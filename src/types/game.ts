@@ -44,7 +44,77 @@ export interface Adventurer {
   image?: string;
   attack?: number; // Base attack power
 }
-// ...
+export interface WorldState {
+  id: string; // uuid
+  location_name: string;
+  status: 'Zenith' | 'Prosperous' | 'Stagnant' | 'Declining' | 'Ruined' | '繁栄' | '衰退' | '崩壊' | '混乱' | string;
+  attribute_name: string; // '至高の平穏' etc.
+  flavor_text: string;
+  background_url?: string;
+
+  // Scores
+  order_score: number;
+  chaos_score: number;
+  justice_score: number;
+  evil_score: number;
+
+  // Territory
+  controlling_nation: NationId;
+
+  updated_at?: string;
+  total_days_passed?: number;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  description: string;
+  x: number;
+  y: number;
+  type: string;
+  connections: string[]; // JSON array of names
+  nation_id: NationId; // Static Region
+  world_states?: WorldState[]; // Joined data
+}
+
+export interface WorldHistory {
+  id: string; // uuid
+  location_name: string;
+  headline: string;
+  news_content?: string;
+  old_status: string; // or null
+  new_status: string;
+  old_attribute: string; // or null
+  new_attribute: string;
+  occured_at: string;
+}
+
+export interface Reputation {
+  location_name: string;
+  score: number;
+  rank: ReputationRank;
+}
+
+export interface UserProfile {
+  id: string; // uuid
+  title_name: string;
+  avatar_url?: string;
+  order_pts: number;
+  chaos_pts: number;
+  justice_pts: number;
+  evil_pts: number;
+  gold: number;
+  updated_at: string;
+
+  current_location_id?: string;
+  current_location_name?: string; // Joined field
+  locations?: Location; // Joined relation
+
+  age?: number;
+  accumulated_days?: number;
+  previous_location_id?: string;
+  level?: number;
+}
 export interface BattleState {
   enemy: Enemy | null;
   party: Adventurer[];
