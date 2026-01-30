@@ -40,7 +40,8 @@ export async function POST() {
         // 2. Reset Inventory (Delete All)
         const { error: invError } = await supabase
             .from('inventory')
-            .delete();
+            .delete()
+            .not('id', 'is', null); // Safety clause for DELETE ALL
         // .neq removed to ensure ALL are deleted
 
         if (invError) console.error("Inventory reset error:", invError);
@@ -97,6 +98,7 @@ export async function POST() {
                 accumulated_days: 0
             })
             // .neq removed to ensure Demo Profile is reset
+            .not('id', 'is', null) // Safety clause
             .select('*');
 
         if (profileError) console.error("Profile reset error:", profileError);
