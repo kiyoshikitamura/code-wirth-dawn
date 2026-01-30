@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
-import { ArrowLeft, ShoppingBag, Coins } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Coins, Sword, Shield, FlaskConical, Box, Package } from 'lucide-react';
 import MobileNav from '@/components/layout/MobileNav';
 
 export default function ShopPage() {
@@ -103,7 +103,7 @@ export default function ShopPage() {
                         <img src="/avatars/shop_keeper.png" alt="Shop Keeper" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 z-10">
-                        <div className="text-xs text-amber-600 font-bold mb-1">SHOP KEEPER</div>
+                        <div className="text-xs text-amber-600 font-bold mb-1">商店の店主</div>
                         <p className="text-amber-100 font-serif italic text-lg leading-relaxed">{masterDialogue}</p>
                     </div>
                     <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full border border-amber-900/50">
@@ -126,14 +126,35 @@ export default function ShopPage() {
                                     className={`flex justify-between items-center p-4 border rounded transition-all group relative cursor-pointer
                                     ${selectedItem?.id === item.id ? 'bg-amber-900/20 border-amber-500 ring-1 ring-amber-500' : 'bg-black/40 border-gray-800 hover:border-amber-600/50 hover:bg-amber-900/10'}`}
                                 >
+                                    <div className="flex items-center justify-center w-12 h-12 bg-gray-900 rounded border border-gray-700 mr-4 shrink-0 text-gray-500">
+                                        {((type) => {
+                                            switch (type) {
+                                                case 'weapon': return <Sword className="w-6 h-6" />;
+                                                case 'armor': return <Shield className="w-6 h-6" />;
+                                                case 'potion': return <FlaskConical className="w-6 h-6" />;
+                                                case 'material': return <Box className="w-6 h-6" />;
+                                                default: return <Package className="w-6 h-6" />;
+                                            }
+                                        })(item.item_type)}
+                                    </div>
                                     <div className="flex-1 min-w-0 pr-4">
                                         <div className="font-bold text-gray-200 group-hover:text-amber-200 whitespace-nowrap truncate">{item.name}</div>
                                         <div className="text-xs text-gray-500 mt-1 whitespace-nowrap truncate">{item.description}</div>
-                                        <div className="flex gap-2 mt-2 text-[10px] uppercase tracking-wider">
-                                            <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{item.item_type}</span>
+                                        <div className="flex gap-2 mt-2 text-[10px] tracking-wider">
+                                            <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">
+                                                {((type) => {
+                                                    switch (type) {
+                                                        case 'weapon': return '武器';
+                                                        case 'armor': return '防具';
+                                                        case 'potion': return '道具';
+                                                        case 'material': return '素材';
+                                                        default: return 'その他';
+                                                    }
+                                                })(item.item_type)}
+                                            </span>
                                             {item.stock_limit !== null && (
                                                 <span className={`${item.stock_limit === 0 ? 'text-red-500' : 'text-amber-500'}`}>
-                                                    Stock: {item.stock_limit}
+                                                    在庫: {item.stock_limit}
                                                 </span>
                                             )}
                                         </div>

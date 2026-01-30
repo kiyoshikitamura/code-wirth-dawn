@@ -178,7 +178,7 @@ export default function PubPage() {
                                 </div>
                                 <div className="flex-1">
                                     <div className="text-amber-400 font-bold text-sm mb-1">{selectedNpc.name} <span className="text-xs text-gray-400">({selectedNpc.job_class} Lv.{selectedNpc.level})</span></div>
-                                    <p className="font-serif italic text-lg leading-relaxed">{dialogue}</p>
+                                    <p className="font-serif italic text-sm md:text-base leading-relaxed">{dialogue}</p>
                                 </div>
                             </div>
                         ) : (
@@ -187,8 +187,8 @@ export default function PubPage() {
                                     <img src="/avatars/pub_staff.png" alt="Staff" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-amber-400 font-bold text-sm mb-1">酒場の看板娘 <span className="text-xs text-gray-400">(Staff)</span></div>
-                                    <p className="font-serif italic text-lg leading-relaxed">「いらっしゃい！空いてる席へどうぞ。」</p>
+                                    <div className="text-amber-400 font-bold text-sm mb-1">酒場の看板娘 <span className="text-xs text-gray-400"></span></div>
+                                    <p className="font-serif italic text-sm md:text-base leading-relaxed">「いらっしゃい！空いてる席へどうぞ。」</p>
                                 </div>
                             </div>
                         )}
@@ -211,17 +211,17 @@ export default function PubPage() {
                                             router.push('/battle-test');
                                         }
                                     }}
-                                    className="w-24 px-3 py-2 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-red-800 whitespace-nowrap"
+                                    className="px-3 py-1.5 md:px-3 md:py-2 bg-red-900/50 hover:bg-red-800 text-red-300 text-[10px] md:text-xs rounded shadow flex items-center justify-center gap-1 border border-red-800 whitespace-nowrap min-w-[70px]"
                                 >
                                     <Sword className="w-3 h-3" /> 襲う
                                 </button>
 
                                 {!partyNpcs.some(p => p.id === selectedNpc.id) ? (
-                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="w-24 px-3 py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-1 whitespace-nowrap">
+                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-3 py-1.5 md:px-3 md:py-2 bg-amber-700 hover:bg-amber-600 text-white text-[10px] md:text-xs rounded shadow flex items-center justify-center gap-1 whitespace-nowrap min-w-[90px]">
                                         <UserPlus className="w-3 h-3" /> 仲間に誘う
                                     </button>
                                 ) : (
-                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="w-24 px-3 py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-gray-500 whitespace-nowrap">
+                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-3 py-1.5 md:px-3 md:py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-[10px] md:text-xs rounded shadow flex items-center justify-center gap-1 border border-gray-500 whitespace-nowrap min-w-[90px]">
                                         <UserMinus className="w-3 h-3" /> 別れる
                                     </button>
                                 )}

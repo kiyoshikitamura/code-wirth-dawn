@@ -400,7 +400,7 @@ export default function InnPage() {
                                     {worldState?.location_name || '宿屋'}
                                 </h1>
                                 <div className="text-[10px] text-gray-400 mt-1">
-                                    <div className="text-orange-300 italic mb-0.5">{getGovernanceText()}</div>
+                                    {/* Governance hidden as requested */}
                                     <div>世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日</div>
                                 </div>
                             </div>
@@ -414,7 +414,7 @@ export default function InnPage() {
                     <div className="space-y-4 md:space-y-8 order-1">
                         {/* NPC Area */}
                         <section className={`${theme.bg} p-4 md:p-6 rounded-sm border-l-4 ${theme.border.replace('/50', '')} relative shadow-lg`}>
-                            <div className={`absolute -top-3 left-4 ${theme.accent.replace('text', 'bg')} text-black px-2 py-0.5 text-xs font-bold`}>MASTER</div>
+                            <div className={`absolute -top-3 left-4 ${theme.accent.replace('text', 'bg')} text-black px-2 py-0.5 text-xs font-bold`}>宿屋の主人</div>
                             <div className="flex gap-4">
                                 <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-black border border-white/10 overflow-hidden rounded-sm">
                                     <img src="/avatars/inn_master.png" alt="Master" className="w-full h-full object-cover opacity-80" />
@@ -461,7 +461,7 @@ export default function InnPage() {
                                     <span className="text-2xl">💰</span>
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-lg font-serif font-bold text-[#e3d5b8] group-hover:text-white">雑貨屋へ行く</div>
+                                    <div className="text-lg font-serif font-bold text-[#e3d5b8] group-hover:text-white">商店へ行く</div>
                                     <div className="text-xs text-gray-500">アイテム・スキルの購入</div>
                                 </div>
                             </button>
