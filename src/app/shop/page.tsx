@@ -104,7 +104,7 @@ export default function ShopPage() {
                     </div>
                     <div className="flex-1 z-10">
                         <div className="text-xs text-amber-600 font-bold mb-1">商店の店主</div>
-                        <p className="text-amber-100 font-serif italic text-lg leading-relaxed">{masterDialogue}</p>
+                        <p className="text-amber-100 font-serif italic text-sm md:text-base leading-relaxed">{masterDialogue}</p>
                     </div>
                     <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full border border-amber-900/50">
                         <Coins className="w-3 h-3 text-amber-400" />
