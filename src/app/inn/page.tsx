@@ -400,7 +400,10 @@ export default function InnPage() {
                                     {worldState?.location_name || '宿屋'}
                                 </h1>
                                 <div className="text-[10px] text-gray-400 mt-1">
-                                    <div className="text-xs text-amber-200/80 italic mt-0.5 leading-snug">{worldState?.flavor_text || `統治: ${worldState?.controlling_nation || '中立'}`}</div>
+                                    <div className="text-xs text-amber-200/80 italic mt-0.5 leading-snug">
+                                        <span className="font-bold not-italic text-amber-500 mr-1">[{worldState?.controlling_nation || '中立'}]</span>
+                                        {worldState?.flavor_text || '...'}
+                                    </div>
                                     <div>世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日</div>
                                 </div>
                             </div>

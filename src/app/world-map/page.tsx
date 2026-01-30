@@ -385,7 +385,7 @@ export default function WorldMapPage() {
                 })}
 
                 {/* Layer 2: Labels (Topmost, Non-Interactive) */}
-                <div className="absolute inset-0 z-[100] pointer-events-none">
+                <div className={`absolute inset-0 z-[100] pointer-events-none transition-opacity duration-300 ${traveling ? 'opacity-0' : 'opacity-100'}`}>
                     {visibleLocations.map(loc => {
                         const isCurrent = userProfile?.current_location_id === loc.id;
                         const isHovered = hoveredId === loc.id;
