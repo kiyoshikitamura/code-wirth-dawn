@@ -335,8 +335,30 @@ export const useGameStore = create<GameState>()(
             },
 
             attackEnemy: async (card?: Card) => {
-                const { battleState, selectedScenario, hand } = get(); // Get latest state
+                const { battleState, selectedScenario, hand, userProfile } = get(); // Get latest state
                 if (!battleState.enemy || battleState.isVictory) return;
+
+                // MP Check & Consumption
+                if (card && card.type === 'Skill' && card.cost) {
+                    const currentMp = userProfile?.mp ?? 0;
+                    if (currentMp < card.cost) {
+                        set(state => ({
+                            battleState: {
+                                ...state.battleState,
+                                messages: [...state.battleState.messages, "MPが足りない！"]
+                            }
+                        }));
+                        return;
+                    }
+                    // Consume
+                    const newMp = currentMp - card.cost;
+                    if (userProfile) set({ userProfile: { ...userProfile, mp: newMp } });
+                    // Sync
+                    fetch('/api/profile/update-status', {
+                        method: 'POST',
+                        body: JSON.stringify({ mp: newMp })
+                    }).catch(console.error);
+                }
 
                 console.log("[Attack] Card used:", card);
 
@@ -438,6 +460,11 @@ export const useGameStore = create<GameState>()(
                             newMessages.push(`報酬 金貨 ${defaultGold} 枚を獲得。`);
                             if (partyCount > 1) newMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
                         }
+                        // Sync Gold Persistence
+                        fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            body: JSON.stringify({ gold: get().gold })
+                        }).catch(console.error);
                         newMessages.push('あなたの活躍が、世界の情勢に微かな変化をもたらしました。');
                     } catch (e) {
                         console.error(e);
@@ -525,6 +552,11 @@ export const useGameStore = create<GameState>()(
                         const rewardBase = selectedScenario?.reward_gold || 50;
                         const reward = Math.floor(rewardBase / partyCount);
                         addGold(reward);
+                        // Sync Gold Persistence
+                        fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            body: JSON.stringify({ gold: get().gold })
+                        }).catch(console.error);
                         newMessages.push(`報酬 金貨 ${rewardBase} 枚を獲得。`);
                     } catch (e) { console.error(e); }
                 }
