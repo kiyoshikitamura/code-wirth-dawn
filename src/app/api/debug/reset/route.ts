@@ -126,6 +126,9 @@ export async function POST() {
                 }]);
             if (insertProfileError) console.error("Profile insert failed:", insertProfileError);
         }
+        if (profileUpdatedCount === 0 && !hasServiceKey) {
+            throw new Error("Reset failed: No profiles updated. Missing Admin Key (SUPABASE_SERVICE_ROLE_KEY)?");
+        }
 
         return NextResponse.json({
             success: true,
