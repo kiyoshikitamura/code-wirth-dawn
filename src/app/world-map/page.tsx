@@ -199,7 +199,7 @@ export default function WorldMapPage() {
 
     const returnToHub = async () => {
         if (!userProfile) return;
-        if (!confirm("名もなき旅人の拠所（宿屋）へ戻りますか？\n※現在の場所は記録されます。")) return;
+        // if (!confirm("名もなき旅人の拠所（宿屋）へ戻りますか？\n※現在の場所は記録されます。")) return;
 
         try {
             // 1. Save current location as previous

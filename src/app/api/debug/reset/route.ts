@@ -45,6 +45,14 @@ export async function POST() {
 
         if (invError) console.error("Inventory reset error:", invError);
 
+        // 2b. Reset NPCs (Disband Party)
+        const { error: npcError } = await supabase
+            .from('npcs')
+            .update({ hired_by_user_id: null })
+            .not('hired_by_user_id', 'is', null);
+
+        if (npcError) console.error("NPC reset error:", npcError);
+
         // 2a. Get Start Location ID
         let { data: startLoc } = await supabase
             .from('locations')
