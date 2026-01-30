@@ -3,35 +3,34 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
-import { ArrowLeft, Users, UserPlus, UserMinus, MessageSquare, Shield, Sword, Heart, Coins } from 'lucide-react';
+import { ArrowLeft, Users, UserPlus, UserMinus, MessageSquare, Shield, Sword, Heart, Coins, Receipt } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import MobileNav from '@/components/layout/MobileNav';
 
-// Npc Type Definition
-interface NPC {
+// Updated to match PartyMember
+interface PartyMember {
     id: string;
     name: string;
     job_class: string;
+    gender: string;
     level: number;
-    hp: number;
-    max_hp: number;
-    mp: number;
-    max_mp: number;
-    attack: number;
-    defense: number;
-    personality_type: string;
-    alignment_nation_id?: string;
+    durability: number;
+    max_durability: number;
+    cover_rate: number;
+    inject_cards: string[]; // Card IDs
+    origin: string;
+    is_active: boolean;
     avatar_url?: string;
-    tactic_mode?: string;
+    personality_type?: string;
 }
 
 export default function PubPage() {
     const router = useRouter();
     const { worldState, userProfile, fetchUserProfile, fetchWorldState, gold } = useGameStore();
-    const [localNpcs, setLocalNpcs] = useState<NPC[]>([]);
-    const [partyNpcs, setPartyNpcs] = useState<NPC[]>([]);
+    const [localMembers, setLocalMembers] = useState<PartyMember[]>([]);
+    const [partyMembers, setPartyMembers] = useState<PartyMember[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedNpc, setSelectedNpc] = useState<NPC | null>(null);
+    const [selectedMember, setSelectedMember] = useState<PartyMember | null>(null);
     const [dialogue, setDialogue] = useState<string>('');
 
     // Fetch Logic
@@ -41,8 +40,8 @@ export default function PubPage() {
             const res = await fetch('/api/pub');
             if (res.ok) {
                 const data = await res.json();
-                setLocalNpcs(data.pub);
-                setPartyNpcs(data.party);
+                setLocalMembers(data.pub);
+                setPartyMembers(data.party);
             }
         } catch (e) {
             console.error(e);
@@ -58,11 +57,10 @@ export default function PubPage() {
     }, []);
 
     // Actions
-    const handleHire = async (npc: NPC) => {
-        if (!confirm(`${npc.name} を仲間に誘いますか？`)) return;
+    const handleHire = async (member: PartyMember) => {
+        if (!confirm(`${member.name} を仲間に誘いますか？`)) return;
 
-        // Frontend Check for convenience
-        if (partyNpcs.length >= 4) {
+        if (partyMembers.length >= 4) {
             alert("これ以上、仲間を連れて行けません。(最大5人パーティ)");
             return;
         }
@@ -70,12 +68,12 @@ export default function PubPage() {
         try {
             const res = await fetch('/api/pub', {
                 method: 'POST',
-                body: JSON.stringify({ action: 'hire', npc_id: npc.id })
+                body: JSON.stringify({ action: 'hire', member_id: member.id })
             });
             if (res.ok) {
                 setDialogue(`「よろしく頼むぜ、相棒。」`);
                 await fetchPubData();
-                setSelectedNpc(null);
+                setSelectedMember(null);
             } else {
                 const err = await res.json();
                 alert(`勧誘失敗: ${err.error}`);
@@ -83,26 +81,24 @@ export default function PubPage() {
         } catch (e) { console.error(e); }
     };
 
-    const handleDismiss = async (npc: NPC) => {
-        if (!confirm(`${npc.name} と別れますか？\n(現在の街に留まります)`)) return;
+    const handleDismiss = async (member: PartyMember) => {
+        if (!confirm(`${member.name} と別れますか？\n(現在の街に留まります)`)) return;
 
         try {
             const res = await fetch('/api/pub', {
                 method: 'POST',
-                body: JSON.stringify({ action: 'dismiss', npc_id: npc.id })
+                body: JSON.stringify({ action: 'dismiss', member_id: member.id })
             });
             if (res.ok) {
                 setDialogue(`「達者でな。縁があったらまた会おう。」`);
                 await fetchPubData();
-                setSelectedNpc(null);
+                setSelectedMember(null);
             }
         } catch (e) { console.error(e); }
     };
 
-    const handleTalk = (npc: NPC) => {
-        // Generate dynamic dialogue based on personality & world state
-        const nation = worldState?.controlling_nation || 'Neutral';
-        const isAlly = partyNpcs.some(p => p.id === npc.id);
+    const handleTalk = (member: PartyMember) => {
+        const isAlly = partyMembers.some(p => p.id === member.id);
 
         let msgs = [
             "ういーっす。",
@@ -120,17 +116,14 @@ export default function PubPage() {
             ];
         } else {
             // Stranger logic
-            if (npc.job_class === 'Warrior') msgs.push("腕には自信があるんだがな。", "戦場が俺を呼んでいる。");
-            if (npc.job_class === 'Mage') msgs.push("知識こそが力よ。", "魔法の研究資金が必要なの。");
-
-            // World State logic
+            if (member.job_class === 'Warrior') msgs.push("腕には自信があるんだがな。", "戦場が俺を呼んでいる。");
+            if (member.job_class === 'Mage') msgs.push("知識こそが力よ。", "魔法の研究資金が必要なの。");
             if (worldState?.status === 'Ruined') msgs.push("この街ももう終わりか...", "早く逃げたほうがいいかもしれねぇ。");
-            if (nation === npc.alignment_nation_id) msgs.push("ここは故郷の匂いがするな。", "この国のために働きたいもんだ。");
         }
 
         const msg = msgs[Math.floor(Math.random() * msgs.length)];
         setDialogue(`「${msg}」`);
-        setSelectedNpc(npc);
+        setSelectedMember(member);
     };
 
     // Render Helpers
@@ -159,7 +152,7 @@ export default function PubPage() {
                         </div>
                         <div>
                             <h1 className="text-lg md:text-2xl font-serif text-amber-500 font-bold tracking-wider whitespace-nowrap">酒場『錆びた剣』</h1>
-                            <p className="text-[10px] md:text-xs text-gray-400">@{worldState?.location_name || 'Unknown'}</p>
+                            <p className="text-[10px] md:text-xs text-gray-400">Members & Equipment</p>
                         </div>
                     </div>
                 </div>
@@ -177,18 +170,19 @@ export default function PubPage() {
                 <section className="lg:col-span-2 space-y-6">
                     {/* Dialogue Box */}
                     <div className={`p-6 rounded-lg border-2 min-h-[120px] flex items-center shadow-2xl relative ${getNationColor()}`}>
-                        {selectedNpc ? (
+                        {selectedMember ? (
                             <div className="flex gap-4 items-center w-full">
                                 <div className="w-16 h-16 rounded border border-gray-500 bg-black overflow-hidden flex-shrink-0">
                                     <img
-                                        src={selectedNpc.avatar_url || '/avatars/adventurer.jpg'}
+                                        src={selectedMember.avatar_url || '/avatars/adventurer.jpg'}
                                         onError={(e) => e.currentTarget.src = '/avatars/adventurer.jpg'}
                                         alt="Avatar"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-amber-400 font-bold text-sm mb-1">{selectedNpc.name} <span className="text-xs text-gray-400">({selectedNpc.job_class} Lv.{selectedNpc.level})</span></div>
+                                    <div className="text-amber-400 font-bold text-sm mb-1">{selectedMember.name} <span className="text-xs text-gray-400">({selectedMember.job_class} Lv.{selectedMember.level})</span></div>
+                                    <div className="text-[10px] text-gray-400 mb-1">耐久: {selectedMember.durability}/{selectedMember.max_durability} | カバー: {selectedMember.cover_rate}%</div>
                                     <p className="font-serif italic text-sm md:text-base leading-relaxed">{dialogue}</p>
                                 </div>
                             </div>
@@ -199,7 +193,7 @@ export default function PubPage() {
                                 </div>
                                 <div className="flex-1">
                                     <div className="text-amber-400 font-bold text-sm mb-1">酒場の看板娘 <span className="text-xs text-gray-400"></span></div>
-                                    <p className="font-serif italic text-sm md:text-base leading-relaxed">「いらっしゃい！空いてる席へどうぞ。」</p>
+                                    <p className="font-serif italic text-sm md:text-base leading-relaxed">「いらっしゃい！新しい仲間を探しているの？」</p>
                                 </div>
                             </div>
                         )}
@@ -207,35 +201,14 @@ export default function PubPage() {
                     </div>
 
                     {/* Action Buttons (Below Dialogue) */}
-                    {selectedNpc && (
+                    {selectedMember && (
                         <div className="flex justify-end gap-2 mt-4">
-                            <button
-                                onClick={() => {
-                                    if (selectedNpc && !confirm(`${selectedNpc.name} に戦いを挑みますか？\n(危険な行為です)`)) return;
-                                    if (selectedNpc) {
-                                        const enemy = {
-                                            id: selectedNpc.id,
-                                            name: selectedNpc.name,
-                                            level: selectedNpc.level,
-                                            hp: selectedNpc.hp,
-                                            maxHp: selectedNpc.max_hp
-                                        };
-                                        useGameStore.getState().startBattle(enemy);
-                                        useGameStore.getState().selectScenario(null);
-                                        router.push('/battle-test');
-                                    }
-                                }}
-                                className="px-4 py-2 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center justify-center gap-2 border border-red-800 whitespace-nowrap min-w-[80px]"
-                            >
-                                <Sword className="w-3 h-3" /> 襲う
-                            </button>
-
-                            {!partyNpcs.some(p => p.id === selectedNpc.id) ? (
-                                <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-2 whitespace-nowrap min-w-[100px]">
+                            {!partyMembers.some(p => p.id === selectedMember.id) ? (
+                                <button onClick={() => selectedMember && handleHire(selectedMember)} className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-2 whitespace-nowrap min-w-[100px]">
                                     <UserPlus className="w-3 h-3" /> 仲間に誘う
                                 </button>
                             ) : (
-                                <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-4 py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-2 border border-gray-500 whitespace-nowrap min-w-[100px]">
+                                <button onClick={() => selectedMember && handleDismiss(selectedMember)} className="px-4 py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-2 border border-gray-500 whitespace-nowrap min-w-[100px]">
                                     <UserMinus className="w-3 h-3" /> 別れる
                                 </button>
                             )}
@@ -247,61 +220,60 @@ export default function PubPage() {
                         {/* Current Party */}
                         <div className="bg-black/60 border border-gray-700 rounded p-4">
                             <h2 className="text-amber-500 font-bold mb-3 flex items-center gap-2 border-b border-gray-800 pb-2">
-                                <Users className="w-4 h-4" /> パーティメンバー
+                                <Users className="w-4 h-4" /> パーティメンバー (Active)
                             </h2>
                             <div className="space-y-2">
                                 <div className="p-2 bg-blue-900/20 border border-blue-900/50 rounded flex justify-between items-center opacity-70">
                                     <span className="text-sm font-bold text-blue-200">{userProfile?.title_name} (You)</span>
                                 </div>
-                                {partyNpcs.map(npc => (
-                                    <div key={npc.id}
-                                        onClick={() => handleTalk(npc)}
+                                {partyMembers.map(m => (
+                                    <div key={m.id}
+                                        onClick={() => handleTalk(m)}
                                         className={`p-2 border rounded cursor-pointer transition-all flex justify-between items-center group
-                                            ${selectedNpc?.id === npc.id ? 'bg-amber-900/30 border-amber-600' : 'bg-gray-900/30 border-gray-800 hover:bg-gray-800'}
+                                            ${selectedMember?.id === m.id ? 'bg-amber-900/30 border-amber-600' : 'bg-gray-900/30 border-gray-800 hover:bg-gray-800'}
                                         `}>
                                         <div>
-                                            <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate max-w-[120px]">{npc.name}</div>
-                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{npc.job_class} Lv.{npc.level}</div>
+                                            <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate max-w-[120px]">{m.name}</div>
+                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class} Lv.{m.level}</div>
                                         </div>
                                         <div className="flex gap-2 text-[10px] text-gray-400">
-                                            <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" /> {npc.hp}</span>
-                                            <span className="flex items-center gap-0.5"><Sword className="w-3 h-3" /> {npc.attack}</span>
+                                            <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" /> {m.durability}</span>
+                                            <span className="flex items-center gap-0.5"><Shield className="w-3 h-3" /> {m.cover_rate}%</span>
                                         </div>
                                     </div>
                                 ))}
-                                {partyNpcs.length === 0 && <div className="text-xs text-gray-600 text-center py-4">仲間はいません。</div>}
+                                {partyMembers.length === 0 && <div className="text-xs text-gray-600 text-center py-4">仲間はいません。</div>}
                             </div>
                         </div>
 
                         {/* Local NPCs */}
                         <div className="bg-black/60 border border-gray-700 rounded p-4">
                             <h2 className="text-gray-400 font-bold mb-3 flex items-center gap-2 border-b border-gray-800 pb-2">
-                                <MessageSquare className="w-4 h-4" /> この店にいる客
+                                <MessageSquare className="w-4 h-4" /> 探索者プール (Recruits)
                             </h2>
                             {loading ? (
                                 <div className="text-center text-xs text-gray-500 py-4">店内を見渡しています...</div>
                             ) : (
                                 <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
-                                    {localNpcs.map(npc => (
-                                        <div key={npc.id}
-                                            onClick={() => handleTalk(npc)}
+                                    {localMembers.map(m => (
+                                        <div key={m.id}
+                                            onClick={() => handleTalk(m)}
                                             className={`p-2 border rounded cursor-pointer transition-all flex justify-between items-center group
-                                                ${selectedNpc?.id === npc.id ? 'bg-amber-900/30 border-amber-600' : 'bg-gray-900/30 border-gray-800 hover:bg-gray-800'}
+                                                ${selectedMember?.id === m.id ? 'bg-amber-900/30 border-amber-600' : 'bg-gray-900/30 border-gray-800 hover:bg-gray-800'}
                                             `}
                                         >
                                             <div className="flex items-center gap-3">
-                                                {/* <div className="w-8 h-8 rounded bg-gray-800"></div> */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate">{npc.name}</div>
-                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{npc.job_class} Lv.{npc.level}</div>
+                                                    <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate">{m.name}</div>
+                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class} Lv.{m.level}</div>
                                                 </div>
                                             </div>
                                             <div className="text-xs text-gray-600 group-hover:text-amber-500 transition-colors">
-                                                話す
+                                                交渉
                                             </div>
                                         </div>
                                     ))}
-                                    {localNpcs.length === 0 && <div className="text-xs text-gray-600 text-center py-4">客は誰もいないようだ...</div>}
+                                    {localMembers.length === 0 && <div className="text-xs text-gray-600 text-center py-4">候補生がいません...</div>}
                                 </div>
                             )}
                         </div>
@@ -312,49 +284,55 @@ export default function PubPage() {
                 <aside className="bg-gray-900/80 border border-gray-700 rounded p-4 h-fit">
                     <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest border-b border-gray-700 pb-2">Status</h3>
 
-                    {selectedNpc ? (
+                    {selectedMember ? (
                         <div className="space-y-4 animate-fade-in">
                             <div className="w-full aspect-square bg-black rounded border border-gray-600 mb-4 overflow-hidden relative group">
                                 <img
-                                    src={selectedNpc.avatar_url || '/avatars/adventurer.jpg'}
+                                    src={selectedMember.avatar_url || '/avatars/adventurer.jpg'}
                                     onError={(e) => e.currentTarget.src = '/avatars/adventurer.jpg'}
                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                 />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
-                                    <div className="text-lg font-bold text-white">{selectedNpc.name}</div>
+                                    <div className="text-lg font-bold text-white">{selectedMember.name}</div>
                                 </div>
                             </div>
 
                             <div className="space-y-2 text-xs font-mono text-gray-300">
                                 <div className="flex justify-between border-b border-gray-800 pb-1">
                                     <span className="text-gray-500">Class</span>
-                                    <span>{selectedNpc.job_class}</span>
+                                    <span>{selectedMember.job_class}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-gray-800 pb-1">
                                     <span className="text-gray-500">Level</span>
-                                    <span>{selectedNpc.level}</span>
+                                    <span>{selectedMember.level}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-gray-800 pb-1">
-                                    <span className="text-gray-500">HP</span>
-                                    <span className="text-green-400">{selectedNpc.hp} / {selectedNpc.max_hp}</span>
+                                    <span className="text-gray-500">Durability</span>
+                                    <span className="text-green-400">{selectedMember.durability} / {selectedMember.max_durability}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-gray-800 pb-1">
-                                    <span className="text-gray-500">MP</span>
-                                    <span className="text-blue-400">{selectedNpc.mp} / {selectedNpc.max_mp}</span>
+                                    <span className="text-gray-500">Cover Rate</span>
+                                    <div className="flex items-center gap-1">
+                                        <Shield className="w-3 h-3 text-blue-400" />
+                                        <span className="text-blue-400">{selectedMember.cover_rate}%</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between border-b border-gray-800 pb-1">
-                                    <span className="text-gray-500">Attack</span>
-                                    <span>{selectedNpc.attack}</span>
-                                </div>
-                                <div className="flex justify-between border-b border-gray-800 pb-1">
-                                    <span className="text-gray-500">Defense</span>
-                                    <span>{selectedNpc.defense}</span>
+
+                                <div className="pt-2">
+                                    <span className="text-gray-500 block mb-1">Deck Injection</span>
+                                    <div className="flex flex-wrap gap-1">
+                                        {selectedMember.inject_cards?.length > 0 ? selectedMember.inject_cards.map((cid, i) => (
+                                            <span key={i} className="px-2 py-1 bg-gray-800 text-[10px] rounded text-amber-200 border border-gray-600">
+                                                {cid}
+                                            </span>
+                                        )) : <span className="text-gray-600 italic">None</span>}
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-700">
-                                <div className="text-[10px] text-gray-500 mb-1">Personality</div>
-                                <div className="text-xs text-amber-200">{selectedNpc.personality_type}</div>
+                                <div className="text-[10px] text-gray-500 mb-1">Origin</div>
+                                <div className="text-xs text-amber-200">{selectedMember.origin}</div>
                             </div>
                         </div>
                     ) : (

@@ -55,12 +55,13 @@ export async function POST() {
         if (invError) console.error("Inventory reset error:", invError);
 
         // 2b. Reset NPCs (Disband Party)
-        const { error: npcError } = await client
-            .from('npcs')
-            .update({ hired_by_user_id: null })
-            .not('hired_by_user_id', 'is', null);
+        // 2b. Reset Party Members (Return to Pool)
+        const { error: pmError } = await client
+            .from('party_members')
+            .update({ owner_id: null, is_active: false })
+            .not('owner_id', 'is', null);
 
-        if (npcError) console.error("NPC reset error:", npcError);
+        if (pmError) console.error("Party Reset error:", pmError);
 
         // 2a. Get Start Location ID
         let { data: startLoc } = await client

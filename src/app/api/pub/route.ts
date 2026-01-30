@@ -9,93 +9,86 @@ async function getUserProfile() {
     return profiles?.[0];
 }
 
-// GET: List NPCs in current location (that are NOT hired) + User's Party
+// GET: List Party Members in Pool (owner_id is NULL) + User's Party
 export async function GET(req: Request) {
     try {
         const profile = await getUserProfile();
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        // Ensure we know where the user is
-        let locationId = profile.current_location_id;
-
-        // If location is null, user is effectively at Hub (or fallback). 
-        // Need to find Hub ID if null? Or rely on client logic. 
-        // Logic: If null, we fetch Hub ID.
-        if (!locationId) {
-            const { data: hub } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').single();
-            locationId = hub?.id;
-        }
-
-        if (!locationId) throw new Error("Location undetermined");
-
-        // 1. Fetch NPCs in this location (Not hired)
-        const { data: pubNpcs, error: pubError } = await supabase
-            .from('npcs')
+        // 1. Fetch Pool (Recruitable)
+        // We can filter by location if we add 'current_location_id' to party_members schema,
+        // but currently the schema only has owner_id.
+        // Assuming global pool for now, or random subset.
+        // If we want location, we need to add it to schema or just ignore location constraint for recruits.
+        // Let's assume Global Pool for now.
+        const { data: poolMembers, error: poolError } = await supabase
+            .from('party_members')
             .select('*')
-            .eq('current_location_id', locationId)
-            .is('hired_by_user_id', null);
+            .is('owner_id', null)
+            .eq('origin', 'system'); // Only system generated ones
 
-        if (pubError) throw pubError;
+        if (poolError) throw poolError;
 
-        let finalPubNpcs = pubNpcs || [];
+        let finalPool = poolMembers || [];
 
-        // --- NPC Generation Logic (Minimum 2) ---
-        if (finalPubNpcs.length < 2) {
-            const needed = 2 - finalPubNpcs.length;
-            const newNpcs = [];
+        // --- Candidate Generation Logic (Minimum 3) ---
+        if (finalPool.length < 3) {
+            const needed = 3 - finalPool.length;
+            const newMembers = [];
 
-            // Simple random generator
             const JOB_CLASSES = ['Warrior', 'Mage', 'Rogue', 'Cleric', 'Paladin'];
-            const PERSONALITIES = ['Brave', 'Timorous', 'Greedy', 'Honest', 'Scheming'];
+            const GENDERS = ['Male', 'Female'];
 
             for (let i = 0; i < needed; i++) {
                 const job = JOB_CLASSES[Math.floor(Math.random() * JOB_CLASSES.length)];
-                const level = (profile.level || 1) + Math.floor(Math.random() * 3); // User Level ~ +2
+                // Stats
+                const durability = 100;
+                const coverRate = Math.floor(Math.random() * 40) + 10; // 10-50%
+                const injectCards = [];
 
-                // Base Stats (Rough Approximation)
-                const hp = 50 + (level * 10);
-                const mp = 20 + (level * 5);
-                const atk = 10 + (level * 2);
-                const def = 5 + (level * 2);
+                // Inject Cards Logic
+                if (job === 'Warrior') injectCards.push('c1'); // Slash
+                if (job === 'Mage') injectCards.push('c2'); // Fireball
+                if (job === 'Cleric') injectCards.push('c3'); // Heal
 
-                newNpcs.push({
-                    name: `Traveler ${Math.floor(Math.random() * 1000)}`, // Temporary Name
+                newMembers.push({
+                    name: `Mercenary ${Math.floor(Math.random() * 1000)}`,
                     job_class: job,
-                    level,
-                    hp, max_hp: hp,
-                    mp, max_mp: mp,
-                    attack: atk,
-                    defense: def,
-                    personality_type: PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)],
-                    current_location_id: locationId,
-                    hired_by_user_id: null,
-                    avatar_url: '/avatars/npc_default.jpg' // Default
+                    gender: GENDERS[Math.floor(Math.random() * GENDERS.length)],
+                    origin: 'system',
+                    durability: durability,
+                    max_durability: durability,
+                    loyalty: 50,
+                    cover_rate: coverRate,
+                    inject_cards: injectCards,
+                    is_active: true // Active when hired
                 });
             }
 
-            // Insert new NPCs
-            const { data: inserted, error: insertError } = await supabase
-                .from('npcs')
-                .insert(newNpcs)
-                .select('*');
+            if (newMembers.length > 0) {
+                const { data: inserted, error: insertError } = await supabase
+                    .from('party_members')
+                    .insert(newMembers)
+                    .select('*');
 
-            if (!insertError && inserted) {
-                finalPubNpcs = [...finalPubNpcs, ...inserted];
+                if (!insertError && inserted) {
+                    finalPool = [...finalPool, ...inserted];
+                }
             }
         }
         // ----------------------------------------
 
-        // 2. Fetch User's Party (Anywhere - logically accompanying user)
-        const { data: partyNpcs, error: partyError } = await supabase
-            .from('npcs')
+        // 2. Fetch User's Party
+        const { data: userParty, error: partyError } = await supabase
+            .from('party_members')
             .select('*')
-            .eq('hired_by_user_id', profile.id);
+            .eq('owner_id', profile.id);
 
         if (partyError) throw partyError;
 
         return NextResponse.json({
-            pub: finalPubNpcs,
-            party: partyNpcs || []
+            pub: finalPool,
+            party: userParty || []
         });
 
     } catch (e: any) {
@@ -106,64 +99,45 @@ export async function GET(req: Request) {
 // POST: Hire or Dismiss
 export async function POST(req: Request) {
     try {
-        const { action, npc_id } = await req.json(); // action: 'hire' | 'dismiss'
+        const { action, member_id } = await req.json(); // member_id (was npc_id)
         const profile = await getUserProfile();
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 401 });
 
         if (action === 'hire') {
             // Check Party Size
             const { count } = await supabase
-                .from('npcs')
+                .from('party_members')
                 .select('*', { count: 'exact', head: true })
-                .eq('hired_by_user_id', profile.id);
+                .eq('owner_id', profile.id);
 
-            if ((count || 0) >= 4) { // Max 4 NPCs + 1 User = 5
-                return NextResponse.json({ error: 'Party is full (Max 4 NPCs).' }, { status: 400 });
+            if ((count || 0) >= 4) {
+                return NextResponse.json({ error: 'Party is full (Max 4).' }, { status: 400 });
             }
 
             // Perform Hire
             const { error } = await supabase
-                .from('npcs')
+                .from('party_members')
                 .update({
-                    hired_by_user_id: profile.id,
-                    current_location_id: null // Removed from map location effectively? Or keep tracking? 
-                    // Technically user location tracks them. Let's set NULL or keep it in sync for "where they return to"?
-                    // Let's keep it NULL while in party to avoid them appearing in pub queries elsewhere.
-                    // Or better: update logic ensures only is('hired_by', null) appears in pub.
+                    owner_id: profile.id,
+                    is_active: true
                 })
-                .eq('id', npc_id);
+                .eq('id', member_id);
 
             if (error) throw error;
             return NextResponse.json({ success: true, message: 'Welcome to the party.' });
 
         } else if (action === 'dismiss') {
-            // Dismiss: They stay at CURRENT location (Pub where we are now)
-            // We need current location ID
-            let locationId = profile.current_location_id;
-            if (!locationId) {
-                const { data: hub } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').single();
-                locationId = hub?.id;
-            }
-
+            // Dismiss -> Return to Pool
             const { error } = await supabase
-                .from('npcs')
+                .from('party_members')
                 .update({
-                    hired_by_user_id: null,
-                    current_location_id: locationId
+                    owner_id: null,
+                    is_active: false
                 })
-                .eq('id', npc_id);
+                .eq('id', member_id);
 
             if (error) throw error;
-            return NextResponse.json({ success: true, message: 'We part ways here.' });
-        } else if (action === 'kill') {
-            // Kill: Delete the NPC record permanently
-            const { error } = await supabase
-                .from('npcs')
-                .delete()
-                .eq('id', npc_id);
-
-            if (error) throw error;
-            return NextResponse.json({ success: true, message: 'NPC eliminated.' });
+            return NextResponse.json({ success: true, message: 'Dismissed.' });
         }
 
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
