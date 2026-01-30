@@ -119,46 +119,18 @@ export default function WorldMapPage() {
 
     // ... handleTravel ...
 
-    const handleTravel = async (target: Location) => {
+    // Travel Confirmation State
+    const [confirmTarget, setConfirmTarget] = useState<Location | null>(null);
+
+    const handleTravelClick = (target: Location) => {
         if (!userProfile) return;
+        setConfirmTarget(target);
+    };
 
-        // Find current location object
-        const currentLocId = userProfile.current_location_id;
-        // Check connectivity
-        // For simplicity, finding the current location object in `locations` array
-        const currentLocObj = locations.find(l => l.id === currentLocId);
-
-        // If connected or first move (no current location)
-        // Fix: If no current location, assume we are at '名もなき旅人の拠所' essentially,
-        // (Wait, with new map, we should query by ID or name more robustly)
-        // If start, look for Capital of Roland? Or just '王都レガリア'?
-        // Assuming user starts at a valid location ID from reset.
-
-        // ... (Keep existing connectivity logic but robustify against missing currentLocId)
-
-        // Logic Reuse
-        let isConnected = false;
-        if (currentLocObj) {
-            isConnected = currentLocObj.connections.includes(target.name);
-        } else {
-            // Fallback if null (e.g. wiped DB but user exists)
-            // Allow moving to any capital? Or just Roland Capital.
-            if (target.type === 'Capital' && target.nation_id === 'Roland') isConnected = true;
-        }
-
-        const allowMove = isConnected; // Strict
-
-        if (!allowMove) return;
-
-        // Calculate days for confirmation
-        const currentLoc = locations.find(l => l.id === currentLocId);
-        let days = '??';
-        if (currentLoc) {
-            const dist = Math.sqrt(Math.pow(target.x - currentLoc.x, 2) + Math.pow(target.y - currentLoc.y, 2));
-            days = Math.max(1, Math.ceil(dist * 0.05)).toString();
-        }
-
-        if (!confirm(`${target.name} へ移動しますか？\n(所要時間: 約${days}日)`)) return;
+    const executeTravel = async () => {
+        if (!confirmTarget) return;
+        const target = confirmTarget;
+        setConfirmTarget(null); // Close modal
 
         setTraveling(true);
         setTravelLog([`旅の支度をしています...`]);
@@ -377,7 +349,7 @@ export default function WorldMapPage() {
                                 ${isWalkable ? 'hover:scale-110 opacity-100' : 'opacity-80 grayscale-[0.5]'}
                             `}
                             style={{ left: (loc.x / 10) + '%', top: (loc.y / 10) + '%' }}
-                            onClick={() => isWalkable && !isCurrent && handleTravel(loc)}
+                            onClick={() => isWalkable && !isCurrent && handleTravelClick(loc)}
                         >
                             {/* Icon Circle */}
                             <div className={`
@@ -425,6 +397,46 @@ export default function WorldMapPage() {
                     );
                 })}
             </main>
+
+            {/* Confirmation Modal */}
+            {confirmTarget && (
+                <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-[#1a202c] border-2 border-[#a38b6b] p-6 max-w-sm w-full shadow-2xl relative text-center">
+                        <h3 className="text-xl font-serif text-[#e3d5b8] mb-4 border-b border-[#a38b6b]/30 pb-2">
+                            移动の確認
+                        </h3>
+                        <div className="text-gray-300 mb-6 space-y-2">
+                            <p>
+                                <span className="text-white font-bold text-lg">{confirmTarget.name}</span> へ移動しますか？
+                            </p>
+                            <p className="text-sm text-[#a38b6b]">
+                                所要時間: 約
+                                {(() => {
+                                    const currentLoc = locations.find(l => l.id === userProfile?.current_location_id);
+                                    if (!currentLoc) return '??';
+                                    const dist = Math.sqrt(Math.pow(confirmTarget.x - currentLoc.x, 2) + Math.pow(confirmTarget.y - currentLoc.y, 2));
+                                    return Math.max(1, Math.ceil(dist * 0.05));
+                                })()}
+                                日
+                            </p>
+                        </div>
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                onClick={() => setConfirmTarget(null)}
+                                className="px-4 py-2 border border-gray-600 text-gray-400 hover:text-white hover:border-white transition-colors"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={executeTravel}
+                                className="px-4 py-2 bg-[#a38b6b] text-black font-bold hover:bg-[#e3d5b8] transition-colors"
+                            >
+                                {confirmTarget.name} へ出発
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Travel Overlay */}
             {traveling && (
