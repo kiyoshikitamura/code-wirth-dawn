@@ -31,6 +31,13 @@ export default function StatusPage() {
                 <h1 className="text-2xl font-serif text-gray-100 font-bold tracking-wider flex items-center gap-2">
                     <Shield className="w-6 h-6 text-gray-500" /> ステータス・所持品
                 </h1>
+                <button
+                    onClick={() => useGameStore.getState().clearStorage()}
+                    className="ml-auto text-[10px] bg-red-900/20 text-red-500 border border-red-900 px-2 py-1 rounded hover:bg-red-900/50 transition-colors"
+                    title="表示がおかしい場合に押してください"
+                >
+                    データ修復
+                </button>
             </header>
 
             <main className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">

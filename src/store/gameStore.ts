@@ -69,6 +69,7 @@ interface GameState {
     processNpcTurn: () => Promise<void>;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
     fleeBattle: () => void;
+    clearStorage: () => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -553,6 +554,16 @@ export const useGameStore = create<GameState>()(
                         isVictory: false
                     }
                 }));
+            },
+
+            clearStorage: () => {
+                try {
+                    localStorage.removeItem('game-storage');
+                    console.log("Storage cleared");
+                    window.location.reload();
+                } catch (e) {
+                    console.error("Failed to clear storage", e);
+                }
             }
         }
         ),

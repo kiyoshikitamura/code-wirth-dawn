@@ -252,8 +252,14 @@ export default function BattleTestPage() {
                             </button>
                         ))}
                         {hand.length === 0 && !battleState.isVictory && (
-                            <div className="flex items-center justify-center text-gray-500 text-sm italic w-full">
-                                カードを配っています...
+                            <div className="flex flex-col items-center justify-center text-gray-500 text-sm italic w-full gap-2">
+                                <span>カードを配っています...</span>
+                                <button
+                                    onClick={() => useGameStore.getState().drawCards(5)}
+                                    className="text-xs border border-gray-700 px-2 py-1 rounded hover:bg-gray-800 transition-colors"
+                                >
+                                    カードを引く (Debug)
+                                </button>
                             </div>
                         )}
                     </div>
