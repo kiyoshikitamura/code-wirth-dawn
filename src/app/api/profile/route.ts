@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     try {
         const { data: profiles, error } = await supabase
             .from('user_profiles')
-            .select('*, locations:locations!fk_current_location(*)')
+            .select('*, locations:locations!fk_current_location(*), reputations(*)')
             .limit(1);
 
         let profile = profiles?.[0];

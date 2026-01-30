@@ -128,6 +128,8 @@ export interface UserProfile {
   // Social
   praise_count?: number;
   prayer_count?: number;
+
+  reputations?: Reputation[]; // Joined
 }
 export interface BattleState {
   enemy: Enemy | null;
