@@ -400,6 +400,7 @@ export default function InnPage() {
                                     {worldState?.location_name || '宿屋'}
                                 </h1>
                                 <div className="text-[10px] text-gray-400 mt-1">
+                                    <div className={`${reputation?.rank === 'Hero' ? 'text-amber-400' : 'text-gray-400'}`}>統治: {worldState?.governing_nation || '中立'}</div>
                                     <div>世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日</div>
                                 </div>
                             </div>

@@ -344,8 +344,9 @@ export default function WorldMapPage() {
                     return (
                         <div
                             key={loc.id}
-                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer transition-all duration-300
-                                ${isWalkable ? 'hover:scale-110 opacity-100' : 'opacity-80 grayscale-[0.5]'}
+                            className={`
+                                absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group 
+                                ${isCurrent ? 'z-[60]' : 'z-[40] hover:z-[60]'}
                             `}
                             style={{ left: (loc.x / 10) + '%', top: (loc.y / 10) + '%' }}
                             onClick={() => isWalkable && !isCurrent && handleTravelClick(loc)}
@@ -359,8 +360,8 @@ export default function WorldMapPage() {
                             </div>
 
                             {/* Label */}
-                            <div className={`mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap relative z-50
-                                ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50' : 'text-gray-400 bg-black/60 group-hover:text-white group-hover:bg-black/80'}
+                            <div className={`mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap relative z-[70] shadow-md
+                                ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50' : 'text-gray-300 bg-black/80 group-hover:text-white group-hover:bg-black/90 group-hover:ring-1 group-hover:ring-white/30'}
                             `}>
                                 {loc.name}
                             </div>
