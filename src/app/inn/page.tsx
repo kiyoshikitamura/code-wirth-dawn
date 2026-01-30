@@ -386,9 +386,6 @@ export default function InnPage() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-300">
-                                所持金: <span className="text-white font-bold text-lg">{gold}</span> G
-                            </div>
                         </div>
                     </div>
 
@@ -407,12 +404,6 @@ export default function InnPage() {
                                 </div>
                             </div>
                         </div>
-
-                        <div className="flex flex-col items-end">
-                            <div className="text-gold-400 font-mono font-bold text-base bg-black/40 px-2 py-1 rounded border border-gold-600/30">
-                                {gold} <span className="text-[10px]">G</span>
-                            </div>
-                        </div>
                     </div>
                 </header>
 
@@ -425,7 +416,7 @@ export default function InnPage() {
                             <div className={`absolute -top-3 left-4 ${theme.accent.replace('text', 'bg')} text-black px-2 py-0.5 text-xs font-bold`}>MASTER</div>
                             <div className="flex gap-4">
                                 <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-black border border-white/10 overflow-hidden rounded-sm">
-                                    <img src="/avatars/master_default.jpg" alt="Master" className="w-full h-full object-cover opacity-80" />
+                                    <img src="/avatars/inn_master.png" alt="Master" className="w-full h-full object-cover opacity-80" />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center">
                                     <p className={`font-serif italic ${theme.text} leading-relaxed min-h-[3rem] text-sm md:text-base flex items-center`}>
@@ -545,10 +536,7 @@ export default function InnPage() {
                 <MobileNav />
 
                 <div className="text-center mt-12 space-y-4">
-                    <a href="/battle-test" className="text-gray-400 hover:text-gold-500 text-sm flex items-center justify-center gap-2">
-                        <ArrowLeft className="w-4 h-4" />
-                        フリーバトルへ（依頼なし）
-                    </a>
+                    {/* Debug Section */}
 
                     {/* Debug Section */}
                     {/* Detailed Debug Panel */}

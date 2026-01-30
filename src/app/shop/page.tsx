@@ -8,9 +8,11 @@ import MobileNav from '@/components/layout/MobileNav';
 
 export default function ShopPage() {
     const router = useRouter();
-    const { gold, spendGold, fetchInventory, userProfile } = useGameStore();
+    const { gold, spendGold, fetchInventory, userProfile, worldState } = useGameStore();
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [masterDialogue, setMasterDialogue] = useState("「いらっしゃい。珍しいものが揃ってるよ。」");
+    const [selectedItem, setSelectedItem] = useState<any>(null);
 
     useEffect(() => {
         async function fetchShop() {
@@ -61,27 +63,56 @@ export default function ShopPage() {
         }
     };
 
+    const handleSelect = (item: any) => {
+        setSelectedItem(item);
+        // Dynamic dialogue based on item type or random
+        const dialogues = [
+            `「${item.name}かい？ 目が高いね。」`,
+            `「${item.name}は人気商品だよ。」`,
+            `「旅の役に立つはずさ。」`,
+            `「おっと、それは慎重に扱ってくれよ。」`
+        ];
+        setMasterDialogue(dialogues[Math.floor(Math.random() * dialogues.length)]);
+    };
+
     return (
         <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative pb-24 md:pb-0">
             <div className="absolute inset-0 bg-[url('/backgrounds/shop-interior.jpg')] bg-cover bg-center opacity-30 pointer-events-none"></div>
 
-            <header className="relative z-10 max-w-4xl mx-auto flex items-center justify-between py-6 border-b border-gray-800 mb-8">
-                <div className="flex items-center gap-4">
+            <header className="relative z-10 max-w-4xl mx-auto flex items-center justify-between py-4 border-b border-gray-800 mb-6 bg-black/60 p-4 rounded">
+                <div className="flex items-center gap-2">
                     <button onClick={() => router.push('/inn')} className="text-gray-400 hover:text-white transition-colors">
                         <ArrowLeft className="w-6 h-6" />
                     </button>
-                    <h1 className="text-2xl font-serif text-amber-500 font-bold tracking-wider flex items-center gap-2">
-                        <ShoppingBag className="w-6 h-6" /> 雑貨屋
-                    </h1>
-                </div>
-                <div className="flex items-center gap-2 bg-gray-900/80 px-4 py-2 rounded-full border border-amber-900/50">
-                    <Coins className="w-4 h-4 text-amber-400" />
-                    <span className="text-xl font-bold text-white">{gold}</span>
-                    <span className="text-xs text-gray-400">G</span>
+                    <div className="flex items-center gap-2">
+                        <div className="text-amber-500 bg-amber-950/30 p-1.5 rounded-full border border-amber-900">
+                            <ShoppingBag className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-lg md:text-2xl font-serif text-amber-500 font-bold tracking-wider whitespace-nowrap">商店『水晶の番人』</h1>
+                            <p className="text-[10px] md:text-xs text-gray-500">@{worldState?.location_name}</p>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <main className="relative z-10 max-w-4xl mx-auto">
+            <main className="relative z-10 max-w-4xl mx-auto space-y-6">
+                {/* Master Section */}
+                <section className="bg-gray-900/80 border border-gray-700 rounded-lg p-6 shadow-xl backdrop-blur-sm flex items-center gap-6 relative overflow-hidden">
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-amber-700/50 overflow-hidden shrink-0 bg-black">
+                        <img src="/avatars/shop_keeper.png" alt="Shop Keeper" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 z-10">
+                        <div className="text-xs text-amber-600 font-bold mb-1">SHOP KEEPER</div>
+                        <p className="text-amber-100 font-serif italic text-lg leading-relaxed">{masterDialogue}</p>
+                        <div className="flex items-center gap-2 mt-2 bg-black/40 w-fit px-3 py-1 rounded-full border border-amber-900/30">
+                            <Coins className="w-3 h-3 text-amber-400" />
+                            <span className="text-sm font-bold text-white">{gold}</span>
+                            <span className="text-[10px] text-gray-400">G</span>
+                        </div>
+                    </div>
+                </section>
+
                 <div className="bg-gray-900/80 border border-gray-700 rounded-lg p-6 shadow-xl backdrop-blur-sm">
                     {loading ? (
                         <div className="text-center py-12 text-gray-500">
@@ -90,7 +121,11 @@ export default function ShopPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {items.map((item) => (
-                                <div key={item.id} className="flex justify-between items-center p-4 bg-black/40 border border-gray-800 rounded hover:border-amber-600/50 hover:bg-amber-900/10 transition-all group relative">
+                                <div key={item.id}
+                                    onClick={() => handleSelect(item)}
+                                    className={`flex justify-between items-center p-4 border rounded transition-all group relative cursor-pointer
+                                    ${selectedItem?.id === item.id ? 'bg-amber-900/20 border-amber-500 ring-1 ring-amber-500' : 'bg-black/40 border-gray-800 hover:border-amber-600/50 hover:bg-amber-900/10'}`}
+                                >
                                     <div className="flex-1 min-w-0 pr-4">
                                         <div className="font-bold text-gray-200 group-hover:text-amber-200 whitespace-nowrap truncate">{item.name}</div>
                                         <div className="text-xs text-gray-500 mt-1 whitespace-nowrap truncate">{item.description}</div>

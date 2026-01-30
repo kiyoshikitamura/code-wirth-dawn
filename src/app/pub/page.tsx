@@ -149,18 +149,19 @@ export default function PubPage() {
             <div className="absolute inset-0 bg-[url('/backgrounds/pub-interior.jpg')] bg-cover bg-center opacity-40 blur-sm pointer-events-none"></div>
 
             <header className="relative z-10 max-w-5xl mx-auto flex items-center justify-between py-4 border-b border-gray-700 mb-6 glass-panel p-4 rounded bg-black/60">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                     <button onClick={() => router.push('/inn')} className="hover:text-white text-gray-400 transition-colors">
                         <ArrowLeft className="w-6 h-6" />
                     </button>
-                    <div>
-                        <h1 className="text-2xl font-serif text-amber-500 font-bold tracking-wider">酒場『錆びた剣』</h1>
-                        <p className="text-xs text-gray-400">@{worldState?.location_name || 'Unknown'}</p>
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-amber-950/50 rounded-full border border-amber-800/50">
+                            <span className="text-xl">🍺</span>
+                        </div>
+                        <div>
+                            <h1 className="text-lg md:text-2xl font-serif text-amber-500 font-bold tracking-wider whitespace-nowrap">酒場『錆びた剣』</h1>
+                            <p className="text-[10px] md:text-xs text-gray-400">@{worldState?.location_name || 'Unknown'}</p>
+                        </div>
                     </div>
-                </div>
-                <div className="text-right">
-                    <div className="text-sm font-mono text-amber-300">Party: {partyNpcs.length + 1} / 5</div>
-                    <div className="text-xs text-gray-500">Gold: {userProfile?.gold} G</div>
                 </div>
             </header>
 
@@ -181,11 +182,19 @@ export default function PubPage() {
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-gray-500 italic text-center w-full">酒場の喧騒が聞こえる...</p>
+                            <div className="flex gap-4 items-center w-full">
+                                <div className="w-16 h-16 rounded border border-gray-500 bg-black overflow-hidden flex-shrink-0">
+                                    <img src="/avatars/pub_staff.png" alt="Staff" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-amber-400 font-bold text-sm mb-1">酒場の看板娘 <span className="text-xs text-gray-400">(Staff)</span></div>
+                                    <p className="font-serif italic text-lg leading-relaxed">「いらっしゃい！空いてる席へどうぞ。」</p>
+                                </div>
+                            </div>
                         )}
 
                         {selectedNpc && (
-                            <div className="absolute right-4 bottom-4 flex gap-2">
+                            <div className="absolute right-4 bottom-4 flex flex-col md:flex-row gap-2">
                                 <button
                                     onClick={() => {
                                         if (selectedNpc && !confirm(`${selectedNpc.name} に戦いを挑みますか？\n(危険な行為です)`)) return;
@@ -202,17 +211,17 @@ export default function PubPage() {
                                             router.push('/battle-test');
                                         }
                                     }}
-                                    className="px-3 py-1 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center gap-1 border border-red-800"
+                                    className="px-3 py-1 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-red-800"
                                 >
                                     <Sword className="w-3 h-3" /> 襲う
                                 </button>
 
                                 {!partyNpcs.some(p => p.id === selectedNpc.id) ? (
-                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-3 py-1 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center gap-1">
+                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-3 py-1 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-1">
                                         <UserPlus className="w-3 h-3" /> 仲間に誘う
                                     </button>
                                 ) : (
-                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-3 py-1 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center gap-1 border border-gray-500">
+                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-3 py-1 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-gray-500">
                                         <UserMinus className="w-3 h-3" /> 別れる
                                     </button>
                                 )}
