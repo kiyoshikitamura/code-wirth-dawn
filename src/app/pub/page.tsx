@@ -180,7 +180,12 @@ export default function PubPage() {
                         {selectedNpc ? (
                             <div className="flex gap-4 items-center w-full">
                                 <div className="w-16 h-16 rounded border border-gray-500 bg-black overflow-hidden flex-shrink-0">
-                                    <img src={selectedNpc.avatar_url || '/avatars/adventurer.jpg'} alt="Avatar" className="w-full h-full object-cover" />
+                                    <img
+                                        src={selectedNpc.avatar_url || '/avatars/adventurer.jpg'}
+                                        onError={(e) => e.currentTarget.src = '/avatars/adventurer.jpg'}
+                                        alt="Avatar"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <div className="flex-1">
                                     <div className="text-amber-400 font-bold text-sm mb-1">{selectedNpc.name} <span className="text-xs text-gray-400">({selectedNpc.job_class} Lv.{selectedNpc.level})</span></div>
@@ -310,7 +315,11 @@ export default function PubPage() {
                     {selectedNpc ? (
                         <div className="space-y-4 animate-fade-in">
                             <div className="w-full aspect-square bg-black rounded border border-gray-600 mb-4 overflow-hidden relative group">
-                                <img src={selectedNpc.avatar_url || '/avatars/adventurer.jpg'} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                <img
+                                    src={selectedNpc.avatar_url || '/avatars/adventurer.jpg'}
+                                    onError={(e) => e.currentTarget.src = '/avatars/adventurer.jpg'}
+                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
                                     <div className="text-lg font-bold text-white">{selectedNpc.name}</div>
                                 </div>

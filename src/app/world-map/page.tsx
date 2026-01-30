@@ -245,65 +245,44 @@ export default function WorldMapPage() {
                 </div>
             </header>
 
-            {/* Hegemony Graph Overlay */}
-            <div className="absolute top-24 right-6 z-20 bg-black/80 border border-[#a38b6b] p-3 rounded shadow-xl backdrop-blur-sm max-w-[200px]">
-                <h3 className="text-xs font-bold text-[#a38b6b] mb-2 uppercase tracking-widest border-b border-[#a38b6b]/30 pb-1">Current Hegemony</h3>
+                        {/* Nation Status Text Display */}
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-black/80 border border-[#a38b6b]/50 p-2 rounded shadow-xl backdrop-blur-sm w-[90%] max-w-lg flex flex-wrap justify-center gap-x-4 gap-y-1">
                 {(() => {
-                    // Calculate Ratios
                     const total = locations.length;
                     if (total === 0) return null;
                     const counts: Record<string, number> = { 'Roland': 0, 'Markand': 0, 'Yato': 0, 'Karyu': 0, 'Neutral': 0 };
-
                     locations.forEach(l => {
                         const n = l.world_states?.[0]?.controlling_nation || l.nation_id || 'Neutral';
                         counts[n] = (counts[n] || 0) + 1;
                     });
-
-                    // Order for Conic Gradient: Roland(Blue), Markand(Yellow), Karyu(Green/Red?), Yato(Purple)
-                    // Colors
-                    const colors: Record<string, string> = {
-                        'Roland': '#3b82f6', // blue-500
-                        'Markand': '#eab308', // yellow-500
-                        'Karyu': '#10b981', // emerald-500 (Wait, Karyu is usually Red/Fire? Code says Emerald. User request says "Evil -> Karyu". Evil is usually red/black. But existing code line 102 uses emerald. I will stick to existing colors to avoid confusion: Emerald.)
-                        'Yato': '#9333ea', // purple-600
-                        'Neutral': '#6b7280'
+                     const getLabel = (n: string) => {
+                        switch(n) {
+                            case 'Roland': return 'ローランド:';
+                            case 'Markand': return 'マーカンド:';
+                            case 'Karyu': return '火龍の民:';
+                            case 'Yato': return '夜刀神国:';
+                            default: return '中立:';
+                        }
+                    };
+                     const getColor = (n: string) => {
+                         switch(n) {
+                            case 'Roland': return 'text-blue-400';
+                            case 'Markand': return 'text-yellow-400';
+                            case 'Karyu': return 'text-emerald-400';
+                            case 'Yato': return 'text-purple-400';
+                            default: return 'text-gray-400';
+                        }
                     };
 
-                    const nations = ['Roland', 'Markand', 'Karyu', 'Yato'];
-                    let currentDeg = 0;
-                    const segments = nations.map(n => {
-                        const count = counts[n] || 0;
-                        const pct = (count / total) * 100;
-                        const deg = (count / total) * 360;
-                        const start = currentDeg;
-                        currentDeg += deg;
-                        return { n, pct, color: colors[n], start, end: currentDeg };
-                    });
-
-                    const conicStr = segments.map(s => `${s.color} ${s.start}deg ${s.end}deg`).join(', ');
-
-                    return (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-4">
-                                <div
-                                    className="w-16 h-16 rounded-full border-2 border-white/10 shadow-inner"
-                                    style={{ background: `conic-gradient(${conicStr})` }}
-                                ></div>
-                                <div className="flex-1 space-y-1">
-                                    {segments.map(s => (
-                                        <div key={s.n} className="flex justify-between text-[10px] text-gray-300">
-                                            <span style={{ color: s.color }}>{s.n.substring(0, 3)}</span>
-                                            <span>{Math.round(s.pct)}%</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                    return ['Roland', 'Markand', 'Karyu', 'Yato'].map(n => (
+                        <div key={n} className={`text-[10px] md:text-xs font-mono font-bold ${getColor(n)} flex items-center gap-1`}>
+                            <span>{getLabel(n)}</span>
+                            <span>{String(Math.round((counts[n] / total) * 100)).padStart(2, '0')}%</span>
                         </div>
-                    );
+                    ));
                 })()}
             </div>
-
-
+            
             {/* Map Area */}
             <main className="relative flex-1 w-full max-w-4xl overflow-hidden border-x border-[#a38b6b]/20 bg-[#1a202c]">
                 {/* Background Grid/Texture */}
@@ -373,8 +352,8 @@ export default function WorldMapPage() {
                             </div>
 
                             {/* Label */}
-                            <div className={`mt-2 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded
-                                ${isCurrent ? 'text-white bg-black/80' : 'text-gray-400 bg-black/50'}
+                            <div className={`mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap
+                                ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50' : 'text-gray-400 bg-black/60 group-hover:text-white group-hover:bg-black/80'}
                             `}>
                                 {loc.name}
                             </div>
@@ -402,9 +381,16 @@ export default function WorldMapPage() {
 
                             {/* Current Indicator */}
                             {isCurrent && (
-                                <div className="absolute -top-8 text-xs text-white animate-bounce font-bold drop-shadow-md">
-                                    YOU ARE HERE
-                                </div>
+                                <>
+                                    {/* Mobile: Blinking Arrow */}
+                                    <div className="md:hidden absolute -top-6 text-xl text-white animate-bounce font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                                        ↓
+                                    </div>
+                                    {/* PC: Text */}
+                                    <div className="hidden md:block absolute -top-8 text-xs text-white animate-bounce font-bold drop-shadow-md whitespace-nowrap bg-black/50 px-2 rounded">
+                                        YOU ARE HERE
+                                    </div>
+                                </>
                             )}
                         </div>
                     );
@@ -468,14 +454,14 @@ export default function WorldMapPage() {
             <div className="p-4 w-full max-w-4xl flex flex-col items-center gap-4 z-20 bg-[#0a121e]/90 border-t border-[#a38b6b]/30">
                 <div className="flex gap-4">
                     <button onClick={() => router.push('/inn')} className="text-gray-400 hover:text-white text-sm flex items-center justify-center gap-2 px-4 py-2 border border-gray-700 rounded hover:border-white transition-colors">
-                        宿屋へ戻る (移動せず)
+                        宿屋に戻る
                     </button>
 
                     <button
                         onClick={returnToHub}
                         className="text-[#a38b6b] hover:text-[#e3d5b8] text-sm flex items-center justify-center gap-2 px-4 py-2 border border-[#a38b6b] rounded hover:shadow-[0_0_10px_#a38b6b] transition-all"
                     >
-                        <Tent className="w-4 h-4" /> 拠所へ帰還 (位置セーブ)
+                        <Tent className="w-4 h-4" /> 拠点への帰還
                     </button>
                 </div>
             </div>
