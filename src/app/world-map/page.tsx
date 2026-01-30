@@ -245,44 +245,51 @@ export default function WorldMapPage() {
                 </div>
             </header>
 
-                        {/* Nation Status Text Display */}
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 bg-black/80 border border-[#a38b6b]/50 p-2 rounded shadow-xl backdrop-blur-sm w-[90%] max-w-lg flex flex-wrap justify-center gap-x-4 gap-y-1">
-                {(() => {
-                    const total = locations.length;
-                    if (total === 0) return null;
-                    const counts: Record<string, number> = { 'Roland': 0, 'Markand': 0, 'Yato': 0, 'Karyu': 0, 'Neutral': 0 };
-                    locations.forEach(l => {
-                        const n = l.world_states?.[0]?.controlling_nation || l.nation_id || 'Neutral';
-                        counts[n] = (counts[n] || 0) + 1;
-                    });
-                     const getLabel = (n: string) => {
-                        switch(n) {
-                            case 'Roland': return 'ローランド:';
-                            case 'Markand': return 'マーカンド:';
-                            case 'Karyu': return '火龍の民:';
-                            case 'Yato': return '夜刀神国:';
-                            default: return '中立:';
-                        }
-                    };
-                     const getColor = (n: string) => {
-                         switch(n) {
-                            case 'Roland': return 'text-blue-400';
-                            case 'Markand': return 'text-yellow-400';
-                            case 'Karyu': return 'text-emerald-400';
-                            case 'Yato': return 'text-purple-400';
-                            default: return 'text-gray-400';
-                        }
-                    };
+            {/* Nation Status Text Display (Outside Map) */}
+            <div className="w-full max-w-4xl bg-[#0a121e] border-x border-[#a38b6b]/30 p-2 z-20">
+                <div className="border border-[#a38b6b]/30 rounded p-2 bg-black/40">
+                    <h3 className="text-center text-xs text-[#a38b6b] font-bold mb-2 tracking-widest border-b border-[#a38b6b]/20 pb-1 w-fit mx-auto px-4">— 国家の覇権 —</h3>
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+                        {(() => {
+                            const total = locations.length;
+                            if (total === 0) return null;
+                            const counts: Record<string, number> = { 'Roland': 0, 'Markand': 0, 'Yato': 0, 'Karyu': 0, 'Neutral': 0 };
+                            locations.forEach(l => {
+                                const n = l.world_states?.[0]?.controlling_nation || l.nation_id || 'Neutral';
+                                counts[n] = (counts[n] || 0) + 1;
+                            });
+                            const getLabel = (n: string) => {
+                                switch (n) {
+                                    case 'Roland': return 'ローランド';
+                                    case 'Markand': return 'マーカンド';
+                                    case 'Karyu': return '火龍の民';
+                                    case 'Yato': return '夜刀神国';
+                                    default: return '中立';
+                                }
+                            };
+                            const getColor = (n: string) => {
+                                switch (n) {
+                                    case 'Roland': return 'text-blue-400';
+                                    case 'Markand': return 'text-yellow-400';
+                                    case 'Karyu': return 'text-emerald-400';
+                                    case 'Yato': return 'text-purple-400';
+                                    default: return 'text-gray-400';
+                                }
+                            };
 
-                    return ['Roland', 'Markand', 'Karyu', 'Yato'].map(n => (
-                        <div key={n} className={`text-[10px] md:text-xs font-mono font-bold ${getColor(n)} flex items-center gap-1`}>
-                            <span>{getLabel(n)}</span>
-                            <span>{String(Math.round((counts[n] / total) * 100)).padStart(2, '0')}%</span>
-                        </div>
-                    ));
-                })()}
+                            return ['Roland', 'Markand', 'Karyu', 'Yato'].map(n => (
+                                <div key={n} className={`text-[10px] md:text-xs font-mono font-bold ${getColor(n)} flex items-center gap-2`}>
+                                    <span>{getLabel(n)}</span>
+                                    <span className="bg-white/10 px-1.5 rounded text-white">{String(Math.round((counts[n] / total) * 100)).padStart(2, '0')}%</span>
+                                </div>
+                            ));
+                        })()}
+                    </div>
+                </div>
             </div>
-            
+
+
+
             {/* Map Area */}
             <main className="relative flex-1 w-full max-w-4xl overflow-hidden border-x border-[#a38b6b]/20 bg-[#1a202c]">
                 {/* Background Grid/Texture */}

@@ -413,12 +413,12 @@ export default function InnPage() {
                     <div className="space-y-4 md:space-y-8 order-1">
                         {/* NPC Area */}
                         <section className={`${theme.bg} p-4 md:p-6 rounded-sm border-l-4 ${theme.border.replace('/50', '')} relative shadow-lg`}>
-                            <div className={`absolute -top-3 left-4 ${theme.accent.replace('text', 'bg')} text-black px-2 py-0.5 text-xs font-bold`}>宿屋の主人</div>
                             <div className="flex gap-4">
                                 <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-black border border-white/10 overflow-hidden rounded-sm">
                                     <img src="/avatars/inn_master.png" alt="Master" className="w-full h-full object-cover opacity-80" />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center">
+                                    <div className="text-amber-400 font-bold text-sm mb-1">宿屋の主人</div>
                                     <p className={`font-serif italic ${theme.text} leading-relaxed min-h-[3rem] text-sm md:text-base flex items-center`}>
                                         {isThinking ? (
                                             <span className="animate-pulse tracking-widest text-xl opacity-70">......</span>

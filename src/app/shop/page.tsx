@@ -103,7 +103,7 @@ export default function ShopPage() {
                         <img src="/avatars/shop_keeper.png" alt="Shop Keeper" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 z-10">
-                        <div className="text-xs text-amber-600 font-bold mb-1">商店の店主</div>
+                        <div className="text-amber-400 font-bold text-sm mb-1">商店の店主</div>
                         <p className="text-amber-100 font-serif italic text-sm md:text-base leading-relaxed">{masterDialogue}</p>
                     </div>
                     <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full border border-amber-900/50">
