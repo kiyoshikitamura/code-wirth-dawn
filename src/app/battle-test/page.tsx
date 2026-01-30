@@ -17,14 +17,16 @@ export default function BattleTestPage() {
         processNpcTurn,
         setTactic,
         fleeBattle,
-        selectedScenario
+        selectedScenario,
+        fetchUserProfile
     } = useGameStore();
 
     const [logs, setLogs] = useState<string[]>([]);
 
-    // We only initialize if direct access (not from Pub attack)
+    // We only initialize if direct access (not from Pub attack) or if hand is empty (bug recovery)
     useEffect(() => {
-        if (!battleState.enemy) {
+        fetchUserProfile();
+        if (!battleState.enemy || hand.length === 0) {
             initializeBattle();
         }
     }, []);

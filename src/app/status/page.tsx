@@ -129,6 +129,25 @@ export default function StatusPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* REPUTATIONS LIST */}
+                    <div className="pt-4 border-t border-gray-800">
+                        <div className="text-xs text-gray-500 mb-2">地域別名声 (Reputations)</div>
+                        {userProfile?.reputations && userProfile.reputations.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2">
+                                {userProfile.reputations.map(rep => (
+                                    <div key={rep.location_name} className="bg-black/40 p-2 rounded border border-gray-800 flex justify-between items-center">
+                                        <span className="text-xs text-gray-400">{rep.location_name}</span>
+                                        <span className={`text-xs font-bold ${rep.rank === 'Hero' ? 'text-amber-400' : rep.rank === 'Criminal' ? 'text-red-500' : 'text-gray-300'}`}>
+                                            {rep.rank}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-xs text-gray-600 italic">まだ名声はありません。</div>
+                        )}
+                    </div>
                 </section>
 
                 {/* Right Column: Inventory & Skills */}
