@@ -8,6 +8,7 @@ import { Scroll, Map, ArrowLeft, ShieldCheck } from 'lucide-react';
 import WorldNews from '../components/WorldNews';
 import { getBackgroundByAttribute } from '@/utils/visuals';
 import { supabase } from '@/lib/supabase';
+import MobileNav from '@/components/layout/MobileNav';
 
 export default function InnPage() {
     const router = useRouter();
@@ -344,75 +345,90 @@ export default function InnPage() {
                     </div>
                 )}
 
-                <header className={`max-w-4xl mx-auto py-6 flex items-center justify-between border-b ${theme.border} mb-8`}>
-                    <div className="flex flex-col">
-                        <h1 className={`text-2xl font-serif ${theme.accent} font-bold tracking-wider flex items-center gap-2`}>
-                            <Map className="w-8 h-8" />
-                            {worldState?.location_name || '冒険者の宿屋'}
-                        </h1>
+                <header className={`max-w-4xl mx-auto py-4 md:py-6 border-b ${theme.border} mb-4 md:mb-8`}>
+                    {/* Desktop Header */}
+                    <div className="hidden md:flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-sm text-gray-400">Rest & Supply @ {worldState?.controlling_nation || 'Neutral'} Territory</span>
-                            <span className="text-xs text-orange-300/80 mt-1 italic font-serif">
-                                {getGovernanceText()}
-                            </span>
-                            <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
-                                世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日 / 年齢: {userProfile?.age || 20}歳
-                            </span>
+                            <h1 className={`text-2xl font-serif ${theme.accent} font-bold tracking-wider flex items-center gap-2`}>
+                                <Map className="w-8 h-8" />
+                                {worldState?.location_name || '冒険者の宿屋'}
+                            </h1>
+                            <div className="flex flex-col">
+                                <span className="text-sm text-gray-400">Rest & Supply @ {worldState?.controlling_nation || 'Neutral'} Territory</span>
+                                <span className="text-xs text-orange-300/80 mt-1 italic font-serif">
+                                    {getGovernanceText()}
+                                </span>
+                                <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
+                                    世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日 / 年齢: {userProfile?.age || 20}歳
+                                </span>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                                <button
+                                    onClick={() => router.push('/world-map')}
+                                    className={`text-xs bg-[#4a3b2b] border ${theme.border} ${theme.text} px-3 py-1.5 rounded hover:bg-white/10 hover:text-white flex items-center gap-2 w-fit transition-all uppercase tracking-wider font-bold`}
+                                >
+                                    <Map className="w-3 h-3" /> World Map
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex gap-2 mt-2">
-                            <button
-                                onClick={() => router.push('/world-map')}
-                                className={`text-xs bg-[#4a3b2b] border ${theme.border} ${theme.text} px-3 py-1.5 rounded hover:bg-white/10 hover:text-white flex items-center gap-2 w-fit transition-all uppercase tracking-wider font-bold`}
-                            >
-                                <Map className="w-3 h-3" /> World Map
-                            </button>
+
+                        <div className="bg-black/50 px-4 py-2 rounded border border-gold-600/50 text-gold-400 font-mono text-right flex flex-col gap-2">
+                            <div className="flex items-center justify-end gap-2">
+                                {userProfile?.avatar_url && (
+                                    <img src={userProfile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-gold-500/50 object-cover" />
+                                )}
+                                <div className="text-right">
+                                    <div className="font-bold text-gray-200 text-sm">
+                                        {userProfile?.title_name || '名もなき旅人'}
+                                    </div>
+                                    <div className={`text-[10px] ${reputation?.rank === 'Hero' ? 'text-amber-400' : 'text-gray-400'}`}>
+                                        名声: {reputation?.rank || 'Stranger'} ({reputation?.score || 0})
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-xs text-gray-300">
+                                所持金: <span className="text-white font-bold text-lg">{gold}</span> G
+                            </div>
                         </div>
                     </div>
-                    <div className="bg-black/50 px-4 py-2 rounded border border-gold-600/50 text-gold-400 font-mono text-right flex flex-col gap-2">
-                        <div className="flex items-center justify-end gap-2">
-                            {/* Avatar & Title */}
+
+                    {/* Mobile Header (Compact) */}
+                    <div className="flex md:hidden items-center justify-between w-full">
+                        <div className="flex items-center gap-3">
                             {userProfile?.avatar_url && (
-                                <img
-                                    src={userProfile.avatar_url}
-                                    alt="Avatar"
-                                    className="w-8 h-8 rounded-full border border-gold-500/50 object-cover"
-                                />
+                                <img src={userProfile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-gold-500/50 object-cover" />
                             )}
-                            <div className="text-right">
-                                <div className="font-bold text-gray-200 text-sm">
-                                    {(() => {
-                                        const r = reputation?.rank;
-                                        if (r === 'Hero') return '英雄的な旅人';
-                                        if (r === 'Famous') return '名の知れた旅人';
-                                        if (r === 'Criminal') return '指名手配犯';
-                                        if (r === 'Rogue') return '不審な旅人';
-                                        return userProfile?.title_name || '名もなき旅人';
-                                    })()}
-                                </div>
-                                <div className={`text-[10px] ${reputation?.rank === 'Hero' ? 'text-amber-400' : 'text-gray-400'}`}>
-                                    名声: {reputation?.rank || 'Stranger'} ({reputation?.score || 0})
+                            <div>
+                                <h1 className={`text-lg font-serif ${theme.accent} font-bold tracking-wider leading-tight`}>
+                                    {worldState?.location_name || '宿屋'}
+                                </h1>
+                                <div className="text-[10px] text-gray-400">
+                                    {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 / {userProfile?.title_name}
                                 </div>
                             </div>
                         </div>
-                        <div className="text-xs text-gray-300">
-                            所持金: <span className="text-white font-bold text-lg">{gold}</span> G
+
+                        <div className="flex flex-col items-end">
+                            <div className="text-gold-400 font-mono font-bold text-base bg-black/40 px-2 py-1 rounded border border-gold-600/30">
+                                {gold} <span className="text-[10px]">G</span>
+                            </div>
                         </div>
                     </div>
                 </header>
 
-                <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 pb-20 md:pb-0">
 
                     {/* Left Column: NPC & Shop */}
-                    <div className="space-y-8">
+                    <div className="space-y-4 md:space-y-8 order-1">
                         {/* NPC Area */}
-                        <section className={`${theme.bg} p-6 rounded-sm border-l-4 ${theme.border.replace('/50', '')} relative shadow-lg`}>
+                        <section className={`${theme.bg} p-4 md:p-6 rounded-sm border-l-4 ${theme.border.replace('/50', '')} relative shadow-lg`}>
                             <div className={`absolute -top-3 left-4 ${theme.accent.replace('text', 'bg')} text-black px-2 py-0.5 text-xs font-bold`}>MASTER</div>
                             <div className="flex gap-4">
-                                <div className="w-24 h-24 flex-shrink-0 bg-black border border-white/10 overflow-hidden rounded-sm">
+                                <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-black border border-white/10 overflow-hidden rounded-sm">
                                     <img src="/avatars/master_default.jpg" alt="Master" className="w-full h-full object-cover opacity-80" />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center">
-                                    <p className={`font-serif italic ${theme.text} leading-relaxed min-h-[3rem] flex items-center`}>
+                                    <p className={`font-serif italic ${theme.text} leading-relaxed min-h-[3rem] text-sm md:text-base flex items-center`}>
                                         {isThinking ? (
                                             <span className="animate-pulse tracking-widest text-xl opacity-70">......</span>
                                         ) : (
@@ -424,14 +440,14 @@ export default function InnPage() {
 
                             <button
                                 onClick={openHistoryHall}
-                                className={`absolute bottom-2 right-2 text-xs ${theme.accent} hover:text-white flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity`}
+                                className={`absolute bottom-2 right-2 text-xs ${theme.accent} hover:text-white flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity p-2`}
                             >
                                 <Scroll className="w-3 h-3" /> 歴史を紐解く
                             </button>
                         </section>
 
-                        {/* Navigation Menu */}
-                        <section className="grid grid-cols-1 gap-4">
+                        {/* Navigation Menu (Desktop Only) */}
+                        <section className="hidden md:grid grid-cols-1 gap-4">
                             <button
                                 onClick={() => router.push('/pub')}
                                 className="bg-[#2b1d12] border border-[#a38b6b] p-4 flex items-center gap-4 hover:bg-[#3e2b1b] transition-all group"
@@ -474,7 +490,7 @@ export default function InnPage() {
                     </div>
 
                     {/* Right Column: Quest Board */}
-                    <div className="bg-[#e3d5b8] text-napy-900 p-6 rounded-sm shadow-[0_0_15px_rgba(0,0,0,0.5)] border-4 border-[#8b5a2b] relative h-fit">
+                    <div className="bg-[#e3d5b8] text-napy-900 p-4 md:p-6 rounded-sm shadow-[0_0_15px_rgba(0,0,0,0.5)] border-4 border-[#8b5a2b] relative h-fit order-2 pb-8">
                         {/* Board Header */}
                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#8b5a2b] text-[#e3d5b8] px-4 py-1 text-xs font-bold tracking-widest shadow-md">
                             QUEST BOARD
@@ -524,6 +540,9 @@ export default function InnPage() {
                         )}
                     </div>
                 </main>
+
+                {/* Mobile Bottom Navigation */}
+                <MobileNav />
 
                 <div className="text-center mt-12 space-y-4">
                     <a href="/battle-test" className="text-gray-400 hover:text-gold-500 text-sm flex items-center justify-center gap-2">
