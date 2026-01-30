@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
 import { WORLD_ID } from '@/utils/constants';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
     try {
+        // Use Admin client if available, otherwise fallback (likely to fail/limited)
+        const client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;
+
+        if (!hasServiceKey) {
+            console.warn("WARNING: SUPABASE_SERVICE_ROLE_KEY missing. Reset may be incomplete due to RLS.");
+        }
+
         // 1. Reset World State
         const defaultState = {
             order_score: 10,
@@ -18,7 +26,7 @@ export async function POST() {
             background_url: '/backgrounds/peace.jpg'
         };
 
-        const { data: worldData, error: worldError } = await supabase
+        const { data: worldData, error: worldError } = await client
             .from('world_states')
             .update(defaultState)
             .eq('location_name', '名もなき旅人の拠所')
@@ -31,14 +39,14 @@ export async function POST() {
         // If no world state found to update, insert one
         if (worldUpdatedCount === 0) {
             console.log("No World State found. Inserting default...");
-            const { error: insertError } = await supabase
+            const { error: insertError } = await client
                 .from('world_states')
                 .insert([{ location_name: '名もなき旅人の拠所', ...defaultState }]);
             if (insertError) console.error("World insert failed:", insertError);
         }
 
         // 2. Reset Inventory (Delete All)
-        const { error: invError } = await supabase
+        const { error: invError } = await client
             .from('inventory')
             .delete()
             .not('id', 'is', null); // Safety clause for DELETE ALL
@@ -47,7 +55,7 @@ export async function POST() {
         if (invError) console.error("Inventory reset error:", invError);
 
         // 2b. Reset NPCs (Disband Party)
-        const { error: npcError } = await supabase
+        const { error: npcError } = await client
             .from('npcs')
             .update({ hired_by_user_id: null })
             .not('hired_by_user_id', 'is', null);
@@ -55,7 +63,7 @@ export async function POST() {
         if (npcError) console.error("NPC reset error:", npcError);
 
         // 2a. Get Start Location ID
-        let { data: startLoc } = await supabase
+        let { data: startLoc } = await client
             .from('locations')
             .select('id')
             .eq('name', '名もなき旅人の拠所')
@@ -63,7 +71,7 @@ export async function POST() {
 
         if (!startLoc) {
             console.log("Hub location not found. Creating...");
-            const { data: newLoc } = await supabase
+            const { data: newLoc } = await client
                 .from('locations')
                 .insert([{
                     name: '名もなき旅人の拠所',
@@ -83,7 +91,7 @@ export async function POST() {
 
         // 3. Reset User Profile
         // Reset ALL profiles including Demo
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await client
             .from('user_profiles')
             .update({
                 order_pts: 0,
@@ -108,7 +116,7 @@ export async function POST() {
         // Fallback: If no profiles updated, ensure Demo Profile exists
         if (profileUpdatedCount === 0) {
             console.log("No Profiles updated. Inserting demo profile...");
-            const { error: insertProfileError } = await supabase
+            const { error: insertProfileError } = await client
                 .from('user_profiles')
                 .upsert([{
                     id: '00000000-0000-0000-0000-000000000000',
