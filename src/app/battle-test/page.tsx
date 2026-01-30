@@ -129,18 +129,16 @@ export default function BattleTestPage() {
                             {/* Player (Self) */}
                             <div className="flex items-center gap-3 bg-black/40 p-2 rounded border-l-2 border-blue-500">
                                 <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
-                                    {/* Placeholder or User Avatar */}
-                                    {battleState.party.length === 0 /* Just logic hack for demo, assume Player always exists but distinct from Party array? */}
-                                    {/* Assume Player is always distinct or part of party? 
-                                        In store: 'party' contains NPCs. 
-                                        So Player (You) needs separate display or logic. 
-                                        For now, display "You" manually like before.
-                                     */}
                                     <div className="w-full h-full bg-blue-900/50 flex items-center justify-center text-xs">You</div>
                                 </div>
                                 <div className="min-w-0">
                                     <div className="text-sm font-bold truncate">あなた</div>
-                                    <div className="text-xs text-blue-300">HP N/A</div>
+                                    <div className="text-xs text-blue-300">
+                                        HP {useGameStore.getState().userProfile?.hp ?? '?'}/{useGameStore.getState().userProfile?.max_hp ?? '?'}
+                                    </div>
+                                    <div className="text-xs text-purple-300">
+                                        MP {useGameStore.getState().userProfile?.mp ?? '?'}/{useGameStore.getState().userProfile?.max_mp ?? '?'}
+                                    </div>
                                 </div>
                             </div>
 

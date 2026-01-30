@@ -104,6 +104,7 @@ export const useGameStore = create<GameState>()(
                     },
                     hand: [],
                 });
+                get().dealHand();
             },
 
             initialize: () => get().initializeBattle(),
