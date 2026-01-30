@@ -359,7 +359,7 @@ export default function WorldMapPage() {
                             </div>
 
                             {/* Label */}
-                            <div className={`mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap
+                            <div className={`mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap relative z-50
                                 ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50' : 'text-gray-400 bg-black/60 group-hover:text-white group-hover:bg-black/80'}
                             `}>
                                 {loc.name}
