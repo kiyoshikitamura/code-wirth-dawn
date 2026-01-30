@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
-import { ArrowLeft, Users, UserPlus, UserMinus, MessageSquare, Shield, Sword, Heart } from 'lucide-react';
+import { ArrowLeft, Users, UserPlus, UserMinus, MessageSquare, Shield, Sword, Heart, Coins } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import MobileNav from '@/components/layout/MobileNav';
 
@@ -27,7 +27,7 @@ interface NPC {
 
 export default function PubPage() {
     const router = useRouter();
-    const { worldState, userProfile, fetchUserProfile, fetchWorldState } = useGameStore();
+    const { worldState, userProfile, fetchUserProfile, fetchWorldState, gold } = useGameStore();
     const [localNpcs, setLocalNpcs] = useState<NPC[]>([]);
     const [partyNpcs, setPartyNpcs] = useState<NPC[]>([]);
     const [loading, setLoading] = useState(true);
@@ -163,6 +163,12 @@ export default function PubPage() {
                         </div>
                     </div>
                 </div>
+
+                <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-amber-900/30">
+                    <Coins className="w-3 h-3 text-amber-400" />
+                    <span className="text-sm font-bold text-white">{gold}</span>
+                    <span className="text-[10px] text-gray-400">G</span>
+                </div>
             </header>
 
             <main className="relative z-10 max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -193,41 +199,43 @@ export default function PubPage() {
                             </div>
                         )}
 
-                        {selectedNpc && (
-                            <div className="absolute right-4 bottom-4 flex flex-col md:flex-row gap-2 items-end">
-                                <button
-                                    onClick={() => {
-                                        if (selectedNpc && !confirm(`${selectedNpc.name} に戦いを挑みますか？\n(危険な行為です)`)) return;
-                                        if (selectedNpc) {
-                                            const enemy = {
-                                                id: selectedNpc.id,
-                                                name: selectedNpc.name,
-                                                level: selectedNpc.level,
-                                                hp: selectedNpc.hp,
-                                                maxHp: selectedNpc.max_hp
-                                            };
-                                            useGameStore.getState().startBattle(enemy);
-                                            useGameStore.getState().selectScenario(null);
-                                            router.push('/battle-test');
-                                        }
-                                    }}
-                                    className="px-3 py-1.5 md:px-3 md:py-2 bg-red-900/50 hover:bg-red-800 text-red-300 text-[10px] md:text-xs rounded shadow flex items-center justify-center gap-1 border border-red-800 whitespace-nowrap min-w-[70px]"
-                                >
-                                    <Sword className="w-3 h-3" /> 襲う
-                                </button>
-
-                                {!partyNpcs.some(p => p.id === selectedNpc.id) ? (
-                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-3 py-1.5 md:px-3 md:py-2 bg-amber-700 hover:bg-amber-600 text-white text-[10px] md:text-xs rounded shadow flex items-center justify-center gap-1 whitespace-nowrap min-w-[90px]">
-                                        <UserPlus className="w-3 h-3" /> 仲間に誘う
-                                    </button>
-                                ) : (
-                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-3 py-1.5 md:px-3 md:py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-[10px] md:text-xs rounded shadow flex items-center justify-center gap-1 border border-gray-500 whitespace-nowrap min-w-[90px]">
-                                        <UserMinus className="w-3 h-3" /> 別れる
-                                    </button>
-                                )}
-                            </div>
-                        )}
                     </div>
+
+                    {/* Action Buttons (Below Dialogue) */}
+                    {selectedNpc && (
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={() => {
+                                    if (selectedNpc && !confirm(`${selectedNpc.name} に戦いを挑みますか？\n(危険な行為です)`)) return;
+                                    if (selectedNpc) {
+                                        const enemy = {
+                                            id: selectedNpc.id,
+                                            name: selectedNpc.name,
+                                            level: selectedNpc.level,
+                                            hp: selectedNpc.hp,
+                                            maxHp: selectedNpc.max_hp
+                                        };
+                                        useGameStore.getState().startBattle(enemy);
+                                        useGameStore.getState().selectScenario(null);
+                                        router.push('/battle-test');
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center justify-center gap-2 border border-red-800 whitespace-nowrap min-w-[80px]"
+                            >
+                                <Sword className="w-3 h-3" /> 襲う
+                            </button>
+
+                            {!partyNpcs.some(p => p.id === selectedNpc.id) ? (
+                                <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-2 whitespace-nowrap min-w-[100px]">
+                                    <UserPlus className="w-3 h-3" /> 仲間に誘う
+                                </button>
+                            ) : (
+                                <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-4 py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-2 border border-gray-500 whitespace-nowrap min-w-[100px]">
+                                    <UserMinus className="w-3 h-3" /> 別れる
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* NPC Lists */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
