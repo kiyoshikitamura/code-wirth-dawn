@@ -14,7 +14,6 @@ export default function BattleTestPage() {
         initializeBattle,
         attackEnemy,
         endTurn,
-        processNpcTurn,
         setTactic,
         fleeBattle,
         selectedScenario,
@@ -50,15 +49,7 @@ export default function BattleTestPage() {
         if (battleState.isVictory) return;
         const card = hand[index];
         await attackEnemy(card);
-        handleTurnEnd();
-    };
-
-    const handleTurnEnd = async () => {
-        await endTurn();
-        // NPC Turn
-        setTimeout(async () => {
-            await processNpcTurn();
-        }, 800);
+        // Turn handling is now automatic in attackEnemy
     };
 
     const handleFlee = () => {
@@ -148,17 +139,13 @@ export default function BattleTestPage() {
                             {battleState.party.map((member) => (
                                 <div key={member.id} className="flex items-center gap-3 bg-black/40 p-2 rounded border-l-2 border-green-600">
                                     <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
-                                        {member.image ? (
-                                            <Image src={member.image} alt={member.name} width={40} height={40} className="object-cover w-full h-full" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs">{member.name[0]}</div>
-                                        )}
+                                        <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs">{member.name[0]}</div>
                                     </div>
                                     <div className="min-w-0">
                                         <div className="text-sm font-bold text-gray-200 truncate">{member.name}</div>
                                         <div className="flex gap-2 text-xs">
-                                            <span className="text-green-400">HP {member.hp}</span>
-                                            <span className="text-blue-400">Lv.{member.level}</span>
+                                            <span className="text-green-400">耐久 {member.durability}</span>
+                                            <span className="text-blue-400">{member.job_class}</span>
                                         </div>
                                     </div>
                                 </div>
