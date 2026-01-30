@@ -120,6 +120,7 @@ export default function WorldMapPage() {
     // ... handleTravel ...
 
     // Travel Confirmation State
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [confirmTarget, setConfirmTarget] = useState<Location | null>(null);
 
     const handleTravelClick = (target: Location) => {
@@ -322,7 +323,7 @@ export default function WorldMapPage() {
                     })}
                 </svg>
 
-                {/* Nodes (Filter out Hub) */}
+                {/* Layer 1: Icons (Interactive) */}
                 {visibleLocations.map((loc: any) => {
                     const isCurrent = userProfile?.current_location_id === loc.id;
                     const nation = loc.world_states?.[0]?.controlling_nation || loc.nation_id || 'Neutral';
@@ -334,51 +335,36 @@ export default function WorldMapPage() {
                     if (currentLocObj) {
                         isConnected = currentLocObj.connections.includes(loc.name);
                     } else {
-                        // Fallback: If location is missing/null (e.g. New Game), treat as Hub (Connect to Capitals)
-                        // Or specifically Roland Capital as start
                         if (loc.type === 'Capital') isConnected = true;
                     }
-
                     const isWalkable = isConnected;
 
                     return (
                         <div
-                            key={loc.id}
+                            key={`icon-${loc.id}`}
                             className={`
-                                absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group 
-                                ${isCurrent ? 'z-[60]' : 'z-[40] hover:z-[60]'}
+                                absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer
+                                ${isCurrent ? 'z-[60]' : 'z-[40]'}
                             `}
                             style={{ left: (loc.x / 10) + '%', top: (loc.y / 10) + '%' }}
                             onClick={() => isWalkable && !isCurrent && handleTravelClick(loc)}
+                            onMouseEnter={() => setHoveredId(loc.id)}
+                            onMouseLeave={() => setHoveredId(null)}
                         >
                             {/* Icon Circle */}
                             <div className={`
-                                w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-lg bg-[#050b14] z-10 transition-colors
-                                ${isCurrent ? 'border-white text-white shadow-white/50 animate-pulse' : (isWalkable ? nationStyle : 'border-gray-700 text-gray-600')}
+                                w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-lg bg-[#050b14] transition-all duration-300
+                                ${isCurrent ? 'border-white text-white shadow-white/50 animate-pulse' :
+                                    (isWalkable ? `${nationStyle} ${hoveredId === loc.id ? 'scale-110 brightness-125' : ''}` : 'border-gray-700 text-gray-600 grayscale opacity-80')}
                             `}>
                                 {getIcon(loc.type)}
                             </div>
 
-                            {/* Label */}
-                            <div className={`mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap relative z-[70] shadow-md
-                                ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50' : 'text-gray-300 bg-black/80 group-hover:text-white group-hover:bg-black/90 group-hover:ring-1 group-hover:ring-white/30'}
-                            `}>
-                                {loc.name}
-                            </div>
-
-                            {/* Nation Flag - Color Only (No Text) */}
-                            {/* Requested to remove text, just keep color hint if needed, or rely on border */}
-                            {/* <div className={`absolute -bottom-4 text-[8px] uppercase tracking-widest px-1 rounded bg-black/80 ${nationStyle.split(' ')[2]}`}>
-                                {nation}
-                            </div> */}
-
-                            {/* Hover info / Travel Estimate */}
-                            {isWalkable && !isCurrent && (
-                                <div className="absolute top-10  opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-white text-[10px] p-2 rounded w-24 text-center z-50 pointer-events-none border border-gold-600/30">
+                            {/* Hover info / Travel Estimate (Attached to Icon, but High Z) */}
+                            {isWalkable && !isCurrent && hoveredId === loc.id && (
+                                <div className="absolute top-10 bg-black/90 text-white text-[10px] p-2 rounded w-24 text-center z-[100] pointer-events-none border border-gold-600/30 shadow-xl">
                                     {(() => {
-                                        // Calc distance
                                         const currentLoc = locations.find(l => l.id === userProfile?.current_location_id);
-                                        // If at Hub (500,500), distance logic works fine
                                         if (!currentLoc) return 'Unknown';
                                         const dist = Math.sqrt(Math.pow(loc.x - currentLoc.x, 2) + Math.pow(loc.y - currentLoc.y, 2));
                                         const days = Math.max(1, Math.ceil(dist * 0.05));
@@ -387,22 +373,37 @@ export default function WorldMapPage() {
                                 </div>
                             )}
 
-                            {/* Current Indicator */}
+                            {/* Current Indicator (Arrow/Text) */}
                             {isCurrent && (
                                 <>
-                                    {/* Mobile: Blinking Arrow */}
-                                    <div className="md:hidden absolute -top-6 text-xl text-white animate-bounce font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                                        ↓
-                                    </div>
-                                    {/* PC: Text */}
-                                    <div className="hidden md:block absolute -top-8 text-xs text-white animate-bounce font-bold drop-shadow-md whitespace-nowrap bg-black/50 px-2 rounded">
-                                        YOU ARE HERE
-                                    </div>
+                                    <div className="md:hidden absolute -top-6 text-xl text-white animate-bounce font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">↓</div>
+                                    <div className="hidden md:block absolute -top-8 text-xs text-white animate-bounce font-bold drop-shadow-md whitespace-nowrap bg-black/50 px-2 rounded">YOU ARE HERE</div>
                                 </>
                             )}
                         </div>
                     );
                 })}
+
+                {/* Layer 2: Labels (Topmost, Non-Interactive) */}
+                <div className="absolute inset-0 z-[100] pointer-events-none">
+                    {visibleLocations.map(loc => {
+                        const isCurrent = userProfile?.current_location_id === loc.id;
+                        const isHovered = hoveredId === loc.id;
+                        return (
+                            <div
+                                key={`label-${loc.id}`}
+                                className={`
+                                    absolute transform -translate-x-1/2 -translate-y-1/2 mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap shadow-md transition-all duration-300
+                                    ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50 z-[101]' :
+                                        (isHovered ? 'text-white bg-black/90 ring-1 ring-white/30 scale-105 z-[101]' : 'text-gray-300 bg-black/80')}
+                                `}
+                                style={{ left: (loc.x / 10) + '%', top: `calc(${(loc.y / 10)}% + 24px)` }}
+                            >
+                                {loc.name}
+                            </div>
+                        );
+                    })}
+                </div>
             </main>
 
             {/* Confirmation Modal */}
