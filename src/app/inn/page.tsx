@@ -359,7 +359,10 @@ export default function InnPage() {
                                     {getGovernanceText()}
                                 </span>
                                 <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
-                                    世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日 / 年齢: {userProfile?.age || 20}歳
+                                    世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日
+                                    <span className="ml-2 text-gray-500">
+                                        / Age: {userProfile?.age || 20} ({userProfile?.gender || '?'}) / Vit: {userProfile?.vitality ?? 100}%
+                                    </span>
                                 </span>
                             </div>
                             <div className="flex gap-2 mt-2">
@@ -404,7 +407,10 @@ export default function InnPage() {
                                         <span className="font-bold not-italic text-amber-500 mr-1">[{worldState?.controlling_nation || '中立'}]</span>
                                         {worldState?.flavor_text || '...'}
                                     </div>
-                                    <div>世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日</div>
+                                    <div>
+                                        世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年...
+                                        <span className="ml-1 text-[9px] text-gray-500">Age:{userProfile?.age} Vit:{userProfile?.vitality ?? 100}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

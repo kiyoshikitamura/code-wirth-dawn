@@ -32,8 +32,10 @@ export async function GET(req: Request) {
                 level: 1, // New
                 hp: 100, max_hp: 100, // New
                 mp: 20, max_mp: 20, // New
-                attack: 10, defense: 5, // New
+                attack: 10, defense: 5,
                 age: 20,
+                gender: 'Unknown',
+                max_vitality: 100,
                 accumulated_days: 0,
                 current_location_id: (await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').single()).data?.id,
             };

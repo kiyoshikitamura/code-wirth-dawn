@@ -62,6 +62,8 @@ export default function StatusPage() {
                             <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                                 <span>Age: {userProfile?.age || 20}</span>
                                 <span className="w-px h-3 bg-gray-700"></span>
+                                <span>{userProfile?.gender || 'Unknown'}</span>
+                                <span className="w-px h-3 bg-gray-700"></span>
                                 <span className="text-amber-500">{userProfile?.gold ?? 0} G</span>
                             </div>
                         </div>
