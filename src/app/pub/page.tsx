@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { ArrowLeft, Users, UserPlus, UserMinus, MessageSquare, Shield, Sword, Heart } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import MobileNav from '@/components/layout/MobileNav';
 
 // Npc Type Definition
 interface NPC {
@@ -143,7 +144,7 @@ export default function PubPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative overflow-hidden pb-24 md:pb-0">
             {/* BG */}
             <div className="absolute inset-0 bg-[url('/backgrounds/pub-interior.jpg')] bg-cover bg-center opacity-40 blur-sm pointer-events-none"></div>
 
@@ -237,8 +238,8 @@ export default function PubPage() {
                                             ${selectedNpc?.id === npc.id ? 'bg-amber-900/30 border-amber-600' : 'bg-gray-900/30 border-gray-800 hover:bg-gray-800'}
                                         `}>
                                         <div>
-                                            <div className="text-sm font-bold text-gray-300 group-hover:text-white">{npc.name}</div>
-                                            <div className="text-[10px] text-gray-500">{npc.job_class} Lv.{npc.level}</div>
+                                            <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate max-w-[120px]">{npc.name}</div>
+                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{npc.job_class} Lv.{npc.level}</div>
                                         </div>
                                         <div className="flex gap-2 text-[10px] text-gray-400">
                                             <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" /> {npc.hp}</span>
@@ -268,9 +269,9 @@ export default function PubPage() {
                                         >
                                             <div className="flex items-center gap-3">
                                                 {/* <div className="w-8 h-8 rounded bg-gray-800"></div> */}
-                                                <div>
-                                                    <div className="text-sm font-bold text-gray-300 group-hover:text-white">{npc.name}</div>
-                                                    <div className="text-[10px] text-gray-500">{npc.job_class} Lv.{npc.level}</div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate">{npc.name}</div>
+                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{npc.job_class} Lv.{npc.level}</div>
                                                 </div>
                                             </div>
                                             <div className="text-xs text-gray-600 group-hover:text-amber-500 transition-colors">
@@ -337,6 +338,7 @@ export default function PubPage() {
                     )}
                 </aside>
             </main>
+            <MobileNav />
         </div>
     );
 }

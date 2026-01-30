@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { ArrowLeft, ShoppingBag, Coins } from 'lucide-react';
+import MobileNav from '@/components/layout/MobileNav';
 
 export default function ShopPage() {
     const router = useRouter();
@@ -61,7 +62,7 @@ export default function ShopPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative">
+        <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative pb-24 md:pb-0">
             <div className="absolute inset-0 bg-[url('/backgrounds/shop-interior.jpg')] bg-cover bg-center opacity-30 pointer-events-none"></div>
 
             <header className="relative z-10 max-w-4xl mx-auto flex items-center justify-between py-6 border-b border-gray-800 mb-8">
@@ -89,10 +90,10 @@ export default function ShopPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {items.map((item) => (
-                                <div key={item.id} className="flex justify-between items-center p-4 bg-black/40 border border-gray-800 rounded hover:border-amber-600/50 hover:bg-amber-900/10 transition-all group">
-                                    <div>
-                                        <div className="font-bold text-gray-200 group-hover:text-amber-200">{item.name}</div>
-                                        <div className="text-xs text-gray-500 mt-1">{item.description}</div>
+                                <div key={item.id} className="flex justify-between items-center p-4 bg-black/40 border border-gray-800 rounded hover:border-amber-600/50 hover:bg-amber-900/10 transition-all group relative">
+                                    <div className="flex-1 min-w-0 pr-4">
+                                        <div className="font-bold text-gray-200 group-hover:text-amber-200 whitespace-nowrap truncate">{item.name}</div>
+                                        <div className="text-xs text-gray-500 mt-1 whitespace-nowrap truncate">{item.description}</div>
                                         <div className="flex gap-2 mt-2 text-[10px] uppercase tracking-wider">
                                             <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{item.item_type}</span>
                                             {item.stock_limit !== null && (
@@ -102,24 +103,28 @@ export default function ShopPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleBuy(item)}
-                                        disabled={item.stock_limit === 0}
-                                        className={`
-                                            px-4 py-2 rounded font-mono text-sm font-bold transition-all
-                                            ${item.stock_limit === 0
-                                                ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-                                                : 'bg-amber-900/50 text-amber-500 border border-amber-700 hover:bg-amber-600 hover:text-black'}
-                                        `}
-                                    >
-                                        {item.stock_limit === 0 ? 'SOLD' : `${item.price} G`}
-                                    </button>
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                        <div className="text-amber-400 font-bold font-mono text-lg">{item.price} G</div>
+                                        <button
+                                            onClick={() => handleBuy(item)}
+                                            disabled={gold < item.price || (item.stock_limit !== null && item.stock_limit <= 0)}
+                                            className={`px-4 py-1.5 text-xs font-bold rounded shadow-lg transition-all
+                                                ${gold < item.price || (item.stock_limit !== null && item.stock_limit <= 0)
+                                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                                    : 'bg-amber-700 hover:bg-amber-600 text-white hover:scale-105 active:scale-95'
+                                                }
+                                            `}
+                                        >
+                                            {item.stock_limit === 0 ? 'SOLD OUT' : '購入'}
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
             </main>
+            <MobileNav />
         </div>
     );
 }

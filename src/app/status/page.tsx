@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { ArrowLeft, Shield, Backpack, Zap, Heart, Sword, Star, Users, Flame } from 'lucide-react';
 import { getVitalityStatus } from '@/lib/character';
+import MobileNav from '@/components/layout/MobileNav';
 
 export default function StatusPage() {
     const router = useRouter();
@@ -23,7 +24,7 @@ export default function StatusPage() {
     const flameColor = vitalityStatus === 'Prime' ? 'text-orange-500' : vitalityStatus === 'Twilight' ? 'text-orange-800' : 'text-gray-700';
 
     return (
-        <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative">
+        <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative pb-24 md:pb-0">
             <div className="absolute inset-0 bg-[url('/backgrounds/status_bg.jpg')] bg-cover bg-center opacity-20 pointer-events-none"></div>
 
             <header className="relative z-10 max-w-4xl mx-auto py-6 mb-6 flex items-center gap-4 border-b border-gray-800">
@@ -92,7 +93,7 @@ export default function StatusPage() {
                     </div>
 
                     {/* COMBAT STATS */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 md:gap-4">
                         {/* HP */}
                         <div className="bg-black/40 p-2 rounded border border-gray-800">
                             <div className="text-xs text-center text-gray-500 mb-1">HP</div>
@@ -222,6 +223,7 @@ export default function StatusPage() {
                     </section>
                 </div>
             </main>
+            <MobileNav />
         </div>
     );
 }
