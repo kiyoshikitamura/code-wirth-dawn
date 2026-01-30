@@ -171,13 +171,22 @@ export default function WorldMapPage() {
 
     const returnToHub = async () => {
         if (!userProfile) return;
-        // if (!confirm("名もなき旅人の拠所（宿屋）へ戻りますか？\n※現在の場所は記録されます。")) return;
+
+        // Immediate visual feedback to prevent INP warning
+        setTraveling(true);
+        setTravelLog(['拠所への帰還を開始します...']);
 
         try {
             // 1. Save current location as previous
             // 2. Set current to Hub
             const hub = locations.find(l => l.name === '名もなき旅人の拠所');
-            if (!hub) return;
+            if (!hub) {
+                setTraveling(false);
+                return;
+            }
+
+            // Yield to main thread briefly to allow UI to paint
+            await new Promise(r => setTimeout(r, 10));
 
             const { error } = await supabase
                 .from('user_profiles')
@@ -189,11 +198,15 @@ export default function WorldMapPage() {
 
             if (error) throw error;
 
-            // await fetchUserProfile(); // Skip local update to prevent Map Auto-Exit logic from triggering
+            // Add slight delay for smoothness
+            setTravelLog(prev => [...prev, '移動完了。']);
+            await new Promise(r => setTimeout(r, 500));
+
             router.push('/inn');
         } catch (e) {
             console.error("Failed to return to hub", e);
             alert("移動に失敗しました。");
+            setTraveling(false);
         }
     };
 
