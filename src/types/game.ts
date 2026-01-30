@@ -114,6 +114,20 @@ export interface UserProfile {
   accumulated_days?: number;
   previous_location_id?: string;
   level?: number;
+  exp?: number;
+
+  // Life & combat
+  vitality?: number;
+  max_hp?: number;
+  hp?: number;
+  max_mp?: number;
+  mp?: number;
+  attack?: number;
+  defense?: number;
+
+  // Social
+  praise_count?: number;
+  prayer_count?: number;
 }
 export interface BattleState {
   enemy: Enemy | null;

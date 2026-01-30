@@ -54,6 +54,19 @@ CREATE TABLE user_profiles (
   age INTEGER DEFAULT 20,
   accumulated_days INTEGER DEFAULT 0,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+  -- Added Parameters
+  vitality INTEGER DEFAULT 100,
+  praise_count INTEGER DEFAULT 0,
+  prayer_count INTEGER DEFAULT 0,
+  level INTEGER DEFAULT 1,
+  exp INTEGER DEFAULT 0,
+  max_hp INTEGER DEFAULT 100,
+  hp INTEGER DEFAULT 100,
+  max_mp INTEGER DEFAULT 20,
+  mp INTEGER DEFAULT 20,
+  attack INTEGER DEFAULT 10,
+  defense INTEGER DEFAULT 5,
   
   CONSTRAINT fk_current_location FOREIGN KEY (current_location_id) REFERENCES locations(id),
   CONSTRAINT fk_prev_location FOREIGN KEY (previous_location_id) REFERENCES locations(id)
