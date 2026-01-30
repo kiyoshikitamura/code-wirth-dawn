@@ -135,7 +135,7 @@ export interface UserProfile {
 }
 export interface BattleState {
   enemy: Enemy | null;
-  party: Adventurer[];
+  party: PartyMember[];
   turn: number;
   messages: string[];
   isVictory: boolean;
@@ -198,14 +198,13 @@ export interface PartyMember {
   name: string;
   gender: 'Male' | 'Female' | 'Unknown';
   origin: 'system' | 'ghost';
-  nation_id: string;
-  alignment: { order: number; chaos: number; justice: number; evil: number };
+  job_class: string;
+
+  durability: number;
+  max_durability: number;
   loyalty: number;
-  contract_cost: number;
-  condition: 'healthy' | 'injured' | 'fear';
-  durability: number; // HP
-  inject_cards: string[];
-  passive_skill?: string;
-  created_at?: string;
-  updated_at?: string;
+  cover_rate: number;
+
+  inject_cards: string[]; // Card IDs
+  is_active: boolean;
 }

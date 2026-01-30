@@ -1,40 +1,25 @@
 
-export interface Alignment {
-    order: number;
-    chaos: number;
-    justice: number;
-    evil: number;
-}
-
-export interface UserProfile {
+export interface UserProfileDB {
     id: string;
-    // ... existing fields ...
-    // We only define the fields relevant to the DB schema here, 
-    // but typically this interface mirrors the full DB row + some joins.
-    // For now, let's just add the life cycle fields.
-    gender?: 'Male' | 'Female' | 'Unknown';
+    gender: 'Male' | 'Female' | 'Unknown';
     age: number;
     vitality: number;
     max_vitality: number;
-    // ... other fields from previous definitions ...
-    // Note: In a real 'types/database.ts', we often put the EXACT row shape.
-    // Since we are creating this file new, we define the exact LifeCycle shapes.
+    // ... other fields implicitly
 }
 
-export interface PartyMember {
+export interface PartyMemberDB {
     id: string;
     owner_id: string;
     name: string;
     gender: 'Male' | 'Female' | 'Unknown';
     origin: 'system' | 'ghost';
-    nation_id: string;
-    alignment: Alignment;
+    job_class: string;
+    durability: number;
+    max_durability: number;
     loyalty: number;
-    contract_cost: number;
-    condition: 'healthy' | 'injured' | 'fear';
-    durability: number; // HP
-    inject_cards: string[]; // Card IDs
-    passive_skill?: string;
+    cover_rate: number;
+    inject_cards: string[];
+    is_active: boolean;
     created_at?: string;
-    updated_at?: string;
 }

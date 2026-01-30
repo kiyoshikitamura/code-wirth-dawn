@@ -1,20 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Adventurer, Card, Enemy, WorldState, Scenario, InventoryItem, UserProfile, BattleState } from '@/types/game';
+import { Adventurer, Card, Enemy, WorldState, Scenario, InventoryItem, UserProfile, BattleState, PartyMember } from '@/types/game';
 import { supabase } from '@/lib/supabase';
 import { WORLD_ID } from '@/utils/constants';
+import { buildBattleDeck, routeDamage, canAffordCard } from '@/lib/battleEngine';
 
 // Dummy Data
-const DUMMY_PARTY: Adventurer[] = [
-    {
-        id: 'p1', name: 'Alphen', age: 24, class: 'Swordsman', level: 5, hp: 120, maxHp: 120, mp: 40, maxMp: 40,
-        coupons: [],
-    },
-    {
-        id: 'p2', name: 'Sill', age: 19, class: 'Healer', level: 5, hp: 80, maxHp: 80, mp: 100, maxMp: 100,
-        coupons: [],
-    }
-];
+/* const DUMMY_PARTY: Adventurer[] = [ ... ]; */
 
 const DUMMY_ENEMY: Enemy = {
     id: 'e1', name: 'Shadow Wolf', level: 4, hp: 300, maxHp: 300,
@@ -61,12 +53,14 @@ interface GameState {
     toggleEquip: (itemId: string, currentEquip: boolean) => Promise<void>;
 
     // Hand Management
+    deck: Card[];
+    discardPile: Card[];
     hand: Card[];
     drawCards: (count: number) => void;
     discardCard: (index: number) => void;
     dealHand: () => void;
     useItem: (card: Card) => Promise<void>;
-    processNpcTurn: () => Promise<void>;
+    processEnemyTurn: (damage: number) => Promise<void>;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
     fleeBattle: () => void;
     clearStorage: () => void;
@@ -81,6 +75,8 @@ export const useGameStore = create<GameState>()(
             gold: 1000,
             selectedScenario: null,
             inventory: [],
+            deck: [],
+            discardPile: [],
             hand: [],
 
             battleState: {
@@ -97,7 +93,7 @@ export const useGameStore = create<GameState>()(
                 set({
                     battleState: {
                         enemy: { ...DUMMY_ENEMY },
-                        party: [...DUMMY_PARTY],
+                        party: [],
                         turn: 1,
                         messages: ['Battle Start!'],
                         isVictory: false,
@@ -111,22 +107,42 @@ export const useGameStore = create<GameState>()(
             initialize: () => get().initializeBattle(),
 
             startBattle: async (enemy: Enemy) => {
-                // Fetch Party logic
-                let partyMembers: Adventurer[] = [...DUMMY_PARTY]; // Fallback
+                // 1. Fetch Party from DB (party_members table)
+                let partyMembers: PartyMember[] = [];
                 try {
-                    const { data: userParty } = await supabase.from('npcs').select('*').eq('hired_by_user_id', get().userProfile?.id);
-                    if (userParty && userParty.length > 0) {
-                        partyMembers = userParty.map((n: any) => ({
-                            id: n.id, name: n.name, class: n.job_class, level: n.level,
-                            hp: n.hp, maxHp: n.max_hp, mp: n.mp, maxMp: n.max_mp,
-                            coupons: [], // logic simplification
-                            image: n.avatar_url,
-                            ...n // Keep other props
-                        }));
-                    } else {
-                        partyMembers = []; // Solo if no NPCs
+                    const { userProfile } = get();
+                    if (userProfile?.id) {
+                        const { data } = await supabase
+                            .from('party_members')
+                            .select('*')
+                            .eq('owner_id', userProfile.id)
+                            .eq('is_active', true);
+
+                        if (data) partyMembers = data as PartyMember[];
                     }
                 } catch (e) { console.error("Party fetch failed", e); }
+
+                // 2. Build Deck
+                const { inventory } = get();
+                // Map inventory equipped items to Cards
+                const equippedCards = (inventory || []).filter(i => i.is_equipped).map(i => ({
+                    id: i.id, // Inventory ID as Card ID
+                    name: i.name,
+                    type: (i.is_skill ? 'Skill' : 'Item') as Card['type'],
+                    description: i.description,
+                    cost: 0,
+                    power: i.power_value,
+                    isEquipment: true,
+                }));
+
+                const initialDeck = buildBattleDeck(
+                    equippedCards,
+                    partyMembers,
+                    (id) => CARD_POOL.find(c => c.id === id)
+                );
+
+                // Shuffle Deck
+                const shuffledDeck = initialDeck.sort(() => 0.5 - Math.random());
 
                 set({
                     battleState: {
@@ -138,8 +154,12 @@ export const useGameStore = create<GameState>()(
                         cooldowns: {},
                         currentTactic: 'Aggressive'
                     },
+                    deck: shuffledDeck,
+                    discardPile: [],
                     hand: []
                 });
+
+                // Draw Initial Hand (e.g. 5 cards)
                 get().dealHand();
             },
 
@@ -183,42 +203,30 @@ export const useGameStore = create<GameState>()(
             },
 
             dealHand: () => {
-                const { inventory } = get();
+                const { deck, discardPile, hand } = get();
+                const drawCount = 5 - hand.length; // Draw up to 5
+                if (drawCount <= 0) return;
 
-                const skills = CARD_POOL.filter(c => c.type === 'Skill');
-                const items = CARD_POOL.filter(c => c.type === 'Item');
-                const basics = CARD_POOL.filter(c => c.type === 'Basic');
-                const personalities = CARD_POOL.filter(c => c.type === 'Personality');
+                let currentDeck = [...deck];
+                let currentDiscard = [...discardPile];
+                const newHand = [...hand];
 
-                const getRandom = (arr: Card[], count: number) => {
-                    const shuffled = [...arr].sort(() => 0.5 - Math.random());
-                    return shuffled.slice(0, count);
-                };
+                for (let i = 0; i < drawCount; i++) {
+                    if (currentDeck.length === 0) {
+                        if (currentDiscard.length === 0) break; // No cards left
+                        // Recycle Discard -> Deck
+                        currentDeck = [...currentDiscard].sort(() => 0.5 - Math.random());
+                        currentDiscard = [];
+                    }
+                    const card = currentDeck.pop();
+                    if (card) newHand.push(card);
+                }
 
-                // Convert equipped inventory items to Cards
-                const equippedItems = (inventory || []).filter(i => i.is_equipped).map(i => ({
-                    id: i.id, // Use unique inventory ID for card ID (or maybe compound?)
-                    name: i.name,
-                    type: (i.is_skill ? 'Skill' : 'Item') as Card['type'],
-                    description: i.description,
-                    cost: 0,
-                    power: i.power_value,
-                    isEquipment: true, // Mark as equipped item/skill
-                    // For skills, we might want to map cost if available? For now 0.
-                }));
-
-                const newHand = [
-                    ...getRandom(skills, 2),
-                    ...getRandom(items, 1),
-                    ...getRandom(basics, 1),
-                    ...getRandom(personalities, 1),
-                    ...equippedItems // Add user's equipped items
-                ];
-
-                set((state) => ({
-                    ...state,
-                    hand: newHand,
-                }));
+                set({
+                    deck: currentDeck,
+                    discardPile: currentDiscard,
+                    hand: newHand
+                });
             },
 
             fetchWorldState: async () => {
@@ -339,25 +347,29 @@ export const useGameStore = create<GameState>()(
                 if (!battleState.enemy || battleState.isVictory) return;
 
                 // MP Check & Consumption
-                if (card && card.type === 'Skill' && card.cost) {
+                // Cost Check (MP or Vitality)
+                if (card) {
+                    const { userProfile } = get();
                     const currentMp = userProfile?.mp ?? 0;
-                    if (currentMp < card.cost) {
+                    const currentVitality = userProfile?.vitality ?? 100;
+
+                    if (!canAffordCard(card, currentMp, currentVitality)) {
                         set(state => ({
                             battleState: {
                                 ...state.battleState,
-                                messages: [...state.battleState.messages, "MPが足りない！"]
+                                messages: [...state.battleState.messages, "コストが足りない！"]
                             }
                         }));
                         return;
                     }
-                    // Consume
-                    const newMp = currentMp - card.cost;
-                    if (userProfile) set({ userProfile: { ...userProfile, mp: newMp } });
-                    // Sync
-                    fetch('/api/profile/update-status', {
-                        method: 'POST',
-                        body: JSON.stringify({ mp: newMp })
-                    }).catch(console.error);
+
+                    // Consume Resources
+                    if (card.cost) { // MP
+                        const newMp = currentMp - card.cost;
+                        if (userProfile) set({ userProfile: { ...userProfile, mp: newMp } });
+                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ mp: newMp }) }).catch(console.error);
+                    }
+                    // Vitality Cost (Future)
                 }
 
                 console.log("[Attack] Card used:", card);
@@ -483,91 +495,62 @@ export const useGameStore = create<GameState>()(
                         turn: state.battleState.turn + 1
                     }
                 }));
+
+                // Trigger Enemy Turn if not dead
+                if (!isDead) {
+                    setTimeout(() => {
+                        const enemy = get().battleState.enemy;
+                        const enemyAtk = enemy?.level ? enemy.level * 5 + 10 : 15;
+                        get().processEnemyTurn(enemyAtk);
+                    }, 800);
+                }
             },
 
-            processNpcTurn: async () => {
-                const { battleState } = get();
-                if (!battleState.enemy || battleState.isVictory) return;
+            processEnemyTurn: async (damage: number) => {
+                const { battleState, userProfile } = get();
+                // 1. Route Damage
+                const result = routeDamage(battleState.party, damage);
 
-                let newMessages = [...battleState.messages];
-                let currentEnemyHp = battleState.enemy.hp;
+                let newMessages = [...battleState.messages, result.message];
                 let newParty = [...battleState.party];
+                let newUserProfile = userProfile ? { ...userProfile } : null;
 
-                // Process each party member
-                for (let i = 0; i < newParty.length; i++) {
-                    const member = newParty[i];
-                    const tactic = battleState.currentTactic || 'Aggressive';
-                    let actionLog = '';
-                    let damage = 0;
-
-                    // Simple Logic based on Tactic
-                    if (tactic === 'Standby') {
-                        actionLog = `${member.name} は様子を伺っている...`;
-                    } else if (tactic === 'Defensive') {
-                        // Heal if needed
-                        if (member.hp < member.maxHp * 0.5) {
-                            const heal = Math.floor(member.maxHp * 0.3);
-                            newParty[i] = { ...member, hp: Math.min(member.maxHp, member.hp + heal) };
-                            actionLog = `${member.name} は傷の手当てをした (+${heal})`;
-                        } else {
-                            // Light Guard or Attack
-                            damage = Math.floor((member.attack || 5) * 0.5);
-                            actionLog = `${member.name} は慎重に攻撃した！ (${damage})`;
+                // 2. Apply Damage to Target
+                if (result.target === 'PartyMember' && result.targetId) {
+                    newParty = newParty.map(p => {
+                        if (p.id === result.targetId) {
+                            const newDur = Math.max(0, p.durability - result.damage);
+                            if (newDur <= 0) {
+                                newMessages.push(`${p.name} は力尽きた...`);
+                                // TODO: Maybe remove their cards from deck/hand if strict?
+                            }
+                            return { ...p, durability: newDur };
                         }
-                    } else { // Aggressive
-                        damage = Math.floor((member.attack || 10) * (1.0 + Math.random() * 0.2));
-                        // Critical chance?
-                        actionLog = `${member.name} の攻撃！ ${damage} のダメージ！`;
+                        return p;
+                    });
+                } else {
+                    // Player Hit
+                    if (newUserProfile) {
+                        const newHp = Math.max(0, (newUserProfile.hp || 100) - result.damage);
+                        newUserProfile.hp = newHp;
+
+                        // Sync HP
+                        set({ userProfile: newUserProfile });
+                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
+
+                        if (newHp <= 0) {
+                            newMessages.push("あなたは力尽きた... (運命の時は近い)");
+                            // Handle Vitality Reduction logic here or in separate function
+                        }
                     }
-
-                    if (damage > 0) {
-                        currentEnemyHp -= damage;
-                    }
-                    if (actionLog) newMessages.push(actionLog);
-                }
-
-                // Check Victory after NPC attacks
-                const isVictory = currentEnemyHp <= 0;
-                if (isVictory) {
-                    currentEnemyHp = 0;
-                    newMessages.push(`${battleState.enemy.name} を倒した！(NPC)`);
-                    try {
-                        const { selectedScenario, fetchWorldState, fetchUserProfile, addGold } = get();
-                        const reportPayload = {
-                            action: 'victory',
-                            impacts: selectedScenario?.impacts,
-                            scenario_id: selectedScenario?.id
-                        };
-
-                        await fetch('/api/report-action', {
-                            method: 'POST',
-                            body: JSON.stringify(reportPayload)
-                        });
-
-                        // Sync Global State
-                        await fetchWorldState();
-                        await fetchUserProfile();
-
-                        const partyCount = (newParty.length || 0) + 1;
-                        const rewardBase = selectedScenario?.reward_gold || 50;
-                        const reward = Math.floor(rewardBase / partyCount);
-                        addGold(reward);
-                        // Sync Gold Persistence
-                        fetch('/api/profile/update-status', {
-                            method: 'POST',
-                            body: JSON.stringify({ gold: get().gold })
-                        }).catch(console.error);
-                        newMessages.push(`報酬 金貨 ${rewardBase} 枚を獲得。`);
-                    } catch (e) { console.error(e); }
                 }
 
                 set((state) => ({
                     battleState: {
                         ...state.battleState,
                         party: newParty,
-                        enemy: state.battleState.enemy ? { ...state.battleState.enemy, hp: currentEnemyHp } : null,
                         messages: newMessages,
-                        isVictory: isVictory
+                        // turn: state.battleState.turn + 1 // Optional explicit turn step
                     }
                 }));
             },
