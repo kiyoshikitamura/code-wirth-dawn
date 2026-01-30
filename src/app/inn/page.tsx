@@ -73,8 +73,9 @@ export default function InnPage() {
             localStorage.removeItem('game-storage');
             alert("世界は再構成されました。");
             window.location.reload();
-        } catch (e) {
-            alert("初期化失敗");
+        } catch (e: any) {
+            console.error(e);
+            alert(`初期化失敗: ${e.message || 'Unknown Error'}`);
         }
     };
 

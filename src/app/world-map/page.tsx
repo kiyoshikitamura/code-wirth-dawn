@@ -45,7 +45,7 @@ export default function WorldMapPage() {
             const currentLoc = locations.find(l => l.id === userProfile.current_location_id);
 
             // Treat NULL location as Hub (Start of game condition)
-            if (!userProfile.current_location_id || currentLoc?.name === '名もなき旅人の拠所') {
+            if (!userProfile.current_location_id || currentLoc?.name === '名もなき旅人の拠所' || currentLoc?.type === 'Hub' || userProfile.current_location_id === '00000000-0000-0000-0000-000000000000') {
                 setIsInitializingHub(true);
                 // We are physically at the Hub/Inn.
                 // When opening the map, we should "exit" the pocket dimension back to reality.
@@ -53,7 +53,8 @@ export default function WorldMapPage() {
                 let targetLocId = userProfile.previous_location_id;
 
                 // Logic: If NO previous location (Fresh Start), Pick Random Capital
-                if (!targetLocId) {
+                const isFreshStart = !targetLocId;
+                if (isFreshStart) {
                     // First time leaving Hub (New Game) -> Random Capital
                     const capitals = locations.filter(l => l.type === 'Capital');
                     if (capitals.length > 0) {

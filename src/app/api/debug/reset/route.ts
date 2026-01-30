@@ -46,11 +46,31 @@ export async function POST() {
         if (invError) console.error("Inventory reset error:", invError);
 
         // 2a. Get Start Location ID
-        const { data: startLoc } = await supabase
+        let { data: startLoc } = await supabase
             .from('locations')
             .select('id')
             .eq('name', '名もなき旅人の拠所')
             .maybeSingle();
+
+        if (!startLoc) {
+            console.log("Hub location not found. Creating...");
+            const { data: newLoc } = await supabase
+                .from('locations')
+                .insert([{
+                    name: '名もなき旅人の拠所',
+                    type: 'Hub',
+                    description: '全ての始まりと終わりの場所。',
+                    x: 500,
+                    y: 500,
+                    nation_id: 'Neutral',
+                    connections: [] // Initial empty connections
+                }])
+                .select('id')
+                .single();
+            startLoc = newLoc;
+        }
+
+        const startLocId = startLoc?.id || '00000000-0000-0000-0000-000000000000'; // Fallback UUID if creation failed (should fail constraint if strictly FK)
 
         // 3. Reset User Profile
         // Reset ALL profiles including Demo
@@ -63,7 +83,7 @@ export async function POST() {
                 evil_pts: 0,
                 title_name: '名もなき旅人',
                 avatar_url: '/avatars/adventurer.jpg',
-                current_location_id: startLoc?.id || null, // Reset location
+                current_location_id: startLocId, // Reset location
                 previous_location_id: null, // Reset previous location
                 age: 20,
                 accumulated_days: 0
