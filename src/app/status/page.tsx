@@ -31,8 +31,8 @@ export default function StatusPage() {
                 <button onClick={() => router.push('/inn')} className="text-gray-400 hover:text-white transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </button>
-                <h1 className="text-2xl font-serif text-gray-100 font-bold tracking-wider flex items-center gap-2">
-                    <Shield className="w-6 h-6 text-gray-500" /> ステータス・所持品
+                <h1 className="text-lg md:text-2xl font-serif text-gray-100 font-bold tracking-wider flex items-center gap-2 whitespace-nowrap">
+                    <Shield className="w-5 h-5 md:w-6 md:h-6 text-gray-500" /> ステータス・所持品
                 </h1>
                 <button
                     onClick={() => useGameStore.getState().clearStorage()}

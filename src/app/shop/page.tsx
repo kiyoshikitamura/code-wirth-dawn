@@ -105,11 +105,11 @@ export default function ShopPage() {
                     <div className="flex-1 z-10">
                         <div className="text-xs text-amber-600 font-bold mb-1">SHOP KEEPER</div>
                         <p className="text-amber-100 font-serif italic text-lg leading-relaxed">{masterDialogue}</p>
-                        <div className="flex items-center gap-2 mt-2 bg-black/40 w-fit px-3 py-1 rounded-full border border-amber-900/30">
-                            <Coins className="w-3 h-3 text-amber-400" />
-                            <span className="text-sm font-bold text-white">{gold}</span>
-                            <span className="text-[10px] text-gray-400">G</span>
-                        </div>
+                    </div>
+                    <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/60 px-3 py-1 rounded-full border border-amber-900/50">
+                        <Coins className="w-3 h-3 text-amber-400" />
+                        <span className="text-sm font-bold text-white">{gold}</span>
+                        <span className="text-[10px] text-gray-400">G</span>
                     </div>
                 </section>
 

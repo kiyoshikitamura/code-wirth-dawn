@@ -174,7 +174,7 @@ export default function PubPage() {
                         {selectedNpc ? (
                             <div className="flex gap-4 items-center w-full">
                                 <div className="w-16 h-16 rounded border border-gray-500 bg-black overflow-hidden flex-shrink-0">
-                                    <img src={selectedNpc.avatar_url || '/avatars/npc_default.jpg'} alt="NPC" className="w-full h-full object-cover" />
+                                    <img src={selectedNpc.avatar_url || '/avatars/default.jpg'} alt="Avatar" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1">
                                     <div className="text-amber-400 font-bold text-sm mb-1">{selectedNpc.name} <span className="text-xs text-gray-400">({selectedNpc.job_class} Lv.{selectedNpc.level})</span></div>
@@ -194,7 +194,7 @@ export default function PubPage() {
                         )}
 
                         {selectedNpc && (
-                            <div className="absolute right-4 bottom-4 flex flex-col md:flex-row gap-2">
+                            <div className="absolute right-4 bottom-4 flex flex-col md:flex-row gap-2 items-end">
                                 <button
                                     onClick={() => {
                                         if (selectedNpc && !confirm(`${selectedNpc.name} に戦いを挑みますか？\n(危険な行為です)`)) return;
@@ -211,17 +211,17 @@ export default function PubPage() {
                                             router.push('/battle-test');
                                         }
                                     }}
-                                    className="px-3 py-1 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-red-800"
+                                    className="w-24 px-3 py-2 bg-red-900/50 hover:bg-red-800 text-red-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-red-800 whitespace-nowrap"
                                 >
                                     <Sword className="w-3 h-3" /> 襲う
                                 </button>
 
                                 {!partyNpcs.some(p => p.id === selectedNpc.id) ? (
-                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="px-3 py-1 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-1">
+                                    <button onClick={() => selectedNpc && handleHire(selectedNpc)} className="w-24 px-3 py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs rounded shadow flex items-center justify-center gap-1 whitespace-nowrap">
                                         <UserPlus className="w-3 h-3" /> 仲間に誘う
                                     </button>
                                 ) : (
-                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="px-3 py-1 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-gray-500">
+                                    <button onClick={() => selectedNpc && handleDismiss(selectedNpc)} className="w-24 px-3 py-2 bg-gray-600/50 hover:bg-gray-500 text-gray-300 text-xs rounded shadow flex items-center justify-center gap-1 border border-gray-500 whitespace-nowrap">
                                         <UserMinus className="w-3 h-3" /> 別れる
                                     </button>
                                 )}
@@ -302,7 +302,7 @@ export default function PubPage() {
                     {selectedNpc ? (
                         <div className="space-y-4 animate-fade-in">
                             <div className="w-full aspect-square bg-black rounded border border-gray-600 mb-4 overflow-hidden relative group">
-                                <img src={selectedNpc.avatar_url || '/avatars/npc_default.jpg'} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                <img src={selectedNpc.avatar_url || '/avatars/default.jpg'} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
                                     <div className="text-lg font-bold text-white">{selectedNpc.name}</div>
                                 </div>

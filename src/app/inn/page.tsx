@@ -399,8 +399,9 @@ export default function InnPage() {
                                 <h1 className={`text-lg font-serif ${theme.accent} font-bold tracking-wider leading-tight`}>
                                     {worldState?.location_name || '宿屋'}
                                 </h1>
-                                <div className="text-[10px] text-gray-400">
-                                    {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 / {userProfile?.title_name}
+                                <div className="text-[10px] text-gray-400 mt-1">
+                                    <div className="text-orange-300 italic mb-0.5">{getGovernanceText()}</div>
+                                    <div>世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日</div>
                                 </div>
                             </div>
                         </div>
@@ -517,7 +518,7 @@ export default function InnPage() {
                                         </div>
 
                                         <button
-                                            className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 bg-[#3e2723] text-gold-500 text-xs px-4 py-2 rounded shadow-lg transition-all"
+                                            className="absolute right-4 bottom-4 bg-[#3e2723] text-gold-500 text-xs px-4 py-2 rounded shadow-lg transition-transform hover:scale-105 active:scale-95"
                                             onClick={(e) => { e.stopPropagation(); handleSelect(s); }}
                                         >
                                             受領する
