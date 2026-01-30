@@ -117,7 +117,9 @@ export interface UserProfile {
   exp?: number;
 
   // Life & combat
+  gender?: 'Male' | 'Female' | 'Unknown';
   vitality?: number;
+  max_vitality?: number;
   max_hp?: number;
   hp?: number;
   max_mp?: number;
@@ -188,4 +190,22 @@ export interface InventoryItem {
   acquired_at: string;
   quantity: number;
   is_skill: boolean;
+}
+
+export interface PartyMember {
+  id: string;
+  owner_id: string;
+  name: string;
+  gender: 'Male' | 'Female' | 'Unknown';
+  origin: 'system' | 'ghost';
+  nation_id: string;
+  alignment: { order: number; chaos: number; justice: number; evil: number };
+  loyalty: number;
+  contract_cost: number;
+  condition: 'healthy' | 'injured' | 'fear';
+  durability: number; // HP
+  inject_cards: string[];
+  passive_skill?: string;
+  created_at?: string;
+  updated_at?: string;
 }
