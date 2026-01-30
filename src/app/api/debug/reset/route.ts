@@ -64,6 +64,7 @@ export async function POST() {
                 title_name: '名もなき旅人',
                 avatar_url: '/avatars/adventurer.jpg',
                 current_location_id: startLoc?.id || null, // Reset location
+                previous_location_id: null, // Reset previous location
                 age: 20,
                 accumulated_days: 0
             })

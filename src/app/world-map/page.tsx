@@ -216,7 +216,7 @@ export default function WorldMapPage() {
 
             if (error) throw error;
 
-            await fetchUserProfile();
+            // await fetchUserProfile(); // Skip local update to prevent Map Auto-Exit logic from triggering
             router.push('/inn');
         } catch (e) {
             console.error("Failed to return to hub", e);
