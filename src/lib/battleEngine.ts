@@ -44,6 +44,16 @@ export function buildBattleDeck(
         }
     }
 
+    // 3. Basic Validation (Ensure usable cards exist)
+    const basicAttack = cardLookup('c7') || { id: 'basic_attack', name: 'Attack', type: 'Basic', description: 'Simple attack', cost: 0, power: 10 };
+    const basicDefend = cardLookup('c4') || { id: 'basic_defend', name: 'Defend', type: 'Basic', description: 'Reduce damage', cost: 0 };
+
+    // Always ensure at least 3 basic attacks and 2 defends if deck is too small
+    if (finalDeck.length < 5) {
+        finalDeck.push(basicAttack, basicAttack, basicAttack);
+        finalDeck.push(basicDefend, basicDefend);
+    }
+
     return finalDeck;
 }
 

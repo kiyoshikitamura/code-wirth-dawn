@@ -4,7 +4,9 @@ ALTER TABLE user_profiles
 ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT 'Unknown',
 ADD COLUMN IF NOT EXISTS age INTEGER DEFAULT 18,
 ADD COLUMN IF NOT EXISTS vitality INTEGER DEFAULT 100,
-ADD COLUMN IF NOT EXISTS max_vitality INTEGER DEFAULT 100;
+ADD COLUMN IF NOT EXISTS max_vitality INTEGER DEFAULT 100,
+ADD COLUMN IF NOT EXISTS mp INTEGER DEFAULT 50,
+ADD COLUMN IF NOT EXISTS max_mp INTEGER DEFAULT 50;
 
 -- 2. Create party_members table
 CREATE TABLE IF NOT EXISTS party_members (
@@ -40,6 +42,14 @@ ALTER TABLE party_members ADD COLUMN IF NOT EXISTS personality TEXT;
 -- Enable RLS
 ALTER TABLE party_members ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage their own party" 
-ON party_members FOR ALL 
-USING (auth.uid() = owner_id);
+CREATE POLICY "Users can see their own or unclaimed party members" 
+ON party_members FOR SELECT 
+USING (auth.uid() = owner_id OR owner_id IS NULL);
+
+CREATE POLICY "Users can update their own or unclaimed party members" 
+ON party_members FOR UPDATE
+USING (auth.uid() = owner_id OR owner_id IS NULL);
+
+CREATE POLICY "Users can insert party members" 
+ON party_members FOR INSERT
+WITH CHECK (true); -- Allow insert (e.g. for generation)

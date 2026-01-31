@@ -80,6 +80,20 @@ export default function InnPage() {
         }
     };
 
+    const handleRest = async () => {
+        setNpcMessage("「ゆっくりお休み。いい夢を。」");
+        try {
+            const res = await fetch('/api/inn/rest', {
+                method: 'POST',
+                body: JSON.stringify({ id: userProfile?.id })
+            });
+            if (res.ok) {
+                alert("HPとMPが全快しました。");
+                useGameStore.getState().fetchUserProfile();
+            }
+        } catch (e) { console.error(e); }
+    };
+
     useEffect(() => {
         async function fetchScenarios() {
             try {
@@ -444,6 +458,12 @@ export default function InnPage() {
                                 className={`absolute bottom-2 right-2 text-xs ${theme.accent} hover:text-white flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity p-2`}
                             >
                                 <Scroll className="w-3 h-3" /> 歴史を紐解く
+                            </button>
+                            <button
+                                onClick={handleRest}
+                                className={`absolute top-2 right-2 text-xs text-green-400 hover:text-white flex items-center gap-1 opacity-90 hover:opacity-100 transition-opacity p-2 border border-green-900/50 rounded bg-black/40`}
+                            >
+                                💤 休息する (HP/MP回復)
                             </button>
                         </section>
 

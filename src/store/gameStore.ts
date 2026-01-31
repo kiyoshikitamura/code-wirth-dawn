@@ -23,6 +23,7 @@ const CARD_POOL: Card[] = [
     // Spec v2.0 Noise Cards
     { id: 'card_noise', name: 'Noise', type: 'Basic', description: 'A distrubance in the mind.', cost: 1, power: 0 },
     { id: 'card_fear', name: 'Fear', type: 'Basic', description: 'Target is paralyzed with fear.', cost: 2, power: 0 },
+    { id: 'c7', name: 'Attack', type: 'Basic', description: 'Basic attack', cost: 0, power: 10 },
 ];
 
 interface GameState {
