@@ -27,6 +27,9 @@ export default function PubPage() {
                 const data = await res.json();
                 setLocalMembers(data.pub);
                 setPartyMembers(data.party);
+            } else {
+                console.error("Pub Data Fetch Failed", res.status);
+                // alert("酒場のデータを読み込めませんでした。"); // Too intrusive?
             }
         } catch (e) {
             console.error(e);

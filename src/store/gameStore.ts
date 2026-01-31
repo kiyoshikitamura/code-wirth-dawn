@@ -95,18 +95,10 @@ export const useGameStore = create<GameState>()(
             },
 
             initializeBattle: () => {
-                set({
-                    battleState: {
-                        enemy: { ...DUMMY_ENEMY },
-                        party: [],
-                        turn: 1,
-                        messages: ['Battle Start!'],
-                        isVictory: false,
-                        currentTactic: 'Aggressive'
-                    },
-                    hand: [],
+                // Delegate to startBattle for proper Deck Construction
+                get().startBattle({
+                    id: 'e1', name: 'Shadow Wolf', level: 4, hp: 300, maxHp: 300,
                 });
-                get().dealHand();
             },
 
             initialize: () => get().initializeBattle(),
