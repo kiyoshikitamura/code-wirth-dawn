@@ -25,11 +25,17 @@ CREATE TABLE IF NOT EXISTS party_members (
   inject_cards TEXT[] DEFAULT '{}', -- Array of Card IDs
   
   -- State
+  passive_id TEXT, -- Passive Skill ID (e.g. shop_discount)
   is_active BOOLEAN DEFAULT true,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Ensure column exists if table was already created
+ALTER TABLE party_members ADD COLUMN IF NOT EXISTS passive_id TEXT;
+ALTER TABLE party_members ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE party_members ADD COLUMN IF NOT EXISTS personality TEXT;
 
 -- Enable RLS
 ALTER TABLE party_members ENABLE ROW LEVEL SECURITY;

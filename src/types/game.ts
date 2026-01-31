@@ -202,9 +202,13 @@ export interface PartyMember {
 
   durability: number;
   max_durability: number;
-  loyalty: number;
   cover_rate: number;
+  loyalty: number;
+
+  avatar_url?: string;
+  personality?: string;
 
   inject_cards: string[]; // Card IDs
+  passive_id?: string;
   is_active: boolean;
 }

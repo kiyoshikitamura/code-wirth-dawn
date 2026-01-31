@@ -18,7 +18,11 @@ const CARD_POOL: Card[] = [
     { id: 'c3', name: 'Heal Herb', type: 'Item', description: 'Restores 50 HP', cost: 0, power: 50 },
     { id: 'c4', name: 'Defend', type: 'Basic', description: 'Reduces dmg', cost: 0 },
     { id: 'c5', name: 'Brave Heart', type: 'Personality', description: 'Boosts Atk', cost: 3 },
+    { id: 'c5', name: 'Brave Heart', type: 'Personality', description: 'Boosts Atk', cost: 3 },
     { id: 'c6', name: 'Calculation', type: 'Basic', description: 'Analyzes enemy (custom)', cost: 1 },
+    // Spec v2.0 Noise Cards
+    { id: 'card_noise', name: 'Noise', type: 'Basic', description: 'A distrubance in the mind.', cost: 1, power: 0 },
+    { id: 'card_fear', name: 'Fear', type: 'Basic', description: 'Target is paralyzed with fear.', cost: 2, power: 0 },
 ];
 
 interface GameState {
@@ -123,7 +127,7 @@ export const useGameStore = create<GameState>()(
                 } catch (e) { console.error("Party fetch failed", e); }
 
                 // 2. Build Deck
-                const { inventory } = get();
+                const { inventory, worldState } = get();
                 // Map inventory equipped items to Cards
                 const equippedCards = (inventory || []).filter(i => i.is_equipped).map(i => ({
                     id: i.id, // Inventory ID as Card ID
@@ -138,7 +142,8 @@ export const useGameStore = create<GameState>()(
                 const initialDeck = buildBattleDeck(
                     equippedCards,
                     partyMembers,
-                    (id) => CARD_POOL.find(c => c.id === id)
+                    (id) => CARD_POOL.find(c => c.id === id),
+                    worldState?.status // Pass World State
                 );
 
                 // Shuffle Deck
@@ -521,10 +526,14 @@ export const useGameStore = create<GameState>()(
                         if (p.id === result.targetId) {
                             const newDur = Math.max(0, p.durability - result.damage);
                             if (newDur <= 0) {
-                                newMessages.push(`${p.name} は力尽きた...`);
-                                // TODO: Maybe remove their cards from deck/hand if strict?
+                                newMessages.push(`${p.name} は力尽きた... (LOST)`);
+                                // Persistent Death
+                                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
+                            } else {
+                                // Persistent Damage
+                                supabase.from('party_members').update({ durability: newDur }).eq('id', p.id).then();
                             }
-                            return { ...p, durability: newDur };
+                            return { ...p, durability: newDur, is_active: newDur > 0 };
                         }
                         return p;
                     });

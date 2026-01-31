@@ -7,22 +7,7 @@ import { ArrowLeft, Users, UserPlus, UserMinus, MessageSquare, Shield, Sword, He
 import { supabase } from '@/lib/supabase';
 import MobileNav from '@/components/layout/MobileNav';
 
-// Updated to match PartyMember
-interface PartyMember {
-    id: string;
-    name: string;
-    job_class: string;
-    gender: string;
-    level: number;
-    durability: number;
-    max_durability: number;
-    cover_rate: number;
-    inject_cards: string[]; // Card IDs
-    origin: string;
-    is_active: boolean;
-    avatar_url?: string;
-    personality_type?: string;
-}
+import { PartyMember } from '@/types/game';
 
 export default function PubPage() {
     const router = useRouter();
@@ -181,7 +166,7 @@ export default function PubPage() {
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-amber-400 font-bold text-sm mb-1">{selectedMember.name} <span className="text-xs text-gray-400">({selectedMember.job_class} Lv.{selectedMember.level})</span></div>
+                                    <div className="text-amber-400 font-bold text-sm mb-1">{selectedMember.name} <span className="text-xs text-gray-400">({selectedMember.job_class})</span></div>
                                     <div className="text-[10px] text-gray-400 mb-1">耐久: {selectedMember.durability}/{selectedMember.max_durability} | カバー: {selectedMember.cover_rate}%</div>
                                     <p className="font-serif italic text-sm md:text-base leading-relaxed">{dialogue}</p>
                                 </div>
@@ -234,7 +219,7 @@ export default function PubPage() {
                                         `}>
                                         <div>
                                             <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate max-w-[120px]">{m.name}</div>
-                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class} Lv.{m.level}</div>
+                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class}</div>
                                         </div>
                                         <div className="flex gap-2 text-[10px] text-gray-400">
                                             <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" /> {m.durability}</span>
@@ -265,7 +250,7 @@ export default function PubPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate">{m.name}</div>
-                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class} Lv.{m.level}</div>
+                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class}</div>
                                                 </div>
                                             </div>
                                             <div className="text-xs text-gray-600 group-hover:text-amber-500 transition-colors">
@@ -302,10 +287,7 @@ export default function PubPage() {
                                     <span className="text-gray-500">Class</span>
                                     <span>{selectedMember.job_class}</span>
                                 </div>
-                                <div className="flex justify-between border-b border-gray-800 pb-1">
-                                    <span className="text-gray-500">Level</span>
-                                    <span>{selectedMember.level}</span>
-                                </div>
+
                                 <div className="flex justify-between border-b border-gray-800 pb-1">
                                     <span className="text-gray-500">Durability</span>
                                     <span className="text-green-400">{selectedMember.durability} / {selectedMember.max_durability}</span>
@@ -317,6 +299,17 @@ export default function PubPage() {
                                         <span className="text-blue-400">{selectedMember.cover_rate}%</span>
                                     </div>
                                 </div>
+                                <div className="flex justify-between border-b border-gray-800 pb-1">
+                                    <span className="text-gray-500">Loyalty</span>
+                                    <span className={selectedMember.loyalty < 30 ? 'text-red-500' : 'text-gray-300'}>{selectedMember.loyalty}/100</span>
+                                </div>
+
+                                {selectedMember.passive_id && (
+                                    <div className="pt-2 border-t border-gray-800">
+                                        <span className="text-gray-500 block mb-1 text-[10px] uppercase">Passive</span>
+                                        <div className="text-xs text-purple-300 font-bold">{selectedMember.passive_id}</div>
+                                    </div>
+                                )}
 
                                 <div className="pt-2">
                                     <span className="text-gray-500 block mb-1">Deck Injection</span>

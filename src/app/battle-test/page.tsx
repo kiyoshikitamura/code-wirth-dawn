@@ -135,21 +135,41 @@ export default function BattleTestPage() {
                                 </div>
                             </div>
 
-                            {/* NPC Members */}
-                            {battleState.party.map((member) => (
-                                <div key={member.id} className="flex items-center gap-3 bg-black/40 p-2 rounded border-l-2 border-green-600">
-                                    <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
-                                        <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs">{member.name[0]}</div>
-                                    </div>
-                                    <div className="min-w-0">
-                                        <div className="text-sm font-bold text-gray-200 truncate">{member.name}</div>
-                                        <div className="flex gap-2 text-xs">
-                                            <span className="text-green-400">耐久 {member.durability}</span>
-                                            <span className="text-blue-400">{member.job_class}</span>
+                            {/* Equipment (NPC) Members */}
+                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2 border-b border-gray-800 pb-1 mb-2">Living Equipment ({battleState.party.filter(p => p.is_active && p.durability > 0).length})</div>
+                            {battleState.party.map((member) => {
+                                const isLost = member.durability <= 0 || !member.is_active;
+                                return (
+                                    <div key={member.id} className={`flex items-center gap-3 p-2 rounded border-l-4 transition-all ${isLost ? 'bg-red-900/10 border-red-900 opacity-50 grayscale' : 'bg-gray-800/40 border-amber-600'}`}>
+                                        <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
+                                            <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs text-gray-400">{member.name[0]}</div>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <div className={`text-xs font-bold leading-none ${isLost ? 'text-red-500 line-through' : 'text-amber-100'}`}>{member.name}</div>
+                                                {!isLost && (
+                                                    <div className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-900/20 px-1 rounded border border-blue-900/50">
+                                                        <Shield className="w-2.5 h-2.5" />
+                                                        {member.cover_rate}%
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Durability Bar */}
+                                            <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden relative">
+                                                <div
+                                                    className={`h-full transition-all duration-300 ${isLost ? 'bg-red-900' : 'bg-green-500'}`}
+                                                    style={{ width: `${Math.max(0, Math.min(100, (member.durability / member.max_durability) * 100))}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-[10px] mt-0.5">
+                                                <span className={isLost ? 'text-red-700' : 'text-green-500'}>{member.durability}/{member.max_durability}</span>
+                                                <span className="text-gray-500">{member.job_class}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     </div>
 
