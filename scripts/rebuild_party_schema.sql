@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS party_members CASCADE;
 
 CREATE TABLE party_members (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  owner_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  owner_id uuid, -- validation managed by app logic (allows Demo User '0000...')
   name TEXT NOT NULL,
   gender TEXT DEFAULT 'Unknown',
   origin TEXT CHECK (origin IN ('system', 'ghost')),

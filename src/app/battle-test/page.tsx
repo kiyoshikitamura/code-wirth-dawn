@@ -226,6 +226,17 @@ export default function BattleTestPage() {
                                     </button>
                                 </div>
                             )}
+
+                            {/* Defeat State */}
+                            {battleState.isDefeat && (
+                                <div className="text-red-500 font-bold text-center mt-2 py-2 border-t border-red-900 bg-red-900/30 rounded animate-pulse">
+                                    DEFEATED...
+                                    <div className="text-xs font-normal text-red-300 mt-1">意識が遠のいていく...</div>
+                                    <button onClick={() => router.push('/inn')} className="mt-2 px-4 py-1 bg-red-800 hover:bg-red-700 text-white rounded text-sm mb-2">
+                                        宿屋へ運ばれる
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -237,7 +248,7 @@ export default function BattleTestPage() {
                             <button
                                 key={idx}
                                 onClick={() => handleCardClick(idx)}
-                                disabled={battleState.isVictory}
+                                disabled={battleState.isVictory || battleState.isDefeat}
                                 className="w-32 h-44 bg-[#1a1a1a] border-2 border-[#333] hover:border-blue-500 hover:-translate-y-2 transition-all duration-200 rounded-lg flex flex-col items-center justify-between p-3 relative group shadow-lg shrink-0 disabled:opacity-50 disabled:hover:translate-y-0"
                             >
                                 <div className="absolute top-2 right-2 text-xs font-bold text-blue-400 border border-blue-900 rounded px-1">{card.cost} MP</div>

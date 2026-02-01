@@ -139,6 +139,7 @@ export interface BattleState {
   turn: number;
   messages: string[];
   isVictory: boolean;
+  isDefeat?: boolean;
   cooldowns?: { [cardId: string]: number };
   currentTactic?: 'Aggressive' | 'Defensive' | 'Standby';
 }

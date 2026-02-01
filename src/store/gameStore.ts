@@ -149,6 +149,7 @@ export const useGameStore = create<GameState>()(
                         turn: 1,
                         messages: [`${enemy.name}が現れた！`],
                         isVictory: false,
+                        isDefeat: false,
                         cooldowns: {},
                         currentTactic: 'Aggressive'
                     },
@@ -542,6 +543,7 @@ export const useGameStore = create<GameState>()(
 
                         if (newHp <= 0) {
                             newMessages.push("あなたは力尽きた... (運命の時は近い)");
+                            set((state) => ({ battleState: { ...state.battleState, isDefeat: true } }));
                             // Handle Vitality Reduction logic here or in separate function
                         }
                     }

@@ -54,6 +54,13 @@ export async function POST() {
 
         if (invError) console.error("Inventory reset error:", invError);
 
+        // 2c. Reset Reputations (New Fix)
+        const { error: repError } = await client
+            .from('reputations')
+            .delete()
+            .not('id', 'is', null);
+        if (repError) console.error("Reputation reset error:", repError);
+
         // 2b. Reset NPCs (Disband Party)
         // 2b. Reset Party Members (Return to Pool)
         const { error: pmError } = await client
