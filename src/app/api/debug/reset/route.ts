@@ -111,7 +111,8 @@ export async function POST() {
                 current_location_id: startLocId, // Reset location
                 previous_location_id: null, // Reset previous location
                 age: 20,
-                accumulated_days: 0
+                accumulated_days: 0,
+                gender: 'Unknown'
             })
             // .neq removed to ensure Demo Profile is reset
             .not('id', 'is', null) // Safety clause

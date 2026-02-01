@@ -72,8 +72,8 @@ export default function InnPage() {
         try {
             await fetch('/api/debug/reset', { method: 'POST' });
             localStorage.removeItem('game-storage');
-            alert("世界は再構成されました。");
-            window.location.reload();
+            alert("世界は再構成されました。新たな旅が始まります。");
+            window.location.href = '/title'; // Go to explicit Title/Entry page
         } catch (e: any) {
             console.error(e);
             alert(`初期化失敗: ${e.message || 'Unknown Error'}`);
@@ -245,6 +245,9 @@ export default function InnPage() {
     // Friction / Governance Text
     const getGovernanceText = () => {
         if (!worldState) return '';
+        // Skip for Hub
+        if (worldState.location_name === '名もなき旅人の拠所') return '';
+
         const nation = worldState.controlling_nation;
         if (nation === 'Neutral') return 'この地は誰の支配も受けていない。';
 
@@ -369,9 +372,11 @@ export default function InnPage() {
                             </h1>
                             <div className="flex flex-col">
                                 <span className="text-sm text-gray-400">Rest & Supply @ {worldState?.controlling_nation || 'Neutral'} Territory</span>
-                                <span className="text-xs text-orange-300/80 mt-1 italic font-serif">
-                                    {getGovernanceText()}
-                                </span>
+                                {getGovernanceText() && (
+                                    <span className="text-xs text-orange-300/80 mt-1 italic font-serif">
+                                        {getGovernanceText()}
+                                    </span>
+                                )}
                                 <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
                                     世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日
                                     <span className="ml-2 text-gray-500">

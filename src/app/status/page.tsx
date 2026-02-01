@@ -52,19 +52,23 @@ export default function StatusPage() {
                         <div className="w-20 h-20 rounded-full border-2 border-gray-600 overflow-hidden bg-black shrink-0 relative">
                             <img src={userProfile?.avatar_url || '/avatars/default.png'} alt="Avatar" className="w-full h-full object-cover" />
                             {/* Level Badge */}
-                            <div className="absolute bottom-0 right-0 bg-blue-900 text-blue-100 text-xs px-1.5 py-0.5 rounded border border-blue-700">
-                                Lv.{userProfile?.level ?? 1}
-                            </div>
+                            <img src={userProfile?.avatar_url || '/avatars/default.png'} alt="Avatar" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">{userProfile?.title_name || '名もなき旅人'}</div>
                             <div className="text-xl font-bold text-white truncate">あなた</div>
-                            <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                                <span>Age: {userProfile?.age || 20}</span>
+                            <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2 mt-1">
+                                <span className="text-blue-300 font-bold">Lv.{userProfile?.level ?? 1}</span>
                                 <span className="w-px h-3 bg-gray-700"></span>
-                                <span>{userProfile?.gender || 'Unknown'}</span>
+                                <span>年齢: {userProfile?.age ?? 20}</span>
                                 <span className="w-px h-3 bg-gray-700"></span>
-                                <span className="text-amber-500">{userProfile?.gold ?? 0} G</span>
+                                <span>{userProfile?.gender === 'Male' ? '男性' : userProfile?.gender === 'Female' ? '女性' : '不明'}</span>
+                            </div>
+                            <div className="text-sm text-amber-500 font-bold mt-1">
+                                所持金: {userProfile?.gold ?? 0} G
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1">
+                                冒険日数: {userProfile?.accumulated_days ?? 0} 日目
                             </div>
                         </div>
                     </div>
