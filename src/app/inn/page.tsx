@@ -9,6 +9,8 @@ import WorldNews from '../components/WorldNews';
 import { getBackgroundByAttribute } from '@/utils/visuals';
 import { supabase } from '@/lib/supabase';
 import MobileNav from '@/components/layout/MobileNav';
+import QuestModal from '@/components/quest/QuestModal';
+
 
 export default function InnPage() {
     const router = useRouter();
@@ -18,6 +20,8 @@ export default function InnPage() {
     const [npcMessage, setNpcMessage] = useState('');
     const [reqStatus, setReqStatus] = useState<'Idle' | 'Success' | 'Error'>('Idle');
     const [reputation, setReputation] = useState<any>(null);
+    const [selectedQuest, setSelectedQuest] = useState<any | null>(null);
+
 
     // --- News & History Logic ---
     const [showNews, setShowNews] = useState(false);
@@ -113,9 +117,15 @@ export default function InnPage() {
         useGameStore.getState().fetchUserProfile();
     }, []);
 
-    const handleSelect = (s: Scenario) => {
-        selectScenario(s);
-        router.push('/battle-test');
+    const handleSelect = (s: any) => {
+        setSelectedQuest(s);
+    };
+
+    const handleQuestComplete = (result: any) => {
+        console.log("Quest Completed:", result);
+        setSelectedQuest(null);
+        alert("クエスト完了！報酬を受け取りました (Mock)");
+        useGameStore.getState().fetchUserProfile();
     };
 
     // Reputation Logic
@@ -332,6 +342,14 @@ export default function InnPage() {
             <div className="relative z-10 p-4">
 
                 {/* News Modal (z-50 handled by modal itself usually, but let's ensure it's inside this relative container or portal) */}
+                {selectedQuest && (
+                    <QuestModal
+                        scenario={selectedQuest}
+                        onClose={() => setSelectedQuest(null)}
+                        onComplete={handleQuestComplete}
+                    />
+                )}
+
                 {showNews && currentNews && (
                     <WorldNews history={currentNews} onClose={closeNews} />
                 )}

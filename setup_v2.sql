@@ -124,16 +124,34 @@ CREATE TABLE scenarios (
   title TEXT NOT NULL,
   description TEXT,
   client_name TEXT,
+  
+  -- V3 Quest System Fields
+  type TEXT DEFAULT 'Subjugation',
+  time_cost INTEGER DEFAULT 1,
+  ruling_nation_id TEXT,
+  location_id UUID REFERENCES locations(id),
+  
+  -- JSONB Logic
+  conditions JSONB DEFAULT '{}'::jsonb,
+  rewards JSONB DEFAULT '{}'::jsonb,
+  flow_nodes JSONB DEFAULT '[]'::jsonb,
+  
+  -- Legacy / Flat columns (kept for compatibility or basic display)
   required_status TEXT,
   required_attribute TEXT,
   reward_gold INTEGER DEFAULT 100,
+  
   order_impact INTEGER DEFAULT 0,
   chaos_impact INTEGER DEFAULT 0,
   justice_impact INTEGER DEFAULT 0,
   evil_impact INTEGER DEFAULT 0,
   rep_impact INTEGER DEFAULT 0,
+  
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX idx_scenarios_location_id ON scenarios(location_id);
+CREATE INDEX idx_scenarios_ruling_nation_id ON scenarios(ruling_nation_id);
 
 -- 10. Initial Data
 

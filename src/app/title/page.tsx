@@ -32,22 +32,24 @@ export default function TitlePage() {
             // Safe fallback: Update if exists, Input if not?
             // For now assuming existing restricted profile from 'reset'.
 
-            const { error } = await supabase
-                .from('user_profiles')
-                .update({
+            // Call server API to bypass potential RLS issues with anonymous users
+            const res = await fetch('/api/profile/init', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     title_name: name,
                     gender: gender,
                     age: 20,
                     accumulated_days: 0,
                     gold: 1000,
-                    current_location_id: (await getHubId()) // Ensure starting at Hub
+                    current_location_id: (await getHubId())
                 })
-                .eq('id', userProfile?.id || (await supabase.auth.getUser()).data.user?.id);
+            });
 
-            // If Update failed due to no ID, handled by Supabase Auth generally. 
-            // In this local-ish app, we rely on the single user row concept often used in dev.
-
-            if (error) console.error("Profile update error", error);
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Initialization failed');
+            }
 
             // Long animation
             await new Promise(r => setTimeout(r, 4000));
@@ -56,6 +58,7 @@ export default function TitlePage() {
             router.push('/inn');
         } catch (err) {
             console.error(err);
+            alert("旅立ちの準備に失敗しました。再試行してください。");
             setStep('FORM');
         }
     };
@@ -124,8 +127,8 @@ export default function TitlePage() {
                                 type="button"
                                 onClick={() => setGender('Male')}
                                 className={`p-4 border rounded flex flex-col items-center gap-2 transition-all duration-300 ${gender === 'Male'
-                                        ? 'bg-[#1a202c] border-blue-500/50 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.2)] scale-105'
-                                        : 'bg-black/30 border-gray-800 text-gray-600 hover:border-gray-600 hover:text-gray-400'
+                                    ? 'bg-[#1a202c] border-blue-500/50 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.2)] scale-105'
+                                    : 'bg-black/30 border-gray-800 text-gray-600 hover:border-gray-600 hover:text-gray-400'
                                     }`}
                             >
                                 <Sword className="w-8 h-8" strokeWidth={1.5} />
@@ -136,8 +139,8 @@ export default function TitlePage() {
                                 type="button"
                                 onClick={() => setGender('Female')}
                                 className={`p-4 border rounded flex flex-col items-center gap-2 transition-all duration-300 ${gender === 'Female'
-                                        ? 'bg-[#1a202c] border-red-500/50 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.2)] scale-105'
-                                        : 'bg-black/30 border-gray-800 text-gray-600 hover:border-gray-600 hover:text-gray-400'
+                                    ? 'bg-[#1a202c] border-red-500/50 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.2)] scale-105'
+                                    : 'bg-black/30 border-gray-800 text-gray-600 hover:border-gray-600 hover:text-gray-400'
                                     }`}
                             >
                                 <Shield className="w-8 h-8" strokeWidth={1.5} />
