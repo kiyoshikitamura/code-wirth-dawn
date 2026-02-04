@@ -56,7 +56,7 @@ export default function StatusPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">{userProfile?.title_name || '名もなき旅人'}</div>
-                            <div className="text-xl font-bold text-white truncate">あなた</div>
+                            <div className="text-xl font-bold text-white truncate">{userProfile?.name || 'あなた'}</div>
                             <div className="text-sm text-gray-500 flex flex-wrap items-center gap-2 mt-1">
                                 <span className="text-blue-300 font-bold">Lv.{userProfile?.level ?? 1}</span>
                                 <span className="w-px h-3 bg-gray-700"></span>

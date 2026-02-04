@@ -8,9 +8,10 @@ interface QuestModalProps {
     scenario: ScenarioDB;
     onClose: () => void;
     onComplete: (result: any) => void;
+    onBattleStart?: (scenario: ScenarioDB) => void;
 }
 
-export default function QuestModal({ scenario, onClose, onComplete }: QuestModalProps) {
+export default function QuestModal({ scenario, onClose, onComplete, onBattleStart }: QuestModalProps) {
     const [currentNodeId, setCurrentNodeId] = useState<string>('start');
     const [currentNode, setCurrentNode] = useState<ScenarioFlowNode | null>(null);
     const [history, setHistory] = useState<string[]>([]);
@@ -31,9 +32,15 @@ export default function QuestModal({ scenario, onClose, onComplete }: QuestModal
         setHistory([...history, label]);
 
         // Check if nextId implies completion or battle
-        if (nextId === 'COMPLETED' || nextId === 'win' || nextId === 'battle') {
-            // For prototype, treat 'win' as complete, 'battle' as... well, special
-            // Proper engine would handle state flags.
+        if (nextId === 'battle') {
+            if (onBattleStart) {
+                onBattleStart(scenario);
+                return;
+            }
+        }
+
+        if (nextId === 'COMPLETED' || nextId === 'win') {
+            // For prototype, treat 'win' as complete
         }
 
         setCurrentNodeId(nextId);

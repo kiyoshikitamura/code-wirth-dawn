@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Adventurer, Card, Enemy, WorldState, Scenario, InventoryItem, UserProfile, BattleState, PartyMember } from '@/types/game';
+import { Adventurer, Card, Enemy, WorldState, Scenario, InventoryItem, UserProfile, BattleState, PartyMember, UserHubState } from '@/types/game';
 import { supabase } from '@/lib/supabase';
 import { WORLD_ID } from '@/utils/constants';
 import { buildBattleDeck, routeDamage, canAffordCard } from '@/lib/battleEngine';
@@ -36,6 +36,8 @@ interface GameState {
     // Global
     worldState: WorldState | null;
     fetchWorldState: () => Promise<void>;
+    hubState: UserHubState | null;
+    fetchHubState: () => Promise<void>;
 
     // Gold & Shopping
     gold: number;
@@ -65,6 +67,7 @@ interface GameState {
     discardCard: (index: number) => void;
     dealHand: () => void;
     useItem: (card: Card) => Promise<void>;
+    processPartyTurn: () => Promise<void>;
     processEnemyTurn: (damage: number) => Promise<void>;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
     fleeBattle: () => void;
@@ -77,6 +80,7 @@ export const useGameStore = create<GameState>()(
             // Initialize missing defaults
             userProfile: null,
             worldState: null,
+            hubState: null,
             gold: 1000,
             selectedScenario: null,
             inventory: [],
@@ -106,8 +110,8 @@ export const useGameStore = create<GameState>()(
             startBattle: async (enemy: Enemy) => {
                 // 1. Fetch Party from DB (party_members table)
                 let partyMembers: PartyMember[] = [];
+                const { userProfile } = get(); // Moved to top scope
                 try {
-                    const { userProfile } = get();
                     if (userProfile?.id) {
                         const { data } = await supabase
                             .from('party_members')
@@ -136,7 +140,8 @@ export const useGameStore = create<GameState>()(
                     equippedCards,
                     partyMembers,
                     (id) => CARD_POOL.find(c => c.id === id),
-                    worldState?.status // Pass World State
+                    worldState?.status, // Pass World State
+                    userProfile?.level || 1 // Pass User Level (Novice Blessing)
                 );
 
                 // Shuffle Deck
@@ -230,9 +235,16 @@ export const useGameStore = create<GameState>()(
 
             fetchWorldState: async () => {
                 try {
-                    // Determine location to fetch
-                    const { userProfile } = get();
-                    const targetLocationName = userProfile?.locations?.name || '名もなき旅人の拠所';
+                    // Update Hub State first to know context
+                    await get().fetchHubState();
+                    const { userProfile, hubState } = get();
+
+                    let targetLocationName = userProfile?.locations?.name || '名もなき旅人の拠所';
+
+                    if (hubState?.is_in_hub) {
+                        targetLocationName = '名もなき旅人の拠所';
+                    }
+
                     console.log("Fetching World State for:", targetLocationName);
 
                     // New Scheme: Query by LOCATION_NAME
@@ -308,6 +320,35 @@ export const useGameStore = create<GameState>()(
                 }
             },
 
+            fetchHubState: async () => {
+                try {
+                    const { userProfile } = get();
+                    if (!userProfile?.id) return;
+
+                    const { data, error } = await supabase
+                        .from('user_hub_states')
+                        .select('*')
+                        .eq('user_id', userProfile.id)
+                        .maybeSingle();
+
+                    if (data) {
+                        set({ hubState: data as UserHubState });
+                    } else if (!error) {
+                        // Create default if missing (lazy create)
+                        const { data: newData, error: insertError } = await supabase
+                            .from('user_hub_states')
+                            .insert([{ user_id: userProfile.id, is_in_hub: false }])
+                            .select()
+                            .single();
+
+                        if (newData) set({ hubState: newData as UserHubState });
+                        else console.warn("Failed to init hub state", insertError);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch hub state", e);
+                }
+            },
+
             // --- Inventory Actions ---
             fetchInventory: async () => {
                 try {
@@ -375,7 +416,8 @@ export const useGameStore = create<GameState>()(
 
                 // Determine damage based on card or default
                 let damage = Math.floor(Math.random() * 11) + 10;
-                let logMsg = `旅人の攻撃！ ${damage} のダメージ！`;
+                const playerName = get().userProfile?.name || '旅人';
+                let logMsg = `${playerName}の攻撃！ ${damage} のダメージ！`;
 
                 // 1. Check Blocking Cooldowns (Read from current state)
                 if (card && card.type === 'Skill' && card.id) {
@@ -495,14 +537,121 @@ export const useGameStore = create<GameState>()(
                     }
                 }));
 
-                // Trigger Enemy Turn if not dead
+                // Trigger Party Turn first
                 if (!isDead) {
                     setTimeout(() => {
-                        const enemy = get().battleState.enemy;
-                        const enemyAtk = enemy?.level ? enemy.level * 5 + 10 : 15;
-                        get().processEnemyTurn(enemyAtk);
-                    }, 800);
+                        get().processPartyTurn();
+                    }, 600);
                 }
+            },
+
+            processPartyTurn: async () => {
+                const { battleState, userProfile } = get();
+                if (battleState.isVictory || !battleState.enemy) return;
+
+                let newMessages = [...battleState.messages];
+                const newParty = [...battleState.party];
+                let enemyHp = battleState.enemy.hp;
+
+                // Iterate active members
+                for (const member of newParty) {
+                    if (!member.is_active || member.durability <= 0) continue;
+
+                    // Simple AI based on Class
+                    if (member.job_class === 'Cleric' || member.job_class === 'Healer') {
+                        // Heal Logic
+                        const healAmount = 15;
+                        const currentHp = userProfile?.hp || 0;
+                        const maxHp = userProfile?.max_hp || 100;
+                        if (currentHp < maxHp) {
+                            const newHp = Math.min(maxHp, currentHp + healAmount);
+                            // Update Profile HP
+                            set(state => ({
+                                userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
+                            }));
+                            fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
+                            newMessages.push(`${member.name}の回復魔法！ HPが ${healAmount} 回復した。`);
+                        } else {
+                            // If full HP, act defensively or weak attack
+                            newMessages.push(`${member.name}は祈りを捧げている...`);
+                        }
+                    } else {
+                        // Attack Logic (Warrior, Mage, Rogue, etc)
+                        // Damage Calculation (Base on class or fixed range)
+                        let dmg = 8 + Math.floor(Math.random() * 5); // 8-12
+                        if (member.job_class === 'Warrior') dmg += 5;
+                        if (member.job_class === 'Mage') dmg += 8; // Mage hits hard but fragile
+
+                        enemyHp = Math.max(0, enemyHp - dmg);
+                        newMessages.push(`${member.name}の援護攻撃！ ${dmg} のダメージ！`);
+
+                        if (enemyHp <= 0) break; // Enemy died
+                    }
+                }
+
+                // Update State
+                set(state => ({
+                    battleState: {
+                        ...state.battleState,
+                        enemy: state.battleState.enemy ? { ...state.battleState.enemy, hp: enemyHp } : null,
+                        messages: newMessages
+                    }
+                }));
+
+                // Check Victory
+                if (enemyHp <= 0) {
+                    // trigger victory logic (Re-use victory logic from attackEnemy? Or just call attackEnemy with 0 dmg? 
+                    // Better: Extract victory logic or just copy-paste for safety for now, or call a verifyVictory helper)
+                    // Since victory logic in attackEnemy is complex (API calls, rewards), let's TRY to trigger it by calling attackEnemy logic or just rely on next turn check?
+                    // NO, we must handle it here or the battle hangs.
+                    // IMPORTANT: DRY principle. But `attackEnemy` is mixed.
+                    // Let's manually trigger the Victory Messages and API call here.
+
+                    const { selectedScenario } = get();
+                    const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！'];
+
+                    try {
+                        const reportPayload = {
+                            action: 'victory',
+                            impacts: selectedScenario?.impacts,
+                            scenario_id: selectedScenario?.id
+                        };
+
+                        await fetch('/api/report-action', {
+                            method: 'POST',
+                            body: JSON.stringify(reportPayload)
+                        });
+
+                        await get().fetchWorldState();
+                        await get().fetchUserProfile();
+
+                        const partyCount = (newParty.length || 0) + 1;
+                        const rewardGold = selectedScenario?.reward_gold || 50;
+                        const reward = Math.floor(rewardGold / partyCount);
+                        get().addGold(reward);
+
+                        finalMessages.push(`報酬 金貨 ${rewardGold} 枚を獲得。`);
+                        if (partyCount > 1) finalMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
+
+                        fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            body: JSON.stringify({ gold: get().gold })
+                        }).catch(console.error);
+
+                    } catch (e) { console.error(e); }
+
+                    set(state => ({
+                        battleState: { ...state.battleState, isVictory: true, messages: finalMessages }
+                    }));
+                    return;
+                }
+
+                // Trigger Enemy Turn
+                setTimeout(() => {
+                    const enemy = get().battleState.enemy;
+                    const enemyAtk = enemy?.level ? enemy.level * 5 + 10 : 15;
+                    get().processEnemyTurn(enemyAtk);
+                }, 800);
             },
 
             processEnemyTurn: async (damage: number) => {

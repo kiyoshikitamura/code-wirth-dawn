@@ -56,14 +56,21 @@ function checkConditions(
         if (req.evil && ua.evil < req.evil) return false;
     }
 
-    // 5. Explicit Location Check (if Array provided)
+    // 5. Explicit Location Check
     if (conditions.locations && conditions.locations.length > 0) {
         if (!conditions.locations.includes(location.id) && !conditions.locations.includes(location.name)) {
             return false;
         }
     }
 
-    // 6. Inventory/Tag Check
+    // 6. Prosperity Check
+    if (conditions.min_prosperity) {
+        if (currentWorldState.prosperity < conditions.min_prosperity) {
+            return false;
+        }
+    }
+
+    // 7. Inventory/Tag Check
     if (conditions.required_tags && conditions.required_tags.length > 0) {
         const userTags = user.tags;
         if (!userTags) return false;
@@ -153,17 +160,26 @@ export const QuestService = {
         // - Have NO location_id restriction OR match current location_id
         // - Have NO ruling_nation restriction OR match current controlling_nation
 
+        // 3. Fetch Scenarios 
+        // Querying all and filtering in-memory to ensure complex AND/OR logic is correct.
+        // Data set is small (<100 rows), so this is performant enough.
         const { data: scenarios, error: scenError } = await supabase
             .from('scenarios')
-            .select('*')
-            .or(`location_id.is.null,location_id.eq.${locationId}`)
-            .or(`ruling_nation_id.is.null,ruling_nation_id.eq.${currentNation}`);
+            .select('*');
 
         if (scenError) throw scenError;
         if (!scenarios) return [];
 
         // 4. Fine-grained Filter (In-Memory)
         const validQuests = scenarios.filter((quest: any) => {
+            // A. Location Filter
+            // Must be NULL (Global) OR match current location
+            if (quest.location_id && quest.location_id !== locationId) return false;
+
+            // B. Nation Filter
+            // Must be NULL (Neutral/All) OR match current nation
+            if (quest.ruling_nation_id && quest.ruling_nation_id !== currentNation) return false;
+
             // Check Conditions JSON
             const conditions = quest.conditions as ScenarioCondition;
             if (!conditions) return true; // No conditions = open to all

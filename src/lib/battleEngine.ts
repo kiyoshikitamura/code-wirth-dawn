@@ -13,11 +13,17 @@ export function buildBattleDeck(
     userDeck: Card[],
     partyMembers: PartyMember[],
     cardLookup: (id: string) => Card | undefined,
-    worldStateStatus: string = 'Normal'
+    worldStateStatus: string = 'Normal',
+    userLevel: number = 1
 ): Card[] {
     let finalDeck = [...userDeck];
 
-    // 1. Party Injection
+    // ... (Party Injection omitted for brevity in diff if unchanged, but included in tool) ...
+    // Since we are replacing block, we need to respect the original content or targeted replace.
+    // I will target the function signature and the specific noise block.
+
+    // Actually, let's use the replacement tool carefully.
+    // I'll replace the signature first, then the noise block.
     partyMembers.forEach(member => {
         if (!member.is_active || member.durability <= 0) return; // Dead/Inactive members don't inject
 
@@ -35,13 +41,22 @@ export function buildBattleDeck(
         });
     });
 
-    // 2. World Injection (Optional)
-    // If status is Ruined, add 'Noise' cards
-    if (worldStateStatus === 'Ruined' || worldStateStatus === '崩壊') {
-        const noiseCard = cardLookup('card_noise'); // Assuming 'card_noise' exists
-        if (noiseCard) {
-            finalDeck.push(noiseCard, noiseCard); // Add 2 noise cards
-        }
+    // 2. World Injection (V4 Mechanics)
+    // Using simple status string check. Ideally we pass prosperity_level directly, but string map works.
+
+    // Ruined (Lv1) / Declining (Lv2) -> Noise
+    // NOVICE BLESSING: Skip noise if Level <= 5
+    if ((worldStateStatus === 'Ruined' || worldStateStatus === 'Declining' || worldStateStatus === '崩壊' || worldStateStatus === '衰退') && userLevel > 5) {
+        const noiseCard = cardLookup('card_noise') || { id: 'card_noise', name: 'Noise', type: 'Basic', description: 'Unusable Glitch', cost: 99 };
+        // Ruined = 3 Noise, Declining = 1 Noise
+        const count = (worldStateStatus === 'Ruined' || worldStateStatus === '崩壊') ? 3 : 1;
+        for (let i = 0; i < count; i++) finalDeck.push({ ...noiseCard, source: 'World Hazard' } as any);
+    }
+
+    // Zenith (Lv5) -> Support
+    if (worldStateStatus === 'Zenith' || worldStateStatus === '絶頂') {
+        const supportCard = cardLookup('card_citizen_support') || { id: 'card_citizen_support', name: 'Citizen Aid', type: 'Skill', description: 'Restore 10 HP', cost: 0, power: 10 };
+        finalDeck.push({ ...supportCard, source: 'World Blessing' } as any);
     }
 
     // 3. Basic Validation (Ensure usable cards exist)

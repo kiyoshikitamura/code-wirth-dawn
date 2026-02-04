@@ -221,58 +221,102 @@ export async function updateWorldSimulation() {
         // With the logic above, since we iterate *all* pairs, eventually everyone gets picked unless a nation runs out of quota.
         // Since sum(quota) == totalLocs, it should match exactly.
 
-        // 5. Update Ownership and Calculate Friction
+        // 5. Update Ownership and Calculate Friction (V4)
         for (const loc of locations) {
-            const newOwner = newAssignments[loc.id];
+            // Retrieve latest state to be sure
             const state = stateMap.get(loc.name);
+            const newOwner = newAssignments[loc.id];
             if (!state) continue;
 
-            // Update Owner
+            // Updated Owner logic (from previous step 4)
             if (state.controlling_nation !== newOwner) {
                 logs.push(`[Change] ${loc.name}: ${state.controlling_nation} -> ${newOwner}`);
-                // DB Update to object
                 state.controlling_nation = newOwner;
             }
 
-            // Friction / Prosperity Logic
-            // 5-Level Status
-            const targetAttrField = NATION_ATTRIBUTE_MAP[newOwner] as keyof WorldState;
-            const score = state[targetAttrField] as number;
+            // --- V4 Friction & Prosperity Logic ---
+            // 1. Determine Target Attribute Value (The ideal ideology)
+            // Each Nation has an Ideal Alignment Profile.
+            // Roland: Order=100
+            // Markand: Chaos=100
+            // Karyu: Evil=100
+            // Yato: Justice=100
+            // *Wait, Spec V4 says: "Friction = abs(Nation.attributeValue - Location.currentAttributeValue)"
+            // *It implies we look at the PRIMARY attribute of the nation.
 
-            let currentRank = STATUS_RANK_MAP[state.status] ?? 3; // Default to Prosperous(3) if unknown
+            const NATION_TARGETS: Record<string, { key: keyof WorldState, ideal: number }> = {
+                [NATIONS.ROLAND]: { key: 'order_score', ideal: 100 },
+                [NATIONS.MARKAND]: { key: 'chaos_score', ideal: 100 },
+                [NATIONS.YATO]: { key: 'justice_score', ideal: 100 }, // Spec V1: Yato=Mystic/Justice? Re-check. 
+                // Spec V1 says Yato is Justice(Iron Discipline)? Wait. 
+                // setup_v2.sql says Yato=Justice(20), Evil(80). Karyu=Justice(20), Evil(80). 
+                // Let's re-read setup_v2.sql carefully.
+                // Roland: Order 80, Justice 80.
+                // Markand: Chaos 80, Justice 80.
+                // Karyu: Order 80, Evil 80... wait.
+                // Let's stick to the PRIMARY attribute logic defined in simulation previously:
+                // Roland->Order, Markand->Chaos, Yato->Justice, Karyu->Evil.
+                [NATIONS.KARYU]: { key: 'evil_score', ideal: 100 }
+            };
 
-            // Rules
-            // High Match (>= 60) -> Rank Up (restore/grow)
-            // Low Match (< 40) -> Rank Down (friction)
-            // Else -> No Change?
-
-            // User: "Large divergence -> lower 1 rank. Match -> raise."
-            // Assuming 80 is Init High, 20 is Init Low.
-
-            let change = 0;
-            if (score >= 60) change = 1;
-            else if (score <= 40) change = -1;
-
-            const oldRank = currentRank;
-            currentRank += change;
-
-            // Clamp 0-4
-            if (currentRank > 4) currentRank = 4;
-            if (currentRank < 0) currentRank = 0;
-
-            const newStatus = RANK_STATUS_MAP[currentRank];
-
-            if (state.status !== newStatus) {
-                logs.push(`[Status] ${loc.name}: ${state.status} -> ${newStatus} (Score: ${score})`);
-                state.status = newStatus;
+            const target = NATION_TARGETS[newOwner];
+            if (!target) {
+                // Neutral or unknown
+                continue;
             }
 
-            // 6. DB Update
+            const currentVal = (state[target.key] as number) || 0;
+            const friction = Math.abs(target.ideal - currentVal);
+            // Default max friction is 100 (if current is 0).
+
+            // 2. Determine Trend
+            // Friction 0-20:  Trend towards Zenith (Lv5)
+            // Friction 21-50: Trend towards Prosperous (Lv4)
+            // Friction 51-80: Trend towards Declining (Lv2)
+            // Friction 81+:   Trend towards Ruined (Lv1)
+
+            let targetLevel = 3; // Stagnant default
+            if (friction <= 20) targetLevel = 5;
+            else if (friction <= 50) targetLevel = 4;
+            else if (friction <= 80) targetLevel = 2;
+            else targetLevel = 1;
+
+            // 3. Update Prosperity Level (Slow moving average or Direct?)
+            // Spec says: "24h batch... Recovery/Collapse conditions".
+            // Implementation: Move 1 step towards target level per day.
+
+            // Get current level (default 4 if new col is null)
+            let currentLevel = (state as any).prosperity_level ?? 4;
+
+            const oldLevel = currentLevel;
+
+            if (currentLevel < targetLevel) currentLevel++;
+            else if (currentLevel > targetLevel) currentLevel--;
+
+            // 4. Determine Text Status (Legacy Support)
+            // Map Level 1-5 back to Text Status for UI compatibility
+            const LEVEL_STATUS_MAP: Record<number, string> = {
+                5: LOC_STATUS.ZENITH,     // 絶頂
+                4: LOC_STATUS.PROSPEROUS, // 繁栄
+                3: LOC_STATUS.STAGNANT,   // 停滞
+                2: LOC_STATUS.DECLINING,  // 衰退
+                1: LOC_STATUS.RUINED      // 崩壊
+            };
+            const newStatusText = LEVEL_STATUS_MAP[currentLevel] || LOC_STATUS.PROSPEROUS;
+
+            // Log changes
+            if (oldLevel !== currentLevel) {
+                logs.push(`[Prosperity] ${loc.name}: Lv${oldLevel} -> Lv${currentLevel} (Friction: ${friction})`);
+            }
+
+            // 5. DB Update
             const { error: updateError } = await supabase
                 .from('world_states')
                 .update({
-                    controlling_nation: state.controlling_nation,
-                    status: state.status,
+                    controlling_nation: newOwner,
+                    status: newStatusText,
+                    prosperity_level: currentLevel,   // New V4 Field
+                    last_friction_score: friction,    // New V4 Field
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', state.id);

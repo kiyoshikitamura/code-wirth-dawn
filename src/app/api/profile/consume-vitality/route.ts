@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
 import { getVitalityStatus } from '@/lib/character';
+import { LifeCycleService } from '@/services/lifeCycleService';
 
 // Logic to consume vitality
 export async function POST(req: Request) {
@@ -24,7 +26,7 @@ export async function POST(req: Request) {
         const newVit = Math.max(0, currentVit - amount);
         const diff = currentVit - newVit;
 
-        if (diff === 0) {
+        if (diff === 0 && currentVit === 0) {
             return NextResponse.json({ success: true, message: 'Vitality already 0', vitality: 0, status: 'Retired' });
         }
 
@@ -36,7 +38,27 @@ export async function POST(req: Request) {
 
         if (error) throw error;
 
-        // Determine Status
+        // Death Trigger
+        if (newVit === 0) {
+            console.log("Vitality depleted. Triggering Death Handler...");
+
+            // Use Admin Client for death updates (Historical Logs RLS might require it if not "own" insert)
+            // But usually Profile Update needs to be secure.
+            const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+            const lifeSync = new LifeCycleService(client);
+
+            await lifeSync.handleCharacterDeath(profile.id);
+
+            return NextResponse.json({
+                success: true,
+                message: '生命力が尽き、旅は終わりを迎えた...',
+                vitality: 0,
+                status: 'Retired',
+                is_death_event: true
+            });
+        }
+
+        // Determine Status (Alive)
         const status = getVitalityStatus(newVit);
         const message = `生命力を ${diff} 消費しました。(残り: ${newVit})`;
 
@@ -51,3 +73,5 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
+
+

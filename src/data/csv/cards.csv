@@ -1,0 +1,62 @@
+id,slug,name,type,cost_type,cost_val,effect_val,_comment
+1000,card_rusty_slash,錆びた斬撃,Skill,vitality,5,5,Weak Attack
+1001,card_slash,スラッシュ,Skill,vitality,5,20,Basic Attack
+1002,card_fireball,ファイアボール,Skill,mp,10,30,Magic Attack
+1003,card_heal,ヒール,Skill,mp,15,50,Healing
+1004,card_iron_def,鉄壁,Skill,vitality,8,0,Defense Buff
+1005,card_dagger,護身短剣,Skill,vitality,0,15,Zero Cost Attack
+1010,card_axe,樵の斧,Skill,vitality,10,35,Heavy Attack
+1012,card_scimitar,曲刀術,Skill,vitality,8,25,Bleed Effect
+1015,card_lance,白銀の槍,Skill,vitality,12,30,Pierce
+1018,card_mace,異端審問,Skill,vitality,15,40,Anti-Chaos
+1020,card_iai,居合,Skill,vitality,10,50,Critical
+1025,card_fan,鉄扇,Skill,vitality,8,20,Defensive Attack
+1030,card_kungfu,少林拳,Skill,vitality,5,15,Double Strike
+1031,card_claw,鉄の爪,Skill,vitality,5,20,Bleed
+1032,card_nunchaku,ヌンチャク,Skill,vitality,3,15,Chain Attack
+1035,card_glaive,青龍偃月刀,Skill,vitality,15,45,Area Attack
+1040,card_bow,大弓,Skill,vitality,10,30,Ranged
+1050,card_abacus,商人のそろばん,Skill,gold,10,0,Gold Damage
+1099,card_kusanagi,神器:草薙,Skill,vitality,50,100,AOE Ultimate
+2000,card_first_aid,応急手当,Skill,vitality,0,10,Small Heal
+2001,card_npc_smash,強撃(NPC),Skill,vitality,0,25,NPC Basic
+2002,card_meditation,瞑想,Skill,vitality,0,0,MP Recovery
+2003,card_tea,精神統一,Skill,vitality,0,0,MP Large Rec
+2004,card_barrier,防御結界,Skill,mp,10,0,Barrier
+2005,card_provoke,挑発,Skill,vitality,5,0,Taunt
+2006,card_cloak,砂漠の外套,Passive,none,0,0,Evasion UP
+2007,card_heavy_armor,重装鎧,Passive,none,0,0,Phys Resist
+2008,card_barrier_all,広域防壁,Skill,mp,20,0,Party Barrier
+2009,card_zen,禅,Skill,mp,5,0,Invincible 1 turn
+2010,card_fire_storm,錬金火球,Skill,item,1,40,Alchemy Fire
+2011,card_ice_spear,氷槍,Skill,mp,12,35,Ice Slow
+2012,card_thunder,雷撃,Skill,mp,15,40,Stun
+2015,card_chi_blast,気功砲,Skill,vitality,20,50,Ignore Def
+2016,card_lion_roar,獅子吼,Skill,vitality,20,20,AOE Stun
+2018,card_archmage,大賢者の魔力,Passive,none,0,0,Magic UP
+2020,card_holy_smite,聖なる一撃,Skill,mp,30,80,Holy Damage
+2025,card_crusader,十字軍の誓い,Passive,none,0,0,Buff
+2030,card_poison,猛毒,Skill,item,1,0,Poison
+2035,card_assassinate,暗殺術,Skill,vitality,30,999,Instant Kill
+2036,card_pressure,経絡秘孔,Skill,vitality,15,40,Pierce Def
+2038,card_dim_mak,点穴,Skill,vitality,40,0,Death or Para
+2040,card_shikigami,式神使役,Skill,mp,20,0,Auto Attack
+2045,card_snake,蛇使い,Skill,mp,10,20,Summon Snake
+2050,card_blood_pact,血の契約,Skill,vitality,50,0,Forbidden Buff
+2051,card_vital_strike,命削り,Skill,vitality,90,200,Suicide Attack
+2055,card_berserk,狂戦士,Skill,vitality,10,0,Atk UP Def DOWN
+2058,card_necromancy,死体操作,Skill,mp,50,0,Raise Undead
+2059,card_cannibal,人食い,Skill,vitality,0,0,Eat Enemy
+2060,card_hannya,般若の威圧,Skill,mp,15,0,AOE Fear
+2066,card_cursed_mask,呪いの仮面,Passive,vitality,5,0,Power UP DoT
+2069,card_idol,呪いの偶像,Passive,none,0,0,Bad Luck
+2080,card_lamp,魔人召喚,Skill,mp,50,100,Summon Genie
+2088,card_coin,幸運のコイン,Passive,none,0,0,Crit UP
+2089,card_dice,黄金のサイコロ,Skill,gold,100,0,Gamble
+2090,card_bag,商人の鞄,Passive,none,0,0,Gold Drop UP
+2091,card_backpack,旅人のリュック,Passive,none,0,0,Drop UP
+2092,card_survival,サバイバル,Passive,none,0,0,Camp Rec UP
+2093,card_map,詳細な地図,Passive,none,0,0,Event Avoid
+2095,card_bribe,賄賂,Skill,gold,500,0,Escape
+2098,card_lockpick,解錠術,Skill,item,1,0,Unlock
+2099,card_escape,逃走,Skill,vitality,10,0,Escape Guarantee

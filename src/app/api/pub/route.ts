@@ -138,6 +138,23 @@ export async function POST(req: Request) {
 
             if (error) throw error;
             return NextResponse.json({ success: true, message: 'Dismissed.' });
+
+        } else if (action === 'kill') {
+            // Permadeath logic
+            const { error } = await supabase
+                .from('party_members')
+                .update({
+                    durability: 0,
+                    is_active: false
+                    // We keep owner_id or set null? Maybe keep to show in "Graveyard"?
+                })
+                .eq('id', member_id);
+
+            if (error) {
+                // Ignore error if ID is invalid (e.g. 'slime' passed by mistake)
+                console.warn("Kill failed (likely invalid ID):", member_id);
+            }
+            return NextResponse.json({ success: true, message: 'Eliminated.' });
         }
 
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

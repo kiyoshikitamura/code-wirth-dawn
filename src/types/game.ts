@@ -2,6 +2,12 @@
 export type NationId = 'Roland' | 'Markand' | 'Karyu' | 'Yato' | 'Neutral';
 export type ReputationRank = 'Hero' | 'Famous' | 'Stranger' | 'Rogue' | 'Criminal';
 
+export interface UserHubState {
+  user_id: string;
+  is_in_hub: boolean;
+  last_visit: string;
+}
+
 export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable';
 
 export interface Card {
@@ -12,6 +18,7 @@ export interface Card {
   cost: number;
   power?: number;
   isEquipment?: boolean;
+  source?: string; // e.g. "Party:Wolf"
 }
 
 export interface Enemy {
@@ -51,6 +58,10 @@ export interface WorldState {
   attribute_name: string; // '至高の平穏' etc.
   flavor_text: string;
   background_url?: string;
+
+  // V4 Mechanics
+  prosperity_level?: number;
+  last_friction_score?: number;
 
   // Scores
   order_score: number;
@@ -97,7 +108,8 @@ export interface Reputation {
 
 export interface UserProfile {
   id: string; // uuid
-  title_name: string;
+  name?: string; // Actual User Name
+  title_name: string; // Title/Rank
   avatar_url?: string;
   order_pts: number;
   chaos_pts: number;

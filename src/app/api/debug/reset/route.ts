@@ -135,6 +135,20 @@ export async function POST() {
                 }]);
             if (insertProfileError) console.error("Profile insert failed:", insertProfileError);
         }
+        // 4. Reset Hub States (Set all to True as everyone moves to Hub)
+        const { error: hubError } = await client
+            .from('user_hub_states')
+            .update({ is_in_hub: true })
+            .not('user_id', 'is', null);
+
+        // If update misses (no rows), we rely on lazy init or manual insert if needed via profile loop.
+        // But simpler to just delete all and let lazy init handle? 
+        // No, lazy init defaults to FALSE. We want TRUE.
+        // So we should upsert for existing profiles.
+        // For now, simple update is good. If no row, Profile Reset puts them at Location ID, which World Map should detect.
+
+        if (hubError) console.error("Hub State reset error:", hubError);
+
         if (profileUpdatedCount === 0 && !hasServiceKey) {
             throw new Error("Reset failed: No profiles updated. Missing Admin Key (SUPABASE_SERVICE_ROLE_KEY)?");
         }

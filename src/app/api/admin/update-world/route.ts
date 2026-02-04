@@ -117,6 +117,44 @@ export async function POST(req: Request) {
             controlling_nation = closest;
         }
 
+        // V4 Logic for API Update
+        // Calculate Friction based on new Controlling Nation (or current if not changing)
+        let targetControllingNation = controlling_nation;
+
+        const NATIONS_TARGETS: Record<string, { key: string, ideal: number }> = {
+            'Roland': { key: 'order', ideal: 100 },
+            'Markand': { key: 'chaos', ideal: 100 },
+            'Yato': { key: 'justice', ideal: 100 },
+            'Karyu': { key: 'evil', ideal: 100 }
+        };
+
+        const target = NATIONS_TARGETS[targetControllingNation];
+        let friction = 0;
+        let prosperity_level = currentState?.prosperity_level || 4;
+
+        if (target) {
+            // Map 'order' to 'newOrder' variable name etc.
+            const values = { 'order': newOrder, 'chaos': newChaos, 'justice': newJustice, 'evil': newEvil };
+            const currentVal = values[target.key as keyof typeof values] || 0;
+            friction = Math.abs(target.ideal - currentVal);
+
+            // Recalculate level based on friction immediately? Or leave it for batch?
+            // Let's recalculate immediately for feedback.
+            // But we don't have existing friction trend history here for "slow moving".
+            // Let's stick to the rule: Friction determines Target Level.
+            // If forcing update via API, maybe we jump to Target Level or move 1 step?
+            // Let's move 1 step.
+
+            let targetLevel = 3;
+            if (friction <= 20) targetLevel = 5;
+            else if (friction <= 50) targetLevel = 4;
+            else if (friction <= 80) targetLevel = 2;
+            else targetLevel = 1;
+
+            if (prosperity_level < targetLevel) prosperity_level++;
+            else if (prosperity_level > targetLevel) prosperity_level--;
+        }
+
         // 3. Upsert World State
         const { data: updatedState, error: updateError } = await supabase
             .from('world_states')
@@ -128,7 +166,9 @@ export async function POST(req: Request) {
                 evil_score: newEvil,
                 status,
                 attribute_name,
-                controlling_nation, // Save the new owner
+                controlling_nation,
+                prosperity_level, // V4
+                last_friction_score: friction, // V4
                 updated_at: new Date().toISOString()
             }, { onConflict: 'location_name' })
             .select()

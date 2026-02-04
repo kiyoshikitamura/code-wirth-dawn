@@ -31,20 +31,20 @@ export default function ShopPage() {
         fetchShop();
     }, []);
 
-    const handleBuy = async (item: any) => {
-        if (confirm(`${item.name} を ${item.price}G で購入しますか？`)) {
-            if (gold < item.price) {
+    const handleBuy = async (item: any, finalPrice: number) => {
+        if (confirm(`${item.name} を ${finalPrice}G で購入しますか？`)) {
+            if (gold < finalPrice) {
                 alert("金貨が足りないようだ。");
                 return;
             }
             try {
                 const res = await fetch('/api/shop/purchase', {
                     method: 'POST',
-                    body: JSON.stringify({ item_id: item.id, price: item.price })
+                    body: JSON.stringify({ item_id: item.id, price: finalPrice })
                 });
 
                 if (res.ok) {
-                    spendGold(item.price);
+                    spendGold(finalPrice);
                     if (item.stock_limit !== null) {
                         setItems(prev => prev.map(i =>
                             i.id === item.id ? { ...i, stock_limit: i.stock_limit - 1 } : i
@@ -120,62 +120,87 @@ export default function ShopPage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {items.map((item) => (
-                                <div key={item.id}
-                                    onClick={() => handleSelect(item)}
-                                    className={`flex justify-between items-center p-4 border rounded transition-all group relative cursor-pointer
+                            {items.map((item) => {
+                                // V4 Economy Logic: Inflation
+                                const prosperity = worldState?.prosperity_level ?? 4;
+                                let priceMultiplier = 1.0;
+                                let statusLabel = null;
+
+                                if (prosperity <= 2) {
+                                    // Lv 1 & 2: Inflation
+                                    priceMultiplier = 1.5;
+                                    statusLabel = <span className="text-red-500 text-[10px] ml-2 animate-pulse">(高騰中)</span>;
+                                } else if (prosperity === 5) {
+                                    // Lv 5: Discount or Bonus? Spec says "Rare items". Let's do slight discount for now 0.9?
+                                    // Spec says "Bonus: Rare items". "Normal: Standard Price".
+                                    // Let's keep 1.0 for Lv5 but maybe mark as "Special"?
+                                    statusLabel = <span className="text-amber-300 text-[10px] ml-2 font-bold">★活況</span>;
+                                }
+
+                                const finalPrice = Math.ceil(item.price * priceMultiplier);
+
+                                return (
+                                    <div key={item.id}
+                                        onClick={() => handleSelect(item)}
+                                        className={`flex justify-between items-center p-4 border rounded transition-all group relative cursor-pointer
                                     ${selectedItem?.id === item.id ? 'bg-amber-900/20 border-amber-500 ring-1 ring-amber-500' : 'bg-black/40 border-gray-800 hover:border-amber-600/50 hover:bg-amber-900/10'}`}
-                                >
-                                    <div className="flex items-center justify-center w-12 h-12 bg-gray-900 rounded border border-gray-700 mr-4 shrink-0 text-gray-500">
-                                        {((type) => {
-                                            switch (type) {
-                                                case 'weapon': return <Sword className="w-6 h-6" />;
-                                                case 'armor': return <Shield className="w-6 h-6" />;
-                                                case 'potion': return <FlaskConical className="w-6 h-6" />;
-                                                case 'material': return <Box className="w-6 h-6" />;
-                                                default: return <Package className="w-6 h-6" />;
-                                            }
-                                        })(item.item_type)}
-                                    </div>
-                                    <div className="flex-1 min-w-0 pr-4">
-                                        <div className="font-bold text-gray-200 group-hover:text-amber-200 whitespace-nowrap truncate">{item.name}</div>
-                                        <div className="text-xs text-gray-500 mt-1 whitespace-nowrap truncate">{item.description}</div>
-                                        <div className="flex gap-2 mt-2 text-[10px] tracking-wider">
-                                            <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">
-                                                {((type) => {
-                                                    switch (type) {
-                                                        case 'weapon': return '武器';
-                                                        case 'armor': return '防具';
-                                                        case 'potion': return '道具';
-                                                        case 'material': return '素材';
-                                                        default: return 'その他';
-                                                    }
-                                                })(item.item_type)}
-                                            </span>
-                                            {item.stock_limit !== null && (
-                                                <span className={`${item.stock_limit === 0 ? 'text-red-500' : 'text-amber-500'}`}>
-                                                    在庫: {item.stock_limit}
+                                    >
+                                        <div className="flex items-center justify-center w-12 h-12 bg-gray-900 rounded border border-gray-700 mr-4 shrink-0 text-gray-500">
+                                            {((type) => {
+                                                switch (type) {
+                                                    case 'weapon': return <Sword className="w-6 h-6" />;
+                                                    case 'armor': return <Shield className="w-6 h-6" />;
+                                                    case 'potion': return <FlaskConical className="w-6 h-6" />;
+                                                    case 'material': return <Box className="w-6 h-6" />;
+                                                    default: return <Package className="w-6 h-6" />;
+                                                }
+                                            })(item.item_type)}
+                                        </div>
+                                        <div className="flex-1 min-w-0 pr-4">
+                                            <div className="font-bold text-gray-200 group-hover:text-amber-200 whitespace-nowrap truncate flex items-center">
+                                                {item.name}
+                                                {statusLabel}
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1 whitespace-nowrap truncate">{item.description}</div>
+                                            <div className="flex gap-2 mt-2 text-[10px] tracking-wider">
+                                                <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded">
+                                                    {((type) => {
+                                                        switch (type) {
+                                                            case 'weapon': return '武器';
+                                                            case 'armor': return '防具';
+                                                            case 'potion': return '道具';
+                                                            case 'material': return '素材';
+                                                            default: return 'その他';
+                                                        }
+                                                    })(item.item_type)}
                                                 </span>
-                                            )}
+                                                {item.stock_limit !== null && (
+                                                    <span className={`${item.stock_limit === 0 ? 'text-red-500' : 'text-amber-500'}`}>
+                                                        在庫: {item.stock_limit}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-2 shrink-0">
+                                            <div className={`font-bold font-mono text-lg ${prosperity <= 2 ? 'text-red-400' : 'text-amber-400'}`}>
+                                                {finalPrice} G
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleBuy(item, finalPrice); }}
+                                                disabled={gold < finalPrice || (item.stock_limit !== null && item.stock_limit <= 0)}
+                                                className={`px-4 py-1.5 text-xs font-bold rounded shadow-lg transition-all
+                                                ${gold < finalPrice || (item.stock_limit !== null && item.stock_limit <= 0)
+                                                        ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                                        : 'bg-amber-700 hover:bg-amber-600 text-white hover:scale-105 active:scale-95'
+                                                    }
+                                            `}
+                                            >
+                                                {item.stock_limit === 0 ? 'SOLD OUT' : '購入'}
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <div className="text-amber-400 font-bold font-mono text-lg">{item.price} G</div>
-                                        <button
-                                            onClick={() => handleBuy(item)}
-                                            disabled={gold < item.price || (item.stock_limit !== null && item.stock_limit <= 0)}
-                                            className={`px-4 py-1.5 text-xs font-bold rounded shadow-lg transition-all
-                                                ${gold < item.price || (item.stock_limit !== null && item.stock_limit <= 0)
-                                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                                    : 'bg-amber-700 hover:bg-amber-600 text-white hover:scale-105 active:scale-95'
-                                                }
-                                            `}
-                                        >
-                                            {item.stock_limit === 0 ? 'SOLD OUT' : '購入'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

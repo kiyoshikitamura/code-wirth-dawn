@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { LifeCycleService } from '@/services/lifeCycleService';
 
 export async function POST(req: Request) {
     try {
@@ -21,28 +22,63 @@ export async function POST(req: Request) {
 
         const profileId = profiles?.[0]?.id;
 
-        if (!profileId) {
-            return NextResponse.json({ error: 'No profile found to initialize' }, { status: 404 });
-        }
-
-        const updates: any = {
-            title_name,
+        let updates: any = {
+            name: title_name, // User Input -> Name
+            title_name: '名もなき旅人', // Default Title/Rank
             gender,
             age: age || 20,
             accumulated_days: 0,
-            gold: gold || 1000
+            // gold: gold || 1000, // Determined by processInheritance below
+            vitality: 100, // Ensure defaults
+            hp: 100,
+            is_alive: true // Resurrect
         };
 
         if (current_location_id) updates.current_location_id = current_location_id;
 
-        const { error } = await client
-            .from('user_profiles')
-            .update(updates)
-            .eq('id', profileId);
+        // Inheritance Logic
+        const lifeSync = new LifeCycleService(client);
 
-        if (error) throw error;
+        let inheritedData = { gold: 1000, legacy_points: 0 }; // Default
 
-        return NextResponse.json({ success: true, id: profileId });
+        if (profileId) {
+            // Apply Inheritance if profile exists (Reincarnation flow)
+            const result = await lifeSync.processInheritance(profileId, { gold: gold || 1000 });
+            // result contains user data modified by inheritance logic
+            if (result) {
+                updates = { ...updates, ...result };
+            }
+        } else {
+            updates.gold = 1000; // Fresh start without ID
+        }
+
+        if (!profileId) {
+            // INSERT Mode
+            console.log("No profile found. Creating new profile...");
+            // We need a UUID. Supabase might gen it or we gen it.
+            // But we need auth.uid() usually.
+            // Since this is admin bypass/local mode, we can generate a random UUID or use a fixed one if auth is mocked.
+            // We'll let Postgres gen it if column is default, but typically user_profiles.id is linked to auth.users.id.
+            // If we insert here with random UUID, it won't match any auth user.
+            // For "Demo/Local", this is fine.
+            const { data: newProfile, error: insertError } = await client
+                .from('user_profiles')
+                .insert([updates])
+                .select('id')
+                .single();
+
+            if (insertError) throw insertError;
+            return NextResponse.json({ success: true, id: newProfile.id });
+        } else {
+            // UPDATE Mode
+            const { error } = await client
+                .from('user_profiles')
+                .update(updates)
+                .eq('id', profileId);
+
+            if (error) throw error;
+            return NextResponse.json({ success: true, id: profileId });
+        }
 
     } catch (err: any) {
         console.error("Profile Init Error:", err);

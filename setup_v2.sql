@@ -1,13 +1,15 @@
 -- 1. Reset
+DROP TABLE IF EXISTS npcs CASCADE;
+DROP TABLE IF EXISTS party_members CASCADE;
 DROP TABLE IF EXISTS world_history;
 DROP TABLE IF EXISTS inventory;
 DROP TABLE IF EXISTS action_logs;
 DROP TABLE IF EXISTS scenarios;
 DROP TABLE IF EXISTS items;
 DROP TABLE IF EXISTS reputations;
-DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS user_profiles CASCADE;
 DROP TABLE IF EXISTS world_states;
-DROP TABLE IF EXISTS locations;
+DROP TABLE IF EXISTS locations CASCADE;
 
 -- 2. Locations
 CREATE TABLE locations (
@@ -31,6 +33,11 @@ CREATE TABLE world_states (
   controlling_nation TEXT DEFAULT 'Neutral',
   flavor_text TEXT DEFAULT '静かな日常。',
   background_url TEXT DEFAULT '/backgrounds/default.jpg',
+  
+  -- V4 Mechanics
+  prosperity_level INTEGER DEFAULT 4, -- 1: Ruined, 2: Declining, 3: Stagnant, 4: Prosperous, 5: Zenith
+  last_friction_score INTEGER DEFAULT 0,
+  
   order_score INTEGER DEFAULT 10,
   chaos_score INTEGER DEFAULT 10,
   justice_score INTEGER DEFAULT 10,
@@ -41,8 +48,9 @@ CREATE TABLE world_states (
 
 -- 4. User Profiles
 CREATE TABLE user_profiles (
-  id uuid PRIMARY KEY,
-  title_name TEXT DEFAULT '名もなき旅人',
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT DEFAULT '名もなき旅人', -- Actual User Name
+  title_name TEXT DEFAULT '名もなき旅人', -- Rank/Title System
   avatar_url TEXT DEFAULT '/avatars/adventurer.jpg',
   order_pts INTEGER DEFAULT 0,
   chaos_pts INTEGER DEFAULT 0,
@@ -56,6 +64,7 @@ CREATE TABLE user_profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
   -- Added Parameters
+  gender TEXT DEFAULT 'Unknown', -- Added missing column
   vitality INTEGER DEFAULT 100,
   praise_count INTEGER DEFAULT 0,
   prayer_count INTEGER DEFAULT 0,
@@ -107,6 +116,35 @@ CREATE TABLE items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 7.5 NPCS & Party (Restored)
+CREATE TABLE npcs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  gender TEXT DEFAULT 'Unknown',
+  job_class TEXT,
+  current_location_id uuid REFERENCES locations(id),
+  hired_by_user_id uuid, -- Link to user_profiles if hired (Soft FK to allow NULL/Cascade handling manually or safely)
+  
+  -- Stats
+  durability INTEGER DEFAULT 100,
+  max_durability INTEGER DEFAULT 100,
+  loyalty INTEGER DEFAULT 50,
+  cover_rate INTEGER DEFAULT 10,
+  inject_cards TEXT[] DEFAULT '{}',
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE party_members (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  owner_id uuid REFERENCES user_profiles(id),
+  name TEXT NOT NULL,
+  durability INTEGER DEFAULT 100,
+  inject_cards TEXT[] DEFAULT '{}',
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 8. Inventory
 CREATE TABLE inventory (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -135,17 +173,6 @@ CREATE TABLE scenarios (
   conditions JSONB DEFAULT '{}'::jsonb,
   rewards JSONB DEFAULT '{}'::jsonb,
   flow_nodes JSONB DEFAULT '[]'::jsonb,
-  
-  -- Legacy / Flat columns (kept for compatibility or basic display)
-  required_status TEXT,
-  required_attribute TEXT,
-  reward_gold INTEGER DEFAULT 100,
-  
-  order_impact INTEGER DEFAULT 0,
-  chaos_impact INTEGER DEFAULT 0,
-  justice_impact INTEGER DEFAULT 0,
-  evil_impact INTEGER DEFAULT 0,
-  rep_impact INTEGER DEFAULT 0,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -209,6 +236,22 @@ INSERT INTO items (name, description, price, item_type, stock_limit) VALUES
 ('旅人の剣', '基本装備', 500, 'equipment', 1);
 
 -- D. Scenarios
-INSERT INTO scenarios (title, description, client_name, reward_gold, rep_impact, order_impact) VALUES
-('スライム退治', '村の平和を守れ', '村長', 100, 10, 5),
-('密輸の護衛', '危険な仕事', '闇商人', 300, -20, -10);
+-- Converted to V3 JSONB format
+INSERT INTO scenarios (title, description, client_name, type, rewards, conditions, flow_nodes) VALUES
+(
+  'スライム退治', 
+  '村の平和を守れ', 
+  '村長',
+  'Subjugation',
+  '{"gold": 100, "alignment_shift": {"order": 5, "justice": 5}, "reputation": 10}'::jsonb,
+  '{}'::jsonb,
+  '[{"id": "start", "text": "森の奥でスライムの群れを発見した。", "choices": [{"label": "戦いを挑む", "next_node": "battle"}, {"label": "見逃す", "next_node": "COMPLETED"}]}]'::jsonb
+),
+(
+  '密輸の護衛', 
+  '危険な仕事', 
+  '闇商人',
+  'Delivery',
+  '{"gold": 300, "alignment_shift": {"chaos": 10, "evil": 10}, "reputation": -20}'::jsonb,
+  '{}'::jsonb
+);

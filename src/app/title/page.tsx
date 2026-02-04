@@ -27,22 +27,26 @@ export default function TitlePage() {
         setStep('CREATING');
 
         try {
-            // If userProfile is null (new user), we might need to insert?
-            // Existing logic assumes 'user_profiles' exists via template/auth.
-            // Safe fallback: Update if exists, Input if not?
-            // For now assuming existing restricted profile from 'reset'.
+            // Get Auth User
+            const { data: { user } } = await supabase.auth.getUser();
+            const hubId = await getHubId();
 
-            // Call server API to bypass potential RLS issues with anonymous users
+            if (!hubId) {
+                console.warn("Hub location not found. Defaulting to null.");
+            }
+
+            // Call server API
             const res = await fetch('/api/profile/init', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    user_id: user?.id, // Pass Auth ID if available
                     title_name: name,
                     gender: gender,
                     age: 20,
                     accumulated_days: 0,
                     gold: 1000,
-                    current_location_id: (await getHubId())
+                    current_location_id: hubId
                 })
             });
 
@@ -52,20 +56,31 @@ export default function TitlePage() {
             }
 
             // Long animation
-            await new Promise(r => setTimeout(r, 4000));
+            await new Promise(r => setTimeout(r, 5500));
 
             await fetchUserProfile();
             router.push('/inn');
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert("旅立ちの準備に失敗しました。再試行してください。");
+            alert(`旅立ちの準備に失敗しました: ${err.message}`);
             setStep('FORM');
         }
     };
 
     const getHubId = async () => {
-        const { data } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').single();
-        return data?.id;
+        try {
+            const { data, error } = await supabase
+                .from('locations')
+                .select('id')
+                .eq('name', '名もなき旅人の拠所')
+                .maybeSingle(); // Safer than single()
+
+            if (error) console.error("Location Fetch Error:", error);
+            return data?.id;
+        } catch (e) {
+            console.error("Unknown error fetching hub:", e);
+            return null;
+        }
     }
 
     if (step === 'CREATING') {
@@ -88,6 +103,7 @@ export default function TitlePage() {
                     <p className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>&gt; 因果律の定着を確認...</p>
                     <p className="animate-fade-in-up" style={{ animationDelay: '1.5s' }}>&gt; 歴史の編纂を開始...</p>
                     <p className="animate-fade-in-up" style={{ animationDelay: '2.5s' }}>&gt; 魂の座標を確定。</p>
+                    <p className="animate-fade-in-up" style={{ animationDelay: '3.5s' }}>&gt; 地図を広げています...</p>
                 </div>
 
                 <div className="absolute bottom-10 w-64 h-1 bg-gray-800 rounded-full overflow-hidden">

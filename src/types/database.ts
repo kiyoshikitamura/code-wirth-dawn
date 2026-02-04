@@ -12,24 +12,11 @@ export interface UserProfileDB {
         justice: number;
         evil: number;
     };
-    // ... other fields implicitly
+    gold: number;
+    current_location_id?: string;
+    // ...
 }
 
-export interface PartyMemberDB {
-    id: string;
-    owner_id: string;
-    name: string;
-    gender: 'Male' | 'Female' | 'Unknown';
-    origin: 'system' | 'ghost';
-    job_class: string;
-    durability: number;
-    max_durability: number;
-    loyalty: number;
-    cover_rate: number;
-    inject_cards: string[];
-    is_active: boolean;
-    created_at?: string;
-}
 
 // --- Quest System v3 Types ---
 
@@ -45,6 +32,9 @@ export interface ScenarioCondition {
     };
     required_reputation?: number; // Min reputation at the location
     gender?: 'Male' | 'Female';
+    min_prosperity?: number;
+    event_trigger?: string;
+    required_alignment?: Record<string, number>;
 }
 
 export interface ScenarioReward {
@@ -78,11 +68,13 @@ export interface ScenarioFlowNode {
 }
 
 export interface ScenarioDB {
-    id: string;
+    id: number; // Changed to number (BIGINT)
+    slug: string; // Added
     title: string;
     description: string; // Initial summary
     client_name: string;
     type: 'Subjugation' | 'Delivery' | 'Politics' | 'Dungeon' | 'Other';
+    difficulty: number; // Added
     time_cost: number;
     ruling_nation_id?: string | null;
     location_id?: string | null;
@@ -107,4 +99,57 @@ export interface LocationDB {
         evil: number;
     };
     // ...
+}
+
+
+export interface PartyMemberDB {
+    id: number; // Changed to number (BIGINT)
+    owner_id: string | null; // UUID or null for pool
+    slug: string; // Master template slug
+    name: string;
+    gender: 'Male' | 'Female' | 'Unknown';
+    origin: 'system' | 'ghost' | 'shadow_active';
+    job_class: string;
+    durability: number;
+    max_durability: number;
+    loyalty: number;
+    cover_rate: number;
+    inject_cards: number[]; // Array of Card IDs
+    is_active: boolean;
+    created_at?: string;
+}
+
+// ...
+
+export interface ItemDB {
+    id: number; // Changed to number (BIGINT)
+    slug: string;
+    name: string;
+    type: 'consumable' | 'skill' | 'equipment';
+    base_price: number;
+    effect_data: any;
+
+    // Availability
+    nation_tags: string[];
+    min_prosperity: number;
+    required_alignment: {
+        order?: number;
+        chaos?: number;
+        justice?: number;
+        evil?: number;
+    };
+    linked_card_id?: number; // FK to Cards
+    is_black_market: boolean;
+    created_at?: string;
+}
+
+export interface CardDB {
+    id: number;
+    slug: string;
+    name: string;
+    type: string;
+    cost_type: 'vitality' | 'mp';
+    cost_val: number;
+    effect_val: number;
+    created_at?: string;
 }
