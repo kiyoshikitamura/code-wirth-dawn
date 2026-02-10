@@ -122,7 +122,7 @@ export class LifeCycleService {
             is_alive: true,
             vitality: 100,
             accumulated_days: 0,
-            age: 20
+            age: newProfileData.age || 20
         };
 
         // If subscriber, maybe allow item inheritance (Not implemented yet)
