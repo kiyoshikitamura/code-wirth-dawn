@@ -12,6 +12,8 @@ export async function POST(req: Request) {
         // This is crucial for "Demo Mode" or initial setup where Auth might not be strictly 1:1
         const client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;
 
+        console.log("Init Profile Body:", body);
+
         // Find the profile to update.
         // Logic matches GET /api/profile: Find any profile or specific one if Auth exists.
         // For this local single-player style:

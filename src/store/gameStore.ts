@@ -149,10 +149,49 @@ export const useGameStore = create<GameState>()(
                     isEquipment: true,
                 }));
 
+                // Fetch Party Cards
+                // We need to fetch the actual card definitions for the party members' inject_cards IDs
+                // Collect all card IDs needed
+                const neededCardIds = new Set<string>();
+                partyMembers.forEach(p => {
+                    p.inject_cards?.forEach(id => neededCardIds.add(String(id)));
+                });
+
+                // Fetch from DB or use CARD_POOL if not strictly DB based yet?
+                // For now, let's try to fetch from DB 'cards' table if we have it, or fall back to CARD_POOL if IDs match.
+                // The IDs in inject_cards are Integers (from DB). CARD_POOL uses Strings 'c1'.
+                // If ShadowService uses real DB IDs, we must fetch from DB.
+
+                let partyCardPool: Card[] = [];
+                if (neededCardIds.size > 0) {
+                    const { data: dbCards } = await supabase
+                        .from('cards')
+                        .select('*')
+                        .in('id', Array.from(neededCardIds));
+
+                    if (dbCards) {
+                        partyCardPool = dbCards.map(c => ({
+                            id: String(c.id),
+                            name: c.name,
+                            type: c.type, // Map DB type to Card type
+                            description: c.description,
+                            cost: c.cost,
+                            power: c.power || 0
+                        })) as Card[];
+                    }
+                }
+
                 const initialDeck = buildBattleDeck(
                     equippedCards,
                     partyMembers,
-                    (id) => CARD_POOL.find(c => c.id === id),
+                    (id) => {
+                        // Look in Party Pool first (Real DB IDs)
+                        const fromPool = partyCardPool.find(c => c.id === String(id));
+                        if (fromPool) return fromPool;
+
+                        // Then fallback to Dummy Pool (for World/Basic cards like 'card_noise')
+                        return CARD_POOL.find(c => c.id === String(id));
+                    },
                     worldState?.status, // Pass World State
                     userProfile?.level || 1 // Pass User Level (Novice Blessing)
                 );

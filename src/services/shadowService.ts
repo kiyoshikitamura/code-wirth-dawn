@@ -30,6 +30,16 @@ export class ShadowService {
     async findShadowsAtLocation(locationId: string, currentUserId: string): Promise<ShadowSummary[]> {
         const results: ShadowSummary[] = [];
 
+        // 0. Fetch Current Party to Exclude
+        const { data: myParty } = await this.supabase
+            .from('party_members')
+            .select('source_user_id, name, origin_type')
+            .eq('owner_id', currentUserId)
+            .eq('is_active', true);
+
+        const hiredSourceIds = new Set(myParty?.map(p => p.source_user_id).filter(Boolean));
+        const hiredNames = new Set(myParty?.map(p => p.name));
+
         // 1. Fetch Active Shadows (Players currently here)
         try {
             const { data: activeUsers } = await this.supabase
@@ -43,6 +53,8 @@ export class ShadowService {
 
             if (activeUsers) {
                 for (const u of activeUsers) {
+                    if (hiredSourceIds.has(u.id)) continue; // Already hired
+
                     const fee = (u.level || 1) * 100;
                     results.push({
                         profile_id: u.id,
@@ -71,6 +83,8 @@ export class ShadowService {
 
             if (heroicLogs) {
                 for (const log of heroicLogs) {
+                    if (hiredSourceIds.has(log.user_id)) continue; // Already hired
+
                     const d = log.data;
                     results.push({
                         profile_id: log.user_id,
@@ -89,9 +103,12 @@ export class ShadowService {
             console.error("ShadowService: Failed to fetch heroic shadows", e);
         }
 
-        // 3. System Mercenaries (Always add these regardless of DB errors)
+        // 3. System Mercenaries (Always add active ones if not hired)
         const systems = this.generateSystemMercenaries();
-        results.push(...systems);
+        for (const sys of systems) {
+            if (hiredNames.has(sys.name)) continue; // Already hired by name
+            results.push(sys);
+        }
 
         return results;
     }

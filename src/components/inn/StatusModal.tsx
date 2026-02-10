@@ -206,10 +206,85 @@ export default function StatusModal({ onClose }: StatusModalProps) {
                                 </div>
                             )}
                         </section>
+
+                        {/* Party Members */}
+                        <section className="bg-black/40 border border-gray-700 p-6 rounded-lg shadow-lg">
+                            <h2 className="text-lg font-bold text-blue-400 mb-4 border-b border-gray-700 pb-2 flex items-center gap-2">
+                                <Users className="w-4 h-4" /> パーティメンバー
+                            </h2>
+                            <PartyList userProfile={userProfile} />
+                        </section>
                     </div>
 
                 </div>
             </div>
+        </div>
+    );
+}
+
+function PartyList({ userProfile }: { userProfile: any }) {
+    const [party, setParty] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        if (!userProfile?.id) return;
+
+        // Dynamically import supabase to avoid build issues if not compliant? 
+        // Or just fetch via API if we want to be safe. 
+        // For MVP, client-side supabase is fine if configured.
+        // Assuming we can use the same pattern as gameStore imports or just fetch from an API?
+        // Let's use a quick fetch to a new endpoint or just use supabase-js if available.
+        // Since we don't have supabase imported in this file, let's add the import or use an API.
+        // gameStore uses '@/lib/supabase'.
+
+        import('@/lib/supabase').then(({ supabase }) => {
+            supabase
+                .from('party_members')
+                .select('*')
+                .eq('owner_id', userProfile.id)
+                .eq('is_active', true)
+                .then(({ data }) => {
+                    setParty(data || []);
+                    setLoading(false);
+                });
+        });
+    }, [userProfile?.id]);
+
+    const handleDismiss = async (memberId: string, name: string) => {
+        if (!confirm(`${name}と別れますか？`)) return;
+
+        try {
+            const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE' });
+            if (res.ok) {
+                setParty(prev => prev.filter(p => p.id !== memberId));
+            } else {
+                alert('別れに失敗しました。');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('エラーが発生しました。');
+        }
+    };
+
+    if (loading) return <div className="text-xs text-gray-500">Loading...</div>;
+    if (party.length === 0) return <div className="text-xs text-gray-500 py-4 text-center">同行者はいません。</div>;
+
+    return (
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
+            {party.map(member => (
+                <div key={member.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800">
+                    <div>
+                        <div className="text-sm text-blue-300 font-bold">{member.name}</div>
+                        <div className="text-xs text-gray-500">{member.job_class || 'Adventurer'} / Durability: {member.durability}</div>
+                    </div>
+                    <button
+                        onClick={() => handleDismiss(member.id, member.name)}
+                        className="text-xs px-2 py-1 bg-red-900/30 text-red-400 border border-red-800 rounded hover:bg-red-900/50"
+                    >
+                        別れる
+                    </button>
+                </div>
+            ))}
         </div>
     );
 }
