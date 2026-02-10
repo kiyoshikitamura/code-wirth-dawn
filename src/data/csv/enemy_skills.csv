@@ -1,0 +1,6 @@
+
+id,slug,name,effect_type,value,inject_card_id,description
+1,bite,噛みつき,damage,10,,基本攻撃
+2,drain,吸血,drain_vit,5,,体力を奪う
+3,charm,誘惑,inject,0,9002,魅了カードを混ぜる
+90,basic_attack,攻撃,damage,10,,

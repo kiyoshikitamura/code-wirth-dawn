@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { ItemDB, UserProfileDB, LocationDB } from '@/types/database';
+import { ItemDB, UserProfileDB, LocationDB } from '@/types/game';
 
 // Helper to get user profile (Mock session)
 async function getUserProfile() {

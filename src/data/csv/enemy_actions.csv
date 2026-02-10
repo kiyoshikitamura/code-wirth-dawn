@@ -1,0 +1,6 @@
+
+id,enemy_slug,skill_slug,prob,condition_type,condition_value
+1,slime,bite,100,,
+2,goblin,bite,80,,
+3,succubus,charm,60,target_gender,Male
+4,succubus,drain,40,,

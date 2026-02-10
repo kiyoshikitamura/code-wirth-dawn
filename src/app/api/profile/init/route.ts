@@ -6,7 +6,7 @@ import { LifeCycleService } from '@/services/lifeCycleService';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title_name, gender, age, gold, current_location_id } = body;
+        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost } = body;
 
         // Use Admin client to bypass RLS for this specific initialization step
         // This is crucial for "Demo Mode" or initial setup where Auth might not be strictly 1:1
@@ -27,10 +27,15 @@ export async function POST(req: Request) {
             title_name: '名もなき旅人', // Default Title/Rank
             gender,
             age: age || 20,
+            birth_date: birth_date || null, // V9.2
             accumulated_days: 0,
             // gold: gold || 1000, // Determined by processInheritance below
-            vitality: 100, // Ensure defaults
-            hp: 100,
+            vitality: max_vitality || 100, // Ensure defaults or use calculated
+            max_vitality: max_vitality || 100,
+            hp: max_hp || 100,
+            max_hp: max_hp || 100,
+            initial_hp: max_hp || 100, // Added for Spec v8.2 scaling
+            max_deck_cost: max_deck_cost || 10,
             is_alive: true // Resurrect
         };
 

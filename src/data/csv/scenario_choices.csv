@@ -1,0 +1,8 @@
+quest_id,parent_node,label,next_node,cost_type,cost_val,req_type,req_val
+1001,start,森に入る,battle_start,,,
+1001,start,引き返す,end_fail,,,
+1001,battle_start,戦う,win,vitality,5,,
+1001,win,進む,end_success,,,
+1002,start,扉を調べる,check_open,,,
+1002,check_open,鍵開けを試みる (要:盗賊ギルド),end_success,vitality,2,flag,guild_thief
+1002,check_open,諦める,end_fail,,,

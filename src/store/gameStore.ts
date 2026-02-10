@@ -51,6 +51,7 @@ interface GameState {
     selectScenario: (scenario: Scenario | null) => void;
     startBattle: (enemy: Enemy) => void;
     attackEnemy: (card?: Card) => Promise<void>;
+    waitTurn: () => Promise<void>;
     endTurn: () => Promise<void>;
     resetBattle: () => void;
 
@@ -58,6 +59,11 @@ interface GameState {
     inventory: InventoryItem[];
     fetchInventory: () => Promise<void>;
     toggleEquip: (itemId: string, currentEquip: boolean) => Promise<void>;
+    clearStorage: () => void;
+
+    // UI State
+    showStatus: boolean;
+    setShowStatus: (show: boolean) => void;
 
     // Hand Management
     deck: Card[];
@@ -71,9 +77,11 @@ interface GameState {
     processEnemyTurn: (damage: number) => Promise<void>;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
     fleeBattle: () => void;
-    clearStorage: () => void;
 }
 
+// export const useGameStore = create<GameState>()(
+//     persist(
+//         (set, get) => ({
 export const useGameStore = create<GameState>()(
     persist(
         (set, get) => ({
@@ -88,12 +96,16 @@ export const useGameStore = create<GameState>()(
             discardPile: [],
             hand: [],
 
+            showStatus: false,
+            setShowStatus: (show) => set({ showStatus: show }),
+
             battleState: {
                 enemy: null,
                 party: [],
                 turn: 1,
                 messages: [],
                 isVictory: false,
+                isDefeat: false,
                 cooldowns: {},
                 currentTactic: 'Aggressive'
             },
@@ -108,6 +120,7 @@ export const useGameStore = create<GameState>()(
             initialize: () => get().initializeBattle(),
 
             startBattle: async (enemy: Enemy) => {
+                console.log("[GameStore] startBattle called for:", enemy.name);
                 // 1. Fetch Party from DB (party_members table)
                 let partyMembers: PartyMember[] = [];
                 const { userProfile } = get(); // Moved to top scope
@@ -127,12 +140,12 @@ export const useGameStore = create<GameState>()(
                 const { inventory, worldState } = get();
                 // Map inventory equipped items to Cards
                 const equippedCards = (inventory || []).filter(i => i.is_equipped).map(i => ({
-                    id: i.id, // Inventory ID as Card ID
+                    id: String(i.id), // Inventory ID as Card ID
                     name: i.name,
                     type: (i.is_skill ? 'Skill' : 'Item') as Card['type'],
-                    description: i.description,
+                    description: i.effect_data?.description || '',
                     cost: 0,
-                    power: i.power_value,
+                    power: i.effect_data?.power || 0,
                     isEquipment: true,
                 }));
 
@@ -288,9 +301,9 @@ export const useGameStore = create<GameState>()(
                         // Fallback / Initial State if DB is empty or error and init failed
                         console.warn("Using fallback local state.");
                         const dummyState: WorldState = {
-                            id: WORLD_ID,
                             location_name: targetLocationName,
                             status: '繁栄', // Default per new schema
+                            prosperity_level: 3,
                             order_score: 10,
                             chaos_score: 10,
                             justice_score: 10,
@@ -367,7 +380,7 @@ export const useGameStore = create<GameState>()(
                     // Optimistic update
                     const { inventory } = get();
                     const newInventory = inventory.map(i =>
-                        i.id === itemId ? { ...i, is_equipped: !currentEquip } : i
+                        String(i.id) === itemId ? { ...i, is_equipped: !currentEquip } : i
                     );
                     set({ inventory: newInventory });
 
@@ -433,9 +446,22 @@ export const useGameStore = create<GameState>()(
                 let nextCooldowns = { ...battleState.cooldowns };
 
                 if (card) {
-                    if (card.power) {
-                        damage = card.power;
+                    damage = card.power ?? 0;
+                    if (damage > 0) {
+                        // Damage Mitigation (Player -> Enemy)
+                        // Magic/Penetrate ignore DEF. Physical/Damage use DEF.
+                        if (card.type === 'Skill' || card.type === 'Item') {
+                            // Simplified check: assume all non-magic are physical for now
+                            // Future: Add damage_type to Card interface
+                            const def = battleState.enemy.def || 0;
+                            // Heuristic: If name contains 'Magic' or 'Fire', ignore DEF?
+                            // consistently: Max(1, Damage - Def)
+                            const mitigation = def;
+                            damage = Math.max(1, damage - mitigation);
+                        }
                         logMsg = `${card.name}を使用！ ${damage} のダメージ！`;
+                    } else {
+                        logMsg = `${card.name}を使用！`;
                     }
 
                     // 2. Handle Item Consumption
@@ -452,13 +478,14 @@ export const useGameStore = create<GameState>()(
                                 });
                                 // Decrease quantity in local inventory store
                                 const { inventory } = get();
-                                const targetItem = inventory.find(i => i.id === card.id);
+                                const targetItem = inventory.find(i => String(i.id) === card.id);
                                 if (targetItem) {
                                     if (targetItem.quantity > 1) {
-                                        const newInv = inventory.map(i => i.id === card.id ? { ...i, quantity: i.quantity - 1 } : i);
+                                        const newInv = inventory.map(i => String(i.id) === card.id ? { ...i, quantity: i.quantity - 1 } : i);
                                         set({ inventory: newInv });
                                     } else {
-                                        set({ inventory: inventory.filter(i => i.id !== card.id) });
+                                        {/* @ts-ignore */ }
+                                        set({ inventory: inventory.filter(i => String(i.id) !== card.id) });
                                     }
                                 }
                             } catch (e) { console.error(e); }
@@ -549,16 +576,20 @@ export const useGameStore = create<GameState>()(
                 const { battleState, userProfile } = get();
                 if (battleState.isVictory || !battleState.enemy) return;
 
-                let newMessages = [...battleState.messages];
-                const newParty = [...battleState.party];
-                let enemyHp = battleState.enemy.hp;
+                let newMessages = [...battleState.messages]; // Don't re-read from state, use passed? No, get() is fresh.
+                // Re-fetch latest from store to be safe
+                const currentBattle = get().battleState;
+                if (!currentBattle.enemy) return;
+
+                let enemyHp = currentBattle.enemy.hp;
+                const enemyDef = currentBattle.enemy.def || 0;
 
                 // Iterate active members
-                for (const member of newParty) {
+                for (const member of currentBattle.party) {
                     if (!member.is_active || member.durability <= 0) continue;
 
                     // Simple AI based on Class
-                    if (member.job_class === 'Cleric' || member.job_class === 'Healer') {
+                    if (member.job_class === 'Cleric' || member.job_class === 'Healer' || member.job_class === 'Priest') {
                         // Heal Logic
                         const healAmount = 15;
                         const currentHp = userProfile?.hp || 0;
@@ -578,12 +609,19 @@ export const useGameStore = create<GameState>()(
                     } else {
                         // Attack Logic (Warrior, Mage, Rogue, etc)
                         // Damage Calculation (Base on class or fixed range)
-                        let dmg = 8 + Math.floor(Math.random() * 5); // 8-12
-                        if (member.job_class === 'Warrior') dmg += 5;
-                        if (member.job_class === 'Mage') dmg += 8; // Mage hits hard but fragile
+                        let baseDmg = 8 + Math.floor(Math.random() * 5); // 8-12
+                        let isMagic = false;
 
-                        enemyHp = Math.max(0, enemyHp - dmg);
-                        newMessages.push(`${member.name}の援護攻撃！ ${dmg} のダメージ！`);
+                        if (member.job_class === 'Warrior') baseDmg += 5;
+                        if (member.job_class === 'Mage') { baseDmg += 8; isMagic = true; } // Mage hits hard but fragile
+
+                        let finalDmg = baseDmg;
+                        if (!isMagic) {
+                            finalDmg = Math.max(1, baseDmg - enemyDef);
+                        }
+
+                        enemyHp = Math.max(0, enemyHp - finalDmg);
+                        newMessages.push(`${member.name}の援護攻撃！ ${finalDmg} のダメージ！`);
 
                         if (enemyHp <= 0) break; // Enemy died
                     }
@@ -600,15 +638,8 @@ export const useGameStore = create<GameState>()(
 
                 // Check Victory
                 if (enemyHp <= 0) {
-                    // trigger victory logic (Re-use victory logic from attackEnemy? Or just call attackEnemy with 0 dmg? 
-                    // Better: Extract victory logic or just copy-paste for safety for now, or call a verifyVictory helper)
-                    // Since victory logic in attackEnemy is complex (API calls, rewards), let's TRY to trigger it by calling attackEnemy logic or just rely on next turn check?
-                    // NO, we must handle it here or the battle hangs.
-                    // IMPORTANT: DRY principle. But `attackEnemy` is mixed.
-                    // Let's manually trigger the Victory Messages and API call here.
-
                     const { selectedScenario } = get();
-                    const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！'];
+                    const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！']; // Use local variable
 
                     try {
                         const reportPayload = {
@@ -625,7 +656,7 @@ export const useGameStore = create<GameState>()(
                         await get().fetchWorldState();
                         await get().fetchUserProfile();
 
-                        const partyCount = (newParty.length || 0) + 1;
+                        const partyCount = (currentBattle.party.length || 0) + 1; // Fix: use currentBattle.party
                         const rewardGold = selectedScenario?.reward_gold || 50;
                         const reward = Math.floor(rewardGold / partyCount);
                         get().addGold(reward);
@@ -637,6 +668,8 @@ export const useGameStore = create<GameState>()(
                             method: 'POST',
                             body: JSON.stringify({ gold: get().gold })
                         }).catch(console.error);
+
+                        finalMessages.push('あなたの活躍が、世界の情勢に微かな変化をもたらしました。'); // Add missing message
 
                     } catch (e) { console.error(e); }
 
@@ -659,15 +692,29 @@ export const useGameStore = create<GameState>()(
                 // 1. Route Damage
                 const result = routeDamage(battleState.party, damage);
 
-                let newMessages = [...battleState.messages, result.message];
+                let newMessages = [...battleState.messages]; // Don't push yet, will modify message
                 let newParty = [...battleState.party];
                 let newUserProfile = userProfile ? { ...userProfile } : null;
 
-                // 2. Apply Damage to Target
+                // 2. Apply Damage to Target with DEF Mitigation
                 if (result.target === 'PartyMember' && result.targetId) {
                     newParty = newParty.map(p => {
                         if (p.id === result.targetId) {
-                            const newDur = Math.max(0, p.durability - result.damage);
+                            // Apply DEF
+                            const def = p.def || 0;
+                            const mitigatedDamage = Math.max(1, result.damage - def);
+
+                            const newDur = Math.max(0, p.durability - mitigatedDamage);
+
+                            // Update Message
+                            // result.message is like "X takes the hit! (-10 Durability)"
+                            // We need to reconstruct or append
+                            if (result.isCovered) {
+                                newMessages.push(`${p.name} がかばった！ ${mitigatedDamage} のダメージ (DEF -${def})`);
+                            } else {
+                                newMessages.push(`${p.name} に ${mitigatedDamage} のダメージ (DEF -${def})`);
+                            }
+
                             if (newDur <= 0) {
                                 newMessages.push(`${p.name} は力尽きた... (LOST)`);
                                 // Persistent Death
@@ -682,8 +729,14 @@ export const useGameStore = create<GameState>()(
                     });
                 } else {
                     // Player Hit
+                    // Apply DEF
+                    const def = newUserProfile?.def || 0;
+                    const mitigatedDamage = Math.max(1, result.damage - def);
+
+                    newMessages.push(`あなたに ${mitigatedDamage} のダメージ (DEF -${def})`);
+
                     if (newUserProfile) {
-                        const newHp = Math.max(0, (newUserProfile.hp || 100) - result.damage);
+                        const newHp = Math.max(0, (newUserProfile.hp || 100) - mitigatedDamage);
                         newUserProfile.hp = newHp;
 
                         // Sync HP
@@ -724,6 +777,41 @@ export const useGameStore = create<GameState>()(
                 }));
             },
 
+            waitTurn: async () => {
+                const { battleState, userProfile } = get();
+                if (battleState.isVictory || battleState.isDefeat) return;
+
+                // 1. Recover MP (Small amount, e.g., 2)
+                const currentMp = userProfile?.mp ?? 0;
+                const maxMp = userProfile?.max_mp ?? 100;
+                const newMp = Math.min(maxMp, currentMp + 2);
+
+                if (userProfile && newMp !== currentMp) {
+                    set({ userProfile: { ...userProfile, mp: newMp } });
+                    fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ mp: newMp }) }).catch(console.error);
+                }
+
+                // 2. Reduce Cooldowns
+                const nextCooldowns = { ...battleState.cooldowns };
+                Object.keys(nextCooldowns).forEach(key => {
+                    if (nextCooldowns[key] > 0) nextCooldowns[key]--;
+                });
+
+                // 3. Log
+                const newMessages = [...battleState.messages, "様子を見ている... (MP+2)"];
+
+                set({
+                    battleState: {
+                        ...battleState,
+                        messages: newMessages,
+                        cooldowns: nextCooldowns
+                    }
+                });
+
+                // 4. Enemy Turn
+                await get().processEnemyTurn(0);
+            },
+
             clearStorage: () => {
                 try {
                     localStorage.removeItem('game-storage');
@@ -738,6 +826,11 @@ export const useGameStore = create<GameState>()(
         {
             name: 'game-storage',
             partialize: (state) => ({ gold: state.gold, inventory: state.inventory }),
+            storage: createJSONStorage(() => typeof window !== 'undefined' ? window.localStorage : {
+                getItem: () => null,
+                setItem: () => { },
+                removeItem: () => { },
+            }),
         }
     )
 );

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { ScenarioDB, ScenarioCondition, UserProfileDB, LocationDB } from '@/types/database';
+import { ScenarioDB, ScenarioCondition, UserProfileDB, LocationDB } from '@/types/game';
 
 // Map textual status to numeric level for comparison
 const PROSPERITY_MAP: Record<string, number> = {
@@ -47,13 +47,21 @@ function checkConditions(
     }
 
     // 4. Alignment Filters
-    if (conditions.alignment_filter) {
+    // Seeder uses 'required_alignment' (Record<string, number>), Type has 'alignment_filter' (Legacy).
+    // checking both for safety.
+    const reqAlign = conditions.required_alignment || conditions.alignment_filter;
+    if (reqAlign) {
         const ua = user.alignment;
-        const req = conditions.alignment_filter;
-        if (req.order && ua.order < req.order) return false;
-        if (req.chaos && ua.chaos < req.chaos) return false;
-        if (req.justice && ua.justice < req.justice) return false;
-        if (req.evil && ua.evil < req.evil) return false;
+        // Handle Record<string, number> or specific fields
+        // required_alignment is { order: 10 } etc.
+        const entries = Object.entries(reqAlign);
+        for (const [key, val] of entries) {
+            const keyLower = key.toLowerCase();
+            // user.alignment keys are order, chaos, justice, evil
+            if ((ua as any)[keyLower] !== undefined) {
+                if ((ua as any)[keyLower] < val) return false;
+            }
+        }
     }
 
     // 5. Explicit Location Check
@@ -63,9 +71,22 @@ function checkConditions(
         }
     }
 
+    // 6. Event Trigger Check
+    // If a quest has an event trigger, it requires a specific World Event to be active.
+    // Currently, no event system is active, so we HIDE these quests by default.
+    if (conditions.event_trigger) {
+        // TODO: Check against active world events
+        return false;
+    }
+
     // 6. Prosperity Check
     if (conditions.min_prosperity) {
         if (currentWorldState.prosperity < conditions.min_prosperity) {
+            return false;
+        }
+    }
+    if (conditions.max_prosperity) {
+        if (currentWorldState.prosperity > conditions.max_prosperity) {
             return false;
         }
     }
@@ -127,6 +148,17 @@ export const QuestService = {
         const currentNation = worldState.controlling_nation; // e.g. 'Roland'
         const prosperityLevel = PROSPERITY_MAP[worldState.status] || 3;
 
+        // Map DB flat structure to UserProfileDB nested structure
+        const mappedUser: UserProfileDB = {
+            ...user,
+            alignment: {
+                order: (user as any).order_pts || 0,
+                chaos: (user as any).chaos_pts || 0,
+                justice: (user as any).justice_pts || 0,
+                evil: (user as any).evil_pts || 0
+            }
+        };
+
         // 2. Fetch Reputation & Inventory (Parallel)
         const [repResult, invResult] = await Promise.all([
             supabase
@@ -172,6 +204,9 @@ export const QuestService = {
 
         // 4. Fine-grained Filter (In-Memory)
         const validQuests = scenarios.filter((quest: any) => {
+            // DEBUG: Force show sample quest 1001
+            if (String(quest.id) === '1001') return true;
+
             // A. Location Filter
             // Must be NULL (Global) OR match current location
             if (quest.location_id && quest.location_id !== locationId) return false;
@@ -181,10 +216,12 @@ export const QuestService = {
             if (quest.ruling_nation_id && quest.ruling_nation_id !== currentNation) return false;
 
             // Check Conditions JSON
+
+            // Check Conditions JSON
             const conditions = quest.conditions as ScenarioCondition;
             if (!conditions) return true; // No conditions = open to all
 
-            const userWithTags = { ...user, tags: userTags };
+            const userWithTags = { ...mappedUser, tags: userTags };
 
             return checkConditions(
                 conditions,
@@ -195,6 +232,49 @@ export const QuestService = {
             );
         });
 
-        return validQuests as ScenarioDB[];
+        // 5. Scoring & Sorting (Logic v9)
+        const scoredQuests = validQuests.map((quest: any) => {
+            let score = 0;
+            const conditions = quest.conditions as ScenarioCondition;
+
+            // A. Urgency (+100)
+            if (quest.is_urgent) score += 100;
+
+            // DEBUG: Force boost sample quest 1001
+            if (String(quest.id) === '1001') score += 10000;
+
+            // B. Alignment Match (+50)
+            // If the quest requires specific alignment and user meets it well (already filtered for numeric req, but here purely for preference)
+            // Seeder mapping: align:order -> required_alignment: {order: 10}
+            const reqAlign = conditions.required_alignment || conditions.alignment_filter;
+            if (reqAlign) {
+                // If user has high value in required alignment, boost score
+                // Ideally check which alignment it is.
+                const entries = Object.entries(reqAlign);
+                for (const [key, val] of entries) {
+                    const keyLower = key.toLowerCase();
+                    const userVal = (mappedUser.alignment as any)[keyLower] || 0;
+                    // If user is significantly aligned (e.g. > 20 when req is 10), it's a "good fit"
+                    if (userVal >= val + 10) score += 50;
+                    else score += 10; // Base match bonus
+                }
+            }
+
+            // C. Level Match (+20)
+            // If rec_level is within ±2 of user level (mappedUser.age used as proxy in checkConditions? No, mappedUser doesn't have level mapped explicitly from DB yet, assuming age logic or default)
+            const userLevel = (mappedUser as any).level || 1; // Assuming level exists or default 1
+            const recLevel = quest.rec_level || 1;
+            if (Math.abs(userLevel - recLevel) <= 2) {
+                score += 20;
+            }
+
+            return { quest, score };
+        });
+
+        // Sort by Score Descending
+        scoredQuests.sort((a, b) => b.score - a.score);
+
+        // Limit to top 6
+        return scoredQuests.slice(0, 6).map(sq => sq.quest) as ScenarioDB[];
     }
 };

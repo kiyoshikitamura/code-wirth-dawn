@@ -31,71 +31,65 @@ export class ShadowService {
         const results: ShadowSummary[] = [];
 
         // 1. Fetch Active Shadows (Players currently here)
-        // Spec v5: "Directly 24h active snapshot".
-        // We query user_profiles where current_location_id = locationId AND updated_at > 24h ago
-        const { data: activeUsers } = await this.supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('current_location_id', locationId)
-            .neq('id', currentUserId)
-            .eq('is_alive', true) // Only living players
-            .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-            .limit(10);
+        try {
+            const { data: activeUsers } = await this.supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('current_location_id', locationId)
+                .neq('id', currentUserId)
+                .eq('is_alive', true)
+                .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                .limit(10);
 
-        if (activeUsers) {
-            for (const u of activeUsers) {
-                // Calculate Contract Fee: Level * 100
-                const fee = (u.level || 1) * 100;
-                results.push({
-                    profile_id: u.id,
-                    name: u.name,
-                    level: u.level,
-                    job_class: 'Adventurer', // Placeholder
-                    origin_type: 'shadow_active',
-                    contract_fee: fee,
-                    stats: { atk: u.attack, def: u.defense, hp: u.max_hp },
-                    signature_deck_preview: u.signature_deck || [],
-                    is_subscriber: u.is_subscriber
-                });
+            if (activeUsers) {
+                for (const u of activeUsers) {
+                    const fee = (u.level || 1) * 100;
+                    results.push({
+                        profile_id: u.id,
+                        name: u.name,
+                        level: u.level,
+                        job_class: 'Adventurer',
+                        origin_type: 'shadow_active',
+                        contract_fee: fee,
+                        stats: { atk: u.attack, def: u.defense, hp: u.max_hp },
+                        signature_deck_preview: u.signature_deck || [],
+                        is_subscriber: u.is_subscriber
+                    });
+                }
             }
+        } catch (e) {
+            console.error("ShadowService: Failed to fetch active users", e);
         }
 
-        // 2. Fetch Heroic Shadows (From Historical Logs of Subscribers)
-        // For now, let's just pick random recent deaths of subscribers?
-        // Or maybe Spec v5 says "Shadow Heroic" is a permanent record.
-        // We'll query historical_logs where legacy_points > threshold OR user was subscriber.
-        // Since we don't have location binding for dead people, we might randomize or show global heroes.
-        // Let's keep it empty or simple for now.
-        const { data: heroicLogs } = await this.supabase
-            .from('historical_logs')
-            .select('*')
-            .order('death_date', { ascending: false })
-            .limit(5);
+        // 2. Fetch Heroic Shadows
+        try {
+            const { data: heroicLogs } = await this.supabase
+                .from('historical_logs')
+                .select('*')
+                .order('death_date', { ascending: false })
+                .limit(5);
 
-        // We need to check if they were subscribers. Log data might contain it or we check profile.
-        // Spec v7 says "Subscriber: Automatically shadow_heroic".
-        // Let's assume we can use them.
-
-        if (heroicLogs) {
-            for (const log of heroicLogs) {
-                const d = log.data;
-                // Filter logic: Check if source user was subscriber?
-                // For MVP, include all "Graveyard" ghosts as cheap mercenaries or elite ones.
-                results.push({
-                    profile_id: log.user_id, // Map to original user ID, but we might need unique ID for hire
-                    name: `Ghost of ${d.name || 'Unknown'}`,
-                    level: d.final_level,
-                    job_class: 'Heroic Spirit',
-                    origin_type: 'shadow_heroic',
-                    contract_fee: (d.final_level * 200), // Expensive
-                    stats: d.stats,
-                    signature_deck_preview: [], // Need to extract from log data
-                    is_subscriber: true // Assume heroic
-                });
+            if (heroicLogs) {
+                for (const log of heroicLogs) {
+                    const d = log.data;
+                    results.push({
+                        profile_id: log.user_id,
+                        name: `Ghost of ${d.name || 'Unknown'}`,
+                        level: d.final_level,
+                        job_class: 'Heroic Spirit',
+                        origin_type: 'shadow_heroic',
+                        contract_fee: (d.final_level * 200),
+                        stats: d.stats,
+                        signature_deck_preview: [],
+                        is_subscriber: true
+                    });
+                }
             }
+        } catch (e) {
+            console.error("ShadowService: Failed to fetch heroic shadows", e);
         }
 
-        // 3. System Mercenaries (NPCs)
+        // 3. System Mercenaries (Always add these regardless of DB errors)
         const systems = this.generateSystemMercenaries();
         results.push(...systems);
 

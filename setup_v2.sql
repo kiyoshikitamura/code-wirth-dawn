@@ -60,12 +60,14 @@ CREATE TABLE user_profiles (
   current_location_id uuid,
   previous_location_id uuid,
   age INTEGER DEFAULT 20,
+  birth_date DATE, -- Added V9.2
   accumulated_days INTEGER DEFAULT 0,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
   -- Added Parameters
   gender TEXT DEFAULT 'Unknown', -- Added missing column
   vitality INTEGER DEFAULT 100,
+  max_vitality INTEGER DEFAULT 100, -- Added V9.2 Fix
   praise_count INTEGER DEFAULT 0,
   prayer_count INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,

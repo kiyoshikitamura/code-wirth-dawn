@@ -1,0 +1,5 @@
+
+id,slug,name,hp,def,exp,gold,drop_item_id
+1,slime,スライム,20,0,2,1,
+2,goblin,ゴブリン,30,1,5,3,
+3,succubus,サキュバス,80,2,20,50,

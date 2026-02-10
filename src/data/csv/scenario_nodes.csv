@@ -1,0 +1,8 @@
+quest_id,node_id,type,text,bg_key,bgm_key,enemy_group_id
+1001,start,text,あなたは暗い森の入り口に立っている。\n風が不気味に木々を揺らしている。,nature_forest,,
+1001,battle_start,battle,茂みからゴブリンが飛び出してきた！,,battle_generic,goblin_squad
+1001,win,text,ゴブリンを倒した。\n森の奥には古い祭壇があった。,nature_forest,,
+1001,end_success,end_success,祭壇を調べ、遺物を回収した。\n依頼は達成だ。,nature_forest,,
+1002,start,text,下水道の入り口だ。\n腐った臭いが鼻をつく。,dungeon_sewer,,
+1002,check_open,check,扉には鍵がかかっている。,dungeon_sewer,,
+1002,end_fail,end_failure,鍵を開けられず、すごすごと引き返した。,dungeon_sewer,,

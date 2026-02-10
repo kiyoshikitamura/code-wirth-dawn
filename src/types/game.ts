@@ -2,6 +2,34 @@
 export type NationId = 'Roland' | 'Markand' | 'Karyu' | 'Yato' | 'Neutral';
 export type ReputationRank = 'Hero' | 'Famous' | 'Stranger' | 'Rogue' | 'Criminal';
 
+export interface Reputation {
+  id: string;
+  user_id: string;
+  location_id: string;
+  score: number;
+  rank: ReputationRank;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  ruling_nation_id: string;
+  prosperity_level: number;
+  description?: string;
+  x: number;
+  y: number;
+  type: string;
+  nation_id?: string;
+  connections: string[];
+  world_states?: { controlling_nation: string }[];
+  current_attributes?: {
+    order: number;
+    chaos: number;
+    justice: number;
+    evil: number;
+  };
+}
+
 export interface UserHubState {
   user_id: string;
   is_in_hub: boolean;
@@ -27,84 +55,12 @@ export interface Enemy {
   level: number;
   hp: number;
   maxHp: number;
+  def?: number; // Added v2.2
   image?: string;
+  slug?: string; // v2.1
 }
 
-export interface Coupon {
-  id: string;
-  name: string;
-  effect: string;
-  value: number;
-}
-
-export interface Adventurer {
-  id: string;
-  name: string;
-  age: number;
-  class: string;
-  coupons: Coupon[];
-  level: number;
-  hp: number;
-  maxHp: number;
-  mp: number;
-  maxMp: number;
-  image?: string;
-  attack?: number; // Base attack power
-}
-export interface WorldState {
-  id: string; // uuid
-  location_name: string;
-  status: 'Zenith' | 'Prosperous' | 'Stagnant' | 'Declining' | 'Ruined' | '繁栄' | '衰退' | '崩壊' | '混乱' | string;
-  attribute_name: string; // '至高の平穏' etc.
-  flavor_text: string;
-  background_url?: string;
-
-  // V4 Mechanics
-  prosperity_level?: number;
-  last_friction_score?: number;
-
-  // Scores
-  order_score: number;
-  chaos_score: number;
-  justice_score: number;
-  evil_score: number;
-
-  // Territory
-  controlling_nation: NationId;
-
-  updated_at?: string;
-  total_days_passed?: number;
-}
-
-export interface Location {
-  id: string;
-  name: string;
-  description: string;
-  x: number;
-  y: number;
-  type: string;
-  connections: string[]; // JSON array of names
-  nation_id: NationId; // Static Region
-  world_states?: WorldState[]; // Joined data
-}
-
-export interface WorldHistory {
-  id: string; // uuid
-  location_name: string;
-  headline: string;
-  news_content?: string;
-  old_status: string; // or null
-  new_status: string;
-  old_attribute: string; // or null
-  new_attribute: string;
-  occured_at: string;
-}
-
-export interface Reputation {
-  location_name: string;
-  score: number;
-  rank: ReputationRank;
-}
+// ... (skipping unchanged interfaces) ...
 
 export interface UserProfile {
   id: string; // uuid
@@ -127,6 +83,7 @@ export interface UserProfile {
   previous_location_id?: string;
   level?: number;
   exp?: number;
+  max_deck_cost?: number; // v8.0 Deck Cost System
 
   // Life & combat
   gender?: 'Male' | 'Female' | 'Unknown';
@@ -137,73 +94,25 @@ export interface UserProfile {
   max_mp?: number;
   mp?: number;
   attack?: number;
-  defense?: number;
+  // defense?: number; // Previous placeholder?
+  def?: number; // Added v2.2
 
   // Social
   praise_count?: number;
   prayer_count?: number;
 
   reputations?: Reputation[]; // Joined
-}
-export interface BattleState {
-  enemy: Enemy | null;
-  party: PartyMember[];
-  turn: number;
-  messages: string[];
-  isVictory: boolean;
-  isDefeat?: boolean;
-  cooldowns?: { [cardId: string]: number };
-  currentTactic?: 'Aggressive' | 'Defensive' | 'Standby';
-}
 
-export interface Scenario {
-  id: string;
-  title: string;
-  description: string;
-  location_name?: string;
-
-  client_name: string;
-  client_nation?: NationId;
-
-  required_status?: string;
-  // required_attribute?: string; // Simplified out for now or keep? Keep for compatibility if needed but usually separate logic
-
-  reward_gold: number;
-
-  // Impacts
-  impacts?: {
+  // Added for v3.0 check_status compatibility
+  alignment?: {
     order: number;
     chaos: number;
     justice: number;
     evil: number;
   };
-  rep_impact?: number;
 }
 
-export interface ShopItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  item_type: 'skill' | 'item' | 'weapon';
-  required_attribute: string; // 'ANY' or specific
-  power_value?: number;
-  stock_limit?: number;
-}
-
-export interface InventoryItem {
-  id: string; // inventory.id
-  item_id: string;
-  name: string;
-  description: string;
-  item_type: 'skill' | 'item' | 'consumable' | 'weapon';
-  power_value: number;
-  required_attribute: string;
-  is_equipped: boolean;
-  acquired_at: string;
-  quantity: number;
-  is_skill: boolean;
-}
+// ...
 
 export interface PartyMember {
   id: string;
@@ -215,6 +124,7 @@ export interface PartyMember {
 
   durability: number;
   max_durability: number;
+  def?: number; // Added v2.2
   cover_rate: number;
   loyalty: number;
 
@@ -224,4 +134,227 @@ export interface PartyMember {
   inject_cards: string[]; // Card IDs
   passive_id?: string;
   is_active: boolean;
+}
+
+export type Adventurer = PartyMember;
+
+// --- From Database Types (Merged) ---
+
+export interface UserProfileDB {
+  id: string;
+  gender: 'Male' | 'Female' | 'Unknown';
+  age: number;
+  vitality: number;
+  max_vitality: number;
+  reputation: Record<string, number>; // { loc_id: score }
+  alignment: {
+    order: number;
+    chaos: number;
+    justice: number;
+    evil: number;
+  };
+  gold: number;
+  current_location_id?: string;
+  // ...
+}
+
+export interface ScenarioCondition {
+  locations?: string[]; // Location IDs or Names where this occurs
+  min_level?: number;
+  required_tags?: string[]; // Inventory tags or skill tags
+  alignment_filter?: {
+    order?: number; // min req
+    chaos?: number;
+    justice?: number;
+    evil?: number;
+  };
+  required_reputation?: number; // Min reputation at the location
+  gender?: 'Male' | 'Female';
+  min_prosperity?: number;
+  max_prosperity?: number;
+  event_trigger?: string;
+  required_alignment?: Record<string, number>;
+}
+
+export interface ScenarioReward {
+  gold?: number;
+  items?: string[]; // Item IDs
+  alignment_shift?: {
+    order?: number;
+    chaos?: number;
+    justice?: number;
+    evil?: number;
+  };
+  reputation_diff?: Record<string, number>; // { loc_id: delta }
+  world_impact?: {
+    target_loc: string; // loc_id
+    attribute: 'order' | 'chaos' | 'justice' | 'evil';
+    value: number;
+  };
+  move_to?: string; // Location ID to move to
+  vitality_cost?: number; // Vitality cost
+  npc_reward?: number; // NPC ID
+}
+
+export interface ScenarioChoice {
+  label: string;
+  req_tag?: string; // e.g. "skill_picklock"
+  cost_vitality?: number;
+  next_node: string; // ID of the next node
+  req?: { type: string; val: any }; // For v3 checks
+  cost?: { type: string; val: any }; // For v3 costs
+}
+
+export interface ScenarioFlowNode {
+  id: string;
+  text: string;
+  choices: ScenarioChoice[];
+}
+
+export interface ScenarioDB {
+  id: number; // Changed to number (BIGINT)
+  slug: string; // Added
+  title: string;
+  description: string; // Initial summary
+  client_name: string;
+  type: 'Subjugation' | 'Delivery' | 'Politics' | 'Dungeon' | 'Other';
+  difficulty: number; // Added
+  rec_level: number; // Added for UI
+  is_urgent: boolean; // Added for UI
+  trigger_condition?: string; // Added for v3 API
+  time_cost: number;
+  ruling_nation_id?: string | null;
+  location_id?: string | null;
+
+  // JSONB columns
+  conditions: ScenarioCondition;
+  rewards: ScenarioReward;
+  flow_nodes: ScenarioFlowNode[];
+  script_data?: any; // BYORK Script JSON
+  impact?: {
+    target_loc?: string;
+    attribute?: string;
+    value?: number;
+  };
+  days_success?: number;
+  days_failure?: number;
+
+  // UI Helpers (Optional/Mapped)
+  reward_gold?: number;
+  impacts?: any;
+
+  created_at?: string;
+}
+
+export interface LocationDB {
+  id: string;
+  name: string;
+  ruling_nation_id: string;
+  prosperity_level: 1 | 2 | 3 | 4 | 5;
+  current_attributes: {
+    order: number;
+    chaos: number;
+    justice: number;
+    evil: number;
+  };
+  // ...
+}
+
+export interface WorldState {
+  location_name: string;
+  order_score: number;
+  chaos_score: number;
+  justice_score: number;
+  evil_score: number;
+  status: string;
+  attribute_name: string;
+  controlling_nation: string;
+  prosperity_level: number;
+  last_friction_score?: number;
+  updated_at?: string;
+  total_days_passed?: number; // Added for Almanac
+  background_url?: string; // Optional UI helper
+  flavor_text?: string;    // Optional UI helper
+}
+
+export interface WorldHistory {
+  id: number;
+  location_name: string;
+  headline: string;
+  news_content: string;
+  old_status: string;
+  new_status: string;
+  old_attribute: string;
+  new_attribute: string;
+  occured_at: string;
+}
+
+export interface PartyMemberDB {
+  id: number; // Changed to number (BIGINT)
+  owner_id: string | null; // UUID or null for pool
+  slug: string; // Master template slug
+  name: string;
+  gender: 'Male' | 'Female' | 'Unknown';
+  origin: 'system' | 'ghost' | 'shadow_active';
+  job_class: string;
+  durability: number;
+  max_durability: number;
+  loyalty: number;
+  cover_rate: number;
+  inject_cards: number[]; // Array of Card IDs
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface ItemDB {
+  id: number; // Changed to number (BIGINT)
+  slug: string;
+  name: string;
+  type: 'consumable' | 'skill' | 'equipment';
+  base_price: number;
+  effect_data: any;
+
+  // Availability
+  nation_tags: string[];
+  min_prosperity: number;
+  required_alignment: {
+    order?: number;
+    chaos?: number;
+    justice?: number;
+    evil?: number;
+  };
+  linked_card_id?: number; // FK to Cards
+  is_black_market: boolean;
+  created_at?: string;
+}
+
+export interface CardDB {
+  id: number;
+  slug: string;
+  name: string;
+  type: string;
+  cost_type: 'vitality' | 'mp';
+  cost_val: number;
+  effect_val: number;
+  created_at?: string;
+}
+
+export interface BattleState {
+  enemy: Enemy | null;
+  party: PartyMember[];
+  messages: string[];
+  turn: number;
+  cooldowns: Record<string, number>;
+  isVictory: boolean;
+  isDefeat: boolean;
+  currentTactic: 'Aggressive' | 'Defensive' | 'Standby';
+}
+
+export type Scenario = ScenarioDB;
+
+export interface InventoryItem extends ItemDB {
+  quantity: number;
+  is_equipped: boolean;
+  is_skill: boolean;
+  cost?: number; // Derived from linked card or item data
 }

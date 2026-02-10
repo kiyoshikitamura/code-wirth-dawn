@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { QuestService } from '@/services/questService';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         // 1. Fetch User Profile to get Current Location

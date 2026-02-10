@@ -1,6 +1,6 @@
 id,slug,name,type,cost_type,cost_val,effect_val,_comment
 1000,card_rusty_slash,錆びた斬撃,Skill,vitality,5,5,Weak Attack
-1001,card_slash,スラッシュ,Skill,vitality,5,20,Basic Attack
+1001,card_slash,斬撃,Skill,vitality,5,20,Basic Attack
 1002,card_fireball,ファイアボール,Skill,mp,10,30,Magic Attack
 1003,card_heal,ヒール,Skill,mp,15,50,Healing
 1004,card_iron_def,鉄壁,Skill,vitality,8,0,Defense Buff

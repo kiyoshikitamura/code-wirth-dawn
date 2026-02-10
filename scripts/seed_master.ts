@@ -34,9 +34,10 @@ async function seedTable(tableName: string, filePath: string, transformer: (reco
         skip_empty_lines: true,
         trim: true,
         bom: true, // Handle Byte Order Mark for Windows CSVs
+        relax_column_count: true, // Allow rows with different column counts (e.g. footer)
         cast: (value, context) => {
             const col = String(context.column);
-            if (col === 'id' || col.endsWith('_id') || col.endsWith('_val') || col.endsWith('_price') || col === 'min_prosperity' || col === 'durability' || col === 'cover_rate') {
+            if (col === 'id' || col.endsWith('_id') || col.endsWith('_val') || col.endsWith('_price') || col === 'min_prosperity' || col === 'durability' || col === 'cover_rate' || col === 'hp' || col === 'exp' || col === 'gold' || col === 'value') {
                 if (value === '') return null;
                 const num = Number(value);
                 return isNaN(num) ? value : num;
@@ -96,7 +97,8 @@ async function main() {
             base_price: r.base_price,
             min_prosperity: r.min_prosperity,
             nation_tags: nationTags,
-            linked_card_id: r.linked_card_id
+            linked_card_id: r.linked_card_id,
+            cost: r.cost || 0
         };
     });
 
@@ -116,6 +118,8 @@ async function main() {
             name: r.name,
             job_class: r.job || r.job_class || 'Civilian', // Map 'job' to 'job_class'
             durability: r.durability,
+            max_durability: r.durability, // Ensure max is set
+            def: r.def || 0, // Added v2.2
             cover_rate: r.cover_rate,
             inject_cards: cardIds,
             // Defaults for master data
@@ -125,30 +129,204 @@ async function main() {
         };
     });
 
+    // ... (skipping unchanged code) ...
+
+    // --- Battle System v2.1 Importers ---
+
+    // 3.a Enemy Skills
+    await seedTable('enemy_skills', path.join(CSV_DIR, 'enemy_skills.csv'), (r: any) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        effect_type: r.effect_type,
+        value: r.value,
+        inject_card_id: r.inject_card_id,
+        description: r.description
+    }));
+
+    // 3.b Enemies & Action Patterns
+    // Need to pre-load enemy_actions to build the JSONB
+    const actionsPath = path.join(CSV_DIR, 'enemy_actions.csv');
+    const actionMap: Record<string, any[]> = {}; // enemy_slug -> action[]
+
+    if (fs.existsSync(actionsPath)) {
+        const fileContent = fs.readFileSync(actionsPath, 'utf-8');
+        const actionRecords = parse(fileContent, { columns: true, skip_empty_lines: true, trim: true });
+
+        // Sort by ID to ensure order? The CSV order is usually implicitly the priority order for logic
+        // If 'id' exists in action records, we sort by it.
+        const sortedActions = actionRecords.sort((a: any, b: any) => Number(a.id) - Number(b.id));
+
+        sortedActions.forEach((a: any) => {
+            if (!a.enemy_slug) return;
+            if (!actionMap[a.enemy_slug]) actionMap[a.enemy_slug] = [];
+
+            const action: any = {
+                skill: a.skill_slug,
+                prob: Number(a.prob) || 100
+            };
+
+            if (a.condition_type && a.condition_value) {
+                // Combine into "TYPE:VAL" format or Object
+                action.condition = `${a.condition_type}:${a.condition_value}`;
+            }
+
+            actionMap[a.enemy_slug].push(action);
+        });
+        console.log(`Loaded ${sortedActions.length} enemy actions.`);
+    }
+
+    await seedTable('enemies', path.join(CSV_DIR, 'enemies.csv'), (r: any) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        hp: r.hp,
+        def: r.def || 0, // Added v2.2
+        exp: r.exp,
+        gold: r.gold,
+        drop_item_id: r.drop_item_id || null, // Ensure explicit null
+        action_pattern: actionMap[r.slug] || [] // Inject the built JSON
+    }));
+
+    // 3.c Enemy Groups
+    await seedTable('enemy_groups', path.join(CSV_DIR, 'enemy_groups.csv'), (r: any) => {
+        let members: string[] = [];
+        if (r.members && typeof r.members === 'string') {
+            members = r.members.split('|');
+        }
+        return {
+            id: r.id,
+            slug: r.slug,
+            members: members
+        };
+    });
+
+    // --- Unified CSV Scenario Importer ---
+    const SCENARIO_DIR = path.join(CSV_DIR, 'scenarios');
+    const allScriptData: Record<string, any> = {}; // questId -> JSON
+
+    // Utility: Parse params string "key:val, key2:val"
+    function parseParams(paramStr: string | undefined): any {
+        if (!paramStr) return {};
+        const obj: any = {};
+        if (paramStr.trim().startsWith('{')) {
+            try { return JSON.parse(paramStr); } catch (e) { console.warn("Failed to parse param JSON:", paramStr); return {}; }
+        }
+
+        paramStr.split(',').forEach(pair => {
+            const [k, v] = pair.split(':');
+            if (k && v) {
+                const key = k.trim();
+                const val = v.trim();
+                const num = Number(val);
+                obj[key] = isNaN(num) ? val : num;
+            }
+        });
+        return obj;
+    }
+
+    if (fs.existsSync(SCENARIO_DIR)) {
+        const files = fs.readdirSync(SCENARIO_DIR).filter(f => f.endsWith('.csv'));
+        console.log(`Found ${files.length} unified scenario CSVs.`);
+
+        for (const file of files) {
+            // Extract Quest ID from filename "1001_slug.csv" -> "1001"
+            const questId = file.split('_')[0];
+            if (!questId || isNaN(Number(questId))) {
+                console.warn(`Skipping scenario file ${file}: Invalid Quest ID prefix.`);
+                continue;
+            }
+
+            const rawContent = fs.readFileSync(path.join(SCENARIO_DIR, file), 'utf-8');
+            const rows: any[] = parse(rawContent, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true });
+
+            const script: any = { nodes: {} };
+            let currentNode: any = null;
+
+            for (const r of rows) {
+                const rowType = r.row_type?.toUpperCase();
+                const params = parseParams(r.params);
+
+                if (rowType === 'NODE') {
+                    const nodeId = r.node_id;
+                    if (!nodeId) continue;
+
+
+
+                    currentNode = {
+
+                        text: r.text_label ? r.text_label.replace(/\\n/g, '\n') : '',
+                        type: params.type || 'text',
+                        bg_key: params.bg || params.bg_key, // Alias
+                        bgm_key: params.bgm || params.bgm_key,
+                        enemy_group_id: params.enemy || params.enemy_group_id,
+                        result: (params.type === 'end_success' || params.type === 'end') ? 'success' : (params.type === 'end_failure' ? 'failure' : undefined),
+                        choices: []
+                    };
+
+                    script.nodes[nodeId] = currentNode;
+                }
+                else if (rowType === 'CHOICE') {
+                    if (!currentNode) continue;
+
+                    const choice: any = {
+                        label: r.text_label,
+                        next: r.next_node
+                    };
+
+                    if (params.cost_type && params.cost_val) {
+                        choice.cost = { type: params.cost_type, val: params.cost_val };
+                        if (params.cost_type === 'vitality') choice.cost_vitality = params.cost_val;
+                    }
+                    else if (params.cost_vitality) {
+                        choice.cost_vitality = params.cost_vitality;
+                    }
+                    if (params.req_tag) choice.req_tag = params.req_tag;
+                    if (params.req_type && params.req_val) choice.req = { type: params.req_type, val: params.req_val };
+
+                    currentNode.choices.push(choice);
+                }
+            }
+
+            allScriptData[questId] = script;
+            console.log(`Loaded scenario script for Quest ${questId} (${Object.keys(script.nodes).length} nodes).`);
+        }
+    }
+
+    // Helper to build JSON
+    function buildScriptData(questId: string): any {
+        return allScriptData[questId] || null;
+    }
+
     // 4. Quests (scenarios)
     await seedTable('scenarios', path.join(CSV_DIR, 'quests.csv'), (r: any) => {
         // Parse Trigger Conditions
         const conditions: any = {};
         let ruling_nation_id = null;
+        let is_urgent = false;
+
+        // Save raw trigger condition for API usage
+        const rawTrigger = r.trigger_condition || null;
 
         if (r.trigger_condition && r.trigger_condition !== 'any') {
             const conds = r.trigger_condition.split('|');
             conds.forEach((c: string) => {
                 const [key, val] = c.split(':');
                 if (key === 'nation') {
-                    // Map CSV tag to Nation ID
                     const nationMap: Record<string, string> = {
-                        'loc_holy_empire': 'Roland',
-                        'loc_marcund': 'Markand',
-                        'loc_haryu': 'Karyu',
-                        'loc_yatoshin': 'Yato',
-                        'loc_neutral': 'Neutral'
+                        'loc_holy_empire': 'Roland', 'loc_marcund': 'Markand',
+                        'loc_haryu': 'Karyu', 'loc_yatoshin': 'Yato', 'loc_neutral': 'Neutral'
                     };
                     ruling_nation_id = nationMap[val] || val;
                 }
-                else if (key === 'prosp') conditions.min_prosperity = parseInt(val.replace('+', '').replace('-', '')) || 1; // Simplify
-                else if (key === 'align') conditions.required_alignment = { [val]: 10 }; // Default 10 req
-                else if (key === 'trigger') conditions.event_trigger = val;
+                else if (key === 'prosp') {
+                    if (val.endsWith('+')) conditions.min_prosperity = parseInt(val.replace('+', '')) || 1;
+                    else if (val.endsWith('-')) conditions.max_prosperity = parseInt(val.replace('-', '')) || 5;
+                    else { const p = parseInt(val) || 1; conditions.min_prosperity = p; conditions.max_prosperity = p; }
+                }
+                else if (key === 'align') conditions.required_alignment = { [val]: 10 };
+                else if (key === 'trigger') { conditions.event_trigger = val; if (val === 'urgent') is_urgent = true; }
+                else if (key === 'has_item') conditions.has_item = parseInt(val);
             });
         }
 
@@ -160,27 +338,52 @@ async function main() {
                 const [type, val] = rew.split(':');
                 if (type === 'Gold') rewards.gold = parseInt(val);
                 else if (type === 'Item') rewards.items.push(parseInt(val));
-                else if (type === 'Rep') rewards.reputation = parseInt(val); // Generic rep
-                else if (type === 'Order' || type === 'Chaos' || type === 'Justice' || type === 'Evil') {
+                else if (type === 'Rep') rewards.reputation = parseInt(val);
+                else if (['Order', 'Chaos', 'Justice', 'Evil'].includes(type)) {
                     if (!rewards.alignment_shift) rewards.alignment_shift = {};
                     rewards.alignment_shift[type.toLowerCase()] = parseInt(val);
-                } else if (type === 'Vitality') rewards.vitality_cost = parseInt(val); // Negative? CSV says Vitality:-5
+                } else if (type === 'Vitality') rewards.vitality_cost = parseInt(val);
                 else if (type === 'NPC') rewards.npc_reward = parseInt(val);
+                else if (type === 'Move' || type === 'move_to') rewards.move_to = val;
             });
         }
+
+        // Parse World Impact
+        let impact: any = null;
+        if (r.impact) {
+            const parts = r.impact.split('|');
+            const impObj: any = {};
+            parts.forEach((p: string) => {
+                const [k, v] = p.split(':');
+                if (k === 'target') impObj.target_loc = v;
+                else if (k === 'attr') impObj.attribute = v;
+                else if (k === 'val') impObj.value = parseFloat(v);
+            });
+            if (impObj.target_loc && impObj.attribute) impact = impObj;
+        }
+
+        // BUILD SCRIPT DATA FROM CSV
+        const scriptData = buildScriptData(r.id);
 
         return {
             id: r.id,
             slug: r.slug,
             title: r.title,
-            description: r._comment || r.title, // Use comment as description
-            difficulty: Number(r.difficulty) || 1, // Safely parse int
-            time_cost: Number(r.time_cost) || 1,   // Safely parse int
+            description: r._comment || r.title,
+            difficulty: Number(r.difficulty) || 1,
+            rec_level: Number(r.rec_level) || 1,
+            time_cost: Number(r.time_cost) || 1,
+            days_success: Number(r.days_success) || 1,
+            days_failure: Number(r.days_failure) || 1,
             ruling_nation_id: ruling_nation_id,
-            conditions: conditions,
+            // conditions: conditions, // Removed since trigger_condition is used
+            trigger_condition: rawTrigger,
             rewards: rewards,
-            type: 'Subjugation', // Default
-            client_name: 'Guild' // Default
+            impact: impact,
+            script_data: scriptData || (r.script_data ? JSON.parse(r.script_data) : null), // Prefer CSV builder, fallback to existing column
+            type: 'Subjugation',
+            client_name: 'Guild',
+            is_urgent: is_urgent
         };
     });
 }

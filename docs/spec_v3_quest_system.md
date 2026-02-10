@@ -1,123 +1,90 @@
-これまでの議論と、直前のクエスト仕様の検討内容を統合し、Antigravity（AIエンジニア）に実装を指示するためのMarkdownファイルを作成しました。
+Spec v3: Quest & Scenario Engine Specification
+1. 概要 (Overview)
+本仕様書は、Code: Wirth-Dawn における「クエスト」および、それを駆動するテキストアドベンチャーエンジン「BYORK (Blueprints of Your Own RPG Kit)」の実装定義である。 プレイヤーはクエストを通じて、報酬を得るだけでなく、移動を行い、世界の歴史（World State）に干渉する。
 
-ファイル名は、以前のバージョン（`spec_v2_parameters.md`）に続く形で **`spec_v3_quest_system.md`** としています。
+--------------------------------------------------------------------------------
+2. シナリオデータ構造 (Unified CSV Format)
+シナリオデータは、可読性と管理効率を高めるため、シーン（NODE）と分岐（CHOICE）を単一のファイルに統合した**「ユニファイドCSV形式」**で管理する。
+2.1 ファイル構成
+• Directory: src/data/csv/scenarios/*.csv
+• File Naming: {quest_id}_{slug}.csv (例: 5001_rat_hunt.csv)
+2.2 カラム定義
+Column
+Description
+Note
+row_type
+行の種類
+NODE (場面) または CHOICE (選択肢/分岐)。
+node_id
+ノードID
+NODE行のみ必須。CHOICE行は空欄（直上のNODEに紐付く）。
+text_label
+テキスト
+NODE: 本文 / CHOICE: ボタンのラベル。
+next_node
+遷移先ID
+次に進むノードID。EXIT (成功終了), EXIT_FAIL (失敗終了) も指定可。
+params
+パラメータ
+挙動を制御するKey-Value定義 (例: bg:town, type:battle)。
+2.3 記述例
+row_type,node_id,text_label,next_node,params
+NODE,start,"街の城門が見えてきた。",,"bg:gate_day, bgm:field"
+CHOICE,,入国する,check_nation,
+NODE,check_nation,,,"type:check_world, cond:destination_nation=loc_holy_empire, next:gate_holy, fallback:gate_common"
+NODE,gate_holy,"聖騎士が立ちはだかる。「身分証を見せよ」",,
+CHOICE,,賄賂を渡す,enter_city,"cost_gold:500, req_card:3058"
+NODE,enter_city,"無事に街に入った。",EXIT,"type:reward, move_to:next_town"
 
-このままコピーしてAIエージェントに渡してください。
+--------------------------------------------------------------------------------
+3. シナリオエンジン機能 (Scenario Engine Features)
+フロントエンドの <ScenarioEngine /> は、CSVから変換されたJSONデータを読み込み、以下の特殊ノードを実行する。
+3.1 演出・分岐ノード
+1. type: check_world (世界情勢チェック)
+    ◦ 機能: 世界の状態（world_states, locations）を参照して分岐する。
+    ◦ Params: cond (条件式), next (真の場合), fallback (偽の場合)。
+    ◦ Target: destination_prosp (移動先の繁栄度) や destination_nation (移動先の支配国) を参照可能。これにより「到着時の劇的な変化」を演出する。
+2. type: random_branch (確率分岐)
+    ◦ 機能: 移動中のランダムエンカウント等を表現する。
+    ◦ Params: prob (確率%), hit (当選先), miss (落選先)。
+3. type: check_status (ステータス判定)
+    ◦ 機能: プレイヤーの能力値を判定する。
+    ◦ Target: reputation (拠点名声), alignment (属性), level。
+4. type: check_party (パーティ判定)
+    ◦ 機能: 特定のNPCが同行しているか判定する。
+    ◦ Params: npc_id。
+    ◦ 用途: 移動中のNPC会話イベント (npc_react)。
+3.2 アクションノード
+1. type: battle (バトル)
+    ◦ 機能: バトルシステム v2 を呼び出す。
+    ◦ Params: enemy (敵グループID)。
+    ◦ 結果: 勝利時は win 先へ、敗北時は lose 先へ遷移。
+2. type: reward (報酬・移動)
+    ◦ 機能: クエストを完了し、報酬付与と移動処理を行う。
+    ◦ Params:
+        ▪ gold, item, exp: 報酬。
+        ▪ move_to: "next_town" または拠点UUID。完了時に現在地(current_location_id)を更新する。
+        ▪ impact: 世界への影響値 (例: impact_order: 5)。
+3.3 静的アセットマッピング (Static Assets)
+リアルタイム生成は行わず、JSONキーとローカルファイルをマッピングする。
+• Config: src/config/assets.ts
+• Logic: bg: "gate_ruined" → /images/bg/gate_ruined.webp (存在しなければ default_gate.webp)。
 
-***
+--------------------------------------------------------------------------------
+4. クエスト掲示板ロジック (Quest Board Logic)
+4.1 スロット制限 (Limited Slots)
+全クエストを表示せず、以下の優先順位で最大6件を選出する。
+1. Urgent (+100): 重要フラグ (is_urgent)。
+2. Condition (+50): アイテム所持トリガー (has_item:ID) や アライメント一致。
+3. Appropriate (+20): 推奨レベル (rec_level) が適正範囲内。
+4.2 リスク管理 (Risk & Vitality)
+• 推奨レベル警告: Player.Level < Quest.rec_level の場合、警告を表示。
+• Vitalityコスト: 禁術使用や特定の選択肢において、回復不能な Vitality を消費させる。
+• 時間経過: 成功/失敗に応じて age_days を加算し、キャラクターを老いさせる。
 
-# Code: Wirth-Dawn Specification v3.0: Quest & Scenario System
-
-## 1. 概要 (Overview)
-本ドキュメントは、`Code: Wirth-Dawn` におけるクエスト（シナリオ）システムの実装仕様書である。
-**『CardWirth』の「手札による解決」**と、**『Lunatic Dawn』の「世界への物理的干渉・背徳の自由」**を融合し、プレイヤーの行動が翌日の「世界変遷（World State）」へ直接フィードバックされる構造を定義する。
-
----
-
-## 2. クエスト出現ロジック (Emergence Logic)
-クエストは常設リストではなく、**「世界の状態」と「個人の資格」が合致した瞬間**にのみ出現する動的なオブジェクトである。
-
-### 2.1 World State Filters (環境要因)
-`scenarios` テーブルへのクエリ時、以下の条件でフィルタリングを行う。
-
-| Parameter | Description | Logic Example |
-| :--- | :--- | :--- |
-| `ruling_nation_id` | **支配国家** | 聖帝国支配下の街では「異端審問」が発生する。<br>`WHERE ruling_nation = 'loc_holy_empire'` |
-| `prosperity_level` | **繁栄度** | 繁栄(`Zenith`)時は「祝祭」、崩壊(`Ruined`)時は「暴動鎮圧」や「復興支援」が発生。<br>`WHERE min_prosperity <= current_level` |
-| `alignment_friction` | **属性摩擦** | 土地と支配国の属性が乖離している場合、「レジスタンス支援」が発生。 |
-
-### 2.2 User Qualification Filters (個人資格)
-プレイヤーのパラメータ（`user_profiles`）と照合する。
-
-| Parameter | Description | Logic Example |
-| :--- | :--- | :--- |
-| `recommended_level` | **推奨レベル** | 推奨Lv未満でも受注可能だが、**Risk Warning**を表示し、敵ステータスに補正(Buff)をかける。 |
-| `reputation` | **地域名声** | 名声が高いと「王家の依頼」、低いと「裏社会の依頼」が出現。<br>`WHERE required_reputation <= user_reputation[loc_id]` |
-| `inventory_tags` | **所持品/スキル** | **[CW Element]** 特定のスキルタグ（例: `tag:ancient_read`）やキーアイテム所持者のみに開示される依頼。 |
-| `gender/origin` | **身体的条件** | `Gender: Female` 限定の潜入任務など。 |
-
----
-
-## 3. シナリオ構造とBYORK (Scenario Structure)
-
-シナリオデータは論理構造設計ツール「BYORK」互換のJSONで管理され、以下の分岐機能を持つ。
-
-### 3.1 Scenario Data Schema (JSON)
-```typescript
-interface Scenario {
-  id: string;
-  title: string;
-  type: 'Subjugation' | 'Delivery' | 'Politics' | 'Dungeon';
-  time_cost: number; // 経過日数 (Age加算)
-  
-  // 受注条件 (Visibility)
-  conditions: {
-    locations: string[]; // 発生拠点ID
-    min_level: number;
-    required_tags: string[]; // e.g., ['skill_unlock', 'item_royal_pass']
-    alignment_filter: { justice: number }; // e.g., Justice > 20 only
-  };
-
-  // 分岐フロー (Flow)
-  flow_nodes: [
-    {
-      id: "node_1",
-      text: "重い扉が閉ざされている。",
-      choices: [
-        { 
-          label: "鍵開けスキルを使う", 
-          req_tag: "skill_picklock", // 手札/デッキに対象カードがあれば成功
-          next_node: "node_success" 
-        },
-        { 
-          label: "強行突破 (Vitality消費)", 
-          cost_vitality: 5, 
-          next_node: "node_forced" 
-        }
-      ]
-    }
-  ];
-}
-```
-
-### 3.2 自由と背徳 (Freedom & Betrayal)
-**[LD Element]** 「運搬」や「護衛」クエストにおいて、システム的な「裏切り」を選択肢として実装する。
-
-*   **配達クエスト:** 「荷物を届ける」だけでなく「荷物を盗んで売り払う」選択肢を用意。
-    *   **Result:** 報酬(Gold)は増えるが、`Alignment: Evil` が大幅上昇し、依頼元の街での `Reputation` が地に落ちる。
-
----
-
-## 4. 報酬と代償 (Rewards & Consequences)
-報酬はゴールドだけでなく、プレイヤーのパラメータと世界の状態（World State）を書き換える。
-
-### 4.1 報酬 (Rewards)
-| Type | Description |
-| :--- | :--- |
-| `gold` / `items` | 通常報酬。崩壊した街では現物支給（食料等）になる場合がある。 |
-| `alignment_shift` | `{order: +5, chaos: -2}` 等。解決手段（正攻法か、暗殺か）によって変動する。 |
-| `reputation_diff` | **重要:** 依頼達成地の名声は上がるが、敵対勢力の街での名声は下がる（相対評価）。 |
-| `world_impact` | **[Core Feature]** `{ target_loc: "loc_A", attribute: "order", value: 10 }`<br>クリア回数がサーバーに集計され、翌日の領土拡大判定に寄与する。 |
-
-### 4.2 代償 (Costs & Risks)
-*   **Time (Age):** 依頼には `time_cost` が設定されており、受注と移動で確実に加齢が進む。
-*   **Vitality (Life):**
-    *   戦闘での禁術使用時。
-    *   シナリオ内の罠（Trap）失敗時。
-    *   **これらはHPダメージではなく、回復不能な寿命の減少として処理される。**
-
----
-
-## 5. UI/UX Requirements
-*   **宿屋 (Quest Board):**
-    *   依頼リストには、金銭的報酬だけでなく「どの国の勢力が拡大するか（World Impact）」をアイコンで明示すること。
-*   **スキル判定演出:**
-    *   シナリオ中の選択肢でスキル（例: `skill_picklock`）を使用する際、デッキからカードが「切られる」アニメーションを入れること。
-
----
-
-## 6. Implementation Steps for Antigravity
-
-1.  **DB Update:** `scenarios` テーブルを作成し、`conditions` (JSONB) と `rewards` (JSONB) カラムを定義。
-2.  **Logic:** `QuestFinder` サービスを実装。ユーザーの `inventory` (tags) と `world_states` を照合してクエリをフィルタリングする機能。
-3.  **Client:** 選択肢分岐において `InventoryCheck` を行い、特定のカード所持時のみボタンをActiveにするロジックの実装。
+--------------------------------------------------------------------------------
+5. Antigravity 実装タスクリスト
+1. Importer Update: seed_master.ts を更新し、scenarios/*.csv を一括で読み込み、JSON変換してDBへ保存するロジックを実装。
+2. API Update: POST /api/quest/complete に move_to (移動処理) と impact (世界への影響) の処理を追加。
+3. Engine Component: <ScenarioEngine /> に check_world (移動先参照含む), random_branch, check_status のロジックを実装。
+4. Board API: GET /api/location/quests にスロット選出アルゴリズムとアイテム所持判定 (has_item) を実装。

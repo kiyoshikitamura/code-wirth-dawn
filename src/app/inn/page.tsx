@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
-import { Scenario } from '@/types/game';
-import { Scroll, Map, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Scenario, Enemy } from '@/types/game';
+import { Scroll, ArrowLeft, AlertOctagon } from 'lucide-react';
 import WorldNews from '../components/WorldNews';
 import { getBackgroundByAttribute } from '@/utils/visuals';
 import { supabase } from '@/lib/supabase';
@@ -13,11 +13,15 @@ import QuestModal from '@/components/quest/QuestModal';
 import TavernModal from '@/components/inn/TavernModal';
 import ShopModal from '@/components/shop/ShopModal';
 import PrayerModal from '@/components/world/PrayerModal';
-
+import QuestResultModal from '@/components/quest/QuestResultModal';
+import StatusModal from '@/components/inn/StatusModal';
+import InnHeader from '@/components/inn/InnHeader';
+import InnNavigation from '@/components/inn/InnNavigation';
+import QuestBoard from '@/components/inn/QuestBoard';
 
 export default function InnPage() {
     const router = useRouter();
-    const { selectScenario, gold, spendGold, worldState, fetchWorldState, userProfile } = useGameStore();
+    const { selectScenario, gold, spendGold, worldState, fetchWorldState, userProfile, showStatus, setShowStatus } = useGameStore();
     const [scenarios, setScenarios] = useState<Scenario[]>([]);
     const [loading, setLoading] = useState(true);
     const [npcMessage, setNpcMessage] = useState('');
@@ -27,7 +31,8 @@ export default function InnPage() {
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
-
+    const [riskConfirmQuest, setRiskConfirmQuest] = useState<any | null>(null);
+    const [questResult, setQuestResult] = useState<any | null>(null);
 
     // --- News & History Logic ---
     const [showNews, setShowNews] = useState(false);
@@ -109,10 +114,12 @@ export default function InnPage() {
             try {
                 const res = await fetch('/api/scenarios', { cache: 'no-store' });
                 if (res.ok) {
-                    setScenarios(await res.json());
+                    const data = await res.json();
+                    console.log("[InnPage] Fetched Scenarios:", data);
+                    setScenarios(data);
                 }
             } catch (e) {
-                console.error(e);
+                console.error("[InnPage] Fetch Error:", e);
             } finally {
                 setLoading(false);
             }
@@ -120,31 +127,188 @@ export default function InnPage() {
 
         fetchWorldState(); // Ensure we have world state for NPC
         fetchScenarios();
-        useGameStore.getState().fetchUserProfile();
+
+        async function loadProfile() {
+            await useGameStore.getState().fetchUserProfile();
+            const p = useGameStore.getState().userProfile;
+            console.log("[InnPage] User Profile:", p);
+        }
+        loadProfile();
     }, []);
 
     const handleSelect = (s: any) => {
+        // Risk Check Logic
+        const userLevel = userProfile?.level || 1;
+        const recLevel = s.rec_level || 1;
+
+        if (recLevel > userLevel) {
+            setRiskConfirmQuest(s);
+            return;
+        }
         setSelectedQuest(s);
     };
 
-    const handleQuestComplete = (result: any) => {
-        console.log("Quest Completed:", result);
-        setSelectedQuest(null);
-        alert("クエスト完了！報酬を受け取りました (Mock)");
-        useGameStore.getState().fetchUserProfile();
+    const confirmRisk = () => {
+        if (riskConfirmQuest) {
+            setSelectedQuest(riskConfirmQuest);
+            setRiskConfirmQuest(null);
+        }
     };
 
-    const handleBattleStart = async (scenario: any) => {
-        // Determine enemy based on scenario
-        let enemy = { id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 };
-        if (scenario.title.includes('退治')) {
-            enemy = { id: 'slime', name: 'スライム', hp: 80, maxHp: 80, level: 1 };
-        }
-        if (scenario.title.includes('ドラゴン')) {
-            enemy = { id: 'dragon', name: 'ドラゴン', hp: 500, maxHp: 500, level: 10 };
+    const handleQuestComplete = async (resultStatusArg: any, historyArg: any[] = []) => {
+        console.log("[InnPage] Quest Complete Result:", resultStatusArg, "Submitting:", isSubmitting);
+        if (isSubmitting) return;
+
+        if (!selectedQuest || !userProfile) {
+            console.error("[InnPage] Missing Quest or User Profile:", { selectedQuest, userProfile });
+            return;
         }
 
+        setIsSubmitting(true);
+
+        const resultStatus = resultStatusArg === 'success' ? 'success' : 'failure';
+
+        try {
+            console.log("[InnPage] Sending Quest Complete Request:", { quest_id: selectedQuest.id, user_id: userProfile.id, result: resultStatus });
+
+            const res = await fetch('/api/quest/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quest_id: selectedQuest.id,
+                    user_id: userProfile.id,
+                    result: resultStatus,
+                    history: historyArg || []
+                })
+            });
+
+            const data = await res.json();
+            console.log("[InnPage] API Response:", data);
+
+            if (res.ok && data.success) {
+                setQuestResult({
+                    changes: data.changes || {},
+                    rewards: data.rewards,
+                    daysPassed: data.days_passed || 0
+                });
+            } else {
+                console.error("[InnPage] API Error:", data.error || "Unknown Error");
+                alert(`結果の保存に失敗しました。\n${data.error || '不明なエラー'}`);
+            }
+        } catch (e) {
+            console.error("[InnPage] Network/Logic Error:", e);
+            alert("通信エラーが発生しました。");
+        } finally {
+            setIsSubmitting(false);
+            setSelectedQuest(null);
+            useGameStore.getState().fetchUserProfile();
+            fetchWorldState(); // Update impacts
+        }
+    };
+
+    const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
+
+    // Battle Return Handler
+    useEffect(() => {
+        const pending = localStorage.getItem('pending_quest');
+        console.log("[InnPage] Checking pending_quest:", pending ? "Found" : "None");
+        if (pending) {
+            try {
+                const { quest, nextNodeId } = JSON.parse(pending);
+
+                // Check URL params for battle result
+                const urlParams = new URLSearchParams(window.location.search);
+                const result = urlParams.get('battle_result');
+
+                console.log("[InnPage] Battle Result Param:", result);
+
+                if (result === 'win') {
+                    console.log("Resuming quest after victory:", quest.title);
+                    setSelectedQuest(quest);
+                    setInitialNodeId(nextNodeId); // Resume at success node
+
+                    // Clear pending status eventually, or ideally immediately but logic might re-trigger if params stay
+                    localStorage.removeItem('pending_quest');
+                    window.history.replaceState({}, '', '/inn'); // Clean URL
+                } else if (result === 'lose' || result === 'escape') {
+                    // Just clear pending
+                    localStorage.removeItem('pending_quest');
+                    window.history.replaceState({}, '', '/inn');
+                    // Maybe show a toast
+                }
+            } catch (e) {
+                console.error("Failed to parse pending quest", e);
+                localStorage.removeItem('pending_quest');
+            }
+        }
+    }, [scenarios]); // Dependency? On mount is ok.
+
+    const handleBattleStart = async (scenario: any, enemyId: string, successNodeId?: string) => {
+        // Default Enemy
+        let enemy: Enemy = { id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 };
+
+        // 1. Try to fetch specific enemy if ID provided
+        if (enemyId && enemyId !== 'slime') {
+            try {
+                // Check if it's a group first
+                const { data: groupData } = await supabase
+                    .from('enemy_groups')
+                    .select('*')
+                    .eq('slug', enemyId)
+                    .maybeSingle();
+
+                let targetSlug = enemyId;
+                if (groupData && groupData.members && groupData.members.length > 0) {
+                    targetSlug = groupData.members[0]; // Pick first member for now
+                }
+
+                // Fetch Enemy Data
+                const { data: enemyData } = await supabase
+                    .from('enemies')
+                    .select('*')
+                    .eq('slug', targetSlug)
+                    .maybeSingle();
+
+                if (enemyData) {
+                    enemy = {
+                        id: enemyData.slug, // Use slug as ID for engine lookup compatibility
+                        name: enemyData.name,
+                        hp: enemyData.hp,
+                        maxHp: enemyData.hp,
+                        level: Math.floor(enemyData.hp / 10) || 1, // Rough estimate if level missing
+                        image: `/enemies/${enemyData.slug}.png`
+                    };
+                }
+            } catch (e) {
+                console.error("Failed to fetch enemy data:", e);
+            }
+        }
+        // Legacy Fallbacks
+        else {
+            if (scenario.title.includes('退治')) {
+                enemy = { id: 'slime', name: 'スライム', hp: 80, maxHp: 80, level: 1 };
+            }
+            if (scenario.title.includes('ドラゴン')) {
+                enemy = { id: 'dragon', name: 'ドラゴン', hp: 500, maxHp: 500, level: 10 };
+            }
+        }
+
+        // PERSIST STATE
+        if (successNodeId) {
+            console.log("[InnPage] Setting pending_quest:", { quest: scenario.title, nextNodeId: successNodeId });
+            localStorage.setItem('pending_quest', JSON.stringify({
+                quest: scenario,
+                nextNodeId: successNodeId,
+                timestamp: Date.now()
+            }));
+        }
+
+        // Show loader overlay immediately to block interactions
+        setIsNavigatingToBattle(true);
+
+        console.log("[InnPage] Calling startBattle...");
         await useGameStore.getState().startBattle(enemy);
+        console.log("[InnPage] Navigating to /battle...");
         router.push('/battle');
     };
 
@@ -165,6 +329,8 @@ export default function InnPage() {
 
     // NPC Dialogue Logic
     const [isThinking, setIsThinking] = useState(false);
+    const [isNavigatingToBattle, setIsNavigatingToBattle] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (!worldState) return;
@@ -201,64 +367,6 @@ export default function InnPage() {
         return () => clearTimeout(timer);
     }, [worldState?.controlling_nation, reputation?.rank]); // Constrain dependencies
 
-    // ... (keep handleSelect, handleBuy) ...
-
-    // Debug Update Logic
-    const updateDebug = async (impacts: any) => {
-        setReqStatus('Idle');
-        try {
-            const res = await fetch('/api/admin/update-world', {
-                method: 'POST',
-                // Pass current location name (or Hub if not set)
-                body: JSON.stringify({
-                    impacts,
-                    location_name: worldState?.location_name || '名もなき旅人の拠所'
-                })
-            });
-            if (res.ok) {
-                setReqStatus('Success');
-                await fetchWorldState(); // REFETCH state to update UI
-                useGameStore.getState().fetchUserProfile(); // Refetch profile too if points changed
-            } else {
-                setReqStatus('Error');
-            }
-        } catch (e) {
-            console.error(e);
-            setReqStatus('Error');
-        }
-    };
-
-    const updateReputation = async (action: 'add' | 'sub') => {
-        if (!worldState?.location_name) return;
-        setReqStatus('Idle');
-        try {
-            const res = await fetch('/api/admin/update-reputation', {
-                method: 'POST',
-                body: JSON.stringify({
-                    location_name: worldState.location_name,
-                    action
-                })
-            });
-            if (res.ok) {
-                setReqStatus('Success');
-                // Refetch EVERYTHING to ensure Title, Dialogue, Shop updates
-                await fetchWorldState();
-                await useGameStore.getState().fetchUserProfile();
-                // Manually trigger reputation refetch (since it's local in useEffect)
-                // We can just rely on the dependency `userProfile` changing or force re-mount?
-                // Better: Extract fetchRep into function and call it.
-                // For now, re-fetching userProfile triggers the Effect [userProfile, worldState].
-
-                // Hack: force URL refresh to ensure clean state? No, avoid reload.
-            } else {
-                setReqStatus('Error');
-            }
-        } catch (e) {
-            console.error(e);
-            setReqStatus('Error');
-        }
-    };
-
     // Helper for Theme
     const getThemeColors = () => {
         const nation = worldState?.controlling_nation || 'Neutral';
@@ -272,25 +380,7 @@ export default function InnPage() {
     };
     const theme = getThemeColors();
 
-    // Friction / Governance Text
-    const getGovernanceText = () => {
-        if (!worldState) return '';
-        // Skip for Hub
-        if (worldState.location_name === '名もなき旅人の拠所') return '';
-
-        const nation = worldState.controlling_nation;
-        if (nation === 'Neutral') return 'この地は誰の支配も受けていない。';
-
-        let score = 0;
-        if (nation === 'Roland') score = worldState.order_score;
-        else if (nation === 'Markand') score = worldState.chaos_score;
-        else if (nation === 'Yato') score = worldState.justice_score;
-        else if (nation === 'Karyu') score = worldState.evil_score;
-
-        if (score >= 60) return `住民は${nation}の統治を歓迎しているようだ。活気がある。`;
-        if (score <= 40) return `住民は${nation}の支配に怯えている... 緊張感が漂っている。`;
-        return `街はこの国の支配にまだ馴染んでいないようだ。`;
-    };
+    // Governance Text moved to InnHeader
 
     // Status Display Map
     const STATUS_MAP: Record<string, string> = {
@@ -358,6 +448,14 @@ export default function InnPage() {
             {/* 5. Vignette */}
             <div className="fixed inset-0 z-[3] bg-[radial-gradient(circle_at_center,_transparent_10%,_#000000_90%)] opacity-60 pointer-events-none"></div>
 
+            {/* Battle Transition Overlay */}
+            {isNavigatingToBattle && (
+                <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-in fade-in duration-500">
+                    <div className="text-red-500 font-serif text-3xl animate-pulse tracking-widest mb-4">BATTLE START</div>
+                    <div className="w-16 h-16 border-4 border-red-900 border-t-red-500 rounded-full animate-spin"></div>
+                </div>
+            )}
+
             {/* 6. Content Container (Must be z-10 or higher to sit above BG layers) */}
             <div className="relative z-10 p-4">
 
@@ -365,9 +463,10 @@ export default function InnPage() {
                 {selectedQuest && (
                     <QuestModal
                         scenario={selectedQuest}
-                        onClose={() => setSelectedQuest(null)}
+                        onClose={() => { setSelectedQuest(null); setInitialNodeId(undefined); }}
                         onComplete={handleQuestComplete}
                         onBattleStart={handleBattleStart}
+                        initialNodeId={initialNodeId}
                     />
                 )}
 
@@ -406,7 +505,7 @@ export default function InnPage() {
                         isOpen={showTavern}
                         onClose={() => setShowTavern(false)}
                         userProfile={userProfile}
-                        locationId={worldState?.id || userProfile.current_location_id || 'loc_hub'}
+                        locationId={userProfile.current_location_id || 'loc_hub'}
                     />
                 )}
 
@@ -419,79 +518,40 @@ export default function InnPage() {
                     />
                 )}
 
-                <header className={`max-w-4xl mx-auto py-4 md:py-6 border-b ${theme.border} mb-4 md:mb-8`}>
-                    {/* Desktop Header */}
-                    <div className="hidden md:flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <h1 className={`text-2xl font-serif ${theme.accent} font-bold tracking-wider flex items-center gap-2`}>
-                                <Map className="w-8 h-8" />
-                                {worldState?.location_name || '冒険者の宿屋'}
-                            </h1>
-                            <div className="flex flex-col">
-                                <span className="text-sm text-gray-400">Rest & Supply @ {worldState?.controlling_nation || 'Neutral'} Territory</span>
-                                {getGovernanceText() && (
-                                    <span className="text-xs text-orange-300/80 mt-1 italic font-serif">
-                                        {getGovernanceText()}
-                                    </span>
-                                )}
-                                <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
-                                    世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日
-                                    <span className="ml-2 text-gray-500">
-                                        / Age: {userProfile?.age || 20} ({userProfile?.gender || '?'}) / Vit: {userProfile?.vitality ?? 100}%
-                                    </span>
-                                </span>
-                            </div>
-                            <div className="flex gap-2 mt-2">
+                {/* Risk Confirmation Modal */}
+                {riskConfirmQuest && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-[#1a0f0f] border-2 border-red-800 w-full max-w-md shadow-2xl relative p-6 text-center">
+                            <AlertOctagon className="w-16 h-16 text-red-600 mx-auto mb-4 animate-pulse" />
+                            <h2 className="text-2xl font-serif font-bold text-red-500 mb-2">危険な依頼です</h2>
+                            <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                                このクエストの推奨レベルは <span className="text-red-400 font-bold text-lg">Lv.{riskConfirmQuest.rec_level}</span> です。<br />
+                                現在のあなたのレベル ({userProfile?.level || 1}) では、<br />
+                                <span className="text-red-400 font-bold">死亡や寿命(Vit)の喪失</span>のリスクが非常に高いです。
+                            </p>
+                            <div className="grid grid-cols-2 gap-4">
                                 <button
-                                    onClick={() => router.push('/world-map')}
-                                    className={`text-xs bg-[#4a3b2b] border ${theme.border} ${theme.text} px-3 py-1.5 rounded hover:bg-white/10 hover:text-white flex items-center gap-2 w-fit transition-all uppercase tracking-wider font-bold`}
+                                    onClick={() => setRiskConfirmQuest(null)}
+                                    className="bg-gray-800 border border-gray-600 text-gray-300 py-3 rounded hover:bg-gray-700 transition-colors"
                                 >
-                                    <Map className="w-3 h-3" /> World Map
+                                    やめる
+                                </button>
+                                <button
+                                    onClick={confirmRisk}
+                                    className="bg-red-900/50 border border-red-600 text-red-200 py-3 rounded hover:bg-red-800 transition-colors font-bold"
+                                >
+                                    それでも挑む
                                 </button>
                             </div>
                         </div>
-
-                        <div className="bg-black/50 px-4 py-2 rounded border border-gold-600/50 text-gold-400 font-mono text-right flex flex-col gap-2">
-                            <div className="flex items-center justify-end gap-2">
-                                {userProfile?.avatar_url && (
-                                    <img src={userProfile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-gold-500/50 object-cover" />
-                                )}
-                                <div className="text-right">
-                                    <div className="font-bold text-gray-200 text-sm">
-                                        {userProfile?.name || userProfile?.title_name || '名もなき旅人'}
-                                    </div>
-                                    <div className={`text-[10px] ${reputation?.rank === 'Hero' ? 'text-amber-400' : 'text-gray-400'}`}>
-                                        &lt;{userProfile?.title_name}&gt; / 名声: {reputation?.rank || 'Stranger'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
+                )}
 
-                    {/* Mobile Header (Compact) */}
-                    <div className="flex md:hidden items-center justify-between w-full">
-                        <div className="flex items-center gap-3">
-                            {userProfile?.avatar_url && (
-                                <img src={userProfile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-gold-500/50 object-cover" />
-                            )}
-                            <div>
-                                <h1 className={`text-lg font-serif ${theme.accent} font-bold tracking-wider leading-tight`}>
-                                    {worldState?.location_name || '宿屋'}
-                                </h1>
-                                <div className="text-[10px] text-gray-400 mt-1">
-                                    <div className="text-xs text-amber-200/80 italic mt-0.5 leading-snug">
-                                        <span className="font-bold not-italic text-amber-500 mr-1">[{worldState?.controlling_nation || '中立'}]</span>
-                                        {worldState?.flavor_text || '...'}
-                                    </div>
-                                    <div>
-                                        世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年...
-                                        <span className="ml-1 text-[9px] text-gray-500">Age:{userProfile?.age} Vit:{userProfile?.vitality ?? 100}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <InnHeader
+                    worldState={worldState}
+                    userProfile={userProfile}
+                    reputation={reputation}
+                />
 
                 <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 pb-20 md:pb-0">
 
@@ -529,143 +589,23 @@ export default function InnPage() {
                             </button>
                         </section>
 
-                        {/* Mobile Navigation (Visible only on small screens) */}
-                        <section className="grid md:hidden grid-cols-2 gap-3 mb-4">
-                            <button
-                                onClick={() => setShowTavern(true)}
-                                className="bg-[#2b1d12] border border-[#a38b6b] p-3 rounded flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-                            >
-                                <span className="text-2xl">🍺</span>
-                                <span className="text-xs font-bold text-[#e3d5b8]">酒場</span>
-                            </button>
-                            <button
-                                onClick={() => setShowShop(true)}
-                                className="bg-[#2b1d12] border border-[#a38b6b] p-3 rounded flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-                            >
-                                <span className="text-2xl">💰</span>
-                                <span className="text-xs font-bold text-[#e3d5b8]">商店</span>
-                            </button>
-                            <button
-                                onClick={() => router.push('/status')}
-                                className="bg-[#1a1510] border border-[#4a3b2b] p-3 rounded flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-                            >
-                                <ShieldCheck className="w-6 h-6 text-gray-400" />
-                                <span className="text-xs font-bold text-gray-300">ステータス</span>
-                            </button>
-                            <button
-                                onClick={() => setShowPrayer(true)}
-                                className="bg-[#1a1510] border border-gold-600/50 p-3 rounded flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-                            >
-                                <span className="text-2xl">🙏</span>
-                                <span className="text-xs font-bold text-gold-400">祈り</span>
-                            </button>
-                        </section>
-
-                        {/* Navigation Menu (Desktop Only) */}
-                        <section className="hidden md:grid grid-cols-1 gap-4">
-                            <button
-                                onClick={() => setShowTavern(true)}
-                                className="bg-[#2b1d12] border border-[#a38b6b] p-4 flex items-center gap-4 hover:bg-[#3e2b1b] transition-all group"
-                            >
-                                <div className="bg-black/30 p-3 rounded-full text-amber-500 group-hover:text-amber-300">
-                                    <span className="text-2xl">🍺</span>
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-lg font-serif font-bold text-[#e3d5b8] group-hover:text-white">酒場へ行く</div>
-                                    <div className="text-xs text-[#8b7355]">仲間を探す・情報を集める</div>
-                                </div>
-                            </button>
-
-                            <button
-                                onClick={() => setShowShop(true)}
-                                className="bg-[#2b1d12] border border-[#a38b6b] p-4 flex items-center gap-4 hover:bg-[#3e2b1b] transition-all group"
-                            >
-                                <div className="bg-black/30 p-3 rounded-full text-amber-500 group-hover:text-amber-300">
-                                    <span className="text-2xl">💰</span>
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-lg font-serif font-bold text-[#e3d5b8] group-hover:text-white">商店へ行く</div>
-                                    <div className="text-xs text-gray-500">アイテム・スキルの購入</div>
-                                </div>
-                            </button>
-
-                            <button
-                                onClick={() => router.push('/status')}
-                                className="bg-[#1a1510] border border-[#4a3b2b] p-4 flex items-center gap-4 hover:bg-[#2a221b] transition-all group"
-                            >
-                                <div className="bg-black/30 p-3 rounded-full text-gray-400 group-hover:text-gray-200">
-                                    <ShieldCheck className="w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-lg font-serif font-bold text-gray-300 group-hover:text-white">ステータス</div>
-                                    <div className="text-xs text-gray-600">所持品・スキルの確認</div>
-                                </div>
-                            </button>
-
-                            <button
-                                onClick={() => setShowPrayer(true)}
-                                className="bg-[#1a1510] border border-gold-600/30 p-4 flex items-center gap-4 hover:bg-[#2d2416] transition-all group"
-                            >
-                                <div className="bg-black/30 p-3 rounded-full text-gold-500 group-hover:text-gold-300">
-                                    <span className="text-2xl">🙏</span>
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-lg font-serif font-bold text-gold-200 group-hover:text-white">祈りを捧げる</div>
-                                    <div className="text-xs text-gold-500/70">世界への介入・属性支援</div>
-                                </div>
-                            </button>
-                        </section>
+                        <InnNavigation
+                            onOpenTavern={() => setShowTavern(true)}
+                            onOpenShop={() => setShowShop(true)}
+                            onOpenStatus={() => setShowStatus(true)}
+                            onOpenPrayer={() => setShowPrayer(true)}
+                            theme={theme}
+                        />
                     </div>
 
                     {/* Right Column: Quest Board */}
-                    <div className="bg-[#e3d5b8] text-napy-900 p-4 md:p-6 rounded-sm shadow-[0_0_15px_rgba(0,0,0,0.5)] border-4 border-[#8b5a2b] relative h-fit order-2 pb-8">
-                        {/* Board Header */}
-                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#8b5a2b] text-[#e3d5b8] px-4 py-1 text-xs font-bold tracking-widest shadow-md">
-                            QUEST BOARD
-                        </div>
-                        {/* ... Existing Scenarios Map ... */}
-                        {loading ? (
-                            <div className="text-center py-12 text-[#5c4033] font-serif">
-                                依頼を読み込み中...
-                            </div>
-                        ) : (
-                            <div className="space-y-4 pt-4">
-                                {scenarios.map((s) => (
-                                    <div key={s.id} className="group hover:bg-[#d4c5a5] p-4 transition-colors border-b border-[#c2b280] last:border-0 cursor-pointer relative" onClick={() => handleSelect(s)}>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h3 className="font-bold text-[#3e2723] text-lg font-serif">
-                                                {s.title}
-                                            </h3>
-                                            <span className="bg-[#8b5a2b] text-[#e3d5b8] text-xs px-2 py-0.5 rounded">
-                                                金貨 {s.reward_gold} 枚
-                                            </span>
-                                        </div>
-                                        <p className="text-[#5d4037] text-sm mb-3">
-                                            {s.description}
-                                        </p>
-
-                                        <div className="flex items-center gap-4 text-xs text-[#5d4037]/80">
-                                            <span>依頼主: {s.client_name}</span>
-                                            <div className="flex gap-2">
-                                                {s.impacts?.order && s.impacts.order > 0 && <span className="text-blue-800">秩序↑</span>}
-                                                {s.impacts?.chaos && s.impacts.chaos > 0 && <span className="text-purple-800">混沌↑</span>}
-                                                {s.impacts?.justice && s.impacts.justice > 0 && <span className="text-yellow-800">正義↑</span>}
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            className="absolute right-4 bottom-4 bg-[#3e2723] text-gold-500 text-xs px-4 py-2 rounded shadow-lg transition-transform hover:scale-105 active:scale-95"
-                                            onClick={(e) => { e.stopPropagation(); handleSelect(s); }}
-                                        >
-                                            受領する
-                                        </button>
-                                    </div>
-                                ))}
-                                {scenarios.length === 0 && (
-                                    <div className="text-center py-8 text-[#5d4037]">現在、依頼はありません。</div>
-                                )}
-                            </div>
-                        )}
+                    <div className="order-2">
+                        <QuestBoard
+                            scenarios={scenarios}
+                            loading={loading}
+                            userLevel={userProfile?.level || 1}
+                            onSelect={handleSelect}
+                        />
                     </div>
                 </main>
 
@@ -674,10 +614,42 @@ export default function InnPage() {
 
                 <div className="text-center mt-12 space-y-4">
                     {/* Debug Section */}
+                    <div className="flex flex-wrap justify-center gap-4 border-t border-gray-800 pt-8">
+                        <button
+                            onClick={handleReset}
+                            className="bg-red-900/20 text-red-500 border border-red-900 px-3 py-1 text-xs hover:bg-red-900/50"
+                        >
+                            [DEBUG] World Reset
+                        </button>
+                        <button
+                            onClick={async () => { await fetch('/api/debug/skip-time', { method: 'POST' }); fetchWorldState(); }}
+                            className="bg-blue-900/20 text-blue-500 border border-blue-900 px-3 py-1 text-xs hover:bg-blue-900/50"
+                        >
+                            [DEBUG] Skip Day
+                        </button>
+                        <button
+                            onClick={async () => { await useGameStore.getState().addGold(1000); }}
+                            className="bg-yellow-900/20 text-yellow-500 border border-yellow-900 px-3 py-1 text-xs hover:bg-yellow-900/50"
+                        >
+                            [DEBUG] +1000 G
+                        </button>
+                        <button
+                            onClick={async () => {
+                                await fetch('/api/reputation/debug', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userId: userProfile?.id, location: worldState?.location_name, amount: 10 })
+                                });
+                                useGameStore.getState().fetchUserProfile();
+                            }}
+                            className="bg-purple-900/20 text-purple-500 border border-purple-900 px-3 py-1 text-xs hover:bg-purple-900/50"
+                        >
+                            [DEBUG] +Rep
+                        </button>
+                    </div>
 
-                    {/* Debug Section */}
                     {/* Detailed Debug Panel */}
-                    <div className="border border-green-900/50 bg-black p-4 rounded mt-8 text-left font-mono text-xs">
+                    <div className="border border-green-900/50 bg-black p-4 rounded mt-4 text-left font-mono text-xs">
                         <p className="text-green-500 mb-2 border-b border-green-900/50 pb-1">--- SYSTEM MONITOR ---</p>
                         {worldState ? (
                             <div className="grid grid-cols-2 gap-4 text-green-400">
@@ -686,7 +658,6 @@ export default function InnPage() {
                                     <div>Chaos:   {worldState.chaos_score || 0}</div>
                                     <div>Justice: {worldState.justice_score || 0}</div>
                                     <div>Evil:    {worldState.evil_score || 0}</div>
-                                    {/* <div className="mt-2 text-white">Total: {worldState.influence_score || 0}</div> */}
                                 </div>
                                 <div>
                                     <div>Status: <span className={worldState.status === 'Ruined' || worldState.status === '崩壊' ? 'text-red-500' : 'text-blue-500'}>{STATUS_MAP[worldState.status] || worldState.status}</span></div>
@@ -695,55 +666,20 @@ export default function InnPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-gray-500">Loading World State...</div>
+                            <div className="text-green-900 animate-pulse">Scanning World State...</div>
                         )}
-
-                        {/* API Status Display */}
-                        <div className="mt-2 text-[10px] text-gray-500 border-t border-green-900/30 pt-1">
-                            Recent Update:
-                            <span className={reqStatus === 'Success' ? 'text-green-500' : reqStatus === 'Error' ? 'text-red-500' : 'text-gray-500'}>
-                                {reqStatus}
-                            </span>
-                        </div>
-
-                        <h3 className="text-gray-500 text-xs font-bold pt-4 border-t border-gray-800 tracking-wider">REPUTATION</h3>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                            <button onClick={() => updateReputation('add')} className="p-2 bg-indigo-900/30 border border-indigo-700 hover:bg-indigo-800 text-indigo-300 rounded text-xs transition-colors">
-                                名声 +10
-                            </button>
-                            <button onClick={() => updateReputation('sub')} className="p-2 bg-red-900/30 border border-red-700 hover:bg-red-800 text-red-300 rounded text-xs transition-colors">
-                                名声 -10
-                            </button>
-                        </div>
-
-                        <h3 className="text-gray-500 text-xs font-bold pt-4 border-t border-gray-800 tracking-wider mt-2">ATTRIBUTES</h3>
-                        <div className="grid grid-cols-4 gap-1 mt-2">
-                            <button onClick={() => updateDebug({ order: 20 })} className="bg-blue-900/30 border border-blue-500/50 text-blue-200 px-1 py-1 hover:bg-blue-800 transition-colors rounded text-[10px]">
-                                Order+20
-                            </button>
-                            <button onClick={() => updateDebug({ chaos: 20 })} className="bg-purple-900/30 border border-purple-500/50 text-purple-200 px-1 py-1 hover:bg-purple-800 transition-colors rounded text-[10px]">
-                                Chaos+20
-                            </button>
-                            <button onClick={() => updateDebug({ justice: 20 })} className="bg-yellow-900/30 border border-yellow-500/50 text-yellow-200 px-1 py-1 hover:bg-yellow-800 transition-colors rounded text-[10px]">
-                                Justice+20
-                            </button>
-                            <button onClick={() => updateDebug({ evil: 20 })} className="bg-red-900/30 border border-red-500/50 text-red-200 px-1 py-1 hover:bg-red-800 transition-colors rounded text-[10px]">
-                                Evil+20
-                            </button>
-                        </div>
-
-                        <h3 className="text-gray-500 text-xs font-bold pt-4 border-t border-gray-800 tracking-wider mt-2">SYSTEM</h3>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                            <button onClick={() => useGameStore.getState().addGold(1000)} className="p-2 bg-yellow-900/20 border border-yellow-800 hover:bg-yellow-900 text-yellow-500 rounded text-xs transition-colors">
-                                GOLD +1000
-                            </button>
-                            <button onClick={handleReset} className="p-2 bg-red-900/20 border border-red-800 hover:bg-red-900 text-red-500 rounded text-xs transition-colors">
-                                RESET WORLD
-                            </button>
-                        </div>
                     </div>
                 </div>
-            </div>{/* End Content Container */}
+            </div>
+            {questResult && (
+                <QuestResultModal
+                    changes={questResult.changes}
+                    rewards={questResult.rewards}
+                    daysPassed={questResult.daysPassed}
+                    onClose={() => setQuestResult(null)}
+                />
+            )}
+            {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
         </div>
     );
 }

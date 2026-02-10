@@ -11,13 +11,12 @@ async function main() {
     const { data, error } = await supabase
         .from('scenarios')
         .select('id, title, location_id, conditions, ruling_nation_id')
-        .in('id', [5008, 5013]);
+        .in('id', [5006, 5007]);
 
     if (error) {
         console.error(error);
     } else {
-        const target = data.find(q => q.id === 5008);
-        console.log("QUEST 5008:", JSON.stringify(target, null, 2));
+        console.log(JSON.stringify(data, null, 2));
     }
 }
 

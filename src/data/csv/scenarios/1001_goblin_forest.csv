@@ -1,0 +1,11 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"暗い森の入り口に立っている。\n風が木々を揺らし、何かの気配を感じる。",,bg:nature_forest
+CHOICE,,"森に入る",battle_start,
+CHOICE,,"引き返す",end_fail,
+NODE,battle_start,"茂みからゴブリンが飛び出してきた！",,"type:battle, enemy:goblin_squad, bg:battle_generic"
+CHOICE,,"戦う",win,cost_type:vitality, cost_val:5
+CHOICE,,"逃げる",end_fail,
+NODE,win,"ゴブリンを倒した。\n奥には古い祭壇があった。",,bg:nature_forest
+CHOICE,,"調べる",end_success,
+NODE,end_success,"祭壇から遺物を回収した。\n依頼達成だ。",,type:end_success
+NODE,end_fail,"危険を感じて引き返した。",,type:end_failure

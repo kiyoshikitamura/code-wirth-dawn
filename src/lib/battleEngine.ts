@@ -60,8 +60,8 @@ export function buildBattleDeck(
     }
 
     // 3. Basic Validation (Ensure usable cards exist)
-    const basicAttack = cardLookup('c7') || { id: 'basic_attack', name: 'Attack', type: 'Basic', description: 'Simple attack', cost: 0, power: 10 };
-    const basicDefend = cardLookup('c4') || { id: 'basic_defend', name: 'Defend', type: 'Basic', description: 'Reduce damage', cost: 0 };
+    const basicAttack = cardLookup('1001') || { id: '1001', name: '斬撃', type: 'Skill', description: '基本攻撃', cost: 0, power: 20 };
+    const basicDefend = cardLookup('1004') || { id: '1004', name: '鉄壁', type: 'Skill', description: '防御バフ', cost: 0, power: 0 };
 
     // Always ensure at least 3 basic attacks and 2 defends if deck is too small
     if (finalDeck.length < 5) {
@@ -129,7 +129,7 @@ export function canAffordCard(
     currentMp: number,
     currentVitality: number
 ): boolean {
-    if (card.cost && currentMp < card.cost) return false;
+    // MP cost is removed from V9 specs
     if (card.cost_vitality && currentVitality < card.cost_vitality) return false;
     return true;
 }

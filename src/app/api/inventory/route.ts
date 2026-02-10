@@ -22,7 +22,8 @@ export async function GET(req: Request) {
                     description,
                     item_type,
                     power_value,
-                    required_attribute
+                    required_attribute,
+                    cost
                 )
             `);
 
@@ -56,6 +57,7 @@ export async function GET(req: Request) {
                 item_type: entry.items.item_type,
                 power_value: entry.items.power_value,
                 required_attribute: entry.items.required_attribute,
+                cost: entry.items.cost || 0,
                 is_equipped: entry.is_equipped,
                 acquired_at: entry.acquired_at,
                 quantity: entry.quantity,

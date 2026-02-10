@@ -1,17 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
     try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-        if (!supabaseUrl || !supabaseServiceKey) {
-            console.error('Missing Supabase Environment Variables');
-            return NextResponse.json({ error: 'Server Configuration Error: Missing Env Vars' }, { status: 500 });
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         const body = await req.json();
         const { user_id, location_id, attribute, amount_tier } = body;

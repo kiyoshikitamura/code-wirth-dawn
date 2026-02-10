@@ -1,0 +1,1 @@
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS max_vitality INTEGER DEFAULT 100;
