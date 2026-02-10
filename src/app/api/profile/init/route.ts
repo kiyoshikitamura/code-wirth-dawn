@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
         if (profileId) {
             // Apply Inheritance if profile exists (Reincarnation flow)
-            const result = await lifeSync.processInheritance(profileId, { gold: gold || 1000 });
+            const result = await lifeSync.processInheritance(profileId, { ...updates, gold: gold || 1000 });
             // result contains user data modified by inheritance logic
             if (result) {
                 updates = { ...updates, ...result };

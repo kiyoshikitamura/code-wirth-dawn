@@ -163,6 +163,19 @@ export class ShadowService {
             });
         }
 
+        // 3.5 Resolve Card IDs from Names
+        let cardIds: number[] = [];
+        if (shadow.signature_deck_preview && shadow.signature_deck_preview.length > 0) {
+            const { data: cards } = await this.supabase
+                .from('cards')
+                .select('id, name')
+                .in('name', shadow.signature_deck_preview);
+
+            if (cards) {
+                cardIds = cards.map(c => c.id);
+            }
+        }
+
         // 4. Create Party Member
         const { error: insertError } = await this.supabase
             .from('party_members')
@@ -172,7 +185,7 @@ export class ShadowService {
                 source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
                 origin_type: shadow.origin_type,
                 durability: 100, // Default durability
-                inject_cards: shadow.signature_deck_preview, // Should be IDs
+                inject_cards: cardIds, // Use resolved IDs
                 royalty_rate: shadow.origin_type === 'shadow_active' ? percentageToInteger(rate) : 0,
                 is_active: true
             });
