@@ -1,6 +1,6 @@
 [
   {
-    "id": "578ccd32-31f5-4247-a20e-5ed56504d9c5",
+    "id": "11dd2844-5599-4534-bfb7-01926ede5c38",
     "name": "帝都カロン",
     "type": "Capital",
     "x": 250,
@@ -8,7 +8,7 @@
     "nation_id": "Karyu"
   },
   {
-    "id": "06aba2d0-4234-4f4a-9b32-ac6b3b9a187e",
+    "id": "8bbc6f39-6e4c-47d0-b3fd-718fbf983865",
     "name": "カロン国境砦",
     "type": "Town",
     "x": 400,
@@ -16,7 +16,7 @@
     "nation_id": "Karyu"
   },
   {
-    "id": "95e9b548-bcac-405a-8c02-316c1747bb41",
+    "id": "27d67abd-4cf5-4954-bba1-bcff78aa7a73",
     "name": "地下監獄",
     "type": "Dungeon",
     "x": 250,
@@ -24,7 +24,7 @@
     "nation_id": "Karyu"
   },
   {
-    "id": "6f827962-6fb4-4bb8-8c60-560f2105d800",
+    "id": "063895cf-c7fa-4185-a1a6-dab24efa8bb2",
     "name": "処刑場の街",
     "type": "City",
     "x": 150,
@@ -32,7 +32,7 @@
     "nation_id": "Karyu"
   },
   {
-    "id": "d8093146-af30-4189-a0b5-3060d2ac7290",
+    "id": "df925291-43c6-4ff1-ac98-97532ec8117c",
     "name": "鉄の鉱山村",
     "type": "Village",
     "x": 250,
@@ -40,7 +40,7 @@
     "nation_id": "Karyu"
   },
   {
-    "id": "5da37228-5411-4482-85bc-140f5a37448f",
+    "id": "4a38a731-00c2-431a-84c0-c07b7c50566d",
     "name": "スラム街",
     "type": "Dungeon",
     "x": 750,
@@ -48,7 +48,7 @@
     "nation_id": "Markand"
   },
   {
-    "id": "e81462ff-0071-46a4-8f98-9696785e3663",
+    "id": "47882601-02a8-4eb3-9995-05fa8d107fc8",
     "name": "交易都市メリディア",
     "type": "Capital",
     "x": 750,
@@ -56,7 +56,7 @@
     "nation_id": "Markand"
   },
   {
-    "id": "a59d7307-88b1-4a7a-8e22-48439675041c",
+    "id": "47d2b27b-91c0-42c8-930f-faa7f2a315e3",
     "name": "自由の関所",
     "type": "Town",
     "x": 600,
@@ -64,7 +64,7 @@
     "nation_id": "Markand"
   },
   {
-    "id": "4188c438-c6aa-4fbe-9be0-4d4da39f6765",
+    "id": "f384eebc-2e02-4199-aa89-7ea95d864e1c",
     "name": "カジノタウン",
     "type": "City",
     "x": 850,
@@ -72,7 +72,7 @@
     "nation_id": "Markand"
   },
   {
-    "id": "92ef5d8a-8f29-4ac6-9d64-49d0dcaa80f7",
+    "id": "ac030e66-4f5c-49f3-98c9-1bcd6267e968",
     "name": "オアシスの村",
     "type": "Village",
     "x": 800,
@@ -80,7 +80,7 @@
     "nation_id": "Markand"
   },
   {
-    "id": "bd0bb858-5311-4522-89c9-903ba85df012",
+    "id": "248a58a9-3ef3-4ab6-b18a-dc93b9c034b6",
     "name": "名もなき旅人の拠所",
     "type": "Town",
     "x": 500,
@@ -88,7 +88,7 @@
     "nation_id": "Neutral"
   },
   {
-    "id": "66063ecd-f00c-41ae-8d22-14ca45cbc1a4",
+    "id": "4c0048b4-af54-448a-ac8d-9b4c22d23762",
     "name": "白亜の砦",
     "type": "Dungeon",
     "x": 250,
@@ -96,7 +96,7 @@
     "nation_id": "Roland"
   },
   {
-    "id": "f583b41f-d764-423b-85eb-8262f639a993",
+    "id": "06713271-7303-41c6-8ed2-e0396e1663c8",
     "name": "巡礼の宿場町",
     "type": "Village",
     "x": 400,
@@ -104,7 +104,7 @@
     "nation_id": "Roland"
   },
   {
-    "id": "f2e9867d-0768-4e60-8553-396c0541bed6",
+    "id": "7660495c-9d95-4671-a237-837e4a6ca9dc",
     "name": "聖教会都市",
     "type": "City",
     "x": 350,
@@ -112,7 +112,7 @@
     "nation_id": "Roland"
   },
   {
-    "id": "af2b8e34-dd36-4a90-8254-6ed068fb3586",
+    "id": "8a2cfc4e-1cb1-4663-86e5-342ed3cba77f",
     "name": "騎士団駐屯地",
     "type": "Town",
     "x": 150,
@@ -120,7 +120,7 @@
     "nation_id": "Roland"
   },
   {
-    "id": "caf16126-6ffc-4a03-8714-08c358a1f027",
+    "id": "581279dc-7038-4447-bc90-e26ce2b531dc",
     "name": "王都アーカディア",
     "type": "Capital",
     "x": 250,
@@ -128,7 +128,7 @@
     "nation_id": "Roland"
   },
   {
-    "id": "cbb2df68-2440-4bd3-9de5-88312783aaa3",
+    "id": "720c68e8-6786-4623-bc48-4b9c14f9927e",
     "name": "神都ヤト",
     "type": "Capital",
     "x": 750,
@@ -136,7 +136,7 @@
     "nation_id": "Yato"
   },
   {
-    "id": "5c18bc9b-f1b3-4cf0-9b4c-495edaa94bfc",
+    "id": "ea597237-6685-43d5-aa54-6cdc9f2a37a6",
     "name": "霧の渡し守",
     "type": "Village",
     "x": 800,
@@ -144,7 +144,7 @@
     "nation_id": "Yato"
   },
   {
-    "id": "1cffb606-b032-41cc-966e-d5b7c4b31510",
+    "id": "930264e9-fafc-4b7b-93a0-1b4f83ea89fe",
     "name": "黄泉の門前町",
     "type": "City",
     "x": 600,
@@ -152,7 +152,7 @@
     "nation_id": "Yato"
   },
   {
-    "id": "652b9e2d-9873-4a16-9330-2c7829798121",
+    "id": "cfd732e4-cc32-4259-92ff-cc5acd3253bc",
     "name": "呪われた廃村",
     "type": "Dungeon",
     "x": 700,
@@ -160,7 +160,7 @@
     "nation_id": "Yato"
   },
   {
-    "id": "f5925137-291f-4703-96ff-5b3ad872afeb",
+    "id": "35bb929d-0d2e-4775-ad6d-d515e874d00f",
     "name": "彼岸花の里",
     "type": "Village",
     "x": 850,

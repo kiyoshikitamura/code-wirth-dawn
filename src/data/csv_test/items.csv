@@ -1,0 +1,4 @@
+id,name,type,base_price,quest_req_id,is_black_market,nation_tags,min_prosperity
+item_test_elixir,試作エリクサー,consumable,100,test_quest_001,FALSE,['loc_all'],1
+card_test_rare,王宮の剣技,skill,500,,FALSE,['loc_roland'],3
+drop_slime_gel,スライムジェル,consumable,50,,FALSE,['loc_all'],1

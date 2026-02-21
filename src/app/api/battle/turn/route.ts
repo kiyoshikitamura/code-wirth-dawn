@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase-server';
+import { supabaseServer as supabase } from '@/lib/supabase-admin';
 
 /**
  * POST /api/battle/turn

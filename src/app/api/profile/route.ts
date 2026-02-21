@@ -6,12 +6,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        const { data: profiles, error } = await supabase
+        // v3.5 Fix: Target specific Demo User to avoid fetching NPCs
+        const DEMO_USER_ID = '00000000-0000-0000-0000-000000000000';
+
+        let { data: profile, error } = await supabase
             .from('user_profiles')
             .select('*, locations:locations!fk_current_location(*), reputations(*)')
-            .limit(1);
-
-        let profile = profiles?.[0];
+            .eq('id', DEMO_USER_ID)
+            .maybeSingle();
 
         if (!profile) {
             // Create Demo Profile with new defaults
@@ -60,7 +62,7 @@ export async function GET(req: Request) {
             const updates: any = {};
 
             // 1. Aging Logic
-            const { age, vitality, aged } = processAging(profile.age || 20, profile.vitality ?? 100, profile.accumulated_days || 0);
+            const { age, vitality, aged } = processAging(profile.age || 20, profile.vitality ?? 100, profile.accumulated_days || 0, profile.birth_date);
             if (aged) {
                 updates.age = age;
                 updates.vitality = vitality;

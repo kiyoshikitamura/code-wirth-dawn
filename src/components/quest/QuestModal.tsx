@@ -29,6 +29,11 @@ export default function QuestModal({ scenario, onClose, onComplete, onBattleStar
                     CLOSE [X]
                 </button>
 
+                {/* Temporary Debug: Show raw script_data properties */}
+                <div className="bg-black text-xs text-green-500 p-2 overflow-auto max-h-32 mb-2 border border-green-900">
+                    DEBUG(QuestModal): ID={scenario.id} | ScriptKeys={Object.keys(scenario.script_data || {}).join(',')} | Data={JSON.stringify(scenario.script_data).slice(0, 100)}...
+                </div>
+
                 <ScenarioEngine
                     scenario={scenario}
                     onComplete={onComplete}

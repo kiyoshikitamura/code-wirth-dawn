@@ -1,11 +1,61 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { QuestService } from '@/services/questService';
 
 export const dynamic = 'force-dynamic';
 
+// Initialize Service Role Client for this API to bypass RLS for script_data
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey || '', {
+    auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+    }
+});
+
 export async function GET(req: Request) {
     try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        // Case 1: Fetch Specific Scenario by ID (for QuestPage)
+        if (id) {
+            const { data: quest, error } = await supabase
+                .from('scenarios')
+                .select('*') // Select all including script_data
+                .eq('id', id)
+                .single();
+
+            if (error || !quest) {
+                console.log("Scenario API: Quest not found for id", id);
+                return NextResponse.json({ scenarios: [] });
+            }
+
+            console.log(`Scenario API: Fetching ID ${id}`);
+            console.log(`Scenario API: Keys found:`, Object.keys(quest));
+            console.log(`Scenario API: script_data type:`, typeof quest.script_data);
+            if (quest.script_data) {
+                console.log(`Scenario API: script_data keys:`, Object.keys(quest.script_data));
+                if (quest.script_data.nodes) {
+                    console.log(`Scenario API: node count:`, Object.keys(quest.script_data.nodes).length);
+                }
+            } else {
+                console.log("Scenario API: script_data is falsy");
+            }
+
+            // Map columns if needed
+            const mapped = {
+                ...quest,
+                reward_gold: quest.rewards?.gold || 0,
+                impacts: quest.impact, // Map impact -> impacts
+            };
+
+            return NextResponse.json({ scenarios: [mapped] });
+        }
+
+        // Case 2: Fetch Available Quests (Legacy/Location based)
         // 1. Fetch User Profile to get Current Location
         // Note: Real implementation should use Auth Session, but assuming single-user/mock env for now or first user
         // We need userId. For now, fetch the first user or 'default' logic if auth not strictly enforced yet.
@@ -73,7 +123,7 @@ export async function GET(req: Request) {
             };
         });
 
-        return NextResponse.json(mappedQuests);
+        return NextResponse.json({ scenarios: mappedQuests });
     } catch (err: any) {
         console.error("Quest API Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });

@@ -50,24 +50,24 @@ export function calculateTitle(profile: UserProfile): string {
  * 365日経過で1歳加算し、Vitalityを減少させる
  * @returns 更新されたパラメータのオブジェクト（DB更新用）
  */
-export function processAging(currentAge: number, currentVitality: number, accumulatedDays: number): { age: number, vitality: number, accumulated_days: number, aged: boolean } {
+export function processAging(currentAge: number, currentVitality: number, accumulatedDays: number, birthDate?: string | null): { age: number, vitality: number, accumulated_days: number, aged: boolean } {
     let newAge = currentAge;
     let newVitality = currentVitality;
     let newDays = accumulatedDays;
     let aged = false;
 
-    // 365日を超えていれば加齢
-    // ここではシンプルに「累積日数が365の倍数を超えた瞬間に歳をとる」というよりは、
-    // 日次バッチ等で「昨日の日数」と「今日の日数」を比較して...という運用を想定するが、
-    // この関数は「現在の日数」を入力として、あるべき年齢とVitalityを返す純粋関数とするのが安全。
-
-    // しかし、Vitality減少は「イベント」なので、ステートレスにするのは難しい。
-    // 簡易実装: 累積日数が age * 365 を超えていたら、その分だけ歳をとらせる。
-
-    // 例: 現在20歳, 累積 0日. 
-    // 累積 366日になった -> 21歳になるべき. 
-
-    const calculatedAge = 20 + Math.floor(newDays / 365); // 初期年齢20歳と仮定
+    // 年齢計算: birth_dateがあれば実年齢を正確に計算、なければcurrentAge + 経過年数で推定
+    let calculatedAge: number;
+    if (birthDate) {
+        const bd = new Date(birthDate);
+        const today = new Date();
+        calculatedAge = today.getFullYear() - bd.getFullYear();
+        const m = today.getMonth() - bd.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) calculatedAge--;
+    } else {
+        // birth_dateがない旧データ向けフォールバック: currentAge + 累積日数から経過年数を加算
+        calculatedAge = currentAge + Math.floor(newDays / 365);
+    }
 
     if (calculatedAge > newAge) {
         const ageDiff = calculatedAge - newAge;

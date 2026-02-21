@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { Location, WorldState } from '@/types/game';
 
 // Status Constants
 export const LOC_STATUS = {
@@ -40,25 +41,7 @@ const NATION_ATTRIBUTE_MAP: Record<string, string> = {
     [NATIONS.KARYU]: 'evil_score'
 };
 
-interface Location {
-    id: string;
-    name: string;
-    x: number;
-    y: number;
-    type: string;
-    nation_id: string; // The original/start nation, mostly used to identify capitals
-}
-
-interface WorldState {
-    id: string;
-    location_name: string;
-    controlling_nation: string;
-    status: string;
-    order_score: number;
-    chaos_score: number;
-    justice_score: number;
-    evil_score: number;
-}
+// Location and WorldState types imported from '@/types/game'
 
 /**
  * Main function to update world hegemony and location status.

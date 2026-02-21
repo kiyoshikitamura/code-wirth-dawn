@@ -58,9 +58,9 @@ export class ShadowService {
                     const fee = (u.level || 1) * 100;
                     results.push({
                         profile_id: u.id,
-                        name: u.name,
+                        name: u.name || u.title_name || 'Unknown Adventurer',
                         level: u.level,
-                        job_class: 'Adventurer',
+                        job_class: u.title_name || 'Adventurer',
                         origin_type: 'shadow_active',
                         contract_fee: fee,
                         stats: { atk: u.attack, def: u.defense, hp: u.max_hp },
@@ -157,6 +157,18 @@ export class ShadowService {
 
         if (!hirer || hirer.gold < shadow.contract_fee) {
             return { success: false, error: 'Not enough gold' };
+        }
+
+        // 1.5 Check Party Size (Max 4)
+        const { count, error: countError } = await this.supabase
+            .from('party_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('owner_id', hirerId)
+            .eq('is_active', true);
+
+        if (countError) return { success: false, error: 'Failed to check party size' };
+        if (count !== null && count >= 4) {
+            return { success: false, error: 'Party is full (Max 4 members)' };
         }
 
         // 2. Deduct Gold (Simple Update for MVP, use RPC in prod)

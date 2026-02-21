@@ -110,9 +110,32 @@ export async function POST() {
                 avatar_url: '/avatars/adventurer.jpg',
                 current_location_id: startLocId, // Reset location
                 previous_location_id: null, // Reset previous location
-                age: 20,
                 accumulated_days: 0,
-                gender: 'Unknown'
+                gender: 'Unknown',
+
+                // Add Level Reset (User Request)
+                level: 1,
+                exp: 0,
+                gold: 1000,
+                vitality: 100,
+                max_vitality: 100,
+                is_alive: true,
+
+                // Fix: Reset Battle Stats (Regression Fix)
+                hp: 100,
+                max_hp: 100,
+                mp: 10,
+                max_mp: 10,
+                atk: 5, // Default base atk
+                def: 0,
+
+                // Fix: Reset Character Creation (Regression Fix)
+                age: null as any, // Should trigger character creation
+                name: null as any, // Clear user name
+
+                // Fix: Reset Quest State
+                current_quest_id: null,
+                current_quest_state: null
             })
             // .neq removed to ensure Demo Profile is reset
             .not('id', 'is', null) // Safety clause

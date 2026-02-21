@@ -1,61 +1,50 @@
 
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import path from 'path';
-
-// Load env from .env.local
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; // or SERVICE_ROLE if needed
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Supabase Env Vars");
-    process.exit(1);
+async function insertQuest() {
+    console.log('Inserting validation quest...');
+
+    // Check if it exists by slug or title first to avoid duplicates
+    const { data: existing } = await supabase
+        .from('scenarios')
+        .select('id')
+        .ilike('title', '検証：王都への護衛任務')
+        .single();
+
+    if (existing) {
+        console.log('Quest already exists with ID:', existing.id);
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('scenarios')
+        .insert({
+            title: '検証：王都への護衛任務',
+            description: 'システム検証用の特別護衛任務です。王都までの安全を確保してください。',
+            quest_type: 'special',
+            difficulty: 3,
+            rec_level: 3, // Recommended Level
+            is_urgent: true,
+            client_name: '運営事務局', // Admin
+            rewards: { gold: 1000, exp: 500 },
+            requirements: {}, // No requirements
+            conditions: {},   // No special conditions
+            slug: 'test_quest_001', // Putting the string ID here if needed
+            script_data: { script_id: 'test_escort_scenario' } // Storing the script reference
+        })
+        .select();
+
+    if (error) {
+        console.error('Insert Error:', error);
+    } else {
+        console.log('Inserted Quest:', data);
+    }
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-async function main() {
-    console.log("Inserting Risk Test Quest...");
-
-    const riskQuest = {
-        title: '【DANGER】伝説の古龍討伐',
-        description: '推奨レベル50の超高難易度クエスト。初心者は即死するだろう。',
-        client_name: '王宮騎士団長',
-        type: 'Subjugation',
-        difficulty: 5,
-        rec_level: 50, // High Level
-        is_urgent: false,
-        time_cost: 1,
-        reward_gold: 9999,
-        conditions: { min_level: 1 }, // Technically accessible but risky
-        rewards: { gold: 9999 },
-        flow_nodes: []
-    };
-
-    const urgentQuest = {
-        title: '【URGENT】緊急防衛任務',
-        description: '街への襲撃が迫っている。至急の対応求む。',
-        client_name: '市警',
-        type: 'Defense',
-        difficulty: 2,
-        rec_level: 1,
-        is_urgent: true, // Urgent
-        time_cost: 1,
-        reward_gold: 500,
-        conditions: {},
-        rewards: { gold: 500 },
-        flow_nodes: []
-    };
-
-    const { error: e1 } = await supabase.from('scenarios').insert(riskQuest);
-    if (e1) console.error("Risk Quest Error:", e1);
-    else console.log("Risk Quest Inserted.");
-
-    const { error: e2 } = await supabase.from('scenarios').insert(urgentQuest);
-    if (e2) console.error("Urgent Quest Error:", e2);
-    else console.log("Urgent Quest Inserted.");
-}
-
-main();
+insertQuest();

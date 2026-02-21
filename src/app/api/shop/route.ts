@@ -11,86 +11,98 @@ async function getUserProfile() {
 // GET: List Items (Dynamic Shop)
 export async function GET(req: Request) {
     try {
+        const { searchParams } = new URL(req.url);
+        const questId = searchParams.get('quest_id'); // v3.4 Quest Context
+
         const profile = await getUserProfile();
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        // 1. Get Location Context (Mock: If location_id not set, use default or join)
-        // Ideally profile has current_location_id. For now, assume 'System' or fetch location by name if stored.
-        // Let's assume we pass location_id param, or fetch based on profile.
-        // Profile has `reputation` map.
-
-        // Mock Location Data (Since we might not have seeded locations fully linked)
-        // In real app, fetch from `locations` table.
-        // We will simulate "Current Location" status.
+        // 1. Get Location Context
+        // Try to fetch real world State from current_location
         let prosperityLevel = 3; // Default Stagnant
         let rulingNation = 'Neutral'; // Default
+        let locationName = 'Unknown';
 
-        // Try to fetch real world State if possible
         if (profile.current_location_id) {
             const { data: loc } = await supabase.from('locations').select('*').eq('id', profile.current_location_id).single();
             if (loc) {
-                // Map loc.prosperity_level
                 prosperityLevel = loc.prosperity_level || 3;
                 rulingNation = loc.ruling_nation_id || 'Neutral';
-            }
-        } else {
-            // Fallback: Check 'world_states' for '名もなき旅人の拠所'
-            const { data: ws } = await supabase.from('world_states').select('*').eq('location_name', '名もなき旅人の拠所').maybeSingle();
-            if (ws) {
-                // Convert Spec v1 status string to Prosperity Level
-                const statusMap: Record<string, number> = { 'Zenith': 5, 'Prosperous': 4, 'Stagnant': 3, 'Declining': 2, 'Ruined': 1, '繁栄': 4, '衰退': 2, '崩壊': 1, '混乱': 1, '安定': 3 };
-                prosperityLevel = statusMap[ws.status] || 3;
-                rulingNation = ws.controlling_nation || 'Neutral';
+                locationName = loc.name;
             }
         }
 
         // 2. Inflation Logic
         const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
-        const priceMultiplier = inflationMap[prosperityLevel] || 1.0;
+        let priceMultiplier = inflationMap[prosperityLevel] || 1.0;
+
+        // v7: Newbie Protection (Lv <= 5) -> Force 1.0 (Except Black Market)
+        const isNewbie = (profile.level || 1) <= 5;
+        if (isNewbie) {
+            priceMultiplier = 1.0;
+        }
 
         // 3. Fetch Items
-        const { data: items, error } = await supabase
-            .from('items')
-            .select('*');
-
+        const { data: items, error } = await supabase.from('items').select('*');
         if (error) throw error;
-
         const allItems = items as ItemDB[];
 
         // 4. Filtering Logic
         const filteredItems = allItems.filter(item => {
-            // A. Prosperity Check
+            // A. Quest Context (Priority)
+            if (questId && item.quest_req_id === questId) {
+                return true; // Always show quest items
+            }
+            if (item.quest_req_id && item.quest_req_id !== questId) {
+                return false; // Hide other quest items
+            }
+
+            // B. Prosperity Check
             if (item.min_prosperity > prosperityLevel) return false;
 
-            // B. Nation Check
-            // item.nation_tags includes 'loc_all' OR current rulingNation?
-            // Assuming tag format 'loc_roland', 'loc_all' etc.
+            // C. Nation Check
             const nationTag = `loc_${rulingNation.toLowerCase()}`;
             const isNationMatch = item.nation_tags.includes('loc_all') || item.nation_tags.includes(nationTag);
             if (!isNationMatch) return false;
 
-            // C. Alignment/Black Market Check (Simplified)
-            // If black market, require user reputation < -50 or Evil > 50?
-            // For prototype, let's say Black Market visible only if Justice < 0 (Mock)
+            // D. Black Market
             if (item.is_black_market) {
-                // Check if user is "Dark" enough
-                // profile.alignment.evil vs ...
+                // Only if Ruined OR Evil > 20
+                const isRuined = prosperityLevel === 1;
                 const isDark = (profile.alignment?.evil || 0) > 20;
-                if (!isDark) return false;
+                if (!isRuined && !isDark) return false;
+            } else {
+                // Normal items: Hide if Ruined (unless filtered by Nation/Prosperity which handled above?)
+                // Spec says: Ruined -> "Normal shop unavailable". But we might show black market items only?
+                // Let's assume normal items are scarce but available if min_prosperity allows.
+                // Ruined has items with min_prosperity=1.
             }
 
             return true;
-        }).map(item => ({
-            ...item,
-            current_price: Math.floor(item.base_price * priceMultiplier)
-        }));
+        }).map(item => {
+            // Calculate Price
+            let multiplier = priceMultiplier;
+
+            // Black Market items ignore Newbie Protection?
+            if (item.is_black_market && isNewbie) {
+                multiplier = inflationMap[prosperityLevel] || 1.0; // Apply inflation to black market even for newbies
+            }
+
+            return {
+                ...item,
+                current_price: Math.floor(item.base_price * multiplier),
+                is_quest_exclusive: (questId && item.quest_req_id === questId)
+            };
+        });
 
         return NextResponse.json({
             items: filteredItems,
             meta: {
+                location: locationName,
                 prosperity: prosperityLevel,
                 inflation: priceMultiplier,
-                ruling_nation: rulingNation
+                ruling_nation: rulingNation,
+                is_newbie_protected: isNewbie
             }
         });
 

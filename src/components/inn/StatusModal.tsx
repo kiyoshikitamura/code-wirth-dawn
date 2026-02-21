@@ -229,25 +229,16 @@ function PartyList({ userProfile }: { userProfile: any }) {
     React.useEffect(() => {
         if (!userProfile?.id) return;
 
-        // Dynamically import supabase to avoid build issues if not compliant? 
-        // Or just fetch via API if we want to be safe. 
-        // For MVP, client-side supabase is fine if configured.
-        // Assuming we can use the same pattern as gameStore imports or just fetch from an API?
-        // Let's use a quick fetch to a new endpoint or just use supabase-js if available.
-        // Since we don't have supabase imported in this file, let's add the import or use an API.
-        // gameStore uses '@/lib/supabase'.
-
-        import('@/lib/supabase').then(({ supabase }) => {
-            supabase
-                .from('party_members')
-                .select('*')
-                .eq('owner_id', userProfile.id)
-                .eq('is_active', true)
-                .then(({ data }) => {
-                    setParty(data || []);
-                    setLoading(false);
-                });
-        });
+        fetch(`/api/party/list?owner_id=${userProfile.id}`)
+            .then(res => res.json())
+            .then(data => {
+                setParty(data.party || []);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to fetch party:', err);
+                setLoading(false);
+            });
     }, [userProfile?.id]);
 
     const handleDismiss = async (memberId: string, name: string) => {

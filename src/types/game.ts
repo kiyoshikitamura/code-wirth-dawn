@@ -36,7 +36,16 @@ export interface UserHubState {
   last_visit: string;
 }
 
-export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable';
+export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise'; // v2.11: noise追加
+
+// v2.7: ターゲットタイプ定義
+export type TargetType =
+  | 'single_enemy'   // 敵単体（tauntの影響を受ける）
+  | 'all_enemies'    // 敵全体
+  | 'random_enemy'   // ランダム敵
+  | 'self'           // 自分自身
+  | 'single_ally'    // 味方単体
+  | 'all_allies';    // 味方全体
 
 export interface Card {
   id: string;
@@ -44,9 +53,16 @@ export interface Card {
   type: CardType;
   description: string;
   cost: number;
+  ap_cost?: number; // Added v2.3 (Battle AP)
   power?: number;
   isEquipment?: boolean;
   source?: string; // e.g. "Party:Wolf"
+  effect_id?: string; // v2.5: バフ/デバフID (e.g. 'atk_up', 'poison')
+  effect_duration?: number; // v2.5: 効果持続ターン数
+  target_type?: TargetType; // v2.7: ターゲットタイプ
+  discard_cost?: number; // v2.11: Noise廃棄コスト (AP)
+  isInjected?: boolean; // v4.1: 環境カード (Cost 0扱い)
+  cost_type?: 'mp' | 'vitality'; // v5.1: コストタイプ
 }
 
 export interface Enemy {
@@ -58,6 +74,11 @@ export interface Enemy {
   def?: number; // Added v2.2
   image?: string;
   slug?: string; // v2.1
+  traits?: string[]; // Added v10 for special effects like drain_vit
+  drop_rate?: number; // v2.6: ドロップ率 0-100
+  drop_item_slug?: string; // v2.6: ドロップアイテムslug
+  status_effects?: { id: string; duration: number }[]; // v3.5: Per-enemy effects
+  vit_damage?: number; // v3.5: Vit damage per attack
 }
 
 // ... (skipping unchanged interfaces) ...
@@ -94,8 +115,12 @@ export interface UserProfile {
   max_mp?: number;
   mp?: number;
   attack?: number;
+  atk?: number; // v8.1: 基礎攻撃力 (1-15)
   // defense?: number; // Previous placeholder?
   def?: number; // Added v2.2
+  age_days?: number; // v9.3: 現年齢内の経過日数 (365でリセット)
+  current_quest_id?: string; // v3.3: デッキロック用 (クエスト中はnon-null)
+  current_quest_state?: any; // v3.4: Resume Persistence
 
   // Social
   praise_count?: number;
@@ -120,6 +145,7 @@ export interface PartyMember {
   name: string;
   gender: 'Male' | 'Female' | 'Unknown';
   origin: 'system' | 'ghost';
+  origin_type?: string; // e.g. 'system_mercenary', 'shadow_heroic', 'active_shadow'
   job_class: string;
 
   durability: number;
@@ -131,9 +157,17 @@ export interface PartyMember {
   avatar_url?: string;
   personality?: string;
 
-  inject_cards: string[]; // Card IDs
+  inject_cards: string[]; // Card IDs (raw from DB)
   passive_id?: string;
   is_active: boolean;
+
+  // v2.4 NPC AI fields
+  ai_role?: 'striker' | 'guardian' | 'medic';
+  ai_grade?: 'smart' | 'random';
+  current_ap?: number; // Per-NPC AP in battle
+  signature_deck?: Card[]; // Resolved card objects for AI use
+  used_this_turn?: string[]; // Card IDs used this turn (1-per-turn limit)
+  status_effects?: { id: string; duration: number }[]; // v2.5
 }
 
 export type Adventurer = PartyMember;
@@ -155,6 +189,15 @@ export interface UserProfileDB {
   };
   gold: number;
   current_location_id?: string;
+  current_quest_state?: any; // v3.4 Resume Persistence
+  // Battle/Growth Stats
+  level: number;
+  exp: number;
+  hp: number;
+  max_hp: number;
+  attack: number;
+  def: number;
+  max_deck_cost: number;
   // ...
 }
 
@@ -209,6 +252,13 @@ export interface ScenarioFlowNode {
   id: string;
   text: string;
   choices: ScenarioChoice[];
+  // Loose typing for Scenario Engine flexibility
+  type?: string;
+  bg_key?: string;
+  bgm_key?: string;
+  enemy_group_id?: string;
+  params?: any;
+  [key: string]: any;
 }
 
 export interface ScenarioDB {
@@ -239,6 +289,11 @@ export interface ScenarioDB {
   days_success?: number;
   days_failure?: number;
 
+  // Spec v3.1 Fields
+  quest_type?: 'normal' | 'special';
+  requirements?: Record<string, any>;
+  location_tags?: string[];
+
   // UI Helpers (Optional/Mapped)
   reward_gold?: number;
   impacts?: any;
@@ -249,6 +304,9 @@ export interface ScenarioDB {
 export interface LocationDB {
   id: string;
   name: string;
+  description?: string; // Added (was missing in interface but used in code?)
+
+  // v4.2 Topology & Prosperity
   ruling_nation_id: string;
   prosperity_level: 1 | 2 | 3 | 4 | 5;
   current_attributes: {
@@ -257,10 +315,14 @@ export interface LocationDB {
     justice: number;
     evil: number;
   };
-  // ...
+
+  map_x?: number;
+  map_y?: number;
+  neighbors?: Record<string, { days: number; type?: string }>; // { 'loc_b': { days: 1, type: 'road' } }
 }
 
 export interface WorldState {
+  id?: string;
   location_name: string;
   order_score: number;
   chaos_score: number;
@@ -303,6 +365,7 @@ export interface PartyMemberDB {
   cover_rate: number;
   inject_cards: number[]; // Array of Card IDs
   is_active: boolean;
+  quest_req_id?: string; // v3.4 Guest Context
   created_at?: string;
 }
 
@@ -315,6 +378,7 @@ export interface ItemDB {
   effect_data: any;
 
   // Availability
+  quest_req_id?: string; // v6.1 Quest Context
   nation_tags: string[];
   min_prosperity: number;
   required_alignment: {
@@ -340,14 +404,24 @@ export interface CardDB {
 }
 
 export interface BattleState {
-  enemy: Enemy | null;
+  enemy: Enemy | null; // Current Target
+  enemies: Enemy[]; // v3.5: All Enemies
   party: PartyMember[];
   messages: string[];
   turn: number;
-  cooldowns: Record<string, number>;
+  current_ap: number; // Added v2.3 (Max: 10, Initial: 5)
   isVictory: boolean;
   isDefeat: boolean;
   currentTactic: 'Aggressive' | 'Defensive' | 'Standby';
+  // v2.5 Status Effects
+  player_effects: { id: string; duration: number }[];
+  enemy_effects: { id: string; duration: number }[];
+  // v2.6 Deck Cycle
+  exhaustPile: { id: string; name: string; type: string }[]; // Consumable使用済み
+  consumedItems: string[]; // 戦闘後インベントリ同期用 inventory_id[]
+  // v2.11 Final
+  vitDamageTakenThisTurn?: boolean; // drain_vit 1ターン1回制限
+  battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee'; // 戦闘結果
 }
 
 export type Scenario = ScenarioDB;

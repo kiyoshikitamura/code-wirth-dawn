@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
+import { useQuestState } from '@/store/useQuestState';
 import { Scenario, Enemy } from '@/types/game';
-import { Scroll, ArrowLeft, AlertOctagon } from 'lucide-react';
+import { Scroll, AlertOctagon } from 'lucide-react';
 import WorldNews from '../components/WorldNews';
 import { getBackgroundByAttribute } from '@/utils/visuals';
 import { supabase } from '@/lib/supabase';
@@ -17,15 +18,19 @@ import QuestResultModal from '@/components/quest/QuestResultModal';
 import StatusModal from '@/components/inn/StatusModal';
 import InnHeader from '@/components/inn/InnHeader';
 import InnNavigation from '@/components/inn/InnNavigation';
-import QuestBoard from '@/components/inn/QuestBoard';
+import QuestBoardModal from '@/components/inn/QuestBoardModal';
 
 export default function InnPage() {
     const router = useRouter();
-    const { selectScenario, gold, spendGold, worldState, fetchWorldState, userProfile, showStatus, setShowStatus } = useGameStore();
-    const [scenarios, setScenarios] = useState<Scenario[]>([]);
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus } = useGameStore();
+
+    // Updated State for v3.1
+    const [normalQuests, setNormalQuests] = useState<Scenario[]>([]);
+    const [specialQuests, setSpecialQuests] = useState<Scenario[]>([]);
+    const [showQuestBoard, setShowQuestBoard] = useState(false);
     const [loading, setLoading] = useState(true);
+
     const [npcMessage, setNpcMessage] = useState('');
-    const [reqStatus, setReqStatus] = useState<'Idle' | 'Success' | 'Error'>('Idle');
     const [reputation, setReputation] = useState<any>(null);
     const [selectedQuest, setSelectedQuest] = useState<any | null>(null);
     const [showTavern, setShowTavern] = useState(false);
@@ -40,6 +45,33 @@ export default function InnPage() {
     const [historyList, setHistoryList] = useState<any[]>([]);
     const [showHistoryHall, setShowHistoryHall] = useState(false);
 
+    // --- NPC Dialogue Logic ---
+    const [isThinking, setIsThinking] = useState(false);
+    const [isNavigatingToBattle, setIsNavigatingToBattle] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [flavorText, setFlavorText] = useState("");
+
+    // v3.4 Resume Logic
+    useEffect(() => {
+        if (userProfile?.current_quest_id && userProfile?.current_quest_state) {
+            console.log("Resuming Quest...", userProfile.current_quest_id);
+            useQuestState.getState().resumeQuest(userProfile.current_quest_state);
+            router.push(`/quest/${userProfile.current_quest_id}`);
+        }
+    }, [userProfile, router]);
+
+    useEffect(() => {
+        const FLAVOR_TEXTS = [
+            "「最近、王都の地下で奇妙な音がするらしい...」",
+            "「北の森には近づかない方がいい。魔物が増えている。」",
+            "「冒険者が増えてきたな。景気が良くなるといいが。」",
+            "「伝説の武器がどこかに眠っているという噂だ。」",
+            "「夜中に不気味な影を見たという者が後を絶たない。」",
+            "「新しい依頼が入ったらしいぞ。稼ぎ時だな。」"
+        ];
+        setFlavorText(FLAVOR_TEXTS[Math.floor(Math.random() * FLAVOR_TEXTS.length)]);
+    }, []);
+
     useEffect(() => {
         async function checkNews() {
             try {
@@ -52,7 +84,6 @@ export default function InnPage() {
                         if (latest.id !== lastSeenId) {
                             setCurrentNews(latest);
                             setShowNews(true);
-                            // Don't save yet, save on close
                         }
                     }
                 }
@@ -110,31 +141,50 @@ export default function InnPage() {
     };
 
     useEffect(() => {
-        async function fetchScenarios() {
+        async function fetchQuests() {
+            setLoading(true); // Ensure loading state is true on start
             try {
-                const res = await fetch('/api/scenarios', { cache: 'no-store' });
+                const url = userProfile?.id
+                    ? `/api/location/quests?userId=${userProfile.id}`
+                    : '/api/location/quests';
+
+                // console.log('[InnPage] Fetching quests:', url);
+                const res = await fetch(url, { cache: 'no-store' });
+                // console.log('[InnPage] Response status:', res.status);
+
                 if (res.ok) {
                     const data = await res.json();
-                    console.log("[InnPage] Fetched Scenarios:", data);
-                    setScenarios(data);
+                    // console.log('[InnPage] Quest API response:', JSON.stringify(data.debug));
+                    setNormalQuests(data.normal_quests || []);
+                    setSpecialQuests(data.special_quests || []);
+                    // Clear any previous errors
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error('[InnPage] Quest API Error:', res.status, errData);
+                    alert(`クエスト情報の取得に失敗しました (Status: ${res.status})`);
                 }
             } catch (e) {
                 console.error("[InnPage] Fetch Error:", e);
+                alert('通信エラーが発生しました。再試行してください。');
             } finally {
                 setLoading(false);
             }
         }
 
-        fetchWorldState(); // Ensure we have world state for NPC
-        fetchScenarios();
+        fetchWorldState();
+        console.log('[InnPage] userProfile?.id:', userProfile?.id);
+        if (userProfile?.id) {
+            fetchQuests();
+        } else {
+            console.log('[InnPage] No userProfile.id, skipping quest fetch');
+            setLoading(false);
+        }
 
         async function loadProfile() {
             await useGameStore.getState().fetchUserProfile();
-            const p = useGameStore.getState().userProfile;
-            console.log("[InnPage] User Profile:", p);
         }
         loadProfile();
-    }, []);
+    }, [userProfile?.id]);
 
     const handleSelect = (s: any) => {
         // Risk Check Logic
@@ -145,112 +195,51 @@ export default function InnPage() {
             setRiskConfirmQuest(s);
             return;
         }
-        setSelectedQuest(s);
+        // Navigate to Quest Page instead of Modal
+        router.push(`/quest/${s.id}`);
     };
 
     const confirmRisk = () => {
         if (riskConfirmQuest) {
-            setSelectedQuest(riskConfirmQuest);
+            router.push(`/quest/${riskConfirmQuest.id}`);
             setRiskConfirmQuest(null);
         }
     };
 
-    const handleQuestComplete = async (resultStatusArg: any, historyArg: any[] = []) => {
-        console.log("[InnPage] Quest Complete Result:", resultStatusArg, "Submitting:", isSubmitting);
-        if (isSubmitting) return;
-
-        if (!selectedQuest || !userProfile) {
-            console.error("[InnPage] Missing Quest or User Profile:", { selectedQuest, userProfile });
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        const resultStatus = resultStatusArg === 'success' ? 'success' : 'failure';
-
-        try {
-            console.log("[InnPage] Sending Quest Complete Request:", { quest_id: selectedQuest.id, user_id: userProfile.id, result: resultStatus });
-
-            const res = await fetch('/api/quest/complete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    quest_id: selectedQuest.id,
-                    user_id: userProfile.id,
-                    result: resultStatus,
-                    history: historyArg || []
-                })
-            });
-
-            const data = await res.json();
-            console.log("[InnPage] API Response:", data);
-
-            if (res.ok && data.success) {
-                setQuestResult({
-                    changes: data.changes || {},
-                    rewards: data.rewards,
-                    daysPassed: data.days_passed || 0
-                });
-            } else {
-                console.error("[InnPage] API Error:", data.error || "Unknown Error");
-                alert(`結果の保存に失敗しました。\n${data.error || '不明なエラー'}`);
-            }
-        } catch (e) {
-            console.error("[InnPage] Network/Logic Error:", e);
-            alert("通信エラーが発生しました。");
-        } finally {
-            setIsSubmitting(false);
-            setSelectedQuest(null);
-            useGameStore.getState().fetchUserProfile();
-            fetchWorldState(); // Update impacts
-        }
-    };
+    // Removed handleQuestComplete as it's now handled in QuestPage
+    // kept some state for battle return just in case, but QuestPage handles it too.
 
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
 
     // Battle Return Handler
     useEffect(() => {
         const pending = localStorage.getItem('pending_quest');
-        console.log("[InnPage] Checking pending_quest:", pending ? "Found" : "None");
         if (pending) {
             try {
                 const { quest, nextNodeId } = JSON.parse(pending);
-
-                // Check URL params for battle result
                 const urlParams = new URLSearchParams(window.location.search);
                 const result = urlParams.get('battle_result');
 
-                console.log("[InnPage] Battle Result Param:", result);
-
                 if (result === 'win') {
-                    console.log("Resuming quest after victory:", quest.title);
                     setSelectedQuest(quest);
                     setInitialNodeId(nextNodeId); // Resume at success node
-
-                    // Clear pending status eventually, or ideally immediately but logic might re-trigger if params stay
                     localStorage.removeItem('pending_quest');
                     window.history.replaceState({}, '', '/inn'); // Clean URL
                 } else if (result === 'lose' || result === 'escape') {
-                    // Just clear pending
                     localStorage.removeItem('pending_quest');
                     window.history.replaceState({}, '', '/inn');
-                    // Maybe show a toast
                 }
             } catch (e) {
-                console.error("Failed to parse pending quest", e);
                 localStorage.removeItem('pending_quest');
             }
         }
-    }, [scenarios]); // Dependency? On mount is ok.
+    }, [userProfile]);
 
     const handleBattleStart = async (scenario: any, enemyId: string, successNodeId?: string) => {
-        // Default Enemy
         let enemy: Enemy = { id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 };
 
-        // 1. Try to fetch specific enemy if ID provided
         if (enemyId && enemyId !== 'slime') {
             try {
-                // Check if it's a group first
                 const { data: groupData } = await supabase
                     .from('enemy_groups')
                     .select('*')
@@ -259,10 +248,9 @@ export default function InnPage() {
 
                 let targetSlug = enemyId;
                 if (groupData && groupData.members && groupData.members.length > 0) {
-                    targetSlug = groupData.members[0]; // Pick first member for now
+                    targetSlug = groupData.members[0];
                 }
 
-                // Fetch Enemy Data
                 const { data: enemyData } = await supabase
                     .from('enemies')
                     .select('*')
@@ -271,20 +259,18 @@ export default function InnPage() {
 
                 if (enemyData) {
                     enemy = {
-                        id: enemyData.slug, // Use slug as ID for engine lookup compatibility
+                        id: enemyData.slug,
                         name: enemyData.name,
                         hp: enemyData.hp,
                         maxHp: enemyData.hp,
-                        level: Math.floor(enemyData.hp / 10) || 1, // Rough estimate if level missing
+                        level: Math.floor(enemyData.hp / 10) || 1,
                         image: `/enemies/${enemyData.slug}.png`
                     };
                 }
             } catch (e) {
                 console.error("Failed to fetch enemy data:", e);
             }
-        }
-        // Legacy Fallbacks
-        else {
+        } else {
             if (scenario.title.includes('退治')) {
                 enemy = { id: 'slime', name: 'スライム', hp: 80, maxHp: 80, level: 1 };
             }
@@ -293,9 +279,7 @@ export default function InnPage() {
             }
         }
 
-        // PERSIST STATE
         if (successNodeId) {
-            console.log("[InnPage] Setting pending_quest:", { quest: scenario.title, nextNodeId: successNodeId });
             localStorage.setItem('pending_quest', JSON.stringify({
                 quest: scenario,
                 nextNodeId: successNodeId,
@@ -303,12 +287,8 @@ export default function InnPage() {
             }));
         }
 
-        // Show loader overlay immediately to block interactions
         setIsNavigatingToBattle(true);
-
-        console.log("[InnPage] Calling startBattle...");
         await useGameStore.getState().startBattle(enemy);
-        console.log("[InnPage] Navigating to /battle...");
         router.push('/battle');
     };
 
@@ -328,10 +308,6 @@ export default function InnPage() {
     }, [userProfile, worldState]);
 
     // NPC Dialogue Logic
-    const [isThinking, setIsThinking] = useState(false);
-    const [isNavigatingToBattle, setIsNavigatingToBattle] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
     useEffect(() => {
         if (!worldState) return;
 
@@ -348,10 +324,8 @@ export default function InnPage() {
                 messages.push("噂は聞いてますよ。腕利きの旅人さんですね。", "いつもご贔屓に。良い品、入ってますよ。");
             } else if (rank === 'Criminal') {
                 messages.push("...ちっ。また来たのか。", "あんたには売る酒はねえよ。さっさと出ていきな。", "衛兵を呼ぶ前に消えるんだな。");
-            } else if (rank === 'Rogue') {
-                messages.push("金さえ払えば客だが...妙な真似はするなよ。", "あんまり目立った行動は控えるこったな。");
             } else {
-                messages.push("いらっしゃい。旅の方ですね。", "空き部屋はあるよ。ゆっくりしていきな。", "この辺りの地理には詳しいかい？");
+                messages.push("いらっしゃい。旅の方ですね。", "空き部屋はあるよ。ゆっくりしていきな。");
             }
 
             const nation = worldState.controlling_nation || 'Neutral';
@@ -362,10 +336,11 @@ export default function InnPage() {
 
             setNpcMessage(messages[Math.floor(Math.random() * messages.length)]);
             setIsThinking(false);
-        }, 600); // "..." Duration
+        }, 600);
 
         return () => clearTimeout(timer);
-    }, [worldState?.controlling_nation, reputation?.rank]); // Constrain dependencies
+    }, [worldState?.controlling_nation, reputation?.rank]);
+
 
     // Helper for Theme
     const getThemeColors = () => {
@@ -380,75 +355,33 @@ export default function InnPage() {
     };
     const theme = getThemeColors();
 
-    // Governance Text moved to InnHeader
-
-    // Status Display Map
     const STATUS_MAP: Record<string, string> = {
-        'Zenith': '絶頂',
-        'Prosperous': '繁栄',
-        'Stagnant': '停滞',
-        'Declining': '衰退',
-        'Ruined': '崩壊',
+        'Zenith': '絶頂', 'Prosperous': '繁栄', 'Stagnant': '停滞', 'Declining': '衰退', 'Ruined': '崩壊',
         '繁栄': '繁栄', '衰退': '衰退', '崩壊': '崩壊'
     };
 
     return (
         <div className="min-h-screen text-gray-200 font-sans p-4 relative">
-            {/* 1. Base Dark Background (Always behind everything) */}
+            {/* Background Layers */}
             <div className="fixed inset-0 z-0 bg-navy-900"></div>
-
-            {/* 2. Dynamic Background Image (Fade in/out) */}
             {(() => {
-                // Prioritize local mapping based on attribute if available to fix stale DB URLs
-                // Fallback to worldState.background_url, then DEFAULT
                 const attributeName = worldState?.attribute_name;
                 const localMappedUrl = attributeName ? getBackgroundByAttribute(attributeName) : null;
-
                 const bgUrl = localMappedUrl || worldState?.background_url;
-                const validBgUrl = (bgUrl && (bgUrl.startsWith('http') || bgUrl.startsWith('/')))
-                    ? bgUrl
-                    : '/backgrounds/default.jpg';
-
+                const validBgUrl = (bgUrl && (bgUrl.startsWith('http') || bgUrl.startsWith('/'))) ? bgUrl : '/backgrounds/default.jpg';
                 return (
-                    <div
-                        className="fixed inset-0 z-[1] transition-all duration-[2000ms] ease-in-out bg-cover bg-center"
-                        style={{
-                            backgroundImage: `url(${validBgUrl})`
-                        }}
-                    ></div>
+                    <div className="fixed inset-0 z-[1] transition-all duration-[2000ms] ease-in-out bg-cover bg-center" style={{ backgroundImage: `url(${validBgUrl})` }}></div>
                 );
             })()}
+            {/* Visual Effects based on Status */}
+            {worldState?.status === 'Declining' && <div className="fixed inset-0 z-[1] bg-[url('/effects/dirt.png')] opacity-40 mix-blend-multiply pointer-events-none"></div>}
+            {worldState?.status === 'Ruined' && <div className="fixed inset-0 z-[1] bg-gradient-to-t from-red-900/40 to-transparent mix-blend-overlay pointer-events-none"></div>}
 
-            {/* Status Visual Effects */}
-            {(() => {
-                const s = worldState?.status || 'Prosperous';
-                if (s === 'Declining' || s === '衰退') {
-                    return <div className="fixed inset-0 z-[1] bg-[url('/effects/dirt.png')] opacity-40 mix-blend-multiply pointer-events-none"></div>;
-                }
-                if (s === 'Ruined' || s === '崩壊') {
-                    return (
-                        <>
-                            <div className="fixed inset-0 z-[1] bg-black/60 pointer-events-none"></div>
-                            <div className="fixed inset-0 z-[1] bg-gradient-to-t from-red-900/40 to-transparent mix-blend-overlay pointer-events-none"></div>
-                        </>
-                    );
-                }
-                if (s === 'Zenith') {
-                    return <div className="fixed inset-0 z-[1] bg-yellow-500/10 mix-blend-overlay pointer-events-none"></div>;
-                }
-                return null;
-            })()}
-
-            {/* 3. Dark Overlay (To make text readable) */}
             <div className="fixed inset-0 z-[2] bg-black/40 transition-opacity duration-1000"></div>
-
-            {/* 4. Noise Pattern (Texture) */}
             <div className="fixed inset-0 z-[3] bg-noise-pattern opacity-30 pointer-events-none mix-blend-overlay"></div>
-
-            {/* 5. Vignette */}
             <div className="fixed inset-0 z-[3] bg-[radial-gradient(circle_at_center,_transparent_10%,_#000000_90%)] opacity-60 pointer-events-none"></div>
 
-            {/* Battle Transition Overlay */}
+            {/* Battle Overlay */}
             {isNavigatingToBattle && (
                 <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-in fade-in duration-500">
                     <div className="text-red-500 font-serif text-3xl animate-pulse tracking-widest mb-4">BATTLE START</div>
@@ -456,25 +389,24 @@ export default function InnPage() {
                 </div>
             )}
 
-            {/* 6. Content Container (Must be z-10 or higher to sit above BG layers) */}
+            {/* Content */}
             <div className="relative z-10 p-4">
 
-                {/* News Modal (z-50 handled by modal itself usually, but let's ensure it's inside this relative container or portal) */}
-                {selectedQuest && (
-                    <QuestModal
-                        scenario={selectedQuest}
-                        onClose={() => { setSelectedQuest(null); setInitialNodeId(undefined); }}
-                        onComplete={handleQuestComplete}
-                        onBattleStart={handleBattleStart}
-                        initialNodeId={initialNodeId}
-                    />
-                )}
+                <QuestBoardModal
+                    isOpen={showQuestBoard}
+                    onClose={() => setShowQuestBoard(false)}
+                    normalQuests={normalQuests}
+                    specialQuests={specialQuests}
+                    loading={loading}
+                    userLevel={userProfile?.level || 1}
+                    onSelect={handleSelect}
+                />
 
-                {showNews && currentNews && (
-                    <WorldNews history={currentNews} onClose={closeNews} />
-                )}
+                {/* QuestModal Removed - using /quest/[id] page */}
 
-                {/* History Hall Modal */}
+                {showNews && currentNews && <WorldNews history={currentNews} onClose={closeNews} />}
+
+                {/* History Hall */}
                 {showHistoryHall && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                         <div className="bg-[#2a221b] border border-[#a38b6b] p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-2xl relative">
@@ -482,11 +414,7 @@ export default function InnPage() {
                             <h2 className="text-2xl font-serif text-gold-500 mb-6 text-center border-b border-[#a38b6b] pb-2">世界の記憶</h2>
                             <div className="space-y-3">
                                 {historyList.map(h => (
-                                    <div
-                                        key={h.id}
-                                        onClick={() => { setCurrentNews(h); setShowNews(true); }} // Open News Modal on top
-                                        className="p-3 bg-black/30 hover:bg-gold-900/20 border border-transparent hover:border-gold-600/30 cursor-pointer transition-all group"
-                                    >
+                                    <div key={h.id} onClick={() => { setCurrentNews(h); setShowNews(true); }} className="p-3 bg-black/30 hover:bg-gold-900/20 border border-transparent hover:border-gold-600/30 cursor-pointer transition-all group">
                                         <div className="flex justify-between text-xs text-gray-500 mb-1">
                                             <span>{h.occured_at ? new Date(h.occured_at).toLocaleDateString() : '-'}</span>
                                             <span className="group-hover:text-gold-400">閲覧 &gt;</span>
@@ -501,24 +429,13 @@ export default function InnPage() {
                 )}
 
                 {userProfile && (
-                    <TavernModal
-                        isOpen={showTavern}
-                        onClose={() => setShowTavern(false)}
-                        userProfile={userProfile}
-                        locationId={userProfile.current_location_id || 'loc_hub'}
-                    />
+                    <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || 'loc_hub'} />
                 )}
 
                 {showShop && <ShopModal onClose={() => setShowShop(false)} />}
-                {showPrayer && userProfile && (
-                    <PrayerModal
-                        onClose={() => setShowPrayer(false)}
-                        locationId={userProfile.current_location_id || ''}
-                        locationName={worldState?.location_name || ''}
-                    />
-                )}
+                {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
 
-                {/* Risk Confirmation Modal */}
+                {/* Risk Confirmation */}
                 {riskConfirmQuest && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
                         <div className="bg-[#1a0f0f] border-2 border-red-800 w-full max-w-md shadow-2xl relative p-6 text-center">
@@ -530,34 +447,17 @@ export default function InnPage() {
                                 <span className="text-red-400 font-bold">死亡や寿命(Vit)の喪失</span>のリスクが非常に高いです。
                             </p>
                             <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => setRiskConfirmQuest(null)}
-                                    className="bg-gray-800 border border-gray-600 text-gray-300 py-3 rounded hover:bg-gray-700 transition-colors"
-                                >
-                                    やめる
-                                </button>
-                                <button
-                                    onClick={confirmRisk}
-                                    className="bg-red-900/50 border border-red-600 text-red-200 py-3 rounded hover:bg-red-800 transition-colors font-bold"
-                                >
-                                    それでも挑む
-                                </button>
+                                <button onClick={() => setRiskConfirmQuest(null)} className="bg-gray-800 border border-gray-600 text-gray-300 py-3 rounded hover:bg-gray-700 transition-colors">やめる</button>
+                                <button onClick={confirmRisk} className="bg-red-900/50 border border-red-600 text-red-200 py-3 rounded hover:bg-red-800 transition-colors font-bold">それでも挑む</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                <InnHeader
-                    worldState={worldState}
-                    userProfile={userProfile}
-                    reputation={reputation}
-                />
+                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} />
 
                 <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 pb-20 md:pb-0">
-
-                    {/* Left Column: NPC & Shop */}
                     <div className="space-y-4 md:space-y-8 order-1">
-                        {/* NPC Area */}
                         <section className={`${theme.bg} p-4 md:p-6 rounded-sm border-l-4 ${theme.border.replace('/50', '')} relative shadow-lg`}>
                             <div className="flex gap-4">
                                 <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-black border border-white/10 overflow-hidden rounded-sm">
@@ -574,112 +474,77 @@ export default function InnPage() {
                                     </p>
                                 </div>
                             </div>
-
-                            <button
-                                onClick={openHistoryHall}
-                                className={`absolute bottom-2 right-2 text-xs ${theme.accent} hover:text-white flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity p-2`}
-                            >
+                            <button onClick={openHistoryHall} className={`absolute bottom-2 right-2 text-xs ${theme.accent} hover:text-white flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity p-2`}>
                                 <Scroll className="w-3 h-3" /> 歴史を紐解く
                             </button>
-                            <button
-                                onClick={handleRest}
-                                className={`absolute top-2 right-2 text-xs text-green-400 hover:text-white flex items-center gap-1 opacity-90 hover:opacity-100 transition-opacity p-2 border border-green-900/50 rounded bg-black/40`}
-                            >
-                                💤 休息する (HP/MP回復)
+                            <button onClick={handleRest} className={`absolute top-2 right-2 text-xs text-green-400 hover:text-white flex items-center gap-1 opacity-90 hover:opacity-100 transition-opacity p-2 border border-green-900/50 rounded bg-black/40`}>
+                                💤 休息する
                             </button>
                         </section>
-
-                        <InnNavigation
-                            onOpenTavern={() => setShowTavern(true)}
-                            onOpenShop={() => setShowShop(true)}
-                            onOpenStatus={() => setShowStatus(true)}
-                            onOpenPrayer={() => setShowPrayer(true)}
-                            theme={theme}
-                        />
+                        <InnNavigation onOpenTavern={() => setShowTavern(true)} onOpenShop={() => setShowShop(true)} onOpenStatus={() => setShowStatus(true)} onOpenPrayer={() => setShowPrayer(true)} theme={theme} />
                     </div>
 
-                    {/* Right Column: Quest Board */}
-                    <div className="order-2">
-                        <QuestBoard
-                            scenarios={scenarios}
-                            loading={loading}
-                            userLevel={userProfile?.level || 1}
-                            onSelect={handleSelect}
-                        />
+                    <div className="order-2 space-y-4">
+                        <div
+                            onClick={() => setShowQuestBoard(true)}
+                            className="group cursor-pointer relative bg-[#e3d5b8] bg-[url('/textures/paper.png')] bg-cover border-4 border-[#8b5a2b] rounded-sm p-6 shadow-2xl transition-transform hover:scale-[1.02] active:scale-95 h-64 flex flex-col justify-center items-center text-[#3e2723]"
+                        >
+                            <div className="absolute top-[-10px] left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full bg-red-800 shadow-md border border-black/30"></div>
+                            <h2 className="font-serif font-bold text-2xl mb-4 tracking-widest border-b-2 border-[#8b5a2b] pb-1">QUEST BOARD</h2>
+                            <div className="flex flex-col items-center gap-2">
+                                {loading ? (
+                                    <span className="text-sm animate-pulse">読み込み中...</span>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-lg">特別依頼:</span>
+                                            {specialQuests.length > 0 ? (
+                                                <span className="text-red-600 font-bold text-2xl animate-pulse">{specialQuests.length}件</span>
+                                            ) : (
+                                                <span className="text-gray-500">なし</span>
+                                            )}
+                                        </div>
+                                        <div className="text-sm text-[#5d4037]">通常依頼: {normalQuests.length}件</div>
+                                    </>
+                                )}
+                            </div>
+                            <div className="mt-6 bg-[#3e2723] text-[#e3d5b8] px-6 py-2 rounded font-bold shadow hover:bg-[#5d4037] transition-colors">依頼を確認する</div>
+                            {!loading && specialQuests.some(q => q.is_urgent) && (
+                                <div className="absolute -top-3 -right-3 bg-red-600 text-white font-bold px-3 py-1 rounded shadow-lg animate-bounce text-xs">URGENT!</div>
+                            )}
+                        </div>
+                        {/* Flavor Text */}
+                        <div className="bg-black/40 border border-[#a38b6b]/30 p-4 rounded text-xs text-gray-400 font-serif italic min-h-[3rem] flex items-center">
+                            {flavorText}
+                        </div>
                     </div>
                 </main>
 
-                {/* Mobile Bottom Navigation */}
                 <MobileNav />
 
                 <div className="text-center mt-12 space-y-4">
                     {/* Debug Section */}
-                    <div className="flex flex-wrap justify-center gap-4 border-t border-gray-800 pt-8">
-                        <button
-                            onClick={handleReset}
-                            className="bg-red-900/20 text-red-500 border border-red-900 px-3 py-1 text-xs hover:bg-red-900/50"
-                        >
-                            [DEBUG] World Reset
-                        </button>
-                        <button
-                            onClick={async () => { await fetch('/api/debug/skip-time', { method: 'POST' }); fetchWorldState(); }}
-                            className="bg-blue-900/20 text-blue-500 border border-blue-900 px-3 py-1 text-xs hover:bg-blue-900/50"
-                        >
-                            [DEBUG] Skip Day
-                        </button>
-                        <button
-                            onClick={async () => { await useGameStore.getState().addGold(1000); }}
-                            className="bg-yellow-900/20 text-yellow-500 border border-yellow-900 px-3 py-1 text-xs hover:bg-yellow-900/50"
-                        >
-                            [DEBUG] +1000 G
-                        </button>
-                        <button
-                            onClick={async () => {
-                                await fetch('/api/reputation/debug', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ userId: userProfile?.id, location: worldState?.location_name, amount: 10 })
-                                });
-                                useGameStore.getState().fetchUserProfile();
-                            }}
-                            className="bg-purple-900/20 text-purple-500 border border-purple-900 px-3 py-1 text-xs hover:bg-purple-900/50"
-                        >
-                            [DEBUG] +Rep
-                        </button>
-                    </div>
-
-                    {/* Detailed Debug Panel */}
-                    <div className="border border-green-900/50 bg-black p-4 rounded mt-4 text-left font-mono text-xs">
-                        <p className="text-green-500 mb-2 border-b border-green-900/50 pb-1">--- SYSTEM MONITOR ---</p>
-                        {worldState ? (
-                            <div className="grid grid-cols-2 gap-4 text-green-400">
-                                <div>
-                                    <div>Order:   {worldState.order_score || 0}</div>
-                                    <div>Chaos:   {worldState.chaos_score || 0}</div>
-                                    <div>Justice: {worldState.justice_score || 0}</div>
-                                    <div>Evil:    {worldState.evil_score || 0}</div>
-                                </div>
-                                <div>
-                                    <div>Status: <span className={worldState.status === 'Ruined' || worldState.status === '崩壊' ? 'text-red-500' : 'text-blue-500'}>{STATUS_MAP[worldState.status] || worldState.status}</span></div>
-                                    <div>Attribute: <span className="text-yellow-500">{worldState.attribute_name || '不明'}</span></div>
-                                    <div className="text-[10px] text-gray-500 truncate w-32" title={worldState.background_url}>BG: {worldState.background_url?.slice(0, 15)}...</div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-green-900 animate-pulse">Scanning World State...</div>
-                        )}
+                    <div className="flex flex-wrap justify-center gap-4 border-t border-gray-800 pt-8 opacity-50 hover:opacity-100 transition-opacity">
+                        <button onClick={handleReset} className="bg-red-900/20 text-red-500 border border-red-900 px-3 py-1 text-xs hover:bg-red-900/50">[DEBUG] World Reset</button>
+                        <button onClick={async () => { await fetch('/api/debug/skip-time', { method: 'POST' }); fetchWorldState(); }} className="bg-blue-900/20 text-blue-500 border border-blue-900 px-3 py-1 text-xs hover:bg-blue-900/50">[DEBUG] Skip Day</button>
+                        <button onClick={async () => {
+                            if (!userProfile) return;
+                            await fetch('/api/debug/level-up', {
+                                method: 'POST',
+                                body: JSON.stringify({ userId: userProfile.id, levels: 1 })
+                            });
+                            fetchUserProfile();
+                            alert("Level Up!");
+                        }} className="bg-green-900/20 text-green-500 border border-green-900 px-3 py-1 text-xs hover:bg-green-900/50">[DEBUG] +Lv1 (Full Restore)</button>
+                        <button onClick={async () => { await useGameStore.getState().addGold(1000); }} className="bg-yellow-900/20 text-yellow-500 border border-yellow-900 px-3 py-1 text-xs hover:bg-yellow-900/50">[DEBUG] +1000 G</button>
                     </div>
                 </div>
+
+                {questResult && (
+                    <QuestResultModal changes={questResult.changes} rewards={questResult.rewards} daysPassed={questResult.daysPassed} onClose={() => setQuestResult(null)} />
+                )}
+                {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
             </div>
-            {questResult && (
-                <QuestResultModal
-                    changes={questResult.changes}
-                    rewards={questResult.rewards}
-                    daysPassed={questResult.daysPassed}
-                    onClose={() => setQuestResult(null)}
-                />
-            )}
-            {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
         </div>
     );
 }

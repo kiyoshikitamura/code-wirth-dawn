@@ -1,0 +1,2 @@
+id,slug,name,gender,origin,job_class,durability,max_durability,loyalty,cover_rate,inject_cards,is_active
+npc_test_alchemist,test_alchemist,錬金術師ルナ,Female,system,Medic,50,50,10,20,[],TRUE

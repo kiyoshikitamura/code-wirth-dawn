@@ -2,28 +2,44 @@ import { NextResponse } from 'next/server';
 import { calculateAge, applyRandomVariance } from '@/utils/characterStats';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
-// Spec v9.3 Base Stats Logic
+// Spec v9.3 Base Stats Logic (with ATK/DEF)
 function getSpecV93BaseStats(age: number) {
-    // 16-18: Late Bloomer (High Vit, Low Starting HP)
-    if (age <= 18) return {
-        max_hp: 85, // Range 85-95
-        max_deck_cost: 8,
-        vitality: 190, // Range 180-200
-        max_vitality: 190
-    };
+    // 16-18: Late Bloomer (High Vit, Low Starting Stats)
+    if (age <= 18) {
+        const baseAtk = 1 + Math.floor(Math.random() * 2); // 1-2
+        const baseDef = 1 + Math.floor(Math.random() * 2); // 1-2
+        return {
+            max_hp: 15 + Math.floor(Math.random() * 4), // 15-18
+            max_deck_cost: 8,
+            vitality: 180 + Math.floor(Math.random() * 21), // 180-200
+            max_vitality: 0, // will be set below
+            atk: baseAtk,
+            def: baseDef,
+        };
+    }
     // 19-22: Standard
-    if (age <= 22) return {
-        max_hp: 100,
-        max_deck_cost: 10,
-        vitality: 150, // Range 140-160
-        max_vitality: 150
-    };
-    // 23-25: Veteran (High Starting HP, Low Vit)
+    if (age <= 22) {
+        const baseAtk = 2 + Math.floor(Math.random() * 2); // 2-3
+        const baseDef = 2 + Math.floor(Math.random() * 2); // 2-3
+        return {
+            max_hp: 20,
+            max_deck_cost: 10,
+            vitality: 140 + Math.floor(Math.random() * 21), // 140-160
+            max_vitality: 0,
+            atk: baseAtk,
+            def: baseDef,
+        };
+    }
+    // 23-25: Veteran (High Starting Stats, Low Vit)
+    const baseAtk = 3 + Math.floor(Math.random() * 3); // 3-5
+    const baseDef = 3 + Math.floor(Math.random() * 3); // 3-5
     return {
-        max_hp: 115, // Range 110-120
+        max_hp: 22 + Math.floor(Math.random() * 4), // 22-25
         max_deck_cost: 12,
-        vitality: 110, // Range 100-120
-        max_vitality: 110
+        vitality: 100 + Math.floor(Math.random() * 21), // 100-120
+        max_vitality: 0,
+        atk: baseAtk,
+        def: baseDef,
     };
 }
 
@@ -49,20 +65,30 @@ export async function POST(req: Request) {
 
         const baseStats = getSpecV93BaseStats(age);
 
-        // Apply Random Variance (Spec v9.3)
-        // HP: -5 ~ +10
-        // Vit: -10 ~ +10
-        const randomHp = Math.floor(Math.random() * 16) - 5; // -5 to +10
-        const randomVit = Math.floor(Math.random() * 21) - 10; // -10 to +10
+        // v9.3 Random Variance
+        const randomHp = Math.floor(Math.random() * 6) - 2;  // -2 ~ +3
+        const randomCost = Math.random() > 0.5 ? 1 : 0;       // 0 ~ +1
+        const randomVit = Math.floor(Math.random() * 21) - 10; // -10 ~ +10
+
+        // ATK/DEF: 50% chance of +1 (Max 5)
+        const atkBonus = Math.random() > 0.5 ? 1 : 0;
+        const defBonus = Math.random() > 0.5 ? 1 : 0;
+        const finalAtk = Math.min(5, baseStats.atk + atkBonus);
+        const finalDef = Math.min(5, baseStats.def + defBonus);
+
+        const finalHp = baseStats.max_hp + randomHp;
+        const finalVit = baseStats.vitality + randomVit;
 
         const finalStats = {
-            max_hp: baseStats.max_hp + randomHp,
-            hp: baseStats.max_hp + randomHp,
-            max_deck_cost: baseStats.max_deck_cost, // No variance on cost
-            vitality: baseStats.vitality + randomVit,
-            max_vitality: baseStats.max_vitality + randomVit,
-            // Ensure bounds
-            age: age
+            max_hp: finalHp,
+            hp: finalHp,
+            max_deck_cost: baseStats.max_deck_cost + randomCost,
+            vitality: finalVit,
+            max_vitality: finalVit,
+            atk: finalAtk,
+            def: finalDef,
+            age: age,
+            age_days: 0,
         };
 
         return NextResponse.json({

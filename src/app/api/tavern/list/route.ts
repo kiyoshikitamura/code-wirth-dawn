@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
 import { ShadowService } from '@/services/shadowService';
 
 export async function GET(req: Request) {
@@ -12,7 +13,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing location_id or user_id' }, { status: 400 });
         }
 
-        const shadowService = new ShadowService(supabase);
+        // Use Admin client to bypass RLS for party_members filtering
+        const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+        const shadowService = new ShadowService(client);
         const shadows = await shadowService.findShadowsAtLocation(location_id, user_id);
 
         return NextResponse.json({ shadows });

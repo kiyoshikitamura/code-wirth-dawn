@@ -1,0 +1,3 @@
+id,enemies
+group_test_poison,"[{""id"":""e_test_slime"",""count"":2}]"
+group_test_reaper,"[{""id"":""e_test_reaper"",""count"":1}]"

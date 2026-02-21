@@ -8,21 +8,29 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost } = body;
 
+        const { user_id } = body; // Expect user_id from client
+
         // Use Admin client to bypass RLS for this specific initialization step
         // This is crucial for "Demo Mode" or initial setup where Auth might not be strictly 1:1
         const client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;
 
         console.log("Init Profile Body:", body);
+        console.log("Init Profile Age Input:", age, typeof age);
 
         // Find the profile to update.
-        // Logic matches GET /api/profile: Find any profile or specific one if Auth exists.
-        // For this local single-player style:
-        const { data: profiles } = await client
-            .from('user_profiles')
-            .select('id')
-            .limit(1);
+        let profileId = null;
 
-        const profileId = profiles?.[0]?.id;
+        if (user_id) {
+            const { data } = await client.from('user_profiles').select('id').eq('id', user_id).maybeSingle();
+            if (data) profileId = data.id;
+        } else {
+            // Fallback for legacy/demo scenarios without explicit user_id
+            const { data: profiles } = await client
+                .from('user_profiles')
+                .select('id')
+                .limit(1);
+            profileId = profiles?.[0]?.id;
+        }
 
         let updates: any = {
             name: title_name, // User Input -> Name
@@ -68,6 +76,11 @@ export async function POST(req: Request) {
             // We'll let Postgres gen it if column is default, but typically user_profiles.id is linked to auth.users.id.
             // If we insert here with random UUID, it won't match any auth user.
             // For "Demo/Local", this is fine.
+            // If user_id provided, ensure we create it with that ID (linking to Auth)
+            if (user_id) {
+                updates.id = user_id;
+            }
+
             const { data: newProfile, error: insertError } = await client
                 .from('user_profiles')
                 .insert([updates])

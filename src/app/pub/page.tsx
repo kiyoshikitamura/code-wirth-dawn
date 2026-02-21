@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import MobileNav from '@/components/layout/MobileNav';
 
 import { PartyMember } from '@/types/game';
+import { getNationBgColor } from '@/utils/nationColors';
 
 export default function PubPage() {
     const router = useRouter();
@@ -115,14 +116,7 @@ export default function PubPage() {
     };
 
     // Render Helpers
-    const getNationColor = () => {
-        const n = worldState?.controlling_nation;
-        if (n === 'Roland') return 'bg-blue-950/80 border-blue-800';
-        if (n === 'Markand') return 'bg-yellow-950/80 border-yellow-800';
-        if (n === 'Karyu') return 'bg-red-950/80 border-red-800';
-        if (n === 'Yato') return 'bg-purple-950/80 border-purple-800';
-        return 'bg-gray-900/80 border-gray-700';
-    };
+    const getNationColor = () => getNationBgColor(worldState?.controlling_nation);
 
     return (
         <div className="min-h-screen bg-black text-gray-200 font-sans p-4 relative overflow-hidden pb-24 md:pb-0">

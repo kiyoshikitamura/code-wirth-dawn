@@ -1,0 +1,2 @@
+id,title,difficulty,scenario_script_id,requirements,rewards
+test_quest_001,検証：王都への護衛任務,3,test_escort_scenario,"{}",{"gold": 1000, "exp": 500}

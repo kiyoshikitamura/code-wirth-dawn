@@ -7,9 +7,9 @@ import { useGameStore } from '@/store/gameStore';
 import { Location } from '@/types/game';
 import { supabase } from '@/lib/supabase';
 import { Map as MapIcon, Compass, Anchor, Castle, Mountain, Tent } from 'lucide-react';
+import { getNationNodeColor } from '@/utils/nationColors';
 
-// Client-side supabase for static data
-// const supabase = createClientComponentClient();
+
 
 export default function WorldMapPage() {
     const router = useRouter();
@@ -127,15 +127,7 @@ export default function WorldMapPage() {
 
     const userAge = userProfile?.age || 20;
 
-    const getNationColor = (nationId: string) => {
-        switch (nationId) {
-            case 'Roland': return 'border-blue-500 shadow-blue-500/50 text-blue-200';
-            case 'Markand': return 'border-yellow-600 shadow-yellow-600/50 text-yellow-200';
-            case 'Karyu': return 'border-emerald-600 shadow-emerald-500/50 text-emerald-200';
-            case 'Yato': return 'border-purple-600 shadow-purple-500/50 text-purple-200';
-            default: return 'border-gray-600 shadow-gray-500/50 text-gray-400';
-        }
-    };
+    const getNationColor = (nationId: string) => getNationNodeColor(nationId);
 
     const getIcon = (type: string) => {
         switch (type) {

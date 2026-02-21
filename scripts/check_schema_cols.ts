@@ -1,43 +1,29 @@
 
 import { createClient } from '@supabase/supabase-js';
-import * as dotenv from 'dotenv';
-
+import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function checkSchema() {
-    console.log('Checking user_profiles columns...');
-    const { data: userProfiles, error: userError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .limit(1);
+    console.log('Checking scenarios schema columns...');
 
-    if (userError) {
-        console.error('Error fetching user_profiles:', userError);
-    } else if (userProfiles && userProfiles.length > 0) {
-        console.log('user_profiles columns:', Object.keys(userProfiles[0]));
-    } else {
-        console.log('user_profiles table found but empty, cannot infer columns.');
-        // Fallback: try to insert a dummy to see errors or use RPC if available (but exec_sql failed before)
-    }
+    // Check if we can select 'reward_gold'
+    const { error: e1 } = await supabase.from('scenarios').select('reward_gold').limit(1);
+    if (e1) console.log('reward_gold error:', e1.message);
+    else console.log('reward_gold exists');
 
-    console.log('Checking items table...');
-    const { data: items, error: itemError } = await supabase
-        .from('items')
-        .select('*')
-        .limit(1);
+    // Check if we can select 'impacts'
+    const { error: e2 } = await supabase.from('scenarios').select('impacts').limit(1);
+    if (e2) console.log('impacts error:', e2.message);
+    else console.log('impacts exists');
 
-    if (itemError) {
-        console.error('Error fetching items:', itemError);
-    } else if (items && items.length > 0) {
-        console.log('items columns:', Object.keys(items[0]));
-    } else {
-        console.log('items table found but empty.');
-    }
+    // Check 'rewards' and 'impact'
+    const { data } = await supabase.from('scenarios').select('rewards, impact').limit(1);
+    if (data && data.length > 0) console.log('rewards/impact data sample:', data[0]);
+
 }
 
 checkSchema();

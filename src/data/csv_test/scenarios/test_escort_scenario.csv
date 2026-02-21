@@ -1,0 +1,14 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"旅の錬金術師から護衛を頼まれた。",,
+CHOICE,,引き受ける (ゲスト加入),join_phase,
+NODE,join_phase,,travel_01,"type:guest_join, guest_id:npc_test_alchemist"
+NODE,travel_01,,battle_encount,"type:travel, dest:loc_stopover_village, bg:field_day, days:1"
+NODE,battle_encount,"街道で毒を持つ魔物が現れた！",,"type:battle, enemy:group_test_poison"
+CHOICE,,勝利 (ショップへ),shop_phase,
+CHOICE,,敗北,lose_end,
+NODE,shop_phase,"中継地点の村に到着。行商人が珍しい品を売っている。",,"type:shop_access, shop_id:merchant_test"
+CHOICE,,出発する (王都へ),travel_02,
+NODE,travel_02,,battle_boss,"type:travel, dest:loc_capital_regalia, bg:capital_gate, days:2"
+NODE,battle_boss,"王都の目前で、寿命を喰らう死神が立ち塞がる！",,"type:battle, enemy:group_test_reaper"
+CHOICE,,勝利 (クエスト完了),EXIT,
+NODE,lose_end,"護衛に失敗した...",EXIT_FAIL,

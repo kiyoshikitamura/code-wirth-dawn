@@ -1,5 +1,36 @@
 
 import { Card, PartyMember, UserProfile } from '@/types/game';
+import { StatusEffect, getAttackMod, getDefenseMod } from '@/lib/statusEffects';
+
+/**
+ * v2.11 決定論的ダメージ計算 (Deterministic)
+ * Formula: FinalDamage = (UserATK + CardPower) * BuffMultiplier - Enemy.DEF
+ * 乱数なし。計算結果が常に正解となる。
+ */
+export function calculateDamage(
+    cardPower: number,
+    targetDef: number,
+    attackerEffects: StatusEffect[] = [],
+    defenderEffects: StatusEffect[] = [],
+    isMagic: boolean = false,
+    userAtk: number = 0  // v2.11: プレイヤーATK加算
+): number {
+    // 1. Base = Card.Power + User.ATK
+    let dmg = cardPower + userAtk;
+
+    // 2. Attacker atk_up buff
+    dmg = Math.floor(dmg * getAttackMod(attackerEffects));
+
+    // 3. DEF mitigation (物理のみ)
+    if (!isMagic) {
+        dmg = Math.max(1, dmg - targetDef);
+    }
+
+    // 4. Defender def_up
+    dmg = Math.max(1, Math.floor(dmg * getDefenseMod(defenderEffects)));
+
+    return dmg;
+}
 
 // Helper to look up card by ID (should be provided or fetched)
 // In a real app, this might come from a robust Card Database.
@@ -25,48 +56,42 @@ export function buildBattleDeck(
     // Actually, let's use the replacement tool carefully.
     // I'll replace the signature first, then the noise block.
     partyMembers.forEach(member => {
-        if (!member.is_active || member.durability <= 0) return; // Dead/Inactive members don't inject
+        if (!member.is_active || member.durability <= 0) return;
 
-        // Logic: 
-        // Iterate through inject_cards array
-        // Find card in pool
-        // Add to deck
-        member.inject_cards.forEach(cardId => {
-            const card = cardLookup(cardId);
+        (member.inject_cards || []).forEach(cardId => {
+            const card = cardLookup(String(cardId));
             if (card) {
-                // Clone card to avoid reference issues if mutable?
-                // For now, reference is fine as cards are usually static definitions.
-                finalDeck.push({ ...card, source: `Party:${member.name}` } as any);
+                finalDeck.push({
+                    ...card,
+                    id: `${card.id}_${member.id}_${Math.random().toString(36).substr(2, 5)}`, // Unique ID for battle instance check
+                    source: `Party:${member.name}`,
+                    isInjected: true
+                } as any);
             }
         });
     });
 
-    // 2. World Injection (V4 Mechanics)
-    // Using simple status string check. Ideally we pass prosperity_level directly, but string map works.
-
-    // Ruined (Lv1) / Declining (Lv2) -> Noise
-    // NOVICE BLESSING: Skip noise if Level <= 5
+    // 2. World Injection (V4.1 Mechanics)
+    // ... (rest is fine)
     if ((worldStateStatus === 'Ruined' || worldStateStatus === 'Declining' || worldStateStatus === '崩壊' || worldStateStatus === '衰退') && userLevel > 5) {
-        const noiseCard = cardLookup('card_noise') || { id: 'card_noise', name: 'Noise', type: 'Basic', description: 'Unusable Glitch', cost: 99 };
-        // Ruined = 3 Noise, Declining = 1 Noise
+        const noiseCard = cardLookup('card_noise') || { id: 'card_noise', name: 'Noise', type: 'noise' as any, description: 'Unusable Glitch', cost: 0, discard_cost: 1 };
         const count = (worldStateStatus === 'Ruined' || worldStateStatus === '崩壊') ? 3 : 1;
-        for (let i = 0; i < count; i++) finalDeck.push({ ...noiseCard, source: 'World Hazard' } as any);
+        for (let i = 0; i < count; i++) finalDeck.push({ ...noiseCard, id: `noise_${i}`, isInjected: true, source: 'World Hazard' } as any);
     }
 
     // Zenith (Lv5) -> Support
     if (worldStateStatus === 'Zenith' || worldStateStatus === '絶頂') {
         const supportCard = cardLookup('card_citizen_support') || { id: 'card_citizen_support', name: 'Citizen Aid', type: 'Skill', description: 'Restore 10 HP', cost: 0, power: 10 };
-        finalDeck.push({ ...supportCard, source: 'World Blessing' } as any);
+        finalDeck.push({ ...supportCard, id: 'zenith_buff', cost: 0, isInjected: true, source: 'World Blessing' } as any);
     }
 
     // 3. Basic Validation (Ensure usable cards exist)
     const basicAttack = cardLookup('1001') || { id: '1001', name: '斬撃', type: 'Skill', description: '基本攻撃', cost: 0, power: 20 };
     const basicDefend = cardLookup('1004') || { id: '1004', name: '鉄壁', type: 'Skill', description: '防御バフ', cost: 0, power: 0 };
 
-    // Always ensure at least 3 basic attacks and 2 defends if deck is too small
     if (finalDeck.length < 5) {
-        finalDeck.push(basicAttack, basicAttack, basicAttack);
-        finalDeck.push(basicDefend, basicDefend);
+        for (let i = 0; i < 3; i++) finalDeck.push({ ...basicAttack, id: `basic_atk_${i}` });
+        for (let i = 0; i < 2; i++) finalDeck.push({ ...basicDefend, id: `basic_def_${i}` });
     }
 
     return finalDeck;

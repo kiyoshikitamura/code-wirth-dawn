@@ -1,0 +1,4 @@
+id,slug,effect_type,value,duration
+skill_poison_spit,poison_spit,poison,5,3
+skill_death_scythe,death_scythe,drain_vit,1,0
+skill_stun_bash,stun_bash,stun,0,1
