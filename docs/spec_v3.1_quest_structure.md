@@ -1,106 +1,167 @@
-Code: Wirth-Dawn Specification v3.1: Quest Structure & Classification
-1. 概要 (Overview)
-本ドキュメントは、クエスト管理構造の改修定義である。 従来の混在していたクエスト群を、リソース収集用の**「通常依頼（Normal）」と、ストーリー/イベント進行用の「特別依頼（Special）」**の2つのストリームに分離する。 これにより、プレイヤーは「日々の稼ぎ」と「冒険の目的」を明確に区別してプレイ可能となる。
-Dependencies:
-• spec_v3_quest_system.md (Scenario Engine)
-• spec_v4_location_details.md (Prosperity Logic)
+Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+# Quest Structure & Scenario Engine
 
---------------------------------------------------------------------------------
-2. クエスト分類 (Classification)
-2.1 通常依頼 (Normal Quests)
-拠点の酒場に常設される、日常的な依頼。
-• 目的: ゴールド稼ぎ、経験値稼ぎ、素材収集。
-• 出現ロジック: 拠点の**「繁栄度 (Prosperity)」と「支配国 (Nation)」**に基づいて、プールからランダムに選出される。
-• リセット: ゲーム内時間で毎日（または一定サイクルで）入れ替わる。
-• 例: 「地下水道のネズミ退治」「商隊の護衛」「聖帝国の巡回任務」
-2.2 特別依頼 (Special Quests)
-特定の条件を満たした時のみ出現する、一回性の強い依頼。旧仕様の「条件付き/緊急クエスト」は全てここに統合される。
-• 目的: 重要アイテム入手、エリア解放、ボス討伐、英霊化への道。
-• 出現ロジック: プレイヤーが特定の**「トリガー条件（アイテム所持、名声値、フラグ）」**を満たした場合にのみ、リスト上部に固定表示される。
-• リセット: 原則として達成するまで消えない（または特定の期間のみ出現）。
-• 例: 「古びた地図の解読（要アイテム）」「深淵への誘い（要禁術使用歴）」「王都防衛戦（要名声）」
+## 1. 概要 (Overview)
+本仕様書は、クエスト（依頼）のデータ構造と出現ロジック、シナリオエンジンの基本的なフローを定義する。
 
---------------------------------------------------------------------------------
-3. データ構造 (Data Structure)
-管理を容易にするため、CSVファイルをカテゴリごとに分割する。
-3.1 ファイル構成 (src/data/csv/)
-シナリオ本文（scenarios/*.csv）とは別に、クエストのメタデータを定義するファイルを分ける。
-File Name
-Description
-Note
-quests_normal.csv
-通常依頼のプールデータ。
-繁栄度や地域タグでフィルタリングされる。
-quests_special.csv
-特別依頼の定義データ。
-厳格な出現条件（Requirements）を持つ。
-3.2 カラム定義 (Metadata Schema)
-共通カラム: id, title, difficulty (1-5), scenario_script_id (参照するシナリオファイル), rewards (JSON)
-quests_normal.csv 固有: | Column | Description | Example | | :--- | :--- | :--- | | location_tags | 出現する拠点や国家のタグ。 | holy_empire, slum, all | | min_prosperity | 出現に必要な最低繁栄度。 | 3 (繁栄度3以上で出現) | | max_prosperity | 出現する最大繁栄度（治安悪いクエ用）。 | 2 (繁栄度2以下で出現) |
-quests_special.csv 固有: | Column | Description | Example | | :--- | :--- | :--- | | requirements | 出現条件（JSONB）。 詳細は後述。 | {"has_item": "map_01", "min_level": 10} | | is_urgent | UIでの強調表示フラグ。 | true | | chain_id | 連続クエストのID（前提クエスト）。 | quest_1001 (1001クリア後に出現) |
+<!-- v11.0: scenariosテーブルベースの実装に合わせて改訂。CSV/DBデータ構造を反映。 -->
 
---------------------------------------------------------------------------------
-4. 出現条件ロジック (Requirements Logic)
-特別依頼（Special）の requirements カラムには、以下の条件を組み合わせて定義できる。
-// Example: 王家の紋章を持っており、かつ聖帝国の名声が20以上
-{
-  "has_item": "key_item_royal_emblem",
-  "min_reputation": { "loc_holy_empire": 20 },
-  "min_level": 15,
-  "min_vitality": 50,  // 余命が十分にあるか
-  "class_tag": "swordsman",
-  "completed_quest": "q_tutorial_05"
+---
+
+## 2. クエスト種別
+
+| 種別 | key | 特徴 |
+|---|---|---|
+| 通常依頼 | `normal` | その拠点の日常的な依頼。難易度低～中。 |
+| 特殊依頼 | `special` | 物語的要素が強い依頼。連続クエストの可能性あり。 |
+
+---
+
+## 3. データ構造
+
+### 3.1 scenarios テーブル
+<!-- v11.0: 実装ではquestsテーブルではなくscenariosテーブルを使用 -->
+```sql
+CREATE TABLE scenarios (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  slug TEXT UNIQUE,
+  title TEXT NOT NULL,
+  quest_type TEXT DEFAULT 'normal',   -- 'normal' | 'special'
+  location_id UUID REFERENCES locations(id),
+  difficulty INT DEFAULT 1,
+  rewards JSONB,                       -- { exp: number, gold: number, items?: [...] }
+  days_success INT DEFAULT 1,
+  days_failure INT DEFAULT 1,
+  flow JSONB,                          -- シナリオノードの木構造
+  description TEXT,
+  required_level INT DEFAULT 1,
+  required_reputation INT DEFAULT 0
+);
+```
+
+### 3.2 シナリオノード構造 (flow JSONB)
+<!-- v11.0: ScenarioEngine.tsx の processNode() に準拠 -->
+`flow` カラムにはツリー構造のノードデータが格納される。
+
+```typescript
+interface ScenarioNode {
+  id: string;
+  type: 'text' | 'choice' | 'battle' | 'shop' | 'travel' | 'check_status' | 'reward' | 'end';
+  text?: string;
+  speaker?: string;
+  background?: string;
+  choices?: { label: string; next: string; condition?: any }[];
+  enemy_slug?: string;
+  success_node?: string;
+  failure_node?: string;
+  reward?: { gold?: number; exp?: number; items?: any[] };
+  location_slug?: string;
 }
-• Logic: 定義された全ての条件が TRUE の場合のみ、そのクエストはリストに出現する。
+```
 
---------------------------------------------------------------------------------
-5. クエストボード API (API Logic)
-GET /api/location/quests のレスポンス構造を変更し、UI側でタブ分け可能な形にする。
-5.1 Request
-• location_id: 現在の拠点UUID
-• user_id: プレイヤーUUID
-5.2 Processing
-1. Fetch Special:
-    ◦ quests_special テーブルをスキャン。
-    ◦ requirements をユーザーの状態（所持品、名声、クリア履歴）と照合。
-    ◦ 条件一致するものを抽出。
-2. Fetch Normal:
-    ◦ quests_normal テーブルをスキャン。
-    ◦ location_tags が現在の拠点（または支配国）と一致するか確認。
-    ◦ 現在の拠点の prosperity_level が min/max の範囲内か確認。
-    ◦ ランダムに数件（例: 5件）をピックアップ。
-5.3 Response Structure
-{
-  "special_quests": [
-    { "id": "sp_001", "title": "【緊急】王都防衛戦", "type": "special", "tag": "URGENT" }
-  ],
-  "normal_quests": [
-    { "id": "nm_102", "title": "下水道の清掃", "type": "normal", "difficulty": 1 },
-    { "id": "nm_105", "title": "聖騎士の訓練", "type": "normal", "difficulty": 3 }
-  ]
+### 3.3 CSVデータファイル
+<!-- v11.0: src/data/csv/ 配下のファイル群を記載 -->
+| ファイル | 用途 |
+|---|---|
+| `quests_normal.csv` | 通常クエストのシードデータ |
+| `quests_special.csv` | 特殊クエストのシードデータ |
+| `scenario_nodes.csv` | シナリオノードのシードデータ |
+| `scenario_choices.csv` | 選択肢のシードデータ |
+
+---
+
+## 4. クエスト出現ロジック (Appearance Logic)
+
+### 4.1 拠点ベースのフィルタ
+<!-- v11.0: QuestService.fetchAvailableQuests() を反映 -->
+```typescript
+class QuestService {
+  static async fetchAvailableQuests(userId: string, locationId: string) {
+    const { data } = await supabase
+      .from('scenarios')
+      .select('*')
+      .eq('location_id', locationId);
+    return data || [];
+  }
 }
+```
 
---------------------------------------------------------------------------------
-6. UI/UX 変更要件
-クエスト選択画面（Quest Board）を以下の2部構成に変更する。
-A. 特別依頼エリア (Top / Highlighted)
-• 表示: 目立つヘッダー、赤い枠、または「緊急（URGENT）」バッジ。
-• 挙動: 条件を満たしている重要案件。ストーリーを進めたい場合はこちらを選択する。
-• Empty State: 特別依頼がない場合は非表示。
-B. 通常依頼エリア (Bottom / List)
-• 表示: 羊皮紙風のリスト。「本日の依頼」として表示。
-• 挙動: 稼ぎプレイ用。
-• 更新: 「更新まであと XX:XX」のカウントダウンを表示（日次リセット）。
+> **Note (v11.0)**: 現在の実装では、`required_level` や `required_reputation` によるフィルタリングは未実装。全クエストが拠点IDのみでフィルタされる。
 
---------------------------------------------------------------------------------
-7. Antigravity Implementation Tasks
-Task 1: Schema Migration
-• 既存の quests テーブルを廃止（または移行）し、quest_definitions テーブルを作成。
-• Column: type ('normal' / 'special') を追加。
-• Column: requirements (JSONB), location_conditions (JSONB) を追加。
-Task 2: Importer Update (seed_quests.ts)
-• quests_normal.csv と quests_special.csv を読み分け、DBの type カラムにマッピングして保存するロジックを実装。
-Task 3: Board Logic Implementation (GET /api/location/quests)
-• Filter Engine: ユーザーの inventory, reputation, history を取得し、Special Quest の requirements JSONを評価するエンジンを実装すること。
-    ◦ has_item チェックの実装。
-    ◦ completed_quest 履歴チェックの実装。
+---
+
+## 5. クエスト進行状態 (Quest State)
+<!-- v11.0: useQuestState.ts を正として反映 -->
+
+```typescript
+interface QuestProgressState {
+  isInQuest: boolean;
+  questId: string | null;
+  questType: 'normal' | 'special' | null;
+
+  playerHp: number;
+  playerMaxHp: number;
+  partyHp: Record<string, number>;   // npc_id -> current HP
+  deadNpcs: string[];
+
+  guest: PartyMember | null;          // v3.4: ゲストNPC
+  currentLocationId: string | null;   // v3.4: クエスト内現在地
+  elapsedDays: number;                // v3.4: 経過日数
+
+  lootPool: LootItem[];              // at-risk: 敗北時全ロスト
+  consumedItems: string[];
+}
+```
+
+### 5.1 永続化ルール
+
+| アクション | メソッド | 効果 |
+|---|---|---|
+| クエスト開始 | `startQuest()` | 全ステートの初期化、HP記録 |
+| バトル後更新 | `updateAfterBattle()` | HP引き継ぎ、NPC死亡記録、ルート蓄積 |
+| クエスト完了 | `finalizeQuest('success')` | ルートを返却、state リセット |
+| クエスト失敗 | `finalizeQuest('failure')` | **ルート全消滅**、state リセット |
+| 移動 | `travelTo(destId, days)` | 現在地更新、経過日数加算 |
+| ゲスト追加 | `addGuest(guest)` | パーティに一時メンバー追加 |
+| 回復 | `healParty(percentage)` | プレイヤーHPを割合回復 |
+| 中断復帰 | `resumeQuest(savedState)` | 保存されたステートから復元 |
+
+---
+
+## 6. シナリオエンジン (ScenarioEngine)
+<!-- v11.0: ScenarioEngine.tsx の実装を反映 -->
+
+### 6.1 ノード処理フロー
+```mermaid
+flowchart TD
+    Start["processNode()"] --> TypeCheck{"node.type?"}
+    TypeCheck -->|text| ShowText["テキスト表示 → auto-advance or choices"]
+    TypeCheck -->|choice| ShowChoices["選択肢表示 → handleChoice()"]
+    TypeCheck -->|battle| StartBattle["バトル開始 → onBattleStart()"]
+    TypeCheck -->|shop| ShowShop["ショップ表示 → handlePurchase()"]
+    TypeCheck -->|travel| ShowMap["ワールドマップ表示 → resolveLocation()"]
+    TypeCheck -->|check_status| CheckStatus["ステータス判定 → 条件分岐"]
+    TypeCheck -->|reward| GiveReward["報酬付与"]
+    TypeCheck -->|end| Complete["onComplete()"]
+```
+
+### 6.2 travel ノードの解決
+<!-- v11.0: resolveLocation()の実装を反映 -->
+1. ワールドマップを表示し、プレイヤーに目的地を選択させる。
+2. `POST /api/travel/cost` で隣接判定と移動日数を取得。
+3. `useQuestState.travelTo(destId, days)` で内部状態を更新。
+
+---
+
+## 7. クエスト完了処理 (Quest Complete API)
+<!-- v11.0: POST /api/quest/complete の実装を反映 -->
+
+**API**: `POST /api/quest/complete`
+
+### 7.1 処理フロー
+1. **クエストデータ取得**: `scenarios` テーブルから取得。
+2. **ユーザーデータ取得**: `user_profiles` テーブルから取得。
+3. **加齢処理**: `processAging()` — 経過日数に基づく年齢・老化計算（詳細: v9仕様）。
+4. **EXP加算 & レベルアップ**: `calculateGrowth()` — 成長計算（詳細: v8仕様）。
+5. **報酬付与**: `quest.rewards` の金額・EXP・アイテムをプロフィールに反映。
+6. **Vitality枯渇チェック**: Vitality 0 到達時は引退/死亡フラグ。

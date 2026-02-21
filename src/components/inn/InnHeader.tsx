@@ -61,7 +61,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
                             </span>
                         )}
                         <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
-                            世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年 {1 + Math.floor(((worldState?.total_days_passed || 0) % 365) / 30)}月 {1 + ((worldState?.total_days_passed || 0) % 365) % 30}日
+                            世界暦 {100 + Math.floor((userProfile?.accumulated_days || 0) / 365)}年 {1 + Math.floor(((userProfile?.accumulated_days || 0) % 365) / 30)}月 {1 + ((userProfile?.accumulated_days || 0) % 365) % 30}日
                         </span>
                     </div>
                     <div className="flex gap-2 mt-2">
@@ -113,7 +113,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
                                 {worldState?.flavor_text || '...'}
                             </div>
                             <div>
-                                世界暦 {100 + Math.floor((worldState?.total_days_passed || 0) / 365)}年...
+                                世界暦 {100 + Math.floor((userProfile?.accumulated_days || 0) / 365)}年...
                             </div>
                         </div>
                     </div>

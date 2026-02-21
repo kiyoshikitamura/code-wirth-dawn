@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { QuestService } from '@/services/questService';
+
 
 export const dynamic = 'force-dynamic';
 

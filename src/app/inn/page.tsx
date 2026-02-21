@@ -22,7 +22,7 @@ import QuestBoardModal from '@/components/inn/QuestBoardModal';
 
 export default function InnPage() {
     const router = useRouter();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState } = useGameStore();
 
     // Updated State for v3.1
     const [normalQuests, setNormalQuests] = useState<Scenario[]>([]);
@@ -116,7 +116,15 @@ export default function InnPage() {
     const handleReset = async () => {
         if (!confirm("【警告】世界と所持品を全て初期化します。よろしいですか？")) return;
         try {
-            await fetch('/api/debug/reset', { method: 'POST' });
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            await fetch('/api/debug/reset', {
+                method: 'POST',
+                headers: {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            });
             localStorage.removeItem('game-storage');
             alert("世界は再構成されました。新たな旅が始まります。");
             window.location.href = '/title'; // Go to explicit Title/Entry page
@@ -184,7 +192,7 @@ export default function InnPage() {
             await useGameStore.getState().fetchUserProfile();
         }
         loadProfile();
-    }, [userProfile?.id]);
+    }, [userProfile?.id, userProfile?.current_location_id]);
 
     const handleSelect = (s: any) => {
         // Risk Check Logic
@@ -373,6 +381,39 @@ export default function InnPage() {
                     <div className="fixed inset-0 z-[1] transition-all duration-[2000ms] ease-in-out bg-cover bg-center" style={{ backgroundImage: `url(${validBgUrl})` }}></div>
                 );
             })()}
+
+            {/* Location Sync Loading Overlay (Prevent Flicker) */}
+            {(() => {
+                // Determine target location name (Hub takes precedence)
+                const targetLocationName = hubState?.is_in_hub ? '名もなき旅人の拠所' : (userProfile?.locations?.name || 'Loading...');
+
+                // Show overlay if:
+                // 1. User Profile or World State is not yet loaded (Initial Load)
+                // 2. Location name mismatch (Transit)
+
+                const isInitialLoad = !userProfile || !worldState;
+                const isLocationSynced = !isInitialLoad && (targetLocationName === worldState.location_name);
+
+                if (isInitialLoad || !isLocationSynced) {
+                    return (
+                        <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center animate-in fade-in duration-300">
+                            {/* Only show "Moving" if we have data but are syncing. If initial load, show "Entering..." */}
+                            {isInitialLoad ? (
+                                <>
+                                    <div className="text-amber-500 font-serif text-xl animate-pulse tracking-widest mb-4">Entering Base...</div>
+                                    <div className="text-xs text-gray-500 font-mono">世界を読み込んでいます...</div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-amber-500 font-serif text-xl animate-pulse tracking-widest mb-4">移動中...</div>
+                                    <div className="text-xs text-gray-500 font-mono">{targetLocationName} へ向かっています</div>
+                                </>
+                            )}
+                        </div>
+                    );
+                }
+                return null;
+            })()}
             {/* Visual Effects based on Status */}
             {worldState?.status === 'Declining' && <div className="fixed inset-0 z-[1] bg-[url('/effects/dirt.png')] opacity-40 mix-blend-multiply pointer-events-none"></div>}
             {worldState?.status === 'Ruined' && <div className="fixed inset-0 z-[1] bg-gradient-to-t from-red-900/40 to-transparent mix-blend-overlay pointer-events-none"></div>}
@@ -537,6 +578,17 @@ export default function InnPage() {
                             alert("Level Up!");
                         }} className="bg-green-900/20 text-green-500 border border-green-900 px-3 py-1 text-xs hover:bg-green-900/50">[DEBUG] +Lv1 (Full Restore)</button>
                         <button onClick={async () => { await useGameStore.getState().addGold(1000); }} className="bg-yellow-900/20 text-yellow-500 border border-yellow-900 px-3 py-1 text-xs hover:bg-yellow-900/50">[DEBUG] +1000 G</button>
+
+                        <div className="w-full flex justify-center gap-4 mt-2">
+                            <span className="text-xs text-gray-600 font-mono">
+                                Auth: {userProfile?.id ? (userProfile.id === '00000000-0000-0000-0000-000000000000' ? 'DEMO' : userProfile.id.substring(0, 8) + '...') : 'None'}
+                            </span>
+                            <button onClick={async () => {
+                                await supabase.auth.signOut();
+                                window.location.href = '/title';
+                            }} className="bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 text-xs hover:text-white">[DEBUG] Logout</button>
+                            <button onClick={() => window.location.href = '/title'} className="bg-gray-800 text-gray-400 border border-gray-600 px-3 py-1 text-xs hover:text-white">[DEBUG] Go to Title</button>
+                        </div>
                     </div>
                 </div>
 

@@ -230,9 +230,11 @@ export class LifeCycleService {
             gold: (newProfileData.gold || 1000) + inheritedGold,
             legacy_points: 0,
             is_alive: true,
-            vitality: 100,
+            vitality: newProfileData.max_vitality ?? 100, // Respect input or default
             accumulated_days: 0,
-            age: newProfileData.age || 20
+            age: newProfileData.age ?? 20,
+            hp: newProfileData.max_hp ?? 100, // Respect input or default
+            max_hp: newProfileData.max_hp ?? 100
         };
 
         return finalData;

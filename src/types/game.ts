@@ -12,6 +12,7 @@ export interface Reputation {
 
 export interface Location {
   id: string;
+  slug: string; // Added vRefactor master travel
   name: string;
   ruling_nation_id: string;
   prosperity_level: number;
@@ -21,6 +22,7 @@ export interface Location {
   type: string;
   nation_id?: string;
   connections: string[];
+  neighbors?: Record<string, number>;
   world_states?: { controlling_nation: string }[];
   current_attributes?: {
     order: number;
@@ -302,7 +304,8 @@ export interface ScenarioDB {
 }
 
 export interface LocationDB {
-  id: string;
+  id: string; // UUID
+  slug: string; // Added vRefactor
   name: string;
   description?: string; // Added (was missing in interface but used in code?)
 
@@ -318,7 +321,7 @@ export interface LocationDB {
 
   map_x?: number;
   map_y?: number;
-  neighbors?: Record<string, { days: number; type?: string }>; // { 'loc_b': { days: 1, type: 'road' } }
+  neighbors?: Record<string, number>;
 }
 
 export interface WorldState {
@@ -352,7 +355,7 @@ export interface WorldHistory {
 }
 
 export interface PartyMemberDB {
-  id: number; // Changed to number (BIGINT)
+  id: number; // BIGINT -> number
   owner_id: string | null; // UUID or null for pool
   slug: string; // Master template slug
   name: string;
@@ -363,14 +366,14 @@ export interface PartyMemberDB {
   max_durability: number;
   loyalty: number;
   cover_rate: number;
-  inject_cards: number[]; // Array of Card IDs
+  inject_cards: number[]; // Array of Card IDs (number)
   is_active: boolean;
   quest_req_id?: string; // v3.4 Guest Context
   created_at?: string;
 }
 
 export interface ItemDB {
-  id: number; // Changed to number (BIGINT)
+  id: number; // BIGINT -> number
   slug: string;
   name: string;
   type: 'consumable' | 'skill' | 'equipment';
@@ -393,7 +396,7 @@ export interface ItemDB {
 }
 
 export interface CardDB {
-  id: number;
+  id: number; // BIGINT -> number
   slug: string;
   name: string;
   type: string;
@@ -426,7 +429,9 @@ export interface BattleState {
 
 export type Scenario = ScenarioDB;
 
-export interface InventoryItem extends ItemDB {
+export interface InventoryItem extends Omit<ItemDB, 'id'> {
+  id: string; // Inventory UUID
+  item_id: number; // Master Item ID
   quantity: number;
   is_equipped: boolean;
   is_skill: boolean;

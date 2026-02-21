@@ -36,17 +36,18 @@ export async function POST(req: Request) {
             name: title_name, // User Input -> Name
             title_name: '名もなき旅人', // Default Title/Rank
             gender,
-            age: age || 20,
+            age: age ?? 20,
             birth_date: birth_date || null, // V9.2
             accumulated_days: 0,
             // gold: gold || 1000, // Determined by processInheritance below
-            vitality: max_vitality || 100, // Ensure defaults or use calculated
-            max_vitality: max_vitality || 100,
-            hp: max_hp || 100,
-            max_hp: max_hp || 100,
-            initial_hp: max_hp || 100, // Added for Spec v8.2 scaling
-            max_deck_cost: max_deck_cost || 10,
-            is_alive: true // Resurrect
+            vitality: max_vitality ?? 100, // Ensure defaults or use calculated
+            max_vitality: max_vitality ?? 100,
+            hp: max_hp ?? 100,
+            max_hp: max_hp ?? 100,
+            initial_hp: max_hp ?? 100, // Added for Spec v8.2 scaling
+            max_deck_cost: max_deck_cost ?? 10,
+            is_alive: true, // Resurrect
+            updated_at: new Date().toISOString()
         };
 
         if (current_location_id) updates.current_location_id = current_location_id;

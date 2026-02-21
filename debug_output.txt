@@ -1,0 +1,2 @@
+--- Checking User Location ---
+Error fetching user: column user_profiles.status does not exist

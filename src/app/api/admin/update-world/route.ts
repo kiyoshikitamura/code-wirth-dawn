@@ -85,24 +85,44 @@ export async function POST(req: Request) {
 
         // --- Territory Control Logic ---
         // Nation Archetypes
-        const NATIONS: Record<string, { order: number, chaos: number, justice: number, evil: number }> = {
-            'Roland': { order: 80, chaos: 20, justice: 80, evil: 20 },
-            'Markand': { order: 20, chaos: 80, justice: 80, evil: 20 },
-            'Karyu': { order: 80, chaos: 20, justice: 20, evil: 80 },
-            'Yato': { order: 20, chaos: 80, justice: 20, evil: 80 }
-        };
+        // --- 領土支配ロジック ---
+        // DBから国家を取得
+        const { data: nationsData } = await supabase.from('nations').select('*');
+        const NATIONS: Record<string, { order: number, chaos: number, justice: number, evil: number }> = {};
+        const NATIONS_TARGETS: Record<string, { key: string, ideal: number }> = {};
 
-        // Determine Controlling Nation
+        if (nationsData) {
+            nationsData.forEach(n => {
+                NATIONS[n.id] = {
+                    order: n.ideal_order,
+                    chaos: n.ideal_chaos,
+                    justice: n.ideal_justice,
+                    evil: n.ideal_evil
+                };
+
+                // 摩擦ロジックのための主要な理想を決定 (簡略化: 最大値がターゲットキー)
+                let maxVal = -1;
+                let maxKey = 'order';
+                if (n.ideal_order > maxVal) { maxVal = n.ideal_order; maxKey = 'order'; }
+                if (n.ideal_chaos > maxVal) { maxVal = n.ideal_chaos; maxKey = 'chaos'; }
+                if (n.ideal_justice > maxVal) { maxVal = n.ideal_justice; maxKey = 'justice'; }
+                if (n.ideal_evil > maxVal) { maxVal = n.ideal_evil; maxKey = 'evil'; }
+
+                NATIONS_TARGETS[n.id] = { key: maxKey, ideal: 100 }; // とりあえず理想は100デフォルト
+            });
+        }
+
+        // 支配国の決定
         const { data: loc } = await supabase.from('locations').select('type, nation_id').eq('name', location_name).single();
         let controlling_nation = currentState?.controlling_nation || loc?.nation_id || 'Neutral';
 
-        // Capitals never change side. Others shift to the closest archetype.
+        // 首都はサイドを変更しない。その他は最も近いアーキタイプにシフトする。
         if (loc?.type !== 'Capital') {
             let minDist = Infinity;
             let closest = controlling_nation;
 
             for (const [nation, arch] of Object.entries(NATIONS)) {
-                // Euclidean distance in 4D alignment space
+                // 4次元アライメント空間でのユークリッド距離
                 const dist = Math.sqrt(
                     Math.pow(newOrder - arch.order, 2) +
                     Math.pow(newChaos - arch.chaos, 2) +
@@ -117,16 +137,13 @@ export async function POST(req: Request) {
             controlling_nation = closest;
         }
 
-        // V4 Logic for API Update
-        // Calculate Friction based on new Controlling Nation (or current if not changing)
+        // API更新用のV4ロジック
+        // 新しい支配国に基づいて摩擦を計算 (変更がない場合は現在の支配国)
         let targetControllingNation = controlling_nation;
 
-        const NATIONS_TARGETS: Record<string, { key: string, ideal: number }> = {
-            'Roland': { key: 'order', ideal: 100 },
-            'Markand': { key: 'chaos', ideal: 100 },
-            'Yato': { key: 'justice', ideal: 100 },
-            'Karyu': { key: 'evil', ideal: 100 }
-        };
+        // NATIONS_TARGETS はDBから上記ですでに生成済み
+        // ハードコードされた定義を削除
+
 
         const target = NATIONS_TARGETS[targetControllingNation];
         let friction = 0;

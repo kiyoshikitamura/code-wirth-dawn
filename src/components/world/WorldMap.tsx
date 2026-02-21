@@ -41,7 +41,7 @@ export default function WorldMap({ currentLocationName, destinationName, classNa
     return (
         <div className={`relative w-full h-full min-h-[300px] bg-[#1a120b] border-2 border-[#8b5a2b] overflow-hidden rounded-lg shadow-inner ${className}`}>
             {/* Background Texture */}
-            <div className="absolute inset-0 opacity-20 bg-[url('/assets/map_texture.jpg')] bg-cover bg-center mix-blend-overlay pointer-events-none" />
+            <div className="absolute inset-0 opacity-20 bg-[url('/aged-paper.png')] bg-cover bg-center mix-blend-overlay pointer-events-none" />
 
             {/* Grid Lines (Decoration) */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(139,90,43,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(139,90,43,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -71,8 +71,8 @@ export default function WorldMap({ currentLocationName, destinationName, classNa
                 const isHighlight = isCurrent || isDest;
 
                 // Fallback coordinates if missing
-                const left = loc.map_x ?? (Math.random() * 80 + 10);
-                const top = loc.map_y ?? (Math.random() * 80 + 10);
+                const left = loc.map_x ?? -100; // Hide off-screen if missing
+                const top = loc.map_y ?? -100;
 
                 return (
                     <div

@@ -9,6 +9,7 @@ import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
 import { useRouter } from 'next/navigation';
 import WorldMap from '@/components/world/WorldMap';
+import { supabase } from '@/lib/supabase';
 
 interface Props {
     scenario: ScenarioDB;
@@ -24,46 +25,75 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     const [feed, setFeed] = useState<string[]>([]);
     const feedEndRef = useRef<HTMLDivElement>(null);
 
-    // v3.6 UI States
-    const [showingGuestJoin, setShowingGuestJoin] = useState<any>(null);
-    const [showingTravel, setShowingTravel] = useState<{ dest: string, days: number, next: string, status: 'confirm' | 'animating' } | null>(null);
+    // initialNodeId の変更に反応 (Quest Resume にとって重要)
+    useEffect(() => {
+        if (initialNodeId) setCurrentNodeId(initialNodeId);
+    }, [initialNodeId]);
 
-    // Global State Access
+    // v3.6 UI State
+    const [showingGuestJoin, setShowingGuestJoin] = useState<any>(null);
+    const [showingTravel, setShowingTravel] = useState<{ dest: string, slug?: string, days: number, next: string, nextBattle?: string, encounterRate?: number, status: 'confirm' | 'animating' } | null>(null);
+
+    // グローバル状態へのアクセス
     const { userProfile, worldState, battleState } = useGameStore();
     const questState = useQuestState();
     const router = useRouter();
 
-    // Scroll to bottom of feed
+    // フィードの最下部へスクロール
     useEffect(() => {
         feedEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [feed]);
 
-    // Parse Script Data (BYORK JSON)
-    const script = scenario.script_data || {
-        nodes: {
-            start: {
-                text: scenario.description || "...",
-                choices: [{ label: "進む", next: "end_success" }]
-            },
-            end_success: {
-                type: 'end',
-                result: 'success',
-                text: "依頼を達成した。"
-            }
+    // スクリプトデータの解析 (BYORK JSON) または V3 フローノード
+    const script = React.useMemo(() => {
+        let s = scenario.script_data;
+
+        // v3.4 アダプター: flow_nodes 配列を BYORK ライクなノードマップに変換
+        if (!s && scenario.flow_nodes && Array.isArray(scenario.flow_nodes)) {
+            const nodes: Record<string, any> = {};
+            scenario.flow_nodes.forEach((node: any) => {
+                nodes[node.id] = {
+                    ...node,
+                    choices: node.choices?.map((c: any) => ({
+                        ...c,
+                        next: c.next_node || c.next // Map next_node -> next, fallback to next
+                    })),
+                    next: node.next || node.next_node, // Map next_node -> next
+                    params: node.params
+                };
+            });
+            s = { nodes };
         }
-    };
+
+        if (!s) {
+            s = {
+                nodes: {
+                    start: {
+                        text: scenario.description || "...",
+                        choices: [{ label: "進む", next: "end_success" }]
+                    },
+                    end_success: {
+                        type: 'end',
+                        result: 'success',
+                        text: "依頼を達成した。"
+                    }
+                }
+            };
+        }
+        return s;
+    }, [scenario]);
 
     const currentNode = script.nodes?.[currentNodeId];
 
-    // --- NODE PROCESSOR ---
+    // --- ノードプロセッサー ---
     useEffect(() => {
         if (!currentNode) return;
         let timeoutId: NodeJS.Timeout;
 
         const processNode = async () => {
-            // 1. Special Logic Nodes
+            // 1. 特殊ロジックノード
             if (currentNode.type === 'check_world') {
-                // ... (unchanged logic if any)
+                // ... (変更なし)
             }
             else if (currentNode.type === 'random_branch') {
                 const prob = currentNode.prob || 50;
@@ -91,56 +121,92 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 }
             }
             // ...
-            // 2. Action Nodes
-            else if (currentNode.type === 'battle') {
-                // Manual Start (handled by parent or specialized component)
+            else if (currentNode.action === 'heal_partial') {
+                // Heal 50%
+                questState.healParty(0.5);
             }
-            // v3.4 Expansion
-            else if (currentNode.type === 'travel') {
-                const dest = currentNode.params?.dest;
-                const days = currentNode.params?.days || 1; // Default 1 day
-                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
-                if (dest && nextId) {
-                    setShowingTravel({ dest, days, next: nextId, status: 'confirm' });
-                } else if (nextId) {
-                    // Fallback if no dest
-                    setCurrentNodeId(nextId);
+            // 2. アクションノード
+            if (currentNode.type === 'battle') {
+                // 手動開始 (親または専用コンポーネントによって処理される)
+            }
+            // v3.4 拡張
+            else if (currentNode.type === 'travel') {
+                if (showingTravel) return; // アニメーション/モーダル中の再計算を防ぐ
+
+                const targetSlug = currentNode.target_location_slug || currentNode.params?.target_location_slug;
+                const encounterRate = currentNode.encounter_rate || 0;
+                const nextSuccess = currentNode.next_node_success || currentNode.next;
+                const nextBattle = currentNode.next_node_battle;
+
+                if (targetSlug) {
+                    // ... (既存の解決ロジックを維持)
+                    const resolveLocation = async () => {
+                        try {
+                            // 見積もりAPIの呼び出し
+                            const res = await fetch('/api/travel/cost', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ target_location_slug: targetSlug })
+                            });
+
+                            if (res.ok) {
+                                const costData = await res.json();
+                                console.log(`[Travel Calc API] From: ${costData.from} To: ${costData.to} Days: ${costData.days}`);
+                                setShowingTravel({
+                                    dest: costData.to,
+                                    slug: targetSlug,
+                                    days: costData.days,
+                                    next: nextSuccess,
+                                    nextBattle,
+                                    encounterRate,
+                                    status: 'confirm'
+                                });
+                            } else {
+                                console.error("Travel cost check failed");
+                                if (nextSuccess) setCurrentNodeId(nextSuccess);
+                            }
+                        } catch (e) {
+                            console.error("Travel resolution error", e);
+                            if (nextSuccess) setCurrentNodeId(nextSuccess);
+                        }
+                    };
+                    resolveLocation();
+                } else if (nextSuccess) {
+                    setCurrentNodeId(nextSuccess);
                 }
             }
             else if (currentNode.type === 'guest_join') {
+                // ... (既存のゲスト参加ロジック)
                 const guestId = currentNode.params?.guest_id;
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
                 if (guestId) {
-                    // Fetch Guest Data
                     try {
                         const res = await fetch(`/api/party/member?id=${guestId}&context=guest`);
                         if (res.ok) {
                             const guestData = await res.json();
                             setShowingGuestJoin({ data: guestData, next: nextId });
-                            // Logic moved to confirmation
                         } else {
-                            // Fallback
                             if (nextId) setCurrentNodeId(nextId);
                         }
                     } catch (e) {
-                        console.error("Failed to load guest", e);
                         if (nextId) setCurrentNodeId(nextId);
                     }
                 } else if (nextId) {
                     setCurrentNodeId(nextId);
                 }
             }
-            // ...
+            else if (currentNode.type === 'shop_special') {
+                // 特別ショップロジック - リダイレクトではなくUI状態で処理
+                // ショップモーダルを表示する状態を設定します
+                // とりあえず、状態を渡すかレンダリングすると仮定します
+                // 'showingShop' 状態を使用 (追加が必要)
+            }
             else if (currentNode.type === 'shop_access') {
-                // Redirect to context shop? or just log
-                // Implementation: Navigate to Shop Page with query param
+                // レガシーなリダイレクトロジック
                 const questId = questState.questId;
                 router.push(`/shop?quest_id=${questId}&return_to=quest`);
-                // Note: The resume logic will bring user back here if they leave?
-                // Actually, if we leave the page, ScenarioEngine unmounts.
-                // We need Resume Logic to work for this to match spec.
             }
             else if (currentNode.type === 'end' || currentNode.result) {
                 const res = currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
@@ -159,13 +225,91 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     }, [currentNodeId, currentNode, userProfile, history, onBattleStart, onComplete]);
 
 
-    // Safety check
+    // --- アクション ---
+    const handlePurchase = async (itemId: number, price: number, itemName: string) => {
+        if ((Number(userProfile?.gold) || 0) < price) {
+            alert("金貨が足りません！");
+            return;
+        }
+        try {
+            const res = await fetch('/api/shop/purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_id: itemId, price })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert(`${itemName} を購入しました！`);
+                useGameStore.getState().fetchUserProfile(); // Refresh gold
+            } else {
+                const err = await res.json();
+                alert(`購入失敗: ${err.error}`);
+            }
+        } catch (e) {
+            console.error("Purchase error", e);
+            alert("通信エラーが発生しました");
+        }
+    };
+
+    // --- レンダリング ---
+
+    // Specila Shop UI
+    if (currentNode?.type === 'shop_special') {
+        const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+        const defaultShopItems = [
+            { id: 1, name: '薬草', price: 50, desc: 'HPを小回復' },
+            { id: 3001, name: '傷薬', price: 100, desc: 'HPを中回復' }
+        ];
+        // パラメータがあれば使用、なければデフォルト
+        const shopItems = currentNode.params?.shop_items || defaultShopItems;
+
+        return (
+            <div className="relative w-full h-[70vh] bg-[#1a120b] border-4 border-[#8b5a2b] overflow-hidden flex flex-col shadow-2xl rounded-lg p-6 md:p-10 items-center justify-center">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('/backgrounds/city/market.jpg')] opacity-20 pointer-events-none bg-cover bg-center" />
+
+                <h2 className="text-3xl font-serif text-[#e3d5b8] mb-2 z-10 drop-shadow-md">特別補給部隊</h2>
+                <p className="text-gray-400 mb-8 z-10 text-sm">「ここでは冒険に役立つ物資を扱っているよ。」</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 z-10 w-full max-w-2xl">
+                    {shopItems.map((item: { id: number; name: string; price: number; desc: string }) => (
+                        <div key={item.id} className="bg-[#3e2723]/90 text-[#e3d5b8] p-4 rounded border border-[#a38b6b] flex flex-col gap-2 shadow-lg">
+                            <div className="flex justify-between items-center border-b border-[#a38b6b]/50 pb-2">
+                                <span className="font-bold text-lg">{item.name}</span>
+                                <span className="text-yellow-400 font-mono">{item.price} G</span>
+                            </div>
+                            <p className="text-xs text-gray-300">{item.desc}</p>
+                            <button
+                                onClick={() => handlePurchase(item.id, item.price, item.name)}
+                                className="mt-2 bg-[#1a120b] hover:bg-[#5d4037] text-center py-2 rounded border border-[#8b5a2b] transition-colors text-sm font-bold tracking-wider"
+                            >
+                                購入する (BUY)
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="z-10 bg-black/50 px-6 py-2 rounded-full border border-[#a38b6b]/30 mb-8 backdrop-blur-sm">
+                    <span className="text-gray-400 text-sm mr-2">所持金:</span>
+                    <span className="text-yellow-400 font-bold font-mono text-xl">{userProfile?.gold || 0} G</span>
+                </div>
+
+                <button
+                    onClick={() => nextId && setCurrentNodeId(nextId)}
+                    className="z-10 text-gray-400 hover:text-white border-b border-transparent hover:border-white transition-all pb-1 hover:pb-0"
+                >
+                    補給を終えて戻る
+                </button>
+            </div>
+        );
+    }
+
+    // 安全性チェック
     if (!currentNode) {
         return <div className="p-8 text-red-500">Error: Node '{currentNodeId}' not found.</div>;
     }
 
     const handleChoice = (choice: any) => {
-        // Validate Requirements
+        // 要件の検証
         if (choice.req) {
             const { type, val } = choice.req;
             if (type === 'has_item') {
@@ -175,7 +319,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             }
         }
 
-        // Cost Check
+        // コストチェック
         if (choice.cost_vitality) {
             if ((userProfile?.vitality || 0) < choice.cost_vitality) {
                 alert("体力が足りません！");
@@ -190,7 +334,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         setCurrentNodeId(choice.next);
     };
 
-    // Visuals
+    // ビジュアル
     const bgUrl = getAssetUrl(currentNode.bg_key || 'default');
 
     return (
@@ -229,7 +373,9 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar fade-mask">
                     <div className="bg-black/60 p-6 rounded-lg border border-[#a38b6b]/30 backdrop-blur-md min-h-[150px] animate-in fade-in slide-in-from-bottom-5 duration-500 shadow-inner">
                         <p className="text-lg text-gray-200 font-serif leading-loose whitespace-pre-wrap">
-                            {currentNode.text || (
+                            {showingTravel ? (
+                                <span className="text-gray-500 italic animate-pulse">移動準備中...</span>
+                            ) : currentNode.text || (
                                 currentNode.type === 'travel' ? "移動中... (数日が経過した)" :
                                     currentNode.type === 'guest_join' ? "新たな仲間が合流したようだ。" :
                                         "..."
@@ -356,15 +502,44 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             {showingTravel && (
                 <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-700 rounded-lg p-8">
 
-                    {/* Map Display */}
-                    <div className="w-full h-full max-h-[60%] mb-6 relative">
-                        <WorldMap
-                            currentLocationName={userProfile?.current_location_name || '名もなき旅人の拠所'}
-                            destinationName={showingTravel.dest}
-                            className="w-full h-full shadow-2xl border-4 border-[#8b5a2b]"
-                        />
-                        {showingTravel.status === 'animating' && (
-                            <div className="absolute inset-x-0 bottom-0 h-1 bg-[#a38b6b] animate-[loading_3s_ease-in-out_infinite]" />
+                    {/* Linear Route Map Display */}
+                    <div className="w-full h-full max-h-[60%] mb-6 relative bg-[#1a120b] border-2 border-[#8b5a2b] rounded-lg p-4 flex items-center justify-center gap-2 md:gap-4 overflow-x-auto">
+                        {/* Current Location */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className="w-10 h-10 rounded-full border-2 border-blue-500 bg-blue-900/50 flex items-center justify-center shadow-[0_0_10px_blue]">
+                                <MapPin size={20} className="text-blue-300" />
+                            </div>
+                            <span className="text-xs text-blue-300 mt-2 font-bold text-center">{userProfile?.current_location_name}</span>
+                            <span className="text-[10px] text-gray-500">現在地</span>
+                        </div>
+
+                        {/* Arrow 1 */}
+                        <div className="text-gray-500 animate-pulse">
+                            <ArrowRight size={20} />
+                        </div>
+
+                        {/* Destination */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                            <div className="w-12 h-12 rounded-full border-2 border-[#e3d5b8] bg-[#3e2723] flex items-center justify-center shadow-[0_0_15px_#e3d5b8] animate-bounce">
+                                <MapPin size={24} className="text-[#e3d5b8]" />
+                            </div>
+                            <span className="text-sm text-[#e3d5b8] mt-2 font-bold text-center">{showingTravel.dest}</span>
+                            <span className="text-[10px] text-yellow-500 font-bold">Next Stop</span>
+                        </div>
+
+                        {/* Future Stops (Hide if destination is Final) */}
+                        {showingTravel.dest !== '帝都カロン' && (
+                            <>
+                                <div className="text-gray-700">
+                                    <ArrowRight size={20} />
+                                </div>
+                                <div className="flex flex-col items-center min-w-[60px] opacity-50 grayscale">
+                                    <div className="w-8 h-8 rounded-full border border-gray-600 bg-black flex items-center justify-center">
+                                        <Star size={14} className="text-gray-400" />
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 mt-2 text-center">???</span>
+                                </div>
+                            </>
                         )}
                     </div>
 
@@ -391,11 +566,58 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 onClick={() => {
                                     setShowingTravel({ ...showingTravel, status: 'animating' });
                                     // Auto-advance after animation duration (e.g. 3s)
-                                    setTimeout(() => {
-                                        questState.travelTo(showingTravel.dest, showingTravel.days);
-                                        setHistory(prev => [...prev, `[Travel] ${showingTravel.days}日かけて移動した... (残り寿命 -${showingTravel.days})`]);
-                                        setShowingTravel(null);
-                                        if (showingTravel.next) setCurrentNodeId(showingTravel.next);
+                                    setTimeout(async () => {
+                                        // 1. Execute Server Move
+                                        try {
+                                            const res = await fetch('/api/move', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    target_location_name: showingTravel.dest,
+                                                    target_location_slug: showingTravel.slug
+                                                })
+                                            });
+
+                                            if (res.ok) {
+                                                const data = await res.json();
+                                                // Refresh Global State
+                                                await useGameStore.getState().fetchUserProfile();
+
+                                                // Update Local Quest State
+                                                questState.travelTo(showingTravel.dest, data.travel_days);
+                                                setHistory(prev => [...prev, `[Travel] ${data.travel_days}日かけて移動した... (残り寿命 -${data.travel_days})`]);
+
+                                                // 2. Encounter Check
+                                                const roll = Math.random();
+                                                const isBattle = showingTravel.encounterRate && roll < showingTravel.encounterRate;
+
+                                                setShowingTravel(null);
+
+                                                if (isBattle && showingTravel.nextBattle && onBattleStart) {
+                                                    console.log("Encounter Triggered!", roll, "<", showingTravel.encounterRate);
+                                                    // Start Battle (Pass success node as next)
+                                                    // Assuming enemy_group_id is needed? 
+                                                    // The current node in 'script' has it, but we need to access it.
+                                                    // 'currentNode' is still the 'travel' node.
+                                                    // Does travel node have 'enemy_group_id'? No, the PLAN said 'type: battle' is NEXT.
+                                                    // My SQL: next_node_battle -> id: 'battle_1' -> type: 'battle'
+
+                                                    // So we just go to the battle node ID.
+                                                    setCurrentNodeId(showingTravel.nextBattle);
+                                                } else {
+                                                    // Success / Safe
+                                                    if (showingTravel.next) setCurrentNodeId(showingTravel.next);
+                                                }
+
+                                            } else {
+                                                alert("移動に失敗しました (API Error)");
+                                                setShowingTravel(null);
+                                            }
+                                        } catch (e) {
+                                            console.error("Travel error", e);
+                                            alert("通信エラー");
+                                            setShowingTravel(null);
+                                        }
                                     }, 3000);
                                 }}
                                 className="bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] px-12 py-3 hover:bg-[#5d4037] transition-all tracking-widest text-lg font-bold shadow-[0_0_15px_rgba(139,90,43,0.3)] hover:scale-105"

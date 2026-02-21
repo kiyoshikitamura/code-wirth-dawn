@@ -32,7 +32,15 @@ export default function WorldMapPage() {
                 .from('locations')
                 .select('*, world_states(controlling_nation)');
 
-            if (data) setLocations(data as any); // Type assertion for join
+            if (data) {
+                const mapped = data.map((l: any) => ({
+                    ...l,
+                    x: l.map_x || -999,
+                    y: l.map_y || -999
+                }));
+                // Cast to Location[] now that x/y are present
+                setLocations(mapped as Location[]);
+            }
 
             await fetchUserProfile();
             await fetchHubState(); // Explicitly fetch Hub State
@@ -120,7 +128,7 @@ export default function WorldMapPage() {
     };
 
     // Calendar & Age Computation
-    const totalDays = worldState?.total_days_passed || 0;
+    const totalDays = userProfile?.accumulated_days || 0;
     const year = 100 + Math.floor(totalDays / 365);
     const month = 1 + Math.floor((totalDays % 365) / 30);
     const day = 1 + (totalDays % 30);
@@ -159,9 +167,17 @@ export default function WorldMapPage() {
         setTravelLog([`旅の支度をしています...`]);
 
         try {
+            // Get Token
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             // Call API
             const res = await fetch('/api/move', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
                 body: JSON.stringify({ target_location_name: target.name })
             });
 
@@ -187,7 +203,11 @@ export default function WorldMapPage() {
                 await fetchHubState();
                 router.push('/inn'); // Go to Inn at new location
             } else {
-                alert("移動できませんでした。");
+                if (res.status === 401) {
+                    alert("認証エラー: 移動するには再ログインが必要です。");
+                } else {
+                    alert("移動できませんでした。");
+                }
                 setTraveling(false);
                 isTravelingRef.current = false;
             }
@@ -283,10 +303,11 @@ export default function WorldMapPage() {
                     <h3 className="text-center text-xs text-[#a38b6b] font-bold mb-2 tracking-widest border-b border-[#a38b6b]/20 pb-1 w-fit mx-auto px-4">— 国家の覇権 —</h3>
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                         {(() => {
-                            const total = locations.length;
+                            const validLocations = locations.filter(l => l.slug !== 'loc_hub' && l.type !== 'Hub' && l.name !== '名もなき旅人の拠所');
+                            const total = validLocations.length;
                             if (total === 0) return null;
                             const counts: Record<string, number> = { 'Roland': 0, 'Markand': 0, 'Yato': 0, 'Karyu': 0, 'Neutral': 0 };
-                            locations.forEach(l => {
+                            validLocations.forEach(l => {
                                 const n = l.world_states?.[0]?.controlling_nation || l.nation_id || 'Neutral';
                                 counts[n] = (counts[n] || 0) + 1;
                             });
@@ -294,7 +315,7 @@ export default function WorldMapPage() {
                                 switch (n) {
                                     case 'Roland': return 'ローランド';
                                     case 'Markand': return 'マーカンド';
-                                    case 'Karyu': return '火龍の民';
+                                    case 'Karyu': return '華龍神朝';
                                     case 'Yato': return '夜刀神国';
                                     default: return '中立';
                                 }
@@ -338,15 +359,15 @@ export default function WorldMapPage() {
                 {/* Connection Lines (SVG) (Excluding Hidden Nodes) */}
                 <svg className="absolute inset-0 z-0 w-full h-full pointer-events-none">
                     {visibleLocations.map(loc => {
-                        return loc.connections.map(targetName => {
-                            const target = locations.find(l => l.name === targetName);
-                            // Don't draw line to hidden hub
+                        const neighbors = loc.neighbors || {};
+                        return Object.keys(neighbors).map(targetSlug => {
+                            const target = locations.find(l => l.slug === targetSlug);
                             if (!target || target.name === '名もなき旅人の拠所') return null;
                             return (
                                 <line
-                                    key={`${loc.name}-${target.name}`}
-                                    x1={(loc.x / 10) + '%'} y1={(loc.y / 10) + '%'}
-                                    x2={(target.x / 10) + '%'} y2={(target.y / 10) + '%'}
+                                    key={`${loc.slug}-${target.slug}`}
+                                    x1={loc.x + '%'} y1={loc.y + '%'}
+                                    x2={target.x + '%'} y2={target.y + '%'}
                                     stroke="#a38b6b" strokeWidth="1" strokeDasharray="4 4" opacity="0.4"
                                 />
                             );
@@ -360,12 +381,14 @@ export default function WorldMapPage() {
                     const nation = loc.world_states?.[0]?.controlling_nation || loc.nation_id || 'Neutral';
                     const nationStyle = getNationColor(nation);
 
-                    // Normal Connectivity
+                    // Neighbor Connectivity
                     const currentLocObj = locations.find(l => l.id === userProfile?.current_location_id);
                     let isConnected = false;
                     if (currentLocObj) {
-                        isConnected = currentLocObj.connections.includes(loc.name);
+                        const neighbors = currentLocObj.neighbors || {};
+                        isConnected = !!neighbors[loc.slug];
                     } else {
+                        // Hub/Descent logic
                         if (loc.type === 'Capital') isConnected = true;
                     }
                     const isWalkable = isConnected;
@@ -377,7 +400,7 @@ export default function WorldMapPage() {
                                 absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer
                                 ${isCurrent ? 'z-[60]' : 'z-[40]'}
                             `}
-                            style={{ left: (loc.x / 10) + '%', top: (loc.y / 10) + '%' }}
+                            style={{ left: loc.x + '%', top: loc.y + '%' }}
                             onClick={() => isWalkable && !isCurrent && handleTravelClick(loc)}
                             onMouseEnter={() => setHoveredId(loc.id)}
                             onMouseLeave={() => setHoveredId(null)}
@@ -396,10 +419,10 @@ export default function WorldMapPage() {
                                 <div className="absolute top-10 bg-black/90 text-white text-[10px] p-2 rounded w-24 text-center z-[90] pointer-events-none border border-gold-600/30 shadow-xl">
                                     {(() => {
                                         const currentLoc = locations.find(l => l.id === userProfile?.current_location_id);
-                                        if (!currentLoc) return 'Unknown';
-                                        const dist = Math.sqrt(Math.pow(loc.x - currentLoc.x, 2) + Math.pow(loc.y - currentLoc.y, 2));
-                                        const days = Math.max(1, Math.ceil(dist * 0.05));
-                                        return `移動: 約${days}日`;
+                                        if (!currentLoc) return '移動: 1日';
+                                        const neighbors = currentLoc.neighbors || {};
+                                        const days = neighbors[loc.slug] || 1;
+                                        return `移動: ${days}日`;
                                     })()}
                                 </div>
                             )}
@@ -428,7 +451,7 @@ export default function WorldMapPage() {
                                     ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50 z-[81]' :
                                         (isHovered ? 'text-white bg-black/90 ring-1 ring-white/30 scale-105 z-[81]' : 'text-gray-300 bg-black/80')}
                                 `}
-                                style={{ left: (loc.x / 10) + '%', top: `calc(${(loc.y / 10)}% + 24px)` }}
+                                style={{ left: loc.x + '%', top: `calc(${loc.y}% + 24px)` }}
                             >
                                 {loc.name}
                             </div>
@@ -482,12 +505,12 @@ export default function WorldMapPage() {
                                 <span className="text-white font-bold text-lg">{confirmTarget.name}</span> へ移動しますか？
                             </p>
                             <p className="text-sm text-[#a38b6b]">
-                                所要時間: 約
+                                所要時間:
                                 {(() => {
                                     const currentLoc = locations.find(l => l.id === userProfile?.current_location_id);
-                                    if (!currentLoc) return '??';
-                                    const dist = Math.sqrt(Math.pow(confirmTarget.x - currentLoc.x, 2) + Math.pow(confirmTarget.y - currentLoc.y, 2));
-                                    return Math.max(1, Math.ceil(dist * 0.05));
+                                    if (!currentLoc) return ' 1';
+                                    const neighbors = currentLoc.neighbors || {};
+                                    return ` ${neighbors[confirmTarget.slug] || 1}`;
                                 })()}
                                 日
                             </p>

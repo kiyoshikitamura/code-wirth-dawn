@@ -9,6 +9,7 @@ import { hasTaunt, StatusEffect } from '@/lib/statusEffects';
 
 export default function BattlePage() {
     const router = useRouter();
+    const hasHydrated = useGameStore(state => state._hasHydrated);
     const {
         battleState,
         hand,
@@ -37,8 +38,12 @@ export default function BattlePage() {
     useEffect(() => {
         console.log("[BattlePage] Mounted. Enemy:", battleState.enemy, "Hand:", hand.length);
         fetchUserProfile();
-        if (!battleState.enemy || hand.length === 0) {
+
+        // Only initialize fallback if hydrated and still no enemy
+        const hydrated = useGameStore.persist.hasHydrated();
+        if (hydrated && !battleState.enemy) {
             console.log("[BattlePage] Initializing Battle (Fallback)...");
+            console.warn("No enemy found in state. Loading dummy battle.");
             initializeBattle();
         }
     }, []);
@@ -98,7 +103,9 @@ export default function BattlePage() {
         }
     }, [battleState.isVictory, battleState.isDefeat, battleState.messages]);
 
-    if (!battleState.enemy) return <div className="p-8 text-white min-h-screen bg-gray-900 flex items-center justify-center">Loading Battle...</div>;
+    // Fix: Allow rendering if victory/defeat, even if enemy is null (all dead)
+    if (!hasHydrated) return <div className="p-8 text-white min-h-screen bg-gray-900 flex items-center justify-center">Loading Data...</div>;
+    if (!battleState.enemy && !battleState.isVictory && !battleState.isDefeat) return <div className="p-8 text-white min-h-screen bg-gray-900 flex items-center justify-center">Loading Battle...</div>;
 
     const target = battleState.enemy; // Current target
     const enemies = battleState.enemies || (battleState.enemy ? [battleState.enemy] : []); // Fallback
@@ -140,50 +147,35 @@ export default function BattlePage() {
                     <div className="flex gap-8 shrink-0">
 
                         {/* LEFT: Party Members (Icons) */}
-                        <div className="w-1/4 flex flex-col gap-4">
-                            <div className="text-xs text-gray-400 font-bold uppercase tracking-widest border-b border-gray-700 pb-1 mb-2">Party</div>
-                            <div className="flex flex-col gap-3">
-                                {/* Player (Self) */}
-                                <div className="flex items-center gap-3 bg-black/40 p-2 rounded border-l-2 border-blue-500">
-                                    <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
-                                        <div className="w-full h-full bg-blue-900/50 flex items-center justify-center text-xs">You</div>
+                        <div className="w-1/4 flex flex-col gap-1">
+                            <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+                                {/* Player Status (Side-by-Side HP/AP) */}
+                                <div className="flex flex-col gap-2 bg-black/40 p-2 rounded border-l-2 border-blue-500">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
+                                            <div className="w-full h-full bg-blue-900/50 flex items-center justify-center text-[10px]">You</div>
+                                        </div>
+                                        <div className="text-sm font-bold truncate flex-1">{userProfile?.name || 'あなた'}</div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="text-sm font-bold truncate">{userProfile?.name || 'あなた'}</div>
-                                        <div className="text-xs text-blue-300">
+
+                                    <div className="flex items-center justify-between gap-2 text-xs">
+                                        <div className="text-blue-300 font-mono bg-black/30 px-1 rounded">
                                             HP {useGameStore.getState().userProfile?.hp ?? '?'}/{useGameStore.getState().userProfile?.max_hp ?? '?'}
                                         </div>
-                                    </div>
-                                </div>
-
-                                {/* AP GAUGE */}
-                                <div className="flex items-center gap-2 bg-black/40 p-2 rounded border-l-2 border-yellow-500 shadow-md">
-                                    <div className="w-10 h-10 rounded-full bg-gray-800/80 overflow-hidden border border-yellow-600/50 relative shrink-0 flex items-center justify-center">
-                                        <div className="absolute inset-0 bg-yellow-500/10 animate-pulse"></div>
-                                        <div className="relative z-10 flex flex-col items-center justify-center">
-                                            <span className="text-[10px] font-bold text-yellow-500 leading-none">AP</span>
-                                            <span className="text-sm font-bold text-white leading-none">{battleState.current_ap ?? 5}</span>
+                                        <div className="text-yellow-500 font-mono bg-black/30 px-1 rounded">
+                                            AP {battleState.current_ap ?? 0}/10
                                         </div>
                                     </div>
-                                    <div className="flex-1 flex flex-col justify-center gap-1">
-                                        <div className="flex justify-between items-end text-[10px] leading-none">
-                                            <span className="text-yellow-200/70 font-bold tracking-wider">ACTION POINTS</span>
-                                            <span className="text-yellow-500 font-mono">MAX 10</span>
-                                        </div>
-                                        <div className="flex gap-0.5 h-2">
-                                            {[...Array(10)].map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`flex-1 rounded-[1px] transition-all duration-300 ${i < (battleState.current_ap ?? 5) ? 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]' : 'bg-gray-800/50 border border-gray-700/50'}`}
-                                                />
-                                            ))}
-                                        </div>
+                                    {/* AP Visual */}
+                                    <div className="flex gap-0.5 h-1.5 w-full mt-1">
+                                        {[...Array(10)].map((_, i) => (
+                                            <div key={i} className={`flex-1 rounded-[1px] ${i < (battleState.current_ap ?? 0) ? 'bg-yellow-400' : 'bg-gray-800'}`} />
+                                        ))}
                                     </div>
                                 </div>
 
 
-                                {/* Equipment (NPC) Members */}
-                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2 border-b border-gray-800 pb-1 mb-2">Living Equipment ({battleState.party.filter(p => p.is_active && p.durability > 0).length})</div>
+                                {/* Equipment (NPC) Members - Label Removed */}
                                 {battleState.party.map((member) => {
                                     const isLost = member.durability <= 0 || !member.is_active;
                                     return (
@@ -325,10 +317,7 @@ export default function BattlePage() {
                             </div>
 
                             {/* Additional Info / Tactic (Placeholder) */}
-                            <div className="bg-black/40 border border-gray-700 rounded p-4 text-xs text-gray-500">
-                                <div className="font-bold text-gray-400 mb-1">TACTIC</div>
-                                Current: {battleState.currentTactic}
-                            </div>
+
                         </div>
                     </div>
 
@@ -426,7 +415,12 @@ export default function BattlePage() {
                                     <p className="text-yellow-200 font-sans tracking-widest text-lg">強敵を打ち倒した！</p>
                                     <button
                                         onClick={() => {
-                                            if (selectedScenario) {
+                                            const urlParams = new URLSearchParams(window.location.search);
+                                            const returnUrl = urlParams.get('return_url');
+                                            if (returnUrl) {
+                                                const separator = returnUrl.includes('?') ? '&' : '?';
+                                                router.push(`${returnUrl}${separator}battle_result=win`);
+                                            } else if (selectedScenario) {
                                                 router.push(`/quest/${selectedScenario.id}`);
                                             } else {
                                                 router.push('/inn?battle_result=win');

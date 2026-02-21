@@ -6,40 +6,52 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        // v3.5 Fix: Target specific Demo User to avoid fetching NPCs
-        const DEMO_USER_ID = '00000000-0000-0000-0000-000000000000';
+        // Dynamic User Identification
+        const url = new URL(req.url);
+        const queryId = url.searchParams.get('profileId');
+
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Priority: 1. Auth ID, 2. Query ID (Explicit), 3. Fallback (Latest)
+        let targetId = user?.id || queryId;
+
+        if (!targetId) {
+            // Fallback: Use the most recent profile (legacy/demo support)
+            const { data: latest } = await supabase
+                .from('user_profiles')
+                .select('id')
+                .not('name', 'is', null) // v3.6: Don't pick nameless ghosts
+                .order('updated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            targetId = latest?.id || '00000000-0000-0000-0000-000000000000';
+        }
 
         let { data: profile, error } = await supabase
             .from('user_profiles')
             .select('*, locations:locations!fk_current_location(*), reputations(*)')
-            .eq('id', DEMO_USER_ID)
+            .eq('id', targetId)
             .maybeSingle();
 
         if (!profile) {
-            // Create Demo Profile with new defaults
-            const demoId = '00000000-0000-0000-0000-000000000000';
-            const defaultTitle = '名もなき旅人';
+            // Create New Profile with sane defaults if totally missing
             const defaultAvatar = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256&h=256';
 
             const newProfile = {
-                id: demoId,
-                title_name: defaultTitle,
+                id: targetId,
+                title_name: '名もなき旅人',
                 avatar_url: defaultAvatar,
                 order_pts: 0,
                 chaos_pts: 0,
                 justice_pts: 0,
                 evil_pts: 0,
                 gold: 1000,
-                vitality: 100, // New
-                level: 1, // New
-                hp: 100, max_hp: 100, // New
-                mp: 20, max_mp: 20, // New
-                attack: 10, defense: 5,
-                age: 20,
+                age: null, // Don't force 20 if we don't know it
                 gender: 'Unknown',
                 max_vitality: 100,
                 accumulated_days: 0,
-                current_location_id: (await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').single()).data?.id,
+                current_location_id: (await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').maybeSingle()).data?.id,
             };
 
             const { data: inserted, error: insertError } = await supabase
@@ -49,7 +61,7 @@ export async function GET(req: Request) {
                 .single();
 
             if (insertError) {
-                console.error("Failed to create demo profile:", insertError);
+                console.error("Failed to create profile:", insertError);
                 profile = newProfile;
             } else {
                 profile = inserted;
@@ -66,6 +78,7 @@ export async function GET(req: Request) {
             if (aged) {
                 updates.age = age;
                 updates.vitality = vitality;
+                updates.updated_at = new Date().toISOString(); // Manual bump
                 profile.age = age;
                 profile.vitality = vitality;
                 needsUpdate = true;
@@ -75,6 +88,7 @@ export async function GET(req: Request) {
             const newTitle = calculateTitle(profile);
             if (newTitle !== profile.title_name) {
                 updates.title_name = newTitle;
+                updates.updated_at = new Date().toISOString(); // Manual bump
                 profile.title_name = newTitle;
                 needsUpdate = true;
             }

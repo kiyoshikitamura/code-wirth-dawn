@@ -3,13 +3,20 @@ import { calculateAge, applyRandomVariance } from '@/utils/characterStats';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
 // Spec v9.3 Base Stats Logic (with ATK/DEF)
+// Spec v9.3 Base Stats Logic (Updated to match GROWTH_RULES constant)
 function getSpecV93BaseStats(age: number) {
+    // Calculate HP based on age range (16-25) mapped to (BASE_HP_MIN - BASE_HP_MAX)
+    // 16yo -> 85, 25yo -> 120
+    // Range: 9 years. HP Range: 35. ~3.8 HP/year.
+    const ageFactor = (age - 16) / (25 - 16); // 0 to 1
+    const baseHp = Math.floor(GROWTH_RULES.BASE_HP_MIN + (ageFactor * (GROWTH_RULES.BASE_HP_MAX - GROWTH_RULES.BASE_HP_MIN)));
+
     // 16-18: Late Bloomer (High Vit, Low Starting Stats)
     if (age <= 18) {
         const baseAtk = 1 + Math.floor(Math.random() * 2); // 1-2
         const baseDef = 1 + Math.floor(Math.random() * 2); // 1-2
         return {
-            max_hp: 15 + Math.floor(Math.random() * 4), // 15-18
+            max_hp: baseHp,
             max_deck_cost: 8,
             vitality: 180 + Math.floor(Math.random() * 21), // 180-200
             max_vitality: 0, // will be set below
@@ -22,7 +29,7 @@ function getSpecV93BaseStats(age: number) {
         const baseAtk = 2 + Math.floor(Math.random() * 2); // 2-3
         const baseDef = 2 + Math.floor(Math.random() * 2); // 2-3
         return {
-            max_hp: 20,
+            max_hp: baseHp,
             max_deck_cost: 10,
             vitality: 140 + Math.floor(Math.random() * 21), // 140-160
             max_vitality: 0,
@@ -34,7 +41,7 @@ function getSpecV93BaseStats(age: number) {
     const baseAtk = 3 + Math.floor(Math.random() * 3); // 3-5
     const baseDef = 3 + Math.floor(Math.random() * 3); // 3-5
     return {
-        max_hp: 22 + Math.floor(Math.random() * 4), // 22-25
+        max_hp: baseHp,
         max_deck_cost: 12,
         vitality: 100 + Math.floor(Math.random() * 21), // 100-120
         max_vitality: 0,

@@ -1,110 +1,105 @@
-Code: Wirth-Dawn Specification v10.1: Retirement & Heroic Spirits
-1. 概要 (Overview)
-本ドキュメントは、キャラクターの**「引退・死亡（End of Life）」、引退後のデータを資産化する「英霊（Heroic Spirit）」、および次世代キャラクターへの「資産継承（Succession）」**の統合仕様である。 本作においてキャラクターの死は終わりではなく、「魂を資産に変え、次世代を有利にするための通過儀礼」として位置づけられる。
-Dependencies:
-• spec_v5_shadow_system.md (Shadow Economy & Validation)
-• spec_v7_lifecycle_economy.md (Succession Rates)
-• spec_v9_character_creation.md (Aging & Decay)
-• spec_v2_battle_parameters.md (Vitality Damage Logic)
+Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+# Retirement & Heroic Spirit System
 
---------------------------------------------------------------------------------
-2. 引退と死亡のトリガー (Triggers)
-キャラクターの生涯が終了する条件は以下の2つである。どちらの場合も、システム上は「死亡（is_alive = false）」として処理され、継承プロセスへ移行する。
-2.1 力尽きる (Depletion)
-• Condition: バトルでの敗北、イベント、または加齢により current_vitality が 0 になった瞬間。
-• Vitality Damage Rules (v2.11準拠):
-    ◦ 敵からの drain_vit 攻撃による減少は、1ターンにつき最大1ポイントまでとする（多段ヒットによる即死事故防止）。
-    ◦ プレイヤー自身の「禁術（Vitalityコスト）」使用による減少は制限なし（自殺可能）。
-• Effect: 「死亡（Dead）」。強制的にゲームオーバー画面へ遷移し、継承フローが開始される。
-2.2 自主的な引退 (Voluntary Retirement)
-• Condition: 街（Town）の宿屋にて「引退する」コマンドを実行。
-• Effect: 「安らかな隠居（Retired）」。Vitalityが残っていても、現在のステータスで確定させる。
-• Strategy: spec_v9 の加齢によるステータス減衰（Decay）が進行しきる前、つまり**「全盛期のステータス」で英霊として保存したい場合**に利用する。
+## 1. 概要 (Overview)
+キャラクターの引退、英霊（Heroic Spirit）システム、および次世代への資産継承を定義する。
 
---------------------------------------------------------------------------------
-3. 英霊登録 (Heroic Registration)
-生涯を終えたキャラクターは、その記録（スナップショット）が保存される。 ここで、プレイヤーのサブスクリプション加入状況によって、「ただの記録」になるか「稼ぐ資産」になるかが分岐する。
-3.1 登録分岐 (Registration Logic)
-項目
-Free User (無料会員)
-Subscriber (サブスク会員)
-データ保存
-墓標（Logs）のみ保存。
-「英霊（Heroic Shadow）」 として酒場に登録。
-他者からの雇用
-不可。 リストに並ばない。
-可能。 永続的にリストに掲載される。
-ロイヤリティ
-発生しない。
-発生する。 (契約金の30%を獲得)
-デッキ登録
-なし。
-引退時のデッキが 「遺産デッキ」 として固定される。
-3.2 遺産デッキのバリデーション (Legacy Deck Validation)
-英霊として登録する際、spec_v5.1 の規定に基づき厳格なチェックを行う。
-• Constraint 1: type: consumable (ポーション等) は登録不可。
-• Constraint 2: cost_type: vitality (禁術) は登録不可（借り手へのGriefing防止）。
-• Fallback: バリデーションエラーとなるカードが含まれていた場合、それらは自動的に除外され、穴埋めとして「錆びた剣」がセットされる。
-3.3 英霊の仕様 (Heroic Specs)
-• Status Freeze: 引退した瞬間の Level, HP, ATK, DEF が永続的に保存される（以降の成長も老化もない）。
-• AI Grade: 英霊は必ず ai_grade: smart (弱点狙い・AP温存行動) が割り当てられる。
-• Visual: 酒場リストにて「黄金のフレーム」で表示され、雇用率が優遇される。
+<!-- v11.0: LifeCycleServiceの実装と/api/character/retireを反映 -->
 
---------------------------------------------------------------------------------
-4. 継承システム (Succession System)
-「死亡/引退」処理が完了した後、プレイヤーは**「次のキャラクター」**を作成する。 この際、前世の功績に応じてスタートダッシュが可能になる。
-4.1 継承資産 (Inheritance Assets)
-継承項目
-Free User
-Subscriber
-解説
-Gold
-10%
-50%
-前世の所持金の引き継ぎ。
-Reputation
-0 (Reset)
-10%
-拠点ごとの名声を一部継承。「〇〇家の末裔」として認知される。
-Heirloom
-なし
-1個
-インベントリ内の装備カードを1つ指定し、次世代の初期デッキに混入させる。
-• Note: 錬金術レシピ等のシステムは未実装のため、現状は継承対象外とする。
-4.2 継承フロー (UX Flow)
-1. Result Screen: 「あなたの冒険は終わった」画面。生涯成績（獲得Gold、到達階層、年齢）を表示。
-2. Inheritance Select (Sub only): 「家宝（Heirloom）」にするアイテムを1つ選択。
-3. New Game: キャラクター作成画面（spec_v9）へ遷移。
-    ◦ 入力フォームの上部に 「継承ボーナス適用中」 のバッジを表示。
+---
 
---------------------------------------------------------------------------------
-5. 英霊の運用と削除 (Management)
-プレイヤーは複数の「英霊」を保有することができるが、枠数は制限される（マネタイズ要素）。
-5.1 スロット管理
-• Default: 1枠。
-• Expansion: 課金アイテムまたは上位プランにより拡張可能。
-• Replacement: 枠が一杯の状態で新しいキャラが英霊化する場合、既存の英霊を1体「完全消滅（削除）」させるか、新キャラの英霊化を諦める（墓標のみ残す）かを選択する。
-5.2 サブスクリプション切れの挙動
-• サブスクリプションを解約した場合、登録済みの英霊はすべて 「休眠状態（Dormant）」 となり、酒場リストから非表示になる（ロイヤリティも停止）。
-• 再加入することで、即座に再公開される。
+## 2. 引退トリガー (Retirement Triggers)
 
---------------------------------------------------------------------------------
-6. Antigravity Implementation Tasks
-Task 1: Retirement Transaction (POST /api/character/retire)
-• Input: cause ("dead" or "voluntary"), heirloom_item_id (Optional).
-• Process:
-    1. user_profiles.is_alive を false に更新。
-    2. Heroic Registration (Sub only):
-        ▪ party_members テーブルに origin_type = 'shadow_heroic' としてレコード作成。
-        ▪ 現在の atk, def, level を snapshot_data に保存。
-        ▪ Deck Filter: 現在のデッキから禁止カード（消耗品・禁術）を除外して保存。
-    3. Succession Setup:
-        ▪ 次回の createCharacter 用に legacy_data (継承Gold額, heirloom_item_id) を user_accounts メタデータ等に一時保存。
-Task 2: Tavern Filtering (GET /api/tavern/list)
-• shadow_heroic (英霊) を含めて返すように修正。
-• Filter: 元ユーザーの is_subscriber が false の場合、その英霊を除外する（Dormant処理）。
-Task 3: Inheritance Logic (POST /api/auth/register)
-• キャラクター作成処理において、legacy_data が存在するか確認。
-• 存在する場合：
-    ◦ 初期 assets.gold に継承分を加算。
-    ◦ 初期 deck に heirloom_item_id のカードを追加（コストオーバーしないよう注意、あるいは初期コスト上限を一時的に無視するロジック）。
+### 2.1 自動引退 (Vitality Depletion)
+- **条件**: `vitality <= 0`
+- **原因文字列**: `'Vitality Depletion'`
+
+### 2.2 自主引退 (Voluntary)
+- **API**: `POST /api/character/retire`
+- **Body**: `{ cause: 'voluntary', heirloom_item_id?: string }`
+- **原因文字列**: `'Voluntary Retirement'`
+
+---
+
+## 3. 引退処理フロー (LifeCycleService.handleCharacterDeath)
+<!-- v11.0: lifeCycleService.ts の実装を反映 -->
+
+```mermaid
+flowchart TD
+    Trigger["Retirement Trigger"] --> SetDead["is_alive = false"]
+    SetDead --> Snapshot["Create Graveyard Snapshot"]
+    Snapshot --> Legacy["Calculate Legacy Points"]
+    Legacy --> CheckSub{"Subscriber?"}
+    CheckSub -->|Yes| RegisterHeroic["Register Heroic Shadow"]
+    CheckSub -->|No| LogOnly["Log-only Archive"]
+    RegisterHeroic --> Done["Complete"]
+    LogOnly --> Done
+```
+
+### 3.1 墓地スナップショット (Graveyard Data)
+引退/死亡時に以下のデータを保存:
+- キャラクター名、レベル、年齢
+- 死因 (cause)
+- 最終拠点
+- 統計情報（クエスト数、バトル数等）
+
+### 3.2 英霊登録 (Heroic Shadow Registration)
+- `party_members` テーブルに `origin: 'ghost'`, `origin_type: 'shadow_heroic'` として挿入。
+- ステータスは**固定** (frozen): 引退時のステータスが永続。
+- AI Grade: `smart`。
+- **デッキ**: 引退時の装備カード（消耗品を除く）が `inject_cards` として保存。
+
+---
+
+## 4. 継承システム (Succession)
+<!-- v11.0: LifeCycleService.processInheritance() を反映 -->
+
+### 4.1 API: POST /api/character/create (新キャラ作成時)
+新キャラクター作成時に `processInheritance()` が呼ばれ、前世代の遺産を引き継ぐ。
+
+### 4.2 継承テーブル
+
+| 資産 | 継承率 | 条件 |
+|---|---|---|
+| ゴールド | 50% | 全ユーザー |
+| 名声 (各拠点) | 30% | 全ユーザー |
+| 形見アイテム | 1個 | 引退時に選択（`heirloom_item_id`） |
+| デッキ / レシピ | 0% | **継承なし** |
+| レベル / EXP | 0% | **Lv1からリスタート** |
+
+### 4.3 形見アイテム (Heirloom)
+- 引退API呼び出し時に `heirloom_item_id` を指定。
+- 新キャラ作成時に `inventory` テーブルに挿入。
+- 1個限定。
+
+---
+
+## 5. スロット管理
+<!-- v11.0: 実装の現状を反映 -->
+
+### 5.1 キャラクタースロット
+| Tier | スロット数 | 条件 |
+|---|---|---|
+| Free | 1 | デフォルト |
+| Subscriber | 3 | サブスクリプション加入 |
+
+### 5.2 プロフィール選択
+- `selectedProfileId` で現在のアクティブプロフィールを管理。
+- `setSelectedProfileId(id)` で切り替え。
+
+---
+
+## 6. 実装上の注意点
+
+### 6.1 認証
+<!-- v11.0: /api/character/retire の認証パターンを反映 -->
+- retire API は `supabase.from('user_profiles').select('*').limit(1)` で最初のプロフィールを取得（簡略化実装）。
+- `is_alive` チェック: 既に死亡/引退済みの場合は 400 エラー。
+- Service Role Client の使用: 環境変数有無で自動判定。
+
+### 6.2 未実装の要素
+| 機能 | 状態 |
+|---|---|
+| 英霊のデッキバリデーション（禁術/消耗品除外） | 簡略化実装 |
+| サブスク判定による英霊登録分岐 | 未実装（全員登録される） |
+| 形見アイテムの実際の在庫挿入 | レスポンスに含むのみ |

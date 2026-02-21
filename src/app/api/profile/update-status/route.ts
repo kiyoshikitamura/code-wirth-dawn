@@ -8,9 +8,14 @@ export async function POST(req: Request) {
         // Expect keys like { hp, mp, gold, exp }
         // We only update what is provided.
 
-        // 1. Get current user (Demo: first user)
-        const { data: profiles } = await supabase.from('user_profiles').select('id').limit(1);
-        const userId = profiles?.[0]?.id;
+        // 1. Dynamic User Identification
+        const { data: { user } } = await supabase.auth.getUser();
+        let userId = user?.id || body.profileId;
+
+        if (!userId) {
+            const { data: latest } = await supabase.from('user_profiles').select('id').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+            userId = latest?.id;
+        }
 
         if (!userId) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });

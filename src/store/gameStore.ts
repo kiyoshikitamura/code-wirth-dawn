@@ -11,7 +11,7 @@ import { useQuestState } from './useQuestState';
 
 
 const DUMMY_ENEMY: Enemy = {
-    id: 'e1', name: 'Shadow Wolf', level: 4, hp: 300, maxHp: 300,
+    id: 'e1', name: 'Training Dummy', level: 1, hp: 50, maxHp: 50,
 };
 
 const CARD_POOL: Card[] = [
@@ -31,6 +31,8 @@ const CARD_POOL: Card[] = [
 interface GameState {
     // Profile
     userProfile: UserProfile | null;
+    selectedProfileId: string | null; // v3.7: Explicit Tracking
+    setSelectedProfileId: (id: string | null) => void;
     fetchUserProfile: () => Promise<void>;
 
     battleState: BattleState;
@@ -81,6 +83,9 @@ interface GameState {
     setTarget: (enemyId: string) => void;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
     fleeBattle: () => void;
+
+    _hasHydrated: boolean;
+    setHasHydrated: (state: boolean) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -88,6 +93,8 @@ export const useGameStore = create<GameState>()(
         (set, get) => ({
             // Initialize missing defaults
             userProfile: null,
+            selectedProfileId: null,
+            setSelectedProfileId: (id) => set({ selectedProfileId: id }),
             worldState: null,
             hubState: null,
             gold: 1000,
@@ -96,6 +103,9 @@ export const useGameStore = create<GameState>()(
             deck: [],
             discardPile: [],
             hand: [],
+            _hasHydrated: false,
+
+            setHasHydrated: (state: boolean) => set({ _hasHydrated: state }),
 
             showStatus: false,
             setShowStatus: (show) => set({ showStatus: show }),
@@ -172,6 +182,9 @@ export const useGameStore = create<GameState>()(
                 });
 
                 let partyCardPool: Card[] = [];
+                // Debug: Log needed cards
+                console.log("[startBattle] Needed NPC Cards:", Array.from(neededCardIds));
+
                 if (neededCardIds.size > 0) {
                     const { data: dbCards } = await supabase
                         .from('cards')
@@ -184,8 +197,8 @@ export const useGameStore = create<GameState>()(
                             name: c.name, // ... other fields mapped in original
                             type: c.type,
                             description: c.description,
-                            cost: c.cost,
-                            power: c.power || 0,
+                            cost: c.cost_val || c.cost || 0, // Handle cost_val from DB
+                            power: c.effect_val || c.power || 0, // Fix: Map effect_val to power
                             ap_cost: c.ap_cost ?? 1,
                         })) as Card[];
                     }
@@ -287,7 +300,11 @@ export const useGameStore = create<GameState>()(
                     set(state => ({
                         userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
                     }));
-                    fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
+                    const { selectedProfileId } = get();
+                    fetch('/api/profile/update-status', {
+                        method: 'POST',
+                        body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                    }).catch(console.error);
                 }
 
                 // Enemy tick (ALL Enemies)
@@ -515,10 +532,20 @@ export const useGameStore = create<GameState>()(
 
             fetchUserProfile: async () => {
                 try {
-                    const res = await fetch('/api/profile', { cache: 'no-store' });
+                    const { selectedProfileId } = get();
+                    const url = selectedProfileId
+                        ? `/api/profile?profileId=${selectedProfileId}`
+                        : '/api/profile';
+
+                    const res = await fetch(url, { cache: 'no-store' });
                     if (res.ok) {
                         const profile = await res.json();
                         set({ userProfile: profile, gold: profile.gold }); // Sync gold
+                        // If we didn't have an ID but got one (e.g. from auth or fallback), store it?
+                        // Actually, for consistency, let's keep selectedProfileId as the "Frontend Authority".
+                        // If it's null, we accept whatever the API gives us, but maybe we shouldn't auto-set it 
+                        // to avoid locking onto a potentially wrong "latest" profile unless we are sure.
+                        // For now, only explicit set (like from TitlePage) drives this.
                     }
                 } catch (e) {
                     console.error("Failed to fetch profile", e);
@@ -557,7 +584,14 @@ export const useGameStore = create<GameState>()(
             // --- Inventory Actions ---
             fetchInventory: async () => {
                 try {
-                    const res = await fetch('/api/inventory', { cache: 'no-store' });
+                    const { userProfile } = get();
+                    const headers: HeadersInit = {};
+                    if (userProfile?.id) headers['x-user-id'] = userProfile.id;
+
+                    const res = await fetch('/api/inventory', {
+                        headers,
+                        cache: 'no-store'
+                    });
                     if (res.ok) {
                         const { inventory } = await res.json();
                         set({ inventory });
@@ -576,8 +610,13 @@ export const useGameStore = create<GameState>()(
                     );
                     set({ inventory: newInventory });
 
+                    const { userProfile } = get();
+                    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                    if (userProfile?.id) headers['x-user-id'] = userProfile.id;
+
                     await fetch('/api/inventory', {
                         method: 'PATCH',
+                        headers,
                         body: JSON.stringify({ inventory_id: itemId, is_equipped: !currentEquip }),
                         cache: 'no-store'
                     });
@@ -737,9 +776,13 @@ export const useGameStore = create<GameState>()(
 
                         // Add to inventory via API
                         const dropSlug = updatedTargetEnemy.drop_item_slug;
+                        const { userProfile } = get();
+                        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                        if (userProfile?.id) headers['x-user-id'] = userProfile.id;
+
                         fetch('/api/inventory', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers,
                             body: JSON.stringify({ item_slug: dropSlug, quantity: 1 })
                         }).then(res => {
                             if (res.ok) {
@@ -986,7 +1029,11 @@ export const useGameStore = create<GameState>()(
                                     newUserProfile.vitality = currentVit - 1;
                                     vitDamageTaken = true;
                                     newMessages.push(`生命力を奪われた！ (Vitality -1)`);
-                                    fetch('/api/profile/consume-vitality', { method: 'POST', body: JSON.stringify({ amount: 1 }) }).catch(console.error);
+                                    const { selectedProfileId } = get();
+                                    fetch('/api/profile/consume-vitality', {
+                                        method: 'POST',
+                                        body: JSON.stringify({ amount: 1, profileId: selectedProfileId })
+                                    }).catch(console.error);
                                 }
                             }
                         }
@@ -1106,6 +1153,9 @@ export const useGameStore = create<GameState>()(
                 setItem: () => { },
                 removeItem: () => { },
             }),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            }
         }
     )
 );

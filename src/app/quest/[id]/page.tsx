@@ -9,6 +9,7 @@ import { Scenario, Enemy } from '@/types/game';
 import { supabase } from '@/lib/supabase'; // Added supabase
 import { ArrowLeft, Skull } from 'lucide-react';
 import { getAssetUrl } from '@/config/assets'; // If needed for backgrounds
+import QuestResultOverlay from '@/components/quest/QuestResultOverlay';
 
 export default function QuestPage() {
     const params = useParams();
@@ -18,6 +19,10 @@ export default function QuestPage() {
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loading, setLoading] = useState(true);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
+    const [resultOverlay, setResultOverlay] = useState<{
+        result: 'success' | 'failure';
+        data?: any;
+    } | null>(null);
 
     // Battle Return Logic
     useEffect(() => {
@@ -48,7 +53,11 @@ export default function QuestPage() {
     }, [id]);
 
     useEffect(() => {
-        if (!id) return;
+        if (!id) {
+            console.error("QuestPage: No ID provided");
+            setLoading(false);
+            return;
+        }
         async function loadScenario() {
             try {
                 // Fetch specific scenario
@@ -100,7 +109,7 @@ export default function QuestPage() {
     if (!scenario) {
         return (
             <div className="min-h-screen bg-[#1a120b] flex flex-col items-center justify-center text-[#e3d5b8] gap-4">
-                <h1 className="text-2xl font-serif text-red-500">Quest Not Found</h1>
+                <h1 className="text-2xl font-serif text-red-500">{!id ? "Invalid Quest ID" : "Quest Not Found"}</h1>
                 <button
                     onClick={() => router.push('/inn')}
                     className="flex items-center gap-2 px-4 py-2 border border-[#8b5a2b] rounded hover:bg-[#3e2723]"
@@ -157,11 +166,14 @@ export default function QuestPage() {
                             name: e.name,
                             hp: e.hp,
                             maxHp: e.hp, // Use max_hp from DB if valid, else hp
+                            def: e.def || 0, // Map defense
                             level: Math.floor(e.hp / 10) || 1,
                             image: `/enemies/${e.slug}.png`,
                             status_effects: [],
                             vit_damage: e.vit_damage,
-                            traits: e.traits
+                            traits: e.traits,
+                            drop_rate: e.drop_rate,
+                            drop_item_slug: e.drop_item_slug
                         };
                     }).filter(Boolean) as Enemy[];
                 } else {
@@ -176,9 +188,10 @@ export default function QuestPage() {
             }
         }
 
+
         console.log("[QuestPage] Starting Battle with Enemies:", enemies);
 
-        useGameStore.getState().startBattle(enemies);
+        await useGameStore.getState().startBattle(enemies);
 
         // Save state for resume
         localStorage.setItem('pending_quest_resume', JSON.stringify({
@@ -246,12 +259,16 @@ export default function QuestPage() {
                             if (!res.ok) {
                                 const err = await res.json();
                                 console.error('Complete Error:', err);
-                                alert(`結果の保存に失敗しました: ${err.error || res.statusText}\n${err.stack || ''}`);
-                                // Don't redirect immediately on error so user can see it
+                                alert(`結果の保存に失敗しました: ${err.error || res.statusText}`);
                             } else {
                                 const data = await res.json();
-                                alert(result === 'success' ? `クエスト達成！\n獲得金貨: ${data.changes?.gold_gained || 0}G` : 'クエスト失敗...');
-                                router.push('/inn');
+                                // Refresh Profile to get new location / gold
+                                await fetchUserProfile();
+
+                                setResultOverlay({
+                                    result: result === 'success' ? 'success' : 'failure',
+                                    data: data
+                                });
                             }
                         } catch (e: any) {
                             console.error(e);
@@ -260,6 +277,15 @@ export default function QuestPage() {
                         }
                     }}
                 />
+
+                {resultOverlay && (
+                    <QuestResultOverlay
+                        result={resultOverlay.result}
+                        rewards={resultOverlay.data?.rewards}
+                        changes={resultOverlay.data?.changes}
+                        onClose={() => router.push('/inn')}
+                    />
+                )}
             </div>
         </div>
     );

@@ -14,7 +14,7 @@ export async function GET(req: Request) {
 
         if (context === 'guest') {
             let npcData, npcErr;
-            // Check if ID is UUID
+            // UUIDかどうかをチェック
             const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
             if (isUuid) {
@@ -22,35 +22,55 @@ export async function GET(req: Request) {
                 npcData = data;
                 npcErr = error;
             } else {
-                const { data, error } = await supabase.from('npcs').select('*').eq('slug', id).maybeSingle();
+                // まずslugを試す
+                let { data, error } = await supabase.from('npcs').select('*').eq('slug', id).maybeSingle();
+
+                // 見つからず、IDが数値に見える場合はIDを試す
+                if (!data && /^\d+$/.test(id)) {
+                    const { data: dataById, error: errorById } = await supabase.from('npcs').select('*').eq('id', id).maybeSingle();
+                    data = dataById;
+                    if (errorById) error = errorById;
+                }
+
                 npcData = data;
                 npcErr = error;
             }
 
-            if (npcErr) throw npcErr;
-
-            if (npcData) {
-                // Return as PartyMember compatible object
-                data = {
-                    id: npcData.id,
-                    slug: npcData.slug,
-                    name: npcData.name,
-                    job_class: npcData.job_class || 'Guest',
-                    level: 1,
-                    hp: 50,
-                    maxHp: 50,
-                    mp: 10,
-                    maxMp: 10,
-                    attack: 10,
-                    defense: 5,
-                    speed: 10,
-                    image: npcData.image || '/assets/chara/guest_default.png',
-                    inject_cards: npcData.default_cards || [],
-                    is_active: true,
-                    durability: 3,
-                    introduction: npcData.introduction
-                };
+            if (npcErr) {
+                console.error("NPC Lookup Error:", npcErr);
+                return NextResponse.json({ error: 'Failed to fetch guest data' }, { status: 500 });
             }
+
+            if (!npcData) {
+                return NextResponse.json({ error: 'Guest NPC not found in database' }, { status: 404 });
+            }
+
+            // PartyMember互換オブジェクトとして返す
+            data = {
+                id: npcData.id,
+                slug: npcData.slug,
+                name: npcData.name,
+                job_class: npcData.job_class || 'Guest',
+                level: npcData.level || 1,
+                hp: npcData.hp || 50,
+                maxHp: npcData.max_hp || npcData.hp || 50,
+                mp: npcData.mp || 10,
+                maxMp: npcData.max_mp || npcData.mp || 10,
+                attack: npcData.attack || 10,
+                defense: npcData.defense || 5,
+                speed: npcData.speed || 10,
+                // image: DBスキーマにカラムがないためデフォルトを使用
+                image: '/assets/chara/guest_default.png',
+                inject_cards: npcData.default_cards || [],
+                is_active: true,
+                durability: 3, // ゲストの初期耐久度？それともDBを使用？
+                // ゲストは「耐久度」を「参加制限」または体力として使用する可能性があります。
+                // とりあえず、意図されていた通りに '3' (または堅牢にしたい場合は100) をハードコードしておきます。
+                // 仕様ではゲストに耐久度はありますか？
+                // 今のところ標準の100にするか、制限としての '3' を維持します。
+                max_durability: 3,
+                introduction: npcData.introduction
+            };
         } else {
             const { data: member, error: memberError } = await supabase
                 .from('party_members')
@@ -77,9 +97,9 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
         }
 
-        // Use Admin client to ensure deletion happens regardless of complex RLS states
-        // In a real app, we should verify that `memberId` belongs to the current user (via auth.uid())
-        // For this prototype, we assume the client sends a valid ID that they own.
+        // 複雑なRLS状態に関わらず削除が行われるようにAdminクライアントを使用
+        // 実際のアプリでは、`memberId` が現在のユーザー (auth.uid() 経由) に属していることを確認すべきです
+        // このプロトタイプでは、クライアントが自身が所有する有効なIDを送信すると仮定します。
         const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
 
         const { error } = await client

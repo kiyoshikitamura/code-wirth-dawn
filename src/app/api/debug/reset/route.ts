@@ -5,10 +5,27 @@ import { WORLD_ID } from '@/utils/constants';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(req: Request) {
     try {
-        // Use Admin client if available, otherwise fallback (likely to fail/limited)
-        const client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;
+        // Use Admin client if available
+        let client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;
+
+        // If no Admin Key, try to use User Token specifically for Profile Reset
+        const authHeader = req.headers.get('authorization');
+        if (!hasServiceKey && authHeader) {
+            const token = authHeader.replace('Bearer ', '');
+            // Re-create client with user token to bypass RLS for *that user*
+            // We import createClient specifically to avoid singleton issues if needed, 
+            // but here we can just assume 'supabase' + auth header works if we use the helper logic
+            // faster: just use the token in a new client instance
+            const { createClient } = require('@supabase/supabase-js'); // dynamic import or use existing import
+            client = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                { global: { headers: { Authorization: authHeader } } }
+            );
+            console.log("Using User-Scoped Client for Reset (Admin Key missing)");
+        }
 
         if (!hasServiceKey) {
             console.warn("WARNING: SUPABASE_SERVICE_ROLE_KEY missing. Reset may be incomplete due to RLS.");
@@ -144,6 +161,12 @@ export async function POST() {
         if (profileError) console.error("Profile reset error:", profileError);
         const profileUpdatedCount = profileData?.length || 0;
         console.log("Profile reset count:", profileUpdatedCount);
+
+        // Explicit check for single user update if using User Client
+        if (profileUpdatedCount === 0 && !hasServiceKey && authHeader) {
+            // Maybe RLS prevented "update all", try updating checking ID explicitly?
+            console.warn("User-Scoped Reset returned 0 rows. Check RLS or Token.");
+        }
 
         // Fallback: If no profiles updated, ensure Demo Profile exists
         if (profileUpdatedCount === 0) {

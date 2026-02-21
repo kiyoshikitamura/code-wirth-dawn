@@ -49,6 +49,7 @@ export class ShadowService {
                 .neq('id', currentUserId)
                 .eq('is_alive', true)
                 .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                .neq('name', null) // Filter out nameless ghosts
                 .limit(10);
 
             if (activeUsers) {
@@ -103,8 +104,9 @@ export class ShadowService {
             console.error("ShadowService: Failed to fetch heroic shadows", e);
         }
 
+
         // 3. System Mercenaries (Always add active ones if not hired)
-        const systems = this.generateSystemMercenaries();
+        const systems = await this.generateSystemMercenaries();
         for (const sys of systems) {
             if (hiredNames.has(sys.name)) continue; // Already hired by name
             results.push(sys);
@@ -113,31 +115,34 @@ export class ShadowService {
         return results;
     }
 
-    private generateSystemMercenaries(): ShadowSummary[] {
-        return [
-            {
-                profile_id: 'sys_warrior',
-                name: '歴戦の傭兵ヴォルフ',
-                level: 5,
-                job_class: 'Warrior',
-                origin_type: 'system_mercenary',
-                contract_fee: 500,
-                stats: { atk: 18, def: 8, hp: 150 },
-                signature_deck_preview: ['Heavy Slash', 'Guard'],
-                is_subscriber: false
-            },
-            {
-                profile_id: 'sys_mage',
-                name: '放浪魔術師エレナ',
-                level: 4,
-                job_class: 'Mage',
-                origin_type: 'system_mercenary',
-                contract_fee: 600,
-                stats: { atk: 22, def: 3, hp: 90 },
-                signature_deck_preview: ['Fireball', 'Meditate'],
-                is_subscriber: false
+    async generateSystemMercenaries(): Promise<ShadowSummary[]> {
+        const results: ShadowSummary[] = [];
+        try {
+            const { data: npcs } = await this.supabase
+                .from('npcs')
+                .select('*')
+                .eq('is_hireable', true)
+                .eq('origin', 'system_mercenary'); // Use dedicated column
+
+            if (npcs) {
+                for (const npc of npcs) {
+                    results.push({
+                        profile_id: npc.id,
+                        name: npc.name,
+                        level: npc.level,
+                        job_class: npc.job_class,
+                        origin_type: 'system_mercenary',
+                        contract_fee: (npc.level * 100), // レベルに基づく動的料金
+                        stats: { atk: npc.attack, def: npc.defense, hp: npc.max_hp },
+                        signature_deck_preview: npc.default_cards || [],
+                        is_subscriber: false
+                    });
+                }
             }
-        ];
+        } catch (e) {
+            console.error("ShadowService: Failed to fetch system mercenaries", e);
+        }
+        return results;
     }
 
     /**

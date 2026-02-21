@@ -1,123 +1,217 @@
-Code: Wirth-Dawn Specification v2.11: Battle System & Data Architecture (Final)
-1. 概要 (Overview)
-本仕様書は、Code: Wirth-Dawn のバトルシステム、および関連するリソース管理の最終定義である。 v2.10に対し、他システム（World, Shadow, Progression）との結合時に発生する**「詰み（Softlock）」や「経済崩壊（Exploit）」を防ぐための例外規定**を追加している。
-Core Philosophy:
-• Determinism: ダメージ計算に乱数やスケーリングを含めず、計算通りの結果を出力する（完全情報ゲーム）。
-• High Risk: 敗北時のリソース全ロストと、回復しないVitality（寿命）による緊張感。
+Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+# Battle System & Data Architecture
 
---------------------------------------------------------------------------------
-2. データアーキテクチャ (Data Architecture)
-2.1 CSV構造拡張 (src/data/csv/)
-File Name
-Key Columns
-Note
-enemies.csv
-id, hp, atk, def, resistance
-ステータスは固定値。スケーリング補正なし。
-items.csv
-id, type, cost, ap_cost, discard_cost
-discard_cost: ノイズカード廃棄用コスト。
-2.2 データベーススキーマ (schema.sql)
-• enemies Table:
-    ◦ resistance (TEXT[]): 無効化する状態異常ID配列 (例: ['stun', 'poison'])。
-• items Table:
-    ◦ target_type (TEXT): single_enemy, all_enemies, self, single_ally.
-    ◦ cost (INT): デッキ構築コスト（Progression制限用）。
-    ◦ ap_cost (INT): バトル内使用コスト。
+## 1. 概要 (Overview)
+本仕様書は、Code: Wirth-Dawn のバトルシステムの定義である。
+バトルの大部分は**クライアントサイド（`gameStore.ts`）**で処理され、サーバーAPI (`/api/battle/turn`) は補助的な敵行動処理を担う。
 
---------------------------------------------------------------------------------
-3. ターン進行プロセス (Turn Sequence)
-3.1 フェーズ詳細
-1. Draw Phase (ドロー):
-    ◦ Hand Fill: 手札上限（Default: 5）まで引く。上限を超える分は引かない。
-    ◦ Cycling: 山札不足時、捨て札をリシャッフル。
-    ◦ Struggle (あがき - 救済措置): ドロー開始時に「山札+捨て札+手札」の合計が 0枚 の場合、システムカード Struggle (0 AP, 1 Dmg) を生成して手札に加える。
-2. Energy Phase (AP回復):
-    ◦ AP = Min(10, CurrentAP + 5)。
-3. Action Phase (行動):
-    ◦ プレイヤーはAPがある限り行動可能。
-    ◦ Purge (ノイズ廃棄): type: noise のカードは、定義された discard_cost (例: 1 AP) を支払うことで、効果を発動せずに手札から消滅（Exhaust）させることができる。
-4. End Phase (ターン終了):
-    ◦ 状態異常の処理（Poison, Regen）。
-    ◦ バフ・デバフの期間減算。
-5. Enemy Phase (敵行動):
-    ◦ 敵AIによる攻撃処理。
-3.2 ターン制限 (Turn Limit)
-• Limit: 30ターン。
-• Result: 30ターン経過時点で敵が生存している場合、強制的に 敗北 (EXIT_FAIL) となる。
+<!-- v11.0: クライアントサイド主体の実装に合わせて全面改訂。drain_vit制限・multi-enemy対応を反映。 -->
 
---------------------------------------------------------------------------------
-4. ダメージとステータス計算 (Deterministic Logic)
-4.1 計算式（固定値・乱数なし）
-Damage=(User.ATK+Card.Power)∗BuffMultiplier−Enemy.DEF
-• User.ATK/DEF: user_profiles の値（成長・老化反映済み）を使用。
-• Variance: 乱数幅、クリティカルは実装しない。計算結果が常に正解となる。
-• Min Damage: 最終値が0以下の場合、1 に補正する（防御無視攻撃を除く）。
-4.2 特殊ダメージ：Vitality (寿命)
-• Effect: drain_vit 属性を持つ攻撃は、HPではなく user.current_vitality を直接減らす。
-• Damage Value: 固定で -1。
-• Safety Cap (即死防止):
-    ◦ 多段ヒット等による事故死を防ぐため、**「Vitalityダメージは1ターンにつき最大1回まで」**とする。
-    ◦ 同ターン2回目以降の drain_vit は無効化（0ダメージ）される。
+**Core Philosophy:**
+- **Determinism**: ダメージ計算に乱数やスケーリングを含めず、計算通りの結果を出力する（完全情報ゲーム）。
+- **High Risk**: 敗北時のリソース全ロストと、回復しないVitality（寿命）による緊張感。
 
---------------------------------------------------------------------------------
-5. リソースの永続性とロスト (Persistence & Risk)
-クエスト内での連戦、および完了時のルール。
-Resource
-Persistence Rule
-Implementation Note
-HP
-Carry Over (持ち越し)
-前のバトルの終了時HPが、次戦の開始時HPとなる。<br>自動回復は一切しない。
-AP / Deck
-Reset
-バトルごとに初期化される。
-Loot / EXP
-Risk (全ロスト)
-取得したアイテムと経験値は一時プールに保管。<br>敗北・撤退時は全て破棄される。<br>勝利（EXIT）時のみ獲得確定。
-NPC
-Permadeath (消滅)
-HP 0になったNPCは即座に消滅し、そのクエスト中は復帰しない。<br>クエスト終了後、契約解除となる。
-Consumables
-Consumed
-使用した消費アイテムは即座に在庫減算。クエスト中は補充されない。
+---
 
---------------------------------------------------------------------------------
-6. システム間干渉の解決 (Conflict Resolution)
-6.1 環境カード介入 (World Injection)
-• Issue: 拠点繁栄度により強制混入されるカード（Support/Noise）が、デッキコスト上限を圧迫する。
-• Resolution:
-    ◦ システムによって強制挿入されるカード（Injection Cards）は、**デッキコスト計算の対象外（Cost 0扱い）**とする。
-    ◦ バトル開始時のデッキ構築ロジックにて、バリデーション後に挿入する処理順とする。
-6.2 汚染カード対策 (Noise Handling)
-• Issue: 手札が「使用不可カード（Noise）」で埋まるとパスし続けるしかなくなり、死を待つのみとなる（Softlock）。
-• Resolution:
-    ◦ 全ての type: noise カードに、共通アクション 「廃棄 (Purge)」 を付与する。
-    ◦ Cost: 1 AP。
-    ◦ Effect: そのカードをゲームから除外する（手札枠を空ける）。
-6.3 残影の不正利用防止 (Shadow Constraints)
-• Issue: 残影（Shadow）が消費アイテムを使うと、雇用主の在庫が減るか、無限に使えてしまう。
-• Resolution:
-    ◦ Shadow登録時 (signature_deck)、消費アイテム (type: consumable) の登録を禁止する。
-    ◦ Shadowはスキルカード (type: skill) のみ使用可能とする。
+## 2. データアーキテクチャ (Data Architecture)
 
---------------------------------------------------------------------------------
-7. ターゲットとAI挙動 (Targeting)
-7.1 ターゲット属性
-• single_enemy: 敵単体（挑発の影響を受ける）。
-• all_enemies: 敵全体（挑発無視）。
-• single_ally: 味方単体（回復用）。
-7.2 状態異常と耐性
-• Resistance Check: enemies.resistance 配列に含まれるIDのデバフは、付与されず "RESISTED" となる。
-• Definitions:
-    ◦ stun: 行動不能（AP回復なし）。
-    ◦ poison: ターン終了時 HP -5% (Min 1)。
-    ◦ taunt: 単体攻撃を引きつける。
+### 2.1 関連テーブル
 
---------------------------------------------------------------------------------
-8. Antigravity Implementation Tasks (Summary)
-1. Damage Engine: 固定値計算式、および Vitalityダメージのターン1回制限の実装。
-2. Turn Logic: ノイズカードの「1 APで廃棄」機能の実装。
-3. Persistence: 敗北時の loot_pool, exp_pool 全破棄ロジックの実装。
-4. Validation: Shadow登録時の消費アイテム禁止チェックの実装。
-5. World Injection: バトル初期化時、環境カードをデッキコスト無視で混入させる処理の実装。
+| テーブル | 主要カラム | 用途 |
+|---|---|---|
+| `enemies` | slug, hp, atk, def, action_pattern (JSONB) | 敵データ定義 |
+| `enemy_skills` | slug, name, value, effect_type, inject_card_id | 敵スキル定義 |
+| `cards` | id, name, type, cost_val, effect_val, ap_cost, description | カードデータ |
+| `items` | id, slug, name, type, base_price, effect_data (JSONB) | アイテム/スキル定義 |
+
+### 2.2 フロントエンド型定義
+<!-- v11.0: 実装のCard/Enemy型を反映 -->
+```typescript
+export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise';
+export type TargetType = 'single_enemy' | 'all_enemies' | 'random_enemy' | 'self' | 'single_ally' | 'all_allies';
+
+export interface Card {
+  id: string;
+  name: string;
+  type: CardType;
+  description: string;
+  cost: number;
+  ap_cost?: number;
+  power?: number;
+  isEquipment?: boolean;
+  source?: string;
+  effect_id?: string;
+  effect_duration?: number;
+  target_type?: TargetType;
+  discard_cost?: number;      // Noise廃棄コスト (AP)
+  isInjected?: boolean;       // 環境カード (Cost 0扱い)
+  cost_type?: 'mp' | 'vitality';
+}
+
+export interface Enemy {
+  id: string;
+  name: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  def?: number;
+  slug?: string;
+  traits?: string[];          // ['drain_vit'] 等
+  vit_damage?: number;
+  status_effects?: { id: string; duration: number }[];
+  drop_rate?: number;
+  drop_item_slug?: string;
+}
+```
+
+---
+
+## 3. バトル初期化 (Battle Initialization)
+<!-- v11.0: gameStore.startBattle() の実装を反映 -->
+
+`startBattle(enemiesInput: Enemy | Enemy[])` で初期化。
+
+1. **Multi-Enemy対応**: 入力は単体 or 配列。最大6体配置可能。
+2. **パーティ取得**: `GET /api/party/list` からDBのパーティメンバーを取得。
+3. **デッキ構築**: 装備中インベントリアイテム (`is_equipped: true`) からカードを生成。
+4. **パーティカード混入**: NPC の `inject_cards` からカードIDを解決し、デッキに追加。
+5. **環境カード**: `buildBattleDeck()` 内で `worldState.status` に応じた注入処理。
+6. **初期AP**: `current_ap: 5`。
+
+### BattleState 構造
+<!-- v11.0: 実装のBattleState型を反映 -->
+```typescript
+export interface BattleState {
+  enemy: Enemy | null;          // 現在のターゲット
+  enemies: Enemy[];             // 全敵リスト (v3.5: multi-enemy)
+  party: PartyMember[];
+  turn: number;
+  current_ap: number;
+  messages: string[];
+  isVictory: boolean;
+  isDefeat: boolean;
+  currentTactic: 'Aggressive' | 'Defensive' | 'Standby';
+  player_effects: StatusEffect[];
+  enemy_effects: StatusEffect[];
+  exhaustPile: any[];
+  consumedItems: string[];
+  vitDamageTakenThisTurn?: boolean;  // drain_vit 1ターン1回制限
+  battle_result?: string;
+}
+```
+
+---
+
+## 4. ターン進行プロセス (Turn Sequence)
+
+### 4.1 フェーズ詳細
+1. **Draw Phase (ドロー)**: `dealHand()` — 手札上限5枚まで引く。山札不足時は捨て札をリシャッフル。山札+捨て札+手札 = 0枚の場合、Struggle カード (0 AP, 1 Dmg, 自傷1) を生成。
+2. **Energy Phase (AP回復)**: `AP = Min(10, CurrentAP + 5)`。Stun状態時はAP回復なし。
+3. **Action Phase (行動)**: APがある限り行動可能。
+   - **Purge (ノイズ廃棄)**: `type: noise` のカードは `discard_cost`（デフォルト1 AP）を支払って手札から消滅（Exhaust）。
+4. **End Phase (ターン終了)**: `endTurn()` — 状態異常の処理（Poison: HP -5%, Regen: HP回復）、バフ・デバフの期間減算。全敵に対して個別にtick処理。
+5. **Party Phase (味方行動)**: `processPartyTurn()` — 各NPCがAI判定で行動。
+6. **Enemy Phase (敵行動)**: `processEnemyTurn()` — 全生存敵が順に行動。
+
+### 4.2 ターン制限 (Turn Limit)
+<!-- v11.0: 実装のendTurn()を反映 -->
+- **Limit**: 30ターン。
+- **Result**: 30ターン経過時点で敵が生存している場合、`battle_result: 'time_over'` で **敗北** となる。
+
+---
+
+## 5. ダメージとステータス計算 (Deterministic Logic)
+
+### 5.1 計算式（固定値・乱数なし）
+<!-- v11.0: 実装のcalculateDamage()を反映 -->
+```
+BaseDamage = Card.Power + Player.ATK
+BuffedDamage = BaseDamage * BuffMultiplier
+FinalDamage = Max(1, BuffedDamage - Enemy.DEF)
+```
+- `User.ATK`: `userProfile.atk` または `userProfile.attack`（互換性のため両方チェック）。
+- **Min Damage**: 最終値が0以下の場合、**1** に補正。
+
+### 5.2 敵攻撃力計算
+<!-- v11.0: processEnemyTurn()の実装を反映 -->
+```
+EnemyATK = Enemy.level * 5 + 10
+MitigatedDamage = Max(1, EnemyATK - Player.DEF)
+```
+
+### 5.3 特殊ダメージ：Vitality (寿命)
+<!-- v11.0: drain_vit制限の実装確認を反映（gameStore L1026） -->
+- **Effect**: `drain_vit` トレイトまたは `vit_damage > 0` を持つ敵攻撃は、HPではなく `user.vitality` を直接減らす。
+- **Damage Value**: 固定で **-1**。
+- **Safety Cap (即死防止)**: `vitDamageTakenThisTurn` フラグにより、**1ターンにつき最大1回まで**（クライアントサイドで実装済み）。
+- **Trigger条件**: `mitigated > 0 && newHp > 0 && hasDrainVit && !vitDamageTaken`。
+- **永続化**: `POST /api/profile/consume-vitality` で即座にDBに反映。
+
+---
+
+## 6. リソースの永続性とロスト (Persistence & Risk)
+<!-- v11.0: useQuestState.ts の実装を反映 -->
+
+| Resource | Rule | 実装 |
+|---|---|---|
+| HP | Carry Over (持ち越し) | `useQuestState.playerHp` で管理 |
+| AP / Deck | Reset | バトルごとに初期化 |
+| Loot / EXP | Risk (全ロスト) | `useQuestState.lootPool` — 敗北時に空配列化 |
+| NPC | Permadeath (消滅) | `useQuestState.deadNpcs` — HP0で `is_active: false` に更新 |
+| Consumables | Consumed | `useQuestState.consumedItems` で追跡 |
+
+---
+
+## 7. システム間干渉の解決 (Conflict Resolution)
+
+### 7.1 環境カード介入 (World Injection)
+- 環境カード（Injection Cards）は**デッキコスト計算の対象外（Cost 0扱い）**。
+- `buildBattleDeck()` のバリデーション後に挿入。
+- `isInjected: true` フラグで識別。
+
+### 7.2 汚染カード対策 (Noise Handling)
+<!-- v11.0: attackEnemy()内のNoise処理を反映 -->
+- 全 `type: noise` カードに「廃棄 (Purge)」アクションが付与されている。
+- Cost: `card.discard_cost ?? 1` AP。
+- Effect: そのカードを `exhaustPile` に移動（ゲームから除外）。
+
+### 7.3 残影の不正利用防止 (Shadow Constraints)
+- Shadow登録時、消費アイテム (`type: consumable`) の登録を禁止。
+- Shadowはスキルカード (`type: skill`) のみ使用可能。
+
+---
+
+## 8. ターゲットとAI挙動 (Targeting)
+
+### 8.1 プレイヤーのターゲット選択
+<!-- v11.0: gameStore の targetId 解決ロジックを反映 -->
+- 指定なしの場合、`battleState.enemy` (現在のターゲット) を使用。
+- ターゲットが死亡している場合、最初の生存敵に自動スイッチ。
+- `setTarget(enemyId)` でターゲット変更可能。
+
+### 8.2 敵の攻撃ルーティング
+<!-- v11.0: routeDamage() を反映 -->
+- 各NPCの `cover_rate` に基づき確率で庇う。
+- 庇った場合 NPC がダメージを受ける（NPC.DEF で軽減）。
+
+### 8.3 状態異常
+- `stun`: 行動不能（AP回復なし）。
+- `poison`: ターン終了時 HP -5% (Min 1)。
+- `regen`: ターン終了時 HP +回復。
+- `atk_up` / `def_up`: 攻撃/防御バフ。
+- `bleed`: カード使用時に追加自傷。
+
+---
+
+## 9. サーバーサイド補助API
+
+### 9.1 POST /api/battle/turn
+<!-- v11.0: 現実装のサーバーAPIを反映 -->
+敵ターンの処理を行うサーバーAPI（クライアントサイド処理と併用）。
+
+- 敵スキルの `action_pattern` に基づく条件付きスキル選択。
+- `effect_type: 'inject'` でデッキ注入。
+- `effect_type: 'drain_vit'` でVitality攻撃。
+- Meat Shield ロジック（NPC `cover_rate` による庇い）。
+
+> **Note (v11.0)**: 現在、バトルの主要ロジック（ダメージ計算、ターン進行、勝敗判定）は全てクライアントサイド（`gameStore.ts`）で処理されている。サーバーAPIは補助的な使用に留まる。

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         // Fetch item details to know type
         const { data: itemDetails, error: itemError } = await supabase
             .from('items')
-            .select('item_type, stock_limit')
+            .select('type, stock_limit')
             .eq('id', item_id)
             .single();
 
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
             }
         };
 
-        if (itemDetails.item_type === 'skill') {
+        if (itemDetails.type === 'skill') {
             if (existingItem) {
                 return NextResponse.json({ error: "習得済みです。" }, { status: 400 });
             }
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
             await decrementStock();
             return NextResponse.json({ success: true, inventory_entry: data[0] });
 
-        } else if (itemDetails.item_type === 'consumable') {
+        } else if (itemDetails.type === 'consumable') {
             // Stack logic
             if (existingItem) {
                 const newQuantity = (existingItem.quantity || 1) + 1;

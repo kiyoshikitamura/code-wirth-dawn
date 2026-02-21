@@ -7,16 +7,30 @@ import { LifeCycleService } from '@/services/lifeCycleService';
 // Logic to consume vitality
 export async function POST(req: Request) {
     try {
-        const { amount, reason } = await req.json(); // amount: number, reason: string (optional log)
+        const body = await req.json();
+        const { amount, reason, profileId } = body; // amount: number, reason: string (optional log)
 
         if (!amount || amount <= 0) {
             return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
         }
 
-        // Get current profile
-        // In real app, authenticate user. Here assume single user or handle via ID if passed.
-        // We reuse the logic from profile/route to find the user.
-        const { data: profiles } = await supabase.from('user_profiles').select('*').limit(1);
+        // Dynamic User Identification
+        // Dynamic User Identification
+        const { data: { user } } = await supabase.auth.getUser();
+        let query = supabase.from('user_profiles').select('*');
+
+        // Priority: 1. Auth ID, 2. Body ID
+        // Note: consume-vitality requires explicit profile target in demo mode
+        const targetId = user?.id || (body as any).profileId; // body was destructured above, need to access full body or add to destructure
+
+        if (targetId) {
+            query = query.eq('id', targetId);
+        } else {
+            // Fallback (Legacy/Demo - Not recommended but kept for backward compat)
+            query = query.order('updated_at', { ascending: false }).limit(1);
+        }
+
+        const { data: profiles } = await query;
         const profile = profiles?.[0];
 
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -33,7 +47,7 @@ export async function POST(req: Request) {
         // Update DB
         const { error } = await supabase
             .from('user_profiles')
-            .update({ vitality: newVit })
+            .update({ vitality: newVit, updated_at: new Date().toISOString() })
             .eq('id', profile.id);
 
         if (error) throw error;
