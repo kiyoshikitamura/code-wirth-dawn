@@ -176,7 +176,8 @@ export default function WorldMapPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': token ? `Bearer ${token}` : ''
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
                 },
                 body: JSON.stringify({ target_location_name: target.name })
             });
@@ -194,19 +195,35 @@ export default function WorldMapPage() {
                 setTravelLog(prev => [...prev, `目的地に到着しました。`]);
                 await new Promise(r => setTimeout(r, 1000));
 
-                // Ensure Hub State is cleared on Travel
-                await supabase.from('user_hub_states').upsert({ user_id: userProfile.id, is_in_hub: false });
-
                 // Refresh & Redirect
                 await fetchUserProfile();
                 await fetchWorldState();
                 await fetchHubState();
                 router.push('/inn'); // Go to Inn at new location
             } else {
+                const data = await res.json().catch(() => ({}));
+
+                if (res.status === 403 && data.require_battle === 'bounty_hunter_ambush') {
+                    alert(data.message || "悪名が響き渡り、賞金首として狙い撃ちされました！");
+                    const bountyHunter: any = {
+                        id: 'bounty_hunter_001',
+                        name: '賞金稼ぎ (Bounty Hunter)',
+                        hp: 300,
+                        maxHp: 300,
+                        atk: 15,
+                        def: 5,
+                        level: 20,
+                        status_effects: []
+                    };
+                    useGameStore.getState().initializeBattle([bountyHunter]);
+                    router.push('/battle?type=bounty_hunter');
+                    return;
+                }
+
                 if (res.status === 401) {
                     alert("認証エラー: 移動するには再ログインが必要です。");
                 } else {
-                    alert("移動できませんでした。");
+                    alert(data.error || "移動できませんでした。");
                 }
                 setTraveling(false);
                 isTravelingRef.current = false;

@@ -1,14 +1,35 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { DEMO_USER_ID } from '@/utils/constants';
 
 export async function POST(req: Request) {
     try {
         const { item_id, price } = await req.json();
 
-        // 1. Validate User & Check Funds
-        // We use the fixed DEMO_USER_ID for this prototype phase.
-        const userId = '00000000-0000-0000-0000-000000000000'; // Matches DEMO_USER_ID in constants
+        let userId: string | null = null;
+
+        const authHeader = req.headers.get('authorization');
+        const xUserId = req.headers.get('x-user-id');
+
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (error || !user) {
+                if (xUserId) {
+                    userId = xUserId;
+                } else {
+                    return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+                }
+            } else {
+                userId = user.id;
+                if (xUserId && xUserId !== userId) {
+                    userId = xUserId;
+                }
+            }
+        } else if (xUserId) {
+            userId = xUserId;
+        } else {
+            return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+        }
 
         const { data: userProfile, error: profileError } = await supabase
             .from('user_profiles')

@@ -7,9 +7,6 @@ import { useGameStore } from '@/store/gameStore';
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
 import { Sword, Shield, Map as MapIcon, Hourglass } from 'lucide-react';
-import LoginModal from '@/components/auth/LoginModal';
-
-import RegisterModal from '@/components/auth/RegisterModal';
 import SecretQuestionModal from '@/components/auth/SecretQuestionModal';
 
 export default function TitlePage() {
@@ -23,7 +20,7 @@ export default function TitlePage() {
     // After Auth -> Check Secret. If no Secret -> Secret Modal.
     // After Secret -> Check Profile. If no Profile -> Char Creation (FORM).
 
-    const [mode, setMode] = useState<'ENTRY' | 'LOGIN' | 'REGISTER' | 'SECRET_SETUP' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
+    const [mode, setMode] = useState<'ENTRY' | 'SECRET_SETUP' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
 
     const [name, setName] = useState('');
     const [gender, setGender] = useState<'Male' | 'Female' | 'Unknown'>('Male');
@@ -39,6 +36,17 @@ export default function TitlePage() {
     useEffect(() => {
         checkUserStatus();
     }, []);
+
+    const handleStart = async () => {
+        setMode('CREATING'); // Shows loading state while authenticating
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            alert('通信エラー: ' + error.message);
+            setMode('ENTRY');
+            return;
+        }
+        await checkUserStatus();
+    };
 
     const checkUserStatus = async () => {
         // Use getUser to validate session against server (handles wiped users)
@@ -205,16 +213,16 @@ export default function TitlePage() {
                             運命の書を開き、あなたの物語を始めましょう。
                         </p>
                         <button
-                            onClick={() => setMode('REGISTER')}
+                            onClick={handleStart}
                             className="w-full bg-[#a38b6b] text-[#1a0f00] font-bold py-3 rounded hover:bg-[#c2b280] transition-colors shadow-lg tracking-widest"
                         >
-                            <span className="flex items-center justify-center gap-2"><Sword className="w-4 h-4" /> 新規に始める</span>
+                            <span className="flex items-center justify-center gap-2"><Sword className="w-4 h-4" /> はじめる</span>
                         </button>
                         <button
-                            onClick={() => setMode('LOGIN')}
+                            onClick={() => alert("外部アカウントによるデータ引き継ぎは現在準備中です。")}
                             className="w-full bg-transparent border border-[#a38b6b]/50 text-[#a38b6b] font-bold py-3 rounded hover:bg-[#a38b6b]/10 transition-colors tracking-widest"
                         >
-                            <span className="flex items-center justify-center gap-2"><Hourglass className="w-4 h-4" /> 続きから</span>
+                            <span className="flex items-center justify-center gap-2"><Hourglass className="w-4 h-4" /> データ引き継ぎ</span>
                         </button>
                     </div>
                 )}
@@ -262,8 +270,7 @@ export default function TitlePage() {
                 )}
             </main>
 
-            {mode === 'LOGIN' && <LoginModal onClose={() => setMode('ENTRY')} />}
-            {mode === 'REGISTER' && <RegisterModal onClose={() => setMode('ENTRY')} onSuccess={() => setMode('ENTRY')} />}
+
             {mode === 'SECRET_SETUP' && <SecretQuestionModal onSuccess={() => checkUserStatus()} onClose={() => { /* Force setup */ }} />}
         </div>
     );

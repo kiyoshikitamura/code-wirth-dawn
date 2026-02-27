@@ -4,7 +4,7 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 ## 1. 概要 (Overview)
 本仕様書は、クエスト中の在庫管理（インベントリ）と道徳的選択（裏切りメカニクス）を定義する。
 
-<!-- v11.0: inventoryテーブルの実装に合わせてスキーマ改訂。裏切りシステムの未実装を明記。 -->
+<!-- v11.1: inventoryテーブルの実装に合わせてスキーマ改訂。裏切り・アイテム判定の実装を反映。 -->
 
 ---
 
@@ -48,6 +48,7 @@ CREATE TABLE inventory (
   item_id BIGINT REFERENCES items(id),
   quantity INT DEFAULT 1,
   is_equipped BOOLEAN DEFAULT FALSE,
+  is_ugc BOOLEAN DEFAULT FALSE,       -- UGC産アイテムフラグ（売却額制限用）
   acquired_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
@@ -88,34 +89,38 @@ export interface InventoryItem {
 ---
 
 ## 5. 裏切りシステム (Betrayal Mechanic)
-<!-- v11.0: 未実装であることを明記 -->
-
-> **⚠️ 未実装 (v11.0時点)**
->
-> 仕様定義のみ。将来的に以下のロジックを実装予定。
+<!-- v11.1: 実装済み -->
 
 ### 5.1 概要
-クエスト中に取得した `key_item` をショップで売却すると「裏切り」と判定される。
+クエスト中に取得または要求された `key_item` / `trade_good` / `consumable` 等のアイテムをショップで売却すると「裏切り」と判定される機能。
 
 ### 5.2 トリガー条件
-- `item.type === 'key_item'`
-- 当該アイテムがアクティブなクエストの報酬または納品物
+- `/api/shop/sell` 呼び出し時に、ユーザーが現在クエストを受注中（`current_quest_id` が存在）であること。
+- 売却するアイテムが、そのクエストに関連していること（クエストの `requirements.has_item` に指定されている、または `flow_nodes` 内で当該 `item_id` が使用されている）。
+- ShopModalにて警告ダイアログが表示され、承諾した場合に成立する。
 
 ### 5.3 裏切りの結果
-- アクティブなクエストが即座に **失敗** となる。
-- 名声 (Reputation) に大幅なマイナス。
-- 売却金額は取得できる。
+- アクティブなクエストが即座に **失敗** となる（`user_profiles.current_quest_id` をクリア）。
+- 現在の拠点の名声 (Reputation) に中程度〜大幅なマイナス（例: -50 ポイント）。
+- 売却金額自体は取得でき、ショップモーダルからクエスト失敗のリザルト画面（または Inn 画面へクエ失敗パラメータ付きで遷移）に移行される。
+
+### 5.4 重度ペナルティ (UGC/Economy Defense)
+裏切り等により名声が一定値以下に落ち込んだ場合、以下の致命的なペナルティが課される。
+- **取引停止・出禁 (名声 0 未満)**:
+  - 対象拠点において、「ショップでの売買」「酒場での残影雇用」「宿屋での休息」がブロック (HTTP 403 / UI無効化) される。
+  - 解除には、別拠点での名声回復や、多額の「祈り（罰金）」の支払いが必要。
+- **賞金稼ぎの襲撃 (名声 -100 以下)**:
+  - 対象拠点を出発する移動（Travel）を実行した際、確定でエリートNPC「賞金稼ぎ (Bounty Hunters)」による襲撃バトルノードへ強制遷移する。
+  - このバトルに敗北した場合、強制的な「リタイア（Vitality 0）」は免除される代わり、**現在の所持ゴールドの半分（または全額）を没収**される（経済防衛メカニクス）。
 
 ---
 
 ## 6. 納品 / 所持判定ノード
-<!-- v11.0: 未実装であることを明記 -->
+<!-- v11.1: 実装済み -->
 
-> **⚠️ 未実装 (v11.0時点)**
+| ノードタイプ | 用途 | 条件 | API連動 |
+|---|---|---|---|
+| `check_delivery` | 納品クエストの進行・成功判定 | 指定アイテム（`item_id`、`quantity`）が在庫にあるか | 成功時、`/api/inventory/consume` を叩きアイテムを消費する (但し `remove_on_success=false` の場合は除く) |
+| `check_possession` | 特定アイテム所持をトリガーとする分岐判定 | 指定アイテム（`item_id`、`quantity`）が在庫にあるか | アイテムの消費は行わない |
 
-| ノードタイプ | 用途 | 条件 |
-|---|---|---|
-| `check_delivery` | 納品クエストの成功判定 | 指定アイテムが在庫にあるか |
-| `check_possession` | 特定アイテム所持をトリガーとする分岐 | 指定アイテムが在庫にあるか |
-
-実装時は `ScenarioEngine.processNode()` に条件分岐を追加予定。
+実装箇所: `ScenarioEngine.tsx` のノードプロセッサーにおいて、`inventory` 状態との照合により実行される。持っていない場合は `fallback` または別経路ノードへ分岐する。

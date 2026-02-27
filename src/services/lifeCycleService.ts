@@ -165,7 +165,7 @@ export class LifeCycleService {
      * Spec v10: Gold, Reputation, Heirloom (Simplified)
      * No Recipe/Knowledge inheritance.
      */
-    async processInheritance(userId: string, newProfileData: any, heirloomItemId?: string): Promise<any> {
+    async processInheritance(userId: string, newProfileData: any, heirloomItemIds?: string[]): Promise<any> {
         const { data: oldProfile } = await this.supabase
             .from('user_profiles')
             .select('legacy_points, gold, is_subscriber')
@@ -202,25 +202,33 @@ export class LifeCycleService {
         await this.supabase.from('inventory').delete().eq('user_id', userId);
 
         if (isSubscriber && inventory && inventory.length > 0) {
-            // v10.1: Use specified heirloom_item_id if provided, otherwise pick random
-            let heirloom = null;
-            if (heirloomItemId) {
-                heirloom = inventory.find((i: any) => String(i.item_id) === String(heirloomItemId));
-            }
-            if (!heirloom) {
-                // Fallback: random item
-                const randomIndex = Math.floor(Math.random() * inventory.length);
-                heirloom = inventory[randomIndex];
+            let heirloomsToKeep: any[] = [];
+
+            // v10.1: Use specified heirloomItemIds if provided, otherwise pick random
+            if (heirloomItemIds && Array.isArray(heirloomItemIds) && heirloomItemIds.length > 0) {
+                // Enforce a hard cap of 3 slots to prevent manipulation
+                const idsArray = heirloomItemIds.slice(0, 3);
+                idsArray.forEach(id => {
+                    const found = inventory.find((i: any) => String(i.item_id) === String(id));
+                    if (found) heirloomsToKeep.push(found);
+                });
             }
 
-            if (heirloom) {
-                await this.supabase.from('inventory').insert({
+            if (heirloomsToKeep.length === 0) {
+                // Fallback: random item
+                const randomIndex = Math.floor(Math.random() * inventory.length);
+                heirloomsToKeep.push(inventory[randomIndex]);
+            }
+
+            if (heirloomsToKeep.length > 0) {
+                const inserts = heirloomsToKeep.map(h => ({
                     user_id: userId,
-                    item_id: heirloom.item_id,
+                    item_id: h.item_id,
                     quantity: 1,
                     is_equipped: false
-                });
-                console.log("Heirloom inherited:", heirloom.item_id);
+                }));
+                await this.supabase.from('inventory').insert(inserts);
+                console.log("Heirlooms inherited:", inserts.map(i => i.item_id));
             }
         }
 

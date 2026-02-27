@@ -46,7 +46,8 @@ export default function ShopModal({ onClose }: Props) {
             const token = await getToken();
             const res = await fetch('/api/shop', {
                 headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
                 }
             });
             if (res.ok) {
@@ -75,7 +76,8 @@ export default function ShopModal({ onClose }: Props) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
                 },
                 body: JSON.stringify({ item_id: item.id })
             });
@@ -100,8 +102,16 @@ export default function ShopModal({ onClose }: Props) {
         }
     };
 
-    const handleSell = async (itemId: number, itemName: string) => {
-        if (!confirm(`「${itemName}」を売却しますか？`)) return;
+    const handleSell = async (itemId: number, itemName: string, itemType: string) => {
+        const isQuestActive = !!userProfile?.current_quest_id;
+        const isKeyItem = itemType === 'key_item' || itemType === 'trade_good' || itemType === 'consumable';
+
+        if (isQuestActive && isKeyItem) {
+            if (!confirm(`警告：これを売却すると現在の依頼は失敗し、名声を失います。よろしいですか？`)) return;
+        } else {
+            if (!confirm(`「${itemName}」を売却しますか？`)) return;
+        }
+
         if (purchasing) return;
 
         setPurchasing(String(itemId));
@@ -111,17 +121,25 @@ export default function ShopModal({ onClose }: Props) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
                 },
                 body: JSON.stringify({ item_id: itemId, quantity: 1 })
             });
             const data = await res.json();
 
             if (res.ok) {
-                // success
-                alert(`売却しました！ (+${data.sold_price} G)`);
-                useGameStore.getState().fetchUserProfile(); // Refresh gold
-                fetchInventory(); // Refresh inventory
+                if (data.trigger_fail) {
+                    alert('【裏切り発覚】\n依頼の品を売りさばいた罪により、クエストは強制失敗となり名声を失いました。');
+                    useGameStore.getState().fetchUserProfile();
+                    fetchInventory();
+                    onClose();
+                    window.location.href = '/inn?betrayal=true';
+                } else {
+                    alert(`売却しました！ (+${data.sold_price} G)`);
+                    useGameStore.getState().fetchUserProfile();
+                    fetchInventory();
+                }
             } else {
                 alert(data.error || '売却に失敗しました。');
             }
@@ -242,7 +260,7 @@ export default function ShopModal({ onClose }: Props) {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => handleSell(invItem.item_id, (invItem as any).name || '不明')}
+                                            onClick={() => handleSell(invItem.item_id, (invItem as any).name || '不明', (invItem as any).type)}
                                             disabled={purchasing === String(invItem.item_id) || invItem.is_equipped}
                                             className={`px-4 py-2 rounded flex items-center gap-2 min-w-[100px] justify-center transition-all ${invItem.is_equipped
                                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed border border-gray-600'

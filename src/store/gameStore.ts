@@ -390,10 +390,19 @@ export const useGameStore = create<GameState>()(
                 set({ gold: newGold });
 
                 if (userProfile?.id) {
-                    await supabase
-                        .from('user_profiles')
-                        .update({ gold: newGold })
-                        .eq('id', userProfile.id);
+                    try {
+                        const res = await fetch('/api/debug/add-gold', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: userProfile.id, amount })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            set({ gold: data.new_gold });
+                        }
+                    } catch (e) {
+                        console.error('Failed to add gold via API', e);
+                    }
                 }
             },
 

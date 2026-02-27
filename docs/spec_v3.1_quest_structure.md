@@ -86,7 +86,7 @@ class QuestService {
 }
 ```
 
-> **Note (v11.0)**: 現在の実装では、`required_level` や `required_reputation` によるフィルタリングは未実装。全クエストが拠点IDのみでフィルタされる。
+> **Note (v11.1)**: 現在の実装では、APIは制限なく該当拠点のクエストをクライアントに返し、フロントエンド（`QuestBoardModal.tsx`）にて `required_level` や `required_reputation` による判定を行っています。条件未達のクエストをグレーアウトし、不足条件を赤字表示する形で実装されています。
 
 ---
 

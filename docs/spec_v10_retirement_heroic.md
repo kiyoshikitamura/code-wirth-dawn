@@ -16,7 +16,7 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 
 ### 2.2 自主引退 (Voluntary)
 - **API**: `POST /api/character/retire`
-- **Body**: `{ cause: 'voluntary', heirloom_item_id?: string }`
+- **Body**: `{ cause: 'voluntary', heirloom_item_ids?: string[], paid_gold_for_slots?: number }`
 - **原因文字列**: `'Voluntary Retirement'`
 
 ---
@@ -67,10 +67,10 @@ flowchart TD
 | デッキ / レシピ | 0% | **継承なし** |
 | レベル / EXP | 0% | **Lv1からリスタート** |
 
-### 4.3 形見アイテム (Heirloom)
-- 引退API呼び出し時に `heirloom_item_id` を指定。
-- 新キャラ作成時に `inventory` テーブルに挿入。
-- 1個限定。
+### 4.3 形見アイテム (Heirloom) と 枠の拡張購入
+- 引退API呼び出し時に `heirloom_item_ids` 配列を指定する。
+- **基本は1枠のみ**だが、引退時に自身の所持ゴールドを大量に支払う（`paid_gold_for_slots`）ことで「冥銭」とし、**2枠、3枠へと引き継ぎ枠を拡張**できる強力なゴールドシンクが存在する。
+- 新キャラ作成時に `inventory` テーブルに挿入される。
 
 ---
 

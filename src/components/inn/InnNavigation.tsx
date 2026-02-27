@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Settings } from 'lucide-react';
 
 interface InnNavigationProps {
     onOpenTavern: () => void;
     onOpenShop: () => void;
     onOpenStatus: () => void;
     onOpenPrayer: () => void;
+    onOpenAccount: () => void;
     theme: {
         border: string;
         text: string;
@@ -15,7 +16,7 @@ interface InnNavigationProps {
     };
 }
 
-export default function InnNavigation({ onOpenTavern, onOpenShop, onOpenStatus, onOpenPrayer, theme }: InnNavigationProps) {
+export default function InnNavigation({ onOpenTavern, onOpenShop, onOpenStatus, onOpenPrayer, onOpenAccount, theme }: InnNavigationProps) {
     return (
         <>
             {/* Mobile Navigation (Visible only on small screens) */}
@@ -47,6 +48,13 @@ export default function InnNavigation({ onOpenTavern, onOpenShop, onOpenStatus, 
                 >
                     <span className="text-2xl">🙏</span>
                     <span className="text-xs font-bold text-gold-400">祈り</span>
+                </button>
+                <button
+                    onClick={onOpenAccount}
+                    className="col-span-2 bg-[#1a1510] border border-[#a38b6b]/50 p-3 rounded flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+                >
+                    <Settings className="w-6 h-6 text-gray-400" />
+                    <span className="text-xs font-bold text-gray-300">データ引継ぎ / 設定</span>
                 </button>
             </section>
 
@@ -101,6 +109,19 @@ export default function InnNavigation({ onOpenTavern, onOpenShop, onOpenStatus, 
                     <div className="text-left">
                         <div className="text-lg font-serif font-bold text-gold-200 group-hover:text-white">祈りを捧げる</div>
                         <div className="text-xs text-gold-500/70">世界への介入・属性支援</div>
+                    </div>
+                </button>
+
+                <button
+                    onClick={onOpenAccount}
+                    className="bg-[#1a1510] border border-[#a38b6b]/30 p-4 flex items-center gap-4 hover:bg-[#2a221b] transition-all group"
+                >
+                    <div className="bg-black/30 p-3 rounded-full text-gray-400 group-hover:text-gray-200">
+                        <Settings className="w-6 h-6" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-lg font-serif font-bold text-[#e3d5b8] group-hover:text-white">データ引継ぎ</div>
+                        <div className="text-xs text-gray-500">外部アカウント情報の連携・設定</div>
                     </div>
                 </button>
             </section>

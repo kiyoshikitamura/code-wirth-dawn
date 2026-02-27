@@ -261,7 +261,8 @@ async function main() {
                         bgm_key: params.bgm || params.bgm_key,
                         enemy_group_id: params.enemy || params.enemy_group_id,
                         result: (params.type === 'end_success' || params.type === 'end') ? 'success' : (params.type === 'end_failure' ? 'failure' : undefined),
-                        choices: []
+                        choices: [],
+                        params: params
                     };
 
                     script.nodes[nodeId] = currentNode;

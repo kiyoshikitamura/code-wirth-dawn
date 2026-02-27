@@ -10,20 +10,24 @@ Code: Wirth-Dawn Specification v11.0 (New Document)
 ---
 
 ## 2. 認証と API 設計パターン
-<!-- v11.0: bug fix #equip-toggle, #sell-auth に由来 -->
+<!-- v11.0: bug fix #equip-toggle, #sell-auth に由来 / v11.1: 匿名認証+OAuthの導入 -->
 
-### 2.1 認証パターン一覧
+### 2.1 認証基盤 (v11.1 改訂)
+シームレスなユーザー体験を実現するため、以下のモダンな認証フローを基本とする。
 
+1. **匿名ログイン (Anonymous Sign-in) をデフォルト化**
+   - タイトル画面の「はじめる」押下時、未ログイン状態であれば `supabase.auth.signInAnonymously()` を呼び出し、バックグラウンドでユーザー（UUID）を作成する。
+   - `DEMO_USER_ID` という固定のゲストID概念は**廃止**し、すべてのユーザーがDB上に固有の `user_profiles` レコードを持つようにする。
+2. **ソーシャルログイン (OAuth) による連携・永続化**
+   - 既存のメールアドレス＆パスワードによるユーザー登録・ログイン画面は**廃止**する。
+   - 代わりに、設定画面等から Google などの OAuth プロバイダを用いて、現在の匿名アカウントに「アカウント連携（`supabase.auth.linkIdentity()`）」を行うことで、データ引き継ぎとアカウントの永続化を実現する。
+
+### 2.2 APIアクセス制御パターン
 | パターン | 使用箇所 | 仕組み |
 |---|---|---|
-| JWT Bearer | Shop Sell, Inventory GET | `Authorization` ヘッダーからトークンを取得 → `supabase.auth.getUser()` |
-| x-user-id Header | Inventory PATCH (Equip) | `x-user-id` ヘッダーでユーザーIDを直接指定 |
-| Service Role Bypass | Shop Sell, Quest Complete, Retire | `SUPABASE_SERVICE_ROLE_KEY` で RLS をバイパス |
-| First Profile | Retire, Travel Cost | `.limit(1)` or `DEMO_USER_ID` フォールバック |
-
-### 2.2 RLS バイパスの理由
-- `inventory` テーブルは認証ユーザーのみ読み書き可能なRLSポリシーを持つ。
-- サーバーサイドAPI（Next.js Route Handler）はクライアントとは別のセッションで動作するため、Service Role Key を使ってRLSを回避する必要がある。
+| JWT Bearer / Fallback | Shop, Inventory, Profile 等全般 | `supabase.auth.getUser()`、またはセッション未確立の匿名ユーザー向けに `x-user-id` ヘッダーでのフォールバックを実施して特定。 |
+| Service Role Bypass | Shop Sell, Quest Complete, Retire | 複雑なトランザクションや内部サーバーロジック等で `SUPABASE_SERVICE_ROLE_KEY` で RLS をバイパス |
+| First Profile | Travel Cost | セッションから対象IDを取得する形、および `x-user-id` の併用へ移行 |
 
 ---
 
@@ -54,6 +58,9 @@ graph TD
 2. **バトル中**: `attackEnemy()`, `processPartyTurn()`, `processEnemyTurn()` — 全てクライアント
 3. **バトル後**: `useQuestState.updateAfterBattle()` — HP/NPC死亡/ルート記録
 4. **クエスト完了**: `POST /api/quest/complete` — EXP/Gold/Aging をDBに反映
+
+### 3.3 クエスト条件判定におけるデータ型マッチング (v11.1追加)
+シナリオエンジン（`check_delivery`, `check_possession`）等のインベントリ検索ロジックにおいては、JSON等からのデシリアライズ経由で `item_id` の型が Integer や String に揺れるケースがあるため、**厳密一致ではなく `String(item_id) === String(required_id)` と文字列キャストしてマッチング**する設計とする。また、バックエンドAPI (`/api/shop/*`, `/api/inventory/consume`) 側でも `Number()` の強制キャストは行わず、Supabaseのネイティブな型解決に任せることで安全性を確保する。
 
 ---
 
@@ -98,7 +105,6 @@ graph TD
 | `BASE_HP = 80` | プレイ調整済み |
 | `EXP = 50 * Lv²` | プレイ調整済み |
 | `base_price / 2` 固定売却 | インフレ未稼働 |
-| `x-user-id` 認証パターン | RLSバイパスの実用解 |
 
 ### 5.B 暫定実装（将来改修予定）
 

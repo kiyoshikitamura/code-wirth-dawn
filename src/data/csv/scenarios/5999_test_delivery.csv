@@ -1,0 +1,9 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"ここは裏切りと納品のテスト専用クエストです。\n「盗まれた宝石(テスト用)」を持っていれば納品できます。",,
+CHOICE,,納品する（テストアイテム所持時のみ成功）,check_node,
+CHOICE,,持っていないので諦める,EXIT_FAIL,
+NODE,check_node,,,type:check_delivery, item_id:3100, quantity:1
+CHOICE,,(成功),success_node,
+CHOICE,,(失敗),fail_node,
+NODE,success_node,"検証完了！納品に成功しました。",EXIT,
+NODE,fail_node,"アイテムを持っていません！",EXIT_FAIL,

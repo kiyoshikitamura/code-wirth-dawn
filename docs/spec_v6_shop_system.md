@@ -37,6 +37,10 @@ const finalPrice = isNewbie ? Math.floor(basePrice * 0.5) : basePrice;
 
 > **Note (v11.0)**: 繁栄度によるインフレ係数は**未実装**。現在は `base_price` を直接使用（初心者保護のみ適用）。
 
+### 3.3 闇市専用アイテム (Black Market Exclusives)
+- 拠点の繁栄度が「1（崩壊）」の場合にのみ購入可能なアイテムが存在する。
+- **禁術の秘薬**: 失われた寿命 (Vitality) を 1 回復する超高額アイテム（ゲーム内経済における大規模ゴールドシンク）。通常拠点では表示されない。
+
 ### 3.3 API: POST /api/shop (購入実行)
 ```
 POST /api/shop
@@ -76,7 +80,8 @@ Body: { inventory_id: string }
 |---|---|---|
 | 通常 | `base_price / 2` | ✅ 実装済み |
 | 崩壊拠点 (闇市) | `base_price * 1.5` | ❌ 未実装 |
-| 裏切り売却 (key_item) | `base_price * 2` | ❌ 未実装 |
+| 裏切り売却 (クエスト関連) | `base_price / 2` | ✅ 実装済み（クエスト失敗＆名声-50ペナルティ） |
+| UGCレプリカ (`is_ugc: true`) | `1 Gold` 固定 | ✅ エコシステム防衛用 |
 
 ---
 
@@ -104,3 +109,9 @@ Body: { item_id: string, is_equipped: boolean }
 | `trade_good` | ✅ | ✅ | ❌ | 売却専用 |
 | `skill` | ✅ | ✅ | ✅ (`is_skill`) | デッキ装備 |
 | `key_item` | ❌ | ❌ (将来) | ❌ | クエスト報酬 |
+
+---
+
+## 7. 利用制限 (Embargo Penalty)
+- プレイヤーの対象拠点における名声 (Reputation) が **0 未満 (マイナス)** の状態になった場合、そのショップにおける「購入」および「売却」機能はシステム的に完全にブロック（APIで403エラー、UIで無効化）される。
+- 別拠点での評価回復や「祈り」による多額の罰金支払いで名声が0以上になるまで解除されない。

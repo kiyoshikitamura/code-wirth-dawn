@@ -19,6 +19,7 @@ import StatusModal from '@/components/inn/StatusModal';
 import InnHeader from '@/components/inn/InnHeader';
 import InnNavigation from '@/components/inn/InnNavigation';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
+import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
 
 export default function InnPage() {
     const router = useRouter();
@@ -36,6 +37,7 @@ export default function InnPage() {
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
+    const [showAccount, setShowAccount] = useState(false);
     const [riskConfirmQuest, setRiskConfirmQuest] = useState<any | null>(null);
     const [questResult, setQuestResult] = useState<any | null>(null);
 
@@ -240,6 +242,26 @@ export default function InnPage() {
             } catch (e) {
                 localStorage.removeItem('pending_quest');
             }
+        } else {
+            // Check for Bounty Hunter Return
+            const urlParams = new URLSearchParams(window.location.search);
+            const result = urlParams.get('battle_result');
+            const bType = urlParams.get('type');
+
+            if (result && bType === 'bounty_hunter') {
+                if (result === 'lose') {
+                    // Trigger Defeat sequence: Gold Halved!
+                    fetch('/api/profile/bounty-defeat', { method: 'POST' }).then(() => {
+                        useGameStore.getState().fetchUserProfile();
+                        alert("賞金稼ぎに敗北し、所持金が半分没収されました！");
+                    });
+                } else if (result === 'win') {
+                    alert("賞金稼ぎをなんとか撃退した...だが悪名は消えない。");
+                } else if (result === 'escape') {
+                    alert("賞金稼ぎから命からがら逃げ延びた...");
+                }
+                window.history.replaceState({}, '', '/inn');
+            }
         }
     }, [userProfile]);
 
@@ -439,7 +461,8 @@ export default function InnPage() {
                     normalQuests={normalQuests}
                     specialQuests={specialQuests}
                     loading={loading}
-                    userLevel={userProfile?.level || 1}
+                    userProfile={userProfile}
+                    reputation={reputation}
                     onSelect={handleSelect}
                 />
 
@@ -475,6 +498,7 @@ export default function InnPage() {
 
                 {showShop && <ShopModal onClose={() => setShowShop(false)} />}
                 {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
+                {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
 
                 {/* Risk Confirmation */}
                 {riskConfirmQuest && (
@@ -522,7 +546,7 @@ export default function InnPage() {
                                 💤 休息する
                             </button>
                         </section>
-                        <InnNavigation onOpenTavern={() => setShowTavern(true)} onOpenShop={() => setShowShop(true)} onOpenStatus={() => setShowStatus(true)} onOpenPrayer={() => setShowPrayer(true)} theme={theme} />
+                        <InnNavigation onOpenTavern={() => setShowTavern(true)} onOpenShop={() => setShowShop(true)} onOpenStatus={() => setShowStatus(true)} onOpenPrayer={() => setShowPrayer(true)} onOpenAccount={() => setShowAccount(true)} theme={theme} />
                     </div>
 
                     <div className="order-2 space-y-4">
@@ -578,11 +602,30 @@ export default function InnPage() {
                             alert("Level Up!");
                         }} className="bg-green-900/20 text-green-500 border border-green-900 px-3 py-1 text-xs hover:bg-green-900/50">[DEBUG] +Lv1 (Full Restore)</button>
                         <button onClick={async () => { await useGameStore.getState().addGold(1000); }} className="bg-yellow-900/20 text-yellow-500 border border-yellow-900 px-3 py-1 text-xs hover:bg-yellow-900/50">[DEBUG] +1000 G</button>
+                        <button onClick={async () => {
+                            if (!userProfile) return;
+                            const res = await fetch('/api/inventory', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'x-user-id': userProfile.id },
+                                body: JSON.stringify({ item_slug: 'item_test_jewel', quantity: 1 })
+                            });
+                            if (res.ok) alert("納品用アイテム(3100)を入手しました！");
+                            else alert("アイテム付与に失敗しました");
+                        }} className="bg-purple-900/20 text-purple-400 border border-purple-900 px-3 py-1 text-xs hover:bg-purple-900/50">[DEBUG] 納品宝石GET</button>
 
                         <div className="w-full flex justify-center gap-4 mt-2">
                             <span className="text-xs text-gray-600 font-mono">
                                 Auth: {userProfile?.id ? (userProfile.id === '00000000-0000-0000-0000-000000000000' ? 'DEMO' : userProfile.id.substring(0, 8) + '...') : 'None'}
                             </span>
+                            <button onClick={async () => {
+                                if (userProfile?.id) {
+                                    if (confirm("本当にユーザーデータを完全に削除しますか？この操作は取り消せません。")) {
+                                        await fetch('/api/debug/hard-reset', { method: 'POST', body: JSON.stringify({ userId: userProfile.id }) });
+                                        await supabase.auth.signOut();
+                                        window.location.href = '/title';
+                                    }
+                                }
+                            }} className="bg-red-900/40 text-red-500 border border-red-900 px-3 py-1 text-xs font-bold hover:bg-red-900/80">[DEBUG] Hard Reset (Delete DB)</button>
                             <button onClick={async () => {
                                 await supabase.auth.signOut();
                                 window.location.href = '/title';

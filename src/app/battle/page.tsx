@@ -417,13 +417,14 @@ export default function BattlePage() {
                                         onClick={() => {
                                             const urlParams = new URLSearchParams(window.location.search);
                                             const returnUrl = urlParams.get('return_url');
+                                            const bType = urlParams.get('type');
                                             if (returnUrl) {
                                                 const separator = returnUrl.includes('?') ? '&' : '?';
-                                                router.push(`${returnUrl}${separator}battle_result=win`);
+                                                router.push(`${returnUrl}${separator}battle_result=win${bType ? `&type=${bType}` : ''}`);
                                             } else if (selectedScenario) {
                                                 router.push(`/quest/${selectedScenario.id}`);
                                             } else {
-                                                router.push('/inn?battle_result=win');
+                                                router.push(`/inn?battle_result=win${bType ? `&type=${bType}` : ''}`);
                                             }
                                         }}
                                         className="px-12 py-4 bg-gradient-to-r from-yellow-900 to-yellow-700 text-yellow-100 border border-yellow-500 rounded hover:scale-105 transition-transform shadow-[0_0_20px_rgba(234,179,8,0.3)] font-bold text-xl"
@@ -440,7 +441,11 @@ export default function BattlePage() {
                                     </h2>
                                     <p className="text-gray-500 font-sans tracking-widest text-lg">戦略的撤退...</p>
                                     <button
-                                        onClick={() => router.push('/inn?battle_result=escape')}
+                                        onClick={() => {
+                                            const urlParams = new URLSearchParams(window.location.search);
+                                            const bType = urlParams.get('type');
+                                            router.push(`/inn?battle_result=escape${bType ? `&type=${bType}` : ''}`)
+                                        }}
                                         className="px-8 py-3 bg-gray-800 text-gray-300 border border-gray-600 rounded hover:bg-gray-700 transition-colors"
                                     >
                                         戦線離脱
@@ -455,7 +460,11 @@ export default function BattlePage() {
                                     </h2>
                                     <p className="text-red-400 font-sans tracking-widest text-lg">意識が遠のいていく...</p>
                                     <button
-                                        onClick={() => router.push('/inn?battle_result=lose')}
+                                        onClick={() => {
+                                            const urlParams = new URLSearchParams(window.location.search);
+                                            const bType = urlParams.get('type');
+                                            router.push(`/inn?battle_result=lose${bType ? `&type=${bType}` : ''}`)
+                                        }}
                                         className="px-12 py-4 bg-red-950/80 text-red-200 border border-red-800 rounded hover:bg-red-900 transition-colors font-bold text-xl"
                                     >
                                         運ばれる

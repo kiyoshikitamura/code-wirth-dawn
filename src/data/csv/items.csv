@@ -38,7 +38,7 @@
 3037,item_ruins_map,宝の地図(偽),consumable,50,1,any,,0,共通(崩壊): ノイズ混入罠。
 3038,gear_adventurer_boots,冒険者の靴,skill_card,400,2,any,2099,2,共通: 逃走確定。
 3039,item_repair_kit,応急修理キット,consumable,200,2,any,,0,共通: NPC耐久回復。
-3040,item_revive_incense,反魂香,consumable,5000,5,any,,0,共通(絶頂): NPC蘇生。
+3040,item_revive_incense,反魂香,consumable,5000,5,any,,0,共通(絶頂): NPC苏生。
 3041,skill_provoke,教本:挑発,skill_card,400,2,any,2005,2,共通: タンク用スキル。
 3042,skill_meditation,教本:瞑想,skill_card,600,3,any,2002,2,共通: MP回復。
 3043,gear_heavy_armor,重装鎧,skill_card,1500,4,any,2007,2,共通: 物理軽減パッシブ。
@@ -79,3 +79,4 @@
 3078,skill_pressure_point,教本:経絡秘孔,skill_card,2000,3,loc_haryu,2036,2,華龍: 敵の防御力を無視する攻撃。
 3079,grimoire_teleport,魔導書:転移,consumable,3000,5,any,,0,共通(絶頂): 好きな拠点へ即時移動。
 3080,item_world_map,詳細な世界地図,skill_card,2000,4,any,2093,2,共通: 移動時のイベント回避率UP。
+3100,item_test_jewel,盗まれた宝石(テスト用),consumable,5000,1,any,,0,裏切り・納品テスト用

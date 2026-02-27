@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseService } from '@/lib/supabase-service';
-import { DEMO_USER_ID } from '@/utils/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,27 +19,30 @@ export async function POST(req: Request) {
         // Actually, for API routes, we should use createRouteHandlerClient or just use getUser with the token from header.
         // But for this legacy code, let's just use the logic:
 
-        let targetUserId = DEMO_USER_ID;
+        let targetUserId: string | null = null;
 
-        // Attempt to get user from Auth (if token passed)
+        // Attempt to get user from Auth
         const authHeader = req.headers.get('authorization');
-        console.log(`[Move] Auth Header: ${authHeader ? (authHeader.substring(0, 10) + '...') : 'Missing'}`);
+        const xUserId = req.headers.get('x-user-id');
 
         if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (error) {
-                console.error("[Move] Auth User Error:", error.message);
-                return NextResponse.json({ error: "Authentication failed: " + error.message }, { status: 401 });
-            }
-            if (user) {
-                console.log(`[Move] Resolved User via Auth: ${user.id}`);
-                targetUserId = user.id;
+            if (error || !user) {
+                if (xUserId) {
+                    targetUserId = xUserId;
+                } else {
+                    return NextResponse.json({ error: "Authentication failed: " + (error?.message || "User not found") }, { status: 401 });
+                }
             } else {
-                return NextResponse.json({ error: "Authentication failed: User not found" }, { status: 401 });
+                targetUserId = user.id;
+                if (xUserId && xUserId !== targetUserId) {
+                    targetUserId = xUserId;
+                }
             }
+        } else if (xUserId) {
+            targetUserId = xUserId;
         } else {
-            // Strict Mode: Move requires Auth
             return NextResponse.json({ error: "Login required for travel" }, { status: 401 });
         }
 
@@ -49,11 +51,6 @@ export async function POST(req: Request) {
             .select('*')
             .eq('id', targetUserId)
             .single();
-
-        // Strict Check against Demo Fallback (Redundant if we return 401 above, but safe)
-        if (targetUserId === DEMO_USER_ID) {
-            return NextResponse.json({ error: "Demo user cannot travel" }, { status: 401 });
-        }
 
         if (profile) {
             console.log(`[Move] Profile: ${profile.id} | Loc: ${profile.current_location_id}`);
@@ -81,6 +78,19 @@ export async function POST(req: Request) {
 
         if (targetError || !targetData) {
             return NextResponse.json({ error: 'Target location not found' }, { status: 404 });
+        }
+
+        // 2.5 Check severe reputation penalty (Bounty Hunters)
+        if (currentLocation) {
+            const { data: repData } = await supabase.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', currentLocation.id).maybeSingle();
+            if (repData && (repData.reputation_score || 0) <= -100) {
+                return NextResponse.json({
+                    success: false,
+                    require_battle: 'bounty_hunter_ambush',
+                    message: "賞金稼ぎの襲撃！ 悪名が響き渡り、移動前に賞金首として狙われました！",
+                    error: "Movement blocked by bounty hunters"
+                }, { status: 403 }); // 403 Forbidden because route is blocked
+            }
         }
 
         // 3. Calculate Days using neighbors

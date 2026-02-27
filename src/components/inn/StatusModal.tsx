@@ -200,7 +200,33 @@ export default function StatusModal({ onClose }: StatusModalProps) {
                                                 <div className="text-sm text-gray-300 font-bold">{item.name} <span className="text-gray-500 text-xs">x{item.quantity}</span></div>
                                                 <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
                                             </div>
-                                            {/* Consumables equip not implemented fully, but keeping button for consistency if needed */}
+                                            {item.name === '禁術の秘薬' && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm("禁術の秘薬を使用しますか？\n失われた寿命(VITALITY)が1回復します。")) return;
+
+                                                        // Supabase session helper
+                                                        const { supabase } = await import('@/lib/supabase');
+                                                        const session = await supabase.auth.getSession();
+
+                                                        const res = await fetch('/api/profile/consume-elixir', {
+                                                            method: 'POST',
+                                                            headers: { 'Authorization': `Bearer ${session.data.session?.access_token || ''}`, 'x-user-id': userProfile?.id || '' }
+                                                        });
+                                                        const data = await res.json();
+                                                        if (res.ok) {
+                                                            alert("禁術の秘薬を使用し、寿命が回復した！");
+                                                            fetchInventory();
+                                                            fetchUserProfile();
+                                                        } else {
+                                                            alert("使用に失敗しました: " + (data.error || "Unknown"));
+                                                        }
+                                                    }}
+                                                    className="text-xs px-3 py-1 bg-red-900/30 text-red-400 border border-red-800 rounded hover:bg-red-900/50"
+                                                >
+                                                    使う
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

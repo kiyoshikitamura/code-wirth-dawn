@@ -2,31 +2,35 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseService } from '@/lib/supabase-service';
 import { ItemDB, UserProfileDB } from '@/types/game';
-import { DEMO_USER_ID } from '@/utils/constants';
 
-// Helper to get user profile (Prototype: try to find by ID if passed, else first or demo)
+// Helper to get user profile 
 async function getUserProfile(req: Request) {
-    let targetUserId = DEMO_USER_ID;
+    let targetUserId: string | null = null;
 
-    // Attempt to get user from Auth (if token passed)
     const authHeader = req.headers.get('authorization');
-    console.log(`[Shop] Auth Header: ${authHeader ? (authHeader.substring(0, 10) + '...') : 'Missing'}`);
+    const xUserId = req.headers.get('x-user-id');
 
     if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (error) {
             console.error("Auth User Error:", error.message);
-            throw new Error("Authentication failed: " + error.message);
-        }
-        if (user) {
-            console.log(`[Shop] Resolved User via Auth: ${user.id}`);
+            // Don't throw immediately, fall back to x-user-id if available
+            if (xUserId) {
+                targetUserId = xUserId;
+            } else {
+                throw new Error("Authentication failed: " + error.message);
+            }
+        } else if (user) {
             targetUserId = user.id;
-        } else {
-            throw new Error("Authentication failed: User not found");
+            if (xUserId && xUserId !== targetUserId) {
+                targetUserId = xUserId;
+            }
         }
+    } else if (xUserId) {
+        targetUserId = xUserId;
     } else {
-        console.warn("[Shop] No Auth Header, using DEMO_USER_ID");
+        throw new Error("Authentication failed: No token provided");
     }
 
     const { data: profile } = await supabase
@@ -57,6 +61,7 @@ export async function GET(req: Request) {
         let prosperityLevel = 3;
         let rulingNation = 'Neutral';
         let locationName = 'Unknown';
+        let isEmbargoed = false;
 
         if (profile.current_location_id) {
             const { data: loc } = await supabase.from('locations').select('*').eq('id', profile.current_location_id).single();
@@ -65,7 +70,13 @@ export async function GET(req: Request) {
                 rulingNation = loc.ruling_nation_id || 'Neutral';
                 locationName = loc.name;
             }
+
+            const { data: repData } = await supabase.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', profile.current_location_id).maybeSingle();
+            if (repData && (repData.reputation_score || 0) < 0) {
+                isEmbargoed = true;
+            }
         }
+
 
         // 2. Inflation Logic
         const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
@@ -93,7 +104,12 @@ export async function GET(req: Request) {
             if (item.is_black_market) {
                 const isRuined = prosperityLevel === 1;
                 const isDark = (profile.alignment?.evil || 0) > 20;
-                if (!isRuined && !isDark) return false;
+                if (item.slug === 'item_elixir_forbidden') {
+                    // Elixir is ONLY available in ruined locations (prosperity 1), strictly.
+                    if (!isRuined) return false;
+                } else {
+                    if (!isRuined && !isDark) return false;
+                }
             }
             return true;
         }).map(item => {
@@ -113,7 +129,8 @@ export async function GET(req: Request) {
                 prosperity: prosperityLevel,
                 inflation: priceMultiplier,
                 ruling_nation: rulingNation,
-                is_newbie_protected: isNewbie
+                is_newbie_protected: isNewbie,
+                is_embargoed: isEmbargoed
             }
         });
     } catch (e: any) {
@@ -128,10 +145,11 @@ export async function POST(req: Request) {
         const profile = await getUserProfile(req);
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        if (profile.id === DEMO_USER_ID) {
-            const authHeader = req.headers.get('authorization');
-            if (!authHeader || authHeader.indexOf('Bearer') === -1) {
-                return NextResponse.json({ error: "Login required to purchase." }, { status: 401 });
+        // 0.5 Check Embargo Mode
+        if (profile.current_location_id) {
+            const { data: repData } = await supabase.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', profile.current_location_id).maybeSingle();
+            if (repData && (repData.reputation_score || 0) < 0) {
+                return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。' }, { status: 403 });
             }
         }
 

@@ -6,7 +6,7 @@ import { LifeCycleService } from '@/services/lifeCycleService';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost } = body;
+        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids } = body;
 
         const { user_id } = body; // Expect user_id from client
 
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
         if (profileId) {
             // Apply Inheritance if profile exists (Reincarnation flow)
-            const result = await lifeSync.processInheritance(profileId, { ...updates, gold: gold || 1000 });
+            const result = await lifeSync.processInheritance(profileId, { ...updates, gold: gold || 1000 }, heirloom_item_ids);
             // result contains user data modified by inheritance logic
             if (result) {
                 updates = { ...updates, ...result };

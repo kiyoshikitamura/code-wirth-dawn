@@ -1,30 +1,35 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseService } from '@/lib/supabase-service';
-import { DEMO_USER_ID } from '@/utils/constants';
 
-// Reuse exact same auth pattern as shop/route.ts POST (which works)
+// Helper to get user profile
 async function getUserProfile(req: Request) {
-    let targetUserId = DEMO_USER_ID;
+    let targetUserId: string | null = null;
 
     const authHeader = req.headers.get('authorization');
-    console.log(`[Sell] Auth Header: ${authHeader ? (authHeader.substring(0, 10) + '...') : 'Missing'}`);
+    const xUserId = req.headers.get('x-user-id');
 
     if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (error) {
-            console.error("[Sell] Auth User Error:", error.message);
-            throw new Error("Authentication failed: " + error.message);
-        }
-        if (user) {
-            console.log(`[Sell] Resolved User via Auth: ${user.id}`);
-            targetUserId = user.id;
+        if (error || !user) {
+            console.error("[Sell] Auth User Error:", error?.message);
+            // Fall back to x-user-id if available
+            if (xUserId) {
+                targetUserId = xUserId;
+            } else {
+                throw new Error("Authentication failed: " + (error?.message || 'User not found'));
+            }
         } else {
-            throw new Error("Authentication failed: User not found");
+            targetUserId = user.id;
+            if (xUserId && xUserId !== targetUserId) {
+                targetUserId = xUserId;
+            }
         }
+    } else if (xUserId) {
+        targetUserId = xUserId;
     } else {
-        console.warn("[Sell] No Auth Header, using DEMO_USER_ID");
+        throw new Error("Authentication failed: No token provided");
     }
 
     const { data: profile } = await supabase
@@ -61,7 +66,7 @@ export async function POST(req: Request) {
             .from('inventory')
             .select('*, items(*)')
             .eq('user_id', profile.id)
-            .eq('item_id', Number(item_id))
+            .eq('item_id', item_id)
             .limit(1);
 
         const invItem = invItems?.[0];
@@ -76,38 +81,79 @@ export async function POST(req: Request) {
 
         // 3. Calculate sell price (base_price / 2)
         const item = invItem.items as any;
-        const sellPrice = Math.floor((item?.base_price || 0) / 2);
+        const isUgc = invItem.is_ugc === true;
+        const sellPrice = isUgc ? 1 : Math.floor((item?.base_price || 0) / 2);
         const totalSellValue = sellPrice * quantity;
         console.log(`[Sell] Item: ${item?.name}, base_price: ${item?.base_price}, sellPrice: ${sellPrice}, qty: ${quantity}, total: ${totalSellValue}`);
 
-        // 4. Update inventory (only sell requested quantity from THIS specific row)
+        // Check for Betrayal
+        let isBetrayal = false;
+        if ((item?.type === 'key_item' || item?.type === 'trade_good' || item?.type === 'consumable') && profile.current_quest_id) {
+            // Note: Also checking 'consumable' if it happens to be strictly typed there but acts as a quest item.
+            const { data: quest } = await supabaseService
+                .from('scenarios')
+                .select('*')
+                .eq('id', profile.current_quest_id)
+                .single();
 
-        if (invItem.quantity > quantity) {
-            // Reduce quantity
-            const { error: updateError } = await supabaseService
-                .from('inventory')
-                .update({ quantity: invItem.quantity - quantity })
-                .eq('id', invItem.id);
-            if (updateError) throw updateError;
-            console.log(`[Sell] Reduced qty from ${invItem.quantity} to ${invItem.quantity - quantity}`);
-        } else {
-            // Delete the row (selling all remaining)
-            const { error: deleteError } = await supabaseService
-                .from('inventory')
-                .delete()
-                .eq('id', invItem.id);
-            if (deleteError) throw deleteError;
-            console.log(`[Sell] Deleted inventory row ${invItem.id}`);
+            if (quest) {
+                const qStr = JSON.stringify(quest);
+                if (qStr.includes(`"item_id":${item_id}`) || qStr.includes(`"item_id":"${item_id}"`) || quest.requirements?.has_item == item_id) {
+                    isBetrayal = true;
+                    console.log(`[Sell] Betrayal detected for item ${item_id} in quest ${profile.current_quest_id}`);
+                }
+            }
         }
 
-        // 5. Add gold to user profile
+        // 4. Update inventory (only sell requested quantity from THIS specific row)
+        if (invItem.quantity > quantity) {
+            const { error: updateError } = await supabaseService.from('inventory').update({ quantity: invItem.quantity - quantity }).eq('id', invItem.id);
+            if (updateError) throw updateError;
+        } else {
+            const { error: deleteError } = await supabaseService.from('inventory').delete().eq('id', invItem.id);
+            if (deleteError) throw deleteError;
+        }
+
+        // Betrayal Penalty
+        if (isBetrayal && profile.current_location_id) {
+            const { data: repData } = await supabaseService
+                .from('reputations')
+                .select('*')
+                .eq('user_id', profile.id)
+                .eq('location_id', profile.current_location_id)
+                .maybeSingle();
+
+            if (repData) {
+                await supabaseService
+                    .from('reputations')
+                    .update({ reputation_score: (repData.reputation_score || 0) - 50 })
+                    .eq('id', repData.id);
+            }
+        }
+
+        // 5. Add gold to user profile, and clear quest if betrayal
+        const updateData: any = { gold: profile.gold + totalSellValue };
+        if (isBetrayal) {
+            updateData.current_quest_id = null;
+            updateData.current_quest_state = null;
+        }
+
         const { error: goldError } = await supabaseService
             .from('user_profiles')
-            .update({ gold: profile.gold + totalSellValue })
+            .update(updateData)
             .eq('id', profile.id);
 
         if (goldError) throw goldError;
-        console.log(`[Sell] Gold updated: ${profile.gold} -> ${profile.gold + totalSellValue}`);
+
+        if (isBetrayal) {
+            return NextResponse.json({
+                success: true,
+                trigger_fail: true,
+                message: "裏切り",
+                sold_price: totalSellValue,
+                new_gold: profile.gold + totalSellValue
+            });
+        }
 
         return NextResponse.json({
             success: true,

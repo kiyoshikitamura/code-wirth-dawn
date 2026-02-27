@@ -35,7 +35,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     const [showingTravel, setShowingTravel] = useState<{ dest: string, slug?: string, days: number, next: string, nextBattle?: string, encounterRate?: number, status: 'confirm' | 'animating' } | null>(null);
 
     // グローバル状態へのアクセス
-    const { userProfile, worldState, battleState } = useGameStore();
+    const { userProfile, worldState, battleState, inventory } = useGameStore();
     const questState = useQuestState();
     const router = useRouter();
 
@@ -120,6 +120,73 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                     setCurrentNodeId(passed ? successChoice.next : failChoice.next);
                 }
             }
+            else if (currentNode.type === 'check_possession') {
+                const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
+                const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
+
+                console.log("[DEBUG check_possession] Required:", requiredItemId, "Qty:", reqQty);
+                console.log("[DEBUG check_possession] Inventory:", inventory?.map(i => ({ item_id: i.item_id, qty: i.quantity, name: i.name })));
+
+                const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
+
+                console.log("[DEBUG check_possession] hasItem:", hasItem);
+
+                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+
+                setCurrentNodeId(hasItem ? successNode : failNode);
+            }
+            else if (currentNode.type === 'check_delivery') {
+                const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
+                const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
+                const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
+
+                console.log("[DEBUG check_delivery] Required:", requiredItemId, "Qty:", reqQty);
+                console.log("[DEBUG check_delivery] Inventory:", inventory?.map(i => ({ item_id: i.item_id, qty: i.quantity, name: i.name })));
+
+                const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
+
+                console.log("[DEBUG check_delivery] hasItem:", hasItem);
+
+                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+
+                if (hasItem) {
+                    if (removeOnSuccess) {
+                        try {
+                            const { data: { session }, error } = await supabase.auth.getSession();
+                            const token = session?.access_token;
+                            const userId = useGameStore.getState().userProfile?.id;
+
+                            console.log("[DEBUG check_delivery] Token for consume:", token ? "Present" : "Missing", "Session Error:", error, "Session:", session);
+
+                            const res = await fetch('/api/inventory/consume', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                    ...(userId ? { 'x-user-id': userId } : {})
+                                },
+                                body: JSON.stringify({ item_id: requiredItemId, quantity: reqQty })
+                            });
+                            if (res.ok) {
+                                await useGameStore.getState().fetchInventory();
+                                if (successNode) setCurrentNodeId(successNode);
+                            } else {
+                                console.error("Failed to consume item");
+                                if (failNode) setCurrentNodeId(failNode);
+                            }
+                        } catch (e) {
+                            console.error("Item consume error:", e);
+                            if (failNode) setCurrentNodeId(failNode);
+                        }
+                    } else {
+                        if (successNode) setCurrentNodeId(successNode);
+                    }
+                } else {
+                    if (failNode) setCurrentNodeId(failNode);
+                }
+            }
             // ...
             else if (currentNode.action === 'heal_partial') {
                 // Heal 50%
@@ -143,10 +210,16 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                     // ... (既存の解決ロジックを維持)
                     const resolveLocation = async () => {
                         try {
-                            // 見積もりAPIの呼び出し
+                            const { data: { session } } = await supabase.auth.getSession();
+                            const token = session?.access_token;
+                            const userId = useGameStore.getState().userProfile?.id;
                             const res = await fetch('/api/travel/cost', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                    ...(userId ? { 'x-user-id': userId } : {})
+                                },
                                 body: JSON.stringify({ target_location_slug: targetSlug })
                             });
 
@@ -232,18 +305,26 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             return;
         }
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const userId = useGameStore.getState().userProfile?.id;
             const res = await fetch('/api/shop/purchase', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userId ? { 'x-user-id': userId } : {})
+                },
                 body: JSON.stringify({ item_id: itemId, price })
             });
             if (res.ok) {
                 const data = await res.json();
                 alert(`${itemName} を購入しました！`);
                 useGameStore.getState().fetchUserProfile(); // Refresh gold
+                useGameStore.getState().fetchInventory();   // Refresh inventory
             } else {
                 const err = await res.json();
-                alert(`購入失敗: ${err.error}`);
+                alert(`購入失敗: ${err.error || 'Unknown error'}`);
             }
         } catch (e) {
             console.error("Purchase error", e);
@@ -569,9 +650,16 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                     setTimeout(async () => {
                                         // 1. Execute Server Move
                                         try {
+                                            const { data: { session } } = await supabase.auth.getSession();
+                                            const token = session?.access_token;
+                                            const userId = useGameStore.getState().userProfile?.id;
                                             const res = await fetch('/api/move', {
                                                 method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                                    ...(userId ? { 'x-user-id': userId } : {})
+                                                },
                                                 body: JSON.stringify({
                                                     target_location_name: showingTravel.dest,
                                                     target_location_slug: showingTravel.slug

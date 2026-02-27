@@ -105,27 +105,13 @@ export async function GET(req: Request) {
 
             const reqs = q.requirements || {};
 
-            // min_level
-            if (reqs.min_level && (user.level || 1) < reqs.min_level) return false;
+            // We no longer strictly filter by min_level or min_reputation here,
+            // because the UI needs to display them as greyed out with red warnings.
+            // min_level: previously returned false
+            // min_reputation: previously returned false
 
-            // min_vitality
-            if (reqs.min_vitality && (user.vitality || 0) < reqs.min_vitality) return false;
-
-            // has_item: check if user has the item
+            // has_item: check if user has the item (keep this or UI filter? Usually quests related to items shouldn't appear at all if they don't have it, or maybe they should. Let's keep strict filter for items for now to avoid spoilers)
             if (reqs.has_item && !ownedItemIds.has(String(reqs.has_item))) return false;
-
-            // min_reputation: { "loc_id": threshold }
-            if (reqs.min_reputation) {
-                if (typeof reqs.min_reputation === 'object') {
-                    for (const [locId, threshold] of Object.entries(reqs.min_reputation)) {
-                        if ((repMap[locId] || 0) < (threshold as number)) return false;
-                    }
-                } else if (typeof reqs.min_reputation === 'number') {
-                    // Global reputation check (sum of all)
-                    const totalRep = Object.values(repMap).reduce((a, b) => a + b, 0);
-                    if (totalRep < reqs.min_reputation) return false;
-                }
-            }
 
             // completed_quest: check quest completion history
             if (reqs.completed_quest) {
@@ -136,12 +122,12 @@ export async function GET(req: Request) {
             // nation_id: check if quest's nation matches current location's nation
             // Allow through for now (location-based filtering not strict yet)
 
-            // align_evil / min_align_chaos / min_align_order
+            // align_evil / min_align_chaos / min_align_order (keep strict for alignment based hidden quests)
             if (reqs.align_evil && !(user.evil_pts > user.justice_pts)) return false;
             if (reqs.min_align_chaos && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
             if (reqs.min_align_order && (user.order_pts || 0) < reqs.min_align_order) return false;
 
-            // max_prosperity
+            // max_prosperity / min_prosperity (keep strict for world state based appearance)
             if (reqs.max_prosperity && currentProsperity > reqs.max_prosperity) return false;
             if (reqs.min_prosperity && currentProsperity < reqs.min_prosperity) return false;
 

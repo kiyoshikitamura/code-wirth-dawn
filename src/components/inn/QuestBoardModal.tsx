@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, X, Scroll } from 'lucide-react';
-import { Scenario } from '@/types/game';
+import { Scenario, UserProfile, Reputation } from '@/types/game';
 
 interface QuestBoardModalProps {
     isOpen: boolean;
@@ -8,11 +8,12 @@ interface QuestBoardModalProps {
     normalQuests: Scenario[];
     specialQuests: Scenario[];
     loading: boolean;
-    userLevel: number;
+    userProfile: UserProfile | null;
+    reputation: Reputation | null;
     onSelect: (scenario: Scenario) => void;
 }
 
-export default function QuestBoardModal({ isOpen, onClose, normalQuests, specialQuests, loading, userLevel, onSelect }: QuestBoardModalProps) {
+export default function QuestBoardModal({ isOpen, onClose, normalQuests, specialQuests, loading, userProfile, reputation, onSelect }: QuestBoardModalProps) {
     const [activeTab, setActiveTab] = useState<'special' | 'normal'>('normal');
 
     if (!isOpen) return null;
@@ -37,8 +38,8 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
                     <button
                         onClick={() => setActiveTab('normal')}
                         className={`flex-1 py-2 font-bold font-serif transition-colors ${activeTab === 'normal'
-                                ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner'
-                                : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'
+                            ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner'
+                            : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'
                             }`}
                     >
                         通常依頼
@@ -46,8 +47,8 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
                     <button
                         onClick={() => setActiveTab('special')}
                         className={`flex-1 py-2 font-bold font-serif transition-colors flex items-center justify-center gap-2 ${activeTab === 'special'
-                                ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner'
-                                : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'
+                            ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner'
+                            : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'
                             }`}
                     >
                         特別依頼
@@ -74,7 +75,8 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
                                     </div>
                                     <QuestList
                                         quests={specialQuests}
-                                        userLevel={userLevel}
+                                        userProfile={userProfile}
+                                        reputation={reputation}
                                         onSelect={onSelect}
                                         emptyMsg="現在、あなたへの特別依頼はありません。"
                                     />
@@ -87,7 +89,8 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
                                     </div>
                                     <QuestList
                                         quests={normalQuests}
-                                        userLevel={userLevel}
+                                        userProfile={userProfile}
+                                        reputation={reputation}
                                         onSelect={onSelect}
                                         emptyMsg="現在、手頃な依頼はありません。"
                                     />
@@ -101,24 +104,43 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
     );
 }
 
-function QuestList({ quests, userLevel, onSelect, emptyMsg }: { quests: Scenario[], userLevel: number, onSelect: (s: Scenario) => void, emptyMsg: string }) {
+function QuestList({ quests, userProfile, reputation, onSelect, emptyMsg }: { quests: Scenario[], userProfile: UserProfile | null, reputation: Reputation | null, onSelect: (s: Scenario) => void, emptyMsg: string }) {
     if (quests.length === 0) {
         return <div className="text-center py-12 text-[#8b5a2b]/70 font-serif">{emptyMsg}</div>;
     }
 
+    const userLevel = userProfile?.level || 1;
+    const currentLocationId = userProfile?.current_location_id || '';
+    const repScore = reputation?.score || 0;
+
     return (
         <div className="grid grid-cols-1 gap-4">
             {quests.map((s) => {
-                const recLevel = s.rec_level || 1;
-                const isRisky = recLevel > userLevel;
+                const recLevel = s.rec_level || s.requirements?.min_level || 1;
                 const isUrgent = s.is_urgent;
+
+                // Reputation Logic
+                let requiredRep = 0;
+                if (typeof s.requirements?.min_reputation === 'number') {
+                    requiredRep = s.requirements.min_reputation as number;
+                } else if (s.requirements?.min_reputation && typeof s.requirements.min_reputation === 'object' && currentLocationId) {
+                    requiredRep = (s.requirements.min_reputation as any)[currentLocationId] || 0;
+                }
+
+                const unmetConditions: string[] = [];
+                if (recLevel > userLevel) unmetConditions.push(`要求レベル: ${recLevel}`);
+                if (requiredRep > repScore) unmetConditions.push(`要求名声: ${requiredRep}`);
+                if (s.location_id && s.location_id !== 'all' && s.location_id !== currentLocationId) unmetConditions.push(`異なる地域`);
+
+                const canAccept = unmetConditions.length === 0;
 
                 return (
                     <div key={s.id}
-                        className={`group relative p-4 border border-[#c2b280] shadow-sm transition-all hover:shadow-md cursor-pointer
-                        ${isUrgent ? 'bg-red-900/5 border-red-900/30' : 'bg-[#fdfbf7] hover:bg-[#fffefc]'}
+                        className={`group relative p-4 border shadow-sm transition-all
+                        ${canAccept ? 'cursor-pointer hover:shadow-md' : 'cursor-not-allowed opacity-60 bg-gray-300 border-gray-400 grayscale'}
+                        ${canAccept ? (isUrgent ? 'bg-red-900/5 border-red-900/30' : 'bg-[#fdfbf7] border-[#c2b280] hover:bg-[#fffefc]') : ''}
                         `}
-                        onClick={() => onSelect(s)}
+                        onClick={() => { if (canAccept) onSelect(s); }}
                     >
                         <div className="flex justify-between items-start mb-2">
                             <div className="flex flex-col">
@@ -127,26 +149,32 @@ function QuestList({ quests, userLevel, onSelect, emptyMsg }: { quests: Scenario
                                     {s.title}
                                 </h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isRisky ? 'bg-red-600 text-white' : 'bg-[#a38b6b] text-white'}`}>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${!canAccept ? 'bg-gray-500 text-white' : 'bg-[#a38b6b] text-white'}`}>
                                         Lv.{recLevel}
                                     </span>
-                                    {isRisky && (
-                                        <span className="text-red-600 text-xs font-bold flex items-center gap-1">
-                                            <AlertTriangle className="w-3 h-3" /> 危険
-                                        </span>
-                                    )}
                                 </div>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                                <span className="bg-[#8b5a2b] text-[#e3d5b8] text-xs px-2 py-0.5 rounded ml-2 whitespace-nowrap font-mono">
+                                <span className={`text-xs px-2 py-0.5 rounded ml-2 whitespace-nowrap font-mono ${!canAccept ? 'bg-gray-500 text-white' : 'bg-[#8b5a2b] text-[#e3d5b8]'}`}>
                                     {s.reward_gold} G
                                 </span>
                             </div>
                         </div>
 
-                        <p className="text-[#5d4037] text-sm mb-3 line-clamp-2 leading-relaxed">
+                        <p className={`text-sm mb-3 line-clamp-2 leading-relaxed ${!canAccept ? 'text-gray-700' : 'text-[#5d4037]'}`}>
                             {s.description}
                         </p>
+
+                        {/* Unmet conditions warning */}
+                        {!canAccept && (
+                            <div className="text-red-600 text-xs font-bold flex flex-wrap gap-2 mb-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                <span>受注不可: </span>
+                                {unmetConditions.map((cond, idx) => (
+                                    <span key={idx} className="border-b border-red-400">{cond}</span>
+                                ))}
+                            </div>
+                        )}
 
                         <div className="flex items-center justify-between mt-4">
                             <div className="flex items-center gap-3 text-xs text-[#5d4037]/70">
@@ -162,14 +190,18 @@ function QuestList({ quests, userLevel, onSelect, emptyMsg }: { quests: Scenario
                             </div>
 
                             <button
-                                className={`text-xs px-4 py-2 rounded shadow transition-all transform active:scale-95 font-bold tracking-wide
-                                ${isRisky
-                                        ? 'bg-red-800 text-white hover:bg-red-700'
-                                        : 'bg-[#3e2723] text-gold-500 hover:bg-[#4e342e]'
+                                disabled={!canAccept}
+                                className={`text-xs px-4 py-2 rounded shadow transition-all transform tracking-wide font-bold
+                                ${canAccept
+                                        ? 'bg-[#3e2723] text-gold-500 hover:bg-[#4e342e] active:scale-95'
+                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                     }`}
-                                onClick={(e) => { e.stopPropagation(); onSelect(s); }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (canAccept) onSelect(s);
+                                }}
                             >
-                                {isRisky ? '危険を冒す' : '受領する'}
+                                受領する
                             </button>
                         </div>
                     </div>

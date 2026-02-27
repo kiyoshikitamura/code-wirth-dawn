@@ -6,7 +6,7 @@ import { LifeCycleService } from '@/services/lifeCycleService';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { cause, heirloom_item_id } = body; // v10.1: 'dead' | 'voluntary', heirloom selection
+        const { cause, heirloom_item_id, heirloom_item_ids, paid_gold_for_slots } = body; // v10.1: 'dead' | 'voluntary', heirloom selection
 
         // Authentication & Profile Fetch (Active Profile)
         const { data: profiles, error: fetchError } = await supabase
@@ -23,8 +23,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Character is already dead/retired' }, { status: 400 });
         }
 
-        // Delegate to LifeCycleService
         const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+
+        // Paid Heritage Slots Rule (v7.1 / v10.1)
+        if (paid_gold_for_slots && typeof paid_gold_for_slots === 'number' && paid_gold_for_slots > 0) {
+            if (profile.gold < paid_gold_for_slots) {
+                return NextResponse.json({ error: 'Not enough gold to purchase premium inheritance slots' }, { status: 400 });
+            }
+            // Deduct gold immediately before snapshot
+            await client.from('user_profiles').update({ gold: profile.gold - paid_gold_for_slots }).eq('id', profile.id);
+        }
+
+        // Handle arrays backwards compatible
+        let finalHeirlooms = heirloom_item_ids || [];
+        if (heirloom_item_id && finalHeirlooms.length === 0) finalHeirlooms.push(heirloom_item_id);
+
+        // Delegate to LifeCycleService
         const lifeSync = new LifeCycleService(client);
 
         // Use 'voluntary' if passed, otherwise default logic in service
@@ -39,7 +53,8 @@ export async function POST(req: Request) {
         return NextResponse.json({
             success: true,
             message: 'Character retired successfully.',
-            heirloom_item_id: heirloom_item_id || null, // v10.1: stored for inheritance
+            heirloom_item_id: finalHeirlooms[0] || null, // fallback for older clients
+            heirloom_item_ids: finalHeirlooms,
         });
 
     } catch (e: any) {

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { DEMO_USER_ID } from '@/utils/constants';
 
 export async function POST(req: Request) {
     try {
@@ -11,9 +10,37 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Target location slug is required' }, { status: 400 });
         }
 
-        // 1. Identify User (Favor Demo User or first profile)
-        const { data: profiles } = await supabase.from('user_profiles').select('id, current_location_id').limit(2);
-        const user = profiles?.find(p => p.id === DEMO_USER_ID) || profiles?.[0];
+        // 1. Authenticate User
+        let userId: string | null = null;
+        const authHeader = req.headers.get('authorization');
+        const xUserId = req.headers.get('x-user-id');
+
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (error || !user) {
+                if (xUserId) {
+                    userId = xUserId;
+                } else {
+                    return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+                }
+            } else {
+                userId = user.id;
+                if (xUserId && xUserId !== userId) {
+                    userId = xUserId;
+                }
+            }
+        } else if (xUserId) {
+            userId = xUserId;
+        } else {
+            return NextResponse.json({ error: "Authentication required for travel cost" }, { status: 401 });
+        }
+
+        const { data: user } = await supabase
+            .from('user_profiles')
+            .select('id, current_location_id')
+            .eq('id', userId)
+            .single();
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 

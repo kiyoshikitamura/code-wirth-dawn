@@ -93,7 +93,7 @@ export class ShadowService {
                         level: d.final_level,
                         job_class: 'Heroic Spirit',
                         origin_type: 'shadow_heroic',
-                        contract_fee: (d.final_level * 200),
+                        contract_fee: (d.final_level * 1000), // Massive Gold Sink for Heroic
                         stats: d.stats,
                         signature_deck_preview: [],
                         is_subscriber: true
@@ -156,12 +156,26 @@ export class ShadowService {
         // 1. Fetch Hirer Profile
         const { data: hirer } = await this.supabase
             .from('user_profiles')
-            .select('gold')
+            .select('gold, current_location_id')
             .eq('id', hirerId)
             .single();
 
         if (!hirer || hirer.gold < shadow.contract_fee) {
             return { success: false, error: 'Not enough gold' };
+        }
+
+        // 1.2 Check Embargo Penalty (Rep < 0)
+        if (hirer.current_location_id) {
+            const { data: repData } = await this.supabase
+                .from('reputations')
+                .select('reputation_score')
+                .eq('user_id', hirerId)
+                .eq('location_id', hirer.current_location_id)
+                .maybeSingle();
+
+            if (repData && (repData.reputation_score || 0) < 0) {
+                return { success: false, error: '出禁状態: この拠点での名声が低すぎるため、誰も契約に応じてくれません。' };
+            }
         }
 
         // 1.5 Check Party Size (Max 4)
