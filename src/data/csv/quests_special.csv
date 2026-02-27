@@ -12,4 +12,5 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 5041,qst_dragon_slaying,邪竜討伐,5,5,3,"{""event_trigger"": ""dragon_raid""}",true,,"Item:3050|Rep:100",イベント: 邪竜。
 5044,qst_cursed_armor_seal,呪いの鎧の封印,4,4,2,"{""min_level"": 18, ""nation_id"": ""loc_holy_empire""}",true,,"NPC:4046",聖帝国: 呪いの鎧。
 5050,qst_final_stand,崩壊都市の最終防衛線,5,5,1,"{""max_prosperity"": 1, ""min_align_order"": 20}",true,,"Rep:100|Order:20",共通(崩壊): 復興へ。
+5998,qst_test_prerequisite,前提条件テストクエスト,1,1,1,"{""completed_quest"": 5999}",false,,"Gold:500",テスト: qst_test_deliveryクリアで出現
 5999,qst_test_delivery,裏切りと納品テスト,1,1,1,"{}",false,,"Gold:1000",テスト用納品クエスト

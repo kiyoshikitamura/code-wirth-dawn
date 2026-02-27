@@ -81,6 +81,14 @@ export async function GET(req: Request) {
             repMap[rep.location_id] = rep.reputation_score || 0;
         }
 
+        // 4.5 Fetch User Completed Quests (for prerequisites)
+        const { data: completedQuests } = await supabase
+            .from('user_completed_quests')
+            .select('scenario_id')
+            .eq('user_id', userId);
+
+        const completedQuestIds = new Set((completedQuests || []).map((q: any) => String(q.scenario_id)));
+
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabase
             .from('scenarios')
@@ -115,8 +123,10 @@ export async function GET(req: Request) {
 
             // completed_quest: check quest completion history
             if (reqs.completed_quest) {
-                // TODO: Implement quest completion history lookup
-                // For now, skip this check (allow quest to appear)
+                const reqId = String(reqs.completed_quest);
+                if (!completedQuestIds.has(reqId)) {
+                    return false;
+                }
             }
 
             // nation_id: check if quest's nation matches current location's nation

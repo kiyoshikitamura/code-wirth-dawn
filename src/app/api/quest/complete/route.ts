@@ -272,12 +272,23 @@ export async function POST(req: Request) {
             }
         }
 
-        // 9. World Impact (Simplified)
-        if (result === 'success' && quest.impact) {
-            // ... existing impact logic if needed, or move to service ...
-            // For now, keeping as is or simplifying. 
-            // Logic in previous file was commented out mostly or simple update.
-            // We'll leave it out for this refactor to focus on stability unless urgent.
+        // 9. World Impact & Quest Completion History
+        if (result === 'success') {
+            // Save quest completion history
+            // Use onConflict to ignore if already completed (though we shouldn't get here if they couldn't start it again,
+            // but for repeatable quests, we might just update completed_at or do nothing)
+            const { error: historyError } = await supabase
+                .from('user_completed_quests')
+                .upsert({
+                    user_id: user_id,
+                    scenario_id: quest_id
+                }, { onConflict: 'user_id,scenario_id' });
+
+            if (historyError) {
+                console.error("Failed to save quest completion history:", historyError);
+            }
+
+            // (Simplified World Impact logic was here, kept omitted as in original)
         }
 
         // Calculate changes for UI

@@ -153,8 +153,8 @@ flowchart TD
 
 ---
 
-## 7. クエスト完了処理 (Quest Complete API)
-<!-- v11.0: POST /api/quest/complete の実装を反映 -->
+## 7. クエスト完了処理 & 履歴管理 (Quest Complete & History)
+<!-- v11.0: POST /api/quest/complete および clear history の実装を反映 -->
 
 **API**: `POST /api/quest/complete`
 
@@ -164,4 +164,8 @@ flowchart TD
 3. **加齢処理**: `processAging()` — 経過日数に基づく年齢・老化計算（詳細: v9仕様）。
 4. **EXP加算 & レベルアップ**: `calculateGrowth()` — 成長計算（詳細: v8仕様）。
 5. **報酬付与**: `quest.rewards` の金額・EXP・アイテムをプロフィールに反映。
-6. **Vitality枯渇チェック**: Vitality 0 到達時は引退/死亡フラグ。
+6. **クリア履歴の保存**: `user_completed_quests` テーブルに `scenario_id` を記録し、以降の前提条件として利用可能にする。
+7. **Vitality枯渇チェック**: Vitality 0 到達時は引退/死亡フラグ。
+
+### 7.2 クエスト解放条件 (Prerequisites)
+`requirements.completed_quest` に「前提となるクエストID（`scenario_id`）」を指定することで、対象クエストをクリア済みの場合のみ新たなクエストが受注リストに表示される（または受注可能になる）。

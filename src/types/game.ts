@@ -203,6 +203,13 @@ export interface UserProfileDB {
   // ...
 }
 
+export interface UserCompletedQuestDB {
+  id: string; // UUID
+  user_id: string; // UUID
+  scenario_id: number; // BIGINT
+  completed_at?: string;
+}
+
 export interface ScenarioCondition {
   locations?: string[]; // Location IDs or Names where this occurs
   min_level?: number;
