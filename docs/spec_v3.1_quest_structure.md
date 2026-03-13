@@ -33,7 +33,9 @@ CREATE TABLE scenarios (
   days_success INT DEFAULT 1,
   days_failure INT DEFAULT 1,
   flow JSONB,                          -- シナリオノードの木構造
-  description TEXT,
+  short_description TEXT,              -- クエスト一覧ボード用テキスト (最大40文字程度)
+  full_description TEXT,               -- 詳細モーダル用長文フレーバーテキスト
+  status TEXT DEFAULT 'published',     -- 'draft' | 'pending_review' | 'published' | 'unpublished'
   required_level INT DEFAULT 1,
   required_reputation INT DEFAULT 0
 );
@@ -46,9 +48,10 @@ CREATE TABLE scenarios (
 ```typescript
 interface ScenarioNode {
   id: string;
-  type: 'text' | 'choice' | 'battle' | 'shop' | 'travel' | 'check_status' | 'reward' | 'end';
+  type: 'text' | 'choice' | 'battle' | 'shop' | 'travel' | 'check_status' | 'check_equipped' | 'camp' | 'reward' | 'end';
   text?: string;
   speaker?: string;
+  speaker_image_url?: string;
   background?: string;
   choices?: { label: string; next: string; condition?: any }[];
   enemy_slug?: string;
@@ -86,7 +89,7 @@ class QuestService {
 }
 ```
 
-> **Note (v11.1)**: 現在の実装では、APIは制限なく該当拠点のクエストをクライアントに返し、フロントエンド（`QuestBoardModal.tsx`）にて `required_level` や `required_reputation` による判定を行っています。条件未達のクエストをグレーアウトし、不足条件を赤字表示する形で実装されています。
+> **Note (v12.0)**: `rec_level` / `min_reputation` の条件判定はAPIサーバー側（`/api/location/quests`）で行い、**条件未達のクエストはレスポンスから完全除外**します。これによりフロントエンド（`QuestBoardModal.tsx`）でのグレーアウト表示ロジックは不要となり削除されました。スペシャルクエストの `has_item` / `completed_quest` 等の厳格なフィルタリングも引き続きサーバー側で処理されます。
 
 ---
 
@@ -141,15 +144,22 @@ flowchart TD
     TypeCheck -->|shop| ShowShop["ショップ表示 → handlePurchase()"]
     TypeCheck -->|travel| ShowMap["ワールドマップ表示 → resolveLocation()"]
     TypeCheck -->|check_status| CheckStatus["ステータス判定 → 条件分岐"]
+    TypeCheck -->|check_equipped| CheckEquip["装備判定 → 条件分岐"]
+    TypeCheck -->|camp| CampNode["野営地表示（デッキ編集特例許可）"]
     TypeCheck -->|reward| GiveReward["報酬付与"]
     TypeCheck -->|end| Complete["onComplete()"]
 ```
 
 ### 6.2 travel ノードの解決
-<!-- v11.0: resolveLocation()の実装を反映 -->
+<!-- v12.0: ゴールドバリデーションと移動費用を追加 -->
 1. ワールドマップを表示し、プレイヤーに目的地を選択させる。
-2. `POST /api/travel/cost` で隣接判定と移動日数を取得。
-3. `useQuestState.travelTo(destId, days)` で内部状態を更新。
+2. `POST /api/travel/cost` で隣接判定・移動日数・移動費用を取得。
+   - レスポンス: `{ from, to, days, gold_cost }`
+3. UIに「所要日数」と「移動費用 (gold_cost G)」を表示する。
+   - プレイヤーの所持金 (`user_profiles.gold`) が `gold_cost` 未満の場合、移動ボタンを `disabled` にし警告テキストを表示。
+4. プレイヤーが移動を確定すると `POST /api/move` を呼び出す。
+   - `gold_cost` 不足の場合は API 側で HTTP 400 (`INSUFFICIENT_FUNDS`) を返しブロック。
+5. `useQuestState.travelTo(destId, days)` で内部状態を更新。
 
 ---
 

@@ -15,70 +15,87 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 <!-- v11.0: 実装のlocationsテーブルに準拠 -->
 
 **ローラン聖帝国圏**
-- 王都レガリア (regalia) — 首都
-- フェルクリンゲン (volklingen)
-- アイゼンブルク (eisenburg)
-- シャンポール (champor)
-- 国境砦エーデルシュタイン (edelstein)
+- 王都レガリア (loc_regalia) — 首都
+- 白亜の砦 (loc_white_fort)
+- 港町 (loc_port_city)
+- 国境の町 (loc_border_town)
+- 鉄の鉱山村 (loc_iron_mine)
 
 **砂塵の王国マルカンド圏**
-- 黄金都市イスハーク (ishak) — 首都
-- 交易都市サマラ (samara)
-- 砂漠のオアシス・バスラ (basra)
-- 遺跡都市ニシャプール (nishapur)
-- 自由港ダール (dar)
+- 黄金都市イスハーク (loc_meridia) — 首都
+- 市場町 (loc_market_town)
+- オアシスの村 (loc_oasis)
+- 平原の都市 (loc_plains_city)
+- 高原の村 (loc_highland)
 
 **夜刀神国圏**
-- 神都「出雲」(izumo) — 首都
-- 古城「天満」(tenma)
-- 漁港「松浦」(matsuura)
-- 温泉地「別府」(beppu)
-- 関門「壇ノ浦」(dannoura)
+- 神都「出雲」(loc_yato) — 首都
+- 門前町 (loc_temple_town)
+- 谷間の集落 (loc_valley)
+- 最果ての村 (loc_frontier_village)
+- 保養地 (loc_resort)
 
 **華龍神朝圏**
-- 天極城「龍京」(ryukyo) — 首都
-- 港町「明州」(meishu)
-- 辺境の村「雲南」(unnan)
-- 学問都市「洛陽」(rakuyo)
-- 要塞「長城」(chojo)
+- 天極城「龍京」(loc_charon) — 首都
+- 北の防衛砦 (loc_north_fort)
+- 監視哨 (loc_monitor_post)
+- 古代遺跡の町 (loc_ancient_ruins)
+- 闘技都市 (loc_coliseum)
 
 ---
 
 ## 3. 座標とマップ
 
 ### 3.1 マップ座標
-<!-- v11.0: x/yで実装（旧仕様の map_x/map_y ではない） -->
-各拠点は `x: INT`, `y: INT` のピクセル座標を持つ。`WorldMap.tsx` コンポーネントがこれに基づきSVGノードをプロット。
+<!-- v11.0: x/yで実装（相対パーセンテージ） -->
+各拠点は `x: INT`, `y: INT` のパーセンテージ座標（0%〜100%）を持つ。モバイル閲覧を前提とした背景画像（`worldmap.png`）の上に、これらに基づき絶対配置でSVGノードをプロットする。
+- **例外処理 (v12.0)**: `locations.x` または `y` が `null` の拠点は、ワールドマップの描画から完全に除外される。
 
 ### 3.2 接続描画
-`connections: TEXT[]` に隣接拠点の slug を格納。WorldMap はこのデータに基づき街道ライン（Edge）を描画。
+`connections: TEXT[]` に隣接拠点の slug を格納。Mapコンポーネントは、このデータに基づき拠点間を繋ぐSVG `<line>` （街道ライン / Edge）を描画する。
 
 ---
 
 ## 4. 隣接移動と移動コスト
 
 ### 4.1 neighbors フィールド
-<!-- v11.0: Record<string, number>の実装を反映 -->
+<!-- v12.0: gold_costを含むオブジェクト形式に変更 -->
 ```typescript
-neighbors: Record<string, number>;  // { "target_slug": days_cost }
+neighbors: Record<string, { days: number; gold_cost: number }>;  // { "target_slug": { days, gold_cost } }
 ```
 
-旧仕様の `{ days: number, type: string }` は採用せず、**移動日数のみ**を格納。
+旧仕様の `Record<string, number>` は廃止。移動日数に加え、移動費用（ゴールド）を固定値として格納。
+
+> **Note (v12.0)**: `gold_cost` には繁栄度に基づくインフレ係数を適用しない。常にマスターデータの固定値を使用する。
 
 ### 4.2 移動コスト API
-<!-- v11.0: POST /api/travel/cost の実装を反映 -->
+<!-- v12.0: gold_costをレスポンスに追加、ゴールドバリデーションを追加 -->
 ```
 POST /api/travel/cost
 Body: { target_location_slug: string }
-Response: { from: string, to: string, days: number }
+Response: { from: string, to: string, days: number, gold_cost: number }
 ```
 
 **処理フロー**:
 1. ユーザーの `current_location_id` から現在地を取得。
 2. 現在地の `neighbors` から `target_slug` をルックアップ。
-3. 一致すれば日数を返却、不一致ならエラー。
+3. 一致すれば `days` と `gold_cost` を返却、不一致ならエラー。
 
-> **Note (v11.0)**: Dijkstra等の最短経路探索は未実装。隣接拠点への直接移動のみサポート。非隣接拠点への移動はエラー (400) を返す。
+> **Note (v12.0)**: Dijkstra等の最短経路探索は**仕様から正式除外**。企画・UX方針として「プレイヤーに1拠点ずつ巡る旅情を感じてほしい」ため、隣接移動のみを正式仕様とする。非隣接拠点への移動はエラー (400) を返す。
+> **【UI/モバイル対応】**: 非隣接拠点を選択した場合、UIのボトムシート（Bottom Sheet）では移動ボタンを Disabled または非表示とし、「直接移動はできません」等の警告文を表示する。
+
+### 4.3 移動実行 API
+<!-- v12.0: ゴールドバリデーションと減算処理を追加 -->
+```
+POST /api/move
+Body: { target_location_slug: string } or { target_location_name: string }
+Response: { success: true, travel_days: number, new_age: number, ... }
+```
+
+**処理フロー**:
+1. 現在地の `neighbors` から `target_slug` をルックアップし `days` と `gold_cost` を取得。
+2. `user_profiles.gold >= gold_cost` を確認。不足の場合は HTTP 400 (`INSUFFICIENT_FUNDS`) を返却。
+3. バリデーション通過後、現在地更新・日数加算・加齢処理と同一トランザクションで `gold - gold_cost` を反映。
 
 ---
 

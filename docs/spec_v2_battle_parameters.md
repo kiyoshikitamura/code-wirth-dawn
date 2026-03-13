@@ -19,10 +19,10 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 
 | テーブル | 主要カラム | 用途 |
 |---|---|---|
-| `enemies` | slug, hp, atk, def, action_pattern (JSONB) | 敵データ定義 |
+| `enemies` | slug, hp, atk, def, action_pattern, image_url | 敵データ定義 |
 | `enemy_skills` | slug, name, value, effect_type, inject_card_id | 敵スキル定義 |
-| `cards` | id, name, type, cost_val, effect_val, ap_cost, description | カードデータ |
-| `items` | id, slug, name, type, base_price, effect_data (JSONB) | アイテム/スキル定義 |
+| `cards` | id, name, type, cost_val, effect_val, description, image_url | カードデータ |
+| `items` | id, slug, name, type, base_price, effect_data, image_url | アイテム/スキル定義 |
 
 ### 2.2 フロントエンド型定義
 <!-- v11.0: 実装のCard/Enemy型を反映 -->
@@ -46,6 +46,7 @@ export interface Card {
   discard_cost?: number;      // Noise廃棄コスト (AP)
   isInjected?: boolean;       // 環境カード (Cost 0扱い)
   cost_type?: 'mp' | 'vitality';
+  image_url?: string;
 }
 
 export interface Enemy {
@@ -61,6 +62,7 @@ export interface Enemy {
   status_effects?: { id: string; duration: number }[];
   drop_rate?: number;
   drop_item_slug?: string;
+  image_url?: string;
 }
 ```
 
@@ -77,6 +79,7 @@ export interface Enemy {
 4. **パーティカード混入**: NPC の `inject_cards` からカードIDを解決し、デッキに追加。
 5. **環境カード**: `buildBattleDeck()` 内で `worldState.status` に応じた注入処理。
 6. **初期AP**: `current_ap: 5`。
+7. **【UI/モバイル対応】SPA挙動**: バトル画面は単独のページ遷移（`/battle`）を行わず、拠点・クエスト進行画面（`quest/[id]/page.tsx`）内にネストされた状態 (`<BattleView />`) でSPAとしてシームレスに開閉される。これにより不必要な再レンダリングやロード遅延を排除した。
 
 ### BattleState 構造
 <!-- v11.0: 実装のBattleState型を反映 -->
@@ -176,8 +179,11 @@ MitigatedDamage = Max(1, EnemyATK - Player.DEF)
 - Effect: そのカードを `exhaustPile` に移動（ゲームから除外）。
 
 ### 7.3 残影の不正利用防止 (Shadow Constraints)
-- Shadow登録時、消費アイテム (`type: consumable`) の登録を禁止。
-- Shadowはスキルカード (`type: skill`) のみ使用可能。
+<!-- v12.1 (Phase 2-B): 実装済みとして詳細を追記 -->
+- Shadow（英霊）登録時、`inject_cards` に保存できるのは **`type === 'skill'` のアイテムのみ**（✅ 実装済み）。
+- `type: 'consumable'`（消費アイテム）は登録を厳密に禁止。
+- `cost_type: 'vitality'`（寿命コストカード）は `type` チェックの段階で自動除外される。
+- Free Tier ユーザーは英霊登録自体がスキップされる（`is_subscriber` フラグで制御）。
 
 ---
 

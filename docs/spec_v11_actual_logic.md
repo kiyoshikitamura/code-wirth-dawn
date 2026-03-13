@@ -12,15 +12,15 @@ Code: Wirth-Dawn Specification v11.0 (New Document)
 ## 2. 認証と API 設計パターン
 <!-- v11.0: bug fix #equip-toggle, #sell-auth に由来 / v11.1: 匿名認証+OAuthの導入 -->
 
-### 2.1 認証基盤 (v11.1 改訂)
+### 2.1 認証基盤 (spec v14 実装済み)
 シームレスなユーザー体験を実現するため、以下のモダンな認証フローを基本とする。
 
-1. **匿名ログイン (Anonymous Sign-in) をデフォルト化**
+1. **匿名ログイン (Anonymous Sign-in) をデフォルト化** ✅ 実装済み
    - タイトル画面の「はじめる」押下時、未ログイン状態であれば `supabase.auth.signInAnonymously()` を呼び出し、バックグラウンドでユーザー（UUID）を作成する。
    - `DEMO_USER_ID` という固定のゲストID概念は**廃止**し、すべてのユーザーがDB上に固有の `user_profiles` レコードを持つようにする。
-2. **ソーシャルログイン (OAuth) による連携・永続化**
+2. **ソーシャルログイン (OAuth) による連携・永続化** ✅ 実装済み
    - 既存のメールアドレス＆パスワードによるユーザー登録・ログイン画面は**廃止**する。
-   - 代わりに、設定画面等から Google などの OAuth プロバイダを用いて、現在の匿名アカウントに「アカウント連携（`supabase.auth.linkIdentity()`）」を行うことで、データ引き継ぎとアカウントの永続化を実現する。
+   - 代わりに、設定画面（`AccountSettingsModal.tsx`）から Google などの OAuth プロバイダを用いて、現在の匿名アカウントに「アカウント連携（`supabase.auth.linkIdentity()`）」を行うことで、データ引き継ぎとアカウントの永続化を実現する。
 
 ### 2.2 APIアクセス制御パターン
 | パターン | 使用箇所 | 仕組み |
@@ -101,10 +101,12 @@ graph TD
 |---|---|
 | クライアントサイドバトルエンジン | レスポンス高速化 |
 | `inventory` テーブル (UUID PK) | 拡張性 |
-| `neighbors: Record<string, number>` | 十分な表現力 |
+| `neighbors: Record<string, { days: number; gold_cost: number }>` | 固定移動費用を含む形式（v12.0更新） |
 | `BASE_HP = 80` | プレイ調整済み |
 | `EXP = 50 * Lv²` | プレイ調整済み |
 | `base_price / 2` 固定売却 | インフレ未稼働 |
+| `check_delivery` / `check_possession` ノード | 実装済み (ScenarioEngine.tsx, String()キャスト対応) |
+| 隣接移動のみ（Dijkstra 不採用） | 旅情UX方針 — プレイヤーに1拠点ずつ巡る体験を提供するため、最短経路探索は仕様から正式除外 |
 
 ### 5.B 暫定実装（将来改修予定）
 
@@ -114,9 +116,7 @@ graph TD
 | Hand Size段階的上昇 未実装 | Lv10: 4枚→Lv20: 5枚 | 中 |
 | ノイズ混入防止（初心者）未実装 | Lv<=5でノイズ無効 | 低（繁栄度未稼働） |
 | ロイヤリティ経済 未実装 | 残影雇用報酬 | 低（サブスク未実装） |
-| Dijkstra経路探索 未実装 | 最短経路計算 | 低（隣接のみで機能中） |
 | 共鳴ボーナス 未実装 | 同一拠点ATK/DEF+10% | 低 |
-| `check_delivery`/`check_possession` 未実装 | シナリオアイテム判定 | 中 |
 | Smart AI の戦略判定未実装 | 効率的スキル選択 | 低 |
 
 ---

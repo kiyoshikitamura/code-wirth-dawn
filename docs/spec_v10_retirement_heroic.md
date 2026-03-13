@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+﻿Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 # Retirement & Heroic Spirit System
 
 ## 1. 概要 (Overview)
@@ -44,10 +44,31 @@ flowchart TD
 - 統計情報（クエスト数、バトル数等）
 
 ### 3.2 英霊登録 (Heroic Shadow Registration)
-- `party_members` テーブルに `origin: 'ghost'`, `origin_type: 'shadow_heroic'` として挿入。
+<!-- v12.1 (Phase 2-B): origin_type修正・デッキバリデーション強化 -->
+<!-- v12.1: avatar_url → image_url コピーを追記 -->
+<!-- v13.0: 3段階Tier (subscription_tier) に対応、FIFO方式を追加 -->
+- `party_members` テーブルに `origin_type: 'shadow_heroic'` として挿入。
+- **権限制御**: `subscription_tier` に応じた登録上限。Free Tier はスキップする。
+
+| subscription_tier | 英霊登録上限 |
+|---|---|
+| `free` | 登録不可 (0) |
+| `basic` | 最大 3体 |
+| `premium` | 最大 10体 |
+
+- **上限到達時の処理 (FIFO方式)**: Basic / Premium ユーザーが上限に達している場合、最も古い自身の英霊（`created_at` 昇順の最初のレコード）を削除した上で新規登録を行う。
 - ステータスは**固定** (frozen): 引退時のステータスが永続。
 - AI Grade: `smart`。
-- **デッキ**: 引退時の装備カード（消耗品を除く）が `inject_cards` として保存。
+- **デッキバリデーション** ✅ **実装済み**: `inject_cards` に登録するカードは `type === 'skill'` のみ。
+  - `type: 'consumable'`（消費アイテム）は厳密に除外。
+  - `cost_type: 'vitality'` のかつてのフィルタは `type === 'skill'` チェックで自動的に除外される。
+  - 有効カードが0枚の場合は基本アタック (`'1001'`) を備考として使用。
+- **アバター引き継ぎ** ✅ **実装済み** (`lifeCycleService.ts`): 引退時に `user_profiles.avatar_url` の値を `party_members.image_url` にコピーして保存する。酒場に残影が並ぶ際に使用される。
+- **HP消耗サイクル (v16)**:
+  - **宿屋で休んでも、傭兵（NPC/残影）のHPは回復しない。**
+  - バトル中の回復スキルやアイテムでのみ回復可能。
+  - HP（Durability）が尽きると消滅し、再契約が必要となるサイクルを形成する。
+
 
 ---
 

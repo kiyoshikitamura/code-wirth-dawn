@@ -69,9 +69,19 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 | ステータス | 説明 | 変動ルール |
 |---|---|---|
 | Vitality (寿命) | 生命の残り時間 | 老化で減算のみ（加齢ロジック: v9仕様参照） |
-| Hand Size | 手札上限 | **固定5枚**（仕様の段階的上昇は未実装） |
+| Hand Size | 手札上限 | **レベル連動で段階的に拡張**（下記参照） |
 
-> **Note (v11.0)**: 旧仕様で定義されていた Hand Size の段階的上昇（Lv10: 4枚 → Lv20: 5枚）は**未実装**。現在は全レベルで5枚固定。
+#### Hand Size 値一覧 (spec v14 更新)
+
+| レベル | 手札枚数 |
+|---|---|
+| Lv 1 〜 4 | 3枚 |
+| Lv 5 〜 9 | 4枚 |
+| Lv 10 〜 14 | 5枚 |
+| Lv 15以上 | 6枚 |
+
+実装: `gameStore.dealHand()` 内で `GROWTH_RULES.HAND_SIZE_BY_LEVEL` を追従。
+* 【UI/モバイル対応】SPA化に伴い、レベル15以上の最大6枚の手札は、画面下部の領域に扇状（Fan Layout）で重ねて配置およびホバー拡大変換される仕様とした。
 
 ---
 
@@ -90,8 +100,8 @@ sum(Card.cost for Card in EquippedDeck) <= user.max_deck_cost
 - NPCの `inject_cards` はコスト検証の対象外。
 
 ### 5.3 バリデーション
-- クライアントサイド: `buildBattleDeck()` 内でコスト合計チェック。
-- サーバーサイド: クエスト中のデッキ変更は `current_quest_id` の存在で禁止（未完全実装）。
+- クライアントサイド: `buildBattleDeck()` 内でコスト合計チェック、およびシナリオの一時的な`camp`ノードでの特例解除。
+- サーバーサイド: `current_quest_id` と `quest_started_at` を元に、クエスト開始前から所持しているアイテムの装備変更（`is_equipped: true` にする操作）を禁止。`camp`ノード滞在時に付与される `bypass_lock` オプションにより特例で許可。
 
 ---
 
@@ -105,10 +115,10 @@ export interface UserProfile {
   max_hp?: number;
   hp?: number;
   atk?: number;         // 基礎攻撃力 (1-15)
-  attack?: number;       // 旧フィールド (互換用)
   def?: number;          // 基礎防御力 (1-15)
   vitality?: number;
   max_vitality?: number;
+  quest_started_at?: string; // クエスト開始日時 (デッキロック等に使用)
   // ... other fields
 }
 ```

@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+﻿Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 # Shadow Mercenary System
 
 ## 1. 概要 (Overview)
@@ -45,6 +45,8 @@ CREATE TABLE party_members (
   passive_id TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   avatar_url TEXT,
+  icon_url TEXT,                       -- NPCアイコンまたは立ち絵
+  image_url TEXT,                      -- 同上
   personality TEXT,
   location_id UUID REFERENCES locations(id)
 );
@@ -70,21 +72,39 @@ CREATE TABLE party_members (
 
 ## 5. 酒場 (Tavern) システム
 <!-- v11.0: /api/party/list の実装を反映 -->
+<!-- v12.1: 通報機能を追記 -->
 
 ### 5.1 雇用可能NPCの表示
 - **API**: `GET /api/party/list?owner_id={userId}`
 - 現在地の `location_id` に基づき、雇用可能なNPCを表示。
 - 既にパーティに参加しているNPCは非表示。
+- 残影カードに表示される `icon_url` / `image_url` は引退時の `avatar_url` を引き継いでいる。
 
-### 5.2 雇用と契約金 (Contract & Tax)
-- **API**: `POST /api/party/hire`
-- パーティ上限: **4名**（プレイヤー含め最大5名）。
-- **英霊の高額契約金**: 英霊（`shadow_heroic`）の雇用コストは、NPCのレベルやステータスに比例して飛躍的に高く設定される（強力なゴールドシンク）。
-- **ロイヤリティとシステム税**: 支払われた高額な契約金のうち、作成者（元プレイヤー）に入るロイヤリティは **10%〜30%** 程度に抑えられ、残りの **70%以上** は「システム税」として回収・消滅する。
+### 5.2 雇用と契約金 (spec v14 実装済み)
+
+*   **API**: `POST /api/party/hire`
+*   パーティ上限: **4名**（プレイヤー含め最大5名）。
+*   **契約金算出式**: `5,000G（基本料） + (レベル × 1,000G)`
+*   **ロイヤリティ分配**:
+    *   契約金の **20%** が元プレイヤーに還元。
+    *   残りの **80%** はシステム税として消滅。
+    *   **日額上限**: 元プレイヤーのレベルに依存（Lv1-10=100G/日, Lv11-20=300G/日, Lv21+=50,000G/日）。超過分はシステム税となる。
+    *   元プレイヤー自身が自分の英霊を雇用した場合は分配金は発生しない。
+*   **英霊の高額契約金**: 英霊（`shadow_heroic`）の雇用コストは、NPCのレベルやステータスに比例して飛躍的に高く設定される（強力なゴールドシンク）。
 
 ### 5.3 解雇
 - **API**: `POST /api/party/dismiss`
 - パーティから除外し、酒場に戻す。
+
+### 5.4 アバター通報 (Report)
+不適切なアバター画像（`image_url`）を発見した場合、タバーン内の残影カードから通報できる。
+
+- **UI**: 残影カードのアイコン右下に🚩ボタン（`system_mercenary` には表示しない）。
+- **API**: `POST /api/report`
+  - Body: `{ reported_user_id, target_url, reason }`
+  - `reports` テーブルに INSERT し、`status: 'pending'` で管理。
+- **通報理由の選択肢**: 「不適切な画像」「公序良俗に反する」「その他」
+- **運営アクション**: 管理者が確認後、`POST /api/admin/reset-avatar` を実行して対象ユーザーの `avatar_url` と `party_members.image_url` をデフォルト画像にリセット。
 
 ---
 
@@ -97,18 +117,23 @@ CREATE TABLE party_members (
 - 他プレイヤーが自分の残影を雇用した際、バトル参加回数に応じてゴールドを獲得。
 - サブスクリプション加入者はロイヤリティ倍率ボーナス。
 
-### 6.2 共鳴ボーナス（設計のみ）
-- 同一拠点にオンラインプレイヤーが存在する場合、ATK/DEF +10%。
+### 6.2 共鳴ボーナス (spec v14 実装済み)
+- **発動条件**: 現在地の `current_location_id` に過去1時間以内に活動した他プレイヤーが1人以上いる場合
+- **効果**: バトル開始時にATK / DEF +10%（`Math.ceil(x × 1.1)`）
+- **UI**: 開始メッセージに「⚡ 共鳴ボーナス発動！ (ATK/DEF +10%)」を表示
+- **実装**: `gameStore.startBattle()` 内で同拠点クエリを実行、`resonanceActive` フラグを `BattleState` に保存
 
 ---
 
-## 7. 制約と制限
+## 7. 制約と制限 (spec v14 実装済み)
 
 | 制約 | ルール | 実装状態 |
 |---|---|---|
 | デッキ検証 | 登録時に消耗品 (`consumable`) の除外 | **簡略化実装** |
-| ロイヤリティ上限 | レベルに応じた日額制限 | **未実装** |
-| 契約終了 | 30日間未使用で自動解除 | **未実装** |
+| ロイヤリティ上限 | レベルに応じた日額制限 | **実装済み** |
+| 契約終了 | 30日間未使用で自動解除 | **実装済み** |
+| 同名登録 | 同名のShadow/Heroicは1人しか登録できない。再登録は前のデータを上書き（Update）する。 | **実装済み** |
+| 英霊データ清掃 | 雇用されていない状態で**30日間**経過した「英霊」のデータは、日次の世界変遷のタイミングで論理削除（`is_active = false`）される。 | **実装済み** |
 
 ### 7.2 雇用ブロック (Embargo Penalty)
 - プレイヤーの該当拠点における名声 (Reputation) が **0 未満 (マイナス)** になった場合、その酒場での「残影雇用」はシステム的にブロック（APIで403エラー、UIで無効化）される。
