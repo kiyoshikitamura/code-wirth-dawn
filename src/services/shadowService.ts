@@ -1,17 +1,41 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { EconomyService } from './economyService';
 import { Card } from '@/types/game';
+import { ECONOMY_RULES } from '@/constants/game_rules';
 
 export interface ShadowSummary {
-    profile_id: string; // The original user id (or historical log id for Heroic?)
+    profile_id: string;
     name: string;
     level: number;
     job_class: string;
     origin_type: 'shadow_active' | 'shadow_heroic' | 'system_mercenary';
     contract_fee: number;
     stats: { atk: number; def: number; hp: number };
-    signature_deck_preview: string[]; // List of card names or IDs
-    is_subscriber: boolean;
+    signature_deck_preview: string[];
+    subscription_tier: 'free' | 'basic' | 'premium';
+    icon_url?: string;
+    image_url?: string;
+}
+
+// タスク1: 英霊（shadow_heroic）の契約金算出式
+// 仕様: spec_v5_shadow_system.md §5.2
+// 5,000G（BaseFee）+ Level × 1,000G（Modifier）
+// 例: Lv10 → 15,000G / Lv30 → 35,000G / Lv50 → 55,000G
+function calcHeroicContractFee(level: number): number {
+    return ECONOMY_RULES.HIRE_HEROIC_BASE + Math.max(1, level) * ECONOMY_RULES.HIRE_HEROIC_PER_LEVEL;
+}
+
+// タスク2: ロイヤリティ分配率（英霊）
+// 20% → 元プレイヤー（owner_id）へ / 残り80% → システム税（消滅）
+const HEROIC_ROYALTY_RATE = 0.20;
+
+// タスク1: ロイヤリティ日額上限
+// 仕様: spec_v7_lifecycle_economy.md §5.1
+// Lv1-10: 100G/日 / Lv11-20: 300G/日 / Lv21+: 50,000G/日
+function getDailyRoyaltyCap(level: number): number {
+    if (level <= 10) return 100;
+    if (level <= 20) return 300;
+    return 50000;
 }
 
 export class ShadowService {
@@ -23,9 +47,6 @@ export class ShadowService {
 
     /**
      * Finds available shadows (mercenaries) at the specific location.
-     * Consists of:
-     * 1. Active Users currently at this location (excluding self).
-     * 2. Heroic Shadows (Dead Subscribers) associated with this location (or global random?).
      */
     async findShadowsAtLocation(locationId: string, currentUserId: string): Promise<ShadowSummary[]> {
         const results: ShadowSummary[] = [];
@@ -49,14 +70,14 @@ export class ShadowService {
                 .neq('id', currentUserId)
                 .eq('is_alive', true)
                 .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-                .neq('name', null) // Filter out nameless ghosts
+                .neq('name', null)
                 .limit(10);
 
             if (activeUsers) {
                 for (const u of activeUsers) {
-                    if (hiredSourceIds.has(u.id)) continue; // Already hired
+                    if (hiredSourceIds.has(u.id)) continue;
 
-                    const fee = (u.level || 1) * 100;
+                    const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
                     results.push({
                         profile_id: u.id,
                         name: u.name || u.title_name || 'Unknown Adventurer',
@@ -66,7 +87,7 @@ export class ShadowService {
                         contract_fee: fee,
                         stats: { atk: u.attack, def: u.defense, hp: u.max_hp },
                         signature_deck_preview: u.signature_deck || [],
-                        is_subscriber: u.is_subscriber
+                        subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium'
                     });
                 }
             }
@@ -74,7 +95,7 @@ export class ShadowService {
             console.error("ShadowService: Failed to fetch active users", e);
         }
 
-        // 2. Fetch Heroic Shadows
+        // 2. Fetch Heroic Shadows from historical_logs
         try {
             const { data: heroicLogs } = await this.supabase
                 .from('historical_logs')
@@ -84,19 +105,21 @@ export class ShadowService {
 
             if (heroicLogs) {
                 for (const log of heroicLogs) {
-                    if (hiredSourceIds.has(log.user_id)) continue; // Already hired
+                    if (hiredSourceIds.has(log.user_id)) continue;
 
                     const d = log.data;
+                    const level = d.final_level || 1;
                     results.push({
                         profile_id: log.user_id,
                         name: `Ghost of ${d.name || 'Unknown'}`,
-                        level: d.final_level,
+                        level,
                         job_class: 'Heroic Spirit',
                         origin_type: 'shadow_heroic',
-                        contract_fee: (d.final_level * 1000), // Massive Gold Sink for Heroic
+                        // タスク1: 5,000G + Level × 1,000G の算出式を適用
+                        contract_fee: calcHeroicContractFee(level),
                         stats: d.stats,
                         signature_deck_preview: [],
-                        is_subscriber: true
+                        subscription_tier: 'basic' as const
                     });
                 }
             }
@@ -104,11 +127,10 @@ export class ShadowService {
             console.error("ShadowService: Failed to fetch heroic shadows", e);
         }
 
-
-        // 3. System Mercenaries (Always add active ones if not hired)
+        // 3. System Mercenaries
         const systems = await this.generateSystemMercenaries();
         for (const sys of systems) {
-            if (hiredNames.has(sys.name)) continue; // Already hired by name
+            if (hiredNames.has(sys.name)) continue;
             results.push(sys);
         }
 
@@ -122,7 +144,7 @@ export class ShadowService {
                 .from('npcs')
                 .select('*')
                 .eq('is_hireable', true)
-                .eq('origin', 'system_mercenary'); // Use dedicated column
+                .eq('origin', 'system_mercenary');
 
             if (npcs) {
                 for (const npc of npcs) {
@@ -132,10 +154,10 @@ export class ShadowService {
                         level: npc.level,
                         job_class: npc.job_class,
                         origin_type: 'system_mercenary',
-                        contract_fee: (npc.level * 100), // レベルに基づく動的料金
+                        contract_fee: (npc.level * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL),
                         stats: { atk: npc.attack, def: npc.defense, hp: npc.max_hp },
                         signature_deck_preview: npc.default_cards || [],
-                        is_subscriber: false
+                        subscription_tier: 'free' as const
                     });
                 }
             }
@@ -147,10 +169,15 @@ export class ShadowService {
 
     /**
      * Hires a shadow.
-     * 1. Check Gold.
-     * 2. Deduct Gold (Hirer).
-     * 3. Distribute Royalty (Source).
-     * 4. Create Party Member.
+     * 仕様: spec_v5_shadow_system.md §5.2
+     *
+     * shadow_heroic の場合:
+     *   - contract_fee はサーバー側で再計算（クライアント改ざん防止）
+     *   - 20% → owner_id（元プレイヤー=英霊の作成者）へロイヤリティ付与
+     *   - 80% → システム税として消滅（誰にも渡さない）
+     *
+     * shadow_active の場合（既存ロジック維持）:
+     *   - Free=10%, Sub=30% のロイヤリティを source_user_id へ付与
      */
     async hireShadow(hirerId: string, shadow: ShadowSummary): Promise<{ success: boolean; error?: string }> {
         // 1. Fetch Hirer Profile
@@ -160,11 +187,72 @@ export class ShadowService {
             .eq('id', hirerId)
             .single();
 
-        if (!hirer || hirer.gold < shadow.contract_fee) {
-            return { success: false, error: 'Not enough gold' };
+        if (!hirer) {
+            return { success: false, error: 'ユーザー情報が取得できませんでした。' };
         }
 
-        // 1.2 Check Embargo Penalty (Rep < 0)
+        // タスク1 & 2.5: サーバ側で contract_fee と雇用対象の正当性を検証・再計算（改ざん防止）
+        let finalContractFee = shadow.contract_fee;
+        let heroicOwnerId: string | null = null;
+
+        if (shadow.origin_type === 'shadow_heroic') {
+            // historical_logs から level を取得して再計算
+            const { data: logData } = await this.supabase
+                .from('historical_logs')
+                .select('data, user_id')
+                .eq('user_id', shadow.profile_id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!logData) return { success: false, error: '無効な英霊IDです。' };
+
+            const level = logData.data?.final_level || shadow.level || 1;
+            finalContractFee = calcHeroicContractFee(level);
+            heroicOwnerId = logData.user_id;
+            
+        } else if (shadow.origin_type === 'shadow_active') {
+            // user_profiles から level を取得して再計算および所在地チェック
+            const { data: userProfile } = await this.supabase
+                .from('user_profiles')
+                .select('level, is_alive, current_location_id')
+                .eq('id', shadow.profile_id)
+                .single();
+                
+            if (!userProfile || !userProfile.is_alive) {
+                return { success: false, error: '対象のプレイヤーは現在雇用できません（死亡または存在しません）。' };
+            }
+            if (userProfile.current_location_id !== hirer.current_location_id) {
+                return { success: false, error: '対象のプレイヤーは既に別の地点に移動しました。' };
+            }
+            
+            finalContractFee = (userProfile.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+
+        } else if (shadow.origin_type === 'system_mercenary') {
+            // npcs から level を取得して再計算
+            const { data: npcData } = await this.supabase
+                .from('npcs')
+                .select('level')
+                .eq('id', shadow.profile_id)
+                .eq('origin', 'system_mercenary')
+                .eq('is_hireable', true)
+                .single();
+                
+            if (!npcData) {
+                return { success: false, error: '無効または現在雇用不可能な傭兵IDです。' };
+            }
+            finalContractFee = (npcData.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL;
+        }
+
+        // 2. ゴールド残高チェック
+        if (hirer.gold < finalContractFee) {
+            return {
+                success: false,
+                error: `金貨が足りません。（必要: ${finalContractFee.toLocaleString()} G / 所持: ${hirer.gold.toLocaleString()} G）`
+            };
+        }
+
+        // 3. Embargo チェック
         if (hirer.current_location_id) {
             const { data: repData } = await this.supabase
                 .from('reputations')
@@ -178,7 +266,7 @@ export class ShadowService {
             }
         }
 
-        // 1.5 Check Party Size (Max 4)
+        // 4. パーティ上限チェック（最大4名）
         const { count, error: countError } = await this.supabase
             .from('party_members')
             .select('*', { count: 'exact', head: true })
@@ -187,23 +275,69 @@ export class ShadowService {
 
         if (countError) return { success: false, error: 'Failed to check party size' };
         if (count !== null && count >= 4) {
-            return { success: false, error: 'Party is full (Max 4 members)' };
+            return { success: false, error: 'パーティが満員です（最大4名）。' };
         }
 
-        // 2. Deduct Gold (Simple Update for MVP, use RPC in prod)
-        await this.supabase
-            .from('user_profiles')
-            .update({ gold: hirer.gold - shadow.contract_fee })
-            .eq('id', hirerId);
+        // 5. 雇用者のゴールドを全額減算（contract_fee を徴収）
+        const { error: goldError } = await this.supabase
+            .rpc('increment_gold', { p_user_id: hirerId, p_amount: -finalContractFee });
 
-        // 3. Distribute Royalty
-        // Royalty Rate: Free=10%, Sub=30%
-        const rate = shadow.is_subscriber ? 0.3 : 0.1;
-        const royaltyAmount = Math.floor(shadow.contract_fee * rate);
+        if (goldError) return { success: false, error: goldError.message };
 
-        // Use Economy Service for Anti-Fraud logic
-        // Only for active shadows. Heroic shadows might go to system or legacy fund?
-        if (shadow.origin_type === 'shadow_active') {
+        // 6. タスク2: ロイヤリティ分配とシステム税
+        if (shadow.origin_type === 'shadow_heroic' && heroicOwnerId) {
+            // 英霊: 20% → 元プレイヤーへ / 80% → システム税（消滅）
+            const royaltyAmount = Math.floor(finalContractFee * HEROIC_ROYALTY_RATE);
+            // システム税 = finalContractFee - royaltyAmount（消滅: 誰にも渡さない）
+
+            if (royaltyAmount > 0 && heroicOwnerId !== hirerId) {
+                const { data: ownerProfile } = await this.supabase
+                    .from('user_profiles')
+                    .select('gold, level')
+                    .eq('id', heroicOwnerId)
+                    .single();
+
+                if (ownerProfile) {
+                    // 日額上限チェック (spec_v7 §5.1)
+                    const ownerLevel = ownerProfile.level || 1;
+                    const dailyCap = getDailyRoyaltyCap(ownerLevel);
+                    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+                    // 当日の累積ロイヤリティを取得 or 0
+                    const { data: logRow } = await this.supabase
+                        .from('royalty_daily_log')
+                        .select('total_gold')
+                        .eq('user_id', heroicOwnerId)
+                        .eq('log_date', today)
+                        .maybeSingle();
+
+                    const todayTotal = logRow?.total_gold || 0;
+                    const remaining = Math.max(0, dailyCap - todayTotal);
+                    const effectiveRoyalty = Math.min(royaltyAmount, remaining);
+
+                    if (effectiveRoyalty > 0) {
+                        await this.supabase
+                            .rpc('increment_gold', { p_user_id: heroicOwnerId, p_amount: effectiveRoyalty });
+
+                        // 日額ログを upsert
+                        await this.supabase
+                            .from('royalty_daily_log')
+                            .upsert(
+                                { user_id: heroicOwnerId, log_date: today, total_gold: todayTotal + effectiveRoyalty },
+                                { onConflict: 'user_id,log_date' }
+                            );
+                    }
+
+                    const taxed = finalContractFee - effectiveRoyalty;
+                    console.log(
+                        `[HeroicHire] Fee: ${finalContractFee}G | Cap: ${dailyCap}G | Royalty: ${effectiveRoyalty}G → ${heroicOwnerId} | Tax: ${taxed}G → System`
+                    );
+                }
+            }
+        } else if (shadow.origin_type === 'shadow_active') {
+            // アクティブ残影: 既存のEconomyServiceロジックを維持 (Tier別)
+            const rate = shadow.subscription_tier === 'premium' ? 0.5 : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1);
+            const royaltyAmount = Math.floor(finalContractFee * rate);
             await this.economy.distributeRoyalty({
                 sourceUserId: shadow.profile_id,
                 targetUserId: hirerId,
@@ -211,7 +345,7 @@ export class ShadowService {
             });
         }
 
-        // 3.5 Resolve Card IDs from Names
+        // 7. カードIDの解決
         let cardIds: number[] = [];
         if (shadow.signature_deck_preview && shadow.signature_deck_preview.length > 0) {
             const { data: cards } = await this.supabase
@@ -224,7 +358,7 @@ export class ShadowService {
             }
         }
 
-        // 4. Create Party Member
+        // 8. パーティメンバーを作成
         const { error: insertError } = await this.supabase
             .from('party_members')
             .insert({
@@ -232,9 +366,13 @@ export class ShadowService {
                 name: shadow.name,
                 source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
                 origin_type: shadow.origin_type,
-                durability: 100, // Default durability
-                inject_cards: cardIds, // Use resolved IDs
-                royalty_rate: shadow.origin_type === 'shadow_active' ? percentageToInteger(rate) : 0,
+                durability: 100,
+                inject_cards: cardIds,
+                royalty_rate: shadow.origin_type === 'shadow_heroic'
+                    ? percentageToInteger(HEROIC_ROYALTY_RATE)
+                    : shadow.origin_type === 'shadow_active'
+                        ? percentageToInteger(shadow.subscription_tier === 'premium' ? 0.5 : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1))
+                        : 0,
                 is_active: true
             });
 

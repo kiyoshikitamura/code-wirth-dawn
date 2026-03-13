@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Create a Service Role client to bypass RLS for API operations
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import { supabase } from '@/lib/supabase';
 
 // GET: Fetch Inventory
 export async function POST(req: Request) {
     try {
         const { item_slug, quantity = 1 } = await req.json();
-        const userId = req.headers.get('x-user-id');
+        
+        let userId = req.headers.get('x-user-id');
+        const authHeader = req.headers.get('authorization');
+        
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) userId = user.id;
+        }
 
         if (!userId) {
             console.warn("Inventory POST: Missing x-user-id header");
@@ -73,8 +76,14 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
     try {
-        // Get user_id from header (custom or standard)
-        const userId = req.headers.get('x-user-id');
+        let userId = req.headers.get('x-user-id');
+        const authHeader = req.headers.get('authorization');
+        
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) userId = user.id;
+        }
 
         let query = supabase
             .from('inventory')
@@ -161,8 +170,48 @@ export async function GET(req: Request) {
 // PATCH: Equip/Unequip
 export async function PATCH(req: Request) {
     try {
-        const { inventory_id, is_equipped } = await req.json();
-        const userId = req.headers.get('x-user-id');
+        const { inventory_id, is_equipped, bypass_lock } = await req.json();
+        
+        let userId = req.headers.get('x-user-id');
+        const authHeader = req.headers.get('authorization');
+        
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) userId = user.id;
+        }
+
+        // クエスト進行中の装備変更制限 (is_equipped: true にする場合のみ、bypass_lockがない場合)
+        if (is_equipped && userId && !bypass_lock) {
+            // ユーザー状態の確認
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('current_quest_id, quest_started_at')
+                .eq('id', userId)
+                .single();
+
+            if (profile?.current_quest_id && profile.quest_started_at) {
+                // 対象アイテムの取得日時を確認
+                const { data: invItem } = await supabase
+                    .from('inventory')
+                    .select('acquired_at')
+                    .eq('id', inventory_id)
+                    .single();
+
+                if (invItem && invItem.acquired_at) {
+                    const questStarted = new Date(profile.quest_started_at).getTime();
+                    const itemAcquired = new Date(invItem.acquired_at).getTime();
+
+                    // クエスト開始前に取得したアイテムは装備不可
+                    if (itemAcquired < questStarted) {
+                        return NextResponse.json(
+                            { error: 'クエスト進行中は、事前所持アイテムを新たに装備できません。' },
+                            { status: 400 }
+                        );
+                    }
+                }
+            }
+        }
 
         let query = supabase
             .from('inventory')

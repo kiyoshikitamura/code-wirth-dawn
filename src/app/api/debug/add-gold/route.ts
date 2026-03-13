@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseService } from '@/lib/supabase-service';
+import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
     try {
@@ -20,9 +20,7 @@ export async function POST(req: Request) {
 
         // Update gold via service role to bypass RLS
         const { error: updateError } = await supabaseService
-            .from('user_profiles')
-            .update({ gold: newGold })
-            .eq('id', userId);
+            .rpc('increment_gold', { p_user_id: userId, p_amount: amount });
 
         if (updateError) throw updateError;
 

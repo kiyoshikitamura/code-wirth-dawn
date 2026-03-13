@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { calculateGrowth, processAging, resolveLocationId } from '@/services/questService';
+import { ECONOMY_RULES } from '@/constants/game_rules';
 
 // Initialize Supabase Client safely (Service Role)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -134,9 +135,9 @@ export async function POST(req: Request) {
         if (result === 'success') {
             const rewards = quest.rewards || {};
 
-            // Gold
+            // Gold (handled via RPC now, do not put in updates)
             if (rewards.gold) {
-                updates.gold = (user.gold || 0) + rewards.gold;
+                // updates.gold = (user.gold || 0) + rewards.gold; // Removed to use RPC later
             }
 
             // Travel (move_to)
@@ -234,8 +235,9 @@ export async function POST(req: Request) {
         }
 
 
-        // 7. Release Quest Lock
+        // 7. Release Quest Lock & Clear Blessing (spec_v16 §4: バトル終了でBlessingを消費)
         updates.current_quest_id = null;
+        updates.blessing_data = null; // Blessing は次のバトル終了で消費される
 
         console.log('[QuestComplete] Updates payload:', JSON.stringify(updates, null, 2));
 
@@ -246,6 +248,67 @@ export async function POST(req: Request) {
             .eq('id', user_id);
 
         if (updateError) throw updateError;
+        
+        // Apply Gold Update via RPC if rewards.gold exists
+        if (result === 'success' && quest.rewards?.gold) {
+            const { error: goldError } = await supabase
+                .rpc('increment_gold', { p_user_id: user_id, p_amount: quest.rewards.gold });
+            if (goldError) {
+                console.error("Failed to increment gold via RPC:", goldError);
+            }
+        }
+
+        // 7.5 Moore Wear Cycle (摩耗サイクル) & Memento Generation
+        if (result === 'success') {
+            const { data: activeParty } = await supabase
+                .from('party_members')
+                .select('id, name, durability, inject_cards')
+                .eq('owner_id', user_id)
+                .eq('is_active', true);
+            
+            if (activeParty && activeParty.length > 0) {
+                for (const member of activeParty) {
+                    const newDurability = Math.max(0, (member.durability || 100) - 10); // Minus 10 per quest
+                    
+                    if (newDurability <= 0) {
+                        // Delete member
+                        await supabase.from('party_members').delete().eq('id', member.id);
+                        console.log(`[Moore] Party member ${member.name} perished due to wear.`);
+
+                        // Generate Memento Item (形見アイテム) from their signature deck
+                        if (member.inject_cards && member.inject_cards.length > 0) {
+                            // Give them the first valid card as an item or just a generic Memento
+                            const skillCardId = member.inject_cards[0];
+                            const { data: card } = await supabase.from('cards').select('id, name').eq('id', skillCardId).maybeSingle();
+                            if (card) {
+                                // Assume there's a corresponding item_id for this card, or we just insert it
+                                // For simplicity, we insert the skill item directly if we can find its item master,
+                                // but we need the `items` table id. We can look it up by `linked_card_id`.
+                                const { data: item } = await supabase.from('items').select('id, name').eq('linked_card_id', card.id).maybeSingle();
+                                if (item) {
+                                    const { data: existingInv } = await supabase
+                                        .from('inventory')
+                                        .select('id, quantity')
+                                        .eq('user_id', user_id)
+                                        .eq('item_id', item.id)
+                                        .maybeSingle();
+
+                                    if (existingInv) {
+                                        await supabase.from('inventory').update({ quantity: existingInv.quantity + 1 }).eq('id', existingInv.id);
+                                    } else {
+                                        await supabase.from('inventory').insert({ user_id, item_id: item.id, quantity: 1 });
+                                    }
+                                    console.log(`[Memento] Created memento item ${item.name} from perished shadow ${member.name}.`);
+                                }
+                            }
+                        }
+                    } else {
+                        // Just update durability
+                        await supabase.from('party_members').update({ durability: newDurability }).eq('id', member.id);
+                    }
+                }
+            }
+        }
 
         // 8. Loot Pool Persistence (Success only)
         let lootSaved: any[] = [];
@@ -270,6 +333,46 @@ export async function POST(req: Request) {
                 }
                 lootSaved.push(loot);
             }
+        }
+
+        // 8.5 UGC First Blood Check & Share Text
+        let finalShareText = quest.share_text || null;
+        if (result === 'success' && quest.is_ugc) {
+            const { count: priorClears } = await supabase
+                .from('user_completed_quests')
+                .select('*', { count: 'exact', head: true })
+                .eq('scenario_id', quest_id);
+
+            if (priorClears === 0) {
+                finalShareText = `名も無き旅人の依頼『${quest.title}』を世界で初めて踏破した。 #Wirth_Dawn #未知への到達`;
+            }
+        }
+
+        // 8.7 クエスト失敗時の名声ペナルティ (spec_v16 §3.1)
+        if (result === 'failure' && user.current_location_id) {
+            const penaltyMin = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MIN); // 5
+            const penaltyMax = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MAX); // 10
+            const repPenalty = -(Math.floor(Math.random() * (penaltyMax - penaltyMin + 1)) + penaltyMin);
+
+            // upsert: 既存レコードがあれば加算、なければ新規作成
+            const { data: existingRep } = await supabase
+                .from('reputations')
+                .select('id, reputation_score')
+                .eq('user_id', user_id)
+                .eq('location_id', user.current_location_id)
+                .maybeSingle();
+
+            if (existingRep) {
+                await supabase
+                    .from('reputations')
+                    .update({ reputation_score: existingRep.reputation_score + repPenalty })
+                    .eq('id', existingRep.id);
+            } else {
+                await supabase
+                    .from('reputations')
+                    .insert({ user_id, location_id: user.current_location_id, reputation_score: repPenalty });
+            }
+            console.log(`[QuestComplete] Failure rep penalty: ${repPenalty} for user ${user_id} at ${user.current_location_id}`);
         }
 
         // 9. World Impact & Quest Completion History
@@ -310,6 +413,7 @@ export async function POST(req: Request) {
             new_location: updates.current_location_id,
             rewards: quest.rewards,
             loot_saved: lootSaved,
+            share_text: finalShareText,
             changes
         });
 

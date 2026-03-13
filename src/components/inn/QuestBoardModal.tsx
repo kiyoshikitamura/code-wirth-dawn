@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { AlertTriangle, X, Scroll } from 'lucide-react';
-import { Scenario, UserProfile, Reputation } from '@/types/game';
+import { X, Scroll } from 'lucide-react';
+import { Scenario, UserProfile } from '@/types/game';
 
 interface QuestBoardModalProps {
     isOpen: boolean;
@@ -9,11 +9,10 @@ interface QuestBoardModalProps {
     specialQuests: Scenario[];
     loading: boolean;
     userProfile: UserProfile | null;
-    reputation: Reputation | null;
     onSelect: (scenario: Scenario) => void;
 }
 
-export default function QuestBoardModal({ isOpen, onClose, normalQuests, specialQuests, loading, userProfile, reputation, onSelect }: QuestBoardModalProps) {
+export default function QuestBoardModal({ isOpen, onClose, normalQuests, specialQuests, loading, userProfile, onSelect }: QuestBoardModalProps) {
     const [activeTab, setActiveTab] = useState<'special' | 'normal'>('normal');
 
     if (!isOpen) return null;
@@ -75,8 +74,6 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
                                     </div>
                                     <QuestList
                                         quests={specialQuests}
-                                        userProfile={userProfile}
-                                        reputation={reputation}
                                         onSelect={onSelect}
                                         emptyMsg="現在、あなたへの特別依頼はありません。"
                                     />
@@ -89,8 +86,6 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
                                     </div>
                                     <QuestList
                                         quests={normalQuests}
-                                        userProfile={userProfile}
-                                        reputation={reputation}
                                         onSelect={onSelect}
                                         emptyMsg="現在、手頃な依頼はありません。"
                                     />
@@ -104,43 +99,25 @@ export default function QuestBoardModal({ isOpen, onClose, normalQuests, special
     );
 }
 
-function QuestList({ quests, userProfile, reputation, onSelect, emptyMsg }: { quests: Scenario[], userProfile: UserProfile | null, reputation: Reputation | null, onSelect: (s: Scenario) => void, emptyMsg: string }) {
+function QuestList({ quests, onSelect, emptyMsg }: { quests: Scenario[], onSelect: (s: Scenario) => void, emptyMsg: string }) {
+    const [expandedQuestId, setExpandedQuestId] = useState<string | null>(null);
+
     if (quests.length === 0) {
         return <div className="text-center py-12 text-[#8b5a2b]/70 font-serif">{emptyMsg}</div>;
     }
-
-    const userLevel = userProfile?.level || 1;
-    const currentLocationId = userProfile?.current_location_id || '';
-    const repScore = reputation?.score || 0;
 
     return (
         <div className="grid grid-cols-1 gap-4">
             {quests.map((s) => {
                 const recLevel = s.rec_level || s.requirements?.min_level || 1;
                 const isUrgent = s.is_urgent;
-
-                // Reputation Logic
-                let requiredRep = 0;
-                if (typeof s.requirements?.min_reputation === 'number') {
-                    requiredRep = s.requirements.min_reputation as number;
-                } else if (s.requirements?.min_reputation && typeof s.requirements.min_reputation === 'object' && currentLocationId) {
-                    requiredRep = (s.requirements.min_reputation as any)[currentLocationId] || 0;
-                }
-
-                const unmetConditions: string[] = [];
-                if (recLevel > userLevel) unmetConditions.push(`要求レベル: ${recLevel}`);
-                if (requiredRep > repScore) unmetConditions.push(`要求名声: ${requiredRep}`);
-                if (s.location_id && s.location_id !== 'all' && s.location_id !== currentLocationId) unmetConditions.push(`異なる地域`);
-
-                const canAccept = unmetConditions.length === 0;
+                const isExpanded = expandedQuestId === String(s.id);
 
                 return (
                     <div key={s.id}
-                        className={`group relative p-4 border shadow-sm transition-all
-                        ${canAccept ? 'cursor-pointer hover:shadow-md' : 'cursor-not-allowed opacity-60 bg-gray-300 border-gray-400 grayscale'}
-                        ${canAccept ? (isUrgent ? 'bg-red-900/5 border-red-900/30' : 'bg-[#fdfbf7] border-[#c2b280] hover:bg-[#fffefc]') : ''}
-                        `}
-                        onClick={() => { if (canAccept) onSelect(s); }}
+                        className={`group relative p-4 border shadow-sm transition-all cursor-pointer hover:shadow-md ${isExpanded ? 'bg-[#fffefc] border-[#a38b6b]' : 'bg-[#fdfbf7] border-[#c2b280]'}`}
+                        style={isUrgent ? { backgroundColor: 'rgba(127,29,29,0.04)', borderColor: 'rgba(127,29,29,0.3)' } : {}}
+                        onClick={() => setExpandedQuestId(isExpanded ? null : String(s.id))}
                     >
                         <div className="flex justify-between items-start mb-2">
                             <div className="flex flex-col">
@@ -149,61 +126,62 @@ function QuestList({ quests, userProfile, reputation, onSelect, emptyMsg }: { qu
                                     {s.title}
                                 </h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${!canAccept ? 'bg-gray-500 text-white' : 'bg-[#a38b6b] text-white'}`}>
+                                    <span className="text-xs px-1.5 py-0.5 rounded font-bold bg-[#a38b6b] text-white">
                                         Lv.{recLevel}
                                     </span>
                                 </div>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                                <span className={`text-xs px-2 py-0.5 rounded ml-2 whitespace-nowrap font-mono ${!canAccept ? 'bg-gray-500 text-white' : 'bg-[#8b5a2b] text-[#e3d5b8]'}`}>
+                                <span className="text-xs px-2 py-0.5 rounded ml-2 whitespace-nowrap font-mono bg-[#8b5a2b] text-[#e3d5b8]">
                                     {s.reward_gold} G
                                 </span>
                             </div>
                         </div>
 
-                        <p className={`text-sm mb-3 line-clamp-2 leading-relaxed ${!canAccept ? 'text-gray-700' : 'text-[#5d4037]'}`}>
-                            {s.description}
-                        </p>
+                        {!isExpanded ? (
+                            <p className="text-sm mb-1 line-clamp-2 leading-relaxed text-[#5d4037]">
+                                {s.short_description || s.description}
+                            </p>
+                        ) : (
+                            <div className="mt-4 pt-4 border-t border-[#8b5a2b]/20 animate-in fade-in slide-in-from-top-2">
+                                <p className="text-sm mb-4 leading-relaxed text-[#3e2723] whitespace-pre-wrap">
+                                    {s.description}
+                                </p>
 
-                        {/* Unmet conditions warning */}
-                        {!canAccept && (
-                            <div className="text-red-600 text-xs font-bold flex flex-wrap gap-2 mb-2">
-                                <AlertTriangle className="w-4 h-4" />
-                                <span>受注不可: </span>
-                                {unmetConditions.map((cond, idx) => (
-                                    <span key={idx} className="border-b border-red-400">{cond}</span>
-                                ))}
+                                <div className="bg-[#f5deb3]/30 p-3 rounded mb-4 text-xs text-[#5d4037]">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div><span className="font-bold">依頼主:</span> {s.client_name}</div>
+                                        {s.impacts && (
+                                            <div className="flex gap-2">
+                                                <span className="font-bold">世界への影響:</span>
+                                                <div className="flex gap-1">
+                                                    {s.impacts.order > 0 && <span className="text-blue-800">秩序↑</span>}
+                                                    {s.impacts.chaos > 0 && <span className="text-purple-800">混沌↑</span>}
+                                                    {s.impacts.justice > 0 && <span className="text-yellow-800">正義↑</span>}
+                                                    {s.impacts.evil > 0 && <span className="text-red-800">悪↑</span>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end mt-4">
+                                    <button
+                                        className="text-sm px-6 py-2.5 rounded shadow-lg transition-all transform tracking-wide font-bold bg-[#8b5a2b] text-white hover:bg-[#6b4522] active:scale-95 flex items-center gap-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSelect(s);
+                                        }}
+                                    >
+                                        <Scroll size={16} /> この依頼を受ける
+                                    </button>
+                                </div>
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between mt-4">
-                            <div className="flex items-center gap-3 text-xs text-[#5d4037]/70">
-                                <span className="flex items-center gap-1">依頼主: {s.client_name}</span>
-                                {s.impacts && (
-                                    <div className="flex gap-2 opacity-80">
-                                        {s.impacts.order > 0 && <span className="text-blue-800 font-bold">秩序↑</span>}
-                                        {s.impacts.chaos > 0 && <span className="text-purple-800 font-bold">混沌↑</span>}
-                                        {s.impacts.justice > 0 && <span className="text-yellow-800 font-bold">正義↑</span>}
-                                        {s.impacts.evil > 0 && <span className="text-red-800 font-bold">悪↑</span>}
-                                    </div>
-                                )}
-                            </div>
-
-                            <button
-                                disabled={!canAccept}
-                                className={`text-xs px-4 py-2 rounded shadow transition-all transform tracking-wide font-bold
-                                ${canAccept
-                                        ? 'bg-[#3e2723] text-gold-500 hover:bg-[#4e342e] active:scale-95'
-                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                    }`}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (canAccept) onSelect(s);
-                                }}
-                            >
-                                受領する
-                            </button>
-                        </div>
+                        {!isExpanded && (
+                            <div className="text-center mt-2 opacity-50 text-[10px] text-[#8b5a2b]">タップして詳細を見る</div>
+                        )}
                     </div>
                 );
             })}

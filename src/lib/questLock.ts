@@ -41,7 +41,10 @@ export async function checkQuestLock(userId: string): Promise<QuestLockResult> {
 export async function setQuestLock(userId: string, questId: string): Promise<void> {
     await supabase
         .from('user_profiles')
-        .update({ current_quest_id: questId })
+        .update({
+            current_quest_id: questId,
+            quest_started_at: new Date().toISOString()
+        })
         .eq('id', userId);
 }
 
@@ -51,6 +54,9 @@ export async function setQuestLock(userId: string, questId: string): Promise<voi
 export async function releaseQuestLock(userId: string): Promise<void> {
     await supabase
         .from('user_profiles')
-        .update({ current_quest_id: null })
+        .update({
+            current_quest_id: null,
+            quest_started_at: null
+        })
         .eq('id', userId);
 }

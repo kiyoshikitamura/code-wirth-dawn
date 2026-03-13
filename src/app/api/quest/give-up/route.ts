@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase Client safely (Service Role)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey || '', {
-    auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-    }
-});
+import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { userId } = body;
+        const requestUserId = body.userId;
+        let userId = requestUserId;
+
+        const authHeader = req.headers.get('authorization');
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) {
+                userId = user.id;
+            }
+        }
 
         if (!userId) {
-            return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
         const { error } = await supabase

@@ -1,14 +1,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { UserProfile, ScenarioReward, LocationDB } from '@/types/game';
+import { GROWTH_RULES } from '@/constants/game_rules';
 
-// Constants for growth (v8.1)
-const BASE_HP = 80;
-const HP_PER_LEVEL = 5;
-const BASE_DECK_COST = 10;
-const COST_PER_LEVEL = 2;
-const MAX_ATK = 15;
-const MAX_DEF = 15;
+// Phase 1.5: ハードコード定数を game_rules.ts に一元化。
+// 旧: const BASE_HP = 80; HP_PER_LEVEL = 5; BASE_DECK_COST = 10; COST_PER_LEVEL = 2; MAX_ATK = 15; MAX_DEF = 15
+const BASE_HP = GROWTH_RULES.BASE_HP_FALLBACK;
+const HP_PER_LEVEL = GROWTH_RULES.HP_PER_LEVEL;
+const BASE_DECK_COST = GROWTH_RULES.BASE_DECK_COST;
+const COST_PER_LEVEL = GROWTH_RULES.COST_PER_LEVEL;
+const MAX_ATK = GROWTH_RULES.MAX_ATK;
+const MAX_DEF = GROWTH_RULES.MAX_DEF;
 
 interface LevelUpInfo {
     level_up: boolean;
@@ -40,16 +42,11 @@ export function calculateGrowth(
     let atkInc = 0;
     let defInc = 0;
 
-    // Simple exponential curve: NextLevel = Base * (Lv^2)
-    // For simplicity, we use a fixed table or formula. 
-    // v8.1: NextLevelExp = Base * (CurrentLevel ^ 2) -> Let's say Base=100 for now or use existing logic
-    // Existing logic in route.ts was: const nextLevelExp = level * 100 * 1.5;
-    // Let's stick to v8.1 formula if possible, but for compatibility let's use a standard curve
-    // v8.1 says: NextLevelExp = Base * (CurrentLevel ^ 2)
-    const getNextExp = (lv: number) => 50 * (lv ** 2);
+    // Use central EXP formula from game_rules.ts
+    // 100 * (Level ^ 2)
 
-    while (exp >= getNextExp(level)) {
-        exp -= getNextExp(level);
+    while (exp >= GROWTH_RULES.EXP_FORMULA(level)) {
+        exp -= GROWTH_RULES.EXP_FORMULA(level);
         level++;
         leveledUp = true;
 

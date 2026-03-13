@@ -9,6 +9,7 @@ import MobileNav from '@/components/layout/MobileNav';
 
 import { PartyMember } from '@/types/game';
 import { getNationBgColor } from '@/utils/nationColors';
+import { UI_RULES } from '@/constants/game_rules';
 
 export default function PubPage() {
     const router = useRouter();
@@ -156,8 +157,8 @@ export default function PubPage() {
                             <div className="flex gap-4 items-center w-full">
                                 <div className="w-16 h-16 rounded border border-gray-500 bg-black overflow-hidden flex-shrink-0">
                                     <img
-                                        src={selectedMember.avatar_url || '/avatars/adventurer.jpg'}
-                                        onError={(e) => e.currentTarget.src = '/avatars/adventurer.jpg'}
+                                        src={selectedMember.avatar_url || UI_RULES.DEFAULT_AVATAR}
+                                        onError={(e) => e.currentTarget.src = UI_RULES.DEFAULT_AVATAR}
                                         alt="Avatar"
                                         className="w-full h-full object-cover"
                                     />
@@ -270,8 +271,8 @@ export default function PubPage() {
                         <div className="space-y-4 animate-fade-in">
                             <div className="w-full aspect-square bg-black rounded border border-gray-600 mb-4 overflow-hidden relative group">
                                 <img
-                                    src={selectedMember.avatar_url || '/avatars/adventurer.jpg'}
-                                    onError={(e) => e.currentTarget.src = '/avatars/adventurer.jpg'}
+                                    src={selectedMember.avatar_url || UI_RULES.DEFAULT_AVATAR}
+                                    onError={(e) => e.currentTarget.src = UI_RULES.DEFAULT_AVATAR}
                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                 />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">

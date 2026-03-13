@@ -147,11 +147,8 @@ export async function POST(req: Request) {
         }
         await decrementStock();
 
-        // Deduct Gold
         const { error: goldError } = await supabase
-            .from('user_profiles')
-            .update({ gold: Number(userProfile.gold) - Number(price) })
-            .eq('id', userId);
+            .rpc('increment_gold', { p_user_id: userId, p_amount: -Number(price) });
 
         if (goldError) {
             console.error("Gold deduction failed:", goldError);

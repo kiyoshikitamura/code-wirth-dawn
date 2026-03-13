@@ -77,7 +77,8 @@ async function main() {
         type: r.type,
         cost_type: r.cost_type,
         cost_val: r.cost_val,
-        effect_val: r.effect_val
+        effect_val: r.effect_val,
+        animation_type: r.animation_type || 'SLASH'
     }));
 
     // 2. Items

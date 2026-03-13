@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculateTitle, processAging } from '@/lib/character';
+import { UI_RULES } from '@/constants/game_rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
 
         if (!profile) {
             // Create New Profile with sane defaults if totally missing
-            const defaultAvatar = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256&h=256';
+            const defaultAvatar = UI_RULES.DEFAULT_AVATAR;
 
             const newProfile = {
                 id: targetId,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
 import { WORLD_ID } from '@/utils/constants';
+import { UI_RULES } from '@/constants/game_rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,7 +125,7 @@ export async function POST(req: Request) {
                 justice_pts: 0,
                 evil_pts: 0,
                 title_name: '名もなき旅人',
-                avatar_url: '/avatars/adventurer.jpg',
+                avatar_url: UI_RULES.DEFAULT_AVATAR,
                 current_location_id: startLocId, // Reset location
                 previous_location_id: null, // Reset previous location
                 accumulated_days: 0,
@@ -176,7 +177,7 @@ export async function POST(req: Request) {
                 .upsert([{
                     id: '00000000-0000-0000-0000-000000000000',
                     title_name: '名もなき旅人',
-                    avatar_url: '/avatars/adventurer.jpg',
+                    avatar_url: UI_RULES.DEFAULT_AVATAR,
                     order_pts: 0, chaos_pts: 0, justice_pts: 0, evil_pts: 0, gold: 1000
                 }]);
             if (insertProfileError) console.error("Profile insert failed:", insertProfileError);

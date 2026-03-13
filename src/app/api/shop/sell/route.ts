@@ -1,35 +1,24 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseService } from '@/lib/supabase-service';
+import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 // Helper to get user profile
 async function getUserProfile(req: Request) {
-    let targetUserId: string | null = null;
+    let targetUserId: string;
 
     const authHeader = req.headers.get('authorization');
-    const xUserId = req.headers.get('x-user-id');
 
     if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (error || !user) {
-            console.error("[Sell] Auth User Error:", error?.message);
-            // Fall back to x-user-id if available
-            if (xUserId) {
-                targetUserId = xUserId;
-            } else {
-                throw new Error("Authentication failed: " + (error?.message || 'User not found'));
-            }
-        } else {
-            targetUserId = user.id;
-            if (xUserId && xUserId !== targetUserId) {
-                targetUserId = xUserId;
-            }
+            console.warn("[Shop Sell API] Authentication failed (JWT). Deprecated x-user-id fallback rejected.");
+            throw new Error("Authentication failed. JWT is required.");
         }
-    } else if (xUserId) {
-        targetUserId = xUserId;
+        targetUserId = user.id;
     } else {
-        throw new Error("Authentication failed: No token provided");
+        console.warn("[Shop Sell API] Missing authorization header. Deprecated x-user-id fallback rejected.");
+        throw new Error("Authentication failed: Login required.");
     }
 
     const { data: profile } = await supabase
@@ -56,6 +45,28 @@ export async function POST(req: Request) {
         // 1. Authenticate user
         const profile = await getUserProfile(req);
 
+        // 1.5 Check Embargo Mode + 繁栄度取得（Task2: 闇市売却ボーナス用）
+        let prosperityLevel = 3;
+        if (profile.current_location_id) {
+            const { data: loc } = await supabaseService
+                .from('locations')
+                .select('prosperity_level, reputation_score:reputations(reputation_score)')
+                .eq('id', profile.current_location_id)
+                .maybeSingle();
+
+            if (loc) prosperityLevel = (loc as any).prosperity_level || 3;
+
+            const { data: repData } = await supabaseService
+                .from('reputations')
+                .select('reputation_score')
+                .eq('user_id', profile.id)
+                .eq('location_id', profile.current_location_id)
+                .maybeSingle();
+            if (repData && (repData.reputation_score || 0) < 0) {
+                return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。' }, { status: 403 });
+            }
+        }
+
         // 2. Find the inventory item with joined item data
         // Use supabaseService to bypass RLS
         // NOTE: There may be multiple inventory rows for the same item_id
@@ -79,12 +90,18 @@ export async function POST(req: Request) {
             }, { status: 404 });
         }
 
-        // 3. Calculate sell price (base_price / 2)
+        // 3. Calculate sell price
+        // Task2: 崩壊拠点（prosperity_level=1）では闇市売却ボーナス（base_price × 1.5）
+        // UGCアイテム（is_ugc: true）は常に1G固定（最優先）
+        // 仕様: spec_v6_shop_system.md §4
         const item = invItem.items as any;
         const isUgc = invItem.is_ugc === true;
-        const sellPrice = isUgc ? 1 : Math.floor((item?.base_price || 0) / 2);
+        const isRuined = prosperityLevel === 1;
+        const sellPrice = isUgc ? 1
+            : isRuined ? Math.floor((item?.base_price || 0) * 1.5)  // 闇市ボーナス
+                : Math.floor((item?.base_price || 0) / 2);              // 通常売却
         const totalSellValue = sellPrice * quantity;
-        console.log(`[Sell] Item: ${item?.name}, base_price: ${item?.base_price}, sellPrice: ${sellPrice}, qty: ${quantity}, total: ${totalSellValue}`);
+        console.log(`[Sell] Item: ${item?.name}, base_price: ${item?.base_price}, prosperity: ${prosperityLevel}, isRuined: ${isRuined}, sellPrice: ${sellPrice}, qty: ${quantity}, total: ${totalSellValue}`);
 
         // Check for Betrayal
         let isBetrayal = false;

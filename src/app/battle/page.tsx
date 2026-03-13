@@ -180,8 +180,12 @@ export default function BattlePage() {
                                     const isLost = member.durability <= 0 || !member.is_active;
                                     return (
                                         <div key={member.id} className={`flex items-center gap-3 p-2 rounded border-l-4 transition-all ${isLost ? 'bg-red-900/10 border-red-900 opacity-50 grayscale' : 'bg-gray-800/40 border-amber-600'}`}>
-                                            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0">
-                                                <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs text-gray-400">{member.name[0]}</div>
+                                            <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500 relative shrink-0 flex items-center justify-center">
+                                                {member.icon_url || member.image_url ? (
+                                                    <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gray-600 flex items-center justify-center text-xs text-gray-400">{member.name[0]}</div>
+                                                )}
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex justify-between items-center mb-1">
@@ -234,11 +238,15 @@ export default function BattlePage() {
                                             )}
 
                                             <div className={`w-28 h-28 sm:w-32 sm:h-32 relative ${battleState.isVictory ? 'opacity-50 grayscale transition-opacity duration-1000' : ''}`}>
-                                                <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black rounded-lg shadow-lg flex items-center justify-center border-2 transform transition-all cursor-pointer
+                                                <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black rounded-lg shadow-lg flex items-center justify-center border-2 transform transition-all cursor-pointer overflow-hidden
                                                     ${isTarget ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] rotate-0' : 'border-red-900 rotate-2'}
                                                     ${hasTaunt((enemy.status_effects || []) as StatusEffect[]) ? 'border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]' : ''}
                                                 `}>
-                                                    <Skull className={`w-12 h-12 ${isDead ? 'text-gray-600' : 'text-red-500/80'}`} />
+                                                    {enemy.image_url ? (
+                                                        <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-50 grayscale' : ''}`} />
+                                                    ) : (
+                                                        <Skull className={`w-12 h-12 ${isDead ? 'text-gray-600' : 'text-red-500/80'}`} />
+                                                    )}
                                                 </div>
 
                                                 {/* Status Effects / Taunt */}
@@ -352,8 +360,10 @@ export default function BattlePage() {
                                 `}
                             >
 
-                                <div className="mt-4 p-2 bg-gray-800 rounded-full">
-                                    {card.type === 'Skill' ? <Sparkles className="w-6 h-6 text-yellow-400" /> :
+                                <div className="mt-4 p-2 bg-gray-800 rounded-full flex items-center justify-center w-10 h-10 overflow-hidden">
+                                    {card.image_url ? (
+                                        <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                    ) : card.type === 'Skill' ? <Sparkles className="w-6 h-6 text-yellow-400" /> :
                                         card.type === 'Item' ? <Heart className="w-6 h-6 text-green-400" /> :
                                             <Sword className="w-6 h-6 text-gray-400" />}
                                 </div>
@@ -463,6 +473,17 @@ export default function BattlePage() {
                                         onClick={() => {
                                             const urlParams = new URLSearchParams(window.location.search);
                                             const bType = urlParams.get('type');
+
+                                            // Task3: 賞金稼ぎペナルティ（敗北でゴールド半減）
+                                            if (bType === 'bounty_hunter') {
+                                                const currentGold = useGameStore.getState().userProfile?.gold || 0;
+                                                const penalty = Math.ceil(currentGold / 2); // 半分没収
+                                                if (penalty > 0) {
+                                                    useGameStore.getState().spendGold(penalty);
+                                                    alert(`賞金稼ぎに身包みを剥がされた...\n所持金の半分（${penalty}G）を失った！`);
+                                                }
+                                            }
+
                                             router.push(`/inn?battle_result=lose${bType ? `&type=${bType}` : ''}`)
                                         }}
                                         className="px-12 py-4 bg-red-950/80 text-red-200 border border-red-800 rounded hover:bg-red-900 transition-colors font-bold text-xl"
@@ -489,6 +510,6 @@ export default function BattlePage() {
                     </div>
                 )
             }
-        </div>
+        </div >
     );
 }

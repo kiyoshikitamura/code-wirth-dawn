@@ -1,23 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { headers } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-
 export async function POST(request: Request) {
     try {
-        const h = headers();
-        const fallbackUserId = h.get('x-user-id');
-        let userId = fallbackUserId;
-
-        // Try getting user from auth session if fallback is not provided or to verify
-        if (!userId) {
-            const supabase = createRouteHandlerClient({ cookies });
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-                userId = session.user.id;
-            }
+        if (!supabaseAdmin) {
+            return NextResponse.json({ error: 'Database unconfigured' }, { status: 500 });
         }
+        const h = await headers();
+        const userId = h.get('x-user-id');
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -38,11 +28,10 @@ export async function POST(request: Request) {
         const currentGold = profile.gold || 0;
         const newGold = Math.floor(currentGold / 2);
 
-        // 3. Update profile
+        // 3. Update profile (decrease by half)
+        const amountToDeduct = currentGold - newGold;
         const { error: updateErr } = await supabaseAdmin
-            .from('user_profiles')
-            .update({ gold: newGold })
-            .eq('id', userId);
+            .rpc('increment_gold', { p_user_id: userId, p_amount: -amountToDeduct });
 
         if (updateErr) {
             throw updateErr;

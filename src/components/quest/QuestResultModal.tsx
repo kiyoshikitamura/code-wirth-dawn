@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Shield, Heart, Zap, Award, Coins, ArrowRight } from 'lucide-react';
+import { Shield, Heart, Zap, Award, Coins, ArrowRight, Trophy } from 'lucide-react';
+import XShareButton from '../shared/XShareButton';
 
 interface LevelUpInfo {
     oldLevel: number;
@@ -25,14 +26,15 @@ interface QuestResultModalProps {
     changes: QuestChanges;
     rewards: any;
     daysPassed: number;
+    shareText?: string;
 }
 
-export default function QuestResultModal({ onClose, changes, rewards, daysPassed }: QuestResultModalProps) {
+export default function QuestResultModal({ onClose, changes, rewards, daysPassed, shareText }: QuestResultModalProps) {
     const { level_up, gold_gained, aged_up } = changes;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-            <div className="bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl overflow-hidden relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl relative my-8">
                 <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent pointer-events-none" />
 
                 <header className="p-6 text-center border-b border-gray-800 relative z-10">
@@ -41,6 +43,19 @@ export default function QuestResultModal({ onClose, changes, rewards, daysPassed
                 </header>
 
                 <div className="p-6 space-y-6 relative z-10">
+                    {/* Share Section (NEW) */}
+                    {shareText && (
+                        <div className="bg-amber-900/10 border border-amber-500/20 p-4 rounded-lg space-y-3 animate-slide-up">
+                            <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
+                                <Trophy className="w-4 h-4" />
+                                <span>SHARE YOUR LEGEND</span>
+                            </div>
+                            <p className="text-gray-300 text-sm italic leading-relaxed">
+                                "{shareText.length > 80 ? shareText.substring(0, 80) + '...' : shareText}"
+                            </p>
+                            <XShareButton text={shareText} variant="large" />
+                        </div>
+                    )}
 
                     {/* Rewards */}
                     <div className="space-y-3">
@@ -105,7 +120,6 @@ export default function QuestResultModal({ onClose, changes, rewards, daysPassed
                     {aged_up && (
                         changes.vit_penalty > 0 ? (
                             <div className="relative overflow-hidden rounded-lg border border-red-900/50 bg-black/80 p-6 text-center animate-fade-in">
-                                {/* Ominous Background Animation */}
                                 <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(80,0,0,0.4)_0%,transparent_70%)] animate-pulse-slow pointer-events-none"></div>
 
                                 <div className="relative z-10 space-y-2">
@@ -165,3 +179,4 @@ export default function QuestResultModal({ onClose, changes, rewards, daysPassed
         </div>
     );
 }
+

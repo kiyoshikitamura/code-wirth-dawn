@@ -4,11 +4,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScenarioDB } from '@/types/game';
 import { getAssetUrl } from '@/config/assets';
-import { Scroll, Sword, Skull, ArrowRight, MapPin, Shield, Star } from 'lucide-react';
+import { Scroll, Sword, Skull, ArrowRight, MapPin, Shield, Star, User } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
 import { useRouter } from 'next/navigation';
 import WorldMap from '@/components/world/WorldMap';
+import StatusModal from '@/components/inn/StatusModal';
 import { supabase } from '@/lib/supabase';
 
 interface Props {
@@ -32,7 +33,8 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
     // v3.6 UI State
     const [showingGuestJoin, setShowingGuestJoin] = useState<any>(null);
-    const [showingTravel, setShowingTravel] = useState<{ dest: string, slug?: string, days: number, next: string, nextBattle?: string, encounterRate?: number, status: 'confirm' | 'animating' } | null>(null);
+    const [showingTravel, setShowingTravel] = useState<{ dest: string, slug?: string, days: number, gold_cost: number, next: string, nextBattle?: string, encounterRate?: number, status: 'confirm' | 'animating' } | null>(null);
+    const [showCampStatus, setShowCampStatus] = useState(false);
 
     // グローバル状態へのアクセス
     const { userProfile, worldState, battleState, inventory } = useGameStore();
@@ -69,7 +71,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             s = {
                 nodes: {
                     start: {
-                        text: scenario.description || "...",
+                        text: scenario.full_description || scenario.description || "...",
                         choices: [{ label: "進む", next: "end_success" }]
                     },
                     end_success: {
@@ -135,6 +137,20 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
 
                 setCurrentNodeId(hasItem ? successNode : failNode);
+            }
+            else if (currentNode.type === 'check_equipped') {
+                const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
+                const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
+
+                console.log("[DEBUG check_equipped] Required:", requiredItemId, "Qty:", reqQty);
+                const hasEquipped = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId) && i.is_equipped).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
+
+                console.log("[DEBUG check_equipped] hasEquipped:", hasEquipped);
+
+                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+
+                setCurrentNodeId(hasEquipped ? successNode : failNode);
             }
             else if (currentNode.type === 'check_delivery') {
                 const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
@@ -225,11 +241,12 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
                             if (res.ok) {
                                 const costData = await res.json();
-                                console.log(`[Travel Calc API] From: ${costData.from} To: ${costData.to} Days: ${costData.days}`);
+                                console.log(`[Travel Calc API] From: ${costData.from} To: ${costData.to} Days: ${costData.days} GoldCost: ${costData.gold_cost}`);
                                 setShowingTravel({
                                     dest: costData.to,
                                     slug: targetSlug,
                                     days: costData.days,
+                                    gold_cost: costData.gold_cost ?? 0,
                                     next: nextSuccess,
                                     nextBattle,
                                     encounterRate,
@@ -384,6 +401,39 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         );
     }
 
+    // Camp UI
+    if (currentNode?.type === 'camp') {
+        const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+
+        return (
+            <div className="relative w-full h-[70vh] bg-[#1a120b] border-4 border-[#8b5a2b] overflow-hidden flex flex-col shadow-2xl rounded-lg p-6 md:p-10 items-center justify-center">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('/backgrounds/camp.jpg')] opacity-30 pointer-events-none bg-cover bg-center" />
+
+                <h2 className="text-3xl font-serif text-[#e3d5b8] mb-2 z-10 drop-shadow-md">野営地 (Camp)</h2>
+                <p className="text-gray-400 mb-8 z-10 text-sm">「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」</p>
+
+                <div className="z-10 bg-black/50 px-6 py-6 rounded border border-[#a38b6b]/30 mb-8 backdrop-blur-sm text-center">
+                    <p className="text-yellow-400 font-bold text-sm mb-4">※ここでは特別に、クエスト中のデッキ・装備変更が許可されます。</p>
+                    <button
+                        onClick={() => setShowCampStatus(true)}
+                        className="bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] px-8 py-3 hover:bg-[#5d4037] transition-all tracking-widest text-lg font-bold shadow-lg hover:scale-105"
+                    >
+                        デッキ編成 (装備変更)
+                    </button>
+                </div>
+
+                <button
+                    onClick={() => nextId && setCurrentNodeId(nextId)}
+                    className="z-10 text-gray-400 hover:text-white border-b border-white border-dashed hover:border-solid hover:text-white transition-all pb-1 hover:pb-0 font-bold"
+                >
+                    休憩を終えて出発する
+                </button>
+
+                {showCampStatus && <StatusModal onClose={() => setShowCampStatus(false)} isCampMode={true} />}
+            </div>
+        );
+    }
+
     // 安全性チェック
     if (!currentNode) {
         return <div className="p-8 text-red-500">Error: Node '{currentNodeId}' not found.</div>;
@@ -419,98 +469,103 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     const bgUrl = getAssetUrl(currentNode.bg_key || 'default');
 
     return (
-        <div className="relative w-full h-[70vh] bg-black border-4 border-[#8b5a2b] overflow-hidden flex flex-col shadow-2xl rounded-lg">
+        <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
             {/* Debug Overlay */}
-            <div className="absolute top-0 left-0 bg-red-900/80 text-white text-xs p-1 z-50 font-mono">
+            <div className="absolute top-0 left-0 bg-red-900/80 text-white text-[10px] p-1 z-50 font-mono shadow-md rounded-br-lg">
                 Nodes: {Object.keys(script.nodes || {}).length} | ID: {currentNodeId} | Type: {currentNode?.type || 'none'}
-                {currentNode?.type === 'battle' && ` | EnemyGroup: ${currentNode.enemy_group_id}`}
             </div>
 
-            {/* Background Layer */}
+            {/* Background Image Layer */}
             <div
-                className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
-                style={{ backgroundImage: `url(${bgUrl})`, filter: 'brightness(0.5) sepia(0.3)' }}
+                className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-40 mix-blend-overlay"
+                style={{ backgroundImage: `url(${bgUrl})` }}
             />
 
-            {/* Overlay Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
-            {/* Content Container */}
-            <div className="relative z-10 flex-1 flex flex-col p-6 md:p-10 justify-between h-full">
-
-                {/* Header / Title */}
-                <div className="text-center border-b border-white/10 pb-4 mb-4">
-                    <h2 className="text-2xl font-serif text-[#e3d5b8] tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                        {scenario.title}
-                    </h2>
-                    <div className="flex justify-center gap-4 mt-2 text-xs text-gray-400 uppercase tracking-widest">
-                        <span>{scenario.slug}</span>
-                        <span>•</span>
-                        <span>Level {scenario.rec_level}</span>
-                    </div>
-                </div>
-
-                {/* Main Text Area (BYORK) */}
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar fade-mask">
-                    <div className="bg-black/60 p-6 rounded-lg border border-[#a38b6b]/30 backdrop-blur-md min-h-[150px] animate-in fade-in slide-in-from-bottom-5 duration-500 shadow-inner">
-                        <p className="text-lg text-gray-200 font-serif leading-loose whitespace-pre-wrap">
-                            {showingTravel ? (
-                                <span className="text-gray-500 italic animate-pulse">移動準備中...</span>
-                            ) : currentNode.text || (
-                                currentNode.type === 'travel' ? "移動中... (数日が経過した)" :
-                                    currentNode.type === 'guest_join' ? "新たな仲間が合流したようだ。" :
-                                        "..."
-                            )}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Input / Choices Area */}
-                <div className="grid gap-3 mt-6">
-                    {currentNode.type === 'battle' ? (
-                        <div className="flex flex-col items-center gap-4 py-4">
-                            <div className="text-red-500 font-bold text-xl animate-pulse">
-                                敵の気配を感じる...
-                            </div>
-                            <button
-                                onClick={() => {
-                                    if (onBattleStart) {
-                                        const successChoice = currentNode.choices?.find((c: any) => c.label === 'win') || currentNode.choices?.[0];
-                                        const successId = successChoice?.next || 'end_success';
-                                        const enemyId = currentNode.enemy_group_id || 'slime';
-                                        onBattleStart(enemyId, successId);
-                                    }
-                                }}
-                                className="bg-red-900/80 border border-red-500 text-red-100 px-8 py-3 rounded text-lg font-bold hover:bg-red-700 transition-colors shadow-[0_0_15px_rgba(220,38,38,0.5)]"
-                            >
-                                戦闘開始 (FIGHT)
-                            </button>
+            <div className="absolute inset-0 flex items-center justify-center opacity-80 pointer-events-none">
+                <div className="w-full h-full bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent z-10" />
+                <div className="w-64 h-[80%] bg-slate-800 rounded-t-full border-t border-amber-900/30 flex flex-col items-center justify-end overflow-hidden mb-8 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+                    {currentNode.speaker_image_url ? (
+                        <div className="w-[120%] h-auto max-h-[100%] flex items-end justify-center z-0 opacity-80 mix-blend-screen transition-all duration-1000 ease-in-out">
+                            <img
+                                src={currentNode.speaker_image_url}
+                                alt="Speaker"
+                                className="w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                                style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }}
+                            />
                         </div>
+                    ) : (
+                        <div className="text-slate-700 transform scale-[4] opacity-20 mb-12"><User size={200} /></div>
+                    )}
+                </div>
+            </div>
+
+            <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
+                {/* Main Text Dialog */}
+                <div className="bg-slate-900/85 backdrop-blur-md border border-amber-900/50 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
+                    <div className="flex-shrink-0">
+                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden">
+                            {currentNode.speaker_image_url ? (
+                                <img src={currentNode.speaker_image_url} alt="Face" className="w-full h-full object-cover" />
+                            ) : (
+                                <User size={32} className="text-amber-600/40" />
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex-1 relative pb-1 pt-1 min-h-[60px]">
+                        {currentNode.speaker && (
+                            <div className="absolute -top-6 -left-1 bg-amber-900 text-amber-100 text-[10px] px-3 py-0.5 rounded-sm border border-amber-600 font-bold uppercase tracking-widest shadow-lg">
+                                {currentNode.speaker}
+                            </div>
+                        )}
+                        <div className="h-full max-h-[30vh] overflow-y-auto no-scrollbar pt-1 pr-1">
+                            <p className="text-slate-200 text-sm leading-relaxed font-serif whitespace-pre-wrap selection:bg-amber-900/50">
+                                {showingTravel ? (
+                                    <span className="text-gray-500 italic animate-pulse">移動準備中...</span>
+                                ) : currentNode.text || (
+                                    currentNode.type === 'travel' ? "移動中... (数日が経過した)" :
+                                        currentNode.type === 'guest_join' ? "新たな仲間が合流したようだ。" :
+                                            "..."
+                                )}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Choices */}
+                <div className="flex flex-col gap-2 shrink-0">
+                    {currentNode.type === 'battle' ? (
+                        <button
+                            onClick={() => {
+                                if (onBattleStart) {
+                                    const successChoice = currentNode.choices?.find((c: any) => c.label === 'win') || currentNode.choices?.[0];
+                                    const successId = successChoice?.next || 'end_success';
+                                    const enemyId = currentNode.enemy_group_id || 'slime';
+                                    onBattleStart(enemyId, successId);
+                                }
+                            }}
+                            className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
+                        >
+                            戦闘開始 (FIGHT)
+                        </button>
                     ) : currentNode.choices && currentNode.choices.length > 0 ? (
                         currentNode.choices.map((choice: any, i: number) => (
                             <button
                                 key={i}
                                 onClick={() => handleChoice(choice)}
-                                className="group relative bg-gradient-to-r from-[#3e2723]/90 to-[#2c1b18]/90 hover:from-[#5d4037] hover:to-[#4e342e] border border-[#a38b6b] text-[#e3d5b8] py-4 px-6 rounded text-left transition-all flex items-center justify-between active:scale-[0.99] hover:shadow-[0_0_15px_rgba(163,139,107,0.3)]"
+                                className="w-full py-4 px-4 bg-amber-900/40 border border-amber-600 text-amber-100 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-amber-900/60 transition-all active:scale-[0.98] flex items-center justify-between"
                             >
-                                {/* Button Content */}
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#a38b6b] opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <span className="font-bold flex items-center gap-3 text-lg">
-                                    <span className="w-2 h-2 bg-[#a38b6b] rounded-full group-hover:bg-white transition-colors shadow-glow" />
-                                    {choice.label}
-                                </span>
+                                <span className="flex-1 text-center font-serif truncate px-2">{choice.label}</span>
 
-                                <div className="flex flex-col items-end gap-1">
+                                {/* Info tags */}
+                                <div className="flex flex-col items-end gap-1 absolute right-6 text-right shrink-0">
                                     {choice.cost_vitality && (
-                                        <div className="flex items-center gap-1 text-xs text-red-400 font-mono">
-                                            <Sword size={12} />
-                                            <span>Vitality -{choice.cost_vitality}</span>
+                                        <div className="flex items-center gap-1 text-[9px] text-red-400 font-mono italic">
+                                            <Sword size={8} /> Vit -{choice.cost_vitality}
                                         </div>
                                     )}
                                     {choice.req_tag && (
-                                        <div className="flex items-center gap-1 text-xs text-blue-400 font-mono border border-blue-900/50 bg-blue-900/20 px-2 py-0.5 rounded">
-                                            <Shield size={12} />
-                                            <span>Req: {choice.req_tag}</span>
+                                        <div className="flex items-center gap-1 text-[9px] text-blue-400 font-mono border border-blue-900/50 bg-blue-900/40 px-1 rounded-sm">
+                                            <Shield size={8} /> {choice.req_tag.substring(0, 8)}..
                                         </div>
                                     )}
                                 </div>
@@ -522,24 +577,22 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 setHistory(prev => [...prev, currentNodeId]);
                                 setCurrentNodeId(currentNode.next);
                             }}
-                            className="w-full bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] py-3 px-6 rounded hover:bg-[#5d4037] transition-colors flex items-center justify-center gap-2 animate-in fade-in duration-500"
+                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2"
                         >
                             <span>次へ</span>
-                            <ArrowRight size={16} />
+                            <ArrowRight size={14} className="opacity-70" />
                         </button>
                     ) : (
                         currentNode.type === 'end' || currentNode.result ? (
-                            <div className="text-center font-bold text-2xl py-6 animate-pulse tracking-widest">
+                            <div className="text-center font-bold text-xl py-4 animate-pulse tracking-widest">
                                 {currentNode.result === 'success' ? (
-                                    <span className="text-yellow-400 drop-shadow-lg">QUEST COMPLETED</span>
+                                    <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">QUEST COMPLETED</span>
                                 ) : (
                                     <span className="text-red-500 drop-shadow-lg">QUEST FAILED</span>
                                 )}
                             </div>
                         ) : (
-                            <div className="text-center text-gray-500 italic pb-4">
-                                ...
-                            </div>
+                            <div className="text-center text-slate-500 italic pb-2 text-sm tracking-widest">...</div>
                         )
                     )}
                 </div>
@@ -639,79 +692,87 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             <Scroll size={14} />
                             <span>所要日数: {showingTravel.days} 日</span>
                         </p>
+                        {showingTravel.gold_cost > 0 && (
+                            <p className={`mt-1 flex items-center justify-center gap-2 text-sm font-bold ${(userProfile?.gold ?? 0) < showingTravel.gold_cost ? 'text-red-400' : 'text-yellow-400'
+                                }`}>
+                                <span>移動費用: {showingTravel.gold_cost} G</span>
+                            </p>
+                        )}
+                        {showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost && (
+                            <p className="text-xs text-red-400 mt-2">ゴールドが不足しています</p>
+                        )}
                     </div>
 
                     {showingTravel.status === 'confirm' ? (
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => {
-                                    setShowingTravel({ ...showingTravel, status: 'animating' });
-                                    // Auto-advance after animation duration (e.g. 3s)
-                                    setTimeout(async () => {
-                                        // 1. Execute Server Move
-                                        try {
-                                            const { data: { session } } = await supabase.auth.getSession();
-                                            const token = session?.access_token;
-                                            const userId = useGameStore.getState().userProfile?.id;
-                                            const res = await fetch('/api/move', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                                                    ...(userId ? { 'x-user-id': userId } : {})
-                                                },
-                                                body: JSON.stringify({
-                                                    target_location_name: showingTravel.dest,
-                                                    target_location_slug: showingTravel.slug
-                                                })
-                                            });
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        setShowingTravel({ ...showingTravel, status: 'animating' });
+                                        // Auto-advance after animation duration (e.g. 3s)
+                                        setTimeout(async () => {
+                                            // 1. Execute Server Move
+                                            try {
+                                                const { data: { session } } = await supabase.auth.getSession();
+                                                const token = session?.access_token;
+                                                const userId = useGameStore.getState().userProfile?.id;
+                                                const res = await fetch('/api/move', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                                        ...(userId ? { 'x-user-id': userId } : {})
+                                                    },
+                                                    body: JSON.stringify({
+                                                        target_location_name: showingTravel.dest,
+                                                        target_location_slug: showingTravel.slug,
+                                                        is_quest_travel: true
+                                                    })
+                                                });
 
-                                            if (res.ok) {
-                                                const data = await res.json();
-                                                // Refresh Global State
-                                                await useGameStore.getState().fetchUserProfile();
+                                                if (res.ok) {
+                                                    const data = await res.json();
+                                                    // Refresh Global State
+                                                    await useGameStore.getState().fetchUserProfile();
 
-                                                // Update Local Quest State
-                                                questState.travelTo(showingTravel.dest, data.travel_days);
-                                                setHistory(prev => [...prev, `[Travel] ${data.travel_days}日かけて移動した... (残り寿命 -${data.travel_days})`]);
+                                                    // Update Local Quest State
+                                                    questState.travelTo(showingTravel.dest, data.travel_days);
+                                                    setHistory(prev => [...prev, `[Travel] ${data.travel_days}日かけて移動した... (残り寿命 -${data.travel_days})`]);
 
-                                                // 2. Encounter Check
-                                                const roll = Math.random();
-                                                const isBattle = showingTravel.encounterRate && roll < showingTravel.encounterRate;
+                                                    // 2. Encounter Check
+                                                    const roll = Math.random();
+                                                    const isBattle = showingTravel.encounterRate && roll < showingTravel.encounterRate;
 
-                                                setShowingTravel(null);
+                                                    setShowingTravel(null);
 
-                                                if (isBattle && showingTravel.nextBattle && onBattleStart) {
-                                                    console.log("Encounter Triggered!", roll, "<", showingTravel.encounterRate);
-                                                    // Start Battle (Pass success node as next)
-                                                    // Assuming enemy_group_id is needed? 
-                                                    // The current node in 'script' has it, but we need to access it.
-                                                    // 'currentNode' is still the 'travel' node.
-                                                    // Does travel node have 'enemy_group_id'? No, the PLAN said 'type: battle' is NEXT.
-                                                    // My SQL: next_node_battle -> id: 'battle_1' -> type: 'battle'
+                                                    if (isBattle && showingTravel.nextBattle && onBattleStart) {
+                                                        console.log("Encounter Triggered!", roll, "<", showingTravel.encounterRate);
+                                                        setCurrentNodeId(showingTravel.nextBattle);
+                                                    } else {
+                                                        // Success / Safe
+                                                        if (showingTravel.next) setCurrentNodeId(showingTravel.next);
+                                                    }
 
-                                                    // So we just go to the battle node ID.
-                                                    setCurrentNodeId(showingTravel.nextBattle);
                                                 } else {
-                                                    // Success / Safe
-                                                    if (showingTravel.next) setCurrentNodeId(showingTravel.next);
+                                                    alert("移動に失敗しました (API Error)");
+                                                    setShowingTravel(null);
                                                 }
-
-                                            } else {
-                                                alert("移動に失敗しました (API Error)");
+                                            } catch (e) {
+                                                console.error("Travel error", e);
+                                                alert("通信エラー");
                                                 setShowingTravel(null);
                                             }
-                                        } catch (e) {
-                                            console.error("Travel error", e);
-                                            alert("通信エラー");
-                                            setShowingTravel(null);
-                                        }
-                                    }, 3000);
-                                }}
-                                className="bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] px-12 py-3 hover:bg-[#5d4037] transition-all tracking-widest text-lg font-bold shadow-[0_0_15px_rgba(139,90,43,0.3)] hover:scale-105"
-                            >
-                                DEPART
-                            </button>
+                                        }, 3000);
+                                    }}
+                                    disabled={showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost}
+                                    className={`px-12 py-3 tracking-widest text-lg font-bold transition-all ${showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost
+                                        ? 'bg-gray-800 text-gray-500 border border-gray-600 cursor-not-allowed'
+                                        : 'bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] hover:bg-[#5d4037] shadow-[0_0_15px_rgba(139,90,43,0.3)] hover:scale-105'
+                                        }`}
+                                >
+                                    DEPART
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <div className="text-gray-500 text-sm animate-pulse italic">

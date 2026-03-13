@@ -1,7 +1,7 @@
+'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Map, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Calendar, Coins, Heart, Star, MapPin } from 'lucide-react';
 import { WorldState, UserProfile } from '@/types/game';
 
 interface InnHeaderProps {
@@ -11,114 +11,145 @@ interface InnHeaderProps {
 }
 
 export default function InnHeader({ worldState, userProfile, reputation }: InnHeaderProps) {
-    const router = useRouter();
+    const [vitalityPulse, setVitalityPulse] = useState(true);
 
-    // Helper for Theme
-    const getThemeColors = () => {
-        const nation = worldState?.controlling_nation || 'Neutral';
-        switch (nation) {
-            case 'Roland': return { border: 'border-blue-700/50', text: 'text-blue-100', accent: 'text-blue-500', bg: 'bg-blue-950/40' };
-            case 'Markand': return { border: 'border-yellow-700/50', text: 'text-yellow-100', accent: 'text-yellow-500', bg: 'bg-yellow-950/40' };
-            case 'Karyu': return { border: 'border-emerald-700/50', text: 'text-emerald-100', accent: 'text-emerald-500', bg: 'bg-emerald-950/40' };
-            case 'Yato': return { border: 'border-purple-700/50', text: 'text-purple-100', accent: 'text-purple-500', bg: 'bg-purple-950/40' };
-            default: return { border: 'border-gold-700/50', text: 'text-gold-100', accent: 'text-gold-500', bg: 'bg-black/40' };
-        }
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setVitalityPulse(prev => !prev);
+        }, 800);
+        return () => clearInterval(interval);
+    }, []);
+
+    const totalDays = userProfile?.accumulated_days || 0;
+    const year = 742 + Math.floor(totalDays / 365); // Base year + elapsed
+    const month = 1 + Math.floor((totalDays % 365) / 30);
+    const day = 1 + (totalDays % 30);
+
+    const isLowVit = (userProfile?.vitality ?? 100) <= 20;
+    const currentLocName = worldState?.location_name || "名もなき旅人の拠所";
+    const controllingNation = worldState?.controlling_nation || "Neutral";
+    const prosperity = worldState?.prosperity_level || 3;
+
+    // HP Bar calculation
+    const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100));
+
+    // Experience/AP Bar proxy (Using a static example or if AP exists)
+    // Here we just use a static blue bar for now, as we only have HP in userProfile
+    const apPercent = 40;
+
+    const getStatusText = () => {
+        if (prosperity === 5) return '繁栄';
+        if (prosperity >= 4) return '発展';
+        if (prosperity === 3) return '通常';
+        if (prosperity <= 1) return '崩壊';
+        return '衰退';
     };
-    const theme = getThemeColors();
 
-    const getGovernanceText = () => {
+    const getFlavorText = () => {
         if (!worldState) return '';
-        if (worldState.location_name === '名もなき旅人の拠所') return '';
+        if (currentLocName === '名もなき旅人の拠所') return '';
 
         const nation = worldState.controlling_nation;
         if (nation === 'Neutral') return 'この地は誰の支配も受けていない。';
 
         let score = 0;
-        if (nation === 'Roland') score = worldState.order_score;
-        else if (nation === 'Markand') score = worldState.chaos_score;
-        else if (nation === 'Yato') score = worldState.justice_score;
-        else if (nation === 'Karyu') score = worldState.evil_score;
+        if (nation === 'Roland') score = worldState.order_score || 0;
+        else if (nation === 'Markand') score = worldState.chaos_score || 0;
+        else if (nation === 'Yato') score = worldState.justice_score || 0;
+        else if (nation === 'Karyu') score = worldState.evil_score || 0;
 
-        if (score >= 60) return `住民は${nation}の統治を歓迎しているようだ。活気がある。`;
-        if (score <= 40) return `住民は${nation}の支配に怯えている... 緊張感が漂っている。`;
-        return `街はこの国の支配にまだ馴染んでいないようだ。`;
+        if (score >= 60) return `「住民は${nation}の統治を歓迎しているようだ。活気がある。」`;
+        if (score <= 40) return `「住民は${nation}の支配に怯えている... 緊張感が漂っている。」`;
+        return `「街はこの国の支配にまだ馴染んでいないようだ。」`;
     };
 
     return (
-        <header className={`max-w-4xl mx-auto py-4 md:py-6 border-b ${theme.border} mb-4 md:mb-8`}>
-            {/* Desktop Header */}
-            <div className="hidden md:flex items-center justify-between">
-                <div className="flex flex-col">
-                    <h1 className={`text-2xl font-serif ${theme.accent} font-bold tracking-wider flex items-center gap-2`}>
-                        <Map className="w-8 h-8" />
-                        {worldState?.location_name || '冒険者の宿屋'}
-                    </h1>
-                    <div className="flex flex-col">
-                        <span className="text-sm text-gray-400">Rest & Supply @ {worldState?.controlling_nation || 'Neutral'} Territory</span>
-                        {getGovernanceText() && (
-                            <span className="text-xs text-orange-300/80 mt-1 italic font-serif">
-                                {getGovernanceText()}
-                            </span>
+        <header className="sticky top-0 z-50 w-full bg-slate-950/90 backdrop-blur-md border-b border-amber-900/50 p-4 shadow-2xl select-none">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="relative flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full border-2 border-amber-500 overflow-hidden bg-slate-800 shadow-[0_0_10px_rgba(212,175,55,0.3)]">
+                        {userProfile?.avatar_url ? (
+                            <img src={userProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-amber-500"><User size={32} /></div>
                         )}
-                        <span className="text-xs text-[#a38b6b] mt-0.5 font-sans">
-                            世界暦 {100 + Math.floor((userProfile?.accumulated_days || 0) / 365)}年 {1 + Math.floor(((userProfile?.accumulated_days || 0) % 365) / 30)}月 {1 + ((userProfile?.accumulated_days || 0) % 365) % 30}日
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 bg-amber-600 text-slate-950 text-[8px] font-black px-1 rounded-sm border border-slate-900">
+                        Lv.{userProfile?.level || 1}
+                    </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                    <p className="text-[9px] text-amber-500 font-bold tracking-widest uppercase truncate">
+                        {userProfile?.title_name || '駆け出しの傭兵'}
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="text-sm font-black text-slate-100 truncate">
+                            {userProfile?.name || '名もなき旅人'}
+                        </h1>
+                        <span className="text-[10px] text-slate-500 font-mono italic">
+                            Age: {Math.floor((userProfile?.age || 15) + ((userProfile?.accumulated_days || 0) / 365))}
                         </span>
                     </div>
-                    <div className="flex gap-2 mt-2">
-                        <button
-                            onClick={() => router.push('/world-map')}
-                            className={`text-xs bg-[#4a3b2b] border ${theme.border} ${theme.text} px-3 py-1.5 rounded hover:bg-white/10 hover:text-white flex items-center gap-2 w-fit transition-all uppercase tracking-wider font-bold`}
-                        >
-                            <Map className="w-3 h-3" /> World Map
-                        </button>
-                    </div>
                 </div>
 
-                <div className="bg-black/50 px-4 py-2 rounded border border-gold-600/50 text-gold-400 font-mono text-right flex flex-col gap-2">
-                    <div className="flex items-center justify-end gap-2">
-                        {userProfile?.avatar_url && (
-                            <img src={userProfile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-gold-500/50 object-cover" />
-                        )}
-                        <div className="text-right">
-                            <div className="font-bold text-gray-200 text-sm">
-                                {userProfile?.name || userProfile?.title_name || '名もなき旅人'}
-                            </div>
-                            <div className={`text-[10px] ${reputation?.rank === 'Hero' ? 'text-amber-400' : 'text-gray-400'}`}>
-                                &lt;{userProfile?.title_name}&gt; / 名声: {reputation?.rank || 'Stranger'}
-                            </div>
-                            <div className="text-[10px] text-gray-300 font-sans mt-0.5 flex gap-2 justify-end">
-                                <span>Age:{userProfile?.age}</span>
-                                <span className="text-blue-300">Lv.{userProfile?.level ?? 1}</span>
-                                <span className="text-green-300">HP:{userProfile?.hp}/{userProfile?.max_hp}</span>
-                                <span className={userProfile?.vitality && userProfile.vitality < 40 ? 'text-red-400' : 'text-gray-300'}>Vit:{userProfile?.vitality ?? 100}%</span>
-                            </div>
+                <div className="flex flex-col items-end gap-1.5 min-w-[120px]">
+                    <div className="w-full space-y-0.5">
+                        {/* HP Bar */}
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                            <div className="h-full bg-green-600 transition-all duration-300" style={{ width: `${hpPercent}%` }} />
                         </div>
+                        {/* AP/MP Bar */}
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                            <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${apPercent}%` }} />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-1">
+                            <Coins size={10} className="text-amber-500" />
+                            <span className="text-[10px] font-bold font-mono text-amber-100">{userProfile?.gold || 0} G</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Heart size={10} className={`${(!isLowVit || vitalityPulse) ? 'text-red-500' : 'text-red-900'} transition-colors duration-300`} />
+                            <span className={`text-[10px] font-bold font-mono ${(!isLowVit || vitalityPulse) ? 'text-red-100' : 'text-red-900'} transition-colors duration-300`}>
+                                {userProfile?.vitality ?? (userProfile?.max_hp || 100)}/{userProfile?.max_vitality ?? (userProfile?.max_hp || 100)}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 mt-0.5">
+                        <Star size={10} className="text-amber-500 fill-amber-500" />
+                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">
+                            名声: {reputation?.score || 0}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            {/* Mobile Header (Compact) */}
-            <div className="flex md:hidden items-center justify-between w-full">
-                <div className="flex items-center gap-3">
-                    {userProfile?.avatar_url && (
-                        <img src={userProfile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full border border-gold-500/50 object-cover" />
-                    )}
-                    <div>
-                        <h1 className={`text-lg font-serif ${theme.accent} font-bold tracking-wider leading-tight`}>
-                            {worldState?.location_name || '宿屋'}
-                        </h1>
-                        <div className="text-[10px] text-gray-400 mt-1">
-                            <div className="text-xs text-amber-200/80 italic mt-0.5 leading-snug">
-                                <span className="font-bold not-italic text-amber-500 mr-1">[{worldState?.controlling_nation || '中立'}]</span>
-                                {worldState?.flavor_text || '...'}
-                            </div>
-                            <div>
-                                世界暦 {100 + Math.floor((userProfile?.accumulated_days || 0) / 365)}年...
-                            </div>
-                        </div>
+            <div className="flex justify-between items-center mb-2 px-1">
+                <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-slate-800">
+                    <Calendar size={12} className="text-amber-500" />
+                    <span className="text-[9px] font-serif tracking-wider text-amber-100/70">
+                        {year}年 {month}月 {day}日
+                    </span>
+                </div>
+                <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-[8px] uppercase text-slate-500 font-bold w-full text-right">世界の覇権</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-serif font-bold text-amber-100">{currentLocName}</span>
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded border ${prosperity <= 2 ? 'bg-red-950/40 text-red-400 border-red-900/30' : 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30'}`}>
+                            {getStatusText()}
+                        </span>
                     </div>
                 </div>
             </div>
+
+            {getFlavorText() && (
+                <p className="px-1 text-[9px] text-slate-500 italic leading-relaxed">
+                    {getFlavorText()}
+                </p>
+            )}
         </header>
     );
 }

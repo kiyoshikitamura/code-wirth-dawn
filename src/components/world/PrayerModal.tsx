@@ -22,9 +22,9 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
     ] as const;
 
     const ATTRIBUTES = [
-        { id: 'Order', label: '秩序', color: 'text-blue-400', border: 'border-blue-500', icon: <ShieldCheckIcon className="w-5 h-5" /> }, // ShieldCheck is not defined, using generic logic below
+        { id: 'Order', label: '秩序', color: 'text-blue-400', border: 'border-blue-500', icon: <Scale className="w-5 h-5" /> },
         { id: 'Chaos', label: '混沌', color: 'text-purple-400', border: 'border-purple-500', icon: <Zap className="w-5 h-5" /> },
-        { id: 'Justice', label: '正義', color: 'text-yellow-400', border: 'border-yellow-500', icon: <Scale className="w-5 h-5" /> },
+        { id: 'Justice', label: '正義', color: 'text-yellow-400', border: 'border-yellow-500', icon: <Sparkles className="w-5 h-5" /> },
         { id: 'Evil', label: '悪意', color: 'text-red-400', border: 'border-red-500', icon: <Skull className="w-5 h-5" /> },
     ] as const;
 
@@ -108,97 +108,98 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-[#1a1510] border border-[#a38b6b] p-6 max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X /></button>
+            <div className={`bg-[#1a1510] border border-[#a38b6b] max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden ${isPraying ? 'animate-pulse' : ''}`}>
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-50"><X /></button>
 
-                <h2 className="text-2xl font-serif text-[#e3d5b8] mb-1 text-center">祈りを捧げる</h2>
-                <div className="text-center text-xs text-[#8b7355] mb-6 font-mono uppercase tracking-widest">
-                    Devotion to {locationName}
+                {/* Visuals & NPC */}
+                <div className="h-48 bg-[url('/backgrounds/temple.jpg')] bg-cover bg-center relative flex items-center justify-center border-b border-[#a38b6b]">
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-[#1a1510]" />
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className={`w-24 h-24 rounded-full border-4 shadow-[0_0_20px_rgba(255,255,255,0.2)] overflow-hidden mb-3 ${isPraying ? 'border-amber-400 shadow-[0_0_40px_rgba(255,200,0,0.5)] animate-pulse' : 'border-gray-600'}`}>
+                            <img src="/avatars/priest.png" alt="Priest" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = '/avatars/inn_master.png'; }} />
+                        </div>
+                        <h2 className="text-3xl font-serif text-[#e3d5b8] tracking-widest text-center shadow-black drop-shadow-lg">
+                            神殿 - {locationName}
+                        </h2>
+                        {isPraying && <div className="text-amber-300 font-serif italic mt-2 animate-pulse">「神よ、我らの声を聞き届けたまえ...」</div>}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Left: Attribute Selection */}
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-400 mb-3 border-b border-gray-800 pb-1">1. 属性を選択</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {ATTRIBUTES.map(attr => (
-                                <button
-                                    key={attr.id}
-                                    onClick={() => setSelectedAttribute(attr.id as any)}
-                                    className={`
+                <div className="p-6 overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Left: Attribute Selection */}
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-400 mb-3 border-b border-gray-800 pb-1">1. 属性を選択</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {ATTRIBUTES.map(attr => (
+                                    <button
+                                        key={attr.id}
+                                        onClick={() => setSelectedAttribute(attr.id as any)}
+                                        className={`
                                         p-4 border flex flex-col items-center gap-2 transition-all
                                         ${selectedAttribute === attr.id
-                                            ? `bg-white/5 ${attr.border} ${attr.color} shadow-[0_0_10px_rgba(255,255,255,0.1)]`
-                                            : 'border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300 bg-black/20'}
+                                                ? `bg-white/5 ${attr.border} ${attr.color} shadow-[0_0_10px_rgba(255,255,255,0.1)]`
+                                                : 'border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300 bg-black/20'}
                                     `}
-                                >
-                                    {attr.icon}
-                                    <span className="font-serif font-bold">{attr.label}</span>
-                                </button>
-                            ))}
+                                    >
+                                        {attr.icon}
+                                        <span className="font-serif font-bold">{attr.label}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Right: Tier Selection */}
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-400 mb-3 border-b border-gray-800 pb-1">2. 捧げる金額</h3>
-                        <div className="space-y-3">
-                            {TIERS.map(t => (
-                                <button
-                                    key={t.tier}
-                                    onClick={() => setSelectedTier(t.tier as any)}
-                                    className={`
+                        {/* Right: Tier Selection */}
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-400 mb-3 border-b border-gray-800 pb-1">2. 捧げる金額</h3>
+                            <div className="space-y-3">
+                                {TIERS.map(t => (
+                                    <button
+                                        key={t.tier}
+                                        onClick={() => setSelectedTier(t.tier as any)}
+                                        className={`
                                         w-full p-3 border flex justify-between items-center transition-all px-4
                                         ${selectedTier === t.tier
-                                            ? 'border-gold-500 bg-gold-900/20 text-gold-200'
-                                            : 'border-gray-800 text-gray-500 hover:border-gray-600 bg-black/20'}
+                                                ? 'border-gold-500 bg-gold-900/20 text-gold-200'
+                                                : 'border-gray-800 text-gray-500 hover:border-gray-600 bg-black/20'}
                                     `}
-                                >
-                                    <div className="text-left">
-                                        <div className="font-bold text-sm">{t.desc}</div>
-                                        <div className="text-[10px] opacity-70">Tier {t.tier}</div>
-                                    </div>
-                                    <div className="font-mono font-bold text-lg">
-                                        {t.cost.toLocaleString()} G
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
+                                    >
+                                        <div className="text-left">
+                                            <div className="font-bold text-sm">{t.desc}</div>
+                                            <div className="text-[10px] opacity-70">Tier {t.tier}</div>
+                                        </div>
+                                        <div className="font-mono font-bold text-lg">
+                                            {t.cost.toLocaleString()} G
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
 
-                        <div className="mt-6 p-3 bg-black/40 border border-gray-800 rounded text-center">
-                            <div className="text-xs text-gray-500">現在の所持金</div>
-                            <div className={`font-mono text-lg ${userProfile && selectedTier && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost ? 'text-red-500' : 'text-gold-400'}`}>
-                                {userProfile?.gold.toLocaleString()} G
+                            <div className="mt-6 p-3 bg-black/40 border border-gray-800 rounded text-center">
+                                <div className="text-xs text-gray-500">現在の所持金</div>
+                                <div className={`font-mono text-lg ${userProfile && selectedTier && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost ? 'text-red-500' : 'text-gold-400'}`}>
+                                    {userProfile?.gold.toLocaleString()} G
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="mt-8 flex justify-center">
-                    <button
-                        disabled={!selectedAttribute || !selectedTier || isPraying || (!!selectedTier && !!userProfile && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost)}
-                        onClick={handlePray}
-                        className={`
+                    <div className="mt-8 flex justify-center">
+                        <button
+                            disabled={!selectedAttribute || !selectedTier || isPraying || (!!selectedTier && !!userProfile && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost)}
+                            onClick={handlePray}
+                            className={`
                             px-8 py-3 min-w-[200px] font-bold tracking-widest transition-all
                             ${!selectedAttribute || !selectedTier || isPraying
-                                ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
-                                : 'bg-[#a38b6b] text-black hover:bg-[#e3d5b8] hover:shadow-[0_0_15px_#a38b6b] border border-[#e3d5b8]'}
+                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                                    : 'bg-[#a38b6b] text-black hover:bg-[#e3d5b8] hover:shadow-[0_0_15px_#a38b6b] border border-[#e3d5b8]'}
                         `}
-                    >
-                        {isPraying ? '祈っています...' : '祈りを捧げる'}
-                    </button>
+                        >
+                            {isPraying ? '祈っています...' : '祈りを捧げる'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     );
-}
-
-// Simple Icon Fallback for illustration
-function ShieldCheckIcon(props: any) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-            <path d="m9 12 2 2 4-4" />
-        </svg>
-    )
 }

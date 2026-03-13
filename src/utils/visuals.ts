@@ -1,3 +1,5 @@
+import { UI_RULES } from '@/constants/game_rules';
+
 export const VISUAL_MAPPING = {
     // World Backgrounds (Unsplash Source)
     BACKGROUNDS: {
@@ -11,7 +13,7 @@ export const VISUAL_MAPPING = {
     // User Avatars (Dummy avatars for now, maybe UI Avatars or RoboHash or Unsplash Portraits)
     // Using Unsplash Portraits for high quality
     AVATARS: {
-        '名もなき旅人': '/avatars/adventurer.jpg',
+        '名もなき旅人': UI_RULES.DEFAULT_AVATAR,
         '光差す騎士': '/avatars/knight.jpg',
         '混沌の放浪者': '/avatars/wanderer.jpg',
         '冷徹なる執行者': '/avatars/enforcer.jpg',

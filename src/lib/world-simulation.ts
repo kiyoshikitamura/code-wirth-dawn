@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Location, WorldState } from '@/types/game';
+import { ECONOMY_RULES } from '@/constants/game_rules';
 
 // Status Constants
 export const LOC_STATUS = {
@@ -205,6 +206,8 @@ export async function updateWorldSimulation() {
         // Since sum(quota) == totalLocs, it should match exactly.
 
         // 5. Update Ownership and Calculate Friction (V4)
+        const historyLogs: any[] = [];
+
         for (const loc of locations) {
             // Retrieve latest state to be sure
             const state = stateMap.get(loc.name);
@@ -214,6 +217,13 @@ export async function updateWorldSimulation() {
             // Updated Owner logic (from previous step 4)
             if (state.controlling_nation !== newOwner) {
                 logs.push(`[Change] ${loc.name}: ${state.controlling_nation} -> ${newOwner}`);
+                historyLogs.push({
+                    location_id: loc.id,
+                    event_type: 'alignment_change',
+                    old_value: state.controlling_nation || 'Unknown',
+                    new_value: newOwner,
+                    message: `「『${loc.name}』が${newOwner}の手に落ちた。私はその歴史の転換点に立ち会っている。」`
+                });
                 state.controlling_nation = newOwner;
             }
 
@@ -290,6 +300,24 @@ export async function updateWorldSimulation() {
             // Log changes
             if (oldLevel !== currentLevel) {
                 logs.push(`[Prosperity] ${loc.name}: Lv${oldLevel} -> Lv${currentLevel} (Friction: ${friction})`);
+
+                const isUp = currentLevel > oldLevel;
+                let msg = '';
+                if (currentLevel === 1) {
+                    msg = `「ついに『${loc.name}』が崩壊の時を迎えた。黒煙が街を覆っている…。」`;
+                } else if (isUp) {
+                    msg = `「私が滞在する『${loc.name}』に活気が戻ってきた。この街の行く末を見届けよう。」`;
+                } else {
+                    msg = `「私が滞在する『${loc.name}』に暗い影が落ち始めている…。」`;
+                }
+
+                historyLogs.push({
+                    location_id: loc.id,
+                    event_type: 'prosperity_change',
+                    old_value: String(oldLevel),
+                    new_value: String(currentLevel),
+                    message: msg
+                });
             }
 
             // 5. DB Update
@@ -309,7 +337,79 @@ export async function updateWorldSimulation() {
             }
         }
 
+        // 5.5 Insert History Logs
+        if (historyLogs.length > 0) {
+            const { error: histError } = await supabase.from('world_states_history').insert(historyLogs);
+            if (histError) {
+                logs.push(`Error saving history logs: ${histError.message}`);
+            } else {
+                logs.push(`[History] Inserted ${historyLogs.length} state change events.`);
+            }
+        }
+
+        // 6. 清掃バッチ: 30日未使用の英霊を論理削除
+        // 仕様: spec_v5_shadow_system.md §7 — 英霊データの负荷軽減
+        try {
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: staleHeroics, error: staleError } = await supabase
+                .from('party_members')
+                .select('id, name')
+                .eq('origin_type', 'shadow_heroic')
+                .is('owner_id', null)          // 未雇用状態
+                .lt('hired_at', thirtyDaysAgo)
+                .eq('is_active', true);
+
+            if (!staleError && staleHeroics && staleHeroics.length > 0) {
+                const ids = staleHeroics.map(r => r.id);
+                await supabase
+                    .from('party_members')
+                    .update({ is_active: false })
+                    .in('id', ids);
+                logs.push(`[Cleanup] ${staleHeroics.length}件の英霊の契約を解除: ${staleHeroics.map(r => r.name).join(', ')}`);
+            } else if (!staleError) {
+                logs.push('[Cleanup] 解除対象なし');
+            } else {
+                logs.push(`[Cleanup] エラー: ${staleError.message}`);
+            }
+        } catch (cleanupErr: any) {
+            logs.push(`[Cleanup] 例外: ${cleanupErr.message}`);
+        }
+
         logs.push('World update complete.');
+
+        // 7. 名声の自然減少 (spec_v16 §5.1: Reputation Decay)
+        try {
+            // REP_DECAY_THRESHOLD を超えている reputation レコードを全取得
+            const { data: highReps, error: repFetchError } = await supabase
+                .from('reputations')
+                .select('id, reputation_score')
+                .gt('reputation_score', ECONOMY_RULES.REP_DECAY_THRESHOLD);
+
+            if (repFetchError) {
+                logs.push(`[RepDecay] 取得エラー: ${repFetchError.message}`);
+            } else if (highReps && highReps.length > 0) {
+                // 各レコードの reputation_score を REP_DECAY_AMOUNT 分減少させる
+                let decayCount = 0;
+                for (const rep of highReps) {
+                    const newScore = rep.reputation_score + ECONOMY_RULES.REP_DECAY_AMOUNT; // REP_DECAY_AMOUNT は負数
+                    // 閾値以下にはしない（閾値ちょうどで止める）
+                    const clampedScore = Math.max(ECONOMY_RULES.REP_DECAY_THRESHOLD, newScore);
+                    if (clampedScore !== rep.reputation_score) {
+                        await supabase
+                            .from('reputations')
+                            .update({ reputation_score: clampedScore })
+                            .eq('id', rep.id);
+                        decayCount++;
+                    }
+                }
+                logs.push(`[RepDecay] ${decayCount}件の名声を ${ECONOMY_RULES.REP_DECAY_AMOUNT} 減少させました。`);
+            } else {
+                logs.push('[RepDecay] Decay対象なし');
+            }
+        } catch (decayErr: any) {
+            logs.push(`[RepDecay] 例外: ${decayErr.message}`);
+        }
+
         return { success: true, logs, hegemony: quotas };
 
     } catch (e: any) {

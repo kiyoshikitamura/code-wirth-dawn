@@ -98,12 +98,14 @@ export function resolveNpcTurn(
         return actions;
     }
 
-    // 2. Emergency Check (Medic only)
-    if (npc.ai_role === 'medic') {
+    // 2. Emergency Heal Check
+    //    smartグレード（英霊）または medic ロールの場合、
+    //    HPが50%以下なら「局面判断でヒール优先」。
+    //    仕様: spec_v2_addendum_npc_ai.md §4
+    if (npc.ai_grade === 'smart' || npc.ai_role === 'medic') {
         const emergencyAction = tryEmergencyHeal(npc, deck, context);
         if (emergencyAction) {
             actions.push(emergencyAction);
-            // After heal, continue to try attacking with remaining AP
         }
     }
 

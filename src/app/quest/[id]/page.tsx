@@ -9,7 +9,11 @@ import { Scenario, Enemy } from '@/types/game';
 import { supabase } from '@/lib/supabase'; // Added supabase
 import { ArrowLeft, Skull } from 'lucide-react';
 import { getAssetUrl } from '@/config/assets'; // If needed for backgrounds
-import QuestResultOverlay from '@/components/quest/QuestResultOverlay';
+import QuestResultModal from '@/components/quest/QuestResultModal';
+import BattleView from '@/components/battle/BattleView';
+import QuestHeader from '@/components/quest/QuestHeader';
+import QuestSettingsModal from '@/components/quest/QuestSettingsModal';
+import { Swords, ScrollText } from 'lucide-react';
 
 export default function QuestPage() {
     const params = useParams();
@@ -19,10 +23,29 @@ export default function QuestPage() {
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loading, setLoading] = useState(true);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
-    const [resultOverlay, setResultOverlay] = useState<{
+    const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
+
+    const resultOverlayState = useState<{ // Renamed variable to avoid conflict
         result: 'success' | 'failure';
         data?: any;
     } | null>(null);
+    const resultOverlay = resultOverlayState[0];
+    const setResultOverlay = resultOverlayState[1];
+
+    const searchParams = useSearchParams();
+    const isTestPlay = searchParams.get('test_play') === 'true';
+
+    // UI States for SPA
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isPartyOpen, setIsPartyOpen] = useState(false);
+    const [vitalityPulse, setVitalityPulse] = useState(true);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setVitalityPulse(prev => !prev);
+        }, 800);
+        return () => clearInterval(interval);
+    }, []);
 
     // Battle Return Logic
     useEffect(() => {
@@ -168,7 +191,8 @@ export default function QuestPage() {
                             maxHp: e.hp, // Use max_hp from DB if valid, else hp
                             def: e.def || 0, // Map defense
                             level: Math.floor(e.hp / 10) || 1,
-                            image: `/enemies/${e.slug}.png`,
+                            // UGC image_url を優先、なければデフォルトパス
+                            image: e.image_url || `/enemies/${e.slug}.png`,
                             status_effects: [],
                             vit_damage: e.vit_damage,
                             traits: e.traits,
@@ -199,92 +223,126 @@ export default function QuestPage() {
             nextNodeId: successNodeId
         }));
 
-        router.push(`/battle?return_url=/quest/${id}`);
+        setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
+        setViewMode('battle');
+    };
+
+    const handleBattleEnd = (result: 'win' | 'lose' | 'escape') => {
+        if (result === 'win') {
+            setViewMode('scenario');
+        } else {
+            router.push('/inn'); // 敗北や逃走時は一旦宿屋へ
+        }
     };
 
     return (
-        <div className="min-h-screen bg-[#1a120b] text-[#e3d5b8] relative">
-            {/* Header / Give Up Controls */}
-            <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 items-end">
-                <button
-                    onClick={handleGiveUp}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-900/20 border border-red-900 text-red-500 rounded hover:bg-red-900/40 transition-colors font-serif text-sm"
-                >
-                    <Skull className="w-4 h-4" /> 撤退する (Give Up)
-                </button>
+        <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
+            <div className="relative w-full max-w-[390px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
 
-                {/* DEBUG OVERLAY */}
-                <div className="bg-black/80 text-green-400 text-xs p-2 rounded border border-green-800 max-w-xs break-all">
-                    <div className="font-bold border-b border-green-800 mb-1">DEBUG INFO</div>
-                    <div>QuestID: {id}</div>
-                    <div>NodeID: {scenario?.script_data?.nodes ? Object.keys(scenario.script_data.nodes).length + ' nodes' : 'No Script'}</div>
-                    <div className="mt-1 border-t border-green-900 pt-1">
-                        Guest (Store): {useQuestState.getState().guest?.name || 'None'}
-                    </div>
-                </div>
-            </div>
+                {isSettingsOpen && (
+                    <QuestSettingsModal
+                        onClose={() => setIsSettingsOpen(false)}
+                        onGiveUp={handleGiveUp}
+                        title={scenario.title}
+                        description={scenario.full_description || scenario.description}
+                    />
+                )}
 
-            {/* Main Content */}
-            <div className="max-w-4xl mx-auto min-h-screen border-x border-[#3e2723] bg-[#2c1e1a]">
-                {/* Temporary Debug: Show raw script_data properties */}
-                <div className="bg-black text-xs text-green-500 p-2 overflow-auto max-h-32">
-                    DEBUG: ID={scenario.id} | ScriptKeys={Object.keys(scenario.script_data || {}).join(',')} | Data={JSON.stringify(scenario.script_data).slice(0, 100)}...
-                </div>
-
-                <ScenarioEngine
-                    scenario={scenario}
-                    initialNodeId={initialNodeId}
-                    onBattleStart={startBattle}
-                    onComplete={async (result, history) => {
-                        if (result === 'abort') {
-                            router.push('/inn');
-                            return;
-                        }
-
-                        // Call Complete API
-                        try {
-                            const res = await fetch('/api/quest/complete', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    quest_id: scenario.id,
-                                    user_id: userProfile?.id,
-                                    result: result === 'success' ? 'success' : 'failure',
-                                    history: history || [],
-                                    loot_pool: [],
-                                    consumed_items: []
-                                })
-                            });
-
-                            if (!res.ok) {
-                                const err = await res.json();
-                                console.error('Complete Error:', err);
-                                alert(`結果の保存に失敗しました: ${err.error || res.statusText}`);
-                            } else {
-                                const data = await res.json();
-                                // Refresh Profile to get new location / gold
-                                await fetchUserProfile();
-
-                                setResultOverlay({
-                                    result: result === 'success' ? 'success' : 'failure',
-                                    data: data
-                                });
-                            }
-                        } catch (e: any) {
-                            console.error(e);
-                            alert(`通信エラーが発生しました: ${e.message}`);
-                            router.push('/inn');
-                        }
-                    }}
+                <QuestHeader
+                    isSettingsOpen={isSettingsOpen}
+                    setIsSettingsOpen={setIsSettingsOpen}
+                    isPartyOpen={isPartyOpen}
+                    setIsPartyOpen={setIsPartyOpen}
+                    vitalityPulse={vitalityPulse}
                 />
 
+                <main className="flex-1 overflow-hidden relative flex flex-col">
+                    {viewMode === 'scenario' ? (
+                        <div className="flex-1 flex flex-col relative">
+                            {/* DEBUG OVERLAY */}
+                            <div className="absolute top-2 right-2 z-50 bg-black/80 text-green-400 text-[10px] p-2 rounded border border-green-800 max-w-xs break-all pointer-events-none opacity-50">
+                                <div className="font-bold border-b border-green-800 mb-1">DEBUG INFO</div>
+                                <div>QuestID: {id}</div>
+                                <div>NodeID: {scenario?.script_data?.nodes ? Object.keys(scenario.script_data.nodes).length + ' nodes' : 'No Script'}</div>
+                            </div>
+
+                            <ScenarioEngine
+                                scenario={scenario}
+                                initialNodeId={initialNodeId}
+                                onBattleStart={startBattle}
+                                onComplete={async (result, history) => {
+                                    if (result === 'abort') {
+                                        router.push(isTestPlay ? '/editor' : '/inn');
+                                        return;
+                                    }
+
+                                    if (isTestPlay) {
+                                        if (result === 'success') {
+                                            localStorage.setItem(`ugc_tested_${scenario.id}`, 'true');
+                                            alert("【テストプレイ完了】\nクエストのクリア条件を満たしました。公開申請が可能です。");
+                                        } else {
+                                            alert("【テストプレイ失敗】\nクエストをクリアできませんでした。構成を見直してください。");
+                                        }
+                                        router.push('/editor');
+                                        return;
+                                    }
+
+                                    try {
+                                        const res = await fetch('/api/quest/complete', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                quest_id: scenario.id,
+                                                user_id: userProfile?.id,
+                                                result: result === 'success' ? 'success' : 'failure',
+                                                history: history || [],
+                                                loot_pool: [],
+                                                consumed_items: []
+                                            })
+                                        });
+
+                                        if (!res.ok) {
+                                            const err = await res.json();
+                                            console.error('Complete Error:', err);
+                                            alert(`結果の保存に失敗しました: ${err.error || res.statusText}`);
+                                        } else {
+                                            const data = await res.json();
+                                            await fetchUserProfile();
+
+                                            setResultOverlay({
+                                                result: result === 'success' ? 'success' : 'failure',
+                                                data: data
+                                            });
+                                        }
+                                    } catch (e: any) {
+                                        console.error(e);
+                                        alert(`通信エラーが発生しました: ${e.message}`);
+                                        router.push('/inn');
+                                    }
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex-1 relative w-full h-full">
+                            <BattleView onBattleEnd={handleBattleEnd} />
+                        </div>
+                    )}
+                </main>
+
+                {/* Mobile indicators */}
+                <div className="w-32 h-1 bg-slate-800 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2" />
+
+                {/* Quest Result Overlay */}
                 {resultOverlay && (
-                    <QuestResultOverlay
-                        result={resultOverlay.result}
-                        rewards={resultOverlay.data?.rewards}
-                        changes={resultOverlay.data?.changes}
-                        onClose={() => router.push('/inn')}
-                    />
+                    <div className="absolute inset-0 z-[110]">
+                        <QuestResultModal
+                            rewards={resultOverlay.data?.rewards}
+                            changes={resultOverlay.data?.changes}
+                            daysPassed={resultOverlay.data?.days_passed || 0}
+                            shareText={resultOverlay.data?.share_text}
+                            onClose={() => router.push('/inn')}
+                        />
+                    </div>
                 )}
             </div>
         </div>

@@ -22,7 +22,7 @@ export interface Location {
   type: string;
   nation_id?: string;
   connections: string[];
-  neighbors?: Record<string, number>;
+  neighbors?: Record<string, { days: number; gold_cost: number }>;
   world_states?: { controlling_nation: string }[];
   current_attributes?: {
     order: number;
@@ -65,6 +65,8 @@ export interface Card {
   discard_cost?: number; // v2.11: Noise廃棄コスト (AP)
   isInjected?: boolean; // v4.1: 環境カード (Cost 0扱い)
   cost_type?: 'mp' | 'vitality'; // v5.1: コストタイプ
+  image_url?: string; // v12.0: UGC対応画像
+  animation_type?: string; // v14.0: バトルカード演出効果(SLASH, WIND等)
 }
 
 export interface Enemy {
@@ -81,6 +83,7 @@ export interface Enemy {
   drop_item_slug?: string; // v2.6: ドロップアイテムslug
   status_effects?: { id: string; duration: number }[]; // v3.5: Per-enemy effects
   vit_damage?: number; // v3.5: Vit damage per attack
+  image_url?: string; // v12.0: エネミー画像
 }
 
 // ... (skipping unchanged interfaces) ...
@@ -116,9 +119,7 @@ export interface UserProfile {
   hp?: number;
   max_mp?: number;
   mp?: number;
-  attack?: number;
   atk?: number; // v8.1: 基礎攻撃力 (1-15)
-  // defense?: number; // Previous placeholder?
   def?: number; // Added v2.2
   age_days?: number; // v9.3: 現年齢内の経過日数 (365でリセット)
   current_quest_id?: string; // v3.3: デッキロック用 (クエスト中はnon-null)
@@ -137,6 +138,8 @@ export interface UserProfile {
     justice: number;
     evil: number;
   };
+  quest_started_at?: string;
+  blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null; // v16: Prayer Buff
 }
 
 // ...
@@ -157,6 +160,8 @@ export interface PartyMember {
   loyalty: number;
 
   avatar_url?: string;
+  icon_url?: string; // v12.0: パーティUI/酒場用アイコン
+  image_url?: string; // v12.0: 立ち絵画像
   personality?: string;
 
   inject_cards: string[]; // Card IDs (raw from DB)
@@ -197,9 +202,10 @@ export interface UserProfileDB {
   exp: number;
   hp: number;
   max_hp: number;
-  attack: number;
+  atk: number;
   def: number;
   max_deck_cost: number;
+  blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null;
   // ...
 }
 
@@ -265,6 +271,7 @@ export interface ScenarioFlowNode {
   type?: string;
   bg_key?: string;
   bgm_key?: string;
+  speaker_image_url?: string; // v12.0: 話者の立ち絵画像
   enemy_group_id?: string;
   params?: any;
   [key: string]: any;
@@ -303,6 +310,11 @@ export interface ScenarioDB {
   requirements?: Record<string, any>;
   location_tags?: string[];
 
+  // v12.0 Fields
+  short_description?: string;
+  full_description?: string;
+  status?: 'draft' | 'pending_review' | 'published' | 'unpublished';
+
   // UI Helpers (Optional/Mapped)
   reward_gold?: number;
   impacts?: any;
@@ -328,24 +340,31 @@ export interface LocationDB {
 
   map_x?: number;
   map_y?: number;
-  neighbors?: Record<string, number>;
+  neighbors?: Record<string, { days: number; gold_cost: number }>;
+}
+
+export interface HegemonyData {
+  name: string;
+  power: number;
+  color: string;
 }
 
 export interface WorldState {
   id?: string;
-  location_name: string;
-  order_score: number;
-  chaos_score: number;
-  justice_score: number;
-  evil_score: number;
-  status: string;
-  attribute_name: string;
-  controlling_nation: string;
-  prosperity_level: number;
+  location_name?: string;
+  order_score?: number;
+  chaos_score?: number;
+  justice_score?: number;
+  evil_score?: number;
+  status?: string;
+  attribute_name?: string;
+  controlling_nation?: string;
+  prosperity_level?: number;
   last_friction_score?: number;
   updated_at?: string;
   total_days_passed?: number; // Added for Almanac
   background_url?: string; // Optional UI helper
+  hegemony?: HegemonyData[]; // v14 World Map Hegemony
   flavor_text?: string;    // Optional UI helper
 }
 
@@ -376,6 +395,8 @@ export interface PartyMemberDB {
   inject_cards: number[]; // Array of Card IDs (number)
   is_active: boolean;
   quest_req_id?: string; // v3.4 Guest Context
+  icon_url?: string; // v12.0
+  image_url?: string; // v12.0
   created_at?: string;
 }
 
@@ -399,6 +420,7 @@ export interface ItemDB {
   };
   linked_card_id?: number; // FK to Cards
   is_black_market: boolean;
+  image_url?: string; // v12.0
   created_at?: string;
 }
 
@@ -410,6 +432,7 @@ export interface CardDB {
   cost_type: 'vitality' | 'mp';
   cost_val: number;
   effect_val: number;
+  image_url?: string; // v12.0
   created_at?: string;
 }
 
@@ -432,6 +455,7 @@ export interface BattleState {
   // v2.11 Final
   vitDamageTakenThisTurn?: boolean; // drain_vit 1ターン1回制限
   battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee'; // 戦闘結果
+  resonanceActive?: boolean; // spec_v5 §6.2: 共鳳ボーナス (ATK/DEF +10%)
 }
 
 export type Scenario = ScenarioDB;
@@ -443,4 +467,5 @@ export interface InventoryItem extends Omit<ItemDB, 'id'> {
   is_equipped: boolean;
   is_skill: boolean;
   cost?: number; // Derived from linked card or item data
+  acquired_at?: string;
 }

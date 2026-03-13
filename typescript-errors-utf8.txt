@@ -1,0 +1,5 @@
+﻿src/components/quest/QuestHeader.tsx(23,26): error TS2339: Property 'party_members' does not exist on type 'GameState'.
+src/components/quest/QuestHeader.tsx(38,46): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/components/quest/QuestHeader.tsx(39,47): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/components/quest/QuestHeader.tsx(94,59): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/components/quest/QuestHeader.tsx(118,55): error TS7006: Parameter 'm' implicitly has an 'any' type.

@@ -7,9 +7,10 @@ import { GROWTH_RULES } from '@/constants/game_rules';
 
 interface StatusModalProps {
     onClose: () => void;
+    isCampMode?: boolean;
 }
 
-export default function StatusModal({ onClose }: StatusModalProps) {
+export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile } = useGameStore();
 
     React.useEffect(() => {
@@ -23,11 +24,25 @@ export default function StatusModal({ onClose }: StatusModalProps) {
     const currentDeckCost = skills.filter(i => i.is_equipped).reduce((sum, i) => sum + (i.cost || 0), 0);
 
     const handleToggleSkill = async (item: any) => {
-        if (!item.is_equipped && currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10)) {
-            alert("デッキコスト上限を超えています。レベルを上げてキャパシティを増やしてください。");
-            return;
+        const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
+
+        if (!item.is_equipped) {
+            // コストチェック
+            if (currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10)) {
+                alert("デッキコスト上限を超えています。レベルを上げてキャパシティを増やしてください。");
+                return;
+            }
+            // クエストロックチェック (事前所持アイテム)
+            if (isQuestActive && item.acquired_at && userProfile?.quest_started_at) {
+                const acquiredTime = new Date(item.acquired_at).getTime();
+                const startedTime = new Date(userProfile.quest_started_at).getTime();
+                if (acquiredTime < startedTime) {
+                    alert("クエスト進行中は、事前所持アイテムを新たに装備できません。");
+                    return;
+                }
+            }
         }
-        await toggleEquip(item.id, item.is_equipped);
+        await toggleEquip(item.id, item.is_equipped, isCampMode);
     };
 
     const vitalityStatus = userProfile?.vitality ? getVitalityStatus(userProfile.vitality) : 'Prime';
@@ -160,27 +175,41 @@ export default function StatusModal({ onClose }: StatusModalProps) {
                                 <div className="text-center text-gray-500 py-4 text-sm">習得したスキルはありません。</div>
                             ) : (
                                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
-                                    {skills.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800 relative group hover:border-purple-500/30 transition-colors">
-                                            <div className="absolute top-1 right-14 opacity-50 text-[10px] text-cyan-500 border border-cyan-800 px-1 rounded">
-                                                Cost {item.cost || 0}
+                                    {skills.map(item => {
+                                        const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
+                                        const isLocked = !item.is_equipped && isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
+                                        const isOverCost = !item.is_equipped && currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10);
+                                        const isDisabled = isLocked || isOverCost;
+
+                                        return (
+                                            <div key={item.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800 relative group hover:border-purple-500/30 transition-colors">
+                                                <div className="absolute top-1 right-14 opacity-50 text-[10px] text-cyan-500 border border-cyan-800 px-1 rounded">
+                                                    Cost {item.cost || 0}
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                        {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-4 h-4 text-yellow-400" />}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm text-purple-300 font-bold">{item.name}</div>
+                                                        <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
+                                                        {isLocked && <div className="text-[10px] text-red-500">※クエスト中は装備不可</div>}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleToggleSkill(item)}
+                                                    disabled={isDisabled}
+                                                    title={isLocked ? "クエスト進行中は事前所持アイテムを新たに装備できません" : ""}
+                                                    className={`text-xs px-3 py-1 rounded border transition-colors ${item.is_equipped
+                                                        ? 'bg-purple-900/30 border-purple-500 text-purple-400 hover:bg-red-900/30 hover:border-red-600 hover:text-red-400'
+                                                        : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                                        }`}
+                                                >
+                                                    {item.is_equipped ? '外す' : '装備'}
+                                                </button>
                                             </div>
-                                            <div>
-                                                <div className="text-sm text-purple-300 font-bold">{item.name}</div>
-                                                <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleToggleSkill(item)}
-                                                disabled={!item.is_equipped && currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10)}
-                                                className={`text-xs px-3 py-1 rounded border transition-colors ${item.is_equipped
-                                                    ? 'bg-purple-900/30 border-purple-500 text-purple-400 hover:bg-red-900/30 hover:border-red-600 hover:text-red-400'
-                                                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                                                    }`}
-                                            >
-                                                {item.is_equipped ? '外す' : '装備'}
-                                            </button>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             )}
                         </section>
@@ -196,9 +225,14 @@ export default function StatusModal({ onClose }: StatusModalProps) {
                                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
                                     {consumables.map(item => (
                                         <div key={item.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800">
-                                            <div>
-                                                <div className="text-sm text-gray-300 font-bold">{item.name} <span className="text-gray-500 text-xs">x{item.quantity}</span></div>
-                                                <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                    {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Heart className="w-4 h-4 text-green-400" />}
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-gray-300 font-bold">{item.name} <span className="text-gray-500 text-xs">x{item.quantity}</span></div>
+                                                    <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
+                                                </div>
                                             </div>
                                             {item.name === '禁術の秘薬' && (
                                                 <button
@@ -290,9 +324,14 @@ function PartyList({ userProfile }: { userProfile: any }) {
         <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
             {party.map(member => (
                 <div key={member.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800">
-                    <div>
-                        <div className="text-sm text-blue-300 font-bold">{member.name}</div>
-                        <div className="text-xs text-gray-500">{member.job_class || 'Adventurer'} / Durability: {member.durability}</div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                            {member.icon_url || member.image_url ? <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" /> : <div className="text-gray-400 text-xs">{member.name[0]}</div>}
+                        </div>
+                        <div>
+                            <div className="text-sm text-blue-300 font-bold">{member.name}</div>
+                            <div className="text-xs text-gray-500">{member.job_class || 'Adventurer'} / Durability: {member.durability}</div>
+                        </div>
                     </div>
                     <button
                         onClick={() => handleDismiss(member.id, member.name)}

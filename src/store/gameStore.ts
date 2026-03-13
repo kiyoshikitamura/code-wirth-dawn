@@ -8,6 +8,7 @@ import { resolveNpcTurn, determineRole, determineGrade, NpcAction, BattleContext
 import { StatusEffect, applyEffect, tickEffects, getBleedDamage, isStunned, hasEffect, StatusEffectId } from '@/lib/statusEffects';
 import { validateCardUse, getDefaultTarget } from '@/lib/targeting';
 import { useQuestState } from './useQuestState';
+import { GROWTH_RULES } from '@/constants/game_rules';
 
 
 const DUMMY_ENEMY: Enemy = {
@@ -62,7 +63,7 @@ interface GameState {
     // Inventory
     inventory: InventoryItem[];
     fetchInventory: () => Promise<void>;
-    toggleEquip: (itemId: string, currentEquip: boolean) => Promise<void>;
+    toggleEquip: (itemId: string, currentEquip: boolean, bypassLock?: boolean) => Promise<void>;
     clearStorage: () => void;
 
     // UI State
@@ -164,6 +165,29 @@ export const useGameStore = create<GameState>()(
                     partyMembers.push({ ...guest, is_active: true });
                 }
 
+                // spec_v5 §6.2: 共鳳ボーナスチェック
+                // 現在拠点に過去1時間以内にアクティブな他プレイヤーがいる場合、ATK/DEF +10%
+                let resonanceActive = false;
+                const locationId = userProfile?.current_location_id;
+                if (locationId) {
+                    try {
+                        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                        const { count } = await supabase
+                            .from('user_profiles')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('current_location_id', locationId)
+                            .eq('is_alive', true)
+                            .neq('id', userProfile!.id)
+                            .gt('updated_at', oneHourAgo);
+                        if ((count ?? 0) > 0) {
+                            resonanceActive = true;
+                            console.log('[startBattle] 共鳳ボーナス発動！同拠点プレイヤー:', count, '人');
+                        }
+                    } catch (e) {
+                        console.warn('[startBattle] 共鳳チェック失敗（続行）', e);
+                    }
+                }
+
                 // 2. Build Deck
                 const { inventory, worldState } = get();
                 const equippedCards = (inventory || []).filter(i => i.is_equipped).map(i => ({
@@ -235,14 +259,54 @@ export const useGameStore = create<GameState>()(
 
                 const shuffledDeck = initialDeck.sort(() => 0.5 - Math.random());
 
+                // 共鳳ボーナス: ATK/DEF +10% を userProfileに適用
+                if (resonanceActive && userProfile) {
+                    const boostedAtk = Math.ceil((userProfile.attack || 0) * 1.1);
+                    const boostedDef = Math.ceil((userProfile.def || 0) * 1.1);
+                    set(state => ({
+                        userProfile: state.userProfile
+                            ? { ...state.userProfile, attack: boostedAtk, def: boostedDef }
+                            : null
+                    }));
+                }
+
+                // 祈りの加護 (Blessing Data) の適用
+                let initialAp = 5;
+                let blessingActive = false;
+                if (userProfile?.blessing_data) {
+                    const blessing = userProfile.blessing_data as any;
+                    blessingActive = true;
+                    initialAp += (blessing.ap_bonus || 0);
+
+                    if (blessing.hp_pct) {
+                        const maxHpBonus = Math.floor((userProfile.max_hp || 100) * blessing.hp_pct);
+                        set(state => ({
+                            userProfile: state.userProfile
+                                ? { 
+                                    ...state.userProfile, 
+                                    max_hp: (state.userProfile.max_hp || 100) + maxHpBonus,
+                                    hp: (state.userProfile.hp || 0) + maxHpBonus 
+                                  }
+                                : null
+                        }));
+                    }
+                }
+
+                const startMessages = [
+                    `${enemies.map(e => e.name).join('と')}が現れた！`,
+                    ...(resonanceActive ? ['\u26a1 共鳳ボーナス発動！ (ATK/DEF +10%)'] : []),
+                    ...(blessingActive ? ['✨ 祈りの加護が発動！(開始APアップ & HP回復)'] : []),
+                    `--- Turn 1 ---`
+                ];
+
                 set({
                     battleState: {
-                        enemy: firstEnemy, // Target first by default
+                        enemy: firstEnemy,
                         enemies: enemies,
                         party: partyMembers,
                         turn: 1,
-                        current_ap: 5,
-                        messages: [`${enemies.map(e => e.name).join('と')}が現れた！`, `--- Turn 1 ---`],
+                        current_ap: initialAp,
+                        messages: startMessages,
                         isVictory: false,
                         isDefeat: false,
                         currentTactic: 'Aggressive',
@@ -252,6 +316,7 @@ export const useGameStore = create<GameState>()(
                         consumedItems: [],
                         vitDamageTakenThisTurn: false,
                         battle_result: undefined,
+                        resonanceActive,
                     },
                     deck: shuffledDeck,
                     discardPile: [],
@@ -416,7 +481,7 @@ export const useGameStore = create<GameState>()(
             },
 
             dealHand: () => {
-                const { deck, discardPile, hand, battleState } = get();
+                const { deck, discardPile, hand, battleState, userProfile } = get();
 
                 // v2.11 Struggle (あがき) — ドロー開始時に全カード0枚なら救済
                 if (deck.length === 0 && discardPile.length === 0 && hand.length === 0) {
@@ -439,7 +504,13 @@ export const useGameStore = create<GameState>()(
                     return;
                 }
 
-                const drawCount = 5 - hand.length; // Draw up to 5
+                // Phase 1.5: spec_v8準拠のレベル連動Hand Size
+                // Lv1-9: 3枚 / Lv10-19: 4枚 / Lv20+: 5枚
+                const level = userProfile?.level || 1;
+                const handSizeRule = GROWTH_RULES.HAND_SIZE_BY_LEVEL.find(r => level >= r.minLevel);
+                const maxHandSize = handSizeRule?.size ?? 3;
+
+                const drawCount = maxHandSize - hand.length;
                 if (drawCount <= 0) return;
 
                 let currentDeck = [...deck];
@@ -485,8 +556,19 @@ export const useGameStore = create<GameState>()(
                         .eq('location_name', targetLocationName)
                         .maybeSingle(); // Use maybeSingle to avoid 406 error if missing
 
+                    // --- New logic: Fetch Hegemony ---
+                    let hegemonyData = [];
+                    try {
+                        const hegemonyRes = await fetch('/api/world/hegemony', { cache: 'no-store' });
+                        if (hegemonyRes.ok) {
+                            const hData = await hegemonyRes.json();
+                            hegemonyData = hData.hegemony || [];
+                        }
+                    } catch (e) { console.error('Hegemony fetch error', e); }
+                    // ---
+
                     if (data && !error) {
-                        set({ worldState: data as WorldState });
+                        set({ worldState: { ...(data as WorldState), hegemony: hegemonyData } });
                     } else {
                         console.warn(`fetchWorldState failed for ${targetLocationName}, attempting auto-initialization...`);
 
@@ -508,7 +590,7 @@ export const useGameStore = create<GameState>()(
                                     .maybeSingle();
 
                                 if (newData) {
-                                    set({ worldState: newData as WorldState });
+                                    set({ worldState: { ...(newData as WorldState), hegemony: hegemonyData } });
                                     return;
                                 }
                             }
@@ -530,7 +612,8 @@ export const useGameStore = create<GameState>()(
                             flavor_text: '新たな土地は静寂に包まれている。',
                             background_url: '/backgrounds/default.jpg',
                             total_days_passed: 0,
-                            controlling_nation: 'Neutral'
+                            controlling_nation: 'Neutral',
+                            hegemony: hegemonyData
                         };
                         set({ worldState: dummyState });
                     }
@@ -610,7 +693,7 @@ export const useGameStore = create<GameState>()(
                 }
             },
 
-            toggleEquip: async (itemId: string, currentEquip: boolean) => {
+            toggleEquip: async (itemId: string, currentEquip: boolean, bypassLock?: boolean) => {
                 try {
                     // Optimistic update
                     const { inventory } = get();
@@ -626,7 +709,7 @@ export const useGameStore = create<GameState>()(
                     await fetch('/api/inventory', {
                         method: 'PATCH',
                         headers,
-                        body: JSON.stringify({ inventory_id: itemId, is_equipped: !currentEquip }),
+                        body: JSON.stringify({ inventory_id: itemId, is_equipped: !currentEquip, bypass_lock: bypassLock }),
                         cache: 'no-store'
                     });
                 } catch (e) {

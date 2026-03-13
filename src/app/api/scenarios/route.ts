@@ -1,19 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { QuestService } from '@/services/questService';
 
 export const dynamic = 'force-dynamic';
-
-// Initialize Service Role Client for this API to bypass RLS for script_data
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey || '', {
-    auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-    }
-});
 
 export async function GET(req: Request) {
     try {
@@ -61,17 +50,32 @@ export async function GET(req: Request) {
         // We need userId. For now, fetch the first user or 'default' logic if auth not strictly enforced yet.
         // The original code fetched limit 1 user.
 
-        const { data: profiles } = await supabase
-            .from('user_profiles')
-            .select('id, current_location_id')
-            .limit(1);
-
-        if (!profiles || profiles.length === 0) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        // Base authentication
+        let userId: string | null = null;
+        let locationId: string | null = null;
+        
+        const authHeader = req.headers.get('authorization');
+        const xUserId = req.headers.get('x-user-id');
+        
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) userId = user.id;
+        } else if (xUserId) {
+            userId = xUserId;
         }
-
-        const userId = profiles[0].id;
-        const locationId = profiles[0].current_location_id;
+        
+        if (!userId) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+        
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('current_location_id')
+            .eq('id', userId)
+            .single();
+            
+        if (profile) locationId = profile.current_location_id;
 
         if (!locationId) {
             return NextResponse.json({ error: 'User location not set' }, { status: 400 });

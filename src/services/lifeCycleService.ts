@@ -1,16 +1,27 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+interface DeathOptions {
+    heirloomItemIds?: string[];
+    allowedSlots?: number;
+    paidGold?: number;
+}
+
 export class LifeCycleService {
     constructor(private supabase: SupabaseClient) { }
 
     /**
      * Handles the death of a character.
      * 1. Sets is_alive = false
-     * 2. Creates a historical snapshot (Graveyard data)
+     * 2. Creates a historical snapshot (Graveyard data) — form見情報を含む
      * 3. Calculates legacy points for the next life
-     * 4. (If Subscriber) Registers as a Heroic Shadow
+     * 4. (If Subscriber) Registers as a Heroic Shadow (shadow_heroic)
+     *    - Deck: skill type only (consumables strictly excluded)
      */
-    async handleCharacterDeath(userId: string, cause: string = 'Vitality Depletion'): Promise<{ success: boolean; error?: string }> {
+    async handleCharacterDeath(
+        userId: string,
+        cause: string = 'Vitality Depletion',
+        options?: DeathOptions
+    ): Promise<{ success: boolean; error?: string }> {
         try {
             // 1. Fetch current profile data
             const { data: profile, error: fetchError } = await this.supabase
@@ -22,14 +33,13 @@ export class LifeCycleService {
             if (fetchError || !profile) throw new Error(fetchError?.message || 'Profile not found');
 
             // 2. Calculate Legacy Points
-            // Formula: (Total Days * 10) + (Level * 100) + (Reputation Rank Bonus?)
-            // Subscriber Bonus: x1.5
             let legacyPoints = (profile.accumulated_days * 10) + (profile.level * 100);
-            if (profile.is_subscriber) {
+            const tier = profile.subscription_tier ?? 'free';
+            if (tier !== 'free') {
                 legacyPoints = Math.floor(legacyPoints * 1.5);
             }
 
-            // 3. Create Snapshot Data
+            // 3. Create Snapshot Data（タスク2: 形見情報をスナップショットに含める）
             const snapshotData = {
                 final_level: profile.level,
                 final_gold: profile.gold,
@@ -38,8 +48,12 @@ export class LifeCycleService {
                     def: profile.defense,
                     hp: profile.max_hp
                 },
-                equipment: null, // To be implemented if equipment is detailed
-                cause: cause
+                equipment: null,
+                cause: cause,
+                // タスク2: 形見情報をhistorical_logsに永続化（次世代のprocessInheritance()で読み込む）
+                heirloom_item_ids: options?.heirloomItemIds || [],
+                allowed_slots: options?.allowedSlots || 1,
+                paid_gold_for_slots: options?.paidGold || 0
             };
 
             // 4. Update Profile (Death & Points)
@@ -61,95 +75,134 @@ export class LifeCycleService {
                     user_id: userId,
                     data: snapshotData,
                     legacy_points: legacyPoints,
-                    cause_of_death: '的老衰' // or logic for battle death
+                    cause_of_death: cause
                 });
 
             if (logError) throw logError;
 
-            // 6. (Subscriber Only) Register as Heroic Shadow
-            if (profile.is_subscriber) {
-                // Check Slots (Default 1)
-                const { count, error: countError } = await this.supabase
+            // 5.5 Insert into retired_characters (Graveyard Archive UI)
+            const { count: questsCount } = await this.supabase
+                .from('user_completed_quests')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId);
+
+            const { error: retiredError } = await this.supabase
+                .from('retired_characters')
+                .insert({
+                    user_id: userId,
+                    name: profile.name || profile.title_name || 'Unknown',
+                    age_days: profile.accumulated_days || 0,
+                    cause_of_death: cause,
+                    final_location_id: profile.current_location_id,
+                    completed_quests_count: questsCount || 0,
+                    snapshot: snapshotData
+                });
+
+            if (retiredError) {
+                console.warn('Failed to save to retired_characters graveyard:', retiredError.message);
+                // Non-fatal, keep going
+            }
+
+            // 6. 英霊登録（仕様: spec_v13 §4, spec_v10 §3.2）
+            //    free:不可 / basic:最大3体 / premium:最大10体
+            //    上限到達時はFIFO（最古の英霊を削除して新規登録）
+            const herTier = profile.subscription_tier ?? 'free';
+            const heroicLimit = herTier === 'premium' ? 10 : herTier === 'basic' ? 3 : 0;
+
+            if (heroicLimit > 0) {
+                const { count, data: existingHeroics } = await this.supabase
                     .from('party_members')
-                    .select('*', { count: 'exact', head: true })
+                    .select('id, created_at', { count: 'exact' })
                     .eq('owner_id', userId)
-                    .eq('origin_type', 'heroic');
+                    .eq('origin_type', 'shadow_heroic')
+                    .order('created_at', { ascending: true });
 
-                const maxSlots = 1;
+                const currentCount = count || 0;
 
-                if ((count || 0) < maxSlots) {
-                    // v5.1/v10.1: Heroic Deck Validation
-                    // Fetch equipped cards and filter out consumables and vitality-cost cards
-                    let heroicDeck: string[] = [];
-                    const signatureDeck = profile.signature_deck;
-                    if (signatureDeck && Array.isArray(signatureDeck) && signatureDeck.length > 0) {
-                        // Fetch card details to validate
-                        const { data: deckCards } = await this.supabase
-                            .from('items')
-                            .select('id, type, cost_type')
-                            .in('id', signatureDeck);
-
-                        if (deckCards) {
-                            heroicDeck = deckCards
-                                .filter((c: any) => c.type !== 'consumable' && c.cost_type !== 'vitality')
-                                .map((c: any) => String(c.id));
-                        }
-                    } else {
-                        // Fallback: try equipped inventory
-                        const { data: equipped } = await this.supabase
-                            .from('inventory')
-                            .select('item_id, items(type, cost_type)')
-                            .eq('user_id', userId)
-                            .eq('is_equipped', true)
-                            .limit(5);
-
-                        if (equipped) {
-                            heroicDeck = equipped
-                                .filter((e: any) => {
-                                    const item = e.items;
-                                    return item && item.type !== 'consumable' && item.cost_type !== 'vitality';
-                                })
-                                .map((e: any) => String(e.item_id));
-                        }
+                // FIFO: 上限に達している、または上限を超えている場合、最古の英霊から順に削除して空きを作る
+                if (currentCount >= heroicLimit && existingHeroics) {
+                    // 何体削除する必要があるか計算 (新規追加する1体分も考慮)
+                    const excessCount = currentCount - heroicLimit + 1;
+                    const oldestMembers = existingHeroics.slice(0, excessCount);
+                    
+                    for (const member of oldestMembers) {
+                        await this.supabase.from('party_members').delete().eq('id', member.id);
+                        console.log('Heroic FIFO: deleted heroic', member.id);
                     }
+                }
+                // タスク3-B: デッキバリデーション — type === 'skill' のみ許可（consumable厳密除外）
+                let heroicDeck: string[] = [];
+                const signatureDeck = profile.signature_deck;
 
-                    // Fallback: if no valid cards, use basic attack
-                    if (heroicDeck.length === 0) {
-                        heroicDeck = ['1001']; // 錆びた剣 (Basic Attack)
+                if (signatureDeck && Array.isArray(signatureDeck) && signatureDeck.length > 0) {
+                    const { data: deckCards } = await this.supabase
+                        .from('items')
+                        .select('id, type')
+                        .in('id', signatureDeck);
+
+                    if (deckCards) {
+                        // タスク3-B: type === 'skill' のみ（cost_type: vitality なども自動除外）
+                        heroicDeck = deckCards
+                            .filter((c: any) => c.type === 'skill')
+                            .map((c: any) => String(c.id));
                     }
+                } else {
+                    // Fallback: 装備中インベントリから取得
+                    const { data: equipped } = await this.supabase
+                        .from('inventory')
+                        .select('item_id, items(type)')
+                        .eq('user_id', userId)
+                        .eq('is_equipped', true)
+                        .limit(5);
 
-                    // Register
-                    const heroicData = {
-                        owner_id: userId,
-                        name: profile.name || profile.title_name,
-                        job_class: 'Hero',
+                    if (equipped) {
+                        // タスク3-B: type === 'skill' のみ（consumable厳密除外）
+                        heroicDeck = equipped
+                            .filter((e: any) => {
+                                const item = e.items;
+                                return item && item.type === 'skill';
+                            })
+                            .map((e: any) => String(e.item_id));
+                    }
+                }
+
+                // 有効カードが0枚の場合は基本アタックをフォールバック
+                if (heroicDeck.length === 0) {
+                    heroicDeck = ['1001']; // 錆びた剣 (Basic Attack)
+                }
+
+                // FIFO または空き枠がある場合は新規登録
+                // タスク3-A: origin_type を 'shadow_heroic' で登録（仕様に合致）
+                const heroicData = {
+                    owner_id: userId,
+                    name: profile.name || profile.title_name,
+                    job_class: 'Hero',
+                    level: profile.level,
+                    hp: profile.max_hp,
+                    max_hp: profile.max_hp,
+                    atk: profile.attack,
+                    def: profile.defense,
+                    speed: 10,
+                    cost: 10,
+                    is_active: false,
+                    origin_type: 'shadow_heroic',
+                    image_url: profile.avatar_url,
+                    contract_gold: 0,
+                    loyalty: 100,
+                    inject_cards: heroicDeck,
+                    snapshot_data: {
                         level: profile.level,
-                        hp: profile.max_hp,
-                        max_hp: profile.max_hp,
                         atk: profile.attack,
                         def: profile.defense,
-                        speed: 10,
-                        cost: 10,
-                        is_active: false,
-                        origin_type: 'heroic',
-                        image_url: profile.avatar_url,
-                        contract_gold: 0,
-                        loyalty: 100,
-                        inject_cards: heroicDeck, // v10.1: Validated legacy deck
-                        snapshot_data: {
-                            level: profile.level,
-                            atk: profile.attack,
-                            def: profile.defense,
-                            hp: profile.max_hp,
-                            deck: heroicDeck,
-                        },
-                    };
+                        hp: profile.max_hp,
+                        deck: heroicDeck,
+                    },
+                };
 
-                    await this.supabase.from('party_members').insert([heroicData]);
-                    console.log("Heroic Spirit Registered:", heroicData.name, "Deck:", heroicDeck);
-                } else {
-                    console.log("Heroic Slots Full. Skipping registration.");
-                }
+                await this.supabase.from('party_members').insert([heroicData]);
+                console.log('Heroic Spirit Registered:', heroicData.name, 'Tier:', herTier);
+            } else {
+                console.log('Free Tier: Heroic Shadow registration skipped.');
             }
 
             return { success: true };
@@ -162,24 +215,24 @@ export class LifeCycleService {
 
     /**
      * Initializes a new character, applying valid inheritance.
-     * Spec v10: Gold, Reputation, Heirloom (Simplified)
-     * No Recipe/Knowledge inheritance.
+     * Spec v10: Gold, Reputation, Heirloom
+     * タスク2: historical_logs から heirloom_item_ids を読み込み inventory に INSERT する。
      */
     async processInheritance(userId: string, newProfileData: any, heirloomItemIds?: string[]): Promise<any> {
         const { data: oldProfile } = await this.supabase
             .from('user_profiles')
-            .select('legacy_points, gold, is_subscriber')
+            .select('legacy_points, gold, subscription_tier')
             .eq('id', userId)
             .single();
 
-        const isSubscriber = oldProfile?.is_subscriber || false;
+        const oldTier = oldProfile?.subscription_tier ?? 'free';
+        const isSubscriber = oldTier !== 'free';
 
         // 1. Gold Inheritance
-        // Free: 10%, Sub: 50%
         const goldRate = isSubscriber ? 0.5 : 0.1;
         const inheritedGold = Math.floor((oldProfile?.gold || 0) * goldRate);
 
-        // 2. Reputation Inheritance (Sub Only: 10% of total score from reputations table)
+        // 2. Reputation Inheritance (Sub Only: 10% of total score)
         let inheritedRep = 0;
         if (isSubscriber) {
             const { data: repData } = await this.supabase
@@ -192,8 +245,24 @@ export class LifeCycleService {
             }
         }
 
-        // 3. Heirloom Inheritance (Sub Only: 1 Item)
-        // Delete all inventory first (Reset)
+        // 3. タスク2: 形見引き継ぎ — historical_logs から heirloom_item_ids を取得
+        // まず前世代スナップショットから形見情報を読み込む
+        let resolvedHeirloomIds: string[] = heirloomItemIds || [];
+        if (resolvedHeirloomIds.length === 0) {
+            const { data: lastLog } = await this.supabase
+                .from('historical_logs')
+                .select('data')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (lastLog?.data?.heirloom_item_ids && Array.isArray(lastLog.data.heirloom_item_ids)) {
+                resolvedHeirloomIds = lastLog.data.heirloom_item_ids;
+            }
+        }
+
+        // インベントリをリセット（前世代の全アイテムを削除）
         const { data: inventory } = await this.supabase
             .from('inventory')
             .select('*')
@@ -201,23 +270,20 @@ export class LifeCycleService {
 
         await this.supabase.from('inventory').delete().eq('user_id', userId);
 
-        if (isSubscriber && inventory && inventory.length > 0) {
+        // タスク2: 形見アイテムを inventory に実際に INSERT
+        if (resolvedHeirloomIds.length > 0) {
             let heirloomsToKeep: any[] = [];
 
-            // v10.1: Use specified heirloomItemIds if provided, otherwise pick random
-            if (heirloomItemIds && Array.isArray(heirloomItemIds) && heirloomItemIds.length > 0) {
-                // Enforce a hard cap of 3 slots to prevent manipulation
-                const idsArray = heirloomItemIds.slice(0, 3);
-                idsArray.forEach(id => {
+            if (inventory && inventory.length > 0) {
+                resolvedHeirloomIds.forEach(id => {
                     const found = inventory.find((i: any) => String(i.item_id) === String(id));
                     if (found) heirloomsToKeep.push(found);
                 });
             }
 
-            if (heirloomsToKeep.length === 0) {
-                // Fallback: random item
-                const randomIndex = Math.floor(Math.random() * inventory.length);
-                heirloomsToKeep.push(inventory[randomIndex]);
+            // フォールバック: item_id直接指定でスロットがある場合
+            if (heirloomsToKeep.length === 0 && resolvedHeirloomIds.length > 0) {
+                heirloomsToKeep = resolvedHeirloomIds.map(id => ({ item_id: id }));
             }
 
             if (heirloomsToKeep.length > 0) {
@@ -238,10 +304,10 @@ export class LifeCycleService {
             gold: (newProfileData.gold || 1000) + inheritedGold,
             legacy_points: 0,
             is_alive: true,
-            vitality: newProfileData.max_vitality ?? 100, // Respect input or default
+            vitality: newProfileData.max_vitality ?? 100,
             accumulated_days: 0,
             age: newProfileData.age ?? 20,
-            hp: newProfileData.max_hp ?? 100, // Respect input or default
+            hp: newProfileData.max_hp ?? 100,
             max_hp: newProfileData.max_hp ?? 100
         };
 

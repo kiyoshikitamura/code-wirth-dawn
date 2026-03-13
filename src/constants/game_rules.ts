@@ -6,6 +6,7 @@ export const GROWTH_RULES = {
     BASE_HP_MIN: 85,      // 16yo min
     BASE_HP_MAX: 120,     // 25yo max
     HP_PER_LEVEL: 5,      // v8.1: +5/Lv (was 10 in v8.0)
+    BASE_HP_FALLBACK: 80, // Phase 1.5: questService等のフォールバック用
 
     // Deck Cost
     BASE_DECK_COST: 8,
@@ -15,6 +16,15 @@ export const GROWTH_RULES = {
     ATK_DEF_GROWTH_INTERVAL: 3,  // +1 every 3 levels (Lv 3,6,9...)
     MAX_ATK: 15,
     MAX_DEF: 15,
+
+    // Hand Size by Level (spec_v8 §4.3: 仕様v14更新)
+    // Lv1-4: 3枚 / Lv5-9: 4枚 / Lv10-14: 5枚 / Lv15+: 6枚
+    HAND_SIZE_BY_LEVEL: [
+        { minLevel: 15, size: 6 },
+        { minLevel: 10, size: 5 },
+        { minLevel: 5, size: 4 },
+        { minLevel: 1, size: 3 },
+    ] as const,
 
     // Aging (Spec v9.3)
     DECAY_START_AGE: 40,
@@ -33,3 +43,46 @@ export const GROWTH_RULES = {
 
     EXP_FORMULA: (currentLevel: number) => 100 * Math.pow(currentLevel, 2)
 };
+
+// ─── spec_v16: Economy & Reputation Rules ────────────────────────────────────
+export const ECONOMY_RULES = {
+    // §1: 移動エンカウント
+    RANDOM_ENCOUNTER_RATE: 0.20,        // 通常ランダムエンカウント発生率 (20%)
+    BOUNTY_HUNTER_THRESHOLD: -100,      // 賞金稼ぎ確定エンカウント閾値（以下で確定）
+    BOUNTY_PENALTY_RATE: 0.50,          // 賞金稼ぎ敗北時ゴールド没収率 (50%)
+    ENCOUNTER_VITALITY_LOSS: 1,         // 通常エンカウント敗北時Vitality減算量
+
+    // §2: 首都入場制限
+    PASS_PRICE: 20_000,                 // 通行許可証価格 (G)
+    PASS_DURATION_DAYS: 365,            // 許可証有効日数
+    BRIBE_COST: 10_000,                 // 賄賂費用 (G)
+
+    // §3: クエスト失敗ペナルティ
+    QUEST_FAIL_REP_PENALTY_MIN: -5,
+    QUEST_FAIL_REP_PENALTY_MAX: -10,
+
+    // §4: 祈りの強化
+    CAPITAL_PRAYER_MULTIPLIER: 2.0,     // 首都での祈りの影響力倍率
+    PRAYER_BUFF_HP_PCT: 0.10,           // Blessing: 最大HP +10%
+    PRAYER_BUFF_AP: 1,                  // Blessing: 初期AP +1
+
+    // §5: 名声の自然減少
+    REP_DECAY_THRESHOLD: 100,           // Decay発動の名声閾値
+    REP_DECAY_AMOUNT: -5,               // 1日あたりの名声減少量
+
+    // §6: ゴールドシンク
+    LAUNDERING_COST: 100_000,           // 名声ロンダリング費用 (G)
+
+    // §7: 宿屋と酒場
+    INN_REST_COST_BASE: 200,
+    INN_REST_COST_CHEAP: 100,
+    INN_REST_COST_EXPENSIVE: 300,
+    HIRE_HEROIC_BASE: 5000,
+    HIRE_HEROIC_PER_LEVEL: 1000,
+    HIRE_ACTIVE_PER_LEVEL: 100,
+    HIRE_MERCENARY_PER_LEVEL: 100,
+} as const;
+
+export const UI_RULES = {
+    DEFAULT_AVATAR: '/avatars/adventurer.jpg',
+} as const;

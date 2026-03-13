@@ -1,20 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
-
-// Initialize Service Role Client for this API to bypass RLS for script_data
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey || '', {
-    auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-    }
-});
-
 
 /**
  * GET /api/location/quests
@@ -24,20 +11,25 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey || '', {
 export async function GET(req: Request) {
     const debug: string[] = [];
 
-    if (!supabaseServiceKey) {
-        console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
-        return NextResponse.json({ error: 'Server misconfiguration', debug: ['Missing Service Key'] }, { status: 500 });
-    }
-
     try {
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('userId');
+        const reqUserId = searchParams.get('userId');
         const locationId = searchParams.get('locationId');
+        let userId = reqUserId;
+
+        const authHeader = req.headers.get('authorization');
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) {
+                userId = user.id;
+            }
+        }
 
         debug.push(`userId = ${userId}, locationId = ${locationId} `);
 
         if (!userId) {
-            return NextResponse.json({ error: 'Missing userId', debug }, { status: 400 });
+            return NextResponse.json({ error: 'Authentication required', debug }, { status: 401 });
         }
 
         // 1. Fetch User Profile
@@ -92,7 +84,7 @@ export async function GET(req: Request) {
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabase
             .from('scenarios')
-            .select('id, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id')
+            .select('id, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
             .in('quest_type', ['normal', 'special'])
             .limit(100);
 
@@ -113,53 +105,79 @@ export async function GET(req: Request) {
 
             const reqs = q.requirements || {};
 
-            // We no longer strictly filter by min_level or min_reputation here,
-            // because the UI needs to display them as greyed out with red warnings.
-            // min_level: previously returned false
-            // min_reputation: previously returned false
-
-            // has_item: check if user has the item (keep this or UI filter? Usually quests related to items shouldn't appear at all if they don't have it, or maybe they should. Let's keep strict filter for items for now to avoid spoilers)
+            // has_item: アイテム所持は完全に限定（スポイラー防止）
             if (reqs.has_item && !ownedItemIds.has(String(reqs.has_item))) return false;
 
-            // completed_quest: check quest completion history
+            // completed_quest: 前提クエスト完了必須
             if (reqs.completed_quest) {
                 const reqId = String(reqs.completed_quest);
-                if (!completedQuestIds.has(reqId)) {
-                    return false;
-                }
+                if (!completedQuestIds.has(reqId)) return false;
             }
 
-            // nation_id: check if quest's nation matches current location's nation
-            // Allow through for now (location-based filtering not strict yet)
-
-            // align_evil / min_align_chaos / min_align_order (keep strict for alignment based hidden quests)
+            // 陰陽/秩序 alignment（隠しクエスト）
             if (reqs.align_evil && !(user.evil_pts > user.justice_pts)) return false;
             if (reqs.min_align_chaos && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
             if (reqs.min_align_order && (user.order_pts || 0) < reqs.min_align_order) return false;
 
-            // max_prosperity / min_prosperity (keep strict for world state based appearance)
+            // 繁栄度条件
             if (reqs.max_prosperity && currentProsperity > reqs.max_prosperity) return false;
             if (reqs.min_prosperity && currentProsperity < reqs.min_prosperity) return false;
+
+            // v12.0: min_level / min_reputation もサーバー側で完全フィルタリング
+            if (reqs.min_level && user.level < reqs.min_level) return false;
+            if (reqs.min_reputation) {
+                const repRequired = typeof reqs.min_reputation === 'number'
+                    ? reqs.min_reputation
+                    : (reqs.min_reputation[locationId || q.location_id] || 0);
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual < repRequired) return false;
+            }
+
+            // v16: max_reputation フィルタ（悪人限定クエスト: 名声が高すぎると受注不可）
+            if (q.max_reputation !== null && q.max_reputation !== undefined) {
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual > q.max_reputation) return false;
+            }
 
             return true;
         });
 
-        // 7. Filter Normal Quests (location + prosperity)
+        // 7. Filter Normal Quests (location + prosperity + level + reputation — server-side v12.0)
         const normalQuests = quests.filter((q: any) => {
             if (q.quest_type !== 'normal') return false;
 
             const conds = q.conditions || {};
+            const reqs = q.requirements || {};
 
             // Prosperity Check
             if (conds.min_prosperity && currentProsperity < conds.min_prosperity) return false;
             if (conds.max_prosperity && currentProsperity > conds.max_prosperity) return false;
 
-            // Location tag check (if location-specific quests exist)
+            // Location tag check
             if (conds.location_tags && locationId) {
                 const tags = Array.isArray(conds.location_tags)
                     ? conds.location_tags
                     : String(conds.location_tags).split(',').map((t: string) => t.trim());
                 if (!tags.includes('all') && !tags.includes(locationId)) return false;
+            }
+
+            // v12.0: rec_level / min_reputation をサーバー側で完全フィルタリング
+            const rec = q.rec_level || reqs.min_level || 0;
+            if (rec > 0 && user.level < rec) return false;
+
+            const minRep = reqs.min_reputation;
+            if (minRep) {
+                const repRequired = typeof minRep === 'number'
+                    ? minRep
+                    : (minRep[locationId || q.location_id] || 0);
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual < repRequired) return false;
+            }
+
+            // v16: max_reputation フィルタ（悪人限定クエスト）
+            if (q.max_reputation !== null && q.max_reputation !== undefined) {
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual > q.max_reputation) return false;
             }
 
             return true;

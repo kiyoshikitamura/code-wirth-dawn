@@ -8,8 +8,12 @@ import { Location } from '@/types/game';
 import { supabase } from '@/lib/supabase';
 import { Map as MapIcon, Compass, Anchor, Castle, Mountain, Tent } from 'lucide-react';
 import { getNationNodeColor } from '@/utils/nationColors';
+import { LOCATION_NAME, HUB_LOCATION_ID, LEGACY_ZERO_UUID } from '@/utils/constants';
 
-
+import GlobalStatusBar from '@/components/world/GlobalStatusBar';
+import LocalMapView, { MappedLocation } from '@/components/world/LocalMapView';
+import LocationDetailSheet from '@/components/world/LocationDetailSheet';
+import WorldAtlasOverlay from '@/components/world/WorldAtlasOverlay';
 
 export default function WorldMapPage() {
     const router = useRouter();
@@ -35,8 +39,8 @@ export default function WorldMapPage() {
             if (data) {
                 const mapped = data.map((l: any) => ({
                     ...l,
-                    x: l.map_x || -999,
-                    y: l.map_y || -999
+                    x: l.x !== null ? l.x : null, // Read actual x column
+                    y: l.y !== null ? l.y : null  // Read actual y column
                 }));
                 // Cast to Location[] now that x/y are present
                 setLocations(mapped as Location[]);
@@ -58,11 +62,11 @@ export default function WorldMapPage() {
     useEffect(() => {
         if (!loading && userProfile && locations.length > 0 && !hasDescendedRef.current) {
             // 1. Check legacy Zero UUID
-            const isZeroUUID = !userProfile.current_location_id || userProfile.current_location_id === '00000000-0000-0000-0000-000000000000';
+            const isZeroUUID = !userProfile.current_location_id || userProfile.current_location_id === LEGACY_ZERO_UUID;
 
             // 2. Check actual Location Data (Name/Type)
             const currentLoc = locations.find(l => l.id === userProfile.current_location_id);
-            const isHubLocation = currentLoc?.name === '名もなき旅人の拠所' || currentLoc?.type === 'Hub';
+            const isHubLocation = currentLoc?.name === LOCATION_NAME || currentLoc?.type === 'Hub';
 
             // 3. Check new Hub State (Reactive)
             const isHubStateFlag = hubState?.is_in_hub;
@@ -148,19 +152,57 @@ export default function WorldMapPage() {
         }
     };
 
-    // Travel Confirmation State
-    const [hoveredId, setHoveredId] = useState<string | null>(null);
-    const [confirmTarget, setConfirmTarget] = useState<Location | null>(null);
+    // Map UI States
+    const [showFullMap, setShowFullMap] = useState(false);
+    const [selectedLocation, setSelectedLocation] = useState<MappedLocation | null>(null);
+    const [bribeModal, setBribeModal] = useState<{ target: MappedLocation, cost: number, message: string } | null>(null);
 
-    const handleTravelClick = (target: Location) => {
-        if (!userProfile) return;
-        setConfirmTarget(target);
+    const handleBribe = async () => {
+        if (!bribeModal || !userProfile?.id) return;
+        const targetId = bribeModal.target.id;
+        setBribeModal(null);
+        setTraveling(true);
+        isTravelingRef.current = true;
+        setTravelLog([`衛兵に賄賂を渡しています...`]);
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch('/api/move/bribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    'x-user-id': userProfile.id
+                },
+                body: JSON.stringify({ target_location_id: targetId })
+            });
+
+            if (res.ok) {
+                setTravelLog(prev => [...prev, `衛兵は無言で道を開けた。目的地へ向かいます...`]);
+                await new Promise(r => setTimeout(r, 1000));
+                await fetchUserProfile();
+                await fetchWorldState();
+                setTimeout(() => {
+                    setTraveling(false);
+                    isTravelingRef.current = false;
+                }, 500);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || "賄賂が受け取られませんでした。");
+                setTraveling(false);
+                isTravelingRef.current = false;
+            }
+        } catch (e) {
+            console.error(e);
+            setTraveling(false);
+            isTravelingRef.current = false;
+        }
     };
 
-    const executeTravel = async () => {
-        if (!confirmTarget || !userProfile?.id) return;
-        const target = confirmTarget;
-        setConfirmTarget(null); // Close modal
+    const executeTravel = async (target: MappedLocation) => {
+        if (!userProfile?.id) return;
+        setSelectedLocation(null); // Close sheet
 
         setTraveling(true);
         isTravelingRef.current = true;
@@ -185,6 +227,19 @@ export default function WorldMapPage() {
             if (res.ok) {
                 const data = await res.json();
 
+                if (data.require_battle) {
+                    alert(data.message || "敵襲だ！");
+                    const enemyName = data.require_battle === 'bounty_hunter_ambush' ? '賞金稼ぎ' : '無法者';
+                    const encounterEnemy: any = {
+                        id: data.encounter_enemy_group_slug,
+                        name: enemyName,
+                        hp: 300, maxHp: 300, atk: 15, def: 5, level: 20, status_effects: []
+                    };
+                    useGameStore.getState().startBattle([encounterEnemy]);
+                    router.push(`/battle?type=${data.require_battle}&target=${data.target_location_id}&origin=${data.origin_location_id}`);
+                    return;
+                }
+
                 // Animation Simulation
                 const steps = Math.min(5, data.travel_days);
                 for (let i = 1; i <= steps; i++) {
@@ -198,26 +253,25 @@ export default function WorldMapPage() {
                 // Refresh & Redirect
                 await fetchUserProfile();
                 await fetchWorldState();
-                await fetchHubState();
-                router.push('/inn'); // Go to Inn at new location
+                setTimeout(() => {
+                    setTraveling(false);
+                    isTravelingRef.current = false;
+                }, 500);
             } else {
                 const data = await res.json().catch(() => ({}));
 
-                if (res.status === 403 && data.require_battle === 'bounty_hunter_ambush') {
-                    alert(data.message || "悪名が響き渡り、賞金首として狙い撃ちされました！");
-                    const bountyHunter: any = {
-                        id: 'bounty_hunter_001',
-                        name: '賞金稼ぎ (Bounty Hunter)',
-                        hp: 300,
-                        maxHp: 300,
-                        atk: 15,
-                        def: 5,
-                        level: 20,
-                        status_effects: []
-                    };
-                    useGameStore.getState().initializeBattle([bountyHunter]);
-                    router.push('/battle?type=bounty_hunter');
-                    return;
+                if (res.status === 403) {
+                    if (data.error_code === 'NEED_PASS_OR_BRIBE') {
+                        setBribeModal({ target, cost: data.bribe_cost, message: data.message });
+                        setTraveling(false);
+                        isTravelingRef.current = false;
+                        return;
+                    } else if (data.error_code === 'NEED_PASS') {
+                        alert(data.message || data.error || "許可証が必要です。");
+                        setTraveling(false);
+                        isTravelingRef.current = false;
+                        return;
+                    }
                 }
 
                 if (res.status === 401) {
@@ -280,7 +334,9 @@ export default function WorldMapPage() {
     };
 
     // Filter Logic for Render
-    const visibleLocations = locations.filter(l => l.name !== '名もなき旅人の拠所');
+    const visibleLocations = locations.filter(l =>
+        l.name !== LOCATION_NAME && l.id !== HUB_LOCATION_ID
+    );
 
     if (loading || isInitializingHub) {
         return (
@@ -293,189 +349,86 @@ export default function WorldMapPage() {
         );
     }
 
+    // --- Derived Map Data ---
+    const currentLocId = userProfile?.current_location_id;
+    const currentLocObj = locations.find(l => l.id === currentLocId);
+
+    const mappedLocations: MappedLocation[] = locations.map(loc => {
+        const isCurrent = loc.id === currentLocId;
+
+        let reachable = false;
+        let days = 1;
+        let cost = 0;
+
+        if (currentLocObj) {
+            const neighbors = currentLocObj.neighbors || {};
+            const nd = neighbors[loc.slug];
+            if (nd) {
+                reachable = true;
+                days = typeof nd === 'object' ? nd.days : nd;
+                cost = typeof nd === 'object' ? nd.gold_cost : 0;
+            }
+        } else if (loc.type === 'Capital') {
+            reachable = true; // From Hub
+        }
+
+        const prosperity = loc.prosperity_level || 3;
+        let typeStyle: 'prosperous' | 'normal' | 'collapsed' = 'normal';
+        let statusLabel = '通常域';
+        if (prosperity >= 4) { typeStyle = 'prosperous'; statusLabel = '繁栄域'; }
+        if (prosperity <= 1) { typeStyle = 'collapsed'; statusLabel = '崩壊域'; }
+
+        let emblem = '・';
+        if (loc.type === 'Capital') emblem = '🏰';
+        else if (loc.type === 'City' || loc.type === 'Town') emblem = '🏘️';
+        else if (loc.type === 'Dungeon') emblem = '⚔️';
+        else if (loc.type === 'Field') emblem = '🌲';
+        else emblem = '⛺';
+
+        return {
+            ...loc,
+            isCurrent,
+            reachable,
+            statusLabel,
+            typeStyle,
+            emblem,
+            travelDays: days,
+            travelCost: cost
+        } as MappedLocation;
+    });
+
+    const validMappedLocations = mappedLocations.filter(l => l.slug !== HUB_LOCATION_ID && l.name !== LOCATION_NAME);
+    const localMapLocations = validMappedLocations.filter(l => l.isCurrent || l.reachable);
+    const currentLocationName = currentLocObj ? currentLocObj.name : LOCATION_NAME;
+    // ---
+
     return (
-        <div className="min-h-screen bg-[#050b14] text-gray-200 font-sans relative overflow-hidden flex flex-col items-center">
+        <div className="h-[100dvh] bg-[#050b14] text-gray-200 font-sans relative overflow-hidden flex flex-col items-center">
 
-            {/* Header: Almanac Style */}
-            <header className="w-full max-w-4xl p-4 z-20 flex justify-between items-end border-b border-[#a38b6b]/30 bg-[#0a121e]/90 backdrop-blur">
-                <div>
-                    <h1 className="text-xl font-serif text-[#a38b6b] flex items-center gap-2">
-                        <Compass className="w-6 h-6" /> 世界地図
-                    </h1>
-                    <div className="text-xs text-gray-500 font-mono">World Map & Almanac</div>
-                </div>
-                <div className="text-right font-serif text-[#e3d5b8]">
-                    <div className="text-lg tracking-widest">
-                        世界暦 {year}年 {month}月 {day}日
-                    </div>
-                    <div className="text-sm text-[#a38b6b]">
-                        {userProfile?.title_name} ( {userAge}歳 )
-                    </div>
-                </div>
-            </header>
+            <GlobalStatusBar
+                currentLocationName={currentLocationName}
+                onEnterLocation={returnToInn}
+                onReturnHome={returnToHub}
+            />
 
-            {/* Nation Status Text Display (Outside Map) */}
-            <div className="w-full max-w-4xl bg-[#0a121e] border-x border-[#a38b6b]/30 p-2 z-20">
-                <div className="border border-[#a38b6b]/30 rounded p-2 bg-black/40">
-                    <h3 className="text-center text-xs text-[#a38b6b] font-bold mb-2 tracking-widest border-b border-[#a38b6b]/20 pb-1 w-fit mx-auto px-4">— 国家の覇権 —</h3>
-                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-                        {(() => {
-                            const validLocations = locations.filter(l => l.slug !== 'loc_hub' && l.type !== 'Hub' && l.name !== '名もなき旅人の拠所');
-                            const total = validLocations.length;
-                            if (total === 0) return null;
-                            const counts: Record<string, number> = { 'Roland': 0, 'Markand': 0, 'Yato': 0, 'Karyu': 0, 'Neutral': 0 };
-                            validLocations.forEach(l => {
-                                const n = l.world_states?.[0]?.controlling_nation || l.nation_id || 'Neutral';
-                                counts[n] = (counts[n] || 0) + 1;
-                            });
-                            const getLabel = (n: string) => {
-                                switch (n) {
-                                    case 'Roland': return 'ローランド';
-                                    case 'Markand': return 'マーカンド';
-                                    case 'Karyu': return '華龍神朝';
-                                    case 'Yato': return '夜刀神国';
-                                    default: return '中立';
-                                }
-                            };
-                            const getColor = (n: string) => {
-                                switch (n) {
-                                    case 'Roland': return 'text-blue-400';
-                                    case 'Markand': return 'text-yellow-400';
-                                    case 'Karyu': return 'text-emerald-400';
-                                    case 'Yato': return 'text-purple-400';
-                                    default: return 'text-gray-400';
-                                }
-                            };
+            <LocalMapView
+                visibleLocations={localMapLocations}
+                onSelectLocation={(loc) => setSelectedLocation(loc)}
+                onOpenWorldMap={() => setShowFullMap(true)}
+            />
 
-                            return ['Roland', 'Markand', 'Karyu', 'Yato'].map(n => (
-                                <div key={n} className={`text-[10px] md:text-xs font-mono font-bold ${getColor(n)} flex items-center gap-2`}>
-                                    <span>{getLabel(n)}</span>
-                                    <span className="bg-white/10 px-1.5 rounded text-white">{String(Math.round((counts[n] / total) * 100)).padStart(2, '0')}%</span>
-                                </div>
-                            ));
-                        })()}
-                    </div>
-                </div>
-            </div>
+            <LocationDetailSheet
+                selectedLocation={selectedLocation}
+                onClose={() => setSelectedLocation(null)}
+                onTravel={(loc) => executeTravel(loc)}
+            />
 
+            <WorldAtlasOverlay
+                show={showFullMap}
+                allLocations={validMappedLocations}
+                onClose={() => setShowFullMap(false)}
+            />
 
-
-            {/* Map Area */}
-            <main className="relative flex-1 w-full max-w-4xl overflow-hidden border-x border-[#a38b6b]/20 bg-[#1a202c]">
-                {/* Background Grid/Texture */}
-                <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay pointer-events-none"
-                    style={{
-                        backgroundImage: 'url(/aged-paper.png)',
-                        backgroundSize: 'cover'
-                    }}>
-                </div>
-                <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
-                    style={{ backgroundImage: 'radial-gradient(#a38b6b 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-                </div>
-
-                {/* Connection Lines (SVG) (Excluding Hidden Nodes) */}
-                <svg className="absolute inset-0 z-0 w-full h-full pointer-events-none">
-                    {visibleLocations.map(loc => {
-                        const neighbors = loc.neighbors || {};
-                        return Object.keys(neighbors).map(targetSlug => {
-                            const target = locations.find(l => l.slug === targetSlug);
-                            if (!target || target.name === '名もなき旅人の拠所') return null;
-                            return (
-                                <line
-                                    key={`${loc.slug}-${target.slug}`}
-                                    x1={loc.x + '%'} y1={loc.y + '%'}
-                                    x2={target.x + '%'} y2={target.y + '%'}
-                                    stroke="#a38b6b" strokeWidth="1" strokeDasharray="4 4" opacity="0.4"
-                                />
-                            );
-                        });
-                    })}
-                </svg>
-
-                {/* Layer 1: Icons (Interactive) */}
-                {visibleLocations.map((loc: any) => {
-                    const isCurrent = userProfile?.current_location_id === loc.id;
-                    const nation = loc.world_states?.[0]?.controlling_nation || loc.nation_id || 'Neutral';
-                    const nationStyle = getNationColor(nation);
-
-                    // Neighbor Connectivity
-                    const currentLocObj = locations.find(l => l.id === userProfile?.current_location_id);
-                    let isConnected = false;
-                    if (currentLocObj) {
-                        const neighbors = currentLocObj.neighbors || {};
-                        isConnected = !!neighbors[loc.slug];
-                    } else {
-                        // Hub/Descent logic
-                        if (loc.type === 'Capital') isConnected = true;
-                    }
-                    const isWalkable = isConnected;
-
-                    return (
-                        <div
-                            key={`icon-${loc.id}`}
-                            className={`
-                                absolute flex flex-col items-center justify-center transform -translate-x-1/2 -translate-y-1/2 cursor-pointer
-                                ${isCurrent ? 'z-[60]' : 'z-[40]'}
-                            `}
-                            style={{ left: loc.x + '%', top: loc.y + '%' }}
-                            onClick={() => isWalkable && !isCurrent && handleTravelClick(loc)}
-                            onMouseEnter={() => setHoveredId(loc.id)}
-                            onMouseLeave={() => setHoveredId(null)}
-                        >
-                            {/* Icon Circle */}
-                            <div className={`
-                                w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-lg bg-[#050b14] transition-all duration-300
-                                ${isCurrent ? 'border-white text-white shadow-white/50 animate-pulse' :
-                                    (isWalkable ? `${nationStyle} ${hoveredId === loc.id ? 'scale-110 brightness-125' : ''}` : 'border-gray-700 text-gray-600 grayscale opacity-80')}
-                            `}>
-                                {getIcon(loc.type)}
-                            </div>
-
-                            {/* Hover info / Travel Estimate (Attached to Icon, but High Z) */}
-                            {isWalkable && !isCurrent && hoveredId === loc.id && (
-                                <div className="absolute top-10 bg-black/90 text-white text-[10px] p-2 rounded w-24 text-center z-[90] pointer-events-none border border-gold-600/30 shadow-xl">
-                                    {(() => {
-                                        const currentLoc = locations.find(l => l.id === userProfile?.current_location_id);
-                                        if (!currentLoc) return '移動: 1日';
-                                        const neighbors = currentLoc.neighbors || {};
-                                        const days = neighbors[loc.slug] || 1;
-                                        return `移動: ${days}日`;
-                                    })()}
-                                </div>
-                            )}
-
-                            {/* Current Indicator (Arrow/Text) */}
-                            {isCurrent && !traveling && (
-                                <>
-                                    <div className="md:hidden absolute -top-6 text-xl text-white animate-bounce font-bold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">↓</div>
-                                    <div className="hidden md:block absolute -top-8 text-xs text-white animate-bounce font-bold drop-shadow-md whitespace-nowrap bg-black/50 px-2 rounded">YOU ARE HERE</div>
-                                </>
-                            )}
-                        </div>
-                    );
-                })}
-
-                {/* Layer 2: Labels (Topmost, Non-Interactive) */}
-                <div className={`absolute inset-0 z-[80] pointer-events-none transition-opacity duration-300 ${traveling ? 'opacity-0' : 'opacity-100'}`}>
-                    {visibleLocations.map(loc => {
-                        const isCurrent = userProfile?.current_location_id === loc.id;
-                        const isHovered = hoveredId === loc.id;
-                        return (
-                            <div
-                                key={`label-${loc.id}`}
-                                className={`
-                                    absolute transform -translate-x-1/2 -translate-y-1/2 mt-1 md:mt-2 text-[8px] md:text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded backdrop-blur-sm whitespace-nowrap shadow-md transition-all duration-300
-                                    ${isCurrent ? 'text-white bg-black/80 ring-1 ring-white/50 z-[81]' :
-                                        (isHovered ? 'text-white bg-black/90 ring-1 ring-white/30 scale-105 z-[81]' : 'text-gray-300 bg-black/80')}
-                                `}
-                                style={{ left: loc.x + '%', top: `calc(${loc.y}% + 24px)` }}
-                            >
-                                {loc.name}
-                            </div>
-                        );
-                    })}
-                </div>
-            </main>
 
             {/* Confirmation Modal */}
             {showEntryModal && (
@@ -511,44 +464,7 @@ export default function WorldMapPage() {
                 </div>
             )}
 
-            {confirmTarget && (
-                <div className="fixed inset-0 z-[250] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-[#1a202c] border-2 border-[#a38b6b] p-6 max-w-sm w-full shadow-2xl relative text-center">
-                        <h3 className="text-xl font-serif text-[#e3d5b8] mb-4 border-b border-[#a38b6b]/30 pb-2">
-                            移动の確認
-                        </h3>
-                        <div className="text-gray-300 mb-6 space-y-2">
-                            <p>
-                                <span className="text-white font-bold text-lg">{confirmTarget.name}</span> へ移動しますか？
-                            </p>
-                            <p className="text-sm text-[#a38b6b]">
-                                所要時間:
-                                {(() => {
-                                    const currentLoc = locations.find(l => l.id === userProfile?.current_location_id);
-                                    if (!currentLoc) return ' 1';
-                                    const neighbors = currentLoc.neighbors || {};
-                                    return ` ${neighbors[confirmTarget.slug] || 1}`;
-                                })()}
-                                日
-                            </p>
-                        </div>
-                        <div className="flex gap-4 justify-center">
-                            <button
-                                onClick={() => setConfirmTarget(null)}
-                                className="px-4 py-2 border border-gray-600 text-gray-400 hover:text-white hover:border-white transition-colors"
-                            >
-                                キャンセル
-                            </button>
-                            <button
-                                onClick={executeTravel}
-                                className="px-4 py-2 bg-[#a38b6b] text-black font-bold hover:bg-[#e3d5b8] transition-colors"
-                            >
-                                {confirmTarget.name} へ出発
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
             {/* Travel Overlay */}
             {traveling && (
@@ -562,22 +478,33 @@ export default function WorldMapPage() {
                     </div>
                 </div>
             )}
-
-            {/* Nav Footer */}
-            <div className="p-4 w-full max-w-4xl flex flex-col items-center gap-4 z-20 bg-[#0a121e]/90 border-t border-[#a38b6b]/30">
-                <div className="flex gap-4">
-                    <button onClick={returnToInn} className="text-gray-400 hover:text-white text-sm flex items-center justify-center gap-2 px-4 py-2 border border-gray-700 rounded hover:border-white transition-colors">
-                        宿屋に戻る
-                    </button>
-
-                    <button
-                        onClick={returnToHub}
-                        className="text-[#a38b6b] hover:text-[#e3d5b8] text-sm flex items-center justify-center gap-2 px-4 py-2 border border-[#a38b6b] rounded hover:shadow-[0_0_10px_#a38b6b] transition-all"
-                    >
-                        <Tent className="w-4 h-4" /> 拠点への帰還
-                    </button>
+            {/* Bribe Modal */}
+            {bribeModal && (
+                <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-[#1a202c] border-2 border-red-900 rounded p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95">
+                        <h3 className="text-xl font-bold text-red-500 mb-4 font-serif flex items-center gap-2">
+                            <span>🛑</span> 通行制限
+                        </h3>
+                        <p className="text-gray-300 mb-6 text-sm leading-relaxed whitespace-pre-wrap">{bribeModal.message}</p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setBribeModal(null)}
+                                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded transition whitespace-nowrap"
+                            >
+                                出直す
+                            </button>
+                            <button
+                                onClick={handleBribe}
+                                className="flex-1 py-2 bg-red-900/40 hover:bg-red-800/60 text-red-200 border border-red-700 rounded transition flex flex-col items-center justify-center gap-0.5"
+                            >
+                                <span className="font-bold">賄賂を渡す</span>
+                                <span className="text-[10px] text-red-400 font-mono">({bribeModal.cost.toLocaleString()}G)</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
+
         </div>
     );
 }

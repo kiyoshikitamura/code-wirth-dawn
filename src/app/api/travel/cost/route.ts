@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        // 2. Get Current Location Name (for response)
+        // 2. Get Current Location
         const { data: currentLoc } = await supabase
             .from('locations')
             .select('name, slug, neighbors')
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         const toSlug = target_location_slug;
 
         if (fromSlug === toSlug) {
-            return NextResponse.json({ from: currentLoc.name, to: currentLoc.name, days: 0 });
+            return NextResponse.json({ from: currentLoc.name, to: currentLoc.name, days: 0, gold_cost: 0 });
         }
 
         // 3. Get Target Location
@@ -69,13 +69,21 @@ export async function POST(req: Request) {
 
         if (!targetLoc) return NextResponse.json({ error: 'Target location not found' }, { status: 404 });
 
-        // 4. Check Neighbors
+        // 4. Check Neighbors and Extract days & gold_cost
         const neighbors = currentLoc.neighbors || {};
-        if (neighbors[toSlug]) {
+        const neighborData = neighbors[toSlug];
+
+        if (neighborData) {
+            // 新形式: { days: number, gold_cost: number } / 旧形式: number（後方互換）
+            const days = typeof neighborData === 'object' ? neighborData.days : Number(neighborData);
+            // NOTE: gold_cost には繁栄度インフレを適用しない（移動費用は固定値）
+            const goldCost = typeof neighborData === 'object' ? (neighborData.gold_cost ?? 0) : 0;
+
             return NextResponse.json({
                 from: currentLoc.name,
                 to: targetLoc.name,
-                days: Number(neighbors[toSlug])
+                days,
+                gold_cost: goldCost
             });
         }
 

@@ -6,8 +6,7 @@ import { useGameStore } from '@/store/gameStore';
 
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
-import { Sword, Shield, Map as MapIcon, Hourglass } from 'lucide-react';
-import SecretQuestionModal from '@/components/auth/SecretQuestionModal';
+import { Sword, Shield, Map as MapIcon, Hourglass, Compass } from 'lucide-react';
 
 export default function TitlePage() {
     const router = useRouter();
@@ -20,25 +19,34 @@ export default function TitlePage() {
     // After Auth -> Check Secret. If no Secret -> Secret Modal.
     // After Secret -> Check Profile. If no Profile -> Char Creation (FORM).
 
-    const [mode, setMode] = useState<'ENTRY' | 'SECRET_SETUP' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
+    // Flow State: ENTRY -> MENU -> AUTH/CHAR_CREATION -> CREATING -> GAME
+    const [mode, setMode] = useState<'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
 
     const [name, setName] = useState('');
     const [gender, setGender] = useState<'Male' | 'Female' | 'Unknown'>('Male');
-    const [inputAge, setInputAge] = useState(20);
-    const [inputMonth, setInputMonth] = useState(1);
-    const [inputDay, setInputDay] = useState(1);
-    const [birthDate, setBirthDate] = useState('');
-    const [age, setAge] = useState<number | null>(null);
+    const [age, setAge] = useState(20);
     const [previewStats, setPreviewStats] = useState<any>(null);
-    const [dateError, setDateError] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
+
+    // Dynamic Flavor Text
+    const getFlavorText = (currentAge: number) => {
+        if (currentAge <= 19) return "若さは最大の武器...";
+        if (currentAge <= 29) return "心身ともに円熟の時...";
+        if (currentAge <= 39) return "経験は盾となり...";
+        return "黄昏の時が近づく...";
+    };
 
     // Initial Check
     useEffect(() => {
-        checkUserStatus();
+        // Just verify if they have an active session, but stay on ENTRY until tap
     }, []);
 
-    const handleStart = async () => {
-        setMode('CREATING'); // Shows loading state while authenticating
+    const handleTapToStart = () => {
+        setMode('MENU');
+    };
+
+    const handleNewGame = async () => {
+        setMode('CREATING');
         const { data, error } = await supabase.auth.signInAnonymously();
         if (error) {
             alert('通信エラー: ' + error.message);
@@ -49,7 +57,6 @@ export default function TitlePage() {
     };
 
     const checkUserStatus = async () => {
-        // Use getUser to validate session against server (handles wiped users)
         const { data: { user }, error } = await supabase.auth.getUser();
 
         if (error || !user) {
@@ -59,22 +66,7 @@ export default function TitlePage() {
         }
 
         if (user) {
-            // User is logged in. Check Secret & Profile.
-            // 1. Check Secret
-            const { data: secret } = await supabase
-                .from('user_secrets')
-                .select('user_id')
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if (!secret) {
-                setMode('SECRET_SETUP');
-                return;
-            }
-
-            // 2. Check Profile
             await fetchUserProfile();
-            // We need to wait for store update or fetch directly
             const { data: profile } = await supabase
                 .from('user_profiles')
                 .select('id')
@@ -82,7 +74,6 @@ export default function TitlePage() {
                 .maybeSingle();
 
             if (profile) {
-                // All good, go to Inn
                 router.push('/inn');
             } else {
                 setMode('CHAR_CREATION');
@@ -90,59 +81,43 @@ export default function TitlePage() {
         }
     };
 
-    // Calculate Stats Effect (Same as before)
+    // Calculate Stats Effect
     useEffect(() => {
-        if (inputAge < 16 || inputAge > 25) return;
-        const today = new Date();
-        let birthYear = today.getFullYear() - inputAge;
-        const currentMonth = today.getMonth() + 1;
-        const currentDay = today.getDate();
-        let isBirthdayPassed = false;
-        if (currentMonth > inputMonth) isBirthdayPassed = true;
-        else if (currentMonth === inputMonth && currentDay >= inputDay) isBirthdayPassed = true;
-        if (!isBirthdayPassed) birthYear -= 1;
-
-        const computedDateStr = `${birthYear}-${String(inputMonth).padStart(2, '0')}-${String(inputDay).padStart(2, '0')}`;
-        const isValidDate = !isNaN(new Date(computedDateStr).getTime());
-
-        if (!isValidDate) {
-            setDateError('無効な日付です');
-            setPreviewStats(null);
-            return;
-        }
-
-        setBirthDate(computedDateStr);
-        setDateError('');
-
+        if (age < 15 || age > 40) return;
         const fetchStats = async () => {
             try {
                 const res = await fetch('/api/auth/calculate-stats', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ birth_date: computedDateStr })
+                    body: JSON.stringify({ age: age })
                 });
                 const data = await res.json();
-                if (!res.ok) setDateError(data.error || 'Invalid date');
+                if (!res.ok) setErrorMsg(data.error || 'Invalid calculation');
                 else {
-                    setAge(data.age);
                     setPreviewStats(data.stats);
+                    setErrorMsg('');
                 }
             } catch (e) {
                 console.error(e);
             }
         };
-        const timer = setTimeout(fetchStats, 500);
+        const timer = setTimeout(fetchStats, 300);
         return () => clearTimeout(timer);
-    }, [inputAge, inputMonth, inputDay]);
+    }, [age]);
 
     const handleCharacterSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!name.trim() || !previewStats) return;
         setMode('CREATING');
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const { data: hubLoc } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').maybeSingle();
+
+            // create a dummy birth_date for backward compatibility if needed, or null if schema allows
+            const dummyBirthDate = new Date();
+            dummyBirthDate.setFullYear(dummyBirthDate.getFullYear() - age);
+            const birthDateStr = dummyBirthDate.toISOString().split('T')[0];
 
             const res = await fetch('/api/profile/init', {
                 method: 'POST',
@@ -152,7 +127,7 @@ export default function TitlePage() {
                     title_name: name,
                     gender: gender,
                     age: age,
-                    birth_date: birthDate,
+                    birth_date: birthDateStr,
                     max_hp: previewStats.max_hp,
                     max_vitality: previewStats.max_vitality,
                     max_deck_cost: previewStats.max_deck_cost,
@@ -164,7 +139,7 @@ export default function TitlePage() {
 
             if (!res.ok) throw new Error((await res.json()).error);
 
-            await new Promise(r => setTimeout(r, 5500)); // Animation wait
+            await new Promise(r => setTimeout(r, 4000));
             await fetchUserProfile();
             router.push('/inn');
         } catch (err: any) {
@@ -174,16 +149,14 @@ export default function TitlePage() {
         }
     };
 
-    // Render Logic
     if (mode === 'CREATING') {
-        // ... (Keep existing animation JSX)
         return (
-            <div className="min-h-screen bg-[#050b14] flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden">
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#a38b6b 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-[200vw] h-[200vw] bg-[radial-gradient(circle,rgba(163,139,107,0.1)_0%,transparent_70%)] animate-pulse-slow"></div>
                 </div>
-                <MapIcon className="w-24 h-24 animate-spin-slow mb-8 text-[#a38b6b] opacity-80" />
+                <MapIcon className="w-24 h-24 animate-spin-slow mb-8 text-amber-500 opacity-80" />
                 <h2 className="text-3xl md:text-5xl text-[#e3d5b8] mb-8 animate-fade-in tracking-[0.2em] font-bold drop-shadow-lg">世界を構築中...</h2>
                 <div className="space-y-4 text-center text-gray-400 font-mono text-sm md:text-base h-32 relative z-10">
                     <p className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>&gt; 因果律の定着を確認...</p>
@@ -191,87 +164,172 @@ export default function TitlePage() {
                     <p className="animate-fade-in-up" style={{ animationDelay: '2.5s' }}>&gt; 魂の座標を確定。</p>
                 </div>
                 <div className="absolute bottom-10 w-64 h-1 bg-gray-800 rounded-full overflow-hidden z-10">
-                    <div className="h-full bg-[#a38b6b] animate-progress-indeterminate"></div>
+                    <div className="h-full bg-amber-500 animate-progress-indeterminate"></div>
                 </div>
             </div>
         );
     }
 
-    return (
-        <div className="min-h-screen bg-[#050b14] text-gray-200 font-sans flex flex-col items-center justify-center p-4 relative">
-            <div className="absolute inset-0 bg-[url('/backgrounds/creation_bg.jpg')] bg-cover bg-center opacity-20 pointer-events-none"></div>
+    // Title / Menu Scene Background
+    const renderTitleBackground = () => (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden bg-slate-950">
+            {/* Dark gradient mapping to indigo/slate */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950" />
+            {/* Giant blurred circle for temple/castle ambiance */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-slate-800 rounded-full mix-blend-overlay blur-3xl opacity-30" />
+            {/* Leather texture overlay */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/dark-leather.png")' }} />
+        </div>
+    );
 
-            <main className="relative z-10 w-full max-w-lg bg-[#0a121e]/90 border border-[#a38b6b]/30 p-8 rounded-lg shadow-[0_0_30px_rgba(163,139,107,0.1)] backdrop-blur-sm">
-                <header className="text-center mb-10">
-                    <h1 className="text-4xl font-serif text-[#e3d5b8] mb-2 tracking-widest drop-shadow-md">Code: Wirth-Dawn</h1>
-                    <div className="text-xs text-[#a38b6b] uppercase tracking-[0.3em] opacity-80">Chronicles of the Unnamed</div>
-                </header>
+    return (
+        <div className="min-h-screen text-gray-200 font-sans flex flex-col items-center justify-center p-4 relative">
+
+            {mode === 'ENTRY' || mode === 'MENU' ? renderTitleBackground() : null}
+
+            {/* Character Creation Background (Parchment) */}
+            {mode === 'CHAR_CREATION' && (
+                <div className="absolute inset-0 bg-[#e3d5b8] pointer-events-none">
+                    <div className="absolute inset-0 mix-blend-multiply opacity-40" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/old-wall.png")' }}></div>
+                    <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]"></div>
+                </div>
+            )}
+
+            <main className={`relative z-10 w-full max-w-md ${mode === 'CHAR_CREATION' ? 'bg-[#e3d5b8]/10 text-slate-900 p-8 rounded-lg border-[3px] border-amber-800/60 shadow-2xl backdrop-blur-md relative overflow-hidden' : 'p-8 flex flex-col items-center'}`}>
+
+                {mode === 'CHAR_CREATION' && (
+                    <div className="absolute inset-2 border border-amber-800/30 pointer-events-none rounded"></div>
+                )}
+
+                {(mode === 'ENTRY' || mode === 'MENU') && (
+                    <header className="text-center mb-16 mt-10">
+                        <h1 className="text-5xl font-serif text-slate-300 mb-3 tracking-widest drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                            <span className="text-amber-500">C</span>ode: Wirth-Dawn
+                        </h1>
+                        <div className="text-xs text-amber-600/80 uppercase tracking-[0.4em] font-serif">Chronicles of the Unnamed</div>
+                    </header>
+                )}
 
                 {mode === 'ENTRY' && (
-                    <div className="space-y-6 animate-fade-in">
-                        <p className="text-center text-gray-400 font-serif mb-8">
-                            運命の書を開き、あなたの物語を始めましょう。
-                        </p>
+                    <div
+                        className="w-full flex-1 flex flex-col items-center pt-24 pb-8 animate-fade-in opacity-80 cursor-pointer"
+                        onClick={handleTapToStart}
+                    >
+                        <div className="text-xl font-serif text-amber-500/70 tracking-[0.5em] uppercase p-4" style={{ animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+                            Tap to Start
+                        </div>
+                    </div>
+                )}
+
+                {mode === 'MENU' && (
+                    <div className="w-full space-y-4 animate-fade-in-up mt-10">
                         <button
-                            onClick={handleStart}
-                            className="w-full bg-[#a38b6b] text-[#1a0f00] font-bold py-3 rounded hover:bg-[#c2b280] transition-colors shadow-lg tracking-widest"
+                            onClick={handleNewGame}
+                            className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-4 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg tracking-widest flex justify-center items-center gap-2 group"
                         >
-                            <span className="flex items-center justify-center gap-2"><Sword className="w-4 h-4" /> はじめる</span>
+                            <Sword className="w-5 h-5 group-hover:text-amber-300 transition-colors" />
+                            <span className="group-hover:text-amber-200">New Game</span>
                         </button>
                         <button
                             onClick={() => alert("外部アカウントによるデータ引き継ぎは現在準備中です。")}
-                            className="w-full bg-transparent border border-[#a38b6b]/50 text-[#a38b6b] font-bold py-3 rounded hover:bg-[#a38b6b]/10 transition-colors tracking-widest"
+                            className="w-full bg-slate-900/50 border border-slate-700 text-slate-400 font-serif py-4 rounded hover:bg-slate-800 hover:text-slate-300 transition-all tracking-widest flex justify-center items-center gap-2"
                         >
-                            <span className="flex items-center justify-center gap-2"><Hourglass className="w-4 h-4" /> データ引き継ぎ</span>
+                            <Hourglass className="w-4 h-4" /> Continue / Transfer
                         </button>
                     </div>
                 )}
 
                 {mode === 'CHAR_CREATION' && (
-                    <form onSubmit={handleCharacterSubmit} className="space-y-8 animate-fade-in-up">
+                    <form onSubmit={handleCharacterSubmit} className="space-y-8 animate-fade-in relative z-10 p-2">
+                        <h2 className="text-center text-2xl font-serif text-amber-900 tracking-widest mb-6 border-b border-amber-900/20 pb-4">
+                            契約の書
+                        </h2>
+
+                        <div className="space-y-1">
+                            <label className="block text-xs text-amber-900/70 font-serif tracking-widest uppercase">Name</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-transparent border-b-2 border-amber-900/40 focus:border-amber-800 text-amber-950 p-2 outline-none transition-colors text-xl text-center font-serif italic placeholder-amber-900/30"
+                                placeholder="汝の名は..."
+                                maxLength={16}
+                                autoFocus
+                            />
+                        </div>
+
                         <div className="space-y-2">
-                            {/* ... Form Content Same as Before ... */}
-                            <label className="block text-sm text-[#a38b6b] font-serif tracking-wider">あなたの名前</label>
-                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-black/50 border-b-2 border-[#333] focus:border-[#a38b6b] text-gray-200 p-3 outline-none transition-colors text-lg text-center font-serif placeholder-gray-800" placeholder="名前を入力..." autoFocus />
-                        </div>
-                        <div className="space-y-4">
-                            <label className="block text-sm text-[#a38b6b] font-serif tracking-wider text-center">性別</label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button type="button" onClick={() => setGender('Male')} className={`p-4 border rounded flex flex-col items-center gap-2 transition-all duration-300 ${gender === 'Male' ? 'bg-[#1a202c] border-blue-500/50 text-blue-200' : 'bg-black/30 border-gray-800 text-gray-600'}`}><Sword className="w-8 h-8" strokeWidth={1.5} /><span className="text-sm font-serif">男性</span></button>
-                                <button type="button" onClick={() => setGender('Female')} className={`p-4 border rounded flex flex-col items-center gap-2 transition-all duration-300 ${gender === 'Female' ? 'bg-[#1a202c] border-red-500/50 text-red-200' : 'bg-black/30 border-gray-800 text-gray-600'}`}><Shield className="w-8 h-8" strokeWidth={1.5} /><span className="text-sm font-serif">女性</span></button>
+                            <label className="block text-xs text-amber-900/70 font-serif tracking-widest uppercase text-center">Gender</label>
+                            <div className="flex justify-center gap-2">
+                                {['Male', 'Female', 'Unknown'].map((g) => (
+                                    <button
+                                        key={g}
+                                        type="button"
+                                        onClick={() => setGender(g as any)}
+                                        className={`flex-1 py-3 border rounded transition-all duration-300 font-serif text-sm tracking-widest
+                                            ${gender === g
+                                                ? 'bg-amber-900 border-amber-950 text-amber-100 shadow-inner'
+                                                : 'bg-transparent border-amber-900/30 text-amber-900/60 hover:border-amber-900/60'}`}
+                                    >
+                                        {g}
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <label className="block text-sm text-[#a38b6b] font-serif tracking-wider text-center">年齢・誕生日</label>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-xs text-gray-400"><span>16歳</span><span className="text-[#a38b6b] font-bold text-lg">{inputAge}歳</span><span>25歳</span></div>
-                                <input type="range" min="16" max="25" value={inputAge} onChange={(e) => setInputAge(Number(e.target.value))} className="w-full accent-[#a38b6b] cursor-pointer" />
-                            </div>
-                            <div className="flex gap-4 items-center">
-                                <select value={inputMonth} onChange={(e) => setInputMonth(Number(e.target.value))} className="w-1/2 bg-black/50 border-b-2 border-[#333] focus:border-[#a38b6b] text-gray-200 p-3 text-center">{[...Array(12)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select>
-                                <select value={inputDay} onChange={(e) => setInputDay(Number(e.target.value))} className="w-1/2 bg-black/50 border-b-2 border-[#333] focus:border-[#a38b6b] text-gray-200 p-3 text-center">{[...Array(31)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select>
-                            </div>
-                            {previewStats && (
-                                <div className="text-center">
-                                    <div className="text-[#e3d5b8] font-bold mb-2">{typeof previewStats.type === 'object' ? previewStats.type.name : previewStats.type}</div>
-                                    <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                                        <div>HP: <span className="text-[#a38b6b]">{previewStats.max_hp}</span></div>
-                                        <div>Cost: <span className="text-[#a38b6b]">{previewStats.max_deck_cost}</span></div>
-                                        <div>Vit: <span className="text-[#a38b6b]">{previewStats.max_vitality}</span></div>
-                                    </div>
+
+                        <div className="space-y-4 pt-2">
+                            <label className="block text-xs text-amber-900/70 font-serif tracking-widest uppercase text-center">Age</label>
+                            <div className="space-y-2 px-2">
+                                <div className="flex justify-between text-xs font-serif text-amber-900/60">
+                                    <span>15</span>
+                                    <span className="text-amber-900 font-bold text-lg">{age}</span>
+                                    <span>40</span>
                                 </div>
-                            )}
-                            {dateError && <p className="text-red-400 text-xs text-center">{dateError}</p>}
+                                <input
+                                    type="range"
+                                    min="15"
+                                    max="40"
+                                    value={age}
+                                    onChange={(e) => setAge(Number(e.target.value))}
+                                    className="w-full accent-amber-900 cursor-pointer"
+                                />
+                            </div>
+
+                            {/* Dynamic Flavor & Stats */}
+                            <div className="bg-amber-900/5 p-4 rounded border border-amber-900/10 min-h[120px] relative">
+                                <div className="absolute top-2 right-2 opacity-10 pointer-events-none">
+                                    <Hourglass size={40} />
+                                </div>
+                                <p className="text-center font-serif text-amber-900 text-lg italic mb-3">
+                                    「{getFlavorText(age)}」
+                                </p>
+
+                                {previewStats ? (
+                                    <div className="grid grid-cols-4 gap-1 text-center font-mono text-amber-950/80 text-xs">
+                                        <div className="bg-amber-900/10 py-1 rounded">HP<br /><span className="text-sm font-bold">{previewStats.max_hp}</span></div>
+                                        <div className="bg-amber-900/10 py-1 rounded">ATK<br /><span className="text-sm font-bold">{previewStats.atk}</span></div>
+                                        <div className="bg-amber-900/10 py-1 rounded">DEF<br /><span className="text-sm font-bold">{previewStats.def}</span></div>
+                                        <div className="bg-amber-900/10 py-1 rounded">Vit<br /><span className="text-sm font-bold">{previewStats.max_vitality}</span></div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-xs text-amber-900/50 py-2">読み解き中...</div>
+                                )}
+                            </div>
+
+                            {errorMsg && <p className="text-red-800 text-xs text-center font-bold">{errorMsg}</p>}
                         </div>
-                        <button type="submit" disabled={!name.trim() || !birthDate || !previewStats} className="w-full bg-[#a38b6b] text-[#1a0f00] font-bold py-4 rounded disabled:opacity-50 hover:bg-[#c2b280] shadow-lg flex items-center justify-center gap-2">
-                            世界へ旅立つ <MapIcon className="w-5 h-5" />
+
+                        <button
+                            type="submit"
+                            disabled={!name.trim() || !previewStats}
+                            className="w-full group bg-slate-950 text-amber-500 font-serif font-bold tracking-widest py-4 rounded disabled:opacity-50 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-all shadow-xl flex items-center justify-center gap-3 overflow-hidden"
+                        >
+                            <span className="relative z-10 transition-transform group-hover:scale-105">世界に降り立つ</span>
+                            <Compass className="w-5 h-5 relative z-10 transition-transform duration-700 group-hover:rotate-180 text-amber-600 group-hover:text-amber-400" />
                         </button>
                     </form>
                 )}
             </main>
-
-
-            {mode === 'SECRET_SETUP' && <SecretQuestionModal onSuccess={() => checkUserStatus()} onClose={() => { /* Force setup */ }} />}
         </div>
     );
 }

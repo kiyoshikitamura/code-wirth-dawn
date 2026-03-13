@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabase-admin';
+import { ECONOMY_RULES } from '@/constants/game_rules';
 
 export async function POST(req: Request) {
     try {
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
         // 2. Validate User Gold
         const { data: userData, error: userError } = await supabase
             .from('user_profiles')
-            .select('gold, prayer_count')
+            .select('gold, prayer_count, blessing_data')
             .eq('id', user_id)
             .single();
 
@@ -38,21 +39,37 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Insufficient gold' }, { status: 400 });
         }
 
-        // 3. Transaction (RPC would be better, but doing sequential ops for now with checks)
-        // Ideally use RPC for atomicity. For now, we update.
+        // 3. 首都判定 (spec_v16 §4): 首都での祈りは影響力 CAPITAL_PRAYER_MULTIPLIER 倍
+        const { data: locData } = await supabase.from('locations').select('name, slug, type').eq('id', location_id).single();
+        if (!locData) throw new Error('Location not found');
 
-        // Deduct Gold
+        // タスク2: 拠点の種類（首都）による効果値ボーナス計算
+        const isCapital = locData.type?.toLowerCase() === 'capital';
+        if (isCapital) {
+            impact *= ECONOMY_RULES.CAPITAL_PRAYER_MULTIPLIER;
+            console.log(`[Pray] Capital bonus applied at ${locData.slug}: impact x${ECONOMY_RULES.CAPITAL_PRAYER_MULTIPLIER}`);
+        }
+
+        // 4. Blessing バフ付与 (spec_v16 §4: 個人バフ)
+        const blessingData = {
+            hp_pct: ECONOMY_RULES.PRAYER_BUFF_HP_PCT,
+            ap_bonus: ECONOMY_RULES.PRAYER_BUFF_AP,
+            expires_after_battle: true
+        };
+
+        // 5. Deduct Gold & Update Blessing
         const { error: updateError } = await supabase
             .from('user_profiles')
             .update({
                 gold: userData.gold - cost,
-                prayer_count: (userData.prayer_count || 0) + 1 // Optional stats
+                prayer_count: (userData.prayer_count || 0) + 1,
+                blessing_data: blessingData
             })
             .eq('id', user_id);
 
         if (updateError) throw updateError;
 
-        // Create Log
+        // 6. Create Log
         await supabase.from('prayer_logs').insert({
             user_id,
             location_id,
@@ -61,48 +78,9 @@ export async function POST(req: Request) {
             impact_value: impact
         });
 
-        // Update Location Attribute
-        // Need to fetch current attributes? 
-        // We can use RPC increment if available, or fetch-update.
-        // Assuming location has columns `order_score` etc?
-        // Wait, setup_v2 schema says `locations` table only has basic info.
-        // `world_states` table has `order_score` etc referenced by `location_name`.
-        // The Prompt said: "locations テーブルの指定属性値を加算 (order_value += impact)".
-        // BUT schema (setup_v2) shows `world_states` holds the scores! `locations` does NOT hold scores.
-        // I must update `world_states` linked to this location.
-        // I need to find the `location_name` from `location_id` first?
-        // Or does `world_states` have `location_id`? Schema says `location_name TEXT REFERENCES locations(name)`.
-        // So: Fetch Location Name -> Update World State.
-
-        const { data: locData } = await supabase.from('locations').select('name').eq('id', location_id).single();
-        if (!locData) throw new Error('Location not found');
-
-        // Column mapping
-        const attrCol = `${attribute.toLowerCase()}_score`; // order_score, chaos_score...
-        // Note: score is Integer in schema, impact is Float.
-        // Maybe I should assume impact adds to Float pool? Or rounds?
-        // The prompt says "world_states: Daily pools (daily_order_pool)".
-        // And "locations (order_value += impact)". 
-        // If schema `world_states` has integer scores, adding 0.1 float won't work well unless I update the *Daily Pool* primarily?
-        // Prompt says: 
-        // "locations テーブルの指定属性値を加算 (order_value += impact)" -> Conflicting with schema.
-        // "world_states テーブルのグローバルプールを加算"
-        // I will update `world_states` pools (`daily_order_pool` etc) AND try to increment the integer score if impact >= 1?
-        // Or store it nicely.
-        // Given spec: "impact calculation: 100g = 0.1 pt".
-        // Updating integer score by 0.1 is impossible.
-        // I will update `daily_order_pool` (Float) in `world_states`.
-        // And maybe trigger a periodic job (cron) to flush pools to scores?
-        // For now, I will update `daily_{attr}_pool`.
-
+        // 7. Update World State Pool
+        const attrCol = `${attribute.toLowerCase()}_score`;
         const dailyPoolCol = `daily_${attribute.toLowerCase()}_pool`;
-
-        /* 
-           Using RPC to increment atomic float? 
-           For this MVP, simple fetch-update or just increment via raw SQL if possible?
-           Supabase JS doesn't support convenient `increment` for dynamic columns easily without RPC.
-           I'll do fetch-update for the pool log.
-        */
 
         const { data: wsData } = await supabase.from('world_states').select(dailyPoolCol).eq('location_name', locData.name).single();
         const currentPool = wsData ? (wsData as any)[dailyPoolCol] || 0 : 0;
@@ -111,8 +89,7 @@ export async function POST(req: Request) {
             .update({ [dailyPoolCol]: currentPool + impact })
             .eq('location_name', locData.name);
 
-
-        // 4. Return Response
+        // 8. Return Response
         const visuals: Record<string, string> = {
             'Order': 'effect_pillar_gold',
             'Chaos': 'effect_fog_purple',
@@ -131,6 +108,9 @@ export async function POST(req: Request) {
             success: true,
             new_gold: userData.gold - cost,
             impact_value: impact,
+            is_capital_bonus: isCapital,
+            blessing_granted: true,
+            blessing_data: blessingData,
             visual_cue: visuals[attribute] || 'effect_default',
             message: messages[attribute] || '祈りが届きました。'
         });
