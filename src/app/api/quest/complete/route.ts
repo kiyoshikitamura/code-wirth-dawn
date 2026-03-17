@@ -5,9 +5,9 @@ import { QuestService, calculateGrowth, processAging, resolveLocationId } from '
 import { ECONOMY_RULES } from '@/constants/game_rules';
 
 // Initialize Supabase Client safely (Service Role)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey || '', {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key';
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
         persistSession: false,
         autoRefreshToken: false,

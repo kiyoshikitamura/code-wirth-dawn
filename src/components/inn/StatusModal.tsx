@@ -143,7 +143,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                 <div className="bg-gray-900/50 p-2 rounded border border-gray-800">
                                     <div className="text-xs text-center text-gray-500 mb-1">攻撃力</div>
                                     <div className="flex items-center justify-center gap-2 text-red-400 font-bold">
-                                        <Sword className="w-4 h-4" /> {userProfile?.attack ?? 10}
+                                        <Sword className="w-4 h-4" /> {userProfile?.atk ?? 10}
                                     </div>
                                 </div>
                                 <div className="bg-gray-900/50 p-2 rounded border border-gray-800">

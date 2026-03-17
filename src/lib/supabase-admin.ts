@@ -21,8 +21,8 @@ export const hasServiceKey = isAdminEnabled;
 // Non-nullable server client (for API routes that require admin access)
 // Replaces supabase-server.ts
 export const supabaseServer = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
     {
         auth: {
             autoRefreshToken: false,

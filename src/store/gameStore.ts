@@ -335,7 +335,7 @@ export const useGameStore = create<GameState>()(
                         party: partyMembers,
                         initial_ap: initialAp,
                         resonance_active: resonanceActive,
-                        player_stats: { hp: userProfile?.hp, max_hp: userProfile?.max_hp, atk: userProfile?.attack, def: userProfile?.def }
+                        player_stats: { hp: userProfile?.hp, max_hp: userProfile?.max_hp, atk: userProfile?.atk, def: userProfile?.def }
                     })
                 }).then(res => res.json()).then(data => {
                     if (data.battle_session_id) {
@@ -834,7 +834,7 @@ export const useGameStore = create<GameState>()(
                     damage = card.power ?? 0;
                     if (damage > 0) {
                         const isMagic = card.name.includes('魔法') || card.name.toLowerCase().includes('magic') || card.name.toLowerCase().includes('fire');
-                        const playerAtk = userProfile?.atk || userProfile?.attack || 0;
+                        const playerAtk = userProfile?.atk || 0;
 
                         damage = calculateDamage(
                             damage,

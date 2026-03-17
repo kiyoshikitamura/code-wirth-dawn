@@ -21,8 +21,8 @@ export async function POST(req: Request) {
             // faster: just use the token in a new client instance
             const { createClient } = require('@supabase/supabase-js'); // dynamic import or use existing import
             client = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+                process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
                 { global: { headers: { Authorization: authHeader } } }
             );
             console.log("Using User-Scoped Client for Reset (Admin Key missing)");

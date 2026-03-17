@@ -210,6 +210,7 @@ export interface UserProfileDB {
   spawn_type?: string;
   max_deck_cost: number;
   blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null;
+  accumulated_days?: number;
   // ...
 }
 

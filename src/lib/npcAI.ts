@@ -202,8 +202,6 @@ function tryEmergencyHeal(
     npc.current_ap = (npc.current_ap || 0) - (healCard.ap_cost ?? 1);
     npc.used_this_turn?.push(healCard.id);
 
-    const targetName = playerInDanger ? 'あなた' : injuredMember?.name || '味方';
-
     return {
         type: 'heal',
         card: healCard,

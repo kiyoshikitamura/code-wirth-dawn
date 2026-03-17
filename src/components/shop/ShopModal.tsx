@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ShoppingBag, Coins, Lock, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
-import { useActionLogStore } from '@/stores/actionLogStore';
 import { supabase } from '@/lib/supabase';
 
 const playCreepyAudio = () => {
