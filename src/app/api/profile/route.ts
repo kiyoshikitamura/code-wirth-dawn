@@ -52,7 +52,8 @@ export async function GET(req: Request) {
                 gender: 'Unknown',
                 max_vitality: 100,
                 accumulated_days: 0,
-                current_location_id: (await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').maybeSingle()).data?.id,
+                // Start the player in the lowest prosperity location in Roland
+                current_location_id: (await supabase.from('locations').select('id').eq('nation_id', 'Roland').order('prosperity_level', { ascending: true }).limit(1).maybeSingle()).data?.id,
             };
 
             const { data: inserted, error: insertError } = await supabase

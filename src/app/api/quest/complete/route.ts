@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { calculateGrowth, processAging, resolveLocationId } from '@/services/questService';
+import { QuestService, calculateGrowth, processAging, resolveLocationId } from '@/services/questService';
 import { ECONOMY_RULES } from '@/constants/game_rules';
 
 // Initialize Supabase Client safely (Service Role)
@@ -51,6 +51,13 @@ export async function POST(req: Request) {
             .single();
 
         if (uError || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+        // 2.5 Security Validation
+        const validation = await QuestService.validateRequirements(supabase, user_id, quest.requirements);
+        if (!validation.valid) {
+            console.warn(`[Security] API rejected quest completion. User ${user_id} blocked from ${quest_id}: ${validation.reason}`);
+            return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
+        }
 
         // 3. Aging Logic
         let daysPassed = 1;

@@ -502,8 +502,8 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
                 {/* Main Text Dialog */}
                 <div className="bg-slate-900/85 backdrop-blur-md border border-amber-900/50 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
-                    <div className="flex-shrink-0">
-                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden">
+                    <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden shadow-inner">
                             {currentNode.speaker_image_url ? (
                                 <img src={currentNode.speaker_image_url} alt="Face" className="w-full h-full object-cover" />
                             ) : (

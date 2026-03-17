@@ -84,6 +84,7 @@ export interface Enemy {
   status_effects?: { id: string; duration: number }[]; // v3.5: Per-enemy effects
   vit_damage?: number; // v3.5: Vit damage per attack
   image_url?: string; // v12.0: エネミー画像
+  spawn_type?: string; // v15.0: Spawn conditions (e.g. bounty, quest_only)
 }
 
 // ... (skipping unchanged interfaces) ...
@@ -140,6 +141,7 @@ export interface UserProfile {
   };
   quest_started_at?: string;
   blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null; // v16: Prayer Buff
+  pass_expires_at?: Record<string, number>; // { loc_slug: expiry_day }
 }
 
 // ...
@@ -195,6 +197,7 @@ export interface UserProfileDB {
     evil: number;
   };
   gold: number;
+  pass_expires_at?: Record<string, number>;
   current_location_id?: string;
   current_quest_state?: any; // v3.4 Resume Persistence
   // Battle/Growth Stats
@@ -204,6 +207,7 @@ export interface UserProfileDB {
   max_hp: number;
   atk: number;
   def: number;
+  spawn_type?: string;
   max_deck_cost: number;
   blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null;
   // ...
@@ -456,6 +460,7 @@ export interface BattleState {
   vitDamageTakenThisTurn?: boolean; // drain_vit 1ターン1回制限
   battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee'; // 戦闘結果
   resonanceActive?: boolean; // spec_v5 §6.2: 共鳳ボーナス (ATK/DEF +10%)
+  battle_session_id?: string; // v17 Server-Authoritative Battle
 }
 
 export type Scenario = ScenarioDB;

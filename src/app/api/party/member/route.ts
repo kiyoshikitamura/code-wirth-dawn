@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 
 export async function GET(req: Request) {
     try {
@@ -97,10 +97,8 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
         }
 
-        // 複雑なRLS状態に関わらず削除が行われるようにAdminクライアントを使用
-        // 実際のアプリでは、`memberId` が現在のユーザー (auth.uid() 経由) に属していることを確認すべきです
-        // このプロトタイプでは、クライアントが自身が所有する有効なIDを送信すると仮定します。
-        const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+        // Use authenticated client to enforce RLS
+        const client = createAuthClient(req);
 
         const { error } = await client
             .from('party_members')

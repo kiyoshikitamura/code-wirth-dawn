@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { LifeCycleService } from '@/services/lifeCycleService';
 
 export async function POST(req: Request) {
@@ -10,9 +10,8 @@ export async function POST(req: Request) {
 
         const { user_id } = body; // Expect user_id from client
 
-        // Use Admin client to bypass RLS for this specific initialization step
-        // This is crucial for "Demo Mode" or initial setup where Auth might not be strictly 1:1
-        const client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;
+        // Use authenticated client to enforce RLS
+        const client = createAuthClient(req);
 
         console.log("Init Profile Body:", body);
         console.log("Init Profile Age Input:", age, typeof age);

@@ -48,6 +48,19 @@ export async function POST(req: Request) {
     }
 
     try {
+        // ─── 冪等性（Idempotency）チェック ───
+        const { error: idempotencyErr } = await supabaseAdmin
+            .from('stripe_webhook_events')
+            .insert({ id: event.id, type: event.type });
+
+        if (idempotencyErr) {
+            if (idempotencyErr.code === '23505') { // Postgres Unique Violation
+                console.log(`[webhooks/stripe] Event ${event.id} already processed. Skipping.`);
+                return NextResponse.json({ received: true }); // すでに処理済みの場合は成功として返す
+            }
+            throw idempotencyErr;
+        }
+
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object as Stripe.Checkout.Session;

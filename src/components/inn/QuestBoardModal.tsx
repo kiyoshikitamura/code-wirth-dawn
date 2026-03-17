@@ -140,7 +140,7 @@ function QuestList({ quests, onSelect, emptyMsg }: { quests: Scenario[], onSelec
 
                         {!isExpanded ? (
                             <p className="text-sm mb-1 line-clamp-2 leading-relaxed text-[#5d4037]">
-                                {s.short_description || s.description}
+                                {s.script_data?.short_description || s.short_description || s.description}
                             </p>
                         ) : (
                             <div className="mt-4 pt-4 border-t border-[#8b5a2b]/20 animate-in fade-in slide-in-from-top-2">

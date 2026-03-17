@@ -1,0 +1,11 @@
+row_type,node_id,text_label,params,next_node
+NODE,1,"熱砂の深淵より「古き竜」が眼を覚ましたのだ。あのような巨大な絶望を前に、軍隊など何の意味もない。","{""type"":""text"",""speaker_name"":""依頼書""}",2
+NODE,2,"雑魚の群れが立ちはだかる。","{""type"":""battle"",""enemy_group_id"":""enemy_slime_blue""}",choice1
+CHOICE,,戦う,,3
+NODE,3,"さらに敵が押し寄せてくる。","{""type"":""battle"",""enemy_group_id"":""enemy_slime_blue""}",choice2
+CHOICE,,戦う,,4
+NODE,4,"ボスの部屋はもうすぐだ。護衛を倒せ。","{""type"":""battle"",""enemy_group_id"":""enemy_slime_blue""}",choice3
+CHOICE,,戦う,,5
+NODE,5,"強力なプレッシャーを感じる。ボス戦だ！","{""type"":""battle"",""enemy_group_id"":""enemy_grp_boss_dragon""}",choice4
+CHOICE,,戦う,,6
+NODE,6,"討伐完了！クエストボードに報告しよう。","{""type"":""end_success"",""share_text"":""砂海の絶対君主、デザートドラゴンを討ち取った。この熱砂に私の名が深く刻まれるだろう。「次は、どの神を殺そうか？」 #Code_Wirth_Dawn #竜殺し""}",

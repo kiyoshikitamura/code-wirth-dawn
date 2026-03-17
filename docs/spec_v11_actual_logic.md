@@ -25,9 +25,7 @@ Code: Wirth-Dawn Specification v11.0 (New Document)
 ### 2.2 APIアクセス制御パターン
 | パターン | 使用箇所 | 仕組み |
 |---|---|---|
-| JWT Bearer / Fallback | Shop, Inventory, Profile 等全般 | `supabase.auth.getUser()`、またはセッション未確立の匿名ユーザー向けに `x-user-id` ヘッダーでのフォールバックを実施して特定。 |
-| Service Role Bypass | Shop Sell, Quest Complete, Retire | 複雑なトランザクションや内部サーバーロジック等で `SUPABASE_SERVICE_ROLE_KEY` で RLS をバイパス |
-| First Profile | Travel Cost | セッションから対象IDを取得する形、および `x-user-id` の併用へ移行 |
+| JWT Bearer Context | 全般 (Shop, Quest, Battle, Retire 等) | `src/lib/supabase-auth.ts` の `createAuthClient(req)` を用い、リクエストヘッダの認証トークンを利用して安全にクライアントを生成し、DB側で RLS によるアクセス制御を強制する。これまでの `SUPABASE_SERVICE_ROLE_KEY` による無差別な管理者権限バイパスは標準APIからは撤廃された（セキュリティ監査対応済）。 |
 
 ---
 
@@ -54,8 +52,8 @@ graph TD
 | Supabase DB | PostgreSQL | 永続データ（プロフィール、在庫、パーティ、世界状態） |
 
 ### 3.2 データフロー：バトル開始〜クエスト完了
-1. **バトル開始**: `gameStore.startBattle()` → パーティ取得 (API) → デッキ構築 (client)
-2. **バトル中**: `attackEnemy()`, `processPartyTurn()`, `processEnemyTurn()` — 全てクライアント
+1. **バトル開始 (Server Init)**: `POST /api/battle/start` にてサーバー側に `battle_sessions` レコードを作成し、ステータスを永続化・検証のベースとする。
+2. **バトル中 (Server-Authoritative)**: UIのレスポンスを担保するためクライアント側（`gameStore`）で Optimistic UI として先行して描画を行うが、裏で非同期に `POST /api/battle/action` をコールし、サーバー側でAP消費やダメージ（チート・改ざんの有無）を検証・保存する。
 3. **バトル後**: `useQuestState.updateAfterBattle()` — HP/NPC死亡/ルート記録
 4. **クエスト完了**: `POST /api/quest/complete` — EXP/Gold/Aging をDBに反映
 
@@ -99,7 +97,7 @@ graph TD
 
 | 項目 | 根拠 |
 |---|---|
-| クライアントサイドバトルエンジン | レスポンス高速化 |
+| Optimistic UI バトルエンジン | UXレスポンスの高速化と、サーバーサイド検証（Server-Authoritative）によるチート防止の両立（実装済み） |
 | `inventory` テーブル (UUID PK) | 拡張性 |
 | `neighbors: Record<string, { days: number; gold_cost: number }>` | 固定移動費用を含む形式（v12.0更新） |
 | `BASE_HP = 80` | プレイ調整済み |
@@ -107,17 +105,18 @@ graph TD
 | `base_price / 2` 固定売却 | インフレ未稼働 |
 | `check_delivery` / `check_possession` ノード | 実装済み (ScenarioEngine.tsx, String()キャスト対応) |
 | 隣接移動のみ（Dijkstra 不採用） | 旅情UX方針 — プレイヤーに1拠点ずつ巡る体験を提供するため、最短経路探索は仕様から正式除外 |
+| 裏切りシステム | key_item売却時のクエスト強制失敗と名声低下（実装済み） |
+| Hand Size段階的上昇 | レベルに応じた手札枚数の拡張（Lv10で5枚など実装済み） |
+| ロイヤリティ経済 | 英霊雇用時の報酬分配および日額上限（実装済み） |
+| 共鳴ボーナス | 同一拠点におけるATK/DEF+10%（実装済み） |
+| Smart AI の戦略判定 | 英霊のAP温存および緊急回復ロジック（実装済み / npcAI.ts） |
+| ノイズ混入防止（初心者） | Lv5以下でのノイズカード免除処理（実装済み / battleEngine.ts） |
 
 ### 5.B 暫定実装（将来改修予定）
 
 | 項目 | 本来の仕様 | 優先度 |
 |---|---|---|
-| 裏切りシステム未実装 | key_item売却→クエスト失敗 | 高 |
-| Hand Size段階的上昇 未実装 | Lv10: 4枚→Lv20: 5枚 | 中 |
-| ノイズ混入防止（初心者）未実装 | Lv<=5でノイズ無効 | 低（繁栄度未稼働） |
-| ロイヤリティ経済 未実装 | 残影雇用報酬 | 低（サブスク未実装） |
-| 共鳴ボーナス 未実装 | 同一拠点ATK/DEF+10% | 低 |
-| Smart AI の戦略判定未実装 | 効率的スキル選択 | 低 |
+| 該当なし | 全ての基本機能が実装済み | - |
 
 ---
 

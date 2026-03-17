@@ -1,0 +1,11 @@
+row_type,node_id,text_label,params,next_node
+NODE,1,"歯車が噛み合い、数千年の眠りから目覚める。人類の手に負えない遺物だ。","{""type"":""text"",""speaker_name"":""依頼書""}",2
+NODE,2,"雑魚の群れが立ちはだかる。","{""type"":""battle"",""enemy_group_id"":""enemy_slime_blue""}",choice1
+CHOICE,,戦う,,3
+NODE,3,"さらに敵が押し寄せてくる。","{""type"":""battle"",""enemy_group_id"":""enemy_slime_blue""}",choice2
+CHOICE,,戦う,,4
+NODE,4,"ボスの部屋はもうすぐだ。護衛を倒せ。","{""type"":""battle"",""enemy_group_id"":""enemy_slime_blue""}",choice3
+CHOICE,,戦う,,5
+NODE,5,"強力なプレッシャーを感じる。ボス戦だ！","{""type"":""battle"",""enemy_group_id"":""enemy_grp_boss_golem""}",choice4
+CHOICE,,戦う,,6
+NODE,6,"討伐完了！クエストボードに報告しよう。","{""type"":""end_success""}",

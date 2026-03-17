@@ -142,8 +142,8 @@ export function processAging(
 export class QuestService {
     static async fetchAvailableQuests(userId: string, locationId: string) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
         const { data: quests, error } = await supabase
             .from('scenarios')
@@ -156,5 +156,60 @@ export class QuestService {
         }
 
         return quests || [];
+    }
+
+    /**
+     * Validate if a user meets the requirements for a scenario
+     * Checks completed quests, required generations, etc.
+     */
+    static async validateRequirements(supabase: any, userId: string, requirements: any): Promise<{ valid: boolean; reason?: string }> {
+        if (!requirements || Object.keys(requirements).length === 0) return { valid: true };
+
+        // 1. Generation Check
+        if (requirements.required_generations) {
+            const { count } = await supabase
+                .from('retired_characters')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId);
+            const generation = (count || 0) + 1;
+            if (generation < requirements.required_generations) {
+                return { valid: false, reason: `Generation ${requirements.required_generations} or higher required (Current: ${generation})` };
+            }
+        }
+
+        // 2. Completed Quest Check (Value can be ID or Slug)
+        if (requirements.completed_quest) {
+            const reqVal = String(requirements.completed_quest);
+            
+            // Check if it's numeric ID
+            let targetId: string | null = null;
+            if (!isNaN(Number(reqVal))) {
+                targetId = reqVal;
+            } else {
+                // Look up by slug
+                const { data: targetQuest } = await supabase
+                    .from('scenarios')
+                    .select('id')
+                    .eq('slug', reqVal)
+                    .maybeSingle();
+                if (targetQuest) targetId = targetQuest.id;
+            }
+
+            if (targetId) {
+                const { data } = await supabase
+                    .from('user_completed_quests')
+                    .select('scenario_id')
+                    .eq('user_id', userId)
+                    .eq('scenario_id', targetId)
+                    .maybeSingle();
+                
+                if (!data) return { valid: false, reason: `Prerequisite quest not completed` };
+            } else {
+                // If slug not found, assume unfulfilled or error
+                return { valid: false, reason: `Invalid prerequisite quest definition` };
+            }
+        }
+
+        return { valid: true };
     }
 }

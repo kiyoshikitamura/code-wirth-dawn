@@ -33,7 +33,7 @@ export default function GlobalStatusBar({ viewMode }: GlobalStatusBarProps) {
             {selectedScenario && (
                 <div className="bg-amber-900/40 text-amber-200 text-xs py-1 px-4 text-center truncate border-b border-amber-900/50 flex items-center justify-center gap-2">
                     <span className="animate-pulse w-1.5 h-1.5 bg-amber-400 rounded-full inline-block"></span>
-                    {selectedScenario.short_description || selectedScenario.title}
+                    {selectedScenario.script_data?.short_description || selectedScenario.short_description || selectedScenario.title}
                 </div>
             )}
 

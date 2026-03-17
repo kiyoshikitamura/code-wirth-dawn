@@ -28,6 +28,7 @@ export interface BattleContext {
     enemyHp: number;
     enemyDef: number;
     partyMembers: PartyMember[];
+    playerEffects?: { id: string; duration: number }[]; // v2.6: プレイヤーのバフ・デバフ用
 }
 
 // ─── Role Determination ──────────────────────────────────
@@ -175,13 +176,25 @@ function tryEmergencyHeal(
 
     if (!playerInDanger && !injuredMember) return null;
 
+    let targetName = playerInDanger ? 'あなた' : injuredMember?.name || '味方';
+    let targetLostHp = playerInDanger ? (context.playerMaxHp - context.playerHp) : injuredMember ? (injuredMember.max_durability - injuredMember.durability) : 0;
+
     // Find a heal card we can afford
-    const healCard = deck.find(c =>
-        (c.name.includes('回復') || c.name.includes('ヒール') ||
-            c.name.toLowerCase().includes('heal') || c.name.toLowerCase().includes('cure')) &&
-        (c.ap_cost ?? 1) <= (npc.current_ap || 0) &&
-        !npc.used_this_turn?.includes(c.id)
-    );
+    const healCard = deck.find(c => {
+        const isHeal = c.name.includes('回復') || c.name.includes('ヒール') ||
+            c.name.toLowerCase().includes('heal') || c.name.toLowerCase().includes('cure');
+        
+        if (!isHeal) return false;
+        
+        const healAmount = Math.abs(c.power || 15);
+        // 無駄なヒールの抑制: 欠損HPに対して過剰な回復（例: 欠損HPの2倍以上かつ固定値10以上のオーバーヒール）となるカードは避ける
+        if (healAmount > targetLostHp * 2 && healAmount > targetLostHp + 10) {
+            return false;
+        }
+
+        return (c.ap_cost ?? 1) <= (npc.current_ap || 0) &&
+            !npc.used_this_turn?.includes(c.id);
+    });
 
     if (!healCard) return null;
 
@@ -241,19 +254,32 @@ function tryRoleBasedBuff(
     let targetCard: Card | undefined;
 
     if (npc.ai_role === 'striker') {
-        // atk_upを優先
-        targetCard = buffCards.find(c => c.effect_id === 'atk_up');
+        // atk_upを優先 (重複回避)
+        const hasAtkUp = npc.status_effects?.some(e => e.id === 'atk_up');
+        if (!hasAtkUp) {
+            targetCard = buffCards.find(c => c.effect_id === 'atk_up');
+        }
     } else if (npc.ai_role === 'medic') {
         // regen/def_upを優先(味方が傷ついている場合)
         const allyInDanger = context.playerHp < context.playerMaxHp * 0.7 ||
             context.partyMembers.some(m => m.id !== npc.id && m.durability < m.max_durability * 0.7);
 
         if (allyInDanger) {
-            targetCard = buffCards.find(c => c.effect_id === 'regen' || c.effect_id === 'def_up');
+            const playerHasRegen = context.playerEffects?.some(e => e.id === 'regen');
+            const playerHasDefUp = context.playerEffects?.some(e => e.id === 'def_up');
+            
+            targetCard = buffCards.find(c => {
+                if (c.effect_id === 'regen' && !playerHasRegen) return true;
+                if (c.effect_id === 'def_up' && !playerHasDefUp) return true;
+                return false;
+            });
         }
     } else if (npc.ai_role === 'guardian') {
-        // def_upを自分に使用
-        targetCard = buffCards.find(c => c.effect_id === 'def_up');
+        // def_upを自分に使用 (重複回避)
+        const hasDefUp = npc.status_effects?.some(e => e.id === 'def_up');
+        if (!hasDefUp) {
+            targetCard = buffCards.find(c => c.effect_id === 'def_up');
+        }
     }
 
     if (!targetCard) return null;

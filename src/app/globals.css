@@ -21,6 +21,7 @@
   --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
   --animate-fade-in: fade-in 1s ease-out forwards;
   --animate-spin-slow: spin 3s linear infinite;
+  --animate-glitch: glitch 2s linear infinite;
 
   @keyframes float-up {
     0% {
@@ -82,6 +83,14 @@
     100% {
       opacity: 1;
     }
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    2% { transform: translate(-2px, 1px); }
+    4% { transform: translate(1px, -1px); }
+    6% { transform: translate(0); }
+    100% { transform: translate(0); }
   }
 }
 

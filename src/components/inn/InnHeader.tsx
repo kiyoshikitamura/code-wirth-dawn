@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, Calendar, Coins, Heart, Star, MapPin } from 'lucide-react';
+import { User, Calendar, Coins, Heart, Star, MapPin, AlertTriangle } from 'lucide-react';
 import { WorldState, UserProfile } from '@/types/game';
 
 interface InnHeaderProps {
@@ -63,8 +63,50 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
         return `「街はこの国の支配にまだ馴染んでいないようだ。」`;
     };
 
+    // Check expiring passes (less than 30 days left)
+    const getExpiringPasses = () => {
+        if (!userProfile?.pass_expires_at) return [];
+        const expiring: string[] = [];
+        const currentDays = userProfile.accumulated_days || 0;
+        
+        for (const [locSlug, expiryDay] of Object.entries(userProfile.pass_expires_at)) {
+            const daysLeft = expiryDay - currentDays;
+            if (daysLeft > 0 && daysLeft <= 30) {
+                let name = locSlug;
+                if (locSlug === 'loc_roland') name = '聖帝国ローラン';
+                if (locSlug === 'loc_karyu') name = '華龍神朝';
+                if (locSlug === 'loc_yato') name = '夜刀神国';
+                if (locSlug === 'loc_markand') name = '砂塵王国マルカンド';
+                expiring.push(name);
+            }
+        }
+        return expiring;
+    };
+
+    const expiringPasses = getExpiringPasses();
+
     return (
-        <header className="sticky top-0 z-50 w-full bg-slate-950/90 backdrop-blur-md border-b border-amber-900/50 p-4 shadow-2xl select-none">
+        <header className="sticky top-0 z-50 w-full bg-slate-950/90 backdrop-blur-md border-b border-amber-900/50 shadow-2xl select-none">
+            {expiringPasses.length > 0 && (
+                <div className="mx-4 my-2 px-4 py-3 bg-orange-950/40 border border-orange-500/50 rounded-lg shadow-lg flex items-center justify-between animate-[pulse_3s_ease-in-out_infinite]">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-900/50 rounded-full">
+                            <AlertTriangle className="text-orange-400" size={20} />
+                        </div>
+                        <div>
+                            <div className="text-orange-100 font-bold text-sm">通行許可証の期限が迫っています</div>
+                            <div className="text-orange-400 text-xs mt-0.5">
+                                {expiringPasses.join('、')} の許可証が残り30日未満です。
+                            </div>
+                        </div>
+                    </div>
+                    <button className="text-xs bg-orange-900 hover:bg-orange-800 text-orange-200 px-3 py-1.5 rounded transition-colors whitespace-nowrap border border-orange-700">
+                        更新する
+                    </button>
+                </div>
+            )}
+            
+            <div className="p-4">
             <div className="flex items-center gap-3 mb-4">
                 <div className="relative flex-shrink-0">
                     <div className="w-14 h-14 rounded-full border-2 border-amber-500 overflow-hidden bg-slate-800 shadow-[0_0_10px_rgba(212,175,55,0.3)]">
@@ -150,6 +192,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
                     {getFlavorText()}
                 </p>
             )}
+            </div>
         </header>
     );
 }

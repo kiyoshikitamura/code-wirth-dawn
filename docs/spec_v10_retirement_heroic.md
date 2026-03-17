@@ -1,4 +1,4 @@
-﻿Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 # Retirement & Heroic Spirit System
 
 ## 1. 概要 (Overview)
@@ -118,9 +118,9 @@ flowchart TD
 - `is_alive` チェック: 既に死亡/引退済みの場合は 400 エラー。
 - Service Role Client の使用: 環境変数有無で自動判定。
 
-### 6.2 未実装の要素
+### 6.2 実装状況の確認
 | 機能 | 状態 |
 |---|---|
-| 英霊のデッキバリデーション（禁術/消耗品除外） | 簡略化実装 |
-| サブスク判定による英霊登録分岐 | 未実装（全員登録される） |
-| 形見アイテムの実際の在庫挿入 | レスポンスに含むのみ |
+| 英霊のデッキバリデーション（禁術/消耗品除外） | ✅ 実装済み |
+| サブスク判定による英霊登録分岐とFIFO削除 | ✅ 実装済み |
+| 形見アイテムの実際の在庫挿入 | ✅ 実装済み |

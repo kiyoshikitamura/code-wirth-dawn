@@ -19,7 +19,6 @@
 5017,qst_debt_collection,強引な借金取り立て,2,2,1,nation:loc_marcund,Gold:300|Evil:5,マルカンド: 汚れ仕事。
 5018,qst_shrine_cleaning,神社の清掃奉仕,1,1,1,nation:loc_yatoshin,Item:3026|Justice:5,夜刀: 呪符セットがもらえる入門クエスト。
 5019,qst_yokai_extermination,古井戸の妖怪退治,3,3,1,nation:loc_yatoshin,Gold:400|Rep:10,夜刀: 和風ホラー展開。
-5020,qst_sword_test,辻斬りの阻止,4,4,1,nation:loc_yatoshin,Item:3025,夜刀: 剣豪との一騎打ち。「居合」入手チャンス。
 5021,qst_ninja_espionage,密書の奪取,3,3,2,nation:loc_yatoshin,Gold:600|Chaos:5,夜刀: 隠密行動。忍具が役立つ。
 5022,qst_rice_defense,不作に喘ぐ村の防衛,2,2,2,align:justice,Rep:30|Gold:50,夜刀: 報酬は安いが名声(Justice)が大幅に上がる。
 5023,qst_dojo_challenge,道場破り,3,3,1,nation:loc_haryu,Item:3031|Rep:10,華龍: 勝利すると「少林拳」習得。

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { ShadowService } from '@/services/shadowService';
 
 export async function POST(req: Request) {
@@ -12,8 +12,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing required params' }, { status: 400 });
         }
 
-        // Use Admin client for secure transaction (Gold updates)
-        const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+        // Use auth client so RLS enforces secure transaction
+        const client = createAuthClient(req);
 
         // Fetch user profile to check location and rep
         const { data: profile } = await client.from('user_profiles').select('current_location_id').eq('id', user_id).single();

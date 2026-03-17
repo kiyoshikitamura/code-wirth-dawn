@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { LifeCycleService } from '@/services/lifeCycleService';
 
 export async function POST(req: Request) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Character is already dead/retired' }, { status: 400 });
         }
 
-        const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+        const client = createAuthClient(req);
 
         // タスク1: 形見スロット数の算出（仕様: spec_v10_retirement_heroic.md §4.3）
         // 50,000G以上 → 2枠 / 200,000G以上 → 3枠 / それ以外 → 1枠（基本）

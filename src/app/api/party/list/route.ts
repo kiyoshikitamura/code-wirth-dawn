@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +13,8 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing owner_id' }, { status: 400 });
         }
 
-        // Use Admin client to bypass RLS on party_members table
-        const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+        // Use authenticated client to enforce RLS
+        const client = createAuthClient(req);
 
         const { data, error } = await client
             .from('party_members')

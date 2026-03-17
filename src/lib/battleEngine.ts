@@ -46,8 +46,9 @@ export function buildBattleDeck(
     cardLookup: (id: string) => Card | undefined,
     worldStateStatus: string = 'Normal',
     userLevel: number = 1
-): Card[] {
+): { deck: Card[]; didProtectFromNoise: boolean } {
     let finalDeck = [...userDeck];
+    let didProtectFromNoise = false;
 
     // ... (Party Injection omitted for brevity in diff if unchanged, but included in tool) ...
     // Since we are replacing block, we need to respect the original content or targeted replace.
@@ -74,6 +75,9 @@ export function buildBattleDeck(
     // 2. World Injection (V4.1 Mechanics)
     // spec_v7 §4.2: 初心者保護 —— Lv5以下は崩壊拠点でもノイズカード混入を免除する
     if (userLevel <= 5) {
+        if (worldStateStatus === 'Ruined' || worldStateStatus === 'Declining' || worldStateStatus === '崩壊' || worldStateStatus === '衰退') {
+            didProtectFromNoise = true;
+        }
         console.log('[buildBattleDeck] 初心者保護: Lv', userLevel, 'のためのノイズカード混入をスキップ。');
     } else if (worldStateStatus === 'Ruined' || worldStateStatus === 'Declining' || worldStateStatus === '崩壊' || worldStateStatus === '衰退') {
         const noiseCard = cardLookup('card_noise') || { id: 'card_noise', name: 'Noise', type: 'noise' as any, description: 'Unusable Glitch', cost: 0, discard_cost: 1 };
@@ -96,7 +100,7 @@ export function buildBattleDeck(
         for (let i = 0; i < 2; i++) finalDeck.push({ ...basicDefend, id: `basic_def_${i}` });
     }
 
-    return finalDeck;
+    return { deck: finalDeck, didProtectFromNoise };
 }
 
 /**

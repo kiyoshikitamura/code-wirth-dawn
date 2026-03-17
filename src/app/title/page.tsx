@@ -112,7 +112,8 @@ export default function TitlePage() {
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            const { data: hubLoc } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').maybeSingle();
+            // Start the player in the lowest prosperity location in Roland (e.g. a border town / village)
+            const { data: hubLoc } = await supabase.from('locations').select('id').eq('nation_id', 'Roland').order('prosperity_level', { ascending: true }).limit(1).maybeSingle();
 
             // create a dummy birth_date for backward compatibility if needed, or null if schema allows
             const dummyBirthDate = new Date();

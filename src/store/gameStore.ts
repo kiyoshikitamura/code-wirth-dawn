@@ -245,7 +245,7 @@ export const useGameStore = create<GameState>()(
                     };
                 });
 
-                const initialDeck = buildBattleDeck(
+                const { deck: initialDeck, didProtectFromNoise } = buildBattleDeck(
                     equippedCards,
                     partyMembers,
                     (id) => {
@@ -261,11 +261,11 @@ export const useGameStore = create<GameState>()(
 
                 // 共鳳ボーナス: ATK/DEF +10% を userProfileに適用
                 if (resonanceActive && userProfile) {
-                    const boostedAtk = Math.ceil((userProfile.attack || 0) * 1.1);
+                    const boostedAtk = Math.ceil((userProfile.atk || 0) * 1.1);
                     const boostedDef = Math.ceil((userProfile.def || 0) * 1.1);
                     set(state => ({
                         userProfile: state.userProfile
-                            ? { ...state.userProfile, attack: boostedAtk, def: boostedDef }
+                            ? { ...state.userProfile, atk: boostedAtk, def: boostedDef }
                             : null
                     }));
                 }
@@ -296,6 +296,7 @@ export const useGameStore = create<GameState>()(
                     `${enemies.map(e => e.name).join('と')}が現れた！`,
                     ...(resonanceActive ? ['\u26a1 共鳳ボーナス発動！ (ATK/DEF +10%)'] : []),
                     ...(blessingActive ? ['✨ 祈りの加護が発動！(開始APアップ & HP回復)'] : []),
+                    ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
                     `--- Turn 1 ---`
                 ];
 
@@ -324,6 +325,23 @@ export const useGameStore = create<GameState>()(
                 });
 
                 get().dealHand();
+
+                // --- Optimistic UI & Server Validation ---
+                fetch('/api/battle/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        enemies: enemies,
+                        party: partyMembers,
+                        initial_ap: initialAp,
+                        resonance_active: resonanceActive,
+                        player_stats: { hp: userProfile?.hp, max_hp: userProfile?.max_hp, atk: userProfile?.attack, def: userProfile?.def }
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (data.battle_session_id) {
+                        set(state => ({ battleState: { ...state.battleState, battle_session_id: data.battle_session_id }}));
+                    }
+                }).catch(err => console.error("Server Battle Sync Error", err));
             },
 
             endTurn: async () => {
@@ -751,6 +769,27 @@ export const useGameStore = create<GameState>()(
 
                 console.log("[Attack] Card used:", card);
 
+                // --- Server Validation Call ---
+                if (card && battleState.battle_session_id) {
+                    fetch('/api/battle/action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            battle_session_id: battleState.battle_session_id,
+                            action_type: 'attack_enemy',
+                            card: card,
+                            target_id: targetEnemyId,
+                            log_message: `Used ${card?.name}`
+                        })
+                    }).then(res => res.json()).then(data => {
+                        if (data.error) {
+                            console.warn('Server validation failed:', data.error);
+                            set(state => ({ battleState: { ...state.battleState, messages: [...state.battleState.messages, `[サーバー未承認] ${data.error}`] }}));
+                        }
+                    });
+                }
+                // ------------------------------
+
                 let nextHand = [...hand];
                 let nextDiscardPile = [...get().discardPile];
                 let logMsg = '';
@@ -944,6 +983,7 @@ export const useGameStore = create<GameState>()(
                         enemyHp,
                         enemyDef,
                         partyMembers: updatedParty,
+                        playerEffects: currentBattle.player_effects,
                     };
 
                     const actions = resolveNpcTurn(member, context);
@@ -1073,7 +1113,30 @@ export const useGameStore = create<GameState>()(
 
                     // Simple AI: Calculate Damage
                     // v3.5: Support 'vit_damage' or traits
-                    const enemyAtk = enemy.level * 5 + 10;
+                    let enemyAtk = enemy.level * 5 + 10;
+                    let applyStun = false;
+
+                    // v15.0: Boss Mock Actions
+                    if (enemy.spawn_type === 'quest_only') {
+                        // Bosses get a damage multiplier
+                        enemyAtk = enemy.level * 8 + 20;
+
+                        if (enemy.slug === 'enemy_boss_ep20_god') {
+                            if (battleState.turn > 0 && battleState.turn % 5 === 0) {
+                                newMessages.push(`『神の粛清』！ 全てを無に帰す光！`);
+                                enemyAtk += 80;
+                                applyStun = true;
+                            } else if (enemy.hp < enemy.maxHp * 0.2) {
+                                newMessages.push(`神が発狂している...！ 規格外の破壊力！`);
+                                enemyAtk += 120;
+                            }
+                        } else if (enemy.slug === 'enemy_boss_ep10_dragon') {
+                            if (battleState.turn > 0 && battleState.turn % 3 === 0) {
+                                newMessages.push(`巨大な熱線！ 防御を紙のように削る！`);
+                                enemyAtk += 50;
+                            }
+                        }
+                    }
 
                     // 1. Route Damage
                     const result = routeDamage(newParty, enemyAtk);
@@ -1126,6 +1189,24 @@ export const useGameStore = create<GameState>()(
                                         method: 'POST',
                                         body: JSON.stringify({ amount: 1, profileId: selectedProfileId })
                                     }).catch(console.error);
+                                }
+                            }
+
+                            // Application of Stun (With Stun-Immune logic to prevent perma-stun lock)
+                            if (applyStun && mitigated > 0) {
+                                const playerEffects = battleState.player_effects as StatusEffect[] || [];
+                                const hasStunImmunity = playerEffects.some(e => e.id === 'stun_immune' && e.duration > 0);
+                                if (hasStunImmunity) {
+                                    newMessages.push(`強靭な意志で気絶現象を弾き返した！`);
+                                } else {
+                                    newMessages.push(`凄まじい衝撃で気絶した！`);
+                                    set((state) => {
+                                        let currentEffects = [...(state.battleState.player_effects as StatusEffect[] || [])];
+                                        currentEffects = applyEffect(currentEffects, 'stun', 1);
+                                        // 連続スタン防止のための耐性付与
+                                        currentEffects = applyEffect(currentEffects, 'stun_immune', 2);
+                                        return { battleState: { ...state.battleState, player_effects: currentEffects } };
+                                    });
                                 }
                             }
                         }

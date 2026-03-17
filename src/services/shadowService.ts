@@ -128,7 +128,7 @@ export class ShadowService {
         }
 
         // 3. System Mercenaries
-        const systems = await this.generateSystemMercenaries();
+        const systems = await this.generateSystemMercenaries(locationId);
         for (const sys of systems) {
             if (hiredNames.has(sys.name)) continue;
             results.push(sys);
@@ -137,9 +137,19 @@ export class ShadowService {
         return results;
     }
 
-    async generateSystemMercenaries(): Promise<ShadowSummary[]> {
+    async generateSystemMercenaries(locationId: string): Promise<ShadowSummary[]> {
         const results: ShadowSummary[] = [];
         try {
+            // Get location context (ruling nation, prosperity)
+            const { data: loc } = await this.supabase
+                .from('locations')
+                .select('ruling_nation_id, prosperity_level')
+                .eq('id', locationId)
+                .single();
+
+            const rulingNation = loc?.ruling_nation_id?.toLowerCase() || 'unknown';
+            const isCapital = loc?.prosperity_level && loc.prosperity_level >= 4; // Use prosperity >= 4 for capital-like hubs
+
             const { data: npcs } = await this.supabase
                 .from('npcs')
                 .select('*')
@@ -147,15 +157,37 @@ export class ShadowService {
                 .eq('origin', 'system_mercenary');
 
             if (npcs) {
-                for (const npc of npcs) {
+                // 1. Filter native NPCs that belong to the location's ruling nation based on slug
+                const nativeNpcs = npcs.filter(n => n.slug?.toLowerCase().includes(rulingNation));
+                
+                // 2. Freelance / Hero NPCs rotation (only appear in capitals/major cities)
+                const freelanceNpcs = npcs.filter(n => n.slug?.toLowerCase().includes('free'));
+                const targetNpcs = [...nativeNpcs];
+
+                if (isCapital && freelanceNpcs.length > 0) {
+                    // Seeded random selection based on current day and location
+                    const todaySeed = Math.floor(Date.now() / 86400000); // 1-day rotation
+                    const locationHash = Array.from(locationId).reduce((acc, char) => acc + char.charCodeAt(0), todaySeed);
+                    
+                    // Pick 2 random freelance heroes for this day/location
+                    const index1 = locationHash % freelanceNpcs.length;
+                    const index2 = (locationHash + 7) % freelanceNpcs.length; // offset
+
+                    targetNpcs.push(freelanceNpcs[index1]);
+                    if (index1 !== index2) {
+                        targetNpcs.push(freelanceNpcs[index2]);
+                    }
+                }
+
+                for (const npc of targetNpcs) {
                     results.push({
                         profile_id: npc.id,
                         name: npc.name,
-                        level: npc.level,
-                        job_class: npc.job_class,
+                        level: npc.level || 1,
+                        job_class: npc.job_class || 'Mercenary',
                         origin_type: 'system_mercenary',
-                        contract_fee: (npc.level * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL),
-                        stats: { atk: npc.attack, def: npc.defense, hp: npc.max_hp },
+                        contract_fee: (npc.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL,
+                        stats: { atk: npc.attack || 0, def: npc.defense || 0, hp: npc.max_hp || 100 },
                         signature_deck_preview: npc.default_cards || [],
                         subscription_tier: 'free' as const
                     });

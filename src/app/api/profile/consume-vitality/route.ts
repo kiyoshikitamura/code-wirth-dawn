@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin, hasServiceKey } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { getVitalityStatus } from '@/lib/character';
 import { LifeCycleService } from '@/services/lifeCycleService';
 
@@ -56,9 +56,7 @@ export async function POST(req: Request) {
         if (newVit === 0) {
             console.log("Vitality depleted. Triggering Death Handler...");
 
-            // Use Admin Client for death updates (Historical Logs RLS might require it if not "own" insert)
-            // But usually Profile Update needs to be secure.
-            const client = (hasServiceKey && supabaseAdmin) ? supabaseAdmin : supabase;
+            const client = createAuthClient(req);
             const lifeSync = new LifeCycleService(client);
 
             await lifeSync.handleCharacterDeath(profile.id);

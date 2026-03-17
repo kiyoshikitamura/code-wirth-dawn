@@ -102,6 +102,9 @@ Stripe側で決済完了・解約イベントを受信し、DBを更新する最
 
 **Webhook 署名検証**: `STRIPE_WEBHOOK_SECRET` 環境変数を使用して `stripe.webhooks.constructEvent()` でリクエストの正当性を検証すること。
 
+**冪等性 (Idempotency) と Race Condition 防止**:
+Stripe Webhookでは、ネットワーク障害等による重複送信（リトライ）への対策が必須である。イベント受信直後に `stripe_webhook_events` テーブルにイベントIDを挿入（INSERT）し、DBレベルの一意制約（UNIQUE CONSTRAINT）を用いて二重処理やレースコンディションによる「ゴールドの二重付与」などを完全にブロックするアーキテクチャを採用する（セキュリティ監査対応済）。
+
 ### 5.3 ダウングレード時の猶予処理
 ダウングレードによって現在のキャラクター数やUGC数がTier上限を超過した場合、**即座に削除・非公開にはしない**。
 ただし、新規の作成・公開・英霊登録アクションを実行した際にバリデーションエラーを返し、ユーザーへ整理を促す設計とする。
@@ -125,10 +128,10 @@ Stripe側で決済完了・解約イベントを受信し、DBを更新する最
 | 機能 | 状態 |
 |---|---|
 | 匿名ログイン（Anonymous Sign-in） | ✅ 実装済み |
-| linkIdentity (OAuth連携 UI) | ❌ 未実装 |
-| `subscription_tier` カラム追加 | ❌ 未実装（マイグレーション要） |
-| `is_subscriber` 廃止 | ❌ 未実装 |
-| POST /api/billing/checkout | ❌ 未実装 |
-| POST /api/webhooks/stripe | ❌ 未実装 |
-| Tier別機能制限の動的適用（UGC枠等） | ⚠️ 一部実装済み（`is_subscriber` 判定のまま） |
-| 英霊登録FIFO | ❌ 未実装 |
+| linkIdentity (OAuth連携 UI) | ✅ 実装済み |
+| `subscription_tier` カラム追加 | ✅ 実装済み |
+| `is_subscriber` 廃止 | ✅ 実装済み |
+| POST /api/billing/checkout | ✅ 実装済み |
+| POST /api/webhooks/stripe | ✅ 実装済み |
+| Tier別機能制限の動的適用（UGC枠等） | ✅ 実装済み |
+| 英霊登録FIFO | ✅ 実装済み |

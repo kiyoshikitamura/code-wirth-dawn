@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
-import { X, UserPlus, Shield, Sword, Heart, Coins, RefreshCw, Flag } from 'lucide-react';
+import { X, UserPlus, Shield, Sword, Heart, Coins, RefreshCw, Flag, Sparkles } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { supabase } from '@/lib/supabase';
 
@@ -321,20 +321,43 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                         </div>
                                     )}
 
-                                    {shadows.map((shadow, idx) => (
-                                        <div key={idx} className={`relative p-4 border transition-all hover:bg-black/40 group ${shadow.subscription_tier === 'premium' ? 'border-yellow-500/50 bg-yellow-900/10' : shadow.subscription_tier === 'basic' ? 'border-blue-500/30 bg-blue-900/5' : 'border-gray-700 bg-black/20'}`}>
+                                    {shadows.map((shadow, idx) => {
+                                        const isHeroic = shadow.level >= 20;
+
+                                        return (
+                                        <div key={idx} className={`relative overflow-hidden p-4 border transition-all duration-300 hover:bg-black/40 group ${
+                                            isHeroic 
+                                            ? 'ring-2 ring-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] bg-gradient-to-b from-slate-900 to-amber-950/30' 
+                                            : shadow.subscription_tier === 'premium' 
+                                                ? 'border-yellow-500/50 bg-yellow-900/10' 
+                                                : shadow.subscription_tier === 'basic' 
+                                                    ? 'border-blue-500/30 bg-blue-900/5' 
+                                                    : 'border-gray-700 bg-black/20'
+                                        }`}>
                                             {/* Badges */}
-                                            {shadow.subscription_tier === 'premium' && (
-                                                <div className="absolute top-0 right-0 bg-yellow-600 text-black text-[10px] px-2 py-0.5 font-bold">LEGEND</div>
+                                            {isHeroic && (
+                                                <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-600 to-yellow-400 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded-bl-lg z-10 shadow-md flex items-center gap-1">
+                                                    <Sparkles size={10} /> HERO
+                                                </div>
                                             )}
-                                            {shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && (
-                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold">HERO</div>
-                                            )}
-                                            {shadow.origin_type === 'system_mercenary' && (
-                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold">OFFICIAL</div>
+                                            {/* Particle Effect for Heroic */}
+                                            {isHeroic && (
+                                                <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-30 z-0">
+                                                    <div className="w-[200%] h-[200%] bg-[url('/textures/dust-particles.png')] animate-[slide_10s_linear_infinite] opacity-50"></div>
+                                                </div>
                                             )}
 
-                                            <div className="flex justify-between items-start mb-2">
+                                            {!isHeroic && shadow.subscription_tier === 'premium' && (
+                                                <div className="absolute top-0 right-0 bg-yellow-600 text-black text-[10px] px-2 py-0.5 font-bold z-10">LEGEND</div>
+                                            )}
+                                            {!isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && (
+                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10">HERO</div>
+                                            )}
+                                            {!isHeroic && shadow.origin_type === 'system_mercenary' && (
+                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10">OFFICIAL</div>
+                                            )}
+
+                                            <div className="flex justify-between items-start mb-2 relative z-10">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-gray-800 overflow-hidden border border-gray-600 flex shrink-0 items-center justify-center">
                                                         {shadow.icon_url || shadow.image_url ? (
@@ -398,7 +421,8 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                 {currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < shadow.contract_fee ? '資金不足' : '契約を結ぶ'}
                                             </button>
                                         </div>
-                                    ))}
+                                    );
+                                    })}
                                 </div>
                             )}
 

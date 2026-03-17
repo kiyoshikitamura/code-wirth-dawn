@@ -1,15 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { ShoppingBag, Coins, Lock, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
+import { useActionLogStore } from '@/stores/actionLogStore';
 import { supabase } from '@/lib/supabase';
+
+const playCreepyAudio = () => {
+    try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(45, audioCtx.currentTime); // very low freq drone
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 5);
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 1); // fade in
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 5); // fade out
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 5);
+    } catch (e) {
+        console.warn("AudioContext init failed", e);
+    }
+};
 
 interface ShopItem {
     id: string;
     name: string;
     type: string;
     base_price: number;
-    current_price: number;
+    current_price: number | string;
     effect_data: any;
+    is_rumored?: boolean;
+    nation_tags?: string[];
 }
 
 interface ShopMeta {
@@ -25,6 +48,7 @@ interface Props {
 export default function ShopModal({ onClose }: Props) {
     const { gold, fetchInventory, userProfile, inventory } = useGameStore();
     const [items, setItems] = useState<ShopItem[]>([]);
+    const [rumoredItems, setRumoredItems] = useState<ShopItem[]>([]);
     const [meta, setMeta] = useState<ShopMeta | null>(null);
     const [loading, setLoading] = useState(true);
     const [purchasing, setPurchasing] = useState<string | null>(null); // itemId being bought/sold
@@ -53,7 +77,11 @@ export default function ShopModal({ onClose }: Props) {
             if (res.ok) {
                 const data = await res.json();
                 setItems(data.items);
+                setRumoredItems(data.rumored_items || []);
                 setMeta(data.meta);
+                if (data.meta.prosperity === 1) {
+                    playCreepyAudio();
+                }
             }
         } catch (e) {
             console.error(e);
@@ -63,7 +91,8 @@ export default function ShopModal({ onClose }: Props) {
     };
 
     const handleBuy = async (item: ShopItem) => {
-        if (gold < item.current_price) {
+        if (item.is_rumored) return;
+        if (gold < (item.current_price as number)) {
             alert("金貨が足りません！");
             return;
         }
@@ -244,85 +273,123 @@ export default function ShopModal({ onClose }: Props) {
 
                 <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
                     {mode === 'buy' ? (
-                        meta?.prosperity === 1 ? (
-                            // BLACK MARKET LAYOUT
-                            <div className="col-span-2 flex flex-col items-center justify-center p-8 text-center border-2 border-red-900/50 bg-red-950/20 rounded shadow-[inset_0_0_50px_rgba(100,0,0,0.5)]">
-                                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900 mb-4 opacity-80">
-                                    <img src="/avatars/thief.png" alt="Black Market Dealer" className="w-full h-full object-cover" />
-                                </div>
-                                <p className="text-red-400 font-serif italic mb-6">「...足元は見てねえよ。命が惜しけりゃ、買えるうちに買っておきな。」</p>
-                                <div className="bg-black/80 border border-red-900 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-20 mix-blend-overlay"></div>
-                                    <div className="relative z-10 text-left">
-                                        <div className="text-red-500 font-bold text-lg mb-1">禁術の秘薬</div>
-                                        <div className="text-xs text-gray-500">HP・MP全回復、全状態異常解除、さらには最大HPを恒久的に劇的に高めるという伝説の...</div>
+                        <>
+                            {meta?.prosperity === 1 ? (
+                                // BLACK MARKET LAYOUT
+                                <div className="col-span-2 flex flex-col items-center justify-center p-8 text-center border-2 border-red-900/50 bg-red-950/20 rounded shadow-[inset_0_0_50px_rgba(100,0,0,0.5)]">
+                                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900 mb-4 opacity-80">
+                                        <img src="/avatars/thief.png" alt="Black Market Dealer" className="w-full h-full object-cover" />
                                     </div>
-                                    <button
-                                        onClick={() => handleBuy({ id: 'item_black_market_elixir', name: '禁術の秘薬', type: 'consumable', base_price: 50000, current_price: 50000, effect_data: {} })}
-                                        disabled={purchasing === 'item_black_market_elixir' || gold < 50000}
-                                        className={`ml-4 px-4 py-3 rounded font-bold min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 50000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-red-900 hover:bg-red-800 text-white border border-red-500 hover:border-red-400 animate-pulse'}`}
-                                    >
-                                        {purchasing === 'item_black_market_elixir' ? '⟳' : '50,000 G'}
-                                    </button>
-                                </div>
-
-                                <div className="bg-black/80 border border-gray-600 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden mt-4">
-                                    <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-10 mix-blend-overlay"></div>
-                                    <div className="relative z-10 text-left">
-                                        <div className="text-gray-300 font-bold text-lg mb-1">帳簿の改竄</div>
-                                        <div className="text-xs text-gray-500">過去の悪名をすべて揉み消してやろうか？ 綺麗さっぱり、な。</div>
-                                    </div>
-                                    <button
-                                        onClick={handleLaunder}
-                                        disabled={purchasing === 'launder' || gold < 100000}
-                                        className={`ml-4 px-4 py-3 rounded font-bold min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 100000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-500 hover:border-gray-400 transition-all active:scale-95'}`}
-                                    >
-                                        {purchasing === 'launder' ? '⟳' : '100,000 G'}
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            // NORMAL BUY LAYOUT
-                            loading ? (
-                                <div className="text-center text-gray-500 col-span-2 py-8">Loading wares...</div>
-                            ) : items.length === 0 ? (
-                                <div className="text-center text-gray-500 col-span-2 py-8">商品は売り切れのようです...</div>
-                            ) : (
-                                items.map((item) => (
-                                    <div key={item.id} className="bg-gray-800/50 border border-gray-700 p-3 rounded flex justify-between items-center hover:bg-gray-800 transition-colors">
-                                        <div className="flex-1 min-w-0 mr-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-gray-200">{item.name}</span>
-                                                <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${item.type === 'skill' ? 'border-blue-900 text-blue-400 bg-blue-900/20' :
-                                                    item.type === 'consumable' ? 'border-green-900 text-green-400 bg-green-900/20' :
-                                                        'border-gray-600 text-gray-400'
-                                                    }`}>{item.type}</span>
-                                            </div>
-                                            <div className="text-xs text-gray-500 mt-1 truncate">
-                                                {JSON.stringify(item.effect_data)}
-                                            </div>
+                                    <p className="text-red-400 font-serif italic mb-6">「...足元は見てねえよ。命が惜しけりゃ、買えるうちに買っておきな。」</p>
+                                    <div className="bg-black/80 border border-red-900 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-20 mix-blend-overlay"></div>
+                                        <div className="relative z-10 text-left">
+                                            <div className="text-red-500 font-bold text-lg mb-1 animate-glitch">禁術の秘薬</div>
+                                            <div className="text-xs text-red-500/70">HP・MP全回復、全状態異常解除、さらには最大HPを恒久的に劇的に高めるという伝説の...</div>
                                         </div>
                                         <button
-                                            onClick={() => handleBuy(item)}
-                                            disabled={purchasing === item.id || gold < item.current_price}
-                                            className={`px-4 py-2 rounded flex items-center gap-2 min-w-[100px] justify-center transition-all ${gold < item.current_price
-                                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed border border-gray-600'
-                                                : 'bg-yellow-700 hover:bg-yellow-600 text-white border border-yellow-600 shadow-lg hover:translate-y-[-2px]'
-                                                }`}
+                                            onClick={() => handleBuy({ id: 'item_black_market_elixir', name: '禁術の秘薬', type: 'consumable', base_price: 50000, current_price: 50000, effect_data: {} })}
+                                            disabled={purchasing === 'item_black_market_elixir' || gold < 50000}
+                                            className={`ml-4 px-4 py-3 rounded font-bold min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 50000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-red-900 hover:bg-red-800 text-white border border-red-500 hover:border-red-400 animate-pulse'}`}
                                         >
-                                            {purchasing === item.id ? (
-                                                <span className="animate-spin text-xl">⟳</span>
-                                            ) : (
-                                                <>
-                                                    <span className="font-mono">{item.current_price}</span>
-                                                    <span className="text-xs">G</span>
-                                                </>
-                                            )}
+                                            {purchasing === 'item_black_market_elixir' ? '⟳' : '50,000 G'}
                                         </button>
                                     </div>
-                                ))
-                            )
-                        )
+
+                                    <div className="bg-black/80 border border-gray-600 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden mt-4">
+                                        <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-10 mix-blend-overlay"></div>
+                                        <div className="relative z-10 text-left">
+                                            <div className="text-gray-300 font-bold text-lg mb-1 animate-glitch" style={{ animationDelay: '0.5s' }}>帳簿の改竄</div>
+                                            <div className="text-xs text-gray-500">過去の悪名をすべて揉み消してやろうか？ 綺麗さっぱり、な。</div>
+                                        </div>
+                                        <button
+                                            onClick={handleLaunder}
+                                            disabled={purchasing === 'launder' || gold < 100000}
+                                            className={`ml-4 px-4 py-3 rounded font-bold min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 100000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-500 hover:border-gray-400 transition-all active:scale-95'}`}
+                                        >
+                                            {purchasing === 'launder' ? '⟳' : '100,000 G'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                // NORMAL BUY LAYOUT
+                                loading ? (
+                                    <div className="text-center text-gray-500 col-span-2 py-8">Loading wares...</div>
+                                ) : items.length === 0 ? (
+                                    <div className="text-center text-gray-500 col-span-2 py-8">商品は売り切れのようです...</div>
+                                ) : (
+                                    items.map((item) => (
+                                        <div key={item.id} className="bg-gray-800/50 border border-gray-700 p-3 rounded flex justify-between items-center hover:bg-gray-800 transition-colors">
+                                            <div className="flex-1 min-w-0 mr-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-gray-200">{item.name}</span>
+                                                    <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${item.type === 'skill' ? 'border-blue-900 text-blue-400 bg-blue-900/20' :
+                                                        item.type === 'consumable' ? 'border-green-900 text-green-400 bg-green-900/20' :
+                                                            'border-gray-600 text-gray-400'
+                                                        }`}>{item.type}</span>
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1 truncate">
+                                                    {JSON.stringify(item.effect_data)}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleBuy(item)}
+                                                disabled={purchasing === item.id || gold < (item.current_price as number)}
+                                                className={`px-4 py-2 rounded flex items-center gap-2 min-w-[100px] justify-center transition-all ${gold < (item.current_price as number)
+                                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed border border-gray-600'
+                                                    : 'bg-yellow-700 hover:bg-yellow-600 text-white border border-yellow-600 shadow-lg hover:translate-y-[-2px]'
+                                                    }`}
+                                            >
+                                                {purchasing === item.id ? (
+                                                    <span className="animate-spin text-xl">⟳</span>
+                                                ) : (
+                                                    <>
+                                                        <span className="font-mono">{item.current_price}</span>
+                                                        <span className="text-xs">G</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    ))
+                                )
+                            )}
+
+                            {/* RUMORED ITEMS */}
+                            {rumoredItems.length > 0 && meta?.prosperity !== 1 && (
+                                <div className="col-span-2 mt-8 mb-4">
+                                    <h3 className="text-gray-500 font-bold border-b border-gray-800 pb-2 mb-4 flex items-center justify-between">
+                                        <span>遠方から伝わる秘伝の噂...</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {rumoredItems.map((item) => {
+                                            let nationHint = "何処かの国";
+                                            if (item.nation_tags?.includes('loc_roland')) nationHint = "聖帝国ローラン";
+                                            if (item.nation_tags?.includes('loc_karyu')) nationHint = "華龍神朝";
+                                            if (item.nation_tags?.includes('loc_yato')) nationHint = "夜刀神国";
+                                            if (item.nation_tags?.includes('loc_markand')) nationHint = "砂塵王国マルカンド";
+
+                                            return (
+                                                <div key={item.id} className="bg-gray-900 border border-gray-800 p-3 rounded flex justify-between items-center opacity-50 grayscale hover:grayscale-0 transition-all select-none relative overflow-hidden">
+                                                    <div className="flex-1 min-w-0 mr-4 blur-[2px]">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-gray-400">{item.name.replace(/：.*/, '：謎の術')}</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-600 mt-1 truncate">
+                                                            強力な霊力を帯びている...
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                        <span className="text-amber-500/80 font-bold text-sm bg-black/50 px-3 py-1 rounded drop-shadow-md">
+                                                            {nationHint}の首都でのみ入手可能
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         // SELL MODE
                         inventory && inventory.length > 0 ? (

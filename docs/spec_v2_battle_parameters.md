@@ -183,7 +183,7 @@ MitigatedDamage = Max(1, EnemyATK - Player.DEF)
 - Shadow（英霊）登録時、`inject_cards` に保存できるのは **`type === 'skill'` のアイテムのみ**（✅ 実装済み）。
 - `type: 'consumable'`（消費アイテム）は登録を厳密に禁止。
 - `cost_type: 'vitality'`（寿命コストカード）は `type` チェックの段階で自動除外される。
-- Free Tier ユーザーは英霊登録自体がスキップされる（`is_subscriber` フラグで制御）。
+- Free Tier ユーザーは英霊登録自体がスキップされる（`subscription_tier: 'free'` で制御）。
 
 ---
 

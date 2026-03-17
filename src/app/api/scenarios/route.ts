@@ -9,6 +9,25 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
+        // Base authentication (Moved up to validate requirements)
+        let userId: string | null = null;
+        let locationId: string | null = null;
+        
+        const authHeader = req.headers.get('authorization');
+        const xUserId = req.headers.get('x-user-id');
+        
+        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) userId = user.id;
+        } else if (xUserId) {
+            userId = xUserId;
+        }
+        
+        if (!userId) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+
         // Case 1: Fetch Specific Scenario by ID (for QuestPage)
         if (id) {
             const { data: quest, error } = await supabase
@@ -21,6 +40,14 @@ export async function GET(req: Request) {
                 console.log("Scenario API: Quest not found for id", id);
                 return NextResponse.json({ scenarios: [] });
             }
+
+            // --- SECURITY VALIDATION ---
+            const validation = await QuestService.validateRequirements(supabase, userId, quest.requirements);
+            if (!validation.valid) {
+                console.warn(`[Security] User ${userId} blocked from scenario ${id}: ${validation.reason}`);
+                return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
+            }
+            // ---------------------------
 
             console.log(`Scenario API: Fetching ID ${id}`);
             console.log(`Scenario API: Keys found:`, Object.keys(quest));
@@ -45,30 +72,7 @@ export async function GET(req: Request) {
         }
 
         // Case 2: Fetch Available Quests (Legacy/Location based)
-        // 1. Fetch User Profile to get Current Location
-        // Note: Real implementation should use Auth Session, but assuming single-user/mock env for now or first user
-        // We need userId. For now, fetch the first user or 'default' logic if auth not strictly enforced yet.
-        // The original code fetched limit 1 user.
-
-        // Base authentication
-        let userId: string | null = null;
-        let locationId: string | null = null;
-        
-        const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
-        
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) userId = user.id;
-        } else if (xUserId) {
-            userId = xUserId;
-        }
-        
-        if (!userId) {
-            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-        }
-        
+        // Fetch User Profile to get Current Location
         const { data: profile } = await supabase
             .from('user_profiles')
             .select('current_location_id')

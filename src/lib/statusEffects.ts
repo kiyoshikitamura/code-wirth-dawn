@@ -19,7 +19,8 @@ export type StatusEffectId =
     | 'poison'    // 毒: ターン終了時 MaxHPの5%ダメージ
     | 'stun'      // 気絶: 次ターン行動不能 (AP回復もスキップ)
     | 'bleed'     // 出血: カード使用毎に3ダメージ
-    | 'fear';     // 恐怖: デッキに使用不可カード混入
+    | 'fear'      // 恐怖: デッキに使用不可カード混入
+    | 'stun_immune'; // スタン免疫: 1ターンスタンを無効化
 
 export interface TickResult {
     newEffects: StatusEffect[];
@@ -39,6 +40,7 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     stun: '気絶',
     bleed: '出血',
     fear: '恐怖',
+    stun_immune: 'スタン耐性',
 };
 
 export function getEffectName(id: StatusEffectId): string {

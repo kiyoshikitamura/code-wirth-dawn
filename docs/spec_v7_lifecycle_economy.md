@@ -1,4 +1,4 @@
-﻿Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 # Lifecycle & Economy — Death, Succession, Newbie Protection
 
 ## 1. 概要 (Overview)
@@ -60,7 +60,7 @@ Body: {
 |---|---|---|
 | ショップ価格割引 | 繁栄度インフレ後の価格に対して **50%OFF**（闇市アイテムを除く） | ✅ 実装済み |
 | ノイズカード混入防止 | 崩壊拠点でもノイズ未混入 | ✅ **実装済み** (`buildBattleDeck()`: `userLevel <= 5` の場合スキップ) |
-| 対人攻撃防止 | PvPからの保護 | ❌ PvP自体が未実装 |
+| 対人攻撃防止 | PvPからの保護 | ❌ 企画から正式削除 |
 
 ---
 

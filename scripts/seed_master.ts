@@ -90,6 +90,13 @@ async function main() {
         let nationTags = r.nation_tags && typeof r.nation_tags === 'string' ? r.nation_tags.split('|') : [];
         nationTags = nationTags.map((t: string) => t === 'any' ? 'loc_all' : t);
 
+        let effectData = {};
+        if (r.effect_data) {
+            try { effectData = JSON.parse(r.effect_data); } catch (e) { console.warn("Invalid JSON in effect_data", r.effect_data); }
+        }
+
+        const isBlackMarket = r.availability === 'black_market' || r.is_black_market === 'true' || r.is_black_market === '1' || r.is_black_market === true;
+
         return {
             id: r.id,
             slug: r.slug,
@@ -99,7 +106,8 @@ async function main() {
             min_prosperity: r.min_prosperity,
             nation_tags: nationTags,
             linked_card_id: r.linked_card_id,
-            cost: r.cost || 0
+            effect_data: effectData,
+            is_black_market: isBlackMarket
         };
     });
 
@@ -182,10 +190,12 @@ async function main() {
         slug: r.slug,
         name: r.name,
         hp: r.hp,
+        atk: r.atk || 0,
         def: r.def || 0, // Added v2.2
         exp: r.exp,
         gold: r.gold,
         drop_item_id: r.drop_item_id || null, // Ensure explicit null
+        spawn_type: r.spawn_type || 'random',
         action_pattern: actionMap[r.slug] || [] // Inject the built JSON
     }));
 
@@ -359,14 +369,14 @@ async function main() {
             id: r.id,
             slug: r.slug,
             title: r.title,
-            description: r._comment || r.title,
+            description: scriptData?.nodes?.['1']?.text || r._comment || r.title,
             difficulty: Number(r.difficulty) || 1,
             rec_level: Number(r.rec_level) || 1,
             time_cost: Number(r.time_cost) || 1,
             // conditions: conditions, 
             trigger_condition: null, // Deprecated in v3.1 API logic (uses specialized cols)
             rewards: rewards,
-            script_data: scriptData || (r.script_data ? JSON.parse(r.script_data) : null),
+            script_data: { ...(scriptData || (r.script_data ? JSON.parse(r.script_data) : null)), short_description: r._comment || r.title },
             type: 'Subjugation',
             client_name: 'Guild',
             is_urgent: is_urgent,

@@ -1,4 +1,4 @@
-﻿Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 # Shadow Mercenary System
 
 ## 1. 概要 (Overview)
@@ -109,9 +109,7 @@ CREATE TABLE party_members (
 ---
 
 ## 6. 経済システム (Royalty Economy)
-<!-- v11.0: 未実装であることを明記 -->
-
-> **⚠️ 未実装 (v11.0時点)**
+<!-- v11.0: 実装済み -->
 
 ### 6.1 ロイヤリティ収入（設計のみ）
 - 他プレイヤーが自分の残影を雇用した際、バトル参加回数に応じてゴールドを獲得。

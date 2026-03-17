@@ -118,8 +118,25 @@ export async function GET(req: Request) {
             };
         });
 
+        const rumoredItems = allItems.filter(item => {
+            if (questId) return false;
+            if (isRuined) return false;
+
+            const tags = item.nation_tags || [];
+            if (tags.length === 0 || tags.includes('loc_all')) return false;
+
+            const nationTag = `loc_${rulingNation.toLowerCase()}`;
+            // If it is nation specific but NOT for the current nation, it's a rumored item.
+            return !tags.includes(nationTag);
+        }).map(item => ({
+            ...item,
+            current_price: 0,
+            is_rumored: true
+        }));
+
         return NextResponse.json({
             items: filteredItems,
+            rumored_items: rumoredItems,
             meta: {
                 location: locationName,
                 prosperity: prosperityLevel,
