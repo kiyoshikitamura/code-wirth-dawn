@@ -64,16 +64,14 @@ export default function WorldMapPage() {
             // 1. Check legacy Zero UUID
             const isZeroUUID = !userProfile.current_location_id || userProfile.current_location_id === LEGACY_ZERO_UUID;
 
-            // 2. Check actual Location Data (Name/Type)
+            // 2. Check actual Location Data
             const currentLoc = locations.find(l => l.id === userProfile.current_location_id);
-            const isHubLocation = currentLoc?.name === LOCATION_NAME || currentLoc?.type === 'Hub';
+            // Show descent modal ONLY if the user is stuck at the legacy "名もなき旅人の拠所" explicitly, or no valid location.
+            const isLegacyHub = currentLoc?.name === '名もなき旅人の拠所';
 
-            // 3. Check new Hub State (Reactive)
-            const isHubStateFlag = hubState?.is_in_hub;
-
-            // "Descent from Heaven" Logic: Show modal ONLY if strictly at Hub Location or Zero ID (Fresh Start/Reset)
-            // We ignore isHubStateFlag here to prevent re-triggering when returning from a valid location
-            if (isZeroUUID || isHubLocation) {
+            // "Descent from Heaven" Logic: Show modal ONLY if strictly at legacy hub or Zero ID (Fresh Start/Reset)
+            // If they are at loc_border_town (国境の町), they should NOT see the descent modal.
+            if (isZeroUUID || isLegacyHub) {
                 setShowEntryModal(true);
             } else {
                 // Ensure modal is closed if conditions are NOT met

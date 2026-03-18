@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         const { data: worldData, error: worldError } = await client
             .from('world_states')
             .update(defaultState)
-            .eq('location_name', '名もなき旅人の拠所')
+            .eq('location_name', '国境の町')
             .select('*');
 
         if (worldError) console.error("World reset error:", worldError);
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
             console.log("No World State found. Inserting default...");
             const { error: insertError } = await client
                 .from('world_states')
-                .insert([{ location_name: '名もなき旅人の拠所', ...defaultState }]);
+                .insert([{ location_name: '国境の町', ...defaultState }]);
             if (insertError) console.error("World insert failed:", insertError);
         }
 
@@ -92,21 +92,24 @@ export async function POST(req: Request) {
         let { data: startLoc } = await client
             .from('locations')
             .select('id')
-            .eq('name', '名もなき旅人の拠所')
+            .eq('slug', 'loc_border_town')
             .maybeSingle();
 
         if (!startLoc) {
-            console.log("Hub location not found. Creating...");
+            console.log("Border town not found. Creating fallback...");
             const { data: newLoc } = await client
                 .from('locations')
                 .insert([{
-                    name: '名もなき旅人の拠所',
-                    type: 'Hub',
-                    description: '全ての始まりと終わりの場所。',
-                    x: 500,
-                    y: 500,
-                    nation_id: 'Neutral',
-                    connections: [] // Initial empty connections
+                    slug: 'loc_border_town',
+                    name: '国境の町',
+                    type: 'Town',
+                    description: '西の国境に位置する静かな町。',
+                    x: 10,
+                    y: 60,
+                    map_x: 10,
+                    map_y: 60,
+                    nation_id: 'Roland',
+                    connections: []
                 }])
                 .select('id')
                 .single();

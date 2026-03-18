@@ -9,8 +9,8 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Use Service Role Key to bypass RLS for seeding
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Use Service Role Key to bypass RLS for seeding, or fallback to anon key
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase URL or Service Role Key in .env.local');
