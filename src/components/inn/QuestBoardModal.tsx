@@ -130,26 +130,30 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
                                     {/* Quest Info */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                            <h3 className="font-bold text-[#3e2723] text-sm font-serif truncate">{s.title}</h3>
-                                            {s.quest_type === 'special' && (
-                                                <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold flex-shrink-0">Special</span>
-                                            )}
-                                            {s.is_ugc && (
-                                                <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold flex-shrink-0">UGC</span>
-                                            )}
-                                        </div>
+                                        <h3 className="font-bold text-[#3e2723] text-sm font-serif truncate">{s.title}</h3>
                                         <p className="text-[11px] text-[#8b6f4e] line-clamp-1 mt-0.5">{s.short_flavor}</p>
                                     </div>
 
-                                    {/* Level & Reward - Fixed Width */}
-                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                        <span className="text-[10px] w-[38px] text-center py-0.5 rounded font-bold bg-[#a38b6b] text-white">
-                                            Lv.{s.rec_level || 1}
-                                        </span>
-                                        <span className="text-[10px] w-[52px] text-center py-0.5 rounded font-mono bg-[#8b5a2b] text-[#e3d5b8]">
-                                            {s.reward_gold > 0 ? `${s.reward_gold}G` : 'アイテム'}
-                                        </span>
+                                    {/* Badges + Level & Reward - Stacked */}
+                                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                        {(s.quest_type === 'special' || s.is_ugc) && (
+                                            <div className="flex gap-1">
+                                                {s.quest_type === 'special' && (
+                                                    <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
+                                                )}
+                                                {s.is_ugc && (
+                                                    <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[10px] w-[38px] text-center py-0.5 rounded font-bold bg-[#a38b6b] text-white">
+                                                Lv.{s.rec_level || 1}
+                                            </span>
+                                            <span className="text-[10px] w-[52px] text-center py-0.5 rounded font-mono bg-[#8b5a2b] text-[#e3d5b8]">
+                                                {s.reward_gold > 0 ? `${s.reward_gold}G` : 'アイテム'}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Arrow */}
