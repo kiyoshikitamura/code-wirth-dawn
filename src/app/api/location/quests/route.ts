@@ -106,6 +106,15 @@ export async function GET(req: Request) {
 
             const reqs = q.requirements || {};
 
+            // nation_id: 現在地が指定国でなければ非表示
+            if (reqs.nation_id && locationId && reqs.nation_id !== locationId) return false;
+
+            // event_trigger: イベントトリガー型は専用イベント発生時のみ表示（未実装のため常に非表示）
+            if (reqs.event_trigger) return false;
+
+            // require_item_id: 特定アイテム所持必須
+            if (reqs.require_item_id && !ownedItemIds.has(String(reqs.require_item_id))) return false;
+
             // has_item: アイテム所持は完全に限定（スポイラー防止）
             if (reqs.has_item && !ownedItemIds.has(String(reqs.has_item))) return false;
 
@@ -123,6 +132,9 @@ export async function GET(req: Request) {
             // 繁栄度条件
             if (reqs.max_prosperity && currentProsperity > reqs.max_prosperity) return false;
             if (reqs.min_prosperity && currentProsperity < reqs.min_prosperity) return false;
+
+            // min_vitality: 体力(Vitality)制限
+            if (reqs.min_vitality && (user.vitality || 0) < reqs.min_vitality) return false;
 
             // v12.0: min_level / min_reputation もサーバー側で完全フィルタリング
             if (reqs.min_level && user.level < reqs.min_level) return false;
