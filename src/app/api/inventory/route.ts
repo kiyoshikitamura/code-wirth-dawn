@@ -164,9 +164,29 @@ export async function GET(req: Request) {
                 console.error(`Error mapping inventory item ${entry.id}:`, e);
                 return null;
             }
-        }).filter(Boolean); // Remove nulls
+        }).filter(Boolean) as any[]; // Remove nulls
 
-        return NextResponse.json({ inventory });
+        // 同一アイテムを item_id で集約（スキル以外）
+        // shop POST が同じアイテム購入時に毎回新規レコードを作るため
+        const aggregated: any[] = [];
+        const itemMap = new Map<string, any>();
+        for (const inv of inventory) {
+            if (inv.is_skill) {
+                // スキルは個別管理（装備状態が異なる）
+                aggregated.push(inv);
+            } else {
+                const key = String(inv.item_id);
+                if (itemMap.has(key)) {
+                    itemMap.get(key).quantity += (inv.quantity || 1);
+                } else {
+                    const merged = { ...inv, quantity: inv.quantity || 1 };
+                    itemMap.set(key, merged);
+                    aggregated.push(merged);
+                }
+            }
+        }
+
+        return NextResponse.json({ inventory: aggregated });
     } catch (err: any) {
         console.error("Inventory GET Critical Error:", err);
         return NextResponse.json({ error: err.message, stack: err.stack }, { status: 500 });
