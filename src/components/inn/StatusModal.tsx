@@ -36,6 +36,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile } = useGameStore();
     const [activeTab, setActiveTab] = React.useState<TabKey>('deck');
     const [detail, setDetail] = React.useState<DetailTarget | null>(null);
+    const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
 
     React.useEffect(() => {
         fetchInventory();
@@ -288,7 +289,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
                     {/* タブ3: パーティ */}
                     {activeTab === 'party' && (
-                        <PartyList userProfile={userProfile} onSelect={(npc: any) => setDetail({ type: 'npc', data: npc })} />
+                        <PartyList userProfile={userProfile} onSelect={(npc: any) => setDetail({ type: 'npc', data: npc })} onDismissRef={partyDismissRef} />
                     )}
                 </div>
 
@@ -430,6 +431,20 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             使用する
                                         </button>
                                     )}
+                                    {detail.type === 'npc' && (
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm(`${detail.data.name}と別れますか？`)) return;
+                                                if (partyDismissRef.current) {
+                                                    await partyDismissRef.current(detail.data.id, detail.data.name);
+                                                }
+                                                setDetail(null);
+                                            }}
+                                            className="flex-1 py-2 text-xs font-bold rounded-lg bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50 transition-all"
+                                        >
+                                            別れる
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -440,9 +455,21 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     );
 }
 
-function PartyList({ userProfile, onSelect }: { userProfile: any; onSelect: (npc: any) => void }) {
+function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; onSelect: (npc: any) => void; onDismissRef: React.MutableRefObject<((id: string, name: string) => Promise<void>) | null> }) {
     const [party, setParty] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
+
+    const handleDismiss = React.useCallback(async (memberId: string, name: string) => {
+        try {
+            const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE' });
+            if (res.ok) { setParty(prev => prev.filter(p => p.id !== memberId)); }
+            else { alert('別れに失敗しました。'); }
+        } catch (e) { console.error(e); alert('エラーが発生しました。'); }
+    }, []);
+
+    React.useEffect(() => {
+        onDismissRef.current = handleDismiss;
+    }, [handleDismiss, onDismissRef]);
 
     React.useEffect(() => {
         if (!userProfile?.id) return;
@@ -457,14 +484,7 @@ function PartyList({ userProfile, onSelect }: { userProfile: any; onSelect: (npc
             .catch(err => { console.error('Failed to fetch party:', err); setLoading(false); });
     }, [userProfile?.id]);
 
-    const handleDismiss = async (memberId: string, name: string) => {
-        if (!confirm(`${name}と別れますか？`)) return;
-        try {
-            const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE' });
-            if (res.ok) { setParty(prev => prev.filter(p => p.id !== memberId)); }
-            else { alert('別れに失敗しました。'); }
-        } catch (e) { console.error(e); alert('エラーが発生しました。'); }
-    };
+
 
     if (loading) return <div className="text-xs text-gray-500 py-4 text-center">読み込み中...</div>;
     if (party.length === 0) return <div className="text-xs text-gray-500 py-8 text-center">同行者はいません。<br /><span className="text-[10px] text-amber-600">酒場で仲間を雇おう！</span></div>;
