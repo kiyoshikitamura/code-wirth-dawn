@@ -30,9 +30,8 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing owner_id' }, { status: 400 });
         }
 
-        // RLSバイパスでパーティメンバーを取得
-        const client = createAuthClient(req);
-        const { data, error } = await client
+        // RLSバイパスでパーティメンバーを取得（adminクライアント使用）
+        const { data, error } = await supabaseServer
             .from('party_members')
             .select('*')
             .eq('owner_id', owner_id)

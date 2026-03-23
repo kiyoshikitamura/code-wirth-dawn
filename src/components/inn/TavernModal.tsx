@@ -48,7 +48,13 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     const fetchPartyData = async () => {
         try {
-            const res = await fetch(`/api/party/list?owner_id=${userProfile.id}`);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch(`/api/party/list?owner_id=${userProfile.id}`, {
+                headers: {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
+            });
             const data = await res.json();
             if (data.party) {
                 setCurrentParty(data.party);
