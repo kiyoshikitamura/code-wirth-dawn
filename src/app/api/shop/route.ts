@@ -21,7 +21,7 @@ async function getUserProfile(req: Request) {
         throw new Error("Login required for shop usage."); // Throwing an error to be caught by the try/catch in GET/POST
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await supabaseService
         .from('user_profiles')
         .select('*')
         .eq('id', targetUserId)
@@ -45,26 +45,33 @@ export async function GET(req: Request) {
         const profile = await getUserProfile(req);
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        // 1. Get Location Context
+        // 1. Get Location Context, Embargo, Items — 並列実行で高速化
         let prosperityLevel = 3;
         let rulingNation = 'Neutral';
         let locationName = 'Unknown';
         let isEmbargoed = false;
 
-        if (profile.current_location_id) {
-            const { data: loc } = await supabase.from('locations').select('*').eq('id', profile.current_location_id).single();
-            if (loc) {
-                prosperityLevel = loc.prosperity_level || 3;
-                rulingNation = loc.ruling_nation_id || 'Neutral';
-                locationName = loc.name;
-            }
+        // 並列: locations、reputations、items を同時取得
+        const [locResult, repResult, itemsResult] = await Promise.all([
+            profile.current_location_id
+                ? supabaseService.from('locations').select('*').eq('id', profile.current_location_id).single()
+                : Promise.resolve({ data: null, error: null }),
+            profile.current_location_id
+                ? supabaseService.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', profile.current_location_id).maybeSingle()
+                : Promise.resolve({ data: null, error: null }),
+            supabaseService.from('items').select('*')
+        ]);
 
-            const { data: repData } = await supabase.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', profile.current_location_id).maybeSingle();
-            if (repData && (repData.reputation_score || 0) < 0) {
-                isEmbargoed = true;
-            }
+        if (locResult.data) {
+            prosperityLevel = locResult.data.prosperity_level || 3;
+            rulingNation = locResult.data.ruling_nation_id || 'Neutral';
+            locationName = locResult.data.name;
         }
-
+        if (repResult.data && (repResult.data.reputation_score || 0) < 0) {
+            isEmbargoed = true;
+        }
+        if (itemsResult.error) throw itemsResult.error;
+        const allItems = itemsResult.data as ItemDB[];
 
         // 2. Inflation Logic
         // inflationMap: 繁栄度ごとの価格乗数（仕様: spec_v6_shop_system.md §5）
@@ -73,11 +80,6 @@ export async function GET(req: Request) {
 
         // 初心者保護フラグのみ保持（割引はmap()内でインフレ後に適用）
         const isNewbie = (profile.level || 1) <= 5;
-
-        // 3. Fetch Items
-        const { data: items, error } = await supabase.from('items').select('*');
-        if (error) throw error;
-        const allItems = items as ItemDB[];
 
         // 4. Filtering Logic
         const isRuined = prosperityLevel === 1;
@@ -92,19 +94,39 @@ export async function GET(req: Request) {
             if (item.min_prosperity > prosperityLevel) return false;
 
             const tags = item.nation_tags || [];
+            // [Logic-Expert] nation_tags\u304c\u7a7a/null\u306e\u30a2\u30a4\u30c6\u30e0\u306f\u300c\u3069\u3053\u3067\u3082\u8ca9\u58f2\u300d\u3068\u307f\u306a\u3059
+            if (tags.length === 0) return true;
+
             const nationTag = `loc_${rulingNation.toLowerCase()}`;
-            const isNationMatch = tags.includes('loc_all') || tags.includes(nationTag);
+            // [Logic-Expert] ruling_nation\u304cNeutral\uff08\u521d\u671f\u62e0\u70b9\u7b49\uff09\u306e\u5834\u5408\u306f
+            // loc_all\u30bf\u30b0\u306e\u307f\u8868\u793a\u3059\u308b
+            const isNationMatch = rulingNation === 'Neutral'
+                ? tags.includes('loc_all')
+                : tags.includes('loc_all') || tags.includes(nationTag);
             if (!isNationMatch) return false;
 
             if (item.is_black_market) {
                 const isDark = (profile.alignment?.evil || 0) > 20;
                 if (item.slug === 'item_elixir_forbidden') {
-                    // 禁術の秘薬: 崩壊拠点（Prosperity=1）限定
                     if (!isRuined) return false;
                 } else {
                     if (!isRuined && !isDark) return false;
                 }
             }
+
+            // レベルベースの出現条件
+            const playerLevel = profile.level || 1;
+            const itemAny = item as any;
+            if (itemAny.min_level && playerLevel < itemAny.min_level) return false;
+
+            // スキルカードはLv3以降に解禁（序盤の商品数を絞る）
+            if (item.type === 'skill' || itemAny.type === 'skill_card') {
+                if (playerLevel < 3) return false;
+                const deckCap = profile.max_deck_cost || 10;
+                const cardCost = itemAny.cost || itemAny.effect_data?.cost_val || itemAny.cost_val || 0;
+                if (cardCost > deckCap + 2) return false;
+            }
+
             return true;
         }).map(item => {
             // タスク1: インフレ係数を先に適用し、その後に初心者保護割引を乗算する
@@ -118,7 +140,10 @@ export async function GET(req: Request) {
             };
         });
 
-        const rumoredItems = allItems.filter(item => {
+        // [Logic-Expert] rumoredItemsはNeutral以外の拠点のみ表示する。
+        // Neutral（初期拠点）では全アイテムが表示対象外の国家のものばかりになり
+        // 「ぼかし+透過」で大量表示されてしまうため、Neutralでは非表示とする。
+        const rumoredItems = rulingNation === 'Neutral' ? [] : allItems.filter(item => {
             if (questId) return false;
             if (isRuined) return false;
 
@@ -133,6 +158,7 @@ export async function GET(req: Request) {
             current_price: 0,
             is_rumored: true
         }));
+
 
         return NextResponse.json({
             items: filteredItems,
@@ -160,14 +186,14 @@ export async function POST(req: Request) {
 
         // 0.5 Check Embargo Mode
         if (profile.current_location_id) {
-            const { data: repData } = await supabase.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', profile.current_location_id).maybeSingle();
+            const { data: repData } = await supabaseService.from('reputations').select('reputation_score').eq('user_id', profile.id).eq('location_id', profile.current_location_id).maybeSingle();
             if (repData && (repData.reputation_score || 0) < 0) {
                 return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。' }, { status: 403 });
             }
         }
 
         // 1. Fetch Item
-        const { data: itemData, error: itemError } = await supabase
+        const { data: itemData, error: itemError } = await supabaseService
             .from('items')
             .select('*')
             .eq('id', item_id)
@@ -179,7 +205,7 @@ export async function POST(req: Request) {
         // 2. Calculate Price (仕様: spec_v6_shop_system.md §3.2 / §5)
         let prosperityLevel = 3;
         if (profile.current_location_id) {
-            const { data: loc } = await supabase.from('locations').select('prosperity_level').eq('id', profile.current_location_id).maybeSingle();
+            const { data: loc } = await supabaseService.from('locations').select('prosperity_level').eq('id', profile.current_location_id).maybeSingle();
             if (loc) prosperityLevel = loc.prosperity_level || 3;
         }
 
@@ -206,7 +232,7 @@ export async function POST(req: Request) {
 
         // 4. Duplicate Check for Skills
         if (item.type === 'skill') {
-            const { count } = await supabase.from('inventory').select('*', { count: 'exact', head: true })
+            const { count } = await supabaseService.from('inventory').select('*', { count: 'exact', head: true })
                 .eq('user_id', profile.id)
                 .eq('item_id', item.id);
             if (count && count > 0) {

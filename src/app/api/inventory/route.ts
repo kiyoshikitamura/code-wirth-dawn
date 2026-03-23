@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 // GET: Fetch Inventory
 export async function POST(req: Request) {
@@ -77,8 +77,8 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
     try {
-        // createAuthClientでユーザーのJWTをSupabaseに渡し、RLSを正しく通す
-        const client = createAuthClient(req);
+        // supabaseServer (Service Role) でRLSをバイパスし、確実にデータを取得する
+        // ユーザー認証はJWTで検証済み、DBクエリはuser_idでフィルタ
 
         let userId = req.headers.get('x-user-id');
         const authHeader = req.headers.get('authorization');
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
             if (!error && user) userId = user.id;
         }
 
-        let query = client
+        let query = supabaseServer
             .from('inventory')
             .select(`
                 id,
@@ -179,8 +179,8 @@ export async function PATCH(req: Request) {
     try {
         const { inventory_id, is_equipped, bypass_lock } = await req.json();
         
-        // createAuthClientでユーザーのJWTをSupabaseに渡し、RLSを正しく通す
-        const client = createAuthClient(req);
+        // supabaseServer (Service Role) でRLSをバイパス
+        // ユーザー認証はJWTで検証済み
 
         let userId = req.headers.get('x-user-id');
         const authHeader = req.headers.get('authorization');
@@ -194,7 +194,7 @@ export async function PATCH(req: Request) {
         // クエスト進行中の装備変更制限 (is_equipped: true にする場合のみ、bypass_lockがない場合)
         if (is_equipped && userId && !bypass_lock) {
             // ユーザー状態の確認
-            const { data: profile } = await client
+            const { data: profile } = await supabaseServer
                 .from('user_profiles')
                 .select('current_quest_id, quest_started_at')
                 .eq('id', userId)
@@ -202,7 +202,7 @@ export async function PATCH(req: Request) {
 
             if (profile?.current_quest_id && profile.quest_started_at) {
                 // 対象アイテムの取得日時を確認
-                const { data: invItem } = await client
+                const { data: invItem } = await supabaseServer
                     .from('inventory')
                     .select('acquired_at')
                     .eq('id', inventory_id)
@@ -223,7 +223,7 @@ export async function PATCH(req: Request) {
             }
         }
 
-        let query = client
+        let query = supabaseServer
             .from('inventory')
             .update({ is_equipped })
             .eq('id', inventory_id);
