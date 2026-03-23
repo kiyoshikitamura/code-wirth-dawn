@@ -114,15 +114,15 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-gray-400 font-bold tracking-wider">VITALITY</span>
+                                        <span className="text-gray-400 font-bold tracking-wider">生命力</span>
                                         <span className={`${userProfile?.vitality && userProfile.vitality < 40 ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                                            {userProfile?.vitality ?? 100}%
+                                            {userProfile?.vitality ?? 100} / {userProfile?.max_vitality ?? 100}
                                         </span>
                                     </div>
                                     <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full transition-all duration-1000 ${userProfile?.vitality && userProfile.vitality < 40 ? 'bg-red-900' : 'bg-orange-700'}`}
-                                            style={{ width: `${userProfile?.vitality ?? 100}%` }}
+                                            style={{ width: `${Math.round(((userProfile?.vitality ?? 100) / (userProfile?.max_vitality ?? 100)) * 100)}%` }}
                                         />
                                     </div>
                                     <div className="text-[10px] text-gray-600 mt-1">
@@ -158,57 +158,93 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
                     {/* Right Column: Inventory & Skills */}
                     <div className="space-y-6">
-                        {/* Skills (Deck) */}
+                        {/* Skills (Deck) - 装備中 */}
                         <section className="bg-black/40 border border-gray-700 p-6 rounded-lg shadow-lg">
                             <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
                                 <h2 className="text-lg font-bold text-purple-400 flex items-center gap-2">
-                                    <Zap className="w-4 h-4" /> 習得スキル (Deck)
+                                    <Zap className="w-4 h-4" /> 装備中デッキ
                                 </h2>
                                 <div className="flex items-center gap-2 bg-black/60 px-3 py-1 rounded border border-gray-600">
                                     <Database className="w-4 h-4 text-cyan-400" />
                                     <span className={`font-mono font-bold ${currentDeckCost > (userProfile?.max_deck_cost || 10) ? 'text-red-500' : 'text-cyan-100'}`}>
-                                        Cost: {currentDeckCost} / {userProfile?.max_deck_cost || 10}
+                                        コスト: {currentDeckCost} / {userProfile?.max_deck_cost || 10}
                                     </span>
                                 </div>
                             </div>
-                            {skills.length === 0 ? (
-                                <div className="text-center text-gray-500 py-4 text-sm">習得したスキルはありません。</div>
+                            {skills.filter(i => i.is_equipped).length === 0 ? (
+                                <div className="text-center text-gray-500 py-4 text-sm">装備中のスキルはありません。下の「未装備」から装備してください。</div>
                             ) : (
-                                <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
-                                    {skills.map(item => {
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
+                                    {skills.filter(i => i.is_equipped).map(item => (
+                                        <div key={item.id} className="flex justify-between items-center p-2 bg-purple-950/20 rounded border border-purple-800/40 relative group hover:border-purple-500/50 transition-colors">
+                                            <div className="absolute top-1 right-14 opacity-50 text-[10px] text-cyan-500 border border-cyan-800 px-1 rounded">
+                                                Cost {item.cost || 0}
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-purple-900/30 flex items-center justify-center shrink-0 overflow-hidden border border-purple-700/50">
+                                                    {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-4 h-4 text-yellow-400" />}
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-purple-300 font-bold">{item.name}</div>
+                                                    <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleToggleSkill(item)}
+                                                className="text-xs px-3 py-1 rounded border transition-colors bg-purple-900/30 border-purple-500 text-purple-400 hover:bg-red-900/30 hover:border-red-600 hover:text-red-400"
+                                            >
+                                                外す
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Skills - 未装備ストック */}
+                        <section className="bg-black/40 border border-gray-700 p-6 rounded-lg shadow-lg">
+                            <h2 className="text-lg font-bold text-gray-400 mb-4 border-b border-gray-700 pb-2 flex items-center gap-2">
+                                <Star className="w-4 h-4" /> 未装備スキル
+                            </h2>
+                            {skills.filter(i => !i.is_equipped).length === 0 ? (
+                                <div className="text-center text-gray-600 py-4 text-sm">
+                                    未装備のスキルはありません。<br />
+                                    <span className="text-amber-600 text-xs">道具屋でスキルを購入しよう！</span>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
+                                    {skills.filter(i => !i.is_equipped).map(item => {
                                         const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
-                                        const isLocked = !item.is_equipped && isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
-                                        const isOverCost = !item.is_equipped && currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10);
+                                        const isLocked = isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
+                                        const isOverCost = currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10);
                                         const isDisabled = isLocked || isOverCost;
 
                                         return (
-                                            <div key={item.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800 relative group hover:border-purple-500/30 transition-colors">
+                                            <div key={item.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800 relative group hover:border-gray-600 transition-colors">
                                                 <div className="absolute top-1 right-14 opacity-50 text-[10px] text-cyan-500 border border-cyan-800 px-1 rounded">
                                                     Cost {item.cost || 0}
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-4 h-4 text-yellow-400" />}
+                                                        {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-4 h-4 text-gray-500" />}
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm text-purple-300 font-bold">{item.name}</div>
-                                                        <div className="text-xs text-gray-500">{item.effect_data?.description || ''}</div>
+                                                        <div className="text-sm text-gray-400 font-bold">{item.name}</div>
+                                                        <div className="text-xs text-gray-600">{item.effect_data?.description || ''}</div>
                                                         {isLocked && <div className="text-[10px] text-red-500">※クエスト中は装備不可</div>}
+                                                        {isOverCost && <div className="text-[10px] text-orange-500">※デッキコスト超過</div>}
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => handleToggleSkill(item)}
                                                     disabled={isDisabled}
-                                                    title={isLocked ? "クエスト進行中は事前所持アイテムを新たに装備できません" : ""}
-                                                    className={`text-xs px-3 py-1 rounded border transition-colors ${item.is_equipped
-                                                        ? 'bg-purple-900/30 border-purple-500 text-purple-400 hover:bg-red-900/30 hover:border-red-600 hover:text-red-400'
-                                                        : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                                                        }`}
+                                                    title={isLocked ? "クエスト進行中は事前所持アイテムを新たに装備できません" : isOverCost ? "デッキコスト上限を超えています" : ""}
+                                                    className="text-xs px-3 py-1 rounded border transition-colors bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    {item.is_equipped ? '外す' : '装備'}
+                                                    装備
                                                 </button>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
                             )}
@@ -219,11 +255,11 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                             <h2 className="text-lg font-bold text-amber-500 mb-4 border-b border-gray-700 pb-2 flex items-center gap-2">
                                 <Backpack className="w-4 h-4" /> 所持品
                             </h2>
-                            {consumables.length === 0 ? (
+                            {consumables.filter(i => (i.quantity || 0) > 0).length === 0 ? (
                                 <div className="text-center text-gray-500 py-4 text-sm">所持品はありません。</div>
                             ) : (
                                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
-                                    {consumables.map(item => (
+                                    {consumables.filter(i => (i.quantity || 0) > 0).map(item => (
                                         <div key={item.id} className="flex justify-between items-center p-2 bg-black/40 rounded border border-gray-800">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
@@ -289,7 +325,13 @@ function PartyList({ userProfile }: { userProfile: any }) {
     React.useEffect(() => {
         if (!userProfile?.id) return;
 
-        fetch(`/api/party/list?owner_id=${userProfile.id}`)
+        // Supabaseセッションから認証トークンを取得してRLSを通す
+        import('@/lib/supabase').then(async ({ supabase }) => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: HeadersInit = {};
+            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+            return fetch(`/api/party/list?owner_id=${userProfile.id}`, { headers });
+        })
             .then(res => res.json())
             .then(data => {
                 setParty(data.party || []);
@@ -317,7 +359,7 @@ function PartyList({ userProfile }: { userProfile: any }) {
         }
     };
 
-    if (loading) return <div className="text-xs text-gray-500">Loading...</div>;
+    if (loading) return <div className="text-xs text-gray-500">読み込み中...</div>;
     if (party.length === 0) return <div className="text-xs text-gray-500 py-4 text-center">同行者はいません。</div>;
 
     return (
@@ -330,7 +372,7 @@ function PartyList({ userProfile }: { userProfile: any }) {
                         </div>
                         <div>
                             <div className="text-sm text-blue-300 font-bold">{member.name}</div>
-                            <div className="text-xs text-gray-500">{member.job_class || 'Adventurer'} / Durability: {member.durability}</div>
+                            <div className="text-xs text-gray-500">{member.job_class || '冒険者'} / 耐久: {member.durability}</div>
                         </div>
                     </div>
                     <button

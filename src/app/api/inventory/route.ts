@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createAuthClient } from '@/lib/supabase-auth';
 
 // GET: Fetch Inventory
 export async function POST(req: Request) {
@@ -76,6 +77,9 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
     try {
+        // createAuthClientでユーザーのJWTをSupabaseに渡し、RLSを正しく通す
+        const client = createAuthClient(req);
+
         let userId = req.headers.get('x-user-id');
         const authHeader = req.headers.get('authorization');
         
@@ -85,7 +89,7 @@ export async function GET(req: Request) {
             if (!error && user) userId = user.id;
         }
 
-        let query = supabase
+        let query = client
             .from('inventory')
             .select(`
                 id,
@@ -99,7 +103,9 @@ export async function GET(req: Request) {
                     slug,
                     type,
                     base_price,
-                    effect_data
+                    effect_data,
+                    cost,
+                    image_url
                 )
             `);
 
@@ -108,8 +114,6 @@ export async function GET(req: Request) {
             query = query.eq('user_id', userId);
         } else {
             // Fallback: Return empty or demo?
-            // Existing logic was .is('user_id', null), likely for "Guest" or "Template".
-            // We keep it safe:
             query = query.is('user_id', null);
         }
 
@@ -144,15 +148,18 @@ export async function GET(req: Request) {
                     id: entry.id,
                     item_id: item.id,
                     name: item.name,
-                    description: item.name, // Description missing in DB, use name or lookup
-                    item_type: item.type, // DB: type -> Frontend: item_type
+                    description: effectData.description || item.name,
+                    item_type: item.type,
                     power_value: powerVal,
-                    required_attribute: 'None', // Missing in DB
+                    required_attribute: 'None',
                     base_price: item.base_price || 0,
                     is_equipped: entry.is_equipped,
                     acquired_at: entry.acquired_at,
                     quantity: entry.quantity,
-                    is_skill: entry.is_skill
+                    is_skill: entry.is_skill,
+                    cost: item.cost || 0,
+                    effect_data: effectData,
+                    image_url: item.image_url || null
                 };
             } catch (e: any) {
                 console.error(`Error mapping inventory item ${entry.id}:`, e);
@@ -172,6 +179,9 @@ export async function PATCH(req: Request) {
     try {
         const { inventory_id, is_equipped, bypass_lock } = await req.json();
         
+        // createAuthClientでユーザーのJWTをSupabaseに渡し、RLSを正しく通す
+        const client = createAuthClient(req);
+
         let userId = req.headers.get('x-user-id');
         const authHeader = req.headers.get('authorization');
         
@@ -184,7 +194,7 @@ export async function PATCH(req: Request) {
         // クエスト進行中の装備変更制限 (is_equipped: true にする場合のみ、bypass_lockがない場合)
         if (is_equipped && userId && !bypass_lock) {
             // ユーザー状態の確認
-            const { data: profile } = await supabase
+            const { data: profile } = await client
                 .from('user_profiles')
                 .select('current_quest_id, quest_started_at')
                 .eq('id', userId)
@@ -192,7 +202,7 @@ export async function PATCH(req: Request) {
 
             if (profile?.current_quest_id && profile.quest_started_at) {
                 // 対象アイテムの取得日時を確認
-                const { data: invItem } = await supabase
+                const { data: invItem } = await client
                     .from('inventory')
                     .select('acquired_at')
                     .eq('id', inventory_id)
@@ -213,7 +223,7 @@ export async function PATCH(req: Request) {
             }
         }
 
-        let query = supabase
+        let query = client
             .from('inventory')
             .update({ is_equipped })
             .eq('id', inventory_id);
