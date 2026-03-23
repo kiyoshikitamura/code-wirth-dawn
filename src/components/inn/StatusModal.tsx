@@ -12,9 +12,13 @@ interface StatusModalProps {
 
 type TabKey = 'deck' | 'items' | 'party';
 
+type DetailType = 'skill' | 'item' | 'npc';
+interface DetailTarget { type: DetailType; data: any; }
+
 export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile } = useGameStore();
     const [activeTab, setActiveTab] = React.useState<TabKey>('deck');
+    const [detail, setDetail] = React.useState<DetailTarget | null>(null);
 
     React.useEffect(() => {
         fetchInventory();
@@ -180,7 +184,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                 ) : (
                                     <div className="space-y-1">
                                         {skills.filter(i => i.is_equipped).map(item => (
-                                            <div key={item.id} className="flex items-center justify-between p-1.5 bg-purple-900/10 rounded border border-purple-900/30 hover:border-purple-700/50 transition-colors">
+                                            <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-purple-900/10 rounded border border-purple-900/30 hover:border-purple-700/50 transition-colors cursor-pointer active:bg-purple-900/20">
                                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                                     <div className="w-6 h-6 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
                                                         {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-purple-400" />}
@@ -188,9 +192,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                                     <span className="text-xs text-gray-200 font-bold truncate">{item.name}</span>
                                                     <span className="text-[9px] text-cyan-600 border border-cyan-900 px-1 rounded shrink-0">C:{item.cost || 0}</span>
                                                 </div>
-                                                <button onClick={() => handleToggleSkill(item)} className="text-[10px] px-2 py-0.5 rounded border border-purple-800 text-purple-400 hover:bg-red-900/30 hover:border-red-600 hover:text-red-400 transition-colors shrink-0 ml-1">
-                                                    外す
-                                                </button>
+                                                <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
                                             </div>
                                         ))}
                                     </div>
@@ -216,27 +218,20 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             const isDisabled = isLocked || isOverCost;
 
                                             return (
-                                                <div key={item.id} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 transition-colors">
+                                                <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer active:bg-gray-800/60">
                                                     <div className="flex items-center gap-2 flex-1 min-w-0">
                                                         <div className="w-6 h-6 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
                                                             {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-gray-500" />}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="text-xs text-gray-400 font-bold truncate">{item.name}</div>
-                                                            {item.effect_data?.description && <div className="text-[10px] text-gray-600 truncate">{item.effect_data.description}</div>}
-                                                            {isLocked && <div className="text-[9px] text-red-500">※クエスト中は装備不可</div>}
+                                                            {isLocked && <div className="text-[9px] text-red-500">※クエスト中装備不可</div>}
                                                             {isOverCost && <div className="text-[9px] text-orange-500">※コスト超過</div>}
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1 shrink-0 ml-1">
                                                         <span className="text-[9px] text-cyan-600 border border-cyan-900 px-1 rounded">C:{item.cost || 0}</span>
-                                                        <button
-                                                            onClick={() => handleToggleSkill(item)}
-                                                            disabled={isDisabled}
-                                                            className="text-[10px] px-2 py-0.5 rounded border border-gray-700 text-gray-400 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            装備
-                                                        </button>
+                                                        <span className="text-[9px] text-gray-600">▶</span>
                                                     </div>
                                                 </div>
                                             );
@@ -255,7 +250,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                             ) : (
                                 <div className="space-y-1">
                                     {consumables.filter(i => (i.quantity || 0) > 0).map(item => (
-                                        <div key={item.id} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800">
+                                        <div key={item.id} onClick={() => setDetail({ type: 'item', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                                 <div className="w-6 h-6 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
                                                     {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Heart className="w-3 h-3 text-green-400" />}
@@ -264,33 +259,9 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                                     <div className="text-xs text-gray-300 font-bold truncate">
                                                         {item.name} <span className="text-gray-500 font-normal">x{item.quantity}</span>
                                                     </div>
-                                                    {item.effect_data?.description && <div className="text-[10px] text-gray-600 truncate">{item.effect_data.description}</div>}
                                                 </div>
                                             </div>
-                                            {item.name === '禁術の秘薬' && (
-                                                <button
-                                                    onClick={async () => {
-                                                        if (!confirm("禁術の秘薬を使用しますか？\n失われた寿命(VITALITY)が1回復します。")) return;
-                                                        const { supabase } = await import('@/lib/supabase');
-                                                        const session = await supabase.auth.getSession();
-                                                        const res = await fetch('/api/profile/consume-elixir', {
-                                                            method: 'POST',
-                                                            headers: { 'Authorization': `Bearer ${session.data.session?.access_token || ''}`, 'x-user-id': userProfile?.id || '' }
-                                                        });
-                                                        const data = await res.json();
-                                                        if (res.ok) {
-                                                            alert("禁術の秘薬を使用し、寿命が回復した！");
-                                                            fetchInventory();
-                                                            fetchUserProfile();
-                                                        } else {
-                                                            alert("使用に失敗しました: " + (data.error || "Unknown"));
-                                                        }
-                                                    }}
-                                                    className="text-[10px] px-2 py-0.5 bg-red-900/30 text-red-400 border border-red-800 rounded hover:bg-red-900/50 shrink-0 ml-1"
-                                                >
-                                                    使う
-                                                </button>
-                                            )}
+                                            <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
                                         </div>
                                     ))}
                                 </div>
@@ -300,15 +271,133 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
                     {/* タブ3: パーティ */}
                     {activeTab === 'party' && (
-                        <PartyList userProfile={userProfile} />
+                        <PartyList userProfile={userProfile} onSelect={(npc: any) => setDetail({ type: 'npc', data: npc })} />
                     )}
                 </div>
+
+                {/* ── 詳細ポップアップ ── */}
+                {detail && (
+                    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-100" onClick={() => setDetail(null)}>
+                        <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
+                            {/* ポップアップヘッダー */}
+                            <div className="bg-gray-800/80 px-4 py-3 flex items-center gap-3 border-b border-gray-700">
+                                <div className="w-10 h-10 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden">
+                                    {detail.type === 'npc' ? (
+                                        detail.data.icon_url || detail.data.image_url
+                                            ? <img src={detail.data.icon_url || detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" />
+                                            : <Users className="w-5 h-5 text-blue-400" />
+                                    ) : detail.type === 'skill' ? (
+                                        detail.data.image_url ? <img src={detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" /> : <Zap className="w-5 h-5 text-purple-400" />
+                                    ) : (
+                                        detail.data.image_url ? <img src={detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" /> : <Heart className="w-5 h-5 text-green-400" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-sm font-bold text-white truncate">{detail.data.name}</h3>
+                                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                                        {detail.type === 'skill' && <><span className="text-purple-400">スキル</span><span className="text-cyan-500">Cost:{detail.data.cost || 0}</span>{detail.data.is_equipped && <span className="text-amber-400">装備中</span>}</>}
+                                        {detail.type === 'item' && <><span className="text-green-400">所持品</span><span>x{detail.data.quantity}</span></>}
+                                        {detail.type === 'npc' && <><span className="text-blue-400">{detail.data.job_class || '冒険者'}</span><span>耐久:{detail.data.durability}</span></>}
+                                    </div>
+                                </div>
+                                <button onClick={() => setDetail(null)} className="text-gray-500 hover:text-white p-1">✕</button>
+                            </div>
+
+                            {/* ポップアップ内容 */}
+                            <div className="px-4 py-3 space-y-3">
+                                {/* 説明テキスト */}
+                                {detail.type !== 'npc' && detail.data.effect_data?.description && (
+                                    <div className="bg-amber-950/20 rounded-lg p-2.5 border border-amber-900/30">
+                                        <p className="text-xs text-amber-400/80 italic leading-relaxed">「{detail.data.effect_data.description}」</p>
+                                    </div>
+                                )}
+                                {detail.type === 'npc' && detail.data.flavor_text && (
+                                    <div className="bg-blue-950/20 rounded-lg p-2.5 border border-blue-900/30">
+                                        <p className="text-xs text-blue-400/80 italic leading-relaxed">「{detail.data.flavor_text}」</p>
+                                    </div>
+                                )}
+
+                                {/* 効果詳細 */}
+                                {detail.type !== 'npc' && detail.data.effect_data && (() => {
+                                    const ed = detail.data.effect_data;
+                                    const effects: string[] = [];
+                                    if (ed.heal != null) effects.push(`HP +${ed.heal} 回復`);
+                                    if (ed.mp_heal != null) effects.push(`MP +${ed.mp_heal} 回復`);
+                                    if (ed.power != null && ed.power > 0) effects.push(`威力 ${ed.power}`);
+                                    if (ed.atk_bonus != null) effects.push(`ATK +${ed.atk_bonus}`);
+                                    if (ed.def_bonus != null) effects.push(`DEF +${ed.def_bonus}`);
+                                    if (ed.max_hp_bonus != null) effects.push(`最大HP +${ed.max_hp_bonus}`);
+                                    if (ed.duration != null) effects.push(`${ed.duration}ターン持続`);
+                                    if (ed.effect) effects.push(String(ed.effect));
+                                    if (ed.status) effects.push(`状態: ${ed.status}`);
+                                    if (effects.length === 0) return null;
+                                    return (
+                                        <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700">
+                                            <div className="text-[10px] text-gray-500 mb-1">効果</div>
+                                            <div className="text-xs text-gray-200">{effects.join(' / ')}</div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* NPC詳細 */}
+                                {detail.type === 'npc' && (
+                                    <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700 space-y-1">
+                                        <div className="flex justify-between text-xs"><span className="text-gray-500">職業</span><span className="text-gray-200">{detail.data.job_class || '冒険者'}</span></div>
+                                        <div className="flex justify-between text-xs"><span className="text-gray-500">耐久値</span><span className="text-gray-200">{detail.data.durability}</span></div>
+                                        {detail.data.hp != null && <div className="flex justify-between text-xs"><span className="text-gray-500">HP</span><span className="text-gray-200">{detail.data.hp}/{detail.data.max_hp || detail.data.hp}</span></div>}
+                                        {detail.data.atk != null && <div className="flex justify-between text-xs"><span className="text-gray-500">ATK</span><span className="text-gray-200">{detail.data.atk}</span></div>}
+                                        {detail.data.def != null && <div className="flex justify-between text-xs"><span className="text-gray-500">DEF</span><span className="text-gray-200">{detail.data.def}</span></div>}
+                                    </div>
+                                )}
+
+                                {/* アクションボタン */}
+                                <div className="flex gap-2 pt-1">
+                                    <button onClick={() => setDetail(null)} className="flex-1 py-2 border border-gray-700 text-gray-400 hover:text-white text-xs rounded-lg transition-colors">
+                                        閉じる
+                                    </button>
+                                    {detail.type === 'skill' && (
+                                        <button
+                                            onClick={async () => { await handleToggleSkill(detail.data); setDetail(null); }}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                                                detail.data.is_equipped
+                                                    ? 'bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50'
+                                                    : 'bg-purple-900/30 text-purple-400 border border-purple-800 hover:bg-purple-900/50'
+                                            }`}
+                                        >
+                                            {detail.data.is_equipped ? '装備を外す' : '装備する'}
+                                        </button>
+                                    )}
+                                    {detail.type === 'item' && detail.data.name === '禁術の秘薬' && (
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm("禁術の秘薬を使用しますか？\n失われた寿命(VITALITY)が1回復します。")) return;
+                                                const { supabase } = await import('@/lib/supabase');
+                                                const session = await supabase.auth.getSession();
+                                                const res = await fetch('/api/profile/consume-elixir', {
+                                                    method: 'POST',
+                                                    headers: { 'Authorization': `Bearer ${session.data.session?.access_token || ''}`, 'x-user-id': userProfile?.id || '' }
+                                                });
+                                                const data = await res.json();
+                                                if (res.ok) { alert("禁術の秘薬を使用し、寿命が回復した！"); fetchInventory(); fetchUserProfile(); }
+                                                else { alert("使用に失敗しました: " + (data.error || "Unknown")); }
+                                                setDetail(null);
+                                            }}
+                                            className="flex-1 py-2 text-xs font-bold rounded-lg bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50 transition-all"
+                                        >
+                                            使用する
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-function PartyList({ userProfile }: { userProfile: any }) {
+function PartyList({ userProfile, onSelect }: { userProfile: any; onSelect: (npc: any) => void }) {
     const [party, setParty] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
 
@@ -340,7 +429,7 @@ function PartyList({ userProfile }: { userProfile: any }) {
     return (
         <div className="space-y-1">
             {party.map(member => (
-                <div key={member.id} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800">
+                <div key={member.id} onClick={() => onSelect(member)} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
                             {member.icon_url || member.image_url ? <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" /> : <div className="text-gray-400 text-[10px]">{member.name[0]}</div>}
@@ -350,11 +439,10 @@ function PartyList({ userProfile }: { userProfile: any }) {
                             <div className="text-[10px] text-gray-500">{member.job_class || '冒険者'} / 耐久:{member.durability}</div>
                         </div>
                     </div>
-                    <button onClick={() => handleDismiss(member.id, member.name)} className="text-[10px] px-2 py-0.5 bg-red-900/30 text-red-400 border border-red-800 rounded hover:bg-red-900/50 shrink-0">
-                        別れる
-                    </button>
+                    <span className="text-[9px] text-gray-600 shrink-0">▶</span>
                 </div>
             ))}
         </div>
     );
 }
+
