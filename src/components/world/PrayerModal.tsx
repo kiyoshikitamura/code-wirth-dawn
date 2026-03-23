@@ -22,10 +22,10 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
     ] as const;
 
     const ATTRIBUTES = [
-        { id: 'Order', label: '秩序', color: 'text-blue-400', border: 'border-blue-500', icon: <Scale className="w-5 h-5" /> },
-        { id: 'Chaos', label: '混沌', color: 'text-purple-400', border: 'border-purple-500', icon: <Zap className="w-5 h-5" /> },
-        { id: 'Justice', label: '正義', color: 'text-yellow-400', border: 'border-yellow-500', icon: <Sparkles className="w-5 h-5" /> },
-        { id: 'Evil', label: '悪意', color: 'text-red-400', border: 'border-red-500', icon: <Skull className="w-5 h-5" /> },
+        { id: 'Order', label: '秩序', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-600', icon: <Scale className="w-5 h-5" /> },
+        { id: 'Chaos', label: '混沌', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-600', icon: <Zap className="w-5 h-5" /> },
+        { id: 'Justice', label: '正義', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-600', icon: <Sparkles className="w-5 h-5" /> },
+        { id: 'Evil', label: '悪意', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-600', icon: <Skull className="w-5 h-5" /> },
     ] as const;
 
     const handlePray = async () => {
@@ -51,7 +51,6 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                 })
             });
 
-            // Read text first to debug JSON errors
             const rawText = await res.text();
             let data;
             try {
@@ -63,7 +62,6 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
             if (res.ok) {
                 setResult(data);
-                // Refresh data
                 await fetchUserProfile();
                 await fetchWorldState();
             } else {
@@ -79,25 +77,25 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
     if (result) {
         return (
-            <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur animate-in fade-in duration-500">
-                <div className="bg-[#1a1510] border-2 border-gold-500 p-8 max-w-md w-full text-center relative shadow-[0_0_50px_rgba(255,215,0,0.2)]">
+            <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-500">
+                <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] p-8 max-w-md w-full text-center relative shadow-[0_0_20px_rgba(0,0,0,0.8)] rounded-sm">
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 -mt-16">
-                        <Sparkles className="w-24 h-24 text-gold-400 animate-pulse" />
+                        <Sparkles className="w-20 h-20 text-amber-500 animate-pulse" />
                     </div>
 
-                    <h2 className="text-2xl font-serif text-gold-100 mb-4 mt-4">祈りが届きました</h2>
-                    <p className="text-gold-300 mb-6 text-lg italic font-serif">
+                    <h2 className="text-2xl font-serif text-[#3e2723] mb-4 mt-4 tracking-wide">祈りが届きました</h2>
+                    <p className="text-[#8b5a2b] mb-6 text-lg italic font-serif">
                         "{result.message}"
                     </p>
 
-                    <div className="text-gray-400 text-sm mb-6">
+                    <div className="text-[#8b6f4e] text-sm mb-6">
                         消費: {TIERS.find(t => t.tier === selectedTier)?.cost} G<br />
                         影響力: {result.impact_value}
                     </div>
 
                     <button
                         onClick={onClose}
-                        className="bg-gold-600/20 border border-gold-500 text-gold-200 px-8 py-2 hover:bg-gold-600/40 transition-colors"
+                        className="bg-[#8b5a2b] border border-[#8b5a2b] text-white px-8 py-2 hover:bg-[#6b4522] transition-colors rounded"
                     >
                         閉じる
                     </button>
@@ -108,35 +106,40 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-            <div className={`bg-[#1a1510] border border-[#a38b6b] max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden ${isPraying ? 'animate-pulse' : ''}`}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-50"><X /></button>
+            <div className={`bg-[#e3d5b8] text-[#2c241b] border-4 border-[#8b5a2b] max-w-2xl w-full shadow-[0_0_20px_rgba(0,0,0,0.8)] rounded-sm relative flex flex-col max-h-[90vh] overflow-hidden ${isPraying ? 'animate-pulse' : ''}`}>
 
-                {/* Visuals & Header */}
-                <div className="h-32 bg-[url('/backgrounds/temple.jpg')] bg-cover bg-center relative flex items-end justify-center border-b border-[#a38b6b]">
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-[#1a1510]/90" />
-                    <div className="relative z-10 flex flex-col items-center pb-4">
-                        <h2 className="text-2xl font-serif text-[#e3d5b8] tracking-widest text-center drop-shadow-lg">
-                            神殿 - {locationName}
-                        </h2>
-                        {isPraying && <div className="text-amber-300 font-serif italic text-sm animate-pulse">「神よ、我らの声を聞き届けたまえ...」</div>}
+                {/* Header */}
+                <div className="bg-[#3e2723] border-b-2 border-[#8b5a2b] p-4 flex justify-between items-center">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-amber-400" />
+                            <h2 className="text-lg font-serif font-bold tracking-widest text-amber-400">
+                                神殿
+                            </h2>
+                        </div>
+                        <p className="text-[10px] text-[#a38b6b] mt-0.5 font-serif italic">― {locationName}の神殿にて祈りを捧げよ ―</p>
                     </div>
+                    <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto">
+                {/* Content */}
+                <div className="p-6 overflow-y-auto bg-[url('/textures/paper.png')] bg-repeat">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Left: Attribute Selection */}
                         <div>
-                            <h3 className="text-sm font-bold text-gray-400 mb-3 border-b border-gray-800 pb-1">1. 属性を選択</h3>
+                            <h3 className="text-sm font-bold text-[#3e2723] mb-3 border-b border-[#8b5a2b]/30 pb-1 font-serif">1. 属性を選択</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 {ATTRIBUTES.map(attr => (
                                     <button
                                         key={attr.id}
                                         onClick={() => setSelectedAttribute(attr.id as any)}
                                         className={`
-                                        p-4 border flex flex-col items-center gap-2 transition-all
+                                        p-4 border rounded flex flex-col items-center gap-2 transition-all
                                         ${selectedAttribute === attr.id
-                                                ? `bg-white/5 ${attr.border} ${attr.color} shadow-[0_0_10px_rgba(255,255,255,0.1)]`
-                                                : 'border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300 bg-black/20'}
+                                                ? `${attr.bg} ${attr.border} ${attr.color} shadow-md`
+                                                : 'border-[#c2b280] text-[#8b6f4e] hover:border-[#a38b6b] hover:text-[#3e2723] bg-[#fdfbf7]'}
                                     `}
                                     >
                                         {attr.icon}
@@ -148,17 +151,17 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
                         {/* Right: Tier Selection */}
                         <div>
-                            <h3 className="text-sm font-bold text-gray-400 mb-3 border-b border-gray-800 pb-1">2. 捧げる金額</h3>
+                            <h3 className="text-sm font-bold text-[#3e2723] mb-3 border-b border-[#8b5a2b]/30 pb-1 font-serif">2. 捧げる金額</h3>
                             <div className="space-y-3">
                                 {TIERS.map(t => (
                                     <button
                                         key={t.tier}
                                         onClick={() => setSelectedTier(t.tier as any)}
                                         className={`
-                                        w-full p-3 border flex justify-between items-center transition-all px-4
+                                        w-full p-3 border rounded flex justify-between items-center transition-all px-4
                                         ${selectedTier === t.tier
-                                                ? 'border-gold-500 bg-gold-900/20 text-gold-200'
-                                                : 'border-gray-800 text-gray-500 hover:border-gray-600 bg-black/20'}
+                                                ? 'border-[#8b5a2b] bg-amber-50 text-[#3e2723] shadow-md'
+                                                : 'border-[#c2b280] text-[#8b6f4e] hover:border-[#a38b6b] bg-[#fdfbf7]'}
                                     `}
                                     >
                                         <div className="text-left">
@@ -172,9 +175,9 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                                 ))}
                             </div>
 
-                            <div className="mt-6 p-3 bg-black/40 border border-gray-800 rounded text-center">
-                                <div className="text-xs text-gray-500">現在の所持金</div>
-                                <div className={`font-mono text-lg ${userProfile && selectedTier && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost ? 'text-red-500' : 'text-gold-400'}`}>
+                            <div className="mt-6 p-3 bg-[#fdfbf7] border border-[#a38b6b]/30 rounded text-center">
+                                <div className="text-xs text-[#8b6f4e]">現在の所持金</div>
+                                <div className={`font-mono text-lg ${userProfile && selectedTier && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost ? 'text-red-700' : 'text-amber-700'}`}>
                                     {userProfile?.gold.toLocaleString()} G
                                 </div>
                             </div>
@@ -186,10 +189,10 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                             disabled={!selectedAttribute || !selectedTier || isPraying || (!!selectedTier && !!userProfile && userProfile.gold < TIERS.find(t => t.tier === selectedTier)!.cost)}
                             onClick={handlePray}
                             className={`
-                            px-8 py-3 min-w-[200px] font-bold tracking-widest transition-all
+                            px-8 py-3 min-w-[200px] font-bold tracking-widest transition-all rounded
                             ${!selectedAttribute || !selectedTier || isPraying
-                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
-                                    : 'bg-[#a38b6b] text-black hover:bg-[#e3d5b8] hover:shadow-[0_0_15px_#a38b6b] border border-[#e3d5b8]'}
+                                    ? 'bg-[#c2b280] text-[#8b6f4e] cursor-not-allowed border border-[#a38b6b]'
+                                    : 'bg-[#8b5a2b] text-white hover:bg-[#6b4522] shadow-lg border border-[#8b5a2b]'}
                         `}
                         >
                             {isPraying ? '祈っています...' : '祈りを捧げる'}

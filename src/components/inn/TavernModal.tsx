@@ -531,7 +531,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                 : 'bg-[#8b5a2b] hover:bg-[#6b4522] text-white border border-[#8b5a2b] shadow-lg'
                                 }`}
                             >
-                                {isAlreadyHired(selectedShadow) ? '契約済' : currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
+                                {isAlreadyHired(selectedShadow) ? '雇用中' : currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
                             </button>
                         </div>
                     </div>
