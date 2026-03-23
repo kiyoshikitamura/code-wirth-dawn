@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
-import { X, UserPlus, Shield, Sword, Heart, Coins, RefreshCw, Flag, Sparkles } from 'lucide-react';
+import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { supabase } from '@/lib/supabase';
 
@@ -16,7 +16,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [activeTab, setActiveTab] = useState<'hire' | 'register'>('hire');
     const [shadows, setShadows] = useState<ShadowSummary[]>([]);
     const [currentParty, setCurrentParty] = useState<PartyMember[]>([]);
-    const [loading, setLoading] = useState(true); // Start true to show loading on open
+    const [loading, setLoading] = useState(true);
     const [hireStatus, setHireStatus] = useState<string | null>(null);
     const [reportTarget, setReportTarget] = useState<ShadowSummary | null>(null);
     const [reportReason, setReportReason] = useState('');
@@ -29,12 +29,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             Promise.all([fetchPartyData(), fetchShadows()]).finally(() => setLoading(false));
         }
     }, [isOpen, locationId]);
-
-    useEffect(() => {
-        if (isOpen && activeTab === 'hire' && !loading) {
-            // Only refetch if tab changes and not already loading
-        }
-    }, [activeTab]);
 
     const JOB_CLASS_JP: Record<string, string> = {
         Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
@@ -51,14 +45,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
             const res = await fetch(`/api/party/list?owner_id=${userProfile.id}`, {
-                headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                },
+                headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
             });
             const data = await res.json();
-            if (data.party) {
-                setCurrentParty(data.party);
-            }
+            if (data.party) setCurrentParty(data.party);
         } catch (e) {
             console.error("Failed to fetch party data", e);
         }
@@ -68,40 +58,23 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         try {
             const res = await fetch(`/api/tavern/list?location_id=${locationId}&user_id=${userProfile.id}`);
             const data = await res.json();
-            if (data.shadows) {
-                setShadows(data.shadows);
-            }
+            if (data.shadows) setShadows(data.shadows);
         } catch (e) {
             console.error("Failed to fetch shadows", e);
         }
     };
 
-    // Check if a shadow is already in the party
     const isAlreadyHired = (shadow: ShadowSummary): boolean => {
         return currentParty.some(member =>
-            (member as any).npc_id === (shadow as any).npc_id ||
             member.name === shadow.name ||
-            (shadow.profile_id && (member as any).profile_id === shadow.profile_id)
+            (shadow.profile_id && (member as any).source_user_id === shadow.profile_id)
         );
     };
 
     const handleHire = async (shadow: ShadowSummary) => {
-        // Duplicate hire check
-        if (isAlreadyHired(shadow)) {
-            alert('この冒険者は既に契約済みです。');
-            return;
-        }
-
-        if (currentParty.length >= 4) {
-            alert('パーティメンバーが上限（4人）に達しています。誰かと別れてから雇用してください。');
-            return;
-        }
-
-        if (userProfile.gold < shadow.contract_fee) {
-            alert('ゴールドが足りません！');
-            return;
-        }
-
+        if (isAlreadyHired(shadow)) { alert('この冒険者は既に契約済みです。'); return; }
+        if (currentParty.length >= 4) { alert('パーティが満員です。'); return; }
+        if (userProfile.gold < shadow.contract_fee) { alert('ゴールドが足りません！'); return; }
         if (!confirm(`${shadow.name} を ${shadow.contract_fee}G で雇用しますか？`)) return;
 
         setHireStatus('雇用処理中...');
@@ -115,17 +88,15 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 },
                 body: JSON.stringify({ user_id: userProfile.id, shadow })
             });
-
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
                 alert(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
                 setHireStatus(null);
                 return;
             }
-
             const data = await res.json();
             if (data.success) {
-                setHireStatus('雇用完了！パーティ情報を更新中...');
+                setHireStatus('雇用完了！');
                 setLoading(true);
                 await Promise.all([fetchPartyData(), fetchShadows()]);
                 setLoading(false);
@@ -160,58 +131,21 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 }),
             });
             setReportStatus(res.ok ? 'done' : 'error');
-        } catch {
-            setReportStatus('error');
-        }
+        } catch { setReportStatus('error'); }
     };
 
-    const closeReportModal = () => {
-        setReportTarget(null);
-        setReportReason('');
-        setReportStatus('idle');
-    };
-
-    const renderPartyMemberCard = (member: PartyMember) => (
-        <div key={`party-${member.id}`} className="relative p-4 border border-blue-800/40 bg-blue-950/10 rounded">
-            <div className="absolute top-0 right-0 bg-blue-700 text-white text-[10px] px-2 py-0.5 font-bold rounded-bl">同行中</div>
-            <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-900/20 overflow-hidden border border-blue-800/40 flex shrink-0 items-center justify-center">
-                        {member.icon_url || member.image_url ? (
-                            <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-blue-700 font-bold">{member.name[0]}</span>
-                        )}
-                    </div>
-                    <div>
-                        <div className="text-base font-bold text-[#3e2723]">{member.name}</div>
-                        <div className="text-xs text-[#8b5a2b]">{toJpJobClass(member.job_class)}</div>
-                    </div>
-                </div>
-                <div className="text-right">
-                    <div className="text-[#a38b6b] font-mono font-bold text-sm">契約済</div>
-                </div>
-            </div>
-            <div className="flex gap-4 mb-3 text-xs font-mono text-[#8b6f4e]">
-                <div className="flex items-center gap-1"><Shield size={12} /> ??</div>
-                <div className="flex items-center gap-1"><Heart size={12} /> {member.durability}</div>
-            </div>
-            <button disabled className="w-full py-2 flex items-center justify-center gap-2 border border-blue-800/30 text-blue-700/50 cursor-not-allowed bg-blue-50/30 rounded text-sm">
-                <UserPlus size={16} /> パーティ加入中
-            </button>
-        </div>
-    );
+    const closeReportModal = () => { setReportTarget(null); setReportReason(''); setReportStatus('idle'); };
 
     const isEmbargoed = reputationScore < 0;
-
     if (!isOpen) return null;
 
     return (
         <>
         <div className="fixed inset-0 z-[60] flex justify-center items-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
             <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
-                {/* Header */}
-                <div className="bg-[#3e2723] border-b-2 border-[#8b5a2b] p-4 flex justify-between items-center relative z-10">
+
+                {/* ===== Header ===== */}
+                <div className="bg-[#3e2723] border-b-2 border-[#8b5a2b] p-4 flex justify-between items-center flex-shrink-0">
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                             <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -227,9 +161,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 </div>
 
                 {isEmbargoed ? (
-                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-red-950/20 relative z-10">
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                         <h2 className="text-3xl font-serif text-red-700 font-bold mb-4 tracking-widest">出入り禁止</h2>
-                        <div className="bg-red-950/20 border border-red-800/40 p-6 rounded-lg max-w-lg">
+                        <div className="bg-red-50/60 border border-red-300/50 p-6 rounded-lg max-w-lg">
                             <p className="text-red-800 font-serif italic text-lg leading-relaxed">
                                 「お前のような悪党に飲ませる酒も、紹介する仲間もねえ。さっさと俺の店から出て行きな！」
                             </p>
@@ -237,7 +171,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     </div>
                 ) : (
                     <>
-                        {/* 通報モーダル */}
+                        {/* ===== 通報モーダル ===== */}
                         {reportTarget && (
                             <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4">
                                 <div className="bg-[#fdfbf7] border-2 border-red-700 max-w-sm w-full p-6 shadow-2xl rounded-lg">
@@ -247,19 +181,16 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                     {reportStatus === 'done' ? (
                                         <div className="text-green-700 text-center py-4">
                                             <p className="font-bold mb-2">通報を受け付けました。</p>
-                                            <p className="text-sm text-[#5d4037]">運営が確認後、適切な対応を行います。</p>
                                             <button onClick={closeReportModal} className="mt-4 px-4 py-2 bg-[#8b5a2b] text-white text-sm rounded hover:bg-[#6b4522]">閉じる</button>
                                         </div>
                                     ) : reportStatus === 'error' ? (
                                         <div className="text-red-700 text-center py-4">
-                                            <p>通報に失敗しました。もう一度お試しください。</p>
+                                            <p>通報に失敗しました。</p>
                                             <button onClick={closeReportModal} className="mt-4 px-4 py-2 bg-[#8b5a2b] text-white text-sm rounded hover:bg-[#6b4522]">閉じる</button>
                                         </div>
                                     ) : (
                                         <>
-                                            <p className="text-[#5d4037] text-sm mb-4">
-                                                <span className="font-bold text-[#3e2723]">{reportTarget.name}</span> のアイコン画像を通報します。
-                                            </p>
+                                            <p className="text-[#5d4037] text-sm mb-4"><span className="font-bold text-[#3e2723]">{reportTarget.name}</span> のアイコン画像を通報します。</p>
                                             <div className="space-y-2 mb-4">
                                                 {['不適切な画像', '公序良俗に反する', 'その他'].map(reason => (
                                                     <label key={reason} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-[#8b5a2b]/10">
@@ -269,10 +200,8 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                 ))}
                                             </div>
                                             <div className="flex gap-3">
-                                                <button onClick={closeReportModal} className="flex-1 py-2 border border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10 text-sm transition-colors rounded">
-                                                    キャンセル
-                                                </button>
-                                                <button onClick={handleReport} disabled={!reportReason || reportStatus === 'sending'} className="flex-1 py-2 bg-red-700 border border-red-600 text-white hover:bg-red-800 text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded">
+                                                <button onClick={closeReportModal} className="flex-1 py-2 border border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10 text-sm rounded">キャンセル</button>
+                                                <button onClick={handleReport} disabled={!reportReason || reportStatus === 'sending'} className="flex-1 py-2 bg-red-700 text-white text-sm font-bold rounded disabled:opacity-50">
                                                     {reportStatus === 'sending' ? '送信中...' : '通報する'}
                                                 </button>
                                             </div>
@@ -281,169 +210,157 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 </div>
                             </div>
                         )}
-                        {/* Tabs & Refresh */}
-                        <div className="flex bg-[#2c1e1a] p-1 gap-1">
-                            <button
-                                onClick={() => setActiveTab('hire')}
-                                className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'hire' ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}
-                            >
+
+                        {/* ===== Tabs ===== */}
+                        <div className="flex bg-[#2c1e1a] p-1 gap-1 flex-shrink-0">
+                            <button onClick={() => setActiveTab('hire')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'hire' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
                                 傭兵を雇う
                             </button>
-                            <button
-                                onClick={() => setActiveTab('register')}
-                                className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'register' ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}
-                            >
+                            <button onClick={() => setActiveTab('register')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'register' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
                                 影の登録
                             </button>
                             {activeTab === 'hire' && (
-                                <button
-                                    onClick={async () => { setLoading(true); await Promise.all([fetchPartyData(), fetchShadows()]); setLoading(false); }}
-                                    disabled={loading}
-                                    className="px-3 py-2 flex items-center gap-1.5 bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e] hover:text-[#e3d5b8] transition-colors rounded-sm"
-                                >
+                                <button onClick={async () => { setLoading(true); await Promise.all([fetchPartyData(), fetchShadows()]); setLoading(false); }} disabled={loading}
+                                    className="px-3 py-2 flex items-center gap-1.5 bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e] hover:text-[#e3d5b8] transition-colors rounded-sm">
                                     <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                                     <span className="text-xs font-bold">見渡す</span>
                                 </button>
                             )}
                         </div>
 
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[url('/textures/paper.png')] bg-repeat">
-                            {/* Full loading overlay */}
+                        {/* ===== Content ===== */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6">
                             {loading ? (
-                                <div className="h-full flex items-center justify-center text-[#5c4033] font-serif animate-pulse">
+                                <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
                                     酒場を見回しています...
                                 </div>
                             ) : hireStatus ? (
-                                <div className="h-full flex items-center justify-center text-[#5c4033] font-serif animate-pulse">
+                                <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
                                     {hireStatus}
                                 </div>
                             ) : activeTab === 'hire' ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Current Party Section */}
+                                    {/* === Current Party === */}
                                     {currentParty.length > 0 && (
                                         <>
-                                            <div className="col-span-1 md:col-span-2 text-[#3e2723] font-serif font-bold border-b border-[#8b5a2b]/30 pb-1 mb-2 mt-2">
+                                            <div className="col-span-1 md:col-span-2 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1">
                                                 現在のパーティ ({currentParty.length}/4)
                                             </div>
-                                            {currentParty.map(member => renderPartyMemberCard(member))}
-
-                                            <div className="col-span-1 md:col-span-2 text-[#3e2723] font-serif font-bold border-b border-[#8b5a2b]/30 pb-1 mb-2 mt-4">
+                                            {currentParty.map(member => (
+                                                <div key={`party-${member.id}`} className="relative p-3 border-2 border-[#6b8cae]/40 bg-[#eef3f7] rounded">
+                                                    <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded-bl">同行中</div>
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <div className="w-9 h-9 rounded-full bg-[#d0dde8] overflow-hidden border border-[#6b8cae]/40 flex shrink-0 items-center justify-center">
+                                                            {member.icon_url || member.image_url
+                                                                ? <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                                                : <span className="text-[#4a7da8] font-bold text-sm">{member.name[0]}</span>}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-sm font-bold text-[#3e2723] truncate">{member.name}</div>
+                                                            <div className="text-[11px] text-[#8b6f4e]">{member.job_class}</div>
+                                                        </div>
+                                                        <div className="text-[11px] text-[#6b8cae] font-bold">契約済</div>
+                                                    </div>
+                                                    <div className="flex gap-3 text-[11px] font-mono text-[#8b6f4e]">
+                                                        <span className="flex items-center gap-1"><Shield size={11} /> ??</span>
+                                                        <span className="flex items-center gap-1"><Heart size={11} /> {member.durability}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <div className="col-span-1 md:col-span-2 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1 mt-3">
                                                 酒場にいる冒険者たち
                                             </div>
                                         </>
                                     )}
 
-                                    {shadows.length === 0 && (
+                                    {/* === Empty State === */}
+                                    {shadows.length === 0 && !loading && (
                                         <div className="text-center text-[#8b5a2b]/70 col-span-2 py-10 font-serif">
                                             <p>ここには誰もいないようだ...</p>
                                             <p className="text-sm mt-2">他のプレイヤーがこの地を訪れるのを待ちましょう。</p>
                                         </div>
                                     )}
 
+                                    {/* === Party Full Warning === */}
                                     {currentParty.length >= 4 && shadows.length > 0 && (
-                                        <div className="col-span-2 bg-red-50/60 border border-red-300/50 text-red-700 p-2 text-center text-xs mb-2 rounded">
-                                            パーティメンバーが上限（4人）に達しています。誰かと別れてから雇用してください。
+                                        <div className="col-span-2 bg-red-50/80 border border-red-300 text-red-700 p-2 text-center text-xs rounded">
+                                            パーティメンバーが上限（4人）に達しています。
                                         </div>
                                     )}
 
+                                    {/* === Shadow Cards === */}
                                     {shadows.map((shadow, idx) => {
                                         const isHeroic = shadow.level >= 20;
                                         const hired = isAlreadyHired(shadow);
-
                                         return (
-                                        <div key={idx} className={`relative overflow-hidden p-4 border rounded transition-all duration-300 ${
-                                            hired
-                                            ? 'border-blue-800/40 bg-blue-50/30 opacity-70'
-                                            : isHeroic
-                                            ? 'ring-2 ring-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)] bg-gradient-to-b from-[#fdfbf7] to-amber-50'
-                                            : shadow.subscription_tier === 'premium'
-                                                ? 'border-yellow-600/50 bg-yellow-50/20'
-                                                : shadow.subscription_tier === 'basic'
-                                                    ? 'border-blue-600/30 bg-blue-50/10'
-                                                    : 'border-[#c2b280] bg-[#fdfbf7] hover:border-[#a38b6b]'
-                                        }`}>
-                                            {/* Hired badge */}
-                                            {hired && (
-                                                <div className="absolute top-0 right-0 bg-blue-700 text-white text-[10px] px-2 py-0.5 font-bold rounded-bl z-10">契約済</div>
-                                            )}
-                                            {/* Other Badges */}
-                                            {!hired && isHeroic && (
-                                                <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-600 to-yellow-400 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded-bl z-10 shadow-md flex items-center gap-1">
-                                                    <Sparkles size={10} /> HERO
-                                                </div>
-                                            )}
-                                            {!hired && !isHeroic && shadow.subscription_tier === 'premium' && (
-                                                <div className="absolute top-0 right-0 bg-yellow-600 text-black text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">伝説</div>
-                                            )}
-                                            {!hired && !isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && (
-                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">傑出</div>
-                                            )}
-                                            {!hired && !isHeroic && shadow.origin_type === 'system_mercenary' && (
-                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">公式</div>
-                                            )}
+                                            <div key={idx} className={`relative overflow-hidden p-3 border rounded transition-all ${
+                                                hired ? 'border-[#6b8cae]/40 bg-[#eef3f7] opacity-75'
+                                                : isHeroic ? 'ring-2 ring-amber-500 bg-gradient-to-b from-[#fdfbf7] to-amber-50/60'
+                                                : shadow.subscription_tier === 'premium' ? 'border-amber-500/50 bg-amber-50/30'
+                                                : shadow.subscription_tier === 'basic' ? 'border-[#6b8cae]/30 bg-[#f5f8fb]'
+                                                : 'border-[#c2b280] bg-[#fdfbf7] hover:border-[#a38b6b]'
+                                            }`}>
+                                                {/* Badge */}
+                                                {hired && <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded-bl z-10">雇用中</div>}
+                                                {!hired && isHeroic && (
+                                                    <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-600 to-yellow-400 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded-bl z-10 flex items-center gap-1"><Sparkles size={10} /> HERO</div>
+                                                )}
+                                                {!hired && !isHeroic && shadow.subscription_tier === 'premium' && <div className="absolute top-0 right-0 bg-amber-600 text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">伝説</div>}
+                                                {!hired && !isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">傑出</div>}
+                                                {!hired && !isHeroic && shadow.origin_type === 'system_mercenary' && <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">公式</div>}
 
-                                            <div className="flex justify-between items-start mb-2 relative z-10">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
-                                                        {shadow.icon_url || shadow.image_url ? (
-                                                            <img src={shadow.icon_url || shadow.image_url} alt={shadow.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className="text-[#8b5a2b] font-bold">{shadow.name[0]}</span>
+                                                {/* Info */}
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
+                                                            {shadow.icon_url || shadow.image_url
+                                                                ? <img src={shadow.icon_url || shadow.image_url} alt={shadow.name} className="w-full h-full object-cover" />
+                                                                : <span className="text-[#8b5a2b] font-bold">{shadow.name[0]}</span>}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-[#3e2723]">{shadow.name}</div>
+                                                            <div className="text-[11px] text-[#8b6f4e]">Lv.{shadow.level} {toJpJobClass(shadow.job_class)}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                        {!hired && <div className="text-amber-700 font-mono font-bold text-sm">{shadow.contract_fee} G</div>}
+                                                        {!hired && <div className="text-[10px] text-[#8b6f4e]">契約金</div>}
+                                                        {(shadow.icon_url || shadow.image_url) && shadow.origin_type !== 'system_mercenary' && (
+                                                            <button onClick={(e) => { e.stopPropagation(); setReportTarget(shadow); }} className="text-[#a38b6b] hover:text-red-600 transition-colors mt-0.5" title="通報"><Flag size={11} /></button>
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <div className="text-base font-bold text-[#3e2723]">{shadow.name}</div>
-                                                        <div className="text-xs text-[#8b6f4e]">Lv.{shadow.level} {toJpJobClass(shadow.job_class)}</div>
+                                                </div>
+
+                                                {/* Stats */}
+                                                <div className="flex gap-3 mb-3 text-[11px] font-mono text-[#5d4037]">
+                                                    <span className="flex items-center gap-1"><Sword size={11} /> {shadow.stats.atk}</span>
+                                                    <span className="flex items-center gap-1"><Shield size={11} /> {shadow.stats.def}</span>
+                                                    <span className="flex items-center gap-1"><Heart size={11} /> {shadow.stats.hp}</span>
+                                                </div>
+
+                                                {/* Skills */}
+                                                {shadow.signature_deck_preview.length > 0 && (
+                                                    <div className="mb-3">
+                                                        <div className="text-[10px] text-[#8b6f4e] mb-1">所持スキル</div>
+                                                        <div className="flex gap-1 flex-wrap">
+                                                            {shadow.signature_deck_preview.map((card, i) => (
+                                                                <span key={i} className="px-1.5 py-0.5 bg-[#e3d5b8] text-[#5d4037] text-[10px] rounded border border-[#a38b6b]">{card}</span>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex flex-col items-end gap-1">
-                                                    {!hired && <div className="text-amber-700 font-mono font-bold">{shadow.contract_fee} G</div>}
-                                                    {!hired && <div className="text-xs text-[#8b6f4e]">契約金</div>}
-                                                    {(shadow.icon_url || shadow.image_url) && shadow.origin_type !== 'system_mercenary' && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setReportTarget(shadow); }}
-                                                            className="text-[#a38b6b] hover:text-red-600 transition-colors mt-1"
-                                                            title="アイコン画像を通報する"
-                                                        >
-                                                            <Flag size={12} />
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                )}
+
+                                                {/* Action Button */}
+                                                <button
+                                                    onClick={() => setSelectedShadow(shadow)}
+                                                    className={`w-full py-2 flex items-center justify-center gap-2 border rounded text-sm font-bold transition-colors ${
+                                                        hired ? 'border-[#6b8cae]/30 text-[#6b8cae] bg-[#eef3f7]' : 'border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10'
+                                                    }`}>
+                                                    <UserPlus size={14} />
+                                                    {hired ? '雇用中 - 詳細を見る' : '詳細を見る'}
+                                                </button>
                                             </div>
-
-                                            <div className="flex gap-4 mb-4 text-xs font-mono text-[#5d4037]">
-                                                <div className="flex items-center gap-1"><Sword size={12} /> {shadow.stats.atk}</div>
-                                                <div className="flex items-center gap-1"><Shield size={12} /> {shadow.stats.def}</div>
-                                                <div className="flex items-center gap-1"><Heart size={12} /> {shadow.stats.hp}</div>
-                                            </div>
-
-                                            {shadow.signature_deck_preview.length > 0 && (
-                                                <div className="mb-4">
-                                                    <div className="text-[10px] text-[#8b6f4e] mb-1">所持スキル</div>
-                                                    <div className="flex gap-1 flex-wrap">
-                                                        {shadow.signature_deck_preview.map((card, i) => (
-                                                            <span key={i} className="px-1.5 py-0.5 bg-[#e3d5b8] text-[#5d4037] text-[10px] rounded border border-[#a38b6b]">
-                                                                {card}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <button
-                                                onClick={() => setSelectedShadow(shadow)}
-                                                className={`w-full py-2 flex items-center justify-center gap-2 border rounded text-sm font-bold transition-colors ${
-                                                    hired
-                                                    ? 'border-blue-800/30 text-blue-700/50 bg-blue-50/30'
-                                                    : 'border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10'
-                                                }`}
-                                            >
-                                                <UserPlus size={16} />
-                                                {hired ? '雇用中 - 詳細を見る' : '詳細を見る'}
-                                            </button>
-                                        </div>
-                                    );
+                                        );
                                     })}
                                 </div>
                             ) : (
@@ -459,27 +376,30 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             </div>
         </div>
 
-        {/* NPC詳細ポップアップ - 中央寄せ */}
-        {(() => { const ss = selectedShadow; if (!ss) return null; return (
+        {/* ===== NPC Detail Popup ===== */}
+        {selectedShadow && (() => {
+            const hired = isAlreadyHired(selectedShadow);
+            return (
             <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
                 <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] w-full max-w-md rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-                    {/* ヘッダー */}
+                    {/* Header */}
                     <div className="bg-[#3e2723] p-5 flex items-center gap-4 border-b-2 border-[#8b5a2b]">
                         <div className="w-16 h-16 rounded-full bg-[#e3d5b8] overflow-hidden border-2 border-[#a38b6b] flex items-center justify-center flex-shrink-0">
-                            {selectedShadow.npc_image_url || selectedShadow.icon_url || selectedShadow.image_url
-                                ? <img src={selectedShadow.npc_image_url || selectedShadow.icon_url || selectedShadow.image_url} alt={selectedShadow.name} className="w-full h-full object-cover" />
-                                : <span className="text-2xl font-bold text-[#a38b6b]">{selectedShadow.name[0]}</span>
-                            }
+                            {(selectedShadow as any).npc_image_url || selectedShadow.icon_url || selectedShadow.image_url
+                                ? <img src={(selectedShadow as any).npc_image_url || selectedShadow.icon_url || selectedShadow.image_url} alt={selectedShadow.name} className="w-full h-full object-cover" />
+                                : <span className="text-2xl font-bold text-[#a38b6b]">{selectedShadow.name[0]}</span>}
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="text-lg font-bold text-amber-400 truncate">{selectedShadow.name}</div>
                             <div className="text-sm text-[#a38b6b]">Lv.{selectedShadow.level} {toJpJobClass(selectedShadow.job_class)}</div>
-                            <div className="text-amber-300 font-mono font-bold mt-1">{selectedShadow.contract_fee.toLocaleString()} G</div>
+                            {!hired && <div className="text-amber-300 font-mono font-bold mt-1">{selectedShadow.contract_fee.toLocaleString()} G</div>}
+                            {hired && <div className="text-[#6b8cae] font-bold mt-1 text-sm">雇用中</div>}
                         </div>
                         <button onClick={() => setSelectedShadow(null)} className="text-[#a38b6b] hover:text-white p-1 flex-shrink-0">✕</button>
                     </div>
+
                     <div className="p-5 space-y-4">
-                        {/* ステータス */}
+                        {/* Stats */}
                         <div className="grid grid-cols-3 gap-2">
                             <div className="bg-[#e3d5b8]/50 rounded p-2 text-center border border-[#a38b6b]/30">
                                 <div className="text-[10px] text-[#8b6f4e] mb-0.5">攻撃</div>
@@ -494,59 +414,53 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 <div className="text-green-700 font-bold font-mono">{selectedShadow.stats.hp}</div>
                             </div>
                         </div>
-                        {/* 所持スキル */}
+
+                        {/* Skills */}
                         {selectedShadow.signature_deck_preview.length > 0 && (
                             <div className="bg-[#e3d5b8]/30 rounded-lg p-3 border border-[#a38b6b]/30">
                                 <div className="text-[10px] text-[#8b6f4e] mb-2">所持スキル</div>
                                 <div className="flex flex-wrap gap-1.5">
                                     {selectedShadow.signature_deck_preview.map((card, i) => (
-                                        <span key={i} className="px-2 py-1 bg-[#fdfbf7] text-[#5d4037] text-xs rounded border border-[#a38b6b] font-medium">
-                                            {card}
-                                        </span>
+                                        <span key={i} className="px-2 py-1 bg-[#fdfbf7] text-[#5d4037] text-xs rounded border border-[#a38b6b] font-medium">{card}</span>
                                     ))}
                                 </div>
                             </div>
                         )}
-                        {/* フレーバーテキスト */}
+
+                        {/* Flavor */}
                         {selectedShadow.flavor_text && (
                             <div className="bg-amber-50/50 rounded-lg p-3 border border-[#a38b6b]/30">
-                                <p className="text-[#8b5a2b] font-serif italic text-sm leading-relaxed">
-                                    「{selectedShadow.flavor_text}」
-                                </p>
+                                <p className="text-[#8b5a2b] font-serif italic text-sm leading-relaxed">「{selectedShadow.flavor_text}」</p>
                             </div>
                         )}
-                        {/* ボタン */}
+
+                        {/* Buttons */}
                         <div className="flex gap-3">
-                            <button
-                                onClick={() => setSelectedShadow(null)}
-                                className="flex-1 py-2.5 border border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10 text-sm rounded-lg transition-colors"
-                            >
+                            <button onClick={() => setSelectedShadow(null)} className="flex-1 py-2.5 border border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10 text-sm rounded-lg">
                                 閉じる
                             </button>
-                            <button
-                                onClick={async () => {
-                                    if (isAlreadyHired(selectedShadow)) return;
-                                    await handleHire(selectedShadow);
-                                    setSelectedShadow(null);
-                                }}
-                                disabled={!!hireStatus || userProfile.gold < selectedShadow.contract_fee || currentParty.length >= 4 || isAlreadyHired(selectedShadow)}
-                                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
-                                    isAlreadyHired(selectedShadow)
-                                        ? 'bg-blue-100 text-blue-700 border border-blue-300 cursor-not-allowed'
-                                        : currentParty.length >= 4
-                                            ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
-                                            : userProfile.gold < selectedShadow.contract_fee
-                                                ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
-                                                : 'bg-[#8b5a2b] hover:bg-[#6b4522] text-white border border-[#8b5a2b] shadow-lg'
-                                }`}
-                            >
-                                {isAlreadyHired(selectedShadow) ? '雇用中' : currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
-                            </button>
+                            {hired ? (
+                                <button disabled className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-[#d0dde8] text-[#6b8cae] border border-[#6b8cae]/30 cursor-not-allowed">
+                                    雇用中
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={async () => { if (isAlreadyHired(selectedShadow)) return; await handleHire(selectedShadow); setSelectedShadow(null); }}
+                                    disabled={!!hireStatus || userProfile.gold < selectedShadow.contract_fee || currentParty.length >= 4}
+                                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                                        currentParty.length >= 4 ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
+                                        : userProfile.gold < selectedShadow.contract_fee ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
+                                        : 'bg-[#8b5a2b] hover:bg-[#6b4522] text-white border border-[#8b5a2b] shadow-lg'
+                                    }`}>
+                                    {currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-        ); })()}
+            );
+        })()}
         </>
     );
 }
