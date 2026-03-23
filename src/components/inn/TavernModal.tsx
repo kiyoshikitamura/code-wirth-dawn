@@ -37,6 +37,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
         Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
         Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
+        Guard: '衛兵', Porter: '荷運び', Animal: '動物', Hunter: '狩人',
+        Samurai: '侍', Miko: '巫女', Ninja: '忍者', Dancer: '踊り子',
+        Lancer: '槍術士', Mercenary: '傭兵', Soldier: '兵士', Villager: '村人',
+        Tactician: '軍師', Summoner: '召喚士', Caster: '術師', Chef: '料理人',
+        'Heroic Spirit': '英霊',
     };
     const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
 
@@ -293,38 +298,33 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                         const isHeroic = shadow.level >= 20;
                                         const hired = isAlreadyHired(shadow);
                                         return (
-                                            <div key={idx} className={`relative overflow-hidden p-3 border rounded transition-all ${
+                                            <div key={idx} className={`overflow-hidden p-3 border rounded transition-all ${
                                                 hired ? 'border-[#6b8cae]/40 bg-[#eef3f7] opacity-75'
                                                 : isHeroic ? 'ring-2 ring-amber-500 bg-gradient-to-b from-[#fdfbf7] to-amber-50/60'
                                                 : shadow.subscription_tier === 'premium' ? 'border-amber-500/50 bg-amber-50/30'
                                                 : shadow.subscription_tier === 'basic' ? 'border-[#6b8cae]/30 bg-[#f5f8fb]'
                                                 : 'border-[#c2b280] bg-[#fdfbf7] hover:border-[#a38b6b]'
                                             }`}>
-                                                {/* Badge */}
-                                                {hired && <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded-bl z-10">雇用中</div>}
-                                                {!hired && isHeroic && (
-                                                    <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-600 to-yellow-400 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded-bl z-10 flex items-center gap-1"><Sparkles size={10} /> HERO</div>
-                                                )}
-                                                {!hired && !isHeroic && shadow.subscription_tier === 'premium' && <div className="absolute top-0 right-0 bg-amber-600 text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">伝説</div>}
-                                                {!hired && !isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">傑出</div>}
-                                                {!hired && !isHeroic && shadow.origin_type === 'system_mercenary' && <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold z-10 rounded-bl">公式</div>}
-
-                                                {/* Info */}
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
-                                                            {shadow.icon_url || shadow.image_url
-                                                                ? <img src={shadow.icon_url || shadow.image_url} alt={shadow.name} className="w-full h-full object-cover" />
-                                                                : <span className="text-[#8b5a2b] font-bold">{shadow.name[0]}</span>}
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-sm font-bold text-[#3e2723]">{shadow.name}</div>
-                                                            <div className="text-[11px] text-[#8b6f4e]">Lv.{shadow.level} {toJpJobClass(shadow.job_class)}</div>
-                                                        </div>
+                                                {/* Info Row: Avatar + Name + Badge/Price */}
+                                                <div className="flex items-start gap-3 mb-2">
+                                                    <div className="w-10 h-10 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
+                                                        {shadow.icon_url || shadow.image_url
+                                                            ? <img src={shadow.icon_url || shadow.image_url} alt={shadow.name} className="w-full h-full object-cover" />
+                                                            : <span className="text-[#8b5a2b] font-bold">{shadow.name?.[0] || '?'}</span>}
                                                     </div>
-                                                    <div className="flex flex-col items-end gap-0.5">
-                                                        {!hired && <div className="text-amber-700 font-mono font-bold text-sm">{shadow.contract_fee} G</div>}
-                                                        {!hired && <div className="text-[10px] text-[#8b6f4e]">契約金</div>}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm font-bold text-[#3e2723] truncate">{shadow.name || '名前なし'}</div>
+                                                        <div className="text-[11px] text-[#8b6f4e]">Lv.{shadow.level} {toJpJobClass(shadow.job_class)}</div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                                        {/* Badge */}
+                                                        {hired && <span className="bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded">雇用中</span>}
+                                                        {!hired && isHeroic && <span className="bg-gradient-to-r from-amber-600 to-yellow-400 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded flex items-center gap-1"><Sparkles size={10} /> HERO</span>}
+                                                        {!hired && !isHeroic && shadow.subscription_tier === 'premium' && <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 font-bold rounded">伝説</span>}
+                                                        {!hired && !isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && <span className="bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded">傑出</span>}
+                                                        {!hired && !isHeroic && shadow.origin_type === 'system_mercenary' && <span className="bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded">公式</span>}
+                                                        {/* Price */}
+                                                        {!hired && <div className="text-amber-700 font-mono font-bold text-sm mt-0.5">{shadow.contract_fee} G</div>}
                                                         {(shadow.icon_url || shadow.image_url) && shadow.origin_type !== 'system_mercenary' && (
                                                             <button onClick={(e) => { e.stopPropagation(); setReportTarget(shadow); }} className="text-[#a38b6b] hover:text-red-600 transition-colors mt-0.5" title="通報"><Flag size={11} /></button>
                                                         )}
