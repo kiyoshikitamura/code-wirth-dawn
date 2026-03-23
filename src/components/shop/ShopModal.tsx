@@ -325,56 +325,52 @@ export default function ShopModal({ onClose }: Props) {
 
     const mainContent = createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-gray-900 border border-gray-700 w-full max-w-4xl h-[85dvh] flex flex-col rounded-lg shadow-2xl relative overflow-hidden">
+            <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85dvh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
 
                 {/* Header */}
-                <div className={`p-4 border-b flex justify-between items-center ${meta?.prosperity === 1 ? 'bg-red-950/40 border-red-900' : 'bg-black/40 border-gray-800'}`}>
-                    <div className="flex items-center gap-3">
-                        <ShoppingBag className={`w-6 h-6 ${meta?.prosperity === 1 ? 'text-red-500' : 'text-yellow-500'}`} />
-                        <div>
-                            <h2 className={`text-xl font-bold ${meta?.prosperity === 1 ? 'text-red-400 font-serif tracking-widest' : 'text-gray-100'}`}>
+                <div className={`p-4 border-b-2 border-[#8b5a2b] flex justify-between items-center ${meta?.prosperity === 1 ? 'bg-red-950/80' : 'bg-[#3e2723]'}`}>
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <ShoppingBag className={`w-5 h-5 ${meta?.prosperity === 1 ? 'text-red-400' : 'text-amber-400'}`} />
+                            <h2 className={`text-lg font-serif font-bold tracking-widest ${meta?.prosperity === 1 ? 'text-red-400' : 'text-amber-400'}`}>
                                 {meta?.prosperity === 1 ? '闇市' : '道具屋'}
                             </h2>
-                            {meta && (
-                                <div className="flex items-center gap-2 text-xs">
-                                    <span className="text-gray-400">統治: {meta.ruling_nation}</span>
-                                    {meta.inflation > 1.0 && (
-                                        <span className="text-red-400 flex items-center gap-1 font-bold animate-pulse">
-                                            <AlertTriangle className="w-3 h-3" />
-                                            物価高 x{meta.inflation.toFixed(1)}
-                                        </span>
-                                    )}
-                                </div>
+                            {meta && meta.inflation > 1.0 && (
+                                <span className="text-red-400 flex items-center gap-1 text-xs font-bold animate-pulse">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    物価高 x{meta.inflation.toFixed(1)}
+                                </span>
                             )}
                         </div>
+                        <p className="text-[10px] text-[#a38b6b] mt-0.5 font-serif italic">― 旅に必要なものは何でも揃うぞ ―</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-yellow-900/20 px-3 py-1 rounded border border-yellow-900/50">
-                            <Coins className="w-4 h-4 text-yellow-400" />
-                            <span className="text-yellow-100 font-mono">{gold} G</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="flex items-center gap-1.5 bg-amber-900/30 px-2.5 py-1 rounded border border-amber-700/50 whitespace-nowrap min-w-[80px] justify-center">
+                            <Coins className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                            <span className="text-amber-200 font-mono text-sm">{gold.toLocaleString()} G</span>
                         </div>
-                        <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+                        <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">✕</button>
                     </div>
                 </div>
 
                 {/* Content */}
                 {/* Tabs */}
-                <div className="flex border-b border-gray-800 bg-black/20">
+                <div className="flex bg-[#2c1e1a] p-1 gap-1">
                     <button
                         onClick={() => setMode('buy')}
-                        className={`flex-1 py-3 text-sm font-bold tracking-wider transition-colors ${mode === 'buy' ? 'bg-yellow-900/20 text-yellow-500 border-b-2 border-yellow-500' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${mode === 'buy' ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}
                     >
                         購入
                     </button>
                     <button
                         onClick={() => setMode('sell')}
-                        className={`flex-1 py-3 text-sm font-bold tracking-wider transition-colors ${mode === 'sell' ? 'bg-blue-900/20 text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${mode === 'sell' ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}
                     >
                         売却
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 content-start bg-[url('/textures/paper.png')] bg-repeat">
                     {mode === 'buy' ? (
                         <>
                             {meta?.prosperity === 1 ? (
@@ -422,14 +418,14 @@ export default function ShopModal({ onClose }: Props) {
                                     <div className="text-center text-gray-500 col-span-2 py-8">商品は売り切れのようです...</div>
                                 ) : (
                                     items.map((item) => (
-                                        <div key={item.id} className="bg-gray-800/50 border border-gray-700 p-3 rounded flex justify-between items-center hover:bg-gray-800 transition-colors">
+                                        <div key={item.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-colors">
                                             <div className="flex-1 min-w-0 mr-4">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-gray-200">{item.name}</span>
+                                                    <span className="font-bold text-[#3e2723]">{item.name}</span>
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                                                        item.type === 'skill' ? 'border-blue-900 text-blue-400 bg-blue-900/20' :
-                                                        item.type === 'consumable' ? 'border-green-900 text-green-400 bg-green-900/20' :
-                                                            'border-gray-600 text-gray-400'
+                                                        item.type === 'skill' ? 'border-blue-700 text-blue-700 bg-blue-50' :
+                                                        item.type === 'consumable' ? 'border-green-700 text-green-700 bg-green-50' :
+                                                            'border-[#8b5a2b] text-[#8b5a2b]'
                                                         }`}>{
                                                         item.type === 'skill' ? 'スキル' :
                                                         item.type === 'consumable' ? '消耗品' :
@@ -438,14 +434,14 @@ export default function ShopModal({ onClose }: Props) {
                                                     }</span>
                                                 </div>
                                                 {formatEffectData(item.effect_data) && (
-                                                    <div className="text-xs text-gray-500 mt-1 truncate">
+                                                    <div className="text-xs text-[#8b6f4e] mt-1 truncate">
                                                         {formatEffectData(item.effect_data)}
                                                     </div>
                                                 )}
                                             </div>
                                             <button
                                                 onClick={() => setSelectedItem(item)}
-                                                className="px-3 py-2 rounded flex-shrink-0 whitespace-nowrap text-sm font-bold border border-yellow-700/60 text-yellow-400 hover:bg-yellow-700/20 transition-all"
+                                                className="px-3 py-2 rounded flex-shrink-0 whitespace-nowrap text-sm font-bold border border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10 transition-all"
                                             >
                                                 詳細
                                             </button>
@@ -467,14 +463,14 @@ export default function ShopModal({ onClose }: Props) {
                                 const isUgc = !!(invItem as any).is_ugc;
                                 const sellPrice = isUgc ? 1 : Math.floor(((invItem as any).base_price || 0) / 2);
                                 return (
-                                    <div key={invItem.id} className="bg-gray-800/50 border border-gray-700 p-3 rounded flex justify-between items-center hover:bg-gray-800 transition-colors">
+                                    <div key={invItem.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-colors">
                                         <div className="flex-1 min-w-0 mr-4">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-gray-200">{(invItem as any).name || '不明'}</span>
-                                                <span className="bg-gray-700 text-gray-300 text-[10px] px-1 rounded">x{invItem.quantity}</span>
-                                                {invItem.is_equipped && <span className="bg-yellow-900 text-yellow-500 text-[10px] px-1 rounded border border-yellow-700">E</span>}
+                                                <span className="font-bold text-[#3e2723]">{(invItem as any).name || '不明'}</span>
+                                                <span className="bg-[#a38b6b] text-white text-[10px] px-1 rounded">x{invItem.quantity}</span>
+                                                {invItem.is_equipped && <span className="bg-amber-700 text-amber-200 text-[10px] px-1 rounded border border-amber-600">E</span>}
                                             </div>
-                                            <div className="text-xs text-gray-500 mt-1 truncate">
+                                            <div className="text-xs text-[#8b6f4e] mt-1 truncate">
                                                 下値: {(invItem as any).base_price || 0} G
                                             </div>
                                         </div>
@@ -505,7 +501,7 @@ export default function ShopModal({ onClose }: Props) {
                     )}
                 </div>
 
-                <div className="p-2 border-t border-gray-800 bg-black/40 text-center text-xs text-gray-600">
+                <div className="p-2 border-t-2 border-[#8b5a2b] bg-[#3e2723] text-center text-xs text-[#a38b6b] font-serif">
                     ※ 商品ラインナップは世界情勢によって変化します。
                 </div>
             </div>
