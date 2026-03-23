@@ -140,24 +140,10 @@ export async function GET(req: Request) {
             };
         });
 
-        // [Logic-Expert] rumoredItemsはNeutral以外の拠点のみ表示する。
-        // Neutral（初期拠点）では全アイテムが表示対象外の国家のものばかりになり
-        // 「ぼかし+透過」で大量表示されてしまうため、Neutralでは非表示とする。
-        const rumoredItems = rulingNation === 'Neutral' ? [] : allItems.filter(item => {
-            if (questId) return false;
-            if (isRuined) return false;
-
-            const tags = item.nation_tags || [];
-            if (tags.length === 0 || tags.includes('loc_all')) return false;
-
-            const nationTag = `loc_${rulingNation.toLowerCase()}`;
-            // If it is nation specific but NOT for the current nation, it's a rumored item.
-            return !tags.includes(nationTag);
-        }).map(item => ({
-            ...item,
-            current_price: 0,
-            is_rumored: true
-        }));
+        // [Logic-Expert] rumoredItemsは初回リリースでは常に非表示 (UI側でも描画を除去済み)。
+        // Service Role修正で実際の国家名が返るようになりリグレッションが発生したため、
+        // API側でも確実に空配列を返す。
+        const rumoredItems: any[] = [];
 
 
         return NextResponse.json({
