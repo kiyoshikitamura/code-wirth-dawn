@@ -12,6 +12,13 @@ const JOB_CLASS_JP: Record<string, string> = {
     Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
     Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
     Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
+    Mercenary: '傭兵', Porter: '荷運び', Animal: '動物', Guard: '衛兵',
+    Hunter: '狩人', Samurai: '侍', Miko: '巫女', Ninja: '忍者',
+    Dancer: '踊り子', Lancer: '槍術士', Undead: '不死者', Chef: '料理人',
+    Taoist: '道士', Ghost: '幽霊', Armor: '鎧', Bandit: '山賊',
+    Villager: '村人', Machine: '機械', Monster: '魔獣', Object: '物体',
+    Tactician: '軍師', Gambler: '賭博師', Soldier: '兵士', Slave: '奴隷',
+    Caster: '術師', Summoner: '召喚士', 'Heroic Spirit': '英霊',
 };
 const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
 
@@ -353,27 +360,18 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                 {detail.type === 'npc' && (
                                     <>
                                         {/* ステータスグリッド */}
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">攻撃</div>
-                                                <div className="text-red-400 font-bold font-mono">{detail.data.atk ?? detail.data.stats?.atk ?? '?'}</div>
-                                            </div>
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">防御</div>
-                                                <div className="text-blue-400 font-bold font-mono">{detail.data.def ?? detail.data.stats?.def ?? '?'}</div>
-                                            </div>
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
-                                                <div className="text-green-400 font-bold font-mono">{detail.data.hp ?? detail.data.stats?.hp ?? '?'}</div>
-                                            </div>
+                                        <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700 space-y-1.5">
+                                            <div className="flex justify-between text-xs"><span className="text-gray-500">職種</span><span className="text-gray-200">{toJpJobClass(detail.data.job_class || 'Adventurer')}</span></div>
+                                            <div className="flex justify-between text-xs"><span className="text-gray-500">耐久値</span><span className="text-green-400 font-bold">{detail.data.durability ?? '—'}</span></div>
+                                            <div className="flex justify-between text-xs"><span className="text-gray-500">タイプ</span><span className="text-gray-200">{detail.data.origin_type === 'shadow_active' ? '影の残像' : detail.data.origin_type === 'shadow_heroic' ? '英霊' : '傭兵'}</span></div>
                                         </div>
                                         {/* 所持スキル */}
-                                        {detail.data.signature_deck_preview && detail.data.signature_deck_preview.length > 0 && (
+                                        {detail.data.inject_cards && detail.data.inject_cards.length > 0 && (
                                             <div className="bg-black/30 rounded-lg p-2.5 border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-1.5">所持スキル</div>
+                                                <div className="text-[10px] text-gray-500 mb-1.5">カード</div>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {detail.data.signature_deck_preview.map((card: string, i: number) => (
-                                                        <span key={i} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 text-[10px] rounded border border-gray-700">{card}</span>
+                                                    {detail.data.inject_cards.map((cardId: number, i: number) => (
+                                                        <span key={i} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 text-[10px] rounded border border-gray-700">#{cardId}</span>
                                                     ))}
                                                 </div>
                                             </div>
