@@ -317,7 +317,6 @@ export default function InnPage() {
                 {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
                 {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
                 {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
-                {userProfile && <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || HUB_LOCATION_ID} reputationScore={reputation?.score || 0} />}
 
                 {activeModal === 'workshop' && (
                     <WorkshopModal onClose={() => setActiveModal(null)} />
@@ -370,6 +369,9 @@ export default function InnPage() {
                     <div className="w-32 h-1 bg-slate-800 rounded-full" />
                 </div>
             </div>
+
+            {/* TavernModal - outside game container so fixed positioning works correctly */}
+            {userProfile && <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || HUB_LOCATION_ID} reputationScore={reputation?.score || 0} />}
         </div>
     );
 }
