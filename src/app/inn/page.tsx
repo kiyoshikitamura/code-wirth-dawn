@@ -31,8 +31,7 @@ export default function InnPage() {
     const [loading, setLoading] = useState(true);
 
     // Quest Data State
-    const [normalQuests, setNormalQuests] = useState<any[]>([]);
-    const [specialQuests, setSpecialQuests] = useState<any[]>([]);
+    const [allQuests, setAllQuests] = useState<any[]>([]);
     const [loadingQuests, setLoadingQuests] = useState(false);
 
     // Dynamic Data
@@ -218,8 +217,7 @@ export default function InnPage() {
             const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${userProfile.current_location_id || HUB_LOCATION_ID}`);
             if (res.ok) {
                 const data = await res.json();
-                setNormalQuests(data.normal_quests || []);
-                setSpecialQuests(data.special_quests || []);
+                setAllQuests(data.quests || []);
             }
         } catch (e) {
             console.error("Failed to load quests", e);
@@ -330,8 +328,7 @@ export default function InnPage() {
                         isOpen={true}
                         onClose={() => setActiveModal(null)}
                         userProfile={userProfile}
-                        normalQuests={normalQuests}
-                        specialQuests={specialQuests}
+                        quests={allQuests}
                         loading={loadingQuests}
                         onSelect={(s) => router.push(`/quest/${s.id}`)}
                     />

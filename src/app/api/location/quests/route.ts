@@ -85,7 +85,7 @@ export async function GET(req: Request) {
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabaseServer
             .from('scenarios')
-            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
+            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation, script_data')
             .in('quest_type', ['normal', 'special'])
             .limit(100);
 
@@ -199,28 +199,40 @@ export async function GET(req: Request) {
 
         debug.push(`filtered: special = ${specialQuests.length}, normal = ${normalQuests.length} `);
 
-        // Map DB columns to expected frontend format
-        const mapQuest = (q: any) => ({
-            ...q,
-            // Map rewards json to flat fields if needed, or frontend can handle it.
-            // But QuestBoardModal expects reward_gold.
-            reward_gold: q.rewards?.gold || 0,
-            reward_exp: q.rewards?.exp || 0,
-            impacts: q.impact, // Rename back to impacts for frontend
-        });
+        // Map DB columns to frontend format with difficulty_tier and flavor text
+        const getDifficultyTier = (recLevel: number): 'easy' | 'normal' | 'hard' => {
+            if (recLevel <= 3) return 'easy';
+            if (recLevel <= 10) return 'normal';
+            return 'hard';
+        };
 
-        // 8. Randomize Normal Quests (Pick 6)
-        const shuffled = normalQuests.sort(() => 0.5 - Math.random());
-        const finalNormalQuests = shuffled.slice(0, 6).map(mapQuest);
+        const mapQuest = (q: any) => {
+            const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            return {
+                ...q,
+                reward_gold: q.rewards?.gold || 0,
+                reward_exp: q.rewards?.exp || 0,
+                impacts: q.impact,
+                difficulty_tier: getDifficultyTier(recLevel),
+                short_flavor: q.script_data?.short_description || q.description || '',
+                long_flavor: q.description || q.script_data?.short_description || '',
+                is_ugc: q.slug?.startsWith('ugc_') || false,
+            };
+        };
 
-        // 9. Sort Special Quests (Urgent first)
-        const sortedSpecial = specialQuests.sort((a: any, b: any) =>
-            (b.is_urgent ? 1 : 0) - (a.is_urgent ? 1 : 0)
-        ).map(mapQuest);
+        // 8. Merge all quests, sort: urgent first, then by rec_level
+        const allQuests = [...specialQuests, ...normalQuests]
+            .sort((a: any, b: any) => {
+                if (a.is_urgent !== b.is_urgent) return (b.is_urgent ? 1 : 0) - (a.is_urgent ? 1 : 0);
+                return (a.rec_level || 1) - (b.rec_level || 1);
+            })
+            .map(mapQuest);
 
         return NextResponse.json({
-            special_quests: sortedSpecial,
-            normal_quests: finalNormalQuests,
+            quests: allQuests,
+            // Backward compatibility
+            special_quests: allQuests.filter((q: any) => q.quest_type === 'special'),
+            normal_quests: allQuests.filter((q: any) => q.quest_type === 'normal'),
             debug
         });
 
