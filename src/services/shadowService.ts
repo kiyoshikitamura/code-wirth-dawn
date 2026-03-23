@@ -328,15 +328,29 @@ export class ShadowService {
             }
         }
 
-        // 4. パーティ上限チェック（最大4名）
-        const { count, error: countError } = await this.supabase
+        // 4. 重複雇用チェック（同名 or 同一source_user_id のメンバーが既にパーティにいる場合は拒否）
+        const { data: existingMembers } = await this.supabase
             .from('party_members')
-            .select('*', { count: 'exact', head: true })
+            .select('id, name, source_user_id')
             .eq('owner_id', hirerId)
             .eq('is_active', true);
 
-        if (countError) return { success: false, error: 'Failed to check party size' };
-        if (count !== null && count >= 4) {
+        if (existingMembers && existingMembers.length > 0) {
+            const isDuplicate = existingMembers.some((m: any) => {
+                // Name match
+                if (m.name === shadow.name) return true;
+                // source_user_id match (for player shadows)
+                if (shadow.profile_id && m.source_user_id && m.source_user_id === shadow.profile_id) return true;
+                return false;
+            });
+            if (isDuplicate) {
+                return { success: false, error: 'この冒険者は既に契約済みです。' };
+            }
+        }
+
+        // 5. パーティ上限チェック（最大4名）
+        const partyCount = existingMembers?.length || 0;
+        if (partyCount >= 4) {
             return { success: false, error: 'パーティが満員です（最大4名）。' };
         }
 

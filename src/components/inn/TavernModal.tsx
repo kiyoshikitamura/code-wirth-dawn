@@ -287,7 +287,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 onClick={() => setActiveTab('register')}
                                 className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'register' ? 'bg-[#8b5a2b] text-[#e3d5b8] shadow-inner' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}
                             >
-                                影の登録（準備中）
+                                影の登録
                             </button>
                             {activeTab === 'hire' && (
                                 <button
