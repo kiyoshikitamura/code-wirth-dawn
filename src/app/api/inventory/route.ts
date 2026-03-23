@@ -104,8 +104,7 @@ export async function GET(req: Request) {
                     type,
                     base_price,
                     effect_data,
-                    cost,
-                    image_url
+                    cost
                 )
             `);
 
