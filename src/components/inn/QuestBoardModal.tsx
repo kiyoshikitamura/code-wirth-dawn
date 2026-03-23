@@ -109,10 +109,12 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                             {filteredQuests.map((s: any) => (
                                 <div
                                     key={s.id}
-                                    className={`group flex items-center gap-2 p-2.5 border rounded cursor-pointer transition-all hover:shadow-sm ${s.is_urgent
-                                        ? 'bg-red-50/60 border-red-300/50 hover:border-red-400'
-                                        : 'bg-[#fdfbf7] border-[#c2b280] hover:border-[#a38b6b]'
-                                        }`}
+                                    className={`group flex items-center gap-2 p-2.5 border rounded cursor-pointer transition-all hover:shadow-sm ${(() => {
+                                        const userLevel = userProfile?.level || 1;
+                                        const isDangerous = (s.rec_level || 1) > userLevel + 1;
+                                        if (isDangerous) return 'bg-red-900/10 border-red-400/40 hover:border-red-500';
+                                        return 'bg-[#fdfbf7] border-[#c2b280] hover:border-[#a38b6b]';
+                                    })()}`}
                                     onClick={() => setDetailQuest(s)}
                                 >
                                     {/* Danger Icon */}
@@ -140,13 +142,13 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                         <p className="text-[11px] text-[#8b6f4e] line-clamp-1 mt-0.5">{s.short_flavor}</p>
                                     </div>
 
-                                    {/* Level & Reward */}
-                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#a38b6b] text-white">
+                                    {/* Level & Reward - Fixed Width */}
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        <span className="text-[10px] w-[38px] text-center py-0.5 rounded font-bold bg-[#a38b6b] text-white">
                                             Lv.{s.rec_level || 1}
                                         </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-[#8b5a2b] text-[#e3d5b8]">
-                                            {s.reward_gold}G
+                                        <span className="text-[10px] w-[52px] text-center py-0.5 rounded font-mono bg-[#8b5a2b] text-[#e3d5b8]">
+                                            {s.reward_gold > 0 ? `${s.reward_gold}G` : 'アイテム'}
                                         </span>
                                     </div>
 
