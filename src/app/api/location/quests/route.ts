@@ -85,7 +85,7 @@ export async function GET(req: Request) {
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabaseServer
             .from('scenarios')
-            .select('id, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
+            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
             .in('quest_type', ['normal', 'special'])
             .limit(100);
 
@@ -106,8 +106,9 @@ export async function GET(req: Request) {
 
             const reqs = q.requirements || {};
 
-            // nation_id: 現在地が指定国でなければ非表示
-            if (reqs.nation_id && locationId && reqs.nation_id !== locationId) return false;
+            // nation_id: 現在地が指定国でなければ非表示（メインシナリオは除外: 舞台設定であり現在地制限ではない）
+            const isMainScenario = q.slug && q.slug.startsWith('main_ep');
+            if (!isMainScenario && reqs.nation_id && locationId && reqs.nation_id !== locationId) return false;
 
             // event_trigger: イベントトリガー型は専用イベント発生時のみ表示（未実装のため常に非表示）
             if (reqs.event_trigger) return false;
