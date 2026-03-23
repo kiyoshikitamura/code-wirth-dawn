@@ -126,12 +126,14 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
 
-                console.log("[DEBUG check_possession] Required:", requiredItemId, "Qty:", reqQty);
-                console.log("[DEBUG check_possession] Inventory:", inventory?.map(i => ({ item_id: i.item_id, qty: i.quantity, name: i.name })));
+                if (process.env.NODE_ENV === 'development') {
+                    console.log("[DEBUG check_possession] 必要アイテム:", requiredItemId, "数量:", reqQty);
+                    console.log("[DEBUG check_possession] インベントリ:", inventory?.map(i => ({ item_id: i.item_id, qty: i.quantity, name: i.name })));
+                }
 
                 const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
 
-                console.log("[DEBUG check_possession] hasItem:", hasItem);
+                if (process.env.NODE_ENV === 'development') console.log("[DEBUG check_possession] アイテム所持:", hasItem);
 
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
@@ -142,10 +144,10 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
 
-                console.log("[DEBUG check_equipped] Required:", requiredItemId, "Qty:", reqQty);
+                if (process.env.NODE_ENV === 'development') console.log("[DEBUG check_equipped] 必要アイテム:", requiredItemId, "数量:", reqQty);
                 const hasEquipped = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId) && i.is_equipped).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
 
-                console.log("[DEBUG check_equipped] hasEquipped:", hasEquipped);
+                if (process.env.NODE_ENV === 'development') console.log("[DEBUG check_equipped] 装備済み:", hasEquipped);
 
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
@@ -157,12 +159,14 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
                 const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
 
-                console.log("[DEBUG check_delivery] Required:", requiredItemId, "Qty:", reqQty);
-                console.log("[DEBUG check_delivery] Inventory:", inventory?.map(i => ({ item_id: i.item_id, qty: i.quantity, name: i.name })));
+                if (process.env.NODE_ENV === 'development') {
+                    console.log("[DEBUG check_delivery] 必要アイテム:", requiredItemId, "数量:", reqQty);
+                    console.log("[DEBUG check_delivery] インベントリ:", inventory?.map(i => ({ item_id: i.item_id, qty: i.quantity, name: i.name })));
+                }
 
                 const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
 
-                console.log("[DEBUG check_delivery] hasItem:", hasItem);
+                if (process.env.NODE_ENV === 'development') console.log("[DEBUG check_delivery] アイテム所持:", hasItem);
 
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
@@ -174,7 +178,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             const token = session?.access_token;
                             const userId = useGameStore.getState().userProfile?.id;
 
-                            console.log("[DEBUG check_delivery] Token for consume:", token ? "Present" : "Missing", "Session Error:", error, "Session:", session);
+                            if (process.env.NODE_ENV === 'development') console.log("[DEBUG check_delivery] 認証トークン:", token ? "存在" : "未取得", "セッションエラー:", error);
 
                             const res = await fetch('/api/inventory/consume', {
                                 method: 'POST',
@@ -662,7 +666,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                         </div>
 
                         {/* Future Stops (Hide if destination is Final) */}
-                        {showingTravel.dest !== '帝都カロン' && (
+                        {showingTravel.slug !== 'loc_charon' && (
                             <>
                                 <div className="text-gray-700">
                                     <ArrowRight size={20} />

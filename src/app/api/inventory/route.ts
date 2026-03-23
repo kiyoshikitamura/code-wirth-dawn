@@ -156,7 +156,7 @@ export async function GET(req: Request) {
                     acquired_at: entry.acquired_at,
                     quantity: entry.quantity,
                     is_skill: entry.is_skill,
-                    cost: item.cost || 0,
+                    cost: item.cost || effectData.cost_val || effectData.cost || 0,
                     effect_data: effectData,
                     image_url: item.image_url || null
                 };

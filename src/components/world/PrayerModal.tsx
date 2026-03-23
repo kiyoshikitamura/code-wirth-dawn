@@ -111,17 +111,14 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
             <div className={`bg-[#1a1510] border border-[#a38b6b] max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden ${isPraying ? 'animate-pulse' : ''}`}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-50"><X /></button>
 
-                {/* Visuals & NPC */}
-                <div className="h-48 bg-[url('/backgrounds/temple.jpg')] bg-cover bg-center relative flex items-center justify-center border-b border-[#a38b6b]">
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-[#1a1510]" />
-                    <div className="relative z-10 flex flex-col items-center">
-                        <div className={`w-24 h-24 rounded-full border-4 shadow-[0_0_20px_rgba(255,255,255,0.2)] overflow-hidden mb-3 ${isPraying ? 'border-amber-400 shadow-[0_0_40px_rgba(255,200,0,0.5)] animate-pulse' : 'border-gray-600'}`}>
-                            <img src="/avatars/priest.png" alt="Priest" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = '/avatars/inn_master.png'; }} />
-                        </div>
-                        <h2 className="text-3xl font-serif text-[#e3d5b8] tracking-widest text-center shadow-black drop-shadow-lg">
+                {/* Visuals & Header */}
+                <div className="h-32 bg-[url('/backgrounds/temple.jpg')] bg-cover bg-center relative flex items-end justify-center border-b border-[#a38b6b]">
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-[#1a1510]/90" />
+                    <div className="relative z-10 flex flex-col items-center pb-4">
+                        <h2 className="text-2xl font-serif text-[#e3d5b8] tracking-widest text-center drop-shadow-lg">
                             神殿 - {locationName}
                         </h2>
-                        {isPraying && <div className="text-amber-300 font-serif italic mt-2 animate-pulse">「神よ、我らの声を聞き届けたまえ...」</div>}
+                        {isPraying && <div className="text-amber-300 font-serif italic text-sm animate-pulse">「神よ、我らの声を聞き届けたまえ...」</div>}
                     </div>
                 </div>
 
@@ -166,7 +163,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                                     >
                                         <div className="text-left">
                                             <div className="font-bold text-sm">{t.desc}</div>
-                                            <div className="text-[10px] opacity-70">Tier {t.tier}</div>
+                                            <div className="text-[10px] opacity-70">段階 {t.tier}</div>
                                         </div>
                                         <div className="font-mono font-bold text-lg">
                                             {t.cost.toLocaleString()} G

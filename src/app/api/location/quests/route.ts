@@ -84,7 +84,7 @@ export async function GET(req: Request) {
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabase
             .from('scenarios')
-            .select('id, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
+            .select('id, title, description, short_description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
             .in('quest_type', ['normal', 'special'])
             .limit(100);
 

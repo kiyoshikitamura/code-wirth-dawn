@@ -8,28 +8,40 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids } = body;
 
-        const { user_id } = body; // Expect user_id from client
+        const { user_id } = body; // クライアントから明示的に渡される場合
 
-        // Use authenticated client to enforce RLS
+        // JWT指向の認証クライアントを生成（RLS を必ず通る）
         const client = createAuthClient(req);
 
-        console.log("Init Profile Body:", body);
-        console.log("Init Profile Age Input:", age, typeof age);
+        // JWT Bearer からユーザー ID を補完取得する
+        const { data: { user: jwtUser } } = await client.auth.getUser();
+        const resolvedUserId: string | null = user_id || jwtUser?.id || null;
 
-        // Find the profile to update.
-        let profileId = null;
-
-        if (user_id) {
-            const { data } = await client.from('user_profiles').select('id').eq('id', user_id).maybeSingle();
-            if (data) profileId = data.id;
-        } else {
-            // Fallback for legacy/demo scenarios without explicit user_id
-            const { data: profiles } = await client
-                .from('user_profiles')
-                .select('id')
-                .limit(1);
-            profileId = profiles?.[0]?.id;
+        if (!resolvedUserId) {
+            // [Logic-Expert] 旧仕様の「.limit(1)フォールバック」を廃止。
+            // user_id なし・ JWT なしの場合は安全に 401 で正す。
+            console.error('[POST /api/profile/init] ユーザー ID を特定できません。告み および JWT の両方が未提供です。');
+            return NextResponse.json(
+                { error: 'ユーザー ID が特定できません。再度ログインしてください。' },
+                { status: 401 }
+            );
         }
+
+        if (process.env.NODE_ENV === 'development') {
+            console.log('[Init Profile] resolvedUserId:', resolvedUserId);
+            console.log('[Init Profile] Age Input:', age, typeof age);
+        }
+
+        // プロファイルを検索（再誕フローの場合は既存プロファイルがあることがある）
+        let profileId: string | null = null;
+
+        const { data: existingProfile } = await client
+            .from('user_profiles')
+            .select('id')
+            .eq('id', resolvedUserId)
+            .maybeSingle();
+
+        if (existingProfile) profileId = existingProfile.id;
 
         let updates: any = {
             name: title_name, // User Input -> Name
@@ -68,18 +80,10 @@ export async function POST(req: Request) {
         }
 
         if (!profileId) {
-            // INSERT Mode
-            console.log("No profile found. Creating new profile...");
-            // We need a UUID. Supabase might gen it or we gen it.
-            // But we need auth.uid() usually.
-            // Since this is admin bypass/local mode, we can generate a random UUID or use a fixed one if auth is mocked.
-            // We'll let Postgres gen it if column is default, but typically user_profiles.id is linked to auth.users.id.
-            // If we insert here with random UUID, it won't match any auth user.
-            // For "Demo/Local", this is fine.
-            // If user_id provided, ensure we create it with that ID (linking to Auth)
-            if (user_id) {
-                updates.id = user_id;
-            }
+            // INSERT モード
+            console.log('[Init Profile] プロファイルが存在しないため新規作成します... ID:', resolvedUserId);
+            // resolvedUserId で必ず登録する（auth.users.idと連携させる）
+            updates.id = resolvedUserId;
 
             const { data: newProfile, error: insertError } = await client
                 .from('user_profiles')

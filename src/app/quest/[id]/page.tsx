@@ -83,17 +83,30 @@ export default function QuestPage() {
         }
         async function loadScenario() {
             try {
-                // Fetch specific scenario
-                // Using the existing scenarios API which returns an array
-                const res = await fetch(`/api/scenarios?id=${id}`, { cache: 'no-store' });
+                // [Logic-Expert] Quest Not Found 修正:
+                // scenarios API は認証必須。トークンなしでは 401 → scenarios:[] になるため、
+                // Supabase セッションから JWT を取得してリクエストヘッダーに付与する。
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+
+                const headers: HeadersInit = { 'Cache-Control': 'no-store' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(`/api/scenarios?id=${id}`, {
+                    cache: 'no-store',
+                    headers
+                });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.scenarios && data.scenarios.length > 0) {
                         setScenario(data.scenarios[0]);
                     } else {
-                        console.error("Scenario not found");
+                        console.error("Scenario not found for id:", id, "Response:", data);
                         // Fallback or error UI
                     }
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("Scenario API error:", res.status, errData);
                 }
             } catch (e) {
                 console.error("Failed to load scenario", e);

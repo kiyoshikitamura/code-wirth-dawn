@@ -559,10 +559,35 @@ export const useGameStore = create<GameState>()(
                     await get().fetchHubState();
                     const { userProfile, hubState } = get();
 
-                    let targetLocationName = userProfile?.locations?.name || '名もなき旅人の拠所';
+                    // [Logic-Expert] 初期拠点バグ修正:
+                    // hubState.is_in_hub が true の場合のみハブ名を使用する。
+                    // それ以外は current_location_id から実際の拠点名をDBから取得する。
+                    // 旧実装は hubState.is_in_hub が false でも locations?.name が null の場合に
+                    // 「名もなき旅人の拠所」をデフォルト値にしていたため、初期表示でズレが生じていた。
+                    let targetLocationName = '名もなき旅人の拠所'; // フォールバック
 
                     if (hubState?.is_in_hub) {
+                        // ハブ内にいる場合は明示的にハブ名を使用
                         targetLocationName = '名もなき旅人の拠所';
+                    } else if (userProfile?.current_location_id) {
+                        // current_location_idがある場合はDBから実際の拠点名を取得
+                        if (userProfile.locations?.name) {
+                            // JOINされたlocation情報がある場合はそれを優先
+                            targetLocationName = userProfile.locations.name;
+                        } else {
+                            // JOINがない場合はlocationsテーブルから直接取得（ID or slug で検索）
+                            const locId = userProfile.current_location_id;
+                            const { data: locData } = await supabase
+                                .from('locations')
+                                .select('name')
+                                .or(`id.eq.${locId},slug.eq.${locId}`)
+                                .maybeSingle();
+                            if (locData?.name) {
+                                targetLocationName = locData.name;
+                            }
+                        }
+                    } else if (userProfile?.locations?.name) {
+                        targetLocationName = userProfile.locations.name;
                     }
 
                     console.log("Fetching World State for:", targetLocationName);
@@ -647,20 +672,25 @@ export const useGameStore = create<GameState>()(
                         ? `/api/profile?profileId=${selectedProfileId}`
                         : '/api/profile';
 
-                    const res = await fetch(url, { cache: 'no-store' });
+                    // [Logic-Expert] Bearer\u30c8\u30fc\u30af\u30f3\u3092\u4ed8\u4e0e\u3057\u3066\u8a8d\u8a3c\u3092\u901a\u3059\u3002
+                    // \u4fee\u6b63\u3057\u305f /api/profile \u306f JWT \u306a\u3057\u306e\u30ea\u30af\u30a8\u30b9\u30c8\u306b 401 \u3092\u8fd4\u3059\u305f\u3081\u3001
+                    // Supabase \u30bb\u30c3\u30b7\u30e7\u30f3\u304b\u3089\u30c8\u30fc\u30af\u30f3\u3092\u53d6\u5f97\u3057\u3066\u5fc5\u305a\u9001\u4fe1\u3059\u308b\u3002
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+
+                    const headers: HeadersInit = { 'Cache-Control': 'no-store' };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    const res = await fetch(url, { cache: 'no-store', headers });
                     if (res.ok) {
                         const profile = await res.json();
-                        set({ userProfile: profile, gold: profile.gold }); // Sync gold
-                        // If we didn't have an ID but got one (e.g. from auth or fallback), store it?
-                        // Actually, for consistency, let's keep selectedProfileId as the "Frontend Authority".
-                        // If it's null, we accept whatever the API gives us, but maybe we shouldn't auto-set it 
-                        // to avoid locking onto a potentially wrong "latest" profile unless we are sure.
-                        // For now, only explicit set (like from TitlePage) drives this.
+                        set({ userProfile: profile, gold: profile.gold });
                     }
                 } catch (e) {
                     console.error("Failed to fetch profile", e);
                 }
             },
+
 
             fetchHubState: async () => {
                 try {
@@ -695,7 +725,9 @@ export const useGameStore = create<GameState>()(
             fetchInventory: async () => {
                 try {
                     const { userProfile } = get();
+                    const { data: { session } } = await supabase.auth.getSession();
                     const headers: HeadersInit = {};
+                    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
                     if (userProfile?.id) headers['x-user-id'] = userProfile.id;
 
                     const res = await fetch('/api/inventory', {
@@ -721,7 +753,9 @@ export const useGameStore = create<GameState>()(
                     set({ inventory: newInventory });
 
                     const { userProfile } = get();
+                    const { data: { session } } = await supabase.auth.getSession();
                     const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
                     if (userProfile?.id) headers['x-user-id'] = userProfile.id;
 
                     await fetch('/api/inventory', {
@@ -732,7 +766,6 @@ export const useGameStore = create<GameState>()(
                     });
                 } catch (e) {
                     console.error("Failed to toggle equip", e);
-                    // Revert on error? For prototype, maybe skip
                 }
             },
 

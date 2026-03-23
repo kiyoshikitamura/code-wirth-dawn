@@ -53,15 +53,17 @@ export default function BattleView({ onBattleEnd }: BattleViewProps) {
 
     // We only initialize if direct access (not from Pub attack) or if hand is empty (bug recovery)
     useEffect(() => {
-        console.log("[BattlePage] Mounted. Enemy:", battleState.enemy, "Hand:", hand.length);
+        if (process.env.NODE_ENV === 'development') {
+            console.log("[BattlePage] Mounted. Enemy:", battleState.enemy, "Hand:", hand.length);
+        }
         fetchUserProfile();
 
-        // Only initialize fallback if hydrated and still no enemy
+        // [Clean-Expert] ShadowWolfダミーバトルのフォールバックを削除。
+        // 敗がない場合はインニへリダイレクトするが、戦闘画面多重加載で区画が出ることがあるため最小限のアニメーション値数待ち。
         const hydrated = useGameStore.persist.hasHydrated();
         if (hydrated && !battleState.enemy) {
-            console.log("[BattlePage] Initializing Battle (Fallback)...");
-            console.warn("No enemy found in state. Loading dummy battle.");
-            initializeBattle();
+            console.warn('[BattlePage] 敗がためいません。/inn に戻ります。');
+            router.push('/inn');
         }
     }, []);
 
@@ -291,13 +293,15 @@ export default function BattleView({ onBattleEnd }: BattleViewProps) {
                     </button>
                 </div>
 
-                {/* Hand Cards (Fan Layout) */}
-                <div className="absolute bottom-0 inset-x-0 h-48 flex justify-center items-end pb-4 pt-10 px-2 overflow-visible">
+                {/* Hand Cards (Fan Layout) — モバイル最適化 */}
+                <div className="absolute bottom-0 inset-x-0 h-52 flex justify-center items-end pb-2 overflow-visible">
                     {hand.map((card, idx) => {
                         const centerIndex = (hand.length - 1) / 2;
                         const offset = idx - centerIndex;
-                        const rotation = offset * 8; // degrees
-                        const translateY = Math.abs(offset) * 12; // pixels to push down edges
+                        const rotation = offset * 8;
+                        const translateY = Math.abs(offset) * 12;
+                        // [UIUX-Expert] 手札枚数に応じてオーバーラップ量を動的に調整
+                        const overlapPx = hand.length > 4 ? -16 : hand.length > 2 ? -12 : -8;
                         const apCost = card.ap_cost ?? 1;
                         const isActivePlayable = battleState.current_ap >= apCost;
 
@@ -312,10 +316,11 @@ export default function BattleView({ onBattleEnd }: BattleViewProps) {
                                 key={idx}
                                 onClick={() => handleCardClick(idx)}
                                 disabled={battleState.isVictory || battleState.isDefeat || !isActivePlayable}
-                                className={`relative group origin-bottom transition-all duration-300 w-24 sm:w-28 flex-shrink-0 -ml-10 sm:-ml-8 first:ml-0
+                                className={`relative group origin-bottom transition-all duration-300 w-20 sm:w-28 flex-shrink-0 first:ml-0
                                     ${!isActivePlayable ? 'opacity-40 grayscale pointer-events-none' : 'hover:-translate-y-8 hover:scale-105'}
                                  `}
                                 style={{
+                                    marginLeft: idx === 0 ? 0 : overlapPx,
                                     transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
                                     zIndex: idx
                                 }}

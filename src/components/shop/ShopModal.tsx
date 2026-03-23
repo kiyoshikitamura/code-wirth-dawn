@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ShoppingBag, Coins, Lock, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
+
 
 const playCreepyAudio = () => {
     try {
@@ -32,6 +34,8 @@ interface ShopItem {
     effect_data: any;
     is_rumored?: boolean;
     nation_tags?: string[];
+    image_url?: string;
+    description?: string;
 }
 
 interface ShopMeta {
@@ -52,10 +56,39 @@ export default function ShopModal({ onClose }: Props) {
     const [loading, setLoading] = useState(true);
     const [purchasing, setPurchasing] = useState<string | null>(null); // itemId being bought/sold
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
+    const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null); // 詳細ポップアップ用
 
     useEffect(() => {
         fetchShop();
     }, []);
+
+    /**
+     * effect_data (JSONB) から人間が読める効果テキストを生成する。
+     * 例: { heal: 50 } -> "HP +50回復"
+     *      { power: 20, type: "attack" } -> "攻撃力 +20"
+     *      { description: "テキスト" } -> "テキスト"
+     */
+    const formatEffectData = (effectData: any): string => {
+        if (!effectData || typeof effectData !== 'object' || Object.keys(effectData).length === 0) {
+            return '';
+        }
+        // descriptionフィールドが最優先
+        if (effectData.description) return String(effectData.description);
+
+        const parts: string[] = [];
+        if (effectData.heal != null)  parts.push(`HP +${effectData.heal}回復`);
+        if (effectData.mp_heal != null) parts.push(`MP +${effectData.mp_heal}回復`);
+        if (effectData.power != null && effectData.power > 0) parts.push(`威力 ${effectData.power}`);
+        if (effectData.atk_bonus != null) parts.push(`ATK +${effectData.atk_bonus}`);
+        if (effectData.def_bonus != null) parts.push(`DEF +${effectData.def_bonus}`);
+        if (effectData.duration != null) parts.push(`${effectData.duration}ターン持続`);
+        if (effectData.effect != null) parts.push(String(effectData.effect));
+        if (effectData.status != null) parts.push(`状態: ${effectData.status}`);
+        if (effectData.effect_id != null) parts.push(`付与: ${effectData.effect_id}`);
+        if (effectData.max_hp_bonus != null) parts.push(`最大HP +${effectData.max_hp_bonus}`);
+
+        return parts.length > 0 ? parts.join(' / ') : '';
+    };
 
 
     // Helper to get token
@@ -219,9 +252,80 @@ export default function ShopModal({ onClose }: Props) {
     };
 
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-gray-900 border border-gray-700 w-full max-w-4xl h-[80vh] flex flex-col rounded-lg shadow-2xl relative overflow-hidden">
+    // [UIUX-Expert] createPortalでdocument.body直下にレンダリング。
+    // innのmax-w-[390px]+overflow-y-autoコンテナがCSSスタッキングコンテキストを
+    // 形成してfixed positionを閉じ込めていた問題を根本解決する。
+
+    // アイテム詳細ポップアップ
+    const renderItemDetail = () => {
+        if (!selectedItem) return null;
+        const canBuy = gold >= (selectedItem.current_price as number);
+        const typeLabel = selectedItem.type === 'skill' ? 'スキル' : selectedItem.type === 'consumable' ? '消耗品' : selectedItem.type === 'weapon' ? '武器' : selectedItem.type === 'armor' ? '防具' : selectedItem.type;
+        const typeBorder = selectedItem.type === 'skill' ? 'border-blue-600' : selectedItem.type === 'consumable' ? 'border-green-600' : 'border-gray-600';
+        return createPortal(
+            <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
+                <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
+                    {/* アイテムヘッダー */}
+                    <div className="bg-gray-800/80 p-5 flex items-center gap-4 border-b border-gray-700">
+                        <div className="w-16 h-16 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {selectedItem.image_url
+                                ? <img src={selectedItem.image_url} alt={selectedItem.name} className="w-full h-full object-cover" />
+                                : <span className="text-3xl">{selectedItem.type === 'skill' ? '⚡' : selectedItem.type === 'consumable' ? '✨' : '⚔️'}</span>
+                            }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-lg font-bold text-white truncate">{selectedItem.name}</h3>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBorder} text-gray-300 bg-gray-800 flex-shrink-0`}>{typeLabel}</span>
+                            </div>
+                            <div className="text-yellow-400 font-mono font-bold text-lg">{(selectedItem.current_price as number).toLocaleString()} G</div>
+                        </div>
+                        <button onClick={() => setSelectedItem(null)} className="text-gray-500 hover:text-white flex-shrink-0 p-1">✕</button>
+                    </div>
+                    {/* 効果・詳細 */}
+                    <div className="p-5 space-y-4">
+                        {formatEffectData(selectedItem.effect_data) && (
+                            <div className="bg-gray-800/60 rounded-lg p-3 border border-gray-700">
+                                <div className="text-xs text-gray-500 mb-1">効果</div>
+                                <div className="text-sm text-gray-200">{formatEffectData(selectedItem.effect_data)}</div>
+                            </div>
+                        )}
+                        {(selectedItem.description || selectedItem.effect_data?.flavor_text) && (
+                            <div className="bg-amber-950/20 rounded-lg p-3 border border-amber-900/30">
+                                <p className="text-xs text-amber-400/80 italic leading-relaxed">
+                                    「{selectedItem.description || selectedItem.effect_data?.flavor_text}」
+                                </p>
+                            </div>
+                        )}
+                        <div className="flex gap-3 pt-1">
+                            <button
+                                onClick={() => setSelectedItem(null)}
+                                className="flex-1 py-2.5 border border-gray-700 text-gray-400 hover:text-white text-sm rounded-lg transition-colors"
+                            >
+                                閉じる
+                            </button>
+                            <button
+                                onClick={async () => { await handleBuy(selectedItem); setSelectedItem(null); }}
+                                disabled={!canBuy || !!purchasing}
+                                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                                    !canBuy
+                                        ? 'bg-gray-700 text-gray-500 border border-gray-600 cursor-not-allowed'
+                                        : 'bg-yellow-600 hover:bg-yellow-500 text-black border border-yellow-500 shadow-lg'
+                                }`}
+                            >
+                                {purchasing ? '購入中...' : !canBuy ? '資金不足' : `購入する (${(selectedItem.current_price as number).toLocaleString()} G)`}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        );
+    };
+
+    const mainContent = createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-gray-900 border border-gray-700 w-full max-w-4xl h-[85dvh] flex flex-col rounded-lg shadow-2xl relative overflow-hidden">
 
                 {/* Header */}
                 <div className={`p-4 border-b flex justify-between items-center ${meta?.prosperity === 1 ? 'bg-red-950/40 border-red-900' : 'bg-black/40 border-gray-800'}`}>
@@ -229,15 +333,15 @@ export default function ShopModal({ onClose }: Props) {
                         <ShoppingBag className={`w-6 h-6 ${meta?.prosperity === 1 ? 'text-red-500' : 'text-yellow-500'}`} />
                         <div>
                             <h2 className={`text-xl font-bold ${meta?.prosperity === 1 ? 'text-red-400 font-serif tracking-widest' : 'text-gray-100'}`}>
-                                {meta?.prosperity === 1 ? '闇市 (Black Market)' : 'Marketplace'}
+                                {meta?.prosperity === 1 ? '闇市' : '道具屋'}
                             </h2>
                             {meta && (
                                 <div className="flex items-center gap-2 text-xs">
-                                    <span className="text-gray-400">Ruling: {meta.ruling_nation}</span>
+                                    <span className="text-gray-400">統治: {meta.ruling_nation}</span>
                                     {meta.inflation > 1.0 && (
                                         <span className="text-red-400 flex items-center gap-1 font-bold animate-pulse">
                                             <AlertTriangle className="w-3 h-3" />
-                                            Inflation x{meta.inflation.toFixed(1)}
+                                            物価高 x{meta.inflation.toFixed(1)}
                                         </span>
                                     )}
                                 </div>
@@ -258,15 +362,15 @@ export default function ShopModal({ onClose }: Props) {
                 <div className="flex border-b border-gray-800 bg-black/20">
                     <button
                         onClick={() => setMode('buy')}
-                        className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${mode === 'buy' ? 'bg-yellow-900/20 text-yellow-500 border-b-2 border-yellow-500' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-1 py-3 text-sm font-bold tracking-wider transition-colors ${mode === 'buy' ? 'bg-yellow-900/20 text-yellow-500 border-b-2 border-yellow-500' : 'text-gray-500 hover:text-gray-300'}`}
                     >
-                        Buy
+                        購入
                     </button>
                     <button
                         onClick={() => setMode('sell')}
-                        className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${mode === 'sell' ? 'bg-blue-900/20 text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'}`}
+                        className={`flex-1 py-3 text-sm font-bold tracking-wider transition-colors ${mode === 'sell' ? 'bg-blue-900/20 text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'}`}
                     >
-                        Sell
+                        売却
                     </button>
                 </div>
 
@@ -310,10 +414,10 @@ export default function ShopModal({ onClose }: Props) {
                                         </button>
                                     </div>
                                 </div>
-                            ) : (
+                                ) : (
                                 // NORMAL BUY LAYOUT
                                 loading ? (
-                                    <div className="text-center text-gray-500 col-span-2 py-8">Loading wares...</div>
+                                    <div className="text-center text-gray-500 col-span-2 py-8">商品を読み込み中...</div>
                                 ) : items.length === 0 ? (
                                     <div className="text-center text-gray-500 col-span-2 py-8">商品は売り切れのようです...</div>
                                 ) : (
@@ -322,72 +426,39 @@ export default function ShopModal({ onClose }: Props) {
                                             <div className="flex-1 min-w-0 mr-4">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-bold text-gray-200">{item.name}</span>
-                                                    <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${item.type === 'skill' ? 'border-blue-900 text-blue-400 bg-blue-900/20' :
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                                        item.type === 'skill' ? 'border-blue-900 text-blue-400 bg-blue-900/20' :
                                                         item.type === 'consumable' ? 'border-green-900 text-green-400 bg-green-900/20' :
                                                             'border-gray-600 text-gray-400'
-                                                        }`}>{item.type}</span>
+                                                        }`}>{
+                                                        item.type === 'skill' ? 'スキル' :
+                                                        item.type === 'consumable' ? '消耗品' :
+                                                        item.type === 'weapon' ? '武器' :
+                                                        item.type === 'armor' ? '防具' : item.type
+                                                    }</span>
                                                 </div>
-                                                <div className="text-xs text-gray-500 mt-1 truncate">
-                                                    {JSON.stringify(item.effect_data)}
-                                                </div>
+                                                {formatEffectData(item.effect_data) && (
+                                                    <div className="text-xs text-gray-500 mt-1 truncate">
+                                                        {formatEffectData(item.effect_data)}
+                                                    </div>
+                                                )}
                                             </div>
                                             <button
-                                                onClick={() => handleBuy(item)}
-                                                disabled={purchasing === item.id || gold < (item.current_price as number)}
-                                                className={`px-4 py-2 rounded flex items-center gap-2 min-w-[100px] justify-center transition-all ${gold < (item.current_price as number)
-                                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed border border-gray-600'
-                                                    : 'bg-yellow-700 hover:bg-yellow-600 text-white border border-yellow-600 shadow-lg hover:translate-y-[-2px]'
-                                                    }`}
+                                                onClick={() => setSelectedItem(item)}
+                                                className="px-3 py-2 rounded flex-shrink-0 whitespace-nowrap text-sm font-bold border border-yellow-700/60 text-yellow-400 hover:bg-yellow-700/20 transition-all"
                                             >
-                                                {purchasing === item.id ? (
-                                                    <span className="animate-spin text-xl">⟳</span>
-                                                ) : (
-                                                    <>
-                                                        <span className="font-mono">{item.current_price}</span>
-                                                        <span className="text-xs">G</span>
-                                                    </>
-                                                )}
+                                                詳細
                                             </button>
                                         </div>
                                     ))
                                 )
                             )}
 
-                            {/* RUMORED ITEMS */}
-                            {rumoredItems.length > 0 && meta?.prosperity !== 1 && (
-                                <div className="col-span-2 mt-8 mb-4">
-                                    <h3 className="text-gray-500 font-bold border-b border-gray-800 pb-2 mb-4 flex items-center justify-between">
-                                        <span>遠方から伝わる秘伝の噂...</span>
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {rumoredItems.map((item) => {
-                                            let nationHint = "何処かの国";
-                                            if (item.nation_tags?.includes('loc_roland')) nationHint = "聖帝国ローラン";
-                                            if (item.nation_tags?.includes('loc_karyu')) nationHint = "華龍神朝";
-                                            if (item.nation_tags?.includes('loc_yato')) nationHint = "夜刀神国";
-                                            if (item.nation_tags?.includes('loc_markand')) nationHint = "砂塵王国マルカンド";
 
-                                            return (
-                                                <div key={item.id} className="bg-gray-900 border border-gray-800 p-3 rounded flex justify-between items-center opacity-50 grayscale hover:grayscale-0 transition-all select-none relative overflow-hidden">
-                                                    <div className="flex-1 min-w-0 mr-4 blur-[2px]">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-gray-400">{item.name.replace(/：.*/, '：謎の術')}</span>
-                                                        </div>
-                                                        <div className="text-xs text-gray-600 mt-1 truncate">
-                                                            強力な霊力を帯びている...
-                                                        </div>
-                                                    </div>
-                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                        <span className="text-amber-500/80 font-bold text-sm bg-black/50 px-3 py-1 rounded drop-shadow-md">
-                                                            {nationHint}の首都でのみ入手可能
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
+                        {/* [UIUX-Expert] rumoredItemsセクションは初回リリースでは非表示。
+                            国家別アイテムの「透過ぼかし表示」が通常アイテムと混在し
+                            UX上の混乱を招いていたため除去。国家遷移後に再検討する。 */}
+
                         </>
                     ) : (
                         // SELL MODE
@@ -404,7 +475,7 @@ export default function ShopModal({ onClose }: Props) {
                                                 {invItem.is_equipped && <span className="bg-yellow-900 text-yellow-500 text-[10px] px-1 rounded border border-yellow-700">E</span>}
                                             </div>
                                             <div className="text-xs text-gray-500 mt-1 truncate">
-                                                Base: {(invItem as any).base_price || 0} G
+                                                下値: {(invItem as any).base_price || 0} G
                                             </div>
                                         </div>
                                         <button
@@ -419,7 +490,7 @@ export default function ShopModal({ onClose }: Props) {
                                                 <span className="animate-spin text-xl">⟳</span>
                                             ) : (
                                                 <>
-                                                    <span className="text-xs">Sell</span>
+                                                    <span className="text-xs">売却</span>
                                                     <span className="font-mono">{sellPrice}</span>
                                                     <span className="text-xs">G</span>
                                                 </>
@@ -438,6 +509,14 @@ export default function ShopModal({ onClose }: Props) {
                     ※ 商品ラインナップは世界情勢によって変化します。
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
+    );
+
+    return (
+        <>
+            {renderItemDetail()}
+            {mainContent}
+        </>
     );
 }

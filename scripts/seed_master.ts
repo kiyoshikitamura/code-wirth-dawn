@@ -393,6 +393,7 @@ async function main() {
             // Let's store them in `conditions` JSONB for now or `requirements`.
             // Normal Quests: Store min/max props in `conditions` (existing column)
             conditions: type === 'normal' ? {
+                location_tags: location_tags.length > 0 ? location_tags : undefined,
                 min_prosperity: r.min_prosperity ? Number(r.min_prosperity) : undefined,
                 max_prosperity: r.max_prosperity ? Number(r.max_prosperity) : undefined
             } : {}

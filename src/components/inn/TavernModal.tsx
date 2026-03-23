@@ -21,6 +21,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [reportTarget, setReportTarget] = useState<ShadowSummary | null>(null);
     const [reportReason, setReportReason] = useState('');
     const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+    const [selectedShadow, setSelectedShadow] = useState<ShadowSummary | null>(null); // NPC詳細ポップアップ用
 
     useEffect(() => {
         if (isOpen) {
@@ -30,6 +31,17 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             }
         }
     }, [isOpen, activeTab, locationId]);
+
+    // job_class を日本語に変換するマップ
+    const JOB_CLASS_JP: Record<string, string> = {
+        Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
+        Ranger: '狩人', Scout: '斥候', Archer: '弓使い', Thief: '盗賊', Rogue: '遊撃士',
+        Mage: '魔法使い', Wizard: '魔術師', Sorcerer: '術師', Warlock: '呪術師',
+        Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
+        Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
+        Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
+    };
+    const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
 
     const fetchPartyData = async () => {
         try {
@@ -73,19 +85,30 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
         setHireStatus('雇用処理中...');
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch('/api/tavern/hire', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+                },
                 body: JSON.stringify({ user_id: userProfile.id, shadow })
             });
-            const data = await res.json();
 
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                alert(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
+                setHireStatus(null);
+                return;
+            }
+
+            const data = await res.json();
             if (data.success) {
                 alert('雇用契約が成立しました！');
-                fetchPartyData(); // Update party list
-                fetchShadows(); // Refresh tavern list to remove hired member
+                fetchPartyData();
+                fetchShadows();
             } else {
-                alert(`エラー: ${data.error}`);
+                alert(`エラー: ${data.error || '不明なエラー'}`);
             }
         } catch (e) {
             alert('通信エラーが発生しました');
@@ -128,7 +151,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     // Helper to render PartyMember as Shadow Card (Unified Look)
     const renderPartyMemberCard = (member: PartyMember) => (
         <div key={`party-${member.id}`} className="relative p-4 border border-blue-900/50 bg-blue-950/20 group">
-            <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold">JOINED</div>
+            <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold">同行中</div>
 
             <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-3">
@@ -141,7 +164,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     </div>
                     <div>
                         <div className="text-lg font-bold text-blue-200">{member.name}</div>
-                        <div className="text-xs text-blue-400">{member.job_class}</div>
+                        <div className="text-xs text-blue-400">{toJpJobClass(member.job_class)}</div>
                     </div>
                 </div>
                 <div className="text-right">
@@ -170,6 +193,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     if (!isOpen) return null;
 
     return (
+        <>
         <div className="fixed inset-0 z-[60] flex justify-center items-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
             <div className="bg-[#1a0f0a] border border-[#5c3a21] rounded shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col relative overflow-hidden">
                 {/* Header */}
@@ -181,7 +205,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             </svg>
                         </div>
                         <div>
-                            <h2 className="text-xl font-serif font-bold text-[#e6ccb2]">Tavern (酒場)</h2>
+                            <h2 className="text-xl font-serif font-bold text-[#e6ccb2]">酒場</h2>
                             <div className="text-xs text-[#d4a373] mt-0.5">冒険者の集う喧騒の場所</div>
                         </div>
                     </div>
@@ -265,16 +289,16 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         <div className="flex border-b border-[#a38b6b]/20 bg-[#0d1117]/50">
                             <button
                                 onClick={() => setActiveTab('hire')}
-                                className={`flex-1 p-3 text-center transition-colors font-bold tracking-wider ${activeTab === 'hire' ? 'bg-[#a38b6b]/20 text-[#e3d5b8] border-b-2 border-[#a38b6b]' : 'text-gray-500 hover:text-gray-300'}`}
+                                className={`flex-1 p-3 text-center transition-colors font-bold tracking-wider whitespace-nowrap text-sm ${activeTab === 'hire' ? 'bg-[#a38b6b]/20 text-[#e3d5b8] border-b-2 border-[#a38b6b]' : 'text-gray-500 hover:text-gray-300'}`}
                             >
                                 傭兵を雇う
                             </button>
-                            <button
-                                onClick={() => setActiveTab('register')}
-                                className={`flex-1 p-3 text-center transition-colors font-bold tracking-wider ${activeTab === 'register' ? 'bg-[#a38b6b]/20 text-[#e3d5b8] border-b-2 border-[#a38b6b]' : 'text-gray-500 hover:text-gray-300'}`}
-                            >
-                                影の登録（準備中）
-                            </button>
+                        <button
+                            onClick={() => setActiveTab('register')}
+                            className={`flex-1 p-3 text-center transition-colors font-bold tracking-wider text-sm whitespace-nowrap ${activeTab === 'register' ? 'bg-[#a38b6b]/20 text-[#e3d5b8] border-b-2 border-[#a38b6b]' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                            影の登録（準備中）
+                        </button>
 
                             {activeTab === 'hire' && (
                                 <button
@@ -348,13 +372,13 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             )}
 
                                             {!isHeroic && shadow.subscription_tier === 'premium' && (
-                                                <div className="absolute top-0 right-0 bg-yellow-600 text-black text-[10px] px-2 py-0.5 font-bold z-10">LEGEND</div>
+                                                <div className="absolute top-0 right-0 bg-yellow-600 text-black text-[10px] px-2 py-0.5 font-bold z-10">伝説</div>
                                             )}
                                             {!isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && (
-                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10">HERO</div>
+                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10">傑出</div>
                                             )}
                                             {!isHeroic && shadow.origin_type === 'system_mercenary' && (
-                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10">OFFICIAL</div>
+                                                <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 font-bold z-10">公式</div>
                                             )}
 
                                             <div className="flex justify-between items-start mb-2 relative z-10">
@@ -368,7 +392,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                     </div>
                                                     <div>
                                                         <div className="text-lg font-bold text-[#e3d5b8]">{shadow.name}</div>
-                                                        <div className="text-xs text-gray-400">Lv.{shadow.level} {shadow.job_class}</div>
+                                                        <div className="text-xs text-gray-400">Lv.{shadow.level} {toJpJobClass(shadow.job_class)}</div>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
@@ -396,7 +420,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             {/* Deck Preview */}
                                             {shadow.signature_deck_preview.length > 0 && (
                                                 <div className="mb-4">
-                                                    <div className="text-[10px] text-gray-500 mb-1">SIGNATURE CARDS</div>
+                                                    <div className="text-[10px] text-gray-500 mb-1">所持スキル</div>
                                                     <div className="flex gap-1 flex-wrap">
                                                         {shadow.signature_deck_preview.map((card, i) => (
                                                             <span key={i} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 text-[10px] rounded border border-gray-600">
@@ -408,17 +432,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             )}
 
                                             <button
-                                                onClick={() => handleHire(shadow)}
-                                                disabled={!!hireStatus || userProfile.gold < shadow.contract_fee || currentParty.length >= 4}
-                                                className={`w-full py-2 flex items-center justify-center gap-2 border transition-colors
-                                                    ${currentParty.length >= 4
-                                                        ? 'border-gray-700 text-gray-600 cursor-not-allowed bg-black/50'
-                                                        : userProfile.gold < shadow.contract_fee
-                                                            ? 'border-red-900/50 text-red-700 cursor-not-allowed'
-                                                            : 'border-[#a38b6b] text-[#a38b6b] hover:bg-[#a38b6b] hover:text-black'}`}
+                                                onClick={() => setSelectedShadow(shadow)}
+                                                className="w-full py-2 flex items-center justify-center gap-2 border border-[#a38b6b] text-[#a38b6b] hover:bg-[#a38b6b]/20 transition-colors font-bold text-sm whitespace-nowrap"
                                             >
                                                 <UserPlus size={16} />
-                                                {currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < shadow.contract_fee ? '資金不足' : '契約を結ぶ'}
+                                                詳細を見る
                                             </button>
                                         </div>
                                     );
@@ -436,7 +454,91 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         </div>
                     </>
                 )}
-            </div>
         </div>
+        </div>
+
+        {/* NPC詳細ポップアップ */}
+        {(() => { const ss = selectedShadow; if (!ss) return null; return (
+            <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
+                <div className="bg-[#1a0f0a] border border-[#5c3a21] w-full max-w-md rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                    {/* ヘッダー */}
+                    <div className="bg-[#2c1a0f] p-5 flex items-center gap-4 border-b border-[#5c3a21]">
+                        <div className="w-16 h-16 rounded-full bg-gray-800 overflow-hidden border-2 border-[#a38b6b] flex items-center justify-center flex-shrink-0">
+                            {selectedShadow.npc_image_url || selectedShadow.icon_url || selectedShadow.image_url
+                                ? <img src={selectedShadow.npc_image_url || selectedShadow.icon_url || selectedShadow.image_url} alt={selectedShadow.name} className="w-full h-full object-cover" />
+                                : <span className="text-2xl font-bold text-[#a38b6b]">{selectedShadow.name[0]}</span>
+                            }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-lg font-bold text-[#e3d5b8] truncate">{selectedShadow.name}</div>
+                            <div className="text-sm text-[#a38b6b]">Lv.{selectedShadow.level} {toJpJobClass(selectedShadow.job_class)}</div>
+                            <div className="text-yellow-400 font-mono font-bold mt-1">{selectedShadow.contract_fee.toLocaleString()} G</div>
+                        </div>
+                        <button onClick={() => setSelectedShadow(null)} className="text-gray-500 hover:text-white p-1 flex-shrink-0">✕</button>
+                    </div>
+                    <div className="p-5 space-y-4">
+                        {/* ステータス */}
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                <div className="text-[10px] text-gray-500 mb-0.5">攻撃</div>
+                                <div className="text-red-400 font-bold font-mono">{selectedShadow.stats.atk}</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                <div className="text-[10px] text-gray-500 mb-0.5">防御</div>
+                                <div className="text-blue-400 font-bold font-mono">{selectedShadow.stats.def}</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
+                                <div className="text-green-400 font-bold font-mono">{selectedShadow.stats.hp}</div>
+                            </div>
+                        </div>
+                        {/* 所持スキル */}
+                        {selectedShadow.signature_deck_preview.length > 0 && (
+                            <div className="bg-black/30 rounded-lg p-3 border border-gray-800">
+                                <div className="text-[10px] text-gray-500 mb-2">所持スキル</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {selectedShadow.signature_deck_preview.map((card, i) => (
+                                        <span key={i} className="px-2 py-1 bg-[#2c1a0f] text-[#d4a373] text-xs rounded border border-[#5c3a21] font-medium">
+                                            {card}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* フレーバーテキスト */}
+                        {selectedShadow.flavor_text && (
+                            <div className="bg-amber-950/20 rounded-lg p-3 border border-[#5c3a21]">
+                                <p className="text-[#d4a373] font-serif italic text-sm leading-relaxed">
+                                    「{selectedShadow.flavor_text}」
+                                </p>
+                            </div>
+                        )}
+                        {/* ボタン */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setSelectedShadow(null)}
+                                className="flex-1 py-2.5 border border-gray-700 text-gray-400 hover:text-white text-sm rounded-lg transition-colors"
+                            >
+                                閉じる
+                            </button>
+                            <button
+                                onClick={async () => { await handleHire(selectedShadow); setSelectedShadow(null); }}
+                                disabled={!!hireStatus || userProfile.gold < selectedShadow.contract_fee || currentParty.length >= 4}
+                                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                                    currentParty.length >= 4
+                                        ? 'bg-gray-700 text-gray-500 border border-gray-600 cursor-not-allowed'
+                                        : userProfile.gold < selectedShadow.contract_fee
+                                            ? 'bg-gray-700 text-gray-500 border border-gray-600 cursor-not-allowed'
+                                            : 'bg-[#a38b6b] hover:bg-[#e3d5b8] text-black border border-[#a38b6b] shadow-lg'
+                                }`}
+                            >
+                                {currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ); })()}
+        </>
     );
 }

@@ -15,6 +15,8 @@ export interface ShadowSummary {
     subscription_tier: 'free' | 'basic' | 'premium';
     icon_url?: string;
     image_url?: string;
+    flavor_text?: string;   // NPCのフレーバーテキスト（台詞）
+    npc_image_url?: string; // NPC専用イメージURL
 }
 
 // タスク1: 英霊（shadow_heroic）の契約金算出式
@@ -148,7 +150,7 @@ export class ShadowService {
                 .single();
 
             const rulingNation = loc?.ruling_nation_id?.toLowerCase() || 'unknown';
-            const isCapital = loc?.prosperity_level && loc.prosperity_level >= 4; // Use prosperity >= 4 for capital-like hubs
+            const isCapital = loc?.prosperity_level && loc.prosperity_level >= 4;
 
             const { data: npcs } = await this.supabase
                 .from('npcs')
@@ -157,29 +159,55 @@ export class ShadowService {
                 .eq('origin', 'system_mercenary');
 
             if (npcs) {
-                // 1. Filter native NPCs that belong to the location's ruling nation based on slug
-                const nativeNpcs = npcs.filter(n => n.slug?.toLowerCase().includes(rulingNation));
-                
-                // 2. Freelance / Hero NPCs rotation (only appear in capitals/major cities)
+                // 1. Filter native NPCs
+                const nativeNpcs = rulingNation === 'unknown'
+                    ? npcs
+                    : npcs.filter(n => n.slug?.toLowerCase().includes(rulingNation));
+
+                // 2. Freelance / Hero NPCs rotation (capitals only)
                 const freelanceNpcs = npcs.filter(n => n.slug?.toLowerCase().includes('free'));
                 const targetNpcs = [...nativeNpcs];
 
                 if (isCapital && freelanceNpcs.length > 0) {
-                    // Seeded random selection based on current day and location
-                    const todaySeed = Math.floor(Date.now() / 86400000); // 1-day rotation
+                    const todaySeed = Math.floor(Date.now() / 86400000);
                     const locationHash = Array.from(locationId).reduce((acc, char) => acc + char.charCodeAt(0), todaySeed);
-                    
-                    // Pick 2 random freelance heroes for this day/location
                     const index1 = locationHash % freelanceNpcs.length;
-                    const index2 = (locationHash + 7) % freelanceNpcs.length; // offset
-
+                    const index2 = (locationHash + 7) % freelanceNpcs.length;
                     targetNpcs.push(freelanceNpcs[index1]);
-                    if (index1 !== index2) {
-                        targetNpcs.push(freelanceNpcs[index2]);
+                    if (index1 !== index2) targetNpcs.push(freelanceNpcs[index2]);
+                }
+
+                // 3. \u5168NPCのdefault_cards（数値ID）を収集してcardsテーブルで一括名前解決
+                const allCardIds: number[] = [];
+                for (const npc of targetNpcs) {
+                    const ids = npc.default_cards || [];
+                    for (const id of ids) {
+                        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
+                        if (!isNaN(numId) && !allCardIds.includes(numId)) allCardIds.push(numId);
                     }
                 }
 
+                // cardsテーブルからカード名をbatch取得
+                const cardNameMap: Record<number, string> = {};
+                if (allCardIds.length > 0) {
+                    const { data: cards } = await this.supabase
+                        .from('cards')
+                        .select('id, name')
+                        .in('id', allCardIds);
+                    if (cards) {
+                        for (const card of cards) {
+                            cardNameMap[card.id] = card.name;
+                        }
+                    }
+                }
+
+                // 4. NPCごとにsignature_deck_previewをカード名に変換
                 for (const npc of targetNpcs) {
+                    const rawIds: (number | string)[] = npc.default_cards || [];
+                    const deckNames = rawIds.map(id => {
+                        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
+                        return cardNameMap[numId] || `Card#${numId}`;
+                    });
                     results.push({
                         profile_id: npc.id,
                         name: npc.name,
@@ -188,8 +216,10 @@ export class ShadowService {
                         origin_type: 'system_mercenary',
                         contract_fee: (npc.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL,
                         stats: { atk: npc.attack || 0, def: npc.defense || 0, hp: npc.max_hp || 100 },
-                        signature_deck_preview: npc.default_cards || [],
-                        subscription_tier: 'free' as const
+                        signature_deck_preview: deckNames,
+                        subscription_tier: 'free' as const,
+                        flavor_text: npc.introduction || npc.flavor_text || undefined,
+                        npc_image_url: npc.image_url || undefined,
                     });
                 }
             }

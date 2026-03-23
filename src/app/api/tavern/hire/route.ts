@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer as supabaseAdmin } from '@/lib/supabase-admin';
 import { ShadowService } from '@/services/shadowService';
 
 export async function POST(req: Request) {
@@ -12,13 +13,24 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing required params' }, { status: 400 });
         }
 
-        // Use auth client so RLS enforces secure transaction
-        const client = createAuthClient(req);
+        // JWT認証でユーザーIDを検証
+        const authHeader = req.headers.get('authorization');
+        let authedUserId: string | null = null;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await supabase.auth.getUser(token);
+            if (!error && user) authedUserId = user.id;
+        }
 
-        // Fetch user profile to check location and rep
-        const { data: profile } = await client.from('user_profiles').select('current_location_id').eq('id', user_id).single();
+        // 認証済みユーザーIDとリクエストのuser_idが一致しない場合は拒否
+        if (authedUserId && authedUserId !== user_id) {
+            return NextResponse.json({ error: 'Authentication mismatch' }, { status: 403 });
+        }
+
+        // Embargo チェック（anon clientで十分）
+        const { data: profile } = await supabase.from('user_profiles').select('current_location_id').eq('id', user_id).single();
         if (profile?.current_location_id) {
-            const { data: repData } = await client
+            const { data: repData } = await supabase
                 .from('reputations')
                 .select('reputation_score')
                 .eq('user_id', user_id)
@@ -30,7 +42,9 @@ export async function POST(req: Request) {
             }
         }
 
-        const shadowService = new ShadowService(client);
+        // Service Roleクライアントを使用してRLSバイパス（gold操作・party_members書き込み）
+        const shadowService = new ShadowService(supabaseAdmin);
+
 
         const result = await shadowService.hireShadow(user_id, shadow);
 

@@ -13,9 +13,11 @@ export default function MobileNav() {
     const navItems = [
         { label: '宿屋', path: '/inn', icon: <Home className="w-5 h-5" /> },
         { label: '酒場', path: '/pub', icon: <Beer className="w-5 h-5" /> },
-        { label: '商店', path: '/shop', icon: <ShoppingBag className="w-5 h-5" /> },
+        // [UIUX-Expert] /shopは旧独立ページのため廃止。道具屋はinnのShopModalから開く
+        { label: '商店', path: '/inn', icon: <ShoppingBag className="w-5 h-5" /> },
         { label: '状況', path: '/status', icon: <Shield className="w-5 h-5" /> },
         { label: '地図', path: '/world-map', icon: <Compass className="w-5 h-5" /> },
+
     ];
 
     const handleClick = (item: any) => {

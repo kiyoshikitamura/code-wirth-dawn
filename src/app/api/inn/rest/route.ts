@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         // Fetch Max Stats and Gold
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('max_hp, max_mp, current_location_id, gold')
+            .select('max_hp, current_location_id, gold')
             .eq('id', id)
             .single();
 
@@ -19,15 +19,24 @@ export async function POST(req: Request) {
 
         let finalCost: number = ECONOMY_RULES.INN_REST_COST_BASE;
 
-        // Check Embargo & Calculate Cost
+        // Check Embargo & Calculate Cost (並列クエリで高速化)
         if (profile.current_location_id) {
-            // Get Reputation
-            const { data: repData } = await supabase
-                .from('reputations')
-                .select('reputation_score')
-                .eq('user_id', id)
-                .eq('location_id', profile.current_location_id)
-                .maybeSingle();
+            const [repResult, locResult] = await Promise.all([
+                supabase
+                    .from('reputations')
+                    .select('reputation_score')
+                    .eq('user_id', id)
+                    .eq('location_id', profile.current_location_id)
+                    .maybeSingle(),
+                supabase
+                    .from('locations')
+                    .select('prosperity_level')
+                    .eq('slug', profile.current_location_id)
+                    .maybeSingle()
+            ]);
+
+            const repData = repResult.data;
+            const locData = locResult.data;
 
             if (repData) {
                 const repScore = repData.reputation_score || 0;
@@ -35,13 +44,6 @@ export async function POST(req: Request) {
                     return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。' }, { status: 403 });
                 }
             }
-
-            // Get Prosperity
-            const { data: locData } = await supabase
-                .from('locations')
-                .select('prosperity_level')
-                .eq('slug', profile.current_location_id)
-                .maybeSingle();
 
             if (locData) {
                 const prosp = locData.prosperity_level || 3;
@@ -55,13 +57,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: `ゴールドが足りません。（必要な額: ${finalCost}G）` }, { status: 400 });
         }
 
-        // Update Player HP/MP to Max & Deduct Gold
-        // spec_v16 §6.2: 居脸では傭兵（NPC/残影）のHPは回复しない
         const { error } = await supabase
             .from('user_profiles')
             .update({
                 hp: profile.max_hp || 100,
-                mp: profile.max_mp || 50,
                 gold: profile.gold - finalCost
             })
             .eq('id', id);

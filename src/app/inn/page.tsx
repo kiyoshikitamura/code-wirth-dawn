@@ -245,7 +245,7 @@ export default function InnPage() {
                 // Deduct locally and alert only after backend succeeds
                 spendGold(cost);
                 useGameStore.getState().fetchUserProfile();
-                setTimeout(() => alert(`HPとMPが全快しました。\n(宿泊費: ${cost} G)`), 100);
+                setTimeout(() => alert(`HPが全快しました。\n(宿泊費: ${cost} G)`), 100);
             } else {
                 const err = await res.json();
                 setTimeout(() => alert(`宿泊できませんでした: ${err.error || '不明なエラー'}`), 100);

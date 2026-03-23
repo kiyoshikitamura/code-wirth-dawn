@@ -281,7 +281,9 @@ async function pickEncounterEnemy(locationId: string, encounterType: 'random' | 
         .eq('location_id', locationId)
         .eq('encounter_type', encounterType);
 
-    if (!rows || rows.length === 0) return 'goblin_squad';
+    // [Logic-Expert] デフォルトをDBに存在する正規エネミースラッグに変更
+    // goblin_squad は未登録のためエンカウントが空になっていた
+    if (!rows || rows.length === 0) return 'bandit_group';
 
     // 重み付き抽選
     const totalWeight = rows.reduce((sum, r) => sum + (r.weight || 1), 0);

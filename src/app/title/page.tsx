@@ -22,11 +22,26 @@ export default function TitlePage() {
     // Flow State: ENTRY -> MENU -> AUTH/CHAR_CREATION -> CREATING -> GAME
     const [mode, setMode] = useState<'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
 
+    // アバターファイル選択ハンドラ
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { alert('画像は2MB以内にしてください。'); return; }
+        const ok = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!ok.includes(file.type)) { alert('JPEG / PNG / WebP のみ対応しています。'); return; }
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
+    };
+
     const [name, setName] = useState('');
     const [gender, setGender] = useState<'Male' | 'Female' | 'Unknown'>('Male');
     const [age, setAge] = useState(20);
     const [previewStats, setPreviewStats] = useState<any>(null);
     const [errorMsg, setErrorMsg] = useState('');
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Dynamic Flavor Text
     const getFlavorText = (currentAge: number) => {
@@ -47,6 +62,23 @@ export default function TitlePage() {
 
     const handleNewGame = async () => {
         setMode('CREATING');
+
+        // [Logic-Expert] 旧セッション・ストアを完全クリアする。
+        // Supabase は既存セッションがある場合 signInAnonymously() で新規 UUID を発行しないため、
+        // 必ず先にサインアウトしてから再ログインする。
+        try {
+            await supabase.auth.signOut();
+        } catch (e) {
+            // サインアウト失敗も続行（未ログインの場合もあるため）
+            if (process.env.NODE_ENV === 'development') console.warn('[handleNewGame] signOut失敗（無視）:', e);
+        }
+
+        // [Clean-Expert] LocalStorage 上の前回ユーザーのゲームステートをクリアする。
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('game-storage');
+            localStorage.removeItem('quest-storage');
+        }
+
         const { data, error } = await supabase.auth.signInAnonymously();
         if (error) {
             alert('通信エラー: ' + error.message);
@@ -105,26 +137,57 @@ export default function TitlePage() {
         return () => clearTimeout(timer);
     }, [age]);
 
-    const handleCharacterSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCharacterSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        setShowConfirm(false);
         if (!name.trim() || !previewStats) return;
         setMode('CREATING');
-
+        setIsUploading(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            // Start the player explicitly in the border town (loc_border_town)
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const userId = session?.user?.id;
+
+            if (!userId) {
+                throw new Error('認証セッションが見つかりません。再度「新しく始める」を押してください。');
+            }
+
+            // アバターアップロード（任意）
+            let uploadedAvatarUrl: string | null = null;
+            if (avatarFile && userId) {
+                try {
+                    const ext = avatarFile.name.split('.').pop();
+                    const path = `anon/${userId}/${Date.now()}.${ext}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('avatars')
+                        .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+                    if (!uploadError) {
+                        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+                        uploadedAvatarUrl = urlData.publicUrl;
+                    }
+                } catch (uploadErr) {
+                    console.warn('[avatar upload] 失敗（続行）:', uploadErr);
+                }
+            }
+            setIsUploading(false);
+
+            // 開始地点を取得 (loc_border_town)
             const { data: hubLoc } = await supabase.from('locations').select('id').eq('slug', 'loc_border_town').maybeSingle();
 
-            // create a dummy birth_date for backward compatibility if needed, or null if schema allows
             const dummyBirthDate = new Date();
             dummyBirthDate.setFullYear(dummyBirthDate.getFullYear() - age);
             const birthDateStr = dummyBirthDate.toISOString().split('T')[0];
 
             const res = await fetch('/api/profile/init', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    // [Logic-Expert] JWT Bearerトークンを必ず添付。
+                    // サーバー側で createAuthClient() がユーザーを特定するための必須ヘッダー。
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({
-                    user_id: user?.id,
+                    user_id: userId,
                     title_name: name,
                     gender: gender,
                     age: age,
@@ -134,7 +197,8 @@ export default function TitlePage() {
                     max_deck_cost: previewStats.max_deck_cost,
                     accumulated_days: 0,
                     gold: 1000,
-                    current_location_id: hubLoc?.id
+                    current_location_id: hubLoc?.id,
+                    ...(uploadedAvatarUrl ? { avatar_url: uploadedAvatarUrl } : {}),
                 })
             });
 
@@ -246,6 +310,21 @@ export default function TitlePage() {
                             契約の書
                         </h2>
 
+                        {/* アバターアップロード */}
+                        <div className="flex flex-col items-center gap-3">
+                            <label className="block text-xs text-amber-900/70 font-serif tracking-widest uppercase text-center">Avatar (Optional)</label>
+                            <label className="cursor-pointer group">
+                                <div className="w-20 h-20 rounded-full border-2 border-amber-900/40 group-hover:border-amber-800 overflow-hidden flex items-center justify-center bg-amber-900/10 transition-all">
+                                    {avatarPreview
+                                        ? <img src={avatarPreview} alt="preview" className="w-full h-full object-cover" />
+                                        : <span className="text-3xl opacity-40">💤</span>
+                                    }
+                                </div>
+                                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
+                            </label>
+                            <span className="text-[10px] text-amber-900/50">{avatarPreview ? 'タップして変更' : 'タップしてアップロード'}</span>
+                        </div>
+
                         <div className="space-y-1">
                             <label className="block text-xs text-amber-900/70 font-serif tracking-widest uppercase">Name</label>
                             <input
@@ -321,13 +400,61 @@ export default function TitlePage() {
                         </div>
 
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={() => setShowConfirm(true)}
                             disabled={!name.trim() || !previewStats}
                             className="w-full group bg-slate-950 text-amber-500 font-serif font-bold tracking-widest py-4 rounded disabled:opacity-50 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-all shadow-xl flex items-center justify-center gap-3 overflow-hidden"
                         >
                             <span className="relative z-10 transition-transform group-hover:scale-105">世界に降り立つ</span>
                             <Compass className="w-5 h-5 relative z-10 transition-transform duration-700 group-hover:rotate-180 text-amber-600 group-hover:text-amber-400" />
                         </button>
+
+                        {/* 最終確認モーダル */}
+                        {showConfirm && (
+                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowConfirm(false)}>
+                                <div className="bg-[#1a1208] border-2 border-amber-800/60 rounded-xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
+                                    <h3 className="text-lg font-serif text-amber-400 text-center mb-6 tracking-widest">— 契約の確認 —</h3>
+                                    <div className="space-y-3 mb-6">
+                                        {avatarPreview && (
+                                            <div className="flex justify-center mb-3">
+                                                <img src={avatarPreview} alt="avatar" className="w-16 h-16 rounded-full border-2 border-amber-700 object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="bg-black/40 rounded-lg p-4 space-y-2 text-sm border border-amber-900/30">
+                                            <div className="flex justify-between">
+                                                <span className="text-amber-900/70 font-serif">名前</span>
+                                                <span className="text-amber-200 font-bold">{name}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-amber-900/70 font-serif">性別</span>
+                                                <span className="text-amber-200">{gender === 'Male' ? '男' : gender === 'Female' ? '女' : '不明'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-amber-900/70 font-serif">年齢</span>
+                                                <span className="text-amber-200">{age}歳</span>
+                                            </div>
+                                            {previewStats && (
+                                                <div className="grid grid-cols-4 gap-1 pt-2 border-t border-amber-900/20">
+                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">HP</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_hp}</div></div>
+                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">ATK</div><div className="text-amber-300 font-mono font-bold">{previewStats.atk}</div></div>
+                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">DEF</div><div className="text-amber-300 font-mono font-bold">{previewStats.def}</div></div>
+                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">Vit</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_vitality}</div></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border border-amber-900/40 text-amber-900/70 font-serif rounded-lg text-sm hover:border-amber-800 transition-colors">戻る</button>
+                                        <button
+                                            onClick={() => handleCharacterSubmit()}
+                                            className="flex-1 py-3 bg-slate-950 border border-amber-700 text-amber-400 font-serif font-bold rounded-lg text-sm hover:bg-slate-900 hover:border-amber-500 transition-all shadow-lg"
+                                        >
+                                            確定する
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </form>
                 )}
             </main>

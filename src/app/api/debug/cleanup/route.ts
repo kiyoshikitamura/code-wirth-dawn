@@ -10,7 +10,7 @@ function getValidSlugs(filename: string): Set<string> {
     const filePath = path.join(process.cwd(), 'src', 'data', 'csv', filename);
     if (!fs.existsSync(filePath)) return new Set();
     const content = fs.readFileSync(filePath, 'utf-8');
-    const records = parse(content, { columns: true, skip_empty_lines: true });
+    const records = parse(content, { columns: true, skip_empty_lines: true, relax_column_count: true });
     return new Set(records.map((r: any) => r.slug).filter(Boolean));
 }
 
@@ -18,7 +18,7 @@ function getValidIds(filename: string): Set<number> {
     const filePath = path.join(process.cwd(), 'src', 'data', 'csv', filename);
     if (!fs.existsSync(filePath)) return new Set();
     const content = fs.readFileSync(filePath, 'utf-8');
-    const records = parse(content, { columns: true, skip_empty_lines: true });
+    const records = parse(content, { columns: true, skip_empty_lines: true, relax_column_count: true });
     return new Set(records.map((r: any) => Number(r.id)).filter(Boolean));
 }
 
