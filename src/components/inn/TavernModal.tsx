@@ -239,11 +239,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                     {hireStatus}
                                 </div>
                             ) : activeTab === 'hire' ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     {/* === Current Party === */}
                                     {currentParty.length > 0 && (
                                         <>
-                                            <div className="col-span-1 md:col-span-2 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1">
+                                            <div className="col-span-1 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1">
                                                 現在のパーティ ({currentParty.length}/4)
                                             </div>
                                             {currentParty.map(member => (
@@ -267,7 +267,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                     </div>
                                                 </div>
                                             ))}
-                                            <div className="col-span-1 md:col-span-2 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1 mt-3">
+                                            <div className="col-span-1 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1 mt-3">
                                                 酒場にいる冒険者たち
                                             </div>
                                         </>
