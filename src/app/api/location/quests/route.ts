@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
         }
 
         // 1. Fetch User Profile
-        const { data: user, error: uError } = await supabase
+        const { data: user, error: uError } = await supabaseServer
             .from('user_profiles')
             .select('*')
             .eq('id', userId)
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
         }
 
         // 2. Fetch World State
-        const { data: worldState } = await supabase
+        const { data: worldState } = await supabaseServer
             .from('world_states')
             .select('*')
             .maybeSingle();
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
         debug.push(`prosperity = ${currentProsperity} `);
 
         // 3. Fetch User Inventory (for has_item checks)
-        const { data: inventory } = await supabase
+        const { data: inventory } = await supabaseServer
             .from('inventory')
             .select('item_id, quantity')
             .eq('user_id', userId);
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
         const ownedItemIds = new Set((inventory || []).map((i: any) => String(i.item_id)));
 
         // 4. Fetch User Reputations (for min_reputation checks)
-        const { data: reputations } = await supabase
+        const { data: reputations } = await supabaseServer
             .from('reputations')
             .select('location_id, reputation_score')
             .eq('user_id', userId);
@@ -74,7 +75,7 @@ export async function GET(req: Request) {
         }
 
         // 4.5 Fetch User Completed Quests (for prerequisites)
-        const { data: completedQuests } = await supabase
+        const { data: completedQuests } = await supabaseServer
             .from('user_completed_quests')
             .select('scenario_id')
             .eq('user_id', userId);
@@ -82,7 +83,7 @@ export async function GET(req: Request) {
         const completedQuestIds = new Set((completedQuests || []).map((q: any) => String(q.scenario_id)));
 
         // 5. Fetch Quests
-        const { data: quests, error: qError } = await supabase
+        const { data: quests, error: qError } = await supabaseServer
             .from('scenarios')
             .select('id, title, description, short_description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation')
             .in('quest_type', ['normal', 'special'])
