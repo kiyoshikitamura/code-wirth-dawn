@@ -426,16 +426,15 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             )}
 
                                             <button
-                                                onClick={() => !hired && setSelectedShadow(shadow)}
-                                                disabled={hired}
+                                                onClick={() => setSelectedShadow(shadow)}
                                                 className={`w-full py-2 flex items-center justify-center gap-2 border rounded text-sm font-bold transition-colors ${
                                                     hired
-                                                    ? 'border-blue-800/30 text-blue-700/50 cursor-not-allowed bg-blue-50/30'
+                                                    ? 'border-blue-800/30 text-blue-700/50 bg-blue-50/30'
                                                     : 'border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10'
                                                 }`}
                                             >
                                                 <UserPlus size={16} />
-                                                {hired ? '契約済' : '詳細を見る'}
+                                                {hired ? '雇用中 - 詳細を見る' : '詳細を見る'}
                                             </button>
                                         </div>
                                     );
@@ -519,7 +518,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 閉じる
                             </button>
                             <button
-                                onClick={async () => { await handleHire(selectedShadow); setSelectedShadow(null); }}
+                                onClick={async () => {
+                                    if (isAlreadyHired(selectedShadow)) return;
+                                    await handleHire(selectedShadow);
+                                    setSelectedShadow(null);
+                                }}
                                 disabled={!!hireStatus || userProfile.gold < selectedShadow.contract_fee || currentParty.length >= 4 || isAlreadyHired(selectedShadow)}
                                 className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
                                     isAlreadyHired(selectedShadow)
