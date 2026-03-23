@@ -51,8 +51,10 @@ export default function InnPage() {
 
     // Initial load effects remain...
     useEffect(() => {
-        fetchWorldState();
-        useGameStore.getState().fetchUserProfile().finally(() => setLoading(false));
+        Promise.all([
+            fetchWorldState(),
+            useGameStore.getState().fetchUserProfile()
+        ]).finally(() => setLoading(false));
     }, []);
 
     // Reputation Logic
@@ -264,6 +266,17 @@ export default function InnPage() {
     const activeNpcData = activeModal && ['inn', 'shop', 'tavern', 'temple', 'guild'].includes(activeModal)
         ? getNpcData(activeModal as FacilityType) : null;
     const { buttonText, isDisabled } = activeDialogConfig();
+
+    if (loading || !userProfile || !worldState) {
+        return (
+            <div className="min-h-screen text-gray-200 font-sans select-none overflow-hidden bg-neutral-950 flex justify-center items-center">
+                <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-slate-950 md:border-[6px] md:border-neutral-800 md:rounded-[40px] shadow-2xl flex flex-col items-center justify-center gap-4">
+                    <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">拠点情報を取得中...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen text-gray-200 font-sans select-none overflow-hidden bg-neutral-950 flex justify-center items-center">

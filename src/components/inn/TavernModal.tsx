@@ -104,9 +104,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
             const data = await res.json();
             if (data.success) {
+                setHireStatus('雇用完了！パーティ情報を更新中...');
+                setLoading(true);
+                await Promise.all([fetchPartyData(), fetchShadows()]);
+                setLoading(false);
                 alert('雇用契約が成立しました！');
-                fetchPartyData();
-                fetchShadows();
             } else {
                 alert(`エラー: ${data.error || '不明なエラー'}`);
             }
