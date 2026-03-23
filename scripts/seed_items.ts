@@ -47,6 +47,8 @@ async function seedItems() {
         else type = 'skill'; // skill_card, gear, book, scroll, manual, grimoire → "skill"
 
 
+        const cost = parseInt(r.cost, 10) || 0;
+
         return {
             slug: r.slug,
             name: r.name,
@@ -55,6 +57,7 @@ async function seedItems() {
             min_prosperity: minProsperity,
             nation_tags: nationTags,
             linked_card_id: linkedCardId,
+            cost,
         };
     });
 
