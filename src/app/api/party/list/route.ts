@@ -47,12 +47,16 @@ export async function GET(req: Request) {
             return NextResponse.json({ party: [] });
         }
 
-        // NPCマスタから職種・レベル・ステータス・フレーバーテキストを取得
+        // NPCマスタから職種・レベル・ステータスを取得
         const memberNames = data.map((m: any) => m.name);
-        const { data: npcs } = await supabaseServer
+        const { data: npcs, error: npcError } = await supabaseServer
             .from('npcs')
-            .select('name, job_class, level, attack, defense, max_hp, introduction, flavor_text, image_url')
+            .select('name, job_class, level, attack, defense, max_hp')
             .in('name', memberNames);
+
+        if (npcError) {
+            console.error('NPC lookup error:', npcError.message);
+        }
 
         const npcMap = new Map<string, any>();
         if (npcs) {
@@ -105,12 +109,10 @@ export async function GET(req: Request) {
                 ...member,
                 // NPCマスタからの補完データ
                 job_class: jobClassJp,
-                level: npc?.level || null,
-                hp: npc?.max_hp || null,
-                atk: npc?.attack || null,
-                def: npc?.defense || null,
-                flavor_text: npc?.introduction || npc?.flavor_text || null,
-                image_url: npc?.image_url || null,
+                level: npc?.level ?? null,
+                hp: npc?.max_hp ?? null,
+                atk: npc?.attack ?? null,
+                def: npc?.defense ?? null,
                 // スキル名解決済み
                 skill_names: skillNames,
             };
