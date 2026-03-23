@@ -30,7 +30,10 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     }), [quests]);
 
     const handleAccept = (quest: Scenario) => {
-        if ((quest as any).is_urgent) {
+        const userLevel = userProfile?.level || 1;
+        const questLevel = (quest as any).rec_level || 1;
+        const isDangerous = questLevel > userLevel + 1;
+        if (isDangerous) {
             setPendingQuest(quest);
             setShowUrgentWarning(true);
         } else {
@@ -112,19 +115,23 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                         }`}
                                     onClick={() => setDetailQuest(s)}
                                 >
-                                    {/* Urgent Icon */}
-                                    {s.is_urgent ? (
-                                        <span className="text-red-500 text-lg font-bold animate-pulse flex-shrink-0" title="危険な依頼">❗</span>
-                                    ) : (
-                                        <span className="w-5 flex-shrink-0" />
-                                    )}
+                                    {/* Danger Icon */}
+                                    {(() => {
+                                        const userLevel = userProfile?.level || 1;
+                                        const isDangerous = (s.rec_level || 1) > userLevel + 1;
+                                        return isDangerous ? (
+                                            <span className="text-red-500 text-lg font-bold animate-pulse flex-shrink-0" title="推奨レベルを超えています">❗</span>
+                                        ) : (
+                                            <span className="w-5 flex-shrink-0" />
+                                        );
+                                    })()}
 
                                     {/* Quest Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5">
                                             <h3 className="font-bold text-[#3e2723] text-sm font-serif truncate">{s.title}</h3>
                                             {s.quest_type === 'special' && (
-                                                <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold flex-shrink-0">特別</span>
+                                                <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold flex-shrink-0">Special</span>
                                             )}
                                             {s.is_ugc && (
                                                 <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold flex-shrink-0">UGC</span>
@@ -160,7 +167,11 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                         <div className="bg-[#3e2723] p-4 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2">
-                                    {(detailQuest as any).is_urgent && <span className="text-red-400 text-lg">❗</span>}
+                                    {(() => {
+                                        const userLevel = userProfile?.level || 1;
+                                        const isDangerous = ((detailQuest as any).rec_level || 1) > userLevel + 1;
+                                        return isDangerous && <span className="text-red-400 text-lg">❗</span>;
+                                    })()}
                                     <h3 className="text-lg font-serif font-bold text-amber-400">{detailQuest.title}</h3>
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5">

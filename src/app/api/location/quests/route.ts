@@ -52,8 +52,11 @@ export async function GET(req: Request) {
             .select('*')
             .maybeSingle();
 
-        const currentProsperity = worldState?.prosperity_level || 50;
-        debug.push(`prosperity = ${currentProsperity} `);
+        // prosperity_level は DB 上ではパーセント(0-100)だが、CSV の min/max_prosperity は 1-5 スケール
+        // 0-20→1(衰退), 21-40→2(不況), 41-60→3(通常), 61-80→4(好況), 81-100→5(絶頂)
+        const rawProsperity = worldState?.prosperity_level ?? 50;
+        const currentProsperity = Math.min(5, Math.max(1, Math.ceil(rawProsperity / 20)));
+        debug.push(`prosperity = ${rawProsperity} (scale: ${currentProsperity}/5) `);
 
         // 3. Fetch User Inventory (for has_item checks)
         const { data: inventory } = await supabaseServer
@@ -175,9 +178,9 @@ export async function GET(req: Request) {
                 if (!tags.includes('all') && !tags.includes(locationId)) return false;
             }
 
-            // v12.0: rec_level / min_reputation をサーバー側で完全フィルタリング
-            const rec = q.rec_level || reqs.min_level || 0;
-            if (rec > 0 && user.level < rec) return false;
+            // rec_level は UI（❗アイコン）で警告表示するのみ。受注自体は制限しない。
+            // const rec = q.rec_level || reqs.min_level || 0;
+            // if (rec > 0 && user.level < rec) return false;
 
             const minRep = reqs.min_reputation;
             if (minRep) {
