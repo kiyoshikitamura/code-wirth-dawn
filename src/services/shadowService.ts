@@ -428,12 +428,8 @@ export class ShadowService {
                 name: shadow.name,
                 source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
                 origin_type: shadow.origin_type,
-                job_class: shadow.job_class || 'Adventurer',
                 durability: 100,
                 inject_cards: cardIds,
-                icon_url: shadow.icon_url || shadow.npc_image_url || null,
-                image_url: shadow.image_url || shadow.npc_image_url || null,
-                flavor_text: shadow.flavor_text || null,
                 royalty_rate: shadow.origin_type === 'shadow_heroic'
                     ? percentageToInteger(HEROIC_ROYALTY_RATE)
                     : shadow.origin_type === 'shadow_active'
