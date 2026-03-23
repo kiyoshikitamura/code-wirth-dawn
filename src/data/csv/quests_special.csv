@@ -11,7 +11,6 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 5041,qst_dragon_slaying,邪竜討伐,5,5,3,"{""event_trigger"": ""dragon_raid""}",true,,"Item:3050|Rep:100",イベント: 邪竜。
 5044,qst_cursed_armor_seal,呪いの鎧の封印,4,4,2,"{""min_level"": 18, ""nation_id"": ""loc_holy_empire""}",true,,"NPC:4046",聖帝国: 呪いの鎧。
 5050,qst_final_stand,崩壊都市の最終防衛線,5,5,1,"{""max_prosperity"": 1, ""min_align_order"": 20}",true,,"Rep:100|Order:20",共通(崩壊): 復興へ。
-
 6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""nation_id"":""loc_holy_empire"",""min_level"":1}",true,,"Gold:100|Rep:10",公式メインシナリオ
 6002,main_ep02,第2話「砂礫の国境線」,2,1,2,"{""completed_quest"":""main_ep01"",""nation_id"":""loc_holy_empire""}",true,,"Gold:200|Rep:10",公式メインシナリオ
 6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,"{""completed_quest"":""main_ep02"",""nation_id"":""loc_marcund""}",true,,"Gold:300|Rep:10",公式メインシナリオ
@@ -32,23 +31,23 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 6018,main_ep18,第18話「四国会戦」,50,5,2,"{""completed_quest"":""main_ep17"",""nation_id"":""loc_holy_empire""}",true,,"Gold:5000|Rep:10",公式メインシナリオ
 6019,main_ep19,第19話「システム・オーバーライド」,55,6,2,"{""completed_quest"":""main_ep18"",""nation_id"":""loc_holy_empire""}",true,,"Gold:5500|Rep:10",公式メインシナリオ
 6020,main_ep20,第20話「蒼き暁」,60,6,2,"{""completed_quest"":""main_ep19"",""nation_id"":""loc_holy_empire""}",true,,"Gold:6000|Rep:10",公式メインシナリオ
-8001,qst_boss_skeleton,旧市街の暴君討伐,5,5,5,"{""completed_quest"":7013}",false,,Gold:2000|Item:3101,[強敵] 旧市街の奥に潜む骸骨王を讨伐せよ。
-8002,qst_boss_worm,マザー大砂蟲討伐,5,5,5,"{""completed_quest"":7023}",false,,Gold:2500|Item:3102,[強敵] 砂漠の脅威、マザー웜を撃破せよ。
+8001,qst_boss_skeleton,旧市街の暴君討伐,5,5,5,"{""completed_quest"":7013}",false,,Gold:2000|Item:3101,[強敵] 旧市街の奥に潜む骸骨王を討伐せよ。
+8002,qst_boss_worm,マザー大砂蟲討伐,5,5,5,"{""completed_quest"":7023}",false,,Gold:2500|Item:3102,[強敵] 砂漠の脅威を撃破せよ。
 8003,qst_boss_ogre,剛腕赤鬼の退治,5,5,5,"{""completed_quest"":7030}",false,,Gold:2000|Rep:15|Item:3103,[強敵] 山道で旅人を食らう巨大赤鬼を退治せよ。
 8004,qst_boss_thunder,霊山の雷獣討伐,5,5,5,"{""completed_quest"":7040}",false,,Gold:3000|Item:3104,[強敵] 霊山に住まう恐るべき雷の獣を狩れ。
 8005,qst_boss_griffon,グリフォン・ロード討伐,5,5,5,"{""completed_quest"":5056}",false,,Gold:2200|Item:3105,[強敵] 嵐を呼ぶグリフォンの王を討伐せよ。
 8006,qst_boss_treant,厄災の古樹討伐,5,5,5,"{""completed_quest"":5002}",false,,Gold:2000|Item:3106,[強敵] 森の怒りを具現化したエント長を静めよ。
 8011,qst_boss_bishop,異端の元大司教,5,5,5,"{""min_reputation"":""Hero""}",false,,Gold:5000|Item:3111,[極秘] 堕落した元大司教の命を絶て。
-8012,qst_boss_cardinal,腐敗枢機卿の暗殺,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:6000,[暗殺] 表の顔は聖職者、裏は人身売買の元締め。枢機卿の首を獲れ。
-8013,qst_boss_ronin,義剣の剣豪討伐,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:4000|Item:3112,[裏稼業] 民を扇動する邪魔な義剣士を始末しろ。
-8014,qst_boss_assassin,暗殺ギルドの壊滅,5,5,5,"{""min_reputation"":""Famous""}",false,,Gold:4500,[討伐] 街の裏社会を牛耳る暗殺ギルドの長を討て。
-8015,qst_boss_pirate,海賊大艦隊の長,5,5,5,"{""completed_quest"":7044}",false,,Gold:3500|Item:3113,[強敵] 沿岸を牛耳る大海賊を討伐せよ。
+8012,qst_boss_cardinal,腐敗枢機卿の暗殺,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:6000,[暗殺] 枢機卿の首を獲れ。
+8013,qst_boss_ronin,義剣の剣豪討伐,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:4000|Item:3112,[裏稼業] 邪魔な義剣士を始末しろ。
+8014,qst_boss_assassin,暗殺ギルドの壊滅,5,5,5,"{""min_reputation"":""Famous""}",false,,Gold:4500,[討伐] 暗殺ギルドの長を討て。
+8015,qst_boss_pirate,海賊大艦隊の長,5,5,5,"{""completed_quest"":7044}",false,,Gold:3500|Item:3113,[強敵] 大海賊を討伐せよ。
 8016,qst_boss_rebel,反乱軍の若き指導者,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:4000,[暗殺] 反乱軍のカリスマを消し去れ。
-8017,qst_boss_merchant,悪徳商会トップの始末,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:5000,[暗殺] 錬金術で自身を強化した商会長を殺せ。
-8021,qst_boss_baphomet,悪魔バフォメット,5,5,5,"{""require_item_id"":3001}",false,,"Item:3121",[封印指定] 祭壇に呼び出された大悪魔を討伐せよ。
-8022,qst_boss_angel,降臨せし天使,5,5,5,"{""require_item_id"":3001}",false,,"Item:3122",[極秘討伐] 狂信をばら撒く厄災の天使を撃墜せよ。
-8023,qst_boss_dragon,デザートドラゴン,5,5,5,"{""require_item_id"":3001}",false,,Gold:8000|Item:3123,[討伐特務] 砂漠の覇者、デザートドラゴンが覚醒した。死を恐れぬ者のみ挑め。
+8017,qst_boss_merchant,悪徳商会トップの始末,5,5,5,"{""max_reputation"":""Rogue""}",false,,Gold:5000,[暗殺] 商会長を殺せ。
+8021,qst_boss_baphomet,悪魔バフォメット,5,5,5,"{""require_item_id"":3001}",false,,"Item:3121",[封印指定] 大悪魔を討伐せよ。
+8022,qst_boss_angel,降臨せし天使,5,5,5,"{""require_item_id"":3001}",false,,"Item:3122",[極秘討伐] 厄災の天使を撃墜せよ。
+8023,qst_boss_dragon,デザートドラゴン,5,5,5,"{""require_item_id"":3001}",false,,Gold:8000|Item:3123,[討伐特務] デザートドラゴンが覚醒した。
 8024,qst_boss_kirin,神域の幻獣,5,5,5,"{""require_item_id"":3001}",false,,"Item:3124",[幻獣特務] 伝説の霊獣・麒麟が現れた。
-8025,qst_boss_golem,オメガ・ゴーレム,5,5,5,"{""require_item_id"":3001}",false,,"Item:3125",[探索特務] 忘れられた古代の機械兵器を破壊せよ。
-8026,qst_boss_kraken,大海の悪夢 クラーケン,5,5,5,"{""require_item_id"":3001}",false,,Gold:5000|Item:3126,[討伐特務] 全ての船乗りが恐れる海獣を討伐せよ。
-8027,qst_boss_mino,迷宮の覇者 牛頭王,5,5,5,"{""require_item_id"":3001}",false,,"Item:3127|Item:3128",[討伐] 決して抜け出せない迷宮の最奥、牛頭王を狩れ。
+8025,qst_boss_golem,オメガ・ゴーレム,5,5,5,"{""require_item_id"":3001}",false,,"Item:3125",[探索特務] 古代の機械兵器を破壊せよ。
+8026,qst_boss_kraken,大海の悪夢 クラーケン,5,5,5,"{""require_item_id"":3001}",false,,Gold:5000|Item:3126,[討伐特務] 海獣を討伐せよ。
+8027,qst_boss_mino,迷宮の覇者 牛頭王,5,5,5,"{""require_item_id"":3001}",false,,"Item:3127|Item:3128",[討伐] 牛頭王を狩れ。
