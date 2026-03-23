@@ -117,17 +117,6 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                     })()}`}
                                     onClick={() => setDetailQuest(s)}
                                 >
-                                    {/* Danger Icon */}
-                                    {(() => {
-                                        const userLevel = userProfile?.level || 1;
-                                        const isDangerous = (s.rec_level || 1) > userLevel + 1;
-                                        return isDangerous ? (
-                                            <span className="text-red-500 text-lg font-bold animate-pulse flex-shrink-0" title="推奨レベルを超えています">❗</span>
-                                        ) : (
-                                            <span className="w-5 flex-shrink-0" />
-                                        );
-                                    })()}
-
                                     {/* Quest Info */}
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-[#3e2723] text-sm font-serif truncate">{s.title}</h3>
@@ -136,16 +125,24 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
                                     {/* Badges + Level & Reward - Stacked */}
                                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                        {(s.quest_type === 'special' || s.is_ugc) && (
-                                            <div className="flex gap-1">
-                                                {s.quest_type === 'special' && (
-                                                    <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
-                                                )}
-                                                {s.is_ugc && (
-                                                    <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
-                                                )}
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const userLevel = userProfile?.level || 1;
+                                            const isDangerous = (s.rec_level || 1) > userLevel + 1;
+                                            const hasBadge = s.quest_type === 'special' || s.is_ugc || isDangerous;
+                                            return hasBadge ? (
+                                                <div className="flex gap-1 items-center">
+                                                    {isDangerous && (
+                                                        <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
+                                                    )}
+                                                    {s.quest_type === 'special' && (
+                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
+                                                    )}
+                                                    {s.is_ugc && (
+                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
+                                                    )}
+                                                </div>
+                                            ) : null;
+                                        })()}
                                         <div className="flex items-center gap-1">
                                             <span className="text-[10px] w-[38px] text-center py-0.5 rounded font-bold bg-[#a38b6b] text-white">
                                                 Lv.{s.rec_level || 1}
