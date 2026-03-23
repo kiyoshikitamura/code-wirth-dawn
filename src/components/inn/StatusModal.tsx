@@ -5,6 +5,16 @@ import { Shield, Backpack, Zap, Heart, Sword, Star, Users, Flame, X } from 'luci
 import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
+const JOB_CLASS_JP: Record<string, string> = {
+    Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
+    Ranger: '狩人', Scout: '斥候', Archer: '弓使い', Thief: '盗賊', Rogue: '遊撃士',
+    Mage: '魔法使い', Wizard: '魔術師', Sorcerer: '術師', Warlock: '呪術師',
+    Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
+    Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
+    Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
+};
+const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
+
 interface StatusModalProps {
     onClose: () => void;
     isCampMode?: boolean;
@@ -277,8 +287,8 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
                 {/* ── 詳細ポップアップ ── */}
                 {detail && (
-                    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-100" onClick={() => setDetail(null)}>
-                        <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-t-xl sm:rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-100" onClick={() => setDetail(null)}>
+                        <div className="bg-gray-900 border border-gray-700 w-full max-w-md mx-4 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                             {/* ポップアップヘッダー */}
                             <div className="bg-gray-800/80 px-4 py-3 flex items-center gap-3 border-b border-gray-700">
                                 <div className="w-10 h-10 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden">
@@ -297,7 +307,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                     <div className="flex items-center gap-2 text-[10px] text-gray-400">
                                         {detail.type === 'skill' && <><span className="text-purple-400">スキル</span><span className="text-cyan-500">Cost:{detail.data.cost || 0}</span>{detail.data.is_equipped && <span className="text-amber-400">装備中</span>}</>}
                                         {detail.type === 'item' && <><span className="text-green-400">所持品</span><span>x{detail.data.quantity}</span></>}
-                                        {detail.type === 'npc' && <><span className="text-blue-400">{detail.data.job_class || '冒険者'}</span><span>耐久:{detail.data.durability}</span></>}
+                                        {detail.type === 'npc' && <><span className="text-blue-400">Lv.{detail.data.level || '?'} {toJpJobClass(detail.data.job_class || 'Adventurer')}</span></>}
                                     </div>
                                 </div>
                                 <button onClick={() => setDetail(null)} className="text-gray-500 hover:text-white p-1">✕</button>
@@ -341,13 +351,34 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
                                 {/* NPC詳細 */}
                                 {detail.type === 'npc' && (
-                                    <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700 space-y-1">
-                                        <div className="flex justify-between text-xs"><span className="text-gray-500">職業</span><span className="text-gray-200">{detail.data.job_class || '冒険者'}</span></div>
-                                        <div className="flex justify-between text-xs"><span className="text-gray-500">耐久値</span><span className="text-gray-200">{detail.data.durability}</span></div>
-                                        {detail.data.hp != null && <div className="flex justify-between text-xs"><span className="text-gray-500">HP</span><span className="text-gray-200">{detail.data.hp}/{detail.data.max_hp || detail.data.hp}</span></div>}
-                                        {detail.data.atk != null && <div className="flex justify-between text-xs"><span className="text-gray-500">ATK</span><span className="text-gray-200">{detail.data.atk}</span></div>}
-                                        {detail.data.def != null && <div className="flex justify-between text-xs"><span className="text-gray-500">DEF</span><span className="text-gray-200">{detail.data.def}</span></div>}
-                                    </div>
+                                    <>
+                                        {/* ステータスグリッド */}
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                                <div className="text-[10px] text-gray-500 mb-0.5">攻撃</div>
+                                                <div className="text-red-400 font-bold font-mono">{detail.data.atk ?? detail.data.stats?.atk ?? '?'}</div>
+                                            </div>
+                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                                <div className="text-[10px] text-gray-500 mb-0.5">防御</div>
+                                                <div className="text-blue-400 font-bold font-mono">{detail.data.def ?? detail.data.stats?.def ?? '?'}</div>
+                                            </div>
+                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                                <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
+                                                <div className="text-green-400 font-bold font-mono">{detail.data.hp ?? detail.data.stats?.hp ?? '?'}</div>
+                                            </div>
+                                        </div>
+                                        {/* 所持スキル */}
+                                        {detail.data.signature_deck_preview && detail.data.signature_deck_preview.length > 0 && (
+                                            <div className="bg-black/30 rounded-lg p-2.5 border border-gray-800">
+                                                <div className="text-[10px] text-gray-500 mb-1.5">所持スキル</div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {detail.data.signature_deck_preview.map((card: string, i: number) => (
+                                                        <span key={i} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 text-[10px] rounded border border-gray-700">{card}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
 
                                 {/* アクションボタン */}
@@ -436,7 +467,7 @@ function PartyList({ userProfile, onSelect }: { userProfile: any; onSelect: (npc
                         </div>
                         <div>
                             <div className="text-xs text-blue-300 font-bold">{member.name}</div>
-                            <div className="text-[10px] text-gray-500">{member.job_class || '冒険者'} / 耐久:{member.durability}</div>
+                            <div className="text-[10px] text-gray-500">{toJpJobClass(member.job_class || 'Adventurer')} / HP:{member.hp ?? member.durability}</div>
                         </div>
                     </div>
                     <span className="text-[9px] text-gray-600 shrink-0">▶</span>
