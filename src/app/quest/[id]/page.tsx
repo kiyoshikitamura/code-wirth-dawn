@@ -150,7 +150,33 @@ export default function QuestPage() {
                     onClick={() => router.push('/inn')}
                     className="flex items-center gap-2 px-4 py-2 border border-[#8b5a2b] rounded hover:bg-[#3e2723]"
                 >
-                    <ArrowLeft className="w-4 h-4" /> Return to Inn
+                    <ArrowLeft className="w-4 h-4" /> 拠点に戻る
+                </button>
+            </div>
+        );
+    }
+
+    // script_data が null またはノードが空のクエストは「準備中」表示
+    const hasScenarioNodes = scenario.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
+    if (!hasScenarioNodes) {
+        return (
+            <div className="min-h-screen bg-[#1a120b] flex flex-col items-center justify-center text-[#e3d5b8] gap-6 px-6">
+                <div className="w-16 h-16 rounded-full bg-amber-900/30 border-2 border-amber-700 flex items-center justify-center">
+                    <ScrollText className="w-8 h-8 text-amber-500" />
+                </div>
+                <div className="text-center space-y-2">
+                    <h1 className="text-xl font-serif font-bold text-amber-400">{scenario.title}</h1>
+                    <p className="text-sm text-[#a8957d] italic max-w-xs">{scenario.description || scenario.script_data?.short_description || ''}</p>
+                </div>
+                <div className="bg-amber-900/20 border border-amber-800/40 rounded-lg px-6 py-4 text-center max-w-sm">
+                    <p className="text-sm text-amber-400/80 font-serif">このクエストのシナリオは現在準備中です。</p>
+                    <p className="text-xs text-amber-600/60 mt-1">今後のアップデートで追加予定</p>
+                </div>
+                <button
+                    onClick={() => router.push('/inn')}
+                    className="flex items-center gap-2 px-6 py-2.5 border border-[#8b5a2b] rounded-lg hover:bg-[#3e2723] transition-colors text-sm font-serif"
+                >
+                    <ArrowLeft className="w-4 h-4" /> 拠点に戻る
                 </button>
             </div>
         );

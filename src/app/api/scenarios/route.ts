@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-admin';
 import { QuestService } from '@/services/questService';
 
 export const dynamic = 'force-dynamic';
@@ -30,9 +31,9 @@ export async function GET(req: Request) {
 
         // Case 1: Fetch Specific Scenario by ID (for QuestPage)
         if (id) {
-            const { data: quest, error } = await supabase
+            const { data: quest, error } = await supabaseServer
                 .from('scenarios')
-                .select('*') // Select all including script_data
+                .select('*')
                 .eq('id', id)
                 .single();
 
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
             }
 
             // --- SECURITY VALIDATION ---
-            const validation = await QuestService.validateRequirements(supabase, userId, quest.requirements);
+            const validation = await QuestService.validateRequirements(supabaseServer, userId, quest.requirements);
             if (!validation.valid) {
                 console.warn(`[Security] User ${userId} blocked from scenario ${id}: ${validation.reason}`);
                 return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
@@ -73,7 +74,7 @@ export async function GET(req: Request) {
 
         // Case 2: Fetch Available Quests (Legacy/Location based)
         // Fetch User Profile to get Current Location
-        const { data: profile } = await supabase
+        const { data: profile } = await supabaseServer
             .from('user_profiles')
             .select('current_location_id')
             .eq('id', userId)

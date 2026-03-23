@@ -1,6 +1,5 @@
 id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_prosperity,rewards_summary,_comment
 5001,qst_rat_hunt,地下倉庫のネズミ退治,1,1,1,all,,,"Gold:100",共通: チュートリアル。誰でも受託可能。
-1001,qst_goblin_forest,ゴブリンの森の冒険(Sample),1,1,1,all,,,"Gold:100",サンプルデータ
 5002,qst_herb_gather,薬草の採取,1,1,1,all,,,"Item:3001",共通: 消耗品（傷薬）が手に入る。
 5003,qst_delivery_letter,手紙の配達,1,1,2,all,,,"Gold:150|Rep:5",共通: 隣町への移動を含むお使い。
 5004,qst_goblin_squad,ゴブリンの小隊撃退,2,2,1,all,,,"Gold:200|Rep:10",共通: 基本的な戦闘クエスト。
