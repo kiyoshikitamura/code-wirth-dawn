@@ -77,14 +77,38 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
         }
     }, [displayedLogs, typingText]);
 
-    // Enqueue new messages
+    // Track previous messages to detect full reset (new battle)
+    const prevMessagesRef = useRef<string[]>([]);
+
+    // Enqueue new messages — detect new battle by checking if messages array was fully replaced
     useEffect(() => {
-        const newMessages = battleState.messages.slice(displayedLogs.length + (isTyping.current ? 1 : 0));
-        if (newMessages.length > 0) {
-            typingQueue.current.push(...newMessages);
-            processQueue();
+        const prev = prevMessagesRef.current;
+        const curr = battleState.messages;
+
+        // Detect new battle: messages array was fully replaced (not appended)
+        const isNewBattle = curr.length > 0 && prev.length > 0 &&
+            (curr.length < prev.length || curr[0] !== prev[0]);
+
+        if (isNewBattle) {
+            // Full reset for new battle
+            typingQueue.current = [];
+            isTyping.current = false;
+            setDisplayedLogs([]);
+            setTypingText('');
+            // Queue all new messages
+            typingQueue.current.push(...curr);
+            setTimeout(() => processQueue(), 50);
+        } else {
+            // Normal append: only queue new messages
+            const newMessages = curr.slice(displayedLogs.length + (isTyping.current ? 1 : 0));
+            if (newMessages.length > 0) {
+                typingQueue.current.push(...newMessages);
+                processQueue();
+            }
         }
-        setLogs(battleState.messages);
+
+        prevMessagesRef.current = [...curr];
+        setLogs(curr);
     }, [battleState.messages]);
 
     // Show turn overlay
