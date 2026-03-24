@@ -212,14 +212,14 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             `}</style>
 
             {/* BATTLE HEADER — safe-area対応 */}
-            <div className="relative z-40 bg-slate-950/90 border-b border-slate-800 px-3 pt-[env(safe-area-inset-top,8px)] pb-1.5 flex items-center justify-between backdrop-blur-sm">
+            <div className="relative z-40 bg-slate-950/90 border-b border-slate-800 px-4 pt-[env(safe-area-inset-top,10px)] pb-2 flex items-center justify-between backdrop-blur-sm">
                 <div className="flex items-center gap-2 min-w-0">
-                    <Sword size={12} className="text-red-400 flex-shrink-0" />
-                    <span className="text-[10px] font-bold text-slate-300 truncate">
+                    <Sword size={14} className="text-red-400 flex-shrink-0" />
+                    <span className="text-xs font-bold text-slate-300 truncate">
                         {battleTitle || selectedScenario?.title || 'BATTLE'}
                     </span>
                 </div>
-                <div className="flex items-center gap-2 text-[9px] text-slate-500 flex-shrink-0">
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-shrink-0">
                     <span>TURN {battleState.turn}</span>
                 </div>
             </div>
@@ -261,72 +261,70 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
 
             {/* PLAYER STATUS PANEL */}
             <div className="relative z-20 px-3 mt-1 w-full flex-shrink-0">
-                <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-1.5 backdrop-blur-sm">
-                    <div className="flex items-center gap-2">
+                <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-2 backdrop-blur-sm">
+                    <div className="flex items-center gap-2.5">
                         {/* Avatar */}
-                        <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-10 h-10 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {userProfile?.avatar_url ? (
                                 <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
-                                <User size={14} className="text-amber-500" />
+                                <User size={18} className="text-amber-500" />
                             )}
                         </div>
 
                         {/* Name + HP + VIT */}
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                                <span className="text-[9px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</span>
-                                <span className="text-[7px] text-amber-500 font-bold">Lv.{userProfile?.level || 1}</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</span>
+                                <span className="text-[9px] text-amber-500 font-bold">Lv.{userProfile?.level || 1}</span>
                                 {battleState.resonanceActive && (
-                                    <span className="text-[7px] text-yellow-400 font-bold animate-pulse">共鳴ボーナス発動中</span>
+                                    <span className="text-[8px] text-yellow-400 font-bold animate-pulse">共鳴ボーナス発動中</span>
                                 )}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                {/* HP */}
-                                <span className="text-[7px] text-green-400 font-bold w-5 flex-shrink-0">HP</span>
-                                <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                <span className="text-[8px] text-green-400 font-bold w-5 flex-shrink-0">HP</span>
+                                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
                                     <div className="h-full bg-green-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100))}%` }} />
                                 </div>
-                                <span className="text-[7px] text-green-400 font-mono w-12 text-right flex-shrink-0">{userProfile?.hp || 0}/{userProfile?.max_hp || 0}</span>
+                                <span className="text-[8px] text-green-400 font-mono w-14 text-right flex-shrink-0">{userProfile?.hp || 0}/{userProfile?.max_hp || 0}</span>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                {/* VIT */}
-                                <span className="text-[7px] text-sky-400 font-bold w-5 flex-shrink-0">VIT</span>
-                                <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                <span className="text-[8px] text-sky-400 font-bold w-5 flex-shrink-0">VIT</span>
+                                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
                                     <div className="h-full bg-sky-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.vitality || 0) / 100) * 100))}%` }} />
                                 </div>
-                                <span className="text-[7px] text-sky-400 font-mono w-12 text-right flex-shrink-0">{userProfile?.vitality || 0}/100</span>
+                                <span className="text-[8px] text-sky-400 font-mono w-14 text-right flex-shrink-0">{userProfile?.vitality || 0}/100</span>
                             </div>
                         </div>
 
                         {/* AP */}
                         <div className="flex flex-col items-center gap-0.5 px-2 border-l border-slate-700 flex-shrink-0">
-                            <span className="text-[7px] text-slate-500 font-bold">AP</span>
-                            <span className="text-sm font-bold text-amber-400 font-mono">{battleState.current_ap || 0}<span className="text-[8px] text-slate-600">/{15}</span></span>
+                            <span className="text-[8px] text-slate-500 font-bold">AP</span>
+                            <span className="text-base font-bold text-amber-400 font-mono">{battleState.current_ap || 0}<span className="text-[9px] text-slate-600">/{15}</span></span>
                         </div>
                     </div>
 
                     {/* Party Members + Guest NPCs row */}
                     {partyMembers.length > 0 && (
-                        <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-slate-800/60 overflow-x-auto no-scrollbar">
-                            <Users size={9} className="text-slate-600 flex-shrink-0" />
+                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-800/60 overflow-x-auto no-scrollbar">
+                            <Users size={12} className="text-slate-600 flex-shrink-0" />
                             {partyMembers.slice(0, 9).map((member: any, i: number) => (
                                 <button
                                     key={i}
                                     onClick={() => setSelectedPartyMember(member)}
                                     className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform"
                                 >
-                                    <div className={`w-7 h-7 rounded-full border ${member.hp > 0 ? 'border-sky-500/70 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-40'} flex items-center justify-center overflow-hidden`}>
+                                    <div className={`w-9 h-9 rounded-full border ${member.hp > 0 ? 'border-sky-500/70 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-40'} flex items-center justify-center overflow-hidden`}>
                                         {member.avatar_url ? (
                                             <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                            <User size={10} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
+                                            <User size={14} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
                                         )}
                                     </div>
-                                    <div className="w-6 h-0.5 mt-0.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="w-8 h-1 mt-0.5 bg-slate-800 rounded-full overflow-hidden">
                                         <div className="h-full bg-green-500" style={{ width: `${member.maxHp ? (member.hp / member.maxHp) * 100 : 100}%` }} />
                                     </div>
-                                    <span className="text-[6px] text-slate-500 truncate max-w-[28px]">{member.name?.slice(0, 3) || 'NPC'}</span>
+                                    <span className="text-[8px] text-slate-500 truncate max-w-[36px]">{member.name?.slice(0, 4) || 'NPC'}</span>
                                 </button>
                             ))}
                         </div>

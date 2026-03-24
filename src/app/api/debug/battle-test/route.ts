@@ -53,8 +53,8 @@ export async function GET(req: Request) {
             }, { status: 404 });
         }
 
-        // ランダムに1～3体選択
-        const enemyCount = Math.min(allEnemies.length, Math.floor(Math.random() * 3) + 1);
+        // 6体選出（最大）
+        const enemyCount = Math.min(allEnemies.length, 6);
         const shuffled = allEnemies.sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, enemyCount);
 
