@@ -559,17 +559,10 @@ export const useGameStore = create<GameState>()(
                     await get().fetchHubState();
                     const { userProfile, hubState } = get();
 
-                    // [Logic-Expert] 初期拠点バグ修正:
-                    // hubState.is_in_hub が true の場合のみハブ名を使用する。
-                    // それ以外は current_location_id から実際の拠点名をDBから取得する。
-                    // 旧実装は hubState.is_in_hub が false でも locations?.name が null の場合に
-                    // 「名もなき旅人の拠所」をデフォルト値にしていたため、初期表示でズレが生じていた。
-                    let targetLocationName = '名もなき旅人の拠所'; // フォールバック
+                    // current_location_id からロケーション名を取得
+                    let targetLocationName = '国境の町'; // フォールバック
 
-                    if (hubState?.is_in_hub) {
-                        // ハブ内にいる場合は明示的にハブ名を使用
-                        targetLocationName = '名もなき旅人の拠所';
-                    } else if (userProfile?.current_location_id) {
+                    if (userProfile?.current_location_id) {
                         // current_location_idがある場合はDBから実際の拠点名を取得
                         if (userProfile.locations?.name) {
                             // JOINされたlocation情報がある場合はそれを優先

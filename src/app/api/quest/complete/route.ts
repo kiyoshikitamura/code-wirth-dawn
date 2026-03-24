@@ -160,7 +160,7 @@ export async function POST(req: Request) {
 
         // 6. Update Hub State (if moved)
         if (updates.current_location_id) {
-            const hubId = await resolveLocationId(supabase, 'loc_hub') || await resolveLocationId(supabase, '名もなき旅人の拠所');
+            const hubId = await resolveLocationId(supabase, 'loc_border_town');
             const isReturningToHub = updates.current_location_id === hubId;
 
             const { error: hubError } = await supabase

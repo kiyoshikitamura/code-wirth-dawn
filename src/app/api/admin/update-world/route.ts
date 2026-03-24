@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     try {
         // In a real app, this would be triggered by a scheduled job or admin action.
         // Here we simulate a recalculation request or handle direct updates.
-        const { id = WORLD_ID, location_name = '名もなき旅人の拠所', impacts = {} } = await req.json();
+        const { id = WORLD_ID, location_name = '国境の町', impacts = {} } = await req.json();
 
         // 1. Fetch current scores (Simulated or from DB)
         // Ideally we aggregate action_logs, but let's assume we update the world_state table directly for this prototype.

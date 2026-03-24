@@ -7,10 +7,6 @@ interface CreatorsWorkshopBannerProps {
 }
 
 export default function CreatorsWorkshopBanner({ onOpenWorkshop, locationName }: CreatorsWorkshopBannerProps) {
-    // 名も無き旅人の拠所でのみ表示
-    if (locationName !== '名もなき旅人の拠所' && locationName !== 'Hub') {
-        return null;
-    }
 
     return (
         <div className="px-4 pb-12 w-full max-w-lg mx-auto">

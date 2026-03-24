@@ -1,7 +1,7 @@
 import React from 'react';
-import { Bed, ShoppingBag, Beer, Flame, ClipboardList, Map as MapIcon, Settings, Activity } from 'lucide-react';
+import { Bed, Map as MapIcon, Settings, Activity } from 'lucide-react';
 
-export type FacilityType = 'inn' | 'shop' | 'tavern' | 'temple' | 'guild' | 'map' | 'status' | 'settings';
+export type FacilityType = 'inn' | 'map' | 'status' | 'settings';
 
 interface FacilityGridProps {
     onSelectFacility: (facility: FacilityType) => void;
@@ -10,10 +10,6 @@ interface FacilityGridProps {
 export default function FacilityGrid({ onSelectFacility }: FacilityGridProps) {
     const facilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋', sub: 'Rest', icon: Bed },
-        { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
-        { id: 'tavern', label: '酒場', sub: 'Tavern', icon: Beer },
-        { id: 'temple', label: '神殿', sub: 'Temple', icon: Flame },
-        { id: 'guild', label: 'ギルド', sub: 'Guild', icon: ClipboardList },
         { id: 'map', label: 'ワールドマップ', sub: 'Map', icon: MapIcon },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'settings', label: '設定', sub: 'Settings', icon: Settings },

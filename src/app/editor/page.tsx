@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
-import { HUB_LOCATION_ID, LEGACY_ZERO_UUID, LOCATION_NAME } from '@/utils/constants';
+import { HUB_LOCATION_ID, LEGACY_ZERO_UUID } from '@/utils/constants';
 import { ShieldAlert, Plus, Trash2, Save, Send } from 'lucide-react';
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
@@ -67,7 +67,7 @@ export default function EditorPage() {
             const isHub = validHubs.includes(userProfile.current_location_id || '') || isHubName;
 
             if (!isHub) {
-                alert(`この機能は「${LOCATION_NAME}」からのみアクセス可能です。`);
+                alert(`この機能は「名もなき旅人の拠所」からのみアクセス可能です。`);
                 router.push('/inn');
             }
         }

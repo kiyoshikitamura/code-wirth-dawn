@@ -4,12 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
-import { X } from 'lucide-react';
-import { LOCATION_NAME, HUB_LOCATION_ID } from '@/utils/constants';
 import InnHeader from '@/components/inn/InnHeader';
-import TavernModal from '@/components/inn/TavernModal';
-import ShopModal from '@/components/shop/ShopModal';
-import PrayerModal from '@/components/world/PrayerModal';
 import StatusModal from '@/components/inn/StatusModal';
 import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
 import MainVisualArea from '@/components/inn/MainVisualArea';
@@ -18,58 +13,28 @@ import NpcDialogModal, { NpcDialogData } from '@/components/inn/NpcDialogModal';
 import RumorsModal from '@/components/inn/RumorsModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import WorkshopModal from '@/components/inn/WorkshopModal';
-import QuestBoardModal from '@/components/inn/QuestBoardModal';
 import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 
 export default function InnPage() {
     const router = useRouter();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus } = useGameStore();
 
     // UI States
-    const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | 'questBoard' | null>(null);
+    const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | null>(null);
     const [loading, setLoading] = useState(true);
-
-    // Quest Data State
-    const [allQuests, setAllQuests] = useState<any[]>([]);
-    const [loadingQuests, setLoadingQuests] = useState(false);
-
-    // Dynamic Data
-    const [reputation, setReputation] = useState<any>(null);
-
-    // News & History Logic (Existing)
-    const [historyList, setHistoryList] = useState<any[]>([]);
-    const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
-
-    // Existing Dialogs to keep for now (Quest, Shop, Tavern, etc are integrated to new modal or separated)
-    // For this refactoring, we'll map FacilityGrid clicks to either the new NpcDialogModal OR existing direct modals
-    const [showTavern, setShowTavern] = useState(false);
-    const [showShop, setShowShop] = useState(false);
-    const [showPrayer, setShowPrayer] = useState(false);
     const [showAccount, setShowAccount] = useState(false);
 
-    // Initial load effects remain...
+    // News & History Logic
+    const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
+
+    // Initial load
     useEffect(() => {
         Promise.all([
             fetchWorldState(),
             useGameStore.getState().fetchUserProfile()
         ]).finally(() => setLoading(false));
     }, []);
-
-    // Reputation Logic
-    useEffect(() => {
-        async function fetchRep() {
-            if (!userProfile?.id || !worldState?.location_name) return;
-            const { data } = await supabase
-                .from('reputations')
-                .select('*')
-                .eq('user_id', userProfile.id)
-                .eq('location_name', worldState.location_name)
-                .maybeSingle();
-            setReputation(data || { rank: 'Stranger', score: 0 });
-        }
-        fetchRep();
-    }, [userProfile, worldState]);
 
     // Gougai Detection
     useEffect(() => {
@@ -85,7 +50,7 @@ export default function InnPage() {
                     }
                 }
             } catch (e) {
-                console.error("Gougai check failed", e);
+                console.error("号外チェック失敗", e);
             }
         };
 
@@ -94,7 +59,7 @@ export default function InnPage() {
 
     const handleCloseGougai = async () => {
         if (gougaiEvents.length > 0 && userProfile?.id) {
-            const latestId = gougaiEvents[0].id; // Events are sorted descending
+            const latestId = gougaiEvents[0].id;
             try {
                 await fetch('/api/world-history/mark-seen', {
                     method: 'POST',
@@ -102,69 +67,28 @@ export default function InnPage() {
                     body: JSON.stringify({ user_id: userProfile.id, last_seen_history_id: latestId })
                 });
             } catch (e) {
-                console.error("Failed to mark news as seen", e);
+                console.error("ニュース既読マーク失敗", e);
             }
         }
         setGougaiEvents([]);
     };
 
-    // NPC Data Generator based on Renown and Status
+    // NPC Data (宿屋のみ)
     const getNpcData = (facility: FacilityType): NpcDialogData | null => {
-        const renScore = reputation?.score || 0;
-        const prosp = worldState?.prosperity_level || 3;
-        const isHighRenown = renScore > 300;
-        const isBadStatus = prosp <= 2;
-
-        switch (facility) {
-            case 'inn':
-                return {
-                    facilityName: '宿屋', role: '主人', name: 'バルナバ',
-                    dialogue: isHighRenown
-                        ? "おお、英雄殿！お帰りなさい。あなたのためなら一番良い部屋を空けておきますよ。"
-                        : "いらっしゃい。悪いが、うちは先払いだ。ゆっくりしていきな。"
-                };
-            case 'shop':
-                return {
-                    facilityName: '道具屋', role: '主人', name: 'エリン',
-                    dialogue: isBadStatus
-                        ? "情勢が悪くてね…仕入れが滞ってるんだ。ある分だけで勘弁しておくれ。"
-                        : "いいのが入ってるよ！あんたのような旅人には必需品ばかりだ。"
-                };
-            case 'tavern':
-                return {
-                    facilityName: '酒場', role: '店員', name: 'リセット',
-                    dialogue: isHighRenown
-                        ? `${userProfile?.name || '旅人'}さん！皆あんたの話で持ちきりだよ。一杯奢らせておくれ！`
-                        : "あら、見ない顔ね。飲みに来たの？騒ぎはご免だよ。"
-                };
-            case 'temple':
-                return {
-                    facilityName: '神殿', role: '神官', name: 'クレメンス',
-                    dialogue: isBadStatus
-                        ? "苦難の時こそ、祈りを捧げましょう。神の慈悲は等しく降り注ぎます。"
-                        : "ようこそ、迷える子よ。あなたの行く末に光があらんことを。"
-                };
-            case 'guild':
-                return {
-                    facilityName: 'ギルド', role: 'ギルドマスター', name: 'ガドルフ',
-                    dialogue: isHighRenown
-                        ? "よく来たな。お前にしか頼めない難件が入っている。期待しているぞ。"
-                        : "腕を磨け。死にたくなければ、まずは簡単な依頼からこなすことだ。"
-                };
-            default: return null;
+        if (facility === 'inn') {
+            return {
+                facilityName: '宿屋', role: '主人', name: 'バルナバ',
+                dialogue: "いらっしゃい。悪いが、うちは先払いだ。ゆっくりしていきな。"
+            };
         }
+        return null;
     };
 
     const handleSelectFacility = (facility: FacilityType) => {
-        if (['map', 'status', 'settings'].includes(facility)) {
-            // Direct Actions
-            if (facility === 'map') router.push('/world-map');
-            if (facility === 'status') setShowStatus(true);
-            if (facility === 'settings') setShowAccount(true);
-        } else {
-            // Open NPC Dialog
-            setActiveModal(facility);
-        }
+        if (facility === 'map') router.push('/world-map');
+        else if (facility === 'status') setShowStatus(true);
+        else if (facility === 'settings') setShowAccount(true);
+        else if (facility === 'inn') setActiveModal('inn');
     };
 
     const getInnCost = () => {
@@ -184,55 +108,17 @@ export default function InnPage() {
                 isDisabled: !canAfford
             };
         }
-        if (activeModal === 'shop') return { buttonText: '品揃えを見る', isDisabled: false };
-        if (activeModal === 'tavern') return { buttonText: '冒険者を探す', isDisabled: false };
-        if (activeModal === 'temple') return { buttonText: '礼拝堂に行く', isDisabled: false };
-        if (activeModal === 'guild') return { buttonText: '依頼を見る', isDisabled: false };
         return { buttonText: '機能を利用する', isDisabled: false };
     };
 
     const handleDialogAction = (facility: FacilityType) => {
-        setActiveModal(null); // Close dialog
-
-        // Execute original facility action
+        setActiveModal(null);
         if (facility === 'inn') {
-            // handle Rest
             handleRest();
-        } else if (facility === 'shop') {
-            setShowShop(true);
-        } else if (facility === 'tavern') {
-            setShowTavern(true);
-        } else if (facility === 'temple') {
-            setShowPrayer(true);
-        } else if (facility === 'guild') {
-            setActiveModal('questBoard');
-            fetchQuestsForBoard();
-        }
-    };
-
-    const fetchQuestsForBoard = async () => {
-        if (!userProfile?.id || !worldState?.location_name) return;
-        setLoadingQuests(true);
-        try {
-            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${userProfile.current_location_id || HUB_LOCATION_ID}`);
-            if (res.ok) {
-                const data = await res.json();
-                setAllQuests(data.quests || []);
-            }
-        } catch (e) {
-            console.error("Failed to load quests", e);
-        } finally {
-            setLoadingQuests(false);
         }
     };
 
     const handleRest = async () => {
-        const isEmbargoed = reputation && (reputation.reputation_score || 0) < 0;
-        if (isEmbargoed) {
-            alert("出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。");
-            return;
-        }
-
         const cost = getInnCost();
         if ((userProfile?.gold || 0) < cost) {
             alert("ゴールドが不足しています。");
@@ -242,7 +128,6 @@ export default function InnPage() {
         try {
             const res = await fetch('/api/inn/rest', { method: 'POST', body: JSON.stringify({ id: userProfile?.id }) });
             if (res.ok) {
-                // Deduct locally and alert only after backend succeeds
                 spendGold(cost);
                 useGameStore.getState().fetchUserProfile();
                 setTimeout(() => alert(`HPが全快しました。\n(宿泊費: ${cost} G)`), 100);
@@ -261,8 +146,7 @@ export default function InnPage() {
     };
 
     // Derived states
-    const activeNpcData = activeModal && ['inn', 'shop', 'tavern', 'temple', 'guild'].includes(activeModal)
-        ? getNpcData(activeModal as FacilityType) : null;
+    const activeNpcData = activeModal === 'inn' ? getNpcData('inn') : null;
     const { buttonText, isDisabled } = activeDialogConfig();
 
     if (loading || !userProfile || !worldState) {
@@ -283,7 +167,7 @@ export default function InnPage() {
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-slate-950 md:border-[6px] md:border-neutral-800 md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
-                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} />
+                <InnHeader worldState={worldState} userProfile={userProfile} />
 
                 {/* Gougai Modal */}
                 {gougaiEvents.length > 0 && (
@@ -293,7 +177,7 @@ export default function InnPage() {
                     />
                 )}
 
-                {/* Modals */}
+                {/* NPC Dialog (宿屋のみ) */}
                 {activeNpcData && activeModal && (
                     <NpcDialogModal
                         npcData={activeNpcData}
@@ -308,29 +192,16 @@ export default function InnPage() {
                     <RumorsModal
                         onClose={() => setActiveModal(null)}
                         worldState={worldState}
-                        reputationScore={reputation?.score || 0}
+                        reputationScore={0}
                     />
                 )}
 
-                {/* Extracted Existing Modals */}
-                {showShop && <ShopModal onClose={() => setShowShop(false)} />}
-                {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
+                {/* Modals */}
                 {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
                 {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
 
                 {activeModal === 'workshop' && (
                     <WorkshopModal onClose={() => setActiveModal(null)} />
-                )}
-
-                {activeModal === 'questBoard' && (
-                    <QuestBoardModal
-                        isOpen={true}
-                        onClose={() => setActiveModal(null)}
-                        userProfile={userProfile}
-                        quests={allQuests}
-                        loading={loadingQuests}
-                        onSelect={(s) => router.push(`/quest/${s.id}`)}
-                    />
                 )}
 
                 {/* Main Visual */}
@@ -349,7 +220,7 @@ export default function InnPage() {
                     />
                 </div>
 
-                {/* History Hall (Modern Archive UI) */}
+                {/* History Hall */}
                 {activeModal === 'history' && userProfile && (
                     <HistoryArchiveModal
                         userId={userProfile.id}
@@ -357,23 +228,15 @@ export default function InnPage() {
                     />
                 )}
 
-                {/* Bottom Home Indicator & Debug Buttons if applicable */}
+                {/* デバッグツール */}
                 <div className="flex flex-col items-center gap-4 py-8">
-                    {/* デバッグツール */}
                     <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-[95%] opacity-50 hover:opacity-100 transition-opacity">
-                        {/* ゴールド・日数 */}
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('ゴールドを追加しますか？')) return; await fetch('/api/debug/add-gold', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-amber-900 border border-amber-500 rounded text-[10px]">Add Gold</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('1日経過させますか？')) return; await fetch('/api/debug/skip-time', { method: 'POST', body: JSON.stringify({ days: 1 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-2 py-1 bg-green-900 border border-green-500 rounded text-[10px]">+1 Day</button>
-
-                        {/* レベル */}
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('レベルを+1しますか？')) return; await fetch('/api/debug/level-up', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, levels: 1 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-blue-900 border border-blue-500 rounded text-[10px]">Lv +1</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('レベルを-1しますか？')) return; await fetch('/api/debug/level-up', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, levels: -1 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-blue-900 border border-blue-400 rounded text-[10px]">Lv -1</button>
-
-                        {/* 名声 */}
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('名声を+100しますか？')) return; await fetch('/api/debug/modify-reputation', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, amount: 100 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-purple-900 border border-purple-500 rounded text-[10px]">名声+</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('名声を-100しますか？')) return; await fetch('/api/debug/modify-reputation', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, amount: -100 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-purple-900 border border-purple-400 rounded text-[10px]">名声-</button>
-
-                        {/* 属性値 */}
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('秩序を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'order', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-1.5 py-1 bg-cyan-900 border border-cyan-500 rounded text-[9px]">秩序+</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('秩序を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'order', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-1.5 py-1 bg-cyan-900 border border-cyan-400 rounded text-[9px]">秩序-</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('混沌を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'chaos', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-1.5 py-1 bg-orange-900 border border-orange-500 rounded text-[9px]">混沌+</button>
@@ -382,18 +245,12 @@ export default function InnPage() {
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('正義を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'justice', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-1.5 py-1 bg-yellow-900 border border-yellow-400 rounded text-[9px]">正義-</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('悪意を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'evil', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-1.5 py-1 bg-rose-900 border border-rose-500 rounded text-[9px]">悪意+</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('悪意を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'evil', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-1.5 py-1 bg-rose-900 border border-rose-400 rounded text-[9px]">悪意-</button>
-
-                        {/* 世界変換・リセット */}
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('世界変換シミュレーションを即時実行しますか？')) return; await fetch('/api/debug/run-simulation', { method: 'POST' }); useGameStore.getState().fetchWorldState(); alert('世界変換を実行しました。'); }} className="px-2 py-1 bg-teal-900 border border-teal-500 rounded text-[10px]">世界変換</button>
                         <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('⚠️ ワールドリセットを実行しますか？\n全てのユーザーデータが削除されます。')) return; await fetch('/api/debug/reset', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id }) }); window.location.href = '/title'; }} className="px-2 py-1 bg-red-900 border border-red-500 rounded text-[10px]">World Reset</button>
                     </div>
                     <div className="w-32 h-1 bg-slate-800 rounded-full" />
                 </div>
             </div>
-
-            {/* TavernModal - outside game container so fixed positioning works correctly */}
-            {userProfile && <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || HUB_LOCATION_ID} reputationScore={reputation?.score || 0} />}
         </div>
     );
 }
-

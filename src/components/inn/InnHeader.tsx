@@ -7,10 +7,9 @@ import { WorldState, UserProfile } from '@/types/game';
 interface InnHeaderProps {
     worldState: WorldState | null;
     userProfile: UserProfile | null;
-    reputation: { rank: string; score: number } | null;
 }
 
-export default function InnHeader({ worldState, userProfile, reputation }: InnHeaderProps) {
+export default function InnHeader({ worldState, userProfile }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
 
     useEffect(() => {
@@ -26,7 +25,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
     const day = 1 + (totalDays % 30);
 
     const isLowVit = (userProfile?.vitality ?? 100) <= 20;
-    const currentLocName = worldState?.location_name || "名もなき旅人の拠所";
+    const currentLocName = worldState?.location_name || "未知の土地";
     const controllingNation = worldState?.controlling_nation || "Neutral";
     const prosperity = worldState?.prosperity_level || 3;
 
@@ -47,7 +46,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
 
     const getFlavorText = () => {
         if (!worldState) return '';
-        if (currentLocName === '名もなき旅人の拠所') return '';
+        if (currentLocName === '未知の土地') return '';
 
         const nation = worldState.controlling_nation;
         if (nation === 'Neutral') return 'この地は誰の支配も受けていない。';
@@ -163,7 +162,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
                     <div className="flex items-center gap-1 mt-0.5">
                         <Star size={10} className="text-amber-500 fill-amber-500" />
                         <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">
-                            名声: {reputation?.score || 0}
+                            名声: 0
                         </span>
                     </div>
                 </div>
