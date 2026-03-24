@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useRouter } from 'next/navigation';
 import { Shield, Sword, Sparkles, Heart, Footprints, Settings, Skull, Clock, Target, Users, User, LogOut, ScrollText, Zap, X } from 'lucide-react';
@@ -34,16 +34,58 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
 
     const [logs, setLogs] = useState<string[]>([]);
     const logEndRef = useRef<HTMLDivElement>(null);
+    const logContainerRef = useRef<HTMLDivElement>(null);
     const [showTurnOverlay, setShowTurnOverlay] = useState(false);
     const [activeEffect, setActiveEffect] = useState<string | null>(null);
     const [selectedPartyMember, setSelectedPartyMember] = useState<any | null>(null);
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [showUserDetail, setShowUserDetail] = useState(false);
 
+    // Typewriter state
+    const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
+    const [typingText, setTypingText] = useState<string>('');
+    const typingQueue = useRef<string[]>([]);
+    const isTyping = useRef(false);
+
+    // Process typewriter queue
+    const processQueue = useCallback(() => {
+        if (isTyping.current || typingQueue.current.length === 0) return;
+        isTyping.current = true;
+        const message = typingQueue.current.shift()!;
+        let charIdx = 0;
+        setTypingText('');
+
+        const timer = setInterval(() => {
+            charIdx++;
+            if (charIdx <= message.length) {
+                setTypingText(message.slice(0, charIdx));
+            } else {
+                clearInterval(timer);
+                setDisplayedLogs(prev => [...prev, message]);
+                setTypingText('');
+                isTyping.current = false;
+                // Process next in queue
+                setTimeout(() => processQueue(), 100);
+            }
+        }, 30);
+    }, []);
+
     // Auto-scroll logs
     useEffect(() => {
-        if (logEndRef.current) logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }, [logs]);
+        if (logContainerRef.current) {
+            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+        }
+    }, [displayedLogs, typingText]);
+
+    // Enqueue new messages
+    useEffect(() => {
+        const newMessages = battleState.messages.slice(displayedLogs.length + (isTyping.current ? 1 : 0));
+        if (newMessages.length > 0) {
+            typingQueue.current.push(...newMessages);
+            processQueue();
+        }
+        setLogs(battleState.messages);
+    }, [battleState.messages]);
 
     // Show turn overlay
     useEffect(() => {
@@ -65,10 +107,6 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             router.push('/inn');
         }
     }, []);
-
-    useEffect(() => {
-        setLogs(battleState.messages);
-    }, [battleState.messages]);
 
     // Handle Pub NPC Death
     useEffect(() => {
@@ -565,11 +603,15 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             )}
 
-            {/* BATTLE LOG (5 lines) */}
+            {/* BATTLE LOG — スクロール可能 + タイプライター */}
             <div className="relative z-20 px-3 w-full flex-shrink-0">
-                <div className="bg-slate-950/80 border border-slate-800 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-hidden flex flex-col justify-end backdrop-blur-sm">
-                    {logs.slice(-5).map((log, idx) => {
-                        const isLatest = idx === Math.min(logs.length, 5) - 1;
+                <div
+                    ref={logContainerRef}
+                    className="bg-slate-950/80 border border-slate-800 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-y-auto backdrop-blur-sm scroll-smooth"
+                    style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+                >
+                    {displayedLogs.map((log, idx) => {
+                        const isLatest = idx === displayedLogs.length - 1 && !typingText;
                         return (
                             <div key={idx} className={`flex gap-1.5 ${isLatest ? 'text-slate-200 font-bold' : 'text-slate-500'}`}>
                                 <span className={`shrink-0 ${isLatest ? 'text-amber-500' : 'text-slate-700'}`}>▸</span>
@@ -577,6 +619,13 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </div>
                         );
                     })}
+                    {typingText && (
+                        <div className="flex gap-1.5 text-slate-200 font-bold">
+                            <span className="shrink-0 text-amber-500">▸</span>
+                            <span className="break-all">{typingText}<span className="animate-pulse text-amber-400">|</span></span>
+                        </div>
+                    )}
+                    <div ref={logEndRef} />
                 </div>
             </div>
 
