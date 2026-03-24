@@ -211,8 +211,8 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 }
             `}</style>
 
-            {/* BATTLE HEADER */}
-            <div className="relative z-40 bg-slate-950/90 border-b border-slate-800 px-3 py-1.5 flex items-center justify-between backdrop-blur-sm">
+            {/* BATTLE HEADER — safe-area対応 */}
+            <div className="relative z-40 bg-slate-950/90 border-b border-slate-800 px-3 pt-[env(safe-area-inset-top,8px)] pb-1.5 flex items-center justify-between backdrop-blur-sm">
                 <div className="flex items-center gap-2 min-w-0">
                     <Sword size={12} className="text-red-400 flex-shrink-0" />
                     <span className="text-[10px] font-bold text-slate-300 truncate">
@@ -360,28 +360,30 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         <div className="space-y-2 text-[11px]">
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-green-400 font-bold">HP</span>
-                                <span className="text-slate-200 font-mono">{selectedPartyMember.hp || 0} / {selectedPartyMember.maxHp || '?'}</span>
+                                <span className="text-slate-200 font-mono">{selectedPartyMember.hp ?? 0} / {selectedPartyMember.maxHp ?? selectedPartyMember.max_hp ?? selectedPartyMember.hp ?? 0}</span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-red-400 font-bold">攻撃力</span>
-                                <span className="text-slate-200 font-mono">{selectedPartyMember.atk || selectedPartyMember.attack || '?'}</span>
+                                <span className="text-slate-200 font-mono">{selectedPartyMember.atk ?? selectedPartyMember.attack ?? 0}</span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-sky-400 font-bold">防御力</span>
-                                <span className="text-slate-200 font-mono">{selectedPartyMember.def || selectedPartyMember.defense || '?'}</span>
+                                <span className="text-slate-200 font-mono">{selectedPartyMember.def ?? selectedPartyMember.defense ?? 0}</span>
                             </div>
-                            {(selectedPartyMember.skills || selectedPartyMember.abilities) && (
-                                <div className="bg-slate-800/50 rounded px-2 py-1.5">
-                                    <span className="text-amber-400 font-bold text-[10px]">スキル</span>
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {(selectedPartyMember.skills || selectedPartyMember.abilities || []).map((skill: any, si: number) => (
+                            <div className="bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-amber-400 font-bold text-[10px]">スキル</span>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                    {(selectedPartyMember.skills || selectedPartyMember.abilities || []).length > 0 ? (
+                                        (selectedPartyMember.skills || selectedPartyMember.abilities).map((skill: any, si: number) => (
                                             <span key={si} className="px-1.5 py-0.5 bg-amber-900/30 border border-amber-800/50 rounded text-[9px] text-amber-300">
                                                 {typeof skill === 'string' ? skill : skill.name || skill}
                                             </span>
-                                        ))}
-                                    </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-[9px] text-slate-500 italic">なし</span>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -403,10 +405,10 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             </div>
 
             {/* BOTTOM: CARDS + ACTION BUTTONS */}
-            <div className="flex-1 w-full relative z-30 mt-1">
+            <div className="flex-1 w-full relative z-30">
 
-                {/* Action Buttons — bottom-left horizontal */}
-                <div className="absolute bottom-2 left-3 z-40 flex items-center gap-1.5">
+                {/* Action Buttons — bottom-right horizontal */}
+                <div className="absolute bottom-2 right-3 z-40 flex items-center gap-1.5">
                     <button
                         onClick={handleEndTurn}
                         disabled={battleState.isVictory || battleState.isDefeat}
