@@ -206,7 +206,7 @@ export default function BattleView({ onBattleEnd }: BattleViewProps) {
     );
 
     return (
-        <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 justify-between pb-4 pt-10 transition-colors duration-1000 ${isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)] animate-pulse-slow' : 'bg-slate-900'}`}>
+        <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 justify-between pb-4 pt-10 transition-colors duration-1000 ${isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'}`}>
             
             {isBossEncounter && (
                 <div className="absolute top-0 w-full text-center py-1 bg-gradient-to-r from-transparent via-red-900/80 to-transparent z-50">
@@ -257,13 +257,72 @@ export default function BattleView({ onBattleEnd }: BattleViewProps) {
                 </div>
             </div>
 
+            {/* PLAYER STATUS PANEL */}
+            <div className="relative z-20 px-4 -mt-2 w-full">
+                <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-2 backdrop-blur-sm flex items-center gap-3">
+                    {/* Player Info */}
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-9 h-9 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {userProfile?.avatar_url ? (
+                                <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <User size={16} className="text-amber-500" />
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</span>
+                                <span className="text-[8px] text-amber-500 font-bold">Lv.{userProfile?.level || 1}</span>
+                            </div>
+                            <div className="flex gap-1 mt-0.5">
+                                <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                    <div className="h-full bg-green-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100))}%` }} />
+                                </div>
+                                <span className="text-[8px] text-green-400 font-mono w-10 text-right">{userProfile?.hp || 0}/{userProfile?.max_hp || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* AP Display */}
+                    <div className="flex flex-col items-center gap-0.5 px-2 border-l border-slate-700">
+                        <span className="text-[8px] text-slate-500 font-bold">AP</span>
+                        <div className="flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className={`w-2.5 h-2.5 rounded-full border ${i < (battleState.current_ap || 0) ? 'bg-amber-500 border-amber-400 shadow-[0_0_4px_rgba(245,158,11,0.6)]' : 'bg-slate-800 border-slate-700'}`} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Party Members */}
+                    {battleState.party && battleState.party.length > 0 && (
+                        <div className="flex items-center gap-1 pl-2 border-l border-slate-700">
+                            <Users size={10} className="text-slate-500" />
+                            {battleState.party.map((member: any, i: number) => (
+                                <div key={i} className="flex flex-col items-center">
+                                    <div className={`w-7 h-7 rounded-full border ${member.hp > 0 ? 'border-sky-500 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-50'} flex items-center justify-center overflow-hidden`}>
+                                        {member.avatar_url ? (
+                                            <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={12} className="text-sky-400" />
+                                        )}
+                                    </div>
+                                    <div className="w-6 h-0.5 mt-0.5 bg-slate-800 rounded-full overflow-hidden">
+                                        <div className="h-full bg-green-500" style={{ width: `${member.maxHp ? (member.hp / member.maxHp) * 100 : 100}%` }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* BATTLE LOG (5 lines) */}
-            <div className="relative z-20 px-4 -mt-4 w-full">
-                <div className="bg-slate-950/80 border-y border-slate-800 p-2 text-[11px] font-mono leading-relaxed h-[6.5rem] overflow-hidden flex flex-col justify-end backdrop-blur-sm">
-                    {logs.slice(-5).map((log, idx) => {
-                        const isLatest = idx === Math.min(logs.length, 5) - 1;
+            <div className="relative z-20 px-4 mt-1 w-full">
+                <div className="bg-slate-950/80 border-y border-slate-800 p-2 text-[11px] font-mono leading-relaxed h-[5.5rem] overflow-hidden flex flex-col justify-end backdrop-blur-sm">
+                    {logs.slice(-4).map((log, idx) => {
+                        const isLatest = idx === Math.min(logs.length, 4) - 1;
                         return (
-                            <div key={idx} className={`flex gap-2 ${isLatest ? 'text-slate-200 font-bold animate-[pulse_2s_ease-in-out_infinite]' : 'text-slate-500'}`}>
+                            <div key={idx} className={`flex gap-2 ${isLatest ? 'text-slate-200 font-bold' : 'text-slate-500'}`}>
                                 <span className={`shrink-0 ${isLatest ? 'text-amber-500' : 'text-slate-700'}`}>▸</span>
                                 <span className="break-all">{log}</span>
                             </div>
