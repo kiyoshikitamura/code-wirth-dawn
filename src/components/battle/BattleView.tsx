@@ -258,52 +258,67 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             )}
 
-            {/* Enemies Layout — 動的ターゲットフォーカス */}
+            {/* Enemies Layout — 重ね表示、ターゲット拡大 */}
             <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-2 pb-1 flex-shrink-0">
-                <div className="w-full min-h-[140px] p-1 flex flex-col items-center justify-end">
-                    {/* Non-target enemies (shrunk, behind) */}
-                    {enemies.filter(e => target?.id !== e.id).length > 0 && (
-                        <div className="flex justify-center gap-1 mb-[-12px] z-0">
-                            {enemies.filter(e => target?.id !== e.id).map((enemy) => {
-                                const isDead = enemy.hp <= 0;
-                                return (
-                                    <div
-                                        key={enemy.id}
-                                        className={`relative transition-all duration-500 shrink-0 scale-[0.65] ${isDead ? 'opacity-30 grayscale' : 'opacity-60 cursor-pointer hover:opacity-80'}`}
-                                        onClick={() => !isDead && setTarget(enemy.id)}
-                                    >
-                                        <div className="w-[104px] h-[140px] sm:w-[116px] sm:h-[156px] relative">
-                                            <div className="w-full h-full rounded-lg shadow-lg flex flex-col border border-slate-700 bg-slate-900 overflow-hidden">
-                                                <div className="h-3/4 bg-slate-800 relative overflow-hidden">
-                                                    {enemy.image_url ? (
-                                                        <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-50 grayscale' : ''}`} />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={28} /></div>
-                                                    )}
-                                                </div>
-                                                <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-1.5 py-0.5">
-                                                    <div className={`text-[8px] font-bold truncate ${isDead ? 'text-gray-500 line-through' : 'text-slate-400'}`}>
-                                                        {enemy.name}
-                                                    </div>
-                                                    {!isDead && (
-                                                        <div className="w-full h-0.5 bg-slate-800 rounded-full overflow-hidden mt-0.5">
-                                                            <div className="h-full bg-red-600/60 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                <div className="w-full flex justify-center items-end px-2">
+                    {enemies.map((enemy, idx) => {
+                        const isTarget = target?.id === enemy.id;
+                        const isDead = enemy.hp <= 0;
+                        const overlapPx = enemies.length > 4 ? -20 : enemies.length > 2 ? -14 : -8;
+                        return (
+                            <div
+                                key={enemy.id}
+                                className={`relative transition-all duration-500 shrink-0 cursor-pointer
+                                    ${isDead ? 'opacity-30 grayscale' : ''}
+                                    ${isTarget && !isDead ? 'z-30 scale-105' : 'z-10 scale-[0.82] opacity-60'}
+                                `}
+                                style={{ marginLeft: idx === 0 ? 0 : overlapPx }}
+                                onClick={() => !isDead && setTarget(enemy.id)}
+                            >
+                                {/* Bounty badge */}
+                                {enemy.spawn_type === 'bounty' && !isDead && (
+                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-red-950/90 border border-red-500 text-red-500 text-[7px] font-black px-1 py-0 whitespace-nowrap z-20 skew-x-[-10deg]">
+                                        BOUNTY
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                    {/* Target enemy (centered, enlarged) */}
-                    {target && target.hp > 0 && (
-                        <div className="z-10 transition-all duration-500">
-                            {renderEnemyCard(target, true, false)}
-                        </div>
-                    )}
+                                )}
+                                <div className={`w-[90px] h-[120px] sm:w-[100px] sm:h-[134px] rounded-lg shadow-2xl flex flex-col border-2 overflow-hidden transition-all duration-500
+                                    ${isTarget && !isDead ? 'border-red-500 animate-[targetPulse_1.5s_ease-in-out_infinite] bg-slate-900' : 'border-slate-700 bg-slate-900'}
+                                `}>
+                                    <div className="h-3/4 bg-slate-800 relative overflow-hidden">
+                                        {enemy.image_url ? (
+                                            <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-50 grayscale' : ''}`} />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={28} /></div>
+                                        )}
+                                    </div>
+                                    <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-1 py-0.5">
+                                        <div className={`text-[8px] font-bold truncate ${isDead ? 'text-gray-500 line-through' : 'text-slate-200'}`}>
+                                            {enemy.name} <span className="text-[6px] text-amber-500">Lv.{enemy.level}</span>
+                                        </div>
+                                        {!isDead && (
+                                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-0.5">
+                                                <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Attack animation on target */}
+                                {isTarget && activeEffect && (
+                                    <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+                                        {activeEffect === 'SLASH' && (
+                                            <div className="w-full h-[2px] bg-red-400 rotate-45 shadow-[0_0_20px_rgba(248,113,113,1)] animate-in slide-in-from-top-12 duration-300" />
+                                        )}
+                                        {activeEffect === 'WIND' && (
+                                            <div className="block">
+                                                <div className="w-16 h-[1px] bg-sky-200 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-right-16 fade-in duration-300 mb-2" />
+                                                <div className="w-12 h-[1px] bg-sky-300 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-left-16 fade-in duration-300" />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -453,7 +468,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             <div className="w-full relative z-30 px-3 pb-2 flex-shrink-0">
 
                 {/* Hand Cards (Fan Layout) — 2段階アクション対応 */}
-                <div className="relative w-full h-40 flex justify-center items-end overflow-visible">
+                <div className="relative w-full h-36 flex justify-center items-end overflow-visible">
                     {hand.map((card, idx) => {
                         const centerIndex = (hand.length - 1) / 2;
                         const offset = idx - centerIndex;
