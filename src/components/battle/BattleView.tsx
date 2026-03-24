@@ -147,14 +147,21 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
         await endTurn();
     };
 
-    // Result overlay
+    // Result overlay — ログが全て表示完了してから遷移
     const [showResultOverlay, setShowResultOverlay] = useState(false);
     const [isReviewingLogs, setIsReviewingLogs] = useState(false);
+    const isEscaped = !battleState.isVictory && battleState.messages.includes("一行は逃げ出した...");
 
     useEffect(() => {
-        if (battleState.isVictory || battleState.isDefeat || (!battleState.isVictory && battleState.messages.includes("一行は逃げ出した..."))) {
-            const timer = setTimeout(() => setShowResultOverlay(true), 2000);
-            return () => clearTimeout(timer);
+        if (battleState.isVictory || battleState.isDefeat || isEscaped) {
+            // ログキューが空になるまで待ってからオーバーレイ表示
+            const checkInterval = setInterval(() => {
+                if (!isTyping.current && typingQueue.current.length === 0) {
+                    clearInterval(checkInterval);
+                    setTimeout(() => setShowResultOverlay(true), 800);
+                }
+            }, 200);
+            return () => clearInterval(checkInterval);
         }
     }, [battleState.isVictory, battleState.isDefeat, battleState.messages]);
 
@@ -163,7 +170,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
 
     const target = battleState.enemy;
     const enemies = battleState.enemies || (battleState.enemy ? [battleState.enemy] : []);
-    const isResultActive = (battleState.isVictory || battleState.isDefeat || (!battleState.isVictory && battleState.messages.includes("一行は逃げ出した...")));
+    const isResultActive = (battleState.isVictory || battleState.isDefeat || isEscaped);
     const shouldShowOverlay = isResultActive && showResultOverlay && !isReviewingLogs;
     const isBossEncounter = enemies.some(e => e.spawn_type === 'bounty' || e.hp >= 150 || ['enemy_slime_king', 'enemy_hobgoblin', 'enemy_chimera', 'enemy_lich', 'enemy_bandit_boss', 'enemy_assassin_boss'].includes(e.slug || ''));
 
@@ -439,9 +446,9 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className="text-[8px] text-sky-400 font-bold w-5 flex-shrink-0">VIT</span>
                                 <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                                    <div className="h-full bg-sky-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.vitality || 0) / 100) * 100))}%` }} />
+                                    <div className="h-full bg-sky-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.vitality || 0) / (userProfile?.max_vitality || 100)) * 100))}%` }} />
                                 </div>
-                                <span className="text-[8px] text-sky-400 font-mono w-14 text-right flex-shrink-0">{userProfile?.vitality || 0}/100</span>
+                                <span className="text-[8px] text-sky-400 font-mono w-14 text-right flex-shrink-0">{userProfile?.vitality || 0}/{userProfile?.max_vitality || 100}</span>
                             </div>
                         </div>
 
@@ -462,7 +469,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                     onClick={() => setSelectedPartyMember(member)}
                                     className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform"
                                 >
-                                    <div className={`w-9 h-9 rounded-full border ${member.hp > 0 ? 'border-sky-500/70 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-40'} flex items-center justify-center overflow-hidden`}>
+                                    <div className={`w-9 h-9 rounded-full border ${(member.durability ?? member.hp) > 0 ? 'border-sky-500/70 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-40'} flex items-center justify-center overflow-hidden`}>
                                         {member.avatar_url ? (
                                             <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
@@ -470,7 +477,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                         )}
                                     </div>
                                     <div className="w-8 h-1 mt-0.5 bg-slate-800 rounded-full overflow-hidden">
-                                        <div className="h-full bg-green-500" style={{ width: `${member.maxHp ? (member.hp / member.maxHp) * 100 : 100}%` }} />
+                                        <div className="h-full bg-green-500" style={{ width: `${(member.maxHp || member.max_hp) ? ((member.durability ?? member.hp) / (member.maxHp || member.max_hp)) * 100 : 100}%` }} />
                                     </div>
                                     <span className="text-[8px] text-slate-500 truncate max-w-[36px]">{member.name?.slice(0, 4) || 'NPC'}</span>
                                 </button>
@@ -505,7 +512,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         <div className="space-y-2 text-[11px]">
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-green-400 font-bold">HP</span>
-                                <span className="text-slate-200 font-mono">{selectedPartyMember.hp ?? 0} / {selectedPartyMember.maxHp ?? selectedPartyMember.max_hp ?? selectedPartyMember.hp ?? 0}</span>
+                                <span className="text-slate-200 font-mono">{selectedPartyMember.durability ?? selectedPartyMember.hp ?? 0} / {selectedPartyMember.maxHp ?? selectedPartyMember.max_hp ?? selectedPartyMember.hp ?? 0}</span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-red-400 font-bold">攻撃力</span>
@@ -563,7 +570,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-sky-400 font-bold">VIT</span>
-                                <span className="text-slate-200 font-mono">{userProfile.vitality || 0} / 100</span>
+                                <span className="text-slate-200 font-mono">{userProfile.vitality || 0} / {userProfile.max_vitality || 100}</span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-red-400 font-bold">攻撃力</span>
@@ -612,9 +619,20 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 >
                     {displayedLogs.map((log, idx) => {
                         const isLatest = idx === displayedLogs.length - 1 && !typingText;
+                        // ログ色分け: ユーザー=緑, エネミー=赤, パーティ=青, システム=黄
+                        const isPlayerLog = log.includes('あなた') || log.includes('を使用') || log.includes('のダメージ！');
+                        const isEnemyLog = log.includes('の行動') || log.includes('に攻撃') || log.includes('あなたに') && log.includes('ダメージ');
+                        const isPartyLog = log.includes('がかばった') || log.includes('パーティ') || (battleState.party || []).some((m: any) => log.startsWith(m.name));
+                        const isSystemLog = log.startsWith('---') || log.includes('勝利') || log.includes('敗北') || log.includes('ターゲット') || log.includes('逃') || log.includes('力尽きた') || log.includes('全ての敵');
+                        let logColor = isLatest ? 'text-slate-200' : 'text-slate-500';
+                        let bulletColor = isLatest ? 'text-amber-500' : 'text-slate-700';
+                        if (isSystemLog) { logColor = isLatest ? 'text-yellow-300' : 'text-yellow-700'; bulletColor = 'text-yellow-600'; }
+                        else if (isEnemyLog) { logColor = isLatest ? 'text-red-300' : 'text-red-800'; bulletColor = 'text-red-600'; }
+                        else if (isPartyLog) { logColor = isLatest ? 'text-sky-300' : 'text-sky-800'; bulletColor = 'text-sky-600'; }
+                        else if (isPlayerLog) { logColor = isLatest ? 'text-green-300' : 'text-green-800'; bulletColor = 'text-green-600'; }
                         return (
-                            <div key={idx} className={`flex gap-1.5 ${isLatest ? 'text-slate-200 font-bold' : 'text-slate-500'}`}>
-                                <span className={`shrink-0 ${isLatest ? 'text-amber-500' : 'text-slate-700'}`}>▸</span>
+                            <div key={idx} className={`flex gap-1.5 ${logColor} ${isLatest ? 'font-bold' : ''}`}>
+                                <span className={`shrink-0 ${bulletColor}`}>▸</span>
                                 <span className="break-all">{log}</span>
                             </div>
                         );
@@ -786,7 +804,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </>
                         )}
 
-                        {battleState.isDefeat && (
+                        {battleState.isDefeat && !isEscaped && (
                             <>
                                 <h2 className="text-4xl md:text-5xl font-serif font-bold text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)]">
                                     DEFEATED
