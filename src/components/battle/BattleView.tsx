@@ -307,47 +307,61 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         </div>
                     )}
 
-                    {/* RIGHT: Non-target enemies (shrunk, stacked) */}
-                    {enemies.filter(e => target?.id !== e.id).length > 0 && (
-                        <div className="flex flex-col gap-[-4px] items-center flex-shrink-0">
-                            {enemies.filter(e => target?.id !== e.id).slice(0, 5).map((enemy, idx) => {
-                                const isDead = enemy.hp <= 0;
-                                return (
-                                    <div
-                                        key={enemy.id}
-                                        className={`relative transition-all duration-300 cursor-pointer hover:scale-105 hover:opacity-90
-                                            ${isDead ? 'opacity-20 grayscale' : 'opacity-70'}
-                                        `}
-                                        style={{ marginTop: idx === 0 ? 0 : -16 }}
-                                        onClick={() => !isDead && setTarget(enemy.id)}
-                                    >
-                                        <div className={`w-[64px] h-[86px] sm:w-[72px] sm:h-[96px] rounded flex flex-col border overflow-hidden transition-all
-                                            ${isDead ? 'border-slate-800' : 'border-slate-600 hover:border-slate-400'}
-                                            bg-slate-900
-                                        `}>
-                                            <div className="h-3/4 bg-slate-800 relative overflow-hidden">
-                                                {enemy.image_url ? (
-                                                    <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-40' : ''}`} />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={16} /></div>
-                                                )}
+                    {/* RIGHT: Non-target enemies (2-2-1 grid, overlapping) */}
+                    {(() => {
+                        const others = enemies.filter(e => target?.id !== e.id).slice(0, 5);
+                        if (others.length === 0) return null;
+                        const rows: typeof others[] = [];
+                        rows.push(others.slice(0, 2));
+                        if (others.length > 2) rows.push(others.slice(2, 4));
+                        if (others.length > 4) rows.push(others.slice(4, 5));
+
+                        const renderMiniCard = (enemy: typeof others[0], mi: number) => {
+                            const isDead = enemy.hp <= 0;
+                            return (
+                                <div
+                                    key={enemy.id}
+                                    className={`relative transition-all duration-300 cursor-pointer hover:scale-110 hover:opacity-90 hover:z-20
+                                        ${isDead ? 'opacity-20 grayscale' : 'opacity-70'}
+                                    `}
+                                    style={{ marginLeft: mi === 0 ? 0 : -10 }}
+                                    onClick={() => !isDead && setTarget(enemy.id)}
+                                >
+                                    <div className={`w-[56px] h-[75px] sm:w-[64px] sm:h-[86px] rounded flex flex-col border overflow-hidden transition-all
+                                        ${isDead ? 'border-slate-800' : 'border-slate-600 hover:border-slate-400'} bg-slate-900
+                                    `}>
+                                        <div className="h-3/4 bg-slate-800 relative overflow-hidden">
+                                            {enemy.image_url ? (
+                                                <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-40' : ''}`} />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={14} /></div>
+                                            )}
+                                        </div>
+                                        <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-0.5">
+                                            <div className={`text-[5px] font-bold truncate ${isDead ? 'text-gray-600 line-through' : 'text-slate-400'}`}>
+                                                {enemy.name}
                                             </div>
-                                            <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-0.5">
-                                                <div className={`text-[6px] font-bold truncate ${isDead ? 'text-gray-600 line-through' : 'text-slate-400'}`}>
-                                                    {enemy.name}
+                                            {!isDead && (
+                                                <div className="w-full h-0.5 bg-slate-800 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-red-600/70" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
                                                 </div>
-                                                {!isDead && (
-                                                    <div className="w-full h-0.5 bg-slate-800 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-red-600/70" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
-                                                    </div>
-                                                )}
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                </div>
+                            );
+                        };
+
+                        return (
+                            <div className="flex flex-col items-center flex-shrink-0">
+                                {rows.map((row, ri) => (
+                                    <div key={ri} className="flex justify-center" style={{ marginTop: ri === 0 ? 0 : -8 }}>
+                                        {row.map((enemy, mi) => renderMiniCard(enemy, mi))}
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
 
