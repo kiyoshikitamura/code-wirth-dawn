@@ -4,7 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
+import { HUB_LOCATION_ID } from '@/utils/constants';
 import InnHeader from '@/components/inn/InnHeader';
+import TavernModal from '@/components/inn/TavernModal';
+import ShopModal from '@/components/shop/ShopModal';
+import PrayerModal from '@/components/world/PrayerModal';
 import StatusModal from '@/components/inn/StatusModal';
 import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
 import MainVisualArea from '@/components/inn/MainVisualArea';
@@ -13,20 +17,34 @@ import NpcDialogModal, { NpcDialogData } from '@/components/inn/NpcDialogModal';
 import RumorsModal from '@/components/inn/RumorsModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import WorkshopModal from '@/components/inn/WorkshopModal';
+import QuestBoardModal from '@/components/inn/QuestBoardModal';
 import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 
 export default function InnPage() {
     const router = useRouter();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState } = useGameStore();
 
     // UI States
-    const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | null>(null);
+    const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | 'questBoard' | null>(null);
     const [loading, setLoading] = useState(true);
     const [showAccount, setShowAccount] = useState(false);
+    const [showTavern, setShowTavern] = useState(false);
+    const [showShop, setShowShop] = useState(false);
+    const [showPrayer, setShowPrayer] = useState(false);
+
+    // Quest Data State (ギルド用)
+    const [allQuests, setAllQuests] = useState<any[]>([]);
+    const [loadingQuests, setLoadingQuests] = useState(false);
+
+    // Reputation
+    const [reputation, setReputation] = useState<any>(null);
 
     // News & History Logic
     const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
+
+    // ハブ判定
+    const isHub = hubState?.is_in_hub === true;
 
     // Initial load
     useEffect(() => {
@@ -35,6 +53,22 @@ export default function InnPage() {
             useGameStore.getState().fetchUserProfile()
         ]).finally(() => setLoading(false));
     }, []);
+
+    // Reputation Logic (通常拠点でのみ取得)
+    useEffect(() => {
+        async function fetchRep() {
+            if (!userProfile?.id || !worldState?.location_name) return;
+            if (isHub) return; // ハブでは不要
+            const { data } = await supabase
+                .from('reputations')
+                .select('*')
+                .eq('user_id', userProfile.id)
+                .eq('location_name', worldState.location_name)
+                .maybeSingle();
+            setReputation(data || { rank: 'Stranger', score: 0 });
+        }
+        fetchRep();
+    }, [userProfile, worldState, isHub]);
 
     // Gougai Detection
     useEffect(() => {
@@ -73,22 +107,62 @@ export default function InnPage() {
         setGougaiEvents([]);
     };
 
-    // NPC Data (宿屋のみ)
+    // NPC Data Generator
     const getNpcData = (facility: FacilityType): NpcDialogData | null => {
-        if (facility === 'inn') {
-            return {
-                facilityName: '宿屋', role: '主人', name: 'バルナバ',
-                dialogue: "いらっしゃい。悪いが、うちは先払いだ。ゆっくりしていきな。"
-            };
+        const renScore = reputation?.score || 0;
+        const prosp = worldState?.prosperity_level || 3;
+        const isHighRenown = renScore > 300;
+        const isBadStatus = prosp <= 2;
+
+        switch (facility) {
+            case 'inn':
+                return {
+                    facilityName: '宿屋', role: '主人', name: 'バルナバ',
+                    dialogue: isHighRenown
+                        ? "おお、英雄殿！お帰りなさい。あなたのためなら一番良い部屋を空けておきますよ。"
+                        : "いらっしゃい。悪いが、うちは先払いだ。ゆっくりしていきな。"
+                };
+            case 'shop':
+                return {
+                    facilityName: '道具屋', role: '主人', name: 'エリン',
+                    dialogue: isBadStatus
+                        ? "情勢が悪くてね…仕入れが滞ってるんだ。ある分だけで勘弁しておくれ。"
+                        : "いいのが入ってるよ！あんたのような旅人には必需品ばかりだ。"
+                };
+            case 'tavern':
+                return {
+                    facilityName: '酒場', role: '店員', name: 'リセット',
+                    dialogue: isHighRenown
+                        ? `${userProfile?.name || '旅人'}さん！皆あんたの話で持ちきりだよ。一杯奢らせておくれ！`
+                        : "あら、見ない顔ね。飲みに来たの？騒ぎはご免だよ。"
+                };
+            case 'temple':
+                return {
+                    facilityName: '神殿', role: '神官', name: 'クレメンス',
+                    dialogue: isBadStatus
+                        ? "苦難の時こそ、祈りを捧げましょう。神の慈悲は等しく降り注ぎます。"
+                        : "ようこそ、迷える子よ。あなたの行く末に光があらんことを。"
+                };
+            case 'guild':
+                return {
+                    facilityName: 'ギルド', role: 'ギルドマスター', name: 'ガドルフ',
+                    dialogue: isHighRenown
+                        ? "よく来たな。お前にしか頼めない難件が入っている。期待しているぞ。"
+                        : "腕を磨け。死にたくなければ、まずは簡単な依頼からこなすことだ。"
+                };
+            default: return null;
         }
-        return null;
     };
 
     const handleSelectFacility = (facility: FacilityType) => {
-        if (facility === 'map') router.push('/world-map');
-        else if (facility === 'status') setShowStatus(true);
-        else if (facility === 'settings') setShowAccount(true);
-        else if (facility === 'inn') setActiveModal('inn');
+        if (['map', 'status', 'settings'].includes(facility)) {
+            if (facility === 'map') router.push('/world-map');
+            if (facility === 'status') setShowStatus(true);
+            if (facility === 'settings') setShowAccount(true);
+        } else {
+            // Open NPC Dialog
+            setActiveModal(facility);
+        }
     };
 
     const getInnCost = () => {
@@ -108,6 +182,10 @@ export default function InnPage() {
                 isDisabled: !canAfford
             };
         }
+        if (activeModal === 'shop') return { buttonText: '品揃えを見る', isDisabled: false };
+        if (activeModal === 'tavern') return { buttonText: '冒険者を探す', isDisabled: false };
+        if (activeModal === 'temple') return { buttonText: '礼拝堂に行く', isDisabled: false };
+        if (activeModal === 'guild') return { buttonText: '依頼を見る', isDisabled: false };
         return { buttonText: '機能を利用する', isDisabled: false };
     };
 
@@ -115,6 +193,31 @@ export default function InnPage() {
         setActiveModal(null);
         if (facility === 'inn') {
             handleRest();
+        } else if (facility === 'shop') {
+            setShowShop(true);
+        } else if (facility === 'tavern') {
+            setShowTavern(true);
+        } else if (facility === 'temple') {
+            setShowPrayer(true);
+        } else if (facility === 'guild') {
+            setActiveModal('questBoard');
+            fetchQuestsForBoard();
+        }
+    };
+
+    const fetchQuestsForBoard = async () => {
+        if (!userProfile?.id || !worldState?.location_name) return;
+        setLoadingQuests(true);
+        try {
+            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${userProfile.current_location_id || HUB_LOCATION_ID}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAllQuests(data.quests || []);
+            }
+        } catch (e) {
+            console.error("クエスト読み込み失敗", e);
+        } finally {
+            setLoadingQuests(false);
         }
     };
 
@@ -146,7 +249,8 @@ export default function InnPage() {
     };
 
     // Derived states
-    const activeNpcData = activeModal === 'inn' ? getNpcData('inn') : null;
+    const activeNpcData = activeModal && ['inn', 'shop', 'tavern', 'temple', 'guild'].includes(activeModal)
+        ? getNpcData(activeModal as FacilityType) : null;
     const { buttonText, isDisabled } = activeDialogConfig();
 
     if (loading || !userProfile || !worldState) {
@@ -167,7 +271,7 @@ export default function InnPage() {
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-slate-950 md:border-[6px] md:border-neutral-800 md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
-                <InnHeader worldState={worldState} userProfile={userProfile} />
+                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} />
 
                 {/* Gougai Modal */}
                 {gougaiEvents.length > 0 && (
@@ -177,7 +281,7 @@ export default function InnPage() {
                     />
                 )}
 
-                {/* NPC Dialog (宿屋のみ) */}
+                {/* NPC Dialog */}
                 {activeNpcData && activeModal && (
                     <NpcDialogModal
                         npcData={activeNpcData}
@@ -192,16 +296,29 @@ export default function InnPage() {
                     <RumorsModal
                         onClose={() => setActiveModal(null)}
                         worldState={worldState}
-                        reputationScore={0}
+                        reputationScore={reputation?.score || 0}
                     />
                 )}
 
                 {/* Modals */}
+                {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+                {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
                 {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
                 {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
 
                 {activeModal === 'workshop' && (
                     <WorkshopModal onClose={() => setActiveModal(null)} />
+                )}
+
+                {activeModal === 'questBoard' && (
+                    <QuestBoardModal
+                        isOpen={true}
+                        onClose={() => setActiveModal(null)}
+                        userProfile={userProfile}
+                        quests={allQuests}
+                        loading={loadingQuests}
+                        onSelect={(s) => router.push(`/quest/${s.id}`)}
+                    />
                 )}
 
                 {/* Main Visual */}
@@ -213,7 +330,7 @@ export default function InnPage() {
 
                 {/* Facility Grid Navigation */}
                 <div className="flex-1 w-full bg-slate-950">
-                    <FacilityGrid onSelectFacility={handleSelectFacility} />
+                    <FacilityGrid onSelectFacility={handleSelectFacility} isHub={isHub} />
                     <CreatorsWorkshopBanner
                         locationName={worldState?.location_name || ''}
                         onOpenWorkshop={() => setActiveModal('workshop')}
@@ -258,6 +375,9 @@ export default function InnPage() {
                     <div className="w-32 h-1 bg-slate-800 rounded-full" />
                 </div>
             </div>
+
+            {/* TavernModal - outside game container so fixed positioning works correctly */}
+            {userProfile && <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || HUB_LOCATION_ID} reputationScore={reputation?.score || 0} />}
         </div>
     );
 }

@@ -7,9 +7,10 @@ import { WorldState, UserProfile } from '@/types/game';
 interface InnHeaderProps {
     worldState: WorldState | null;
     userProfile: UserProfile | null;
+    reputation?: { rank: string; score: number } | null;
 }
 
-export default function InnHeader({ worldState, userProfile }: InnHeaderProps) {
+export default function InnHeader({ worldState, userProfile, reputation }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
 
     useEffect(() => {
@@ -162,7 +163,7 @@ export default function InnHeader({ worldState, userProfile }: InnHeaderProps) {
                     <div className="flex items-center gap-1 mt-0.5">
                         <Star size={10} className="text-amber-500 fill-amber-500" />
                         <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">
-                            名声: 0
+                            名声: {reputation?.score || 0}
                         </span>
                     </div>
                 </div>

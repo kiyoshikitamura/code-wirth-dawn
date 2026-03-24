@@ -1,19 +1,31 @@
 import React from 'react';
-import { Bed, Map as MapIcon, Settings, Activity } from 'lucide-react';
+import { Bed, Map as MapIcon, Settings, Activity, ShoppingBag, Beer, Church, Shield } from 'lucide-react';
 
-export type FacilityType = 'inn' | 'map' | 'status' | 'settings';
+export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'tavern' | 'temple' | 'guild';
 
 interface FacilityGridProps {
     onSelectFacility: (facility: FacilityType) => void;
+    isHub?: boolean;
 }
 
-export default function FacilityGrid({ onSelectFacility }: FacilityGridProps) {
-    const facilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
+export default function FacilityGrid({ onSelectFacility, isHub = false }: FacilityGridProps) {
+    // 共通施設（すべての拠点で表示）
+    const baseFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋', sub: 'Rest', icon: Bed },
         { id: 'map', label: 'ワールドマップ', sub: 'Map', icon: MapIcon },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'settings', label: '設定', sub: 'Settings', icon: Settings },
     ];
+
+    // 通常拠点のみに表示する施設（ハブには表示しない）
+    const locationFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
+        { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
+        { id: 'tavern', label: '酒場', sub: 'Tavern', icon: Beer },
+        { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
+        { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
+    ];
+
+    const facilities = isHub ? baseFacilities : [...baseFacilities, ...locationFacilities];
 
     return (
         <div className="px-4 py-6 grid grid-cols-2 gap-3 max-w-lg mx-auto w-full">
