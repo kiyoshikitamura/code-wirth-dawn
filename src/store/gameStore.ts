@@ -1065,18 +1065,39 @@ export const useGameStore = create<GameState>()(
                     if (enemyHp <= 0) break;
                 }
 
+                // Update enemies array with the target's new HP
+                let updatedEnemies = [...(get().battleState.enemies || [])].map(e => {
+                    if (e.id === currentBattle.enemy?.id) {
+                        return { ...e, hp: enemyHp };
+                    }
+                    return e;
+                });
+
+                const allEnemiesDead = updatedEnemies.every(e => e.hp <= 0);
+
+                // If current target dead but others alive, switch target
+                let nextTarget = currentBattle.enemy ? { ...currentBattle.enemy, hp: enemyHp } : null;
+                if (enemyHp <= 0 && !allEnemiesDead) {
+                    const firstAlive = updatedEnemies.find(e => e.hp > 0);
+                    if (firstAlive) {
+                        nextTarget = firstAlive;
+                        newMessages.push(`ターゲットを ${firstAlive.name} に切り替えた。`);
+                    }
+                }
+
                 // Update State with updated party (AP changes)
                 set(state => ({
                     battleState: {
                         ...state.battleState,
-                        enemy: state.battleState.enemy ? { ...state.battleState.enemy, hp: enemyHp } : null,
+                        enemy: nextTarget,
+                        enemies: updatedEnemies,
                         party: updatedParty,
                         messages: newMessages
                     }
                 }));
 
-                // Check Victory
-                if (enemyHp <= 0) {
+                // Check Victory — ALL enemies must be dead
+                if (allEnemiesDead) {
                     const { selectedScenario } = get();
                     const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！'];
 

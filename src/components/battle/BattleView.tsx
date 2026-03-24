@@ -38,6 +38,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
     const [activeEffect, setActiveEffect] = useState<string | null>(null);
     const [selectedPartyMember, setSelectedPartyMember] = useState<any | null>(null);
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+    const [showUserDetail, setShowUserDetail] = useState(false);
 
     // Auto-scroll logs
     useEffect(() => {
@@ -369,14 +370,17 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             <div className="relative z-20 px-3 mt-1 w-full flex-shrink-0">
                 <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-2 backdrop-blur-sm">
                     <div className="flex items-center gap-2.5">
-                        {/* Avatar */}
-                        <div className="w-10 h-10 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {/* Avatar — タップで詳細表示 */}
+                        <button
+                            onClick={() => setShowUserDetail(true)}
+                            className="w-10 h-10 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden active:scale-90 transition-transform"
+                        >
                             {userProfile?.avatar_url ? (
                                 <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
                                 <User size={18} className="text-amber-500" />
                             )}
-                        </div>
+                        </button>
 
                         {/* Name + HP + VIT */}
                         <div className="flex-1 min-w-0">
@@ -487,6 +491,75 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* User Status Detail Popup */}
+            {showUserDetail && userProfile && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserDetail(false)}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-[280px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center overflow-hidden">
+                                    {userProfile.avatar_url ? (
+                                        <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={18} className="text-amber-500" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-200">{userProfile.name || '旅人'}</p>
+                                    <p className="text-[9px] text-amber-500 font-bold">Lv.{userProfile.level || 1}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowUserDetail(false)} className="text-slate-500 hover:text-slate-300">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="space-y-2 text-[11px]">
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-green-400 font-bold">HP</span>
+                                <span className="text-slate-200 font-mono">{userProfile.hp || 0} / {userProfile.max_hp || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-sky-400 font-bold">VIT</span>
+                                <span className="text-slate-200 font-mono">{userProfile.vitality || 0} / 100</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-red-400 font-bold">攻撃力</span>
+                                <span className="text-slate-200 font-mono">{userProfile.atk || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-blue-400 font-bold">防御力</span>
+                                <span className="text-slate-200 font-mono">{userProfile.def || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-amber-400 font-bold">AP</span>
+                                <span className="text-slate-200 font-mono">{battleState.current_ap || 0} / 15</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-yellow-400 font-bold">所持金</span>
+                                <span className="text-slate-200 font-mono">{userProfile.gold || 0} G</span>
+                            </div>
+                            {battleState.resonanceActive && (
+                                <div className="bg-yellow-900/20 border border-yellow-700/50 rounded px-2 py-1.5 text-center">
+                                    <span className="text-yellow-400 font-bold text-[10px] animate-pulse">✦ 共鳴ボーナス発動中 ✦</span>
+                                </div>
+                            )}
+                            {(battleState.player_effects as any[])?.length > 0 && (
+                                <div className="bg-slate-800/50 rounded px-2 py-1.5">
+                                    <span className="text-purple-400 font-bold text-[10px]">状態効果</span>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {(battleState.player_effects as any[]).map((eff: any, ei: number) => (
+                                            <span key={ei} className="px-1.5 py-0.5 bg-purple-900/30 border border-purple-800/50 rounded text-[9px] text-purple-300">
+                                                {eff.id || eff.name || 'Effect'} ({eff.remaining_turns || '?'}T)
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
