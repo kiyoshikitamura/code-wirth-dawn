@@ -44,10 +44,10 @@ export async function GET() {
         };
 
         const hegemony = [
-            { name: 'ローランド', power: calcPower('Roland'), color: 'bg-blue-600' },
-            { name: 'マーカンド', power: calcPower('Markand'), color: 'bg-emerald-600' },
-            { name: '華龍神朝', power: calcPower('Karyu'), color: 'bg-red-600' },
-            { name: '夜刀神国', power: calcPower('Yato'), color: 'bg-purple-700' }
+            { name: 'ローランド', power: calcPower('Roland'), locations: counts['Roland'], color: 'bg-blue-600' },
+            { name: 'マーカンド', power: calcPower('Markand'), locations: counts['Markand'], color: 'bg-emerald-600' },
+            { name: '華龍神朝', power: calcPower('Karyu'), locations: counts['Karyu'], color: 'bg-red-600' },
+            { name: '夜刀神国', power: calcPower('Yato'), locations: counts['Yato'], color: 'bg-purple-700' }
         ];
 
         // 合計が100%にならない場合の補正（表示崩れ対策として最大勢力に余りを追加）

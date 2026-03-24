@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Home, User as UserIcon } from 'lucide-react';
+import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Home, User as UserIcon, Shield } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 
 import HegemonyModal from './HegemonyModal';
 import AccountSettingsModal from '../inn/AccountSettingsModal';
+import StatusModal from '../inn/StatusModal';
 
 interface Props {
     currentLocationName: string;
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export default function GlobalStatusBar({ currentLocationName, onEnterLocation, onReturnHome }: Props) {
-    const { userProfile, worldState, gold } = useGameStore();
+    const { userProfile, worldState, gold, showStatus, setShowStatus } = useGameStore();
     const [showHegemony, setShowHegemony] = React.useState(false);
     const [showSettings, setShowSettings] = React.useState(false);
 
@@ -23,7 +24,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
     const year = 742 + Math.floor(totalDays / 365);
     const month = 1 + Math.floor((totalDays % 365) / 30);
     const day = 1 + (totalDays % 30);
-    const calendarString = `${year}年 ${month}月 ${day}日`; // Integer based format
+    const calendarString = `${year}年 ${month}月 ${day}日`;
 
     const hegemony = worldState?.hegemony || [
         { name: "ローランド", power: 25, color: "bg-blue-600" },
@@ -34,11 +35,13 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
 
     const maxVitality = userProfile?.max_vitality || 100;
     const currentVitality = userProfile?.vitality ?? maxVitality;
+    const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100));
 
     return (
         <header className="relative shrink-0 w-full z-50 bg-slate-950 p-4 pt-6 border-b border-amber-900/30 shadow-lg">
             {showHegemony && <HegemonyModal worldState={worldState} onClose={() => setShowHegemony(false)} />}
             {showSettings && <AccountSettingsModal onClose={() => setShowSettings(false)} />}
+            {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
 
             {/* 覇権・暦 */}
             <div className="flex justify-between items-center mb-3">
@@ -58,7 +61,6 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
                         ))}
                     </div>
                 </button>
-                {/* Settings button placeholder for later feature, can be disabled or modal trigger */}
                 <button onClick={() => setShowSettings(true)} className="p-1.5 text-slate-400 group relative">
                     <Settings size={16} className="group-hover:text-amber-500 transition-colors" />
                 </button>
@@ -66,20 +68,21 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
 
             {/* プロフィール */}
             <div className="flex items-center gap-3 mb-3">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-lg border border-amber-500/50 bg-slate-800 overflow-hidden shadow-lg">
+                {/* ユーザーアイコン — 丸枠 + タップでステータスモーダル */}
+                <button onClick={() => setShowStatus(true)} className="relative active:scale-90 transition-transform">
+                    <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-slate-800 overflow-hidden shadow-[0_0_10px_rgba(212,175,55,0.3)]">
                         <div className="w-full h-full flex items-center justify-center text-amber-500 bg-slate-900">
                             {userProfile?.avatar_url ? (
                                 <img src={userProfile.avatar_url} alt="You" className="object-cover w-full h-full" />
                             ) : (
-                                <UserIcon size={28} />
+                                <UserIcon size={24} />
                             )}
                         </div>
                     </div>
                     <div className="absolute -bottom-1 -right-1 bg-amber-600 text-slate-950 text-[8px] font-black px-1 rounded-sm border border-slate-900">
                         Lv.{userProfile?.level || 1}
                     </div>
-                </div>
+                </button>
                 <div className="flex-1 min-w-0">
                     <p className="text-[9px] text-amber-500 font-bold uppercase truncate">{userProfile?.title_name || "冒険者"}</p>
                     <h1 className="text-sm font-black text-slate-100 truncate">{userProfile?.name || "Player"}</h1>
@@ -89,9 +92,17 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
                         <Coins size={10} className="text-amber-500" />
                         <span className="text-[10px] font-bold text-amber-100">{gold.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-black/50 px-2 py-0.5 rounded border border-red-900/30">
-                        <Heart size={10} className="text-red-500" />
-                        <span className="text-[10px] font-bold text-red-100">{currentVitality}/{maxVitality}</span>
+                    <div className="flex items-center gap-2">
+                        {/* HP表示 */}
+                        <div className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded border border-green-900/30">
+                            <Shield size={10} className="text-green-500" />
+                            <span className="text-[10px] font-bold text-green-100">{userProfile?.hp || 0}/{userProfile?.max_hp || 0}</span>
+                        </div>
+                        {/* Vitality表示 */}
+                        <div className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded border border-red-900/30">
+                            <Heart size={10} className="text-red-500" />
+                            <span className="text-[10px] font-bold text-red-100">{currentVitality}/{maxVitality}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,7 +121,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
                     className="flex-1 h-9 bg-slate-800/40 border border-slate-600/50 rounded flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:bg-slate-700/50"
                 >
                     <Home size={14} className="text-slate-400" />
-                    <span className="text-[10px] font-bold text-slate-300">帰還</span>
+                    <span className="text-[10px] font-bold text-slate-300">名もなき旅人の拠所へ</span>
                 </button>
             </div>
         </header>
