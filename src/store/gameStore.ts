@@ -560,9 +560,14 @@ export const useGameStore = create<GameState>()(
                     const { userProfile, hubState } = get();
 
                     // current_location_id からロケーション名を取得
+                    // 帰還時（is_in_hub=true）は「名もなき旅人の拠所」をハブとして使い、
+                    // current_location_id は直前の拠点を保持するため変更しない
                     let targetLocationName = '国境の町'; // フォールバック
 
-                    if (userProfile?.current_location_id) {
+                    if (hubState?.is_in_hub) {
+                        // ハブ（名もなき旅人の拠所）にいる場合
+                        targetLocationName = '名もなき旅人の拠所';
+                    } else if (userProfile?.current_location_id) {
                         // current_location_idがある場合はDBから実際の拠点名を取得
                         if (userProfile.locations?.name) {
                             // JOINされたlocation情報がある場合はそれを優先
