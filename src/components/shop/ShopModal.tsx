@@ -263,7 +263,7 @@ export default function ShopModal({ onClose }: Props) {
         const typeLabel = selectedItem.type === 'skill' ? 'スキル' : selectedItem.type === 'consumable' ? '消耗品' : selectedItem.type === 'weapon' ? '武器' : selectedItem.type === 'armor' ? '防具' : selectedItem.type;
         const typeBorder = selectedItem.type === 'skill' ? 'border-blue-600' : selectedItem.type === 'consumable' ? 'border-green-600' : 'border-gray-600';
         return createPortal(
-            <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
                 <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                     {/* アイテムヘッダー */}
                     <div className="bg-gray-800/80 p-5 flex items-center gap-4 border-b border-gray-700">

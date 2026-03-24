@@ -320,7 +320,7 @@ export default function WorldMapPage() {
         setTravelLog(['拠所への帰還を開始します...']);
 
         try {
-            await new Promise(r => setTimeout(r, 10));
+            await new Promise(r => setTimeout(r, 1500));
 
             // Set Hub State = TRUE
             const { error } = await supabase
