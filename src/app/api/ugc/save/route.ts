@@ -1,25 +1,33 @@
 import { NextResponse } from 'next/server';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
         
-        // S1修正: 認証ヘッダーからユーザーIDを必須取得（bodyのuserIdフォールバック廃止）
-        let userId: string | null = null;
-        const authHeader = request.headers.get('authorization');
+        // 認証クライアントを作成（RLS対応）
+        const client = createAuthClient(request);
         
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) userId = user.id;
+        // JWTからユーザーIDを検証取得
+        const { data: { user }, error: authErr } = await client.auth.getUser();
+        let userId: string | null = user?.id || null;
+
+        // フォールバック: ヘッダーから直接取得
+        if (!userId) {
+            const authHeader = request.headers.get('authorization');
+            if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
+                const token = authHeader.replace('Bearer ', '');
+                const { data: { user: u2 }, error: e2 } = await supabase.auth.getUser(token);
+                if (!e2 && u2) userId = u2.id;
+            }
         }
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized: 有効な認証トークンが必要です' }, { status: 401 });
         }
 
-        // bodyのuserIdと認証ユーザーの一致チェック（指定されている場合）
+        // bodyのuserIdと認証ユーザーの一致チェック
         if (body.userId && body.userId !== userId) {
             return NextResponse.json({ error: 'Unauthorized: ユーザーIDが一致しません' }, { status: 401 });
         }
@@ -45,38 +53,33 @@ export async function POST(request: Request) {
             }
         });
 
-        // Pack into Scenario Database Model
-        // We put customReward inside rewards.ugc_item for now to prevent bloating items table before publish.
         const dbPayload = {
             slug: `ugc_${userId.substring(0, 8)}_${Date.now()}`,
             title,
             short_description: shortDescription,
             full_description: fullDescription,
-            description: shortDescription, // fallback
+            description: shortDescription,
             client_name: '謎の依頼人',
-            type: 'Other', // Or maybe 'UGC' if added to enum
+            type: 'Other',
             difficulty: Math.ceil(suggestLevel / 10) || 1,
             rec_level: suggestLevel,
             is_urgent: false,
             time_cost: 1,
             location_id: startLocationId,
             status: 'draft',
-            // creator_id: userId, // Assuming creator_id exists in DB from migration
             flow_nodes: nodes,
             conditions: {},
             rewards: {
                 ugc_item: customReward || null,
-                gold: 100 // Default minimal reward
+                gold: 100
             }
         };
 
-        // For now we add creator_id manually. If it errors because the column doesn't exist, the user needs to add it.
         (dbPayload as any).creator_id = userId;
 
-        // Check Submission Limits based on subscription tier
-        // Free: 4 drafts max, Subscriber: 10 max
+        // Check Submission Limits
         if (!id) {
-            const { data: creatorProfile } = await supabase
+            const { data: creatorProfile } = await client
                 .from('user_profiles')
                 .select('subscription_tier')
                 .eq('id', userId)
@@ -85,12 +88,15 @@ export async function POST(request: Request) {
             const tier = creatorProfile?.subscription_tier ?? 'free';
             const draftLimit = tier === 'premium' ? 52 : tier === 'basic' ? 12 : 4;
 
-            const { count, error: countErr } = await supabase
+            const { count, error: countErr } = await client
                 .from('scenarios')
                 .select('*', { count: 'exact', head: true })
                 .eq('creator_id', userId);
 
-            if (countErr) throw countErr;
+            if (countErr) {
+                console.error('UGC Save - Count Error:', JSON.stringify(countErr));
+                throw new Error(countErr.message || 'Failed to check draft count');
+            }
             if (count && count >= draftLimit) {
                 return NextResponse.json({
                     error: `UGCの作成可能枠（最大${draftLimit}枠）の上限に達しています。`,
@@ -102,24 +108,28 @@ export async function POST(request: Request) {
 
         let result;
         if (id) {
-            // Update
-            const { data, error } = await supabase
+            const { data, error } = await client
                 .from('scenarios')
                 .update(dbPayload)
                 .eq('id', id)
                 .eq('creator_id', userId)
                 .select('id')
                 .single();
-            if (error) throw error;
+            if (error) {
+                console.error('UGC Save - Update Error:', JSON.stringify(error));
+                throw new Error(error.message || JSON.stringify(error));
+            }
             result = data;
         } else {
-            // Insert
-            const { data, error } = await supabase
+            const { data, error } = await client
                 .from('scenarios')
                 .insert(dbPayload)
                 .select('id')
                 .single();
-            if (error) throw error;
+            if (error) {
+                console.error('UGC Save - Insert Error:', JSON.stringify(error));
+                throw new Error(error.message || JSON.stringify(error));
+            }
             result = data;
         }
 
@@ -127,6 +137,6 @@ export async function POST(request: Request) {
 
     } catch (e: any) {
         console.error("UGC Save API Error:", e);
-        return NextResponse.json({ error: 'Save failed: ' + e.message }, { status: 500 });
+        return NextResponse.json({ error: 'Save failed: ' + (e.message || JSON.stringify(e)) }, { status: 500 });
     }
 }
