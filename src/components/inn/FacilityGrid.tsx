@@ -9,23 +9,27 @@ interface FacilityGridProps {
 }
 
 export default function FacilityGrid({ onSelectFacility, isHub = false }: FacilityGridProps) {
-    // 共通施設（すべての拠点で表示）
-    const baseFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
+    // 通常拠点: 宿屋/酒場 → ギルド/道具屋 → 神殿/マップ → ステータス/設定
+    const locationFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
+        { id: 'inn', label: '宿屋', sub: 'Rest', icon: Bed },
+        { id: 'tavern', label: '酒場', sub: 'Tavern', icon: Beer },
+        { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
+        { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
+        { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
+        { id: 'map', label: 'ワールドマップ', sub: 'Map', icon: MapIcon },
+        { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
+        { id: 'settings', label: '設定', sub: 'Settings', icon: Settings },
+    ];
+
+    // ハブ: 宿屋/マップ/ステータス/設定のみ
+    const hubFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋', sub: 'Rest', icon: Bed },
         { id: 'map', label: 'ワールドマップ', sub: 'Map', icon: MapIcon },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'settings', label: '設定', sub: 'Settings', icon: Settings },
     ];
 
-    // 通常拠点のみに表示する施設（ハブには表示しない）
-    const locationFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
-        { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
-        { id: 'tavern', label: '酒場', sub: 'Tavern', icon: Beer },
-        { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
-        { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
-    ];
-
-    const facilities = isHub ? baseFacilities : [...baseFacilities, ...locationFacilities];
+    const facilities = isHub ? hubFacilities : locationFacilities;
 
     return (
         <div className="px-4 py-6 grid grid-cols-2 gap-3 max-w-lg mx-auto w-full">
