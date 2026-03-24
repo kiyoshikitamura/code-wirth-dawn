@@ -5,80 +5,78 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/debug/battle-test
- * ランダムエンカウント用のエネミーグループを取得してバトルテスト用データを返す。
- * クエリパラメータ:
- *   - slug: (optional) 特定のenemy_groupスラッグを指定
- *   - locationId: (optional) 拠点IDからlocation_encountersを使って抽選
+ * バトルテスト用エネミーデータを取得する。
+ * 優先順位:
+ *   1. slug指定 → enemy_groups からグループ取得
+ *   2. enemy_groups からランダム選択
+ *   3. enemies テーブルから直接ランダム取得（フォールバック）
  */
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const slug = searchParams.get('slug');
 
-        let groupSlug = slug;
-
-        if (!groupSlug) {
+        // === 方法1: enemy_groups ベースの取得 ===
+        if (slug) {
+            const result = await getEnemiesFromGroup(slug);
+            if (result) return NextResponse.json(result);
+        } else {
             // enemy_groups からランダムに1つ選ぶ
-            const { data: groups } = await supabase
+            const { data: groups, error: groupsError } = await supabase
                 .from('enemy_groups')
                 .select('slug')
                 .limit(50);
 
+            console.log('[バトルテスト] enemy_groups取得:', { count: groups?.length, error: groupsError?.message });
+
             if (groups && groups.length > 0) {
                 const randomIndex = Math.floor(Math.random() * groups.length);
-                groupSlug = groups[randomIndex].slug;
-            } else {
-                groupSlug = 'bandit_group';
+                const result = await getEnemiesFromGroup(groups[randomIndex].slug);
+                if (result) return NextResponse.json(result);
             }
         }
 
-        // グループデータ取得
-        const { data: groupData } = await supabase
-            .from('enemy_groups')
-            .select('*')
-            .eq('slug', groupSlug)
-            .maybeSingle();
+        // === 方法2: enemies テーブルから直接取得（フォールバック） ===
+        console.log('[バトルテスト] enemy_groupsからの取得失敗。enemiesテーブルから直接取得');
 
-        let targetSlugs = [groupSlug];
-        if (groupData?.members && groupData.members.length > 0) {
-            targetSlugs = groupData.members;
-        }
-
-        // エネミーデータ取得
-        const { data: enemiesData } = await supabase
+        const { data: allEnemies, error: enemiesError } = await supabase
             .from('enemies')
             .select('*')
-            .in('slug', targetSlugs);
+            .limit(50);
 
-        if (!enemiesData || enemiesData.length === 0) {
-            return NextResponse.json({ error: 'エネミーデータが見つかりません', slug: groupSlug }, { status: 404 });
+        console.log('[バトルテスト] enemies取得:', { count: allEnemies?.length, error: enemiesError?.message });
+
+        if (!allEnemies || allEnemies.length === 0) {
+            return NextResponse.json({
+                error: 'エネミーデータが見つかりません。enemies テーブルが空です。',
+                debug: { enemiesError: enemiesError?.message }
+            }, { status: 404 });
         }
 
-        // バトル用フォーマットに変換
-        const enemyMap = new Map(enemiesData.map(e => [e.slug, e]));
-        const enemies = targetSlugs.map((s, index) => {
-            const e = enemyMap.get(s);
-            if (!e) return null;
-            return {
-                id: `${e.slug}_${index}_${Date.now()}`,
-                name: e.name,
-                hp: e.hp,
-                maxHp: e.hp,
-                def: e.def || 0,
-                level: Math.floor(e.hp / 10) || 1,
-                image: e.image_url || `/enemies/${e.slug}.png`,
-                status_effects: [],
-                vit_damage: e.vit_damage,
-                traits: e.traits,
-                drop_rate: e.drop_rate,
-                drop_item_slug: e.drop_item_slug
-            };
-        }).filter(Boolean);
+        // ランダムに1～3体選択
+        const enemyCount = Math.min(allEnemies.length, Math.floor(Math.random() * 3) + 1);
+        const shuffled = allEnemies.sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, enemyCount);
+
+        const enemies = selected.map((e, index) => ({
+            id: `${e.slug || e.id}_${index}_${Date.now()}`,
+            name: e.name,
+            hp: e.hp,
+            maxHp: e.hp,
+            def: e.def || 0,
+            level: Math.floor(e.hp / 10) || 1,
+            image: e.image_url || `/enemies/${e.slug || 'default'}.png`,
+            status_effects: [],
+            vit_damage: e.vit_damage,
+            traits: e.traits,
+            drop_rate: e.drop_rate,
+            drop_item_slug: e.drop_item_slug
+        }));
 
         return NextResponse.json({
             success: true,
-            group_slug: groupSlug,
-            group_name: groupData?.name || groupSlug,
+            group_slug: 'random_selection',
+            group_name: `ランダム選出 (${enemyCount}体)`,
             enemies
         });
 
@@ -86,4 +84,54 @@ export async function GET(req: Request) {
         console.error('[デバッグ] バトルテストエラー:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
+}
+
+/** enemy_groups → enemies の取得ヘルパー */
+async function getEnemiesFromGroup(groupSlug: string) {
+    const { data: groupData } = await supabase
+        .from('enemy_groups')
+        .select('*')
+        .eq('slug', groupSlug)
+        .maybeSingle();
+
+    let targetSlugs = [groupSlug];
+    if (groupData?.members && groupData.members.length > 0) {
+        targetSlugs = groupData.members;
+    }
+
+    const { data: enemiesData } = await supabase
+        .from('enemies')
+        .select('*')
+        .in('slug', targetSlugs);
+
+    if (!enemiesData || enemiesData.length === 0) return null;
+
+    const enemyMap = new Map(enemiesData.map(e => [e.slug, e]));
+    const enemies = targetSlugs.map((s, index) => {
+        const e = enemyMap.get(s);
+        if (!e) return null;
+        return {
+            id: `${e.slug}_${index}_${Date.now()}`,
+            name: e.name,
+            hp: e.hp,
+            maxHp: e.hp,
+            def: e.def || 0,
+            level: Math.floor(e.hp / 10) || 1,
+            image: e.image_url || `/enemies/${e.slug}.png`,
+            status_effects: [],
+            vit_damage: e.vit_damage,
+            traits: e.traits,
+            drop_rate: e.drop_rate,
+            drop_item_slug: e.drop_item_slug
+        };
+    }).filter(Boolean);
+
+    if (enemies.length === 0) return null;
+
+    return {
+        success: true,
+        group_slug: groupSlug,
+        group_name: groupData?.name || groupSlug,
+        enemies
+    };
 }
