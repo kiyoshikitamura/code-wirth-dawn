@@ -96,7 +96,7 @@ export default function BattleTestPage() {
                 </div>
 
                 <main className="flex-1 relative w-full h-full overflow-hidden">
-                    <BattleView onBattleEnd={handleBattleEnd} />
+                    <BattleView onBattleEnd={handleBattleEnd} battleTitle={`バトルテスト: ${groupName}`} />
                 </main>
 
                 <div className="w-32 h-1 bg-slate-800 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2" />
