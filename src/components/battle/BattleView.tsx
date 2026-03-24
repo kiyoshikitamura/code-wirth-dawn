@@ -37,6 +37,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
     const [showTurnOverlay, setShowTurnOverlay] = useState(false);
     const [activeEffect, setActiveEffect] = useState<string | null>(null);
     const [selectedPartyMember, setSelectedPartyMember] = useState<any | null>(null);
+    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
 
     // Auto-scroll logs
     useEffect(() => {
@@ -81,9 +82,19 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
     const handleCardClick = async (index: number) => {
         if (battleState.isVictory || battleState.isDefeat) return;
         const card = hand[index];
-        setActiveEffect(card.animation_type || 'SLASH');
-        setTimeout(() => setActiveEffect(null), 500);
-        await attackEnemy(card);
+        const apCost = card.ap_cost ?? 1;
+        if (battleState.current_ap < apCost) return;
+
+        if (selectedCardIndex === index) {
+            // 2段階目: 実行
+            setSelectedCardIndex(null);
+            setActiveEffect(card.animation_type || 'SLASH');
+            setTimeout(() => setActiveEffect(null), 500);
+            await attackEnemy(card);
+        } else {
+            // 1段階目: 選択
+            setSelectedCardIndex(index);
+        }
     };
 
     const handleFlee = () => {
@@ -203,11 +214,15 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
     return (
         <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 transition-colors duration-1000 ${isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'}`}>
 
-            {/* CSS for target pulse animation */}
+            {/* CSS for animations */}
             <style jsx>{`
                 @keyframes targetPulse {
                     0%, 100% { border-color: rgb(239 68 68); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
                     50% { border-color: rgb(239 68 68 / 0.4); box-shadow: 0 0 2px rgba(239,68,68,0.1); }
+                }
+                @keyframes cardSelectPulse {
+                    0%, 100% { border-color: rgb(255 255 255); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
+                    50% { border-color: rgb(255 255 255 / 0.3); box-shadow: 0 0 4px rgba(255,255,255,0.2); }
                 }
             `}</style>
 
@@ -243,19 +258,52 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             )}
 
-            {/* Enemies Layout — 80% size */}
+            {/* Enemies Layout — 動的ターゲットフォーカス */}
             <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-2 pb-1 flex-shrink-0">
-                <div className="w-full min-h-[120px] p-1 flex flex-col justify-end">
-                    {/* Back Row */}
-                    {enemies.length > 3 && (
-                        <div className="flex justify-center gap-1 mb-[-8px] z-0 opacity-90 scale-[0.85]">
-                            {enemies.slice(3, 6).map((enemy) => renderEnemyCard(enemy, target?.id === enemy.id, enemy.hp <= 0))}
+                <div className="w-full min-h-[140px] p-1 flex flex-col items-center justify-end">
+                    {/* Non-target enemies (shrunk, behind) */}
+                    {enemies.filter(e => target?.id !== e.id).length > 0 && (
+                        <div className="flex justify-center gap-1 mb-[-12px] z-0">
+                            {enemies.filter(e => target?.id !== e.id).map((enemy) => {
+                                const isDead = enemy.hp <= 0;
+                                return (
+                                    <div
+                                        key={enemy.id}
+                                        className={`relative transition-all duration-500 shrink-0 scale-[0.65] ${isDead ? 'opacity-30 grayscale' : 'opacity-60 cursor-pointer hover:opacity-80'}`}
+                                        onClick={() => !isDead && setTarget(enemy.id)}
+                                    >
+                                        <div className="w-[104px] h-[140px] sm:w-[116px] sm:h-[156px] relative">
+                                            <div className="w-full h-full rounded-lg shadow-lg flex flex-col border border-slate-700 bg-slate-900 overflow-hidden">
+                                                <div className="h-3/4 bg-slate-800 relative overflow-hidden">
+                                                    {enemy.image_url ? (
+                                                        <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-50 grayscale' : ''}`} />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={28} /></div>
+                                                    )}
+                                                </div>
+                                                <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-1.5 py-0.5">
+                                                    <div className={`text-[8px] font-bold truncate ${isDead ? 'text-gray-500 line-through' : 'text-slate-400'}`}>
+                                                        {enemy.name}
+                                                    </div>
+                                                    {!isDead && (
+                                                        <div className="w-full h-0.5 bg-slate-800 rounded-full overflow-hidden mt-0.5">
+                                                            <div className="h-full bg-red-600/60 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
-                    {/* Front Row */}
-                    <div className="flex justify-center gap-2 z-10 w-full px-1">
-                        {enemies.slice(0, 3).map((enemy) => renderEnemyCard(enemy, target?.id === enemy.id, enemy.hp <= 0))}
-                    </div>
+                    {/* Target enemy (centered, enlarged) */}
+                    {target && target.hp > 0 && (
+                        <div className="z-10 transition-all duration-500">
+                            {renderEnemyCard(target, true, false)}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -404,16 +452,17 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             {/* BOTTOM: CARDS + ACTION BUTTONS — フロー配置 */}
             <div className="w-full relative z-30 px-3 pb-2 flex-shrink-0">
 
-                {/* Hand Cards (Fan Layout) — relative flow */}
+                {/* Hand Cards (Fan Layout) — 2段階アクション対応 */}
                 <div className="relative w-full h-40 flex justify-center items-end overflow-visible">
                     {hand.map((card, idx) => {
                         const centerIndex = (hand.length - 1) / 2;
                         const offset = idx - centerIndex;
-                        const rotation = offset * 8;
-                        const translateY = Math.abs(offset) * 12;
+                        const rotation = selectedCardIndex === idx ? 0 : offset * 8;
+                        const translateY = selectedCardIndex === idx ? -16 : Math.abs(offset) * 12;
                         const overlapPx = hand.length > 4 ? -16 : hand.length > 2 ? -12 : -8;
                         const apCost = card.ap_cost ?? 1;
                         const isActivePlayable = battleState.current_ap >= apCost;
+                        const isSelected = selectedCardIndex === idx;
 
                         const getCostStyles = (ap: number) => {
                             if (ap >= 4) return 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.6)] bg-gradient-to-t from-amber-950 to-slate-900';
@@ -426,18 +475,23 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                 key={idx}
                                 onClick={() => handleCardClick(idx)}
                                 disabled={battleState.isVictory || battleState.isDefeat || !isActivePlayable}
-                                className={`relative group origin-bottom transition-all duration-300 w-[72px] sm:w-24 flex-shrink-0 first:ml-0
-                                    ${!isActivePlayable ? 'opacity-40 grayscale pointer-events-none' : 'hover:-translate-y-6 hover:scale-105'}
+                                className={`relative group origin-bottom transition-all duration-300 flex-shrink-0 first:ml-0
+                                    ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50' : 'w-[72px] sm:w-24'}
+                                    ${!isActivePlayable ? 'opacity-40 grayscale pointer-events-none' : isSelected ? '' : 'hover:-translate-y-4 hover:scale-105'}
+                                    ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
                                  `}
                                 style={{
                                     marginLeft: idx === 0 ? 0 : overlapPx,
-                                    transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
-                                    zIndex: idx
+                                    transform: `rotate(${rotation}deg) translateY(${translateY}px)${isSelected ? ' scale(1.1)' : ''}`,
+                                    zIndex: isSelected ? 50 : idx
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.zIndex = '50'}
-                                onMouseLeave={(e) => e.currentTarget.style.zIndex = String(idx)}
+                                onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
+                                onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
                             >
-                                <div className={`h-32 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all ${getCostStyles(apCost)} group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]`}>
+                                <div className={`h-32 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
+                                    ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}
+                                    ${!isSelected ? 'group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]' : ''}
+                                `}>
                                     <div className="h-1/2 bg-slate-900/50 border-b border-slate-700 relative backdrop-blur-sm">
                                         {card.image_url ? (
                                             <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
@@ -459,6 +513,12 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                         </div>
                                     </div>
                                 </div>
+                                {/* Tap to execute label */}
+                                {isSelected && (
+                                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-white/90 text-slate-900 text-[8px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-lg animate-bounce">
+                                        タップで実行
+                                    </div>
+                                )}
                             </button>
                         )
                     })}
