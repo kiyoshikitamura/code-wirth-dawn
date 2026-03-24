@@ -265,14 +265,21 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         const isTarget = target?.id === enemy.id;
                         const isDead = enemy.hp <= 0;
                         const overlapPx = enemies.length > 4 ? -20 : enemies.length > 2 ? -14 : -8;
+                        const centerIdx = (enemies.length - 1) / 2;
+                        const offsetFromCenter = idx - centerIdx;
+                        const rotation = isTarget ? 0 : offsetFromCenter * 6;
+                        const translateY = isTarget ? -8 : Math.abs(offsetFromCenter) * 8;
                         return (
                             <div
                                 key={enemy.id}
-                                className={`relative transition-all duration-500 shrink-0 cursor-pointer
+                                className={`relative transition-all duration-500 shrink-0 cursor-pointer origin-bottom
                                     ${isDead ? 'opacity-30 grayscale' : ''}
                                     ${isTarget && !isDead ? 'z-30 scale-105' : 'z-10 scale-[0.82] opacity-60'}
                                 `}
-                                style={{ marginLeft: idx === 0 ? 0 : overlapPx }}
+                                style={{
+                                    marginLeft: idx === 0 ? 0 : overlapPx,
+                                    transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
+                                }}
                                 onClick={() => !isDead && setTarget(enemy.id)}
                             >
                                 {/* Bounty badge */}
