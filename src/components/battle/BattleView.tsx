@@ -465,26 +465,26 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         )
                     })}
                 </div>
+            </div>
 
-                {/* Action Buttons — right side horizontal */}
-                <div className="flex justify-end gap-1.5 mt-1">
-                    <button
-                        onClick={handleEndTurn}
-                        disabled={battleState.isVictory || battleState.isDefeat}
-                        className="bg-slate-800/90 border border-slate-600 text-slate-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
-                    >
-                        <Clock size={12} />
-                        END
-                    </button>
-                    <button
-                        onClick={handleFlee}
-                        disabled={battleState.isVictory || battleState.isDefeat}
-                        className="bg-slate-800/90 border border-red-900/50 text-red-400 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
-                    >
-                        <LogOut size={12} />
-                        撤退
-                    </button>
-                </div>
+            {/* Action Buttons — カード領域の外、右寄せ */}
+            <div className="flex justify-end gap-1.5 px-3 py-1.5 flex-shrink-0 z-30">
+                <button
+                    onClick={handleEndTurn}
+                    disabled={battleState.isVictory || battleState.isDefeat}
+                    className="bg-slate-800/90 border border-slate-600 text-slate-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
+                >
+                    <Clock size={12} />
+                    ターンエンド
+                </button>
+                <button
+                    onClick={handleFlee}
+                    disabled={battleState.isVictory || battleState.isDefeat}
+                    className="bg-slate-800/90 border border-red-900/50 text-red-400 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
+                >
+                    <LogOut size={12} />
+                    撤退
+                </button>
             </div>
 
             {/* BATTLE RESULT OVERLAY */}
