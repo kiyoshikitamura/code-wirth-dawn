@@ -33,13 +33,22 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         
-        let userId = body.userId;
+        // S1修正: JWT認証必須化
+        let userId: string | null = null;
         const authHeader = req.headers.get('authorization');
         
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user }, error } = await supabase.auth.getUser(token);
             if (!error && user) userId = user.id;
+        }
+
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized: 有効な認証トークンが必要です' }, { status: 401 });
+        }
+
+        if (body.userId && body.userId !== userId) {
+            return NextResponse.json({ error: 'Unauthorized: ユーザーIDが一致しません' }, { status: 401 });
         }
 
         const {
