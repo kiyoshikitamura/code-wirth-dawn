@@ -1218,19 +1218,25 @@ export const useGameStore = create<GameState>()(
                         // Player Hit
                         const def = newUserProfile?.def || 0;
                         const mitigated = Math.max(1, result.damage - def);
-                        newMessages.push(`あなたに ${mitigated} のダメージ (DEF -${def})`);
 
                         if (newUserProfile) {
-                            const newHp = Math.max(0, (newUserProfile.hp || 100) - mitigated);
+                            const prevHp = newUserProfile.hp || 0;
+                            const newHp = Math.max(0, prevHp - mitigated);
+                            const actualDamage = prevHp - newHp;
                             newUserProfile.hp = newHp;
 
+                            if (actualDamage > 0) {
+                                newMessages.push(`あなたに ${actualDamage} のダメージ${def > 0 ? ` (DEF -${def})` : ''}`);
+                            } else {
+                                newMessages.push(`あなたに攻撃！ しかしもう意識がない…`);
+                            }
+
                             // Vit Damage Logic (v3.5)
-                            // Use 'vit_damage' property from enemy if exists, otherwise check traits
                             const vitDmgVal = (enemy as any).vit_damage || 0;
                             const traits = enemy.traits || [];
                             const hasDrainVit = traits.includes('drain_vit') || vitDmgVal > 0;
 
-                            if (mitigated > 0 && newHp > 0 && hasDrainVit && !vitDamageTaken) {
+                            if (actualDamage > 0 && newHp > 0 && hasDrainVit && !vitDamageTaken) {
                                 const currentVit = newUserProfile.vitality ?? 100;
                                 if (currentVit > 0) {
                                     newUserProfile.vitality = currentVit - 1;
@@ -1244,8 +1250,8 @@ export const useGameStore = create<GameState>()(
                                 }
                             }
 
-                            // Application of Stun (With Stun-Immune logic to prevent perma-stun lock)
-                            if (applyStun && mitigated > 0) {
+                            // Application of Stun
+                            if (applyStun && actualDamage > 0) {
                                 const playerEffects = battleState.player_effects as StatusEffect[] || [];
                                 const hasStunImmunity = playerEffects.some(e => e.id === 'stun_immune' && e.duration > 0);
                                 if (hasStunImmunity) {
@@ -1255,12 +1261,14 @@ export const useGameStore = create<GameState>()(
                                     set((state) => {
                                         let currentEffects = [...(state.battleState.player_effects as StatusEffect[] || [])];
                                         currentEffects = applyEffect(currentEffects, 'stun', 1);
-                                        // 連続スタン防止のための耐性付与
                                         currentEffects = applyEffect(currentEffects, 'stun_immune', 2);
                                         return { battleState: { ...state.battleState, player_effects: currentEffects } };
                                     });
                                 }
                             }
+
+                            // HP0なら残りの敵の攻撃をスキップ
+                            if (newHp <= 0) break;
                         }
                     }
                 }
