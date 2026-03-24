@@ -224,11 +224,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             </div>
 
-            {isBossEncounter && (
-                <div className="absolute top-8 w-full text-center py-0.5 bg-gradient-to-r from-transparent via-red-900/80 to-transparent z-30">
-                    <span className="text-red-200 text-[9px] font-bold tracking-widest uppercase animate-pulse">DIVINE THREAT</span>
-                </div>
-            )}
+
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -281,6 +277,9 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             <div className="flex items-center gap-1">
                                 <span className="text-[9px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</span>
                                 <span className="text-[7px] text-amber-500 font-bold">Lv.{userProfile?.level || 1}</span>
+                                {battleState.resonanceActive && (
+                                    <span className="text-[7px] text-yellow-400 font-bold animate-pulse">共鳴ボーナス発動中</span>
+                                )}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 {/* HP */}
@@ -373,8 +372,8 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             <div className="bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-amber-400 font-bold text-[10px]">スキル</span>
                                 <div className="mt-1 flex flex-wrap gap-1">
-                                    {(selectedPartyMember.skills || selectedPartyMember.abilities || []).length > 0 ? (
-                                        (selectedPartyMember.skills || selectedPartyMember.abilities).map((skill: any, si: number) => (
+                                    {(selectedPartyMember.skill_names || selectedPartyMember.skills || selectedPartyMember.abilities || []).length > 0 ? (
+                                        (selectedPartyMember.skill_names || selectedPartyMember.skills || selectedPartyMember.abilities).map((skill: any, si: number) => (
                                             <span key={si} className="px-1.5 py-0.5 bg-amber-900/30 border border-amber-800/50 rounded text-[9px] text-amber-300">
                                                 {typeof skill === 'string' ? skill : skill.name || skill}
                                             </span>
@@ -404,31 +403,11 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             </div>
 
-            {/* BOTTOM: CARDS + ACTION BUTTONS */}
-            <div className="w-full relative z-30 h-48 mt-auto flex-shrink-0">
+            {/* BOTTOM: CARDS + ACTION BUTTONS — フロー配置 */}
+            <div className="w-full relative z-30 px-3 pb-2 flex-shrink-0">
 
-                {/* Action Buttons — bottom-right horizontal */}
-                <div className="absolute bottom-2 right-3 z-40 flex items-center gap-1.5">
-                    <button
-                        onClick={handleEndTurn}
-                        disabled={battleState.isVictory || battleState.isDefeat}
-                        className="bg-slate-800/90 border border-slate-600 text-slate-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
-                    >
-                        <Clock size={12} />
-                        END
-                    </button>
-                    <button
-                        onClick={handleFlee}
-                        disabled={battleState.isVictory || battleState.isDefeat}
-                        className="bg-slate-800/90 border border-red-900/50 text-red-400 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
-                    >
-                        <LogOut size={12} />
-                        撤退
-                    </button>
-                </div>
-
-                {/* Hand Cards (Fan Layout) */}
-                <div className="absolute bottom-0 inset-x-0 h-full flex justify-center items-end pb-2 overflow-visible">
+                {/* Hand Cards (Fan Layout) — relative flow */}
+                <div className="relative w-full h-40 flex justify-center items-end overflow-visible">
                     {hand.map((card, idx) => {
                         const centerIndex = (hand.length - 1) / 2;
                         const offset = idx - centerIndex;
@@ -485,6 +464,26 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </button>
                         )
                     })}
+                </div>
+
+                {/* Action Buttons — right side horizontal */}
+                <div className="flex justify-end gap-1.5 mt-1">
+                    <button
+                        onClick={handleEndTurn}
+                        disabled={battleState.isVictory || battleState.isDefeat}
+                        className="bg-slate-800/90 border border-slate-600 text-slate-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
+                    >
+                        <Clock size={12} />
+                        END
+                    </button>
+                    <button
+                        onClick={handleFlee}
+                        disabled={battleState.isVictory || battleState.isDefeat}
+                        className="bg-slate-800/90 border border-red-900/50 text-red-400 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
+                    >
+                        <LogOut size={12} />
+                        撤退
+                    </button>
                 </div>
             </div>
 
