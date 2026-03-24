@@ -45,12 +45,13 @@ export async function POST(request: Request) {
             }
         });
 
+        // dbPayload — 実際のscenariosテーブルカラムのみ使用
+        // 存在しないカラム: full_description, short_description, status, creator_id
+        // → descriptionカラムにshortDescription/fullDescriptionを統合保存
         const dbPayload: Record<string, any> = {
             slug: `ugc_${userId.substring(0, 8)}_${Date.now()}`,
             title,
-            short_description: shortDescription,
-            full_description: fullDescription,
-            description: shortDescription,
+            description: shortDescription || fullDescription || '',
             client_name: '謎の依頼人',
             type: 'Other',
             difficulty: Math.ceil(suggestLevel / 10) || 1,
@@ -58,20 +59,23 @@ export async function POST(request: Request) {
             is_urgent: false,
             time_cost: 1,
             location_id: startLocationId,
-            status: 'draft',
             flow_nodes: nodes,
             conditions: {},
             rewards: {
                 ugc_item: customReward || null,
-                gold: 100
+                gold: 100,
+                // UGC メタデータを rewards JSONB 内に保存（帰属管理用）
+                _ugc_meta: {
+                    creator_id: userId,
+                    short_description: shortDescription || '',
+                    full_description: fullDescription || '',
+                    status: 'draft',
+                }
             }
         };
 
-        // creator_idカラムが存在する場合のみ設定（未migrationでも動作するように）
-        // scenariosテーブルにcreator_idカラムが追加されたら、ここのコメントを外す
-        // dbPayload.creator_id = userId;
-
-        // Check Submission Limits (user_idベースで暫定チェック)
+        // Check Submission Limits (rewards._ugc_meta.creator_id ベースで簡易チェック)
+        // NOTE: creator_idカラム追加後は直接カラムベースに切り替える
         if (!id) {
             const { data: creatorProfile } = await supabase
                 .from('user_profiles')
@@ -82,9 +86,25 @@ export async function POST(request: Request) {
             const tier = creatorProfile?.subscription_tier ?? 'free';
             const draftLimit = tier === 'premium' ? 52 : tier === 'basic' ? 12 : 4;
 
-            // scenariosテーブルのuser_idまたは全体数でチェック
-            // creator_idカラムが追加されるまでは、全体数ベースのチェックにフォールバック
-            // ※暫定：ユーザー全体のシナリオ数ではなく全体数をチェック
+            // 全UGCシナリオのうち自分のものをカウント（JSONB内のcreator_idで照合）
+            const { data: allScenarios, error: listErr } = await supabase
+                .from('scenarios')
+                .select('id, rewards')
+                .eq('type', 'Other');
+            
+            if (!listErr && allScenarios) {
+                const myCount = allScenarios.filter(s => 
+                    s.rewards?._ugc_meta?.creator_id === userId
+                ).length;
+                
+                if (myCount >= draftLimit) {
+                    return NextResponse.json({
+                        error: `UGCの作成可能枠（最大${draftLimit}枠）の上限に達しています。`,
+                        limit: draftLimit,
+                        current: myCount,
+                    }, { status: 400 });
+                }
+            }
         }
 
         let result;
