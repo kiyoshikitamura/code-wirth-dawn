@@ -31,7 +31,16 @@ export default function WorldMapPage() {
     useEffect(() => {
         async function init() {
             setLoading(true);
-            // Fetch locations with their current controlling nation
+
+            // 背景画像のプリロード（データ取得と並行して実行）
+            const bgPreload = new Promise<void>((resolve) => {
+                const img = new window.Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve(); // エラー時もブロックしない
+                img.src = '/backgrounds/worldmap.png';
+            });
+
+            // ロケーションデータと国家情報を取得
             const { data } = await supabase
                 .from('locations')
                 .select('*, world_states(controlling_nation)');
@@ -39,16 +48,18 @@ export default function WorldMapPage() {
             if (data) {
                 const mapped = data.map((l: any) => ({
                     ...l,
-                    x: l.x !== null ? l.x : null, // Read actual x column
-                    y: l.y !== null ? l.y : null  // Read actual y column
+                    x: l.x !== null ? l.x : null,
+                    y: l.y !== null ? l.y : null
                 }));
-                // Cast to Location[] now that x/y are present
                 setLocations(mapped as Location[]);
             }
 
             await fetchUserProfile();
-            await fetchHubState(); // Explicitly fetch Hub State
-            await fetchWorldState(); // Global date
+            await fetchHubState();
+            await fetchWorldState();
+
+            // 背景画像の読み込み完了を待機してからローディング解除
+            await bgPreload;
             setLoading(false);
         }
         init();
@@ -131,7 +142,7 @@ export default function WorldMapPage() {
 
     // Calendar & Age Computation
     const totalDays = userProfile?.accumulated_days || 0;
-    const year = 100 + Math.floor(totalDays / 365);
+    const year = 742 + Math.floor(totalDays / 365);
     const month = 1 + Math.floor((totalDays % 365) / 30);
     const day = 1 + (totalDays % 30);
 

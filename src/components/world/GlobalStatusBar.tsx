@@ -20,7 +20,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
 
     // Calendar & Age Computation
     const totalDays = userProfile?.accumulated_days || 0;
-    const year = 100 + Math.floor(totalDays / 365);
+    const year = 742 + Math.floor(totalDays / 365);
     const month = 1 + Math.floor((totalDays % 365) / 30);
     const day = 1 + (totalDays % 30);
     const calendarString = `${year}年 ${month}月 ${day}日`; // Integer based format

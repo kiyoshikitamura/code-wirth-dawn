@@ -63,30 +63,48 @@ export async function POST(req: Request) {
             if (insertError) console.error("World insert failed:", insertError);
         }
 
-        // 2. Reset Inventory (Delete All)
+        // 2. 全ユーザーデータの削除
+        // 2a. インベントリ削除
         const { error: invError } = await client
             .from('inventory')
             .delete()
-            .not('id', 'is', null); // Safety clause for DELETE ALL
-        // .neq removed to ensure ALL are deleted
+            .not('id', 'is', null);
+        if (invError) console.error("インベントリ削除エラー:", invError);
 
-        if (invError) console.error("Inventory reset error:", invError);
-
-        // 2c. Reset Reputations (New Fix)
+        // 2b. 名声データ削除
         const { error: repError } = await client
             .from('reputations')
             .delete()
             .not('id', 'is', null);
-        if (repError) console.error("Reputation reset error:", repError);
+        if (repError) console.error("名声削除エラー:", repError);
 
-        // 2b. Reset NPCs (Disband Party)
-        // 2b. Reset Party Members (Return to Pool)
+        // 2c. クエスト進捗削除
+        const { error: questProgError } = await client
+            .from('quest_progress')
+            .delete()
+            .not('id', 'is', null);
+        if (questProgError) console.error("クエスト進捗削除エラー:", questProgError);
+
+        // 2d. 世界履歴削除
+        const { error: worldHistError } = await client
+            .from('world_history')
+            .delete()
+            .not('id', 'is', null);
+        if (worldHistError) console.error("世界履歴削除エラー:", worldHistError);
+
+        // 2e. 世界状態履歴削除
+        const { error: stateHistError } = await client
+            .from('world_states_history')
+            .delete()
+            .not('id', 'is', null);
+        if (stateHistError) console.error("世界状態履歴削除エラー:", stateHistError);
+
+        // 2f. パーティメンバーリセット
         const { error: pmError } = await client
             .from('party_members')
             .update({ owner_id: null, is_active: false })
             .not('owner_id', 'is', null);
-
-        if (pmError) console.error("Party Reset error:", pmError);
+        if (pmError) console.error("パーティリセットエラー:", pmError);
 
         // 2a. Get Start Location ID
         let { data: startLoc } = await client
