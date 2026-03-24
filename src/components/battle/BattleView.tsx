@@ -390,7 +390,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             )}
 
             {/* BATTLE LOG (5 lines) */}
-            <div className="relative z-20 px-3 mt-1 w-full flex-shrink-0">
+            <div className="relative z-20 px-3 w-full flex-shrink-0">
                 <div className="bg-slate-950/80 border border-slate-800 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-hidden flex flex-col justify-end backdrop-blur-sm">
                     {logs.slice(-5).map((log, idx) => {
                         const isLatest = idx === Math.min(logs.length, 5) - 1;
@@ -405,7 +405,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             </div>
 
             {/* BOTTOM: CARDS + ACTION BUTTONS */}
-            <div className="flex-1 w-full relative z-30">
+            <div className="w-full relative z-30 h-48 mt-auto flex-shrink-0">
 
                 {/* Action Buttons — bottom-right horizontal */}
                 <div className="absolute bottom-2 right-3 z-40 flex items-center gap-1.5">
@@ -428,7 +428,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
 
                 {/* Hand Cards (Fan Layout) */}
-                <div className="absolute bottom-0 inset-x-0 h-48 flex justify-center items-end pb-2 overflow-visible">
+                <div className="absolute bottom-0 inset-x-0 h-full flex justify-center items-end pb-2 overflow-visible">
                     {hand.map((card, idx) => {
                         const centerIndex = (hand.length - 1) / 2;
                         const offset = idx - centerIndex;
