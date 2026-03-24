@@ -9,6 +9,16 @@ import { ShieldAlert, Plus, Trash2, Save, Send } from 'lucide-react';
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
 
+// Auth helper for API calls
+const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+};
+
 export default function EditorPage() {
     const router = useRouter();
     const { userProfile, fetchUserProfile, worldState, fetchWorldState } = useGameStore();
@@ -106,9 +116,10 @@ export default function EditorPage() {
 
         setIsSaving(true);
         try {
+            const headers = await getAuthHeaders();
             const res = await fetch('/api/ugc/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     id: questId,
                     userId: userProfile?.id,
@@ -145,9 +156,10 @@ export default function EditorPage() {
 
         setIsSaving(true);
         try {
+            const headers = await getAuthHeaders();
             const res = await fetch('/api/ugc/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     id: questId,
                     userId: userProfile?.id,
@@ -184,9 +196,10 @@ export default function EditorPage() {
 
         setIsSaving(true);
         try {
+            const headers = await getAuthHeaders();
             const res = await fetch('/api/ugc/publish', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     id: questId,
                     userId: userProfile?.id,

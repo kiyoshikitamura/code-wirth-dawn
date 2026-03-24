@@ -5,17 +5,23 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         
-        let userId = body.userId;
+        // S1修正: 認証ヘッダーからユーザーIDを必須取得（bodyのuserIdフォールバック廃止）
+        let userId: string | null = null;
         const authHeader = request.headers.get('authorization');
         
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user }, error } = await supabase.auth.getUser(token);
             if (!error && user) userId = user.id;
         }
 
         if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: 'Unauthorized: 有効な認証トークンが必要です' }, { status: 401 });
+        }
+
+        // bodyのuserIdと認証ユーザーの一致チェック（指定されている場合）
+        if (body.userId && body.userId !== userId) {
+            return NextResponse.json({ error: 'Unauthorized: ユーザーIDが一致しません' }, { status: 401 });
         }
 
         const { id, payload } = body;

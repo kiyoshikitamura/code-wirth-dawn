@@ -19,13 +19,25 @@ import { createAuthClient } from '@/lib/supabase-auth';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { id, userId } = body;
+        const { id } = body;
 
-        if (!userId || !id) {
-            return NextResponse.json({ error: 'Unauthorized or Missing ID' }, { status: 401 });
+        if (!id) {
+            return NextResponse.json({ error: 'Missing quest ID' }, { status: 400 });
         }
 
         const client = createAuthClient(request);
+
+        // S3修正: JWTからユーザーIDを検証取得（bodyのuserIdを信頼しない）
+        const { data: { user }, error: authErr } = await client.auth.getUser();
+        if (authErr || !user) {
+            return NextResponse.json({ error: 'Unauthorized: 有効な認証トークンが必要です' }, { status: 401 });
+        }
+        const userId = user.id;
+
+        // bodyのuserIdと認証ユーザーの一致チェック（指定されている場合）
+        if (body.userId && body.userId !== userId) {
+            return NextResponse.json({ error: 'Unauthorized: ユーザーIDが一致しません' }, { status: 401 });
+        }
 
         // 1. シナリオを取得して状態・所有者を確認
         const { data: quest, error: questErr } = await client
