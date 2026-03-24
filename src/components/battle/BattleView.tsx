@@ -258,74 +258,96 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             )}
 
-            {/* Enemies Layout — 重ね表示、ターゲット拡大 */}
+            {/* Enemies Layout — 左:ターゲット大 / 右:非ターゲット縮小重ね */}
             <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-2 pb-1 flex-shrink-0">
-                <div className="w-full flex justify-center items-end px-2">
-                    {enemies.map((enemy, idx) => {
-                        const isTarget = target?.id === enemy.id;
-                        const isDead = enemy.hp <= 0;
-                        const overlapPx = enemies.length > 4 ? -20 : enemies.length > 2 ? -14 : -8;
-                        const centerIdx = (enemies.length - 1) / 2;
-                        const offsetFromCenter = idx - centerIdx;
-                        const rotation = isTarget ? 0 : offsetFromCenter * 6;
-                        const translateY = isTarget ? -8 : Math.abs(offsetFromCenter) * 8;
-                        return (
-                            <div
-                                key={enemy.id}
-                                className={`relative transition-all duration-500 shrink-0 cursor-pointer origin-bottom
-                                    ${isDead ? 'opacity-30 grayscale' : ''}
-                                    ${isTarget && !isDead ? 'z-30 scale-105' : 'z-10 scale-[0.82] opacity-60'}
-                                `}
-                                style={{
-                                    marginLeft: idx === 0 ? 0 : overlapPx,
-                                    transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
-                                }}
-                                onClick={() => !isDead && setTarget(enemy.id)}
-                            >
-                                {/* Bounty badge */}
-                                {enemy.spawn_type === 'bounty' && !isDead && (
-                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-red-950/90 border border-red-500 text-red-500 text-[7px] font-black px-1 py-0 whitespace-nowrap z-20 skew-x-[-10deg]">
-                                        BOUNTY
-                                    </div>
-                                )}
-                                <div className={`w-[90px] h-[120px] sm:w-[100px] sm:h-[134px] rounded-lg shadow-2xl flex flex-col border-2 overflow-hidden transition-all duration-500
-                                    ${isTarget && !isDead ? 'border-red-500 animate-[targetPulse_1.5s_ease-in-out_infinite] bg-slate-900' : 'border-slate-700 bg-slate-900'}
-                                `}>
-                                    <div className="h-3/4 bg-slate-800 relative overflow-hidden">
-                                        {enemy.image_url ? (
-                                            <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-50 grayscale' : ''}`} />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={28} /></div>
-                                        )}
-                                    </div>
-                                    <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-1 py-0.5">
-                                        <div className={`text-[8px] font-bold truncate ${isDead ? 'text-gray-500 line-through' : 'text-slate-200'}`}>
-                                            {enemy.name} <span className="text-[6px] text-amber-500">Lv.{enemy.level}</span>
-                                        </div>
-                                        {!isDead && (
-                                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-0.5">
-                                                <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
-                                            </div>
-                                        )}
-                                    </div>
+                <div className="w-full flex items-center justify-center gap-3 px-3">
+                    {/* LEFT: Target enemy (large) */}
+                    {target && (
+                        <div className="relative transition-all duration-500 flex-shrink-0">
+                            {target.spawn_type === 'bounty' && target.hp > 0 && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-950/90 border border-red-500 text-red-500 text-[7px] font-black px-1.5 py-0.5 whitespace-nowrap z-20 skew-x-[-10deg]">
+                                    BOUNTY
                                 </div>
-                                {/* Attack animation on target */}
-                                {isTarget && activeEffect && (
-                                    <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-                                        {activeEffect === 'SLASH' && (
-                                            <div className="w-full h-[2px] bg-red-400 rotate-45 shadow-[0_0_20px_rgba(248,113,113,1)] animate-in slide-in-from-top-12 duration-300" />
-                                        )}
-                                        {activeEffect === 'WIND' && (
-                                            <div className="block">
-                                                <div className="w-16 h-[1px] bg-sky-200 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-right-16 fade-in duration-300 mb-2" />
-                                                <div className="w-12 h-[1px] bg-sky-300 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-left-16 fade-in duration-300" />
-                                            </div>
-                                        )}
+                            )}
+                            <div className={`w-[120px] h-[160px] sm:w-[140px] sm:h-[186px] rounded-lg shadow-2xl flex flex-col border-2 overflow-hidden transition-all duration-500
+                                ${target.hp > 0 ? 'border-red-500 animate-[targetPulse_1.5s_ease-in-out_infinite] bg-slate-900' : 'border-slate-700 bg-slate-900 opacity-50 grayscale'}
+                            `}>
+                                <div className="h-3/4 bg-slate-800 relative overflow-hidden">
+                                    {target.image_url ? (
+                                        <img src={target.image_url} alt={target.name} className={`w-full h-full object-cover ${target.hp <= 0 ? 'opacity-50 grayscale' : ''}`} />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={36} /></div>
+                                    )}
+                                </div>
+                                <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-2 py-1">
+                                    <div className={`text-[10px] font-bold truncate ${target.hp <= 0 ? 'text-gray-500 line-through' : 'text-slate-200'}`}>
+                                        {target.name} <span className="text-[8px] text-amber-500">Lv.{target.level}</span>
                                     </div>
-                                )}
+                                    {target.hp > 0 && (
+                                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-0.5">
+                                            <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${(target.hp / target.maxHp) * 100}%` }} />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        );
-                    })}
+                            {/* Attack animation */}
+                            {activeEffect && (
+                                <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+                                    {activeEffect === 'SLASH' && (
+                                        <div className="w-full h-[2px] bg-red-400 rotate-45 shadow-[0_0_20px_rgba(248,113,113,1)] animate-in slide-in-from-top-12 duration-300" />
+                                    )}
+                                    {activeEffect === 'WIND' && (
+                                        <div className="block">
+                                            <div className="w-16 h-[1px] bg-sky-200 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-right-16 fade-in duration-300 mb-2" />
+                                            <div className="w-12 h-[1px] bg-sky-300 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-left-16 fade-in duration-300" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* RIGHT: Non-target enemies (shrunk, stacked) */}
+                    {enemies.filter(e => target?.id !== e.id).length > 0 && (
+                        <div className="flex flex-col gap-[-4px] items-center flex-shrink-0">
+                            {enemies.filter(e => target?.id !== e.id).slice(0, 5).map((enemy, idx) => {
+                                const isDead = enemy.hp <= 0;
+                                return (
+                                    <div
+                                        key={enemy.id}
+                                        className={`relative transition-all duration-300 cursor-pointer hover:scale-105 hover:opacity-90
+                                            ${isDead ? 'opacity-20 grayscale' : 'opacity-70'}
+                                        `}
+                                        style={{ marginTop: idx === 0 ? 0 : -16 }}
+                                        onClick={() => !isDead && setTarget(enemy.id)}
+                                    >
+                                        <div className={`w-[64px] h-[86px] sm:w-[72px] sm:h-[96px] rounded flex flex-col border overflow-hidden transition-all
+                                            ${isDead ? 'border-slate-800' : 'border-slate-600 hover:border-slate-400'}
+                                            bg-slate-900
+                                        `}>
+                                            <div className="h-3/4 bg-slate-800 relative overflow-hidden">
+                                                {enemy.image_url ? (
+                                                    <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-40' : ''}`} />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={16} /></div>
+                                                )}
+                                            </div>
+                                            <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-0.5">
+                                                <div className={`text-[6px] font-bold truncate ${isDead ? 'text-gray-600 line-through' : 'text-slate-400'}`}>
+                                                    {enemy.name}
+                                                </div>
+                                                {!isDead && (
+                                                    <div className="w-full h-0.5 bg-slate-800 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-red-600/70" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
