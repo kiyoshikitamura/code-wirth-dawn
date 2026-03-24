@@ -43,6 +43,10 @@ export default function InnPage() {
     // News & History Logic
     const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
 
+    // Badge states (赤！バッジ)
+    const [showHistoryBadge, setShowHistoryBadge] = useState(true);
+    const [showRumorsBadge, setShowRumorsBadge] = useState(true);
+
     // ハブ判定
     const isHub = hubState?.is_in_hub === true;
 
@@ -245,6 +249,7 @@ export default function InnPage() {
     };
 
     const openHistoryHall = async () => {
+        setShowHistoryBadge(false);
         setActiveModal('history');
     };
 
@@ -325,7 +330,9 @@ export default function InnPage() {
                 <MainVisualArea
                     worldState={worldState}
                     onOpenHistory={openHistoryHall}
-                    onOpenRumors={() => setActiveModal('rumors')}
+                    onOpenRumors={() => { setShowRumorsBadge(false); setActiveModal('rumors'); }}
+                    showHistoryBadge={showHistoryBadge}
+                    showRumorsBadge={showRumorsBadge}
                 />
 
                 {/* Facility Grid Navigation */}

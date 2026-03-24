@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, Calendar, Coins, Heart, Star, MapPin, AlertTriangle } from 'lucide-react';
+import { User, Calendar, Coins, Heart, Star, MapPin, AlertTriangle, Trophy } from 'lucide-react';
 import { WorldState, UserProfile } from '@/types/game';
+import HegemonyModal from '@/components/world/HegemonyModal';
 
 interface InnHeaderProps {
     worldState: WorldState | null;
@@ -12,6 +13,7 @@ interface InnHeaderProps {
 
 export default function InnHeader({ worldState, userProfile, reputation }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
+    const [showHegemony, setShowHegemony] = useState(false);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -21,7 +23,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
     }, []);
 
     const totalDays = userProfile?.accumulated_days || 0;
-    const year = 742 + Math.floor(totalDays / 365); // Base year + elapsed
+    const year = 742 + Math.floor(totalDays / 365);
     const month = 1 + Math.floor((totalDays % 365) / 30);
     const day = 1 + (totalDays % 30);
 
@@ -30,11 +32,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
     const controllingNation = worldState?.controlling_nation || "Neutral";
     const prosperity = worldState?.prosperity_level || 3;
 
-    // HP Bar calculation
     const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100));
-
-    // Experience/AP Bar proxy (Using a static example or if AP exists)
-    // Here we just use a static blue bar for now, as we only have HP in userProfile
     const apPercent = 40;
 
     const getStatusText = () => {
@@ -63,7 +61,6 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
         return `「街はこの国の支配にまだ馴染んでいないようだ。」`;
     };
 
-    // Check expiring passes (less than 30 days left)
     const getExpiringPasses = () => {
         if (!userProfile?.pass_expires_at) return [];
         const expiring: string[] = [];
@@ -86,6 +83,7 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
     const expiringPasses = getExpiringPasses();
 
     return (
+        <>
         <header className="sticky top-0 z-50 w-full bg-slate-950/90 backdrop-blur-md border-b border-amber-900/50 shadow-2xl select-none">
             {expiringPasses.length > 0 && (
                 <div className="mx-4 my-2 px-4 py-3 bg-orange-950/40 border border-orange-500/50 rounded-lg shadow-lg flex items-center justify-between animate-[pulse_3s_ease-in-out_infinite]">
@@ -137,11 +135,9 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
 
                 <div className="flex flex-col items-end gap-1.5 min-w-[120px]">
                     <div className="w-full space-y-0.5">
-                        {/* HP Bar */}
                         <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700">
                             <div className="h-full bg-green-600 transition-all duration-300" style={{ width: `${hpPercent}%` }} />
                         </div>
-                        {/* AP/MP Bar */}
                         <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700">
                             <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${apPercent}%` }} />
                         </div>
@@ -169,18 +165,27 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
                 </div>
             </div>
 
+            {/* 暦 + 世界の覇権ボタン（同列配置） */}
             <div className="flex justify-between items-center mb-2 px-1">
                 <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-slate-800">
                     <Calendar size={12} className="text-amber-500" />
                     <span className="text-[9px] font-serif tracking-wider text-amber-100/70">
                         {year}年 {month}月 {day}日
                     </span>
+                    <span className="text-slate-700 text-[8px]">|</span>
+                    <button
+                        onClick={() => setShowHegemony(true)}
+                        className="flex items-center gap-1 text-[8px] text-amber-600 font-bold uppercase hover:text-amber-400 transition-colors active:scale-95"
+                    >
+                        <Trophy size={10} className="text-amber-600" />
+                        世界の覇権
+                    </button>
                 </div>
+                {/* 拠点名・状況（テキストサイズ拡大） */}
                 <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-[8px] uppercase text-slate-500 font-bold w-full text-right">世界の覇権</span>
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-serif font-bold text-amber-100">{currentLocName}</span>
-                        <span className={`text-[8px] px-1.5 py-0.5 rounded border ${prosperity <= 2 ? 'bg-red-950/40 text-red-400 border-red-900/30' : 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30'}`}>
+                        <span className="text-[12px] font-serif font-bold text-amber-100">{currentLocName}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded border font-bold ${prosperity <= 2 ? 'bg-red-950/40 text-red-400 border-red-900/30' : 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30'}`}>
                             {getStatusText()}
                         </span>
                     </div>
@@ -194,5 +199,11 @@ export default function InnHeader({ worldState, userProfile, reputation }: InnHe
             )}
             </div>
         </header>
+
+        {/* HegemonyModal */}
+        {showHegemony && (
+            <HegemonyModal worldState={worldState} onClose={() => setShowHegemony(false)} />
+        )}
+        </>
     );
 }

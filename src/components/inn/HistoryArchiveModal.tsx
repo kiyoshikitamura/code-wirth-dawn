@@ -64,14 +64,14 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
                 </button>
 
                 {/* Title Section */}
-                <header className="px-8 pt-8 pb-4 relative z-10 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                        <div className="h-px w-8 bg-amber-800" />
-                        <BookOpen className="w-6 h-6 text-amber-500" />
-                        <h2 className="text-2xl font-serif font-black text-amber-100 tracking-[0.2em] uppercase">歴史を紐解く</h2>
-                        <div className="h-px w-8 bg-amber-800" />
+                <header className="px-5 sm:px-8 pt-6 sm:pt-8 pb-3 sm:pb-4 relative z-10 text-center">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+                        <div className="h-px w-6 sm:w-8 bg-amber-800" />
+                        <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
+                        <h2 className="text-base sm:text-xl font-serif font-black text-amber-100 tracking-[0.1em] sm:tracking-[0.2em] uppercase whitespace-nowrap">歴史を紐解く</h2>
+                        <div className="h-px w-6 sm:w-8 bg-amber-800" />
                     </div>
-                    <p className="text-[10px] text-amber-700 font-bold tracking-widest uppercase">Chronicles of the Witness</p>
+                    <p className="text-[9px] sm:text-[10px] text-amber-700 font-bold tracking-widest uppercase">Chronicles of the Witness</p>
                 </header>
 
                 {/* Tab Navigation */}
