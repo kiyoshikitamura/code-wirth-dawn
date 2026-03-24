@@ -18,34 +18,30 @@ interface EnemyEditorProps {
 
 const SKILL_CATALOG = [
     { id: 'attack', name: '通常攻撃', cost: 0, minLevel: 1 },
-    { id: 'heavy_attack', name: '強撃 (大ダメージ)', cost: 50, minLevel: 5 },
+    { id: 'heavy_attack', name: '強撃', cost: 50, minLevel: 5 },
     { id: 'heal', name: '自己回復', cost: 80, minLevel: 10 },
     { id: 'poison', name: '毒付与', cost: 120, minLevel: 15 },
-    { id: 'drain_vit', name: '魂喰らい (Vit減少)', cost: 1000, minLevel: 30 },
+    { id: 'drain_vit', name: '魂喰らい', cost: 1000, minLevel: 30 },
 ];
 
 export default function EnemyEditor({ value, onChange }: EnemyEditorProps) {
     const [tp, setTp] = useState(0);
     const [maxTp, setMaxTp] = useState(0);
 
-    // Calculate TP based on Level
     useEffect(() => {
-        const calculatedMaxTp = value.level * 50 + 100; // Base 100 + 50 per level
+        const calculatedMaxTp = value.level * 50 + 100;
         setMaxTp(calculatedMaxTp);
     }, [value.level]);
 
-    // Calculate Used TP
     useEffect(() => {
         let used = 0;
-        used += value.hp * 1;    // 1 TP = 1 HP
-        used += value.atk * 10;  // 10 TP = 1 ATK
-        used += value.def * 10;  // 10 TP = 1 DEF
-
+        used += value.hp * 1;
+        used += value.atk * 10;
+        used += value.def * 10;
         value.skills.forEach(skillId => {
             const skill = SKILL_CATALOG.find(s => s.id === skillId);
             if (skill) used += skill.cost;
         });
-
         setTp(maxTp - used);
     }, [value, maxTp]);
 
@@ -62,94 +58,74 @@ export default function EnemyEditor({ value, onChange }: EnemyEditorProps) {
     };
 
     return (
-        <div className="bg-[#1a1a24] border border-red-900/50 rounded-lg p-4 space-y-4">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-red-400">カスタムエネミー設計</h3>
-                <div className={`text-xl font-mono font-bold px-3 py-1 rounded bg-black border ${tp < 0 ? 'text-red-500 border-red-500' : 'text-green-400 border-green-500'}`}>
-                    TP: {tp} / {maxTp}
+        <div className="bg-slate-800/50 border border-red-900/30 rounded-xl p-3 space-y-3">
+            {/* Header + TP */}
+            <div className="flex justify-between items-center">
+                <h3 className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                    <Sword size={12} /> エネミー設計
+                </h3>
+                <div className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${tp < 0 ? 'text-red-400 border-red-600 bg-red-900/30' : 'text-green-400 border-green-700 bg-green-900/20'}`}>
+                    TP: {tp}/{maxTp}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-xs text-gray-400 mb-1">エネミー名</label>
-                        <input
-                            type="text"
-                            value={value.name}
-                            onChange={e => handleUpdate('name', e.target.value)}
-                            className="w-full bg-black/50 border border-red-900/50 rounded p-2 text-white focus:border-red-500 outline-none"
-                            placeholder="例: マッドゴブリン"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs text-gray-400 mb-1">画像URL (任意)</label>
-                        <input
-                            type="text"
-                            value={value.image_url}
-                            onChange={e => handleUpdate('image_url', e.target.value)}
-                            className="w-full bg-black/50 border border-red-900/50 rounded p-2 text-white outline-none"
-                            placeholder="https://..."
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs text-gray-400 mb-1 flex justify-between">
-                            <span>想定レベル (1-50)</span>
-                            <span className="text-red-400">基礎構築力(TP)を決定</span>
-                        </label>
-                        <input
-                            type="number"
-                            min="1" max="50"
-                            value={value.level}
-                            onChange={e => handleUpdate('level', parseInt(e.target.value) || 1)}
-                            className="w-full bg-black/50 border border-red-900/50 rounded p-2 text-white outline-none text-center text-xl font-bold"
-                        />
-                    </div>
-                </div>
-
-                <div className="bg-black/40 p-4 rounded border border-gray-800 space-y-4">
-                    <h4 className="text-sm font-bold text-gray-300 border-b border-gray-700 pb-2">ステータス振り分け</h4>
-
-                    <div className="grid grid-cols-[auto_1fr_auto] gap-4 items-center">
-                        <Heart className="w-5 h-5 text-green-500" />
-                        <input
-                            type="range" min="10" max={Math.max(100, value.level * 50)}
-                            value={value.hp}
-                            onChange={e => handleUpdate('hp', parseInt(e.target.value))}
-                            className="accent-green-500"
-                        />
-                        <span className="w-12 text-right font-mono text-green-400">{value.hp}</span>
-
-                        <Sword className="w-5 h-5 text-red-500" />
-                        <input
-                            type="range" min="1" max={Math.max(10, value.level * 2)}
-                            value={value.atk}
-                            onChange={e => handleUpdate('atk', parseInt(e.target.value))}
-                            className="accent-red-500"
-                        />
-                        <span className="w-12 text-right font-mono text-red-400">{value.atk}</span>
-
-                        <Shield className="w-5 h-5 text-blue-500" />
-                        <input
-                            type="range" min="1" max={Math.max(10, value.level * 2)}
-                            value={value.def}
-                            onChange={e => handleUpdate('def', parseInt(e.target.value))}
-                            className="accent-blue-500"
-                        />
-                        <span className="w-12 text-right font-mono text-blue-400">{value.def}</span>
-                    </div>
-
-                    <div className="text-[10px] text-gray-500 text-right">HP: 1TP / ATK: 10TP / DEF: 10TP</div>
+            {/* Name + Level */}
+            <div className="space-y-2">
+                <input
+                    type="text"
+                    value={value.name}
+                    onChange={e => handleUpdate('name', e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm text-white outline-none focus:border-red-500 transition-colors"
+                    placeholder="エネミー名"
+                />
+                <div className="flex gap-2 items-center">
+                    <label className="text-[10px] text-slate-400 whitespace-nowrap">Lv.</label>
+                    <input
+                        type="number"
+                        min="1" max="50"
+                        value={value.level}
+                        onChange={e => handleUpdate('level', parseInt(e.target.value) || 1)}
+                        className="w-16 bg-slate-900 border border-slate-600 rounded-lg p-2 text-sm text-white outline-none text-center font-bold focus:border-red-500"
+                    />
+                    <input
+                        type="text"
+                        value={value.image_url}
+                        onChange={e => handleUpdate('image_url', e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-600 rounded-lg p-2 text-[11px] text-white outline-none focus:border-slate-500"
+                        placeholder="画像URL (任意)"
+                    />
                 </div>
             </div>
 
-            <div className="mt-4">
-                <h4 className="text-sm font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2 text-purple-400">
-                    <Activity className="w-4 h-4" /> 特殊能力 (スキル)
+            {/* Stats Sliders */}
+            <div className="bg-slate-900/60 rounded-lg p-3 space-y-2.5 border border-slate-700/50">
+                <div className="flex items-center gap-2">
+                    <Heart size={12} className="text-green-400 flex-shrink-0" />
+                    <input type="range" min="10" max={Math.max(100, value.level * 50)} value={value.hp}
+                        onChange={e => handleUpdate('hp', parseInt(e.target.value))} className="flex-1 accent-green-500 h-1.5" />
+                    <span className="w-10 text-right font-mono text-green-400 text-xs">{value.hp}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Sword size={12} className="text-red-400 flex-shrink-0" />
+                    <input type="range" min="1" max={Math.max(10, value.level * 2)} value={value.atk}
+                        onChange={e => handleUpdate('atk', parseInt(e.target.value))} className="flex-1 accent-red-500 h-1.5" />
+                    <span className="w-10 text-right font-mono text-red-400 text-xs">{value.atk}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Shield size={12} className="text-blue-400 flex-shrink-0" />
+                    <input type="range" min="1" max={Math.max(10, value.level * 2)} value={value.def}
+                        onChange={e => handleUpdate('def', parseInt(e.target.value))} className="flex-1 accent-blue-500 h-1.5" />
+                    <span className="w-10 text-right font-mono text-blue-400 text-xs">{value.def}</span>
+                </div>
+                <div className="text-[9px] text-slate-600 text-right">HP: 1TP / ATK: 10TP / DEF: 10TP</div>
+            </div>
+
+            {/* Skills */}
+            <div>
+                <h4 className="text-[10px] font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                    <Activity size={10} /> 特殊能力
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                     {SKILL_CATALOG.map(skill => {
                         const isLocked = value.level < skill.minLevel;
                         const isSelected = value.skills.includes(skill.id);
@@ -158,19 +134,19 @@ export default function EnemyEditor({ value, onChange }: EnemyEditorProps) {
                                 key={skill.id}
                                 disabled={isLocked}
                                 onClick={() => toggleSkill(skill.id)}
-                                className={`text-left p-2 rounded border text-xs transition-all ${isLocked
-                                        ? 'bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed'
-                                        : isSelected
-                                            ? 'bg-purple-900/50 border-purple-500 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
-                                            : 'bg-black/40 border-gray-700 text-gray-400 hover:border-purple-900'
-                                    }`}
+                                className={`text-left p-2 rounded-lg border text-[10px] transition-all ${isLocked
+                                    ? 'bg-slate-900/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                                    : isSelected
+                                        ? 'bg-amber-900/30 border-amber-600 text-amber-200 shadow-[0_0_8px_rgba(234,179,8,0.2)]'
+                                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-amber-700'
+                                }`}
                             >
                                 <div className="font-bold flex justify-between">
                                     <span>{skill.name}</span>
-                                    {isLocked && <span className="text-red-900 flex-shrink-0">Lv.{skill.minLevel}〜</span>}
+                                    {isLocked && <span className="text-red-900/60">Lv.{skill.minLevel}〜</span>}
                                 </div>
-                                <div className={`font-mono mt-1 ${isLocked ? 'text-gray-700' : 'text-gray-500'}`}>
-                                    Cost: {skill.cost} TP
+                                <div className={`font-mono mt-0.5 ${isLocked ? 'text-slate-700' : 'text-slate-500'}`}>
+                                    {skill.cost} TP
                                 </div>
                             </button>
                         );
@@ -179,8 +155,8 @@ export default function EnemyEditor({ value, onChange }: EnemyEditorProps) {
             </div>
 
             {tp < 0 && (
-                <div className="mt-4 bg-red-900/40 border border-red-500 text-red-200 text-xs p-2 rounded text-center animate-pulse">
-                    警告: TPがマイナスです。ステータスを下げるか、想定レベルを上げてください。
+                <div className="bg-red-900/30 border border-red-600/50 text-red-300 text-[10px] p-2 rounded-lg text-center animate-pulse">
+                    ⚠ TPがマイナスです。ステータスを下げるか、想定レベルを上げてください。
                 </div>
             )}
         </div>

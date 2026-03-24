@@ -20,7 +20,7 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
         e.preventDefault();
         e.stopPropagation();
         onClose();
-        // 作品管理用画面（未定義の場合は一旦エディタへ）
+        // TODO: 作品管理画面実装後にルート変更
         setTimeout(() => router.push('/editor'), 50);
     };
 
@@ -43,7 +43,10 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
                     >
                         <div className="flex items-center gap-3">
                             <PlusCircle className="text-amber-500 group-hover:scale-110 transition-transform" />
-                            <span className="font-bold text-slate-200">アセット作成</span>
+                            <div className="text-left">
+                                <span className="font-bold text-slate-200 block text-sm">新規クエスト作成</span>
+                                <span className="text-[10px] text-slate-500">シナリオを一から構築</span>
+                            </div>
                         </div>
                         <span className="text-amber-900/50 group-hover:text-amber-500/80">→</span>
                     </button>
@@ -54,7 +57,10 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
                     >
                         <div className="flex items-center gap-3">
                             <FolderKanban className="text-slate-400 group-hover:text-amber-500 group-hover:scale-110 transition-all" />
-                            <span className="font-bold text-slate-400 group-hover:text-slate-200 transition-colors">作品管理</span>
+                            <div className="text-left">
+                                <span className="font-bold text-slate-400 group-hover:text-slate-200 transition-colors block text-sm">作品管理</span>
+                                <span className="text-[10px] text-slate-600">下書き・公開中のクエスト</span>
+                            </div>
                         </div>
                         <span className="text-slate-700 group-hover:text-amber-500/80">→</span>
                     </button>

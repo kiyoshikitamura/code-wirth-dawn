@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
 import { HUB_LOCATION_ID, LEGACY_ZERO_UUID } from '@/utils/constants';
-import { ShieldAlert, Plus, Trash2, Save, Send } from 'lucide-react';
+import { PenTool, Plus, Trash2, Save, Send, ChevronDown, ChevronUp, Sword, X, ArrowLeft, Play, ScrollText, Package, Sparkles } from 'lucide-react';
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
 
@@ -36,6 +36,10 @@ export default function EditorPage() {
     const [isTested, setIsTested] = useState(false);
     const [worldLocations, setWorldLocations] = useState<{ id: string, name: string }[]>([]);
 
+    // UI state
+    const [activeTab, setActiveTab] = useState<'basic' | 'nodes' | 'reward' | 'action'>('basic');
+    const [expandedNode, setExpandedNode] = useState<number | null>(null);
+
     useEffect(() => {
         async function init() {
             const [profileRes, worldRes, locRes] = await Promise.all([
@@ -63,16 +67,10 @@ export default function EditorPage() {
         }
     }, [questId]);
 
+    // Hub access check — single definition (L2 fix)
     useEffect(() => {
         if (!loading && userProfile && worldState) {
-            // "名も無き旅人の拠所" 以外からのアクセスを弾く
-            // We allow if ID strictly matches 'loc_nameless_hub' or Name is strict match, to be safe.
-            const validHubs = [
-                HUB_LOCATION_ID,
-                LEGACY_ZERO_UUID
-            ];
-
-            // Check using the hubState from store if possible, or fallback to UUID check
+            const validHubs = [HUB_LOCATION_ID, LEGACY_ZERO_UUID];
             const isHubName = worldState?.location_name === '名も無き旅人の拠所' || worldState?.location_name === '名もなき旅人の拠所';
             const isHub = validHubs.includes(userProfile.current_location_id || '') || isHubName;
 
@@ -88,18 +86,21 @@ export default function EditorPage() {
             alert('ノードは最大20個までです。');
             return;
         }
-        setNodes([...nodes, {
+        const newNode = {
             id: `node_${Date.now()}`,
             type: 'text',
-            text: '新しいテキスト',
+            text: '',
             choices: []
-        }]);
+        };
+        setNodes([...nodes, newNode]);
+        setExpandedNode(nodes.length);
     };
 
     const handleRemoveNode = (index: number) => {
         const newNodes = [...nodes];
         newNodes.splice(index, 1);
         setNodes(newNodes);
+        if (expandedNode === index) setExpandedNode(null);
     };
 
     const handleUpdateNode = (index: number, updates: any) => {
@@ -169,7 +170,6 @@ export default function EditorPage() {
             const data = await res.json();
             if (data.success) {
                 setQuestId(data.questId);
-                // Redirect to Quest Page with Test Play Flag
                 router.push(`/quest/${data.questId}?test_play=true`);
             } else {
                 alert('保存に失敗しました: ' + data.error);
@@ -220,227 +220,328 @@ export default function EditorPage() {
         }
     };
 
+    // Node type labels
+    const nodeTypeLabel = (type: string) => {
+        switch (type) {
+            case 'text': return '会話';
+            case 'battle': return 'バトル';
+            case 'check_delivery': return '納品';
+            case 'hire_mercenary': return 'NPC';
+            default: return type;
+        }
+    };
+
+    const nodeTypeColor = (type: string) => {
+        switch (type) {
+            case 'text': return 'bg-amber-900/30 text-amber-300 border-amber-700';
+            case 'battle': return 'bg-red-900/30 text-red-300 border-red-700';
+            case 'check_delivery': return 'bg-green-900/30 text-green-300 border-green-700';
+            case 'hire_mercenary': return 'bg-blue-900/30 text-blue-300 border-blue-700';
+            default: return 'bg-slate-800 text-slate-300 border-slate-700';
+        }
+    };
+
     if (loading) {
-        return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none text-slate-200">
+                <div className="relative w-full max-w-[390px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl flex flex-col items-center justify-center gap-4 bg-slate-950">
+                    <PenTool className="w-12 h-12 text-amber-500 animate-pulse" />
+                    <p className="text-sm text-amber-400 font-serif tracking-widest">工房を準備中...</p>
+                </div>
+            </div>
+        );
     }
 
-    if (!loading && userProfile && worldState) {
+    // Hub access guard (render)
+    if (userProfile && worldState) {
         const validHubs = [HUB_LOCATION_ID, LEGACY_ZERO_UUID];
         const isHubName = worldState?.location_name === '名も無き旅人の拠所' || worldState?.location_name === '名もなき旅人の拠所';
         if (!validHubs.includes(userProfile.current_location_id || '') && !isHubName) {
-            return null; // Redirecting
+            return null;
         }
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0c] text-gray-200 font-sans p-4 md:p-8">
-            <div className="max-w-6xl mx-auto">
-                <header className="mb-8 border-b-2 border-purple-900/50 pb-4 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-serif text-purple-400 font-bold mb-2 flex items-center gap-2">
-                            <span className="text-4xl">✍️</span> UGC Creator Portal
-                        </h1>
-                        <p className="text-gray-400 text-sm">名も無き旅人の拠所 - クエスト作成エディタ</p>
+        <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
+            <div className="relative w-full max-w-[390px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
+
+                {/* HEADER */}
+                <div className="relative z-40 bg-slate-950/90 border-b border-amber-900/30 px-4 pt-[env(safe-area-inset-top,10px)] pb-2 flex items-center justify-between backdrop-blur-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <button onClick={() => router.push('/inn')} className="text-slate-500 hover:text-amber-400 transition-colors p-1">
+                            <ArrowLeft size={16} />
+                        </button>
+                        <PenTool size={14} className="text-amber-500 flex-shrink-0" />
+                        <span className="text-xs font-bold text-amber-400 tracking-widest uppercase truncate">クリエイターズ工房</span>
                     </div>
-                    <button onClick={() => router.push('/inn')} className="text-gray-500 hover:text-white transition-colors text-sm">
-                        酒場へ戻る ✕
-                    </button>
-                </header>
+                    {questId && (
+                        <span className="text-[9px] text-slate-600 font-mono truncate max-w-[100px]">ID: {questId.substring(0, 8)}</span>
+                    )}
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Left Column: Quest Meta */}
-                    <div className="col-span-1 space-y-6">
-                        <section className="bg-[#1a1525] border border-purple-900/30 p-6 rounded shadow-lg">
-                            <h2 className="text-xl font-bold text-purple-300 mb-4 border-b border-purple-900/50 pb-2">基本情報</h2>
+                {/* TAB NAVIGATION */}
+                <div className="flex bg-slate-950 border-b border-slate-800 px-1 gap-0.5 flex-shrink-0">
+                    {[
+                        { key: 'basic', label: '基本情報', icon: <ScrollText size={12} /> },
+                        { key: 'nodes', label: `ノード(${nodes.length})`, icon: <Plus size={12} /> },
+                        { key: 'reward', label: '報酬', icon: <Package size={12} /> },
+                        { key: 'action', label: 'アクション', icon: <Send size={12} /> },
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key as any)}
+                            className={`flex-1 py-2.5 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors ${
+                                activeTab === tab.key
+                                    ? 'text-amber-400 border-b-2 border-amber-500 bg-amber-900/10'
+                                    : 'text-slate-500 hover:text-slate-300'
+                            }`}
+                        >
+                            {tab.icon} {tab.label}
+                        </button>
+                    ))}
+                </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs text-gray-400 mb-1">クエスト名 (必須)</label>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={e => setTitle(e.target.value)}
-                                        className="w-full bg-black/50 border border-purple-900/50 rounded p-2 text-white focus:border-purple-500 outline-none"
-                                        placeholder="例: ゴブリンの討伐"
-                                    />
-                                </div>
+                {/* CONTENT */}
+                <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
 
-                                <div>
-                                    <label className="block text-xs text-gray-400 mb-1">一覧表示用テキスト (最大40文字)</label>
-                                    <textarea
-                                        value={shortDescription}
-                                        onChange={e => setShortDescription(e.target.value.substring(0, 40))}
-                                        className="w-full bg-black/50 border border-purple-900/50 rounded p-2 text-white focus:border-purple-500 outline-none h-16 resize-none"
-                                        placeholder="ボードに表示される概要"
-                                    />
-                                    <div className="text-right text-[10px] text-gray-500">{shortDescription.length}/40</div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-gray-400 mb-1">詳細フレーバーテキスト</label>
-                                    <textarea
-                                        value={fullDescription}
-                                        onChange={e => setFullDescription(e.target.value)}
-                                        className="w-full bg-black/50 border border-purple-900/50 rounded p-2 text-white focus:border-purple-500 outline-none h-32 resize-none"
-                                        placeholder="クエストの詳細な背景など"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-gray-400 mb-1">出発拠点 (発生場所)</label>
-                                    <select
-                                        value={startLocationId}
-                                        onChange={e => setStartLocationId(e.target.value)}
-                                        className="w-full bg-black/50 border border-purple-900/50 rounded p-2 text-white focus:border-purple-500 outline-none"
-                                    >
-                                        {worldLocations.map(loc => (
-                                            <option key={loc.id} value={loc.id}>{loc.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                    {/* === TAB: 基本情報 === */}
+                    {activeTab === 'basic' && (
+                        <div className="space-y-4 animate-in fade-in duration-200">
+                            <div>
+                                <label className="block text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1">クエスト名 *</label>
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={e => setTitle(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-600 rounded-lg p-3 text-sm text-white outline-none transition-colors"
+                                    placeholder="例: ゴブリンの討伐"
+                                />
                             </div>
-                        </section>
 
-                        <CustomItemEditor value={customReward} onChange={setCustomReward} />
-
-                        <section className="bg-[#1a1525] border border-purple-900/30 p-6 rounded shadow-lg flex flex-col gap-3 mt-6">
-                            <h2 className="text-xl font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2">アクション</h2>
-                            <button
-                                onClick={handleSaveDraft}
-                                disabled={isSaving}
-                                className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white p-3 rounded transition-colors font-bold border border-gray-600 disabled:opacity-50"
-                            >
-                                <Save className="w-5 h-5" /> {isSaving ? '保存中...' : '下書き保存 (Draft)'}
-                            </button>
-                            <button
-                                onClick={handleTestPlay}
-                                disabled={isSaving || nodes.length === 0}
-                                className="flex items-center justify-center gap-2 bg-purple-900 hover:bg-purple-800 text-purple-100 p-3 rounded transition-colors font-bold border border-purple-600 disabled:opacity-50"
-                            >
-                                ⚔️ テストプレイ開始
-                            </button>
-                            <button
-                                onClick={handlePublish}
-                                disabled={!isTested || isSaving || !userProfile || userProfile.gold < publishTax}
-                                className={`flex items-center justify-center gap-2 p-3 rounded transition-colors font-bold border ${isTested && userProfile && userProfile.gold >= publishTax ? 'bg-indigo-900 hover:bg-indigo-800 text-indigo-100 border-indigo-600' : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed opacity-50'}`}
-                                title={!isTested ? "テストプレイをクリアする必要があります" : userProfile && userProfile.gold < publishTax ? `所持金が不足しています（必要: ${publishTax}G）` : "審査申請を行います"}
-                            >
-                                <Send className="w-5 h-5" /> 審査申請 (Submit) - 費用: {publishTax}G
-                            </button>
-                            <div className="text-[10px] text-gray-500 mt-2">
-                                ※申請時、報酬価値に応じたパブリッシュ税（基本税100G ＋ アイテム価値等）が引き落とされます。
+                            <div>
+                                <label className="block text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1">概要 <span className="text-slate-600">({shortDescription.length}/40)</span></label>
+                                <textarea
+                                    value={shortDescription}
+                                    onChange={e => setShortDescription(e.target.value.substring(0, 40))}
+                                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-600 rounded-lg p-3 text-sm text-white outline-none h-16 resize-none transition-colors"
+                                    placeholder="ボードに表示される概要"
+                                />
                             </div>
-                        </section>
-                    </div>
 
-                    {/* Right Column: Node Editor */}
-                    <div className="col-span-1 md:col-span-2 space-y-4">
-                        <div className="flex justify-between items-end mb-2">
-                            <h2 className="text-2xl font-bold text-gray-200">シナリオ・ノード構築</h2>
-                            <div className="text-sm text-gray-400">ノード数: {nodes.length}/20</div>
+                            <div>
+                                <label className="block text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1">詳細フレーバーテキスト</label>
+                                <textarea
+                                    value={fullDescription}
+                                    onChange={e => setFullDescription(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-600 rounded-lg p-3 text-sm text-white outline-none h-28 resize-none transition-colors"
+                                    placeholder="クエストの詳細な背景など"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-1">出発拠点</label>
+                                <select
+                                    value={startLocationId}
+                                    onChange={e => setStartLocationId(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-700 focus:border-amber-600 rounded-lg p-3 text-sm text-white outline-none transition-colors"
+                                >
+                                    {worldLocations.map(loc => (
+                                        <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
+                    )}
 
-                        {nodes.length === 0 ? (
-                            <div className="bg-black/40 border border-dashed border-gray-700 rounded-lg p-12 text-center text-gray-500 flex flex-col items-center justify-center gap-4">
-                                <ShieldAlert className="w-12 h-12 opacity-50" />
-                                <p>ノードがありません。<br />最初のノードを追加してクエストを構築しましょう。</p>
-                                <button onClick={handleAddNode} className="bg-purple-900/50 text-purple-300 px-4 py-2 rounded border border-purple-700/50 hover:bg-purple-800/50 transition-colors mt-2">
-                                    + 最初のノードを追加
-                                </button>
+                    {/* === TAB: ノード構築 === */}
+                    {activeTab === 'nodes' && (
+                        <div className="space-y-3 animate-in fade-in duration-200">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xs font-bold text-slate-300">シナリオ・ノード</h3>
+                                <span className="text-[10px] text-slate-500 font-mono">{nodes.length}/20</span>
                             </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {nodes.map((node, index) => (
-                                    <div key={node.id} className="bg-[#1a1a24] border border-gray-700 rounded-lg p-4 relative group transition-all hover:border-purple-500/50">
-                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleRemoveNode(index)} className="text-red-500 hover:bg-red-900/30 p-1 rounded">
-                                                <Trash2 className="w-4 h-4" />
+
+                            {nodes.length === 0 ? (
+                                <div className="bg-slate-900/50 border border-dashed border-slate-700 rounded-xl p-8 text-center flex flex-col items-center gap-3">
+                                    <Sparkles className="w-8 h-8 text-amber-600/50" />
+                                    <p className="text-xs text-slate-500">ノードがありません。<br />最初のノードを追加してクエストを構築しましょう。</p>
+                                    <button onClick={handleAddNode} className="bg-amber-900/30 text-amber-400 px-4 py-2 rounded-lg border border-amber-700/50 text-xs font-bold hover:bg-amber-900/50 transition-colors">
+                                        + 最初のノードを追加
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    {nodes.map((node, index) => (
+                                        <div key={node.id} className="bg-slate-900/80 border border-slate-700/50 rounded-xl overflow-hidden transition-all">
+                                            {/* Node Header — clickable accordion */}
+                                            <button
+                                                onClick={() => setExpandedNode(expandedNode === index ? null : index)}
+                                                className="w-full p-3 flex items-center gap-2 text-left hover:bg-slate-800/50 transition-colors"
+                                            >
+                                                <span className="w-6 h-6 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-[10px] font-bold text-slate-400 flex-shrink-0">
+                                                    {index + 1}
+                                                </span>
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${nodeTypeColor(node.type)}`}>
+                                                    {nodeTypeLabel(node.type)}
+                                                </span>
+                                                <span className="flex-1 text-xs text-slate-300 truncate">
+                                                    {node.type === 'text' ? (node.text || '未入力') : node.type === 'battle' ? (node.enemyData?.name || '敵未設定') : node.npcName || 'NPC'}
+                                                </span>
+                                                {expandedNode === index ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
                                             </button>
-                                        </div>
 
-                                        <div className="flex gap-4 mb-4">
-                                            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-xl font-bold border-2 border-gray-700 text-gray-500 shrink-0">
-                                                {index + 1}
-                                            </div>
-                                            <div className="flex-1 space-y-3">
-                                                <div className="flex gap-2">
-                                                    <select
-                                                        value={node.type}
-                                                        onChange={(e) => handleUpdateNode(index, { type: e.target.value })}
-                                                        className="bg-black border border-gray-600 rounded p-1 text-sm text-gray-300 outline-none"
-                                                    >
-                                                        <option value="text">テキスト / 会話</option>
-                                                        <option value="battle">バトル進行</option>
-                                                        <option value="check_delivery">アイテム納品</option>
-                                                        <option value="hire_mercenary">同行NPC追加</option>
-                                                    </select>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="ノードID (例: start, battle_1)"
-                                                        value={node.id}
-                                                        onChange={(e) => handleUpdateNode(index, { id: e.target.value })}
-                                                        className="bg-black border border-gray-600 rounded p-1 text-sm text-gray-300 outline-none flex-1 font-mono"
-                                                    />
-                                                </div>
+                                            {/* Node Content — expanded */}
+                                            {expandedNode === index && (
+                                                <div className="px-3 pb-3 space-y-3 border-t border-slate-800 pt-3 animate-in slide-in-from-top-2 duration-200">
+                                                    <div className="flex gap-2 items-center">
+                                                        <select
+                                                            value={node.type}
+                                                            onChange={(e) => handleUpdateNode(index, { type: e.target.value })}
+                                                            className="bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs text-slate-300 outline-none flex-1"
+                                                        >
+                                                            <option value="text">テキスト / 会話</option>
+                                                            <option value="battle">バトル進行</option>
+                                                            <option value="check_delivery">アイテム納品</option>
+                                                            <option value="hire_mercenary">同行NPC追加</option>
+                                                        </select>
+                                                        <button onClick={() => handleRemoveNode(index)} className="text-red-500 hover:bg-red-900/30 p-2 rounded-lg transition-colors">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
 
-                                                {/* Node Content based on Type */}
-                                                {node.type === 'text' && (
-                                                    <textarea
-                                                        value={node.text}
-                                                        onChange={(e) => handleUpdateNode(index, { text: e.target.value })}
-                                                        className="w-full bg-black/50 border border-gray-600 rounded p-2 text-white focus:border-purple-500 outline-none h-20 resize-none text-sm"
-                                                        placeholder="テキスト本文を入力"
-                                                    />
-                                                )}
+                                                    {/* Text Node */}
+                                                    {node.type === 'text' && (
+                                                        <textarea
+                                                            value={node.text}
+                                                            onChange={(e) => handleUpdateNode(index, { text: e.target.value })}
+                                                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-sm text-white outline-none h-24 resize-none focus:border-amber-600 transition-colors"
+                                                            placeholder="テキスト本文を入力"
+                                                        />
+                                                    )}
 
-                                                {node.type === 'battle' && (
-                                                    <div className="mt-2">
+                                                    {/* Battle Node */}
+                                                    {node.type === 'battle' && (
                                                         <EnemyEditor
                                                             value={node.enemyData || { name: 'スライム', level: 1, hp: 50, atk: 5, def: 5, image_url: '', skills: [] }}
                                                             onChange={(newEnemy) => handleUpdateNode(index, { enemyData: newEnemy })}
                                                         />
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                {node.type === 'hire_mercenary' && (
-                                                    <div className="bg-blue-900/20 border border-blue-900 p-3 rounded text-sm text-blue-200">
-                                                        <label className="block text-xs mb-1 text-blue-400">NPC名</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="同行者名"
-                                                            value={node.npcName || ''}
-                                                            onChange={(e) => handleUpdateNode(index, { npcName: e.target.value })}
-                                                            className="w-full bg-black border border-blue-900/50 rounded p-2 outline-none mb-2"
-                                                        />
-                                                        <label className="block text-xs mb-1 text-blue-400">画像URL</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="https://..."
-                                                            value={node.npcImageUrl || ''}
-                                                            onChange={(e) => handleUpdateNode(index, { npcImageUrl: e.target.value })}
-                                                            className="w-full bg-black border border-blue-900/50 rounded p-2 outline-none"
-                                                        />
-                                                    </div>
-                                                )}
-
-                                            </div>
+                                                    {/* Hire Mercenary Node */}
+                                                    {node.type === 'hire_mercenary' && (
+                                                        <div className="space-y-2">
+                                                            <div>
+                                                                <label className="block text-[10px] text-blue-400 mb-1">NPC名</label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="同行者名"
+                                                                    value={node.npcName || ''}
+                                                                    onChange={(e) => handleUpdateNode(index, { npcName: e.target.value })}
+                                                                    className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[10px] text-blue-400 mb-1">画像URL</label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="https://..."
+                                                                    value={node.npcImageUrl || ''}
+                                                                    onChange={(e) => handleUpdateNode(index, { npcImageUrl: e.target.value })}
+                                                                    className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
+                                    ))}
+
+                                    {nodes.length < 20 && (
+                                        <button
+                                            onClick={handleAddNode}
+                                            className="w-full py-3 bg-transparent border-2 border-dashed border-slate-700 hover:border-amber-600 hover:bg-amber-900/10 text-slate-500 hover:text-amber-400 rounded-xl flex items-center justify-center gap-2 transition-all text-xs font-bold"
+                                        >
+                                            <Plus size={14} /> ノードを追加
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* === TAB: 報酬設定 === */}
+                    {activeTab === 'reward' && (
+                        <div className="animate-in fade-in duration-200">
+                            <CustomItemEditor value={customReward} onChange={setCustomReward} />
+                        </div>
+                    )}
+
+                    {/* === TAB: アクション === */}
+                    {activeTab === 'action' && (
+                        <div className="space-y-4 animate-in fade-in duration-200">
+                            {/* Status Summary */}
+                            <div className="bg-slate-900/80 border border-slate-700/50 rounded-xl p-4 space-y-2">
+                                <h3 className="text-xs font-bold text-amber-400 mb-2">ステータス</h3>
+                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="bg-slate-800/50 rounded-lg p-2 text-center">
+                                        <div className="text-slate-500">クエスト名</div>
+                                        <div className="text-white font-bold truncate">{title || '未設定'}</div>
                                     </div>
-                                ))}
-
-                                {nodes.length < 20 && (
-                                    <button
-                                        onClick={handleAddNode}
-                                        className="w-full py-4 bg-transparent border-2 border-dashed border-gray-700 hover:border-purple-600 hover:bg-purple-900/10 text-gray-400 hover:text-purple-300 rounded-lg flex items-center justify-center gap-2 transition-all font-bold"
-                                    >
-                                        <Plus className="w-5 h-5" /> 次のノードを追加
-                                    </button>
-                                )}
+                                    <div className="bg-slate-800/50 rounded-lg p-2 text-center">
+                                        <div className="text-slate-500">ノード数</div>
+                                        <div className="text-white font-bold">{nodes.length}/20</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-lg p-2 text-center">
+                                        <div className="text-slate-500">テスト済</div>
+                                        <div className={`font-bold ${isTested ? 'text-green-400' : 'text-red-400'}`}>{isTested ? '✓ 合格' : '✗ 未テスト'}</div>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-lg p-2 text-center">
+                                        <div className="text-slate-500">パブリッシュ税</div>
+                                        <div className="text-amber-400 font-bold font-mono">{publishTax} G</div>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                </div>
 
+                            {/* Action Buttons */}
+                            <button
+                                onClick={handleSaveDraft}
+                                disabled={isSaving}
+                                className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white p-3.5 rounded-xl transition-colors font-bold border border-slate-600 disabled:opacity-50 text-sm"
+                            >
+                                <Save size={16} /> {isSaving ? '保存中...' : '下書き保存'}
+                            </button>
+
+                            <button
+                                onClick={handleTestPlay}
+                                disabled={isSaving || nodes.length === 0}
+                                className="w-full flex items-center justify-center gap-2 bg-amber-900/40 hover:bg-amber-900/60 text-amber-200 p-3.5 rounded-xl transition-colors font-bold border border-amber-700/50 disabled:opacity-50 text-sm"
+                            >
+                                <Play size={16} /> テストプレイ開始
+                            </button>
+
+                            <button
+                                onClick={handlePublish}
+                                disabled={!isTested || isSaving || !userProfile || userProfile.gold < publishTax}
+                                className={`w-full flex items-center justify-center gap-2 p-3.5 rounded-xl transition-colors font-bold border text-sm ${
+                                    isTested && userProfile && userProfile.gold >= publishTax
+                                        ? 'bg-gradient-to-r from-amber-900 to-amber-700 text-amber-100 border-amber-500 hover:from-amber-800 hover:to-amber-600 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+                                        : 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed opacity-50'
+                                }`}
+                                title={!isTested ? "テストプレイをクリアする必要があります" : userProfile && userProfile.gold < publishTax ? `所持金が不足しています（必要: ${publishTax}G）` : "審査申請を行います"}
+                            >
+                                <Send size={16} /> 審査申請 — {publishTax} G
+                            </button>
+
+                            <div className="text-[10px] text-slate-600 text-center mt-2">
+                                ※申請時、パブリッシュ税（基本税100G ＋ アイテム価値等）が引き落とされます。
+                            </div>
+                        </div>
+                    )}
+                </main>
+
+                {/* HOME INDICATOR */}
+                <div className="w-32 h-1 bg-slate-800 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2" />
             </div>
         </div>
     );
