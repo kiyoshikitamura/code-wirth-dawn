@@ -1,12 +1,27 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import BattleView from '@/components/battle/BattleView';
 import { Swords } from 'lucide-react';
 
 export default function BattlePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none text-slate-200">
+                <div className="relative w-full max-w-[390px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl flex flex-col items-center justify-center gap-4 bg-slate-950">
+                    <Swords className="w-12 h-12 text-red-500 animate-pulse" />
+                    <p className="text-sm text-red-400 font-serif tracking-widest">戦闘準備中...</p>
+                </div>
+            </div>
+        }>
+            <BattlePageInner />
+        </Suspense>
+    );
+}
+
+function BattlePageInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const hasHydrated = useGameStore(state => state._hasHydrated);
