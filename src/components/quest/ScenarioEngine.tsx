@@ -354,49 +354,49 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
     // --- レンダリング ---
 
-    // Specila Shop UI
+    // Special Shop UI
     if (currentNode?.type === 'shop_special') {
         const nextId = currentNode.next || currentNode.choices?.[0]?.next;
         const defaultShopItems = [
             { id: 1, name: '薬草', price: 50, desc: 'HPを小回復' },
             { id: 3001, name: '傷薬', price: 100, desc: 'HPを中回復' }
         ];
-        // パラメータがあれば使用、なければデフォルト
         const shopItems = currentNode.params?.shop_items || defaultShopItems;
 
         return (
-            <div className="relative w-full h-[70vh] bg-[#1a120b] border-4 border-[#8b5a2b] overflow-hidden flex flex-col shadow-2xl rounded-lg p-6 md:p-10 items-center justify-center">
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('/backgrounds/city/market.jpg')] opacity-20 pointer-events-none bg-cover bg-center" />
+            <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-6">
+                <div className="absolute inset-0 bg-[url('/backgrounds/city/market.jpg')] opacity-15 pointer-events-none bg-cover bg-center" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
 
-                <h2 className="text-3xl font-serif text-[#e3d5b8] mb-2 z-10 drop-shadow-md">特別補給部隊</h2>
-                <p className="text-gray-400 mb-8 z-10 text-sm">「ここでは冒険に役立つ物資を扱っているよ。」</p>
+                <h2 className="text-2xl font-serif text-amber-400 mb-1 z-10 drop-shadow-md">特別補給部隊</h2>
+                <p className="text-slate-500 mb-6 z-10 text-sm italic">「ここでは冒険に役立つ物資を扱っているよ。」</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 z-10 w-full max-w-2xl">
+                <div className="flex flex-col gap-3 mb-6 z-10 w-full max-w-sm">
                     {shopItems.map((item: { id: number; name: string; price: number; desc: string }) => (
-                        <div key={item.id} className="bg-[#3e2723]/90 text-[#e3d5b8] p-4 rounded border border-[#a38b6b] flex flex-col gap-2 shadow-lg">
-                            <div className="flex justify-between items-center border-b border-[#a38b6b]/50 pb-2">
-                                <span className="font-bold text-lg">{item.name}</span>
-                                <span className="text-yellow-400 font-mono">{item.price} G</span>
+                        <div key={item.id} className="bg-slate-900/90 backdrop-blur-sm text-slate-200 p-4 rounded-xl border border-amber-900/40 flex flex-col gap-2 shadow-lg">
+                            <div className="flex justify-between items-center border-b border-slate-700/50 pb-2">
+                                <span className="font-bold text-base">{item.name}</span>
+                                <span className="text-amber-400 font-mono text-sm">{item.price} G</span>
                             </div>
-                            <p className="text-xs text-gray-300">{item.desc}</p>
+                            <p className="text-xs text-slate-400">{item.desc}</p>
                             <button
                                 onClick={() => handlePurchase(item.id, item.price, item.name)}
-                                className="mt-2 bg-[#1a120b] hover:bg-[#5d4037] text-center py-2 rounded border border-[#8b5a2b] transition-colors text-sm font-bold tracking-wider"
+                                className="mt-1 bg-amber-900/40 hover:bg-amber-800/60 text-amber-100 text-center py-2.5 rounded-lg border border-amber-700/50 transition-all text-sm font-bold tracking-wider active:scale-[0.98]"
                             >
-                                購入する (BUY)
+                                購入する
                             </button>
                         </div>
                     ))}
                 </div>
 
-                <div className="z-10 bg-black/50 px-6 py-2 rounded-full border border-[#a38b6b]/30 mb-8 backdrop-blur-sm">
-                    <span className="text-gray-400 text-sm mr-2">所持金:</span>
-                    <span className="text-yellow-400 font-bold font-mono text-xl">{userProfile?.gold || 0} G</span>
+                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-2 rounded-full border border-slate-700/50 mb-6">
+                    <span className="text-slate-400 text-sm mr-2">所持金:</span>
+                    <span className="text-amber-400 font-bold font-mono text-lg">{userProfile?.gold || 0} G</span>
                 </div>
 
                 <button
                     onClick={() => nextId && setCurrentNodeId(nextId)}
-                    className="z-10 text-gray-400 hover:text-white border-b border-transparent hover:border-white transition-all pb-1 hover:pb-0"
+                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-transparent hover:border-slate-400 transition-all text-sm"
                 >
                     補給を終えて戻る
                 </button>
@@ -409,25 +409,29 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
         return (
-            <div className="relative w-full h-[70vh] bg-[#1a120b] border-4 border-[#8b5a2b] overflow-hidden flex flex-col shadow-2xl rounded-lg p-6 md:p-10 items-center justify-center">
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('/backgrounds/camp.jpg')] opacity-30 pointer-events-none bg-cover bg-center" />
+            <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-6">
+                <div className="absolute inset-0 bg-[url('/backgrounds/camp.jpg')] opacity-20 pointer-events-none bg-cover bg-center" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
 
-                <h2 className="text-3xl font-serif text-[#e3d5b8] mb-2 z-10 drop-shadow-md">野営地 (Camp)</h2>
-                <p className="text-gray-400 mb-8 z-10 text-sm">「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」</p>
+                <div className="z-10 w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
+                    <span className="text-3xl">🔥</span>
+                </div>
+                <h2 className="text-2xl font-serif text-amber-400 mb-1 z-10 drop-shadow-md">野営地</h2>
+                <p className="text-slate-500 mb-6 z-10 text-sm italic text-center max-w-xs">「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」</p>
 
-                <div className="z-10 bg-black/50 px-6 py-6 rounded border border-[#a38b6b]/30 mb-8 backdrop-blur-sm text-center">
-                    <p className="text-yellow-400 font-bold text-sm mb-4">※ここでは特別に、クエスト中のデッキ・装備変更が許可されます。</p>
+                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm">
+                    <p className="text-amber-400/80 font-bold text-sm mb-4">※ここでは特別に、デッキ・装備変更が許可されます。</p>
                     <button
                         onClick={() => setShowCampStatus(true)}
-                        className="bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] px-8 py-3 hover:bg-[#5d4037] transition-all tracking-widest text-lg font-bold shadow-lg hover:scale-105"
+                        className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98]"
                     >
-                        デッキ編成 (装備変更)
+                        デッキ編成・装備変更
                     </button>
                 </div>
 
                 <button
                     onClick={() => nextId && setCurrentNodeId(nextId)}
-                    className="z-10 text-gray-400 hover:text-white border-b border-white border-dashed hover:border-solid hover:text-white transition-all pb-1 hover:pb-0 font-bold"
+                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold"
                 >
                     休憩を終えて出発する
                 </button>
@@ -545,7 +549,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             }}
                             className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
                         >
-                            戦闘開始 (FIGHT)
+                            ⚔️ 戦闘開始
                         </button>
                     ) : currentNode.choices && currentNode.choices.length > 0 ? (
                         currentNode.choices.map((choice: any, i: number) => (
@@ -560,7 +564,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 <div className="flex flex-col items-end gap-1 absolute right-6 text-right shrink-0">
                                     {choice.cost_vitality && (
                                         <div className="flex items-center gap-1 text-[9px] text-red-400 font-mono italic">
-                                            <Sword size={8} /> Vit -{choice.cost_vitality}
+                                            <Sword size={8} /> 体力 -{choice.cost_vitality}
                                         </div>
                                     )}
                                     {choice.req_tag && (
@@ -586,9 +590,9 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                         currentNode.type === 'end' || currentNode.result ? (
                             <div className="text-center font-bold text-xl py-4 animate-pulse tracking-widest">
                                 {currentNode.result === 'success' ? (
-                                    <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">QUEST COMPLETED</span>
+                                    <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
                                 ) : (
-                                    <span className="text-red-500 drop-shadow-lg">QUEST FAILED</span>
+                                    <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
                                 )}
                             </div>
                         ) : (
@@ -600,19 +604,24 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
             {/* Guest Join Modal */}
             {showingGuestJoin && (
-                <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center animate-in fade-in duration-500 rounded-lg">
-                    <div className="bg-[#1a120b] border-2 border-[#a38b6b] p-8 max-w-md w-full text-center shadow-2xl relative">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#a38b6b] text-[#1a120b] px-4 py-1 font-bold tracking-widest uppercase text-sm border border-[#e3d5b8]">
-                            New Member
+                <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-500 p-6">
+                    <div className="bg-slate-900 border border-amber-900/50 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl relative">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-4 py-1 font-bold tracking-widest text-xs rounded-full shadow-lg">
+                            新たな仲間
                         </div>
-                        <h3 className="text-2xl font-serif text-[#e3d5b8] mb-2">{showingGuestJoin.data.name}</h3>
-                        <p className="text-gray-400 mb-6 italic">"{showingGuestJoin.data.introduction || 'よろしくお願いします。'}"</p>
 
-                        <div className="flex justify-center gap-4 mb-6">
-                            <div className="text-xs text-[#a38b6b] border border-[#3e2723] px-2 py-1 rounded">
+                        <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-amber-600/40 flex items-center justify-center mx-auto mt-4 mb-3">
+                            <User size={32} className="text-amber-500/60" />
+                        </div>
+
+                        <h3 className="text-xl font-serif text-amber-400 mb-1">{showingGuestJoin.data.name}</h3>
+                        <p className="text-slate-500 mb-4 italic text-sm">"{showingGuestJoin.data.introduction || 'よろしくお願いします。'}"</p>
+
+                        <div className="flex justify-center gap-3 mb-5">
+                            <div className="text-xs text-amber-400/80 border border-amber-900/40 bg-amber-950/30 px-3 py-1 rounded-full">
                                 {showingGuestJoin.data.job_class}
                             </div>
-                            <div className="text-xs text-[#a38b6b] border border-[#3e2723] px-2 py-1 rounded">
+                            <div className="text-xs text-slate-400 border border-slate-700 bg-slate-800/50 px-3 py-1 rounded-full">
                                 Lv.{showingGuestJoin.data.level}
                             </div>
                         </div>
@@ -624,7 +633,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 setShowingGuestJoin(null);
                                 if (showingGuestJoin.next) setCurrentNodeId(showingGuestJoin.next);
                             }}
-                            className="bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] px-8 py-2 hover:bg-[#5d4037] transition-colors w-full"
+                            className="w-full bg-amber-900/40 text-amber-100 border border-amber-700/50 px-6 py-3 rounded-lg hover:bg-amber-800/60 transition-all font-bold tracking-wider active:scale-[0.98]"
                         >
                             仲間に入れる
                         </button>
@@ -634,67 +643,59 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
             {/* Travel Modal */}
             {showingTravel && (
-                <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-700 rounded-lg p-8">
+                <div className="absolute inset-0 z-50 bg-slate-950/98 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-700 p-6">
 
                     {/* Linear Route Map Display */}
-                    <div className="w-full h-full max-h-[60%] mb-6 relative bg-[#1a120b] border-2 border-[#8b5a2b] rounded-lg p-4 flex items-center justify-center gap-2 md:gap-4 overflow-x-auto">
+                    <div className="w-full max-w-sm mb-6 relative bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5 flex items-center justify-center gap-3 overflow-x-auto">
                         {/* Current Location */}
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className="w-10 h-10 rounded-full border-2 border-blue-500 bg-blue-900/50 flex items-center justify-center shadow-[0_0_10px_blue]">
-                                <MapPin size={20} className="text-blue-300" />
+                        <div className="flex flex-col items-center min-w-[70px]">
+                            <div className="w-10 h-10 rounded-full border-2 border-blue-500 bg-blue-900/40 flex items-center justify-center shadow-[0_0_10px_rgba(59,130,246,0.3)]">
+                                <MapPin size={18} className="text-blue-300" />
                             </div>
-                            <span className="text-xs text-blue-300 mt-2 font-bold text-center">{userProfile?.current_location_name}</span>
-                            <span className="text-[10px] text-gray-500">現在地</span>
+                            <span className="text-[11px] text-blue-300 mt-2 font-bold text-center">{userProfile?.current_location_name}</span>
+                            <span className="text-[10px] text-slate-500">現在地</span>
                         </div>
 
-                        {/* Arrow 1 */}
-                        <div className="text-gray-500 animate-pulse">
-                            <ArrowRight size={20} />
-                        </div>
+                        <div className="text-slate-600 animate-pulse"><ArrowRight size={18} /></div>
 
                         {/* Destination */}
-                        <div className="flex flex-col items-center min-w-[80px]">
-                            <div className="w-12 h-12 rounded-full border-2 border-[#e3d5b8] bg-[#3e2723] flex items-center justify-center shadow-[0_0_15px_#e3d5b8] animate-bounce">
-                                <MapPin size={24} className="text-[#e3d5b8]" />
+                        <div className="flex flex-col items-center min-w-[70px]">
+                            <div className="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-900/30 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.3)] animate-pulse">
+                                <MapPin size={22} className="text-amber-400" />
                             </div>
-                            <span className="text-sm text-[#e3d5b8] mt-2 font-bold text-center">{showingTravel.dest}</span>
-                            <span className="text-[10px] text-yellow-500 font-bold">Next Stop</span>
+                            <span className="text-sm text-amber-400 mt-2 font-bold text-center">{showingTravel.dest}</span>
+                            <span className="text-[10px] text-amber-500/70 font-bold">目的地</span>
                         </div>
 
-                        {/* Future Stops (Hide if destination is Final) */}
+                        {/* Future Stops */}
                         {showingTravel.slug !== 'loc_charon' && (
                             <>
-                                <div className="text-gray-700">
-                                    <ArrowRight size={20} />
-                                </div>
-                                <div className="flex flex-col items-center min-w-[60px] opacity-50 grayscale">
-                                    <div className="w-8 h-8 rounded-full border border-gray-600 bg-black flex items-center justify-center">
-                                        <Star size={14} className="text-gray-400" />
+                                <div className="text-slate-700"><ArrowRight size={18} /></div>
+                                <div className="flex flex-col items-center min-w-[50px] opacity-40">
+                                    <div className="w-8 h-8 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center">
+                                        <Star size={12} className="text-slate-500" />
                                     </div>
-                                    <span className="text-[10px] text-gray-400 mt-2 text-center">???</span>
+                                    <span className="text-[10px] text-slate-500 mt-2">???</span>
                                 </div>
                             </>
                         )}
                     </div>
 
-                    <h2 className="text-3xl font-serif text-[#e3d5b8] mb-2 tracking-widest animate-pulse">
-                        {showingTravel.status === 'confirm' ? 'TRAVEL ROUTE' : 'TRAVELING...'}
+                    <h2 className="text-xl font-serif text-amber-400 mb-3 tracking-wider">
+                        {showingTravel.status === 'confirm' ? '移動ルート' : '移動中...'}
                     </h2>
 
-                    <div className="text-center mb-8 bg-black/50 p-4 rounded border border-[#a38b6b]/30 backdrop-blur-sm">
-                        <p className="text-gray-400 text-lg flex items-center justify-center gap-2">
-                            <span>To:</span>
-                            <span className="text-[#e3d5b8] font-bold text-xl drop-shadow-[0_0_5px_rgba(227,213,184,0.5)]">
-                                {showingTravel.dest}
-                            </span>
+                    <div className="text-center mb-6 bg-slate-900/80 backdrop-blur-sm p-4 rounded-xl border border-slate-700/50 max-w-sm w-full">
+                        <p className="text-slate-400 text-base flex items-center justify-center gap-2">
+                            <span>行き先:</span>
+                            <span className="text-amber-400 font-bold text-lg">{showingTravel.dest}</span>
                         </p>
-                        <p className="text-gray-500 mt-1 flex items-center justify-center gap-2 text-sm">
+                        <p className="text-slate-500 mt-1 flex items-center justify-center gap-2 text-sm">
                             <Scroll size={14} />
                             <span>所要日数: {showingTravel.days} 日</span>
                         </p>
                         {showingTravel.gold_cost > 0 && (
-                            <p className={`mt-1 flex items-center justify-center gap-2 text-sm font-bold ${(userProfile?.gold ?? 0) < showingTravel.gold_cost ? 'text-red-400' : 'text-yellow-400'
-                                }`}>
+                            <p className={`mt-1 flex items-center justify-center gap-2 text-sm font-bold ${(userProfile?.gold ?? 0) < showingTravel.gold_cost ? 'text-red-400' : 'text-amber-400'}`}>
                                 <span>移動費用: {showingTravel.gold_cost} G</span>
                             </p>
                         )}
@@ -704,79 +705,67 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                     </div>
 
                     {showingTravel.status === 'confirm' ? (
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => {
-                                        setShowingTravel({ ...showingTravel, status: 'animating' });
-                                        // Auto-advance after animation duration (e.g. 3s)
-                                        setTimeout(async () => {
-                                            // 1. Execute Server Move
-                                            try {
-                                                const { data: { session } } = await supabase.auth.getSession();
-                                                const token = session?.access_token;
-                                                const userId = useGameStore.getState().userProfile?.id;
-                                                const res = await fetch('/api/move', {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                                                        ...(userId ? { 'x-user-id': userId } : {})
-                                                    },
-                                                    body: JSON.stringify({
-                                                        target_location_name: showingTravel.dest,
-                                                        target_location_slug: showingTravel.slug,
-                                                        is_quest_travel: true
-                                                    })
-                                                });
+                        <button
+                            onClick={() => {
+                                setShowingTravel({ ...showingTravel, status: 'animating' });
+                                setTimeout(async () => {
+                                    try {
+                                        const { data: { session } } = await supabase.auth.getSession();
+                                        const token = session?.access_token;
+                                        const userId = useGameStore.getState().userProfile?.id;
+                                        const res = await fetch('/api/move', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                                ...(userId ? { 'x-user-id': userId } : {})
+                                            },
+                                            body: JSON.stringify({
+                                                target_location_name: showingTravel.dest,
+                                                target_location_slug: showingTravel.slug,
+                                                is_quest_travel: true
+                                            })
+                                        });
 
-                                                if (res.ok) {
-                                                    const data = await res.json();
-                                                    // Refresh Global State
-                                                    await useGameStore.getState().fetchUserProfile();
+                                        if (res.ok) {
+                                            const data = await res.json();
+                                            await useGameStore.getState().fetchUserProfile();
+                                            questState.travelTo(showingTravel.dest, data.travel_days);
+                                            setHistory(prev => [...prev, `[Travel] ${data.travel_days}日かけて移動した... (残り寿命 -${data.travel_days})`]);
 
-                                                    // Update Local Quest State
-                                                    questState.travelTo(showingTravel.dest, data.travel_days);
-                                                    setHistory(prev => [...prev, `[Travel] ${data.travel_days}日かけて移動した... (残り寿命 -${data.travel_days})`]);
+                                            const roll = Math.random();
+                                            const isBattle = showingTravel.encounterRate && roll < showingTravel.encounterRate;
+                                            setShowingTravel(null);
 
-                                                    // 2. Encounter Check
-                                                    const roll = Math.random();
-                                                    const isBattle = showingTravel.encounterRate && roll < showingTravel.encounterRate;
-
-                                                    setShowingTravel(null);
-
-                                                    if (isBattle && showingTravel.nextBattle && onBattleStart) {
-                                                        console.log("Encounter Triggered!", roll, "<", showingTravel.encounterRate);
-                                                        setCurrentNodeId(showingTravel.nextBattle);
-                                                    } else {
-                                                        // Success / Safe
-                                                        if (showingTravel.next) setCurrentNodeId(showingTravel.next);
-                                                    }
-
-                                                } else {
-                                                    alert("移動に失敗しました (API Error)");
-                                                    setShowingTravel(null);
-                                                }
-                                            } catch (e) {
-                                                console.error("Travel error", e);
-                                                alert("通信エラー");
-                                                setShowingTravel(null);
+                                            if (isBattle && showingTravel.nextBattle && onBattleStart) {
+                                                setCurrentNodeId(showingTravel.nextBattle);
+                                            } else {
+                                                if (showingTravel.next) setCurrentNodeId(showingTravel.next);
                                             }
-                                        }, 3000);
-                                    }}
-                                    disabled={showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost}
-                                    className={`px-12 py-3 tracking-widest text-lg font-bold transition-all ${showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost
-                                        ? 'bg-gray-800 text-gray-500 border border-gray-600 cursor-not-allowed'
-                                        : 'bg-[#3e2723] text-[#e3d5b8] border border-[#a38b6b] hover:bg-[#5d4037] shadow-[0_0_15px_rgba(139,90,43,0.3)] hover:scale-105'
-                                        }`}
-                                >
-                                    DEPART
-                                </button>
-                            </div>
-                        </div>
+                                        } else {
+                                            alert("移動に失敗しました");
+                                            setShowingTravel(null);
+                                        }
+                                    } catch (e) {
+                                        console.error("Travel error", e);
+                                        alert("通信エラー");
+                                        setShowingTravel(null);
+                                    }
+                                }, 3000);
+                            }}
+                            disabled={showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost}
+                            className={`px-10 py-3 tracking-wider text-base font-bold rounded-lg transition-all active:scale-[0.98] ${
+                                showingTravel.gold_cost > 0 && (userProfile?.gold ?? 0) < showingTravel.gold_cost
+                                    ? 'bg-slate-800 text-slate-500 border border-slate-600 cursor-not-allowed'
+                                    : 'bg-amber-900/50 text-amber-100 border border-amber-700/50 hover:bg-amber-800/60 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                            }`}
+                        >
+                            出発する
+                        </button>
                     ) : (
-                        <div className="text-gray-500 text-sm animate-pulse italic">
-                            移動中...
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-slate-500 text-sm italic">移動中...</span>
                         </div>
                     )}
                 </div>

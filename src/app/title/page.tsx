@@ -238,12 +238,16 @@ export default function TitlePage() {
     // Title / Menu Scene Background
     const renderTitleBackground = () => (
         <div className="absolute inset-0 pointer-events-none overflow-hidden bg-slate-950">
-            {/* Dark gradient mapping to indigo/slate */}
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950" />
-            {/* Giant blurred circle for temple/castle ambiance */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-slate-800 rounded-full mix-blend-overlay blur-3xl opacity-30" />
-            {/* Leather texture overlay */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/dark-leather.png")' }} />
+            {/* 新しいキービジュアル (main_kv_journey_empty.png) */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+                style={{ backgroundImage: 'url("/backgrounds/key_visual/main_kv_journey_empty.png")' }}
+            />
+            {/* テキスト視認性確保のためのグラデーション */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/80" />
+            
+            {/* 以前の古いアセットやシェイプは削除し、薄いテクスチャのみ残す */}
+            <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/dark-leather.png")' }} />
         </div>
     );
 
