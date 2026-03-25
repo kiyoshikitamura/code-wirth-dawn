@@ -104,9 +104,8 @@ export async function POST(request: Request) {
             });
         }
 
-        // dbPayload — 実際のscenariosテーブルカラムのみ使用
-        // 存在しないカラム: full_description, short_description, status, creator_id
-        // → descriptionカラムにshortDescription/fullDescriptionを統合保存
+        // dbPayload — scenariosテーブルカラムに直接書き込み
+        // SQL migration適用済み: status, creator_id, short_description, full_description が使用可能
         const dbPayload: Record<string, any> = {
             slug: `ugc_${userId.substring(0, 8)}_${Date.now()}`,
             title,
@@ -119,6 +118,10 @@ export async function POST(request: Request) {
             time_cost: 1,
             location_id: locationUuid,
             flow_nodes: linkedNodes,
+            status: 'draft',
+            creator_id: userId,
+            short_description: shortDescription || '',
+            full_description: fullDescription || '',
             conditions: {},
             rewards: {
                 ugc_item: customReward || null,

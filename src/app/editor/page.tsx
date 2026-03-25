@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
 import { HUB_LOCATION_ID, LEGACY_ZERO_UUID } from '@/utils/constants';
-import { PenTool, Plus, Trash2, Save, Send, ChevronDown, ChevronUp, Sword, X, ArrowLeft, Play, ScrollText, Package, Sparkles } from 'lucide-react';
+import { ArrowLeft, PenTool, Plus, Package, Send, Play, Save, ScrollText, ChevronDown, ChevronUp, Trash2, FolderKanban, Sparkles } from 'lucide-react';
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
 
@@ -274,9 +274,18 @@ export default function EditorPage() {
                         <PenTool size={14} className="text-amber-500 flex-shrink-0" />
                         <span className="text-xs font-bold text-amber-400 tracking-widest uppercase truncate">クリエイターズ工房</span>
                     </div>
-                    {questId && (
-                        <span className="text-[9px] text-slate-600 font-mono truncate max-w-[100px]">ID: {String(questId).substring(0, 8)}</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {questId && (
+                            <span className="text-[9px] text-slate-600 font-mono truncate max-w-[60px]">ID: {String(questId).substring(0, 8)}</span>
+                        )}
+                        <button
+                            onClick={() => router.push('/editor/manage')}
+                            className="text-slate-500 hover:text-amber-400 transition-colors p-1"
+                            title="作品管理"
+                        >
+                            <FolderKanban size={16} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* TAB NAVIGATION */}

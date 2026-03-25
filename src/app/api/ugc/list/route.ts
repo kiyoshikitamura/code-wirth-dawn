@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
 
         // rewards._ugc_meta.creator_id でユーザーのUGCを取得
         // creator_idカラムが使える場合はそちらも併用
-        const { data: scenarios, error } = await supabase
+        const { data: scenarios, error } = await supabaseServer
             .from('scenarios')
             .select('id, title, description, type, status, created_at, flow_nodes, rewards, creator_id')
             .eq('type', 'Other')
@@ -77,7 +78,7 @@ export async function DELETE(request: Request) {
         }
 
         // まず所有者確認
-        const { data: scenario, error: fetchErr } = await supabase
+        const { data: scenario, error: fetchErr } = await supabaseServer
             .from('scenarios')
             .select('id, rewards, creator_id')
             .eq('id', scenarioId)
@@ -96,7 +97,7 @@ export async function DELETE(request: Request) {
         }
 
         // 削除
-        const { error: delErr } = await supabase
+        const { error: delErr } = await supabaseServer
             .from('scenarios')
             .delete()
             .eq('id', scenarioId);
