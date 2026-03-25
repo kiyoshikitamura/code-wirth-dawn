@@ -88,7 +88,7 @@ function BattlePageInner() {
             <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none text-slate-200">
                 <div className="relative w-full max-w-[430px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl flex flex-col items-center justify-center gap-4 bg-slate-950">
                     <Swords className="w-12 h-12 text-red-500 animate-pulse" />
-                    <p className="text-sm text-red-400 font-serif tracking-widest">Loading Battle...</p>
+                    <p className="text-sm text-red-400 font-serif tracking-widest">戦闘準備中...</p>
                     <button onClick={() => router.push('/inn')} className="px-4 py-2 bg-slate-800 border border-slate-700 rounded text-sm hover:bg-slate-700 mt-4">
                         宿屋に戻る
                     </button>

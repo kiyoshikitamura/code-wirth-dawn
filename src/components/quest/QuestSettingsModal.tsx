@@ -20,7 +20,7 @@ export default function QuestSettingsModal({ onClose, onGiveUp, title, descripti
             <div className="w-full bg-slate-900 border border-amber-900/50 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80%]">
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/50 shrink-0">
                     <h2 className="text-amber-500 font-bold flex items-center gap-2">
-                        <Settings size={18} /> システム設定
+                        <Settings size={18} /> クエスト設定
                     </h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-1">
                         <X size={20} />
@@ -30,7 +30,7 @@ export default function QuestSettingsModal({ onClose, onGiveUp, title, descripti
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
                     <section>
                         <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                            <MapPin size={12} /> Current Location
+                            <MapPin size={12} /> 現在地
                         </h3>
                         <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
                             <p className="text-slate-200 text-sm font-bold">{location?.name || '未知の領域'}</p>
@@ -42,7 +42,7 @@ export default function QuestSettingsModal({ onClose, onGiveUp, title, descripti
 
                     <section>
                         <h3 className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                            <Info size={12} /> Quest Details
+                            <Info size={12} /> クエスト詳細
                         </h3>
                         <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
                             <p className="text-amber-200 text-xs font-serif leading-relaxed whitespace-pre-wrap">

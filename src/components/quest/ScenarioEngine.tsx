@@ -8,7 +8,6 @@ import { Scroll, Sword, Skull, ArrowRight, MapPin, Shield, Star, User } from 'lu
 import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
 import { useRouter } from 'next/navigation';
-import WorldMap from '@/components/world/WorldMap';
 import StatusModal from '@/components/inn/StatusModal';
 import { supabase } from '@/lib/supabase';
 

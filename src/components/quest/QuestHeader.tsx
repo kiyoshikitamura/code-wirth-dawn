@@ -70,7 +70,7 @@ export default function QuestHeader({
                     </div>
                     <div className="flex justify-between items-baseline">
                         <span className={`text-[10px] font-bold tracking-wider uppercase transition-colors duration-300 ${vitalityPulse && vitality <= 20 ? 'text-red-500' : 'text-slate-400'}`}>
-                            Vitality: {vitality} / {maxVitality}
+                            体力: {vitality} / {maxVitality}
                         </span>
                         <div className="w-24 h-1 bg-slate-800 rounded-full overflow-hidden">
                             <div className={`h-full bg-red-600 transition-all duration-300 ${vitalityPulse && vitality <= 20 ? 'opacity-100' : 'opacity-70'}`} style={{ width: `${vitPercent}%` }} />
@@ -81,7 +81,7 @@ export default function QuestHeader({
 
             <div className="border-t border-slate-800 pt-1">
                 <button onClick={() => setIsPartyOpen(!isPartyOpen)} className="w-full flex justify-between items-center py-1 px-1 text-[10px] text-slate-400 uppercase tracking-widest outline-none">
-                    <span>Party Composition</span>
+                    <span>パーティ編成</span>
                     {isPartyOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
                 {isPartyOpen && (
@@ -90,14 +90,14 @@ export default function QuestHeader({
                         {mainMembers.length > 0 && (
                             <div className="flex-shrink-0 flex items-center gap-2 p-1.5 border border-slate-800 rounded-lg bg-slate-900/50">
                                 <div className="flex flex-col gap-1 items-center">
-                                    <span className="text-[7px] text-slate-500 uppercase tracking-tighter">Main</span>
+                                    <span className="text-[7px] text-slate-500 uppercase tracking-tighter">メイン</span>
                                     <div className="flex gap-2">
                                         {mainMembers.map((m: PartyMember) => {
                                             const mhp = Math.max(0, Math.min(100, (m.durability / Math.max(1, m.max_durability)) * 100));
                                             return (
                                                 <div key={m.id} className="flex flex-col items-center gap-1">
                                                     <div className="w-8 h-8 rounded-full border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-500 overflow-hidden relative">
-                                                        {/* Wait, party member image if any, otherwise icon */}
+                                                        {/* パーティメンバー画像（あれば） */}
                                                         <User size={16} />
                                                     </div>
                                                     <div className="w-8 h-0.5 bg-slate-800 rounded-full overflow-hidden">
@@ -114,7 +114,7 @@ export default function QuestHeader({
                         {/* Guest Party */}
                         {guestMembers.length > 0 && (
                             <div className="flex-shrink-0 flex flex-col gap-1 p-1.5 border border-amber-900/40 rounded-lg bg-amber-950/20">
-                                <span className="text-[7px] text-amber-500 uppercase tracking-tighter self-center">Guest</span>
+                                <span className="text-[7px] text-amber-500 uppercase tracking-tighter self-center">ゲスト</span>
                                 <div className="flex gap-2 px-2">
                                     {guestMembers.map((m: PartyMember) => {
                                         const mhp = Math.max(0, Math.min(100, (m.durability / Math.max(1, m.max_durability)) * 100));

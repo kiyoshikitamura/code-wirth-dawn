@@ -143,7 +143,7 @@ export default function QuestPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-300 font-serif">
-                Loading Quest...
+                クエストを読み込み中...
             </div>
         );
     }
