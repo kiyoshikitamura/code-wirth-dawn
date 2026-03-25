@@ -101,7 +101,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     // --- ノードプロセッサー ---
     useEffect(() => {
         if (!currentNode) return;
-        let timeoutId: NodeJS.Timeout;
+        let timeoutId: NodeJS.Timeout | undefined;
 
         const processNode = async () => {
             // 1. 特殊ロジックノード
