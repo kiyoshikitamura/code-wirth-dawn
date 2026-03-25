@@ -58,6 +58,52 @@ export async function POST(request: Request) {
             locationUuid = locData?.id || null;
         }
 
+        // UGCノードの自動連結（ScenarioEngine互換フォーマットに変換）
+        // - 最初のノードのidを'start'に変更
+        // - 各ノードに`next`プロパティで次ノードへの連結を追加
+        // - 最後のノードの次を'end_success'に設定
+        // - end_successノードを末尾に追加
+        const linkedNodes: any[] = [];
+        if (nodes && nodes.length > 0) {
+            for (let i = 0; i < nodes.length; i++) {
+                const node = { ...nodes[i] };
+                
+                // 最初のノードは id='start' にする
+                if (i === 0) {
+                    node.id = 'start';
+                }
+                
+                // 次のノードへの連結を追加（既にchoicesがある場合はスキップ）
+                if (!node.choices || node.choices.length === 0) {
+                    const nextId = i < nodes.length - 1 
+                        ? (i + 1 === 0 ? 'start' : nodes[i + 1]?.id || `node_${i + 1}`)
+                        : 'end_success';
+                    
+                    if (node.type === 'text') {
+                        // テキストノード: 「次へ」ボタン付き
+                        node.choices = [{ label: '次へ', next: nextId }];
+                    } else if (node.type === 'battle') {
+                        // バトルノード: 勝利で次へ
+                        node.enemy_group_id = node.enemyData?.name || 'slime';
+                        node.choices = [{ label: 'win', next: nextId }];
+                    } else {
+                        // その他: 自動進行
+                        node.next = nextId;
+                    }
+                }
+                
+                linkedNodes.push(node);
+            }
+            
+            // end_successノードを追加
+            linkedNodes.push({
+                id: 'end_success',
+                type: 'end',
+                result: 'success',
+                text: 'クエストを達成した。'
+            });
+        }
+
         // dbPayload — 実際のscenariosテーブルカラムのみ使用
         // 存在しないカラム: full_description, short_description, status, creator_id
         // → descriptionカラムにshortDescription/fullDescriptionを統合保存
@@ -72,7 +118,7 @@ export async function POST(request: Request) {
             is_urgent: false,
             time_cost: 1,
             location_id: locationUuid,
-            flow_nodes: nodes,
+            flow_nodes: linkedNodes,
             conditions: {},
             rewards: {
                 ugc_item: customReward || null,

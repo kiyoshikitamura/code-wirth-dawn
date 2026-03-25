@@ -157,7 +157,10 @@ export default function QuestPage() {
     }
 
     // script_data が null またはノードが空のクエストは「準備中」表示
-    const hasScenarioNodes = scenario.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
+    // UGCクエストは flow_nodes にノードを保存するため、そちらもチェック
+    const hasScriptNodes = scenario.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
+    const hasFlowNodes = Array.isArray(scenario.flow_nodes) && scenario.flow_nodes.length > 0;
+    const hasScenarioNodes = hasScriptNodes || hasFlowNodes;
     if (!hasScenarioNodes) {
         return (
             <div className="min-h-screen bg-[#1a120b] flex flex-col items-center justify-center text-[#e3d5b8] gap-6 px-6">
