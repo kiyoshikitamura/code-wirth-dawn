@@ -136,7 +136,7 @@ export default function EditorPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setQuestId(data.questId);
+                setQuestId(String(data.questId));
                 alert('下書きを保存しました！');
             } else {
                 alert('保存に失敗しました: ' + data.error);
@@ -169,7 +169,7 @@ export default function EditorPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setQuestId(data.questId);
+                setQuestId(String(data.questId));
                 router.push(`/quest/${data.questId}?test_play=true`);
             } else {
                 alert('保存に失敗しました: ' + data.error);
@@ -275,7 +275,7 @@ export default function EditorPage() {
                         <span className="text-xs font-bold text-amber-400 tracking-widest uppercase truncate">クリエイターズ工房</span>
                     </div>
                     {questId && (
-                        <span className="text-[9px] text-slate-600 font-mono truncate max-w-[100px]">ID: {questId.substring(0, 8)}</span>
+                        <span className="text-[9px] text-slate-600 font-mono truncate max-w-[100px]">ID: {String(questId).substring(0, 8)}</span>
                     )}
                 </div>
 
