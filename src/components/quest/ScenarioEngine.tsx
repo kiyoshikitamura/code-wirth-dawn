@@ -35,6 +35,11 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     const [showingTravel, setShowingTravel] = useState<{ dest: string, slug?: string, days: number, gold_cost: number, next: string, nextBattle?: string, encounterRate?: number, status: 'confirm' | 'animating' } | null>(null);
     const [showCampStatus, setShowCampStatus] = useState(false);
 
+    // Phase 2: UX改善 State
+    const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; history: string[] } | null>(null);
+    const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
     // グローバル状態へのアクセス
     const { userProfile, worldState, battleState, inventory } = useGameStore();
     const questState = useQuestState();
@@ -44,6 +49,13 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     useEffect(() => {
         feedEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [feed]);
+
+    // トースト表示ヘルパー（3秒で自動消去）
+    const showToast = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToastMessage({ text, type });
+        toastTimerRef.current = setTimeout(() => setToastMessage(null), 3000);
+    };
 
     // スクリプトデータの解析 (BYORK JSON) または V3 フローノード
     const script = React.useMemo(() => {
@@ -137,6 +149,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
 
+                showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
                 setCurrentNodeId(hasItem ? successNode : failNode);
             }
             else if (currentNode.type === 'check_equipped') {
@@ -151,6 +164,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
 
+                showToast(hasEquipped ? '✅ 指定の装備を確認。' : '❌ 指定の装備がされていない...', hasEquipped ? 'success' : 'error');
                 setCurrentNodeId(hasEquipped ? successNode : failNode);
             }
             else if (currentNode.type === 'check_delivery') {
@@ -190,19 +204,24 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             });
                             if (res.ok) {
                                 await useGameStore.getState().fetchInventory();
+                                showToast('✅ アイテムを納品した。', 'success');
                                 if (successNode) setCurrentNodeId(successNode);
                             } else {
                                 console.error("Failed to consume item");
+                                showToast('❌ 納品に失敗した。', 'error');
                                 if (failNode) setCurrentNodeId(failNode);
                             }
                         } catch (e) {
                             console.error("Item consume error:", e);
+                            showToast('❌ 納品処理中にエラーが発生。', 'error');
                             if (failNode) setCurrentNodeId(failNode);
                         }
                     } else {
+                        showToast('✅ アイテムを確認した。', 'success');
                         if (successNode) setCurrentNodeId(successNode);
                     }
                 } else {
+                    showToast('❌ 必要なアイテムが足りない...', 'error');
                     if (failNode) setCurrentNodeId(failNode);
                 }
             }
@@ -270,13 +289,21 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 }
             }
             else if (currentNode.type === 'guest_join') {
-                // ... (既存のゲスト参加ロジック)
+                // Phase 3: 認証ヘッダーを付与してゲスト情報を取得
                 const guestId = currentNode.params?.guest_id;
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
                 if (guestId) {
                     try {
-                        const res = await fetch(`/api/party/member?id=${guestId}&context=guest`);
+                        const { data: { session } } = await supabase.auth.getSession();
+                        const token = session?.access_token;
+                        const userId = useGameStore.getState().userProfile?.id;
+                        const res = await fetch(`/api/party/member?id=${guestId}&context=guest`, {
+                            headers: {
+                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                ...(userId ? { 'x-user-id': userId } : {})
+                            }
+                        });
                         if (res.ok) {
                             const guestData = await res.json();
                             setShowingGuestJoin({ data: guestData, next: nextId });
@@ -302,10 +329,9 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 router.push(`/shop?quest_id=${questId}&return_to=quest`);
             }
             else if (currentNode.type === 'end' || currentNode.result) {
+                // Phase 2: 自動遷移を廃止し、ユーザーのボタン操作を待つ
                 const res = currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
-                timeoutId = setTimeout(() => {
-                    onComplete(res, history);
-                }, 2000);
+                setEndReady({ result: res, history });
             }
         };
 
@@ -478,6 +504,16 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
 
+            {/* Phase 2: トースト通知UI */}
+            {toastMessage && (
+                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[60] px-5 py-2.5 rounded-lg shadow-xl border text-sm font-bold tracking-wider animate-in fade-in slide-in-from-top-3 duration-300 ${
+                    toastMessage.type === 'success' ? 'bg-emerald-950/90 border-emerald-700/50 text-emerald-300' :
+                    toastMessage.type === 'error' ? 'bg-red-950/90 border-red-700/50 text-red-300' :
+                    'bg-slate-800/90 border-slate-600/50 text-slate-300'
+                }`}>
+                    {toastMessage.text}
+                </div>
+            )}
 
             {/* Background Image Layer */}
             <div
@@ -538,19 +574,36 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 {/* Choices */}
                 <div className="flex flex-col gap-2 shrink-0">
                     {currentNode.type === 'battle' ? (
-                        <button
-                            onClick={() => {
-                                if (onBattleStart) {
-                                    const successChoice = currentNode.choices?.find((c: any) => c.label === 'win') || currentNode.choices?.[0];
-                                    const successId = successChoice?.next || 'end_success';
-                                    const enemyId = currentNode.enemy_group_id || 'slime';
-                                    onBattleStart(enemyId, successId);
-                                }
-                            }}
-                            className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
-                        >
-                            ⚔️ 戦闘開始
-                        </button>
+                        <div className="flex flex-col gap-3">
+                            {/* Phase 2: 遭遇演出 — 敵情報の事前表示 */}
+                            <div className="bg-red-950/50 border border-red-900/50 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <div className="w-12 h-12 rounded-lg bg-red-900/30 border border-red-800/50 flex items-center justify-center shrink-0">
+                                    <Skull size={24} className="text-red-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-red-300 text-xs font-bold tracking-wider uppercase">⚠ 敵遭遇</p>
+                                    <p className="text-red-200/80 text-sm font-serif truncate">
+                                        {currentNode.enemy_name || currentNode.params?.enemy_name || '未知の敵'}
+                                    </p>
+                                    {(currentNode.enemy_level || currentNode.params?.enemy_level) && (
+                                        <p className="text-red-500/70 text-[10px] font-mono">推定脅威度 Lv.{currentNode.enemy_level || currentNode.params?.enemy_level}</p>
+                                    )}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    if (onBattleStart) {
+                                        const successChoice = currentNode.choices?.find((c: any) => c.label === 'win') || currentNode.choices?.[0];
+                                        const successId = successChoice?.next || 'end_success';
+                                        const enemyId = currentNode.enemy_group_id || 'slime';
+                                        onBattleStart(enemyId, successId);
+                                    }
+                                }}
+                                className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
+                            >
+                                ⚔️ 戦闘開始
+                            </button>
+                        </div>
                     ) : currentNode.choices && currentNode.choices.length > 0 ? (
                         currentNode.choices.map((choice: any, i: number) => (
                             <button
@@ -588,12 +641,28 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                         </button>
                     ) : (
                         currentNode.type === 'end' || currentNode.result ? (
-                            <div className="text-center font-bold text-xl py-4 animate-pulse tracking-widest">
-                                {currentNode.result === 'success' ? (
-                                    <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
-                                ) : (
-                                    <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
-                                )}
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="text-center font-bold text-xl py-2 animate-pulse tracking-widest">
+                                    {currentNode.result === 'success' ? (
+                                        <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
+                                    ) : (
+                                        <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
+                                    )}
+                                </div>
+                                {/* Phase 2: ユーザーボタン操作による遷移 */}
+                                <button
+                                    onClick={() => {
+                                        if (endReady) onComplete(endReady.result, endReady.history);
+                                    }}
+                                    disabled={!endReady}
+                                    className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
+                                        currentNode.result === 'success'
+                                            ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
+                                            : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
+                                    } ${!endReady ? 'opacity-50 cursor-wait' : ''}`}
+                                >
+                                    {endReady ? '結果を確認する' : '判定中...'}
+                                </button>
                             </div>
                         ) : (
                             <div className="text-center text-slate-500 italic pb-2 text-sm tracking-widest">...</div>
