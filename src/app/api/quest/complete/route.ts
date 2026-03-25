@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { supabase as anonSupabase } from '@/lib/supabase';
 import { QuestService, calculateGrowth, processAging, resolveLocationId } from '@/services/questService';
 import { ECONOMY_RULES } from '@/constants/game_rules';
 
@@ -26,10 +27,19 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { quest_id, result, user_id, history, loot_pool, consumed_items } = body;
+        const { quest_id, result, history, loot_pool, consumed_items } = body;
+
+        // [Security] JWT認証必須化 — body.user_idを信頼しない
+        let user_id: string | null = null;
+        const authHeader = req.headers.get('authorization');
+        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error: authErr } = await anonSupabase.auth.getUser(token);
+            if (!authErr && user) user_id = user.id;
+        }
 
         if (!quest_id || !user_id) {
-            return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing parameters or authentication required' }, { status: 401 });
         }
 
         // 1. Fetch Quest
@@ -427,8 +437,7 @@ export async function POST(req: Request) {
     } catch (e: any) {
         console.error('Quest Complete API Critical Error:', e);
         return NextResponse.json({
-            error: e.message || 'Unknown server error',
-            stack: e.stack
+            error: e.message || 'Unknown server error'
         }, { status: 500 });
     }
 }

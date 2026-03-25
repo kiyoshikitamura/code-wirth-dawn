@@ -474,10 +474,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
-            {/* Debug Overlay */}
-            <div className="absolute top-0 left-0 bg-red-900/80 text-white text-[10px] p-1 z-50 font-mono shadow-md rounded-br-lg">
-                Nodes: {Object.keys(script.nodes || {}).length} | ID: {currentNodeId} | Type: {currentNode?.type || 'none'}
-            </div>
+
 
             {/* Background Image Layer */}
             <div

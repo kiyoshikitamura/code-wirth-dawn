@@ -3,17 +3,13 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const requestUserId = body.userId;
-        let userId = requestUserId;
-
+        // [Security] JWT認証必須化 — body.userIdを信頼しない
+        let userId: string | null = null;
         const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) {
-                userId = user.id;
-            }
+            if (!error && user) userId = user.id;
         }
 
         if (!userId) {
@@ -36,3 +32,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
+

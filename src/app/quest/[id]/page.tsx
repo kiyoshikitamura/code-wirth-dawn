@@ -121,9 +121,15 @@ export default function QuestPage() {
         if (!confirm("クエストを放棄して撤退しますか？\n※ 進行状況は失われ、安全な場所まで戻ります。")) return;
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
             await fetch('/api/quest/give-up', {
                 method: 'POST',
-                body: JSON.stringify({ userId: userProfile?.id })
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({})
             });
             useQuestState.getState().resetQuest();
             await fetchUserProfile(); // Refresh profile to clear current_quest_id
@@ -136,7 +142,7 @@ export default function QuestPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#1a120b] flex items-center justify-center text-[#e3d5b8] font-serif">
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-300 font-serif">
                 Loading Quest...
             </div>
         );
@@ -144,11 +150,11 @@ export default function QuestPage() {
 
     if (!scenario) {
         return (
-            <div className="min-h-screen bg-[#1a120b] flex flex-col items-center justify-center text-[#e3d5b8] gap-4">
+            <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-4">
                 <h1 className="text-2xl font-serif text-red-500">{!id ? "Invalid Quest ID" : "Quest Not Found"}</h1>
                 <button
                     onClick={() => router.push('/inn')}
-                    className="flex items-center gap-2 px-4 py-2 border border-[#8b5a2b] rounded hover:bg-[#3e2723]"
+                    className="flex items-center gap-2 px-4 py-2 border border-slate-700 rounded hover:bg-slate-800 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" /> 拠点に戻る
                 </button>
@@ -163,13 +169,13 @@ export default function QuestPage() {
     const hasScenarioNodes = hasScriptNodes || hasFlowNodes;
     if (!hasScenarioNodes) {
         return (
-            <div className="min-h-screen bg-[#1a120b] flex flex-col items-center justify-center text-[#e3d5b8] gap-6 px-6">
+            <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-6 px-6">
                 <div className="w-16 h-16 rounded-full bg-amber-900/30 border-2 border-amber-700 flex items-center justify-center">
                     <ScrollText className="w-8 h-8 text-amber-500" />
                 </div>
                 <div className="text-center space-y-2">
                     <h1 className="text-xl font-serif font-bold text-amber-400">{scenario.title}</h1>
-                    <p className="text-sm text-[#a8957d] italic max-w-xs">{scenario.description || scenario.script_data?.short_description || ''}</p>
+                    <p className="text-sm text-slate-500 italic max-w-xs">{scenario.description || scenario.script_data?.short_description || ''}</p>
                 </div>
                 <div className="bg-amber-900/20 border border-amber-800/40 rounded-lg px-6 py-4 text-center max-w-sm">
                     <p className="text-sm text-amber-400/80 font-serif">このクエストのシナリオは現在準備中です。</p>
@@ -177,7 +183,7 @@ export default function QuestPage() {
                 </div>
                 <button
                     onClick={() => router.push('/inn')}
-                    className="flex items-center gap-2 px-6 py-2.5 border border-[#8b5a2b] rounded-lg hover:bg-[#3e2723] transition-colors text-sm font-serif"
+                    className="flex items-center gap-2 px-6 py-2.5 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors text-sm font-serif"
                 >
                     <ArrowLeft className="w-4 h-4" /> 拠点に戻る
                 </button>
@@ -279,7 +285,7 @@ export default function QuestPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
-            <div className="relative w-full max-w-[390px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
+            <div className="relative w-full max-w-[430px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
 
                 {isSettingsOpen && (
                     <QuestSettingsModal
@@ -301,12 +307,6 @@ export default function QuestPage() {
                 <main className="flex-1 overflow-hidden relative flex flex-col">
                     {viewMode === 'scenario' ? (
                         <div className="flex-1 flex flex-col relative">
-                            {/* DEBUG OVERLAY */}
-                            <div className="absolute top-2 right-2 z-50 bg-black/80 text-green-400 text-[10px] p-2 rounded border border-green-800 max-w-xs break-all pointer-events-none opacity-50">
-                                <div className="font-bold border-b border-green-800 mb-1">DEBUG INFO</div>
-                                <div>QuestID: {id}</div>
-                                <div>NodeID: {scenario?.script_data?.nodes ? Object.keys(scenario.script_data.nodes).length + ' nodes' : 'No Script'}</div>
-                            </div>
 
                             <ScenarioEngine
                                 scenario={scenario}
@@ -330,12 +330,16 @@ export default function QuestPage() {
                                     }
 
                                     try {
+                                        const { data: { session: sess } } = await supabase.auth.getSession();
+                                        const authToken = sess?.access_token;
                                         const res = await fetch('/api/quest/complete', {
                                             method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                                            },
                                             body: JSON.stringify({
                                                 quest_id: scenario.id,
-                                                user_id: userProfile?.id,
                                                 result: result === 'success' ? 'success' : 'failure',
                                                 history: history || [],
                                                 loot_pool: [],

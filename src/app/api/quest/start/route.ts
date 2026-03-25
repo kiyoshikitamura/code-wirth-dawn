@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabase-admin';
+import { supabase as anonSupabase } from '@/lib/supabase';
 import { setQuestLock } from '@/lib/questLock';
 
 /**
@@ -12,10 +13,19 @@ import { setQuestLock } from '@/lib/questLock';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { user_id, quest_id } = body;
+        const { quest_id } = body;
+
+        // [Security] JWT認証必須化 — body.user_idを信頼しない
+        let user_id: string | null = null;
+        const authHeader = req.headers.get('authorization');
+        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error: authErr } = await anonSupabase.auth.getUser(token);
+            if (!authErr && user) user_id = user.id;
+        }
 
         if (!user_id || !quest_id) {
-            return NextResponse.json({ error: 'Missing user_id or quest_id' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing quest_id or authentication required' }, { status: 401 });
         }
 
         // Verify user exists and is not already in a quest

@@ -36,7 +36,6 @@ export default function QuestHeader({
     const vitPercent = Math.max(0, Math.min(100, (vitality / maxVitality) * 100));
 
     // Party separation
-    // Party separation
     const mainMembers = party_members.filter((m: PartyMember) => m.origin_type !== 'quest_guest');
     const guestMembers = party_members.filter((m: PartyMember) => m.origin_type === 'quest_guest');
 
