@@ -45,6 +45,19 @@ export async function POST(request: Request) {
             }
         });
 
+        // location_id: slug → UUID 変換
+        // scenariosテーブルのlocation_idはUUID(FK→locations.id)だが
+        // フロントエンドはslug("loc_regalia"等)を送信するため変換が必要
+        let locationUuid: string | null = null;
+        if (startLocationId) {
+            const { data: locData } = await supabase
+                .from('locations')
+                .select('id')
+                .eq('slug', startLocationId)
+                .single();
+            locationUuid = locData?.id || null;
+        }
+
         // dbPayload — 実際のscenariosテーブルカラムのみ使用
         // 存在しないカラム: full_description, short_description, status, creator_id
         // → descriptionカラムにshortDescription/fullDescriptionを統合保存
@@ -58,7 +71,7 @@ export async function POST(request: Request) {
             rec_level: suggestLevel,
             is_urgent: false,
             time_cost: 1,
-            location_id: startLocationId,
+            location_id: locationUuid,
             flow_nodes: nodes,
             conditions: {},
             rewards: {
