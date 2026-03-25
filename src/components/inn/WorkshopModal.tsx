@@ -20,8 +20,7 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
         e.preventDefault();
         e.stopPropagation();
         onClose();
-        // TODO: 作品管理画面実装後にルート変更
-        setTimeout(() => router.push('/editor'), 50);
+        setTimeout(() => router.push('/editor/manage'), 50);
     };
 
     return (
