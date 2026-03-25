@@ -263,7 +263,7 @@ export default function EditorPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
-            <div className="relative w-full max-w-[390px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
+            <div className="relative w-full max-w-[430px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
 
                 {/* HEADER */}
                 <div className="relative z-40 bg-slate-950/90 border-b border-amber-900/30 px-4 pt-[env(safe-area-inset-top,10px)] pb-2 flex items-center justify-between backdrop-blur-sm">
@@ -280,17 +280,17 @@ export default function EditorPage() {
                 </div>
 
                 {/* TAB NAVIGATION */}
-                <div className="flex bg-slate-950 border-b border-slate-800 px-1 gap-0.5 flex-shrink-0">
+                <div className="flex bg-slate-950 border-b border-slate-800 px-0.5 gap-0 flex-shrink-0 overflow-x-auto">
                     {[
-                        { key: 'basic', label: '基本情報', icon: <ScrollText size={12} /> },
-                        { key: 'nodes', label: `ノード(${nodes.length})`, icon: <Plus size={12} /> },
-                        { key: 'reward', label: '報酬', icon: <Package size={12} /> },
-                        { key: 'action', label: 'アクション', icon: <Send size={12} /> },
+                        { key: 'basic', label: '基本', icon: <ScrollText size={11} /> },
+                        { key: 'nodes', label: `ノード(${nodes.length})`, icon: <Plus size={11} /> },
+                        { key: 'reward', label: '報酬', icon: <Package size={11} /> },
+                        { key: 'action', label: 'アクション', icon: <Send size={11} /> },
                     ].map(tab => (
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key as any)}
-                            className={`flex-1 py-2.5 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors ${
+                            className={`flex-1 min-w-0 py-2.5 text-[10px] font-bold flex items-center justify-center gap-0.5 transition-colors whitespace-nowrap ${
                                 activeTab === tab.key
                                     ? 'text-amber-400 border-b-2 border-amber-500 bg-amber-900/10'
                                     : 'text-slate-500 hover:text-slate-300'
@@ -513,8 +513,20 @@ export default function EditorPage() {
                             </button>
 
                             <button
-                                onClick={handleTestPlay}
-                                disabled={isSaving || nodes.length === 0}
+                                onClick={() => {
+                                    if (!title.trim()) {
+                                        alert('クエスト名を入力してください');
+                                        setActiveTab('basic');
+                                        return;
+                                    }
+                                    if (nodes.length === 0) {
+                                        alert('ノードを1つ以上追加してください');
+                                        setActiveTab('nodes');
+                                        return;
+                                    }
+                                    handleTestPlay();
+                                }}
+                                disabled={isSaving}
                                 className="w-full flex items-center justify-center gap-2 bg-amber-900/40 hover:bg-amber-900/60 text-amber-200 p-3.5 rounded-xl transition-colors font-bold border border-amber-700/50 disabled:opacity-50 text-sm"
                             >
                                 <Play size={16} /> テストプレイ開始
