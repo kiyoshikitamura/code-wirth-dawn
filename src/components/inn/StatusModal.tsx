@@ -4,6 +4,8 @@ import { useGameStore } from '@/store/gameStore';
 import { Shield, Backpack, Zap, Heart, Sword, Star, Users, Flame, X } from 'lucide-react';
 import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
+import { formatEffectData, getEffectList, getItemImageUrl, getSlotLabel, getEquipmentBonus } from '@/lib/itemUtils';
+import { supabase } from '@/lib/supabase';
 
 const JOB_CLASS_JP: Record<string, string> = {
     Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
@@ -27,7 +29,7 @@ interface StatusModalProps {
     isCampMode?: boolean;
 }
 
-type TabKey = 'deck' | 'items' | 'party';
+type TabKey = 'deck' | 'items' | 'equip' | 'party';
 
 type DetailType = 'skill' | 'item' | 'npc';
 interface DetailTarget { type: DetailType; data: any; }
@@ -37,14 +39,36 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const [activeTab, setActiveTab] = React.useState<TabKey>('deck');
     const [detail, setDetail] = React.useState<DetailTarget | null>(null);
     const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
+    const [equipped, setEquipped] = React.useState<any[]>([]);
+    const [equipBonus, setEquipBonus] = React.useState<{atk:number;def:number;hp:number}>({atk:0,def:0,hp:0});
 
     React.useEffect(() => {
         fetchInventory();
         fetchUserProfile();
+        fetchEquipment();
     }, []);
 
-    const consumables = inventory.filter(i => !i.is_skill);
-    const skills = inventory.filter(i => i.is_skill);
+    const fetchEquipment = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch('/api/equipment', {
+                headers: {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setEquipped(data.equipped || []);
+                setEquipBonus(data.bonus || {atk:0,def:0,hp:0});
+            }
+        } catch (e) { console.error('Equipment fetch error:', e); }
+    };
+
+    const consumables = inventory.filter(i => !i.is_skill && i.item_type !== 'skill_card');
+    const skills = inventory.filter(i => i.is_skill || i.item_type === 'skill_card');
+    const equipmentItems = consumables.filter(i => i.item_type === 'equipment' || i.type === 'equipment');
     const currentDeckCost = skills.filter(i => i.is_equipped).reduce((sum, i) => sum + (i.cost || 0), 0);
 
     const handleToggleSkill = async (item: any) => {
@@ -66,12 +90,53 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
         await toggleEquip(item.id, item.is_equipped, isCampMode);
     };
 
+    const handleEquipItem = async (invItem: any, slot: string) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch('/api/equipment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                },
+                body: JSON.stringify({ inventory_id: invItem.id, slot })
+            });
+            if (res.ok) {
+                await fetchEquipment();
+                alert(`${invItem.name}を装備しました！`);
+            } else {
+                const data = await res.json();
+                alert(data.error || '装備に失敗しました。');
+            }
+        } catch (e) { console.error(e); alert('通信エラー'); }
+    };
+
+    const handleUnequip = async (slot: string) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch(`/api/equipment?slot=${slot}`, {
+                method: 'DELETE',
+                headers: {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                }
+            });
+            if (res.ok) {
+                await fetchEquipment();
+            }
+        } catch (e) { console.error(e); }
+    };
+
     const vitalityStatus = userProfile?.vitality ? getVitalityStatus(userProfile.vitality) : 'Prime';
     const flameColor = vitalityStatus === 'Prime' ? 'text-orange-500' : vitalityStatus === 'Twilight' ? 'text-orange-800' : 'text-gray-700';
 
     const tabs: { key: TabKey; label: string; icon: React.ReactNode; count?: number }[] = [
         { key: 'deck', label: 'デッキ', icon: <Zap className="w-3.5 h-3.5" />, count: skills.length },
-        { key: 'items', label: '所持品', icon: <Backpack className="w-3.5 h-3.5" />, count: consumables.filter(i => (i.quantity || 0) > 0).length },
+        { key: 'items', label: '所持品', icon: <Backpack className="w-3.5 h-3.5" />, count: consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').length },
+        { key: 'equip', label: '装備', icon: <Shield className="w-3.5 h-3.5" />, count: equipped.length },
         { key: 'party', label: 'パーティ', icon: <Users className="w-3.5 h-3.5" /> },
     ];
 
@@ -201,18 +266,20 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                     <div className="text-center text-gray-600 py-3 text-xs">装備中のスキルがありません。</div>
                                 ) : (
                                     <div className="space-y-1">
-                                        {skills.filter(i => i.is_equipped).map(item => (
+                                        {skills.filter(i => i.is_equipped).map(item => {
+                                            const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                            return (
                                             <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-purple-900/10 rounded border border-purple-900/30 hover:border-purple-700/50 transition-colors cursor-pointer active:bg-purple-900/20">
                                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                    <div className="w-6 h-6 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-purple-400" />}
+                                                    <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                        {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-purple-400" />}
                                                     </div>
                                                     <span className="text-xs text-gray-200 font-bold truncate">{item.name}</span>
                                                     <span className="text-[9px] text-cyan-600 border border-cyan-900 px-1 rounded shrink-0">C:{item.cost || 0}</span>
                                                 </div>
                                                 <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
                                             </div>
-                                        ))}
+                                        );})}
                                     </div>
                                 )}
                             </div>
@@ -234,12 +301,13 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             const isLocked = isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
                                             const isOverCost = currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10);
                                             const isDisabled = isLocked || isOverCost;
+                                            const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
 
                                             return (
                                                 <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer active:bg-gray-800/60">
                                                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                        <div className="w-6 h-6 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                            {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-gray-500" />}
+                                                        <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                            {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-gray-500" />}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="text-xs text-gray-400 font-bold truncate">{item.name}</div>
@@ -260,18 +328,105 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                         </div>
                     )}
 
-                    {/* タブ2: 所持品 */}
+                    {/* タブ: 装備品 */}
+                    {activeTab === 'equip' && (
+                        <div className="space-y-3">
+                            {/* 装備ボーナス表示 */}
+                            {(equipBonus.atk > 0 || equipBonus.def > 0 || equipBonus.hp > 0) && (
+                                <div className="flex items-center gap-3 bg-orange-900/20 px-3 py-2 rounded border border-orange-800/40">
+                                    <span className="text-[10px] text-orange-400 font-bold">装備ボーナス</span>
+                                    {equipBonus.atk > 0 && <span className="text-xs text-red-400 font-mono">ATK+{equipBonus.atk}</span>}
+                                    {equipBonus.def > 0 && <span className="text-xs text-blue-400 font-mono">DEF+{equipBonus.def}</span>}
+                                    {equipBonus.hp > 0 && <span className="text-xs text-green-400 font-mono">HP+{equipBonus.hp}</span>}
+                                </div>
+                            )}
+
+                            {/* 3スロット表示 */}
+                            {(['weapon', 'armor', 'accessory'] as const).map(slot => {
+                                const eq = equipped.find((e: any) => e.slot === slot);
+                                const slotLabel = getSlotLabel(slot);
+                                const slotIcon = slot === 'weapon' ? <Sword className="w-3.5 h-3.5 text-red-400" /> : slot === 'armor' ? <Shield className="w-3.5 h-3.5 text-blue-400" /> : <Star className="w-3.5 h-3.5 text-amber-400" />;
+                                return (
+                                    <div key={slot} className="p-2 bg-gray-800/40 rounded border border-gray-700">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {slotIcon}
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{slotLabel}</span>
+                                        </div>
+                                        {eq?.item ? (
+                                            <div className="flex items-center justify-between p-1.5 bg-orange-900/15 rounded border border-orange-800/30">
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                        {eq.item.image_url ? <img src={eq.item.image_url} alt={eq.item.name} className="w-full h-full object-cover" /> : slotIcon}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-xs text-gray-200 font-bold truncate">{eq.item.name}</div>
+                                                        <div className="text-[9px] text-gray-500">
+                                                            {eq.item.effect_data?.atk_bonus ? <span className="text-red-400 mr-1">ATK+{eq.item.effect_data.atk_bonus}</span> : null}
+                                                            {eq.item.effect_data?.def_bonus ? <span className="text-blue-400 mr-1">DEF+{eq.item.effect_data.def_bonus}</span> : null}
+                                                            {eq.item.effect_data?.hp_bonus ? <span className="text-green-400">HP+{eq.item.effect_data.hp_bonus}</span> : null}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => handleUnequip(slot)} className="text-[9px] text-red-500 border border-red-900/50 px-1.5 py-0.5 rounded hover:bg-red-900/30 shrink-0 ml-1">外す</button>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-gray-600 py-2 text-[10px] border border-dashed border-gray-700 rounded">未装備</div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {/* 装備可能アイテム一覧 */}
+                            {equipmentItems.length > 0 && (
+                                <div className="mt-2">
+                                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5">装備可能アイテム</div>
+                                    <div className="space-y-1">
+                                        {equipmentItems.map(item => {
+                                            const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                            const subType = (item as any).sub_type || (item as any).item_type === 'equipment' ? ((item as any).sub_type || 'weapon') : 'weapon';
+                                            const bonus = getEquipmentBonus(item.effect_data);
+                                            return (
+                                                <div key={item.id} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800">
+                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                        <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                            {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Shield className="w-3 h-3 text-orange-400" />}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="text-xs text-gray-300 font-bold truncate">{item.name}</div>
+                                                            <div className="text-[9px] text-gray-500">
+                                                                {bonus.atk > 0 && <span className="text-red-400 mr-1">ATK+{bonus.atk}</span>}
+                                                                {bonus.def > 0 && <span className="text-blue-400 mr-1">DEF+{bonus.def}</span>}
+                                                                {bonus.hp > 0 && <span className="text-green-400">HP+{bonus.hp}</span>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleEquipItem(item, subType)}
+                                                        className="text-[9px] text-orange-400 border border-orange-800/50 px-1.5 py-0.5 rounded hover:bg-orange-900/30 shrink-0 ml-1"
+                                                    >装備</button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* タブ2: 所持品 (装備品を除外) */}
                     {activeTab === 'items' && (
                         <div>
                             {consumables.filter(i => (i.quantity || 0) > 0).length === 0 ? (
                                 <div className="text-center text-gray-500 py-8 text-xs">所持品はありません。</div>
                             ) : (
                                 <div className="space-y-1">
-                                    {consumables.filter(i => (i.quantity || 0) > 0).map(item => (
+                                    {consumables.filter(i => (i.quantity || 0) > 0).map(item => {
+                                        const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                        return (
                                         <div key={item.id} onClick={() => setDetail({ type: 'item', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <div className="w-6 h-6 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                    {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <Heart className="w-3 h-3 text-green-400" />}
+                                                <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+                                                    {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Heart className="w-3 h-3 text-green-400" />}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <div className="text-xs text-gray-300 font-bold truncate">
@@ -281,7 +436,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             </div>
                                             <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
                                         </div>
-                                    ))}
+                                    );})}
                                 </div>
                             )}
                         </div>
@@ -299,16 +454,19 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                         <div className="bg-gray-900 border border-gray-700 w-full max-w-md mx-4 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                             {/* ポップアップヘッダー */}
                             <div className="bg-gray-800/80 px-4 py-3 flex items-center gap-3 border-b border-gray-700">
-                                <div className="w-10 h-10 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden">
+                                <div className="w-14 h-14 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden">
                                     {detail.type === 'npc' ? (
                                         detail.data.icon_url || detail.data.image_url
                                             ? <img src={detail.data.icon_url || detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" />
                                             : <Users className="w-5 h-5 text-blue-400" />
-                                    ) : detail.type === 'skill' ? (
-                                        detail.data.image_url ? <img src={detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" /> : <Zap className="w-5 h-5 text-purple-400" />
-                                    ) : (
-                                        detail.data.image_url ? <img src={detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" /> : <Heart className="w-5 h-5 text-green-400" />
-                                    )}
+                                    ) : (() => {
+                                        const imgUrl = (detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : detail.data.image_url;
+                                        return imgUrl
+                                            ? <img src={imgUrl} alt={detail.data.name} className="w-full h-full object-cover" />
+                                            : detail.type === 'skill'
+                                                ? <Zap className="w-5 h-5 text-purple-400" />
+                                                : <Heart className="w-5 h-5 text-green-400" />;
+                                    })()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="text-sm font-bold text-white truncate">{detail.data.name}</h3>
@@ -323,7 +481,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
                             {/* ポップアップ内容 */}
                             <div className="px-4 py-3 space-y-3">
-                                {/* 説明テキスト */}
+                                {/* フレーバーテキスト */}
                                 {detail.type !== 'npc' && detail.data.effect_data?.description && (
                                     <div className="bg-amber-950/20 rounded-lg p-2.5 border border-amber-900/30">
                                         <p className="text-xs text-amber-400/80 italic leading-relaxed">「{detail.data.effect_data.description}」</p>
@@ -335,24 +493,21 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                     </div>
                                 )}
 
-                                {/* 効果詳細 */}
+                                {/* 効果詳細（構造化グリッド） */}
                                 {detail.type !== 'npc' && detail.data.effect_data && (() => {
-                                    const ed = detail.data.effect_data;
-                                    const effects: string[] = [];
-                                    if (ed.heal != null) effects.push(`HP +${ed.heal} 回復`);
-                                    if (ed.mp_heal != null) effects.push(`MP +${ed.mp_heal} 回復`);
-                                    if (ed.power != null && ed.power > 0) effects.push(`威力 ${ed.power}`);
-                                    if (ed.atk_bonus != null) effects.push(`ATK +${ed.atk_bonus}`);
-                                    if (ed.def_bonus != null) effects.push(`DEF +${ed.def_bonus}`);
-                                    if (ed.max_hp_bonus != null) effects.push(`最大HP +${ed.max_hp_bonus}`);
-                                    if (ed.duration != null) effects.push(`${ed.duration}ターン持続`);
-                                    if (ed.effect) effects.push(String(ed.effect));
-                                    if (ed.status) effects.push(`状態: ${ed.status}`);
-                                    if (effects.length === 0) return null;
+                                    const effectList = getEffectList(detail.data.effect_data);
+                                    if (effectList.length === 0) return null;
                                     return (
                                         <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700">
-                                            <div className="text-[10px] text-gray-500 mb-1">効果</div>
-                                            <div className="text-xs text-gray-200">{effects.join(' / ')}</div>
+                                            <div className="text-[10px] text-gray-500 mb-1.5">効果</div>
+                                            <div className="grid grid-cols-2 gap-1.5">
+                                                {effectList.map((eff, i) => (
+                                                    <div key={i} className="flex items-center justify-between bg-black/30 rounded px-2 py-1 border border-gray-800">
+                                                        <span className="text-[10px] text-gray-400">{eff.label}</span>
+                                                        <span className={`text-xs font-bold ${eff.color}`}>{eff.value}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     );
                                 })()}

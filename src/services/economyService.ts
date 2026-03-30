@@ -94,46 +94,5 @@ export class EconomyService {
         return { success: true };
     }
 
-    /**
-     * Fetches shop items with dynamic price/availability logic (Spec v6).
-     */
-    async getShopItems(locationName: string, userId: string) {
-        // 1. Fetch Location Context (Prosperity, Nation)
-        const { data: worldState } = await this.supabase
-            .from('world_states')
-            .select('status, controlling_nation, prosperity_level')
-            .eq('location_name', locationName)
-            .single();
-
-        // 2. Fetch User Context (Reputation, Alignment)
-        // Mocking alignment for now if not in DB
-
-        // 3. Definition of Inflation
-        // 5(Zenith)=1.0, 4=1.0, 3=1.2, 2=1.5, 1=Ruined(N/A)
-        let priceMultiplier = 1.0;
-        const prosperity = worldState?.prosperity_level || 4;
-
-        if (prosperity === 3) priceMultiplier = 1.2;
-        if (prosperity === 2) priceMultiplier = 1.5;
-        if (prosperity === 1) priceMultiplier = 3.0; // Black Market pricing
-
-        // 4. Fetch Items
-        const { data: items } = await this.supabase
-            .from('items')
-            .select('*');
-
-        if (!items) return [];
-
-        // 5. Filter & Calculate
-        return items.map(item => {
-            // Nation Filter? (Mock)
-            // Alignment Filter? (Mock)
-
-            return {
-                ...item,
-                current_price: Math.ceil(item.base_price * priceMultiplier),
-                is_inflated: priceMultiplier > 1.0
-            };
-        });
-    }
+    // v18: getShopItems() は Shop API (api/shop/route.ts) に完全統合済みのため削除
 }

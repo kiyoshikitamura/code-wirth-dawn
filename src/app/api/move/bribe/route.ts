@@ -57,19 +57,22 @@ export async function POST(req: Request) {
 
         // 現在地の名声チェック（名声 < 0 のみ賄賂可能）
         if (profile.current_location_id) {
-            const { data: repData } = await supabase
-                .from('reputations')
-                .select('reputation_score')
-                .eq('user_id', userId)
-                .eq('location_id', profile.current_location_id)
-                .maybeSingle();
+            const { data: locData } = await supabase.from('locations').select('name').eq('id', profile.current_location_id).maybeSingle();
+            if (locData?.name) {
+                const { data: repData } = await supabase
+                    .from('reputations')
+                    .select('score')
+                    .eq('user_id', userId)
+                    .eq('location_name', locData.name)
+                    .maybeSingle();
 
-            const repScore = repData?.reputation_score || 0;
-            if (repScore >= 0) {
-                return NextResponse.json({
-                    error: '賄賂は悪名高き者だけが使える手段です。',
-                    error_code: 'BRIBE_NOT_AVAILABLE'
-                }, { status: 403 });
+                const repScore = repData?.score || 0;
+                if (repScore >= 0) {
+                    return NextResponse.json({
+                        error: '賄賂は悪名高き者だけが使える手段です。',
+                        error_code: 'BRIBE_NOT_AVAILABLE'
+                    }, { status: 403 });
+                }
             }
         }
 

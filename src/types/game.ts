@@ -409,7 +409,8 @@ export interface ItemDB {
   id: number; // BIGINT -> number
   slug: string;
   name: string;
-  type: 'consumable' | 'skill' | 'equipment';
+  type: 'consumable' | 'equipment' | 'material' | 'key_item' | 'trade_good';
+  sub_type?: 'weapon' | 'armor' | 'accessory' | null; // 装備品のスロット種別
   base_price: number;
   effect_data: any;
 
@@ -417,16 +418,55 @@ export interface ItemDB {
   quest_req_id?: string; // v6.1 Quest Context
   nation_tags: string[];
   min_prosperity: number;
-  required_alignment: {
+  required_alignment?: {
     order?: number;
     chaos?: number;
     justice?: number;
     evil?: number;
   };
-  linked_card_id?: number; // FK to Cards
   is_black_market: boolean;
   image_url?: string; // v12.0
+  cost?: number; // 旧互換用
   created_at?: string;
+}
+
+// v18: スキルマスタ（items から分離）
+export interface SkillDB {
+  id: number;
+  slug: string;
+  name: string;
+  card_id: number; // FK to cards.id
+  base_price: number;
+  deck_cost: number;
+  nation_tags: string[];
+  min_prosperity: number;
+  is_black_market: boolean;
+  image_url?: string;
+  description?: string;
+  // Joined from cards table
+  card?: CardDB;
+}
+
+// v18: ユーザーのスキル所持/装備状態
+export interface UserSkill {
+  id: string; // UUID
+  user_id: string;
+  skill_id: number;
+  is_equipped: boolean;
+  acquired_at?: string;
+  // Joined from skills table
+  skill?: SkillDB;
+}
+
+// v18: 装備品スロット
+export interface EquippedItem {
+  id: string; // UUID
+  user_id: string;
+  item_id: number;
+  slot: 'weapon' | 'armor' | 'accessory';
+  equipped_at?: string;
+  // Joined from items table
+  item?: ItemDB;
 }
 
 export interface CardDB {
@@ -434,7 +474,7 @@ export interface CardDB {
   slug: string;
   name: string;
   type: string;
-  cost_type: 'vitality' | 'mp';
+  cost_type: 'vitality' | 'mp' | 'gold' | 'item' | 'none';
   cost_val: number;
   effect_val: number;
   image_url?: string; // v12.0
@@ -471,7 +511,12 @@ export interface InventoryItem extends Omit<ItemDB, 'id'> {
   item_id: number; // Master Item ID
   quantity: number;
   is_equipped: boolean;
-  is_skill: boolean;
+  is_skill?: boolean; // v18: 後方互換用（段階廃止）
+  item_type?: string; // v18: API返却のtype ('consumable', 'equipment', 'skill_card'等)
+  sub_type?: 'weapon' | 'armor' | 'accessory' | null; // v18: 装備品サブタイプ
+  skill_id?: number; // v18: user_skills からのスキルID
+  card_id?: number; // v18: スキルの cards.id
   cost?: number; // Derived from linked card or item data
   acquired_at?: string;
 }
+

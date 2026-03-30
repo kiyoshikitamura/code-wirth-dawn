@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ShoppingBag, Coins, Lock, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
+import { formatEffectData, getItemTypeLabel, getItemTypeBorderColor, getItemImageUrl, getEffectList } from '@/lib/itemUtils';
 
 
 const playCreepyAudio = () => {
@@ -29,6 +30,7 @@ interface ShopItem {
     id: string;
     name: string;
     type: string;
+    sub_type?: string;
     base_price: number;
     current_price: number | string;
     effect_data: any;
@@ -36,6 +38,8 @@ interface ShopItem {
     nation_tags?: string[];
     image_url?: string;
     description?: string;
+    _source?: 'item' | 'skill';
+    cost?: number;
 }
 
 interface ShopMeta {
@@ -62,33 +66,7 @@ export default function ShopModal({ onClose }: Props) {
         fetchShop();
     }, []);
 
-    /**
-     * effect_data (JSONB) から人間が読める効果テキストを生成する。
-     * 例: { heal: 50 } -> "HP +50回復"
-     *      { power: 20, type: "attack" } -> "攻撃力 +20"
-     *      { description: "テキスト" } -> "テキスト"
-     */
-    const formatEffectData = (effectData: any): string => {
-        if (!effectData || typeof effectData !== 'object' || Object.keys(effectData).length === 0) {
-            return '';
-        }
-        // descriptionフィールドが最優先
-        if (effectData.description) return String(effectData.description);
-
-        const parts: string[] = [];
-        if (effectData.heal != null)  parts.push(`HP +${effectData.heal}回復`);
-        if (effectData.mp_heal != null) parts.push(`MP +${effectData.mp_heal}回復`);
-        if (effectData.power != null && effectData.power > 0) parts.push(`威力 ${effectData.power}`);
-        if (effectData.atk_bonus != null) parts.push(`ATK +${effectData.atk_bonus}`);
-        if (effectData.def_bonus != null) parts.push(`DEF +${effectData.def_bonus}`);
-        if (effectData.duration != null) parts.push(`${effectData.duration}ターン持続`);
-        if (effectData.effect != null) parts.push(String(effectData.effect));
-        if (effectData.status != null) parts.push(`状態: ${effectData.status}`);
-        if (effectData.effect_id != null) parts.push(`付与: ${effectData.effect_id}`);
-        if (effectData.max_hp_bonus != null) parts.push(`最大HP +${effectData.max_hp_bonus}`);
-
-        return parts.length > 0 ? parts.join(' / ') : '';
-    };
+    // formatEffectData, getItemTypeLabel etc. は @/lib/itemUtils から import 済み
 
 
     // Helper to get token
@@ -140,7 +118,7 @@ export default function ShopModal({ onClose }: Props) {
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
                     ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
                 },
-                body: JSON.stringify({ item_id: item.id })
+                body: JSON.stringify({ item_id: item.id, _source: item._source || 'item' })
             });
             const data = await res.json();
 
@@ -260,17 +238,19 @@ export default function ShopModal({ onClose }: Props) {
     const renderItemDetail = () => {
         if (!selectedItem) return null;
         const canBuy = gold >= (selectedItem.current_price as number);
-        const typeLabel = selectedItem.type === 'skill' ? 'スキル' : selectedItem.type === 'consumable' ? '消耗品' : selectedItem.type === 'weapon' ? '武器' : selectedItem.type === 'armor' ? '防具' : selectedItem.type;
-        const typeBorder = selectedItem.type === 'skill' ? 'border-blue-600' : selectedItem.type === 'consumable' ? 'border-green-600' : 'border-gray-600';
+        const typeLabel = getItemTypeLabel(selectedItem.type);
+        const typeBorder = getItemTypeBorderColor(selectedItem.type);
+        const itemImg = (selectedItem as any).slug ? getItemImageUrl((selectedItem as any).slug) : selectedItem.image_url;
+        const effectList = getEffectList(selectedItem.effect_data);
         return createPortal(
             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
                 <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                     {/* アイテムヘッダー */}
                     <div className="bg-gray-800/80 p-5 flex items-center gap-4 border-b border-gray-700">
                         <div className="w-16 h-16 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {selectedItem.image_url
-                                ? <img src={selectedItem.image_url} alt={selectedItem.name} className="w-full h-full object-cover" />
-                                : <span className="text-3xl">{selectedItem.type === 'skill' ? '⚡' : selectedItem.type === 'consumable' ? '✨' : '⚔️'}</span>
+                            {itemImg
+                                ? <img src={itemImg} alt={selectedItem.name} className="w-full h-full object-cover" />
+                                : <span className="text-3xl">{selectedItem.type === 'skill' || selectedItem.type === 'skill_card' ? '⚡' : selectedItem.type === 'consumable' ? '✨' : '⚔️'}</span>
                             }
                         </div>
                         <div className="flex-1 min-w-0">
@@ -284,16 +264,23 @@ export default function ShopModal({ onClose }: Props) {
                     </div>
                     {/* 効果・詳細 */}
                     <div className="p-5 space-y-4">
-                        {formatEffectData(selectedItem.effect_data) && (
+                        {effectList.length > 0 && (
                             <div className="bg-gray-800/60 rounded-lg p-3 border border-gray-700">
-                                <div className="text-xs text-gray-500 mb-1">効果</div>
-                                <div className="text-sm text-gray-200">{formatEffectData(selectedItem.effect_data)}</div>
+                                <div className="text-xs text-gray-500 mb-1.5">効果</div>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {effectList.map((eff, i) => (
+                                        <div key={i} className="flex items-center justify-between bg-black/30 rounded px-2 py-1 border border-gray-800">
+                                            <span className="text-[10px] text-gray-400">{eff.label}</span>
+                                            <span className={`text-xs font-bold ${eff.color}`}>{eff.value}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
-                        {(selectedItem.description || selectedItem.effect_data?.flavor_text) && (
+                        {(selectedItem.description || selectedItem.effect_data?.flavor_text || selectedItem.effect_data?.description) && (
                             <div className="bg-amber-950/20 rounded-lg p-3 border border-amber-900/30">
                                 <p className="text-xs text-amber-400/80 italic leading-relaxed">
-                                    「{selectedItem.description || selectedItem.effect_data?.flavor_text}」
+                                    「{selectedItem.description || selectedItem.effect_data?.flavor_text || selectedItem.effect_data?.description}」
                                 </p>
                             </div>
                         )}
@@ -383,8 +370,13 @@ export default function ShopModal({ onClose }: Props) {
                                     <div className="bg-black/80 border border-red-900 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden">
                                         <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-20 mix-blend-overlay"></div>
                                         <div className="relative z-10 text-left">
-                                            <div className="text-red-500 font-bold text-lg mb-1 animate-glitch">禁術の秘薬</div>
-                                            <div className="text-xs text-red-500/70">HP・MP全回復、全状態異常解除、さらには最大HPを恒久的に劇的に高めるという伝説の...</div>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <div className="w-10 h-10 rounded-lg bg-gray-900 border border-red-900 flex items-center justify-center shrink-0 overflow-hidden shadow-black shadow-inner">
+                                                    <img src="/images/items/item_black_market_elixir.png" alt="禁術の秘薬" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="text-red-500 font-bold text-lg animate-glitch">禁術の秘薬</div>
+                                            </div>
+                                            <div className="text-xs text-red-500/70 mt-1">HP・MP全回復、全状態異常解除、さらには最大HPを恒久的に劇的に高めるという伝説の...</div>
                                         </div>
                                         <button
                                             onClick={() => handleBuy({ id: 'item_black_market_elixir', name: '禁術の秘薬', type: 'consumable', base_price: 50000, current_price: 50000, effect_data: {} })}
@@ -398,8 +390,13 @@ export default function ShopModal({ onClose }: Props) {
                                     <div className="bg-black/80 border border-gray-600 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden mt-4">
                                         <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-10 mix-blend-overlay"></div>
                                         <div className="relative z-10 text-left">
-                                            <div className="text-gray-300 font-bold text-lg mb-1 animate-glitch" style={{ animationDelay: '0.5s' }}>帳簿の改竄</div>
-                                            <div className="text-xs text-gray-500">過去の悪名をすべて揉み消してやろうか？ 綺麗さっぱり、な。</div>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <div className="w-10 h-10 rounded-lg bg-gray-900 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden shadow-black shadow-inner">
+                                                    <img src="/images/items/item_launder_scroll.png" alt="帳簿の改竄" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="text-gray-300 font-bold text-lg animate-glitch" style={{ animationDelay: '0.5s' }}>帳簿の改竄</div>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1">過去の悪名をすべて揉み消してやろうか？ 綺麗さっぱり、な。</div>
                                         </div>
                                         <button
                                             onClick={handleLaunder}
@@ -417,24 +414,28 @@ export default function ShopModal({ onClose }: Props) {
                                 ) : items.length === 0 ? (
                                     <div className="text-center text-gray-500 col-span-2 py-8">商品は売り切れのようです...</div>
                                 ) : (
-                                    items.map((item) => (
-                                        <div key={item.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-colors">
-                                            <div className="flex-1 min-w-0 mr-4">
+                                    items.map((item) => {
+                                        const listImg = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                        return (
+                                        <div key={item.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex items-center gap-3 hover:border-[#a38b6b] transition-colors">
+                                            <div className="w-10 h-10 rounded bg-[#e8dcc8] border border-[#c2b280] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                {listImg
+                                                    ? <img src={listImg} alt={item.name} className="w-full h-full object-cover" />
+                                                    : <span className="text-lg">{item.type === 'skill' || item.type === 'skill_card' ? '⚡' : '✨'}</span>
+                                                }
+                                            </div>
+                                            <div className="flex-1 min-w-0 mr-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-[#3e2723]">{item.name}</span>
+                                                    <span className="font-bold text-[#3e2723] text-sm truncate">{item.name}</span>
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                                                        item.type === 'skill' ? 'border-blue-700 text-blue-700 bg-blue-50' :
+                                                        item.type === 'skill' || item.type === 'skill_card' ? 'border-blue-700 text-blue-700 bg-blue-50' :
                                                         item.type === 'consumable' ? 'border-green-700 text-green-700 bg-green-50' :
+                                                        item.type === 'material' ? 'border-amber-700 text-amber-700 bg-amber-50' :
                                                             'border-[#8b5a2b] text-[#8b5a2b]'
-                                                        }`}>{
-                                                        item.type === 'skill' ? 'スキル' :
-                                                        item.type === 'consumable' ? '消耗品' :
-                                                        item.type === 'weapon' ? '武器' :
-                                                        item.type === 'armor' ? '防具' : item.type
-                                                    }</span>
+                                                        }`}>{getItemTypeLabel(item.type)}</span>
                                                 </div>
                                                 {formatEffectData(item.effect_data) && (
-                                                    <div className="text-xs text-[#8b6f4e] mt-1 truncate">
+                                                    <div className="text-xs text-[#8b6f4e] mt-0.5 truncate">
                                                         {formatEffectData(item.effect_data)}
                                                     </div>
                                                 )}
@@ -446,7 +447,7 @@ export default function ShopModal({ onClose }: Props) {
                                                 詳細
                                             </button>
                                         </div>
-                                    ))
+                                    );})
                                 )
                             )}
 
@@ -466,6 +467,12 @@ export default function ShopModal({ onClose }: Props) {
                                     <div key={invItem.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-colors">
                                         <div className="flex-1 min-w-0 mr-4">
                                             <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded bg-[#e8dcc8] border border-[#c2b280] flex items-center justify-center shrink-0 overflow-hidden">
+                                                    {invItem.image_url || ((invItem as any).slug ? `/images/items/${(invItem as any).slug}.png` : undefined) ?
+                                                        <img src={invItem.image_url || ((invItem as any).slug ? `/images/items/${(invItem as any).slug}.png` : undefined)} alt={(invItem as any).name || '不明'} className="w-full h-full object-cover" />
+                                                        : <span className="text-sm">✨</span>
+                                                    }
+                                                </div>
                                                 <span className="font-bold text-[#3e2723]">{(invItem as any).name || '不明'}</span>
                                                 <span className="bg-[#a38b6b] text-white text-[10px] px-1 rounded">x{invItem.quantity}</span>
                                                 {invItem.is_equipped && <span className="bg-amber-700 text-amber-200 text-[10px] px-1 rounded border border-amber-600">E</span>}

@@ -8,7 +8,7 @@ import { Location } from '@/types/game';
 import { supabase } from '@/lib/supabase';
 import { Map as MapIcon, Compass, Anchor, Castle, Mountain, Tent } from 'lucide-react';
 import { getNationNodeColor } from '@/utils/nationColors';
-import { HUB_LOCATION_ID, LEGACY_ZERO_UUID } from '@/utils/constants';
+import { HUB_LOCATION_NAME, LEGACY_ZERO_UUID } from '@/utils/constants';
 
 import GlobalStatusBar from '@/components/world/GlobalStatusBar';
 import LocalMapView, { MappedLocation } from '@/components/world/LocalMapView';
@@ -344,7 +344,7 @@ export default function WorldMapPage() {
 
     // Filter Logic for Render
     const visibleLocations = locations.filter(l =>
-        l.name !== '名もなき旅人の拠所' && l.id !== HUB_LOCATION_ID
+        l.name !== HUB_LOCATION_NAME
     );
 
     if (loading || isInitializingHub) {
@@ -406,9 +406,9 @@ export default function WorldMapPage() {
         } as MappedLocation;
     });
 
-    const validMappedLocations = mappedLocations.filter(l => l.slug !== HUB_LOCATION_ID && l.name !== '名もなき旅人の拠所');
+    const validMappedLocations = mappedLocations.filter(l => l.name !== HUB_LOCATION_NAME);
     const localMapLocations = validMappedLocations.filter(l => l.isCurrent || l.reachable);
-    const currentLocationName = currentLocObj ? currentLocObj.name : '国境の町';
+    const currentLocationName = currentLocObj ? currentLocObj.name : HUB_LOCATION_NAME;
     // ---
 
     return (

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
-import { HUB_LOCATION_ID, LEGACY_ZERO_UUID } from '@/utils/constants';
+import { HUB_LOCATION_NAME, LEGACY_ZERO_UUID } from '@/utils/constants';
 import { ArrowLeft, PenTool, Plus, Package, Send, Play, Save, ScrollText, ChevronDown, ChevronUp, Trash2, FolderKanban, Sparkles } from 'lucide-react';
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
@@ -45,11 +45,11 @@ export default function EditorPage() {
             const [profileRes, worldRes, locRes] = await Promise.all([
                 fetchUserProfile(),
                 fetchWorldState(),
-                supabase.from('locations').select('slug, name')
+                supabase.from('locations').select('id, name')
             ]);
 
             if (locRes && locRes.data) {
-                setWorldLocations(locRes.data.map(l => ({ id: l.slug, name: l.name })));
+                setWorldLocations(locRes.data.map(l => ({ id: l.id, name: l.name })));
             }
 
             setLoading(false);
@@ -70,9 +70,8 @@ export default function EditorPage() {
     // Hub access check — single definition (L2 fix)
     useEffect(() => {
         if (!loading && userProfile && worldState) {
-            const validHubs = [HUB_LOCATION_ID, LEGACY_ZERO_UUID];
-            const isHubName = worldState?.location_name === '名も無き旅人の拠所' || worldState?.location_name === '名もなき旅人の拠所';
-            const isHub = validHubs.includes(userProfile.current_location_id || '') || isHubName;
+            const isHubByName = worldState?.location_name === HUB_LOCATION_NAME;
+            const isHub = isHubByName;
 
             if (!isHub) {
                 alert(`この機能は「名もなき旅人の拠所」からのみアクセス可能です。`);
@@ -254,9 +253,8 @@ export default function EditorPage() {
 
     // Hub access guard (render)
     if (userProfile && worldState) {
-        const validHubs = [HUB_LOCATION_ID, LEGACY_ZERO_UUID];
-        const isHubName = worldState?.location_name === '名も無き旅人の拠所' || worldState?.location_name === '名もなき旅人の拠所';
-        if (!validHubs.includes(userProfile.current_location_id || '') && !isHubName) {
+        const isHubByName = worldState?.location_name === '名も無き旅人の拠所' || worldState?.location_name === HUB_LOCATION_NAME;
+        if (!isHubByName) {
             return null;
         }
     }

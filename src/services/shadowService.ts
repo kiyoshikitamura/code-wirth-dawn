@@ -316,15 +316,18 @@ export class ShadowService {
 
         // 3. Embargo チェック
         if (hirer.current_location_id) {
-            const { data: repData } = await this.supabase
-                .from('reputations')
-                .select('reputation_score')
-                .eq('user_id', hirerId)
-                .eq('location_id', hirer.current_location_id)
-                .maybeSingle();
+            const { data: locData } = await this.supabase.from('locations').select('name').eq('id', hirer.current_location_id).maybeSingle();
+            if (locData?.name) {
+                const { data: repData } = await this.supabase
+                    .from('reputations')
+                    .select('score')
+                    .eq('user_id', hirerId)
+                    .eq('location_name', locData.name)
+                    .maybeSingle();
 
-            if (repData && (repData.reputation_score || 0) < 0) {
-                return { success: false, error: '出禁状態: この拠点での名声が低すぎるため、誰も契約に応じてくれません。' };
+                if (repData && (repData.score || 0) < 0) {
+                    return { success: false, error: '出禁状態: この拠点での名声が低すぎるため、誰も契約に応じてくれません。' };
+                }
             }
         }
 

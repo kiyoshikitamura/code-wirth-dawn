@@ -116,77 +116,135 @@ export async function GET(req: Request) {
             query = query.is('user_id', null);
         }
 
-        const { data, error } = await query;
+        // user_skills も並列取得
+        const [inventoryResult, userSkillsResult] = await Promise.all([
+            query,
+            userId ? supabaseServer
+                .from('user_skills')
+                .select(`
+                    id,
+                    skill_id,
+                    is_equipped,
+                    acquired_at,
+                    skills!inner (
+                        id,
+                        slug,
+                        name,
+                        card_id,
+                        base_price,
+                        deck_cost,
+                        image_url,
+                        description,
+                        cards (
+                            id,
+                            name,
+                            type,
+                            cost_type,
+                            cost_val,
+                            effect_val
+                        )
+                    )
+                `)
+                .eq('user_id', userId) : Promise.resolve({ data: [], error: null })
+        ]);
+
+        const { data, error } = inventoryResult;
 
         if (error) {
             console.error("Inventory GET Supabase Error:", JSON.stringify(error, null, 2));
             return NextResponse.json({ error: error.message, details: error }, { status: 500 });
         }
 
-        if (!data) return NextResponse.json({ inventory: [] });
-
-        // Flatten structure
-        // Flatten structure
-        const inventory = data.map((entry: any) => {
+        // --- Items (non-skill) ---
+        const itemInventory = (data || []).map((entry: any) => {
             try {
                 if (!entry.items) {
-                    // Warn about orphan but don't crash the whole list
                     console.warn(`Inventory Item Orphan Detected! ID: ${entry.id}`);
                     return null;
                 }
-                // Map DB columns to Frontend expected props
-                // Frontend expects: item_type, power_value, etc.
-                // We need to derive them or return defaults.
-
                 const item = entry.items;
                 const effectData = item.effect_data || {};
-                // Try to guess power_value from effect_data (e.g. heal: 30, damage: 10)
                 const powerVal = effectData.heal || effectData.damage || effectData.power || 0;
 
                 return {
                     id: entry.id,
                     item_id: item.id,
                     name: item.name,
+                    slug: item.slug || null,
                     description: effectData.description || item.name,
                     item_type: item.type,
+                    sub_type: item.sub_type || null,
                     power_value: powerVal,
                     required_attribute: 'None',
                     base_price: item.base_price || 0,
                     is_equipped: entry.is_equipped,
                     acquired_at: entry.acquired_at,
                     quantity: entry.quantity,
-                    is_skill: entry.is_skill,
+                    is_skill: false,
                     cost: item.cost || effectData.cost_val || effectData.cost || 0,
                     effect_data: effectData,
-                    image_url: item.image_url || null
+                    image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null)
                 };
             } catch (e: any) {
                 console.error(`Error mapping inventory item ${entry.id}:`, e);
                 return null;
             }
-        }).filter(Boolean) as any[]; // Remove nulls
+        }).filter(Boolean) as any[];
 
-        // 同一アイテムを item_id で集約（スキル以外）
-        // shop POST が同じアイテム購入時に毎回新規レコードを作るため
-        const aggregated: any[] = [];
+        // 同一アイテムを item_id で集約
+        const aggregatedItems: any[] = [];
         const itemMap = new Map<string, any>();
-        for (const inv of inventory) {
-            if (inv.is_skill) {
-                // スキルは個別管理（装備状態が異なる）
-                aggregated.push(inv);
+        for (const inv of itemInventory) {
+            const key = String(inv.item_id);
+            if (itemMap.has(key)) {
+                itemMap.get(key).quantity += (inv.quantity || 1);
             } else {
-                const key = String(inv.item_id);
-                if (itemMap.has(key)) {
-                    itemMap.get(key).quantity += (inv.quantity || 1);
-                } else {
-                    const merged = { ...inv, quantity: inv.quantity || 1 };
-                    itemMap.set(key, merged);
-                    aggregated.push(merged);
-                }
+                const merged = { ...inv, quantity: inv.quantity || 1 };
+                itemMap.set(key, merged);
+                aggregatedItems.push(merged);
             }
         }
 
-        return NextResponse.json({ inventory: aggregated });
+        // --- Skills (from user_skills) ---
+        const skillInventory = (userSkillsResult.data || []).map((entry: any) => {
+            try {
+                const skill = entry.skills;
+                if (!skill) return null;
+                const card = skill.cards;
+                const effectData = card ? {
+                    cost_val: card.cost_val,
+                    effect_val: card.effect_val,
+                    cost_type: card.cost_type,
+                    card_type: card.type,
+                    description: skill.description || card.name
+                } : {};
+
+                return {
+                    id: entry.id,
+                    item_id: skill.id,
+                    skill_id: skill.id,
+                    card_id: skill.card_id,
+                    name: skill.name,
+                    slug: skill.slug || null,
+                    description: skill.description || skill.name,
+                    item_type: 'skill_card',
+                    power_value: card?.effect_val || 0,
+                    base_price: skill.base_price || 0,
+                    is_equipped: entry.is_equipped,
+                    acquired_at: entry.acquired_at,
+                    quantity: 1,
+                    is_skill: true,
+                    cost: skill.deck_cost || 0,
+                    effect_data: effectData,
+                    image_url: skill.image_url || (skill.slug ? `/images/items/${skill.slug}.png` : null)
+                };
+            } catch (e: any) {
+                console.error(`Error mapping user_skill ${entry.id}:`, e);
+                return null;
+            }
+        }).filter(Boolean) as any[];
+
+        return NextResponse.json({ inventory: [...aggregatedItems, ...skillInventory] });
     } catch (err: any) {
         console.error("Inventory GET Critical Error:", err);
         return NextResponse.json({ error: err.message, stack: err.stack }, { status: 500 });

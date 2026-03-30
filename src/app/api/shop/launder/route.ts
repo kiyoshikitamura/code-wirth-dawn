@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         // world_states で拠点の status を確認
         const { data: locData } = await supabase
             .from('locations')
-            .select('name, slug')
+            .select('name')
             .eq('id', profile.current_location_id)
             .single();
 
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
         // 全拠点の名声を 0 にリセット
         const { error: repError } = await supabaseService
             .from('reputations')
-            .update({ reputation_score: 0 })
+            .update({ score: 0 })
             .eq('user_id', userId);
 
         if (repError) throw repError;

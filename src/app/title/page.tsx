@@ -171,8 +171,8 @@ export default function TitlePage() {
             }
             setIsUploading(false);
 
-            // 開始地点を取得 (loc_border_town)
-            const { data: hubLoc } = await supabase.from('locations').select('id').eq('slug', 'loc_border_town').maybeSingle();
+            // 開始地点を取得
+            const { data: hubLoc } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').maybeSingle();
 
             const dummyBirthDate = new Date();
             dummyBirthDate.setFullYear(dummyBirthDate.getFullYear() - age);

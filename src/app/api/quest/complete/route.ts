@@ -170,7 +170,7 @@ export async function POST(req: Request) {
 
         // 6. Update Hub State (if moved)
         if (updates.current_location_id) {
-            const hubId = await resolveLocationId(supabase, 'loc_border_town');
+            const hubId = await resolveLocationId(supabase, '名もなき旅人の拠所');
             const isReturningToHub = updates.current_location_id === hubId;
 
             const { error: hubError } = await supabase
@@ -372,24 +372,29 @@ export async function POST(req: Request) {
             const repPenalty = -(Math.floor(Math.random() * (penaltyMax - penaltyMin + 1)) + penaltyMin);
 
             // upsert: 既存レコードがあれば加算、なければ新規作成
-            const { data: existingRep } = await supabase
-                .from('reputations')
-                .select('id, reputation_score')
-                .eq('user_id', user_id)
-                .eq('location_id', user.current_location_id)
-                .maybeSingle();
+            // location_nameを取得
+            const { data: locForRep } = await supabase.from('locations').select('name').eq('id', user.current_location_id).maybeSingle();
+            const repLocName = locForRep?.name;
+            if (repLocName) {
+                const { data: existingRep } = await supabase
+                    .from('reputations')
+                    .select('id, score')
+                    .eq('user_id', user_id)
+                    .eq('location_name', repLocName)
+                    .maybeSingle();
 
-            if (existingRep) {
-                await supabase
-                    .from('reputations')
-                    .update({ reputation_score: existingRep.reputation_score + repPenalty })
-                    .eq('id', existingRep.id);
-            } else {
-                await supabase
-                    .from('reputations')
-                    .insert({ user_id, location_id: user.current_location_id, reputation_score: repPenalty });
+                if (existingRep) {
+                    await supabase
+                        .from('reputations')
+                        .update({ score: existingRep.score + repPenalty })
+                        .eq('id', existingRep.id);
+                } else {
+                    await supabase
+                        .from('reputations')
+                        .insert({ user_id, location_name: repLocName, score: repPenalty });
+                }
+                console.log(`[QuestComplete] Failure rep penalty: ${repPenalty} for user ${user_id} at ${repLocName}`);
             }
-            console.log(`[QuestComplete] Failure rep penalty: ${repPenalty} for user ${user_id} at ${user.current_location_id}`);
         }
 
         // 9. World Impact & Quest Completion History

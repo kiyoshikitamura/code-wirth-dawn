@@ -3,6 +3,7 @@ import { UserProfile, PartyMember } from '@/types/game';
 import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { supabase } from '@/lib/supabase';
+import { getNpcForLocation } from '@/lib/getNpcForLocation';
 
 interface TavernModalProps {
     isOpen: boolean;
@@ -10,9 +11,10 @@ interface TavernModalProps {
     userProfile: UserProfile;
     locationId: string;
     reputationScore?: number;
+    locationSlug?: string;
 }
 
-export default function TavernModal({ isOpen, onClose, userProfile, locationId, reputationScore = 0 }: TavernModalProps) {
+export default function TavernModal({ isOpen, onClose, userProfile, locationId, reputationScore = 0, locationSlug }: TavernModalProps) {
     const [activeTab, setActiveTab] = useState<'hire' | 'register'>('hire');
     const [shadows, setShadows] = useState<ShadowSummary[]>([]);
     const [currentParty, setCurrentParty] = useState<PartyMember[]>([]);
@@ -166,16 +168,25 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     </button>
                 </div>
 
-                {isEmbargoed ? (
+                {isEmbargoed ? (() => {
+                    const tavernNpc = locationSlug ? getNpcForLocation(locationSlug, 'inn', reputationScore) : null;
+                    return (
                     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                        {tavernNpc?.imageUrl && (
+                            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-red-700/50 mb-4 shadow-lg">
+                                <img src={tavernNpc.imageUrl} alt={tavernNpc.name} className="w-full h-full object-cover" />
+                            </div>
+                        )}
                         <h2 className="text-3xl font-serif text-red-700 font-bold mb-4 tracking-widest">出入り禁止</h2>
                         <div className="bg-red-50/60 border border-red-300/50 p-6 rounded-lg max-w-lg">
                             <p className="text-red-800 font-serif italic text-lg leading-relaxed">
-                                「お前のような悪党に飲ませる酒も、紹介する仲間もねえ。さっさと俺の店から出て行きな！」
+                                「{tavernNpc?.dialogue || 'お前のような悪党に飲ませる酒も、紹介する仲間もねえ。さっさと俺の店から出て行きな！'}」
                             </p>
+                            {tavernNpc && <p className="text-red-600 text-sm mt-2 font-bold">— {tavernNpc.name}</p>}
                         </div>
                     </div>
-                ) : (
+                    );
+                })() : (
                     <>
                         {/* ===== 通報モーダル ===== */}
                         {reportTarget && (

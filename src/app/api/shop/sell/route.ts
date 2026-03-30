@@ -50,20 +50,22 @@ export async function POST(req: Request) {
         if (profile.current_location_id) {
             const { data: loc } = await supabaseService
                 .from('locations')
-                .select('prosperity_level, reputation_score:reputations(reputation_score)')
+                .select('name, prosperity_level')
                 .eq('id', profile.current_location_id)
                 .maybeSingle();
 
-            if (loc) prosperityLevel = (loc as any).prosperity_level || 3;
+            if (loc) prosperityLevel = loc.prosperity_level || 3;
 
-            const { data: repData } = await supabaseService
-                .from('reputations')
-                .select('reputation_score')
-                .eq('user_id', profile.id)
-                .eq('location_id', profile.current_location_id)
-                .maybeSingle();
-            if (repData && (repData.reputation_score || 0) < 0) {
-                return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。' }, { status: 403 });
+            if (loc?.name) {
+                const { data: repData } = await supabaseService
+                    .from('reputations')
+                    .select('score')
+                    .eq('user_id', profile.id)
+                    .eq('location_name', loc.name)
+                    .maybeSingle();
+                if (repData && (repData.score || 0) < 0) {
+                    return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。' }, { status: 403 });
+                }
             }
         }
 
@@ -133,18 +135,21 @@ export async function POST(req: Request) {
 
         // Betrayal Penalty
         if (isBetrayal && profile.current_location_id) {
-            const { data: repData } = await supabaseService
-                .from('reputations')
-                .select('*')
-                .eq('user_id', profile.id)
-                .eq('location_id', profile.current_location_id)
-                .maybeSingle();
-
-            if (repData) {
-                await supabaseService
+            const { data: locForRep } = await supabaseService.from('locations').select('name').eq('id', profile.current_location_id).maybeSingle();
+            if (locForRep?.name) {
+                const { data: repData } = await supabaseService
                     .from('reputations')
-                    .update({ reputation_score: (repData.reputation_score || 0) - 50 })
-                    .eq('id', repData.id);
+                    .select('*')
+                    .eq('user_id', profile.id)
+                    .eq('location_name', locForRep.name)
+                    .maybeSingle();
+
+                if (repData) {
+                    await supabaseService
+                        .from('reputations')
+                        .update({ score: (repData.score || 0) - 50 })
+                        .eq('id', repData.id);
+                }
             }
         }
 

@@ -382,22 +382,22 @@ export async function updateWorldSimulation() {
             // REP_DECAY_THRESHOLD を超えている reputation レコードを全取得
             const { data: highReps, error: repFetchError } = await supabase
                 .from('reputations')
-                .select('id, reputation_score')
-                .gt('reputation_score', ECONOMY_RULES.REP_DECAY_THRESHOLD);
+                .select('id, score')
+                .gt('score', ECONOMY_RULES.REP_DECAY_THRESHOLD);
 
             if (repFetchError) {
                 logs.push(`[RepDecay] 取得エラー: ${repFetchError.message}`);
             } else if (highReps && highReps.length > 0) {
-                // 各レコードの reputation_score を REP_DECAY_AMOUNT 分減少させる
+                // 各レコードの score を REP_DECAY_AMOUNT 分減少させる
                 let decayCount = 0;
                 for (const rep of highReps) {
-                    const newScore = rep.reputation_score + ECONOMY_RULES.REP_DECAY_AMOUNT; // REP_DECAY_AMOUNT は負数
+                    const newScore = rep.score + ECONOMY_RULES.REP_DECAY_AMOUNT; // REP_DECAY_AMOUNT は負数
                     // 閾値以下にはしない（閾値ちょうどで止める）
                     const clampedScore = Math.max(ECONOMY_RULES.REP_DECAY_THRESHOLD, newScore);
-                    if (clampedScore !== rep.reputation_score) {
+                    if (clampedScore !== rep.score) {
                         await supabase
                             .from('reputations')
-                            .update({ reputation_score: clampedScore })
+                            .update({ score: clampedScore })
                             .eq('id', rep.id);
                         decayCount++;
                     }

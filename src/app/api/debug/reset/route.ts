@@ -110,23 +110,20 @@ export async function POST(req: Request) {
         let { data: startLoc } = await client
             .from('locations')
             .select('id')
-            .eq('slug', 'loc_border_town')
+            .eq('name', '名もなき旅人の拠所')
             .maybeSingle();
 
         if (!startLoc) {
-            console.log("Border town not found. Creating fallback...");
+            console.log("Start location not found. Creating fallback...");
             const { data: newLoc } = await client
                 .from('locations')
                 .insert([{
-                    slug: 'loc_border_town',
-                    name: '国境の町',
+                    name: '名もなき旅人の拠所',
                     type: 'Town',
-                    description: '西の国境に位置する静かな町。',
+                    description: '旅人たちの集う拠り所。',
                     x: 10,
                     y: 60,
-                    map_x: 10,
-                    map_y: 60,
-                    nation_id: 'Roland',
+                    nation_id: 'Neutral',
                     connections: []
                 }])
                 .select('id')

@@ -63,7 +63,8 @@ export async function POST(req: Request) {
         // 2. Get Target Location
         let query = supabase.from('locations').select('*');
         if (target_location_slug) {
-            query = query.eq('slug', target_location_slug);
+            // 旧slug互換: nameとして扱う
+            query = query.eq('name', target_location_slug);
         } else {
             query = query.eq('name', target_location_name);
         }
@@ -75,12 +76,12 @@ export async function POST(req: Request) {
         }
 
         // 2.3 首都入場制限チェック (spec_v16 §2)
-        const targetSlug = targetData.slug as string;
+        const targetNationId = targetData.nation_id as string;
         const isCapital = targetData.type?.toLowerCase() === 'capital';
 
         if (isCapital) {
             const passExpiresAt = (profile.pass_expires_at || {}) as Record<string, number>;
-            const passExpiry = passExpiresAt[targetSlug] ?? 0;
+            const passExpiry = passExpiresAt[targetNationId] ?? 0;
             const currentAccumulatedDays = profile.accumulated_days || 0;
 
             if (passExpiry <= currentAccumulatedDays) {
@@ -90,11 +91,11 @@ export async function POST(req: Request) {
                 if (currentLocation) {
                     const { data: repData } = await supabase
                         .from('reputations')
-                        .select('reputation_score')
+                        .select('score')
                         .eq('user_id', profile.id)
-                        .eq('location_id', currentLocation.id)
+                        .eq('location_name', currentLocation.name)
                         .maybeSingle();
-                    originRepScore = repData?.reputation_score || 0;
+                    originRepScore = repData?.score || 0;
                 }
 
                 if (originRepScore < 0) {
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
                 }
             }
             // 有効な許可証あり → 通常移動処理へ
-            console.log(`[Move] Valid pass for capital ${targetSlug}, expires at day ${passExpiry}`);
+            console.log(`[Move] Valid pass for capital ${targetData.name}, expires at day ${passExpiry}`);
         }
 
         // 2.5 エンカウント判定 (spec_v16 §1)
@@ -127,11 +128,11 @@ export async function POST(req: Request) {
         if (currentLocation && !is_quest_travel) {
             const { data: repData } = await supabase
                 .from('reputations')
-                .select('reputation_score')
+                .select('score')
                 .eq('user_id', profile.id)
-                .eq('location_id', currentLocation.id)
+                .eq('location_name', currentLocation.name)
                 .maybeSingle();
-            const repScore = repData?.reputation_score || 0;
+            const repScore = repData?.score || 0;
 
             // §1.2 賞金稼ぎ確定エンカウント（優先判定）
             if (repScore <= ECONOMY_RULES.BOUNTY_HUNTER_THRESHOLD) {

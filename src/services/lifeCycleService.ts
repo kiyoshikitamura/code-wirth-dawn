@@ -130,39 +130,26 @@ export class LifeCycleService {
                         console.log('Heroic FIFO: deleted heroic', member.id);
                     }
                 }
-                // タスク3-B: デッキバリデーション — type === 'skill' のみ許可（consumable厳密除外）
+                // v18: デッキバリデーション — user_skills から装備中スキルを取得
                 let heroicDeck: string[] = [];
                 const signatureDeck = profile.signature_deck;
 
                 if (signatureDeck && Array.isArray(signatureDeck) && signatureDeck.length > 0) {
-                    const { data: deckCards } = await this.supabase
-                        .from('items')
-                        .select('id, type')
-                        .in('id', signatureDeck);
-
-                    if (deckCards) {
-                        // タスク3-B: type === 'skill' のみ（cost_type: vitality なども自動除外）
-                        heroicDeck = deckCards
-                            .filter((c: any) => c.type === 'skill')
-                            .map((c: any) => String(c.id));
-                    }
+                    // signature_deck がある場合はそのまま使用（cards.id の配列）
+                    heroicDeck = signatureDeck.map((id: any) => String(id));
                 } else {
-                    // Fallback: 装備中インベントリから取得
-                    const { data: equipped } = await this.supabase
-                        .from('inventory')
-                        .select('item_id, items(type)')
+                    // Fallback: user_skills から装備中スキルを取得
+                    const { data: equippedSkills } = await this.supabase
+                        .from('user_skills')
+                        .select('skill_id, skills(card_id)')
                         .eq('user_id', userId)
                         .eq('is_equipped', true)
                         .limit(5);
 
-                    if (equipped) {
-                        // タスク3-B: type === 'skill' のみ（consumable厳密除外）
-                        heroicDeck = equipped
-                            .filter((e: any) => {
-                                const item = e.items;
-                                return item && item.type === 'skill';
-                            })
-                            .map((e: any) => String(e.item_id));
+                    if (equippedSkills) {
+                        heroicDeck = equippedSkills
+                            .filter((e: any) => e.skills?.card_id)
+                            .map((e: any) => String(e.skills.card_id));
                     }
                 }
 

@@ -19,29 +19,27 @@ export async function POST(req: Request) {
 
         let finalCost: number = ECONOMY_RULES.INN_REST_COST_BASE;
 
-        // Check Embargo & Calculate Cost (並列クエリで高速化)
+        // Check Embargo & Calculate Cost
         if (profile.current_location_id) {
-            const [repResult, locResult] = await Promise.all([
-                supabase
+            const { data: locData } = await supabase
+                .from('locations')
+                .select('name, prosperity_level')
+                .eq('id', profile.current_location_id)
+                .maybeSingle();
+
+            if (locData?.name) {
+                const { data: repData } = await supabase
                     .from('reputations')
-                    .select('reputation_score')
+                    .select('score')
                     .eq('user_id', id)
-                    .eq('location_id', profile.current_location_id)
-                    .maybeSingle(),
-                supabase
-                    .from('locations')
-                    .select('prosperity_level')
-                    .eq('slug', profile.current_location_id)
-                    .maybeSingle()
-            ]);
+                    .eq('location_name', locData.name)
+                    .maybeSingle();
 
-            const repData = repResult.data;
-            const locData = locResult.data;
-
-            if (repData) {
-                const repScore = repData.reputation_score || 0;
-                if (repScore < 0) {
-                    return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。' }, { status: 403 });
+                if (repData) {
+                    const repScore = repData.score || 0;
+                    if (repScore < 0) {
+                        return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。' }, { status: 403 });
+                    }
                 }
             }
 

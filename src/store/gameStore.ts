@@ -190,13 +190,13 @@ export const useGameStore = create<GameState>()(
 
                 // 2. Build Deck
                 const { inventory, worldState } = get();
-                const equippedCards = (inventory || []).filter(i => i.is_equipped).map(i => ({
+                const equippedCards = (inventory || []).filter(i => i.is_equipped && (i.is_skill || i.item_type === 'skill_card')).map(i => ({
                     id: String(i.id),
                     name: i.name,
-                    type: (i.is_skill ? 'Skill' : 'Item') as Card['type'],
+                    type: 'Skill' as Card['type'],
                     description: i.effect_data?.description || '',
                     cost: 0,
-                    power: i.effect_data?.power || 0,
+                    power: i.effect_data?.power || i.effect_data?.effect_val || 0,
                     isEquipment: true,
                 }));
 

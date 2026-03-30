@@ -30,15 +30,18 @@ export async function POST(req: Request) {
         // Embargo チェック（anon clientで十分）
         const { data: profile } = await supabase.from('user_profiles').select('current_location_id').eq('id', user_id).single();
         if (profile?.current_location_id) {
-            const { data: repData } = await supabase
-                .from('reputations')
-                .select('reputation_score')
-                .eq('user_id', user_id)
-                .eq('location_id', profile.current_location_id)
-                .maybeSingle();
+            const { data: locData } = await supabase.from('locations').select('name').eq('id', profile.current_location_id).maybeSingle();
+            if (locData?.name) {
+                const { data: repData } = await supabase
+                    .from('reputations')
+                    .select('score')
+                    .eq('user_id', user_id)
+                    .eq('location_name', locData.name)
+                    .maybeSingle();
 
-            if (repData && (repData.reputation_score || 0) < 0) {
-                return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、酒場の利用を断られました。' }, { status: 403 });
+                if (repData && (repData.score || 0) < 0) {
+                    return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、酒場の利用を断られました。' }, { status: 403 });
+                }
             }
         }
 

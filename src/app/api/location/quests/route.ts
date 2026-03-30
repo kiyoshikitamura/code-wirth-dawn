@@ -52,11 +52,9 @@ export async function GET(req: Request) {
             .select('*')
             .maybeSingle();
 
-        // prosperity_level は DB 上ではパーセント(0-100)だが、CSV の min/max_prosperity は 1-5 スケール
-        // 0-20→1(衰退), 21-40→2(不況), 41-60→3(通常), 61-80→4(好況), 81-100→5(絶頂)
-        const rawProsperity = worldState?.prosperity_level ?? 50;
-        const currentProsperity = Math.min(5, Math.max(1, Math.ceil(rawProsperity / 20)));
-        debug.push(`prosperity = ${rawProsperity} (scale: ${currentProsperity}/5) `);
+        // prosperity_level は DB上で1-5のスケール
+        const currentProsperity = worldState?.prosperity_level || 3;
+        debug.push(`prosperity = ${currentProsperity} (scale: 1-5) `);
 
         // 3. Fetch User Inventory (for has_item checks)
         const { data: inventory } = await supabaseServer
@@ -69,12 +67,12 @@ export async function GET(req: Request) {
         // 4. Fetch User Reputations (for min_reputation checks)
         const { data: reputations } = await supabaseServer
             .from('reputations')
-            .select('location_id, reputation_score')
+            .select('location_name, score')
             .eq('user_id', userId);
 
         const repMap: Record<string, number> = {};
         for (const rep of (reputations || [])) {
-            repMap[rep.location_id] = rep.reputation_score || 0;
+            repMap[rep.location_name] = rep.score || 0;
         }
 
         // 4.5 Fetch User Completed Quests (for prerequisites)
