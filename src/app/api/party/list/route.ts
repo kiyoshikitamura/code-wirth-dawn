@@ -46,12 +46,12 @@ export async function GET(req: Request) {
             return NextResponse.json({ party: [] });
         }
 
-        // NPCマスタから職種・レベル・ステータスを取得
-        const memberNames = data.map((m: any) => m.name);
+        // NPCマスタから職種・レベル・ステータスを取得（slugで結合）
+        const memberSlugs = data.map((m: any) => m.slug).filter(Boolean);
         const { data: npcs, error: npcError } = await supabaseServer
             .from('npcs')
-            .select('name, job_class, level, attack, defense, max_hp')
-            .in('name', memberNames);
+            .select('slug, name, epithet, job_class, level, attack, defense, max_hp')
+            .in('slug', memberSlugs);
 
         if (npcError) {
             console.error('NPC lookup error:', npcError.message);
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
         const npcMap = new Map<string, any>();
         if (npcs) {
             for (const npc of npcs) {
-                npcMap.set(npc.name, npc);
+                npcMap.set(npc.slug, npc);
             }
         }
 
@@ -90,7 +90,7 @@ export async function GET(req: Request) {
 
         // パーティメンバーにNPCデータ・カード名を結合して返す
         const enrichedParty = data.map((member: any) => {
-            const npc = npcMap.get(member.name);
+            const npc = npcMap.get(member.slug);
 
             // inject_cards のカード名解決
             const skillNames: string[] = [];
@@ -107,6 +107,7 @@ export async function GET(req: Request) {
             return {
                 ...member,
                 // NPCマスタからの補完データ
+                epithet: npc?.epithet || member.epithet || '',
                 job_class: jobClassJp,
                 level: npc?.level ?? null,
                 hp: npc?.max_hp ?? null,

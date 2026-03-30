@@ -21,7 +21,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const CSV_DIR = path.join(process.cwd(), 'src', 'data', 'csv');
 
-async function seedTable(tableName: string, filePath: string, transformer: (record: any) => any) {
+async function seedTable(tableName: string, filePath: string, transformer: (record: any) => any, onConflictKey: string = 'id') {
     if (!fs.existsSync(filePath)) {
         console.warn(`Skipping ${tableName}: File not found at ${filePath}`);
         return;
@@ -56,10 +56,9 @@ async function seedTable(tableName: string, filePath: string, transformer: (reco
     const transformedRecords = validRecords.map(transformer);
 
     // Upsert batch
-    // Supabase upsert requires specifying the Conflict Key (id)
     const { error } = await supabase
         .from(tableName)
-        .upsert(transformedRecords, { onConflict: 'id' });
+        .upsert(transformedRecords, { onConflict: onConflictKey });
 
     if (error) {
         console.error(`Error seeding ${tableName}:`, error);
@@ -102,6 +101,7 @@ async function main() {
             slug: r.slug,
             name: r.name,
             type: itemType,
+            sub_type: r.sub_type || null,
             base_price: r.base_price,
             min_prosperity: r.min_prosperity,
             nation_tags: nationTags,
@@ -109,10 +109,8 @@ async function main() {
             effect_data: effectData,
             is_black_market: isBlackMarket
         };
-    });
+    }, 'id'); // items は id で conflict 判定
 
-    // 3. NPCs (party_members)
-    // inject_cards is pipe separated integers "1001|1002" -> integer array
     await seedTable('party_members', path.join(CSV_DIR, 'npcs.csv'), (r: any) => {
         let cardIds: number[] = [];
         // Handle both possible header names just in case
@@ -125,6 +123,7 @@ async function main() {
             id: r.id,
             slug: r.slug,
             name: r.name,
+            epithet: r.epithet || '', // 通り名（例:「見習い僧侶」）
             job_class: r.job || r.job_class || 'Civilian', // Map 'job' to 'job_class'
             durability: r.durability,
             max_durability: r.durability, // Ensure max is set
@@ -137,6 +136,7 @@ async function main() {
             origin_type: 'system'
         };
     });
+
 
     // ... (skipping unchanged code) ...
 

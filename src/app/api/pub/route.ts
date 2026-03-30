@@ -31,52 +31,9 @@ export async function GET(req: Request) {
 
         let finalPool = poolMembers || [];
 
-        // --- Candidate Generation Logic (Minimum 3) ---
-        if (finalPool.length < 3) {
-            const needed = 3 - finalPool.length;
-            const newMembers = [];
+        // ※ マスターデータ（npcs.csv → party_membersテーブル）から事前投入済みのため、
+        //    プールが空の場合はランダム生成を行わず、そのまま返す。
 
-            const JOB_CLASSES = ['Warrior', 'Mage', 'Rogue', 'Cleric', 'Paladin'];
-            const GENDERS = ['Male', 'Female'];
-
-            for (let i = 0; i < needed; i++) {
-                const job = JOB_CLASSES[Math.floor(Math.random() * JOB_CLASSES.length)];
-                // Stats
-                const durability = 100;
-                const coverRate = Math.floor(Math.random() * 40) + 10; // 10-50%
-                const injectCards = [];
-
-                // Inject Cards Logic
-                if (job === 'Warrior') injectCards.push('c1'); // Slash
-                if (job === 'Mage') injectCards.push('c2'); // Fireball
-                if (job === 'Cleric') injectCards.push('c3'); // Heal
-
-                newMembers.push({
-                    name: `Mercenary ${Math.floor(Math.random() * 1000)}`,
-                    job_class: job,
-                    gender: GENDERS[Math.floor(Math.random() * GENDERS.length)],
-                    origin: 'system',
-                    durability: durability,
-                    max_durability: durability,
-                    loyalty: 50,
-                    cover_rate: coverRate,
-                    inject_cards: injectCards,
-                    is_active: true // Active when hired
-                });
-            }
-
-            if (newMembers.length > 0) {
-                const { data: inserted, error: insertError } = await supabase
-                    .from('party_members')
-                    .insert(newMembers)
-                    .select('*');
-
-                if (!insertError && inserted) {
-                    finalPool = [...finalPool, ...inserted];
-                }
-            }
-        }
-        // ----------------------------------------
 
         // 2. Fetch User's Party
         const { data: userParty, error: partyError } = await supabase

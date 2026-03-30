@@ -164,7 +164,7 @@ export default function PubPage() {
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-amber-400 font-bold text-sm mb-1">{selectedMember.name} <span className="text-xs text-gray-400">({selectedMember.job_class})</span></div>
+                                    <div className="text-amber-400 font-bold text-sm mb-1">{selectedMember.name} {selectedMember.epithet && <span className="text-xs text-gray-400">({selectedMember.epithet})</span>}</div>
                                     <div className="text-[10px] text-gray-400 mb-1">耐久: {selectedMember.durability}/{selectedMember.max_durability} | カバー: {selectedMember.cover_rate}%</div>
                                     <p className="font-serif italic text-sm md:text-base leading-relaxed">{dialogue}</p>
                                 </div>
@@ -217,7 +217,7 @@ export default function PubPage() {
                                         `}>
                                         <div>
                                             <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate max-w-[120px]">{m.name}</div>
-                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class}</div>
+                                            <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.epithet || m.job_class}</div>
                                         </div>
                                         <div className="flex gap-2 text-[10px] text-gray-400">
                                             <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" /> {m.durability}</span>
@@ -248,7 +248,7 @@ export default function PubPage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-sm font-bold text-gray-300 group-hover:text-white whitespace-nowrap truncate">{m.name}</div>
-                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.job_class}</div>
+                                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">{m.epithet || m.job_class}</div>
                                                 </div>
                                             </div>
                                             <div className="text-xs text-gray-600 group-hover:text-amber-500 transition-colors">
@@ -276,7 +276,7 @@ export default function PubPage() {
                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                 />
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
-                                    <div className="text-lg font-bold text-white">{selectedMember.name}</div>
+                                    <div className="text-lg font-bold text-white">{selectedMember.epithet ? `${selectedMember.epithet} ${selectedMember.name}` : selectedMember.name}</div>
                                 </div>
                             </div>
 

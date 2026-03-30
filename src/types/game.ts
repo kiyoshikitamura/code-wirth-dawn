@@ -38,7 +38,7 @@ export interface UserHubState {
   last_visit: string;
 }
 
-export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise'; // v2.11: noise追加
+export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise' | 'Passive'; // v2.11: noise追加, v5.2: Passive追加
 
 // v2.7: ターゲットタイプ定義
 export type TargetType =
@@ -64,7 +64,7 @@ export interface Card {
   target_type?: TargetType; // v2.7: ターゲットタイプ
   discard_cost?: number; // v2.11: Noise廃棄コスト (AP)
   isInjected?: boolean; // v4.1: 環境カード (Cost 0扱い)
-  cost_type?: 'mp' | 'vitality'; // v5.1: コストタイプ
+  cost_type?: 'mp' | 'vitality' | 'item' | 'gold' | 'none'; // v5.1: コストタイプ（item=1バトル1回制限）
   image_url?: string; // v12.0: UGC対応画像
   animation_type?: string; // v14.0: バトルカード演出効果(SLASH, WIND等)
 }
@@ -150,6 +150,7 @@ export interface PartyMember {
   id: string;
   owner_id: string;
   name: string;
+  epithet?: string; // 通り名（例:「見習い僧侶」）
   gender: 'Male' | 'Female' | 'Unknown';
   origin: 'system' | 'ghost';
   origin_type?: string; // e.g. 'system_mercenary', 'shadow_heroic', 'active_shadow'
@@ -390,6 +391,7 @@ export interface PartyMemberDB {
   owner_id: string | null; // UUID or null for pool
   slug: string; // Master template slug
   name: string;
+  epithet?: string; // 通り名（例:「歴戦の騎士」）
   gender: 'Male' | 'Female' | 'Unknown';
   origin: 'system' | 'ghost' | 'shadow_active';
   job_class: string;
@@ -499,9 +501,10 @@ export interface BattleState {
   consumedItems: string[]; // 戦闘後インベントリ同期用 inventory_id[]
   // v2.11 Final
   vitDamageTakenThisTurn?: boolean; // drain_vit 1ターン1回制限
-  battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee'; // 戦闘結果
+  battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee' | 'escape'; // 戦闘結果
   resonanceActive?: boolean; // spec_v5 §6.2: 共鳳ボーナス (ATK/DEF +10%)
   battle_session_id?: string; // v17 Server-Authoritative Battle
+  activePassives: string[]; // v5.2: 使用済みPassiveカードのcard_idリスト（バトル内永続効果）
 }
 
 export type Scenario = ScenarioDB;

@@ -150,7 +150,25 @@ export async function POST(req: Request) {
             }
 
             // §1.1 通常ランダムエンカウント
-            if (Math.random() < ECONOMY_RULES.RANDOM_ENCOUNTER_RATE) {
+            // v5.2: パッシブ効果「詳細な地図」によるエンカウント回避率を考慮
+            let adjustedEncounterRate = ECONOMY_RULES.RANDOM_ENCOUNTER_RATE;
+            try {
+                const { data: equippedSkills } = await supabase
+                    .from('user_skills')
+                    .select('card_id')
+                    .eq('user_id', profile.id);
+                if (equippedSkills && equippedSkills.length > 0) {
+                    const { getTravelPassives } = await import('@/lib/passiveEffects');
+                    const travelMods = getTravelPassives(equippedSkills.map(s => String(s.card_id)));
+                    if (travelMods.eventAvoidPct > 0) {
+                        adjustedEncounterRate *= (1 - travelMods.eventAvoidPct / 100);
+                        console.log(`[Move] パッシブ効果: エンカウント率 ${ECONOMY_RULES.RANDOM_ENCOUNTER_RATE} → ${adjustedEncounterRate.toFixed(3)}`);
+                    }
+                }
+            } catch (e) {
+                console.warn('[Move] パッシブ効果取得失敗（続行）', e);
+            }
+            if (Math.random() < adjustedEncounterRate) {
                 const encounterEnemySlug = await pickEncounterEnemy(profile.current_location_id, 'random');
                 console.log(`[Move] Random encounter triggered!`);
                 return NextResponse.json({

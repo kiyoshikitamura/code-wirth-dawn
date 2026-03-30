@@ -1,6 +1,7 @@
 
 import { Card, PartyMember, UserProfile } from '@/types/game';
 import { StatusEffect, getAttackMod, getDefenseMod } from '@/lib/statusEffects';
+import { getNoiseInjectionCount } from '@/lib/passiveEffects';
 
 /**
  * v2.11 決定論的ダメージ計算 (Deterministic)
@@ -91,7 +92,18 @@ export function buildBattleDeck(
         finalDeck.push({ ...supportCard, id: 'zenith_buff', cost: 0, isInjected: true, source: 'World Blessing' } as any);
     }
 
-    // 3. Basic Validation (Ensure usable cards exist)
+    // 3. v5.2: 呪いの偶像によるノイズ注入（Passiveカードはデッキに残す = 方式A）
+    const passiveCards = finalDeck.filter(c => c.type === 'Passive');
+    const curseNoiseCount = getNoiseInjectionCount(passiveCards);
+    if (curseNoiseCount > 0) {
+        const noiseCard = cardLookup('card_noise') || { id: 'card_noise', name: 'Noise', type: 'noise' as any, description: 'Unusable Glitch', cost: 0, discard_cost: 1 };
+        for (let i = 0; i < curseNoiseCount; i++) {
+            finalDeck.push({ ...noiseCard, id: `curse_noise_${i}`, isInjected: true, source: '呪いの偶像' } as any);
+        }
+        console.log(`[buildBattleDeck] 呪いの偶像: ノイズ ${curseNoiseCount}枚注入`);
+    }
+
+    // 4. Basic Validation (Ensure usable cards exist)
     const basicAttack = cardLookup('1001') || { id: '1001', name: '斬撃', type: 'Skill', description: '基本攻撃', cost: 0, power: 20 };
     const basicDefend = cardLookup('1004') || { id: '1004', name: '鉄壁', type: 'Skill', description: '防御バフ', cost: 0, power: 0 };
 

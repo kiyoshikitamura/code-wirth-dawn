@@ -166,13 +166,17 @@ export async function GET(req: Request) {
                 const effectData = item.effect_data || {};
                 const powerVal = effectData.heal || effectData.damage || effectData.power || 0;
 
+                // v5.2: items.type === 'skill' はレガシーデータ（旧仕様で inventory に入ったスキル）
+                // → is_skill: true, item_type: 'skill_card' としてデッキタブに表示させる
+                const isLegacySkill = item.type === 'skill';
+
                 return {
                     id: entry.id,
                     item_id: item.id,
                     name: item.name,
                     slug: item.slug || null,
                     description: effectData.description || item.name,
-                    item_type: item.type,
+                    item_type: isLegacySkill ? 'skill_card' : item.type,
                     sub_type: item.sub_type || null,
                     power_value: powerVal,
                     required_attribute: 'None',
@@ -180,7 +184,7 @@ export async function GET(req: Request) {
                     is_equipped: entry.is_equipped,
                     acquired_at: entry.acquired_at,
                     quantity: entry.quantity,
-                    is_skill: false,
+                    is_skill: isLegacySkill,
                     cost: item.cost || effectData.cost_val || effectData.cost || 0,
                     effect_data: effectData,
                     image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null)
@@ -251,10 +255,10 @@ export async function GET(req: Request) {
     }
 }
 
-// PATCH: Equip/Unequip
+// PATCH: Equip/Unequip (v5.2: inventory + user_skills 両対応)
 export async function PATCH(req: Request) {
     try {
-        const { inventory_id, is_equipped, bypass_lock } = await req.json();
+        const { inventory_id, is_equipped, bypass_lock, is_skill } = await req.json();
         
         // supabaseServer (Service Role) でRLSをバイパス
         // ユーザー認証はJWTで検証済み
@@ -270,7 +274,6 @@ export async function PATCH(req: Request) {
 
         // クエスト進行中の装備変更制限 (is_equipped: true にする場合のみ、bypass_lockがない場合)
         if (is_equipped && userId && !bypass_lock) {
-            // ユーザー状態の確認
             const { data: profile } = await supabaseServer
                 .from('user_profiles')
                 .select('current_quest_id, quest_started_at')
@@ -278,9 +281,10 @@ export async function PATCH(req: Request) {
                 .single();
 
             if (profile?.current_quest_id && profile.quest_started_at) {
-                // 対象アイテムの取得日時を確認
+                // スキルの場合は user_skills、アイテムの場合は inventory から取得日時を確認
+                const tableName = is_skill ? 'user_skills' : 'inventory';
                 const { data: invItem } = await supabaseServer
-                    .from('inventory')
+                    .from(tableName)
                     .select('acquired_at')
                     .eq('id', inventory_id)
                     .single();
@@ -289,7 +293,6 @@ export async function PATCH(req: Request) {
                     const questStarted = new Date(profile.quest_started_at).getTime();
                     const itemAcquired = new Date(invItem.acquired_at).getTime();
 
-                    // クエスト開始前に取得したアイテムは装備不可
                     if (itemAcquired < questStarted) {
                         return NextResponse.json(
                             { error: 'クエスト進行中は、事前所持アイテムを新たに装備できません。' },
@@ -300,20 +303,34 @@ export async function PATCH(req: Request) {
             }
         }
 
-        let query = supabaseServer
-            .from('inventory')
-            .update({ is_equipped })
-            .eq('id', inventory_id);
+        // v5.2: スキルとアイテムでテーブルを分岐
+        if (is_skill) {
+            // user_skills テーブルを更新
+            let query = supabaseServer
+                .from('user_skills')
+                .update({ is_equipped })
+                .eq('id', inventory_id);
 
-        // Filter by user_id if available, otherwise allow null (legacy)
-        if (userId) {
-            query = query.eq('user_id', userId);
+            if (userId) query = query.eq('user_id', userId);
+
+            const { error } = await query;
+            if (error) throw error;
         } else {
-            query = query.is('user_id', null);
-        }
+            // inventory テーブルを更新（既存ロジック）
+            let query = supabaseServer
+                .from('inventory')
+                .update({ is_equipped })
+                .eq('id', inventory_id);
 
-        const { error } = await query;
-        if (error) throw error;
+            if (userId) {
+                query = query.eq('user_id', userId);
+            } else {
+                query = query.is('user_id', null);
+            }
+
+            const { error } = await query;
+            if (error) throw error;
+        }
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

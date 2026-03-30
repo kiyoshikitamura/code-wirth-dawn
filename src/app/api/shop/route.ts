@@ -66,7 +66,7 @@ export async function GET(req: Request) {
             locationName !== 'Unknown'
                 ? supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locationName).maybeSingle()
                 : Promise.resolve({ data: null, error: null }),
-            supabaseService.from('items').select('*'),
+            supabaseService.from('items').select('*').neq('type', 'skill'), // v5.2: スキルは skills テーブルから取得するため除外
             supabaseService.from('skills').select('*, cards(*)')
         ]);
 

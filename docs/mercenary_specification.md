@@ -1,4 +1,8 @@
-# 傭兵設定仕様書（system_mercenary版） - 全50体仕様
+# ⚠️ [DEPRECATED] 傭兵設定仕様書（system_mercenary版） - 全50体仕様
+
+> **非推奨**: この仕様書は初期構想段階のデータです。
+> 現在のゲーム内NPCは `src/data/csv/npcs.csv` が正であり、
+> フレーバー定義は `docs/mercenary_flavor_specification.md`（新規作成予定）を参照してください。
 
 本仕様書は、酒場に配置される初期公式傭兵50体のデータ構造、CSVフォーマット、および全50体の詳細仕様（AIロール、設定、ビジュアルプロンプト等）を定義するものです。
 

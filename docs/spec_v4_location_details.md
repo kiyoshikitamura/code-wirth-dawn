@@ -14,28 +14,28 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 ### 2.1 拠点構成
 <!-- v11.0: 実装のlocationsテーブルに準拠 -->
 
-**ローラン聖帝国圏**
+**ローラン聖帝国圏 (マップ北西部 / 左上)**
 - 王都レガリア (loc_regalia) — 首都
 - 白亜の砦 (loc_white_fort)
 - 港町 (loc_port_city)
 - 国境の町 (loc_border_town)
 - 鉄の鉱山村 (loc_iron_mine)
 
-**砂塵の王国マルカンド圏**
+**砂塵の王国マルカンド圏 (マップ南西部 / 左下)**
 - 黄金都市イスハーク (loc_meridia) — 首都
 - 市場町 (loc_market_town)
 - オアシスの村 (loc_oasis)
 - 平原の都市 (loc_plains_city)
 - 高原の村 (loc_highland)
 
-**夜刀神国圏**
+**夜刀神国圏 (マップ北東部 / 右上)**
 - 神都「出雲」(loc_yato) — 首都
 - 門前町 (loc_temple_town)
 - 谷間の集落 (loc_valley)
 - 最果ての村 (loc_frontier_village)
 - 保養地 (loc_resort)
 
-**華龍神朝圏**
+**華龍神朝圏 (マップ南東部 / 右下)**
 - 天極城「龍京」(loc_charon) — 首都
 - 北の防衛砦 (loc_north_fort)
 - 監視哨 (loc_monitor_post)
@@ -53,6 +53,16 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 
 ### 3.2 接続描画
 `connections: TEXT[]` に隣接拠点の slug を格納。Mapコンポーネントは、このデータに基づき拠点間を繋ぐSVG `<line>` （街道ライン / Edge）を描画する。
+
+### 3.3 地理的配置と背景マップ (Geographical Distribution)
+データベースの（x, y）座標（0,0 = 左上）に従い、世界は大きく4つの象限に分割される。
+背景画像となる `worldmap.png` は、この配置に完全準拠して描画されること。
+
+- **北西 (左上)**: ローラン聖帝国（西洋ファンタジー・緑・平原・砦）
+- **南西 (左下)**: マルカンド（アラビアン・砂漠・オアシス）
+- **北東 (右上)**: 夜刀神国（和風・桜・雪山・渓谷）
+- **南東 (右下)**: 華龍神朝（中華・険しい岩峰・古き遺跡）
+- **中央部**: 中心（x:50, y:50付近）にはハブである「名もなき旅人の拠所」およびローラン側の「港町」が存在し、海や大きな内湾が中央に向かって入り込んでいる地形を形成する。
 
 ---
 

@@ -50,6 +50,7 @@ export async function GET(req: Request) {
                 id: npcData.id,
                 slug: npcData.slug,
                 name: npcData.name,
+                epithet: npcData.epithet || '', // 通り名
                 job_class: npcData.job_class || 'Guest',
                 level: npcData.level || 1,
                 hp: npcData.hp || 50,
@@ -63,11 +64,7 @@ export async function GET(req: Request) {
                 image: '/assets/chara/guest_default.png',
                 inject_cards: npcData.default_cards || [],
                 is_active: true,
-                durability: 3, // ゲストの初期耐久度？それともDBを使用？
-                // ゲストは「耐久度」を「参加制限」または体力として使用する可能性があります。
-                // とりあえず、意図されていた通りに '3' (または堅牢にしたい場合は100) をハードコードしておきます。
-                // 仕様ではゲストに耐久度はありますか？
-                // 今のところ標準の100にするか、制限としての '3' を維持します。
+                durability: 3,
                 max_durability: 3,
                 introduction: npcData.introduction
             };

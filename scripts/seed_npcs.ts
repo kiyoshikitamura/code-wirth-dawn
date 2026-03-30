@@ -39,6 +39,7 @@ async function seedNpcs() {
             // idなし → DBでUUIDを自動生成
             slug: r.slug,
             name: r.name,
+            epithet: r.epithet || '', // 通り名
             job_class: r.job || r.job_class || 'Civilian',
             level: 5,
             attack: 10,

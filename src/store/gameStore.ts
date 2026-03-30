@@ -5,8 +5,10 @@ import { supabase } from '@/lib/supabase';
 import { WORLD_ID } from '@/utils/constants';
 import { buildBattleDeck, routeDamage, canAffordCard, calculateDamage } from '@/lib/battleEngine';
 import { resolveNpcTurn, determineRole, determineGrade, NpcAction, BattleContext } from '@/lib/npcAI';
-import { StatusEffect, applyEffect, tickEffects, getBleedDamage, isStunned, hasEffect, StatusEffectId } from '@/lib/statusEffects';
+import { StatusEffect, applyEffect, removeEffect, tickEffects, getBleedDamage, isStunned, hasEffect, StatusEffectId, getEffectName } from '@/lib/statusEffects';
 import { validateCardUse, getDefaultTarget } from '@/lib/targeting';
+import { getCardEffectInfo } from '@/lib/cardEffects';
+import { getPassiveLabel, aggregateBattlePassives } from '@/lib/passiveEffects';
 import { useQuestState } from './useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
@@ -125,6 +127,7 @@ export const useGameStore = create<GameState>()(
                 enemy_effects: [],
                 exhaustPile: [],
                 consumedItems: [],
+                activePassives: [],
             },
 
             initializeBattle: () => {
@@ -191,9 +194,9 @@ export const useGameStore = create<GameState>()(
                 // 2. Build Deck
                 const { inventory, worldState } = get();
                 const equippedCards = (inventory || []).filter(i => i.is_equipped && (i.is_skill || i.item_type === 'skill_card')).map(i => ({
-                    id: String(i.id),
+                    id: String(i.card_id || i.id),
                     name: i.name,
-                    type: 'Skill' as Card['type'],
+                    type: (i.effect_data?.card_type || 'Skill') as Card['type'], // v5.2: DBのtypeを引き継ぎ（Passive等）
                     description: i.effect_data?.description || '',
                     cost: 0,
                     power: i.effect_data?.power || i.effect_data?.effect_val || 0,
@@ -218,12 +221,13 @@ export const useGameStore = create<GameState>()(
                     if (dbCards) {
                         partyCardPool = dbCards.map(c => ({
                             id: String(c.id),
-                            name: c.name, // ... other fields mapped in original
+                            name: c.name,
                             type: c.type,
                             description: c.description,
-                            cost: c.cost_val || c.cost || 0, // Handle cost_val from DB
-                            power: c.effect_val || c.power || 0, // Fix: Map effect_val to power
+                            cost: c.cost_val || c.cost || 0,
+                            power: c.effect_val || c.power || 0,
                             ap_cost: c.ap_cost ?? 1,
+                            cost_type: c.cost_type || undefined, // item/mp/vitality等
                         })) as Card[];
                     }
                 }
@@ -318,6 +322,7 @@ export const useGameStore = create<GameState>()(
                         vitDamageTakenThisTurn: false,
                         battle_result: undefined,
                         resonanceActive,
+                        activePassives: [], // v5.2: 使用済みPassiveカードIDリスト
                     },
                     deck: shuffledDeck,
                     discardPile: [],
@@ -745,6 +750,7 @@ export const useGameStore = create<GameState>()(
                 try {
                     // Optimistic update
                     const { inventory } = get();
+                    const targetItem = inventory.find(i => String(i.id) === itemId);
                     const newInventory = inventory.map(i =>
                         String(i.id) === itemId ? { ...i, is_equipped: !currentEquip } : i
                     );
@@ -756,10 +762,18 @@ export const useGameStore = create<GameState>()(
                     if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
                     if (userProfile?.id) headers['x-user-id'] = userProfile.id;
 
+                    // v5.2: スキルかアイテムかを判定し、API に is_skill フラグを渡す
+                    const isSkill = targetItem?.is_skill || targetItem?.item_type === 'skill_card';
+
                     await fetch('/api/inventory', {
                         method: 'PATCH',
                         headers,
-                        body: JSON.stringify({ inventory_id: itemId, is_equipped: !currentEquip, bypass_lock: bypassLock }),
+                        body: JSON.stringify({
+                            inventory_id: itemId,
+                            is_equipped: !currentEquip,
+                            bypass_lock: bypassLock,
+                            is_skill: isSkill,
+                        }),
                         cache: 'no-store'
                     });
                 } catch (e) {
@@ -796,6 +810,22 @@ export const useGameStore = create<GameState>()(
                     }
                     const apCost = card.ap_cost ?? 1;
                     set(state => ({ battleState: { ...state.battleState, current_ap: (battleState.current_ap || 0) - apCost } }));
+
+                    // cost_type=item: 1バトル1回制限チェック
+                    if (card.cost_type === 'item') {
+                        const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+                        if (battleState.consumedItems?.some(cid => cid.startsWith(baseId))) {
+                            // AP返却して使用ブロック
+                            set(state => ({
+                                battleState: {
+                                    ...state.battleState,
+                                    current_ap: (state.battleState.current_ap || 0) + apCost,
+                                    messages: [...state.battleState.messages, `${card.name}の素材が尽きた！（1戦闘1回制限）`]
+                                }
+                            }));
+                            return;
+                        }
+                    }
                 }
 
                 console.log("[Attack] Card used:", card);
@@ -825,6 +855,8 @@ export const useGameStore = create<GameState>()(
                 let nextDiscardPile = [...get().discardPile];
                 let logMsg = '';
                 let damage = 0;
+                let isAoe = false;
+                let effectInfo: ReturnType<typeof getCardEffectInfo> | undefined;
 
                 // Noise logic (unchanged)
                 if (card && (card.type === 'noise' || card.type === 'Basic' && card.name === 'Noise')) {
@@ -862,27 +894,163 @@ export const useGameStore = create<GameState>()(
                         }));
                     }
 
-                    damage = card.power ?? 0;
-                    if (damage > 0) {
-                        const isMagic = card.name.includes('魔法') || card.name.toLowerCase().includes('magic') || card.name.toLowerCase().includes('fire');
-                        const playerAtk = userProfile?.atk || 0;
+                    // ─── カード効果分岐エンジン ───────────────────
+                    effectInfo = getCardEffectInfo(card);
 
-                        damage = calculateDamage(
-                            damage,
-                            targetEnemy.def || 0,
-                            battleState.player_effects as StatusEffect[],
-                            targetEnemy.status_effects as StatusEffect[] || [], // v3.5
-                            isMagic,
-                            playerAtk
-                        );
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！ ${damage} のダメージ！`;
-                    } else {
-                        logMsg = `${card.name}を使用！`;
+                    switch (effectInfo.effectType) {
+                        case 'heal': {
+                            const healAmount = card.power || 0;
+                            if (userProfile && healAmount > 0) {
+                                const maxHp = userProfile.max_hp || 100;
+                                const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
+                                set(state => ({
+                                    userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
+                                }));
+                                logMsg = `${card.name}で HP ${healAmount} 回復！`;
+                                const { selectedProfileId } = get();
+                                fetch('/api/profile/update-status', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                                }).catch(console.error);
+                            } else {
+                                logMsg = `${card.name}を使用！`;
+                            }
+                            // cure_poison: ヒールカードが毒も解除する場合はここで
+                            // （将来拡張ポイント）
+                            break;
+                        }
+                        case 'escape': {
+                            nextHand = nextHand.filter(c => c.id !== card.id);
+                            nextDiscardPile = [...nextDiscardPile, card];
+                            logMsg = `${card.name}を使用！ 戦闘から離脱した！`;
+                            set(state => ({
+                                hand: nextHand,
+                                discardPile: nextDiscardPile,
+                                battleState: {
+                                    ...state.battleState,
+                                    isDefeat: true,
+                                    battle_result: 'escape',
+                                    messages: [...state.battleState.messages, logMsg]
+                                }
+                            }));
+                            return; // 即座に終了
+                        }
+                        case 'buff_self': {
+                            if (effectInfo.effectId) {
+                                const newEffects = applyEffect(
+                                    battleState.player_effects as StatusEffect[],
+                                    effectInfo.effectId,
+                                    effectInfo.effectDuration || 3
+                                );
+                                set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                                logMsg = `${card.name}を使用！ ${getEffectName(effectInfo.effectId)}を得た！`;
+                            } else {
+                                logMsg = `${card.name}を使用！`;
+                            }
+                            break;
+                        }
+                        case 'taunt': {
+                            if (effectInfo.effectId) {
+                                const newEffects = applyEffect(
+                                    battleState.player_effects as StatusEffect[],
+                                    effectInfo.effectId,
+                                    effectInfo.effectDuration || 2
+                                );
+                                set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                            }
+                            const sourceName = card.source?.replace('Party:', '') || 'パーティメンバー';
+                            logMsg = `${sourceName}が${card.name}！ 敵の攻撃を引きつけた！`;
+                            break;
+                        }
+                        case 'buff_party': {
+                            if (effectInfo.effectId) {
+                                const newEffects = applyEffect(
+                                    battleState.player_effects as StatusEffect[],
+                                    effectInfo.effectId,
+                                    effectInfo.effectDuration || 3
+                                );
+                                set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                            }
+                            logMsg = `${card.name}を展開！ パーティ全体が守られた！`;
+                            break;
+                        }
+                        case 'aoe_attack': {
+                            damage = card.power ?? 0;
+                            if (damage > 0) {
+                                const isMagic = card.name.includes('魔法') || card.name.toLowerCase().includes('magic');
+                                const playerAtk = userProfile?.atk || 0;
+                                // AoEは最も硬い敵のDEFで計算（最低保証）
+                                damage = calculateDamage(
+                                    damage, 0,
+                                    battleState.player_effects as StatusEffect[],
+                                    [],
+                                    isMagic,
+                                    playerAtk
+                                );
+                            }
+                            logMsg = `${card.name}で全体攻撃！ 各敵に ${damage} のダメージ！`;
+                            isAoe = true;
+                            break;
+                        }
+                        case 'debuff_enemy': {
+                            // デバフ系: ダメージは0でも効果を付与
+                            damage = card.power ?? 0;
+                            if (damage > 0) {
+                                const isMagic = true; // デバフは魔法扱い（DEF貫通）
+                                const playerAtk = userProfile?.atk || 0;
+                                damage = calculateDamage(
+                                    damage, targetEnemy.def || 0,
+                                    battleState.player_effects as StatusEffect[],
+                                    targetEnemy.status_effects as StatusEffect[] || [],
+                                    isMagic, playerAtk
+                                );
+                                logMsg = `${targetEnemy.name}に${card.name}！ ${damage} ダメージ！`;
+                            } else {
+                                const effectName = effectInfo.effectId ? getEffectName(effectInfo.effectId) : card.name;
+                                logMsg = `${targetEnemy.name}に${card.name}を使用！ ${effectName}を付与！`;
+                            }
+                            break;
+                        }
+                        default: { // 'attack'
+                            damage = card.power ?? 0;
+                            if (damage > 0) {
+                                const isMagic = card.name.includes('魔法') || card.name.toLowerCase().includes('magic') || card.name.toLowerCase().includes('fire');
+                                const playerAtk = userProfile?.atk || 0;
+                                damage = calculateDamage(
+                                    damage,
+                                    targetEnemy.def || 0,
+                                    battleState.player_effects as StatusEffect[],
+                                    targetEnemy.status_effects as StatusEffect[] || [],
+                                    isMagic,
+                                    playerAtk
+                                );
+                                logMsg = `${targetEnemy.name}に${card.name}を使用！ ${damage} のダメージ！`;
+                            } else {
+                                logMsg = `${card.name}を使用！`;
+                            }
+                        }
+                        case 'passive_activate': {
+                            // v5.2: Passiveカード使用 → バトル内永続バフ付与
+                            const passiveLabel = getPassiveLabel(card.id);
+                            // activePassives にカードIDを追加（重複防止）
+                            const currentPassives = get().battleState.activePassives || [];
+                            if (!currentPassives.includes(card.id)) {
+                                set(state => ({
+                                    battleState: {
+                                        ...state.battleState,
+                                        activePassives: [...(state.battleState.activePassives || []), card.id],
+                                    }
+                                }));
+                            }
+                            logMsg = `✨ ${card.name}を発動！ ${passiveLabel}（バトル終了まで）`;
+                            break;
+                        }
                     }
 
-                    // Card Cycle
+                    // ─── Card Cycle ────────────────────────────
                     nextHand = nextHand.filter(c => c.id !== card.id);
-                    if (card.type === 'Item' && card.isEquipment) {
+                    if ((card.type === 'Item' && card.isEquipment) || card.cost_type === 'item' || card.type === 'Passive') {
+                        // 装備品カード / cost_type=item / Passiveカード → exhaust（再利用不可）
                         set(state => ({
                             battleState: {
                                 ...state.battleState,
@@ -894,11 +1062,21 @@ export const useGameStore = create<GameState>()(
                         nextDiscardPile = [...nextDiscardPile, card];
                     }
 
-                    // Effect Application
-                    if (card.effect_id) {
+                    // ─── Effect Application (effectInfo経由) ──
+                    // buff_self/taunt/buff_party/heal は switch 内で処理済み
+                    // attack/aoe_attack/debuff_enemy の場合のみ敵にeffect付与
+                    if (!effectInfo.skipDamage && effectInfo.effectId) {
+                        const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
+                        if (isSelfBuff) {
+                            const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
+                            set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                        }
+                    }
+                    // card.effect_id（既存カードのeffect_id属性）も引き続きサポート
+                    if (card.effect_id && !effectInfo.effectId) {
                         const effectId = card.effect_id as StatusEffectId;
                         const duration = card.effect_duration || 3;
-                        const isSelfBuff = ['atk_up', 'def_up', 'regen'].includes(effectId);
+                        const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectId);
                         if (isSelfBuff) {
                             const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectId, duration);
                             set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
@@ -906,17 +1084,30 @@ export const useGameStore = create<GameState>()(
                     }
                 }
 
-                // Apply Damage & Effects to Enemies Array
+                // ─── Apply Damage & Effects to Enemies ────
                 let newEnemies = battleState.enemies.map(e => {
+                    // AoE: 全生存敵にダメージ
+                    if (isAoe && e.hp > 0) {
+                        let newHp = Math.max(0, e.hp - damage);
+                        let newEffects = (e.status_effects || []) as StatusEffect[];
+                        if (effectInfo?.effectId) {
+                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
+                            if (!isSelfBuff) {
+                                newEffects = applyEffect(newEffects, effectInfo.effectId, effectInfo?.effectDuration || 3);
+                            }
+                        }
+                        return { ...e, hp: newHp, status_effects: newEffects };
+                    }
+                    // 単体ターゲット
                     if (e.id === targetEnemyId) {
                         let newHp = Math.max(0, e.hp - damage);
                         let newEffects = (e.status_effects || []) as StatusEffect[];
-
-                        if (card?.effect_id) {
-                            const effectId = card.effect_id as StatusEffectId;
-                            const isSelfBuff = ['atk_up', 'def_up', 'regen'].includes(effectId);
+                        // effectInfo 経由のデバフ付与
+                        const resolvedEffectId = effectInfo?.effectId || (card?.effect_id as StatusEffectId | undefined);
+                        if (resolvedEffectId) {
+                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(resolvedEffectId);
                             if (!isSelfBuff) {
-                                newEffects = applyEffect(newEffects, effectId, card.effect_duration || 3);
+                                newEffects = applyEffect(newEffects, resolvedEffectId, effectInfo?.effectDuration || card?.effect_duration || 3);
                             }
                         }
                         return { ...e, hp: newHp, status_effects: newEffects };

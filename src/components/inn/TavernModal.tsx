@@ -274,7 +274,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="text-sm font-bold text-[#3e2723] truncate">{member.name}</div>
-                                                            <div className="text-[11px] text-[#8b6f4e]">{member.job_class}</div>
+                                                            <div className="text-[11px] text-[#8b6f4e]">{(member as any).epithet || member.job_class}</div>
                                                         </div>
                                                         <div className="text-[11px] text-[#6b8cae] font-bold">契約済</div>
                                                     </div>

@@ -469,7 +469,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                     })()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-sm font-bold text-white truncate">{detail.data.name}</h3>
+                                    <h3 className="text-sm font-bold text-white truncate">{detail.data.epithet ? `${detail.data.epithet} ${detail.data.name}` : detail.data.name}</h3>
                                     <div className="flex items-center gap-2 text-[10px] text-gray-400">
                                         {detail.type === 'skill' && <><span className="text-purple-400">スキル</span><span className="text-cyan-500">Cost:{detail.data.cost || 0}</span>{detail.data.is_equipped && <span className="text-amber-400">装備中</span>}</>}
                                         {detail.type === 'item' && <><span className="text-green-400">所持品</span><span>x{detail.data.quantity}</span></>}
@@ -654,7 +654,7 @@ function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; 
                         </div>
                         <div>
                             <div className="text-xs text-blue-300 font-bold">{member.name}</div>
-                            <div className="text-[10px] text-gray-500">{toJpJobClass(member.job_class || 'Adventurer')} / HP:{member.hp ?? member.durability}</div>
+                            <div className="text-[10px] text-gray-500">{member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / HP:{member.hp ?? member.durability}</div>
                         </div>
                     </div>
                     <span className="text-[9px] text-gray-600 shrink-0">▶</span>

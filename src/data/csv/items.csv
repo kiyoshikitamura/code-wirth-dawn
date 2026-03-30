@@ -14,25 +14,25 @@ id,slug,name,type,sub_type,base_price,min_prosperity,nation_tags,effect_data,_co
 3040,item_revive_incense,反魂香,consumable,,5000,5,any,"{""effect"":""revive_npc""}",共通(絶頂): NPC蘇生。
 3044,item_bomb_large,大型爆弾,consumable,,500,3,loc_marcund,"{""power"":40,""effect"":""aoe""}",マルカンド: 全体ダメ。
 3047,item_royal_decree,王家の勅令書,consumable,,1000,4,loc_holy_empire,"{""effect"":""reputation_boost""}",聖帝国: 名声倍増。
-3050,item_debris_clear,瓦礫撤去許可証,consumable,,0,1,any,"{""effect"":""quest_key""}",共通(崩壊): クエストキー。
+3050,item_debris_clear,瓦礫撤去許可証,key_item,,0,1,any,"{""effect"":""quest_key""}",共通(崩壊): クエストキー。
 3079,grimoire_teleport,魔導書:転移,consumable,,3000,5,any,"{""effect"":""teleport""}",共通(絶頂): 好きな拠点へ即時移動。
-3101,item_relic_bone,聖遺物の欠片,consumable,500,,any,"{}",骸骨狂王の討伐証明
-3102,item_desert_worm_meat,大砂蟲の極上肉,consumable,800,,any,"{}",マザーワームから採れる希少部位
-3103,item_red_ogre_horn,剛腕赤鬼の金棒碎片,consumable,600,,any,"{}",赤鬼討伐の証
-3104,item_thunder_fur,雷獣の帯電毛皮,consumable,1000,,any,"{}",雷獣のレア素材
-3105,item_griffon_feather,暴風グリフォンの王羽,consumable,900,,any,"{}",グリフォンロードの巨大羽
-3106,item_treant_core,エントの輝く心材,consumable,700,,any,"{}",長年の魔力を蓄えた芯
-3111,item_white_robe,極白の法衣,consumable,armor,5000,,any,"{""def_bonus"":10,""description"":""異端へと堕ちた元大司教の法衣""}",ボスドロップ装備
-3112,item_thief_blade,義賊の刀,consumable,weapon,4000,,any,"{""atk_bonus"":15,""description"":""民を救えなかった狂剣の遺品""}",ボスドロップ装備
-3113,item_pirate_hat,大海賊の帽子,consumable,accessory,3500,,any,"{""hp_bonus"":20,""description"":""血塗られた艦隊の長の帽子""}",ボスドロップ装備
-3121,item_demon_heart,悪魔の心臓,consumable,3000,,any,"{}",バフォメットの脈打つ心臓
-3122,item_angel_record,天使の手記,consumable,3000,,any,"{}",天界の真実が記された冒涜的な書
+3101,item_relic_bone,聖遺物の欠片,material,,500,,any,"{}",骸骨狂王の討伐証明
+3102,item_desert_worm_meat,大砂蟲の極上肉,material,,800,,any,"{}",マザーワームから採れる希少部位
+3103,item_red_ogre_horn,剛腕赤鬼の金棒碎片,material,,600,,any,"{}",赤鬼討伐の証
+3104,item_thunder_fur,雷獣の帯電毛皮,material,,1000,,any,"{}",雷獣のレア素材
+3105,item_griffon_feather,暴風グリフォンの王羽,material,,900,,any,"{}",グリフォンロードの巨大羽
+3106,item_treant_core,エントの輝く心材,material,,700,,any,"{}",長年の魔力を蓄えた芯
+3111,item_white_robe,極白の法衣,equipment,armor,5000,,any,"{""def_bonus"":10,""description"":""異端へと堕ちた元大司教の法衣""}",ボスドロップ装備
+3112,item_thief_blade,義賊の刀,equipment,weapon,4000,,any,"{""atk_bonus"":15,""description"":""民を救えなかった狂剣の遺品""}",ボスドロップ装備
+3113,item_pirate_hat,大海賊の帽子,equipment,accessory,3500,,any,"{""hp_bonus"":20,""description"":""血塗られた艦隊の長の帽子""}",ボスドロップ装備
+3121,item_demon_heart,悪魔の心臓,material,,3000,,any,"{}",バフォメットの脈打つ心臓
+3122,item_angel_record,天使の手記,material,,3000,,any,"{}",天界の真実が記された冒涜的な書
 3123,item_dragon_blood,竜血,consumable,,8000,,any,"{""effect"":""restore_vitality"",""vit_restore"":3}",デザートドラゴンから採れる貴重な血。Vitを3回復する
-3124,item_kirin_horn,麒麟の雷角,consumable,5000,,any,"{}",神域の幻獣の力を持つ角
-3125,item_omega_part,謎の金属部品,consumable,4000,,any,"{}",オメガ・ゴーレムの未知の機関
-3126,item_kraken_proof,海王の証,consumable,5000,,any,"{}",クラーケン討伐の揺るぎない証明
-3127,item_mino_axe,大斧,consumable,weapon,4000,,any,"{""atk_bonus"":20,""description"":""ミノタウロス・キングの巨大な斧""}",ボスドロップ装備
-3128,item_maze_seal,迷宮の宝印,consumable,2000,,any,"{}",迷宮走破の印
+3124,item_kirin_horn,麒麟の雷角,material,,5000,,any,"{}",神域の幻獣の力を持つ角
+3125,item_omega_part,謎の金属部品,material,,4000,,any,"{}",オメガ・ゴーレムの未知の機関
+3126,item_kraken_proof,海王の証,material,,5000,,any,"{}",クラーケン討伐の揺るぎない証明
+3127,item_mino_axe,大斧,equipment,weapon,4000,,any,"{""atk_bonus"":20,""description"":""ミノタウロス・キングの巨大な斧""}",ボスドロップ装備
+3128,item_maze_seal,迷宮の宝印,material,,2000,,any,"{}",迷宮走破の印
 3129,item_potion,中和薬,consumable,,50,1,any,"{""heal"":15}",共通: 最安価の回復薬。
 3130,item_high_potion,上級中和薬,consumable,,250,3,any,"{""heal"":80}",共通: 高品質な回復薬。
 3131,item_roland_blessing,大聖堂の祝福,consumable,,1000,3,loc_holy_empire,"{""effect"":""buff_all"",""atk_bonus"":5,""def_bonus"":5,""duration"":3}",聖帝国: ATK/DEFを一時強化。
@@ -43,15 +43,15 @@ id,slug,name,type,sub_type,base_price,min_prosperity,nation_tags,effect_data,_co
 3136,item_yato_smoke,煙玉(夜刀),consumable,,600,2,loc_yatoshin,"{""effect"":""escape""}",夜刀: 確実に逃走する煙玉。
 3137,item_oasis_water,霊泉の水,consumable,,1000,3,loc_marcund,"{""heal"":40,""effect"":""regen"",""duration"":5}",マルカンド: 継続HP回復。
 3138,item_desert_spice,熱砂の香辛料,consumable,,900,2,loc_marcund,"{""effect"":""berserk"",""atk_bonus"":15,""def_penalty"":10,""duration"":3}",マルカンド: ATK大幅UP・DEFダウン。
-3139,item_trade_iron,良質な鉄鉱石,consumable,,100,2,any,"{}",交易品: 手堅い資金源。
-3140,item_trade_silk,煌びやかな絹織物,consumable,,300,3,any,"{}",交易品: 貴族に需要。
-3141,item_trade_gem,古代遺跡の宝石,consumable,,1000,4,any,"{}",交易品: 歴史的価値が高い。
-3142,item_trade_dragon,飛竜の鱗,consumable,,5000,5,any,"{}",交易品: 最高級防具の素材。
-3143,item_trade_mithril,ミスリル鋼,consumable,,10000,5,any,"{}",交易品: 天文学的な値で取引。
-3144,item_pass_roland,聖帝国通行許可証,consumable,,20000,3,loc_holy_empire,"{""effect"":""capital_pass"",""nation"":""roland"",""duration_days"":365}",聖帝国首都への通行許可証。
-3145,item_pass_karyu,神朝通行許可証,consumable,,20000,3,loc_haryu,"{""effect"":""capital_pass"",""nation"":""karyu"",""duration_days"":365}",華龍首都への通行許可証。
-3146,item_pass_yato,夜刀秘密通行符,consumable,,20000,3,loc_yatoshin,"{""effect"":""capital_pass"",""nation"":""yato"",""duration_days"":365}",夜刀首都への通行許可証。
-3147,item_pass_markand,熱砂の隊商証,consumable,,20000,3,loc_marcund,"{""effect"":""capital_pass"",""nation"":""markand"",""duration_days"":365}",マルカンド首都への通行許可証。
+3139,item_trade_iron,良質な鉄鉱石,trade_good,,100,2,any,"{}",交易品: 手堅い資金源。
+3140,item_trade_silk,煌びやかな絹織物,trade_good,,300,3,any,"{}",交易品: 貴族に需要。
+3141,item_trade_gem,古代遺跡の宝石,trade_good,,1000,4,any,"{}",交易品: 歴史的価値が高い。
+3142,item_trade_dragon,飛竜の鱗,trade_good,,5000,5,any,"{}",交易品: 最高級防具の素材。
+3143,item_trade_mithril,ミスリル鋼,trade_good,,10000,5,any,"{}",交易品: 天文学的な値で取引。
+3144,item_pass_roland,聖帝国通行許可証,key_item,,20000,3,loc_holy_empire,"{""effect"":""capital_pass"",""nation"":""roland"",""duration_days"":365}",聖帝国首都への通行許可証。
+3145,item_pass_karyu,神朝通行許可証,key_item,,20000,3,loc_haryu,"{""effect"":""capital_pass"",""nation"":""karyu"",""duration_days"":365}",華龍首都への通行許可証。
+3146,item_pass_yato,夜刀秘密通行符,key_item,,20000,3,loc_yatoshin,"{""effect"":""capital_pass"",""nation"":""yato"",""duration_days"":365}",夜刀首都への通行許可証。
+3147,item_pass_markand,熱砂の隊商証,key_item,,20000,3,loc_marcund,"{""effect"":""capital_pass"",""nation"":""markand"",""duration_days"":365}",マルカンド首都への通行許可証。
 3148,item_black_market_elixir,禁術の秘薬,consumable,,50000,1,any,"{""heal"":9999,""effect"":""full_restore""}",闇市: 完全回復(代償あり)。
 3149,item_launder_scroll,帳簿の改竄,consumable,,100000,1,any,"{""effect"":""reputation_reset""}",闇市: 全拠点の関係値リセット。
-3150,item_dark_matter,謎の黒鉱石,consumable,,30000,1,any,"{}",闇市: 禍々しい高額交易品。
+3150,item_dark_matter,謎の黒鉱石,trade_good,,30000,1,any,"{}",闇市: 禍々しい高額交易品。
