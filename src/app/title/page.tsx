@@ -171,8 +171,8 @@ export default function TitlePage() {
             }
             setIsUploading(false);
 
-            // 開始地点を取得
-            const { data: hubLoc } = await supabase.from('locations').select('id').eq('name', '名もなき旅人の拠所').maybeSingle();
+            // 開始地点を取得（国境の町 = 正規の初期拠点）
+            const { data: startLoc } = await supabase.from('locations').select('id').eq('slug', 'loc_border_town').maybeSingle();
 
             const dummyBirthDate = new Date();
             dummyBirthDate.setFullYear(dummyBirthDate.getFullYear() - age);
@@ -197,7 +197,7 @@ export default function TitlePage() {
                     max_deck_cost: previewStats.max_deck_cost,
                     accumulated_days: 0,
                     gold: 1000,
-                    current_location_id: hubLoc?.id,
+                    current_location_id: startLoc?.id,
                     ...(uploadedAvatarUrl ? { avatar_url: uploadedAvatarUrl } : {}),
                 })
             });

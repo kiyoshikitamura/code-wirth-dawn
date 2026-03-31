@@ -106,23 +106,48 @@ export async function POST(req: Request) {
             .not('owner_id', 'is', null);
         if (pmError) console.error("パーティリセットエラー:", pmError);
 
-        // 2a. Get Start Location ID
+        // 2g. 装備データ削除
+        const { error: equipError } = await client
+            .from('equipped_items')
+            .delete()
+            .not('id', 'is', null);
+        if (equipError) console.error("装備データ削除エラー:", equipError);
+
+        // 2h. スキルデータ削除
+        const { error: skillError } = await client
+            .from('user_skills')
+            .delete()
+            .not('id', 'is', null);
+        if (skillError) console.error("スキルデータ削除エラー:", skillError);
+
+        // 2a. Get Start Location ID (国境の町 = 正規の初期拠点)
         let { data: startLoc } = await client
             .from('locations')
             .select('id')
-            .eq('name', '名もなき旅人の拠所')
+            .eq('slug', 'loc_border_town')
             .maybeSingle();
 
         if (!startLoc) {
-            console.log("Start location not found. Creating fallback...");
+            // slug で見つからない場合は name でフォールバック
+            const { data: fallbackLoc } = await client
+                .from('locations')
+                .select('id')
+                .eq('name', '国境の町')
+                .maybeSingle();
+            startLoc = fallbackLoc;
+        }
+
+        if (!startLoc) {
+            console.log("Start location '国境の町' not found. Creating fallback...");
             const { data: newLoc } = await client
                 .from('locations')
                 .insert([{
-                    name: '名もなき旅人の拠所',
+                    name: '国境の町',
+                    slug: 'loc_border_town',
                     type: 'Town',
-                    description: '旅人たちの集う拠り所。',
-                    x: 10,
-                    y: 60,
+                    description: '四つの国の境界に位置する交易の町。',
+                    x: 50,
+                    y: 50,
                     nation_id: 'Neutral',
                     connections: []
                 }])
@@ -200,17 +225,14 @@ export async function POST(req: Request) {
                 }]);
             if (insertProfileError) console.error("Profile insert failed:", insertProfileError);
         }
-        // 4. Reset Hub States (Set all to True as everyone moves to Hub)
+        // 4. Reset Hub States (国境の町は通常拠点なので is_in_hub = false)
         const { error: hubError } = await client
             .from('user_hub_states')
-            .update({ is_in_hub: true })
+            .update({ is_in_hub: false })
             .not('user_id', 'is', null);
 
-        // If update misses (no rows), we rely on lazy init or manual insert if needed via profile loop.
-        // But simpler to just delete all and let lazy init handle? 
-        // No, lazy init defaults to FALSE. We want TRUE.
-        // So we should upsert for existing profiles.
-        // For now, simple update is good. If no row, Profile Reset puts them at Location ID, which World Map should detect.
+        // 国境の町はハブではないため、is_in_hub を false に設定
+        // ハブに戻ったときに move API で true に再設定される
 
         if (hubError) console.error("Hub State reset error:", hubError);
 

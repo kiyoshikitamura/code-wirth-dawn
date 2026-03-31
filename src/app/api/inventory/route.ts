@@ -102,6 +102,7 @@ export async function GET(req: Request) {
                     name,
                     slug,
                     type,
+                    sub_type,
                     base_price,
                     effect_data,
                     cost
@@ -166,9 +167,13 @@ export async function GET(req: Request) {
                 const effectData = item.effect_data || {};
                 const powerVal = effectData.heal || effectData.damage || effectData.power || 0;
 
-                // v5.2: items.type === 'skill' はレガシーデータ（旧仕様で inventory に入ったスキル）
+                // v5.3: items.type === 'skill' はレガシーデータ（旧仕様で inventory に入ったスキル）
                 // → is_skill: true, item_type: 'skill_card' としてデッキタブに表示させる
-                const isLegacySkill = item.type === 'skill';
+                // ただし slug ベースでスキル教本系のプレフィックスを持つもののみに限定
+                // (交易品・装備品等が万が一 type='skill' のまま残っていても誤分類を防ぐ)
+                const SKILL_SLUG_PREFIXES = ['book_', 'grimoire_', 'scroll_', 'skill_', 'manual_'];
+                const hasSkillSlug = item.slug && SKILL_SLUG_PREFIXES.some((p: string) => item.slug.startsWith(p));
+                const isLegacySkill = item.type === 'skill' && hasSkillSlug;
 
                 return {
                     id: entry.id,
@@ -187,7 +192,7 @@ export async function GET(req: Request) {
                     is_skill: isLegacySkill,
                     cost: item.cost || effectData.cost_val || effectData.cost || 0,
                     effect_data: effectData,
-                    image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null)
+                    image_url: item.slug ? `/images/items/${item.slug}.png` : null
                 };
             } catch (e: any) {
                 console.error(`Error mapping inventory item ${entry.id}:`, e);
@@ -255,7 +260,7 @@ export async function GET(req: Request) {
     }
 }
 
-// PATCH: Equip/Unequip (v5.2: inventory + user_skills 両対応)
+// PATCH: Equip/Unequip (v5.2: inventory + user_skills 両対応, レガシースキルフォールバック付き)
 export async function PATCH(req: Request) {
     try {
         const { inventory_id, is_equipped, bypass_lock, is_skill } = await req.json();
@@ -272,6 +277,26 @@ export async function PATCH(req: Request) {
             if (!error && user) userId = user.id;
         }
 
+        // is_skill が true の場合、まず user_skills に該当IDがあるか確認
+        // なければレガシースキル（inventory テーブルに保存された旧スキル）とみなす
+        let isLegacySkill = false;
+        if (is_skill) {
+            const { data: skillRecord } = await supabaseServer
+                .from('user_skills')
+                .select('id')
+                .eq('id', inventory_id)
+                .maybeSingle();
+
+            if (!skillRecord) {
+                // user_skills に該当IDが存在しない → レガシースキル（inventory テーブル側）
+                isLegacySkill = true;
+                console.log(`[PATCH] Legacy skill detected: inventory_id=${inventory_id} not found in user_skills, falling back to inventory table`);
+            }
+        }
+
+        // 実際に更新するテーブルを決定
+        const useUserSkillsTable = is_skill && !isLegacySkill;
+
         // クエスト進行中の装備変更制限 (is_equipped: true にする場合のみ、bypass_lockがない場合)
         if (is_equipped && userId && !bypass_lock) {
             const { data: profile } = await supabaseServer
@@ -281,8 +306,8 @@ export async function PATCH(req: Request) {
                 .single();
 
             if (profile?.current_quest_id && profile.quest_started_at) {
-                // スキルの場合は user_skills、アイテムの場合は inventory から取得日時を確認
-                const tableName = is_skill ? 'user_skills' : 'inventory';
+                // 実際に使用するテーブルから取得日時を確認
+                const tableName = useUserSkillsTable ? 'user_skills' : 'inventory';
                 const { data: invItem } = await supabaseServer
                     .from(tableName)
                     .select('acquired_at')
@@ -303,9 +328,9 @@ export async function PATCH(req: Request) {
             }
         }
 
-        // v5.2: スキルとアイテムでテーブルを分岐
-        if (is_skill) {
-            // user_skills テーブルを更新
+        // v5.2: スキルとアイテムでテーブルを分岐（レガシースキルは inventory にフォールバック）
+        if (useUserSkillsTable) {
+            // user_skills テーブルを更新（正規スキル）
             let query = supabaseServer
                 .from('user_skills')
                 .update({ is_equipped })
@@ -316,7 +341,7 @@ export async function PATCH(req: Request) {
             const { error } = await query;
             if (error) throw error;
         } else {
-            // inventory テーブルを更新（既存ロジック）
+            // inventory テーブルを更新（通常アイテム or レガシースキル）
             let query = supabaseServer
                 .from('inventory')
                 .update({ is_equipped })
@@ -330,6 +355,10 @@ export async function PATCH(req: Request) {
 
             const { error } = await query;
             if (error) throw error;
+
+            if (isLegacySkill) {
+                console.log(`[PATCH] Legacy skill equip updated successfully: inventory_id=${inventory_id}, is_equipped=${is_equipped}`);
+            }
         }
 
         return NextResponse.json({ success: true });

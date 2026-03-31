@@ -61,13 +61,20 @@ export async function GET(req: Request) {
             }
         }
 
-        // 並列: reputations と items と skills を同時取得
-        const [repResult, itemsResult, skillsResult] = await Promise.all([
+        // 通行許可証の slug 一覧
+        const PASS_SLUGS = ['item_pass_roland', 'item_pass_karyu', 'item_pass_yato', 'item_pass_markand'];
+
+        // 並列: reputations, items, skills, 通行許可証, 所持済み通行許可証 を同時取得
+        const [repResult, itemsResult, skillsResult, passResult, ownedPassResult] = await Promise.all([
             locationName !== 'Unknown'
                 ? supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locationName).maybeSingle()
                 : Promise.resolve({ data: null, error: null }),
-            supabaseService.from('items').select('*').neq('type', 'skill'), // v5.2: スキルは skills テーブルから取得するため除外
-            supabaseService.from('skills').select('*, cards(*)')
+            supabaseService.from('items').select('*').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v5.4: スキル・キーアイテム・素材を除外
+            supabaseService.from('skills').select('*, cards(*)'),
+            // 通行許可証は全道具屋で表示するため別途取得
+            supabaseService.from('items').select('*').in('slug', PASS_SLUGS),
+            // ユーザーが既に所持している通行許可証を確認
+            supabaseService.from('inventory').select('item_id, items!inner(slug)').eq('user_id', profile.id).in('items.slug', PASS_SLUGS)
         ]);
 
         if (repResult.data && (repResult.data.score || 0) < 0) {
@@ -76,6 +83,8 @@ export async function GET(req: Request) {
         if (itemsResult.error) throw itemsResult.error;
         const allItems = itemsResult.data as ItemDB[];
         const allSkills = (skillsResult.data || []) as any[];
+        const passItems = (passResult.data || []) as ItemDB[];
+        const ownedPassSlugs = new Set((ownedPassResult.data || []).map((inv: any) => inv.items?.slug).filter(Boolean));
 
         // 2. Inflation Logic
         // inflationMap: 繁栄度ごとの価格乗数（仕様: spec_v6_shop_system.md §5）
@@ -123,10 +132,24 @@ export async function GET(req: Request) {
             if (isNewbie && !item.is_black_market) price = Math.floor(price * 0.5);
             return {
                 ...item,
-                // slugベースの画像URLを自動設定
-                image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null),
+                image_url: item.slug ? `/images/items/${item.slug}.png` : null,
                 current_price: price,
                 is_quest_exclusive: (questId && item.quest_req_id === questId),
+                _source: 'item' as const
+            };
+        });
+
+        // 4b. 通行許可証をショップに追加（全道具屋共通、国・繁栄度フィルタ無視）
+        const filteredPasses = passItems.map(item => {
+            let price = Math.floor(item.base_price * priceMultiplier);
+            if (isNewbie && !item.is_black_market) price = Math.floor(price * 0.5);
+            const isOwned = ownedPassSlugs.has(item.slug);
+            return {
+                ...item,
+                type: 'key_item' as const,
+                image_url: item.slug ? `/images/items/${item.slug}.png` : null,
+                current_price: price,
+                is_owned: isOwned,
                 _source: 'item' as const
             };
         });
@@ -173,8 +196,35 @@ export async function GET(req: Request) {
             };
         });
 
-        // 6. 統合してソート（混在表示）
-        const allShopItems = [...filteredItems, ...filteredSkills].sort((a, b) => a.current_price - b.current_price);
+        // 6. 統合してカテゴリ優先ソート（武器→防具→アクセサリー→スキル→通行許可証→消耗品→交易品）
+        // カテゴリ内は価格昇順
+        const CATEGORY_ORDER: Record<string, number> = {
+            'weapon': 0,
+            'armor': 1,
+            'accessory': 2,
+            'skill_card': 3,
+            'key_item': 4,
+            'consumable': 5,
+            'trade_good': 6,
+        };
+        const getCategoryOrder = (item: any): number => {
+            // 装備品はsub_typeで分類
+            if (item.type === 'equipment' && item.sub_type) {
+                return CATEGORY_ORDER[item.sub_type] ?? 99;
+            }
+            // スキルカード
+            if (item._source === 'skill' || item.type === 'skill_card') {
+                return CATEGORY_ORDER['skill_card'];
+            }
+            // その他（consumable, trade_good など）
+            return CATEGORY_ORDER[item.type] ?? 99;
+        };
+        const allShopItems = [...filteredItems, ...filteredPasses, ...filteredSkills].sort((a, b) => {
+            const catA = getCategoryOrder(a);
+            const catB = getCategoryOrder(b);
+            if (catA !== catB) return catA - catB;
+            return a.current_price - b.current_price;
+        });
 
         // rumoredItemsは初回リリースでは常に非表示
         const rumoredItems: any[] = [];
@@ -309,6 +359,19 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
     const isNewbie = (profile.level || 1) <= 5;
     let finalPrice = Math.floor(item.base_price * priceMultiplier);
     if (isNewbie && !item.is_black_market) finalPrice = Math.floor(finalPrice * 0.5);
+
+    // 2b. 通行許可証の重複購入チェック
+    const PASS_SLUGS = ['item_pass_roland', 'item_pass_karyu', 'item_pass_yato', 'item_pass_markand'];
+    if (item.slug && PASS_SLUGS.includes(item.slug)) {
+        const { count } = await supabaseService
+            .from('inventory')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+            .eq('item_id', item.id);
+        if (count && count > 0) {
+            return NextResponse.json({ error: 'この通行許可証は既に所持しています。' }, { status: 400 });
+        }
+    }
 
     // 3. Check Gold
     if (profile.gold < finalPrice) {

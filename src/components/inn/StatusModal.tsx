@@ -45,8 +45,12 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     React.useEffect(() => {
         fetchInventory();
         fetchUserProfile();
-        fetchEquipment();
     }, []);
+
+    // userProfile が読み込まれてからも再取得（初回マウント時は userProfile が null の可能性）
+    React.useEffect(() => {
+        fetchEquipment();
+    }, [userProfile?.id]);
 
     const fetchEquipment = async () => {
         try {
@@ -104,7 +108,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 body: JSON.stringify({ inventory_id: invItem.id, slot })
             });
             if (res.ok) {
-                await fetchEquipment();
+                await Promise.all([fetchEquipment(), fetchInventory()]);
                 alert(`${invItem.name}を装備しました！`);
             } else {
                 const data = await res.json();
@@ -125,7 +129,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 }
             });
             if (res.ok) {
-                await fetchEquipment();
+                await Promise.all([fetchEquipment(), fetchInventory()]);
             }
         } catch (e) { console.error(e); }
     };
@@ -136,7 +140,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const tabs: { key: TabKey; label: string; icon: React.ReactNode; count?: number }[] = [
         { key: 'deck', label: 'デッキ', icon: <Zap className="w-3.5 h-3.5" />, count: skills.length },
         { key: 'items', label: '所持品', icon: <Backpack className="w-3.5 h-3.5" />, count: consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').length },
-        { key: 'equip', label: '装備', icon: <Shield className="w-3.5 h-3.5" />, count: equipped.length },
+        { key: 'equip', label: '装備', icon: <Shield className="w-3.5 h-3.5" />, count: equipped.length + equipmentItems.length },
         { key: 'party', label: 'パーティ', icon: <Users className="w-3.5 h-3.5" /> },
     ];
 
@@ -188,15 +192,27 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                         <div className="flex-1 grid grid-cols-3 gap-1.5">
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
                                 <div className="text-[9px] text-gray-600">HP</div>
-                                <div className="text-xs text-green-400 font-bold flex items-center justify-center gap-1"><Heart className="w-3 h-3" />{userProfile?.hp ?? 100}/{userProfile?.max_hp ?? 100}</div>
+                                <div className="text-xs text-green-400 font-bold flex items-center justify-center gap-1">
+                                    <Heart className="w-3 h-3" />
+                                    {(userProfile?.hp ?? 100) + equipBonus.hp}/{(userProfile?.max_hp ?? 100) + equipBonus.hp}
+                                    {equipBonus.hp > 0 && <span className="text-[8px] text-emerald-500">+{equipBonus.hp}</span>}
+                                </div>
                             </div>
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
                                 <div className="text-[9px] text-gray-600">ATK</div>
-                                <div className="text-xs text-red-400 font-bold flex items-center justify-center gap-1"><Sword className="w-3 h-3" />{userProfile?.atk ?? 10}</div>
+                                <div className="text-xs text-red-400 font-bold flex items-center justify-center gap-1">
+                                    <Sword className="w-3 h-3" />
+                                    {(userProfile?.atk ?? 10) + equipBonus.atk}
+                                    {equipBonus.atk > 0 && <span className="text-[8px] text-orange-400">+{equipBonus.atk}</span>}
+                                </div>
                             </div>
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
                                 <div className="text-[9px] text-gray-600">DEF</div>
-                                <div className="text-xs text-slate-400 font-bold flex items-center justify-center gap-1"><Shield className="w-3 h-3" />{userProfile?.def ?? 0}</div>
+                                <div className="text-xs text-slate-400 font-bold flex items-center justify-center gap-1">
+                                    <Shield className="w-3 h-3" />
+                                    {(userProfile?.def ?? 0) + equipBonus.def}
+                                    {equipBonus.def > 0 && <span className="text-[8px] text-cyan-400">+{equipBonus.def}</span>}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -383,7 +399,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                     <div className="space-y-1">
                                         {equipmentItems.map(item => {
                                             const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
-                                            const subType = (item as any).sub_type || (item as any).item_type === 'equipment' ? ((item as any).sub_type || 'weapon') : 'weapon';
+                                            const subType = (item as any).sub_type || ((item as any).item_type === 'equipment' ? 'weapon' : 'weapon');
                                             const bonus = getEquipmentBonus(item.effect_data);
                                             return (
                                                 <div key={item.id} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800">
@@ -413,14 +429,14 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                         </div>
                     )}
 
-                    {/* タブ2: 所持品 (装備品を除外) */}
+                    {/* タブ2: 所持品 (装備品・スキルを除外) */}
                     {activeTab === 'items' && (
                         <div>
-                            {consumables.filter(i => (i.quantity || 0) > 0).length === 0 ? (
+                            {consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').length === 0 ? (
                                 <div className="text-center text-gray-500 py-8 text-xs">所持品はありません。</div>
                             ) : (
                                 <div className="space-y-1">
-                                    {consumables.filter(i => (i.quantity || 0) > 0).map(item => {
+                                    {consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').map(item => {
                                         const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
                                         return (
                                         <div key={item.id} onClick={() => setDetail({ type: 'item', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">

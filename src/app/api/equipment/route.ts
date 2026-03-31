@@ -28,7 +28,7 @@ export async function GET(req: Request) {
                 item_id,
                 equipped_at,
                 items!inner (
-                    id, slug, name, type, sub_type, base_price, effect_data, image_url
+                    id, slug, name, type, sub_type, base_price, effect_data
                 )
             `)
             .eq('user_id', userId);
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
             equipped_at: e.equipped_at,
             item: e.items ? {
                 ...e.items,
-                image_url: e.items.image_url || (e.items.slug ? `/images/items/${e.items.slug}.png` : null)
+                image_url: e.items.slug ? `/images/items/${e.items.slug}.png` : null
             } : null
         }));
 
