@@ -1,0 +1,10 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"先日の暴動で焼け落ちた区画に、まだ金庫が残っているはずだ。火事場泥棒どもより先に見つけ出してくれ。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_goblin"
+CHOICE,,"win",node_2,
+CHOICE,,"lose",end_failure,
+NODE,node_2,"依頼品の納品を行う。",,"type:check_delivery, item_id:3002, quantity:1"
+CHOICE,,"success",end_success,
+CHOICE,,"failure",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

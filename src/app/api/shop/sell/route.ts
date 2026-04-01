@@ -92,11 +92,19 @@ export async function POST(req: Request) {
             }, { status: 404 });
         }
 
+        // 2.5 スキルアイテムの売却防止 (spec_v3.1 §5.2)
+        // シナリオ専用スキル（is_skill=true, type='skill'）は売却不可
+        const item = invItem.items as any;
+        if (item?.type === 'skill' || item?.is_skill === true) {
+            return NextResponse.json({
+                error: '売却不可: このスキルは売却できません。'
+            }, { status: 400 });
+        }
+
         // 3. Calculate sell price
         // Task2: 崩壊拠点（prosperity_level=1）では闇市売却ボーナス（base_price × 1.5）
         // UGCアイテム（is_ugc: true）は常に1G固定（最優先）
         // 仕様: spec_v6_shop_system.md §4
-        const item = invItem.items as any;
         const isUgc = invItem.is_ugc === true;
         const isRuined = prosperityLevel === 1;
         const sellPrice = isUgc ? 1

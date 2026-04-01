@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"腹を空かせた豚どもが、我々の倉庫を狙って集会を開いている。武器を持った暴れん坊を数人間引けば、あとは散るだろう。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_thug"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

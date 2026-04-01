@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"薬にするのかって？ ははっ、お前は少し詮索しすぎだ。赤いサソリの尾っぽだけあればいい。新鮮なやつをな。",node_1,"type:text"
+NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3005, quantity:1"
+CHOICE,,"success",end_success,
+CHOICE,,"failure",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

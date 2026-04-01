@@ -1,0 +1,9 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"主神の声が聞こえるのです。あの危険な谷の奥底へ行かねばなりません。あなたが盾となるのは、神の思し召しです。",node_1,"type:text"
+NODE,node_1,"新たな同行者が合流した。",node_2,"type:guest_join, guest_id:npc_pilgrim, is_escort_target:true"
+NODE,node_2,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_roland_ghost_knight"
+CHOICE,,"win",node_3,
+CHOICE,,"lose",end_failure,
+NODE,node_3,"同行者が別れを告げた。",end_success,"type:leave"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

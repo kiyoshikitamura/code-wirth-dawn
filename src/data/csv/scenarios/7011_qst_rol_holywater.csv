@@ -1,0 +1,8 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"最前線の砦では腐臭が充満し、戦死者が歩き出している。この聖水瓶を届け、安らかな眠りを与えてやらねば。",node_1,"type:text"
+NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3006, quantity:1"
+CHOICE,,"success",node_2,
+CHOICE,,"failure",end_failure,
+NODE,node_2,"目的地へ出発する。",end_success,"type:travel"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

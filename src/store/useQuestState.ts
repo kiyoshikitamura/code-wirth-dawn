@@ -1,12 +1,14 @@
 /**
  * useQuestState.ts
- * Zustand store for quest-in-progress state management (Spec v3.3)
+ * Zustand store for quest-in-progress state management (Spec v3.3 → v4.0)
  *
  * Manages Persistence Rules:
  * - HP carry-over (player & NPC)
  * - NPC death tracking
  * - Loot pool (risk: lost on failure)
  * - Consumed items tracking
+ * - Quest-local flags (v4.0: curse count, correct answers, etc.)
+ * - Escort mission failure detection (v4.0)
  */
 
 import { create } from 'zustand';
@@ -38,6 +40,10 @@ interface QuestProgressState {
     currentLocationId: string | null;
     elapsedDays: number;
 
+    // v4.0 Expansion: Quest-local flags & escort
+    questFlags: Record<string, number>;  // key -> value (curse count, correct answers, etc.)
+    isEscortMission: boolean;            // true when guest has is_escort_target flag
+
     // Loot Pool (at-risk items)
     lootPool: LootItem[];
 
@@ -51,7 +57,7 @@ interface QuestProgressState {
         playerHp: number;
         playerMaxHp: number;
         partyHp: Record<string, number>;
-        currentLocationId?: string; // v3.4
+        currentLocationId?: string;
     }) => void;
 
     updateAfterBattle: (result: {
@@ -75,6 +81,14 @@ interface QuestProgressState {
     addGuest: (guest: PartyMember) => void;
     healParty: (percentage: number) => void;
     resumeQuest: (savedState: any) => void;
+
+    // v4.0 Actions
+    removeGuest: () => void;
+    setFlag: (key: string, delta: number) => void;
+    getFlag: (key: string) => number;
+    applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => void;
+    checkEscortFailure: () => boolean;
+    setEscortMission: (value: boolean) => void;
 }
 
 const initialState = {
@@ -90,6 +104,9 @@ const initialState = {
     guest: null as PartyMember | null,
     currentLocationId: null as string | null,
     elapsedDays: 0,
+    // v4.0
+    questFlags: {} as Record<string, number>,
+    isEscortMission: false,
 };
 
 export const useQuestState = create<QuestProgressState>()(persist((set, get) => ({
@@ -109,6 +126,9 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             deadNpcs: [],
             lootPool: [],
             consumedItems: [],
+            // v4.0: クエスト開始時にフラグとエスコートをリセット
+            questFlags: {},
+            isEscortMission: false,
         });
     },
 
@@ -146,13 +166,11 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         const state = get();
 
         if (result === 'success') {
-            // Loot is kept → will be persisted to inventory by caller
             const finalResult = {
                 loot: state.lootPool,
                 deadNpcs: state.deadNpcs,
                 consumedItems: state.consumedItems,
             };
-            // Reset after returning
             set(initialState);
             return finalResult;
         } else {
@@ -185,19 +203,6 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
     healParty: (percentage) => {
         const state = get();
         const newPlayerHp = Math.min(state.playerMaxHp, Math.floor(state.playerHp + state.playerMaxHp * percentage));
-
-        const newPartyHp = { ...state.partyHp };
-        Object.keys(newPartyHp).forEach(id => {
-            // Assuming max HP for NPCs is not stored but current is? Wait, we need Max HP for NPCs.
-            // Current model only tracks current HP in partyHp. 
-            // We usually fetch party data or store it.
-            // For now, let's just heal 50% of current? No, max.
-            // Since we don't carry NPC max HP in store (limitation), let's heal by a flat amount or percentage of current (risky).
-            // Actually, battle system knows max HP.
-            // Let's heal player fully effectively or use a safe heuristic.
-            // Or just heal player for now.
-        });
-
         set({ playerHp: newPlayerHp });
     },
 
@@ -217,7 +222,54 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             guest: savedState.guest || null,
             currentLocationId: savedState.currentLocationId || null,
             elapsedDays: savedState.elapsedDays || 0,
+            // v4.0
+            questFlags: savedState.questFlags || {},
+            isEscortMission: savedState.isEscortMission || false,
         });
+    },
+
+    // --- v4.0 新規アクション ---
+
+    removeGuest: () => {
+        set({ guest: null, isEscortMission: false });
+    },
+
+    setFlag: (key: string, delta: number) => {
+        set((state) => ({
+            questFlags: {
+                ...state.questFlags,
+                [key]: (state.questFlags[key] || 0) + delta,
+            },
+        }));
+    },
+
+    getFlag: (key: string) => {
+        return get().questFlags[key] || 0;
+    },
+
+    applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => {
+        const state = get();
+        let damage = 0;
+        if (params.hp_percent) {
+            damage = Math.floor(state.playerMaxHp * (params.hp_percent / 100));
+        }
+        if (params.hp_flat) {
+            damage += params.hp_flat;
+        }
+        const newHp = Math.max(1, state.playerHp - damage); // 最低1HPを保証（即死防止）
+        set({ playerHp: newHp });
+    },
+
+    checkEscortFailure: () => {
+        const state = get();
+        if (!state.isEscortMission || !state.guest) return false;
+        // ゲストが deadNpcs に含まれていれば護衛失敗
+        const guestId = (state.guest as any).id || (state.guest as any).slug;
+        return state.deadNpcs.includes(guestId);
+    },
+
+    setEscortMission: (value: boolean) => {
+        set({ isEscortMission: value });
     },
 }),
     {

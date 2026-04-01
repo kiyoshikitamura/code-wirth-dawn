@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"主君を失い、武士の誇りすら捨てた野良犬どもが、町で乱暴を働いている。あ奴らに死という名の教訓を与えてやれ。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_boss"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

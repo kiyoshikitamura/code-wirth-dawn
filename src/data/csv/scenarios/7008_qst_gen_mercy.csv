@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"祈りは痛みを忘れさせますが、傷は塞ぎません。せめて、神の代わりとなる薬草を運んできてくださいませんか。",node_1,"type:text"
+NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3001, quantity:1"
+CHOICE,,"success",end_success,
+CHOICE,,"failure",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

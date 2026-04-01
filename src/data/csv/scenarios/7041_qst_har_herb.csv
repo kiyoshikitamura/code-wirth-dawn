@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"帝の命により、悠久の時を生きるための丹を作る。岩肌に咲く『星見草』を探し出せば、貴様にも恩恵を分けてやろう。",node_1,"type:text"
+NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3001, quantity:2"
+CHOICE,,"success",end_success,
+CHOICE,,"failure",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

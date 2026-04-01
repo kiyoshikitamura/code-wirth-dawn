@@ -1,0 +1,10 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"砂海を越えるのは命がけだ、傭兵。砂漠の盗賊団と化け物に教え込んでやれ。我々の積荷には手を出せないとな。",node_1,"type:text"
+NODE,node_1,"新たな同行者が合流した。",node_2,"type:guest_join, guest_id:npc_guard, is_escort_target:true"
+NODE,node_2,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_markand_scorpion"
+CHOICE,,"win",node_3,
+CHOICE,,"lose",end_failure,
+NODE,node_3,"目的地へ出発する。",node_4,"type:travel"
+NODE,node_4,"同行者が別れを告げた。",end_success,"type:leave"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

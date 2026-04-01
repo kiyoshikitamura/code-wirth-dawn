@@ -28,6 +28,9 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 <!-- v11.0: 実装のCard/Enemy型を反映 -->
 ```typescript
 export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise';
+// ⚠ 重要な仕様変更 (Passiveの廃止):
+// 永続的に効果を発動・管理する「Passive」型は実装・UIの複雑化を招くため完全に廃止する。
+// 以降はすべて「APを払って発動・バフを付与する Support 型」などに統合される。
 export type TargetType = 'single_enemy' | 'all_enemies' | 'random_enemy' | 'self' | 'single_ally' | 'all_allies';
 
 export interface Card {

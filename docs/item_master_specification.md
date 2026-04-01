@@ -1,6 +1,6 @@
 # Wirth-Dawn Item Master Specification (v16.1) & Security/UX Audit
 
-本ドキュメントは、「Code: Wirth-Dawn」の経済システムおよびゲーム体験の基盤となるアイテムマスタ（itemsテーブル）全25種の定義、およびそれに伴うセキュリティ監査検証とUI/UX追加実装提案を統合したものです。
+本ドキュメントは、「Code: Wirth-Dawn」の経済システムおよびゲーム体験の基盤となるアイテムマスタ（itemsテーブル）全57種の定義、およびそれに伴うセキュリティ監査検証とUI/UX追加実装提案を統合したものです。
 
 ---
 
@@ -21,7 +21,7 @@
 *   `image_url` (string): アイコン画像URL (任意)
 *   `description` (string): 説明文
 
-### 1-2. 25種アイテム設計・配分リスト
+### 1-2. 全57種アイテム設計・配分リスト（ボス素材・武具拡張含む）
 
 #### ① 汎用消費アイテム（5種 / 各都市販売 / 安価）
 1. `item_potion` (中和薬 / consumable / 50G): 薬草の緑色が残る安価な回復液。泥水よりはマシな味がする。
@@ -61,6 +61,21 @@
 23. `item_black_market_elixir` (禁術の秘薬 / consumable / 50000G): どろりとした赤黒い液体。完全回復と引き換えに、何か大切なものを失う気がする。
 24. `item_launder_scroll` (帳簿の改竄 / key_item / 100000G): 各国の手配書を白紙に戻す禁忌の契約。莫大な金と引き換えに、過去の悪名を闇に葬る。
 25. `item_dark_matter` (謎の黒鉱石 / trade_good / 30000G): 触れると不快な脈動を感じる、出所不明の禍々しい石。特定の愛好家が常軌を逸した額で買い取るという。
+
+#### ⑥ 第6カテゴリ：ボスドロップ素材・証明書 (非売品 / `material`, `key_item`等)
+強敵ボスの討伐を果たした証明。インベントリに所持していることで特殊クエスト（スポットシナリオ）の出現トリガー等となる。
+*   `item_relic_bone`, `item_desert_worm_meat`, `item_red_ogre_horn`, `item_thunder_fur`, `item_griffon_feather`: (拠点周辺クエスト等の中ボス素材)
+*   `item_treant_core`, `item_demon_heart`, `item_angel_record`, `item_kirin_horn`, `item_omega_part`, `item_kraken_proof`: (特殊フラグ強敵ボスの素材・証明)
+*   `item_dragon_blood` (竜血 / consumable): 例外的なVit3回復の実用消費アイテム。
+
+#### ⑦ 第7カテゴリ：ボスドロップ限定武具 (非売品 / `equipment`)
+ショップでは手に入らない非常に強力なステータス上昇補正を持つ武具。インベントリ内で装備指定するだけで純粋なステータス強化をもたらす。
+*   `item_white_robe` (極白の法衣 / armor): 異端の大司教の遺品。強力な防御バフ。
+*   `item_thief_blade` (義賊の刀 / weapon): 攻撃力15の大幅上昇。
+*   `item_pirate_hat` (大海賊の帽子 / accessory): HP補正+20。
+*   `item_mino_axe` (大斧 / weapon): 攻撃力20の極大上昇。
+
+> **※補足**: 実データ稼働に伴い追加された「基本消費アイテムのバリエーション（松明、解毒剤等）」や「上記ボス関連素材・武具」を含め、計57種のアクティブなアイテムを**すべて公式正史**として承認する。
 
 ---
 

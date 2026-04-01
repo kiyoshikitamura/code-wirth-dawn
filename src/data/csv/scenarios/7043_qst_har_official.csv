@@ -1,0 +1,10 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"私は国のために尽くしてきたのだ！ たかが少しの便宜で命を狙われる筋合いはない。金を払う、私をここまで護衛しろ！",node_1,"type:text"
+NODE,node_1,"新たな同行者が合流した。",node_2,"type:guest_join, guest_id:npc_official, is_escort_target:true"
+NODE,node_2,"目的地へ出発する。",node_3,"type:travel"
+NODE,node_3,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_assassin_master"
+CHOICE,,"win",node_4,
+CHOICE,,"lose",end_failure,
+NODE,node_4,"同行者が別れを告げた。",end_success,"type:leave"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

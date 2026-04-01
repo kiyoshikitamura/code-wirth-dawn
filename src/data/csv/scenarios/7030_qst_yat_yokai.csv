@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"夜道に気をつけろ。無念の死を遂げた者たちの怨念が、形を成して旅人を襲う。斬り伏せ、その恨みを祓ってくれ。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_yato_karakasa"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

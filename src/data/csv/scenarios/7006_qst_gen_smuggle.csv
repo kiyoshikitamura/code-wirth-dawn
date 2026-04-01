@@ -1,0 +1,8 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"この木箱を運ぶだけだ。中身？ 聞かない方が長生きできるぞ。関所の連中には賄賂が通っているはずだが、用心しろ。",node_1,"type:text"
+NODE,node_1,"目的地へ出発する。",node_2,"type:travel"
+NODE,node_2,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_guard"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

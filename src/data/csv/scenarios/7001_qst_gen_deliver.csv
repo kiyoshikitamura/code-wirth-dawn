@@ -1,0 +1,5 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"出張中の主人に宛てたものです。どうか封は開けないでください。あの中には……いえ、あなたには関係のないことです。",node_1,"type:text"
+NODE,node_1,"目的地へ出発する。",end_success,"type:travel"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

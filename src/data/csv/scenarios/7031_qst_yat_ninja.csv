@@ -1,0 +1,8 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"我が国を嗅ぎ回るネズミがいる。風より速く背後を取り、その首を刎ねよ。奪った書状は私が『処理』する。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_assassin_trainee"
+CHOICE,,"win",node_2,
+CHOICE,,"lose",end_failure,
+NODE,node_2,"目的地へ出発する。",end_success,"type:travel"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

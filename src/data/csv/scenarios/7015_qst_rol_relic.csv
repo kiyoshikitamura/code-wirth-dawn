@@ -1,0 +1,10 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"教会の宝物庫から最古の聖杯が消えた。身の程知らずのネズミの巣を強襲し、血まみれにしてでも主の器を取り戻せ。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_boss"
+CHOICE,,"win",node_2,
+CHOICE,,"lose",end_failure,
+NODE,node_2,"依頼品の納品を行う。",,"type:check_delivery, item_id:3101, quantity:1"
+CHOICE,,"success",end_success,
+CHOICE,,"failure",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

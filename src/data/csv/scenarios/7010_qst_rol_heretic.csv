@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"地下で禁忌の儀式を行う愚か者どもがいます。手荒な真似は問いません。あの廃村を文字通り""浄化""してください。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_cultist"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

@@ -395,8 +395,13 @@ async function main() {
             conditions: type === 'normal' ? {
                 location_tags: location_tags.length > 0 ? location_tags : undefined,
                 min_prosperity: r.min_prosperity ? Number(r.min_prosperity) : undefined,
-                max_prosperity: r.max_prosperity ? Number(r.max_prosperity) : undefined
-            } : {}
+                max_prosperity: r.max_prosperity ? Number(r.max_prosperity) : undefined,
+                // v4.0: 名声条件の数値パース (spec_v3.1 §3)
+                min_reputation: r.min_reputation ? Number(r.min_reputation) : undefined,
+                max_reputation: r.max_reputation ? Number(r.max_reputation) : undefined,
+                // 前提クエスト
+                completed_quest: r.completed_quest || undefined,
+            } : (type === 'special' ? requirements : {})
         };
     };
 

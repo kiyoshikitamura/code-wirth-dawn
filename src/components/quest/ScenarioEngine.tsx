@@ -317,6 +317,125 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                     setCurrentNodeId(nextId);
                 }
             }
+            // --- v4.0 新ノード型 ---
+            else if (currentNode.type === 'leave') {
+                // ゲストNPCの離脱
+                const guestName = questState.guest?.name || '仲間';
+                questState.removeGuest();
+                setHistory(prev => [...prev, `[Leave] ${guestName} が離脱した。`]);
+                showToast(`${guestName} が離脱した。`, 'info');
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+                if (nextId) setTimeout(() => setCurrentNodeId(nextId), 1000);
+            }
+            else if (currentNode.type === 'trap' || currentNode.type === 'modify_state') {
+                // 環境トラップ: HP割合 or 固定ダメージ
+                const hpPercent = currentNode.params?.hp_percent;
+                const hpFlat = currentNode.params?.hp_flat;
+                if (hpPercent || hpFlat) {
+                    questState.applyTrapDamage({ hp_percent: hpPercent, hp_flat: hpFlat });
+                    const dmgText = hpPercent ? `最大HPの${hpPercent}%` : `${hpFlat}`;
+                    showToast(`⚠ トラップ発動！ HP -${dmgText}`, 'error');
+                    setHistory(prev => [...prev, `[Trap] ダメージを受けた (-${dmgText} HP)`]);
+                }
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+                if (nextId) setTimeout(() => setCurrentNodeId(nextId), 1500);
+            }
+            else if (currentNode.type === 'modify_flag') {
+                // クエスト内部フラグの操作
+                const flagKey = currentNode.params?.flag || currentNode.params?.key;
+                const flagDelta = currentNode.params?.delta ?? currentNode.params?.value ?? 1;
+                if (flagKey) {
+                    questState.setFlag(flagKey, flagDelta);
+                    const newVal = questState.getFlag(flagKey) + flagDelta;
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log(`[modify_flag] ${flagKey}: +${flagDelta} → ${newVal}`);
+                    }
+                }
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+                if (nextId) setCurrentNodeId(nextId);
+            }
+            else if (currentNode.type === 'check_flags') {
+                // クエスト内部フラグによる条件分岐
+                const flagKey = currentNode.params?.flag || currentNode.params?.key;
+                const threshold = currentNode.params?.threshold ?? currentNode.params?.value ?? 1;
+                const operator = currentNode.params?.operator || '>=';
+
+                let passed = false;
+                if (flagKey) {
+                    const flagVal = questState.getFlag(flagKey);
+                    if (operator === '>=' && flagVal >= threshold) passed = true;
+                    else if (operator === '<=' && flagVal <= threshold) passed = true;
+                    else if (operator === '==' && flagVal === threshold) passed = true;
+                    else if (operator === '>' && flagVal > threshold) passed = true;
+                    else if (operator === '<' && flagVal < threshold) passed = true;
+                }
+
+                const successNode = currentNode.next || currentNode.choices?.find((c: any) => c.label === 'success')?.next;
+                const failNode = currentNode.fallback || currentNode.choices?.find((c: any) => c.label === 'failure')?.next;
+                setCurrentNodeId(passed ? successNode : failNode);
+            }
+            else if (currentNode.type === 'modify_reputation') {
+                // 名声の即時変動
+                const amount = currentNode.params?.amount || currentNode.params?.value || 0;
+                const locName = currentNode.params?.location_name;
+
+                if (amount !== 0) {
+                    try {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        const token = session?.access_token;
+                        const res = await fetch('/api/reputation/update', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                            },
+                            body: JSON.stringify({ amount, locationName: locName })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            showToast(`名声 ${amount > 0 ? '+' : ''}${amount} (${data.location})`, amount > 0 ? 'success' : 'error');
+                            setHistory(prev => [...prev, `[Reputation] 名声が ${amount > 0 ? '+' : ''}${amount} 変動した`]);
+                        }
+                    } catch (e) {
+                        console.error('[modify_reputation] API error:', e);
+                    }
+                }
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+                if (nextId) setTimeout(() => setCurrentNodeId(nextId), 1000);
+            }
+            else if (currentNode.type === 'reward') {
+                // クエスト中間報酬の付与
+                const rewardItems = currentNode.params?.items; // [{ item_id, quantity }]
+                const rewardGold = currentNode.params?.gold;
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+                    const res = await fetch('/api/inventory/grant', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify({ items: rewardItems, gold: rewardGold })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const msgs: string[] = [];
+                        if (data.gold > 0) msgs.push(`${data.gold}G`);
+                        if (data.items?.length > 0) msgs.push(data.items.map((i: any) => `${i.name} x${i.quantity}`).join(', '));
+                        showToast(`🎁 報酬獲得: ${msgs.join(' / ')}`, 'success');
+                        setHistory(prev => [...prev, `[Reward] ${msgs.join(' / ')} を獲得`]);
+                        // インベントリとプロフィールを再取得
+                        await useGameStore.getState().fetchInventory();
+                        if (rewardGold) await useGameStore.getState().fetchUserProfile();
+                    }
+                } catch (e) {
+                    console.error('[reward] Grant API error:', e);
+                }
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+                if (nextId) setTimeout(() => setCurrentNodeId(nextId), 1500);
+            }
             else if (currentNode.type === 'shop_special') {
                 // 特別ショップロジック - リダイレクトではなくUI状態で処理
                 // ショップモーダルを表示する状態を設定します
@@ -332,6 +451,13 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 // Phase 2: 自動遷移を廃止し、ユーザーのボタン操作を待つ
                 const res = currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
                 setEndReady({ result: res, history });
+            }
+
+            // --- v4.0 護衛失敗チェック（バトル後の自動判定） ---
+            if (questState.isEscortMission && questState.checkEscortFailure()) {
+                showToast('⚠ 護衛対象が倒れた… クエスト失敗', 'error');
+                setHistory(prev => [...prev, '[Escort] 護衛対象が死亡し、クエストは失敗となった。']);
+                setEndReady({ result: 'failure', history });
             }
         };
 

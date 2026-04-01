@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"下水溝のネズミが犬ほどに育っている。疫病が広がる前に、あの不快な牙をへし折ってきてくれ。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_slime_blue"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

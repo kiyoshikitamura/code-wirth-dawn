@@ -1,0 +1,7 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"海賊どもが我が国の絹と茶を強奪しおった。ヤツらの小島に夜襲をかけ、根こそぎ奪い返せ。海に沈めても構わん。",node_1,"type:text"
+NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_guard"
+CHOICE,,"win",end_success,
+CHOICE,,"lose",end_failure,
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

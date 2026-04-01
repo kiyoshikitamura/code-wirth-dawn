@@ -1,0 +1,10 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"この道は最近、""野犬より質の悪い連中""が出るらしい。護衛料は払う、私の命とこの荷を次の街まで頼む。",node_1,"type:text"
+NODE,node_1,"新たな同行者が合流した。",node_2,"type:guest_join, guest_id:npc_merchant, is_escort_target:true"
+NODE,node_2,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_thug"
+CHOICE,,"win",node_3,
+CHOICE,,"lose",end_failure,
+NODE,node_3,"目的地へ出発する。",node_4,"type:travel"
+NODE,node_4,"同行者が別れを告げた。",end_success,"type:leave"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"

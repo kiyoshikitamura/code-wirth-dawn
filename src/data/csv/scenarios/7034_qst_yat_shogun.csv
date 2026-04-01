@@ -1,0 +1,5 @@
+row_type,node_id,text_label,next_node,params
+NODE,start,"これは真剣勝負の『果たし状』だ。もし道中の敵対派閥に奪われれば、我が流派の恥となる。命がけで死守せよ。",node_1,"type:text"
+NODE,node_1,"目的地へ出発する。",end_success,"type:travel"
+NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
+NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
