@@ -9,6 +9,7 @@ import { StatusEffect, applyEffect, removeEffect, tickEffects, getBleedDamage, i
 import { validateCardUse, getDefaultTarget } from '@/lib/targeting';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getPassiveLabel, aggregateBattlePassives } from '@/lib/passiveEffects';
+import { getEnemySkill } from '@/lib/enemySkills';
 import { useQuestState } from './useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
@@ -1344,6 +1345,8 @@ export const useGameStore = create<GameState>()(
 
                 // Fallback for old state if enemies array is missing matching enemy
                 const activeEnemies = enemies.length > 0 ? enemies : (battleState.enemy ? [battleState.enemy] : []);
+                // v20: 敵のHP変動をトラッキング（回復スキル等）
+                let updatedEnemies = [...(battleState.enemies || [])];
 
                 let newMessages = [...battleState.messages];
                 let newParty = [...battleState.party];
@@ -1354,32 +1357,99 @@ export const useGameStore = create<GameState>()(
                 for (const enemy of activeEnemies) {
                     newMessages.push(`${enemy.name}の行動！`);
 
-                    // Simple AI: Calculate Damage
-                    // v3.5: Support 'vit_damage' or traits
-                    let enemyAtk = enemy.level * 5 + 10;
+                    // ─── v20: AI Action Pattern Engine ───────────────
+                    const actions = (enemy as any).action_pattern || [];
+                    let selectedSkillSlug: string | null = null;
                     let applyStun = false;
+                    let isDrainVit = false;
 
-                    // v15.0: Boss Mock Actions
-                    if (enemy.spawn_type === 'quest_only') {
-                        // Bosses get a damage multiplier
-                        enemyAtk = enemy.level * 8 + 20;
+                    if (actions.length > 0) {
+                        // 1. Filter actions by condition
+                        const validActions = actions.filter((a: any) => {
+                            if (!a.condition) return true;
+                            const parts = String(a.condition).split(':');
+                            const condType = parts[0];
+                            const condVal = Number(parts[1]) || 0;
+                            switch (condType) {
+                                case 'turn_mod':
+                                    return battleState.turn > 0 && battleState.turn % condVal === 0;
+                                case 'hp_under':
+                                    return enemy.hp < enemy.maxHp * (condVal / 100);
+                                default:
+                                    return true;
+                            }
+                        });
 
-                        if (enemy.slug === 'enemy_boss_ep20_god') {
-                            if (battleState.turn > 0 && battleState.turn % 5 === 0) {
-                                newMessages.push(`『神の粛清』！ 全てを無に帰す光！`);
-                                enemyAtk += 80;
-                                applyStun = true;
-                            } else if (enemy.hp < enemy.maxHp * 0.2) {
-                                newMessages.push(`神が発狂している...！ 規格外の破壊力！`);
-                                enemyAtk += 120;
+                        // 2. Weighted random selection from valid actions
+                        if (validActions.length > 0) {
+                            const totalProb = validActions.reduce((sum: number, a: any) => sum + (a.prob || 0), 0);
+                            let roll = Math.floor(Math.random() * totalProb);
+                            for (const action of validActions) {
+                                roll -= (action.prob || 0);
+                                if (roll < 0) {
+                                    selectedSkillSlug = action.skill;
+                                    break;
+                                }
                             }
-                        } else if (enemy.slug === 'enemy_boss_ep10_dragon') {
-                            if (battleState.turn > 0 && battleState.turn % 3 === 0) {
-                                newMessages.push(`巨大な熱線！ 防御を紙のように削る！`);
-                                enemyAtk += 50;
-                            }
+                            // Safety: pick last if roll somehow didn't match
+                            if (!selectedSkillSlug) selectedSkillSlug = validActions[validActions.length - 1].skill;
                         }
                     }
+
+                    // 3. Resolve skill from dictionary
+                    const skillDef = selectedSkillSlug ? getEnemySkill(selectedSkillSlug) : null;
+
+                    // 4. Calculate action result
+                    let enemyAtk = 0;
+
+                    if (skillDef) {
+                        // Skill-based action
+                        const baseAtk = (enemy.level || 1) * 3 + 5;
+
+                        switch (skillDef.effect_type) {
+                            case 'damage': {
+                                enemyAtk = Math.floor(baseAtk * skillDef.value);
+                                newMessages.push(`${enemy.name}の『${skillDef.name}』！`);
+                                // Special: stun for boss_stun or god_purge
+                                if (selectedSkillSlug === 'skill_god_purge' || selectedSkillSlug === 'skill_boss_stun') {
+                                    applyStun = true;
+                                }
+                                break;
+                            }
+                            case 'heal': {
+                                const healAmount = skillDef.value;
+                                const oldHp = enemy.hp;
+                                const newEnemyHp = Math.min(enemy.maxHp, oldHp + healAmount);
+                                const actualHeal = newEnemyHp - oldHp;
+                                // Update in the tracked enemies array
+                                updatedEnemies = updatedEnemies.map(e =>
+                                    e.id === enemy.id ? { ...e, hp: newEnemyHp } : e
+                                );
+                                newMessages.push(`${enemy.name}の『${skillDef.name}』！ HP ${actualHeal} 回復！`);
+                                continue; // Heal does not deal damage; skip to next enemy
+                            }
+                            case 'drain_vit': {
+                                enemyAtk = Math.floor(baseAtk * skillDef.value);
+                                isDrainVit = true;
+                                newMessages.push(`${enemy.name}の『${skillDef.name}』！`);
+                                break;
+                            }
+                            case 'status_effect': {
+                                // Currently status_effect = stun
+                                applyStun = true;
+                                enemyAtk = Math.floor(baseAtk * 0.5); // Light damage with status
+                                newMessages.push(`${enemy.name}の『${skillDef.name}』！`);
+                                break;
+                            }
+                        }
+                    } else {
+                        // Fallback: no action_pattern or no valid actions → basic attack
+                        enemyAtk = (enemy.level || 1) * 3 + 5;
+                        newMessages.push(`${enemy.name}の攻撃！`);
+                    }
+
+                    // ─── Damage Application ─────────────────────────
+                    if (enemyAtk <= 0) continue; // heal/no-damage actions already handled
 
                     // 1. Route Damage
                     const result = routeDamage(newParty, enemyAtk);
@@ -1396,7 +1466,6 @@ export const useGameStore = create<GameState>()(
 
                                 if (newDur <= 0) {
                                     newMessages.push(`${p.name}は力尽きた...`);
-                                    // Death logic...
                                     supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
                                 }
                                 return { ...p, durability: newDur, is_active: newDur > 0 };
@@ -1406,7 +1475,6 @@ export const useGameStore = create<GameState>()(
                     }
 
                     if (result.target === 'Player') {
-                        // Player Hit
                         const def = newUserProfile?.def || 0;
                         const mitigated = Math.max(1, result.damage - def);
 
@@ -1422,12 +1490,8 @@ export const useGameStore = create<GameState>()(
                                 newMessages.push(`あなたに攻撃！ しかしもう意識がない…`);
                             }
 
-                            // Vit Damage Logic (v3.5)
-                            const vitDmgVal = (enemy as any).vit_damage || 0;
-                            const traits = enemy.traits || [];
-                            const hasDrainVit = traits.includes('drain_vit') || vitDmgVal > 0;
-
-                            if (actualDamage > 0 && newHp > 0 && hasDrainVit && !vitDamageTaken) {
+                            // v20: drain_vit — スキル経由での正確な判定（旧traits依存を廃止）
+                            if (isDrainVit && actualDamage > 0 && newHp > 0 && !vitDamageTaken) {
                                 const currentVit = newUserProfile.vitality ?? 100;
                                 if (currentVit > 0) {
                                     newUserProfile.vitality = currentVit - 1;
@@ -1466,24 +1530,39 @@ export const useGameStore = create<GameState>()(
 
                 if (newUserProfile && (newUserProfile.hp ?? 0) <= 0) {
                     newMessages.push("あなたは力尽きた...");
+
+                    // v20: Bounty敗北ペナルティ（URLパラメータ非依存）
+                    const hasBountyEnemy = activeEnemies.some(e => e.spawn_type === 'bounty');
+                    if (hasBountyEnemy && newUserProfile) {
+                        const currentGold = newUserProfile.gold || 0;
+                        const penalty = Math.ceil(currentGold / 2);
+                        if (penalty > 0) {
+                            newMessages.push(`賞金稼ぎに身包みを剥がされた… 所持金の半分（${penalty}G）を失った！`);
+                            // spendGold は set 後に呼ぶ
+                            setTimeout(() => {
+                                get().spendGold(penalty);
+                                fetch('/api/profile/update-status', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ gold: Math.max(0, currentGold - penalty) })
+                                }).catch(console.error);
+                            }, 100);
+                        }
+                    }
+
                     set(state => ({ battleState: { ...state.battleState, isDefeat: true, messages: newMessages } }));
                 } else {
-                    // Ensure messages are updated even if not defeated
                     set(state => ({
                         userProfile: newUserProfile,
                         battleState: {
                             ...state.battleState,
-                            enemy: state.battleState.enemy, // No change to enemy here?
-                            enemies: enemies, // Should update enemies state if needed?
+                            enemy: state.battleState.enemy,
+                            enemies: updatedEnemies.map(e => e.hp > 0 ? e : { ...e, hp: 0 }),
                             party: newParty,
                             messages: newMessages,
-                            vitDamageTakenThisTurn: false // Reset for next turn
+                            vitDamageTakenThisTurn: false
                         }
                     }));
                 }
-
-                // End of Enemy Turn
-                // Player can now act.
             },
 
 

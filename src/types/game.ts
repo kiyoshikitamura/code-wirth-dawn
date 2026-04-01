@@ -85,6 +85,24 @@ export interface Enemy {
   vit_damage?: number; // v3.5: Vit damage per attack
   image_url?: string; // v12.0: エネミー画像
   spawn_type?: string; // v15.0: Spawn conditions (e.g. bounty, quest_only)
+  action_pattern?: EnemyAction[]; // v20: AIアクションパターン（DBからJSONBで取得）
+}
+
+// v20: 敵AIアクション定義
+export interface EnemyAction {
+  skill: string;       // skill_slug (e.g. 'skill_heavy_blow')
+  prob: number;        // 発動確率 (0-100)
+  condition?: string;  // 条件文字列 "turn_mod:3" | "hp_under:50" 等
+}
+
+// v20: 敵スキルマスター定義
+export interface EnemySkillMaster {
+  id: number;
+  slug: string;
+  name: string;
+  effect_type: 'damage' | 'heal' | 'drain_vit' | 'status_effect';
+  value: number;       // damage倍率 / heal量 / etc.
+  description?: string;
 }
 
 // ... (skipping unchanged interfaces) ...

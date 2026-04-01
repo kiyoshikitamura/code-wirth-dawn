@@ -262,14 +262,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
         const returnUrl = urlParams.get('return_url');
         const bType = urlParams.get('type');
 
-        if (resultType === 'lose' && bType === 'bounty_hunter') {
-            const currentGold = useGameStore.getState().userProfile?.gold || 0;
-            const penalty = Math.ceil(currentGold / 2);
-            if (penalty > 0) {
-                useGameStore.getState().spendGold(penalty);
-                alert(`賞金稼ぎに身包みを剥がされた...\n所持金の半分（${penalty}G）を失った！`);
-            }
-        }
+        // v20: Bounty敗北ペナルティはgameStore.processEnemyTurn内で処理済み
 
         if (returnUrl) {
             const separator = returnUrl.includes('?') ? '&' : '?';
