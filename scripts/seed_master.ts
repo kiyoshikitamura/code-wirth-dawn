@@ -74,11 +74,12 @@ async function main() {
         slug: r.slug,
         name: r.name,
         type: r.type,
+        ap_cost: r.ap_cost || 1,
         cost_type: r.cost_type,
         cost_val: r.cost_val,
         effect_val: r.effect_val,
-        // Note: ap_cost, target_type, effect_id are in CSV but not yet in DB schema.
-        // These will be used after the DB migration adds the columns.
+        target_type: r.target_type || 'single_enemy',
+        effect_id: r.effect_id || null,
     }));
 
     // 2. Items
