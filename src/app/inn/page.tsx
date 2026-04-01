@@ -57,8 +57,12 @@ export default function InnPage() {
         Promise.all([
             fetchWorldState(),
             useGameStore.getState().fetchUserProfile()
-        ]).finally(() => setLoading(false));
-    }, []);
+        ]).then(() => {
+            if (!useGameStore.getState().userProfile) {
+                router.push('/title');
+            }
+        }).finally(() => setLoading(false));
+    }, [router, fetchWorldState]);
 
     // Reputation Logic (通常拠点でのみ取得)
     const fetchRep = useCallback(async () => {

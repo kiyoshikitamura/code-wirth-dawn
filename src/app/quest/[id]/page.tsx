@@ -243,9 +243,9 @@ export default function QuestPage() {
                             image: e.image_url || `/enemies/${e.slug}.png`,
                             status_effects: [],
                             vit_damage: e.vit_damage,
-                            traits: e.traits,
-                            drop_rate: e.drop_rate,
-                            drop_item_slug: e.drop_item_slug
+                            drop_item_slug: e.drop_item_slug,
+                            action_pattern: e.action_pattern,
+                            spawn_type: e.spawn_type
                         };
                     }).filter(Boolean) as Enemy[];
                 } else {

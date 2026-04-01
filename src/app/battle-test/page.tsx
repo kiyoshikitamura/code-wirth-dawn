@@ -20,6 +20,10 @@ export default function BattleTestPage() {
             try {
                 // ユーザープロフィールの取得
                 await fetchUserProfile();
+                if (!useGameStore.getState().userProfile) {
+                    router.push('/title');
+                    return;
+                }
 
                 // エネミーデータの取得
                 const res = await fetch('/api/debug/battle-test');
