@@ -38,7 +38,7 @@ export interface UserHubState {
   last_visit: string;
 }
 
-export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise' | 'Passive'; // v2.11: noise追加, v5.2: Passive追加
+export type CardType = 'Skill' | 'Magic' | 'Defense' | 'Heal' | 'Support' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise'; // v19: Passive廃止, 正典5型追加
 
 // v2.7: ターゲットタイプ定義
 export type TargetType =
@@ -504,7 +504,7 @@ export interface BattleState {
   battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee' | 'escape'; // 戦闘結果
   resonanceActive?: boolean; // spec_v5 §6.2: 共鳳ボーナス (ATK/DEF +10%)
   battle_session_id?: string; // v17 Server-Authoritative Battle
-  activePassives: string[]; // v5.2: 使用済みPassiveカードのcard_idリスト（バトル内永続効果）
+  activeSupportBuffs: string[]; // v19: 使用済みSupportカードのcard_idリスト（バトル内永続効果）
 }
 
 export type Scenario = ScenarioDB;

@@ -127,7 +127,7 @@ export const useGameStore = create<GameState>()(
                 enemy_effects: [],
                 exhaustPile: [],
                 consumedItems: [],
-                activePassives: [],
+                activeSupportBuffs: [],
             },
 
             initializeBattle: () => {
@@ -196,7 +196,7 @@ export const useGameStore = create<GameState>()(
                 const equippedCards = (inventory || []).filter(i => i.is_equipped && (i.is_skill || i.item_type === 'skill_card')).map(i => ({
                     id: String(i.card_id || i.id),
                     name: i.name,
-                    type: (i.effect_data?.card_type || 'Skill') as Card['type'], // v5.2: DBのtypeを引き継ぎ（Passive等）
+                    type: (i.effect_data?.card_type || 'Skill') as Card['type'], // v19: DBのtypeを引き継ぎ（Support等）
                     description: i.effect_data?.description || '',
                     cost: 0,
                     power: i.effect_data?.power || i.effect_data?.effect_val || 0,
@@ -322,7 +322,7 @@ export const useGameStore = create<GameState>()(
                         vitDamageTakenThisTurn: false,
                         battle_result: undefined,
                         resonanceActive,
-                        activePassives: [], // v5.2: 使用済みPassiveカードIDリスト
+                        activeSupportBuffs: [], // v19: 使用済みSupportカードIDリスト
                     },
                     deck: shuffledDeck,
                     discardPile: [],
@@ -1029,16 +1029,16 @@ export const useGameStore = create<GameState>()(
                                 logMsg = `${card.name}を使用！`;
                             }
                         }
-                        case 'passive_activate': {
-                            // v5.2: Passiveカード使用 → バトル内永続バフ付与
+                        case 'support_activate': {
+                            // v19: Supportカード使用 → バトル内永続バフ付与
                             const passiveLabel = getPassiveLabel(card.id);
-                            // activePassives にカードIDを追加（重複防止）
-                            const currentPassives = get().battleState.activePassives || [];
-                            if (!currentPassives.includes(card.id)) {
+                            // activeSupportBuffs にカードIDを追加（重複防止）
+                            const currentBuffs = get().battleState.activeSupportBuffs || [];
+                            if (!currentBuffs.includes(card.id)) {
                                 set(state => ({
                                     battleState: {
                                         ...state.battleState,
-                                        activePassives: [...(state.battleState.activePassives || []), card.id],
+                                        activeSupportBuffs: [...(state.battleState.activeSupportBuffs || []), card.id],
                                     }
                                 }));
                             }
@@ -1049,8 +1049,8 @@ export const useGameStore = create<GameState>()(
 
                     // ─── Card Cycle ────────────────────────────
                     nextHand = nextHand.filter(c => c.id !== card.id);
-                    if ((card.type === 'Item' && card.isEquipment) || card.cost_type === 'item' || card.type === 'Passive') {
-                        // 装備品カード / cost_type=item / Passiveカード → exhaust（再利用不可）
+                    if ((card.type === 'Item' && card.isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
+                        // 装備品カード / cost_type=item / Supportカード → exhaust（再利用不可）
                         set(state => ({
                             battleState: {
                                 ...state.battleState,

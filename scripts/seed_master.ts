@@ -77,7 +77,8 @@ async function main() {
         cost_type: r.cost_type,
         cost_val: r.cost_val,
         effect_val: r.effect_val,
-        animation_type: r.animation_type || 'SLASH'
+        // Note: ap_cost, target_type, effect_id are in CSV but not yet in DB schema.
+        // These will be used after the DB migration adds the columns.
     }));
 
     // 2. Items

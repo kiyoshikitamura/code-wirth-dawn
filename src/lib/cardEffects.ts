@@ -1,5 +1,5 @@
 /**
- * カード効果分岐エンジン
+ * カード効果分岐エンジン (v19: Passive→Support移行)
  * 
  * cards.csv のカードIDから、バトル中の効果タイプ（attack / heal / escape 等）を判定する。
  * gameStore.ts の attackEnemy() から呼び出され、効果に応じた処理分岐を実現する。
@@ -19,7 +19,7 @@ export type CardEffectType =
     | 'buff_party'     // パーティ全体バフ
     | 'aoe_attack'     // 全体攻撃
     | 'debuff_enemy'   // 敵デバフ（毒付与等、ダメージなし/低ダメージ）
-    | 'passive_activate'; // v5.2: Passiveカード使用（バトル内永続バフを付与）
+    | 'support_activate'; // v19: Supportカード使用（バトル内永続バフを付与）
 
 export interface CardEffectInfo {
     effectType: CardEffectType;
@@ -29,52 +29,70 @@ export interface CardEffectInfo {
     skipDamage?: boolean;         // true = 敵へのダメージ計算をスキップ
 }
 
-// ─── カードID → 効果マッピング ──────────────────────────
+// ─── カードID → 効果マッピング (新ID体系: 1-60) ────────────
 
 /**
  * cards.csv の id (数値部) をキーに、そのカードの効果を定義する。
  * ここに定義がないカードはデフォルトで 'attack' として扱う。
- * 
- * NPC注入カードは "1003_memberid_xxxxx" の形式で来るため、
- * getBaseCardId() で数値部を抽出してからこのマップを参照する。
  */
 const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
-    // ─── 基本カード ─────────────────────────
-    '1003': { effectType: 'heal', skipDamage: true },                                       // ヒール
-    '1004': { effectType: 'buff_self', effectId: 'def_up', effectDuration: 2, skipDamage: true }, // 鉄壁
-    '1035': { effectType: 'aoe_attack' },                                                   // 青龍偃月刀
-    '1099': { effectType: 'aoe_attack' },                                                   // 神器:草薙
+    // ─── 汎用スキル (1-10) ────────────────────
+    '4':  { effectType: 'buff_self', effectId: 'def_up', effectDuration: 2, skipDamage: true },     // 防御
+    '5':  { effectType: 'heal', skipDamage: true },                                                  // 応急手当
+    '6':  { effectType: 'attack', effectId: 'stun', effectDuration: 1 },                             // シールドバッシュ
+    '7':  { effectType: 'support_activate', skipDamage: true },                                      // 集中 (ATK UP)
+    '8':  { effectType: 'support_activate', skipDamage: true },                                      // クイックステップ (回避UP)
+    '9':  { effectType: 'taunt', effectId: 'taunt', effectDuration: 2, skipDamage: true },           // 挑発
 
-    // ─── NPC注入カード ──────────────────────
-    '2000': { effectType: 'heal', skipDamage: true },                                       // 応急手当
-    '2004': { effectType: 'buff_self', effectId: 'def_up', effectDuration: 2, skipDamage: true }, // 防御結界
-    '2005': { effectType: 'taunt', effectId: 'taunt', effectDuration: 2, skipDamage: true },     // 挑発
-    '2008': { effectType: 'buff_party', effectId: 'def_up', effectDuration: 2, skipDamage: true }, // 広域防壁
-    '2009': { effectType: 'buff_self', effectId: 'stun_immune', effectDuration: 1, skipDamage: true }, // 禅
-    '2012': { effectType: 'attack', effectId: 'stun', effectDuration: 1 },                  // 雷撃 (攻撃+スタン)
-    '2016': { effectType: 'aoe_attack', effectId: 'stun', effectDuration: 1 },              // 獅子吼 (全体+スタン)
-    '2030': { effectType: 'debuff_enemy', effectId: 'poison', effectDuration: 3, skipDamage: true }, // 猛毒
-    '2050': { effectType: 'buff_self', effectId: 'atk_up', effectDuration: 3, skipDamage: true },  // 血の契約
-    '2055': { effectType: 'buff_self', effectId: 'atk_up', effectDuration: 3, skipDamage: true },  // 狂戦士
-    '2060': { effectType: 'aoe_attack', effectId: 'fear', effectDuration: 2 },              // 般若の威圧 (全体+恐怖)
-    '2095': { effectType: 'escape', skipDamage: true },                                     // 賄賂
-    '2099': { effectType: 'escape', skipDamage: true },                                     // 逃走
+    // ─── ローラン聖帝国 (11-15) ──────────────
+    '13': { effectType: 'heal', skipDamage: true },                                                  // 祈り (全体リジェネ)
+    '14': { effectType: 'heal', skipDamage: true },                                                  // 治癒
+    '15': { effectType: 'buff_party', effectId: 'def_up', effectDuration: 2, skipDamage: true },     // 聖壁 (全体バリア)
 
-    // ─── Passiveカード (v5.2) ──────────────
-    '2006': { effectType: 'passive_activate', skipDamage: true },    // 砂漠の外套
-    '2007': { effectType: 'passive_activate', skipDamage: true },    // 重装鎧
-    '2018': { effectType: 'passive_activate', skipDamage: true },    // 大賢者の魔力
-    '2025': { effectType: 'passive_activate', skipDamage: true },    // 十字軍の誓い
-    '2066': { effectType: 'passive_activate', skipDamage: true },    // 呪いの仮面
-    '2069': { effectType: 'passive_activate', skipDamage: true },    // 呪いの偶像
-    '2088': { effectType: 'passive_activate', skipDamage: true },    // 幸運のコイン
-    '2090': { effectType: 'passive_activate', skipDamage: true },    // 商人の鞄
+    // ─── マルカンド (16-20) ──────────────────
+    '16': { effectType: 'debuff_enemy', effectId: 'bind' as StatusEffectId, effectDuration: 2, skipDamage: true }, // 砂の罠
+    '17': { effectType: 'debuff_enemy', effectId: 'blind' as StatusEffectId, effectDuration: 2, skipDamage: true }, // 砂塵
+    '18': { effectType: 'attack', effectId: 'poison', effectDuration: 3 },                           // 毒刃
+    '19': { effectType: 'buff_party', effectId: 'evasion_up' as StatusEffectId, effectDuration: 2, skipDamage: true }, // 蜃気楼
+    '20': { effectType: 'heal', skipDamage: true },                                                  // オアシスの水
+
+    // ─── 夜刀神国 (21-25) ────────────────────
+    '23': { effectType: 'debuff_enemy', effectId: 'stun', effectDuration: 1, skipDamage: true },     // 影縫い
+    '24': { effectType: 'heal', skipDamage: true },                                                  // 清め
+
+    // ─── 華龍神朝 (26-30) ────────────────────
+    '26': { effectType: 'heal', skipDamage: true },                                                  // 氣の癒やし
+    '27': { effectType: 'debuff_enemy', effectId: 'atk_down' as StatusEffectId, effectDuration: 2, skipDamage: true }, // 龍の咆哮
+    '28': { effectType: 'buff_self', effectId: 'def_up', effectDuration: 3, skipDamage: true },      // 鉄布衫
+
+    // ─── NPC専用 (31-55) ─────────────────────
+    '31': { effectType: 'buff_party', effectId: 'def_up', effectDuration: 3, skipDamage: true },     // 王の城壁
+    '32': { effectType: 'aoe_attack' },                                                              // ドラゴンダイブ
+    '33': { effectType: 'heal', skipDamage: true },                                                  // 奇跡
+    '34': { effectType: 'taunt', effectId: 'taunt', effectDuration: 3, skipDamage: true },           // 皇帝の盾
+    '35': { effectType: 'buff_self', effectId: 'stun_immune', effectDuration: 2, skipDamage: true }, // 絶対防御
+    '37': { effectType: 'aoe_attack', effectId: 'burn' as StatusEffectId, effectDuration: 2 },       // メテオストライク
+    '38': { effectType: 'heal', skipDamage: true },                                                  // 完全治癒
+    '39': { effectType: 'aoe_attack', effectId: 'blind' as StatusEffectId, effectDuration: 1 },      // ホーリーノヴァ
+    '42': { effectType: 'support_activate', skipDamage: true },                                      // 血の怒り (ATK大UP代償あり)
+    '43': { effectType: 'buff_party', effectId: 'atk_up', effectDuration: 3, skipDamage: true },     // 獅子の心
+    '44': { effectType: 'buff_party', effectId: 'spd_up' as StatusEffectId, effectDuration: 2, skipDamage: true }, // 疾風術
+    '45': { effectType: 'aoe_attack', effectId: 'stun', effectDuration: 1 },                         // 岩砕き
+    '49': { effectType: 'aoe_attack', effectId: 'curse' as StatusEffectId, effectDuration: 2 },      // 黒曜球
+    '54': { effectType: 'aoe_attack', effectId: 'bleed' as StatusEffectId, effectDuration: 2 },      // 死の舞踊
+    '55': { effectType: 'debuff_enemy', effectId: 'freeze' as StatusEffectId, effectDuration: 2, skipDamage: true }, // 時止め
+
+    // ─── 闇市 (56-60) ────────────────────────
+    '56': { effectType: 'attack', effectId: 'drain' as StatusEffectId },                              // 吸血
+    '57': { effectType: 'support_activate', skipDamage: true },                                      // 闇の代償 (AP全回復)
+    '59': { effectType: 'support_activate', skipDamage: true },                                      // 狂戦士の薬
+    '60': { effectType: 'aoe_attack' },                                                              // 魂の生贄
 };
 
 // ─── ユーティリティ ─────────────────────────────────────
 
 /**
- * NPC注入カードの "1003_memberid_xxxxx" から基底ID "1003" を抽出する。
+ * NPC注入カードの "14_memberid_xxxxx" から基底ID "14" を抽出する。
  */
 function getBaseCardId(cardId: string): string {
     const match = cardId.match(/^(\d+)/);

@@ -1,62 +1,61 @@
-id,slug,name,type,cost_type,cost_val,effect_val,_comment
-1000,card_rusty_slash,錆びた斬撃,Skill,vitality,5,5,Weak Attack
-1001,card_slash,斬撃,Skill,vitality,5,20,Basic Attack
-1002,card_fireball,ファイアボール,Skill,mp,10,30,Magic Attack
-1003,card_heal,ヒール,Skill,mp,15,50,Healing
-1004,card_iron_def,鉄壁,Skill,vitality,8,0,Defense Buff
-1005,card_dagger,護身短剣,Skill,vitality,0,15,Zero Cost Attack
-1010,card_axe,樵の斧,Skill,vitality,10,35,Heavy Attack
-1012,card_scimitar,曲刀術,Skill,vitality,8,25,Bleed Effect
-1015,card_lance,白銀の槍,Skill,vitality,12,30,Pierce
-1018,card_mace,異端審問,Skill,vitality,15,40,Anti-Chaos
-1020,card_iai,居合,Skill,vitality,10,50,Critical
-1025,card_fan,鉄扇,Skill,vitality,8,20,Defensive Attack
-1030,card_kungfu,少林拳,Skill,vitality,5,15,Double Strike
-1031,card_claw,鉄の爪,Skill,vitality,5,20,Bleed
-1032,card_nunchaku,ヌンチャク,Skill,vitality,3,15,Chain Attack
-1035,card_glaive,青龍偃月刀,Skill,vitality,15,45,Area Attack
-1040,card_bow,大弓,Skill,vitality,10,30,Ranged
-1050,card_abacus,商人のそろばん,Skill,gold,10,0,Gold Damage
-1099,card_kusanagi,神器:草薙,Skill,vitality,50,100,AOE Ultimate
-2000,card_first_aid,応急手当,Skill,vitality,0,10,Small Heal
-2001,card_npc_smash,強撃(NPC),Skill,vitality,0,25,NPC Basic
-2002,card_meditation,瞑想,Skill,vitality,0,0,MP Recovery
-2003,card_tea,精神統一,Skill,vitality,0,0,MP Large Rec
-2004,card_barrier,防御結界,Skill,mp,10,0,Barrier
-2005,card_provoke,挑発,Skill,vitality,5,0,Taunt
-2006,card_cloak,砂漠の外套,Passive,none,0,0,Evasion UP
-2007,card_heavy_armor,重装鎧,Passive,none,0,0,Phys Resist
-2008,card_barrier_all,広域防壁,Skill,mp,20,0,Party Barrier
-2009,card_zen,禅,Skill,mp,5,0,Invincible 1 turn
-2010,card_fire_storm,錬金火球,Skill,item,1,40,Alchemy Fire
-2011,card_ice_spear,氷槍,Skill,mp,12,35,Ice Slow
-2012,card_thunder,雷撃,Skill,mp,15,40,Stun
-2015,card_chi_blast,気功砲,Skill,vitality,20,50,Ignore Def
-2016,card_lion_roar,獅子吼,Skill,vitality,20,20,AOE Stun
-2018,card_archmage,大賢者の魔力,Passive,none,0,0,Magic UP
-2020,card_holy_smite,聖なる一撃,Skill,mp,30,80,Holy Damage
-2025,card_crusader,十字軍の誓い,Passive,none,0,0,Buff
-2030,card_poison,猛毒,Skill,item,1,0,Poison
-2035,card_assassinate,暗殺術,Skill,vitality,30,999,Instant Kill
-2036,card_pressure,経絡秘孔,Skill,vitality,15,40,Pierce Def
-2038,card_dim_mak,点穴,Skill,vitality,40,0,Death or Para
-2040,card_shikigami,式神使役,Skill,mp,20,0,Auto Attack
-2045,card_snake,蛇使い,Skill,mp,10,20,Summon Snake
-2050,card_blood_pact,血の契約,Skill,vitality,50,0,Forbidden Buff
-2051,card_vital_strike,命削り,Skill,vitality,90,200,Suicide Attack
-2055,card_berserk,狂戦士,Skill,vitality,10,0,Atk UP Def DOWN
-2058,card_necromancy,死体操作,Skill,mp,50,0,Raise Undead
-2059,card_cannibal,人食い,Skill,vitality,0,0,Eat Enemy
-2060,card_hannya,般若の威圧,Skill,mp,15,0,AOE Fear
-2066,card_cursed_mask,呪いの仮面,Passive,vitality,5,0,Power UP DoT
-2069,card_idol,呪いの偶像,Passive,none,0,0,Bad Luck
-2080,card_lamp,魔人召喚,Skill,mp,50,100,Summon Genie
-2088,card_coin,幸運のコイン,Passive,none,0,0,Crit UP
-2089,card_dice,黄金のサイコロ,Skill,gold,100,0,Gamble
-2090,card_bag,商人の鞄,Passive,none,0,0,Gold Drop UP
-2091,card_backpack,旅人のリュック,Passive,none,0,0,Drop UP
-2092,card_survival,サバイバル,Passive,none,0,0,Camp Rec UP
-2093,card_map,詳細な地図,Passive,none,0,0,Event Avoid
-2095,card_bribe,賄賂,Skill,gold,500,0,Escape
-2098,card_lockpick,解錠術,Skill,item,1,0,Unlock
-2099,card_escape,逃走,Skill,vitality,10,0,Escape Guarantee
+id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id
+1,card_strike,強打,Skill,1,vitality,5,15,single_enemy,
+2,card_slash,斬撃,Skill,1,vitality,5,12,single_enemy,bleed_minor
+3,card_thrust,突き,Skill,1,vitality,5,18,single_enemy,
+4,card_guard,防御,Defense,1,vitality,3,10,self,def_up
+5,card_first_aid,応急手当,Heal,1,vitality,3,20,single_ally,
+6,card_shield_bash,シールドバッシュ,Defense,2,vitality,8,10,single_enemy,stun
+7,card_focus,集中,Support,1,vitality,5,0,self,atk_up
+8,card_quick_step,クイックステップ,Support,1,vitality,5,0,self,evasion_up
+9,card_taunt,挑発,Support,2,vitality,8,0,all_enemies,taunt
+10,card_throw_stone,石投げ,Skill,1,vitality,3,5,single_enemy,blind_minor
+11,card_holy_sword,聖剣,Magic,3,mp,20,45,single_enemy,holy_burn
+12,card_holy_smite,裁き,Magic,3,mp,25,50,random_enemy,
+13,card_prayer,祈り,Heal,2,mp,15,15,all_allies,regen
+14,card_heal,治癒,Heal,2,mp,12,40,single_ally,
+15,card_holy_wall,聖壁,Defense,3,mp,20,20,all_allies,barrier
+16,card_sand_trap,砂の罠,Support,2,vitality,8,10,single_enemy,bind
+17,card_sandstorm,砂塵の目眩まし,Support,2,vitality,10,0,all_enemies,blind
+18,card_poison_dagger,毒刃,Skill,2,vitality,8,20,single_enemy,poison
+19,card_mirage,蜃気楼,Support,3,vitality,12,0,all_allies,evasion_up
+20,card_oasis_water,オアシスの水,Heal,2,mp,10,30,single_ally,cure_status
+21,card_swallow_rev,ツバメ返し,Skill,3,vitality,15,50,single_enemy,counter
+22,card_kunai,クナイ投げ,Skill,1,vitality,5,15,single_enemy,bleed
+23,card_shadow_stitch,影縫い,Support,2,vitality,10,0,single_enemy,stun
+24,card_purify,清め,Heal,2,mp,10,25,single_ally,cure_debuff
+25,card_iai_slash,居合切り,Skill,3,vitality,15,60,single_enemy,
+26,card_qigong_heal,氣の癒やし,Heal,2,mp,12,35,single_ally,regen
+27,card_dragon_roar,龍の咆哮,Support,3,vitality,15,0,all_enemies,atk_down
+28,card_iron_body,鉄布衫,Defense,2,vitality,10,30,self,def_up_heavy
+29,card_continuous,連撃,Skill,3,vitality,15,40,single_enemy,multi_hit
+30,card_flying_blade,飛刀,Skill,2,vitality,8,25,random_enemy,pierce
+31,card_kings_wall,王の城壁,Defense,4,vitality,20,0,all_allies,absolute_def
+32,card_dragon_dive,ドラゴンダイブ,Skill,5,vitality,30,80,all_enemies,def_ignore
+33,card_miracle,奇跡,Heal,5,mp,50,999,all_allies,revive
+34,card_emp_shield,皇帝の盾,Defense,3,vitality,15,0,single_ally,taunt_100
+35,card_absolute_def,絶対防御,Defense,4,vitality,20,50,self,invulnerable
+36,card_hundred_fists,百裂拳,Skill,4,vitality,20,75,single_enemy,multi_hit
+37,card_meteor_strike,メテオストライク,Magic,5,mp,40,100,all_enemies,burn
+38,card_great_heal,完全治癒,Heal,4,mp,30,999,single_ally,
+39,card_holy_nova,ホーリーノヴァ,Magic,4,mp,30,60,all_enemies,blind
+40,card_assassinate,暗殺,Skill,3,vitality,15,50,single_enemy,poison_fatal
+41,card_demonic_slash,魔刃,Skill,4,vitality,20,70,single_enemy,drain
+42,card_blood_rage,血の怒り,Support,2,vitality,10,0,self,atk_up_fatal
+43,card_lion_heart,獅子の心,Support,3,vitality,15,0,all_allies,morale_up
+44,card_swift_wind,疾風術,Support,2,mp,10,0,all_allies,spd_up
+45,card_earth_shatter,岩砕き,Skill,4,vitality,20,55,all_enemies,stun
+46,card_soul_rend,魂裂き,Magic,4,mp,25,60,single_enemy,mp_drain
+47,card_phantom_strike,幻影撃,Skill,3,vitality,15,45,random_enemy,blind
+48,card_heaven_slash,天翔斬,Skill,5,vitality,30,120,single_enemy,
+49,card_dark_sphere,黒曜球,Magic,4,mp,25,65,all_enemies,curse
+50,card_royal_guard,近衛の盾,Defense,3,vitality,15,30,single_ally,cover
+51,card_dragon_scale,竜の鱗,Defense,4,vitality,20,40,self,counter
+52,card_void_strike,虚空撃,Skill,4,vitality,20,80,single_enemy,pierce
+53,card_blessing,女神の祝福,Heal,4,mp,25,50,all_allies,regen
+54,card_death_dance,死の舞踊,Skill,4,vitality,20,50,all_enemies,bleed
+55,card_time_stop,時止めの法,Support,5,mp,40,0,all_enemies,freeze
+56,card_blood_drain,吸血,Magic,3,mp,15,40,single_enemy,drain
+57,card_dark_pact,闇の代償,Support,1,vitality,50,0,self,ap_max
+58,card_death_strike,即死攻撃,Skill,4,vitality,30,0,single_enemy,instakill
+59,card_mad_frenzy,狂戦士の薬,Support,1,vitality,30,0,self,berserk
+60,card_soul_sac,魂の生贄,Magic,5,vitality,50,150,all_enemies,recoil

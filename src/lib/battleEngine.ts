@@ -92,15 +92,14 @@ export function buildBattleDeck(
         finalDeck.push({ ...supportCard, id: 'zenith_buff', cost: 0, isInjected: true, source: 'World Blessing' } as any);
     }
 
-    // 3. v5.2: 呪いの偶像によるノイズ注入（Passiveカードはデッキに残す = 方式A）
-    const passiveCards = finalDeck.filter(c => c.type === 'Passive');
-    const curseNoiseCount = getNoiseInjectionCount(passiveCards);
+    // 3. v19: サポートバフカードのノイズ注入チェック（呪いの偶像は廃止済み: 常に0を返す）
+    const supportCards = finalDeck.filter(c => c.type === 'Support');
+    const curseNoiseCount = getNoiseInjectionCount(supportCards);
     if (curseNoiseCount > 0) {
         const noiseCard = cardLookup('card_noise') || { id: 'card_noise', name: 'Noise', type: 'noise' as any, description: 'Unusable Glitch', cost: 0, discard_cost: 1 };
         for (let i = 0; i < curseNoiseCount; i++) {
-            finalDeck.push({ ...noiseCard, id: `curse_noise_${i}`, isInjected: true, source: '呪いの偶像' } as any);
+            finalDeck.push({ ...noiseCard, id: `curse_noise_${i}`, isInjected: true, source: '呪い' } as any);
         }
-        console.log(`[buildBattleDeck] 呪いの偶像: ノイズ ${curseNoiseCount}枚注入`);
     }
 
     // 4. Basic Validation (Ensure usable cards exist)
