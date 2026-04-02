@@ -135,7 +135,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                                         <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
                                                     )}
                                                     {s.quest_type === 'special' && (
-                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">特別依頼</span>
+                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
                                                     )}
                                                     {s.is_ugc && (
                                                         <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
@@ -182,7 +182,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                         報酬: {(detailQuest as any).reward_gold || 0}G
                                     </span>
                                     {(detailQuest as any).quest_type === 'special' && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold">特別依頼</span>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold">Special</span>
                                     )}
                                     {(detailQuest as any).is_ugc && (
                                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
