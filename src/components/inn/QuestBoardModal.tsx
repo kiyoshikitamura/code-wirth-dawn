@@ -135,7 +135,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                                         <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
                                                     )}
                                                     {s.quest_type === 'special' && (
-                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
+                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">特別依頼</span>
                                                     )}
                                                     {s.is_ugc && (
                                                         <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
@@ -146,9 +146,6 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                         <div className="flex items-center gap-1">
                                             <span className="text-[10px] w-[38px] text-center py-0.5 rounded font-bold bg-[#a38b6b] text-white">
                                                 Lv.{s.rec_level || 1}
-                                            </span>
-                                            <span className="text-[10px] w-[52px] text-center py-0.5 rounded font-mono bg-[#8b5a2b] text-[#e3d5b8]">
-                                                {s.reward_gold > 0 ? `${s.reward_gold}G` : 'アイテム'}
                                             </span>
                                         </div>
                                     </div>
@@ -185,7 +182,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                         報酬: {(detailQuest as any).reward_gold || 0}G
                                     </span>
                                     {(detailQuest as any).quest_type === 'special' && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold">特別</span>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold">特別依頼</span>
                                     )}
                                     {(detailQuest as any).is_ugc && (
                                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
