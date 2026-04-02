@@ -267,12 +267,13 @@ async function main() {
 
 
                     currentNode = {
-
                         text: r.text_label ? r.text_label.replace(/\\n/g, '\n') : '',
                         type: params.type || 'text',
+                        next: r.next_node || undefined, // v21: テキストノードの遷移先を正しくマッピング
                         bg_key: params.bg || params.bg_key, // Alias
                         bgm_key: params.bgm || params.bgm_key,
                         enemy_group_id: params.enemy || params.enemy_group_id,
+                        speaker_image_url: params.speaker_image_url || undefined,
                         result: (params.type === 'end_success' || params.type === 'end') ? 'success' : (params.type === 'end_failure' ? 'failure' : undefined),
                         choices: [],
                         params: params
@@ -371,7 +372,7 @@ async function main() {
             id: r.id,
             slug: r.slug,
             title: r.title,
-            description: scriptData?.nodes?.['1']?.text || r._comment || r.title,
+            description: r._comment || r.title, // v21: _comment をショート説明として使用
             difficulty: Number(r.difficulty) || 1,
             rec_level: Number(r.rec_level) || 1,
             time_cost: Number(r.time_cost) || 1,
@@ -380,7 +381,7 @@ async function main() {
             rewards: rewards,
             script_data: { ...(scriptData || (r.script_data ? JSON.parse(r.script_data) : null)), short_description: r._comment || r.title },
             type: 'Subjugation',
-            client_name: 'Guild',
+            client_name: r.client_name || '冒険者ギルド', // v21: CSVから取得、フォールバックはギルド
             is_urgent: is_urgent,
 
             // New v3.1 Columns

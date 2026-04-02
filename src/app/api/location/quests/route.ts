@@ -88,6 +88,7 @@ export async function GET(req: Request) {
             .from('scenarios')
             .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation, script_data')
             .in('quest_type', ['normal', 'special'])
+            .not('slug', 'like', 'ugc_%') // v21: UGCクエスト（slug が ugc_ 始まり）を除外
             .limit(100);
 
         debug.push(`quest_fetch: ${qError ? 'ERROR: ' + qError.message : 'OK, count=' + (quests?.length || 0)} `);
@@ -216,7 +217,7 @@ export async function GET(req: Request) {
                 impacts: q.impact,
                 difficulty_tier: getDifficultyTier(recLevel),
                 short_flavor: q.script_data?.short_description || q.description || '',
-                long_flavor: q.description || q.script_data?.short_description || '',
+                long_flavor: q.script_data?.nodes?.start?.text || q.description || '', // v21: スタートノードのテキストをロング説明として使用
                 is_ugc: q.slug?.startsWith('ugc_') || false,
             };
         };
