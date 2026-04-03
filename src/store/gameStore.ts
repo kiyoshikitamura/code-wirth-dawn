@@ -12,6 +12,7 @@ import { getPassiveLabel, aggregateBattlePassives } from '@/lib/passiveEffects';
 import { getEnemySkill } from '@/lib/enemySkills';
 import { useQuestState } from './useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
+import { soundManager, CARD_EFFECT_SE_MAP } from '@/lib/soundManager';
 
 
 const DUMMY_ENEMY: Enemy = {
@@ -332,6 +333,9 @@ export const useGameStore = create<GameState>()(
 
                 get().dealHand();
 
+                // サウンド: バトルBGM再生
+                soundManager?.playBgm('bgm_battle');
+
                 // --- Optimistic UI & Server Validation ---
                 fetch('/api/battle/start', {
                     method: 'POST',
@@ -357,6 +361,7 @@ export const useGameStore = create<GameState>()(
                 const nextTurn = battleState.turn + 1;
 
                 if (nextTurn > 30) {
+                    soundManager?.playSE('se_battle_lose');
                     set(state => ({
                         battleState: {
                             ...state.battleState,
@@ -442,6 +447,7 @@ export const useGameStore = create<GameState>()(
                 }));
 
                 if (allEnemiesDead) {
+                    soundManager?.playSE('se_battle_win');
                     set(state => ({
                         battleState: { ...state.battleState, isVictory: true, battle_result: 'victory', messages: [...state.battleState.messages, '全ての敵を倒した！ 勝利！'] }
                     }));
@@ -898,6 +904,9 @@ export const useGameStore = create<GameState>()(
                     // ─── カード効果分岐エンジン ───────────────────
                     effectInfo = getCardEffectInfo(card);
 
+                    // サウンド: カードエフェクトに応じたSE再生
+                    soundManager?.playSEForCardEffect(effectInfo.effectType);
+
                     switch (effectInfo.effectType) {
                         case 'heal': {
                             const healAmount = card.power || 0;
@@ -924,6 +933,7 @@ export const useGameStore = create<GameState>()(
                             nextHand = nextHand.filter(c => c.id !== card.id);
                             nextDiscardPile = [...nextDiscardPile, card];
                             logMsg = `${card.name}を使用！ 戦闘から離脱した！`;
+                            soundManager?.playSE('se_escape');
                             set(state => ({
                                 hand: nextHand,
                                 discardPile: nextDiscardPile,
@@ -1549,6 +1559,7 @@ export const useGameStore = create<GameState>()(
                         }
                     }
 
+                    soundManager?.playSE('se_battle_lose');
                     set(state => ({ battleState: { ...state.battleState, isDefeat: true, messages: newMessages } }));
                 } else {
                     set(state => ({

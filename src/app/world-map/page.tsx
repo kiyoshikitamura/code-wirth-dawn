@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { Map as MapIcon, Compass, Anchor, Castle, Mountain, Tent } from 'lucide-react';
 import { getNationNodeColor } from '@/utils/nationColors';
 import { HUB_LOCATION_NAME, LEGACY_ZERO_UUID } from '@/utils/constants';
+import { useBgm } from '@/hooks/useBgm';
+import { soundManager } from '@/lib/soundManager';
 
 import GlobalStatusBar from '@/components/world/GlobalStatusBar';
 import LocalMapView, { MappedLocation } from '@/components/world/LocalMapView';
@@ -18,6 +20,7 @@ import WorldAtlasOverlay from '@/components/world/WorldAtlasOverlay';
 export default function WorldMapPage() {
     const router = useRouter();
     const { userProfile, worldState, hubState, fetchUserProfile, fetchWorldState, fetchHubState } = useGameStore();
+    useBgm('bgm_field');
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [traveling, setTraveling] = useState(false);

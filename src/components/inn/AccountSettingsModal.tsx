@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Link as LinkIcon, AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut } from 'lucide-react';
+import { ShieldAlert, Link as LinkIcon, AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useGameStore } from '@/store/gameStore';
 import { UI_RULES } from '@/constants/game_rules';
+import SoundSettingsPanel from '@/components/sound/SoundSettingsPanel';
 
 interface Props {
     onClose: () => void;
@@ -308,6 +309,14 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                 </ul>
                             </div>
                         )}
+                        {/* ── サウンド設定 ── */}
+                        <div className="mb-6 pb-6 border-b border-[#3e2723]">
+                            <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                                <Volume2 className="w-4 h-4" />
+                                サウンド設定
+                            </h3>
+                            <SoundSettingsPanel />
+                        </div>
 
                         <div className="pt-4 border-t border-[#3e2723] space-y-3">
                             <p className="text-[#a38b6b] text-sm font-bold text-center mb-4">連携するアカウントを選択</p>

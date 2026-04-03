@@ -7,10 +7,12 @@ import { useGameStore } from '@/store/gameStore';
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
 import { Sword, Shield, Map as MapIcon, Hourglass, Compass } from 'lucide-react';
+import { useBgm } from '@/hooks/useBgm';
 
 export default function TitlePage() {
     const router = useRouter();
     const { userProfile, fetchUserProfile } = useGameStore();
+    useBgm('bgm_title');
 
     // Flow State: ENTRY -> AUTH(Login/Register) -> SECRET_SETUP -> CHAR_CREATION -> GAME
     // Actually, ENTRY is the default view with Login/Start buttons.

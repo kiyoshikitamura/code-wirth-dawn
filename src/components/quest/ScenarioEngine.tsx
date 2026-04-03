@@ -10,6 +10,7 @@ import { useQuestState } from '@/store/useQuestState';
 import { useRouter } from 'next/navigation';
 import StatusModal from '@/components/inn/StatusModal';
 import { supabase } from '@/lib/supabase';
+import { soundManager } from '@/lib/soundManager';
 
 interface Props {
     scenario: ScenarioDB;
@@ -104,6 +105,21 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         let timeoutId: NodeJS.Timeout | undefined;
 
         const processNode = async () => {
+            // サウンド: ノードにBGM指定があれば切替
+            const bgmKey = currentNode.bgm || currentNode.bgm_key;
+            if (bgmKey && soundManager) {
+                soundManager.playBgm(bgmKey);
+            }
+
+            // サウンド: 終了ノードでSE再生
+            if (currentNode.type === 'end' && soundManager) {
+                if (currentNode.result === 'success') {
+                    soundManager.playSE('se_quest_success');
+                } else if (currentNode.result === 'failure') {
+                    soundManager.playSE('se_quest_fail');
+                }
+            }
+
             // 1. 特殊ロジックノード
             if (currentNode.type === 'check_world') {
                 // ... (変更なし)

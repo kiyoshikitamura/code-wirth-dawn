@@ -22,10 +22,13 @@ import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
 import type { FacilityKey } from '@/data/npcMasterData';
+import { useBgm } from '@/hooks/useBgm';
+import { soundManager } from '@/lib/soundManager';
 
 export default function InnPage() {
     const router = useRouter();
     const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState } = useGameStore();
+    useBgm('bgm_inn');
 
     // UI States
     const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | 'questBoard' | null>(null);
