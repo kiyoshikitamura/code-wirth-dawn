@@ -59,3 +59,4 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id
 58,card_death_strike,即死攻撃,Skill,4,vitality,30,0,single_enemy,instakill
 59,card_mad_frenzy,狂戦士の薬,Support,1,vitality,30,0,self,berserk
 60,card_soul_sac,魂の生贄,Magic,5,vitality,50,150,all_enemies,recoil
+61,card_citizen_support,市民の支援,Heal,0,,0,300,self,

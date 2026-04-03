@@ -241,13 +241,51 @@ export default function WorldMapPage() {
 
                 if (data.require_battle) {
                     alert(data.message || "敵襲だ！");
-                    const enemyName = data.require_battle === 'bounty_hunter_ambush' ? '賞金稼ぎ' : '無法者';
-                    const encounterEnemy: any = {
-                        id: data.encounter_enemy_group_slug,
-                        name: enemyName,
-                        hp: 300, maxHp: 300, atk: 15, def: 5, level: 20, status_effects: []
-                    };
-                    useGameStore.getState().startBattle([encounterEnemy]);
+                    
+                    let enemiesToSpawn: any[] = [];
+                    try {
+                        const { data: groupData } = await supabase.from('enemy_groups').select('members').eq('slug', data.encounter_enemy_group_slug).single();
+                        if (groupData?.members) {
+                            const enemySlugs = groupData.members.split('|');
+                            const { data: dbEnemies } = await supabase.from('enemies').select('*').in('slug', enemySlugs);
+                            if (dbEnemies && dbEnemies.length > 0) {
+                                enemiesToSpawn = enemySlugs.map((slug: string) => {
+                                    const e = dbEnemies.find(en => en.slug === slug);
+                                    if (!e) return null;
+                                    return {
+                                        id: crypto.randomUUID(), // Multi-spawn needs unique ID
+                                        slug: e.slug,
+                                        name: e.name,
+                                        hp: e.hp,
+                                        maxHp: e.hp,
+                                        atk: e.atk,
+                                        def: e.def || 0,
+                                        level: Math.floor(e.hp / 10) || 1,
+                                        image: e.image_url || `/enemies/${e.slug}.png`,
+                                        status_effects: [],
+                                        vit_damage: e.vit_damage,
+                                        drop_item_slug: e.drop_item_slug,
+                                        spawn_type: data.require_battle === 'bounty_hunter_ambush' ? 'bounty' : undefined
+                                    };
+                                }).filter(Boolean);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch encounter enemies', err);
+                    }
+
+                    // フォールバック
+                    if (enemiesToSpawn.length === 0) {
+                        const enemyName = data.require_battle === 'bounty_hunter_ambush' ? '賞金稼ぎ' : '無法者';
+                        enemiesToSpawn = [{
+                            id: data.encounter_enemy_group_slug,
+                            name: enemyName,
+                            hp: 300, maxHp: 300, atk: 15, def: 5, level: 20, status_effects: []
+                        }];
+                    }
+
+                    // startBattle は async のため、await で完了を待ってから state をセットし遷移する
+                    await useGameStore.getState().startBattle(enemiesToSpawn);
                     router.push(`/battle?type=${data.require_battle}&target=${data.target_location_id}&origin=${data.origin_location_id}`);
                     return;
                 }

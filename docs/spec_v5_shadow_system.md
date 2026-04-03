@@ -13,7 +13,7 @@ Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
 
 | 種別 | origin_type | 説明 | AI Grade |
 |---|---|---|---|
-| アクティブ残影 | `active_shadow` | 現在プレイ中のプレイヤーのコピー | `random` |
+| アクティブ残影 | `shadow_active` | 現在プレイ中のプレイヤーのコピー | `random` |
 | 英霊 (Heroic) | `shadow_heroic` | 引退/死亡したキャラクターの固定データ | `smart` |
 | システムNPC | `system_mercenary` | ゲームが提供する固定NPC | `random` |
 
@@ -85,11 +85,20 @@ CREATE TABLE party_members (
 *   **API**: `POST /api/party/hire`
 *   パーティ上限: **4名**（プレイヤー含め最大5名）。
 *   **契約金算出式**: `5,000G（基本料） + (レベル × 1,000G)`
-*   **ロイヤリティ分配**:
+*   **ロイヤリティ分配（英霊 `shadow_heroic`）**:
     *   契約金の **20%** が元プレイヤーに還元。
     *   残りの **80%** はシステム税として消滅。
     *   **日額上限**: 元プレイヤーのレベルに依存（Lv1-10=100G/日, Lv11-20=300G/日, Lv21+=50,000G/日）。超過分はシステム税となる。
     *   元プレイヤー自身が自分の英霊を雇用した場合は分配金は発生しない。
+*   **ロイヤリティ分配（アクティブ残影 `shadow_active`）**:
+    *   Subscription Tier に応じたレートで元プレイヤーに還元。
+
+    | Subscription Tier | ロイヤリティ率 |
+    |---|---|
+    | Free | 10% |
+    | Basic | 30% |
+    | Premium | 50% |
+
 *   **英霊の高額契約金**: 英霊（`shadow_heroic`）の雇用コストは、NPCのレベルやステータスに比例して飛躍的に高く設定される（強力なゴールドシンク）。
 
 ### 5.3 解雇

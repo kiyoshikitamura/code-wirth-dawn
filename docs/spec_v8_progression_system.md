@@ -27,7 +27,7 @@ const MAX_DEF = 15;            // DEF上限
 ## 3. レベルアップとEXP
 
 ### 3.1 EXP計算式
-<!-- v11.0: calculateGrowth() の getNextExp を反映 -->
+<!-- v15.0: game_rules.ts EXP_FORMULA の実装値に合致（50 × Lv²）-->
 ```
 NextLevelExp = 50 * (CurrentLevel ^ 2)
 ```
@@ -71,17 +71,16 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 | Vitality (寿命) | 生命の残り時間 | 老化で減算のみ（加齢ロジック: v9仕様参照） |
 | Hand Size | 手札上限 | **レベル連動で段階的に拡張**（下記参照） |
 
-#### Hand Size 値一覧 (spec v14 更新)
+#### Hand Size 値一覧 (spec v15 更新)
 
 | レベル | 手札枚数 |
 |---|---|
-| Lv 1 〜 4 | 3枚 |
-| Lv 5 〜 9 | 4枚 |
-| Lv 10 〜 14 | 5枚 |
-| Lv 15以上 | 6枚 |
+| Lv 1 〜 4 | 4枚 |
+| Lv 5 〜 9 | 5枚 |
+| Lv 10以上 | 6枚 |
 
 実装: `gameStore.dealHand()` 内で `GROWTH_RULES.HAND_SIZE_BY_LEVEL` を追従。
-* 【UI/モバイル対応】SPA化に伴い、レベル15以上の最大6枚の手札は、画面下部の領域に扇状（Fan Layout）で重ねて配置およびホバー拡大変換される仕様とした。
+* 【UI/モバイル対応】SPA化に伴い、レベル10以上の最大6枚の手札は、画面下部の領域に扇状（Fan Layout）で重ねて配置およびホバー拡大変換される仕様とした。
 
 ---
 

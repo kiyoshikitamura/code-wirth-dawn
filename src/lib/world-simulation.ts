@@ -44,12 +44,15 @@ const NATION_ATTRIBUTE_MAP: Record<string, string> = {
 
 // Location and WorldState types imported from '@/types/game'
 
+// v11.1: Resistance 閾値 — fiction ≥ RESISTANCE_THRESHOLD かつ新規占領時に崩壊強制
+const RESISTANCE_THRESHOLD = 51;
+
 /**
  * Main function to update world hegemony and location status.
- * Intended to be run daily via Cron.
+ * Intended to be run every 6 hours via Cron.
  */
 export async function updateWorldSimulation() {
-    console.log('[WorldSim] Starting daily update...');
+    console.log('[WorldSim] Starting 6h world update...');
     const logs: string[] = [];
 
     try {
@@ -215,7 +218,8 @@ export async function updateWorldSimulation() {
             if (!state) continue;
 
             // Updated Owner logic (from previous step 4)
-            if (state.controlling_nation !== newOwner) {
+            const isNewCapture = state.controlling_nation !== newOwner;
+            if (isNewCapture) {
                 logs.push(`[Change] ${loc.name}: ${state.controlling_nation} -> ${newOwner}`);
                 historyLogs.push({
                     location_id: loc.id,
@@ -265,7 +269,7 @@ export async function updateWorldSimulation() {
             // 2. Determine Trend
             // Friction 0-20:  Trend towards Zenith (Lv5)
             // Friction 21-50: Trend towards Prosperous (Lv4)
-            // Friction 51-80: Trend towards Declining (Lv2)
+            // Friction 51-80: Trend towards Stagnant/Declining (Lv3→Lv2)
             // Friction 81+:   Trend towards Ruined (Lv1)
 
             let targetLevel = 3; // Stagnant default
@@ -274,17 +278,31 @@ export async function updateWorldSimulation() {
             else if (friction <= 80) targetLevel = 2;
             else targetLevel = 1;
 
-            // 3. Update Prosperity Level (Slow moving average or Direct?)
-            // Spec says: "24h batch... Recovery/Collapse conditions".
-            // Implementation: Move 1 step towards target level per day.
+            // 3. Update Prosperity Level
+            // spec v11.1: Resistance — friction >= RESISTANCE_THRESHOLD かつ新規占領時は崩壊強制
+            // Implementation: Move 1 step towards target level per 6h cycle.
 
             // Get current level (default 4 if new col is null)
             let currentLevel = (state as any).prosperity_level ?? 4;
 
             const oldLevel = currentLevel;
 
-            if (currentLevel < targetLevel) currentLevel++;
-            else if (currentLevel > targetLevel) currentLevel--;
+            // v11.1: Resistance 判定 — 新規占領かつ高摩擦 → 即時崩壊
+            if (isNewCapture && friction >= RESISTANCE_THRESHOLD) {
+                currentLevel = 1; // 崩壊状態で強制併合
+                logs.push(`[Resistance] ${loc.name}: 摩擦(${friction}) >= ${RESISTANCE_THRESHOLD} → 崩壊状態で${newOwner}に吸収`);
+                historyLogs.push({
+                    location_id: loc.id,
+                    event_type: 'resistance_collapse',
+                    old_value: String(oldLevel),
+                    new_value: '1',
+                    message: `「『${loc.name}』は激しい抵抗の末、廃墟と化した状態で${newOwner}の版図に組み込まれた。」`
+                });
+            } else {
+                // 通常の段階的変動（1ステップずつ）
+                if (currentLevel < targetLevel) currentLevel++;
+                else if (currentLevel > targetLevel) currentLevel--;
+            }
 
             // 4. Determine Text Status (Legacy Support)
             // Map Level 1-5 back to Text Status for UI compatibility

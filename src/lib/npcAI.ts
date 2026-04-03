@@ -51,7 +51,8 @@ export function determineRole(member: PartyMember): AIRole {
         c.name.includes('ヒール') ||
         c.name.toLowerCase().includes('heal') ||
         c.name.toLowerCase().includes('cure') ||
-        (c.power && c.power < 0) // Negative power = heal convention
+        (c.power && c.power < 0) || // Negative power = heal convention
+        (c as any).type === 'Heal'  // Q6: explicit Heal type card
     );
     if (hasHealCard) return 'medic';
 

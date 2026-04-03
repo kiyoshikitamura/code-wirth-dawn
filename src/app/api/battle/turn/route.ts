@@ -5,6 +5,16 @@ import { supabaseServer as supabase } from '@/lib/supabase-admin';
 /**
  * POST /api/battle/turn
  * Process Enemy Turn (AI, Injection, Damage)
+ *
+ * [v12.0 設計方針]
+ * 現在、バトルの主要ロジック（ダメージ計算・ターン進行・勝敗判定）は
+ * 全てクライアントサイド（gameStore.processEnemyTurn()）で処理されている。
+ * このAPIはデッドコード状態だが、将来の「権威サーバー移行」の受け皿として保持・整備する。
+ *
+ * TODO: フロントエンドからこのAPIを呼び出し、クライアント側の processEnemyTurn() を
+ *       段階的にこのサーバー実装に移行する（不正防止・マルチプレイヤー対応のため）。
+ *
+ * ATK計算基準: フォールバック攻撃力 = Level × 5 + 10 (spec_v2_battle_parameters §5.2)
  */
 export async function POST(req: Request) {
     try {
@@ -96,8 +106,9 @@ export async function POST(req: Request) {
             }
         } else {
             // Damage / Drain Logic
-            let finalDamage = skillVal; // Base damage
-            // (Optional calculation with defense?)
+            // ATK式基準: Level × 5 + 10 (spec_v2_battle_parameters §5.2)
+            // skillVal が 0 のフォールバック時は基準式を適用する
+            let finalDamage = skillVal || 10; // Base damage (skillVal=0 はありえないが念のため)
 
             // Meat Shield Check
             // Filter living NPCs

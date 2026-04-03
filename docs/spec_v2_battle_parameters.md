@@ -111,7 +111,8 @@ export interface BattleState {
 ## 4. ターン進行プロセス (Turn Sequence)
 
 ### 4.1 フェーズ詳細
-1. **Draw Phase (ドロー)**: `dealHand()` — 手札上限5枚まで引く。山札不足時は捨て札をリシャッフル。山札+捨て札+手札 = 0枚の場合、Struggle カード (0 AP, 1 Dmg, 自傷1) を生成。
+1. **Draw Phase (ドロー)**: `dealHand()` — 手札が上限枚数になるまで引く。山札不足時は捨て札をリシャッフル。山札+捨て札+手札 = 0枚の場合、Struggle カード (0 AP, 1 Dmg, 自傷1) を生成。
+   - **手札上限**: Lv1-4: 4枚 / Lv5-9: 5枚 / Lv10+: 6枚（`HAND_SIZE_BY_LEVEL` 定義）
 2. **Energy Phase (AP回復)**: `AP = Min(10, CurrentAP + 5)`。Stun状態時はAP回復なし。
 3. **Action Phase (行動)**: APがある限り行動可能。
    - **Purge (ノイズ廃棄)**: `type: noise` のカードは `discard_cost`（デフォルト1 AP）を支払って手札から消滅（Exhaust）。
@@ -223,4 +224,6 @@ MitigatedDamage = Max(1, EnemyATK - Player.DEF)
 - `effect_type: 'drain_vit'` でVitality攻撃。
 - Meat Shield ロジック（NPC `cover_rate` による庇い）。
 
-> **Note (v11.0)**: 現在、バトルの主要ロジック（ダメージ計算、ターン進行、勝敗判定）は全てクライアントサイド（`gameStore.ts`）で処理されている。サーバーAPIは補助的な使用に留まる。
+> **Note (v12.0)**: 現在、バトルの主要ロジック（ダメージ計算、ターン進行、勝敗判定）は全てクライアントサイド（`gameStore.ts`）で処理されている。
+> `/api/battle/turn` は現在デッドコード状態だが、将来の不正防止・マルチプレイヤー対応のための「権威サーバー」能力として保持・整備する。
+> 将来的にフロントエンドからこのAPIを呼び出し、クライアント処理を段階的に移行する（計画）。

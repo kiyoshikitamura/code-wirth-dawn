@@ -56,7 +56,7 @@ export async function POST(req: Request) {
             hp: max_hp ?? 100,
             max_hp: max_hp ?? 100,
             initial_hp: max_hp ?? 100, // Added for Spec v8.2 scaling
-            max_deck_cost: max_deck_cost ?? 10,
+            max_deck_cost: max_deck_cost ?? 12,
             is_alive: true, // Resurrect
             updated_at: new Date().toISOString()
         };

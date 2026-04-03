@@ -1454,7 +1454,7 @@ export const useGameStore = create<GameState>()(
                         }
                     } else {
                         // Fallback: no action_pattern or no valid actions → basic attack
-                        enemyAtk = (enemy.level || 1) * 3 + 5;
+                        enemyAtk = (enemy.level || 1) * 5 + 10;
                         newMessages.push(`${enemy.name}の攻撃！`);
                     }
 

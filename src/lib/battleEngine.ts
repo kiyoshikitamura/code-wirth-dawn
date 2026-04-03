@@ -86,10 +86,20 @@ export function buildBattleDeck(
         for (let i = 0; i < count; i++) finalDeck.push({ ...noiseCard, id: `noise_${i}`, isInjected: true, source: 'World Hazard' } as any);
     }
 
-    // Zenith (Lv5) -> Support
+    // Zenith (Lv5) → 市民支援カード自動注入 (v11.1: HP300回復 / コスツ0)
     if (worldStateStatus === 'Zenith' || worldStateStatus === '絶頂') {
-        const supportCard = cardLookup('card_citizen_support') || { id: 'card_citizen_support', name: 'Citizen Aid', type: 'Skill', description: 'Restore 10 HP', cost: 0, power: 10 };
-        finalDeck.push({ ...supportCard, id: 'zenith_buff', cost: 0, isInjected: true, source: 'World Blessing' } as any);
+        const supportCard = cardLookup('card_citizen_support') || {
+            id: 'card_citizen_support',
+            name: '市民の支援',
+            type: 'Heal' as any,
+            description: '[絶頂効果] 画教の一道。HPを300回復する。',
+            cost: 0,
+            ap_cost: 0,
+            power: 300,
+            effect_val: 300,
+            target_type: 'self'
+        };
+        finalDeck.push({ ...supportCard, id: 'zenith_buff', cost: 0, ap_cost: 0, isInjected: true, source: '絶頂の祝福' } as any);
     }
 
     // 3. v19: サポートバフカードのノイズ注入チェック（呪いの偶像は廃止済み: 常に0を返す）

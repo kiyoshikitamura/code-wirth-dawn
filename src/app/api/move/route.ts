@@ -63,8 +63,7 @@ export async function POST(req: Request) {
         // 2. Get Target Location
         let query = supabase.from('locations').select('*');
         if (target_location_slug) {
-            // 旧slug互換: nameとして扱う
-            query = query.eq('name', target_location_slug);
+            query = query.eq('slug', target_location_slug); // v11.1修正: slugカラムで正しく検索
         } else {
             query = query.eq('name', target_location_name);
         }

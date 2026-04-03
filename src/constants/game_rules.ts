@@ -17,13 +17,12 @@ export const GROWTH_RULES = {
     MAX_ATK: 15,
     MAX_DEF: 15,
 
-    // Hand Size by Level (spec_v8 §4.3: 仕様v14更新)
-    // Lv1-4: 3枚 / Lv5-9: 4枚 / Lv10-14: 5枚 / Lv15+: 6枚
+    // Hand Size by Level (spec_v2_battle_parameters.md §4.1: 仕様v15更新)
+    // Lv1-4: 4枚 / Lv5-9: 5枚 / Lv10+: 6枚
     HAND_SIZE_BY_LEVEL: [
-        { minLevel: 15, size: 6 },
-        { minLevel: 10, size: 5 },
-        { minLevel: 5, size: 4 },
-        { minLevel: 1, size: 3 },
+        { minLevel: 10, size: 6 },
+        { minLevel: 5, size: 5 },
+        { minLevel: 1, size: 4 },
     ] as const,
 
     // Aging (Spec v9.3)
@@ -41,7 +40,7 @@ export const GROWTH_RULES = {
         60: { amount: 2, interval: 1 }   // 60+:   -2 every year
     } as Record<number, { amount: number; interval: number }>,
 
-    EXP_FORMULA: (currentLevel: number) => 100 * Math.pow(currentLevel, 2)
+    EXP_FORMULA: (currentLevel: number) => 50 * Math.pow(currentLevel, 2)
 };
 
 // ─── spec_v16: Economy & Reputation Rules ────────────────────────────────────
