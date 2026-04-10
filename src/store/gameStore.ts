@@ -234,6 +234,9 @@ export const useGameStore = create<GameState>()(
                             power: c.effect_val || c.power || 0,
                             ap_cost: c.ap_cost ?? 1,
                             cost_type: c.cost_type || undefined, // item/mp/vitality等
+                            effect_id: c.effect_id || undefined,
+                            effect_duration: c.effect_duration || undefined,
+                            animation_type: c.animation_type || undefined,
                         })) as Card[];
                     }
                 }
