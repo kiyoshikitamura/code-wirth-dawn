@@ -125,6 +125,17 @@ export function getCardEffectInfo(card: Card): CardEffectInfo {
         };
     }
 
-    // 3. デフォルト: 通常攻撃
+    // 3. card.type / name からの推定 (v8.5 フォールバック強化)
+    if (card.type === 'Defense' || card.name.includes('防御') || card.name.includes('鉄壁')) {
+        return { effectType: 'buff_self', effectId: 'def_up', effectDuration: card.effect_duration || 2, skipDamage: true };
+    }
+    if (card.type === 'Heal' || card.name.includes('回復') || card.name.includes('ヒール')) {
+        return { effectType: 'heal', skipDamage: true };
+    }
+    if (card.type === 'Support') {
+        return { effectType: 'support_activate', skipDamage: true };
+    }
+
+    // 4. デフォルト: 通常攻撃
     return { effectType: 'attack' };
 }

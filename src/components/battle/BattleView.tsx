@@ -171,6 +171,9 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 }
                 setActiveEffect(effect);
                 setTimeout(() => setActiveEffect(null), 500);
+            } else {
+                setActiveEffect('BUFF');
+                setTimeout(() => setActiveEffect(null), 700);
             }
             await attackEnemy(card);
         } else {
@@ -580,6 +583,15 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Global Anim for Buffs */}
+            {activeEffect === 'BUFF' && (
+                <div className="fixed inset-0 z-[55] pointer-events-none flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-sky-200/20 animate-in fade-in duration-300" />
+                    <div className="w-full h-full border-[10px] border-sky-400/30 rounded-lg animate-in zoom-in fade-in duration-500 scale-110 blur-sm" />
+                    <div className="absolute bottom-1/4 w-32 h-64 bg-gradient-to-t from-sky-300/40 to-transparent blur-xl animate-in slide-in-from-bottom-32 fade-in duration-500" />
                 </div>
             )}
 

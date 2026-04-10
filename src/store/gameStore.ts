@@ -961,7 +961,13 @@ export const useGameStore = create<GameState>()(
                                     effectInfo.effectDuration || 3
                                 );
                                 set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                                logMsg = `${card.name}を使用！ ${getEffectName(effectInfo.effectId)}を得た！`;
+                                
+                                if (effectInfo.effectId === 'def_up') {
+                                    const defVal = card.power || 15;
+                                    logMsg = `${card.name}を使用！ 防御効果を ${defVal} 得た！`;
+                                } else {
+                                    logMsg = `${card.name}を使用！ ${getEffectName(effectInfo.effectId)}を得た！`;
+                                }
                             } else {
                                 logMsg = `${card.name}を使用！`;
                             }
@@ -1046,6 +1052,7 @@ export const useGameStore = create<GameState>()(
                             } else {
                                 logMsg = `${card.name}を使用！`;
                             }
+                            break;
                         }
                         case 'support_activate': {
                             // v19: Supportカード使用 → バトル内永続バフ付与
