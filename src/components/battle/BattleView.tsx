@@ -157,7 +157,10 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 card.type === 'Heal' ||
                 (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id)) ||
                 card.name.includes('防御') ||
+                card.name.includes('鉄壁') ||
                 card.name.includes('応急') ||
+                card.name.includes('回復') ||
+                card.name.includes('ヒール') ||
                 card.name.includes('集中') ||
                 card.name.includes('挑発') ||
                 card.name.includes('クイック');
