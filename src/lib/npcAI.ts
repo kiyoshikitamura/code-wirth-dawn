@@ -136,10 +136,10 @@ export function resolveNpcTurn(
     const playableCards = deck
         .filter(c => {
             const cost = c.ap_cost ?? 1;
-            const isBuff = c.type === 'Defense' || c.type === 'Support' || (c.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(c.effect_id));
+            const isBuff = c.type === 'Defense' || c.type === 'Support' || c.type === 'Heal' || (c.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(c.effect_id));
             return cost <= (npc.current_ap || 0) &&
                 !npc.used_this_turn?.includes(c.id) &&
-                !isBuff; // バフ専用カードはスキップ（攻撃カードのみ実行）
+                !isBuff; // バフ・回復専用カードはスキップ（攻撃カードのみ実行）
         })
         .sort((a, b) => (b.ap_cost ?? 1) - (a.ap_cost ?? 1));
 

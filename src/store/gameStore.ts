@@ -1212,10 +1212,12 @@ export const useGameStore = create<GameState>()(
                 const enemyDef = currentBattle.enemy.def || 0;
                 const updatedParty = [...currentBattle.party];
 
-                // v2.4: Use NPC AI Engine for each party member
                 for (let i = 0; i < updatedParty.length; i++) {
                     const member = { ...updatedParty[i] };
                     if (!member.is_active || member.durability <= 0) continue;
+
+                    // v8.4: ターン開始時に使用済みカードの履歴をリセット
+                    member.used_this_turn = [];
 
                     const context: BattleContext = {
                         playerHp: userProfile?.hp || 0,
