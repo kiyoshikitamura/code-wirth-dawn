@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Link as LinkIcon, AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2 } from 'lucide-react';
+import { ShieldAlert, Link as LinkIcon, AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2, Coins } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useGameStore } from '@/store/gameStore';
 import { UI_RULES } from '@/constants/game_rules';
@@ -76,6 +76,24 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: userProfile?.id, mode: 'subscription', tier }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || '決済URLの取得に失敗しました');
+            window.location.href = data.url;
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setBillingLoading(null);
+        }
+    };
+
+    const handleBuyGold = async (packageKey: 'gold_10k' | 'gold_50k') => {
+        setBillingLoading(packageKey);
+        try {
+            const res = await fetch('/api/billing/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: userProfile?.id, mode: 'payment', packageKey }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || '決済URLの取得に失敗しました');
@@ -217,6 +235,46 @@ export default function AccountSettingsModal({ onClose }: Props) {
                             )}
                         </div>
                     )}
+                </div>
+
+                {/* ── ゴールド購入セクション ── */}
+                <div className="mb-6 pb-6 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                        <Coins className="w-4 h-4" />
+                        ゴールド購入
+                    </h3>
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => handleBuyGold('gold_10k')}
+                            disabled={!!billingLoading || isAnonymous}
+                            className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <span className="flex items-center gap-2">
+                                <span className="text-yellow-400 font-bold">🪙 10,000 G</span>
+                                <span className="text-gray-400 text-xs">スターターパック</span>
+                            </span>
+                            <span className="font-bold text-yellow-300">
+                                {billingLoading === 'gold_10k' ? '処理中...' : '330円（税込）'}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => handleBuyGold('gold_50k')}
+                            disabled={!!billingLoading || isAnonymous}
+                            className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
+                        >
+                            <span className="flex items-center gap-2">
+                                <span className="text-yellow-400 font-bold">🪙 50,000 G</span>
+                                <span className="text-gray-400 text-xs">アドベンチャーパック</span>
+                                <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded font-bold">おすすめ</span>
+                            </span>
+                            <span className="font-bold text-yellow-300">
+                                {billingLoading === 'gold_50k' ? '処理中...' : '1,460円（税込）'}
+                            </span>
+                        </button>
+                        {isAnonymous && (
+                            <p className="text-xs text-gray-500 text-center">※ ゴールド購入にはアカウント連携が必要です</p>
+                        )}
+                    </div>
                 </div>
 
                 {/* ── アバター変更セクション ── */}

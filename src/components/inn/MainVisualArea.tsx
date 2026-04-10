@@ -1,24 +1,22 @@
 import React from 'react';
-import { BookOpen, MessageSquare, MapPin, Compass } from 'lucide-react';
+import { BookOpen, MapPin, Compass } from 'lucide-react';
 import { WorldState } from '@/types/game';
 
 interface MainVisualAreaProps {
     worldState: WorldState | null;
     locationSlug?: string;
     onOpenHistory: () => void;
-    onOpenRumors: () => void;
     onOpenMap?: () => void;
     showHistoryBadge?: boolean;
-    showRumorsBadge?: boolean;
 }
 
-export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onOpenRumors, onOpenMap, showHistoryBadge, showRumorsBadge }: MainVisualAreaProps) {
+export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onOpenMap, showHistoryBadge }: MainVisualAreaProps) {
     const prosperity = worldState?.prosperity_level || 3;
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
 
     let stateSuffix = "normal";
-    let prosperityLabel = '通常';
+    let prosperityLabel = '停滞';
     let prosperityBadgeClass = 'bg-slate-800/70 text-slate-200 border-slate-600/50';
     let vignette = 'from-transparent via-transparent to-slate-950/80';
     let topGlow = '';
@@ -52,13 +50,27 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
     const flavorText = (() => {
         if (!worldState || locationName === '未知の土地') return '';
         if (controllingNation === 'Neutral') return 'この地は誰の支配も受けていない。';
+
+        const getNationName = (nation: string) => {
+            switch (nation) {
+                case 'Roland': return 'ローランド王国';
+                case 'Karyu': return '華龍神朝';
+                case 'Yato': return '夜刀神組国';
+                case 'Markand': return '商業都市マーカンド';
+                case 'Neutral': return '中立地帯';
+                default: return nation;
+            }
+        };
+        const jpNation = getNationName(controllingNation);
+
         let score = 0;
         if (controllingNation === 'Roland') score = worldState.order_score || 0;
         else if (controllingNation === 'Markand') score = worldState.chaos_score || 0;
         else if (controllingNation === 'Yato') score = worldState.justice_score || 0;
         else if (controllingNation === 'Karyu') score = worldState.evil_score || 0;
-        if (score >= 60) return `住民は${controllingNation}の統治を歓迎している。活気がある。`;
-        if (score <= 40) return `住民は${controllingNation}の支配に怯えている…`;
+
+        if (score >= 60) return `住民は${jpNation}の統治を歓迎している。活気がある。`;
+        if (score <= 40) return `住民は${jpNation}の支配に怯えている…`;
         return `街はこの国の支配にまだ馴染んでいないようだ。`;
     })();
 
@@ -88,17 +100,6 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                 >
                     <BookOpen size={18} />
                     {showHistoryBadge && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-slate-950">
-                            !
-                        </span>
-                    )}
-                </button>
-                <button
-                    onClick={onOpenRumors}
-                    className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-slate-600/40 shadow-lg flex items-center justify-center text-slate-300 hover:bg-slate-800 hover:text-white transition-colors active:scale-95 focus:outline-none"
-                >
-                    <MessageSquare size={18} />
-                    {showRumorsBadge && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-slate-950">
                             !
                         </span>

@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_marcund`（マルカンド） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_desert.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_desert_bandit`（砂漠の盗賊）、`enemy_sand_beast`（砂漠の魔獣） |
 
@@ -76,13 +80,16 @@ params: type:join, npc_slug:npc_caravan_leader, is_escort_target:false, next:tra
 ```
 
 #### `battle_bandits`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_desert_bandit` |
+| 敵グループ | `enemy_desert_bandit` |
 | 敵名 | 砂漠の盗賊 |
 
 ```
-params: type:battle, enemy:enemy_desert_bandit, next:midpoint_rest, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_desert_bandit が含まれるグループ], next:midpoint_rest, fail:end_failure
 ```
 
 #### `midpoint_rest`（text）
@@ -98,14 +105,17 @@ params: type:battle, enemy:enemy_desert_bandit, next:midpoint_rest, fail:end_fai
 ```
 
 #### `battle_beast`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_sand_beast` |
+| 敵グループ | `enemy_sand_beast` |
 | 敵名 | 砂漠の魔獣 |
 | 備考 | HP高め・ボス格。第2戦のため強め設定 |
 
 ```
-params: type:battle, enemy:enemy_sand_beast, next:arrive_destination, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_sand_beast が含まれるグループ], next:arrive_destination, fail:end_failure
 ```
 
 #### `arrive_destination`（text）
@@ -145,4 +155,3 @@ params: type:leave, npc_slug:npc_caravan_leader, next:end_success
 
 - 砂漠オアシスでの`camp`ノード（HP回復・デッキ調整）
 - 商品の種類によって報酬が変動するシステム（将来実装）
-- BGM: `bgm_quest_calm`（砂漠旅情）→ `bgm_battle`

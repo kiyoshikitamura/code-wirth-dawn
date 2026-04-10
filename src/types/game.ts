@@ -176,6 +176,7 @@ export interface PartyMember {
 
   durability: number;
   max_durability: number;
+  atk?: number; // v8.1: 基礎攻撃力 (1-15) — 傭兵のカード攻撃に加算
   def?: number; // Added v2.2
   cover_rate: number;
   loyalty: number;

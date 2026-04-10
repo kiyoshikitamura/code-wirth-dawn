@@ -16,11 +16,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
+        // spec_v15.1 §4: abandon_countをインクリメント
+        const { data: currentProfile } = await supabase
+            .from('user_profiles')
+            .select('abandon_count')
+            .eq('id', userId)
+            .single();
+
         const { error } = await supabase
             .from('user_profiles')
             .update({
                 current_quest_id: null,
-                current_quest_state: null
+                current_quest_state: null,
+                abandon_count: (currentProfile?.abandon_count ?? 0) + 1
             })
             .eq('id', userId);
 

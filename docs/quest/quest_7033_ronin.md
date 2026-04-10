@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_yatoshin` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_tavern_night.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_ronin`（浪人） |
 | **道徳的傾向** | 秩序（Order +5） |
@@ -78,18 +82,21 @@ start → enter_gambling_den → confront_leader
 ```
 
 #### `battle_ronin_wave_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_ronin` |
+| 敵グループ | `enemy_ronin` |
 | 敵名 | 食い詰め浪人（雑兵） |
 
 ```
-params: type:battle, enemy:enemy_ronin, next:leader_fight, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_ronin が含まれるグループ], next:leader_fight, fail:end_failure
 ```
 
 #### `leader_fight`（battle）
 ```
-params: type:battle, enemy:enemy_ronin, next:scatter, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_ronin が含まれるグループ], next:scatter, fail:end_failure
 ```
 > 頭目は `enemy_ronin_leader`（強化版）として定義。
 
@@ -125,4 +132,3 @@ params: type:battle, enemy:enemy_ronin, next:scatter, fail:end_failure
 
 - 浪人の頭目が「元は藩の重臣だった」フレーバー（没落の理由）
 - 「浪人に同情して見逃す」選択肢（失敗・フレーバーのみの選択肢）
-- BGM: `bgm_quest_tense`（和風緊張系）

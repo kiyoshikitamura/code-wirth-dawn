@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_yatoshin` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_mountain.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **戦闘** | なし（基本）/ 途中トラブルの可能性あり |
 
@@ -96,13 +100,16 @@ params: type:random_branch, prob:60, next:confronted, fallback:deliver_letter
 ```
 
 #### `battle_spirit`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_yokai`（或いは `enemy_spirit`） |
+| 敵グループ | `enemy_yokai`（或いは `enemy_spirit`） |
 | 敵名 | 峠の怨霊 |
 
 ```
-params: type:battle, enemy:enemy_yokai, next:deliver_letter, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_yokai が含まれるグループ], next:deliver_letter, fail:end_failure
 ```
 
 #### `deliver_letter`（text）
@@ -145,4 +152,3 @@ params: type:battle, enemy:enemy_yokai, next:deliver_letter, fail:end_failure
 
 - 怨霊の正体が道場の先代師範だったことが分かる後続フレーバー
 - 「話し合い」で渡した者への隠し報酬（戦闘回避ボーナス）
-- BGM: `bgm_quest_calm`（峠道・静か）

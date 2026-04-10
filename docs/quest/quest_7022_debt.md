@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_marcund` |
+| **出現条件** | 名声 -50以下 |
+| **サムネイル画像** | `/images/quests/bg_bandit_camp.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | max_reputation: -50（悪名-50以下） |
 | **敵スラッグ** | `enemy_fugitive_guard`（逃亡者を守る仲間） |
 | **道徳的傾向** | 邪悪（Evil +5） |
@@ -82,13 +86,16 @@ start → locate_colony → confront_fugitive
 - 選択肢:「黙って連れ帰る（余計な話は不要だ）」→ `battle_guards`
 
 #### `battle_guards`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_fugitive_guard` |
+| 敵グループ | `enemy_fugitive_guard` |
 | 敵名 | 逃亡者の仲間（無法者） |
 
 ```
-params: type:battle, enemy:enemy_fugitive_guard, next:capture, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_fugitive_guard が含まれるグループ], next:capture, fail:end_failure
 ```
 
 #### `capture`（text）
@@ -132,4 +139,3 @@ params: type:battle, enemy:enemy_fugitive_guard, next:capture, fail:end_failure
 
 - 「逃亡奴隷を見逃す」隠し選択肢（Justice変動・失敗扱い・フレーバー会話あり）
 - 逃亡奴隷が後続ストーリーで再登場する伏線要素
-- BGM: `bgm_quest_tense`

@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_catacombs.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_giant_rat`（巨大ネズミ） |
 
@@ -67,14 +71,17 @@ start → enter_sewers → battle_rats_01 → deeper → battle_rats_02 → dest
 ```
 
 #### `battle_rats_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_giant_rat` |
+| 敵グループ | `enemy_giant_rat` |
 | 敵名 | 巨大ネズミ（群） |
 | 備考 | 複数体の雑魚戦想定。HP低め・数で圧す |
 
 ```
-params: type:battle, enemy:enemy_giant_rat, next:deeper, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_giant_rat が含まれるグループ], next:deeper, fail:end_failure
 ```
 
 #### `deeper`（text）
@@ -85,7 +92,7 @@ params: type:battle, enemy:enemy_giant_rat, next:deeper, fail:end_failure
 
 #### `battle_rats_02`（battle）
 ```
-params: type:battle, enemy:enemy_giant_rat, next:destroy_nest, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_giant_rat が含まれるグループ], next:destroy_nest, fail:end_failure
 ```
 > 第2戦は個体数を増やすか、`enemy_giant_rat_alpha`など亜種で強化する。
 
@@ -127,4 +134,3 @@ params: type:battle, enemy:enemy_giant_rat, next:destroy_nest, fail:end_failure
 ## 6. 拡張メモ
 
 - ネズミの巣に隠されていたアイテム（偶発的な宝探し要素）
-- BGM: `bgm_quest_tense`（閉所・緊張感）

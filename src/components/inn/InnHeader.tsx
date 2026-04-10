@@ -32,7 +32,8 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
     const isLowVit = (userProfile?.vitality ?? 100) <= 20;
 
     const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100));
-    const apPercent = 40;
+    const vitalityPercent = Math.max(0, Math.min(100, ((userProfile?.vitality ?? 0) / (userProfile?.max_vitality || 100)) * 100));
+    const isLowVitBar = isLowVit;
 
     const getExpiringPasses = () => {
         if (!userProfile?.pass_expires_at) return [];
@@ -79,9 +80,9 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
             
             <div className="p-4">
 
-            {/* 暦 + 世界の覇権ボタン */}
+            {/* 暦 + 世界の覇権 + 設定ボタン */}
             <div className="flex items-center gap-2 px-1 mb-3">
-                <div className="flex items-center gap-2 bg-[#0a1628]/60 px-3 py-1.5 rounded border border-[#2a4080]/30">
+                <div className="flex items-center gap-2 bg-[#0a1628]/60 px-3 py-1.5 rounded border border-[#2a4080]/30 shrink-0">
                     <span className="text-[10px] text-amber-400 font-bold tracking-wider">世界暦</span>
                     <span className="text-[11px] font-serif tracking-wider text-blue-100/80">
                         {year}年 {month}月 {day}日
@@ -94,6 +95,15 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                     <Trophy size={12} className="text-amber-400" />
                     世界の覇権
                 </button>
+                {onOpenSettings && (
+                    <button
+                        onClick={onOpenSettings}
+                        className="p-1.5 bg-[#0a1628]/60 rounded border border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 transition-colors active:scale-90 shrink-0"
+                        aria-label="設定"
+                    >
+                        <Settings size={14} />
+                    </button>
+                )}
             </div>
 
             <div className="flex items-center gap-3 mb-2">
@@ -126,49 +136,37 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
 
                 <div className="flex flex-col items-end gap-1.5 min-w-[120px]">
                     <div className="w-full space-y-1">
+                        {/* HPバー */}
                         <div className="flex items-center gap-1.5">
                             <span className="text-[8px] text-emerald-400 font-bold w-5">HP</span>
                             <div className="flex-1 h-1.5 bg-[#0a1628] rounded-full overflow-hidden border border-[#2a4080]/40">
                                 <div className="h-full bg-emerald-500 transition-all duration-300" style={{ width: `${hpPercent}%` }} />
                             </div>
                         </div>
+                        {/* Vitalityバー（≤20で赤点滅） */}
                         <div className="flex items-center gap-1.5">
-                            <span className="text-[8px] text-blue-300 font-bold w-5">AP</span>
+                            <span className={`text-[8px] font-bold w-5 transition-colors duration-300 ${isLowVitBar ? (vitalityPulse ? 'text-red-400' : 'text-red-900') : 'text-pink-300'}`}>VIT</span>
                             <div className="flex-1 h-1.5 bg-[#0a1628] rounded-full overflow-hidden border border-[#2a4080]/40">
-                                <div className="h-full bg-blue-400 transition-all duration-300" style={{ width: `${apPercent}%` }} />
+                                <div
+                                    className={`h-full transition-all duration-300 ${isLowVitBar ? (vitalityPulse ? 'bg-red-500' : 'bg-red-900') : 'bg-pink-400'}`}
+                                    style={{ width: `${vitalityPercent}%` }}
+                                />
                             </div>
                         </div>
                     </div>
 
+                    {/* ゴールド + 名声 横並び */}
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-1">
                             <Coins size={10} className="text-amber-400" />
                             <span className="text-[10px] font-bold font-mono text-amber-100">{userProfile?.gold || 0} G</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            <Heart size={10} className={`${(!isLowVit || vitalityPulse) ? 'text-red-400' : 'text-red-900'} transition-colors duration-300`} />
-                            <span className={`text-[10px] font-bold font-mono ${(!isLowVit || vitalityPulse) ? 'text-red-100' : 'text-red-900'} transition-colors duration-300`}>
-                                {userProfile?.vitality ?? (userProfile?.max_hp || 100)}/{userProfile?.max_vitality ?? (userProfile?.max_hp || 100)}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full mt-0.5">
-                        <div className="flex items-center gap-1">
                             <Star size={10} className="text-amber-400 fill-amber-400" />
-                            <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">
+                            <span className="text-[9px] font-black text-amber-400 tracking-widest">
                                 名声: {reputation?.score || 0}
                             </span>
                         </div>
-                        {onOpenSettings && (
-                            <button
-                                onClick={onOpenSettings}
-                                className="p-1 text-blue-200/50 hover:text-amber-400 transition-colors active:scale-90"
-                                aria-label="設定"
-                            >
-                                <Settings size={14} />
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>

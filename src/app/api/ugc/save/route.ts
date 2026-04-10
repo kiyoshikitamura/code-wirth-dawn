@@ -136,8 +136,7 @@ export async function POST(request: Request) {
             }
         };
 
-        // Check Submission Limits (rewards._ugc_meta.creator_id ベースで簡易チェック)
-        // NOTE: creator_idカラム追加後は直接カラムベースに切り替える
+        // Check Submission Limits
         if (!id) {
             const { data: creatorProfile } = await supabase
                 .from('user_profiles')
@@ -146,26 +145,24 @@ export async function POST(request: Request) {
                 .single();
 
             const tier = creatorProfile?.subscription_tier ?? 'free';
-            const draftLimit = tier === 'premium' ? 52 : tier === 'basic' ? 12 : 4;
+            // Bug-2修正: 仙5様書通りの上限値に修正 (free:3 / basic:10 / premium:50)
+            const draftLimit = tier === 'premium' ? 50 : tier === 'basic' ? 10 : 3;
 
-            // 全UGCシナリオのうち自分のものをカウント（JSONB内のcreator_idで照合）
-            const { data: allScenarios, error: listErr } = await supabase
+            // Bug-2修正: creator_idカラムで直接フィルタ（JSONB内スキャンから変更）
+            const { count: draftCount, error: countErr } = await supabase
                 .from('scenarios')
-                .select('id, rewards')
-                .eq('type', 'Other');
-            
-            if (!listErr && allScenarios) {
-                const myCount = allScenarios.filter(s => 
-                    s.rewards?._ugc_meta?.creator_id === userId
-                ).length;
-                
-                if (myCount >= draftLimit) {
-                    return NextResponse.json({
-                        error: `UGCの作成可能枠（最大${draftLimit}枠）の上限に達しています。`,
-                        limit: draftLimit,
-                        current: myCount,
-                    }, { status: 400 });
-                }
+                .select('*', { count: 'exact', head: true })
+                .eq('creator_id', userId)
+                .eq('status', 'draft');
+
+            if (countErr) {
+                console.warn('[ugc/save] draft count error:', countErr.message);
+            } else if ((draftCount ?? 0) >= draftLimit) {
+                return NextResponse.json({
+                    error: `UGCの作成可能枠（最大${draftLimit}枠）の上限に達しています。`,
+                    limit: draftLimit,
+                    current: draftCount,
+                }, { status: 400 });
             }
         }
 

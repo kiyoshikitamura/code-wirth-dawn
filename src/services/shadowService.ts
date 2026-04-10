@@ -6,6 +6,7 @@ import { ECONOMY_RULES } from '@/constants/game_rules';
 export interface ShadowSummary {
     profile_id: string;
     name: string;
+    epithet?: string;       // 称号（通り名）
     level: number;
     job_class: string;
     origin_type: 'shadow_active' | 'shadow_heroic' | 'system_mercenary';
@@ -75,21 +76,47 @@ export class ShadowService {
                 .neq('name', null)
                 .limit(10);
 
-            if (activeUsers) {
+            if (activeUsers && activeUsers.length > 0) {
+                // アクティブ残影のスキルIDを一括収集してcard名に解決
+                const allActiveCardIds: number[] = [];
+                for (const u of activeUsers) {
+                    const deck = u.signature_deck || [];
+                    for (const id of deck) {
+                        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
+                        if (!isNaN(numId) && !allActiveCardIds.includes(numId)) allActiveCardIds.push(numId);
+                    }
+                }
+                const activeCardNameMap: Record<number, string> = {};
+                if (allActiveCardIds.length > 0) {
+                    const { data: activeCards } = await this.supabase
+                        .from('cards')
+                        .select('id, name')
+                        .in('id', allActiveCardIds);
+                    if (activeCards) {
+                        for (const c of activeCards) activeCardNameMap[c.id] = c.name;
+                    }
+                }
+
                 for (const u of activeUsers) {
                     if (hiredSourceIds.has(u.id)) continue;
 
                     const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+                    const rawDeck: (number | string)[] = u.signature_deck || [];
+                    const deckNames = rawDeck.map(id => {
+                        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
+                        return activeCardNameMap[numId] || `スキル#${numId}`;
+                    });
                     results.push({
                         profile_id: u.id,
-                        name: u.name || u.title_name || 'Unknown Adventurer',
+                        name: u.name || 'Unknown Adventurer',
                         level: u.level,
                         job_class: u.title_name || 'Adventurer',
                         origin_type: 'shadow_active',
                         contract_fee: fee,
                         stats: { atk: u.attack, def: u.defense, hp: u.max_hp },
-                        signature_deck_preview: u.signature_deck || [],
-                        subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium'
+                        signature_deck_preview: deckNames,
+                        subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium',
+                        icon_url: u.avatar_url || undefined,
                     });
                 }
             }
@@ -177,10 +204,10 @@ export class ShadowService {
                     if (index1 !== index2) targetNpcs.push(freelanceNpcs[index2]);
                 }
 
-                // 3. \u5168NPCのdefault_cards（数値ID）を収集してcardsテーブルで一括名前解決
+                // 3. 全NPCのinject_cards（数値ID）を収集してcardsテーブルで一括名前解決
                 const allCardIds: number[] = [];
                 for (const npc of targetNpcs) {
-                    const ids = npc.default_cards || [];
+                    const ids = npc.inject_cards || npc.default_cards || [];
                     for (const id of ids) {
                         const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
                         if (!isNaN(numId) && !allCardIds.includes(numId)) allCardIds.push(numId);
@@ -203,14 +230,15 @@ export class ShadowService {
 
                 // 4. NPCごとにsignature_deck_previewをカード名に変換
                 for (const npc of targetNpcs) {
-                    const rawIds: (number | string)[] = npc.default_cards || [];
+                    const rawIds: (number | string)[] = npc.inject_cards || npc.default_cards || [];
                     const deckNames = rawIds.map(id => {
                         const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
-                        return cardNameMap[numId] || `Card#${numId}`;
+                        return cardNameMap[numId] || `スキル#${numId}`;
                     });
                     results.push({
                         profile_id: npc.id,
                         name: npc.name,
+                        epithet: npc.epithet || undefined,
                         level: npc.level || 1,
                         job_class: npc.job_class || 'Mercenary',
                         origin_type: 'system_mercenary',
@@ -219,7 +247,8 @@ export class ShadowService {
                         signature_deck_preview: deckNames,
                         subscription_tier: 'free' as const,
                         flavor_text: npc.introduction || npc.flavor_text || undefined,
-                        npc_image_url: npc.image_url || undefined,
+                        // DBにimage_urlがない場合はslugからパスを自動生成
+                        npc_image_url: npc.image_url || (npc.slug ? `/images/npcs/${npc.slug}.png` : undefined),
                     });
                 }
             }
@@ -438,14 +467,42 @@ export class ShadowService {
         }
 
         // 8. パーティメンバーを作成
+        // slugを省略名から推定（system_mercenaryの場合はprofile_idが内部UUIDなのでnpcテーブルから取得）
+        // ※ RLSバイパスのためsupabaseAdminを使う
+        let npcSlug: string | null = null;
+        let npcEpithet: string | null = null;
+        let npcImageUrl: string | null = null;
+        if (shadow.origin_type === 'system_mercenary') {
+            // dynamic importで循環依存を避けつつsupabaseAdminを使用
+            const { supabaseServer: adminClient } = await import('@/lib/supabase-admin');
+            const { data: npcInfo } = await adminClient
+                .from('npcs')
+                .select('slug, epithet, image_url')
+                .eq('id', shadow.profile_id)
+                .single();
+            if (npcInfo) {
+                npcSlug = npcInfo.slug;
+                npcEpithet = npcInfo.epithet || null;
+                npcImageUrl = npcInfo.image_url || (npcInfo.slug ? `/images/npcs/${npcInfo.slug}.png` : null);
+            }
+        } else {
+            // shadow_active / shadow_heroic: ShadowSummaryから取得
+            npcEpithet = shadow.epithet || null;
+            npcImageUrl = shadow.npc_image_url || shadow.icon_url || shadow.image_url || null;
+        }
+
+
         const { error: insertError } = await this.supabase
             .from('party_members')
             .insert({
                 owner_id: hirerId,
                 name: shadow.name,
+                slug: npcSlug,
+                epithet: npcEpithet,
+                image_url: npcImageUrl,
                 source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
                 origin_type: shadow.origin_type,
-                durability: 100,
+                durability: shadow.stats?.hp || 100,
                 inject_cards: cardIds,
                 royalty_rate: shadow.origin_type === 'shadow_heroic'
                     ? percentageToInteger(HEROIC_ROYALTY_RATE)

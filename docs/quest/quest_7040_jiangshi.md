@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_haryu`（華龍神朝） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_mountain.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_jiangshi`（キョンシー） |
 
@@ -72,14 +76,17 @@ start → receive_talisman → enter_mountain → jiangshi_group_01（battle）
 ```
 
 #### `jiangshi_group_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_jiangshi` |
+| 敵グループ | `enemy_jiangshi` |
 | 敵名 | キョンシー |
 | 備考 | 斬撃無効・物理耐性高め。護符（特定カード）で有効打判定（将来実装）想定 |
 
 ```
-params: type:battle, enemy:enemy_jiangshi, next:deeper_mountain, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_jiangshi が含まれるグループ], next:deeper_mountain, fail:end_failure
 ```
 
 #### `deeper_mountain`（text）
@@ -90,7 +97,7 @@ params: type:battle, enemy:enemy_jiangshi, next:deeper_mountain, fail:end_failur
 
 #### `jiangshi_group_02`（battle）
 ```
-params: type:battle, enemy:enemy_jiangshi, next:report_done, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_jiangshi が含まれるグループ], next:report_done, fail:end_failure
 ```
 
 #### `report_done`（text）
@@ -125,4 +132,3 @@ params: type:battle, enemy:enemy_jiangshi, next:report_done, fail:end_failure
 
 - 護符カード（バトル中アイテムとして使用）による弱点攻撃システム
 - 役人キョンシーの背景フレーバー（腐敗した政治の犠牲者）
-- BGM: `bgm_quest_tense`（中国霊山の重厚な雰囲気）

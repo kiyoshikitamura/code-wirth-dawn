@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_marcund` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_bandit_camp.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_militia`（見張り兵） ※発覚時 |
 | **道徳的傾向** | 混沌（Chaos +5） |
@@ -83,13 +87,16 @@ params: type:random_branch, prob:60, next:exposed, fallback:find_officer
 ```
 
 #### `battle_militia`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_militia` |
+| 敵グループ | `enemy_militia` |
 | 敵名 | 軍閥の見張り兵 |
 
 ```
-params: type:battle, enemy:enemy_militia, next:forced_deliver, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_militia が含まれるグループ], next:forced_deliver, fail:end_failure
 ```
 
 #### `forced_deliver`（text）
@@ -135,4 +142,3 @@ params: type:battle, enemy:enemy_militia, next:forced_deliver, fail:end_failure
 
 - `check_status` による「隠密スキル保有者は発覚率低下」システム（将来実装）
 - 将校ハルムが後続ストーリーで同盟者として登場する伏線
-- BGM: `bgm_quest_calm`（忍び込みのスネーキームード）

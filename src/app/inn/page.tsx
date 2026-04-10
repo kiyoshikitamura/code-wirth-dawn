@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
 import { HUB_LOCATION_NAME } from '@/utils/constants';
@@ -15,6 +15,7 @@ import MainVisualArea from '@/components/inn/MainVisualArea';
 import FacilityGrid, { FacilityType } from '@/components/inn/FacilityGrid';
 import NpcDialogModal, { NpcDialogData, SecondaryAction } from '@/components/inn/NpcDialogModal';
 import RumorsModal from '@/components/inn/RumorsModal';
+import GossipModal from '@/components/world/GossipModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import WorkshopModal from '@/components/inn/WorkshopModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
@@ -24,14 +25,36 @@ import { getNpcForLocation } from '@/lib/getNpcForLocation';
 import type { FacilityKey } from '@/data/npcMasterData';
 import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
+import { getBgmKey } from '@/lib/getBgmKey';
+import XShareButton from '@/components/shared/XShareButton';
 
 export default function InnPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#070e1e] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <InnPageInner />
+        </Suspense>
+    );
+}
+
+function InnPageInner() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState } = useGameStore();
-    useBgm('bgm_inn');
+
+    // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
+    const bgmKey = getBgmKey(
+        worldState?.location_name,
+        worldState?.controlling_nation,
+        worldState?.prosperity_level
+    );
+    useBgm(bgmKey);
 
     // UI States
-    const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | 'questBoard' | null>(null);
+    const [activeModal, setActiveModal] = useState<FacilityType | 'rumors' | 'workshop' | 'history' | 'questBoard' | 'gossip' | null>(null);
     const [loading, setLoading] = useState(true);
     const [showAccount, setShowAccount] = useState(false);
     const [showTavern, setShowTavern] = useState(false);
@@ -55,6 +78,10 @@ export default function InnPage() {
     // ハブ判定
     const isHub = hubState?.is_in_hub === true;
 
+    // Vitality枯渇死亡モーダル (spec_v15.1 §3.3)
+    const [showVitalityDeath, setShowVitalityDeath] = useState(false);
+    const [vitalityDeathHandled, setVitalityDeathHandled] = useState(false);
+
     // Initial load
     useEffect(() => {
         Promise.all([
@@ -66,6 +93,63 @@ export default function InnPage() {
             }
         }).finally(() => setLoading(false));
     }, [router, fetchWorldState]);
+
+    // ① redirect_to_map後続処理: バトル後のURLパラメータを読んでencounter-resultを解決 (spec_v16 §1.1/1.2)
+    useEffect(() => {
+        const battleResult = searchParams.get('battle_result');
+        const bType = searchParams.get('type');
+        const targetLocId = searchParams.get('target');
+        const originLocId = searchParams.get('origin');
+
+        // エンカウントバトル結果のみ処理 (quest系は除外)
+        const isEncounterType = bType === 'bounty_hunter_ambush' || bType === 'random_encounter';
+        if (!battleResult || !isEncounterType || !userProfile?.id) return;
+
+        const resolveEncounterResult = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                const res = await fetch('/api/move/encounter-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                        'x-user-id': userProfile.id
+                    },
+                    body: JSON.stringify({
+                        result: battleResult === 'win' ? 'win' : 'lose',
+                        encounter_type: bType,
+                        target_location_id: targetLocId,
+                        origin_location_id: originLocId
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    await fetchUserProfile();
+                    if (data.redirect_to_map) {
+                        // 敗北: ワールドマップへ（出発地選択状態）
+                        router.replace(`/world-map`);
+                    }
+                    // 賞金稼ぎ勝利シェアはBattleView側で既に表示済みのためスキップ
+                }
+            } catch (e) {
+                console.error('[InnPage] encounter-result resolve failed', e);
+            }
+            // URLパラメータをクリーンアップ
+            router.replace('/inn');
+        };
+
+        resolveEncounterResult();
+    }, [searchParams.get('battle_result'), userProfile?.id]);
+
+    // ② Vitality枯渇死亡検知 (spec_v15.1 §3.3)
+    useEffect(() => {
+        if (!userProfile || vitalityDeathHandled) return;
+        if ((userProfile.vitality ?? 100) <= 0) {
+            setShowVitalityDeath(true);
+            setVitalityDeathHandled(true);
+        }
+    }, [userProfile?.vitality]);
 
     // Reputation Logic (通常拠点でのみ取得)
     const fetchRep = useCallback(async () => {
@@ -155,11 +239,25 @@ export default function InnPage() {
     };
 
     const handleSelectFacility = (facility: FacilityType) => {
-        if (['map', 'status', 'settings'].includes(facility)) {
-            if (facility === 'map') router.push('/world-map');
+        if (['map', 'status', 'settings', 'gossip'].includes(facility)) {
+            if (facility === 'map') {
+                // ワールドマップ遷移SE → 150ms後に遷移 (spec_v14.1 §5.2)
+                soundManager?.playSE('se_travel');
+                setTimeout(() => router.push('/world-map'), 150);
+            }
             if (facility === 'status') setShowStatus(true);
             if (facility === 'settings') setShowAccount(true);
+            if (facility === 'gossip') setActiveModal('gossip');
         } else {
+            // 施設入場SE (spec_v14.1 §5.1)
+            const facilitySeMap: Record<string, string> = {
+                inn:    'se_enter_inn',
+                guild:  'se_enter_guild',
+                shop:   'se_enter_shop',
+                temple: 'se_enter_temple',
+            };
+            const seKey = facilitySeMap[facility];
+            if (seKey) soundManager?.playSE(seKey);
             // Open NPC Dialog
             setActiveModal(facility);
         }
@@ -277,6 +375,14 @@ export default function InnPage() {
                 {/* Fixed Header */}
                 <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} />
 
+                {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
+                {showVitalityDeath && userProfile && (
+                    <VitalityDeathModal
+                        userProfile={userProfile}
+                        onClose={() => setShowVitalityDeath(false)}
+                    />
+                )}
+
                 {/* Gougai Modal */}
                 {gougaiEvents.length > 0 && (
                     <ChronicleModal
@@ -302,6 +408,13 @@ export default function InnPage() {
                         onClose={() => setActiveModal(null)}
                         worldState={worldState}
                         reputationScore={reputation?.score || 0}
+                    />
+                )}
+
+                {activeModal === 'gossip' && (
+                    <GossipModal
+                        onClose={() => setActiveModal(null)}
+                        onOpenTavern={() => { setActiveModal(null); setShowTavern(true); }}
                     />
                 )}
 
@@ -331,10 +444,8 @@ export default function InnPage() {
                     worldState={worldState}
                     locationSlug={userProfile?.locations?.slug}
                     onOpenHistory={openHistoryHall}
-                    onOpenRumors={() => { setShowRumorsBadge(false); setActiveModal('rumors'); }}
                     onOpenMap={() => router.push('/world-map')}
                     showHistoryBadge={showHistoryBadge}
-                    showRumorsBadge={showRumorsBadge}
                 />
 
                 {/* Facility Grid Navigation */}
@@ -416,6 +527,95 @@ export default function InnPage() {
 
             {/* TavernModal - outside game container so fixed positioning works correctly */}
             {userProfile && <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || ''} reputationScore={reputation?.score || 0} locationSlug={locationSlug} />}
+        </div>
+    );
+}
+
+// Vitality枯渇死亡モーダル (spec_v15.1 §3.3)
+function VitalityDeathModal({ userProfile, onClose }: { userProfile: any; onClose: () => void }) {
+    const router = useRouter();
+    const [retiring, setRetiring] = useState(false);
+    const [shareText, setShareText] = useState<string | null>(null);
+
+    const ageAtDeath = (userProfile.age || 18) + Math.floor((userProfile.accumulated_days || 0) / 365);
+    const deathShareText = `我が名は${userProfile.name || '旅人'}。${ageAtDeath}歳の若さでこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。 #Wirth_Dawn #英雄の最期`;
+
+    const handleRetire = async () => {
+        setRetiring(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch('/api/character/retire', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    'x-user-id': userProfile.id
+                },
+                body: JSON.stringify({ cause: 'vitality_death', user_id: userProfile.id })
+            });
+            if (res.ok) {
+                setShareText(deathShareText);
+            }
+        } catch (e) {
+            console.error('[VitalityDeathModal] retire failed', e);
+        } finally {
+            setRetiring(false);
+        }
+    };
+
+    const handleNewGame = () => {
+        router.push('/title');
+    };
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-1000">
+            <div className="relative w-full max-w-sm mx-4 text-center">
+
+                {/* 死亡演出 */}
+                <div className="mb-8 space-y-2">
+                    <p className="text-red-500 text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">
+                        ── Vitality Depleted ──
+                    </p>
+                    <h2 className="text-4xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-gray-300 to-gray-600">
+                        旅人は力尽きた
+                    </h2>
+                    <p className="text-gray-500 text-sm font-serif italic leading-relaxed">
+                        「{userProfile.name || '旅人'}は、{ageAtDeath}年の生涯を全うした。」
+                    </p>
+                </div>
+
+                {!shareText ? (
+                    <div className="space-y-3">
+                        <button
+                            onClick={handleRetire}
+                            disabled={retiring}
+                            className="w-full py-3 bg-gradient-to-r from-gray-900 to-gray-800 border border-gray-600 text-gray-200 font-bold rounded-lg hover:border-gray-400 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {retiring ? '英霊に昇華中...' : '英霊として名を刻む'}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="w-full py-2 text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                        >
+                            後で確認する
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="bg-gray-900/60 border border-gray-700 rounded-lg p-4">
+                            <p className="text-xs text-green-400 font-bold mb-3">✦ 英霊として酒場の系譜に刻まれた</p>
+                            <XShareButton text={shareText} variant="large" />
+                        </div>
+                        <button
+                            onClick={handleNewGame}
+                            className="w-full py-3 bg-amber-900/40 border border-amber-600 text-amber-200 font-bold rounded-lg hover:bg-amber-900/60 transition-all active:scale-95"
+                        >
+                            新たな旅人として再び立つ
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

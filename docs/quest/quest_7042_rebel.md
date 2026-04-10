@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_haryu` |
+| **出現条件** | 名声 -50以下 |
+| **サムネイル画像** | `/images/quests/bg_slum.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | max_reputation: -50（悪名-50以下） |
 | **敵スラッグ** | `enemy_rebel_farmer`（反乱農民） |
 | **道徳的傾向** | 邪悪（Evil +10） |
@@ -77,19 +81,22 @@ start → approach_rebels → face_mob
 - 選択: 「これはやりたくない——引き下がる」→ `end_failure`
 
 #### `battle_farmers_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_rebel_farmer` |
+| 敵グループ | `enemy_rebel_farmer` |
 | 敵名 | 反乱農民（群） |
 | 備考 | ATK非常に低め・HP低め・多数。撃破するほど気が重い |
 
 ```
-params: type:battle, enemy:enemy_rebel_farmer, next:battle_farmers_02, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_rebel_farmer が含まれるグループ], next:battle_farmers_02, fail:end_failure
 ```
 
 #### `battle_farmers_02`（battle）
 ```
-params: type:battle, enemy:enemy_rebel_farmer, next:end_success, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_rebel_farmer が含まれるグループ], next:end_success, fail:end_failure
 ```
 > 首謀者の農民リーダーを想定。ATK/HP微増の強化版。
 
@@ -128,4 +135,3 @@ params: type:battle, enemy:enemy_rebel_farmer, next:end_success, fail:end_failur
 
 - 「農民側に加担して太守を裏切る」隠し選択肢（Justice変動・別報酬ルート）
 - 鎮圧後に疫病や飢饉が悪化するフレーバー展開
-- BGM: `bgm_quest_tense`（重い空気）

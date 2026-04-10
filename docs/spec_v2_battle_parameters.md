@@ -141,8 +141,20 @@ FinalDamage = Max(1, BuffedDamage - Enemy.DEF)
 
 ### 5.2 敵攻撃力計算
 <!-- v11.0: processEnemyTurn()の実装を反映 -->
+<!-- v12.1: スキル発動時と基本攻撃の式を分離して明記 -->
+
+**スキルあり（`action_pattern` に有効なスキルが存在し発動した場合）**:
 ```
-EnemyATK = Enemy.level * 5 + 10
+BaseATK = Enemy.level × 3 + 5
+EnemyATK = floor(BaseATK × skill.value)
+MitigatedDamage = Max(1, EnemyATK - Player.DEF)
+```
+- `skill.value` はスキルマスタ (`enemy_skills.value`) の倍率。例: `1.5` → 1.5倍ダメージ。
+- 魔法スキル (`effect_type: inject` 等) は DEF軽減なし。
+
+**スキルなし（フォールバック / `action_pattern` 未定義の場合）**:
+```
+EnemyATK = Enemy.level × 5 + 10
 MitigatedDamage = Max(1, EnemyATK - Player.DEF)
 ```
 

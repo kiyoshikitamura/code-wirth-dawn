@@ -13,6 +13,10 @@
 | **所要日数（失敗）** | 1 |
 | **依頼主** | 配達組合 |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_guild.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 
 ---
 
@@ -56,27 +60,39 @@ Gold:150
 
 ### 全体フロー
 
-```
+```text
 start
   └─[続ける]→ receive_letter
        └─[続ける]→ travel_start
-            └─[続ける]→ arrive_inn        ← 配達先の旅籠に到着
-                 └─[手紙を渡す]→ delivery_ok
-                      └─[続ける]→ end_success
-                 └─[様子を見る]→ suspicious ← optional 分岐
-                      └─[続ける]→ delivery_ok
+            └─[移動中 (random_branch)]
+                 ├─ [10%: トラブル発生] → encounter_thief → battle_thief
+                 │    ├─ [勝利] → arrive_inn
+                 │    └─ [敗北] → end_failure
+                 └─ [90%: 平和な移動] → arrive_inn
+                      └─[手紙を渡す]→ delivery_ok
+                           └─[続ける]→ end_success
+                      └─[様子を見る]→ suspicious ← optional 分岐
+                           └─[続ける]→ delivery_ok
 ```
 
 ### ノード詳細
 
 #### `start`（type: text）
+**演出パラメータ:**
+- **BGM**: `bgm_quest_calm` （※ここで指定し、変更があるまで継続）
+- **背景画像**: `bg_guild`
+- **SE**: `se_quest_accept` （※ノード突入時に1回のみ再生）
+
 **テキスト:**
 ```
 配達組合から依頼が来た。
 隣街の旅籠「黄昏亭」の主人に、封書を届けるだけの仕事だ。
 受け取りは必ず本人の手に。それだけが条件だ。
 ```
-**次ノード:** `receive_letter`（auto-advance）
+**params:**
+```
+type:text, bgm_key:bgm_quest_calm, se_trigger:se_quest_accept, bg_image:bg_guild, next:receive_letter
+```
 
 ---
 
@@ -91,20 +107,65 @@ start
 ---
 
 #### `travel_start`（type: travel）
+**演出パラメータ:**
+- **背景画像**: `bg_guild`
+
 **テキスト:**
 ```
-目的地：隣街。特に指定はないが、日が暮れる前には届けたい。
+目的地：隣の宿場町。特に指定はないが、日が暮れる前には届けたい。
 ```
 **params:**
 ```
-type:travel, dest:隣街, days:1, gold_cost:0, next:arrive_inn
+type:travel, bg_image:bg_guild, dest:[要定義: 具体的なロケーションスラッグ 例: loc_border_town], days:1, gold_cost:0, default_next:arrive_inn
 ```
 
-> **注意:** travel ノードの `dest` 値は実際のロケーションスラッグに合わせて修正すること。
+#### `travel_event` (type: random_branch) ※内部判定ノード
+**params:**
+```
+type:random_branch, prob:10, next:encounter_thief, fallback:arrive_inn
+```
+
+> **注意:** `dest` の値はプレイヤーの現在地から隣接するロケーションの正しいスラッグをユーザー様にて定義してください。
+
+---
+
+#### `encounter_thief`（type: text）
+**演出パラメータ:**
+- **BGM**: `bgm_quest_tense` （※ここから緊張感のあるBGMに変更）
+- **背景画像**: `bg_guild`
+
+**テキスト:**
+```
+道中、茂みから追い剥ぎが飛び出してきた！
+「おい、その手紙の中身、金目のものだろう？ 置いていきな！」
+```
+**params:**
+```
+type:text, bgm_key:bgm_quest_tense, bg_image:bg_guild, next:battle_thief
+```
+
+---
+
+#### `battle_thief`（type: battle）
+**演出パラメータ:**
+- **BGM**: `bgm_battle_normal`
+
+| 設定 | 値 |
+|-----|-----|
+| 敵グループ | `[要定義: 敵グループのSlug 例: enemy_group_id: bandit_group]` |
+
+**params:**
+```
+type:battle, bgm_key:bgm_battle_normal, enemy_group_id:[要定義], next:arrive_inn, fail:end_failure
+```
 
 ---
 
 #### `arrive_inn`（type: text）
+**演出パラメータ:**
+- **BGM**: `bgm_quest_calm` （※戦闘終了後、静かな曲に戻す）
+- **背景画像**: `bg_guild`
+
 **テキスト:**
 ```
 「黄昏亭」に到着した。
@@ -142,9 +203,16 @@ type:travel, dest:隣街, days:1, gold_cost:0, next:arrive_inn
 ---
 
 #### `end_success`（type: end, result: success）
+**演出パラメータ:**
+- **SE**: `se_quest_success`
+
 **テキスト:**
 ```
 配達完了。報酬を受け取った。
+```
+**params:**
+```
+type:end, result:success, se_trigger:se_quest_success
 ```
 
 ---
@@ -172,5 +240,4 @@ id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_pr
 ## 6. 拡張メモ（将来対応）
 
 - 封書の中身が「密告状」だった場合の道徳的分岐（`alignment` 変動）
-- 配達途中に追いはぎが出現するランダムイベント（`random_branch` ノード追加）
-- BGM: `bgm_quest_calm`（穏やかな旅路）
+- 配達途中に追いはぎが出現するイベントの派生（依頼主からの追加報酬フラグ等）

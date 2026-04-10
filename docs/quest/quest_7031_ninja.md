@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_yatoshin` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_forest_night.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_spy`（他国の間者） |
 
@@ -75,14 +79,17 @@ start → locate_spy → ambush → battle_spy
 ```
 
 #### `battle_spy`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_spy` |
+| 敵グループ | `enemy_spy` |
 | 敵名 | 他国の間者と護衛 |
 | 備考 | 素早い・状態異常使用型（毒・混乱）の想定 |
 
 ```
-params: type:battle, enemy:enemy_spy, next:take_document, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_spy が含まれるグループ], next:take_document, fail:end_failure
 ```
 
 #### `take_document`（text）
@@ -125,4 +132,3 @@ params: type:check_delivery, item_id:[密書ID], quantity:1, next:end_success
 
 - 「密書の内容を読む」選択肢（内容フレーバー + Chaos変動）
 - 間者を「捕縛」vs「殺害」で結末フレーバーが変わる分岐
-- BGM: `bgm_quest_tense`

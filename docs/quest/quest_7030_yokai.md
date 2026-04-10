@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_yatoshin`（夜刀神国） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_road_night.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_yokai`（妖怪） |
 
@@ -77,14 +81,17 @@ start → patrol_road → encounter_yokai_01 → battle_yokai_01
 ```
 
 #### `battle_yokai_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_yokai` |
+| 敵グループ | `enemy_yokai` |
 | 敵名 | からかさ小僧 |
 | 備考 | 素早い・回避率高め・HP低め |
 
 ```
-params: type:battle, enemy:enemy_yokai, next:deeper_night, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_yokai が含まれるグループ], next:deeper_night, fail:end_failure
 ```
 
 #### `deeper_night`（text）
@@ -101,7 +108,7 @@ params: type:battle, enemy:enemy_yokai, next:deeper_night, fail:end_failure
 
 #### `battle_yokai_02`（battle）
 ```
-params: type:battle, enemy:enemy_yokai, next:road_cleared, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_yokai が含まれるグループ], next:road_cleared, fail:end_failure
 ```
 > 第2戦は `enemy_yokai_oni`（赤鬼）として、HP高め・ATK高めの強化版を使用。
 
@@ -137,4 +144,3 @@ params: type:battle, enemy:enemy_yokai, next:road_cleared, fail:end_failure
 
 - 夜刀神国の妖怪百種を順次実装するシリーズ化（7030は第1弾）
 - 護符を使ったバトル特殊演出（将来実装）
-- BGM: `bgm_quest_tense`（和風BGM推奨）

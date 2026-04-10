@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_marcund` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_desert.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_scorpion`（幻覚サソリ） |
 | **報酬アイテム** | Item:3005 |
@@ -73,14 +77,17 @@ start → locate_scorpion → battle_scorpion_01 → collect_stinger_01
 ```
 
 #### `battle_scorpion_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_scorpion` |
+| 敵グループ | `enemy_scorpion` |
 | 敵名 | 幻覚サソリ |
 | 備考 | 毒状態異常付与の特殊行動を持つ（将来実装想定） |
 
 ```
-params: type:battle, enemy:enemy_scorpion, next:collect_stinger_01, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_scorpion が含まれるグループ], next:collect_stinger_01, fail:end_failure
 ```
 
 #### `collect_stinger_01`（reward）
@@ -118,4 +125,3 @@ params: type:check_delivery, item_id:3005, quantity:1, next:end_success
 
 - 複数仕留めによるボーナス報酬システム（アイテム数量に応じたGold追加）
 - 「毒針を実は自分で持ち続ける」裏ルート（高価な取引品として別売り）
-- BGM: `bgm_quest_tense`（危険な採集）

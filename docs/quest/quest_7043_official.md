@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_haryu` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_office.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_assassin`（暗殺者） |
 | **道徳的傾向** | 混沌（Chaos +10） |
@@ -77,14 +81,17 @@ params: type:join, npc_slug:npc_corrupt_official, is_escort_target:true, next:pa
 ```
 
 #### `battle_assassin_wave_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_assassin` |
+| 敵グループ | `enemy_assassin` |
 | 敵名 | 刺客（第1波） |
 | 備考 | 素早い・先制攻撃あり（将来実装） |
 
 ```
-params: type:battle, enemy:enemy_assassin, next:investigation_day, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_assassin が含まれるグループ], next:investigation_day, fail:end_failure
 ```
 
 #### `investigation_day`（text）
@@ -96,7 +103,7 @@ params: type:battle, enemy:enemy_assassin, next:investigation_day, fail:end_fail
 
 #### `battle_assassin_wave_02`（battle）
 ```
-params: type:battle, enemy:enemy_assassin, next:inspection_over, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_assassin が含まれるグループ], next:inspection_over, fail:end_failure
 ```
 
 #### `inspection_over`（text）
@@ -149,4 +156,3 @@ params: type:leave, npc_slug:npc_corrupt_official, next:end_success
 
 - 「暗殺者に加担して薛を見殺しにする」隠し選択肢（Justice変動・依頼失敗・フレーバーのみ）
 - 暗殺の依頼主が誰かを調査する後続クエスト
-- BGM: `bgm_quest_tense`

@@ -94,21 +94,50 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
         }
 
-        // Use authenticated client to enforce RLS
-        const client = createAuthClient(req);
+        // 認証済みユーザーIDを取得（RLSの代わりに明示的オーナー検証）
+        const authClient = createAuthClient(req);
+        const { data: { user } } = await authClient.auth.getUser();
 
-        const { error } = await client
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // まずレコードのowner_idを確認（supabaseServerでRLSバイパス）
+        const { supabaseServer } = await import('@/lib/supabase-admin');
+        const { data: memberRecord, error: fetchError } = await supabaseServer
+            .from('party_members')
+            .select('id, owner_id, name')
+            .eq('id', memberId)
+            .maybeSingle();
+
+        if (fetchError) {
+            console.error('Party member fetch error:', fetchError);
+            return NextResponse.json({ error: fetchError.message }, { status: 500 });
+        }
+
+        if (!memberRecord) {
+            return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+        }
+
+        // オーナー検証（自分のパーティメンバーのみ削除可）
+        if (memberRecord.owner_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden: not your party member' }, { status: 403 });
+        }
+
+        // Service Role でRLSをバイパスして物理削除
+        const { error: deleteError } = await supabaseServer
             .from('party_members')
             .delete()
             .eq('id', memberId);
 
-        if (error) {
-            console.error("Party member delete failed:", error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        if (deleteError) {
+            console.error('Party member delete failed:', deleteError);
+            return NextResponse.json({ error: deleteError.message }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, name: memberRecord.name });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
+

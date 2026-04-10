@@ -86,7 +86,9 @@ export async function POST(req: Request) {
             throw new Error(result.error || 'Retirement failed');
         }
 
-        const shareText = `我が名は${profile.name || profile.title_name}。${profile.age}歳の若さでこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。 #Wirth_Dawn #英雄の最期`;
+        // 泣年 = 基本年齢 + 経過年数 (spec_v15.1 §3.3)
+        const ageAtDeath = (profile.age || 18) + Math.floor((profile.accumulated_days || 0) / 365);
+        const shareText = `我が名は${profile.name || profile.title_name}。${ageAtDeath}歳の若さでこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。 #Wirth_Dawn #英雄の最期`;
 
         return NextResponse.json({
             success: true,

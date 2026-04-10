@@ -240,6 +240,8 @@ export default function WorldMapPage() {
                 const data = await res.json();
 
                 if (data.require_battle) {
+                    // エンカウントSE（警告音）を再生してからバトル画面へ (spec_v14.1 §5.3)
+                    soundManager?.playSE('se_encounter');
                     alert(data.message || "敵襲だ！");
                     
                     let enemiesToSpawn: any[] = [];
@@ -261,7 +263,7 @@ export default function WorldMapPage() {
                                         atk: e.atk,
                                         def: e.def || 0,
                                         level: Math.floor(e.hp / 10) || 1,
-                                        image: e.image_url || `/enemies/${e.slug}.png`,
+                                        image_url: e.image_url || `/images/enemies/${e.slug}.png`,
                                         status_effects: [],
                                         vit_damage: e.vit_damage,
                                         drop_item_slug: e.drop_item_slug,
@@ -289,6 +291,9 @@ export default function WorldMapPage() {
                     router.push(`/battle?type=${data.require_battle}&target=${data.target_location_id}&origin=${data.origin_location_id}`);
                     return;
                 }
+
+                // 馬（馬車）の移動SE を再生してからアニメーション開始 (spec_v14.1 §5.3)
+                soundManager?.playSE('se_travel_horse');
 
                 // Animation Simulation
                 const steps = Math.min(5, data.travel_days);
@@ -341,6 +346,8 @@ export default function WorldMapPage() {
 
     const returnToInn = async () => {
         if (!userProfile) return;
+        // 拠点に入るSE（人間の足音）(spec_v14.1 §5.3)
+        soundManager?.playSE('se_enter_location');
         // Explicitly Leave Hub
         try {
             await supabase

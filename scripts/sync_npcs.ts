@@ -43,7 +43,6 @@ async function main() {
     let errorCount = 0;
     
     for (const npc of npcs) {
-        const id = parseInt(npc.id);
         const slug = npc.slug;
         const epithet = npc.epithet || '';
         const name = npc.name || '';
@@ -64,6 +63,8 @@ async function main() {
                 epithet: epithet,
                 name: name,
                 inject_cards: injectCards,
+                default_cards: injectCards, // shadowService.ts がdefault_cardsを参照するため両方更新
+                introduction: flavorText,
             })
             .eq('slug', slug);
         
@@ -80,9 +81,9 @@ async function main() {
     
     // Verify
     console.log('\n=== Verification (first 5) ===');
-    const { data: verify } = await supabase.from('npcs').select('slug, epithet, name, inject_cards').order('slug').limit(5);
+    const { data: verify } = await supabase.from('npcs').select('slug, epithet, name, inject_cards, default_cards').order('slug').limit(5);
     for (const v of (verify || [])) {
-        console.log(v.slug, '| epithet:', v.epithet, '| name:', v.name, '| cards:', JSON.stringify(v.inject_cards));
+        console.log(v.slug, '| epithet:', v.epithet, '| name:', v.name, '| inject_cards:', JSON.stringify(v.inject_cards), '| default_cards:', JSON.stringify(v.default_cards));
     }
 }
 

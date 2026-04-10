@@ -13,6 +13,10 @@
 | **所要日数（失敗）** | 1 |
 | **依頼主** | 旅商人組合 |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_road_day.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **敵スラッグ** | `enemy_bandit_thug`（チンピラ） |
 
 ---
@@ -74,6 +78,11 @@ start
 ### ノード詳細
 
 #### `start`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 旅商人組合からの依頼を受けた。
@@ -86,6 +95,11 @@ start
 ---
 
 #### `join_escort`（type: join）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 マルコがパーティに加わった。
@@ -101,6 +115,11 @@ type:join, npc_slug:npc_merchant_marco, is_escort_target:true, next:travel_start
 ---
 
 #### `travel_start`（type: travel）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 目的地へ向かって出発した。
@@ -113,6 +132,11 @@ type:travel, dest:隣街, days:1, gold_cost:0, next:midway
 ---
 
 #### `midway`（type: random_branch）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 日が傾き始めたころ、街道の曲がり角で人の気配を感じた。
@@ -128,6 +152,11 @@ type:random_branch, prob:60, next:battle_bandit, fallback:travel_end
 ---
 
 #### `battle_bandit`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 「金を出せ！ガタガタすんなよ！」
@@ -145,12 +174,15 @@ type:random_branch, prob:60, next:battle_bandit, fallback:travel_end
 #### バトルノード（type: battle）
 **params:**
 ```
-type:battle, enemy:enemy_bandit_thug, next:after_battle, fail:end_failure
+type:battle, enemy_group_id:[要定義: enemy_bandit_thug が含まれるグループ], next:after_battle, fail:end_failure
 ```
+
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
 
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_bandit_thug` |
+| 敵グループ | `enemy_bandit_thug` |
 | 敵名 | チンピラ |
 | 選定理由 | 夜道での追いはぎに最適なアーキタイプ敵 |
 | 難易度 | 低（序盤向け）|
@@ -159,6 +191,11 @@ type:battle, enemy:enemy_bandit_thug, next:after_battle, fail:end_failure
 ---
 
 #### `after_battle`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 夜盗を退けた。
@@ -170,6 +207,11 @@ type:battle, enemy:enemy_bandit_thug, next:after_battle, fail:end_failure
 ---
 
 #### `travel_end`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 目的地が見えてきた。
@@ -179,6 +221,11 @@ type:battle, enemy:enemy_bandit_thug, next:after_battle, fail:end_failure
 ---
 
 #### `arrive`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 無事に到着した。
@@ -189,6 +236,11 @@ type:battle, enemy:enemy_bandit_thug, next:after_battle, fail:end_failure
 ---
 
 #### `leave_escort`（type: leave）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 マルコがパーティから離脱した。
@@ -202,6 +254,11 @@ type:leave, npc_slug:npc_merchant_marco, next:end_success
 ---
 
 #### `end_success`（type: end, result: success）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 護衛任務完了。報酬を受け取った。
@@ -210,6 +267,11 @@ type:leave, npc_slug:npc_merchant_marco, next:end_success
 ---
 
 #### `end_failure`（type: end, result: failure）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_tavern_day`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 マルコが倒れた——依頼は失敗だ。
@@ -274,4 +336,3 @@ id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_pr
 - 夜盗の人数を複数にしたHard版（難易度3以上向け）
 - マルコが持つ荷物の中身フレーバー（「実は密輸品では？」疑惑ルート）
 - 無事に届けた場合の隠し報酬（マルコから追加アイテムをもらう）
-- BGM: `bgm_quest_calm` → 戦闘時 `bgm_battle` に切替

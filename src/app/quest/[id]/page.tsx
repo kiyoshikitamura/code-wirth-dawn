@@ -240,7 +240,7 @@ export default function QuestPage() {
                             def: e.def || 0, // Map defense
                             level: Math.floor(e.hp / 10) || 1,
                             // UGC image_url を優先、なければデフォルトパス
-                            image: e.image_url || `/enemies/${e.slug}.png`,
+                            image_url: e.image_url || `/images/enemies/${e.slug}.png`,
                             status_effects: [],
                             vit_damage: e.vit_damage,
                             drop_item_slug: e.drop_item_slug,

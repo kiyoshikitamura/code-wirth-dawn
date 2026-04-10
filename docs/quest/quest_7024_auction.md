@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_marcund` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_shop.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_raider`（乱入者） |
 | **道徳的傾向** | 混沌（Chaos +5） |
@@ -69,13 +73,16 @@ start → auction_begins → wave_01（battle）→ intermission → wave_02（b
 ```
 
 #### `wave_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_raider` |
+| 敵グループ | `enemy_raider` |
 | 敵名 | 乱入者（第1波） |
 
 ```
-params: type:battle, enemy:enemy_raider, next:intermission, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_raider が含まれるグループ], next:intermission, fail:end_failure
 ```
 
 #### `intermission`（text）
@@ -86,7 +93,7 @@ params: type:battle, enemy:enemy_raider, next:intermission, fail:end_failure
 
 #### `wave_02`（battle）
 ```
-params: type:battle, enemy:enemy_raider, next:auction_ends, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_raider が含まれるグループ], next:auction_ends, fail:end_failure
 ```
 > 第2波は政府の密偵風の個体（`enemy_spy`など強化版）を想定。
 
@@ -122,4 +129,3 @@ params: type:battle, enemy:enemy_raider, next:auction_ends, fail:end_failure
 
 - 「密偵として闇市を裏切る」隠し選択肢（Quest失敗・Justice変動・別報酬）
 - オークション品の競売結果がフレーバーとして反映されるシステム
-- BGM: `bgm_quest_tense`

@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_slum.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_mob`（暴徒） |
 | **道徳的傾向** | 邪悪（Evil +5） |
@@ -71,14 +75,17 @@ start → locate_mob → battle_mob
 ```
 
 #### `battle_mob`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_mob` |
+| 敵グループ | `enemy_mob` |
 | 敵名 | 暴徒（飢えた市民） |
 | 備考 | ATK低め・DEF低め。数で圧してくる構成を想定 |
 
 ```
-params: type:battle, enemy:enemy_mob, next:disperse, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_mob が含まれるグループ], next:disperse, fail:end_failure
 ```
 
 #### `disperse`（text）
@@ -119,4 +126,3 @@ params: type:battle, enemy:enemy_mob, next:disperse, fail:end_failure
 ## 6. 拡張メモ
 
 - 選択肢分岐：「指導者を匿う」「自治会を裏切って市民側につく」（Justice変動ルート）
-- BGM: `bgm_quest_tense`

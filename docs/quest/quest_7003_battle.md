@@ -13,6 +13,10 @@
 | **所要日数（失敗）** | 1 |
 | **依頼主** | 冒険者ギルド |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_catacombs.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **敵スラッグ** | `enemy_goblin`（ゴブリン） |
 
 ---
@@ -77,6 +81,11 @@ start
 ### ノード詳細
 
 #### `start`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 冒険者ギルドからの回収依頼だ。
@@ -89,6 +98,11 @@ start
 ---
 
 #### `enter_ruins`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 崩れかけた壁を潜り、廃墟の内部へ入った。
@@ -99,6 +113,11 @@ start
 ---
 
 #### `battle_01`（type: text + battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 「ギャッギャッ……！」
@@ -115,12 +134,15 @@ start
 #### `battle_01_fight`（type: battle）
 **params:**
 ```
-type:battle, enemy:enemy_goblin, next:deeper, fail:end_failure
+type:battle, enemy_group_id:[要定義: enemy_goblin が含まれるグループ], next:deeper, fail:end_failure
 ```
+
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
 
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_goblin` |
+| 敵グループ | `enemy_goblin` |
 | 敵名 | ゴブリン |
 | 選定理由 | 廃墟・洞窟系クエストの定番雑敵。弱いが数で来るイメージ |
 | 難易度 | 低〜中（序盤向け）|
@@ -129,6 +151,11 @@ type:battle, enemy:enemy_goblin, next:deeper, fail:end_failure
 ---
 
 #### `deeper`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 入口のゴブリンを退けた。
@@ -140,6 +167,11 @@ type:battle, enemy:enemy_goblin, next:deeper, fail:end_failure
 ---
 
 #### `battle_02`（type: text + battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 ——金庫を守るように、一際大きなゴブリンが仁王立ちしていた。
@@ -157,7 +189,7 @@ type:battle, enemy:enemy_goblin, next:deeper, fail:end_failure
 #### `battle_02_fight`（type: battle）
 **params:**
 ```
-type:battle, enemy:enemy_goblin, next:find_vault, fail:end_failure
+type:battle, enemy_group_id:[要定義: enemy_goblin が含まれるグループ], next:find_vault, fail:end_failure
 ```
 
 > **variant:** 第2戦は同じ `enemy_goblin` スラッグだが、HPやATKを強化した個体（リーダー格）として敵マスタ側で別エントリを設けるか、パラメータ上書きで対応する。
@@ -165,6 +197,11 @@ type:battle, enemy:enemy_goblin, next:find_vault, fail:end_failure
 ---
 
 #### `find_vault`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 ゴブリンを倒すと、その背後に古びた金庫が姿を現した。
@@ -179,6 +216,11 @@ type:battle, enemy:enemy_goblin, next:find_vault, fail:end_failure
 ---
 
 #### `get_item`（type: reward）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 金庫が開いた。
@@ -193,6 +235,11 @@ type:reward, item_id:3002, quantity:1, next:escape
 ---
 
 #### `escape`（type: text）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 物資を手に廃墟を脱出した。
@@ -203,6 +250,11 @@ type:reward, item_id:3002, quantity:1, next:escape
 ---
 
 #### `end_success`（type: end, result: success）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 物資の回収に成功した。
@@ -212,6 +264,11 @@ type:reward, item_id:3002, quantity:1, next:escape
 ---
 
 #### `end_failure`（type: end, result: failure）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **背景画像**: `bg_catacombs`
+- **SE**: `[要定義 (必要時のみ)]`
+
 **テキスト:**
 ```
 力及ばず、廃墟から撤退した。
@@ -278,4 +335,3 @@ id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_pr
 - 金庫の中に追加フレーバーアイテム（古い日記など `key_item`）を仕込む隠し要素
 - 第3戦追加による難易度アップ版（Hard variant）
 - キャンプノードの追加（廃墟内での野営、HP回復）
-- BGM: `bgm_quest_tense`（緊張感のある探索曲）→ バトル時 `bgm_battle` に切替

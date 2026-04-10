@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_holy_empire` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_catacombs.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_undead`（歩死者） |
 
@@ -70,14 +74,17 @@ start → enter_mortuary → battle_undead_01 → deeper
 ```
 
 #### `battle_undead_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_undead` |
+| 敵グループ | `enemy_undead` |
 | 敵名 | 歩死者 |
 | 備考 | 第1波：2〜3体想定 |
 
 ```
-params: type:battle, enemy:enemy_undead, next:deeper, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_undead が含まれるグループ], next:deeper, fail:end_failure
 ```
 
 #### `deeper`（text）
@@ -88,7 +95,7 @@ params: type:battle, enemy:enemy_undead, next:deeper, fail:end_failure
 
 #### `battle_undead_02`（battle）
 ```
-params: type:battle, enemy:enemy_undead, next:find_source, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_undead が含まれるグループ], next:find_source, fail:end_failure
 ```
 > 第2波：個体強化版（`enemy_undead_elder`など）を想定。
 
@@ -137,4 +144,3 @@ params: type:battle, enemy:enemy_undead, next:find_source, fail:end_failure
 ## 6. 拡張メモ
 
 - 瘴気石が「誰かが意図的に設置した」ことが判明するフレーバー（謀略要素）
-- BGM: `bgm_quest_tense`（暗い閉所）

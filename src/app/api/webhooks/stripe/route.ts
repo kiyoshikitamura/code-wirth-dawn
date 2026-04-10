@@ -117,15 +117,13 @@ export async function POST(req: Request) {
             case 'customer.subscription.deleted': {
                 // ─── サブスク解約・ダウングレード ───
                 const subscription = event.data.object as Stripe.Subscription;
-                // customer から user_id を特定（Stripe Customer ID → user_id は metadata から引く）
-                const customerId = subscription.customer as string;
 
-                // Stripe Customer の metadata から user_id を取得
-                const customer = await stripe.customers.retrieve(customerId);
-                const userId = 'deleted' in customer ? null : customer.metadata?.user_id;
+                // Bug-1修正: Subscriptionのメタデータから直接 user_id を取得する
+                // (チェックアウト時に subscription_data.metadata に user_id を設定済み)
+                const userId = subscription.metadata?.user_id;
 
                 if (!userId) {
-                    console.error('[webhooks/stripe] 解約イベントで user_id が特定できません。customerId:', customerId);
+                    console.error('[webhooks/stripe] 解約イベントで user_id が特定できません。subscriptionId:', subscription.id);
                     break;
                 }
 

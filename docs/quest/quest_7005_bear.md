@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_mountain.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_bear`（凶熊） |
 
@@ -78,14 +82,17 @@ start → enter_forest → find_bear → battle_bear
 - 選択肢: 「戦う」→ `battle_bear`
 
 #### `battle_bear`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_bear` |
+| 敵グループ | `enemy_bear` |
 | 敵名 | 凶熊 |
 | 備考 | HP高め・ATK高め。1体のボス型戦闘 |
 
 ```
-params: type:battle, enemy:enemy_bear, next:collect_pelt, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_bear が含まれるグループ], next:collect_pelt, fail:end_failure
 ```
 
 #### `collect_pelt`（reward）
@@ -126,4 +133,3 @@ params: type:reward, item_id:3001, quantity:1, next:end_success
 ## 6. 拡張メモ
 
 - 「熊を殺さず追い払う」選択肢（Combat回避ルート / Justice変動）
-- BGM: `bgm_quest_calm` → `bgm_battle`（遭遇時切替）

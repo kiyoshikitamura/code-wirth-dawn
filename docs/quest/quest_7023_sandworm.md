@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_marcund` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_desert.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_sandworm`（大砂虫） |
 
@@ -82,14 +86,17 @@ start → set_bait → wait_tremor → sandworm_emerges → battle_sandworm
 - 選択肢: 「戦う」→ `battle_sandworm`
 
 #### `battle_sandworm`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_sandworm` |
+| 敵グループ | `enemy_sandworm` |
 | 敵名 | 大砂虫 |
 | 備考 | HP非常に高い・DEF高め・特殊技あり（砂埃で手札制限など）のボス型 |
 
 ```
-params: type:battle, enemy:enemy_sandworm, next:worm_dead, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_sandworm が含まれるグループ], next:worm_dead, fail:end_failure
 ```
 
 #### `worm_dead`（text）
@@ -131,4 +138,3 @@ params: type:battle, enemy:enemy_sandworm, next:worm_dead, fail:end_failure
 
 - 砂虫の体内から価値ある素材が取れる（ドロップまたは追加報酬）
 - 「囮を失敗させて撤退」の選択肢（安全ルート・報酬なし）
-- BGM: `bgm_quest_tense` → ボス出現時 `bgm_battle`（切替演出強調）

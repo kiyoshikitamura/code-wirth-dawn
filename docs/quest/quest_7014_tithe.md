@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_holy_empire` |
+| **出現条件** | 名声 -50以下 |
+| **サムネイル画像** | `/images/quests/bg_slum.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | max_reputation: -50（悪名-50以下） |
 | **敵スラッグ** | `enemy_mob`（抵抗する貧民） |
 | **道徳的傾向** | 邪悪（Evil +10） |
@@ -74,14 +78,17 @@ start → first_house → demand_payment
 - 選択肢: 「それでも払えと言う」→ `battle_mob_1` / 「引き下がる」→ `end_failure`
 
 #### `battle_mob_1`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_mob` |
+| 敵グループ | `enemy_mob` |
 | 敵名 | 抵抗する貧民 |
 | 備考 | ATK・HP低め。感情的に動く群衆型 |
 
 ```
-params: type:battle, enemy:enemy_mob, next:force_collect, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_mob が含まれるグループ], next:force_collect, fail:end_failure
 ```
 
 #### `force_collect`（text）
@@ -123,4 +130,3 @@ params: type:battle, enemy:enemy_mob, next:force_collect, fail:end_failure
 
 - 「途中で依頼を断って住民側につく」道徳的分岐（Justice変動・失敗扱い）
 - 高Evil値プレイヤー向けの上位報酬ルート（徴収額ボーナス）
-- BGM: `bgm_quest_tense`

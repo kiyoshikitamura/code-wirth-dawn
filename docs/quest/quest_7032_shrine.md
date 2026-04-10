@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_yatoshin` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_mountain.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **戦闘** | なし（基本）/ random_branch で妨害妖怪が出現する可能性あり |
 
@@ -76,7 +80,7 @@ start → mountain_search → collect_shard_01（random_branch：妖怪遭遇50%
 #### `yokai_01`（battle）
 ```
 落ちた破片の気に引き寄せられたのか、木陰から妖怪が現れた。
-params: type:battle, enemy:enemy_yokai, next:collect_shard_02, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_yokai が含まれるグループ], next:collect_shard_02, fail:end_failure
 ```
 
 #### `collect_shard_02` / `collect_shard_03`
@@ -124,4 +128,3 @@ params: type:battle, enemy:enemy_yokai, next:collect_shard_02, fail:end_failure
 
 - 結界石を壊した犯人を追う後続クエストへの伏線
 - 破片の数量に応じた結界の強度変動フレーバー
-- BGM: `bgm_quest_calm`（神社・和の静謐な雰囲気）

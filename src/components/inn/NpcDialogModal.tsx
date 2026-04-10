@@ -136,7 +136,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                             <button
                                 key={i}
                                 onClick={action.onClick}
-                                className="w-full py-3 rounded-xl font-bold text-sm border border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700/80 hover:text-white transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                className="w-full py-3 rounded-xl font-bold text-sm border border-amber-600 bg-amber-900/30 text-amber-100 hover:bg-amber-800/50 hover:text-white transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500"
                             >
                                 {action.label}
                             </button>

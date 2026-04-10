@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_holy_empire` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_ruins_field.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_bandit_thug`（盗賊団） |
 
@@ -75,13 +79,16 @@ start → locate_hideout → assault_entry → battle_bandits_01 → inside
 ```
 
 #### `battle_bandits_01`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_bandit_thug` |
+| 敵グループ | `enemy_bandit_thug` |
 | 敵名 | 盗賊団の構成員 |
 
 ```
-params: type:battle, enemy:enemy_bandit_thug, next:inside, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_bandit_thug が含まれるグループ], next:inside, fail:end_failure
 ```
 
 #### `inside`（text）
@@ -92,7 +99,7 @@ params: type:battle, enemy:enemy_bandit_thug, next:inside, fail:end_failure
 
 #### `battle_bandits_02`（battle）
 ```
-params: type:battle, enemy:enemy_bandit_thug, next:find_relic, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_bandit_thug が含まれるグループ], next:find_relic, fail:end_failure
 ```
 > 第2戦はボス格。HP/ATKを増強した個体想定。
 
@@ -135,4 +142,3 @@ params: type:battle, enemy:enemy_bandit_thug, next:find_relic, fail:end_failure
 
 - 「聖杯を持ち逃げして別場所に売る」裏切り選択肢（Evil変動・高報酬別ルート）
 - ボスが聖杯を盗んだ理由のフレーバー（病気の娘の薬代など）
-- BGM: `bgm_quest_tense` → `bgm_battle`（突入時）

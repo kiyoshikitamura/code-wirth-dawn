@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | 全拠点（`all`） |
+| **出現条件** | 名声 -50以下 |
+| **サムネイル画像** | `/images/quests/bg_forest_night.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | max_reputation: -50（悪名-50以下） |
 | **敵スラッグ** | `enemy_bandit_thug`（追手の賞金稼ぎ） |
 | **道徳的傾向** | 混沌（Chaos +5） |
@@ -86,14 +90,17 @@ params: type:random_branch, prob:70, next:ambush, fallback:delivery_success
 ```
 
 #### `battle_hunter`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_bandit_thug` |
+| 敵グループ | `enemy_bandit_thug` |
 | 敵名 | 賞金稼ぎ |
 | 備考 | 中程度の強さ。AIが「追手」として攻撃的に動く想定 |
 
 ```
-params: type:battle, enemy:enemy_bandit_thug, next:delivery_success, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_bandit_thug が含まれるグループ], next:delivery_success, fail:end_failure
 ```
 
 #### `delivery_success`（text）
@@ -135,4 +142,3 @@ params: type:battle, enemy:enemy_bandit_thug, next:delivery_success, fail:end_fa
 
 - 禁制品の中身が発覚するイベント（フレーバー分岐）
 - 検問での`check_possession`（通行許可証を持っていれば別ルートも可能）
-- BGM: `bgm_quest_tense` → `bgm_battle`

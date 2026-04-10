@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_haryu` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_mountain.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **道徳的傾向** | 活力（Vitality +1） |
 
@@ -81,14 +85,17 @@ params: type:random_branch, prob:40, next:guardian_beast, fallback:collect
 ```
 
 #### `guardian_beast`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_mountain_beast` |
+| 敵グループ | `enemy_mountain_beast` |
 | 敵名 | 霊草の守護獣 |
 | 備考 | HP中程度・守護兽のため自然属性（将来実装）|
 
 ```
-params: type:battle, enemy:enemy_mountain_beast, next:collect, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_mountain_beast が含まれるグループ], next:collect, fail:end_failure
 ```
 
 #### `collect`（reward）
@@ -126,4 +133,3 @@ params: type:check_delivery, item_id:[霊草ID], quantity:3, next:end_success
 
 - 宦官の依頼内容が「実は毒薬」だった場合の裏ルート（Will来実装）
 - 霊草採取量に応じた追加報酬システム
-- BGM: `bgm_quest_calm`（山岳・静かな自然）

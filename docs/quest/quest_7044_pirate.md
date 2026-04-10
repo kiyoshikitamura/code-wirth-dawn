@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_haryu` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_river.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_pirate`（水賊） |
 
@@ -78,13 +82,16 @@ start → approach_cove → surprise_attack → battle_pirates_deck
 ```
 
 #### `battle_pirates_deck`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_pirate` |
+| 敵グループ | `enemy_pirate` |
 | 敵名 | 水賊（甲板員） |
 
 ```
-params: type:battle, enemy:enemy_pirate, next:board_ship, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_pirate が含まれるグループ], next:board_ship, fail:end_failure
 ```
 
 #### `board_ship`（text）
@@ -94,7 +101,7 @@ params: type:battle, enemy:enemy_pirate, next:board_ship, fail:end_failure
 
 #### `battle_pirates_captain`（battle）
 ```
-params: type:battle, enemy:enemy_pirate, next:reclaim_cargo, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_pirate が含まれるグループ], next:reclaim_cargo, fail:end_failure
 ```
 > 水賊の頭目：`enemy_pirate_captain`（強化版）として定義。
 
@@ -139,4 +146,3 @@ params: type:battle, enemy:enemy_pirate, next:reclaim_cargo, fail:end_failure
 
 - 奪還した荷物の量によるボーナス報酬（将来実装）
 - 水賊の船を使った移動システム（将来のロケーション拡張と連携）
-- BGM: `bgm_quest_tense`（海戦感の和風BGM）

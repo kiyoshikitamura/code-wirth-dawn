@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_holy_empire`（ローラン聖帝国） |
+| **出現条件** | 名声 80以上 |
+| **サムネイル画像** | `/images/quests/bg_catacombs.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | min_reputation: 80（英雄級名声以上） |
 | **敵スラッグ** | `enemy_heretic`（異端信徒） |
 | **道徳的傾向** | 秩序（Order +5） |
@@ -79,14 +83,17 @@ start → locate_heretics → infiltrate
 - 選択肢: 「応戦する」→ `battle_heretics`
 
 #### `battle_heretics`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_heretic` |
+| 敵グループ | `enemy_heretic` |
 | 敵名 | 異端信徒 |
 | 備考 | 中程度。宗教的熱狂により状態異常耐性あり（想定） |
 
 ```
-params: type:battle, enemy:enemy_heretic, next:capture_leader, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_heretic が含まれるグループ], next:capture_leader, fail:end_failure
 ```
 
 #### `capture_leader`（text）
@@ -128,4 +135,3 @@ params: type:battle, enemy:enemy_heretic, next:capture_leader, fail:end_failure
 
 - 「異端者に同情して騎士団を裏切る」選択肢（Justice変動・依頼失敗）
 - 異端者が実は正しい教えを持っていた……という結末フレーバー
-- BGM: `bgm_quest_tense`

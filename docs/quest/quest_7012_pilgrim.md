@@ -11,6 +11,10 @@
 | **推奨Lv / 難度** | 2 / 2 |
 | **所要日数** | 成功:1 / 失敗:1 |
 | **出現拠点** | `loc_holy_empire` |
+| **出現条件** | 特になし（常時） |
+| **サムネイル画像** | `/images/quests/bg_mountain.png` |
+
+※BGM、SE、進行中の背景画像などはノードごとに指定します。
 | **受注条件** | なし |
 | **敵スラッグ** | `enemy_bandit_thug`（山賊） |
 
@@ -89,13 +93,16 @@ params: type:random_branch, prob:70, next:battle_bandit, fallback:arrive_shrine
 ```
 
 #### `battle_bandit`（battle）
+**演出パラメータ:**
+- **BGM**: `[要定義: 例 bgm_battle_normal]`
+
 | 設定 | 値 |
 |-----|-----|
-| 敵スラッグ | `enemy_bandit_thug` |
+| 敵グループ | `enemy_bandit_thug` |
 | 敵名 | 山賊 |
 
 ```
-params: type:battle, enemy:enemy_bandit_thug, next:arrive_shrine, fail:end_failure
+params: type:battle, enemy_group_id:[要定義: enemy_bandit_thug が含まれるグループ], next:arrive_shrine, fail:end_failure
 ```
 
 #### `arrive_shrine`（text）
@@ -155,4 +162,3 @@ params: type:leave, npc_slug:npc_pilgrim_albert, next:end_success
 ## 7. 拡張メモ
 
 - アルバートが戦闘中に祈りで「HP自動回復」するフレーバー（実装上は微量回復）
-- BGM: `bgm_quest_calm` → `bgm_battle`

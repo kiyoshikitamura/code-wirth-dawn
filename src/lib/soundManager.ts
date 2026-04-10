@@ -14,6 +14,12 @@ const BGM_FILES: Record<string, string> = {
     bgm_battle:      '/audio/bgm/bgm_battle.ogg',
     bgm_quest_calm:  '/audio/bgm/bgm_quest_calm.ogg',
     bgm_quest_tense: '/audio/bgm/bgm_quest_tense.ogg',
+    // 国家テーワBGM (spec_v14.1 §4)
+    bgm_roland:      '/audio/bgm/bgm_roland.ogg',
+    bgm_markand:     '/audio/bgm/bgm_markand.ogg',
+    bgm_yato:        '/audio/bgm/bgm_yato.ogg',
+    bgm_karyu:       '/audio/bgm/bgm_karyu.ogg',
+    bgm_collapse:    '/audio/bgm/bgm_collapse.ogg',
 };
 
 const SE_FILES: Record<string, string> = {
@@ -21,9 +27,16 @@ const SE_FILES: Record<string, string> = {
     se_click:        '/audio/se/se_click.ogg',
     se_modal_open:   '/audio/se/se_modal_open.ogg',
     se_cancel:       '/audio/se/se_cancel.ogg',
-    // 拠点・移動
+    // 拡点・移動 (spec_v14.1 §5)
     se_enter_inn:    '/audio/se/se_enter_inn.ogg',
-    se_travel:       '/audio/se/se_travel.ogg',
+    se_enter_guild:  '/audio/se/se_enter_guild.ogg',
+    se_enter_shop:   '/audio/se/se_enter_shop.ogg',
+    se_enter_temple: '/audio/se/se_enter_temple.ogg',
+    se_travel:       '/audio/se/se_travel.ogg',         // 拠点→ワールドマップ（人間の足音）
+    // ワールドマップ用 SE (spec_v14.1 §5.3)
+    se_enter_location: '/audio/se/se_enter_location.ogg', // 拠点に入る（人間の足音）
+    se_travel_horse:   '/audio/se/se_travel_horse.ogg',   // 拠点間移動（馬・馬車の足音）
+    se_encounter:      '/audio/se/se_encounter.ogg',      // 敵とのエンカウント
     // クエスト
     se_quest_accept: '/audio/se/se_quest_accept.ogg',
     se_quest_success:'/audio/se/se_quest_success.ogg',

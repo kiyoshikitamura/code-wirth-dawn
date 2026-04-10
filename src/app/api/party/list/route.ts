@@ -46,21 +46,43 @@ export async function GET(req: Request) {
             return NextResponse.json({ party: [] });
         }
 
-        // NPCマスタから職種・レベル・ステータスを取得（slugで結合）
+        // NPCマスタから職種・レベル・ステータスを取得
+        // 【優先①】slug で結合（新規雇用済み）
         const memberSlugs = data.map((m: any) => m.slug).filter(Boolean);
-        const { data: npcs, error: npcError } = await supabaseServer
-            .from('npcs')
-            .select('slug, name, epithet, job_class, level, attack, defense, max_hp')
-            .in('slug', memberSlugs);
-
-        if (npcError) {
-            console.error('NPC lookup error:', npcError.message);
-        }
+        // 【フォールバック②】slug=NULL のメンバーは name で検索
+        const membersWithoutSlug = data.filter((m: any) => !m.slug);
+        const memberNames = membersWithoutSlug.map((m: any) => m.name).filter(Boolean);
 
         const npcMap = new Map<string, any>();
-        if (npcs) {
-            for (const npc of npcs) {
-                npcMap.set(npc.slug, npc);
+
+        // slug で検索  ← select('*') で未知カラムエラーを回避
+        if (memberSlugs.length > 0) {
+            const { data: npcsBySlug, error: npcSlugError } = await supabaseServer
+                .from('npcs')
+                .select('*')
+                .in('slug', memberSlugs);
+            if (npcSlugError) console.error('NPC slug lookup error:', npcSlugError.message);
+            if (npcsBySlug) {
+                for (const npc of npcsBySlug) {
+                    npcMap.set(`slug:${npc.slug}`, npc);
+                }
+            }
+        }
+
+        // name でフォールバック検索（slug=NULLのメンバー向け: 既存レコード対応）
+        if (memberNames.length > 0) {
+            const { data: npcsByName, error: npcNameError } = await supabaseServer
+                .from('npcs')
+                .select('*')
+                .in('name', memberNames);
+            if (npcNameError) console.error('NPC name lookup error:', npcNameError.message);
+            if (npcsByName) {
+                for (const npc of npcsByName) {
+                    // 名前をキーに登録（重複する場合は最初の1件）
+                    if (!npcMap.has(`name:${npc.name}`)) {
+                        npcMap.set(`name:${npc.name}`, npc);
+                    }
+                }
             }
         }
 
@@ -90,7 +112,10 @@ export async function GET(req: Request) {
 
         // パーティメンバーにNPCデータ・カード名を結合して返す
         const enrichedParty = data.map((member: any) => {
-            const npc = npcMap.get(member.slug);
+            // slug優先、なければ name でフォールバック
+            const npc = member.slug
+                ? npcMap.get(`slug:${member.slug}`)
+                : npcMap.get(`name:${member.name}`);
 
             // inject_cards のカード名解決
             const skillNames: string[] = [];
@@ -101,21 +126,38 @@ export async function GET(req: Request) {
                 }
             }
 
-            const jobClassEn = npc?.job_class || 'Adventurer';
+            const jobClassEn = npc?.job_class || npc?.job || member.job_class || 'Adventurer';
             const jobClassJp = JOB_CLASS_JP[jobClassEn] || jobClassEn;
+
+            // 画像 URL: party_members.image_url → npc.image_url → slugフォールバック
+            const slug = member.slug || npc?.slug;
+            const resolvedImageUrl = member.image_url
+                || npc?.image_url
+                || (slug ? `/images/npcs/${slug}.png` : null);
 
             return {
                 ...member,
-                // NPCマスタからの補完データ
+                // NPCマスタからの補完データ（カラム名複数パターン対応）
+                slug: slug || member.slug,
                 epithet: npc?.epithet || member.epithet || '',
                 job_class: jobClassJp,
-                level: npc?.level ?? null,
-                hp: npc?.max_hp ?? null,
-                atk: npc?.attack ?? null,
-                def: npc?.defense ?? null,
+                // level: npcsにlevelカラムがない場合はnull
+                level: npc?.level ?? member.level ?? null,
+                // HP: max_hp → hp → durability (CSVのdurabilityカラム) の順
+                hp: npc?.max_hp ?? npc?.hp ?? npc?.durability ?? member.durability ?? null,
+                // ATK: attack → atk の順
+                atk: npc?.attack ?? npc?.atk ?? null,
+                // DEF: defense → def の順
+                def: npc?.defense ?? npc?.def ?? null,
+                // 画像 URL
+                image_url: resolvedImageUrl,
+                icon_url: resolvedImageUrl,
                 // スキル名解決済み
                 skill_names: skillNames,
+                // flavor_text
+                flavor_text: npc?.introduction || npc?.flavor_text || member.introduction || member.flavor_text || undefined,
             };
+
         });
 
         return NextResponse.json({ party: enrichedParty });

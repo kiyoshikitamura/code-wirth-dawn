@@ -16,6 +16,7 @@ export async function GET(req: Request) {
             .select(`
                 id,
                 completed_at,
+                accumulated_days_at_completion,
                 scenarios (
                     id,
                     title,
@@ -52,10 +53,22 @@ export async function GET(req: Request) {
 
         if (lError) throw lError;
 
+        // 4. 出禁拠点リスト (spec_v15.1 §4 Tab1 フレーバー統計)
+        // reputations.score < 0 の拠点を集計
+        const { data: bannedReps, error: brError } = await supabase
+            .from('reputations')
+            .select('score, location_name')
+            .eq('user_id', userId)
+            .lt('score', 0)
+            .order('score', { ascending: true });
+
+        if (brError) console.warn('[HistoryArchive] banned reps fetch failed:', brError.message);
+
         return NextResponse.json({
             chronicle: quests,
             world_history: worldHistory,
-            lineage: lineage
+            lineage: lineage,
+            banned_locations: bannedReps || []
         });
     } catch (err: any) {
         console.error('History Archive API Error:', err);

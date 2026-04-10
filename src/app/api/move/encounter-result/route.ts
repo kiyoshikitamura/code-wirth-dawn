@@ -70,15 +70,17 @@ export async function POST(req: Request) {
                 const currentGold = profile.gold || 0;
                 const goldLost = Math.floor(currentGold * ECONOMY_RULES.BOUNTY_PENALTY_RATE);
                 updatePayload.gold = currentGold - goldLost;
-                penaltyMessage = `賞金稼ぎに敗れた...${goldLost}Gを奪われた。だが命は繋いだ。`;
+                penaltyMessage = `賞金稼ぎに敗れた…${goldLost}Gを奪われた。だが命は繋いだ。`;
                 console.log(`[EncounterResult] Bounty hunter defeat: ${goldLost}G forfeited for user ${userId}`);
             } else if (encounter_type === 'random_encounter') {
                 // §1.1 通常エンカウント敗北: Vitality -1
                 const currentVitality = profile.vitality || 0;
                 updatePayload.vitality = Math.max(0, currentVitality - ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS);
-                penaltyMessage = `傷を負いながらも目的地に辿り着いた。（Vitality -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS}）`;
+                penaltyMessage = `傷を負いながら出発地へ引き返された。（Vitality -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS}）`;
                 console.log(`[EncounterResult] Random encounter defeat: Vitality -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS} for user ${userId}`);
             }
+            // spec_v16 §1.1/1.2: 敗北時は出発地へ強制送還
+            updatePayload.current_location_id = origin_location_id;
         }
 
         // DBを更新（移動完了 + ペナルティ）
@@ -94,16 +96,26 @@ export async function POST(req: Request) {
             .from('user_hub_states')
             .upsert({ user_id: userId, is_in_hub: false });
 
-        const successMessage = result === 'win'
+        const isLose = result === 'lose';
+        const successMessage = !isLose
             ? '戦いに勝利し、目的地へと到達した。'
             : penaltyMessage;
+
+        // 賞金稼ぎ勝利時のシェアテキスト (spec_v15.1 §3.3)
+        let share_text: string | null = null;
+        if (!isLose && encounter_type === 'bounty_hunter_ambush') {
+            share_text = `名声が地に落ち賞金首として狙われたが、刺客を返り討ちにしてやった。 #Wirth_Dawn #悪名辟く`;
+        }
 
         return NextResponse.json({
             success: true,
             result,
             encounter_type,
-            new_location_id: target_location_id,
-            penalty_applied: result === 'lose',
+            new_location_id: isLose ? (origin_location_id || target_location_id) : target_location_id,
+            penalty_applied: isLose,
+            redirect_to_map: isLose, // spec_v16: 敗北時はワールドマップへ強制送還
+            origin_location_id: isLose ? origin_location_id : undefined,
+            share_text,
             message: successMessage,
             updates: {
                 gold: updatePayload.gold,

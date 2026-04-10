@@ -13,10 +13,16 @@ const PRICE_IDS: Record<string, string> = {
     premium: process.env.STRIPE_PRICE_ID_PREMIUM!,
 };
 
-// ゴールドパッケージ定義（price_id → 付与G）
-const GOLD_PACKAGES: Record<string, number> = {
-    [process.env.STRIPE_PRICE_ID_GOLD_10K ?? 'gold_10k']: 10000,
-    [process.env.STRIPE_PRICE_ID_GOLD_50K ?? 'gold_50k']: 50000,
+// ゴールドパッケージ定義（packageKey → { priceId, goldAmount } のマッピング）
+const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number }> = {
+    gold_10k: {
+        priceId: process.env.STRIPE_PRICE_ID_GOLD_10K!,
+        goldAmount: 10000,
+    },
+    gold_50k: {
+        priceId: process.env.STRIPE_PRICE_ID_GOLD_50K!,
+        goldAmount: 50000,
+    },
 };
 
 /**
@@ -29,12 +35,12 @@ const GOLD_PACKAGES: Record<string, number> = {
  *   userId: string,
  *   mode: 'subscription' | 'payment',
  *   tier?: 'basic' | 'premium',      // mode='subscription' のとき
- *   priceId?: string,                 // mode='payment' (ゴールド購入) のとき
+ *   packageKey?: 'gold_10k' | 'gold_50k', // mode='payment' (ゴールド購入) のとき
  * }
  */
 export async function POST(req: Request) {
     try {
-        const { userId, mode, tier, priceId } = await req.json();
+        const { userId, mode, tier, packageKey } = await req.json();
 
         if (!userId || !mode) {
             return NextResponse.json({ error: 'userId と mode は必須です。' }, { status: 400 });
@@ -56,6 +62,10 @@ export async function POST(req: Request) {
                 line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
                 client_reference_id: userId,           // Webhook で user_id を特定するため必須
                 metadata: { user_id: userId, tier },
+                subscription_data: {
+                    trial_period_days: 7,               // 最初の1週間無料トライアル
+                    metadata: { user_id: userId },      // Bug-1修正: 解約Webhookでuser_idを取得できるようにSubscriptionにmetadataを設定
+                },
                 success_url: `${origin}/inn?billing=success&tier=${tier}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
             });
@@ -64,18 +74,20 @@ export async function POST(req: Request) {
 
         } else if (mode === 'payment') {
             // ─── ゴールド都度購入 ───
-            if (!priceId) {
-                return NextResponse.json({ error: 'ゴールド購入には priceId が必要です。' }, { status: 400 });
+            const pkg = packageKey ? GOLD_PACKAGES[packageKey] : null;
+            if (!pkg) {
+                return NextResponse.json(
+                    { error: `packageKey は 'gold_10k' または 'gold_50k' を指定してください。` },
+                    { status: 400 }
+                );
             }
-
-            const goldAmount = GOLD_PACKAGES[priceId] ?? 10000;
 
             const session = await stripe.checkout.sessions.create({
                 mode: 'payment',
-                line_items: [{ price: priceId, quantity: 1 }],
+                line_items: [{ price: pkg.priceId, quantity: 1 }],
                 client_reference_id: userId,
-                metadata: { user_id: userId, gold_amount: String(goldAmount) },
-                success_url: `${origin}/inn?billing=gold_success&amount=${goldAmount}`,
+                metadata: { user_id: userId, gold_amount: String(pkg.goldAmount) },
+                success_url: `${origin}/inn?billing=gold_success&amount=${pkg.goldAmount}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
             });
 

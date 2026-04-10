@@ -395,9 +395,11 @@ export async function updateWorldSimulation() {
 
         logs.push('World update complete.');
 
-        // 7. 名声の自然減少 (spec_v16 §5.1: Reputation Decay)
+        // 7. 名声の自然減少 (spec_v16 §3.2: Reputation Decay)
+        // REP_DECAY_THRESHOLD (100) を超えている全レコードの score を REP_DECAY_AMOUNT (-5) 分減少
+        // ただし下限は REP_DECAY_THRESHOLD (100) に固定（仕様確認済み: 102 → 97 ではなく 100）
         try {
-            // REP_DECAY_THRESHOLD を超えている reputation レコードを全取得
+            // 対象レコードを一括取得
             const { data: highReps, error: repFetchError } = await supabase
                 .from('reputations')
                 .select('id, score')
@@ -406,27 +408,55 @@ export async function updateWorldSimulation() {
             if (repFetchError) {
                 logs.push(`[RepDecay] 取得エラー: ${repFetchError.message}`);
             } else if (highReps && highReps.length > 0) {
-                // 各レコードの score を REP_DECAY_AMOUNT 分減少させる
+                // スコアを計算してバッチ更新用に分類
+                // 「threshold ちょうど(100)になるもの」と「threshold + decay超のもの」を一括処理
+                const decayAmount = ECONOMY_RULES.REP_DECAY_AMOUNT; // -5（負数）
+                const threshold = ECONOMY_RULES.REP_DECAY_THRESHOLD; // 100
+
+                // 結果スコアが threshold を下回るケース → threshold に固定
+                const clampedIds = highReps
+                    .filter(r => r.score + decayAmount < threshold)
+                    .map(r => r.id);
+                // 結果スコアが threshold 以上のケース → そのまま -5
+                const normalDecayIds = highReps
+                    .filter(r => r.score + decayAmount >= threshold)
+                    .map(r => r.id);
+
                 let decayCount = 0;
-                for (const rep of highReps) {
-                    const newScore = rep.score + ECONOMY_RULES.REP_DECAY_AMOUNT; // REP_DECAY_AMOUNT は負数
-                    // 閾値以下にはしない（閾値ちょうどで止める）
-                    const clampedScore = Math.max(ECONOMY_RULES.REP_DECAY_THRESHOLD, newScore);
-                    if (clampedScore !== rep.score) {
-                        await supabase
-                            .from('reputations')
-                            .update({ score: clampedScore })
-                            .eq('id', rep.id);
-                        decayCount++;
+
+                // 一括UPDATE: threshold固定グループ
+                if (clampedIds.length > 0) {
+                    const { error: clampError } = await supabase
+                        .from('reputations')
+                        .update({ score: threshold })
+                        .in('id', clampedIds);
+                    if (clampError) {
+                        logs.push(`[RepDecay] Clamp UPDATE エラー: ${clampError.message}`);
+                    } else {
+                        decayCount += clampedIds.length;
                     }
                 }
-                logs.push(`[RepDecay] ${decayCount}件の名声を ${ECONOMY_RULES.REP_DECAY_AMOUNT} 減少させました。`);
+
+                // 一括UPDATE: 通常Decayグループ
+                // Supabase clientではRAW SQL式でのインクリメントがないため、
+                // スコアの分布が均一でない場合は個別UPDATEが必要。
+                // 実運用上 threshold超のレコード数は少数のため、個別でも問題なし。
+                for (const rep of highReps.filter(r => normalDecayIds.includes(r.id))) {
+                    const { error: repUpdateError } = await supabase
+                        .from('reputations')
+                        .update({ score: rep.score + decayAmount })
+                        .eq('id', rep.id);
+                    if (!repUpdateError) decayCount++;
+                }
+
+                logs.push(`[RepDecay] ${decayCount} / ${highReps.length} 件の名声を ${decayAmount} 減少（下限: ${threshold}）`);
             } else {
-                logs.push('[RepDecay] Decay対象なし');
+                logs.push('[RepDecay] Decay対象なし（全員 score ≤ 100）');
             }
         } catch (decayErr: any) {
             logs.push(`[RepDecay] 例外: ${decayErr.message}`);
         }
+
 
         return { success: true, logs, hegemony: quotas };
 

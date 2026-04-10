@@ -406,7 +406,9 @@ export async function POST(req: Request) {
                 .from('user_completed_quests')
                 .upsert({
                     user_id: user_id,
-                    scenario_id: quest_id
+                    scenario_id: quest_id,
+                    // spec_v15.1 §4: はれ時のゲーム内経過日数を記録（聖界性暦変換に使用）
+                    accumulated_days_at_completion: user.accumulated_days ?? 0
                 }, { onConflict: 'user_id,scenario_id' });
 
             if (historyError) {
