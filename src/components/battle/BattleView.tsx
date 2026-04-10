@@ -229,39 +229,25 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
     const renderEnemyCard = (enemy: Enemy, isTarget: boolean, isDead: boolean) => (
         <div
             key={enemy.id}
-            className={`relative group transition-all duration-300 shrink-0 ${isDead ? 'opacity-50 grayscale' : 'cursor-pointer'} ${isTarget && !isDead ? 'z-20' : 'z-10 opacity-70'}`}
+            className={`relative group transition-all duration-300 shrink-0 ${isDead ? 'opacity-50 grayscale' : 'cursor-pointer'} flex flex-col items-center justify-end ${isTarget && !isDead ? 'z-20' : 'z-10 opacity-90 hover:opacity-100'}`}
             onClick={() => !isDead && setTarget(enemy.id)}
         >
             {/* WANTED Bounty Hunter Effect */}
             {enemy.spawn_type === 'bounty' && !isDead && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-950/90 border border-red-500 text-red-500 text-[7px] font-black px-1 py-0.5 whitespace-nowrap z-20 skew-x-[-10deg]">
+                <div className="absolute top-0 bg-red-950/90 border border-red-500 text-red-500 text-[8px] font-black px-1.5 py-0.5 whitespace-nowrap z-20 skew-x-[-10deg] shadow-[0_0_10px_rgba(220,38,38,0.5)]">
                     BOUNTY
                 </div>
             )}
 
-            {/* Card — 80% size */}
-            <div className="w-[104px] h-[140px] sm:w-[116px] sm:h-[156px] relative transition-all duration-500">
-                <div className={`w-full h-full rounded-lg shadow-2xl flex flex-col border-2 overflow-hidden
-                    ${isTarget && !isDead ? 'border-red-500 animate-[targetPulse_1.5s_ease-in-out_infinite] bg-slate-900' : 'border-slate-700 bg-slate-900'}
-                `}>
-                    <div className="h-3/4 bg-slate-800 relative overflow-hidden">
-                        {enemy.image_url ? (
-                            <img src={enemy.image_url} alt={enemy.name} className={`w-full h-full object-cover ${isDead ? 'opacity-50 grayscale' : ''}`} />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-700"><Skull size={36} /></div>
-                        )}
-                    </div>
-                    <div className="h-1/4 bg-slate-950 flex flex-col justify-center px-1.5 py-0.5 relative">
-                        <div className={`text-[9px] font-bold truncate ${isDead ? 'text-gray-500 line-through' : 'text-slate-200'}`}>
-                            {enemy.name} <span className="text-[7px] text-amber-500 font-normal">Lv.{enemy.level}</span>
-                        </div>
-                        {!isDead && (
-                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-0.5">
-                                <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
-                            </div>
-                        )}
-                    </div>
-                </div>
+            {/* Sprite Image Container */}
+            <div className={`w-[120px] h-[120px] sm:w-[140px] sm:h-[140px] relative transition-all duration-500 flex items-center justify-center
+                ${isTarget && !isDead ? 'drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] scale-105' : 'drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]'}
+            `}>
+                {enemy.image_url ? (
+                    <img src={enemy.image_url} alt={enemy.name} className="max-w-full max-h-full object-contain" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-500"><Skull size={48} /></div>
+                )}
 
                 {/* Action Animations */}
                 {isTarget && activeEffect && (
@@ -276,11 +262,23 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </div>
                         )}
                         {activeEffect === 'PIERCE' && (
-                            <div className="w-1.5 h-16 bg-slate-100 shadow-[0_0_15px_rgba(255,255,255,1)] animate-in slide-in-from-bottom-16 fade-in duration-200" />
+                            <div className="w-1.5 h-20 bg-slate-100 shadow-[0_0_15px_rgba(255,255,255,1)] animate-in slide-in-from-bottom-16 fade-in duration-200" />
                         )}
                         {activeEffect === 'BLUNT' && (
-                            <div className="w-10 h-10 rounded-full border-4 border-amber-500 bg-amber-200/40 shadow-[0_0_20px_rgba(245,158,11,1)] animate-in zoom-in fade-in duration-300" />
+                            <div className="w-12 h-12 rounded-full border-4 border-amber-500 bg-amber-200/40 shadow-[0_0_20px_rgba(245,158,11,1)] animate-in zoom-in fade-in duration-300" />
                         )}
+                    </div>
+                )}
+            </div>
+
+            {/* Floating Info (HP & Name) Below Sprite */}
+            <div className="mt-2 w-[110px] sm:w-[130px] flex flex-col items-center bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-white/5 shadow-xl">
+                <div className={`text-[10px] sm:text-[11px] font-bold text-center truncate w-full leading-tight ${isDead ? 'text-gray-500 line-through' : 'text-slate-100 drop-shadow-md'}`}>
+                    {enemy.name} <span className="text-[8px] sm:text-[9px] text-amber-400 font-normal ml-0.5">Lv.{enemy.level}</span>
+                </div>
+                {!isDead && (
+                    <div className="w-full h-1.5 bg-slate-900/80 rounded-full overflow-hidden mt-1.5 border border-black/80">
+                        <div className="h-full bg-gradient-to-r from-red-800 to-red-500 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
                     </div>
                 )}
             </div>
