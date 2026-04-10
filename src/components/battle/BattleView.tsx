@@ -151,8 +151,14 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
         if (selectedCardIndex === index) {
             // 2段階目: 実行
             setSelectedCardIndex(null);
-            setActiveEffect(card.animation_type || 'SLASH');
-            setTimeout(() => setActiveEffect(null), 500);
+            // バフ・防御系カードはSLASHアニメーションを出さない
+            const isBuff = card.type === 'Support' ||
+                card.type === 'Defense' ||
+                (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id));
+            if (!isBuff) {
+                setActiveEffect(card.animation_type || 'SLASH');
+                setTimeout(() => setActiveEffect(null), 500);
+            }
             await attackEnemy(card);
         } else {
             // 1段階目: 選択
@@ -487,8 +493,8 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                     className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform"
                                 >
                                     <div className={`w-9 h-9 rounded-full border ${(member.durability ?? member.hp) > 0 ? 'border-sky-500/70 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-40'} flex items-center justify-center overflow-hidden`}>
-                                        {member.avatar_url ? (
-                                            <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        {(member.icon_url || member.image_url || member.avatar_url) ? (
+                                            <img src={member.icon_url || member.image_url || member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
                                             <User size={14} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
                                         )}
@@ -511,8 +517,8 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <div className="w-10 h-10 rounded-full border-2 border-sky-500 bg-slate-800 flex items-center justify-center overflow-hidden">
-                                    {selectedPartyMember.avatar_url ? (
-                                        <img src={selectedPartyMember.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    {(selectedPartyMember.icon_url || selectedPartyMember.image_url || selectedPartyMember.avatar_url) ? (
+                                        <img src={selectedPartyMember.icon_url || selectedPartyMember.image_url || selectedPartyMember.avatar_url} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <User size={18} className="text-sky-400" />
                                     )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
-import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles } from 'lucide-react';
+import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { supabase } from '@/lib/supabase';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
@@ -14,6 +14,15 @@ interface TavernModalProps {
     locationSlug?: string;
 }
 
+// 英霊情報
+interface MyHeroic {
+    id: string;
+    name: string;
+    level: number;
+    job_class: string;
+    created_at: string;
+}
+
 export default function TavernModal({ isOpen, onClose, userProfile, locationId, reputationScore = 0, locationSlug }: TavernModalProps) {
     const [activeTab, setActiveTab] = useState<'hire' | 'register'>('hire');
     const [shadows, setShadows] = useState<ShadowSummary[]>([]);
@@ -24,6 +33,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [reportReason, setReportReason] = useState('');
     const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
     const [selectedShadow, setSelectedShadow] = useState<ShadowSummary | null>(null);
+    const [myHeroics, setMyHeroics] = useState<MyHeroic[]>([]);
+    const [heroicLoading, setHeroicLoading] = useState(false);
+    const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -31,6 +43,12 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             Promise.all([fetchPartyData(), fetchShadows()]).finally(() => setLoading(false));
         }
     }, [isOpen, locationId]);
+
+    useEffect(() => {
+        if (isOpen && activeTab === 'register') {
+            fetchMyHeroics();
+        }
+    }, [isOpen, activeTab]);
 
     const JOB_CLASS_JP: Record<string, string> = {
         Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
@@ -43,7 +61,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         Samurai: '侍', Miko: '巫女', Ninja: '忍者', Dancer: '踊り子',
         Lancer: '槍術士', Mercenary: '傭兵', Soldier: '兵士', Villager: '村人',
         Tactician: '軍師', Summoner: '召喚士', Caster: '術師', Chef: '料理人',
-        'Heroic Spirit': '英霊',
+        'Heroic Spirit': '英霊', Taoist: '道士', Bandit: '山賊', Slave: '奴隷',
+        Gamurai: 'ギャンブラー', Gambler: 'イカサマ師', Machine: '自律人形',
+        Ghost: '幽霊', Armor: '呪いの鎧', Monster: '幻獣', Object: '石像', Undead: '不死',
     };
     const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
 
@@ -68,6 +88,19 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             if (data.shadows) setShadows(data.shadows);
         } catch (e) {
             console.error("Failed to fetch shadows", e);
+        }
+    };
+
+    const fetchMyHeroics = async () => {
+        setHeroicLoading(true);
+        try {
+            const res = await fetch(`/api/tavern/my-heroic?user_id=${userProfile.id}`);
+            const data = await res.json();
+            if (data.heroics) setMyHeroics(data.heroics);
+        } catch (e) {
+            console.error("Failed to fetch my heroics", e);
+        } finally {
+            setHeroicLoading(false);
         }
     };
 
@@ -142,6 +175,25 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     };
 
     const closeReportModal = () => { setReportTarget(null); setReportReason(''); setReportStatus('idle'); };
+
+    // origin_type に応じたバッジ
+    const OriginBadge = ({ shadow }: { shadow: ShadowSummary }) => {
+        if (shadow.origin_type === 'shadow_heroic') {
+            return (
+                <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-600 to-yellow-400 text-[9px] font-bold text-slate-950 px-1.5 py-0.5 rounded">
+                    <Star size={8} />英霊
+                </span>
+            );
+        }
+        if (shadow.origin_type === 'shadow_active') {
+            return (
+                <span className="flex items-center gap-0.5 bg-blue-600 text-[9px] font-bold text-white px-1.5 py-0.5 rounded">
+                    <Ghost size={8} />残影
+                </span>
+            );
+        }
+        return null; // system_mercenary はバッジなし
+    };
 
     const isEmbargoed = reputationScore < 0;
     if (!isOpen) return null;
@@ -234,7 +286,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 傭兵を雇う
                             </button>
                             <button onClick={() => setActiveTab('register')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'register' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
-                                影の登録
+                                影の記録
                             </button>
                             {activeTab === 'hire' && (
                                 <button onClick={async () => { setLoading(true); await Promise.all([fetchPartyData(), fetchShadows()]); setLoading(false); }} disabled={loading}
@@ -246,7 +298,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         </div>
 
                         {/* ===== Content ===== */}
-                        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                        <div className="flex-1 overflow-y-auto p-3">
                             {loading ? (
                                 <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
                                     酒場を見回しています...
@@ -256,35 +308,74 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                     {hireStatus}
                                 </div>
                             ) : activeTab === 'hire' ? (
-                                <div className="grid grid-cols-1 gap-4">
+                                <div className="space-y-2">
                                     {/* === Current Party === */}
                                     {currentParty.length > 0 && (
                                         <>
-                                            <div className="col-span-1 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1">
-                                                現在のパーティ ({currentParty.length}/4)
+                                            <div className="text-[#3e2723] font-serif font-bold border-b border-[#8b5a2b]/40 pb-1 text-xs">
+                                                同行中のパーティ ({currentParty.length}/4)
                                             </div>
-                                            {currentParty.map(member => (
-                                                <div key={`party-${member.id}`} className="relative p-3 border-2 border-[#6b8cae]/40 bg-[#eef3f7] rounded">
-                                                    <div className="absolute top-0 right-0 bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded-bl">同行中</div>
-                                                    <div className="flex items-center gap-3 mb-2">
+                                            {currentParty.map(member => {
+                                                const memberImgSrc = (member as any).icon_url || (member as any).image_url;
+                                                const memberEpithet = (member as any).epithet;
+                                                const memberDisplayName = memberEpithet ? `${memberEpithet} ${member.name}` : member.name;
+                                                const memberSkills: string[] = (member as any).skill_names || [];
+                                                // クリック時に詳細ポップアップを開くためShadowSummaryに変換
+                                                const asShadow: ShadowSummary = {
+                                                    profile_id: (member as any).source_user_id || member.id,
+                                                    name: member.name,
+                                                    epithet: memberEpithet,
+                                                    level: (member as any).level || 1,
+                                                    job_class: (member as any).job_class || member.job_class || '冒険者',
+                                                    origin_type: ((member as any).origin_type || 'system_mercenary') as any,
+                                                    contract_fee: 0,
+                                                    stats: {
+                                                        hp: (member as any).hp ?? (member as any).durability ?? 100,
+                                                        atk: (member as any).atk ?? 0,
+                                                        def: (member as any).def ?? 0,
+                                                    },
+                                                    signature_deck_preview: memberSkills,
+                                                    subscription_tier: 'free',
+                                                    icon_url: memberImgSrc,
+                                                    image_url: memberImgSrc,
+                                                    npc_image_url: memberImgSrc,
+                                                    flavor_text: (member as any).flavor_text || (member as any).introduction,
+                                                };
+                                                return (
+                                                    <div
+                                                        key={`party-${member.id}`}
+                                                        className="flex items-center gap-2 p-2.5 border border-[#6b8cae]/50 bg-[#eef3f7] rounded-md cursor-pointer hover:border-[#4a7da8]/60 active:scale-[0.99] transition-all"
+                                                        onClick={() => setSelectedShadow(asShadow)}
+                                                    >
                                                         <div className="w-9 h-9 rounded-full bg-[#d0dde8] overflow-hidden border border-[#6b8cae]/40 flex shrink-0 items-center justify-center">
-                                                            {member.icon_url || member.image_url
-                                                                ? <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" />
+                                                            {memberImgSrc
+                                                                ? <img src={memberImgSrc} alt={member.name} className="w-full h-full object-cover" />
                                                                 : <span className="text-[#4a7da8] font-bold text-sm">{member.name[0]}</span>}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="text-sm font-bold text-[#3e2723] truncate">{member.name}</div>
-                                                            <div className="text-[11px] text-[#8b6f4e]">{(member as any).epithet || member.job_class}</div>
+                                                            <div className="flex items-center gap-1 flex-wrap">
+                                                                <span className="text-xs font-bold text-[#3e2723] truncate max-w-[140px]">{memberDisplayName}</span>
+                                                                <span className="bg-[#4a7da8] text-white text-[9px] px-1.5 py-0.5 font-bold rounded flex-shrink-0">同行中</span>
+                                                            </div>
+                                                            <div className="text-[10px] text-[#8b6f4e]">
+                                                                Lv.{(member as any).level ?? '?'} {(member as any).job_class || member.job_class}
+                                                            </div>
+                                                            {memberSkills.length > 0 && (
+                                                                <div className="flex gap-1 flex-wrap mt-1">
+                                                                    {memberSkills.slice(0, 3).map((sk, i) => (
+                                                                        <span key={i} className="px-1 py-0.5 bg-[#d0dde8] text-[#3e5a7a] text-[8px] rounded border border-[#6b8cae]/30">{sk}</span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div className="text-[11px] text-[#6b8cae] font-bold">契約済</div>
+                                                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                                            <div className="text-[9px] text-[#4a7da8] font-mono">HP {(member as any).hp ?? (member as any).durability ?? '?'}</div>
+                                                            <span className="text-[10px] text-[#8b5a2b] font-bold">詳細 →</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex gap-3 text-[11px] font-mono text-[#8b6f4e]">
-                                                        <span className="flex items-center gap-1"><Shield size={11} /> ??</span>
-                                                        <span className="flex items-center gap-1"><Heart size={11} /> {member.durability}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            <div className="col-span-1 text-[#3e2723] font-serif font-bold border-b-2 border-[#8b5a2b]/40 pb-1 mb-1 mt-3">
+                                                );
+                                            })}
+                                            <div className="text-[#3e2723] font-serif font-bold border-b border-[#8b5a2b]/40 pb-1 text-xs mt-3">
                                                 酒場にいる冒険者たち
                                             </div>
                                         </>
@@ -292,7 +383,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
                                     {/* === Empty State === */}
                                     {shadows.length === 0 && !loading && (
-                                        <div className="text-center text-[#8b5a2b]/70 col-span-2 py-10 font-serif">
+                                        <div className="text-center text-[#8b5a2b]/70 py-10 font-serif">
                                             <p>ここには誰もいないようだ...</p>
                                             <p className="text-sm mt-2">他のプレイヤーがこの地を訪れるのを待ちましょう。</p>
                                         </div>
@@ -300,86 +391,140 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
                                     {/* === Party Full Warning === */}
                                     {currentParty.length >= 4 && shadows.length > 0 && (
-                                        <div className="col-span-2 bg-red-50/80 border border-red-300 text-red-700 p-2 text-center text-xs rounded">
+                                        <div className="bg-red-50/80 border border-red-300 text-red-700 p-2 text-center text-xs rounded">
                                             パーティメンバーが上限（4人）に達しています。
                                         </div>
                                     )}
 
-                                    {/* === Shadow Cards === */}
+                                    {/* === Shadow Cards (compact) === */}
                                     {shadows.map((shadow, idx) => {
-                                        const isHeroic = shadow.level >= 20;
                                         const hired = isAlreadyHired(shadow);
+                                        const isHeroic = shadow.origin_type === 'shadow_heroic';
+                                        const imgSrc = shadow.npc_image_url || shadow.icon_url || shadow.image_url;
+                                        const displayName = shadow.epithet
+                                            ? `${shadow.epithet} ${shadow.name}`
+                                            : shadow.name;
                                         return (
-                                            <div key={idx} className={`overflow-hidden p-3 border rounded transition-all ${
-                                                hired ? 'border-[#6b8cae]/40 bg-[#eef3f7] opacity-75'
-                                                : isHeroic ? 'ring-2 ring-amber-500 bg-gradient-to-b from-[#fdfbf7] to-amber-50/60'
-                                                : shadow.subscription_tier === 'premium' ? 'border-amber-500/50 bg-amber-50/30'
-                                                : shadow.subscription_tier === 'basic' ? 'border-[#6b8cae]/30 bg-[#f5f8fb]'
-                                                : 'border-[#c2b280] bg-[#fdfbf7] hover:border-[#a38b6b]'
-                                            }`}>
-                                                {/* Info Row: Avatar + Name + Badge/Price */}
-                                                <div className="flex items-start gap-3 mb-2">
-                                                    <div className="w-10 h-10 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
-                                                        {shadow.icon_url || shadow.image_url
-                                                            ? <img src={shadow.icon_url || shadow.image_url} alt={shadow.name} className="w-full h-full object-cover" />
-                                                            : <span className="text-[#8b5a2b] font-bold">{shadow.name?.[0] || '?'}</span>}
+                                            <div
+                                                key={idx}
+                                                className={`p-2.5 border rounded-md transition-all cursor-pointer active:scale-[0.99] ${
+                                                    hired ? 'border-[#6b8cae]/40 bg-[#eef3f7] opacity-80'
+                                                    : isHeroic ? 'ring-1 ring-amber-500 bg-gradient-to-r from-amber-50/60 to-[#fdfbf7] hover:ring-amber-400'
+                                                    : shadow.origin_type === 'shadow_active' ? 'border-blue-300/50 bg-blue-50/20 hover:border-blue-400/60'
+                                                    : 'border-[#c2b280] bg-[#fdfbf7] hover:border-[#a38b6b]'
+                                                }`}
+                                                onClick={() => setSelectedShadow(shadow)}
+                                            >
+                                                {/* Row 1: アイコン + 名前 + バッジ + 金額 */}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-9 h-9 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
+                                                        {imgSrc
+                                                            ? <img src={imgSrc} alt={shadow.name} className="w-full h-full object-cover" />
+                                                            : <span className="text-[#8b5a2b] font-bold text-sm">{shadow.name?.[0] || '?'}</span>}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="text-sm font-bold text-[#3e2723] truncate">{shadow.name || '名前なし'}</div>
-                                                        <div className="text-[11px] text-[#8b6f4e]">Lv.{shadow.level} {toJpJobClass(shadow.job_class)}</div>
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                                                        {/* Badge */}
-                                                        {hired && <span className="bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded">雇用中</span>}
-                                                        {!hired && isHeroic && <span className="bg-gradient-to-r from-amber-600 to-yellow-400 text-[10px] font-bold text-slate-950 px-2 py-0.5 rounded flex items-center gap-1"><Sparkles size={10} /> HERO</span>}
-                                                        {!hired && !isHeroic && shadow.subscription_tier === 'premium' && <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 font-bold rounded">伝説</span>}
-                                                        {!hired && !isHeroic && shadow.subscription_tier === 'basic' && shadow.origin_type !== 'system_mercenary' && <span className="bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded">傑出</span>}
-                                                        {!hired && !isHeroic && shadow.origin_type === 'system_mercenary' && <span className="bg-[#4a7da8] text-white text-[10px] px-2 py-0.5 font-bold rounded">公式</span>}
-                                                        {/* Price */}
-                                                        {!hired && <div className="text-amber-700 font-mono font-bold text-sm mt-0.5">{shadow.contract_fee} G</div>}
-                                                        {(shadow.icon_url || shadow.image_url) && shadow.origin_type !== 'system_mercenary' && (
-                                                            <button onClick={(e) => { e.stopPropagation(); setReportTarget(shadow); }} className="text-[#a38b6b] hover:text-red-600 transition-colors mt-0.5" title="通報"><Flag size={11} /></button>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Stats */}
-                                                <div className="flex gap-3 mb-3 text-[11px] font-mono text-[#5d4037]">
-                                                    <span className="flex items-center gap-1"><Sword size={11} /> {shadow.stats.atk}</span>
-                                                    <span className="flex items-center gap-1"><Shield size={11} /> {shadow.stats.def}</span>
-                                                    <span className="flex items-center gap-1"><Heart size={11} /> {shadow.stats.hp}</span>
-                                                </div>
-
-                                                {/* Skills */}
-                                                {shadow.signature_deck_preview.length > 0 && (
-                                                    <div className="mb-3">
-                                                        <div className="text-[10px] text-[#8b6f4e] mb-1">所持スキル</div>
-                                                        <div className="flex gap-1 flex-wrap">
-                                                            {shadow.signature_deck_preview.map((card, i) => (
-                                                                <span key={i} className="px-1.5 py-0.5 bg-[#e3d5b8] text-[#5d4037] text-[10px] rounded border border-[#a38b6b]">{card}</span>
-                                                            ))}
+                                                        <div className="flex items-center gap-1 flex-wrap">
+                                                            <span className="text-xs font-bold text-[#3e2723] truncate max-w-[140px]">{displayName}</span>
+                                                            {hired
+                                                                ? <span className="bg-[#4a7da8] text-white text-[9px] px-1.5 py-0.5 font-bold rounded">雇用中</span>
+                                                                : <OriginBadge shadow={shadow} />
+                                                            }
+                                                        </div>
+                                                        <div className="text-[10px] text-[#8b6f4e]">
+                                                            Lv.{shadow.level} {toJpJobClass(shadow.job_class)}
                                                         </div>
                                                     </div>
-                                                )}
+                                                    {/* 金額 + 通報 + 詳細 */}
+                                                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                                        {!hired && (
+                                                            <div className="text-amber-700 font-mono font-bold text-xs">{shadow.contract_fee.toLocaleString()} G</div>
+                                                        )}
+                                                        <div className="flex items-center gap-1">
+                                                            {(shadow.icon_url || shadow.image_url) && shadow.origin_type !== 'system_mercenary' && (
+                                                                <button onClick={(e) => { e.stopPropagation(); setReportTarget(shadow); }} className="text-[#a38b6b] hover:text-red-600 transition-colors" title="通報">
+                                                                    <Flag size={10} />
+                                                                </button>
+                                                            )}
+                                                            <span className="text-[10px] text-[#8b5a2b] font-bold">詳細 →</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                                {/* Action Button */}
-                                                <button
-                                                    onClick={() => setSelectedShadow(shadow)}
-                                                    className={`w-full py-2 flex items-center justify-center gap-2 border rounded text-sm font-bold transition-colors ${
-                                                        hired ? 'border-[#6b8cae]/30 text-[#6b8cae] bg-[#eef3f7]' : 'border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10'
-                                                    }`}>
-                                                    <UserPlus size={14} />
-                                                    {hired ? '雇用中 - 詳細を見る' : '詳細を見る'}
-                                                </button>
+                                                {/* Row 2: スキルタグ */}
+                                                {shadow.signature_deck_preview.length > 0 && (
+                                                    <div className="flex gap-1 flex-wrap mt-1.5 ml-11">
+                                                        {shadow.signature_deck_preview.slice(0, 4).map((card, i) => (
+                                                            <span key={i} className="px-1.5 py-0.5 bg-[#e3d5b8] text-[#5d4037] text-[9px] rounded border border-[#a38b6b]">{card}</span>
+                                                        ))}
+                                                        {shadow.signature_deck_preview.length > 4 && (
+                                                            <span className="text-[9px] text-[#8b6f4e]">+{shadow.signature_deck_preview.length - 4}</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <div className="text-center text-[#8b5a2b]/70 py-20 font-serif">
-                                    <h3 className="text-xl mb-4 text-[#3e2723]">影の登録</h3>
-                                    <p>自分の写し身を酒場に登録し、不労所得を得ることができます。</p>
-                                    <p className="text-sm mt-4 text-amber-700">※ この機能は開発中です。</p>
+                                /* ===== 影の記録タブ ===== */
+                                <div className="space-y-4">
+                                    {/* 説明文 */}
+                                    <div className="bg-amber-50/60 border border-[#a38b6b]/40 rounded-lg p-3">
+                                        <h3 className="text-sm font-bold text-[#3e2723] font-serif mb-1.5">残影とは</h3>
+                                        <p className="text-[11px] text-[#5d4037] leading-relaxed">
+                                            引退・死亡したキャラクターは「英霊」として酒場の系譜に刻まれ、他の冒険者のパーティに加わることができます。
+                                            英霊が雇われるたびに、あなたのもとへロイヤリティが届きます。
+                                        </p>
+                                    </div>
+
+                                    {/* サブスクリプション案内 */}
+                                    <div className="bg-[#fdfbf7] border border-[#c2b280] rounded-lg p-3">
+                                        <h3 className="text-xs font-bold text-[#3e2723] mb-2 font-serif">英霊登録上限</h3>
+                                        <div className="space-y-1 text-[10px] text-[#5d4037]">
+                                            <div className="flex justify-between">
+                                                <span>Free</span><span className="font-bold text-[#8b5a2b]">登録不可</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Basic</span><span className="font-bold text-[#8b5a2b]">最大 3体</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="flex items-center gap-1"><Sparkles size={9} className="text-amber-500" />Premium</span>
+                                                <span className="font-bold text-[#8b5a2b]">最大 10体</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 自分の英霊リスト */}
+                                    <div>
+                                        <h3 className="text-xs font-bold text-[#3e2723] mb-2 font-serif border-b border-[#8b5a2b]/30 pb-1">
+                                            あなたの英霊
+                                        </h3>
+                                        {heroicLoading ? (
+                                            <div className="text-center text-[#8b5a2b] text-xs py-4 animate-pulse">記録を確認中...</div>
+                                        ) : myHeroics.length === 0 ? (
+                                            <div className="text-center text-[#8b6f4e] text-xs py-6 font-serif italic">
+                                                <p>英霊の記録はまだありません。</p>
+                                                <p className="mt-1">引退または死亡したキャラクターが、英霊として刻まれます。</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {myHeroics.map(h => (
+                                                    <div key={h.id} className="flex items-center gap-2 p-2 bg-gradient-to-r from-amber-50/60 to-[#fdfbf7] border border-amber-300/60 rounded ring-1 ring-amber-400/30">
+                                                        <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-400/50 flex items-center justify-center flex-shrink-0">
+                                                            <Star size={12} className="text-amber-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-xs font-bold text-[#3e2723] truncate">{h.name}</div>
+                                                            <div className="text-[10px] text-[#8b6f4e]">Lv.{h.level} {toJpJobClass(h.job_class)}</div>
+                                                        </div>
+                                                        <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-600 to-yellow-400 text-[9px] font-bold text-slate-950 px-1.5 py-0.5 rounded flex-shrink-0">
+                                                            <Star size={8} />英霊
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -391,18 +536,33 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         {/* ===== NPC Detail Popup ===== */}
         {selectedShadow && (() => {
             const hired = isAlreadyHired(selectedShadow);
+            const imgSrc = selectedShadow.npc_image_url || selectedShadow.icon_url || selectedShadow.image_url;
+            const displayName = selectedShadow.epithet
+                ? `${selectedShadow.epithet} ${selectedShadow.name}`
+                : selectedShadow.name;
             return (
             <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
                 <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] w-full max-w-md rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
                     {/* Header */}
                     <div className="bg-[#3e2723] p-5 flex items-center gap-4 border-b-2 border-[#8b5a2b]">
-                        <div className="w-16 h-16 rounded-full bg-[#e3d5b8] overflow-hidden border-2 border-[#a38b6b] flex items-center justify-center flex-shrink-0">
-                            {(selectedShadow as any).npc_image_url || selectedShadow.icon_url || selectedShadow.image_url
-                                ? <img src={(selectedShadow as any).npc_image_url || selectedShadow.icon_url || selectedShadow.image_url} alt={selectedShadow.name} className="w-full h-full object-cover" />
+                        <div 
+                            className={`w-16 h-16 rounded-full bg-[#e3d5b8] overflow-hidden border-2 border-[#a38b6b] flex items-center justify-center flex-shrink-0 ${imgSrc ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                            onClick={(e) => {
+                                if (imgSrc) {
+                                    e.stopPropagation();
+                                    setEnlargedImage(imgSrc);
+                                }
+                            }}
+                        >
+                            {imgSrc
+                                ? <img src={imgSrc} alt={selectedShadow.name} className="w-full h-full object-cover" />
                                 : <span className="text-2xl font-bold text-[#a38b6b]">{selectedShadow.name[0]}</span>}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-lg font-bold text-amber-400 truncate">{selectedShadow.name}</div>
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                <OriginBadge shadow={selectedShadow} />
+                            </div>
+                            <div className="text-lg font-bold text-amber-400 truncate">{displayName}</div>
                             <div className="text-sm text-[#a38b6b]">Lv.{selectedShadow.level} {toJpJobClass(selectedShadow.job_class)}</div>
                             {!hired && <div className="text-amber-300 font-mono font-bold mt-1">{selectedShadow.contract_fee.toLocaleString()} G</div>}
                             {hired && <div className="text-[#6b8cae] font-bold mt-1 text-sm">雇用中</div>}
@@ -411,19 +571,19 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     </div>
 
                     <div className="p-5 space-y-4">
-                        {/* Stats */}
+                        {/* Stats — 順序: HP → 攻撃 → 防御 */}
                         <div className="grid grid-cols-3 gap-2">
                             <div className="bg-[#e3d5b8]/50 rounded p-2 text-center border border-[#a38b6b]/30">
-                                <div className="text-[10px] text-[#8b6f4e] mb-0.5">攻撃</div>
+                                <div className="text-[10px] text-[#8b6f4e] mb-0.5 flex items-center justify-center gap-0.5"><Heart size={9} />HP</div>
+                                <div className="text-green-700 font-bold font-mono">{selectedShadow.stats.hp}</div>
+                            </div>
+                            <div className="bg-[#e3d5b8]/50 rounded p-2 text-center border border-[#a38b6b]/30">
+                                <div className="text-[10px] text-[#8b6f4e] mb-0.5 flex items-center justify-center gap-0.5"><Sword size={9} />攻撃</div>
                                 <div className="text-red-700 font-bold font-mono">{selectedShadow.stats.atk}</div>
                             </div>
                             <div className="bg-[#e3d5b8]/50 rounded p-2 text-center border border-[#a38b6b]/30">
-                                <div className="text-[10px] text-[#8b6f4e] mb-0.5">防御</div>
+                                <div className="text-[10px] text-[#8b6f4e] mb-0.5 flex items-center justify-center gap-0.5"><Shield size={9} />防御</div>
                                 <div className="text-blue-700 font-bold font-mono">{selectedShadow.stats.def}</div>
-                            </div>
-                            <div className="bg-[#e3d5b8]/50 rounded p-2 text-center border border-[#a38b6b]/30">
-                                <div className="text-[10px] text-[#8b6f4e] mb-0.5">HP</div>
-                                <div className="text-green-700 font-bold font-mono">{selectedShadow.stats.hp}</div>
                             </div>
                         </div>
 
@@ -473,6 +633,28 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             </div>
             );
         })()}
+
+        {/* ===== Enlarged Image Popup ===== */}
+        {enlargedImage && (
+            <div 
+                className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+                onClick={() => setEnlargedImage(null)}
+            >
+                <div className="relative max-w-2xl max-h-[90vh] flex flex-col items-center">
+                    <button 
+                        onClick={() => setEnlargedImage(null)}
+                        className="absolute -top-10 right-0 text-white hover:text-amber-400 p-2"
+                    >
+                        <X className="w-8 h-8" />
+                    </button>
+                    <img 
+                        src={enlargedImage} 
+                        alt="Enlarged view" 
+                        className="object-contain max-w-full max-h-[85vh] rounded shadow-2xl"
+                    />
+                </div>
+            </div>
+        )}
         </>
     );
 }

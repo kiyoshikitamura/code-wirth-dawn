@@ -202,6 +202,10 @@ export const useGameStore = create<GameState>()(
                     description: i.effect_data?.description || '',
                     cost: 0,
                     power: i.effect_data?.power || i.effect_data?.effect_val || 0,
+                    ap_cost: i.effect_data?.ap_cost ?? 1,         // v8.2: APコストを引き継ぐ
+                    effect_id: i.effect_data?.effect_id || undefined,   // v8.2: バフ/デバフIDを引き継ぐ
+                    effect_duration: i.effect_data?.effect_duration || undefined,
+                    image_url: i.effect_data?.image_url || i.image_url || undefined,
                     isEquipment: true,
                 }));
 
@@ -1560,7 +1564,11 @@ export const useGameStore = create<GameState>()(
                     }
 
                     soundManager?.playSE('se_battle_lose');
-                    set(state => ({ battleState: { ...state.battleState, isDefeat: true, messages: newMessages } }));
+                    // v8.2: isDefeat時もuserProfileのHPを同期してHPバーに反映
+                    set(state => ({ 
+                        userProfile: newUserProfile,
+                        battleState: { ...state.battleState, isDefeat: true, messages: newMessages } 
+                    }));
                 } else {
                     set(state => ({
                         userProfile: newUserProfile,

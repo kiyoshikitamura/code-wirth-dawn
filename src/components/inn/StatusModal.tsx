@@ -41,6 +41,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
     const [equipped, setEquipped] = React.useState<any[]>([]);
     const [equipBonus, setEquipBonus] = React.useState<{atk:number;def:number;hp:number}>({atk:0,def:0,hp:0});
+    const [enlargedImage, setEnlargedImage] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         fetchInventory();
@@ -145,6 +146,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     ];
 
     return (
+        <>
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="w-full max-w-lg h-[92dvh] bg-gray-900 border border-gray-800 rounded-lg shadow-2xl overflow-hidden flex flex-col">
 
@@ -470,7 +472,23 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                         <div className="bg-gray-900 border border-gray-700 w-full max-w-md mx-4 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                             {/* ポップアップヘッダー */}
                             <div className="bg-gray-800/80 px-4 py-3 flex items-center gap-3 border-b border-gray-700">
-                                <div className="w-14 h-14 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden">
+                                <div 
+                                    className={`w-14 h-14 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden ${
+                                        (detail.type === 'npc' && (detail.data.icon_url || detail.data.image_url)) || (detail.type !== 'npc' && ((detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : detail.data.image_url)) ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+                                    }`}
+                                    onClick={(e) => {
+                                        let imgUrl = null;
+                                        if (detail.type === 'npc') {
+                                            imgUrl = detail.data.icon_url || detail.data.image_url;
+                                        } else {
+                                            imgUrl = (detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : detail.data.image_url;
+                                        }
+                                        if (imgUrl) {
+                                            e.stopPropagation();
+                                            setEnlargedImage(imgUrl);
+                                        }
+                                    }}
+                                >
                                     {detail.type === 'npc' ? (
                                         detail.data.icon_url || detail.data.image_url
                                             ? <img src={detail.data.icon_url || detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" />
@@ -623,6 +641,29 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 )}
             </div>
         </div>
+
+        {/* ===== Enlarged Image Popup ===== */}
+        {enlargedImage && (
+            <div 
+                className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+                onClick={() => setEnlargedImage(null)}
+            >
+                <div className="relative max-w-2xl max-h-[90vh] flex flex-col items-center">
+                    <button 
+                        onClick={() => setEnlargedImage(null)}
+                        className="absolute -top-10 right-0 text-white hover:text-amber-400 p-2"
+                    >
+                        <X className="w-8 h-8" />
+                    </button>
+                    <img 
+                        src={enlargedImage} 
+                        alt="Enlarged view" 
+                        className="object-contain max-w-full max-h-[85vh] rounded shadow-2xl"
+                    />
+                </div>
+            </div>
+        )}
+        </>
     );
 }
 
@@ -632,9 +673,18 @@ function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; 
 
     const handleDismiss = React.useCallback(async (memberId: string, name: string) => {
         try {
-            const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE' });
+            // auth tokenを取得してDELETEリクエストに付与
+            const { supabase } = await import('@/lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+            const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE', headers });
             if (res.ok) { setParty(prev => prev.filter(p => p.id !== memberId)); }
-            else { alert('別れに失敗しました。'); }
+            else {
+                const errData = await res.json().catch(() => ({}));
+                alert(`別れに失敗しました。${errData.error ? `（${errData.error}）` : ''}`);
+            }
         } catch (e) { console.error(e); alert('エラーが発生しました。'); }
     }, []);
 
