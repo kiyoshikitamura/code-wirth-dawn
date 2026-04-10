@@ -198,7 +198,7 @@ export const useGameStore = create<GameState>()(
                 const equippedCards = (inventory || []).filter(i => i.is_equipped && (i.is_skill || i.item_type === 'skill_card')).map(i => ({
                     id: String(i.card_id || i.id),
                     name: i.name,
-                    type: (i.effect_data?.card_type || 'Skill') as Card['type'], // v19: DBのtypeを引き継ぎ（Support等）
+                    type: (i.effect_data?.type || i.effect_data?.card_type || 'Skill') as Card['type'], // v19: DBのtypeを引き継ぎ（Support等）
                     description: i.effect_data?.description || '',
                     cost: 0,
                     power: i.effect_data?.power || i.effect_data?.effect_val || 0,
@@ -1247,18 +1247,19 @@ export const useGameStore = create<GameState>()(
                             }
                         }
 
-                        // v2.5: NPC buff/debuff action
-                        if (action.type === 'buff' && action.effectId) {
+                        // v2.5/v8.3: NPC buff/debuff action (attacks can also have effectId)
+                        if (action.effectId) {
                             const effectId = action.effectId as StatusEffectId;
                             const duration = action.effectDuration || 3;
-                            const isSelfBuff = ['atk_up', 'def_up', 'regen'].includes(effectId);
+                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectId);
                             if (isSelfBuff) {
-                                // 味方バフ → player_effectsへ
+                                // 味方バフ → player_effectsへ (NPC自身にかかっているバフもplayer_effectsで一括管理)
                                 const currentEffects = get().battleState.player_effects as StatusEffect[];
                                 const newEffects = applyEffect(currentEffects, effectId, duration);
                                 set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
                             } else {
-                                // 敵デバフ → enemy_effectsへ
+                                // 敵デバフ → enemy_effectsへ (対象の敵固有ではなく全体デバフ配列、または現在のターゲットへ)
+                                // 厳密には敵単体ですが、現在のV3仕様ではエンカウント全体(またはターゲット)として扱われるようにな設計です
                                 const currentEffects = get().battleState.enemy_effects as StatusEffect[];
                                 const newEffects = applyEffect(currentEffects, effectId, duration);
                                 set(state => ({ battleState: { ...state.battleState, enemy_effects: newEffects } }));

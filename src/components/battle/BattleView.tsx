@@ -156,7 +156,14 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 card.type === 'Defense' ||
                 (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id));
             if (!isBuff) {
-                setActiveEffect(card.animation_type || 'SLASH');
+                let effect = card.animation_type;
+                if (!effect) {
+                    if (card.name.includes('風') || card.name.includes('疾')) effect = 'WIND';
+                    else if (card.name.includes('突') || card.name.includes('槍') || card.name.includes('針')) effect = 'PIERCE';
+                    else if (card.name.includes('打') || card.name.includes('砕') || card.name.includes('バッシュ')) effect = 'BLUNT';
+                    else effect = 'SLASH';
+                }
+                setActiveEffect(effect);
                 setTimeout(() => setActiveEffect(null), 500);
             }
             await attackEnemy(card);
@@ -255,6 +262,12 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                 <div className="w-16 h-[1px] bg-sky-200 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-right-16 fade-in duration-300 mb-2" />
                                 <div className="w-12 h-[1px] bg-sky-300 shadow-[0_0_15px_rgba(186,230,253,1)] animate-in slide-in-from-left-16 fade-in duration-300" />
                             </div>
+                        )}
+                        {activeEffect === 'PIERCE' && (
+                            <div className="w-1.5 h-16 bg-slate-100 shadow-[0_0_15px_rgba(255,255,255,1)] animate-in slide-in-from-bottom-16 fade-in duration-200" />
+                        )}
+                        {activeEffect === 'BLUNT' && (
+                            <div className="w-10 h-10 rounded-full border-4 border-amber-500 bg-amber-200/40 shadow-[0_0_20px_rgba(245,158,11,1)] animate-in zoom-in fade-in duration-300" />
                         )}
                     </div>
                 )}

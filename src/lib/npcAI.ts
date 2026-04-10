@@ -136,9 +136,10 @@ export function resolveNpcTurn(
     const playableCards = deck
         .filter(c => {
             const cost = c.ap_cost ?? 1;
+            const isBuff = c.type === 'Defense' || c.type === 'Support' || (c.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(c.effect_id));
             return cost <= (npc.current_ap || 0) &&
                 !npc.used_this_turn?.includes(c.id) &&
-                !c.effect_id; // バフカードは上で処理済み
+                !isBuff; // バフ専用カードはスキップ（攻撃カードのみ実行）
         })
         .sort((a, b) => (b.ap_cost ?? 1) - (a.ap_cost ?? 1));
 
@@ -305,11 +306,12 @@ function executeCard(
     context: BattleContext
 ): NpcAction {
     const power = card.power ?? 0;
+    const isBuff = card.type === 'Defense' || card.type === 'Support' || (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id));
 
-    // v2.5: バフ/デバフカード
-    if (card.effect_id) {
-        const isSelf = ['atk_up', 'def_up', 'regen'].includes(card.effect_id);
-        const targetName = isSelf ? npc.name : '敵';
+    // v2.5: バフ/防御カード
+    if (isBuff) {
+        const isSelf = card.effect_id && ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id);
+        const targetName = isSelf ? npc.name : '味方';
         return {
             type: 'buff',
             card,
@@ -335,6 +337,10 @@ function executeCard(
     // Attack card
     let damage = power || (8 + Math.floor(Math.random() * 5));
 
+    // v8.1: NPC基礎ATK加算 (プレイヤーと同様)
+    const npcAtk = npc.atk || 0;
+    damage = damage + npcAtk;
+
     // Apply DEF mitigation (non-magic)
     const isMagic = card.name.includes('魔法') ||
         card.name.toLowerCase().includes('magic') ||
@@ -349,6 +355,8 @@ function executeCard(
         type: 'attack',
         card,
         damage,
+        effectId: card.effect_id,
+        effectDuration: card.effect_duration || 3,
         message: `${npc.name}の${card.name}！ ${damage} のダメージ！`
     };
 }
@@ -358,6 +366,10 @@ function createBasicAttack(
     context: BattleContext
 ): NpcAction {
     let baseDmg = 8 + Math.floor(Math.random() * 5); // 8-12
+
+    // v8.1: NPC基礎ATK加算
+    const npcAtk = npc.atk || 0;
+    baseDmg += npcAtk;
 
     // Class bonuses
     if (npc.job_class === 'Warrior') baseDmg += 5;
