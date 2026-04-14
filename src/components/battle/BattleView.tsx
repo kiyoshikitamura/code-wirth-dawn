@@ -53,9 +53,16 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const [livePartyDurability, setLivePartyDurability] = useState<Record<string, number>>({});
     const typingQueue = useRef<string[]>([]);
     const isTyping = useRef(false);
+    // タイプライター完了フラグ: ログキューが空になったら true → プレイヤー操作を解放
+    const [isTypingDone, setIsTypingDone] = useState(true);
 
     // Process typewriter queue
     const processQueue = useCallback(() => {
+        // キューが空で入力中でもなければ完了フラグを立てる
+        if (typingQueue.current.length === 0 && !isTyping.current) {
+            setIsTypingDone(true);
+            return;
+        }
         if (isTyping.current || typingQueue.current.length === 0) return;
 
         const message = typingQueue.current.shift()!;
@@ -84,15 +91,21 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (/^--- .+ ---$/.test(message)) {
             setDisplayedLogs(prev => [...prev, message]);
             setTypingText('');
-            setTimeout(() => processQueue(), 80);
+            // キューの残りを確認して完了フラグを更新
+            if (typingQueue.current.length === 0) {
+                setIsTypingDone(true);
+            } else {
+                setTimeout(() => processQueue(), 80);
+            }
             return;
         }
 
         isTyping.current = true;
+        setIsTypingDone(false); // タイピング開始 → 操作ロック
         let charIdx = 0;
         setTypingText('');
 
-        // v25: setInterval の蔓用を防ぐため、クリア铺クロージャを保持
+        // v25: setInterval の蔓用を防ぐため、クリアのクロージャを保持
         let timerId: ReturnType<typeof setInterval> | null = null;
 
         timerId = setInterval(() => {
@@ -105,8 +118,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 setDisplayedLogs(prev => [...prev, message]);
                 setTypingText('');
                 isTyping.current = false;
-                // Process next in queue
-                setTimeout(() => processQueue(), 80);
+                // 次のメッセージへ（またはキュー完了）
+                if (typingQueue.current.length > 0) {
+                    setTimeout(() => processQueue(), 80);
+                } else {
+                    setIsTypingDone(true); // キュー終了 → 操作解放
+                }
             }
         }, 20); // v25: 30ms → 20msに高速化
     }, []);
@@ -136,6 +153,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             isTyping.current = false;
             setDisplayedLogs([]);
             setTypingText('');
+            setIsTypingDone(false); // 新バトル開始 → ロック
             // Queue all new messages
             typingQueue.current.push(...curr);
             setTimeout(() => processQueue(), 50);
@@ -143,6 +161,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             // Normal append: only queue new messages
             const newMessages = curr.slice(displayedLogs.length + (isTyping.current ? 1 : 0));
             if (newMessages.length > 0) {
+                setIsTypingDone(false); // 新メッセージ追加 → ロック
                 typingQueue.current.push(...newMessages);
                 processQueue();
             }
@@ -152,14 +171,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setLogs(curr);
     }, [battleState.messages]);
 
-    // Show turn overlay
+    // Show turn overlay — ログ表示完了後に表示する
     useEffect(() => {
-        if (battleState.turn > 0) {
+        if (battleState.turn > 0 && isTypingDone && !battleState.isVictory && !battleState.isDefeat) {
             setShowTurnOverlay(true);
             const timer = setTimeout(() => setShowTurnOverlay(false), 1500);
             return () => clearTimeout(timer);
         }
-    }, [battleState.turn]);
+    }, [battleState.turn, isTypingDone]);
 
     useEffect(() => {
         if (process.env.NODE_ENV === 'development') {
@@ -200,8 +219,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     }, [battleState.isVictory, selectedScenario, battleState.enemy]);
 
+    // プレイヤーが操作可能かどうか（isPlayerTurn フラグ + タイプライター完了の両方を確認）
+    const isPlayerTurn = battleState.isPlayerTurn !== false; // undefined は true 扱い（後方互換）
+    const canInteract = isPlayerTurn && isTypingDone && !battleState.isVictory && !battleState.isDefeat;
+
     const handleCardClick = async (index: number) => {
-        if (battleState.isVictory || battleState.isDefeat) return;
+        if (!canInteract) return;
         const card = hand[index];
         const apCost = card.ap_cost ?? 1;
         if (battleState.current_ap < apCost) return;
@@ -250,7 +273,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     };
 
     const handleEndTurn = async () => {
-        if (battleState.isVictory || battleState.isDefeat) return;
+        if (!canInteract) return;
         await endTurn();
     };
 
@@ -780,10 +803,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                             <button
                                 key={idx}
                                 onClick={() => handleCardClick(idx)}
-                                disabled={battleState.isVictory || battleState.isDefeat || !isActivePlayable}
+                                disabled={!canInteract || !isActivePlayable}
                                 className={`relative group origin-bottom transition-all duration-300 flex-shrink-0 first:ml-0
                                     ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50' : 'w-[72px] sm:w-24'}
-                                    ${!isActivePlayable ? 'opacity-40 grayscale pointer-events-none' : isSelected ? '' : 'hover:-translate-y-4 hover:scale-105'}
+                                    ${(!canInteract || !isActivePlayable) ? 'opacity-40 grayscale pointer-events-none' : isSelected ? '' : 'hover:-translate-y-4 hover:scale-105'}
                                     ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
                                  `}
                                 style={{
@@ -837,8 +860,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 {(battleState.battleItems || []).length > 0 && (
                     <button
                         onClick={() => setShowItemPanel(true)}
-                        disabled={battleState.isVictory || battleState.isDefeat}
-                        className="bg-black/40 backdrop-blur-md border border-amber-600/50 text-amber-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-amber-900/30"
+                        disabled={!canInteract}
+                        className="bg-black/40 backdrop-blur-md border border-amber-600/50 text-amber-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-amber-900/30 disabled:opacity-40 disabled:pointer-events-none"
                     >
                         🎒
                         <span>アイテム</span>
@@ -846,16 +869,16 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 )}
                 <button
                     onClick={handleEndTurn}
-                    disabled={battleState.isVictory || battleState.isDefeat}
-                    className="bg-black/40 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-black/60"
+                    disabled={!canInteract}
+                    className="bg-black/40 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-black/60 disabled:opacity-40 disabled:pointer-events-none"
                 >
                     <Clock size={12} />
                     ターンエンド
                 </button>
                 <button
                     onClick={handleFlee}
-                    disabled={battleState.isVictory || battleState.isDefeat}
-                    className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50"
+                    disabled={!canInteract}
+                    className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50 disabled:opacity-40 disabled:pointer-events-none"
                 >
                     <LogOut size={12} />
                     撤退

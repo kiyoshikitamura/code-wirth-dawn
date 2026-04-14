@@ -528,6 +528,7 @@ export interface BattleState {
   equipBonus?: { atk: number; def: number; hp: number }; // v24: 装備品ボーナス（バトル中永続）
   battleItems: InventoryItem[]; // v25: バトル中使用可能な消耗品リスト
   _pendingNextTurnLabel?: number | null; // v25: パーティ・エネミーターン完了後に表示するターン番号
+  isPlayerTurn?: boolean; // v26: false=敵/NPCターン処理中（プレイヤー操作ロック）
 }
 
 export type Scenario = ScenarioDB;
