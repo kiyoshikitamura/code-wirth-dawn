@@ -85,20 +85,29 @@ function useTypewriter(text: string, speed = 22, active = true) {
 
 // ─── タイプライターカード ─────────────────────────────────────
 function TypewriterCard({
-    text, icon, footer, delay = 0, className = '',
+    text, icon, footer, delay = 0, className = '', onDone,
 }: {
     text: string;
     icon?: React.ReactNode;
     footer?: React.ReactNode;
     delay?: number;
     className?: string;
+    onDone?: () => void;
 }) {
     const [started, setStarted] = useState(false);
+    const calledDone = useRef(false);
     useEffect(() => {
         const t = setTimeout(() => setStarted(true), delay);
         return () => clearTimeout(t);
     }, [delay]);
     const { displayed, done } = useTypewriter(text, 22, started);
+
+    useEffect(() => {
+        if (done && onDone && !calledDone.current) {
+            calledDone.current = true;
+            onDone();
+        }
+    }, [done, onDone]);
 
     return (
         <div className={`relative bg-gray-800/60 border border-gray-700/60 rounded-xl p-3.5 ${className}`}>
@@ -109,6 +118,33 @@ function TypewriterCard({
             </p>
             {done && footer && <div className="mt-2.5">{footer}</div>}
         </div>
+    );
+}
+
+// ─── 順次タイプライター表示（1つずつ） ───────────────────────
+function SequentialTypewriterCards<T>({
+    items,
+    renderCard,
+    tabKey,
+}: {
+    items: T[];
+    renderCard: (item: T, index: number, onDone: () => void) => React.ReactNode;
+    tabKey: number;
+}) {
+    const [visibleCount, setVisibleCount] = useState(1);
+    // tabKeyが変わるたびにリセット
+    useEffect(() => { setVisibleCount(1); }, [tabKey]);
+
+    return (
+        <>
+            {items.slice(0, visibleCount).map((item, i) =>
+                renderCard(item, i, () => {
+                    if (i === visibleCount - 1 && visibleCount < items.length) {
+                        setVisibleCount(v => v + 1);
+                    }
+                })
+            )}
+        </>
     );
 }
 
@@ -187,10 +223,8 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
 
     const difficultyStars = (d: number) => '★'.repeat(Math.min(d, 5));
 
-    // ─── タイプライター遅延アキュムレーター ───
+    // ─── タイプライター遅延アキュムレーター（newsタブ用）───
     let newsDelay = 0;
-    let loreDelay = 0;
-    let secretDelay = 0;
     let tavernDelay = 0;
 
     // ─── レンダリング ───────────────────────────────────────
@@ -294,14 +328,14 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                             {loading.lore ? <Spinner /> : (
                                 data.lore_tips?.length === 0
                                     ? <EmptyHint text="今日は特に面白い話を耳にしていないな…" />
-                                    : data.lore_tips?.map((item, i) => {
-                                        const textText = `「${item.content}」`;
-                                        const d = loreDelay;
-                                        loreDelay += textText.length * 22 + 500;
-                                        return (
+                                    : <SequentialTypewriterCards
+                                        items={data.lore_tips ?? []}
+                                        tabKey={tabKey.lore}
+                                        renderCard={(item, i, onDone) => (
                                             <TypewriterCard
                                                 key={`${tabKey.lore}-lore-${item.id}`}
-                                                delay={d}
+                                                delay={0}
+                                                onDone={onDone}
                                                 icon={
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="text-base">💬</span>
@@ -309,10 +343,10 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                                                         <span className="ml-auto">{rarityBadge(item.rarity)}</span>
                                                     </div>
                                                 }
-                                                text={textText}
+                                                text={`「${item.content}」`}
                                             />
-                                        );
-                                    })
+                                        )}
+                                    />
                             )}
                         </>
                     )}
@@ -326,29 +360,30 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                                         ? <EmptyHint text="今は大した情報はない。また後で聞いてみろ。" />
                                         : null}
 
-                                    {data.secret_info?.quests.map((q, i) => {
-                                        const textText = `「『${q.title}』という依頼が出回っているらしい……」\n${q.hint}`;
-                                        const d = secretDelay;
-                                        secretDelay += textText.length * 22 + 500;
-                                        return (
-                                            <TypewriterCard
-                                                key={`${tabKey.secret}-secret-${q.id}`}
-                                                delay={d}
-                                                className="border-l-2 border-l-red-700"
-                                                icon={
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-base">🗝</span>
-                                                        <div>
-                                                            <span className="text-[10px] font-bold text-red-400">{q.location_name}</span>
-                                                            <span className="text-[9px] text-gray-500 ml-2">{difficultyStars(q.difficulty)}</span>
+                                    {(data.secret_info?.quests?.length ?? 0) > 0 && (
+                                        <SequentialTypewriterCards
+                                            items={data.secret_info!.quests}
+                                            tabKey={tabKey.secret}
+                                            renderCard={(q, i, onDone) => (
+                                                <TypewriterCard
+                                                    key={`${tabKey.secret}-secret-${q.id}`}
+                                                    delay={0}
+                                                    onDone={onDone}
+                                                    className="border-l-2 border-l-red-700"
+                                                    icon={
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-base">🗝</span>
+                                                            <div>
+                                                                <span className="text-[10px] font-bold text-red-400">{q.location_name}</span>
+                                                                <span className="text-[9px] text-gray-500 ml-2">{difficultyStars(q.difficulty)}</span>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                }
-                                                text={textText}
-                                            />
-                                        );
-                                    })}
-
+                                                    }
+                                                    text={`「『${q.title}』という依頼が出回っているらしい……」\n${q.hint}`}
+                                                />
+                                            )}
+                                        />
+                                    )}
                                 </>
                             )}
                         </>

@@ -60,6 +60,13 @@ function InnPageInner() {
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
+    const [restLoading, setRestLoading] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 2500);
+    };
 
     // Quest Data State (ギルド用)
     const [allQuests, setAllQuests] = useState<any[]>([]);
@@ -325,23 +332,26 @@ function InnPageInner() {
     const handleRest = async () => {
         const cost = getInnCost();
         if ((userProfile?.gold || 0) < cost) {
-            alert("ゴールドが不足しています。");
+            showToast('ゴールドが不足しています。', 'error');
             return;
         }
 
+        setRestLoading(true);
         try {
             const res = await fetch('/api/inn/rest', { method: 'POST', body: JSON.stringify({ id: userProfile?.id }) });
             if (res.ok) {
                 spendGold(cost);
-                useGameStore.getState().fetchUserProfile();
-                setTimeout(() => alert(`HPが全快しました。\n(宿泊費: ${cost} G)`), 100);
+                await useGameStore.getState().fetchUserProfile();
+                showToast(`✨ HPが全快しました（宿泊費: ${cost} G）`);
             } else {
                 const err = await res.json();
-                setTimeout(() => alert(`宿泊できませんでした: ${err.error || '不明なエラー'}`), 100);
+                showToast(`宿泊できませんでした: ${err.error || '不明なエラー'}`, 'error');
             }
         } catch (e) {
             console.error(e);
-            setTimeout(() => alert("通信エラーが発生しました。"), 100);
+            showToast('通信エラーが発生しました。', 'error');
+        } finally {
+            setRestLoading(false);
         }
     };
 
@@ -368,6 +378,25 @@ function InnPageInner() {
 
     return (
         <div className="min-h-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
+
+            {/* Toast通知 */}
+            {toast && (
+                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[500] px-5 py-3 rounded-xl shadow-2xl text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 duration-200 max-w-[320px] ${
+                    toast.type === 'success'
+                        ? 'bg-emerald-900/90 border border-emerald-500/60 text-emerald-200'
+                        : 'bg-red-900/90 border border-red-500/60 text-red-200'
+                }`}>
+                    {toast.msg}
+                </div>
+            )}
+
+            {/* 休息中オーバーレイ */}
+            {restLoading && (
+                <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+                    <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-amber-300 text-sm font-serif tracking-widest animate-pulse">休息中...</p>
+                </div>
+            )}
 
             {/* Mobile View Container */}
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">

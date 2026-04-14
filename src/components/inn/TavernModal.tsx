@@ -112,10 +112,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     };
 
     const handleHire = async (shadow: ShadowSummary) => {
-        if (isAlreadyHired(shadow)) { alert('この冒険者は既に契約済みです。'); return; }
-        if (currentParty.length >= 4) { alert('パーティが満員です。'); return; }
-        if (userProfile.gold < shadow.contract_fee) { alert('ゴールドが足りません！'); return; }
-        if (!confirm(`${shadow.name} を ${shadow.contract_fee}G で雇用しますか？`)) return;
+        if (isAlreadyHired(shadow)) { setHireStatus('この冒険者は既に契約済みです。'); setTimeout(() => setHireStatus(null), 2000); return; }
+        if (currentParty.length >= 4) { setHireStatus('パーティが満員です。'); setTimeout(() => setHireStatus(null), 2000); return; }
+        if (userProfile.gold < shadow.contract_fee) { setHireStatus('ゴールドが足りません！'); setTimeout(() => setHireStatus(null), 2000); return; }
 
         setHireStatus('雇用処理中...');
         try {
@@ -130,24 +129,24 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-                alert(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
-                setHireStatus(null);
+                setHireStatus(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
+                setTimeout(() => setHireStatus(null), 2500);
                 return;
             }
             const data = await res.json();
             if (data.success) {
-                setHireStatus('雇用完了！');
+                setHireStatus('雇用契約が成立しました！ ✨');
                 setLoading(true);
                 await Promise.all([fetchPartyData(), fetchShadows()]);
                 setLoading(false);
-                alert('雇用契約が成立しました！');
+                setTimeout(() => setHireStatus(null), 2000);
             } else {
-                alert(`エラー: ${data.error || '不明なエラー'}`);
+                setHireStatus(`エラー: ${data.error || '不明なエラー'}`);
+                setTimeout(() => setHireStatus(null), 2500);
             }
         } catch (e) {
-            alert('通信エラーが発生しました');
-        } finally {
-            setHireStatus(null);
+            setHireStatus('通信エラーが発生しました');
+            setTimeout(() => setHireStatus(null), 2500);
         }
     };
 
