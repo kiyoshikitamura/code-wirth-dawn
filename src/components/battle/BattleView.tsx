@@ -207,13 +207,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             battleState.turn > lastShownTurnRef.current &&
             !battleState.isVictory && !battleState.isDefeat) {
             lastShownTurnRef.current = battleState.turn;
-            // TURN N オーバーレイ → PLAYER オーバーレイ の順に表示
+            // TURN N オーバーレイ（2000ms） → PLAYER オーバーレイ（1000ms）
             setShowTurnOverlay(true);
             const t1 = setTimeout(() => {
                 setShowTurnOverlay(false);
                 setShowPhaseOverlay('player');
-            }, 1200);
-            const t2 = setTimeout(() => setShowPhaseOverlay(null), 2200);
+            }, 2000);
+            const t2 = setTimeout(() => setShowPhaseOverlay(null), 3000);
             return () => { clearTimeout(t1); clearTimeout(t2); };
         }
     }, [battleState.battlePhase, battleState.turn]);
@@ -964,8 +964,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     } disabled:opacity-40 disabled:pointer-events-none`}
                 >
                     <Clock size={12} />
-                    {battlePhase === 'npc_done' && isTypingDone ? '▶ ENEMY PHASE' :
-                     battlePhase === 'enemy_done' && isTypingDone ? '▶ NEXT TURN' : 'NEXT'}
+                    NEXT
                 </button>
                 {/* 撤退: プレイヤーフェーズのみ */}
                 {battlePhase === 'player' && (
