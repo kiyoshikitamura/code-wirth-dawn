@@ -504,6 +504,9 @@ export const useGameStore = create<GameState>()(
                     }
                 }));
 
+                // カードドロー（ターン開始時の手札補充）
+                get().dealHand();
+
                 if (allEnemiesDead) {
                     soundManager?.playSE('se_battle_win');
                     set(state => ({
