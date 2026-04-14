@@ -243,9 +243,9 @@ export class ShadowService {
                         job_class: npc.job_class || 'Mercenary',
                         origin_type: 'system_mercenary',
                         contract_fee: (npc.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL,
-                        // npcsテーブルのHP: max_durabilityが正しい最大HP値。
-                        // hpは50固定のデフォルト値のため使用しない
-                        stats: { atk: npc.attack || npc.atk || 0, def: npc.defense || npc.def || 0, hp: npc.max_durability || npc.durability || npc.max_hp || 100 },
+                        // npcsテーブルのHP: max_hpが各NPC個別の上限HP値。
+                        // hp=50は固定デフォルト値、max_durability=100はDBデフォルト値のため両方使用不可
+                        stats: { atk: npc.attack || npc.atk || 0, def: npc.defense || npc.def || 0, hp: npc.max_hp || 100 },
                         signature_deck_preview: deckNames,
                         subscription_tier: 'free' as const,
                         flavor_text: npc.introduction || npc.flavor_text || undefined,
