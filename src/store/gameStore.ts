@@ -64,7 +64,10 @@ interface GameState {
     startBattle: (enemy: Enemy | Enemy[]) => void;
     attackEnemy: (card?: Card, targetId?: string) => Promise<void>;
     waitTurn: () => Promise<void>;
-    endTurn: () => Promise<void>;
+    endTurn: () => Promise<void>; // 後方互换エイリアス
+    runNpcPhase: () => Promise<void>;   // v15.0: NPCフェーズ（tick + NPC行動）
+    runEnemyPhase: () => Promise<void>; // v15.0: 敵フェーズ
+    advanceTurn: () => void;            // v15.0: 次ターン展開（turn++, カード配布）
     resetBattle: () => void;
 
     // Inventory
@@ -418,12 +421,11 @@ export const useGameStore = create<GameState>()(
                 }).catch(err => console.error("Server Battle Sync Error", err));
             },
 
-            endTurn: async () => {
+
+            // v15.0: runNpcPhase -- NPCフェーズ（旧 endTurn、setTimeout 廃止）
+            runNpcPhase: async () => {
                 const { battleState, userProfile } = get();
                 if (battleState.isVictory || battleState.isDefeat) return;
-
-                // カード操作をロック（NPC/エネミーターン処理中はプレイヤー操作不可）
-                set(state => ({ battleState: { ...state.battleState, isPlayerTurn: false } }));
 
                 const nextTurn = battleState.turn + 1;
 
@@ -434,7 +436,8 @@ export const useGameStore = create<GameState>()(
                             ...state.battleState,
                             isDefeat: true,
                             battle_result: 'time_over',
-                            messages: [...state.battleState.messages, '--- 30ターン経過 --- 時間切れ… 撤退を余儀なくされた。']
+                            messages: [...state.battleState.messages, '--- 30ターン経過 --- 時間切れ… 撃退を余儀なくされた。'],
+                            battlePhase: 'npc_done',
                         }
                     }));
                     return;
@@ -458,6 +461,7 @@ export const useGameStore = create<GameState>()(
                     set(state => ({
                         userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
                     }));
+                    tickMessages.push(`__hp_sync:${newHp}`);
                     const { selectedProfileId } = get();
                     fetch('/api/profile/update-status', {
                         method: 'POST',
@@ -496,13 +500,13 @@ export const useGameStore = create<GameState>()(
                 set(state => ({
                     battleState: {
                         ...state.battleState,
-                        // ターン番号はエネミーターン完了後に更新する
                         current_ap: newAp,
                         messages: [...state.battleState.messages, ...tickMessages],
                         player_effects: playerEffects,
                         enemies: updatedEnemies,
                         enemy: currentTarget,
                         vitDamageTakenThisTurn: false,
+                        battlePhase: 'npc_done', // NPC tick完了、NPC行動待機
                     }
                 }));
 
@@ -514,12 +518,13 @@ export const useGameStore = create<GameState>()(
                     return;
                 }
 
-                // NPC → エネミーターンへ
-                setTimeout(() => {
-                    get().processPartyTurn();
-                }, 300);
-
+                // NPCフェーズ: processPartyTurnを専即呼び出し（setTimeout廃止）
+                await get().processPartyTurn();
             },
+
+            // 後方互换エイリアス
+            endTurn: async () => { await get().runNpcPhase(); },
+
 
             resetBattle: () => {
                 // v3.3: initializeBattle の重複を除去してバトル状態をリセット
@@ -1716,10 +1721,23 @@ export const useGameStore = create<GameState>()(
                     return;
                 }
 
-                // エネミーターンへ
-                setTimeout(() => {
-                    get().processEnemyTurn();
-                }, 600);
+                // v15.0: NPCフェーズ完了 → battlePhase:'npc_done' をセットしUIに封ゎる
+                // processEnemyTurnのSETTIMEOUTは廃止。runEnemyPhase()をUIから呼び出す。
+                set(state => ({
+                    battleState: {
+                        ...state.battleState,
+                        battlePhase: 'npc_done',
+                    }
+                }));
+            },
+
+            // v15.0: runEnemyPhase -- 敵フェーズ（旧 processEnemyTurn + turn++）
+            runEnemyPhase: async () => { await get().processEnemyTurn(true); },
+
+            // v15.0: advanceTurn -- 次ターン開始（enemy_done 待機中に NEXT をタップしたとき）
+            advanceTurn: () => {
+                get().dealHand();
+                // battlePhase:'player' への遷移は processEnemyTurn 内で完了時にセット済み
             },
 
             processEnemyTurn: async (shouldAdvanceTurn: boolean = true) => {
@@ -1985,7 +2003,7 @@ export const useGameStore = create<GameState>()(
                     }));
                 } else {
                     if (shouldAdvanceTurn) {
-                        // エネミーターン完了 → ターン番号を +1 して次のターン開始
+                        // v15.0: ターン番号 +1、battlePhase:'player'へ
                         const { battleState: latestBattle } = get();
                         const nextTurn = latestBattle.turn + 1;
                         const turnLabel = `--- ターン ${nextTurn} ---`;
@@ -2000,11 +2018,13 @@ export const useGameStore = create<GameState>()(
                                 party: newParty,
                                 messages: [...newMessages, turnLabel],
                                 vitDamageTakenThisTurn: false,
-                                isPlayerTurn: true, // カード操作を解除
+                                isPlayerTurn: true,
+                                battlePhase: 'player', // v15.0: プレイヤーフェーズへ
                             }
                         }));
+                        get().dealHand(); // v15.0: 次ターン開始時に配布
                     } else {
-                        // 逃げ失敗等: ターン番号は据え置き、カード操作を再開
+                        // 逃げ失敗等: ターン番号は据え置き、playerフェーズへ
                         set(state => ({
                             userProfile: newUserProfile,
                             battleState: {
@@ -2014,13 +2034,10 @@ export const useGameStore = create<GameState>()(
                                 party: newParty,
                                 messages: newMessages,
                                 vitDamageTakenThisTurn: false,
-                                isPlayerTurn: true, // カード操作を解除
+                                isPlayerTurn: true,
+                                battlePhase: 'player', // v15.0
                             }
                         }));
-                    }
-
-                    // 次ターンの手札を配布（shouldAdvanceTurnのときのみ）
-                    if (shouldAdvanceTurn) {
                         get().dealHand();
                     }
                 }
@@ -2055,6 +2072,7 @@ export const useGameStore = create<GameState>()(
                             ...state.battleState,
                             messages: [...state.battleState.messages, "一行は逃げ出した..."],
                             isDefeat: true,
+                            battlePhase: 'player',
                         }
                     }));
                 } else {
@@ -2062,13 +2080,12 @@ export const useGameStore = create<GameState>()(
                         battleState: {
                             ...state.battleState,
                             messages: [...state.battleState.messages, "逃走に失敗！ 敵の反撃を受ける！"],
-                            isPlayerTurn: false, // 敵の反撃中はカード操作ロック
+                            battlePhase: 'npc_done', // 敵の反撃 = enemyフェーズに
                         }
                     }));
-                    setTimeout(() => {
-                        // ターン加算しない（同ターン内での敵の反撃）
-                        get().processEnemyTurn(false);
-                    }, 500);
+                    // v15.0: setTimeout 廃止→ battlePhase:'npc_done' にして
+                    // BattleViewが runEnemyPhaseを呼び出す形式へ変更
+                    setTimeout(() => { get().processEnemyTurn(false); }, 300);
                 }
             },
 
@@ -2088,8 +2105,8 @@ export const useGameStore = create<GameState>()(
                     }
                 });
 
-                // Trigger end of turn (Energy Phase + Enemy Turn)
-                await get().endTurn();
+                // Trigger end of turn (NPC Phase)
+                await get().runNpcPhase();
             },
 
             clearStorage: () => {

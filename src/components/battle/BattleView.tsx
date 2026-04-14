@@ -24,6 +24,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         hand,
         attackEnemy,
         endTurn,
+        runNpcPhase,
+        runEnemyPhase,
         waitTurn,
         setTactic,
         fleeBattle,
@@ -53,33 +55,43 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const [livePartyDurability, setLivePartyDurability] = useState<Record<string, number>>({});
     const typingQueue = useRef<string[]>([]);
     const isTyping = useRef(false);
-    // タイプライター完了フラグ: ログキューが空になったら true → プレイヤー操作を解放
+    const currentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // v15.0: isTypingDone = ログキュー空かどうか
     const [isTypingDone, setIsTypingDone] = useState(true);
     // キュー登録済みの battleState.messages インデックス上限（stale closure 防止）
     const enqueuedUpToRef = useRef(0);
-    // ターン処理中ロック: endTurn/flee 時に true にして、ログ完了まで操作を禁止
-    // ★ isPlayerTurn ストアフラグと同じビルのバッチ更新によるフレーム窓問題を回避
-    const [isWaitingForLogs, setIsWaitingForLogs] = useState(false);
-    // ターンオーバーレイを表示したターン番号（重複表示防止）
-    const lastShownTurnRef = useRef(0);
+    // v15.0: オーバーレイ表示管理（ターン/フェーズ）
+    const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
+    const [showPhaseOverlay, setShowPhaseOverlay] = useState<null | 'player' | 'enemy'>(null);
+
+    // v15.0: キューを即時フラッシュ（NEXT ボタンで早送り）
+    const flushQueue = useCallback(() => {
+        if (currentTimerRef.current) {
+            clearInterval(currentTimerRef.current);
+            currentTimerRef.current = null;
+        }
+        const remaining = typingQueue.current.filter(m => !m.startsWith('__'));
+        typingQueue.current = [];
+        isTyping.current = false;
+        if (remaining.length > 0) {
+            setDisplayedLogs(prev => [...prev, ...remaining]);
+        }
+        setTypingText('');
+        setIsTypingDone(true);
+    }, []);
 
     // Process typewriter queue
     const processQueue = useCallback(() => {
         // キューが空で入力中でもなければ完了フラグを立てる
         if (typingQueue.current.length === 0 && !isTyping.current) {
             setIsTypingDone(true);
-            // useGameStore.getState() でストア状態を直接確認（Reactバッチ更新の影響なし）
-            // -> isPlayerTurn:true と新メッセージが同バッチにやってくる 1フレーム窓問題を回避
-            if (useGameStore.getState().battleState.isPlayerTurn === true) {
-                setIsWaitingForLogs(false);
-            }
             return;
         }
         if (isTyping.current || typingQueue.current.length === 0) return;
 
         const message = typingQueue.current.shift()!;
 
-        // v3.3: __hp_sync:NNN マーカーは表示せず、HPバーのみ更新
+        // __hp_sync:NNN マーカーは表示せず、HPバーのみ更新
         if (message.startsWith('__hp_sync:')) {
             const newHp = parseInt(message.slice(10), 10);
             if (!isNaN(newHp)) setLiveHp(newHp);
@@ -87,7 +99,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             return;
         }
 
-        // v3.3: __party_sync:ID:DUR マーカーは表示せず、パーティHPバーのみ更新
+        // __party_sync:ID:DUR マーカーは表示せず、パーティHPバーのみ更新
         if (message.startsWith('__party_sync:')) {
             const parts = message.slice(13).split(':');
             const memberId = parts[0];
@@ -99,15 +111,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             return;
         }
 
-        // v25: ターン区切りメッセージ（--- ターン N ---）はタイプライターなしで即時表示
+        // ターン区切りメッセージ（--- ターン N ---）はタイプライターなしで即時表示
         if (/^--- .+ ---$/.test(message)) {
             setDisplayedLogs(prev => [...prev, message]);
             setTypingText('');
             if (typingQueue.current.length === 0) {
                 setIsTypingDone(true);
-                if (useGameStore.getState().battleState.isPlayerTurn === true) {
-                    setIsWaitingForLogs(false);
-                }
             } else {
                 setTimeout(() => processQueue(), 80);
             }
@@ -119,15 +128,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         let charIdx = 0;
         setTypingText('');
 
-        let timerId: ReturnType<typeof setInterval> | null = null;
-
-        timerId = setInterval(() => {
+        const timerId = setInterval(() => {
             charIdx++;
             if (charIdx <= message.length) {
                 setTypingText(message.slice(0, charIdx));
             } else {
-                if (timerId) clearInterval(timerId);
-                timerId = null;
+                clearInterval(timerId);
+                if (currentTimerRef.current === timerId) currentTimerRef.current = null;
                 setDisplayedLogs(prev => [...prev, message]);
                 setTypingText('');
                 isTyping.current = false;
@@ -135,13 +142,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     setTimeout(() => processQueue(), 80);
                 } else {
                     setIsTypingDone(true);
-                    // キュー終了: ストアの isPlayerTurn を直接確認してロック解除判定
-                    if (useGameStore.getState().battleState.isPlayerTurn === true) {
-                        setIsWaitingForLogs(false);
-                    }
                 }
             }
         }, 20);
+        currentTimerRef.current = timerId;
     }, []);
 
     // Auto-scroll logs
@@ -196,20 +200,24 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     //   Reactバッチ更新の影響を受けがれの isTypingDone ・ストアフラグを使わず、
     //   キュー内から直接ストアをつきさして判定するためタイミングの1フレーム窓問題を完全回避。
 
-    // Show turn overlay — ログが全て流れてから表示する
-    // battleState.turn を dep にすると「isPlayerTurn:trueとメッセージが同バッチ」問題で
-    // isTypingDone がまだ true の状態でオーバーレイが出てしまうため、
-    // isTypingDone の変化のみを監視し、lastShownTurnRef で未表示ターンを追跡する
+    // v15.0: ターン/フェーズ オーバーレイ制御
+    // battlePhase:'player' に遷移した時 = 新しいプレイヤーターン開始
     useEffect(() => {
-        if (isTypingDone && !isWaitingForLogs &&
+        if (battleState.battlePhase === 'player' &&
             battleState.turn > lastShownTurnRef.current &&
             !battleState.isVictory && !battleState.isDefeat) {
             lastShownTurnRef.current = battleState.turn;
+            // TURN N オーバーレイ → PLAYER オーバーレイ の順に表示
             setShowTurnOverlay(true);
-            const timer = setTimeout(() => setShowTurnOverlay(false), 1500);
-            return () => clearTimeout(timer);
+            const t1 = setTimeout(() => {
+                setShowTurnOverlay(false);
+                setShowPhaseOverlay('player');
+            }, 1200);
+            const t2 = setTimeout(() => setShowPhaseOverlay(null), 2200);
+            return () => { clearTimeout(t1); clearTimeout(t2); };
         }
-    }, [isTypingDone, isWaitingForLogs]);
+    }, [battleState.battlePhase, battleState.turn]);
+
 
     useEffect(() => {
         if (process.env.NODE_ENV === 'development') {
@@ -250,10 +258,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     }, [battleState.isVictory, selectedScenario, battleState.enemy]);
 
-    // プレイヤーが操作可能かどうか
-    // ★ isPlayerTurn (store) は使わない: isPlayerTurn:true が新メッセージと同バッチで
-    //    セットされるため React レンダリング時に 1 フレーム canInteract=true になる問題回避
-    const canInteract = !isWaitingForLogs && isTypingDone && !battleState.isVictory && !battleState.isDefeat;
+    // v15.0: canInteract = プレイヤーフェーズ中のみ操作可能
+    // battlePhaseが'player'でない間（npc_done / enemy_done）は常にロック
+    const battlePhase = battleState.battlePhase ?? 'player';
+    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat;
+    // NEXT ボタンの押下可否: ログ再生中（isTypingDone=false）かつプレイヤーフェーズ外は不可
+    // プレイヤーフェーズ中はログ再生中でも NEXT 可能（早送り）
+    const canPressNext = !battleState.isVictory && !battleState.isDefeat &&
+        (battlePhase === 'player' || isTypingDone);
 
     const handleCardClick = async (index: number) => {
         if (!canInteract) return;
@@ -299,15 +311,36 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     };
 
     const handleFlee = () => {
+        if (!canInteract) return; // プレイヤーフェーズのみ
         if (confirm("本当に撤退しますか？\n敗北扱いとなります。")) {
             fleeBattle();
         }
     };
 
-    const handleEndTurn = async () => {
-        if (!canInteract) return;
-        await endTurn();
+    // v15.0: NEXT ボタンのフェーズ分岐処理
+    const handleNext = async () => {
+        if (!canPressNext) return;
+        if (battlePhase === 'player') {
+            // プレイヤーフェーズ: 残ログを早送り → NPC フェーズ実行
+            flushQueue();
+            await runNpcPhase();
+        } else if (battlePhase === 'npc_done' && isTypingDone) {
+            // NPC 完了 → ENEMY オーバーレイ + 敵フェーズ実行
+            setShowPhaseOverlay('enemy');
+            const t = setTimeout(() => setShowPhaseOverlay(null), 1000);
+            setTimeout(async () => {
+                await runEnemyPhase();
+            }, 600); // オーバーレイと同タイミングで开始
+            return () => clearTimeout(t);
+        } else if (battlePhase === 'enemy_done' && isTypingDone) {
+            // 敵フェーズ完了 → 次ターンへ（processEnemyTurn内でdealHand済み）
+            // 何もしない（次ターンはすでにプレイヤーフェーズに移行済み）
+        }
     };
+
+    // 後方互換エイリアス（waitTurn から呼ばれる）
+    const handleEndTurn = async () => { await handleNext(); };
+
 
     // Result overlay — ログが全て表示完了してから遷移
     const [showResultOverlay, setShowResultOverlay] = useState(false);
@@ -405,6 +438,23 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                         <span className="w-8 h-[1px] bg-red-500/50" />
                         <span className="font-serif text-3xl font-bold tracking-[0.3em] italic">TURN {battleState.turn}</span>
                         <span className="w-8 h-[1px] bg-red-500/50" />
+                    </div>
+                </div>
+            )}
+
+            {/* Phase Overlay (PLAYER / ENEMY) */}
+            {showPhaseOverlay && (
+                <div className="absolute inset-x-0 top-1/3 flex items-center justify-center z-50 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-400">
+                    <div className={`px-12 py-2 border-y flex items-center gap-3 ${
+                        showPhaseOverlay === 'player'
+                            ? 'bg-sky-950/80 text-sky-400 border-sky-500/50 shadow-[0_0_30px_rgba(56,189,248,0.4)]'
+                            : 'bg-orange-950/80 text-orange-400 border-orange-500/50 shadow-[0_0_30px_rgba(251,146,60,0.4)]'
+                    }`}>
+                        <span className="w-6 h-[1px] opacity-60" style={{background:'currentColor'}} />
+                        <span className="font-serif text-2xl font-bold tracking-[0.4em]">
+                            {showPhaseOverlay === 'player' ? 'PLAYER' : 'ENEMY'}
+                        </span>
+                        <span className="w-6 h-[1px] opacity-60" style={{background:'currentColor'}} />
                     </div>
                 </div>
             )}
@@ -886,9 +936,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 </div>
             </div>
 
-            {/* Action Buttons — カード領域の外、右寄せ */}
+            {/* Action Buttons — v15.0 NEXT button */}
             <div className="flex justify-end gap-1.5 px-3 py-1.5 flex-shrink-0 z-30 drop-shadow-md">
-                {/* v25: アイテムボタン — ターンエンドの左隣 */}
+                {/* アイテムボタン */}
                 {(battleState.battleItems || []).length > 0 && (
                     <button
                         onClick={() => setShowItemPanel(true)}
@@ -899,23 +949,35 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                         <span>アイテム</span>
                     </button>
                 )}
+                {/* v15.0: NEXT ボタン */}
                 <button
-                    onClick={handleEndTurn}
-                    disabled={!canInteract}
-                    className="bg-black/40 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-black/60 disabled:opacity-40 disabled:pointer-events-none"
+                    onClick={handleNext}
+                    disabled={!canPressNext}
+                    className={`backdrop-blur-md rounded-lg px-4 py-1.5 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-[11px] font-bold border ${
+                        battlePhase === 'player'
+                            ? 'bg-sky-900/60 border-sky-400/60 text-sky-200 hover:bg-sky-800/70'
+                            : (isTypingDone
+                                ? 'bg-orange-900/60 border-orange-400/60 text-orange-200 hover:bg-orange-800/70 animate-pulse'
+                                : 'bg-black/40 border-white/20 text-white/50')
+                    } disabled:opacity-40 disabled:pointer-events-none`}
                 >
                     <Clock size={12} />
-                    ターンエンド
+                    {battlePhase === 'npc_done' && isTypingDone ? '▶ ENEMY PHASE' :
+                     battlePhase === 'enemy_done' && isTypingDone ? '▶ NEXT TURN' : 'NEXT'}
                 </button>
-                <button
-                    onClick={handleFlee}
-                    disabled={!canInteract}
-                    className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50 disabled:opacity-40 disabled:pointer-events-none"
-                >
-                    <LogOut size={12} />
-                    撤退
-                </button>
+                {/* 撤退: プレイヤーフェーズのみ */}
+                {battlePhase === 'player' && (
+                    <button
+                        onClick={handleFlee}
+                        disabled={!canInteract}
+                        className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50 disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                        <LogOut size={12} />
+                        撤退
+                    </button>
+                )}
             </div>
+
 
             {/* v25: バトルアイテムパネル */}
             {showItemPanel && (

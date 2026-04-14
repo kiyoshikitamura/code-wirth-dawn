@@ -423,3 +423,65 @@ export interface BattleState {
   currentTactic: 'Aggressive' | 'Defensive' | 'Standby';
   player_effects: StatusEffect[]; // v3.0: value莉倥″StatusEffect
   enemy_effects: StatusEffect[];
+---
+
+## v15.0 Phase-Based Battle Flow (2026-04-15)
+
+### Overview
+Each turn is split into two manual phases controlled by the NEXT button.
+This eliminates all log/UI synchronization bugs by making phase transitions
+explicit player actions rather than timer-based automation.
+
+### battlePhase State Machine
+
+| Phase | Description | NEXT Button |
+|---|---|---|
+| `'player'` | Player uses cards freely | Always enabled (fast-forwards logs) |
+| `'npc_done'` | NPC actions processed, logs flowing | Disabled until logs finish |
+| `'enemy_done'` | Enemy actions processed, logs flowing | Disabled until logs finish > advances turn |
+
+### Turn Sequence (v15.0)
+
+`
+[Turn N Start]
+  TURN N overlay -> PLAYER overlay
+  Player uses cards (canInteract = true, NEXT always enabled)
+    |
+  [NEXT tapped]
+  runNpcPhase(): AP recovery, tick effects, NPC actions
+  -> battlePhase: 'npc_done', NPC messages added
+  -> Logs flow (NEXT disabled)
+  -> Logs complete (NEXT enabled)
+    |
+  [NEXT tapped]
+  ENEMY overlay shown
+  runEnemyPhase(): Enemy attacks
+  -> battlePhase: 'enemy_done', enemy messages added
+  -> Currently auto-advances via processEnemyTurn setting battlePhase:'player'
+[Turn N+1 Start]
+`
+
+### Store Actions (v15.0)
+
+| Action | Description |
+|---|---|
+| `runNpcPhase()` | Replaces old endTurn(). AP + tick + NPC actions, no setTimeout. |
+| `runEnemyPhase()` | Alias for processEnemyTurn(true). Enemy attacks + turn++. |
+| `endTurn()` | Backward-compat alias for runNpcPhase(). |
+
+### UI Controls (v15.0)
+
+| Control | Condition | Behavior |
+|---|---|---|
+| Cards | battlePhase === 'player' | Freely usable regardless of log playback |
+| NEXT (player phase) | Always enabled | Fast-forwards logs + starts NPC phase |
+| NEXT (npc_done) | isTypingDone only | Starts enemy phase with ENEMY overlay |
+| NEXT (enemy_done) | isTypingDone only | Advances to next turn |
+| Flee button | battlePhase === 'player' only | Hidden during NPC/enemy phase |
+
+### Removed Mechanisms
+- isWaitingForLogs state flag (replaced by battlePhase)
+- useGameStore.getState().isPlayerTurn checks inside processQueue
+- setTimeout(300ms) before processPartyTurn()
+- setTimeout(600ms) before processEnemyTurn()
+- isSelfBuff missing evasion_up/taunt (fixed in all 3 paths)

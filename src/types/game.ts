@@ -527,8 +527,11 @@ export interface BattleState {
   activeSupportBuffs: string[]; // v19: 使用済みSupportカードのcard_idリスト（バトル内永続効果）
   equipBonus?: { atk: number; def: number; hp: number }; // v24: 装備品ボーナス（バトル中永続）
   battleItems: InventoryItem[]; // v25: バトル中使用可能な消耗品リスト
-  _pendingNextTurnLabel?: number | null; // v25: パーティ・エネミーターン完了後に表示するターン番号
-  isPlayerTurn?: boolean; // v26: false=敵/NPCターン処理中（プレイヤー操作ロック）
+  _pendingNextTurnLabel?: number | null; // 非推奨: 削除予定
+  isPlayerTurn?: boolean; // 非推奨: battlePhaseに統合
+  // v15.0: フェーズ制バトルフロー
+  // 'player'= プレイヤー操作中 | 'npc_done'= NPC処理完了・Enemy待機 | 'enemy_done'= 敵処理完了・次ターン待機
+  battlePhase?: 'player' | 'npc_done' | 'enemy_done';
 }
 
 export type Scenario = ScenarioDB;
