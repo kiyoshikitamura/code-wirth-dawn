@@ -512,6 +512,11 @@ export const useGameStore = create<GameState>()(
                     return;
                 }
 
+                // NPC → エネミーターンへ
+                setTimeout(() => {
+                    get().processPartyTurn();
+                }, 300);
+
             },
 
             resetBattle: () => {
