@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useBattleTypewriter } from './hooks/useBattleTypewriter';
 import { useGameStore } from '@/store/gameStore';
 import { useRouter } from 'next/navigation';
 import { Shield, Sword, Sparkles, Heart, Footprints, Settings, Skull, Clock, Target, Users, User, LogOut, ScrollText, Zap, X } from 'lucide-react';
@@ -46,107 +47,22 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const [showUserDetail, setShowUserDetail] = useState(false);
     const [showItemPanel, setShowItemPanel] = useState(false); // v25: バトルアイテムパネル
 
-    // Typewriter state
-    const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
-    const [typingText, setTypingText] = useState<string>('');
-    // v3.3: HPバーをタイプライターと同期するためのゴースト HP 状態
-    const [liveHp, setLiveHp] = useState<number | null>(null);
-    // v3.3: パーティHPバーをタイプライターと同期するためのゴースト durability Map
-    const [livePartyDurability, setLivePartyDurability] = useState<Record<string, number>>({});
-    const typingQueue = useRef<string[]>([]);
-    const isTyping = useRef(false);
-    const currentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    // v15.0: isTypingDone = ログキュー空かどうか
-    const [isTypingDone, setIsTypingDone] = useState(true);
-    // キュー登録済みの battleState.messages インデックス上限（stale closure 防止）
-    const enqueuedUpToRef = useRef(0);
+    // ─── タイプライターフック ────────────────────────────────────────────────
+    const {
+        displayedLogs, setDisplayedLogs,
+        typingText, setTypingText,
+        isTypingDone, setIsTypingDone,
+        liveHp, setLiveHp,
+        livePartyDurability, setLivePartyDurability,
+        typingQueue,
+        isTypingRef: isTyping,
+        processQueue,
+        flushQueue,
+        enqueuedUpToRef,
+    } = useBattleTypewriter(userProfile?.hp);
     // v15.0: オーバーレイ表示管理（ターン/フェーズ）
     const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
     const [showPhaseOverlay, setShowPhaseOverlay] = useState<null | 'player' | 'enemy'>(null);
-
-    // v15.0: キューを即時フラッシュ（NEXT ボタンで早送り）
-    const flushQueue = useCallback(() => {
-        if (currentTimerRef.current) {
-            clearInterval(currentTimerRef.current);
-            currentTimerRef.current = null;
-        }
-        const remaining = typingQueue.current.filter(m => !m.startsWith('__'));
-        typingQueue.current = [];
-        isTyping.current = false;
-        if (remaining.length > 0) {
-            setDisplayedLogs(prev => [...prev, ...remaining]);
-        }
-        setTypingText('');
-        setIsTypingDone(true);
-    }, []);
-
-    // Process typewriter queue
-    const processQueue = useCallback(() => {
-        // キューが空で入力中でもなければ完了フラグを立てる
-        if (typingQueue.current.length === 0 && !isTyping.current) {
-            setIsTypingDone(true);
-            return;
-        }
-        if (isTyping.current || typingQueue.current.length === 0) return;
-
-        const message = typingQueue.current.shift()!;
-
-        // __hp_sync:NNN マーカーは表示せず、HPバーのみ更新
-        if (message.startsWith('__hp_sync:')) {
-            const newHp = parseInt(message.slice(10), 10);
-            if (!isNaN(newHp)) setLiveHp(newHp);
-            setTimeout(() => processQueue(), 0);
-            return;
-        }
-
-        // __party_sync:ID:DUR マーカーは表示せず、パーティHPバーのみ更新
-        if (message.startsWith('__party_sync:')) {
-            const parts = message.slice(13).split(':');
-            const memberId = parts[0];
-            const newDur = parseInt(parts[1], 10);
-            if (memberId && !isNaN(newDur)) {
-                setLivePartyDurability(prev => ({ ...prev, [memberId]: newDur }));
-            }
-            setTimeout(() => processQueue(), 0);
-            return;
-        }
-
-        // ターン区切りメッセージ（--- ターン N ---）はタイプライターなしで即時表示
-        if (/^--- .+ ---$/.test(message)) {
-            setDisplayedLogs(prev => [...prev, message]);
-            setTypingText('');
-            if (typingQueue.current.length === 0) {
-                setIsTypingDone(true);
-            } else {
-                setTimeout(() => processQueue(), 80);
-            }
-            return;
-        }
-
-        isTyping.current = true;
-        setIsTypingDone(false);
-        let charIdx = 0;
-        setTypingText('');
-
-        const timerId = setInterval(() => {
-            charIdx++;
-            if (charIdx <= message.length) {
-                setTypingText(message.slice(0, charIdx));
-            } else {
-                clearInterval(timerId);
-                if (currentTimerRef.current === timerId) currentTimerRef.current = null;
-                setDisplayedLogs(prev => [...prev, message]);
-                setTypingText('');
-                isTyping.current = false;
-                if (typingQueue.current.length > 0) {
-                    setTimeout(() => processQueue(), 80);
-                } else {
-                    setIsTypingDone(true);
-                }
-            }
-        }, 20);
-        currentTimerRef.current = timerId;
-    }, []);
 
     // Auto-scroll logs
     useEffect(() => {
