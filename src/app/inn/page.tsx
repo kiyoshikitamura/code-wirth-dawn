@@ -465,64 +465,7 @@ function InnPageInner() {
                     />
                 )}
 
-                {/* デバッグツール */}
-                <div className="flex flex-col items-center gap-4 py-8">
-                    <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-[95%] opacity-50 hover:opacity-100 transition-opacity">
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('10000Gを追加しますか？')) return; await fetch('/api/debug/add-gold', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, amount: 10000 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-amber-900 border border-amber-500 rounded text-[10px]">Add Gold</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('1日経過させますか？')) return; await fetch('/api/debug/skip-time', { method: 'POST', body: JSON.stringify({ days: 1 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-2 py-1 bg-green-900 border border-green-500 rounded text-[10px]">+1 Day</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('レベルを+1しますか？')) return; await fetch('/api/debug/level-up', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, levels: 1 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-blue-900 border border-blue-500 rounded text-[10px]">Lv +1</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('レベルを-1しますか？')) return; await fetch('/api/debug/level-up', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, levels: -1 }) }); useGameStore.getState().fetchUserProfile(); }} className="px-2 py-1 bg-blue-900 border border-blue-400 rounded text-[10px]">Lv -1</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('名声を+100しますか？')) return; await fetch('/api/debug/modify-reputation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: userProfile?.id, locationName: worldState?.location_name, amount: 100 }) }); await fetchRep(); }} className="px-2 py-1 bg-purple-900 border border-purple-500 rounded text-[10px]">名声+</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('名声を-100しますか？')) return; await fetch('/api/debug/modify-reputation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: userProfile?.id, locationName: worldState?.location_name, amount: -100 }) }); await fetchRep(); }} className="px-2 py-1 bg-purple-900 border border-purple-400 rounded text-[10px]">名声-</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('秩序を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'order', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-cyan-900 border border-cyan-500 rounded text-[9px]">秩序+</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('秩序を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'order', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-cyan-900 border border-cyan-400 rounded text-[9px]">秩序-</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('混沌を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'chaos', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-orange-900 border border-orange-500 rounded text-[9px]">混沌+</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('混沌を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'chaos', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-orange-900 border border-orange-400 rounded text-[9px]">混沌-</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('正義を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'justice', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-yellow-900 border border-yellow-500 rounded text-[9px]">正義+</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('正義を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'justice', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-yellow-900 border border-yellow-400 rounded text-[9px]">正義-</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('悪意を+10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'evil', amount: 10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-rose-900 border border-rose-500 rounded text-[9px]">悪意+</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('悪意を-10しますか？')) return; await fetch('/api/debug/modify-alignment', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id, type: 'evil', amount: -10 }) }); useGameStore.getState().fetchUserProfile(); useGameStore.getState().fetchWorldState(); }} className="px-1.5 py-1 bg-rose-900 border border-rose-400 rounded text-[9px]">悪意-</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('世界変換シミュレーションを即時実行しますか？')) return; await fetch('/api/debug/run-simulation', { method: 'POST' }); useGameStore.getState().fetchWorldState(); alert('世界変換を実行しました。'); }} className="px-2 py-1 bg-teal-900 border border-teal-500 rounded text-[10px]">世界変換</button>
-                        <button onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('⚠️ ワールドリセットを実行しますか？\n全てのユーザーデータが削除されます。')) return; await fetch('/api/debug/reset', { method: 'POST', body: JSON.stringify({ userId: userProfile?.id }) }); window.location.href = '/title'; }} className="px-2 py-1 bg-red-900 border border-red-500 rounded text-[10px]">World Reset</button>
-                    </div>
-                    {/* バトルテスト */}
-                    <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (!window.confirm('バトルテストを開始しますか？\nランダムな敵グループと戦闘します。')) return; router.push('/battle-test'); }}
-                        className="w-[90%] max-w-xs mt-2 px-4 py-3 bg-gradient-to-r from-red-950 to-red-900 border-2 border-red-600 rounded-xl text-sm font-bold text-red-200 hover:from-red-900 hover:to-red-800 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-red-950/50"
-                    >
-                        ⚔️ バトルテスト
-                    </button>
 
-                    {/* 拠点属性パラメータ表示 */}
-                    {worldState && (
-                        <div className="w-[90%] max-w-xs mt-3 p-3 bg-[#0d1b3e]/80 border border-[#2a4080]/50 rounded-xl text-[11px] space-y-2">
-                            <div className="flex items-center justify-between text-blue-200/70 font-bold border-b border-[#2a4080]/30 pb-1.5 mb-1">
-                                <span>📍 {worldState.location_name || '---'}</span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                                    worldState.prosperity_level === 5 ? 'bg-amber-500/20 text-amber-300' :
-                                    worldState.prosperity_level === 4 ? 'bg-green-500/20 text-green-300' :
-                                    worldState.prosperity_level === 3 ? 'bg-slate-500/20 text-slate-300' :
-                                    worldState.prosperity_level === 2 ? 'bg-orange-500/20 text-orange-300' :
-                                    'bg-red-500/20 text-red-300'
-                                }`}>
-                                    Lv{worldState.prosperity_level} {worldState.status}
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                <div className="flex justify-between"><span className="text-cyan-400">秩序</span><span className="text-white font-mono">{worldState.order_score ?? 0}</span></div>
-                                <div className="flex justify-between"><span className="text-orange-400">混沌</span><span className="text-white font-mono">{worldState.chaos_score ?? 0}</span></div>
-                                <div className="flex justify-between"><span className="text-yellow-400">正義</span><span className="text-white font-mono">{worldState.justice_score ?? 0}</span></div>
-                                <div className="flex justify-between"><span className="text-rose-400">悪意</span><span className="text-white font-mono">{worldState.evil_score ?? 0}</span></div>
-                            </div>
-                            <div className="flex justify-between text-blue-200/50 pt-1 border-t border-[#2a4080]/30">
-                                <span>支配国: <span className="text-blue-100">{worldState.controlling_nation || 'Neutral'}</span></span>
-                                <span>Friction: <span className="text-blue-100">{worldState.last_friction_score ?? '---'}</span></span>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="w-32 h-1 bg-[#2a4080]/30 rounded-full" />
-                </div>
             </div>
 
             {/* TavernModal - outside game container so fixed positioning works correctly */}
