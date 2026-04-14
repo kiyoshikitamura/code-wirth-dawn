@@ -56,7 +56,29 @@ export function getEffectList(effectData: any): { label: string; value: string; 
     if (effectData.duration != null) list.push({ label: '持続', value: `${effectData.duration}ターン`, color: 'text-amber-400' });
     if (effectData.effect != null) list.push({ label: '効果', value: String(effectData.effect), color: 'text-purple-400' });
     if (effectData.status != null) list.push({ label: '状態', value: String(effectData.status), color: 'text-yellow-400' });
-    if (effectData.effect_id != null) list.push({ label: '付与', value: String(effectData.effect_id), color: 'text-purple-400' });
+    if (effectData.effect_id != null) {
+        const effectIdLabel: Record<string, string> = {
+            bleed_minor: '出血（小）', bleed_major: '出血（大）',
+            poison: '毒', stun: 'スタン', blind: '暗闇', bind: '拘束',
+            def_up: '防御UP', def_down: '防御DOWN', atk_up: '攻撃UP', atk_down: '攻撃DOWN',
+            regen: '継続回復', berserk: '狂戦士',
+        };
+        list.push({ label: '付与', value: effectIdLabel[effectData.effect_id] || effectData.effect_id, color: 'text-purple-400' });
+    }
+    // スキルカード固有
+    if (effectData.card_type != null) {
+        const typeLabel: Record<string, string> = { Skill: 'スキル', Defense: '防御', Support: 'サポート', Heal: '回復' };
+        list.push({ label: '種別', value: typeLabel[effectData.card_type] || effectData.card_type, color: 'text-cyan-400' });
+    }
+    if (effectData.cost_type != null) {
+        const costLabel: Record<string, string> = { vitality: '体力消費', ap: 'AP消費', item: 'アイテム消費', free: '無消費' };
+        list.push({ label: 'コスト種別', value: costLabel[effectData.cost_type] || effectData.cost_type, color: 'text-amber-400' });
+    }
+    if (effectData.cost_val != null && effectData.cost_val > 0) list.push({ label: '消費量', value: String(effectData.cost_val), color: 'text-amber-300' });
+    if (effectData.target_type != null) {
+        const targetLabel: Record<string, string> = { single_enemy: '単体敵', all_enemies: '全体敵', self: '自身', single_ally: '味方単体', all_allies: '味方全体' };
+        list.push({ label: '対象', value: targetLabel[effectData.target_type] || effectData.target_type, color: 'text-sky-400' });
+    }
 
     return list;
 }

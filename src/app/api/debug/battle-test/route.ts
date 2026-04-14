@@ -53,8 +53,8 @@ export async function GET(req: Request) {
             }, { status: 404 });
         }
 
-        // 6体選出（最大）
-        const enemyCount = Math.min(allEnemies.length, 6);
+        // 5体選出（最大）
+        const enemyCount = Math.min(allEnemies.length, 5);
         const shuffled = allEnemies.sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, enemyCount);
 
@@ -75,11 +75,29 @@ export async function GET(req: Request) {
             spawn_type: e.spawn_type
         }));
 
+        // ランダム背景の取得
+        let bgImageUrl = '/images/quests/bg_tavern_night_1775635917235.png'; // fallback
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const bgDir = path.join(process.cwd(), 'public', 'images', 'quests');
+            if (fs.existsSync(bgDir)) {
+                const files = fs.readdirSync(bgDir).filter((f: string) => f.endsWith('.png') || f.endsWith('.jpg'));
+                if (files.length > 0) {
+                    const randomFile = files[Math.floor(Math.random() * files.length)];
+                    bgImageUrl = `/images/quests/${randomFile}`;
+                }
+            }
+        } catch (err) {
+            console.error('背景取得エラー:', err);
+        }
+
         return NextResponse.json({
             success: true,
             group_slug: 'random_selection',
             group_name: `ランダム選出 (${enemyCount}体)`,
-            enemies
+            enemies,
+            bg_image_url: bgImageUrl
         });
 
     } catch (e: any) {

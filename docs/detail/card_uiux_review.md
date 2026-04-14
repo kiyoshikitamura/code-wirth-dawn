@@ -60,3 +60,130 @@ const getCostStyles = (ap: number) => {
 
 ### ③ 闇市への導線
 「崩壊した拠点（Chaoticが高い状態）」の街でのみ出現する『闇市』では、UI自体を禍々しい赤黒いテーマ（`bg-red-950`）へと切り替え、カテゴリ4の「即死攻撃」などでプレイヤーに危険な誘惑を提示する演出を推奨します。
+
+---
+
+## 3. バトルv3.0 スキル効果のUI表示指針
+
+バトルエンジンv3.0の実装に合わせ、スキル効果のUIテキストを**実装値に忠実に**表示するよう統一します。
+
+### 3.1 カード詳細ポップアップのテキスト表示規則
+
+| 効果 | UIテキスト例 |
+|---|---|
+| `def_up` (value=10) | 「2ターンの間、受けるダメージを **10** 軽減」 |
+| `def_up_heavy` (value=30) | 「3ターンの間、受けるダメージを **30** 軽減（鉄壁）」 |
+| `bleed_minor` | 「出血（軽微）: カード使用ごとに **+1** ダメージ」 |
+| `bleed` | 「出血: カード使用ごとに **+3** ダメージ」 |
+| `blind` | 「目潰し: 敵の攻撃が **50%** でミス」 |
+| `blind_minor` | 「目潰し（軽微）: 敵の攻撃が **30%** でミス」 |
+| `evasion_up` | 「回避UP: 攻撃を **30%** で回避」 |
+| `atk_down` | 「ATK DOWN: 敵の攻撃力を **30%** ダウン」 |
+| `instakill` | 「**30%** の確率で即死。失敗時は通常攻撃」 |
+| `recoil` | 「全体攻撃後、最大HP **10%** を自傷」 |
+| `cure_status` | 「毒・出血・スタン等の状態異常を**全解除**」 |
+| `cure_debuff` | 「ATK DOWN・目潰し等のデバフを**解除**」 |
+
+### 3.2 ツバメ返し（card_swallow_rev）の表示
+ツバメ返しは `counter` の実装待ちのため、現在は**高威力単体攻撃（50固定ダメージ）**として動作します。  
+UIテキスト: 「神速の一撃で **50** の大ダメージを与える。」
+
+> ⚠️ **注意**: `description` カラムはDBからSQLで更新します（`update_card_descriptions.sql` 参照）。フロントエンドのハードコードは禁止。
+
+### 3.3 カード説明文の更新手順
+1. `update_card_descriptions.sql` をSupabaseのSQL Editorで実行
+2. `cards` テーブルの `description` カラムが更新される
+3. バトル画面のカード詳細ポップアップは `card.description` を表示するよう実装
+
+---
+
+## 4. カードデータのDB取得フロー（v3.3 実装確認）
+
+### 4.1 現在の実装状態
+
+| カード種別 | 画像表示 | description表示 | 取得元 |
+|---|---|---|---|
+| 装備スキル（user_skills経由） | ✅ | ✅ | `inventory/route.ts` → `cards` JOIN（v3.3でdescription追加） |
+| 初期スキル（強打・斬撃・防御等） | ✅ | ✅ | 同上（user_skills テーブルで管理） |
+| パーティカード（inject_cards） | ✅ | ✅ | `startBattle` → `/api/cards?ids=...` フェッチ |
+| 環境カード（ノイズ等） | ❌（意図的） | ✅（固定） | `buildBattleDeck` 内でハードコード |
+
+### 4.2 `inventory/route.ts` のカードデータ取得
+
+```typescript
+// user_skills JOIN で cards テーブルの全必要カラムを取得（v3.3）
+cards (
+    id, slug, name, type, cost_type, cost_val, effect_val,
+    ap_cost, target_type, effect_id,
+    image_url,    // ← v3.3で確実に取得
+    description   // ← v3.3で追加（以前は欠落し card.name にフォールバックしていた）
+)
+
+// effectData の description 解決順序
+description: skill.description || card.description || card.name
+```
+
+### 4.3 startBattle での image_url 取得フロー（v3.3）
+
+```
+startBattle()
+    → fetchInventory() を必ず実行（キャッシュ破棄）
+    → inventory の is_equipped スキルから equippedCards を生成
+        → image_url: i.effect_data?.image_url || i.image_url
+        → description: i.effect_data?.description || ''
+    → /api/cards?ids=... でパーティカードプール取得
+        → 基本カード(id=1-10)も含めてフェッチ
+```
+
+---
+
+## 5. HPバーのリアルタイム同期（v3.3）
+
+バトルUI（`BattleView.tsx`）ではタイプライターエフェクトとHPバーが連動する。
+
+### 5.1 仕組み
+
+ログメッセージ配列（`battleState.messages`）の中に、以下のマーカーを非表示メッセージとして挿入：
+
+| マーカー | 対象 | タイミング |
+|---|---|---|
+| `__hp_sync:NNN` | プレイヤーHPバー | ダメージ受ける/回復するログの直後 |
+| `__party_sync:ID:NNN` | パーティメンバーHPバー | パーティがダメージ/回復のログ直後 |
+
+### 5.2 BattleView でのマーカー解析
+
+```typescript
+// processQueue() のタイプライター処理中
+if (text.startsWith('__hp_sync:')) {
+    const newHp = parseInt(text.split(':')[1]);
+    setLiveHp(newHp);  // HPバーを即時更新
+    // テキストログには表示しない
+    setCurrentIndex(prev => prev + 1);
+    return;
+}
+if (text.startsWith('__party_sync:')) {
+    const [, id, valStr] = text.split(':');
+    setLivePartyDurability(prev => ({ ...prev, [id]: Number(valStr) }));
+    setCurrentIndex(prev => prev + 1);
+    return;
+}
+```
+
+### 5.3 マーカー挿入対象イベント一覧
+
+| イベント | 挿入関数 | マーカー |
+|---|---|---|
+| 敵→プレイヤーへのダメージ | `processEnemyTurn` | `__hp_sync:newHp` |
+| プレイヤーの治癒カード | `attackEnemy` (heal case) | `__hp_sync:newHp` |
+| NPCがプレイヤーを治癒 | `processPartyTurn` | `__hp_sync:newHp` |
+| 敵→パーティへのダメージ | `processEnemyTurn` | `__party_sync:ID:newDur` |
+| NPCがパーティを治癒 | `processPartyTurn` | `__party_sync:ID:newDur` |
+
+---
+
+## 更新履歴
+
+| 日付 | 内容 |
+|---|---|
+| 2026-04-11 | バトルv3.0スキル効果UI表示指針（§3）追加 |
+| **2026-04-12** | **カードDB取得フロー（§4）・HPバーリアルタイム同期仕様（§5）追加（v3.3対応）** |

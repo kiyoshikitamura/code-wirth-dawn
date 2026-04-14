@@ -84,8 +84,8 @@ export function resolveNpcTurn(
 ): NpcAction[] {
     const actions: NpcAction[] = [];
 
-    // Skip inactive/dead NPCs
-    if (!npc.is_active || npc.durability <= 0) return actions;
+    // Skip inactive/dead NPCs（null/undefined は満HP相当として扱う）
+    if (!npc.is_active || (npc.durability ?? 100) <= 0) return actions;
 
     // 1. AP Recovery (+5, cap 10)
     npc.current_ap = Math.min(10, (npc.current_ap || 0) + 5);
@@ -126,20 +126,23 @@ export function resolveNpcTurn(
     // 4. v2.5: Role-based Buff Priority
     //  - Striker: atk_upカードを自分に使用後、攻撃
     //  - Medic: regen/def_upカードを傷ついた味方に優先
-    //  - Guardian: def_upカードを自分に使用
+    //  - Guardian: def_upカードを自分に使用後、攻撃も行う
     const buffAction = tryRoleBasedBuff(npc, deck, context);
     if (buffAction) {
         actions.push(buffAction);
     }
 
     // 5. Aggressive Execution: Use cards by descending AP cost
+    // バフ専用カード（Defense/Support/Heal タイプ）は除外するが、
+    // 使用済みでないカードは全部使う。攻撃カードがなければ基本攻撃へフォールバック。
     const playableCards = deck
         .filter(c => {
             const cost = c.ap_cost ?? 1;
-            const isBuff = c.type === 'Defense' || c.type === 'Support' || c.type === 'Heal' || (c.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(c.effect_id));
+            // Defense/Support/Heal タイプ OR バフ効果のみのカードは攻撃フェーズから除外
+            const isPureBuffCard = (c.type === 'Defense' || c.type === 'Support' || c.type === 'Heal');
             return cost <= (npc.current_ap || 0) &&
                 !npc.used_this_turn?.includes(c.id) &&
-                !isBuff; // バフ・回復専用カードはスキップ（攻撃カードのみ実行）
+                !isPureBuffCard; // 純粋なバフ/回復カードのみスキップ
         })
         .sort((a, b) => (b.ap_cost ?? 1) - (a.ap_cost ?? 1));
 
@@ -152,8 +155,9 @@ export function resolveNpcTurn(
         npc.used_this_turn?.push(card.id);
     }
 
-    // If no cards were played (all on cooldown or no AP), do basic attack
-    if (actions.length === 0) {
+    // 攻撃アクションが1件もない場合は基本攻撃（バフのみのguardianも攻撃する）
+    const hasAttackAction = actions.some(a => a.type === 'attack');
+    if (!hasAttackAction) {
         actions.push(createBasicAttack(npc, context));
     }
 
@@ -183,12 +187,19 @@ function tryEmergencyHeal(
 
     // Find a heal card we can afford
     const healCard = deck.find(c => {
-        const isHeal = c.name.includes('回復') || c.name.includes('ヒール') ||
-            c.name.toLowerCase().includes('heal') || c.name.toLowerCase().includes('cure');
+        const isHeal =
+            (c as any).type === 'Heal' ||
+            c.name.includes('回復') ||
+            c.name.includes('ヒール') ||
+            c.name.includes('治癒') ||
+            c.name.includes('癒') ||
+            c.name.toLowerCase().includes('heal') ||
+            c.name.toLowerCase().includes('cure') ||
+            c.name.toLowerCase().includes('mend');
         
         if (!isHeal) return false;
         
-        const healAmount = Math.abs(c.power || 15);
+        const healAmount = Math.abs((c as any).effect_val ?? c.power ?? 15);
         // 無駄なヒールの抑制: 欠損HPに対して過剰な回復（例: 欠損HPの2倍以上かつ固定値10以上のオーバーヒール）となるカードは避ける
         if (healAmount > targetLostHp * 2 && healAmount > targetLostHp + 10) {
             return false;
@@ -200,7 +211,7 @@ function tryEmergencyHeal(
 
     if (!healCard) return null;
 
-    const healAmount = Math.abs(healCard.power || 15);
+    const healAmount = Math.abs((healCard as any).effect_val ?? healCard.power ?? 15);
     npc.current_ap = (npc.current_ap || 0) - (healCard.ap_cost ?? 1);
     npc.used_this_turn?.push(healCard.id);
 

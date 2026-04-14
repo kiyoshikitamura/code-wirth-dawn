@@ -104,12 +104,14 @@ export async function POST(req: Request) {
             const currentExp = Number(user.exp || 0);
 
             const difficulty = quest.difficulty || 1;
-            // Check if rewards.exp exists in JSONB, else fallback
-            const questExp = (quest.rewards?.exp) || (difficulty * 20);
+            // v15.0: フォールバックEXPをランダム化 (difficulty * randInt(10, 50))
+            const expFallback = difficulty * (Math.floor(Math.random() * 41) + 10); // difficulty * 10〜50
+            const questExp = (quest.rewards?.exp) || expFallback;
 
-            // Battle Bonus (Simple: 30 * battle_nodes_visited)
+            // v15.0: バトルボーナスをランダム化 (battleCount * randInt(100, 200))
             const battleCount = Array.isArray(history) ? history.filter((h: any) => h.nodeType === 'battle').length : 0;
-            const earnedExp = questExp + (battleCount * 30);
+            const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100); // 100〜200/戦闘
+            const earnedExp = questExp + battleBonus;
 
             // Use Service for calculation
             const growthResult = calculateGrowth(
@@ -117,7 +119,8 @@ export async function POST(req: Request) {
                 currentExp,
                 earnedExp,
                 updates.atk || user.atk || 1,
-                updates.def || user.def || 1
+                updates.def || user.def || 1,
+                user.max_hp || 85  // v15.0: currentMaxHp を渡して累積加算方式に対応
             );
 
             updates.exp = growthResult.newExp;

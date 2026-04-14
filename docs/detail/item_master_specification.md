@@ -1,4 +1,4 @@
-# Wirth-Dawn Item Master Specification (v16.1) & Security/UX Audit
+# Wirth-Dawn Item Master Specification (v16.3) & Security/UX Audit
 
 本ドキュメントは、「Code: Wirth-Dawn」の経済システムおよびゲーム体験の基盤となるアイテムマスタ（itemsテーブル）全57種の定義、およびそれに伴うセキュリティ監査検証とUI/UX追加実装提案を統合したものです。
 
@@ -17,14 +17,22 @@
 *   `nation_tags` (array): `['loc_all']` または `['loc_roland']` などの入手制限タグ
 *   `min_prosperity` (integer): ショップに並ぶ最低繁栄度（通常は `2` や `3`、闇市は `1` にフィルタされるか `is_black_market=true` で制御）
 *   `is_black_market` (boolean): 繁栄度1の崩壊拠点（闇市）限定かどうか
-*   `effect_data` (JSONB): バトルやフィールドでの効果（例: `{"heal_hp": 50}`, `{"buff": "atk_up"}`）
+*   `effect_data` (JSONB): バトルやフィールドでの効果。必ず `use_timing` キーを含む。
+    - `use_timing`: `'battle'` / `'field'` / `'passive'`
+    - HP回復: `heal` (固定値), `heal_hp` (固定値alias), `heal_pct` (割合 0.0〜1.0), `heal_full` (全回復)
+    - バフ/デバフ: `effect_id` (効果ID), `effect_duration` (持続ターン), `target` (`'enemy'` or 省略=自身)
+    - 状態異常解除: `remove_effect` (解除する効果ID)
+    - 逃走: `escape: true`
+    - フィールド専用: `vit_restore` (Vit回復量)
+    - 例: `{"use_timing": "battle", "heal": 150}` / `{"use_timing": "battle", "effect_id": "regen"}` / `{"use_timing": "field", "vit_restore": 1}`
 *   `image_url` (string): アイコン画像URL (任意)
 *   `description` (string): 説明文
 
 ### 1-2. 全57種アイテム設計・配分リスト（ボス素材・武具拡張含む）
 
-#### ① 汎用消費アイテム（5種 / 各都市販売 / 安価）
-1. `item_potion` (中和薬 / consumable / 50G): 薬草の緑色が残る安価な回復液。泥水よりはマシな味がする。
+#### ① 汎用消費アイテム（6種 / 各都市販売 / 安価）
+0. `item_potion_s` (傷薬 S / consumable / 20G): effect_data: `{use_timing: 'battle', heal: 50}`. 小回復。最もポピュラーな傷薬の最小版。
+1. `item_potion` (中和薬 / consumable / 50G): effect_data: `{use_timing: 'battle', heal: 150}`. 薬草の緑色が残る安価な回復液。泥水よりはマシな味がする。
 2. `item_high_potion` (上級中和薬 / consumable / 250G): 澄んだ青色をした上質な霊薬。致命傷でなければ瞬時に塞ぐ。
 3. `item_antidote` (解毒草 / consumable / 30G): 強烈な苦味を持つ薬草。噛み砕くことで血中の毒素を中和する。
 4. `item_holy_water` (聖水 / consumable / 100G): 教会で清められた水。穢れや呪いを払い、精神を落ち着かせる。
@@ -175,3 +183,35 @@ theme: {
 }
 ```
 これらの演出を組み込むことで、世界観（ダークファンタジー）の厚みが一層増します。
+
+---
+
+## 🔄 バトルエンジンv3.0との整合性 (2026-04-11更新)
+
+### スキルアイテムの `description` フィールドについて
+
+スキルアイテム（`is_skill: true`）の `description` は、連携する `cards` テーブルの `description` カラムを参照して表示します。バトルエンジンv3.0の実装に合わせ、全60カードの説明文を更新しています。
+
+**更新が必要なSQLファイル**: `update_card_descriptions.sql`
+
+### 主なスキル効果の変更点
+
+| スキル名 | 旧説明（v2.x） | 新説明（v3.0） |
+|---|---|---|
+| 防御 (`card_guard`) | 「防御力を一時上昇」 | 「2ターンの間、受けるダメージを**10**軽減」 |
+| 聖壁 (`card_holy_wall`) | 「パーティを守る防御バフ」 | 「2ターンの間、受けるダメージを**20**軽減（全体）」 |
+| 鉄布衫 (`card_iron_body`) | 「防御力を大幅上昇」 | 「3ターンの間、受けるダメージを**30**軽減」 |
+| ツバメ返し (`card_swallow_rev`) | 「敵の攻撃を反射するカウンター」 | 「神速の一撃で**50**の大ダメージ**（高威力攻撃）**」 |
+| 斬撃 (`card_slash`) | 「軽微な出血付与」 | 「出血（軽微）: カード使用ごとに**+1**ダメージ」 |
+| 砂塵の目眩まし (`card_sandstorm`) | 「敵の視界を奪う」 | 「2ターンの間、敵全体の攻撃を**50%**でミスさせる」 |
+| 龍の咆哮 (`card_dragon_roar`) | 「敵ATKダウン」 | 「2ターンの間、敵全体のATKを**30%**ダウン」 |
+| 即死攻撃 (`card_death_strike`) | 「即死効果」 | 「**30%**の確率で即死。失敗時は通常攻撃」 |
+
+### 変更履歴
+
+| バージョン | 日付 | 主な変更内容 |
+|---|---|---|
+| v16.0 | 2026-03 | 初版：57種アイテム定義 |
+| v16.1 | 2026-04 | ボス素材・武具拡張追加 |
+| v16.2 | 2026-04-11 | バトルエンジンv3.0対応：スキル説明文更新・ツバメ返し仕様変更反映 |
+| **v16.3** | **2026-04-13** | **effect_data key仕様を明確化（heal/heal_pct/heal_full/escape等）・item_potion_s heal:50 追加・バトルアイテムログ仕様追加** |

@@ -6,7 +6,7 @@ import { LifeCycleService } from '@/services/lifeCycleService';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids } = body;
+        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids, atk, def } = body;
 
         const { user_id } = body; // クライアントから明示的に渡される場合
 
@@ -57,6 +57,8 @@ export async function POST(req: Request) {
             max_hp: max_hp ?? 100,
             initial_hp: max_hp ?? 100, // Added for Spec v8.2 scaling
             max_deck_cost: max_deck_cost ?? 12,
+            atk: atk ?? 1,  // v9.3: 基礎攻撃力（年齢連動）
+            def: def ?? 1,  // v9.3: 基礎防御力（年齢連動）
             is_alive: true, // Resurrect
             updated_at: new Date().toISOString()
         };
@@ -66,17 +68,18 @@ export async function POST(req: Request) {
         // Inheritance Logic
         const lifeSync = new LifeCycleService(client);
 
-        let inheritedData = { gold: 1000, legacy_points: 0 }; // Default
+        // v15.0: calculate-stats API から渡された gold を優先（フォールバックは v15.0 最低値の 800G）
+        const FRESH_START_GOLD_DEFAULT = 800; // spec_v10: 800 + randInt(100,400) の最低値
+        const requestedGold = typeof gold === 'number' && gold > 0 ? gold : FRESH_START_GOLD_DEFAULT;
 
         if (profileId) {
             // Apply Inheritance if profile exists (Reincarnation flow)
-            const result = await lifeSync.processInheritance(profileId, { ...updates, gold: gold || 1000 }, heirloom_item_ids);
-            // result contains user data modified by inheritance logic
+            const result = await lifeSync.processInheritance(profileId, { ...updates, gold: requestedGold }, heirloom_item_ids);
             if (result) {
                 updates = { ...updates, ...result };
             }
         } else {
-            updates.gold = 1000; // Fresh start without ID
+            updates.gold = requestedGold; // v15.0: ランダム初期Gold を使用
         }
 
         if (!profileId) {

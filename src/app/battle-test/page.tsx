@@ -14,6 +14,7 @@ export default function BattleTestPage() {
     const [error, setError] = useState<string | null>(null);
     const [battleStarted, setBattleStarted] = useState(false);
     const [groupName, setGroupName] = useState('');
+    const [bgImageUrl, setBgImageUrl] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         const initBattle = async () => {
@@ -34,6 +35,9 @@ export default function BattleTestPage() {
 
                 const data = await res.json();
                 setGroupName(data.group_name || data.group_slug);
+                if (data.bg_image_url) {
+                    setBgImageUrl(data.bg_image_url);
+                }
 
                 if (!data.enemies || data.enemies.length === 0) {
                     throw new Error('エネミーが見つかりません');
@@ -100,7 +104,7 @@ export default function BattleTestPage() {
                 </div>
 
                 <main className="flex-1 relative w-full h-full overflow-hidden">
-                    <BattleView onBattleEnd={handleBattleEnd} battleTitle={`バトルテスト: ${groupName}`} />
+                    <BattleView onBattleEnd={handleBattleEnd} battleTitle={`バトルテスト: ${groupName}`} bgImageUrl={bgImageUrl} />
                 </main>
 
                 <div className="w-32 h-1 bg-slate-800 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2" />

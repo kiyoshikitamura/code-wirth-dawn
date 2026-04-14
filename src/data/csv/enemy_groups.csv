@@ -1,8 +1,8 @@
 
 id,slug,members
-1,slime_squad,slime|slime
-2,goblin_squad,goblin|goblin
-3,succubus_pair,succubus|succubus
+1,slime_squad,enemy_slime_blue|enemy_slime_red
+2,goblin_squad,enemy_goblin|enemy_goblin_archer
+3,succubus_pair,enemy_succubus|enemy_succubus
 4,group_boss_ep5,enemy_boss_ep5_squad
 5,group_boss_ep10,enemy_boss_ep10_dragon
 6,group_boss_ep20,enemy_boss_ep20_god

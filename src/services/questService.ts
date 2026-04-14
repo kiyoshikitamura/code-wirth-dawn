@@ -3,14 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import { UserProfile, ScenarioReward, LocationDB } from '@/types/game';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
-// Phase 1.5: ハードコード定数を game_rules.ts に一元化。
-// 旧: const BASE_HP = 80; HP_PER_LEVEL = 5; BASE_DECK_COST = 10; COST_PER_LEVEL = 2; MAX_ATK = 15; MAX_DEF = 15
+// v15.0: game_rules.ts に一元化（ATK/DEF 上限廃止・ランダム成長対応）
 const BASE_HP = GROWTH_RULES.BASE_HP_FALLBACK;
-const HP_PER_LEVEL = GROWTH_RULES.HP_PER_LEVEL;
 const BASE_DECK_COST = GROWTH_RULES.BASE_DECK_COST;
 const COST_PER_LEVEL = GROWTH_RULES.COST_PER_LEVEL;
-const MAX_ATK = GROWTH_RULES.MAX_ATK;
-const MAX_DEF = GROWTH_RULES.MAX_DEF;
+const MAX_DECK_COST = GROWTH_RULES.MAX_DECK_COST;
+
+// v15.0: ランダムヘルパー（サーバーサイド専用）
+const randInt = (min: number, max: number) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
 
 interface LevelUpInfo {
     level_up: boolean;
@@ -25,14 +26,18 @@ interface LevelUpInfo {
 
 /**
  * Calculate level up and stat growth based on EXP
- * Spec v8.1: Progression & Growth
+ * Spec v15.0: 上方修正・ランダム成長
+ * - HP: +randInt(3, 6) / Lv（累積加算）
+ * - ATK/DEF: +randInt(0, 2) / Lv（毎Lv・上限なし）
+ * - DeckCost: 上限 MAX_DECK_COST(30) でキャップ
  */
 export function calculateGrowth(
     currentLevel: number,
     currentExp: number,
     expGained: number,
     currentAtk: number = 1,
-    currentDef: number = 1
+    currentDef: number = 1,
+    currentMaxHp: number = BASE_HP
 ): { newExp: number; levelInfo: LevelUpInfo } {
     let level = currentLevel;
     let exp = currentExp + expGained;
@@ -42,23 +47,32 @@ export function calculateGrowth(
     let atkInc = 0;
     let defInc = 0;
 
-    // Use central EXP formula from game_rules.ts
-    // 100 * (Level ^ 2)
-
     while (exp >= GROWTH_RULES.EXP_FORMULA(level)) {
         exp -= GROWTH_RULES.EXP_FORMULA(level);
         level++;
         leveledUp = true;
 
-        // Stat Growth
-        hpInc += HP_PER_LEVEL;
-        costInc += COST_PER_LEVEL;
+        // HP: randInt(3, 6) / Lv（累積加算）
+        hpInc += randInt(
+            GROWTH_RULES.HP_LEVEL_GAIN_MIN,
+            GROWTH_RULES.HP_LEVEL_GAIN_MAX
+        );
 
-        // ATK/DEF: +1 every 3 levels (3, 6, 9...)
-        if (level % 3 === 0) {
-            if (currentAtk + atkInc < MAX_ATK) atkInc++;
-            if (currentDef + defInc < MAX_DEF) defInc++;
+        // DeckCost: 上限 MAX_DECK_COST でキャップ
+        const projectedCost = BASE_DECK_COST + (level * COST_PER_LEVEL);
+        if (projectedCost <= MAX_DECK_COST) {
+            costInc += COST_PER_LEVEL;
         }
+
+        // ATK/DEF: +randInt(0, 2) / Lv（毎Lv・上限なし）
+        atkInc += randInt(
+            GROWTH_RULES.ATK_LEVEL_GAIN_MIN,
+            GROWTH_RULES.ATK_LEVEL_GAIN_MAX
+        );
+        defInc += randInt(
+            GROWTH_RULES.DEF_LEVEL_GAIN_MIN,
+            GROWTH_RULES.DEF_LEVEL_GAIN_MAX
+        );
     }
 
     return {
@@ -70,10 +84,9 @@ export function calculateGrowth(
             cost_increase: costInc,
             atk_increase: atkInc,
             def_increase: defInc,
-            new_max_hp: BASE_HP + (level * HP_PER_LEVEL), // Formula based or additive? 
-            // Note: If user has custom stats not following formula, additive is safer.
-            // But spec implies formula: 20 + 5*Lv.
-            new_max_cost: BASE_DECK_COST + (level * COST_PER_LEVEL)
+            // v15.0: currentMaxHp からの累積加算（固定式ではなく加算方式）
+            new_max_hp: currentMaxHp + hpInc,
+            new_max_cost: Math.min(MAX_DECK_COST, BASE_DECK_COST + (level * COST_PER_LEVEL))
         }
     };
 }

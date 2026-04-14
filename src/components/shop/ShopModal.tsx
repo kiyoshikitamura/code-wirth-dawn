@@ -240,7 +240,7 @@ export default function ShopModal({ onClose }: Props) {
         const canBuy = gold >= (selectedItem.current_price as number);
         const typeLabel = getItemTypeLabel(selectedItem.type);
         const typeBorder = getItemTypeBorderColor(selectedItem.type);
-        const itemImg = (selectedItem as any).slug ? getItemImageUrl((selectedItem as any).slug) : selectedItem.image_url;
+        const itemImg = selectedItem.image_url || ((selectedItem as any).slug ? getItemImageUrl((selectedItem as any).slug) : null);
         const effectList = getEffectList(selectedItem.effect_data);
         return createPortal(
             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
@@ -415,7 +415,7 @@ export default function ShopModal({ onClose }: Props) {
                                     <div className="text-center text-gray-500 col-span-2 py-8">商品は売り切れのようです...</div>
                                 ) : (
                                     items.map((item) => {
-                                        const listImg = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                        const listImg = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
                                         return (
                                         <div key={item.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex items-center gap-3 hover:border-[#a38b6b] transition-colors">
                                             <div className="w-10 h-10 rounded bg-[#e8dcc8] border border-[#c2b280] flex items-center justify-center flex-shrink-0 overflow-hidden">

@@ -51,6 +51,7 @@ export type TargetType =
 
 export interface Card {
   id: string;
+  slug?: string;
   name: string;
   type: CardType;
   description: string;
@@ -524,6 +525,9 @@ export interface BattleState {
   resonanceActive?: boolean; // spec_v5 §6.2: 共鳳ボーナス (ATK/DEF +10%)
   battle_session_id?: string; // v17 Server-Authoritative Battle
   activeSupportBuffs: string[]; // v19: 使用済みSupportカードのcard_idリスト（バトル内永続効果）
+  equipBonus?: { atk: number; def: number; hp: number }; // v24: 装備品ボーナス（バトル中永続）
+  battleItems: InventoryItem[]; // v25: バトル中使用可能な消耗品リスト
+  _pendingNextTurnLabel?: number | null; // v25: パーティ・エネミーターン完了後に表示するターン番号
 }
 
 export type Scenario = ScenarioDB;
@@ -540,5 +544,6 @@ export interface InventoryItem extends Omit<ItemDB, 'id'> {
   card_id?: number; // v18: スキルの cards.id
   cost?: number; // Derived from linked card or item data
   acquired_at?: string;
+  use_timing?: 'battle' | 'field' | 'passive'; // v25: 使用タイミング（effect_data.use_timing のショートカット）
 }
 

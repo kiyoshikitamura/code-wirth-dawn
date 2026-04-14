@@ -138,11 +138,17 @@ export async function GET(req: Request) {
                         description,
                         cards (
                             id,
+                            slug,
                             name,
                             type,
                             cost_type,
                             cost_val,
-                            effect_val
+                            effect_val,
+                            ap_cost,
+                            target_type,
+                            effect_id,
+                            image_url,
+                            description
                         )
                     )
                 `)
@@ -225,7 +231,12 @@ export async function GET(req: Request) {
                     effect_val: card.effect_val,
                     cost_type: card.cost_type,
                     card_type: card.type,
-                    description: skill.description || card.name
+                    ap_cost: card.ap_cost ?? 1,
+                    target_type: card.target_type,
+                    effect_id: card.effect_id || null,
+                    image_url: card.image_url || null,      // v3.3: バトルカード画像
+                    // v3.3: skills.description → cards.description → skill.name の順で優先
+                    description: skill.description || card.description || card.name
                 } : {};
 
                 return {
@@ -245,7 +256,7 @@ export async function GET(req: Request) {
                     is_skill: true,
                     cost: skill.deck_cost || 0,
                     effect_data: effectData,
-                    image_url: skill.image_url || (skill.slug ? `/images/items/${skill.slug}.png` : null)
+                    image_url: card?.image_url || skill.image_url || (skill.slug ? `/images/items/${skill.slug}.png` : null)
                 };
             } catch (e: any) {
                 console.error(`Error mapping user_skill ${entry.id}:`, e);

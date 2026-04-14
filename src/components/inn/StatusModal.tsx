@@ -35,12 +35,11 @@ type DetailType = 'skill' | 'item' | 'npc';
 interface DetailTarget { type: DetailType; data: any; }
 
 export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
-    const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile } = useGameStore();
+    const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile,
+            fetchEquipment, equippedItems: equipped, equipBonus } = useGameStore();
     const [activeTab, setActiveTab] = React.useState<TabKey>('deck');
     const [detail, setDetail] = React.useState<DetailTarget | null>(null);
     const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
-    const [equipped, setEquipped] = React.useState<any[]>([]);
-    const [equipBonus, setEquipBonus] = React.useState<{atk:number;def:number;hp:number}>({atk:0,def:0,hp:0});
     const [enlargedImage, setEnlargedImage] = React.useState<string | null>(null);
 
     React.useEffect(() => {
@@ -50,30 +49,17 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
 
     // userProfile が読み込まれてからも再取得（初回マウント時は userProfile が null の可能性）
     React.useEffect(() => {
-        fetchEquipment();
+        if (userProfile?.id) fetchEquipment();
     }, [userProfile?.id]);
-
-    const fetchEquipment = async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            const res = await fetch('/api/equipment', {
-                headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
-                }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setEquipped(data.equipped || []);
-                setEquipBonus(data.bonus || {atk:0,def:0,hp:0});
-            }
-        } catch (e) { console.error('Equipment fetch error:', e); }
-    };
 
     const consumables = inventory.filter(i => !i.is_skill && i.item_type !== 'skill_card');
     const skills = inventory.filter(i => i.is_skill || i.item_type === 'skill_card');
-    const equipmentItems = consumables.filter(i => i.item_type === 'equipment' || i.type === 'equipment');
+    // 装備済み item_id を Set に収集してから equipmentItems をフィルタリング（重複除去）
+    const equippedItemIds = new Set(equipped.map((e: any) => String(e.item_id)));
+    const equipmentItems = consumables.filter(i =>
+        (i.item_type === 'equipment' || (i as any).type === 'equipment') &&
+        !equippedItemIds.has(String((i as any).item_id || i.id))
+    );
     const currentDeckCost = skills.filter(i => i.is_equipped).reduce((sum, i) => sum + (i.cost || 0), 0);
 
     const handleToggleSkill = async (item: any) => {
@@ -95,6 +81,65 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
         await toggleEquip(item.id, item.is_equipped, isCampMode);
     };
 
+    // v25: フィールド場面での消耗品使用
+    const handleUseFieldItem = async (item: any) => {
+        const itemType = item.item_type || item.type || '';
+        const useTiming = item.effect_data?.use_timing || item.use_timing || 'field';
+
+        if (useTiming === 'battle') {
+            alert(`「${item.name}」はバトル中のみ使用できます。`);
+            return;
+        }
+        if (useTiming === 'passive') {
+            alert(`「${item.name}」は所持するだけで効果を発揮します。`);
+            return;
+        }
+
+        // 特殊処理：禁術の秘薬（Vit回復）
+        const slug = item.slug || item.item_slug || '';
+        if (slug === 'item_black_market_elixir' || item.name === '禁術の秘薬') {
+            if (!confirm('禁術の秘薬を使用しますか？\n失われた寿命(VITALITY)が1回復します。')) return;
+            const { supabase } = await import('@/lib/supabase');
+            const session = await supabase.auth.getSession();
+            const res = await fetch('/api/profile/consume-elixir', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.data.session?.access_token || ''}`, 'x-user-id': userProfile?.id || '' }
+            });
+            const data = await res.json();
+            if (res.ok) { alert('禁術の秘薬を使用し、寿命が回復した！'); fetchInventory(); fetchUserProfile(); }
+            else { alert('使用に失敗しました: ' + (data.error || 'Unknown')); }
+            setDetail(null);
+            return;
+        }
+
+        // 汎用フィールド使用 API
+        if (!confirm(`「${item.name}」を使用しますか？`)) return;
+        const { supabase } = await import('@/lib/supabase');
+        const session = await supabase.auth.getSession();
+        const res = await fetch('/api/item/use', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.data.session?.access_token || ''}`
+            },
+            body: JSON.stringify({ inventory_id: item.id, use_context: 'field' })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            // フィールド効果の平文メッセージを構築
+            const ed = item.effect_data || {};
+            let msg = `「${item.name}」を使用しました。`;
+            if (ed.vit_restore) msg += `\n寿命(VIT) +${ed.vit_restore}回復！`;
+            if (ed.hp_restore) msg += `\nHP +${ed.hp_restore}回復！`;
+            alert(msg);
+            fetchInventory();
+            fetchUserProfile();
+        } else {
+            alert('使用に失敗しました: ' + (data.error || 'Unknown'));
+        }
+        setDetail(null);
+    };
+
     const handleEquipItem = async (invItem: any, slot: string) => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -109,6 +154,16 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 body: JSON.stringify({ inventory_id: invItem.id, slot })
             });
             if (res.ok) {
+                // equipped_items テーブルに登録後、inventory の is_equipped も同期
+                await fetch('/api/inventory', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                        ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    },
+                    body: JSON.stringify({ inventory_id: invItem.id, is_equipped: true })
+                });
                 await Promise.all([fetchEquipment(), fetchInventory()]);
                 alert(`${invItem.name}を装備しました！`);
             } else {
@@ -122,6 +177,8 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+            // 外す前に equipped_items の item_id を記録
+            const eqItem = equipped.find((e: any) => e.slot === slot);
             const res = await fetch(`/api/equipment?slot=${slot}`, {
                 method: 'DELETE',
                 headers: {
@@ -130,6 +187,22 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 }
             });
             if (res.ok) {
+                // equipped_items から削除後、inventory.is_equipped も false に同期
+                if (eqItem) {
+                    // inventory の中から item_id が一致するものを探して is_equipped = false
+                    const invItem = inventory.find((i: any) => i.item_id === eqItem.item_id || String(i.item_id) === String(eqItem.item_id));
+                    if (invItem) {
+                        await fetch('/api/inventory', {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                                ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                            },
+                            body: JSON.stringify({ inventory_id: invItem.id, is_equipped: false })
+                        });
+                    }
+                }
                 await Promise.all([fetchEquipment(), fetchInventory()]);
             }
         } catch (e) { console.error(e); }
@@ -285,7 +358,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                 ) : (
                                     <div className="space-y-1">
                                         {skills.filter(i => i.is_equipped).map(item => {
-                                            const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                            const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
                                             return (
                                             <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-purple-900/10 rounded border border-purple-900/30 hover:border-purple-700/50 transition-colors cursor-pointer active:bg-purple-900/20">
                                                 <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -319,7 +392,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             const isLocked = isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
                                             const isOverCost = currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10);
                                             const isDisabled = isLocked || isOverCost;
-                                            const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                            const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
 
                                             return (
                                                 <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer active:bg-gray-800/60">
@@ -400,7 +473,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                     <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5">装備可能アイテム</div>
                                     <div className="space-y-1">
                                         {equipmentItems.map(item => {
-                                            const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                            const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
                                             const subType = (item as any).sub_type || ((item as any).item_type === 'equipment' ? 'weapon' : 'weapon');
                                             const bonus = getEquipmentBonus(item.effect_data);
                                             return (
@@ -439,7 +512,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                             ) : (
                                 <div className="space-y-1">
                                     {consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').map(item => {
-                                        const imgUrl = (item as any).slug ? getItemImageUrl((item as any).slug) : item.image_url;
+                                        const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
                                         return (
                                         <div key={item.id} onClick={() => setDetail({ type: 'item', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -481,7 +554,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                         if (detail.type === 'npc') {
                                             imgUrl = detail.data.icon_url || detail.data.image_url;
                                         } else {
-                                            imgUrl = (detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : detail.data.image_url;
+                                            imgUrl = detail.data.image_url || ((detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : null);
                                         }
                                         if (imgUrl) {
                                             e.stopPropagation();
@@ -494,7 +567,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             ? <img src={detail.data.icon_url || detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" />
                                             : <Users className="w-5 h-5 text-blue-400" />
                                     ) : (() => {
-                                        const imgUrl = (detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : detail.data.image_url;
+                                        const imgUrl = detail.data.image_url || ((detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : null);
                                         return imgUrl
                                             ? <img src={imgUrl} alt={detail.data.name} className="w-full h-full object-cover" />
                                             : detail.type === 'skill'
@@ -553,7 +626,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                         <div className="grid grid-cols-3 gap-2">
                                             <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
                                                 <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
-                                                <div className="text-green-400 font-bold font-mono">{detail.data.hp ?? detail.data.durability ?? '—'}</div>
+                                                <div className="text-green-400 font-bold font-mono">{detail.data.max_hp ?? detail.data.hp ?? detail.data.durability ?? '—'}</div>
                                             </div>
                                             <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
                                                 <div className="text-[10px] text-gray-500 mb-0.5">ATK</div>
@@ -566,7 +639,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                         </div>
                                         <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700 space-y-1.5">
                                             <div className="flex justify-between text-xs"><span className="text-gray-500">職種</span><span className="text-gray-200">{detail.data.job_class || '冒険者'}</span></div>
-                                            <div className="flex justify-between text-xs"><span className="text-gray-500">耐久値</span><span className="text-gray-200">{detail.data.durability ?? '—'}</span></div>
+                                            <div className="flex justify-between text-xs"><span className="text-gray-500">耐久値</span><span className="text-gray-200">{detail.data.max_hp ?? detail.data.hp ?? detail.data.durability ?? '—'}</span></div>
                                             <div className="flex justify-between text-xs"><span className="text-gray-500">タイプ</span><span className="text-gray-200">{detail.data.origin_type === 'shadow_active' ? '影の残像' : detail.data.origin_type === 'shadow_heroic' ? '英霊' : '傭兵'}</span></div>
                                         </div>
                                         {/* 所持スキル */}
@@ -600,26 +673,34 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                             {detail.data.is_equipped ? '装備を外す' : '装備する'}
                                         </button>
                                     )}
-                                    {detail.type === 'item' && detail.data.name === '禁術の秘薬' && (
-                                        <button
-                                            onClick={async () => {
-                                                if (!confirm("禁術の秘薬を使用しますか？\n失われた寿命(VITALITY)が1回復します。")) return;
-                                                const { supabase } = await import('@/lib/supabase');
-                                                const session = await supabase.auth.getSession();
-                                                const res = await fetch('/api/profile/consume-elixir', {
-                                                    method: 'POST',
-                                                    headers: { 'Authorization': `Bearer ${session.data.session?.access_token || ''}`, 'x-user-id': userProfile?.id || '' }
-                                                });
-                                                const data = await res.json();
-                                                if (res.ok) { alert("禁術の秘薬を使用し、寿命が回復した！"); fetchInventory(); fetchUserProfile(); }
-                                                else { alert("使用に失敗しました: " + (data.error || "Unknown")); }
-                                                setDetail(null);
-                                            }}
-                                            className="flex-1 py-2 text-xs font-bold rounded-lg bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50 transition-all"
-                                        >
-                                            使用する
-                                        </button>
-                                    )}
+                                    {/* v25: 消耗品の使用ボタン */}
+                                    {detail.type === 'item' && (() => {
+                                        const ed = detail.data.effect_data || {};
+                                        const timing = ed.use_timing || detail.data.use_timing || 'field';
+                                        if (timing === 'battle') {
+                                            return (
+                                                <div className="flex-1 py-2 text-xs text-center text-amber-600/70 border border-amber-900/30 rounded-lg">
+                                                    🗡 バトル中のみ使用可
+                                                </div>
+                                            );
+                                        }
+                                        if (timing === 'passive') {
+                                            return (
+                                                <div className="flex-1 py-2 text-xs text-center text-gray-600 border border-gray-800 rounded-lg">
+                                                    ○ 所持効果
+                                                </div>
+                                            );
+                                        }
+                                        // field または未定義 → 使用ボタン
+                                        return (
+                                            <button
+                                                onClick={() => handleUseFieldItem(detail.data)}
+                                                className="flex-1 py-2 text-xs font-bold rounded-lg bg-green-900/30 text-green-400 border border-green-800 hover:bg-green-900/50 transition-all"
+                                            >
+                                                使用する
+                                            </button>
+                                        );
+                                    })()}
                                     {detail.type === 'npc' && (
                                         <button
                                             onClick={async () => {

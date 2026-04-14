@@ -3,7 +3,7 @@ import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
     try {
-        const { userId, amount = 1000 } = await req.json();
+        const { userId, amount = 10000 } = await req.json();
 
         if (!userId) return NextResponse.json({ error: 'User ID required' }, { status: 400 });
 

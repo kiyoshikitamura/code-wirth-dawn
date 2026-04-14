@@ -135,20 +135,36 @@ export async function GET(req: Request) {
                 || npc?.image_url
                 || (slug ? `/images/npcs/${slug}.png` : null);
 
+            // HP 計算: 優先順位 = max_durability(非DEFAULT) > npc.hp > member.durability
+            // max_durabilityのDEFAULT値(100)は信用せず、NPCマスタのhpを参照する
+            const rawMaxDur = member.max_durability;
+            const npcHp = npc?.hp ?? npc?.max_hp ?? npc?.durability ?? null;
+            // active_shadow: hire時スナップショットのmax_durabilityが正（100でなければそれが正値）
+            const resolvedHp = member.origin_type === 'active_shadow'
+                ? (rawMaxDur && rawMaxDur !== 100 ? rawMaxDur : (member.durability && member.durability !== 100 ? member.durability : (npcHp ?? 100)))
+                : (npcHp ?? (rawMaxDur !== 100 ? rawMaxDur : null) ?? member.durability ?? 100);
+
             return {
                 ...member,
                 // NPCマスタからの補完データ（カラム名複数パターン対応）
                 slug: slug || member.slug,
                 epithet: npc?.epithet || member.epithet || '',
                 job_class: jobClassJp,
-                // level: npcsにlevelカラムがない場合はnull
-                level: npc?.level ?? member.level ?? null,
-                // HP: max_hp → hp → durability (CSVのdurabilityカラム) の順
-                hp: npc?.max_hp ?? npc?.hp ?? npc?.durability ?? member.durability ?? null,
-                // ATK: attack → atk の順
-                atk: npc?.attack ?? npc?.atk ?? null,
-                // DEF: defense → def の順
-                def: npc?.defense ?? npc?.def ?? null,
+                // v25: active_shadow は party_members のスナップショット値を優先
+                level: member.origin_type === 'active_shadow'
+                    ? (member.level ?? npc?.level ?? null)
+                    : (npc?.level ?? member.level ?? null),
+                // HP: 上記で計算した resolvedHp を使用
+                hp: resolvedHp,
+                max_hp: resolvedHp,
+                // ATK: active_shadow は party_members.atk 優先
+                atk: member.origin_type === 'active_shadow'
+                    ? (member.atk ?? npc?.attack ?? npc?.atk ?? null)
+                    : (npc?.attack ?? npc?.atk ?? member.atk ?? null),
+                // DEF: active_shadow は party_members.def 優先
+                def: member.origin_type === 'active_shadow'
+                    ? (member.def ?? npc?.defense ?? npc?.def ?? null)
+                    : (npc?.defense ?? npc?.def ?? member.def ?? null),
                 // 画像 URL
                 image_url: resolvedImageUrl,
                 icon_url: resolvedImageUrl,

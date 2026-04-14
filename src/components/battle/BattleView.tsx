@@ -5,22 +5,23 @@ import { useGameStore } from '@/store/gameStore';
 import { useRouter } from 'next/navigation';
 import { Shield, Sword, Sparkles, Heart, Footprints, Settings, Skull, Clock, Target, Users, User, LogOut, ScrollText, Zap, X } from 'lucide-react';
 import Image from 'next/image';
-import { hasTaunt, StatusEffect } from '@/lib/statusEffects';
+import { hasTaunt, StatusEffect, getEffectName } from '@/lib/statusEffects';
 import XShareButton from '../shared/XShareButton';
 import { Enemy } from '@/types/game';
+import StatusEffectBadges from './StatusEffectBadges';
 
 interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
     battleTitle?: string;
+    bgImageUrl?: string;
 }
 
-export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps) {
+export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: BattleViewProps) {
     const router = useRouter();
     const hasHydrated = useGameStore(state => state._hasHydrated);
     const {
         battleState,
         hand,
-        initializeBattle,
         attackEnemy,
         endTurn,
         waitTurn,
@@ -29,7 +30,8 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
         selectedScenario,
         fetchUserProfile,
         userProfile,
-        setTarget
+        setTarget,
+        useBattleItem,
     } = useGameStore();
 
     const [logs, setLogs] = useState<string[]>([]);
@@ -40,34 +42,73 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
     const [selectedPartyMember, setSelectedPartyMember] = useState<any | null>(null);
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [showUserDetail, setShowUserDetail] = useState(false);
+    const [showItemPanel, setShowItemPanel] = useState(false); // v25: バトルアイテムパネル
 
     // Typewriter state
     const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
     const [typingText, setTypingText] = useState<string>('');
+    // v3.3: HPバーをタイプライターと同期するためのゴースト HP 状態
+    const [liveHp, setLiveHp] = useState<number | null>(null);
+    // v3.3: パーティHPバーをタイプライターと同期するためのゴースト durability Map
+    const [livePartyDurability, setLivePartyDurability] = useState<Record<string, number>>({});
     const typingQueue = useRef<string[]>([]);
     const isTyping = useRef(false);
 
     // Process typewriter queue
     const processQueue = useCallback(() => {
         if (isTyping.current || typingQueue.current.length === 0) return;
-        isTyping.current = true;
+
         const message = typingQueue.current.shift()!;
+
+        // v3.3: __hp_sync:NNN マーカーは表示せず、HPバーのみ更新
+        if (message.startsWith('__hp_sync:')) {
+            const newHp = parseInt(message.slice(10), 10);
+            if (!isNaN(newHp)) setLiveHp(newHp);
+            setTimeout(() => processQueue(), 0);
+            return;
+        }
+
+        // v3.3: __party_sync:ID:DUR マーカーは表示せず、パーティHPバーのみ更新
+        if (message.startsWith('__party_sync:')) {
+            const parts = message.slice(13).split(':');
+            const memberId = parts[0];
+            const newDur = parseInt(parts[1], 10);
+            if (memberId && !isNaN(newDur)) {
+                setLivePartyDurability(prev => ({ ...prev, [memberId]: newDur }));
+            }
+            setTimeout(() => processQueue(), 0);
+            return;
+        }
+
+        // v25: ターン区切りメッセージ（--- ターン N ---）はタイプライターなしで即時表示
+        if (/^--- .+ ---$/.test(message)) {
+            setDisplayedLogs(prev => [...prev, message]);
+            setTypingText('');
+            setTimeout(() => processQueue(), 80);
+            return;
+        }
+
+        isTyping.current = true;
         let charIdx = 0;
         setTypingText('');
 
-        const timer = setInterval(() => {
+        // v25: setInterval の蔓用を防ぐため、クリア铺クロージャを保持
+        let timerId: ReturnType<typeof setInterval> | null = null;
+
+        timerId = setInterval(() => {
             charIdx++;
             if (charIdx <= message.length) {
                 setTypingText(message.slice(0, charIdx));
             } else {
-                clearInterval(timer);
+                if (timerId) clearInterval(timerId);
+                timerId = null;
                 setDisplayedLogs(prev => [...prev, message]);
                 setTypingText('');
                 isTyping.current = false;
                 // Process next in queue
-                setTimeout(() => processQueue(), 100);
+                setTimeout(() => processQueue(), 80);
             }
-        }, 30);
+        }, 20); // v25: 30ms → 20msに高速化
     }, []);
 
     // Auto-scroll logs
@@ -131,6 +172,23 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             router.push('/inn');
         }
     }, []);
+
+    // v25: バトル開始時（party が存在し始めた時）のみ livePartyDurability を初期化
+    // battleState.party 全体を監視すると毎ターンのメンバー更新で不要なレンダリングが発生するため
+    // length のみ監視し、0 → N の変化（= 新しいバトル開始）時のみ実行する
+    const prevPartyLengthRef = useRef(0);
+    useEffect(() => {
+        const len = battleState.party?.length ?? 0;
+        if (len > 0 && prevPartyLengthRef.current === 0) {
+            // 新しいバトル開始: livePartyDurability を初期化
+            const initial: Record<string, number> = {};
+            for (const m of battleState.party) {
+                initial[String(m.id)] = m.durability ?? (m as any).hp ?? 0;
+            }
+            setLivePartyDurability(initial);
+        }
+        prevPartyLengthRef.current = len;
+    }, [battleState.party?.length]);
 
     // Handle Pub NPC Death
     useEffect(() => {
@@ -262,7 +320,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             `}</style>
 
             {/* BATTLE HEADER — safe-area対応 */}
-            <div className="relative z-40 bg-slate-950/90 border-b border-slate-800 px-4 pt-[env(safe-area-inset-top,10px)] pb-2 flex items-center justify-between backdrop-blur-sm">
+            <div className="relative z-40 bg-black/40 border-b border-white/20 px-4 pt-[env(safe-area-inset-top,10px)] pb-2 flex items-center justify-between backdrop-blur-md shadow-sm">
                 <div className="flex items-center gap-2 min-w-0">
                     <Sword size={14} className="text-red-400 flex-shrink-0" />
                     <span className="text-xs font-bold text-slate-300 truncate">
@@ -278,8 +336,11 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
 
             {/* Background Layer */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542261226-9fcfd06ec4da?auto=format&fit=crop&w=1000&q=80')] bg-cover bg-center opacity-30 mix-blend-overlay" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+                <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-60" 
+                    style={{ backgroundImage: `url('${bgImageUrl || "https://images.unsplash.com/photo-1542261226-9fcfd06ec4da?auto=format&fit=crop&w=1000&q=80"}')` }} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             </div>
 
             {/* Turn Overlay */}
@@ -299,12 +360,6 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                     {/* LEFT: Target enemy (Sprite) */}
                     {target && (
                         <div className="relative transition-all duration-500 flex flex-col items-center flex-shrink-0 z-20">
-                            {target.spawn_type === 'bounty' && target.hp > 0 && (
-                                <div className="absolute -top-4 bg-red-950/90 border border-red-500 text-red-500 text-[10px] sm:text-xs font-black px-2 py-0.5 whitespace-nowrap z-20 skew-x-[-10deg] shadow-[0_0_15px_rgba(220,38,38,0.6)]">
-                                    BOUNTY
-                                </div>
-                            )}
-
                             {/* Huge Sprite Image */}
                             <div className={`w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] relative transition-all duration-500 flex items-center justify-center
                                 ${target.hp > 0 ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
@@ -313,6 +368,16 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                     <img src={target.image_url} alt={target.name} className="max-w-full max-h-full object-contain drop-shadow-2xl" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-500"><Skull size={64} /></div>
+                                )}
+
+                            {/* 大スプライト左上：状態異常バッジ */}
+                                {target.hp > 0 && (target.status_effects || []).length > 0 && (
+                                    <div className="absolute top-1 left-1 z-50 pointer-events-none">
+                                        <StatusEffectBadges
+                                            effects={target.status_effects || []}
+                                            size="md"
+                                        />
+                                    </div>
                                 )}
 
                                 {/* Action Animations strictly for attack on target */}
@@ -339,21 +404,26 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
 
                             {/* Floating Info Base */}
                             <div className="mt-2 w-[140px] sm:w-[160px] flex flex-col items-center bg-black/60 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 shadow-2xl z-10 transition-all duration-300">
-                                <div className={`text-[11px] sm:text-xs font-bold text-center truncate w-full leading-tight ${target.hp <= 0 ? 'text-gray-500 line-through' : 'text-slate-100 drop-shadow-md'}`}>
-                                    {target.name} <span className="text-[9px] sm:text-[10px] text-amber-400 font-normal ml-1">Lv.{target.level}</span>
+                                <div className={`text-[10px] sm:text-[12px] font-bold text-center w-full leading-tight truncate ${target.hp <= 0 ? 'text-gray-500 line-through' : 'text-slate-100 drop-shadow-md'}`}>
+                                    {target.name}
                                 </div>
-                                {target.hp > 0 && (
-                                    <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden mt-1.5 border border-black/80 relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)]">
-                                        <div className="h-full bg-gradient-to-r from-red-800 to-red-500 transition-all duration-300" style={{ width: `${(target.hp / target.maxHp) * 100}%` }} />
-                                    </div>
-                                )}
+                                <div className="flex items-center w-full mt-1.5 gap-1.5">
+                                    <span className="text-[9px] sm:text-[10px] text-amber-400 font-bold whitespace-nowrap">Lv.{target.level}</span>
+                                    {target.hp > 0 ? (
+                                        <div className="flex-1 h-2 bg-slate-900/80 rounded-full overflow-hidden border border-black/80 relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)]">
+                                            <div className="h-full bg-gradient-to-r from-red-800 to-red-500 transition-all duration-300" style={{ width: `${(target.hp / target.maxHp) * 100}%` }} />
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 h-2" />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* RIGHT: Non-target enemies (Icon list) */}
                     {(() => {
-                        const others = enemies.filter(e => target?.id !== e.id);
+                        const others = enemies.filter(e => target?.id !== e.id).slice(0, 4);
                         if (others.length === 0) return null;
 
                         return (
@@ -364,26 +434,29 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                         <div
                                             key={enemy.id}
                                             className={`flex items-center gap-2 cursor-pointer transition-all duration-300 px-1.5 py-1 sm:px-2 sm:py-1.5 rounded-lg border
-                                                ${isDead ? 'opacity-40 grayscale border-transparent' : 'bg-slate-900/50 hover:bg-slate-800 border-slate-700/50 hover:border-slate-500 shadow-lg hover:scale-105 active:scale-95'}
+                                                ${isDead ? 'opacity-40 grayscale border-transparent' : 'bg-black/30 backdrop-blur-md hover:bg-black/50 border-white/20 hover:border-white/50 shadow-lg hover:scale-105 active:scale-95'}
                                             `}
                                             onClick={() => !isDead && setTarget(enemy.id)}
                                         >
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center flex-shrink-0 relative">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden bg-black/50 border border-white/20 flex items-center justify-center flex-shrink-0 relative">
                                                 {enemy.image_url ? (
                                                     <img src={enemy.image_url} alt={enemy.name} className="max-w-full max-h-full object-cover" />
                                                 ) : (
                                                     <Skull size={16} className="text-slate-600" />
                                                 )}
-                                                {enemy.spawn_type === 'bounty' && !isDead && (
-                                                    <div className="absolute -top-1 right-0 text-red-500 font-extrabold text-[8px] bg-red-950/90 rounded-bl leading-none px-0.5">B</div>
+                                                {/* 非ターゲット敵アイコン左上：状態異常バッジ */}
+                                                {!isDead && (enemy.status_effects || []).length > 0 && (
+                                                    <div className="absolute top-0 left-0 z-10 pointer-events-none">
+                                                        <StatusEffectBadges effects={enemy.status_effects || []} size="sm" maxBadges={3} />
+                                                    </div>
                                                 )}
                                             </div>
                                             {!isDead && (
                                                 <div className="flex flex-col justify-center w-[72px] sm:w-[90px]">
-                                                    <div className="text-[9px] sm:text-[10px] font-bold text-slate-300 truncate w-full leading-tight">
+                                                    <div className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow-md truncate w-full leading-tight">
                                                         {enemy.name}
                                                     </div>
-                                                    <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden mt-1 border border-black relative">
+                                                    <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-white/10 relative shadow-inner">
                                                         <div className="h-full bg-red-600/80 transition-all duration-300" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
                                                     </div>
                                                 </div>
@@ -397,86 +470,80 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 </div>
             </div>
 
-            {/* PLAYER STATUS PANEL */}
+            {/* PLAYER & PARTY STATUS PANEL */}
             <div className="relative z-20 px-3 mt-1 w-full flex-shrink-0">
-                <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-2 backdrop-blur-sm">
-                    <div className="flex items-center gap-2.5">
-                        {/* Avatar — タップで詳細表示 */}
-                        <button
-                            onClick={() => setShowUserDetail(true)}
-                            className="w-10 h-10 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden active:scale-90 transition-transform"
-                        >
-                            {userProfile?.avatar_url ? (
-                                <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                                <User size={18} className="text-amber-500" />
-                            )}
-                        </button>
+                <div className="bg-black/40 border border-white/20 rounded-lg p-2 backdrop-blur-md drop-shadow-md">
+                    <div className="flex items-center gap-1.5">
+                        <div className="flex flex-col justify-center items-center w-12 h-14 bg-white/10 rounded-lg border border-white/20 flex-shrink-0 shadow-inner mr-1 backdrop-blur-sm">
+                            <span className="text-[9px] text-slate-300 font-bold mb-0.5 drop-shadow-md">AP</span>
+                            <span className="text-xl font-bold text-amber-400 font-mono leading-none drop-shadow-md">{battleState.current_ap || 0}</span>
+                        </div>
 
-                        {/* Name + HP + VIT */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</span>
-                                <span className="text-[9px] text-amber-500 font-bold">Lv.{userProfile?.level || 1}</span>
-                                {battleState.resonanceActive && (
-                                    <span className="text-[8px] text-yellow-400 font-bold animate-pulse">共鳴ボーナス発動中</span>
+                        {/* Scrolling Members List — pt-3 でバッジが上に飛び出せる余白を確保 */}
+                        <div className="flex-1 flex items-start gap-3 overflow-x-auto no-scrollbar pb-1 pt-3">
+                            {/* Player Icon */}
+                            <button
+                                onClick={() => setShowUserDetail(true)}
+                                className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform relative"
+                            >
+                                <div className="w-10 h-10 rounded-full border-[2px] border-amber-400 bg-black/50 flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm">
+                                    {userProfile?.avatar_url ? (
+                                        <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={18} className="text-amber-500" />
+                                    )}
+                                </div>
+                                {/* プレイヤーアイコン左上：状態異常バッジ — button 相対に配置しoverflow-hiddenを回避 */}
+                                {(battleState.player_effects || []).length > 0 && (
+                                    <div className="absolute top-0 left-0 -translate-y-1/4 z-30 pointer-events-none">
+                                        <StatusEffectBadges
+                                            effects={battleState.player_effects as StatusEffect[]}
+                                            size="sm"
+                                        />
+                                    </div>
                                 )}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[8px] text-green-400 font-bold w-5 flex-shrink-0">HP</span>
-                                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                                    <div className="h-full bg-green-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100))}%` }} />
+                                <div className="w-10 h-1.5 mt-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-900 shadow-inner">
+                                    <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, ((liveHp ?? userProfile?.hp ?? 0) / (userProfile?.max_hp || 1)) * 100))}%` }} />
                                 </div>
-                                <span className="text-[8px] text-green-400 font-mono w-14 text-right flex-shrink-0">{userProfile?.hp || 0}/{userProfile?.max_hp || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[8px] text-sky-400 font-bold w-5 flex-shrink-0">VIT</span>
-                                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                                    <div className="h-full bg-sky-500 transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, ((userProfile?.vitality || 0) / (userProfile?.max_vitality || 100)) * 100))}%` }} />
-                                </div>
-                                <span className="text-[8px] text-sky-400 font-mono w-14 text-right flex-shrink-0">{userProfile?.vitality || 0}/{userProfile?.max_vitality || 100}</span>
-                            </div>
-                        </div>
+                                <span className="text-[9px] text-slate-100 font-bold w-[44px] text-center truncate mt-0.5 drop-shadow-md">{userProfile?.name || '旅人'}</span>
+                            </button>
 
-                        {/* AP */}
-                        <div className="flex flex-col items-center gap-0.5 px-2 border-l border-slate-700 flex-shrink-0">
-                            <span className="text-[8px] text-slate-500 font-bold">AP</span>
-                            <span className="text-base font-bold text-amber-400 font-mono">{battleState.current_ap || 0}<span className="text-[9px] text-slate-600">/{15}</span></span>
-                        </div>
-                    </div>
-
-                    {/* Party Members + Guest NPCs row */}
-                    {partyMembers.length > 0 && (
-                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-800/60 overflow-x-auto no-scrollbar">
-                            <Users size={12} className="text-slate-600 flex-shrink-0" />
+                            {/* Party Members */}
                             {partyMembers.slice(0, 9).map((member: any, i: number) => (
                                 <button
                                     key={i}
                                     onClick={() => setSelectedPartyMember(member)}
-                                    className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform"
+                                    className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform relative"
                                 >
-                                    <div className={`w-9 h-9 rounded-full border ${(member.durability ?? member.hp) > 0 ? 'border-sky-500/70 bg-slate-800' : 'border-slate-700 bg-slate-900 opacity-40'} flex items-center justify-center overflow-hidden`}>
+                                    <div className={`w-10 h-10 rounded-full border-[2px] ${(member.durability ?? member.hp) > 0 ? 'border-sky-400/80 bg-black/50' : 'border-white/20 bg-black/80 opacity-60'} flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm`}>
                                         {(member.icon_url || member.image_url || member.avatar_url) ? (
                                             <img src={member.icon_url || member.image_url || member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                            <User size={14} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
+                                            <User size={18} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
                                         )}
                                     </div>
-                                    <div className="w-8 h-1 mt-0.5 bg-slate-800 rounded-full overflow-hidden">
-                                        <div className="h-full bg-green-500" style={{ width: `${(member.maxHp || member.max_hp) ? ((member.durability ?? member.hp) / (member.maxHp || member.max_hp)) * 100 : 100}%` }} />
+                                    {/* パーティアイコン左上：状態異常バッジ — button 相対に配置しoverflow-hiddenを回避 */}
+                                    {(member.status_effects || []).length > 0 && (member.durability ?? member.hp) > 0 && (
+                                        <div className="absolute top-0 left-0 -translate-y-1/4 z-30 pointer-events-none">
+                                            <StatusEffectBadges effects={member.status_effects || []} size="sm" maxBadges={3} />
+                                        </div>
+                                    )}
+                                    <div className="w-10 h-1.5 mt-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                                        {/* v25: max_hp (= max_durability) を使った正しいHPバー計算 */}
+                                        <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, ((livePartyDurability[String(member.id)] ?? member.durability ?? member.hp ?? 0) / (member.max_hp || member.max_durability || member.durability || 1)) * 100))}%` }} />
                                     </div>
-                                    <span className="text-[8px] text-slate-500 truncate max-w-[36px]">{member.name?.slice(0, 4) || 'NPC'}</span>
+                                    <span className="text-[9px] text-slate-200 font-bold w-[44px] text-center truncate mt-0.5 drop-shadow-md">{member.name?.slice(0, 4) || 'NPC'}</span>
                                 </button>
                             ))}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
             {/* Party Member Detail Popup */}
             {selectedPartyMember && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedPartyMember(null)}>
-                    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-[280px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-[280px] shadow-2xl drop-shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <div className="w-10 h-10 rounded-full border-2 border-sky-500 bg-slate-800 flex items-center justify-center overflow-hidden">
@@ -498,7 +565,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         <div className="space-y-2 text-[11px]">
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-green-400 font-bold">HP</span>
-                                <span className="text-slate-200 font-mono">{selectedPartyMember.durability ?? selectedPartyMember.hp ?? 0} / {selectedPartyMember.maxHp ?? selectedPartyMember.max_hp ?? selectedPartyMember.hp ?? 0}</span>
+                                <span className="text-slate-200 font-mono">{selectedPartyMember.durability ?? selectedPartyMember.hp ?? 0} / {selectedPartyMember.max_durability ?? selectedPartyMember.durability ?? 0}</span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-red-400 font-bold">攻撃力</span>
@@ -539,7 +606,7 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             {/* User Status Detail Popup */}
             {showUserDetail && userProfile && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserDetail(false)}>
-                    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-[280px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-[280px] shadow-2xl drop-shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <div className="w-10 h-10 rounded-full border-2 border-amber-500 bg-slate-800 flex items-center justify-center overflow-hidden">
@@ -561,7 +628,10 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         <div className="space-y-2 text-[11px]">
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-green-400 font-bold">HP</span>
-                                <span className="text-slate-200 font-mono">{userProfile.hp || 0} / {userProfile.max_hp || 0}</span>
+                                <span className="text-slate-200 font-mono">
+                                    {userProfile.hp || 0} / {(userProfile.max_hp || 0) + (battleState.equipBonus?.hp || 0)}
+                                    {(battleState.equipBonus?.hp || 0) > 0 && <span className="text-[9px] text-emerald-400 ml-1">(装備+{battleState.equipBonus!.hp})</span>}
+                                </span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-sky-400 font-bold">VIT</span>
@@ -569,11 +639,21 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-red-400 font-bold">攻撃力</span>
-                                <span className="text-slate-200 font-mono">{userProfile.atk || 0}</span>
+                                <span className="text-slate-200 font-mono">
+                                    {/* 実効ATK = (base + equipBonus) * resonanceMod */}
+                                    {Math.floor(((userProfile.atk || 0) + (battleState.equipBonus?.atk || 0)) * (battleState.resonanceActive ? 1.1 : 1.0))}
+                                    {(battleState.equipBonus?.atk || 0) > 0 && <span className="text-[9px] text-orange-400 ml-1">(装備+{battleState.equipBonus!.atk})</span>}
+                                    {battleState.resonanceActive && <span className="text-[9px] text-yellow-400 ml-1">(共鳴×1.1)</span>}
+                                </span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-blue-400 font-bold">防御力</span>
-                                <span className="text-slate-200 font-mono">{userProfile.def || 0}</span>
+                                <span className="text-slate-200 font-mono">
+                                    {/* 実効DEF = (base + equipBonus) * resonanceMod */}
+                                    {Math.floor(((userProfile.def || 0) + (battleState.equipBonus?.def || 0)) * (battleState.resonanceActive ? 1.1 : 1.0))}
+                                    {(battleState.equipBonus?.def || 0) > 0 && <span className="text-[9px] text-cyan-400 ml-1">(装備+{battleState.equipBonus!.def})</span>}
+                                    {battleState.resonanceActive && <span className="text-[9px] text-yellow-400 ml-1">(共鳴×1.1)</span>}
+                                </span>
                             </div>
                             <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                                 <span className="text-amber-400 font-bold">AP</span>
@@ -584,19 +664,52 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                 <span className="text-slate-200 font-mono">{userProfile.gold || 0} G</span>
                             </div>
                             {battleState.resonanceActive && (
-                                <div className="bg-yellow-900/20 border border-yellow-700/50 rounded px-2 py-1.5 text-center">
-                                    <span className="text-yellow-400 font-bold text-[10px] animate-pulse">✦ 共鳴ボーナス発動中 ✦</span>
+                                <div className="bg-yellow-900/30 border border-yellow-600/50 rounded px-2 py-1.5 text-center">
+                                    <span className="text-yellow-300 font-bold text-[10px] animate-pulse">⚡ 共鳴ボーナス発動中 (ATK/DEF +10%)</span>
                                 </div>
                             )}
+
                             {(battleState.player_effects as any[])?.length > 0 && (
                                 <div className="bg-slate-800/50 rounded px-2 py-1.5">
                                     <span className="text-purple-400 font-bold text-[10px]">状態効果</span>
                                     <div className="mt-1 flex flex-wrap gap-1">
-                                        {(battleState.player_effects as any[]).map((eff: any, ei: number) => (
-                                            <span key={ei} className="px-1.5 py-0.5 bg-purple-900/30 border border-purple-800/50 rounded text-[9px] text-purple-300">
-                                                {eff.id || eff.name || 'Effect'} ({eff.remaining_turns || '?'}T)
+                                        {(battleState.player_effects as any[]).map((eff: any, ei: number) => {
+                                            const isDebuff = ['stun', 'bind', 'poison', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'atk_down'].includes(eff.id);
+                                            return (
+                                                <span key={ei} className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${
+                                                    isDebuff
+                                                        ? 'bg-red-900/30 border-red-800/50 text-red-300'
+                                                        : 'bg-sky-900/30 border-sky-800/50 text-sky-300'
+                                                }`}>
+                                                    {getEffectName(eff.id)} ({eff.duration ?? '?'}T)
+                                                    {eff.value != null && eff.value > 0 && <span className="ml-0.5 text-[8px] opacity-70">+{eff.value}</span>}
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* デッキスキル */}
+                            {hand?.length > 0 && (
+                                <div className="bg-slate-800/50 rounded px-2 py-1.5">
+                                    <span className="text-amber-400 font-bold text-[10px]">手札スキル ({hand.length}枚)</span>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {hand.filter((c: any) => c.type !== 'noise').slice(0, 8).map((c: any, ci: number) => (
+                                            <span key={ci} className={`px-1.5 py-0.5 rounded text-[9px] border ${
+                                                c.cost_type === 'item'
+                                                    ? 'bg-teal-900/30 border-teal-700/50 text-teal-300'
+                                                    : c.type === 'Support'
+                                                        ? 'bg-purple-900/30 border-purple-700/50 text-purple-300'
+                                                        : 'bg-orange-900/30 border-orange-700/50 text-orange-300'
+                                            }`}>
+                                                {c.name}
+                                                {c.ap_cost != null && <span className="ml-0.5 text-[8px] opacity-60">({c.ap_cost}AP)</span>}
                                             </span>
                                         ))}
+                                        {hand.filter((c: any) => c.type !== 'noise').length > 8 && (
+                                            <span className="text-[9px] text-slate-500">...他{hand.filter((c: any) => c.type !== 'noise').length - 8}枚</span>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -606,10 +719,10 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             )}
 
             {/* BATTLE LOG — スクロール可能 + タイプライター */}
-            <div className="relative z-20 px-3 w-full flex-shrink-0">
+            <div className="relative z-20 px-3 w-full flex-shrink-0 drop-shadow-md">
                 <div
                     ref={logContainerRef}
-                    className="bg-slate-950/80 border border-slate-800 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-y-auto backdrop-blur-sm scroll-smooth"
+                    className="bg-black/30 backdrop-blur-md border border-white/20 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-y-auto scroll-smooth shadow-inner"
                     style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
                 >
                     {displayedLogs.map((log, idx) => {
@@ -619,12 +732,12 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         const isEnemyLog = log.includes('の行動') || log.includes('に攻撃') || log.includes('あなたに') && log.includes('ダメージ');
                         const isPartyLog = log.includes('がかばった') || log.includes('パーティ') || (battleState.party || []).some((m: any) => log.startsWith(m.name));
                         const isSystemLog = log.startsWith('---') || log.includes('勝利') || log.includes('敗北') || log.includes('ターゲット') || log.includes('逃') || log.includes('力尽きた') || log.includes('全ての敵');
-                        let logColor = isLatest ? 'text-slate-200' : 'text-slate-500';
-                        let bulletColor = isLatest ? 'text-amber-500' : 'text-slate-700';
-                        if (isSystemLog) { logColor = isLatest ? 'text-yellow-300' : 'text-yellow-700'; bulletColor = 'text-yellow-600'; }
-                        else if (isEnemyLog) { logColor = isLatest ? 'text-red-300' : 'text-red-800'; bulletColor = 'text-red-600'; }
-                        else if (isPartyLog) { logColor = isLatest ? 'text-sky-300' : 'text-sky-800'; bulletColor = 'text-sky-600'; }
-                        else if (isPlayerLog) { logColor = isLatest ? 'text-green-300' : 'text-green-800'; bulletColor = 'text-green-600'; }
+                        let logColor = isLatest ? 'text-white drop-shadow' : 'text-slate-300 drop-shadow; opacity-80';
+                        let bulletColor = isLatest ? 'text-amber-400 drop-shadow' : 'text-slate-500 drop-shadow';
+                        if (isSystemLog) { logColor = isLatest ? 'text-yellow-300 drop-shadow' : 'text-yellow-600 drop-shadow'; bulletColor = 'text-yellow-500 drop-shadow'; }
+                        else if (isEnemyLog) { logColor = isLatest ? 'text-red-300 drop-shadow' : 'text-red-700 drop-shadow'; bulletColor = 'text-red-500 drop-shadow'; }
+                        else if (isPartyLog) { logColor = isLatest ? 'text-sky-300 drop-shadow' : 'text-sky-600 drop-shadow'; bulletColor = 'text-sky-400 drop-shadow'; }
+                        else if (isPlayerLog) { logColor = isLatest ? 'text-green-300 drop-shadow' : 'text-green-600 drop-shadow'; bulletColor = 'text-green-500 drop-shadow'; }
                         return (
                             <div key={idx} className={`flex gap-1.5 ${logColor} ${isLatest ? 'font-bold' : ''}`}>
                                 <span className={`shrink-0 ${bulletColor}`}>▸</span>
@@ -658,9 +771,9 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                         const isSelected = selectedCardIndex === idx;
 
                         const getCostStyles = (ap: number) => {
-                            if (ap >= 4) return 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.6)] bg-gradient-to-t from-amber-950 to-slate-900';
-                            if (ap === 3) return 'border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] bg-gradient-to-t from-blue-950 to-slate-900';
-                            return 'border-slate-600 bg-slate-800';
+                            if (ap >= 4) return 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.8)] ring-1 ring-amber-400 animate-pulse bg-gradient-to-t from-amber-950/50 to-black/40 backdrop-blur-md';
+                            if (ap === 3) return 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] ring-1 ring-blue-400 bg-gradient-to-t from-blue-950/50 to-black/40 backdrop-blur-md';
+                            return 'border-slate-500 shadow-sm bg-black/40 backdrop-blur-md hover:border-slate-400';
                         }
 
                         return (
@@ -685,23 +798,23 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                                     ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}
                                     ${!isSelected ? 'group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]' : ''}
                                 `}>
-                                    <div className="h-1/2 bg-slate-900/50 border-b border-slate-700 relative backdrop-blur-sm">
+                                    <div className="h-1/2 bg-transparent border-b border-white/20 relative backdrop-blur-sm">
                                         {card.image_url ? (
                                             <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-amber-500/20">
+                                            <div className="w-full h-full flex items-center justify-center text-amber-500/80 drop-shadow-md">
                                                 {card.type === 'Skill' ? <Sparkles size={24} /> : card.type === 'Item' ? <Heart size={24} /> : <Sword size={24} />}
                                             </div>
                                         )}
-                                        <div className="absolute top-0.5 left-0.5 bg-black/80 rounded-full w-5 h-5 flex items-center justify-center font-bold text-white text-[10px] border border-slate-700">
+                                        <div className="absolute top-0.5 left-0.5 bg-black/60 backdrop-blur rounded-full w-5 h-5 flex items-center justify-center font-bold text-white text-[10px] border border-white/20 shadow-md">
                                             {apCost}
                                         </div>
                                     </div>
-                                    <div className="h-1/2 bg-slate-950/80 backdrop-blur-sm p-1 flex flex-col justify-between">
-                                        <div className="text-[9px] sm:text-[10px] font-bold leading-tight line-clamp-2 text-slate-200">
+                                    <div className="h-1/2 bg-black/30 backdrop-blur p-1 flex flex-col justify-between drop-shadow-md">
+                                        <div className="text-[9px] sm:text-[10px] font-bold leading-tight line-clamp-2 text-white drop-shadow">
                                             {card.name}
                                         </div>
-                                        <div className="text-[7px] sm:text-[8px] text-slate-500 line-clamp-2">
+                                        <div className="text-[7px] sm:text-[8px] text-slate-300 line-clamp-2 drop-shadow">
                                             {card.description}
                                         </div>
                                     </div>
@@ -719,11 +832,22 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
             </div>
 
             {/* Action Buttons — カード領域の外、右寄せ */}
-            <div className="flex justify-end gap-1.5 px-3 py-1.5 flex-shrink-0 z-30">
+            <div className="flex justify-end gap-1.5 px-3 py-1.5 flex-shrink-0 z-30 drop-shadow-md">
+                {/* v25: アイテムボタン — ターンエンドの左隣 */}
+                {(battleState.battleItems || []).length > 0 && (
+                    <button
+                        onClick={() => setShowItemPanel(true)}
+                        disabled={battleState.isVictory || battleState.isDefeat}
+                        className="bg-black/40 backdrop-blur-md border border-amber-600/50 text-amber-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-amber-900/30"
+                    >
+                        🎒
+                        <span>アイテム</span>
+                    </button>
+                )}
                 <button
                     onClick={handleEndTurn}
                     disabled={battleState.isVictory || battleState.isDefeat}
-                    className="bg-slate-800/90 border border-slate-600 text-slate-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
+                    className="bg-black/40 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-black/60"
                 >
                     <Clock size={12} />
                     ターンエンド
@@ -731,12 +855,78 @@ export default function BattleView({ onBattleEnd, battleTitle }: BattleViewProps
                 <button
                     onClick={handleFlee}
                     disabled={battleState.isVictory || battleState.isDefeat}
-                    className="bg-slate-800/90 border border-red-900/50 text-red-400 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold"
+                    className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50"
                 >
                     <LogOut size={12} />
                     撤退
                 </button>
             </div>
+
+            {/* v25: バトルアイテムパネル */}
+            {showItemPanel && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-end justify-center"
+                    onClick={() => setShowItemPanel(false)}
+                >
+                    <div
+                        className="w-full max-w-lg bg-slate-950/95 backdrop-blur-xl border-t border-amber-600/40 rounded-t-2xl shadow-2xl p-4 animate-in slide-in-from-bottom duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">🎒</span>
+                                <span className="text-sm font-bold text-amber-300">所持品（バトル中使用）</span>
+                            </div>
+                            <button onClick={() => setShowItemPanel(false)} className="text-gray-500 hover:text-white p-1">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                            {(battleState.battleItems || []).map(item => {
+                                const qty = item.quantity || 0;
+                                const ed = (item as any).effect_data || {};
+                                const currentHp = liveHp ?? userProfile?.hp ?? 0;
+                                const maxHp = (userProfile?.max_hp || 0) + (battleState.equipBonus?.hp || 0);
+                                const healAmount = ed.heal || ed.heal_hp || ed.heal_amount || 0;
+                                const isHealOnly = !!(ed.heal_full || ed.heal_all || healAmount > 0 || ed.heal_pct > 0) && !ed.escape && !ed.remove_effect && !ed.effect_id;
+                                const isHpFull = isHealOnly && maxHp > 0 && currentHp >= maxHp;
+                                const disabled = qty <= 0 || battleState.isVictory || battleState.isDefeat || isHpFull;
+                                const imgUrl = (item as any).image_url || null;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        disabled={disabled}
+                                        onClick={async () => {
+                                            setShowItemPanel(false);
+                                            await useBattleItem(item);
+                                        }}
+                                        className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-95 ${
+                                            disabled
+                                                ? 'border-gray-800 bg-gray-900/50 opacity-40 cursor-not-allowed'
+                                                : 'border-amber-600/50 bg-amber-950/30 hover:bg-amber-900/40 hover:border-amber-400'
+                                        }`}
+                                    >
+                                        <div className="w-10 h-10 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
+                                            {imgUrl
+                                                ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" />
+                                                : <Heart size={20} className="text-green-400" />
+                                            }
+                                        </div>
+                                        <div className="text-[9px] text-center text-gray-300 leading-tight line-clamp-2">{item.name}</div>
+                                        {isHpFull
+                                            ? <div className="text-[8px] font-bold text-sky-500">HP満</div>
+                                            : <div className="text-[8px] font-bold text-amber-400">x{qty}</div>
+                                        }
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {(battleState.battleItems || []).every(i => (i.quantity || 0) <= 0) && (
+                            <div className="text-center text-gray-600 text-xs py-4">使用可能なアイテムがありません。</div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* BATTLE RESULT OVERLAY */}
             {shouldShowOverlay && (

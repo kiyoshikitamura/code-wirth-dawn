@@ -1,27 +1,27 @@
-Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+Code: Wirth-Dawn Specification v15.0 (Progression System)
 # Progression System — Leveling, Growth, Deck Cost
 
 ## 1. 概要 (Overview)
 キャラクターの成長ルール（EXP計算、レベルアップ時のステータス増加、デッキコスト制度）を定義する。
 
-<!-- v11.0: questService.calculateGrowth()の実装定数に合わせて全面改訂 -->
+<!-- v15.0: HP/ATK/DEFを全体的に上方修正。ATK/DEFの上限を廃止、毎レベルランダム加算に変更。DeckCost上限を30に変更。 -->
 
 ---
 
 ## 2. 成長定数 (Growth Constants)
-<!-- v11.0: questService.ts の実装値を正として記載 -->
+<!-- v15.0: 上方修正後の実装値に更新 -->
 
 ```typescript
-const BASE_HP = 80;            // Lv1時の基底HP → MaxHP = 80 + (Lv * 5) = Lv1で85
-const HP_PER_LEVEL = 5;
-const BASE_DECK_COST = 8;     // Lv1時の基底デッキコスト → MaxCost = 8 + (Lv * 2) = Lv1で10
-const COST_PER_LEVEL = 2;
-const MAX_ATK = 15;            // ATK上限
-const MAX_DEF = 15;            // DEF上限
+const BASE_HP = 85;            // キャラクター作成時の基底HP（v15.0で80→85に引き上げ）
+const HP_PER_LEVEL_MIN = 3;    // v15.0: レベルアップごとの最小HP増加
+const HP_PER_LEVEL_MAX = 6;    // v15.0: レベルアップごとの最大HP増加
+const BASE_DECK_COST = 8;      // Lv1時の基底デッキコスト
+const COST_PER_LEVEL = 2;      // レベルあたりのデッキコスト増加
+const MAX_DECK_COST = 30;      // v15.0: デッキコスト上限（旧: 上限なし）
+// ATK/DEF: 上限廃止（v15.0）。毎レベルにランダム加算。
 ```
 
-> **Note (v12.1)**: `BASE_DECK_COST` は実装値の `8` を正とする。`game_rules.ts` 定義値または実装と一致している。
-> 旧記述（`BASE_DECK_COST = 10`）は誤りだったため削除された。
+> **Note (v15.0)**: `MAX_ATK = 15` / `MAX_DEF = 15` の上限は廃止された。ATK/DEFは毎レベルアップでランダムに加算され、上限なしで成長する。
 
 ---
 
@@ -42,9 +42,11 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 | 10 → 11 | 5,000 | 16,750 |
 
 ### 3.2 EXP獲得源
-<!-- v11.0: quest/complete APIの実装を反映 -->
-- **クエスト報酬**: `quest.rewards.exp` (JSONB) or fallback `difficulty * 20`
-- **バトルボーナス**: `battleCount * 30` (クエスト履歴内のバトルノード数)
+<!-- v15.0: EXPをランダム化してバトルの報酬感を強化 -->
+- **クエスト報酬**: `quest.rewards.exp` (JSONB) or fallback `difficulty * randInt(10, 50)`
+- **バトルボーナス**: `battleCount * randInt(100, 200)` (クエスト履歴内のバトルノード数)
+
+> **v15.0 変更点**: 旧仕様（フォールバック `difficulty * 20`、バトル `30/戦闘`）を廃止。バトル1回あたりのボーナスを大幅に引き上げ（30 → 100〜200）、クエストフォールバックも幅を持たせることでレベルアップの爽快感を向上させる。
 
 ### 3.3 多段レベルアップ
 `calculateGrowth()` は while ループで処理。一度のクエスト完了で複数レベルアップ可能。
@@ -54,12 +56,34 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 ## 4. ステータス成長ルール
 
 ### 4.1 レベルアップ時の自動成長
+
+<!-- v15.0: HP をランダム増加に変更、ATK/DEFを毎レベルランダム加算・上限撤廃、DeckCost上限を30に設定 -->
+
 | ステータス | 増加 | 計算式 | 上限 |
 |---|---|---|---|
-| Max HP | +5 / Lv | `BASE_HP + (Level * HP_PER_LEVEL)` | なし |
-| Max Deck Cost | +2 / Lv | `BASE_DECK_COST + (Level * COST_PER_LEVEL)` | なし |
-| ATK | +1 / 3Lv (3, 6, 9...) | `level % 3 === 0` | 15 |
-| DEF | +1 / 3Lv (3, 6, 9...) | `level % 3 === 0` | 15 |
+| Max HP | `+randInt(3, 6)` / Lv | `baseStat.max_hp + hpIncrease` (累積加算) | なし |
+| Max Deck Cost | `+2` / Lv | `BASE_DECK_COST + (Level * COST_PER_LEVEL)` | **30** |
+| ATK | `+randInt(0, 2)` / Lv | 毎レベルで加算 | **なし** |
+| DEF | `+randInt(0, 2)` / Lv | 毎レベルで加算 | **なし** |
+
+> **v15.0 変更点まとめ:**
+> - HP: 固定 +5/Lv → ランダム **+3〜6/Lv**
+> - ATK/DEF: 3Lv毎に+1（上限15）→ **毎Lv +0〜2（上限なし）**
+> - Max Deck Cost: 上限なし → **上限 30**（Lv11以降はコスト増加せず上限に張り付く）
+
+**実装例 (`calculateGrowth` 内):**
+```typescript
+// HP: ランダム増加
+const hpGain = Math.floor(Math.random() * 4) + 3; // randInt(3, 6)
+hpInc += hpGain;
+
+// ATK/DEF: 毎レベルランダム加算（上限なし）
+atkInc += Math.floor(Math.random() * 3); // randInt(0, 2)
+defInc += Math.floor(Math.random() * 3); // randInt(0, 2)
+
+// Deck Cost: 上限 30 に制限
+const newCost = Math.min(30, BASE_DECK_COST + (level * COST_PER_LEVEL));
+```
 
 ### 4.2 レベルアップ時の特殊効果
 <!-- v11.0: quest/complete API の実装を反映 -->
@@ -69,10 +93,10 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 
 | ステータス | 説明 | 変動ルール |
 |---|---|---|
-| Vitality (寿命) | 生命の残り時間 | 老化で減算のみ（加齢ロジック: v9仕様参照） |
+| Vitality (寿命) | 生命の残り時間 | 老化で減算のみ（加齢ロジック: spec_v10参照） |
 | Hand Size | 手札上限 | **レベル連動で段階的に拡張**（下記参照） |
 
-### 4.2 老化によるATK/DEF減衰
+### 4.4 老化によるATK/DEF減衰
 <!-- v12.1: 実装意図を明記 -->
 
 | 年齢帯 | Vit減衰 | ATK/DEF減衰 | 実装動作 |
@@ -81,8 +105,7 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 | 50歳帯 (50-59) | -5/年 | -1 / 1年ごと | 毎年発動 |
 | 60歳以上 | -10/年 | -2 / 1年ごと | 毎年発動 |
 
-**`processAging()` 実装注意**: 40歳帯のATK/DEF減衰は `if (newAge % 2 === 0)` で判定しているため、正確には「2年ごと」ではなく「偶数年齢となる導年က00に発動」が正展。
-界善には無視できる差异だが、少なくとも実装の意図を了解するための記述である。
+> ATK/DEFの減衰は、高レベルで積み上げた値から削られていく。上限廃止により高齢でも高ステータスが維持されやすくなったが、減衰リスクとのバランスが重要。
 
 #### Hand Size 値一覧 (spec v15 更新)
 
@@ -107,13 +130,14 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 ```
 sum(Card.cost for Card in EquippedDeck) <= user.max_deck_cost
 ```
-- `max_deck_cost` は `BASE_DECK_COST + (Level * COST_PER_LEVEL)` で決定。
+- `max_deck_cost` は `min(30, BASE_DECK_COST + (Level * COST_PER_LEVEL))` で決定。
 - 環境カード (`isInjected: true`) は Cost 0 扱い。
 - NPCの `inject_cards` はコスト検証の対象外。
+- **Lv11 到達時点で MAX_DECK_COST = 30 に達し、それ以降は増加しない。**
 
 ### 5.3 バリデーション
-- クライアントサイド: `buildBattleDeck()` 内でコスト合計チェック、およびシナリオの一時的な`camp`ノードでの特例解除。
-- サーバーサイド: `current_quest_id` と `quest_started_at` を元に、クエスト開始前から所持しているアイテムの装備変更（`is_equipped: true` にする操作）を禁止。`camp`ノード滞在時に付与される `bypass_lock` オプションにより特例で許可。
+- クライアントサイド: `buildBattleDeck()` 内でコスト合計チェック。
+- サーバーサイド: `bypass_lock` オプションにより特例で許可（campノード）。
 
 ---
 
@@ -123,14 +147,24 @@ sum(Card.cost for Card in EquippedDeck) <= user.max_deck_cost
 export interface UserProfile {
   level?: number;
   exp?: number;
-  max_deck_cost?: number;
-  max_hp?: number;
+  max_deck_cost?: number;     // min(30, BASE_DECK_COST + level * COST_PER_LEVEL)
+  max_hp?: number;            // 累積加算（各Lvで randInt(3,6) 増加）
   hp?: number;
-  atk?: number;         // 基礎攻撃力 (1-15)
-  def?: number;          // 基礎防御力 (1-15)
+  atk?: number;               // 上限なし（毎Lv +0〜2、老化で減衰）
+  def?: number;               // 上限なし（毎Lv +0〜2、老化で減衰）
   vitality?: number;
   max_vitality?: number;
-  quest_started_at?: string; // クエスト開始日時 (デッキロック等に使用)
+  quest_started_at?: string;  // クエスト開始日時 (デッキロック等に使用)
   // ... other fields
 }
 ```
+
+---
+
+## 7. 変更履歴
+
+| バージョン | 日付 | 主な変更内容 |
+|---|---|---|
+| v11.0 | 2026-04 | questService.calculateGrowth()の実装定数に合わせて全面改訂 |
+| v12.1 | 2026-04 | BASE_DECK_COSTを10→8に修正 |
+| **v15.0** | **2026-04-13** | **HP増加をランダム化(+3〜6/Lv)、ATK/DEF毎Lv加算(+0〜2)・上限廃止、DeckCost上限30に変更** |

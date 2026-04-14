@@ -159,7 +159,7 @@ export async function GET(req: Request) {
             // ※ Supabaseクエリビルダーはimmutableなので必ずletで再代入
             let activeUsersQuery = supabase
                 .from('user_profiles')
-                .select('id, name, title_name, level, avatar_url, updated_at')
+                .select('id, name, title_name, level, avatar_url, updated_at, atk, def, max_hp, job_class')
                 .eq('is_alive', true)
                 .not('name', 'is', null)   // name=NULLを除外（tavernListと整合）
                 .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
@@ -172,6 +172,26 @@ export async function GET(req: Request) {
 
             activeUsersQuery = activeUsersQuery.limit(5); // 多すぎないよう制限
             const { data: activeUsers } = await activeUsersQuery;
+
+            // v25: active_shadow ユーザーの装備スキルを一括取得
+            const activeUserIds = (activeUsers || []).map((u: any) => u.id);
+            const skillsByUser: Record<string, string[]> = {};
+            if (activeUserIds.length > 0) {
+                const { data: equippedSkills } = await supabase
+                    .from('user_skills')
+                    .select('user_id, cards!inner(name)')
+                    .in('user_id', activeUserIds)
+                    .eq('is_equipped', true)
+                    .limit(30);
+
+                if (equippedSkills) {
+                    for (const s of equippedSkills) {
+                        if (!skillsByUser[s.user_id]) skillsByUser[s.user_id] = [];
+                        const cardName = (s as any).cards?.name;
+                        if (cardName) skillsByUser[s.user_id].push(cardName);
+                    }
+                }
+            }
 
             // ② システム傭兵 - shadowServiceと同じslug.includes(rulingNation)ロジックで絞り込み
             // 全npcsを取得後にJS側でフィルタ（Supabase ilike構文の複雑さを回避）
@@ -191,18 +211,30 @@ export async function GET(req: Request) {
             }
             npcMercs = npcMercs.slice(0, 10);
 
-            // activeUsersをTavernShadow形式に整形
-            const activeShadows = (activeUsers || []).map(u => ({
+            // activeUsersをTavernShadow形式に整形（v25: atk/def/hp/skills追加）
+            const JOB_CLASS_JP_GOSSIP: Record<string, string> = {
+                Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Mage: '魔法使い',
+                Ranger: '狩人', Thief: '盗賊', Cleric: '僧侶', Bard: '吟遊詩人',
+                Adventurer: '冒険者', Samurai: '侍', Ninja: '忍者', Mercenary: '傭兵',
+            };
+            const activeShadows = (activeUsers || []).map((u: any) => ({
                 id: u.id,
+                profile_id: u.id,
                 name: u.name || '名もなき旅人',
                 epithet: u.title_name || '',
-                job_class: u.title_name || '冒険者',
-                durability: 100,
-                max_durability: 100,
+                job_class: JOB_CLASS_JP_GOSSIP[u.job_class] || u.job_class || '冒険者',
+                durability: u.max_hp || 100,
+                max_durability: u.max_hp || 100,
                 cover_rate: 0,
                 avatar_url: u.avatar_url,
+                icon_url: u.avatar_url,
                 origin_type: 'active_shadow',
                 level: u.level,
+                // v25: スナップショットステータス
+                stats: { atk: u.atk || 0, def: u.def || 0, hp: u.max_hp || 100 },
+                signature_deck_preview: skillsByUser[u.id] || [],
+                contract_fee: (u.level || 1) * 50, // 仮計算（hireShadow 側でサーバー再計算）
+                subscription_tier: 'free',
             }));
 
             // npcをTavernShadow形式に整形

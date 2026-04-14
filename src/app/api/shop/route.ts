@@ -64,13 +64,14 @@ export async function GET(req: Request) {
         // 通行許可証の slug 一覧
         const PASS_SLUGS = ['item_pass_roland', 'item_pass_karyu', 'item_pass_yato', 'item_pass_markand'];
 
-        // 並列: reputations, items, skills, 通行許可証, 所持済み通行許可証 を同時取得
-        const [repResult, itemsResult, skillsResult, passResult, ownedPassResult] = await Promise.all([
+        // 並列: reputations, items, skills, cards, 通行許可証, 所持済み通行許可証 を同時取得
+        const [repResult, itemsResult, skillsResult, cardsResult, passResult, ownedPassResult] = await Promise.all([
             locationName !== 'Unknown'
                 ? supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locationName).maybeSingle()
                 : Promise.resolve({ data: null, error: null }),
             supabaseService.from('items').select('*').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v5.4: スキル・キーアイテム・素材を除外
-            supabaseService.from('skills').select('*, cards(*)'),
+            supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, nation_tags, min_prosperity, is_black_market, image_url, description'),
+            supabaseService.from('cards').select('id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url'),
             // 通行許可証は全道具屋で表示するため別途取得
             supabaseService.from('items').select('*').in('slug', PASS_SLUGS),
             // ユーザーが既に所持している通行許可証を確認
@@ -81,8 +82,17 @@ export async function GET(req: Request) {
             isEmbargoed = true;
         }
         if (itemsResult.error) throw itemsResult.error;
+        if (skillsResult.error) {
+            console.error('[Shop API] Skills query error:', JSON.stringify(skillsResult.error));
+        }
         const allItems = itemsResult.data as ItemDB[];
         const allSkills = (skillsResult.data || []) as any[];
+        // cards を id -> card オブジェクトの Map に変換
+        const cardsMap = new Map<number, any>();
+        for (const card of (cardsResult.data || [])) {
+            cardsMap.set(card.id, card);
+        }
+        console.log(`[Shop API] Skills fetched: ${allSkills.length}, Cards fetched: ${cardsResult.data?.length || 0}, Location: ${locationName}, Prosperity: ${prosperityLevel}, Nation: ${rulingNation}`);
         const passItems = (passResult.data || []) as ItemDB[];
         const ownedPassSlugs = new Set((ownedPassResult.data || []).map((inv: any) => inv.items?.slug).filter(Boolean));
 
@@ -156,27 +166,51 @@ export async function GET(req: Request) {
 
         // 5. Skills Filtering Logic
         const filteredSkills = allSkills.filter(skill => {
-            if (isRuined && !skill.is_black_market) return false;
-            if ((skill.min_prosperity || 1) > prosperityLevel) return false;
+            if (isRuined && !skill.is_black_market) {
+                console.log(`[Shop] SKIP skill ${skill.slug}: isRuined && not black market`);
+                return false;
+            }
+            if ((skill.min_prosperity || 1) > prosperityLevel) {
+                console.log(`[Shop] SKIP skill ${skill.slug}: min_prosperity=${skill.min_prosperity} > prosperityLevel=${prosperityLevel}`);
+                return false;
+            }
             
-            const tags = Array.isArray(skill.nation_tags) ? skill.nation_tags : [];
-            if (!matchesNation(tags)) return false;
+            const tags = Array.isArray(skill.nation_tags) ? skill.nation_tags : (skill.nation_tags ? [skill.nation_tags] : []);
+            if (!matchesNation(tags)) {
+                console.log(`[Shop] SKIP skill ${skill.slug}: nation_tags=${JSON.stringify(skill.nation_tags)} doesn't match rulingNation=${rulingNation}`);
+                return false;
+            }
 
             if (skill.is_black_market) {
                 const isDark = (profile.alignment?.evil || 0) > 20;
-                if (!isRuined && !isDark) return false;
+                if (!isRuined && !isDark) {
+                    console.log(`[Shop] SKIP skill ${skill.slug}: black market but not dark/ruined`);
+                    return false;
+                }
             }
 
-            // スキルカードはLv3以降に解禁
-            if (playerLevel < 3) return false;
+            // スキルカードはデッキコスト上限+2以内のものを表示
             const deckCap = profile.max_deck_cost || 10;
             const cardCost = skill.deck_cost || 0;
-            if (cardCost > deckCap + 2) return false;
+            if (cardCost > deckCap + 2) {
+                console.log(`[Shop] SKIP skill ${skill.slug}: deck_cost=${cardCost} > deckCap+2=${deckCap+2}`);
+                return false;
+            }
 
             return true;
         }).map(skill => {
             let price = Math.floor(skill.base_price * priceMultiplier);
             if (isNewbie && !skill.is_black_market) price = Math.floor(price * 0.5);
+            const card = cardsMap.get(skill.card_id);
+            const effectData = card ? {
+                power: card.effect_val || 0,
+                cost_type: card.cost_type,
+                cost_val: card.cost_val,
+                card_type: card.type,
+                target_type: card.target_type,
+                effect_id: card.effect_id || null,
+                description: skill.description || null,
+            } : { description: skill.description || null };
             return {
                 id: skill.id,
                 slug: skill.slug,
@@ -189,7 +223,7 @@ export async function GET(req: Request) {
                 min_prosperity: skill.min_prosperity,
                 is_black_market: skill.is_black_market,
                 image_url: skill.image_url || (skill.slug ? `/images/items/${skill.slug}.png` : null),
-                effect_data: skill.cards || {},
+                effect_data: effectData,
                 description: skill.description,
                 current_price: price,
                 _source: 'skill' as const
@@ -240,6 +274,12 @@ export async function GET(req: Request) {
                 ruling_nation: rulingNation,
                 is_newbie_protected: isNewbie,
                 is_embargoed: isEmbargoed
+            },
+            debug: {
+                skills_raw_count: allSkills.length,
+                skills_filtered_count: filteredSkills.length,
+                skills_error: skillsResult.error ? JSON.stringify(skillsResult.error) : null,
+                first_skill_sample: allSkills[0] ? { slug: allSkills[0].slug, nation_tags: allSkills[0].nation_tags, min_prosperity: allSkills[0].min_prosperity, is_black_market: allSkills[0].is_black_market } : null
             }
         });
     } catch (e: any) {
@@ -370,6 +410,20 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
             .eq('item_id', item.id);
         if (count && count > 0) {
             return NextResponse.json({ error: 'この通行許可証は既に所持しています。' }, { status: 400 });
+        }
+    }
+
+    // 2c. v25: 消耗品の所持上限チェック（最大10個）
+    if (item.type === 'consumable') {
+        const { data: existingRows } = await supabaseService
+            .from('inventory')
+            .select('id, quantity')
+            .eq('user_id', profile.id)
+            .eq('item_id', item.id);
+
+        const totalQty = (existingRows || []).reduce((sum: number, row: any) => sum + (row.quantity || 1), 0);
+        if (totalQty >= 10) {
+            return NextResponse.json({ error: `「${item.name}」は最大10個までしか所持できません。` }, { status: 400 });
         }
     }
 

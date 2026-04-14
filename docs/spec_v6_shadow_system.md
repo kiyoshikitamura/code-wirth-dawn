@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v12.0 (UI改修・傭兵料金修正 2026-04-09)
+﻿Code: Wirth-Dawn Specification v13.0 (Active Shadow 詳細仕様追記 2026-04-13)
 # Shadow Mercenary System
 
 ## 1. 概要 (Overview)
@@ -16,7 +16,7 @@ Code: Wirth-Dawn Specification v12.0 (UI改修・傭兵料金修正 2026-04-09)
 
 | 種別 | origin_type | 説明 | AI Grade |
 |---|---|---|---|
-| アクティブ残影 | `shadow_active` | 現在プレイ中のプレイヤーのコピー | `random` |
+| アクティブ残影 | `shadow_active` | 現在同じ拠点にいる生存プレイヤーのスナップショット | `random` |
 | 英霊 (Heroic) | `shadow_heroic` | 引退/死亡したキャラクターの固定データ | `smart` |
 | システムNPC | `system_mercenary` | ゲームが提供する固定NPC | `random` |
 
@@ -103,6 +103,9 @@ CREATE TABLE party_members (
     | Basic | 30% |
     | Premium | 50% |
 
+    *   **日額CAP**: 英靈と同様に Lv 連動の日額上限を適用（**§5A.4**参照）。超過分はシステム税となる。
+    *   元プレイヤーがオフラインまたは別拠点にいても還元は発生する。
+
 *   **英霊の高額契約金**: 英霊（`shadow_heroic`）の雇用コストは、NPCのレベルやステータスに比例して飛躍的に高く設定される（強力なゴールドシンク）。
 
 **定数一覧** (`src/constants/game_rules.ts`):
@@ -117,6 +120,74 @@ CREATE TABLE party_members (
 ### 5.3 解雇
 - **API**: `POST /api/party/dismiss`
 - パーティから除外し、酒場に戻す。
+
+---
+
+## 5A. アクティブ残影（同拠点プレイヤー雇用）の詳細仕様
+
+<!-- v13.0: 調査レポートのギャップ分析に基づき追記 -->
+
+### 5A.1 酒場リストの表示条件
+
+`GET /api/party/list` この3つの条件を全て満たすプレイヤーのみ表示される。
+
+| 条件 | 詳細 |
+|---|---|
+| 同拠点 | `current_location_id` が雇用者と同一 |
+| アクティブ判定 | `updated_at` が現在時刱30晄32分時間指定（「24時間以内」） |
+| 生存種別 | `is_alive = true` |
+
+- **服し自身は除外**: `neq(id, currentUserId)`
+- **既雇用製は除外**: 既に自パーティの `source_user_id` に存在するプレイヤーは魔除
+- **表示上限**: 10件（システムNPC・英靈と合算）
+
+### 5A.2 雇用時のサーバー側バリデーション
+
+`POST /api/tavern/hire` 内で以下をサーバー側にて再検証する。
+
+| ステップ | 内容 |
+|---|---|
+| 1 | 雇用対象が `is_alive = true` |
+| 2 | 雇用者と雇用対象の `current_location_id` が一致（同拠点再検証） |
+| 3 | 契約金をサーバー側で再計算（`level * HIRE_ACTIVE_PER_LEVEL`）クライアント値は不信任 |
+| 4 | ゴールド残高チェック |
+| 5 | embarge（名声マイナス）チェック |
+| 6 | 重複雇用チェック（同名 or 同一 source_user_id） |
+| 7 | パーティ上限チェック（最大4名） |
+
+> **重要**: ステップ2により、雇用操作中に対象プレイヤーが別拠点に移動していた場合は契約が失敗する（「対象のプレイヤーは既に別の地点に移動しました」エラー）。
+
+### 5A.3 stats ・デッキの参照元
+
+雇用時の `user_profiles` から次の値を**スナップショット**として `party_members` テーブルに直接保存。
+
+| フィールド | 参照先 (`user_profiles`) | `party_members` 保存先 |
+|---|---|---|
+| HP | `max_hp` | `durability`（耒久値として使用） |
+| ATK | `attack` | `atk` |
+| DEF | `defense` | `def` |
+| デッキ | `signature_deck`（card ID配列） | `inject_cards`（card ID配列） |
+
+> **重要**: 雇用後は `party_members` の値が固定される。元プレイヤーがステータスを山ててもリアルタイム山増しはされない。
+
+### 5A.4 ロイヤリティ日額CAP（v13.0 新規定義）
+
+`shadow_active` へのロイヤリティは、英靈と同様に日額CAPを適用する。
+
+| 元プレイヤーの Lv | 日額CAP |
+|---|---|
+| Lv 1-10 | 100G / 日 |
+| Lv 11-20 | 300G / 日 |
+| Lv 21以上 | 50,000G / 日 |
+
+- **超過分**: システム税として消滅（誤用防止）。
+- **雇用者自身の残影を雇用した場合**: 分配金は発生しない。
+- **元プレイヤーがオフライン/別拠点の場合**: 雇用後に還元は発生する。
+
+### 5A.5 AIグレード
+
+- `shadow_active` のAIは現在 `random`（デッキからランダムに1枚選択）で動作。
+- `smart` グレードは設計されているが未実装（v13.0時点）。
 
 ### 5.5 傑兵一覧 UI 仕様 (v12.0新規)
 

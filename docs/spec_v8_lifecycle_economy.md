@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v11.0 (Revised based on actual implementation)
+Code: Wirth-Dawn Specification v12.0 (Lifecycle & Economy)
 # Lifecycle & Economy — Death, Succession, Newbie Protection
 
 ## 1. 概要 (Overview)

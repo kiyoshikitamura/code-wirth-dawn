@@ -184,8 +184,6 @@ export default function TitlePage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // [Logic-Expert] JWT Bearerトークンを必ず添付。
-                    // サーバー側で createAuthClient() がユーザーを特定するための必須ヘッダー。
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
                 },
                 body: JSON.stringify({
@@ -197,12 +195,15 @@ export default function TitlePage() {
                     max_hp: previewStats.max_hp,
                     max_vitality: previewStats.max_vitality,
                     max_deck_cost: previewStats.max_deck_cost,
+                    atk: previewStats.atk,
+                    def: previewStats.def,
+                    gold: previewStats.gold,  // v15.0: ランダム初期Gold を使用
                     accumulated_days: 0,
-                    gold: 1000,
                     current_location_id: startLoc?.id,
                     ...(uploadedAvatarUrl ? { avatar_url: uploadedAvatarUrl } : {}),
                 })
             });
+
 
             if (!res.ok) throw new Error((await res.json()).error);
 
@@ -391,11 +392,16 @@ export default function TitlePage() {
                                 </p>
 
                                 {previewStats ? (
-                                    <div className="grid grid-cols-4 gap-1 text-center font-mono text-amber-950/80 text-xs">
-                                        <div className="bg-amber-900/10 py-1 rounded">HP<br /><span className="text-sm font-bold">{previewStats.max_hp}</span></div>
-                                        <div className="bg-amber-900/10 py-1 rounded">ATK<br /><span className="text-sm font-bold">{previewStats.atk}</span></div>
-                                        <div className="bg-amber-900/10 py-1 rounded">DEF<br /><span className="text-sm font-bold">{previewStats.def}</span></div>
-                                        <div className="bg-amber-900/10 py-1 rounded">Vit<br /><span className="text-sm font-bold">{previewStats.max_vitality}</span></div>
+                                    <div className="space-y-1">
+                                        <div className="grid grid-cols-4 gap-1 text-center font-mono text-amber-950/80 text-xs">
+                                            <div className="bg-amber-900/10 py-1 rounded">HP<br /><span className="text-sm font-bold">{previewStats.max_hp}</span></div>
+                                            <div className="bg-amber-900/10 py-1 rounded">ATK<br /><span className="text-sm font-bold">{previewStats.atk}</span></div>
+                                            <div className="bg-amber-900/10 py-1 rounded">DEF<br /><span className="text-sm font-bold">{previewStats.def}</span></div>
+                                            <div className="bg-amber-900/10 py-1 rounded">Vit<br /><span className="text-sm font-bold">{previewStats.max_vitality}</span></div>
+                                        </div>
+                                        <div className="text-center bg-amber-900/10 py-1 rounded font-mono text-amber-950/80 text-xs">
+                                            Gold　<span className="text-sm font-bold text-amber-800">{previewStats.gold?.toLocaleString() ?? '—'} G</span>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="text-center text-xs text-amber-900/50 py-2">読み解き中...</div>
@@ -440,11 +446,14 @@ export default function TitlePage() {
                                                 <span className="text-amber-200">{age}歳</span>
                                             </div>
                                             {previewStats && (
-                                                <div className="grid grid-cols-4 gap-1 pt-2 border-t border-amber-900/20">
-                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">HP</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_hp}</div></div>
-                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">ATK</div><div className="text-amber-300 font-mono font-bold">{previewStats.atk}</div></div>
-                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">DEF</div><div className="text-amber-300 font-mono font-bold">{previewStats.def}</div></div>
-                                                    <div className="text-center"><div className="text-[10px] text-amber-900/60">Vit</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_vitality}</div></div>
+                                                <div className="space-y-1 pt-2 border-t border-amber-900/20">
+                                                    <div className="grid grid-cols-4 gap-1">
+                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">HP</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_hp}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">ATK</div><div className="text-amber-300 font-mono font-bold">{previewStats.atk}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">DEF</div><div className="text-amber-300 font-mono font-bold">{previewStats.def}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">Vit</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_vitality}</div></div>
+                                                    </div>
+                                                    <div className="text-center text-[10px] text-amber-900/60">Gold　<span className="text-amber-300 font-mono font-bold">{previewStats.gold?.toLocaleString() ?? '—'} G</span></div>
                                                 </div>
                                             )}
                                         </div>

@@ -1,23 +1,32 @@
 
-// Protocol v8.1 / v9.3: Progression & Growth Rules
+// Protocol v15.0: Progression & Growth Rules (上方修正・ランダム成長)
 
 export const GROWTH_RULES = {
-    // HP Scale (Spec v8.1)
-    BASE_HP_MIN: 85,      // 16yo min
-    BASE_HP_MAX: 120,     // 25yo max
-    HP_PER_LEVEL: 5,      // v8.1: +5/Lv (was 10 in v8.0)
-    BASE_HP_FALLBACK: 80, // Phase 1.5: questService等のフォールバック用
+    // HP Scale (Spec v15.0)
+    BASE_HP_MIN: 85,            // 15歳の基底HP
+    BASE_HP_MAX: 135,           // 40歳の基底HP上限（ランダム幅含む）
+    BASE_HP_FALLBACK: 85,       // questService等のフォールバック用（v15.0: 80→85に引き上げ）
 
-    // Deck Cost
+    // HP Level Growth (Spec v15.0: ランダム増加)
+    HP_LEVEL_GAIN_MIN: 3,       // レベルアップごとの最小HP増加
+    HP_LEVEL_GAIN_MAX: 6,       // レベルアップごとの最大HP増加
+
+    // Deck Cost (Spec v15.0: 上限30)
     BASE_DECK_COST: 8,
     COST_PER_LEVEL: 2,
+    MAX_DECK_COST: 30,          // v15.0: 上限追加（Lv11で到達）
 
-    // ATK/DEF Growth (Spec v8.1)
-    ATK_DEF_GROWTH_INTERVAL: 3,  // +1 every 3 levels (Lv 3,6,9...)
-    MAX_ATK: 15,
-    MAX_DEF: 15,
+    // ATK/DEF Growth (Spec v15.0: 毎Lv +0〜2、上限廃止)
+    ATK_LEVEL_GAIN_MIN: 0,      // レベルアップごとの最小ATK増加
+    ATK_LEVEL_GAIN_MAX: 2,      // レベルアップごとの最大ATK増加
+    DEF_LEVEL_GAIN_MIN: 0,      // レベルアップごとの最小DEF増加
+    DEF_LEVEL_GAIN_MAX: 2,      // レベルアップごとの最大DEF増加
 
-    // Hand Size by Level (spec_v2_battle_parameters.md §4.1: 仕様v15更新)
+    // Initial Gold Range (Spec v15.0)
+    INITIAL_GOLD_MIN: 900,      // 800 + 100
+    INITIAL_GOLD_MAX: 1200,     // 800 + 400
+
+    // Hand Size by Level (spec_v2_battle_parameters.md §4.1)
     // Lv1-4: 4枚 / Lv5-9: 5枚 / Lv10+: 6枚
     HAND_SIZE_BY_LEVEL: [
         { minLevel: 10, size: 6 },
@@ -25,7 +34,7 @@ export const GROWTH_RULES = {
         { minLevel: 1, size: 4 },
     ] as const,
 
-    // Aging (Spec v9.3)
+    // Aging (Spec v9.3 / v10)
     DECAY_START_AGE: 40,
     DECAY_RATES: {
         40: 2,  // 40s: Vit -2/year

@@ -1,12 +1,12 @@
 
 import { Card, PartyMember, UserProfile } from '@/types/game';
-import { StatusEffect, getAttackMod, getDefenseMod } from '@/lib/statusEffects';
+import { StatusEffect, getAttackMod, getDefBonus } from '@/lib/statusEffects';
 import { getNoiseInjectionCount } from '@/lib/passiveEffects';
 
 /**
- * v2.11 決定論的ダメージ計算 (Deterministic)
- * Formula: FinalDamage = (UserATK + CardPower) * BuffMultiplier - Enemy.DEF
- * 乱数なし。計算結果が常に正解となる。
+ * v3.0 決定論的ダメージ計算 (Deterministic)
+ * Formula: FinalDamage = (UserATK + CardPower) * AtkMod - TargetDEF - DefBonus
+ * DefBonus は StatusEffect(def_up/def_up_heavy).value から取得（提案A）。
  */
 export function calculateDamage(
     cardPower: number,
@@ -19,18 +19,17 @@ export function calculateDamage(
     // 1. Base = Card.Power + User.ATK
     let dmg = cardPower + userAtk;
 
-    // 2. Attacker atk_up buff
+    // 2. Attacker atk_up buff (x1.5)
     dmg = Math.floor(dmg * getAttackMod(attackerEffects));
 
-    // 3. DEF mitigation (物理のみ)
+    // 3. DEF mitigation: 物理は targetDEF + defBonus を引く
     if (!isMagic) {
-        dmg = Math.max(1, dmg - targetDef);
+        const defBonus = getDefBonus(defenderEffects); // value付きdef_upの固定値
+        dmg = Math.max(1, dmg - targetDef - defBonus);
     }
+    // 魔法はDEF・defBonusともに無視（貫通）
 
-    // 4. Defender def_up
-    dmg = Math.max(1, Math.floor(dmg * getDefenseMod(defenderEffects)));
-
-    return dmg;
+    return Math.max(1, dmg);
 }
 
 // Helper to look up card by ID (should be provided or fetched)
@@ -113,8 +112,9 @@ export function buildBattleDeck(
     }
 
     // 4. Basic Validation (Ensure usable cards exist)
-    const basicAttack = cardLookup('1001') || { id: '1001', name: '斬撃', type: 'Skill', description: '基本攻撃', cost: 0, power: 20 };
-    const basicDefend = cardLookup('1004') || { id: '1004', name: '鉄壁', type: 'Skill', description: '防御バフ', cost: 0, power: 0 };
+    // card_slash (id=2), card_guard (id=4) を参照 — DBのslugキーでルックアップ
+    const basicAttack = cardLookup('2') || cardLookup('card_slash') || { id: 'card_slash', name: '斬撃', type: 'Skill', description: '基本攻撃', cost: 0, power: 20 };
+    const basicDefend = cardLookup('4') || cardLookup('card_guard') || { id: 'card_guard', name: '防御', type: 'Defense', description: '防御バフ', cost: 0, power: 0 };
 
     if (finalDeck.length < 5) {
         for (let i = 0; i < 3; i++) finalDeck.push({ ...basicAttack, id: `basic_atk_${i}` });
@@ -140,30 +140,40 @@ export function routeDamage(
     partyMembers: PartyMember[],
     rawDamage: number
 ): DamageResult {
-    // 1. Iterate through active party members to check for cover
-    // Sort by cover_rate descending? Or just first come first serve?
-    // Let's shuffle or order by loyalty/cover_rate logic.
-    // Spec: "Iterate... Roll against cover_rate"
-
-    // We filter alive active members
     const blockers = partyMembers.filter(m => m.is_active && m.durability > 0);
 
+    // v3.3: パーティがいる場合、まずランダムターゲット選択（30%）
+    // これにより敵がプレイヤーのみを狙い続ける偏りを緩和する
+    if (blockers.length > 0) {
+        const randomTargetChance = 30; // 30% でランダムなパーティメンバーを直接狙う
+        const randomRoll = Math.floor(Math.random() * 100);
+        if (randomRoll < randomTargetChance) {
+            const picked = blockers[Math.floor(Math.random() * blockers.length)];
+            return {
+                target: 'PartyMember',
+                targetId: picked.id,
+                damage: rawDamage,
+                isCovered: false,
+                message: `${picked.name} takes a direct hit! (-${rawDamage} Durability)`
+            };
+        }
+    }
+
+    // Cover check: cover_rate によるかばう判定
     for (const member of blockers) {
-        // Simple D100 roll
         const roll = Math.floor(Math.random() * 100);
         if (roll < member.cover_rate) {
-            // COVER SUCCESS
             return {
                 target: 'PartyMember',
                 targetId: member.id,
-                damage: rawDamage, // Future: Apply defense reduction
+                damage: rawDamage,
                 isCovered: true,
                 message: `${member.name} takes the hit! (-${rawDamage} Durability)`
             };
         }
     }
 
-    // No one covered -> Player takes hit
+    // どちらも失敗 → プレイヤーへ
     return {
         target: 'Player',
         damage: rawDamage,

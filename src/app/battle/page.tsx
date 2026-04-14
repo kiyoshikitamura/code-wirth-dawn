@@ -28,7 +28,6 @@ function BattlePageInner() {
     const {
         battleState,
         hand,
-        initializeBattle,
         fetchUserProfile,
         selectedScenario
     } = useGameStore();
@@ -55,7 +54,10 @@ function BattlePageInner() {
         const hydrated = useGameStore.persist.hasHydrated();
         if (hydrated && !battleState.enemy) {
             console.warn('[BattlePage] No enemy found. Initializing fallback battle.');
-            initializeBattle();
+            // v3.3: initializeBattle を廃止し startBattle を直接呼び出す
+            useGameStore.getState().startBattle({
+                id: 'e1', name: 'Shadow Wolf', level: 4, hp: 300, maxHp: 300,
+            });
         }
 
         setBattleReady(true);

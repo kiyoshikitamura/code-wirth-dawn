@@ -1,52 +1,75 @@
 import { NextResponse } from 'next/server';
-import { calculateAge, applyRandomVariance } from '@/utils/characterStats';
 import { GROWTH_RULES } from '@/constants/game_rules';
 
-// Spec v9.3 Base Stats Logic (with ATK/DEF)
-// Spec v9.3 Base Stats Logic (Updated to match GROWTH_RULES constant)
-function getStartingStatsByAge(age: number) {
-    // Base HP starts around 85
-    const baseHp = 85 + Math.floor((age - 15) * 1.5); // slightly increases with age
+// v15.0: ランダムヘルパー
+const randInt = (min: number, max: number) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
+const randFloat = (min: number, max: number) =>
+    min + Math.random() * (max - min);
 
-    // Base Deck Cost
-    const currentCost = 12;
+/**
+ * v15.0: 初期ステータス計算（上方修正・ランダム変数導入）
+ * spec_v10_character_creation.md §2.2〜2.3
+ */
+function getStartingStatsByAge(age: number) {
+    // 基底HP: 85 + floor((Age - 15) * randFloat(1.5, 2.0))
+    const baseHp = 85 + Math.floor((age - 15) * randFloat(1.5, 2.0));
+
+    // 基底 ATK/DEF: randInt(1, 3)（年齢補正が別途加わる）
+    const baseAtk = randInt(1, 3);
+    const baseDef = randInt(1, 3);
+
+    // 初期Gold: 800 + randInt(100, 400)
+    const gold = 800 + randInt(100, 400);
+
+    // 固定値
+    const currentCost = 12; // BASE_DECK_COST(8) + Lv1 * COST_PER_LEVEL(2) + 2
 
     if (age <= 19) {
+        // 15-19歳: VIT=100、HP+randInt(0,10)、ATK+randInt(0,2)、DEF+randInt(0,2)
         return {
-            max_hp: baseHp,
+            max_hp: baseHp + randInt(0, 10),
             max_deck_cost: currentCost,
             vitality: 100,
             max_vitality: 100,
-            atk: 1,
-            def: 1,
+            atk: baseAtk + randInt(0, 2),
+            def: baseDef + randInt(0, 2),
+            gold,
         };
     } else if (age <= 29) {
+        // 20-29歳: VIT=randInt(85,95)、HP+randInt(0,10)、ATK+randInt(0,2)、DEF+randInt(0,2)
+        const vit = randInt(85, 95);
         return {
-            max_hp: baseHp,
+            max_hp: baseHp + randInt(0, 10),
             max_deck_cost: currentCost,
-            vitality: 85 + Math.floor(Math.random() * 11), // 85-95
-            max_vitality: 0, // set below
-            atk: 1 + (Math.floor(Math.random() * 2) + 1), // 1 + (1-2) = 2-3
-            def: 1,
+            vitality: vit,
+            max_vitality: vit,
+            atk: baseAtk + randInt(0, 2),
+            def: baseDef + randInt(0, 2),
+            gold,
         };
     } else if (age <= 39) {
+        // 30-39歳: VIT=randInt(70,80)、HP+randInt(10,20)、ATK+randInt(1,3)、DEF+randInt(1,3)
+        const vit = randInt(70, 80);
         return {
-            max_hp: baseHp,
+            max_hp: baseHp + randInt(10, 20),
             max_deck_cost: currentCost,
-            vitality: 70 + Math.floor(Math.random() * 11), // 70-80
-            max_vitality: 0,
-            atk: 1 + 1, // +1
-            def: 1 + 1, // +1
+            vitality: vit,
+            max_vitality: vit,
+            atk: baseAtk + randInt(1, 3),
+            def: baseDef + randInt(1, 3),
+            gold,
         };
     } else {
-        // 40
+        // 40歳: VIT=60、HP+randInt(20,30)、ATK+randInt(2,4)、DEF+randInt(2,4)
         return {
-            max_hp: baseHp + 10, // Bonus for veteran
+            max_hp: baseHp + randInt(20, 30),
             max_deck_cost: currentCost,
             vitality: 60,
-            max_vitality: 0,
-            atk: 1 + 2, // +2
-            def: 1 + 1, // +1
+            max_vitality: 60,
+            atk: baseAtk + randInt(2, 4),
+            def: baseDef + randInt(2, 4),
+            gold,
         };
     }
 }
@@ -65,25 +88,22 @@ export async function POST(req: Request) {
         // Validate Age (15 <= Age <= 40)
         if (parsedAge < 15 || parsedAge > 40) {
             return NextResponse.json({
-                error: '年齢は15歳から40歳の間である必要があります。',
+                error: '年齢は15歳から40歳の間である必要があります',
                 age: parsedAge
             }, { status: 400 });
         }
 
         const baseStats = getStartingStatsByAge(parsedAge);
-        baseStats.max_vitality = baseStats.vitality; // Set max to intial
-
-        const finalHp = baseStats.max_hp;
-        const finalVit = baseStats.vitality;
 
         const finalStats = {
-            max_hp: finalHp,
-            hp: finalHp,
+            max_hp: baseStats.max_hp,
+            hp: baseStats.max_hp,
             max_deck_cost: baseStats.max_deck_cost,
-            vitality: finalVit,
-            max_vitality: finalVit,
+            vitality: baseStats.vitality,
+            max_vitality: baseStats.max_vitality,
             atk: baseStats.atk,
             def: baseStats.def,
+            gold: baseStats.gold,
             age: parsedAge,
             age_days: 0,
         };

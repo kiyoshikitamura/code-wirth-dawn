@@ -111,13 +111,51 @@ Body: { item_id: string, is_equipped: boolean }
 ---
 
 ## 6. アイテム種別ごとの挙動
+<!-- v25: use_timing フィールドを追加。消耗品をバトル中/フィールド/パッシブに分類 -->
 
 | type | 購入可 | 売却可 | 装備可 | 備考 |
 |---|---|---|---|---|
-| `consumable` | ✅ | ✅ | ❌ | バトル中1回限り使用 |
+| `consumable` | ✅ | ✅ | ❌ | `use_timing` で使用場面を制御 |
 | `trade_good` | ✅ | ✅ | ❌ | 売却専用 |
 | `skill` | ✅ | ✅ | ✅ (`is_skill`) | デッキ装備 |
 | `key_item` | ✅ (一部) | ❌ | ❌ | クエスト報酬、または許可証など |
+
+### 6.0 消耗品の use_timing 分類 (v25)
+
+消耗品は `items.effect_data.use_timing` で使用タイミングを管理する。
+
+| use_timing | 使用場面 | 代表アイテム |
+|---|---|---|
+| `battle` | バトル中 🗡 (BattleViewのアイテムボタンから使用) | 傷薬S/M/上級・毒薬・煙玉・解毒剤・禁術の秘薬 |
+| `field` | フィールド (StatusModalの所持品ポップアップから使用) | テント（Vit+1）・竜血（Vit+3） |
+| `passive` | 常時パッシブ（所持で効果を発揮） | 通行許可証 |
+
+**バトル中使用アイテム一覧:**
+
+| slug | 名称 | 効果 |
+|---|---|---|
+| `item_potion_s` | 傷薬(S) | HP +50 回復 |
+| `item_potion` | 傷薬(M) | HP +150 回復 |
+| `item_high_potion` | 上級傷薬 | HP +350 回復 |
+| `item_roland_blessing` | ローランの祝福 | HP +50% 回復 |
+| `item_roland_elixir` | ローランの霊薬 | HP 全回復 |
+| `item_antidote` | 解毒剤 | ポイズン解除 |
+| `item_yato_poison` | 夜刀の毒薬 | 敵にポイズン(3ターン) |
+| `item_yato_smoke` | 夜刀の煙玉 | 即時逃走 |
+| `item_karyu_tea` | カリュウ茶 | HP +200 回復 |
+| `item_oasis_water` | 聖都の霊水 | HP +200 + リジェネ付与 |
+| `item_karyu_charm` | 魔符 | 敵にスタン(1ターン) |
+| `item_desert_spice` | 砂漠の香辛料 | ATK UP バフ(2ターン) |
+| `item_black_market_elixir` | 禁術の秘薬 | HP 全回復 (バトル中) |
+
+**フィールド使用アイテム一覧:**
+
+| slug | 名称 | 効果 |
+|---|---|---|
+| `item_tent` | テント | Vit +1 回復 (= ゲーム内1日分の寿命回復) |
+| `item_dragon_blood` | 竜血 | Vit +3 回復 |
+
+> **Note**: `passive` アイテム（通行許可証等）は詳細ポップアップに「所持効果」と表示され、使用ボタンは出現しない。
 
 ### 6.1 通行許可証 (Pass) (v16)
 首都への入場に必要な `consumable` 扱いの特殊アイテム。

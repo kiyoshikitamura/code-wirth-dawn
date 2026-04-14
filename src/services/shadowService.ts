@@ -303,10 +303,10 @@ export class ShadowService {
             heroicOwnerId = logData.user_id;
             
         } else if (shadow.origin_type === 'shadow_active') {
-            // user_profiles から level を取得して再計算および所在地チェック
+            // user_profiles から level/atk/def/hp/job_class を取得して再計算および所在地チェック
             const { data: userProfile } = await this.supabase
                 .from('user_profiles')
-                .select('level, is_alive, current_location_id')
+                .select('level, is_alive, current_location_id, atk, def, max_hp, job_class')
                 .eq('id', shadow.profile_id)
                 .single();
                 
@@ -318,6 +318,30 @@ export class ShadowService {
             }
             
             finalContractFee = (userProfile.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+
+            // v25: スナップショット取得
+            shadow.stats = {
+                atk: userProfile.atk || 0,
+                def: userProfile.def || 0,
+                hp: userProfile.max_hp || 100,
+            };
+            shadow.level = userProfile.level || 1;
+            (shadow as any).snapshot_job_class = userProfile.job_class || 'Adventurer';
+
+            // v25: 装備中スキルID取得 → inject_cards に
+            const { data: equippedSkills } = await this.supabase
+                .from('user_skills')
+                .select('skill_id, cards!inner(id, name)')
+                .eq('user_id', shadow.profile_id)
+                .eq('is_equipped', true)
+                .limit(6);
+
+            if (equippedSkills && equippedSkills.length > 0) {
+                // signature_deck_preview をカード名で埋める
+                shadow.signature_deck_preview = equippedSkills.map((s: any) => s.cards?.name).filter(Boolean);
+                // inject_cards 用 cardIds を直接セット
+                (shadow as any)._resolved_card_ids = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
+            }
 
         } else if (shadow.origin_type === 'system_mercenary') {
             // npcs から level を取得して再計算
@@ -443,19 +467,66 @@ export class ShadowService {
                 }
             }
         } else if (shadow.origin_type === 'shadow_active') {
-            // アクティブ残影: 既存のEconomyServiceロジックを維持 (Tier別)
-            const rate = shadow.subscription_tier === 'premium' ? 0.5 : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1);
-            const royaltyAmount = Math.floor(finalContractFee * rate);
-            await this.economy.distributeRoyalty({
-                sourceUserId: shadow.profile_id,
-                targetUserId: hirerId,
-                amount: royaltyAmount
-            });
+            // v13.0: shadow_active にも日額CAP を適用（spec_v6 §5A.4）
+            // 自己雇用は分配なし
+            if (shadow.profile_id === hirerId) {
+                console.log(`[ActiveHire] Self-hire detected. No royalty paid.`);
+            } else {
+                const rate = shadow.subscription_tier === 'premium' ? 0.5
+                    : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1);
+                const royaltyAmount = Math.floor(finalContractFee * rate);
+
+                if (royaltyAmount > 0) {
+                    const { data: ownerProfile } = await this.supabase
+                        .from('user_profiles')
+                        .select('level')
+                        .eq('id', shadow.profile_id)
+                        .single();
+
+                    const ownerLevel = ownerProfile?.level || 1;
+                    const dailyCap = getDailyRoyaltyCap(ownerLevel);
+                    const today = new Date().toISOString().slice(0, 10);
+
+                    const { data: logRow } = await this.supabase
+                        .from('royalty_daily_log')
+                        .select('total_gold')
+                        .eq('user_id', shadow.profile_id)
+                        .eq('log_date', today)
+                        .maybeSingle();
+
+                    const todayTotal = logRow?.total_gold || 0;
+                    const remaining = Math.max(0, dailyCap - todayTotal);
+                    const effectiveRoyalty = Math.min(royaltyAmount, remaining);
+
+                    if (effectiveRoyalty > 0) {
+                        await this.economy.distributeRoyalty({
+                            sourceUserId: shadow.profile_id,
+                            targetUserId: hirerId,
+                            amount: effectiveRoyalty
+                        });
+
+                        await this.supabase
+                            .from('royalty_daily_log')
+                            .upsert(
+                                { user_id: shadow.profile_id, log_date: today, total_gold: todayTotal + effectiveRoyalty },
+                                { onConflict: 'user_id,log_date' }
+                            );
+                    }
+
+                    const taxed = finalContractFee - effectiveRoyalty;
+                    console.log(
+                        `[ActiveHire] Fee: ${finalContractFee}G | Cap: ${dailyCap}G | Royalty: ${effectiveRoyalty}G → ${shadow.profile_id} | Tax: ${taxed}G → System`
+                    );
+                }
+            }
         }
 
         // 7. カードIDの解決
         let cardIds: number[] = [];
-        if (shadow.signature_deck_preview && shadow.signature_deck_preview.length > 0) {
+        // v25: active_shadow は _resolved_card_ids が事前にセットされている場合はそちらを優先
+        if ((shadow as any)._resolved_card_ids && (shadow as any)._resolved_card_ids.length > 0) {
+            cardIds = (shadow as any)._resolved_card_ids;
+        } else if (shadow.signature_deck_preview && shadow.signature_deck_preview.length > 0) {
             const { data: cards } = await this.supabase
                 .from('cards')
                 .select('id, name')
@@ -492,6 +563,7 @@ export class ShadowService {
         }
 
 
+        const snapshotHp = shadow.stats?.hp || 100;
         const { error: insertError } = await this.supabase
             .from('party_members')
             .insert({
@@ -502,7 +574,14 @@ export class ShadowService {
                 image_url: npcImageUrl,
                 source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
                 origin_type: shadow.origin_type,
-                durability: shadow.stats?.hp || 100,
+                durability: snapshotHp,
+                max_durability: snapshotHp, // v25: 正しいmax_durabilityを保存
+                // v25: active_shadow のスナップショットステータス
+                ...(shadow.origin_type === 'shadow_active' ? {
+                    level: shadow.level || 1,
+                    atk: shadow.stats?.atk || 0,
+                    def: shadow.stats?.def || 0,
+                } : {}),
                 inject_cards: cardIds,
                 royalty_rate: shadow.origin_type === 'shadow_heroic'
                     ? percentageToInteger(HEROIC_ROYALTY_RATE)

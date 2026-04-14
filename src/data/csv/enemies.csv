@@ -21,6 +21,7 @@ id,slug,name,hp,atk,def,exp,gold,drop_item_id,spawn_type
 1111,enemy_cultist,狂信者,60,20,2,10,30,,random
 1112,enemy_cult_priest,邪教の司祭,100,35,3,25,80,,random
 1113,enemy_cult_exec,教団の執行者,180,50,10,60,150,,random
+1114,enemy_succubus,サキュバス,110,45,5,60,100,,random
 1121,enemy_assassin_trainee,見習い暗殺者,70,30,2,20,50,,random
 1122,enemy_assassin_master,凄腕の刺客,150,60,5,50,150,,random
 1123,enemy_assassin_boss,影の頭目,400,90,12,200,500,224,quest_only
