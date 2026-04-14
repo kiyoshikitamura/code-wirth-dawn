@@ -325,18 +325,20 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             flushQueue();
             await runNpcPhase();
         } else if (battlePhase === 'npc_done' && isTypingDone) {
-            // NPC 完了 → ENEMY オーバーレイ + 敵フェーズ実行
+            // NPC 完了 → ENEMY オーバーレイ表示 → 敵フェーズ実行
             setShowPhaseOverlay('enemy');
-            const t = setTimeout(() => setShowPhaseOverlay(null), 1000);
+            setTimeout(() => setShowPhaseOverlay(null), 1200);
+            // オーバーレイと同タイミングで敵フェーズ開始（600ms後）
             setTimeout(async () => {
                 await runEnemyPhase();
-            }, 600); // オーバーレイと同タイミングで开始
-            return () => clearTimeout(t);
+            }, 600);
         } else if (battlePhase === 'enemy_done' && isTypingDone) {
-            // 敵フェーズ完了 → 次ターンへ（processEnemyTurn内でdealHand済み）
-            // 何もしない（次ターンはすでにプレイヤーフェーズに移行済み）
+            // 敵フェーズ完了 → 次ターン開始（手札配布 + battlePhase:'player'へ）
+            // advanceTurn()が dealHand() + battlePhase:'player' をセット
+            useGameStore.getState().advanceTurn();
         }
     };
+
 
     // 後方互換エイリアス（waitTurn から呼ばれる）
     const handleEndTurn = async () => { await handleNext(); };

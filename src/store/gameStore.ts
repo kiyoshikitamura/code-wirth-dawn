@@ -392,6 +392,7 @@ export const useGameStore = create<GameState>()(
                         activeSupportBuffs: [],
                         battleItems, // v25
                         isPlayerTurn: true, // v26: 初期状態はプレイヤーターン
+                        battlePhase: 'player' as const, // v15.0
                     },
                     deck: shuffledDeck,
                     discardPile: [],
@@ -1734,10 +1735,17 @@ export const useGameStore = create<GameState>()(
             // v15.0: runEnemyPhase -- 敵フェーズ（旧 processEnemyTurn + turn++）
             runEnemyPhase: async () => { await get().processEnemyTurn(true); },
 
-            // v15.0: advanceTurn -- 次ターン開始（enemy_done 待機中に NEXT をタップしたとき）
+            // v15.0: advanceTurn -- NEXT（enemy_done）タップ時
             advanceTurn: () => {
+                // 次ターン開始: 手札配布 + battlePhase:'player'へ
                 get().dealHand();
-                // battlePhase:'player' への遷移は processEnemyTurn 内で完了時にセット済み
+                set(state => ({
+                    battleState: {
+                        ...state.battleState,
+                        isPlayerTurn: true,
+                        battlePhase: 'player' as const,
+                    }
+                }));
             },
 
             processEnemyTurn: async (shouldAdvanceTurn: boolean = true) => {
@@ -2003,7 +2011,8 @@ export const useGameStore = create<GameState>()(
                     }));
                 } else {
                     if (shouldAdvanceTurn) {
-                        // v15.0: ターン番号 +1、battlePhase:'player'へ
+                        // v15.0: ターン番号 +1、次ターンメッセージ追加、battlePhase:'enemy_done'で一時停止
+                        // BattleViewの handleNext('enemy_done') が dealHand()+battlePhase:'player' を呼ぶ
                         const { battleState: latestBattle } = get();
                         const nextTurn = latestBattle.turn + 1;
                         const turnLabel = `--- ターン ${nextTurn} ---`;
@@ -2018,11 +2027,11 @@ export const useGameStore = create<GameState>()(
                                 party: newParty,
                                 messages: [...newMessages, turnLabel],
                                 vitDamageTakenThisTurn: false,
-                                isPlayerTurn: true,
-                                battlePhase: 'player', // v15.0: プレイヤーフェーズへ
+                                isPlayerTurn: false,
+                                battlePhase: 'enemy_done', // v15.0: NEXTタップ待機
                             }
                         }));
-                        get().dealHand(); // v15.0: 次ターン開始時に配布
+                        // dealHand()は呼ばない - handleNextの'enemy_done'ケースで呼ぶ
                     } else {
                         // 逃げ失敗等: ターン番号は据え置き、playerフェーズへ
                         set(state => ({
