@@ -68,6 +68,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         // キューが空で入力中でもなければ完了フラグを立てる
         if (typingQueue.current.length === 0 && !isTyping.current) {
             setIsTypingDone(true);
+            // useGameStore.getState() でストア状態を直接確認（Reactバッチ更新の影響なし）
+            // -> isPlayerTurn:true と新メッセージが同バッチにやってくる 1フレーム窓問題を回避
+            if (useGameStore.getState().battleState.isPlayerTurn === true) {
+                setIsWaitingForLogs(false);
+            }
             return;
         }
         if (isTyping.current || typingQueue.current.length === 0) return;
@@ -98,9 +103,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (/^--- .+ ---$/.test(message)) {
             setDisplayedLogs(prev => [...prev, message]);
             setTypingText('');
-            // キューの残りを確認して完了フラグを更新
             if (typingQueue.current.length === 0) {
                 setIsTypingDone(true);
+                if (useGameStore.getState().battleState.isPlayerTurn === true) {
+                    setIsWaitingForLogs(false);
+                }
             } else {
                 setTimeout(() => processQueue(), 80);
             }
@@ -108,11 +115,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
 
         isTyping.current = true;
-        setIsTypingDone(false); // タイピング開始 → 操作ロック
+        setIsTypingDone(false);
         let charIdx = 0;
         setTypingText('');
 
-        // v25: setInterval の蔓用を防ぐため、クリアのクロージャを保持
         let timerId: ReturnType<typeof setInterval> | null = null;
 
         timerId = setInterval(() => {
@@ -125,14 +131,17 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 setDisplayedLogs(prev => [...prev, message]);
                 setTypingText('');
                 isTyping.current = false;
-                // 次のメッセージへ（またはキュー完了）
                 if (typingQueue.current.length > 0) {
                     setTimeout(() => processQueue(), 80);
                 } else {
-                    setIsTypingDone(true); // キュー終了 → 操作解放
+                    setIsTypingDone(true);
+                    // キュー終了: ストアの isPlayerTurn を直接確認してロック解除判定
+                    if (useGameStore.getState().battleState.isPlayerTurn === true) {
+                        setIsWaitingForLogs(false);
+                    }
                 }
             }
-        }, 20); // v25: 30ms → 20msに高速化
+        }, 20);
     }, []);
 
     // Auto-scroll logs
@@ -182,15 +191,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setLogs(curr);
     }, [battleState.messages]);
 
-    // ログ完了時にターン処理ロックを解除
-    // ★ isTypingDone だけで除条件にすると、endTurn の tick→party→enemy 各フェーズ間で
-    //   キューが一時的に空になるたびにロックが解除されてしまう。
-    // 「ログ完了 かつ ストアがプレイヤーターンと認識」の両方でのみ解除する。
-    useEffect(() => {
-        if (isTypingDone && battleState.isPlayerTurn === true) {
-            setIsWaitingForLogs(false);
-        }
-    }, [isTypingDone, battleState.isPlayerTurn]);
+    // ログ完了かつストアがプレイヤーターンの時にターン処理ロックを解除
+    // ★ useEffect依存でなく processQueue 内部で useGameStore.getState() を直接確認する方式に変更。
+    //   Reactバッチ更新の影響を受けがれの isTypingDone ・ストアフラグを使わず、
+    //   キュー内から直接ストアをつきさして判定するためタイミングの1フレーム窓問題を完全回避。
 
     // Show turn overlay — ログが全て流れてから表示する
     // battleState.turn を dep にすると「isPlayerTurn:trueとメッセージが同バッチ」問題で

@@ -1362,7 +1362,7 @@ export const useGameStore = create<GameState>()(
                     // buff_self/taunt/buff_party/heal は switch 内で処理済み
                     // attack/aoe_attack/debuff_enemy の場合のみ敵にeffect付与
                     if (!effectInfo.skipDamage && effectInfo.effectId) {
-                        const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
+                        const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectInfo.effectId);
                         if (isSelfBuff) {
                             const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
                             set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
@@ -1403,7 +1403,8 @@ export const useGameStore = create<GameState>()(
                         // effectInfo 経由のデバフ付与
                         const resolvedEffectId = effectInfo?.effectId || (card?.effect_id as StatusEffectId | undefined);
                         if (resolvedEffectId) {
-                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(resolvedEffectId);
+                            // ★ evasion_up / taunt はプレイヤー自身へのバフのため敵には付与しない
+                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(resolvedEffectId);
                             if (!isSelfBuff) {
                                 // v3.2: stun/bind は「付与されたターンの次のターン確実に1回行動不能」にするため
                                 // duration を +1 して endTurn tick 消費後に有効期間が残るようにする
