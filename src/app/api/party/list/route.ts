@@ -175,17 +175,6 @@ export async function GET(req: Request) {
             };
         });
 
-        // [DEBUG] NPCステータス確認
-        console.log('[party/list] enrichedParty stats:', enrichedParty.map(m => ({
-            name: m.name,
-            slug: m.slug,
-            atk: m.atk,
-            def: m.def,
-            hp: m.hp,
-            origin_type: m.origin_type,
-        })));
-
-
         return NextResponse.json({ party: enrichedParty });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

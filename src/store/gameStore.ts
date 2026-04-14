@@ -281,12 +281,11 @@ export const useGameStore = create<GameState>()(
                         return CARD_POOL.find(c => c.id === String(id));
                     }).filter(Boolean) as Card[];
 
-                    // バトル開始時に durability を max_hp に正規化
+                    // バトル開始時に durability を正規化
+                    // 優先順位: party_members.max_durability（雇用時スナップショット）>
+                    //           npc.max_hp（マスタ基準値） > durability > 100
                     const pmAny = pm as any;
-                    const fullHp = pmAny.max_hp || pmAny.hp || pm.max_durability || pm.durability || 100;
-
-                    // [DEBUG] NPCステータス確認
-                    console.log(`[startBattle] PM: ${pm.name}, max_hp=${pmAny.max_hp}, hp=${pmAny.hp}, max_durability=${pm.max_durability}, durability=${pm.durability} → fullHp=${fullHp}, atk=${pmAny.atk}, def=${pmAny.def}`);
+                    const fullHp = pm.max_durability || pmAny.max_hp || pmAny.hp || pm.durability || 100;
 
                     return {
                         ...pm,
