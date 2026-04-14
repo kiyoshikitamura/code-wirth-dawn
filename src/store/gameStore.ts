@@ -1904,10 +1904,8 @@ export const useGameStore = create<GameState>()(
                             const actualDamage = prevHp - newHp; // HPへの実際の影響（内部処理用）
                             newUserProfile.hp = newHp;
 
-                            // v3.3: ダメージごとに即座にHPバーを更新（ログ反映タイミングと同期）
-                            set(state => ({
-                                userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
-                            }));
+                            // v26: HPバー同期は __hp_sync: マーカー経由でタイプライターと連動させる
+                            // ここで set({userProfile.hp}) すると liveHp と競合し逆順バグが発生するため削除
 
                             if (mitigated > 0) {
                                 const defDesc = (def > 0 || defBonus > 0) ? ` (DEF -${def}${defBonus > 0 ? ` 防御強化 -${defBonus}` : ''})` : '';

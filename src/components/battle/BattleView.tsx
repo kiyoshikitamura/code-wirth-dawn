@@ -57,6 +57,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const [isTypingDone, setIsTypingDone] = useState(true);
     // キュー登録済みの battleState.messages インデックス上限（stale closure 防止）
     const enqueuedUpToRef = useRef(0);
+    // ターン処理中ロック: endTurn/flee 時に true にして、ログ完了まで操作を禁止
+    // ★ isPlayerTurn ストアフラグと同じビルのバッチ更新によるフレーム窓問題を回避
+    const [isWaitingForLogs, setIsWaitingForLogs] = useState(false);
+    // ターンオーバーレイを表示したターン番号（重複表示防止）
+    const lastShownTurnRef = useRef(0);
 
     // Process typewriter queue
     const processQueue = useCallback(() => {
@@ -158,6 +163,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             setIsTypingDone(false); // 新バトル開始 → ロック
             enqueuedUpToRef.current = curr.length; // 全メッセージをキューに積む
             typingQueue.current.push(...curr);
+            setLiveHp(userProfile?.hp ?? null); // 新バトル開始時に HP バーをリセット
             setTimeout(() => processQueue(), 50);
         } else {
             // Normal append: enqueuedUpToRef で「どこまで登録済みか」を管理
@@ -176,14 +182,27 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setLogs(curr);
     }, [battleState.messages]);
 
-    // Show turn overlay — ログ表示完了後に表示する
+    // ログ完了時にターン処理ロックを解除
     useEffect(() => {
-        if (battleState.turn > 0 && isTypingDone && !battleState.isVictory && !battleState.isDefeat) {
+        if (isTypingDone) {
+            setIsWaitingForLogs(false);
+        }
+    }, [isTypingDone]);
+
+    // Show turn overlay — ログが全て流れてから表示する
+    // battleState.turn を dep にすると「isPlayerTurn:trueとメッセージが同バッチ」問題で
+    // isTypingDone がまだ true の状態でオーバーレイが出てしまうため、
+    // isTypingDone の変化のみを監視し、lastShownTurnRef で未表示ターンを追跡する
+    useEffect(() => {
+        if (isTypingDone && !isWaitingForLogs &&
+            battleState.turn > lastShownTurnRef.current &&
+            !battleState.isVictory && !battleState.isDefeat) {
+            lastShownTurnRef.current = battleState.turn;
             setShowTurnOverlay(true);
             const timer = setTimeout(() => setShowTurnOverlay(false), 1500);
             return () => clearTimeout(timer);
         }
-    }, [battleState.turn, isTypingDone]);
+    }, [isTypingDone, isWaitingForLogs]);
 
     useEffect(() => {
         if (process.env.NODE_ENV === 'development') {
@@ -224,9 +243,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     }, [battleState.isVictory, selectedScenario, battleState.enemy]);
 
-    // プレイヤーが操作可能かどうか（isPlayerTurn フラグ + タイプライター完了の両方を確認）
-    const isPlayerTurn = battleState.isPlayerTurn !== false; // undefined は true 扱い（後方互換）
-    const canInteract = isPlayerTurn && isTypingDone && !battleState.isVictory && !battleState.isDefeat;
+    // プレイヤーが操作可能かどうか
+    // ★ isPlayerTurn (store) は使わない: isPlayerTurn:true が新メッセージと同バッチで
+    //    セットされるため React レンダリング時に 1 フレーム canInteract=true になる問題回避
+    const canInteract = !isWaitingForLogs && isTypingDone && !battleState.isVictory && !battleState.isDefeat;
 
     const handleCardClick = async (index: number) => {
         if (!canInteract) return;
