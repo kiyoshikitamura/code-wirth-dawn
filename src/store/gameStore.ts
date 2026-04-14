@@ -91,7 +91,7 @@ interface GameState {
     useItem: (card: Card) => Promise<void>;
     useBattleItem: (item: InventoryItem) => Promise<void>; // v25: バトル中消耗品使用
     processPartyTurn: () => Promise<void>;
-    processEnemyTurn: (damage?: number) => Promise<void>;
+    processEnemyTurn: (shouldAdvanceTurn?: boolean) => Promise<void>;
 
     setTarget: (enemyId: string) => void;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
@@ -420,6 +420,9 @@ export const useGameStore = create<GameState>()(
             endTurn: async () => {
                 const { battleState, userProfile } = get();
                 if (battleState.isVictory || battleState.isDefeat) return;
+
+                // カード操作をロック（NPC/エネミーターン処理中はプレイヤー操作不可）
+                set(state => ({ battleState: { ...state.battleState, isPlayerTurn: false } }));
 
                 const nextTurn = battleState.turn + 1;
 
@@ -1717,7 +1720,7 @@ export const useGameStore = create<GameState>()(
                 }, 600);
             },
 
-            processEnemyTurn: async (unusedDamage?: number) => {
+            processEnemyTurn: async (shouldAdvanceTurn: boolean = true) => {
                 const { battleState, userProfile } = get();
                 // Filter living enemies
                 const enemies = battleState.enemies ? battleState.enemies.filter(e => e.hp > 0) : [];
@@ -1981,26 +1984,45 @@ export const useGameStore = create<GameState>()(
                         battleState: { ...state.battleState, isDefeat: true, messages: newMessages } 
                     }));
                 } else {
-                    // エネミーターン完了 → ターン番号を +1 して次のターン開始
-                    const { battleState: latestBattle } = get();
-                    const nextTurn = latestBattle.turn + 1;
-                    const turnLabel = `--- ターン ${nextTurn} ---`;
+                    if (shouldAdvanceTurn) {
+                        // エネミーターン完了 → ターン番号を +1 して次のターン開始
+                        const { battleState: latestBattle } = get();
+                        const nextTurn = latestBattle.turn + 1;
+                        const turnLabel = `--- ターン ${nextTurn} ---`;
 
-                    set(state => ({
-                        userProfile: newUserProfile,
-                        battleState: {
-                            ...state.battleState,
-                            turn: nextTurn,
-                            enemy: state.battleState.enemy,
-                            enemies: updatedEnemies.map(e => e.hp > 0 ? e : { ...e, hp: 0 }),
-                            party: newParty,
-                            messages: [...newMessages, turnLabel],
-                            vitDamageTakenThisTurn: false,
-                        }
-                    }));
+                        set(state => ({
+                            userProfile: newUserProfile,
+                            battleState: {
+                                ...state.battleState,
+                                turn: nextTurn,
+                                enemy: state.battleState.enemy,
+                                enemies: updatedEnemies.map(e => e.hp > 0 ? e : { ...e, hp: 0 }),
+                                party: newParty,
+                                messages: [...newMessages, turnLabel],
+                                vitDamageTakenThisTurn: false,
+                                isPlayerTurn: true, // カード操作を解除
+                            }
+                        }));
+                    } else {
+                        // 逃げ失敗等: ターン番号は据え置き、カード操作を再開
+                        set(state => ({
+                            userProfile: newUserProfile,
+                            battleState: {
+                                ...state.battleState,
+                                enemy: state.battleState.enemy,
+                                enemies: updatedEnemies.map(e => e.hp > 0 ? e : { ...e, hp: 0 }),
+                                party: newParty,
+                                messages: newMessages,
+                                vitDamageTakenThisTurn: false,
+                                isPlayerTurn: true, // カード操作を解除
+                            }
+                        }));
+                    }
 
-                    // 次ターンの手札を配布
-                    get().dealHand();
+                    // 次ターンの手札を配布（shouldAdvanceTurnのときのみ）
+                    if (shouldAdvanceTurn) {
+                        get().dealHand();
+                    }
                 }
             },
 
@@ -2039,11 +2061,13 @@ export const useGameStore = create<GameState>()(
                     set((state) => ({
                         battleState: {
                             ...state.battleState,
-                            messages: [...state.battleState.messages, "逃走に失敗！ 敵の反撃を受ける！"]
+                            messages: [...state.battleState.messages, "逃走に失敗！ 敵の反撃を受ける！"],
+                            isPlayerTurn: false, // 敵の反撃中はカード操作ロック
                         }
                     }));
                     setTimeout(() => {
-                        get().processEnemyTurn();
+                        // ターン加算しない（同ターン内での敵の反撃）
+                        get().processEnemyTurn(false);
                     }, 500);
                 }
             },
