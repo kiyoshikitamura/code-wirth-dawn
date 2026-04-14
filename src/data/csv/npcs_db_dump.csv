@@ -1,4 +1,4 @@
-id,slug,name,job_class,gender,durability,cover_rate,current_location_id,hired_by_user_id,max_durability,loyalty,inject_cards,created_at,introduction,is_hireable,default_cards,level,hp,max_hp,mp,max_mp,attack,defense,speed,origin,epithet
+id,slug,name,job_class,gender,durability,cover_rate,current_location_id,hired_by_user_id,loyalty,inject_cards,created_at,introduction,is_hireable,default_cards,level,max_hp,mp,max_mp,attack,defense,speed,origin,epithet
 0f49c554-87ef-4b13-82c5-036c49230e7f,npc_free_guts,ガッツ,Mercenary,Unknown,100,10,,,100,50,"[""1010"",""2005""]",2026-03-18T10:12:17.809658+00:00,「金を積めばどこへでも行ってやる。だが、裏切りは許さん。」,true,"[""1010"",""2005""]",5,50,160,0,0,10,3,10,system_mercenary,黒鉄の傭兵
 dc7965e8-3db0-41c9-8271-312b476f3bb9,npc_free_stray_dog,野犬,Animal,Unknown,100,10,,,100,50,"[""1005""]",2026-03-18T10:12:17.809658+00:00,「……（ひたすら尾を振る）」,true,"[""1005""]",5,50,30,0,0,10,0,10,system_mercenary,薄汚れた
 81d8db1c-6f58-40b7-8d4c-da212bb3cd0f,npc_roland_guard_rookie,衛兵,Guard,Unknown,100,10,,,100,50,"[""1001"",""2005""]",2026-03-18T10:12:17.809658+00:00,「まだ新米ですが、剣ならお任せを。隊長に鍛えられましたので！」,true,"[""1001"",""2005""]",5,50,80,0,0,10,2,10,system_mercenary,新米
