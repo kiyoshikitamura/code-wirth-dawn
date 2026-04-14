@@ -1372,7 +1372,7 @@ export const useGameStore = create<GameState>()(
                     if (card.effect_id && !effectInfo.effectId) {
                         const effectId = card.effect_id as StatusEffectId;
                         const duration = card.effect_duration || 3;
-                        const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectId);
+                        const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectId);
                         if (isSelfBuff) {
                             const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectId, duration);
                             set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
