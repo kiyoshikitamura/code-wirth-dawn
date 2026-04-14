@@ -282,9 +282,11 @@ export const useGameStore = create<GameState>()(
                     }).filter(Boolean) as Card[];
 
                     // バトル開始時に durability を max_hp に正規化
-                    // （前回バトルの残留ダメージ・DB 不整合を解消し、常に満HP でスタート）
                     const pmAny = pm as any;
                     const fullHp = pmAny.max_hp || pmAny.hp || pm.max_durability || pm.durability || 100;
+
+                    // [DEBUG] NPCステータス確認
+                    console.log(`[startBattle] PM: ${pm.name}, max_hp=${pmAny.max_hp}, hp=${pmAny.hp}, max_durability=${pm.max_durability}, durability=${pm.durability} → fullHp=${fullHp}, atk=${pmAny.atk}, def=${pmAny.def}`);
 
                     return {
                         ...pm,
