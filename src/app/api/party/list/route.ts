@@ -135,14 +135,15 @@ export async function GET(req: Request) {
                 || npc?.image_url
                 || (slug ? `/images/npcs/${slug}.png` : null);
 
-            // HP 計算: 優先順位 = max_durability(非DEFAULT) > npc.hp > member.durability
-            // max_durabilityのDEFAULT値(100)は信用せず、NPCマスタのhpを参照する
+            // HP 計算: 優先順位 = party_members.max_durability（hire時スナップショット）> npc.hp > npc.max_hp > 100
+            // 注意: npc.max_hp は全NPC共通のデフォルト値（50等）が入りやすいため、party_membersの値を優先する
             const rawMaxDur = member.max_durability;
             const npcHp = npc?.hp ?? npc?.max_hp ?? npc?.durability ?? null;
-            // active_shadow: hire時スナップショットのmax_durabilityが正（100でなければそれが正値）
-            const resolvedHp = member.origin_type === 'active_shadow'
-                ? (rawMaxDur && rawMaxDur !== 100 ? rawMaxDur : (member.durability && member.durability !== 100 ? member.durability : (npcHp ?? 100)))
-                : (npcHp ?? (rawMaxDur !== 100 ? rawMaxDur : null) ?? member.durability ?? 100);
+            // system_mercenary は hire時に snapshotHp(=npc.hp) を max_durability に保存済みなのでそれを最優先
+            // active_shadow は hire時の user_profiles.max_hp を max_durability に保存済み
+            const resolvedHp = (rawMaxDur && rawMaxDur !== 100)
+                ? rawMaxDur
+                : (npcHp ?? member.durability ?? 100);
 
             return {
                 ...member,
