@@ -388,6 +388,7 @@ export const useGameStore = create<GameState>()(
                         equipBonus,
                         activeSupportBuffs: [],
                         battleItems, // v25
+                        isPlayerTurn: true, // v26: 初期状態はプレイヤーターン
                     },
                     deck: shuffledDeck,
                     discardPile: [],

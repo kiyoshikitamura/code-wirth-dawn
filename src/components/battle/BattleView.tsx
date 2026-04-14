@@ -183,11 +183,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     }, [battleState.messages]);
 
     // ログ完了時にターン処理ロックを解除
+    // ★ isTypingDone だけで除条件にすると、endTurn の tick→party→enemy 各フェーズ間で
+    //   キューが一時的に空になるたびにロックが解除されてしまう。
+    // 「ログ完了 かつ ストアがプレイヤーターンと認識」の両方でのみ解除する。
     useEffect(() => {
-        if (isTypingDone) {
+        if (isTypingDone && battleState.isPlayerTurn === true) {
             setIsWaitingForLogs(false);
         }
-    }, [isTypingDone]);
+    }, [isTypingDone, battleState.isPlayerTurn]);
 
     // Show turn overlay — ログが全て流れてから表示する
     // battleState.turn を dep にすると「isPlayerTurn:trueとメッセージが同バッチ」問題で
