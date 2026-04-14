@@ -115,7 +115,7 @@ const newCost = Math.min(30, BASE_DECK_COST + (level * COST_PER_LEVEL));
 | Lv 5 〜 9 | 5枚 |
 | Lv 10以上 | 6枚 |
 
-実装: `gameStore.dealHand()` 内で `GROWTH_RULES.HAND_SIZE_BY_LEVEL` を追従。
+実装: `battleSlice.dealHand()` 内で `GROWTH_RULES.HAND_SIZE_BY_LEVEL` を追従。（旧: `gameStore.dealHand()` / v1.0 リファクタリングにより `src/store/slices/battleSlice.ts` に移動）
 * 【UI/モバイル対応】SPA化に伴い、レベル10以上の最大6枚の手札は、画面下部の領域に扇状（Fan Layout）で重ねて配置およびホバー拡大変換される仕様とした。
 
 ---

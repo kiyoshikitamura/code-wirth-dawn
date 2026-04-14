@@ -485,3 +485,16 @@ explicit player actions rather than timer-based automation.
 - setTimeout(300ms) before processPartyTurn()
 - setTimeout(600ms) before processEnemyTurn()
 - isSelfBuff missing evasion_up/taunt (fixed in all 3 paths)
+
+---
+
+## 14. コードアーキテクチャ変更履歴 (リファクタリング v1.0)
+
+| バージョン | 日付 | 変更内容 |
+|---|---|---|
+| v15.0 | 2026-04-15 | フェーズ制バトルフロー導入（battlePhase: player→npc_done→enemy_done）、NEXTボタン実装、setTimeout連鎖廃止、evasion_up敵誤付与バグ修正 |
+| **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。gameStore.ts(2154行)→スライス分割(~75行)。useBattleTypewriter / useScenarioNodeProcessor フック抽出。ScenarioEngine 988行→559行。詳細: spec_v18_code_architecture.md 参照** |
+
+> getEffectiveAtk / getEffectiveDef / getEffectiveMaxHp は v1.0 リファクタリングにより
+> src/store/gameStore.ts から src/store/slices/profileSlice.ts に移動した。
+

@@ -3,7 +3,8 @@ Code: Wirth-Dawn Specification v14.0
 
 ## 1. 概要 (Overview)
 NPCおよびShadow（影の残像）がバトル中に自動的に行動するためのAIロジックを定義する。
-AIは全て**クライアントサイド**（`gameStore.processPartyTurn()`）で実行される。
+AIは全て**クライアントサイド**（`battleSlice.processPartyTurn()` / 旧: `gameStore.processPartyTurn()`）で実行される。
+<!-- v1.0 refactor: processPartyTurn は src/store/slices/battleSlice.ts に移動 (2026-04-15) -->
 
 <!-- v14.0: ターン進行順序正規化・NPCステータス取得優先順位確定・npcsテーブルHP列廃止 -->
 <!-- v13.0: startBattle時のdurability正規化、resolveNpcTurn null-safe guard追加 -->
@@ -247,3 +248,5 @@ export interface PartyMember {
 | v12.0 | 2026-04-12 | v3.3対応: heal actionのdurability更新修正・HPバー同期マーカー追加 |
 | v13.0 | 2026-04-13 | startBattle時のdurability正規化・resolveNpcTurnのnull-safe guard追加 |
 | **v14.0** | **2026-04-14** | **ターン進行順序正規化（エネミー完了後にターン番号更新）・NPCのHP取得優先順位確定（party_members.max_durability → npcs.max_hp）・npcsテーブルhp/max_durabilityカラム廃止反映** |
+| v15.0 | 2026-04-15 | フェーズ制バトルフロー（player/npc_done/enemy_done）導入。endTurn→runNpcPhase に改名。setTimeout連鎖廃止 |
+| **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。processPartyTurn を含む全バトルアクションを `src/store/slices/battleSlice.ts` に移動。詳細: spec_v18_code_architecture.md 参照** |

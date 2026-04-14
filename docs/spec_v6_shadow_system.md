@@ -1,4 +1,4 @@
-﻿Code: Wirth-Dawn Specification v13.0 (Active Shadow 詳細仕様追記 2026-04-13)
+Code: Wirth-Dawn Specification v13.0 (Active Shadow 詳細仕様追記 2026-04-13)
 # Shadow Mercenary System
 
 ## 1. 概要 (Overview)
@@ -244,7 +244,7 @@ CREATE TABLE party_members (
 - **発動条件**: 現在地の `current_location_id` に過去1時間以内に活動した他プレイヤーが1人以上いる場合
 - **効果**: バトル開始時にATK / DEF +10%（`Math.ceil(x × 1.1)`）
 - **UI**: 開始メッセージに「⚡ 共鳴ボーナス発動！ (ATK/DEF +10%)」を表示
-- **実装**: `gameStore.startBattle()` 内で同拠点クエリを実行、`resonanceActive` フラグを `BattleState` に保存
+- **実装**: `battleSlice.startBattle()` 内で同拠点クエリを実行、`resonanceActive` フラグを `BattleState` に保存（旧: `gameStore.startBattle()` / v1.0 リファクタリングにより `src/store/slices/battleSlice.ts` に移動）
 
 ---
 
