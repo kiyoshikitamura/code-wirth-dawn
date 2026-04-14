@@ -173,8 +173,18 @@ export async function GET(req: Request) {
                 // flavor_text
                 flavor_text: npc?.introduction || npc?.flavor_text || member.introduction || member.flavor_text || undefined,
             };
-
         });
+
+        // [DEBUG] NPCステータス確認
+        console.log('[party/list] enrichedParty stats:', enrichedParty.map(m => ({
+            name: m.name,
+            slug: m.slug,
+            atk: m.atk,
+            def: m.def,
+            hp: m.hp,
+            origin_type: m.origin_type,
+        })));
+
 
         return NextResponse.json({ party: enrichedParty });
     } catch (e: any) {

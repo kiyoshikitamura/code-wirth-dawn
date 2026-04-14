@@ -488,13 +488,10 @@ export const useGameStore = create<GameState>()(
                     }
                 }
 
-                // ターン区切りラベルをここで追加（プレイヤーのターンエンド直後に表示）
-                tickMessages.push(`--- ターン ${nextTurn} ---`);
-
                 set(state => ({
                     battleState: {
                         ...state.battleState,
-                        turn: nextTurn,
+                        // ターン番号はエネミーターン完了後に更新する
                         current_ap: newAp,
                         messages: [...state.battleState.messages, ...tickMessages],
                         player_effects: playerEffects,
@@ -503,9 +500,6 @@ export const useGameStore = create<GameState>()(
                         vitDamageTakenThisTurn: false,
                     }
                 }));
-
-                // カードドロー（ターン開始時の手札補充）
-                get().dealHand();
 
                 if (allEnemiesDead) {
                     soundManager?.playSE('se_battle_win');
@@ -1986,17 +1980,26 @@ export const useGameStore = create<GameState>()(
                         battleState: { ...state.battleState, isDefeat: true, messages: newMessages } 
                     }));
                 } else {
+                    // エネミーターン完了 → ターン番号を +1 して次のターン開始
+                    const { battleState: latestBattle } = get();
+                    const nextTurn = latestBattle.turn + 1;
+                    const turnLabel = `--- ターン ${nextTurn} ---`;
+
                     set(state => ({
                         userProfile: newUserProfile,
                         battleState: {
                             ...state.battleState,
+                            turn: nextTurn,
                             enemy: state.battleState.enemy,
                             enemies: updatedEnemies.map(e => e.hp > 0 ? e : { ...e, hp: 0 }),
                             party: newParty,
-                            messages: newMessages,
+                            messages: [...newMessages, turnLabel],
                             vitDamageTakenThisTurn: false,
                         }
                     }));
+
+                    // 次ターンの手札を配布
+                    get().dealHand();
                 }
             },
 
