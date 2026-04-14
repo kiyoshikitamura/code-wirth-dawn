@@ -55,6 +55,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const isTyping = useRef(false);
     // タイプライター完了フラグ: ログキューが空になったら true → プレイヤー操作を解放
     const [isTypingDone, setIsTypingDone] = useState(true);
+    // キュー登録済みの battleState.messages インデックス上限（stale closure 防止）
+    const enqueuedUpToRef = useRef(0);
 
     // Process typewriter queue
     const processQueue = useCallback(() => {
@@ -154,13 +156,16 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             setDisplayedLogs([]);
             setTypingText('');
             setIsTypingDone(false); // 新バトル開始 → ロック
-            // Queue all new messages
+            enqueuedUpToRef.current = curr.length; // 全メッセージをキューに積む
             typingQueue.current.push(...curr);
             setTimeout(() => processQueue(), 50);
         } else {
-            // Normal append: only queue new messages
-            const newMessages = curr.slice(displayedLogs.length + (isTyping.current ? 1 : 0));
+            // Normal append: enqueuedUpToRef で「どこまで登録済みか」を管理
+            // displayedLogs.length はステールになりうるため使わない
+            const startIdx = enqueuedUpToRef.current;
+            const newMessages = curr.slice(startIdx);
             if (newMessages.length > 0) {
+                enqueuedUpToRef.current = curr.length; // 先に更新（再エントリ防止）
                 setIsTypingDone(false); // 新メッセージ追加 → ロック
                 typingQueue.current.push(...newMessages);
                 processQueue();
