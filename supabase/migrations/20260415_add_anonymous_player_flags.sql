@@ -12,7 +12,6 @@ ALTER TABLE user_profiles
   ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT NULL;
 
 -- 2. 既存匿名データのリセット（関連テーブルも含めてカスケード削除）
--- 注: auth.users の is_anonymous は Supabase 内部フラグ
 
 -- 2-1. party_members（匿名オーナーのパーティ）
 DELETE FROM party_members
@@ -47,11 +46,19 @@ WHERE user_id IN (
   SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
 );
 
--- 2-6. royalty_daily_log
-DELETE FROM royalty_daily_log
-WHERE user_id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
+-- 2-6. royalty_daily_log（テーブルが存在する場合のみ）
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'royalty_daily_log'
+  ) THEN
+    DELETE FROM royalty_daily_log
+    WHERE user_id IN (
+      SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
+    );
+  END IF;
+END $$;
 
 -- 2-7. user_profiles（本体）
 DELETE FROM user_profiles
