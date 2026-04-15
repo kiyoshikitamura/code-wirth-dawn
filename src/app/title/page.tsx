@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
-import { Sword, Shield, Map as MapIcon, Hourglass, Compass } from 'lucide-react';
+import { Sword, Shield, Map as MapIcon, Hourglass, Compass, LogIn, PlayCircle } from 'lucide-react';
 import { useBgm } from '@/hooks/useBgm';
 
 export default function TitlePage() {
@@ -14,17 +14,20 @@ export default function TitlePage() {
     const { userProfile, fetchUserProfile } = useGameStore();
     useBgm('bgm_title');
 
-    // Flow State: ENTRY -> AUTH(Login/Register) -> SECRET_SETUP -> CHAR_CREATION -> GAME
-    // Actually, ENTRY is the default view with Login/Start buttons.
-    // If Start -> Check Auth. If no Auth -> Register Modal.
-    // If Login -> Login Modal.
-    // After Auth -> Check Secret. If no Secret -> Secret Modal.
-    // After Secret -> Check Profile. If no Profile -> Char Creation (FORM).
-
-    // Flow State: ENTRY -> MENU -> AUTH/CHAR_CREATION -> CREATING -> GAME
+    // Flow State:
+    //   ENTRY  → タイトル画面（Tap to Start）
+    //   MENU   → New Game / Continue / Test Play ボタン
+    //   CHAR_CREATION → キャラクター作成フォーム
+    //   CREATING      → 作成中ローディング
     const [mode, setMode] = useState<'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
 
-    // アバターファイル選択ハンドラ
+    // テストプレイ（匿名）フラグ — CHAR_CREATION 時にバナー表示用
+    const [isTestPlay, setIsTestPlay] = useState(false);
+
+    // OAuth エラーメッセージ
+    const [authError, setAuthError] = useState<string | null>(null);
+
+    // アバター
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -53,44 +56,37 @@ export default function TitlePage() {
         return "黄昏の時が近づく...";
     };
 
-    // Initial Check
+    // ─── OAuth コールバック処理 ────────────────────────────────────────────
+    // /auth/callback から ?code= で戻ってきた場合にセッションを確立する
     useEffect(() => {
-        // Just verify if they have an active session, but stay on ENTRY until tap
-    }, []);
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const authErrParam = params.get('auth_error');
 
-    const handleTapToStart = () => {
-        setMode('MENU');
-    };
-
-    const handleNewGame = async () => {
-        setMode('CREATING');
-
-        // [Logic-Expert] 旧セッション・ストアを完全クリアする。
-        // Supabase は既存セッションがある場合 signInAnonymously() で新規 UUID を発行しないため、
-        // 必ず先にサインアウトしてから再ログインする。
-        try {
-            await supabase.auth.signOut();
-        } catch (e) {
-            // サインアウト失敗も続行（未ログインの場合もあるため）
-            if (process.env.NODE_ENV === 'development') console.warn('[handleNewGame] signOut失敗（無視）:', e);
-        }
-
-        // [Clean-Expert] LocalStorage 上の前回ユーザーのゲームステートをクリアする。
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('game-storage');
-            localStorage.removeItem('quest-storage');
-        }
-
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-            alert('通信エラー: ' + error.message);
-            setMode('ENTRY');
+        if (authErrParam) {
+            setAuthError(`認証エラー: ${authErrParam}`);
+            setMode('MENU');
             return;
         }
-        await checkUserStatus();
-    };
 
-    const checkUserStatus = async () => {
+        if (code) {
+            // URL をクリーン
+            window.history.replaceState({}, '', '/title');
+            // コードをセッションに交換してから状態確認
+            setMode('CREATING');
+            supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+                if (error) {
+                    setAuthError(`認証に失敗しました: ${error.message}`);
+                    setMode('MENU');
+                } else {
+                    checkUserStatus();
+                }
+            });
+        }
+    }, []);
+
+    // ─── ユーザー状態確認 ─────────────────────────────────────────────────
+    const checkUserStatus = useCallback(async () => {
         const { data: { user }, error } = await supabase.auth.getUser();
 
         if (error || !user) {
@@ -99,20 +95,88 @@ export default function TitlePage() {
             return;
         }
 
-        if (user) {
-            await fetchUserProfile();
-            const { data: profile } = await supabase
-                .from('user_profiles')
-                .select('id')
-                .eq('id', user.id)
-                .maybeSingle();
+        await fetchUserProfile();
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('id', user.id)
+            .maybeSingle();
 
-            if (profile) {
-                router.push('/inn');
-            } else {
-                setMode('CHAR_CREATION');
-            }
+        if (profile) {
+            router.push('/inn');
+        } else {
+            // 匿名かどうかを判定してフラグをセット
+            setIsTestPlay(user.is_anonymous ?? false);
+            setMode('CHAR_CREATION');
         }
+    }, [fetchUserProfile, router]);
+
+    // ─── ハンドラー ───────────────────────────────────────────────────────
+
+    const handleTapToStart = () => setMode('MENU');
+
+    /**
+     * New Game — Google OAuth 必須
+     * OAuth 完了後 /auth/callback → /title?code=xxx → exchangeCodeForSession → checkUserStatus
+     */
+    const handleNewGame = async () => {
+        setAuthError(null);
+        // 前回セッション・ストアをクリア
+        try { await supabase.auth.signOut(); } catch (_) {}
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('game-storage');
+            localStorage.removeItem('quest-storage');
+        }
+
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: { prompt: 'select_account' },
+            }
+        });
+        if (error) {
+            setAuthError(`Google 認証の開始に失敗しました: ${error.message}`);
+        }
+        // → ブラウザが Google の認証画面に遷移するため、以降の処理は /auth/callback 経由で再開
+    };
+
+    /**
+     * Continue — Google OAuth でログインして既存プロフィールへ
+     */
+    const handleContinue = async () => {
+        setAuthError(null);
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            }
+        });
+        if (error) {
+            setAuthError(`Google 認証の開始に失敗しました: ${error.message}`);
+        }
+    };
+
+    /**
+     * Test Play — 匿名認証。DBに1週間保存（影として機能）。引き継ぎ不可。
+     */
+    const handleTestPlay = async () => {
+        setMode('CREATING');
+        setAuthError(null);
+        try { await supabase.auth.signOut(); } catch (_) {}
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('game-storage');
+            localStorage.removeItem('quest-storage');
+        }
+
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            alert('通信エラー: ' + error.message);
+            setMode('ENTRY');
+            return;
+        }
+        setIsTestPlay(true);
+        await checkUserStatus();
     };
 
     // Calculate Stats Effect
@@ -127,13 +191,8 @@ export default function TitlePage() {
                 });
                 const data = await res.json();
                 if (!res.ok) setErrorMsg(data.error || 'Invalid calculation');
-                else {
-                    setPreviewStats(data.stats);
-                    setErrorMsg('');
-                }
-            } catch (e) {
-                console.error(e);
-            }
+                else { setPreviewStats(data.stats); setErrorMsg(''); }
+            } catch (e) { console.error(e); }
         };
         const timer = setTimeout(fetchStats, 300);
         return () => clearTimeout(timer);
@@ -151,7 +210,7 @@ export default function TitlePage() {
             const userId = session?.user?.id;
 
             if (!userId) {
-                throw new Error('認証セッションが見つかりません。再度「新しく始める」を押してください。');
+                throw new Error('認証セッションが見つかりません。再度お試しください。');
             }
 
             // アバターアップロード（任意）
@@ -159,7 +218,8 @@ export default function TitlePage() {
             if (avatarFile && userId) {
                 try {
                     const ext = avatarFile.name.split('.').pop();
-                    const path = `anon/${userId}/${Date.now()}.${ext}`;
+                    const folder = isTestPlay ? 'anon' : 'users';
+                    const path = `${folder}/${userId}/${Date.now()}.${ext}`;
                     const { error: uploadError } = await supabase.storage
                         .from('avatars')
                         .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
@@ -173,7 +233,6 @@ export default function TitlePage() {
             }
             setIsUploading(false);
 
-            // 開始地点を取得（国境の町 = 正規の初期拠点）
             const { data: startLoc } = await supabase.from('locations').select('id').eq('slug', 'loc_border_town').maybeSingle();
 
             const dummyBirthDate = new Date();
@@ -197,13 +256,12 @@ export default function TitlePage() {
                     max_deck_cost: previewStats.max_deck_cost,
                     atk: previewStats.atk,
                     def: previewStats.def,
-                    gold: previewStats.gold,  // v15.0: ランダム初期Gold を使用
+                    gold: previewStats.gold,
                     accumulated_days: 0,
                     current_location_id: startLoc?.id,
                     ...(uploadedAvatarUrl ? { avatar_url: uploadedAvatarUrl } : {}),
                 })
             });
-
 
             if (!res.ok) throw new Error((await res.json()).error);
 
@@ -217,6 +275,7 @@ export default function TitlePage() {
         }
     };
 
+    // ─── CREATING 画面 ────────────────────────────────────────────────────
     if (mode === 'CREATING') {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden">
@@ -238,18 +297,14 @@ export default function TitlePage() {
         );
     }
 
-    // Title / Menu Scene Background
+    // ─── TITLE / CHAR_CREATION 背景 ───────────────────────────────────────
     const renderTitleBackground = () => (
         <div className="absolute inset-0 pointer-events-none overflow-hidden bg-slate-950">
-            {/* 新しいキービジュアル (main_kv_journey_empty.png) */}
-            <div 
+            <div
                 className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
                 style={{ backgroundImage: 'url("/backgrounds/key_visual/main_kv_journey_empty.png")' }}
             />
-            {/* テキスト視認性確保のためのグラデーション */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/80" />
-            
-            {/* 以前の古いアセットやシェイプは削除し、薄いテクスチャのみ残す */}
             <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/dark-leather.png")' }} />
         </div>
     );
@@ -259,7 +314,7 @@ export default function TitlePage() {
 
             {mode === 'ENTRY' || mode === 'MENU' ? renderTitleBackground() : null}
 
-            {/* Character Creation Background (Parchment) */}
+            {/* Character Creation Background */}
             {mode === 'CHAR_CREATION' && (
                 <div className="absolute inset-0 bg-[#e3d5b8] pointer-events-none">
                     <div className="absolute inset-0 mix-blend-multiply opacity-40" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/old-wall.png")' }}></div>
@@ -282,6 +337,7 @@ export default function TitlePage() {
                     </header>
                 )}
 
+                {/* ─── ENTRY ─── */}
                 {mode === 'ENTRY' && (
                     <div
                         className="w-full flex-1 flex flex-col items-center pt-24 pb-8 animate-fade-in opacity-80 cursor-pointer"
@@ -293,29 +349,74 @@ export default function TitlePage() {
                     </div>
                 )}
 
+                {/* ─── MENU ─── */}
                 {mode === 'MENU' && (
-                    <div className="w-full space-y-4 animate-fade-in-up mt-10">
+                    <div className="w-full space-y-3 animate-fade-in-up mt-10">
+
+                        {/* 認証エラー表示 */}
+                        {authError && (
+                            <div className="bg-red-950/60 border border-red-700 text-red-300 text-xs font-serif px-3 py-2 rounded mb-2 text-center">
+                                {authError}
+                            </div>
+                        )}
+
+                        {/* New Game — Google OAuth 必須 */}
                         <button
                             onClick={handleNewGame}
                             className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-4 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg tracking-widest flex justify-center items-center gap-2 group"
                         >
                             <Sword className="w-5 h-5 group-hover:text-amber-300 transition-colors" />
                             <span className="group-hover:text-amber-200">New Game</span>
+                            <span className="text-[10px] text-amber-600/70 ml-1">(Google アカウント必須)</span>
                         </button>
+
+                        {/* Continue — Google OAuth */}
                         <button
-                            onClick={() => alert("外部アカウントによるデータ引き継ぎは現在準備中です。")}
-                            className="w-full bg-slate-900/50 border border-slate-700 text-slate-400 font-serif py-4 rounded hover:bg-slate-800 hover:text-slate-300 transition-all tracking-widest flex justify-center items-center gap-2"
+                            onClick={handleContinue}
+                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-4 rounded hover:bg-slate-800 hover:border-slate-400 transition-all tracking-widest flex justify-center items-center gap-2 group"
                         >
-                            <Hourglass className="w-4 h-4" /> Continue / Transfer
+                            <LogIn className="w-4 h-4 group-hover:text-slate-200 transition-colors" />
+                            <span className="group-hover:text-white">Continue / Transfer</span>
+                        </button>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-3 py-1">
+                            <div className="flex-1 h-px bg-slate-800" />
+                            <span className="text-[10px] text-slate-600 font-serif tracking-widest">または</span>
+                            <div className="flex-1 h-px bg-slate-800" />
+                        </div>
+
+                        {/* Test Play — 匿名（7日間のみ） */}
+                        <button
+                            onClick={handleTestPlay}
+                            className="w-full bg-transparent border border-slate-700/50 text-slate-500 font-serif py-3 rounded hover:bg-slate-900/30 hover:text-slate-400 hover:border-slate-600 transition-all tracking-widest flex flex-col items-center gap-0.5 text-sm"
+                        >
+                            <div className="flex items-center gap-2">
+                                <PlayCircle className="w-4 h-4" />
+                                <span>Test Play</span>
+                            </div>
+                            <span className="text-[9px] text-slate-600 tracking-wide">アカウント連携なし・7日間限定・データ引き継ぎ不可</span>
                         </button>
                     </div>
                 )}
 
+                {/* ─── CHAR_CREATION ─── */}
                 {mode === 'CHAR_CREATION' && (
                     <form onSubmit={handleCharacterSubmit} className="space-y-8 animate-fade-in relative z-10 p-2">
                         <h2 className="text-center text-2xl font-serif text-amber-900 tracking-widest mb-6 border-b border-amber-900/20 pb-4">
                             契約の書
                         </h2>
+
+                        {/* テストプレイ警告バナー */}
+                        {isTestPlay && (
+                            <div className="bg-amber-950/80 border border-amber-700/60 rounded-lg px-4 py-3 text-center">
+                                <p className="text-amber-400 text-xs font-bold tracking-wide mb-1">⚠️ テストプレイ中</p>
+                                <p className="text-amber-500/80 text-[10px] leading-relaxed">
+                                    このキャラクターは <strong>7日後に失効</strong> します。<br />
+                                    データを引き継ぐには、ゲーム内から Google アカウントと連携してください。
+                                </p>
+                            </div>
+                        )}
 
                         {/* アバターアップロード */}
                         <div className="flex flex-col items-center gap-3">
@@ -426,6 +527,14 @@ export default function TitlePage() {
                             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowConfirm(false)}>
                                 <div className="bg-[#1a1208] border-2 border-amber-800/60 rounded-xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
                                     <h3 className="text-lg font-serif text-amber-400 text-center mb-6 tracking-widest">— 契約の確認 —</h3>
+
+                                    {/* テストプレイ警告（確認モーダル内） */}
+                                    {isTestPlay && (
+                                        <div className="bg-amber-950/60 border border-amber-800/50 rounded px-3 py-2 mb-4 text-center">
+                                            <p className="text-amber-500 text-[10px]">⚠️ テストプレイ — 7日後に失効します</p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-3 mb-6">
                                         {avatarPreview && (
                                             <div className="flex justify-center mb-3">

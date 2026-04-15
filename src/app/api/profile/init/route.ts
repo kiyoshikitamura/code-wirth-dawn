@@ -65,6 +65,16 @@ export async function POST(req: Request) {
 
         if (current_location_id) updates.current_location_id = current_location_id;
 
+        // 匿名ユーザー（テストプレイ）フラグ＆失効日時を設定
+        const isAnonymous = jwtUser?.is_anonymous ?? false;
+        updates.is_anonymous = isAnonymous;
+        if (isAnonymous) {
+            // テストプレイは7日間のみ有効（日次 cron で失効データを自動削除）
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 7);
+            updates.expires_at = expiresAt.toISOString();
+        }
+
         // Inheritance Logic
         const lifeSync = new LifeCycleService(client);
 

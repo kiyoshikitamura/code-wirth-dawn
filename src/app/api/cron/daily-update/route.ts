@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { updateWorldSimulation } from '@/lib/world-simulation';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,24 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, logs: result.logs, error: result.error }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, logs: result.logs, hegemony: result.hegemony });
+        // 失効した匿名（テストプレイ）プロファイルを圧削
+        // 安全のため失敗しても全体は継続する
+        let cleanupLog = 'skipped';
+        try {
+            const now = new Date().toISOString();
+            const { count, error: deleteError } = await supabaseServer
+                .from('user_profiles')
+                .delete({ count: 'exact' })
+                .eq('is_anonymous', true)
+                .lt('expires_at', now);
+            cleanupLog = deleteError
+                ? `error: ${deleteError.message}`
+                : `deleted ${count ?? 0} expired anonymous profiles`;
+        } catch (cleanupErr: any) {
+            cleanupLog = `exception: ${cleanupErr.message}`;
+        }
+
+        return NextResponse.json({ success: true, logs: result.logs, hegemony: result.hegemony, cleanup: cleanupLog });
     } catch (e: any) {
         return NextResponse.json({ success: false, error: e.message }, { status: 500 });
     }

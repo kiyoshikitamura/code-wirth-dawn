@@ -1,23 +1,72 @@
-Code: Wirth-Dawn Specification v15.0 (Character Creation)
+Code: Wirth-Dawn Specification v16.0 (Character Creation)
 # Character Creation & Aging Mechanics
 
 ## 1. 概要 (Overview)
 キャラクター作成時の入力パラメータ、初期ステータスの決定ロジック、加齢/老化による能力減衰を定義する。
 
-<!-- v15.0: 初期ステータスを全体的に上方修正。基底値・年齢補正にランダム変数を導入。 -->
+<!-- v16.0: ゲーム開始フローを3モードに刷新。New Game は Google OAuth 必須。Test Play（匿名）は7日間失効。 -->
 
 ---
 
 ## 2. キャラクター作成 (Character Creation)
 
-### 2.1 入力パラメータ
+### 2.1 ゲーム開始フロー（v16.0）
+
+タイトル画面（`/title`）では以下の3モードを提供する。
+
+| ボタン | 認証方式 | データ永続化 | 説明 |
+|---|---|---|---|
+| **New Game** | Google OAuth **必須** | 永続（無期限） | アカウント作成 → キャラクター作成 |
+| **Continue / Transfer** | Google OAuth | 永続（無期限） | 既存キャラクターへログイン |
+| **Test Play** | 匿名認証 | **7日間のみ** | アカウントなしで気軽に体験プレイ |
+
+#### New Game フロー
+```
+[New Game] ボタン
+  → Google OAuth 画面（Supabase 経由）
+  → /auth/callback?code=xxx
+  → /title（exchangeCodeForSession で認証確立）
+  → checkUserStatus:
+      - 既存プロフィールあり → /inn
+      - 新規           → CHAR_CREATION 画面
+```
+
+#### Continue フロー
+```
+[Continue] ボタン
+  → Google OAuth 画面（同一アカウントでログイン）
+  → /auth/callback → /title
+  → checkUserStatus → プロフィールあり → /inn
+  → プロフィールなし → CHAR_CREATION（新規キャラクター作成）
+```
+
+#### Test Play フロー
+```
+[Test Play] ボタン
+  → signInAnonymously()（Supabase 匿名認証）
+  → CHAR_CREATION（⚠️ 7日間失効バナー表示）
+  → /api/profile/init に is_anonymous=true で作成
+  → /inn（7日間のみ遊べる）
+```
+
+> [!WARNING]
+> Test Play のデータは **7日後に daily cron で自動削除** される。
+> 引き継ぎ不可。ゲーム内のアカウント連携で Google アカウントに紐付けることで永続化できる（Phase 6 予定）。
+
+> [!NOTE]
+> Test Play キャラクターも **残影（影）として酒場に表示される**ため、
+> DB に保存することに意味がある。失効後は自動削除されるためデータが残らない。
+
+---
+
+### 2.2 入力パラメータ
 | パラメータ | 型 | 検証 |
 |---|---|---|
 | 名前 (Name) | TEXT | 1〜16文字 |
 | 性別 (Gender) | ENUM | 'Male' / 'Female' / 'Unknown' |
 | 開始年齢 (Age) | INT | 15〜40 歳 |
 
-### 2.2 初期ステータス（基底値）
+### 2.3 初期ステータス（基底値）
 
 <!-- v15.0: HP/ATK/DEFを上方修正。ランダム変数を加算して個性を演出 -->
 
@@ -29,10 +78,12 @@ Code: Wirth-Dawn Specification v15.0 (Character Creation)
 | ATK | `randInt(1, 3)` | 基底値でランダム（年齢補正が別途加わる） |
 | DEF | `randInt(1, 3)` | 基底値でランダム（年齢補正が別途加わる） |
 | Gold | `800 + randInt(100, 400)` | 900〜1200G のランダム幅 |
-| Vitality | 年齢補正で決定（§2.3参照） | |
+| Vitality | 年齢補正で決定（§2.4参照） | |
 | Max Vitality | Vitality と同値（作成時点） | |
 | Max Deck Cost | 12 | `BASE_DECK_COST(8) + (1 * COST_PER_LEVEL(2)) + 2` |
 | avatar_url | `/avatars/adventurer.jpg` | デフォルト画像（固定） |
+| is_anonymous | boolean | true = Test Play（7日後失効） |
+| expires_at | TIMESTAMPTZ | Test Play 時: 作成から7日後 / New Game 時: NULL |
 
 **ランダム関数定義:**
 ```typescript
@@ -40,10 +91,7 @@ const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - 
 const randFloat = (min: number, max: number) => min + Math.random() * (max - min);
 ```
 
-### 2.3 年齢による初期ステータスボーナス・制約
-
-初期開始年齢は15〜40歳の間で選択可能。年齢帯ごとに Vitality とステータスボーナスが決まる。
-UI上では、年齢スライダーを動かした際に「動的フレーバーテキスト」と「適用される初期ステータス（ステータスプレビュー）」がリアルタイムに表示される。
+### 2.4 年齢による初期ステータスボーナス・制約
 
 <!-- v15.0: 全補正値をランダム変数化 -->
 
@@ -53,19 +101,6 @@ UI上では、年齢スライダーを動かした際に「動的フレーバー
 | 20-29 | 「心身ともに円熟の時...」 | `randInt(85, 95)` | `+ randInt(0, 10)` | `+ randInt(0, 2)` | `+ randInt(0, 2)` |
 | 30-39 | 「経験は盾となり...」 | `randInt(70, 80)` | `+ randInt(10, 20)` | `+ randInt(1, 3)` | `+ randInt(1, 3)` |
 | 40 | 「黄昏の時が近づく...」 | 60（固定） | `+ randInt(20, 30)` | `+ randInt(2, 4)` | `+ randInt(2, 4)` |
-
-**最終 HP 例（15歳）:**
-```
-baseHp = 85 + floor(0 * randFloat(1.5, 2.0)) = 85
-hp = 85 + randInt(0, 10) = 85〜95
-```
-
-**最終 HP 例（40歳）:**
-```
-baseHp = 85 + floor(25 * randFloat(1.5, 2.0)) = 122〜135
-hp = baseHp + randInt(20, 30) = 142〜165
-atk = randInt(1,3) + randInt(2,4) = 3〜7
-```
 
 ---
 
@@ -124,6 +159,8 @@ export interface UserProfile {
   max_vitality?: number;  // 加齢で減少するVitality上限
   gender?: 'Male' | 'Female' | 'Unknown';
   title_name?: string;    // ランダム生成等で付与される称号
+  is_anonymous?: boolean; // v16.0: テストプレイフラグ
+  expires_at?: string;    // v16.0: 匿名プロフィール失効日時 (ISO 8601)
   // ...
 }
 ```
@@ -132,36 +169,56 @@ export interface UserProfile {
 - **現在年齢表示**: プレイヤーの現在年齢は `age + (age_days / 365)` を基準としてUI表示する。
 - **暦（カレンダー）表示**: `age_days`（クエスト経過日数の累計）を利用し、ゲーム内の世界観に合わせた暦に変換して画面上部のヘッダーに表示する。
 - **健康状態 (Vitality)**: `vitality` が **20以下** となった場合、赤色点滅等の目立つ警告表示を行う。
+- **テストプレイバナー (v16.0)**: `is_anonymous === true` の場合、CHAR_CREATION 画面上部に7日間失効警告バナーを表示する。
 
 ---
 
 ## 5. UI/UX
 
-### 5.1 キャラクター作成フロー
-1. タイトル画面（Wait Mode）から「Tap to Start」でメニュー展開（Menu Mode）へ移行。
-2. 「New Game」を選択するとキャラクター作成画面へ遷移。
-3. キャラクター作成画面が表示され、名前（イタリック体）・性別（ボタン）・年齢（スライダー 15〜40歳）を入力。
-4. スライダーの年齢値に応じて、羽根ペンで書かれたような「動的フレーバーテキスト」が即座に切り替わって表示される。
-   - 15〜19歳：「若さは最大の武器...」
-   - 20〜29歳：「心身ともに円熟の時...」
-   - 30〜39歳：「経験は盾となり...」
-   - 40歳：「黄昏の時が近づく...」
-5. **動的フレーバーテキストの直下**に、その年齢で決定される「生成される開始ステータス（HP, ATK, DEF, Max Vitality 等）」をリアルタイムプレビューとして表示する。
-   - ただしプレビューはランダム幅の**中央値（平均）**を表示し、実際の値は作成時に決定される。
-6. 確認後、「世界に降り立つ」ボタンを押下。
-7. `POST /api/character/create` / `POST /api/profile/calculate-stats` でプロフィールデータを作成。
-8. 完了後、ゲーム本編（プロローグまたは拠点）へ遷移する。
+### 5.1 キャラクター作成フロー（v16.0）
+1. タイトル画面から「Tap to Start」でメニューに移行。
+2. 3つのボタンが表示:
+   - **New Game** — Google OAuth 認証 → CHAR_CREATION
+   - **Continue / Transfer** — Google OAuth → /inn（既存）or CHAR_CREATION（新規）
+   - **Test Play** — 匿名認証 → CHAR_CREATION（失効バナー付き）
+3. CHAR_CREATION: 名前（イタリック体）・性別（ボタン）・年齢（スライダー 15〜40歳）を入力。
+4. スライダーの年齢値に応じて「動的フレーバーテキスト」と「ステータスプレビュー」をリアルタイム表示。
+5. 「世界に降り立つ」→ 確認モーダル → `POST /api/profile/init` → `/inn` へ遷移。
 
-### 5.2 老化通知
+### 5.2 認証コールバック
+- Google OAuth 完了後、`/auth/callback` でコードを受け取り `/title?code=xxx` へリダイレクト。
+- `/title` ページが `exchangeCodeForSession(code)` でセッションを確立する。
+
+### 5.3 老化通知
 - 年齢増加時にバトルログまたはクエスト結果画面で通知。
 - Vitality が 20 以下になったら赤色警告。
 
 ---
 
-## 6. 変更履歴
+## 6. テストプレイの失効と削除
+
+### 6.1 失効フラグ
+| カラム | 型 | 設定タイミング | 値 |
+|---|---|---|---|
+| `is_anonymous` | BOOLEAN | `/api/profile/init` | `true`（匿名認証ユーザー） |
+| `expires_at` | TIMESTAMPTZ | `/api/profile/init` | 作成日時 + 7日 |
+
+### 6.2 自動削除
+- `/api/cron/daily-update`（Vercel Cron: 毎日 UTC 0:00）が失効プロフィールを削除。
+- 削除対象: `is_anonymous = true AND expires_at < NOW()`
+- 関連テーブル（party_members, user_skills, inventory 等）の CASCADE 削除は DB レベルで処理。
+
+### 6.3 アカウント連携（将来実装予定）
+- 匿名ユーザーが Google アカウントと連携（`linkIdentity`）することで永続化できる。
+- 連携後: `is_anonymous = false`, `expires_at = NULL` に更新。
+
+---
+
+## 7. 変更履歴
 
 | バージョン | 日付 | 主な変更内容 |
 |---|---|---|
 | v11.0 | 2026-04 | processAging()の実装に合わせて全面改訂 |
 | v12.1 | 2026-04 | avatar_url 追加 |
-| **v15.0** | **2026-04-13** | **初期ステータス上方修正。HP/ATK/DEF/Gold の基底値・年齢補正にランダム変数を導入。旧固定値を全て削除。** |
+| v15.0 | 2026-04-13 | 初期ステータス上方修正。HP/ATK/DEF/Gold の基底値・年齢補正にランダム変数を導入 |
+| **v16.0** | **2026-04-15** | **ゲーム開始フロー刷新。New Game = Google OAuth 必須、Test Play = 匿名7日間失効に分離。Auth コールバックルート追加（`/auth/callback`）。`user_profiles` に `is_anonymous` / `expires_at` カラム追加。daily cron に匿名データ自動削除を追加。** |
