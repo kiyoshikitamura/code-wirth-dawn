@@ -37,7 +37,7 @@ export default function TitlePage() {
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { alert('画像は2MB以内にしてください。'); return; }
+        if (file.size > 5 * 1024 * 1024) { alert('画像は5MB以内にしてください。'); return; }
         const ok = ['image/jpeg', 'image/png', 'image/webp'];
         if (!ok.includes(file.type)) { alert('JPEG / PNG / WebP のみ対応しています。'); return; }
         setAvatarFile(file);
@@ -378,11 +378,13 @@ export default function TitlePage() {
                         {/* New Game — Google OAuth 必須 */}
                         <button
                             onClick={handleNewGame}
-                            className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-4 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg tracking-widest flex justify-center items-center gap-2 group"
+                            className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-4 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg flex flex-col justify-center items-center gap-1 group"
                         >
-                            <Sword className="w-5 h-5 group-hover:text-amber-300 transition-colors" />
-                            <span className="group-hover:text-amber-200">New Game</span>
-                            <span className="text-[10px] text-amber-600/70 ml-1">(Google アカウント必須)</span>
+                            <div className="flex items-center gap-2">
+                                <Sword className="w-5 h-5 group-hover:text-amber-300 transition-colors" />
+                                <span className="group-hover:text-amber-200 tracking-widest text-base">New Game</span>
+                            </div>
+                            <span className="text-[11px] text-amber-500/80 tracking-wide">Google連携が必要</span>
                         </button>
 
                         {/* Continue — Google OAuth */}
@@ -404,13 +406,13 @@ export default function TitlePage() {
                         {/* Test Play — 匿名（7日間のみ） */}
                         <button
                             onClick={handleTestPlay}
-                            className="w-full bg-transparent border border-slate-700/50 text-slate-500 font-serif py-3 rounded hover:bg-slate-900/30 hover:text-slate-400 hover:border-slate-600 transition-all tracking-widest flex flex-col items-center gap-0.5 text-sm"
+                            className="w-full bg-slate-900/40 border border-slate-500/70 text-slate-300 font-serif py-3 rounded hover:bg-slate-800/60 hover:text-slate-200 hover:border-slate-400 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
                         >
                             <div className="flex items-center gap-2">
-                                <PlayCircle className="w-4 h-4" />
-                                <span>Test Play</span>
+                                <PlayCircle className="w-4 h-4 text-slate-400" />
+                                <span className="font-bold">Test Play</span>
                             </div>
-                            <span className="text-[9px] text-slate-600 tracking-wide">アカウント連携なし・7日間限定・データ引き継ぎ不可</span>
+                            <span className="text-[10px] text-slate-400/80 tracking-wide">アカウント連携なし・7日間限定・データ引き継ぎ不可</span>
                         </button>
                     </div>
                 )}
@@ -537,10 +539,25 @@ export default function TitlePage() {
                             <Compass className="w-5 h-5 relative z-10 transition-transform duration-700 group-hover:rotate-180 text-amber-600 group-hover:text-amber-400" />
                         </button>
 
+                        {/* タイトルに戺る */}
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                try { await supabase.auth.signOut(); } catch (_) {}
+                                setMode('ENTRY');
+                                setName('');
+                                setAvatarFile(null);
+                                setAvatarPreview(null);
+                            }}
+                            className="w-full text-slate-500 hover:text-slate-300 font-serif text-xs tracking-widest py-2 transition-colors text-center"
+                        >
+                            ← タイトルに戺る
+                        </button>
+
                         {/* 最終確認モーダル */}
                         {showConfirm && (
-                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowConfirm(false)}>
-                                <div className="bg-[#1a1208] border-2 border-amber-800/60 rounded-xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
+                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowConfirm(false)}>
+                                <div className="bg-[#1c1710] border-2 border-amber-600/70 rounded-xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
                                     <h3 className="text-lg font-serif text-amber-400 text-center mb-6 tracking-widest">— 契約の確認 —</h3>
 
                                     {/* テストプレイ警告（確認モーダル内） */}
@@ -556,37 +573,37 @@ export default function TitlePage() {
                                                 <img src={avatarPreview} alt="avatar" className="w-16 h-16 rounded-full border-2 border-amber-700 object-cover" />
                                             </div>
                                         )}
-                                        <div className="bg-black/40 rounded-lg p-4 space-y-2 text-sm border border-amber-900/30">
+                                        <div className="bg-slate-900/80 rounded-lg p-4 space-y-2 text-sm border border-amber-700/40">
                                             <div className="flex justify-between">
-                                                <span className="text-amber-900/70 font-serif">名前</span>
-                                                <span className="text-amber-200 font-bold">{name}</span>
+                                                <span className="text-amber-400/80 font-serif">名前</span>
+                                                <span className="text-amber-100 font-bold">{name}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-amber-900/70 font-serif">性別</span>
-                                                <span className="text-amber-200">{gender === 'Male' ? '男' : gender === 'Female' ? '女' : '不明'}</span>
+                                                <span className="text-amber-400/80 font-serif">性別</span>
+                                                <span className="text-amber-100">{gender === 'Male' ? '男' : gender === 'Female' ? '女' : '不明'}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-amber-900/70 font-serif">年齢</span>
-                                                <span className="text-amber-200">{age}歳</span>
+                                                <span className="text-amber-400/80 font-serif">年齢</span>
+                                                <span className="text-amber-100">{age}歳</span>
                                             </div>
                                             {previewStats && (
-                                                <div className="space-y-1 pt-2 border-t border-amber-900/20">
+                                                <div className="space-y-1 pt-2 border-t border-amber-700/30">
                                                     <div className="grid grid-cols-4 gap-1">
-                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">HP</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_hp}</div></div>
-                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">ATK</div><div className="text-amber-300 font-mono font-bold">{previewStats.atk}</div></div>
-                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">DEF</div><div className="text-amber-300 font-mono font-bold">{previewStats.def}</div></div>
-                                                        <div className="text-center"><div className="text-[10px] text-amber-900/60">Vit</div><div className="text-amber-300 font-mono font-bold">{previewStats.max_vitality}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-400/60">HP</div><div className="text-amber-200 font-mono font-bold">{previewStats.max_hp}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-400/60">ATK</div><div className="text-amber-200 font-mono font-bold">{previewStats.atk}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-400/60">DEF</div><div className="text-amber-200 font-mono font-bold">{previewStats.def}</div></div>
+                                                        <div className="text-center"><div className="text-[10px] text-amber-400/60">Vit</div><div className="text-amber-200 font-mono font-bold">{previewStats.max_vitality}</div></div>
                                                     </div>
-                                                    <div className="text-center text-[10px] text-amber-900/60">Gold　<span className="text-amber-300 font-mono font-bold">{previewStats.gold?.toLocaleString() ?? '—'} G</span></div>
+                                                    <div className="text-center text-[10px] text-amber-400/60">Gold　<span className="text-amber-200 font-mono font-bold">{previewStats.gold?.toLocaleString() ?? '—'} G</span></div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     <div className="flex gap-3">
-                                        <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border border-amber-900/40 text-amber-900/70 font-serif rounded-lg text-sm hover:border-amber-800 transition-colors">戻る</button>
+                                        <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border border-amber-700/50 text-amber-400/80 font-serif rounded-lg text-sm hover:border-amber-600 hover:text-amber-300 transition-colors">戻る</button>
                                         <button
                                             onClick={() => handleCharacterSubmit()}
-                                            className="flex-1 py-3 bg-slate-950 border border-amber-700 text-amber-400 font-serif font-bold rounded-lg text-sm hover:bg-slate-900 hover:border-amber-500 transition-all shadow-lg"
+                                            className="flex-1 py-3 bg-amber-900/30 border border-amber-600 text-amber-200 font-serif font-bold rounded-lg text-sm hover:bg-amber-900/50 hover:border-amber-400 hover:text-white transition-all shadow-lg"
                                         >
                                             確定する
                                         </button>
