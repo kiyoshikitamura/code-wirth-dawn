@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import BattleView from '@/components/battle/BattleView';
 import { Swords } from 'lucide-react';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function BattlePage() {
     return (
@@ -31,6 +32,8 @@ function BattlePageInner() {
         fetchUserProfile,
         selectedScenario
     } = useGameStore();
+
+    useAuthGuard(); // タイトル画面経由チェック
 
     const [battleReady, setBattleReady] = useState(false);
 

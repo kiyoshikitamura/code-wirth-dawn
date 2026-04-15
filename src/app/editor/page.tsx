@@ -8,6 +8,7 @@ import { HUB_LOCATION_NAME, LEGACY_ZERO_UUID } from '@/utils/constants';
 import { ArrowLeft, PenTool, Plus, Package, Send, Play, Save, ScrollText, ChevronDown, ChevronUp, Trash2, FolderKanban, Sparkles } from 'lucide-react';
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 // Auth helper for API calls
 const getAuthHeaders = async () => {
@@ -24,6 +25,8 @@ export default function EditorPage() {
     const { userProfile, fetchUserProfile, worldState, fetchWorldState } = useGameStore();
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
+    useAuthGuard(); // タイトル画面経由チェック
 
     // Form State
     const [questId, setQuestId] = useState<string | null>(null);

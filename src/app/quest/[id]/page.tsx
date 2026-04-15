@@ -6,14 +6,15 @@ import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
 import ScenarioEngine from '@/components/quest/ScenarioEngine';
 import { Scenario, Enemy } from '@/types/game';
-import { supabase } from '@/lib/supabase'; // Added supabase
+import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Skull } from 'lucide-react';
-import { getAssetUrl } from '@/config/assets'; // If needed for backgrounds
+import { getAssetUrl } from '@/config/assets';
 import QuestResultModal from '@/components/quest/QuestResultModal';
 import BattleView from '@/components/battle/BattleView';
 import QuestHeader from '@/components/quest/QuestHeader';
 import QuestSettingsModal from '@/components/quest/QuestSettingsModal';
 import { Swords, ScrollText } from 'lucide-react';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function QuestPage() {
     const params = useParams();
@@ -24,6 +25,8 @@ export default function QuestPage() {
     const [loading, setLoading] = useState(true);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
+
+    useAuthGuard(); // タイトル画面経由チェック
 
     const resultOverlayState = useState<{ // Renamed variable to avoid conflict
         result: 'success' | 'failure';

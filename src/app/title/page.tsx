@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
+import { setGameStarted, clearGameStarted } from '@/hooks/useAuthGuard';
 
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
@@ -81,6 +82,8 @@ export default function TitlePage() {
             .maybeSingle();
 
         if (profile) {
+            // /inn に遷移する前にゲーム開始フラグをセット
+            setGameStarted();
             router.push('/inn');
         } else {
             // 匿名かどうかを判定してフラグをセット
@@ -134,7 +137,8 @@ export default function TitlePage() {
      */
     const handleNewGame = async () => {
         setAuthError(null);
-        // 前回セッション・ストアをクリア
+        // 前回セッション・スト・ストアをクリア
+        clearGameStarted();
         try { await supabase.auth.signOut(); } catch (_) {}
         if (typeof window !== 'undefined') {
             localStorage.removeItem('game-storage');

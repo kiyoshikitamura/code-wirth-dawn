@@ -11,6 +11,7 @@ import { getNationNodeColor } from '@/utils/nationColors';
 import { HUB_LOCATION_NAME, LEGACY_ZERO_UUID } from '@/utils/constants';
 import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 import GlobalStatusBar from '@/components/world/GlobalStatusBar';
 import LocalMapView, { MappedLocation } from '@/components/world/LocalMapView';
@@ -21,6 +22,7 @@ export default function WorldMapPage() {
     const router = useRouter();
     const { userProfile, worldState, hubState, fetchUserProfile, fetchWorldState, fetchHubState } = useGameStore();
     useBgm('bgm_field');
+    useAuthGuard(); // タイトル画面経由チェック
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [traveling, setTraveling] = useState(false);

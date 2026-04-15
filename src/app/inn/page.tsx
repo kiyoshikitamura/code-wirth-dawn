@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
+import { useAuthGuard, clearGameStarted } from '@/hooks/useAuthGuard';
 import { HUB_LOCATION_NAME } from '@/utils/constants';
 import InnHeader from '@/components/inn/InnHeader';
 import TavernModal from '@/components/inn/TavernModal';
@@ -88,6 +89,18 @@ function InnPageInner() {
     // Vitality枯渇死亡モーダル (spec_v15.1 §3.3)
     const [showVitalityDeath, setShowVitalityDeath] = useState(false);
     const [vitalityDeathHandled, setVitalityDeathHandled] = useState(false);
+
+    useAuthGuard(); // タイトル画面経由チェック
+
+    // ブラウザバック制御: /inn からのバックナビゲーションを捕捉し /title に導く
+    useEffect(() => {
+        const handlePopState = () => {
+            clearGameStarted();
+            router.replace('/title');
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [router]);
 
     // Initial load
     useEffect(() => {
@@ -379,14 +392,16 @@ function InnPageInner() {
     return (
         <div className="min-h-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
 
-            {/* Toast通知 */}
+            {/* Toast通知（画面中央） */}
             {toast && (
-                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[500] px-5 py-3 rounded-xl shadow-2xl text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 duration-200 max-w-[320px] ${
-                    toast.type === 'success'
-                        ? 'bg-emerald-900/90 border border-emerald-500/60 text-emerald-200'
-                        : 'bg-red-900/90 border border-red-500/60 text-red-200'
-                }`}>
-                    {toast.msg}
+                <div className="fixed inset-0 z-[500] flex items-center justify-center pointer-events-none">
+                    <div className={`px-6 py-4 rounded-xl shadow-2xl text-sm font-bold text-center animate-in fade-in zoom-in-90 duration-200 max-w-[320px] ${
+                        toast.type === 'success'
+                            ? 'bg-emerald-900/95 border border-emerald-500/60 text-emerald-200 shadow-emerald-900/50'
+                            : 'bg-red-900/95 border border-red-500/60 text-red-200 shadow-red-900/50'
+                    }`}>
+                        {toast.msg}
+                    </div>
                 </div>
             )}
 
