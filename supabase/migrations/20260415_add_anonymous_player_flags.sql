@@ -11,94 +11,61 @@ ALTER TABLE user_profiles
   ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT NULL;
 
--- 2. 既存匿名データのリセット
--- ※ 外部キー制約のある子テーブルを先に削除してから user_profiles を削除する
+-- 2. 匿名ユーザーの id を一時テーブルへ収集
+CREATE TEMP TABLE _anon_ids AS
+  SELECT au.id
+  FROM auth.users au
+  WHERE au.is_anonymous = true;
 
--- 2-1. party_members（匿名オーナーのパーティ）
-DELETE FROM party_members
-WHERE owner_id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
-
--- 2-2. party_members（匿名ユーザーが source_user_id として参照されている）
-DELETE FROM party_members
-WHERE source_user_id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
-
--- 2-3. user_skills
-DELETE FROM user_skills
-WHERE user_id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
-
--- 2-4. inventory
-DELETE FROM inventory
-WHERE user_id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
-
--- 2-5. reputations
-DELETE FROM reputations
-WHERE user_id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
-
--- 2-6. royalty_logs（存在する場合のみ: source / target 両方向を削除）
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'royalty_logs'
-  ) THEN
-    DELETE FROM royalty_logs
-    WHERE source_user_id IN (
-      SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-    )
-    OR target_user_id IN (
-      SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-    );
-  END IF;
-END $$;
-
--- 2-7. royalty_daily_log（存在する場合のみ）
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'royalty_daily_log'
-  ) THEN
-    DELETE FROM royalty_daily_log
-    WHERE user_id IN (
-      SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-    );
-  END IF;
-END $$;
-
--- 2-8. その他の外部キー参照テーブル（存在チェック付き）
+-- 3. user_profiles に対する外部キーを持つ全テーブルを動的に DELETE
+--    （どのテーブルが参照しているか不明でも一括対応）
 DO $$
 DECLARE
-  tbl text;
-  col text;
+  r RECORD;
+  sql_stmt TEXT;
 BEGIN
-  -- historical_logs
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='historical_logs') THEN
-    DELETE FROM historical_logs WHERE user_id IN (SELECT au.id FROM auth.users au WHERE au.is_anonymous = true);
-  END IF;
+  FOR r IN
+    SELECT
+      tc.table_name      AS child_table,
+      kcu.column_name    AS child_column
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_schema   = kcu.table_schema
+    JOIN information_schema.referential_constraints rc
+      ON tc.constraint_name = rc.constraint_name
+      AND tc.table_schema   = rc.constraint_schema
+    JOIN information_schema.key_column_usage rcu
+      ON rc.unique_constraint_name = rcu.constraint_name
+      AND rc.unique_constraint_schema = rcu.table_schema
+    WHERE tc.constraint_type = 'FOREIGN KEY'
+      AND tc.table_schema    = 'public'
+      AND rcu.table_name     = 'user_profiles'
+      AND rcu.column_name    = 'id'
+  LOOP
+    sql_stmt := format(
+      'DELETE FROM %I WHERE %I IN (SELECT id FROM _anon_ids)',
+      r.child_table,
+      r.child_column
+    );
+    RAISE NOTICE 'Executing: %', sql_stmt;
+    EXECUTE sql_stmt;
+  END LOOP;
 END $$;
 
--- 2-9. user_profiles（本体）— 子テーブルをすべて削除してから実行
+-- 4. user_profiles 本体を削除（この時点で子テーブルはすべてクリア済み）
 DELETE FROM user_profiles
-WHERE id IN (
-  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
-);
+WHERE id IN (SELECT id FROM _anon_ids);
 
--- 3. 失効チェック用インデックス
+-- 5. 一時テーブルを破棄
+DROP TABLE IF EXISTS _anon_ids;
+
+-- 6. 失効チェック用インデックス
 CREATE INDEX IF NOT EXISTS idx_user_profiles_expires_at
   ON user_profiles (expires_at)
   WHERE expires_at IS NOT NULL;
 
--- 4. コメント
+-- 7. コメント
 COMMENT ON COLUMN user_profiles.is_anonymous IS
   'true = 匿名（テストプレイ）ユーザー。expires_at を過ぎると cron で自動削除される。';
 
