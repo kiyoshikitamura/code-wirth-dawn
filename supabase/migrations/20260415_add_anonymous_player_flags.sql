@@ -11,15 +11,13 @@ ALTER TABLE user_profiles
   ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT NULL;
 
--- 2. 既存匿名データのリセット（関連テーブルも含めてカスケード削除）
+-- 2. 既存匿名データのリセット
+-- ※ 外部キー制約のある子テーブルを先に削除してから user_profiles を削除する
 
 -- 2-1. party_members（匿名オーナーのパーティ）
 DELETE FROM party_members
 WHERE owner_id IN (
-  SELECT up.id
-  FROM user_profiles up
-  INNER JOIN auth.users au ON au.id = up.id
-  WHERE au.is_anonymous = true
+  SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
 );
 
 -- 2-2. party_members（匿名ユーザーが source_user_id として参照されている）
@@ -46,7 +44,24 @@ WHERE user_id IN (
   SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
 );
 
--- 2-6. royalty_daily_log（テーブルが存在する場合のみ）
+-- 2-6. royalty_logs（存在する場合のみ: source / target 両方向を削除）
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'royalty_logs'
+  ) THEN
+    DELETE FROM royalty_logs
+    WHERE source_user_id IN (
+      SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
+    )
+    OR target_user_id IN (
+      SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
+    );
+  END IF;
+END $$;
+
+-- 2-7. royalty_daily_log（存在する場合のみ）
 DO $$
 BEGIN
   IF EXISTS (
@@ -60,7 +75,19 @@ BEGIN
   END IF;
 END $$;
 
--- 2-7. user_profiles（本体）
+-- 2-8. その他の外部キー参照テーブル（存在チェック付き）
+DO $$
+DECLARE
+  tbl text;
+  col text;
+BEGIN
+  -- historical_logs
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='historical_logs') THEN
+    DELETE FROM historical_logs WHERE user_id IN (SELECT au.id FROM auth.users au WHERE au.is_anonymous = true);
+  END IF;
+END $$;
+
+-- 2-9. user_profiles（本体）— 子テーブルをすべて削除してから実行
 DELETE FROM user_profiles
 WHERE id IN (
   SELECT au.id FROM auth.users au WHERE au.is_anonymous = true
