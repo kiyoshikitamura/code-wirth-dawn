@@ -1,10 +1,11 @@
-Code: Wirth-Dawn Specification v16.0 (Character Creation)
+Code: Wirth-Dawn Specification v16.1 (Character Creation)
 # Character Creation & Aging Mechanics
 
 ## 1. 概要 (Overview)
 キャラクター作成時の入力パラメータ、初期ステータスの決定ロジック、加齢/老化による能力減衰を定義する。
 
 <!-- v16.0: ゲーム開始フローを3モードに刷新。New Game は Google OAuth 必須。Test Play（匿名）は7日間失効。 -->
+<!-- v16.1: OAuthコールバック方式修正（onAuthStateChangeへの統一）、UIアップデート（ボタン可読性・確認モーダル改善）、アバター上限5MB化 -->
 
 ---
 
@@ -22,21 +23,21 @@ Code: Wirth-Dawn Specification v16.0 (Character Creation)
 
 #### New Game フロー
 ```
-[New Game] ボタン
+[New Game] ボタン（表示: "New Game" + "Google連携が必要"、2行レイアウト）
   → Google OAuth 画面（Supabase 経由）
-  → /auth/callback?code=xxx
-  → /title（exchangeCodeForSession で認証確立）
+  → /title?code=xxx に直接リダイレクト
+     ↳ Supabase client が detectSessionInUrl=true でコードを自動消費
+     ↳ onAuthStateChange の SIGNED_IN イベントを発火
   → checkUserStatus:
       - 既存プロフィールあり → /inn
-      - 新規           → CHAR_CREATION 画面
+      - 新規           → CHAR_CREATION 画面（タイトルに戻るリンク付き）
 ```
 
 #### Continue フロー
 ```
-[Continue] ボタン
+[Continue / Transfer] ボタン
   → Google OAuth 画面（同一アカウントでログイン）
-  → /auth/callback → /title
-  → checkUserStatus → プロフィールあり → /inn
+  → /title?code=xxx → onAuthStateChange SIGNED_IN → checkUserStatus → /inn
   → プロフィールなし → CHAR_CREATION（新規キャラクター作成）
 ```
 
