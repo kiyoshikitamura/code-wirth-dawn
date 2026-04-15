@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, Edit, ArrowLeft, ScrollText, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 interface UGCScenario {
     id: number;
@@ -19,6 +20,8 @@ export default function ManagePage() {
     const [scenarios, setScenarios] = useState<UGCScenario[]>([]);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState<number | null>(null);
+
+    useAuthGuard(); // タイトル画面経由チェック
 
     const getAuthHeaders = async (): Promise<HeadersInit> => {
         const { data: { session } } = await supabase.auth.getSession();

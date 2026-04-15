@@ -182,6 +182,7 @@ export default function TitlePage() {
     const handleTestPlay = async () => {
         setMode('CREATING');
         setAuthError(null);
+        clearGameStarted();
         try { await supabase.auth.signOut(); } catch (_) {}
         if (typeof window !== 'undefined') {
             localStorage.removeItem('game-storage');
@@ -547,6 +548,7 @@ export default function TitlePage() {
                         <button
                             type="button"
                             onClick={async () => {
+                                clearGameStarted();
                                 try { await supabase.auth.signOut(); } catch (_) {}
                                 setMode('ENTRY');
                                 setName('');
