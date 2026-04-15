@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 
@@ -19,7 +19,13 @@ export default function TitlePage() {
     //   MENU   → New Game / Continue / Test Play ボタン
     //   CHAR_CREATION → キャラクター作成フォーム
     //   CREATING      → 作成中ローディング
-    const [mode, setMode] = useState<'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
+    const [mode, setModeRaw] = useState<'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
+    const modeRef = useRef<'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
+    // mode を変更するときは必ずこのラッパーを使う（modeRef を同期更新するため）
+    const setMode = useCallback((m: 'ENTRY' | 'MENU' | 'CHAR_CREATION' | 'CREATING') => {
+        modeRef.current = m;
+        setModeRaw(m);
+    }, []);
 
     // テストプレイ（匿名）フラグ — CHAR_CREATION 時にバナー表示用
     const [isTestPlay, setIsTestPlay] = useState(false);
@@ -56,34 +62,6 @@ export default function TitlePage() {
         return "黄昏の時が近づく...";
     };
 
-    // ─── OAuth コールバック処理 ────────────────────────────────────────────
-    // /auth/callback から ?code= で戻ってきた場合にセッションを確立する
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        const authErrParam = params.get('auth_error');
-
-        if (authErrParam) {
-            setAuthError(`認証エラー: ${authErrParam}`);
-            setMode('MENU');
-            return;
-        }
-
-        if (code) {
-            // URL をクリーン
-            window.history.replaceState({}, '', '/title');
-            // コードをセッションに交換してから状態確認
-            setMode('CREATING');
-            supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-                if (error) {
-                    setAuthError(`認証に失敗しました: ${error.message}`);
-                    setMode('MENU');
-                } else {
-                    checkUserStatus();
-                }
-            });
-        }
-    }, []);
 
     // ─── ユーザー状態確認 ─────────────────────────────────────────────────
     const checkUserStatus = useCallback(async () => {
@@ -111,6 +89,41 @@ export default function TitlePage() {
         }
     }, [fetchUserProfile, router]);
 
+    // ─── OAuth コールバック処理 ────────────────────────────────────────────
+    // Supabase は detectSessionInUrl=true（デフォルト）で ?code= を自動検出し
+    // exchangeCodeForSession を内部実行した後 SIGNED_IN イベントを発火する。
+    // そのため URL 直読みではなく onAuthStateChange で検知する方式に統一する。
+    useEffect(() => {
+        // auth_error パラメータのみ直接確認（コールバック失敗時）
+        const params = new URLSearchParams(window.location.search);
+        const authErrParam = params.get('auth_error');
+        if (authErrParam) {
+            setAuthError(`認証エラー: ${decodeURIComponent(authErrParam)}`);
+            setMode('MENU');
+            window.history.replaceState({}, '', '/title');
+        }
+
+        // SIGNED_IN: Google OAuth 完了 or 匿名サインイン完了
+        // modeRef で現在の mode を同期参照し、CREATING 中（Test Play 処理中）は二重呼び出しを防ぐ
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('[title] auth event:', event, 'mode:', modeRef.current);
+            if (event === 'SIGNED_IN' && session) {
+                // URL に ?code= が残っていればクリーン
+                if (window.location.search.includes('code=')) {
+                    window.history.replaceState({}, '', '/title');
+                }
+                // Test Play は handleTestPlay 内で checkUserStatus を直接呼ぶため
+                // CREATING モード中は onAuthStateChange からの二重呼び出しをスキップ
+                if (modeRef.current !== 'CREATING') {
+                    setMode('CREATING');
+                    checkUserStatus();
+                }
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [checkUserStatus, setMode]);
+
     // ─── ハンドラー ───────────────────────────────────────────────────────
 
     const handleTapToStart = () => setMode('MENU');
@@ -131,7 +144,9 @@ export default function TitlePage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                // /title に直接リダイレクト → Supabase が ?code= を自動検出し
+                // onAuthStateChange で SIGNED_IN を発火する
+                redirectTo: `${window.location.origin}/title`,
                 queryParams: { prompt: 'select_account' },
             }
         });
@@ -149,7 +164,7 @@ export default function TitlePage() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${window.location.origin}/title`,
             }
         });
         if (error) {
