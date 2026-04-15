@@ -74,38 +74,37 @@ export class ShadowService {
                 .eq('is_alive', true)
                 .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
                 .neq('name', null)
-                .limit(10);
+                .limit(20); // 候補を多めに取得してからランダム〆5体を選抜
 
             if (activeUsers && activeUsers.length > 0) {
-                // アクティブ残影のスキルIDを一括収集してcard名に解決
-                const allActiveCardIds: number[] = [];
-                for (const u of activeUsers) {
-                    const deck = u.signature_deck || [];
-                    for (const id of deck) {
-                        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
-                        if (!isNaN(numId) && !allActiveCardIds.includes(numId)) allActiveCardIds.push(numId);
-                    }
-                }
-                const activeCardNameMap: Record<number, string> = {};
-                if (allActiveCardIds.length > 0) {
-                    const { data: activeCards } = await this.supabase
-                        .from('cards')
-                        .select('id, name')
-                        .in('id', allActiveCardIds);
-                    if (activeCards) {
-                        for (const c of activeCards) activeCardNameMap[c.id] = c.name;
+                // v2.7: user_skillsテーブルから装備済みスキルを一括取得（gossip/route.tsと同様の正しい実装）
+                // user_profiles.signature_deck はこのフィールドが存在しないため使用不可
+                const activeUserIds = activeUsers.map((u: any) => u.id);
+                const skillsByUser: Record<string, string[]> = {};
+                if (activeUserIds.length > 0) {
+                    const { data: equippedSkills } = await this.supabase
+                        .from('user_skills')
+                        .select('user_id, cards!inner(name)')
+                        .in('user_id', activeUserIds)
+                        .eq('is_equipped', true)
+                        .limit(120); // 最大20ユーザー × 6スキル上限
+
+                    if (equippedSkills) {
+                        for (const s of equippedSkills) {
+                            if (!skillsByUser[(s as any).user_id]) skillsByUser[(s as any).user_id] = [];
+                            const cardName = (s as any).cards?.name;
+                            if (cardName) skillsByUser[(s as any).user_id].push(cardName);
+                        }
                     }
                 }
 
-                for (const u of activeUsers) {
+                // 候補をランダムシャッフルして最大5体を選抜
+                const shuffledUsers = [...activeUsers].sort(() => Math.random() - 0.5).slice(0, 5);
+
+                for (const u of shuffledUsers) {
                     if (hiredSourceIds.has(u.id)) continue;
 
                     const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
-                    const rawDeck: (number | string)[] = u.signature_deck || [];
-                    const deckNames = rawDeck.map(id => {
-                        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
-                        return activeCardNameMap[numId] || `スキル#${numId}`;
-                    });
                     results.push({
                         profile_id: u.id,
                         name: u.name || 'Unknown Adventurer',
@@ -113,8 +112,8 @@ export class ShadowService {
                         job_class: u.title_name || 'Adventurer',
                         origin_type: 'shadow_active',
                         contract_fee: fee,
-                        stats: { atk: u.attack, def: u.defense, hp: u.max_hp },
-                        signature_deck_preview: deckNames,
+                        stats: { atk: u.attack || u.atk || 0, def: u.defense || u.def || 0, hp: u.max_hp },
+                        signature_deck_preview: skillsByUser[u.id] || [],
                         subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium',
                         icon_url: u.avatar_url || undefined,
                     });
@@ -125,17 +124,20 @@ export class ShadowService {
         }
 
         // 2. Fetch Heroic Shadows from historical_logs
+        // 候補を多めに取得してからランダムシャッフルして最大3体を選抜（見渡すごとにリフレッシュ）
         try {
             const { data: heroicLogs } = await this.supabase
                 .from('historical_logs')
                 .select('*')
                 .order('death_date', { ascending: false })
-                .limit(5);
+                .limit(30); // 候補を多めに取得
 
             if (heroicLogs) {
-                for (const log of heroicLogs) {
-                    if (hiredSourceIds.has(log.user_id)) continue;
+                // 雇用済みを除外してからシャッフル → 最大3体を選抜
+                const eligibleLogs = heroicLogs.filter(log => !hiredSourceIds.has(log.user_id));
+                const shuffledLogs = [...eligibleLogs].sort(() => Math.random() - 0.5).slice(0, 3);
 
+                for (const log of shuffledLogs) {
                     const d = log.data;
                     const level = d.final_level || 1;
                     results.push({
@@ -161,6 +163,25 @@ export class ShadowService {
         for (const sys of systems) {
             if (hiredNames.has(sys.name)) continue;
             results.push(sys);
+        }
+
+        // 4. 合計表示上限: active → heroic → mercenary の優先順で最大10体
+        // 同一タイプ内の順序はそれぞれのシャッフル済み順序を維持
+        const MAX_DISPLAY = 10;
+        if (results.length > MAX_DISPLAY) {
+            const active   = results.filter(r => r.origin_type === 'shadow_active');
+            const heroic   = results.filter(r => r.origin_type === 'shadow_heroic');
+            const mercenary = results.filter(r => r.origin_type === 'system_mercenary');
+
+            const capped: ShadowSummary[] = [];
+            for (const bucket of [active, heroic, mercenary]) {
+                for (const shadow of bucket) {
+                    if (capped.length >= MAX_DISPLAY) break;
+                    capped.push(shadow);
+                }
+                if (capped.length >= MAX_DISPLAY) break;
+            }
+            return capped;
         }
 
         return results;
@@ -204,9 +225,12 @@ export class ShadowService {
                     if (index1 !== index2) targetNpcs.push(freelanceNpcs[index2]);
                 }
 
-                // 3. 全NPCのinject_cards（数値ID）を収集してcardsテーブルで一括名前解決
+                // 3. ランダムシャッフルして最大5体を選抜（見渡すごとにリフレッシュ）
+                const shuffledNpcs = [...targetNpcs].sort(() => Math.random() - 0.5).slice(0, 5);
+
+                // 4. 選抜NPCのinject_cards（数値ID）を収集してcardsテーブルで一括名前解決
                 const allCardIds: number[] = [];
-                for (const npc of targetNpcs) {
+                for (const npc of shuffledNpcs) {
                     const ids = npc.inject_cards || npc.default_cards || [];
                     for (const id of ids) {
                         const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
@@ -228,8 +252,8 @@ export class ShadowService {
                     }
                 }
 
-                // 4. NPCごとにsignature_deck_previewをカード名に変換
-                for (const npc of targetNpcs) {
+                // 5. NPCごとにsignature_deck_previewをカード名に変換
+                for (const npc of shuffledNpcs) {
                     const rawIds: (number | string)[] = npc.inject_cards || npc.default_cards || [];
                     const deckNames = rawIds.map(id => {
                         const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
