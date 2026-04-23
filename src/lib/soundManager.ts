@@ -8,18 +8,22 @@
 // ─── BGM / SE ファイルマッピング ───────────────────────────
 
 const BGM_FILES: Record<string, string> = {
-    bgm_title:       '/audio/bgm/bgm_title.ogg',
-    bgm_inn:         '/audio/bgm/bgm_inn.ogg',
-    bgm_field:       '/audio/bgm/bgm_field.ogg',
-    bgm_battle:      '/audio/bgm/bgm_battle.ogg',
-    bgm_quest_calm:  '/audio/bgm/bgm_quest_calm.ogg',
-    bgm_quest_tense: '/audio/bgm/bgm_quest_tense.ogg',
-    // 国家テーワBGM (spec_v14.1 §4)
-    bgm_roland:      '/audio/bgm/bgm_roland.ogg',
-    bgm_markand:     '/audio/bgm/bgm_markand.ogg',
-    bgm_yato:        '/audio/bgm/bgm_yato.ogg',
-    bgm_karyu:       '/audio/bgm/bgm_karyu.ogg',
-    bgm_collapse:    '/audio/bgm/bgm_collapse.ogg',
+    bgm_title:          '/audio/bgm/bgm_title.ogg',
+    bgm_inn:            '/audio/bgm/bgm_inn.ogg',
+    bgm_field:          '/audio/bgm/bgm_field.ogg',
+    bgm_battle:         '/audio/bgm/bgm_battle.ogg',
+    bgm_battle_strong:  '/audio/bgm/bgm_battle_strong.ogg',
+    bgm_battle_boss:    '/audio/bgm/bgm_battle_boss.ogg',
+    bgm_quest_calm:     '/audio/bgm/bgm_quest_calm.ogg',
+    bgm_quest_tense:    '/audio/bgm/bgm_quest_tense.ogg',
+    bgm_quest_crisis:   '/audio/bgm/bgm_quest_crisis.ogg',
+    bgm_quest_mystery:  '/audio/bgm/bgm_quest_mystery.ogg',
+    // 国家テーマBGM (spec_v14.1 §4)
+    bgm_roland:         '/audio/bgm/bgm_roland.ogg',
+    bgm_markand:        '/audio/bgm/bgm_markand.ogg',
+    bgm_yato:           '/audio/bgm/bgm_yato.ogg',
+    bgm_karyu:          '/audio/bgm/bgm_karyu.ogg',
+    bgm_collapse:       '/audio/bgm/bgm_collapse.ogg',
 };
 
 const SE_FILES: Record<string, string> = {
@@ -85,16 +89,22 @@ class SoundManager {
     // BGM
     private bgmAudio: HTMLAudioElement | null = null;
     private currentBgmKey: string | null = null;
-    private bgmVolume = 0.7;
+    private bgmEnabled = true;
+    private readonly BGM_VOLUME = 0.7;
     private isFading = false;
 
     // SE
     private audioCtx: AudioContext | null = null;
     private seBufferCache: Map<string, AudioBuffer> = new Map();
-    private seVolume = 0.8;
+    private seEnabled = true;
+    private readonly SE_VOLUME = 0.8;
 
     // 初期化済みフラグ
     private initialized = false;
+
+    // モバイル: ユーザー操作アンロック済みフラグ
+    private unlocked = false;
+    private pendingBgmKey: string | null = null;
 
     private constructor() {}
 
@@ -112,9 +122,44 @@ class SoundManager {
         try {
             this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
             this.initialized = true;
+            // モバイル: 初回ユーザー操作でオーディオをアンロック
+            if (!this.unlocked) {
+                this.setupUserGestureUnlock();
+            }
         } catch (e) {
             console.warn('[SoundManager] AudioContext init failed:', e);
         }
+    }
+
+    /** モバイル向け: 初回タッチ/クリックでAudioContextをresumeし、保留中のBGMを再生 */
+    private setupUserGestureUnlock(): void {
+        const unlock = async () => {
+            if (this.unlocked) return;
+            this.unlocked = true;
+
+            // AudioContext の suspend 解除
+            if (this.audioCtx?.state === 'suspended') {
+                try { await this.audioCtx.resume(); } catch (_) {}
+            }
+
+            // 保留中のBGMがあれば再生
+            if (this.pendingBgmKey) {
+                const key = this.pendingBgmKey;
+                this.pendingBgmKey = null;
+                this.currentBgmKey = null; // reset to allow playBgm
+                await this.playBgm(key);
+            }
+
+            // リスナー解除
+            ['touchstart', 'touchend', 'click', 'keydown'].forEach(ev =>
+                document.removeEventListener(ev, unlock, true)
+            );
+            console.log('[SoundManager] Audio unlocked by user gesture');
+        };
+
+        ['touchstart', 'touchend', 'click', 'keydown'].forEach(ev =>
+            document.addEventListener(ev, unlock, { once: false, capture: true, passive: true })
+        );
     }
 
     /** Autoplay Policy 解除 */
@@ -126,8 +171,26 @@ class SoundManager {
 
     // ─── BGM ──────────────────────────────────────────────
 
+    private fadeTimerId: ReturnType<typeof setInterval> | null = null;
+
+    /** 進行中のフェードを強制キャンセル */
+    private cancelFade(): void {
+        if (this.fadeTimerId) {
+            clearInterval(this.fadeTimerId);
+            this.fadeTimerId = null;
+        }
+        this.isFading = false;
+    }
+
     async playBgm(key: string): Promise<void> {
         if (!key || key === this.currentBgmKey) return;
+
+        // BGM OFF時: キーだけ記録して実際の再生はスキップ
+        if (!this.bgmEnabled) {
+            this.currentBgmKey = key;
+            this.pendingBgmKey = null;
+            return;
+        }
 
         const src = BGM_FILES[key];
         if (!src) {
@@ -135,41 +198,48 @@ class SoundManager {
             return;
         }
 
-        // フェードアウト中のBGMがあれば待つ
+        // 古いpendingを上書き（ページ遷移後に古いBGMが再生されるのを防止）
+        this.pendingBgmKey = null;
+
+        // 進行中のフェードを即時キャンセル
+        this.cancelFade();
+
+        // 現在のBGMを即時停止（フェードアウトの代わりに即停止で競合回避）
         if (this.bgmAudio && this.currentBgmKey) {
-            await this.fadeOutBgm();
+            this.bgmAudio.pause();
         }
 
         this.currentBgmKey = key;
 
-        // 新しいBGMを作成
-        const audio = new Audio(src);
-        audio.loop = true;
-        audio.volume = 0;
-        audio.preload = 'auto';
+        // iOS Safari対応: Audio要素を再利用（初回ジェスチャでplay済みの要素のみ再生可能）
+        if (!this.bgmAudio) {
+            this.bgmAudio = new Audio();
+            this.bgmAudio.loop = true;
+            this.bgmAudio.preload = 'auto';
+            this.bgmAudio.onerror = () => {
+                console.warn(`[SoundManager] Failed to load BGM: ${this.bgmAudio?.src}`);
+            };
+        }
 
-        // エラーハンドリング（ファイルが見つからない場合静かに失敗）
-        audio.onerror = () => {
-            console.warn(`[SoundManager] Failed to load BGM: ${src}`);
-        };
-
-        this.bgmAudio = audio;
+        const audio = this.bgmAudio;
+        audio.src = src;
+        audio.volume = this.BGM_VOLUME; // 即時フルボリューム（フェードインの競合を回避）
 
         try {
             await audio.play();
-            // フェードイン
-            await this.fadeBgmTo(this.bgmVolume);
+            console.log(`[SoundManager] BGM playing: ${key}`);
         } catch (e) {
             // Autoplay blocked — ユーザー操作後にリトライされる
-            console.warn('[SoundManager] BGM play blocked (autoplay policy)');
+            console.warn('[SoundManager] BGM play blocked (autoplay policy), queuing for unlock');
+            this.pendingBgmKey = key;
         }
     }
 
     stopBgm(): void {
+        this.cancelFade();
         if (this.bgmAudio) {
             this.bgmAudio.pause();
             this.bgmAudio.currentTime = 0;
-            this.bgmAudio = null;
         }
         this.currentBgmKey = null;
     }
@@ -178,7 +248,6 @@ class SoundManager {
         return this.fadeBgmTo(0).then(() => {
             if (this.bgmAudio) {
                 this.bgmAudio.pause();
-                this.bgmAudio = null;
             }
         });
     }
@@ -186,7 +255,9 @@ class SoundManager {
     private fadeBgmTo(targetVolume: number): Promise<void> {
         return new Promise((resolve) => {
             if (!this.bgmAudio) { resolve(); return; }
-            if (this.isFading) { resolve(); return; }
+
+            // 進行中のフェードをキャンセルしてから新しいフェードを開始
+            this.cancelFade();
 
             this.isFading = true;
             const audio = this.bgmAudio;
@@ -195,14 +266,13 @@ class SoundManager {
             const volumeDelta = (targetVolume - startVolume) / steps;
             let step = 0;
 
-            const timer = setInterval(() => {
+            this.fadeTimerId = setInterval(() => {
                 step++;
                 if (step >= steps || !this.bgmAudio || this.bgmAudio !== audio) {
-                    clearInterval(timer);
+                    this.cancelFade();
                     if (audio === this.bgmAudio) {
                         audio.volume = Math.max(0, Math.min(1, targetVolume));
                     }
-                    this.isFading = false;
                     resolve();
                     return;
                 }
@@ -211,25 +281,57 @@ class SoundManager {
         });
     }
 
-    setBgmVolume(vol: number): void {
-        this.bgmVolume = Math.max(0, Math.min(1, vol));
-        if (this.bgmAudio && !this.isFading) {
-            this.bgmAudio.volume = this.bgmVolume;
+    setBgmEnabled(enabled: boolean): void {
+        this.bgmEnabled = enabled;
+        if (this.bgmAudio) {
+            if (!enabled) {
+                this.bgmAudio.pause();
+            } else if (this.currentBgmKey) {
+                this.bgmAudio.volume = this.BGM_VOLUME;
+                this.bgmAudio.play().catch(() => {});
+            }
         }
     }
 
-    getBgmVolume(): number {
-        return this.bgmVolume;
+    getBgmEnabled(): boolean {
+        return this.bgmEnabled;
     }
 
     getCurrentBgmKey(): string | null {
         return this.currentBgmKey;
     }
 
+    /** モバイル向け: 保留中のBGMをユーザージェスチャコンテキスト内で同期的に再生 */
+    playPendingBgm(): void {
+        if (!this.pendingBgmKey) return;
+        const key = this.pendingBgmKey;
+        const src = BGM_FILES[key];
+        if (!src) return;
+
+        this.pendingBgmKey = null;
+        this.currentBgmKey = key;
+
+        // Audio要素を再利用（なければ作成）
+        if (!this.bgmAudio) {
+            this.bgmAudio = new Audio();
+            this.bgmAudio.loop = true;
+            this.bgmAudio.preload = 'auto';
+        }
+
+        const audio = this.bgmAudio;
+        audio.src = src;
+        audio.volume = this.BGM_VOLUME;
+
+        // iOS Safari: play()は同期コールスタック内で呼ぶ（awaitしない）
+        audio.play().catch(() => {
+            console.warn('[SoundManager] playPendingBgm: play() still blocked');
+        });
+    }
+
     // ─── SE ───────────────────────────────────────────────
 
     async playSE(key: string): Promise<void> {
-        if (this.seVolume <= 0) return;
+        if (!this.seEnabled) return;
         if (!this.audioCtx) this.init();
         if (!this.audioCtx) return;
 
@@ -258,7 +360,7 @@ class SoundManager {
             source.buffer = buffer;
 
             const gainNode = this.audioCtx.createGain();
-            gainNode.gain.value = this.seVolume;
+            gainNode.gain.value = this.SE_VOLUME;
 
             source.connect(gainNode);
             gainNode.connect(this.audioCtx.destination);
@@ -274,12 +376,12 @@ class SoundManager {
         if (seKey) this.playSE(seKey);
     }
 
-    setSeVolume(vol: number): void {
-        this.seVolume = Math.max(0, Math.min(1, vol));
+    setSeEnabled(enabled: boolean): void {
+        this.seEnabled = enabled;
     }
 
-    getSeVolume(): number {
-        return this.seVolume;
+    getSeEnabled(): boolean {
+        return this.seEnabled;
     }
 
     // ─── クリーンアップ ───────────────────────────────────

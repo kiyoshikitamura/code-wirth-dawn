@@ -1,4 +1,4 @@
-# クエスト仕様書：6002 — 第2話「砂礫の国境線」
+﻿# クエスト仕様書：6002 — 第2話「砂礫の国境線」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 2 |
 | **難度** | 1 |
 | **依頼主** | 帝国軍 |
-| **出現条件** | 前提クエストクリア: main_ep01 / 必須滞在拠点: loc_holy_empire |
+| **出現条件** | 前提クエストクリア: main_ep01 / 必須滞在拠点: loc_border_town |
 | **サムネイル画像** | `/images/quests/bg_wasteland.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+国境警備任務に就いた君を待ち受けるのは、ただの野盗ではなかった。統率の取れた武装集団の背後に蠢く大国の影。ローランとマルカンドの国境地帯で、戦争の気配が静かに忍び寄る。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:200|Rep:10
+Gold:200|Rep:5
 ```
 
 ---
@@ -66,8 +66,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -84,8 +84,8 @@ text0_1
 
 #### `text0_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -102,15 +102,15 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 「最近、この辺りでは武装した集団が頻繁に出没している。ただのゴロツキや盗賊団にしては、妙に動きに統率が取れているのが気掛かりだ」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text1_1
@@ -120,15 +120,15 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 ガウェインは厳しい顔で地平線を睨んでいる。「それに……あの野盗どもが使っていた武器の質。どう見てもどこかの正規のものだ」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 choice1
@@ -138,15 +138,15 @@ choice1
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 「……かもしれん。マルカンド側も、我が帝国の膨張を警戒して水面下で作戦を展開しているという噂はある。いずれにせよ、油断するなよ」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text2_1
@@ -156,8 +156,8 @@ text2_1
 
 #### `text2_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -174,8 +174,8 @@ text3
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -192,8 +192,8 @@ text3_1
 
 #### `text3_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -210,15 +210,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 「舌の根も乾かぬうちに来たぞ！陣形を崩すな、背中を取られるなよ！」
 ```
-**次ノード:** `{type:battle, enemy_group_id:1, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:200, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 choice2
@@ -228,8 +228,8 @@ choice2
 
 #### `text_post_battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -246,8 +246,8 @@ text_post_battle2
 
 #### `text_post_battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -264,8 +264,8 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**

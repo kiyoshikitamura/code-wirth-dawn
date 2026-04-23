@@ -1,9 +1,13 @@
 /**
  * csvScenarioLoader.ts
- * Unified CSV → ScenarioEngine JSON converter (Spec v3.3)
+ * Unified CSV → ScenarioEngine JSON converter (Spec v4.0)
  *
  * Parses row_type (NODE/CHOICE) CSV format into the JSON tree
  * consumed by <ScenarioEngine />.
+ *
+ * Supports two params formats:
+ *   - JSON:      {"type":"text", "bg":"bg_default", "speaker_image_url":"/images/..."}
+ *   - Legacy:    type:text, bg:forest, enemy:goblin_squad
  */
 
 export interface ScenarioNode {
@@ -12,11 +16,16 @@ export interface ScenarioNode {
     bg_key?: string;
     bgm?: string;
     enemy_group_id?: string;
+    speaker_image_url?: string;
+    speaker_name?: string;
+    speaker?: string;
     result?: string;
     prob?: number;
     req_stat?: string;
     req_val?: number;
+    next?: string;
     choices?: ScenarioChoice[];
+    params?: Record<string, any>;
     [key: string]: any;
 }
 
@@ -35,15 +44,25 @@ export interface ScenarioJson {
 }
 
 /**
- * Parse a key:value params string like "bg:forest, type:battle, enemy:goblin_squad"
- * into an object { bg: "forest", type: "battle", enemy: "goblin_squad" }
+ * Parse a params string. Auto-detects JSON vs legacy key:value format.
  */
-function parseParams(paramsStr: string): Record<string, string> {
-    const result: Record<string, string> = {};
-    if (!paramsStr || !paramsStr.trim()) return result;
+function parseParams(paramsStr: string): Record<string, any> {
+    if (!paramsStr || !paramsStr.trim()) return {};
 
-    // Split by comma, then by colon
-    const parts = paramsStr.split(',').map(s => s.trim()).filter(Boolean);
+    const trimmed = paramsStr.trim();
+
+    // JSON形式を自動検出 (先頭が { の場合)
+    if (trimmed.startsWith('{')) {
+        try {
+            return JSON.parse(trimmed);
+        } catch (e) {
+            console.warn('[csvScenarioLoader] JSON parse failed for params, falling back to legacy:', trimmed);
+        }
+    }
+
+    // Legacy format: key:value, key:value
+    const result: Record<string, string> = {};
+    const parts = trimmed.split(',').map(s => s.trim()).filter(Boolean);
     for (const part of parts) {
         const colonIdx = part.indexOf(':');
         if (colonIdx > 0) {
@@ -105,7 +124,7 @@ function parseCsvRows(csvText: string): string[][] {
 /**
  * Main converter: parses unified CSV text into ScenarioEngine-compatible JSON.
  *
- * Expected columns: row_type, node_id, text_label, next_node, params
+ * Expected columns: row_type, node_id, text_label, params, next_node
  */
 export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
     const rows = parseCsvRows(csvText);
@@ -143,7 +162,7 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 node.text = textLabel.replace(/\\n/g, '\n');
             }
 
-            // Apply params
+            // Apply params — 全フィールドを params から抽出
             if (params.type) {
                 node.type = params.type;
 
@@ -157,15 +176,50 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 }
             }
 
+            // 背景・BGM
             if (params.bg) node.bg_key = params.bg;
             if (params.bgm) node.bgm = params.bgm;
-            if (params.enemy) node.enemy_group_id = params.enemy;
-            if (params.prob) node.prob = parseInt(params.prob, 10);
+
+            // 敵グループ
+            if (params.enemy_group_id) {
+                node.enemy_group_id = String(params.enemy_group_id);
+            } else if (params.enemy) {
+                node.enemy_group_id = params.enemy;
+            }
+
+            // 話者情報
+            if (params.speaker_image_url) node.speaker_image_url = params.speaker_image_url;
+            if (params.speaker_name) {
+                node.speaker_name = params.speaker_name;
+                node.speaker = params.speaker_name;
+            }
+
+            // ゲスト参加
+            if (params.guest_id) {
+                node.params = node.params || {};
+                node.params.guest_id = params.guest_id;
+            }
+
+            // 分岐・条件系
+            if (params.prob) node.prob = parseInt(String(params.prob), 10);
             if (params.cond) node.cond = params.cond;
             if (params.next) node.condNext = params.next;
             if (params.fallback) node.condFallback = params.fallback;
             if (params.req_stat) node.req_stat = params.req_stat;
-            if (params.req_val) node.req_val = parseInt(params.req_val, 10);
+            if (params.req_val) node.req_val = parseInt(String(params.req_val), 10);
+
+            // アイテム・移動系パラメータをparamsに保存
+            const passthrough = ['item_id', 'quantity', 'remove_on_success',
+                'target_location_slug', 'hp_percent', 'hp_flat',
+                'flag', 'key', 'delta', 'value', 'threshold', 'operator',
+                'amount', 'location_name', 'items', 'gold',
+                'encounter_rate'];
+            for (const k of passthrough) {
+                if (params[k] !== undefined) {
+                    node.params = node.params || {};
+                    node.params[k] = params[k];
+                }
+            }
 
             // If next_node is specified at NODE level (auto-advance)
             if (nextNode) {
@@ -176,6 +230,7 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                     node.type = 'end';
                     node.result = 'failure';
                 } else {
+                    node.next = nextNode;
                     // Auto-advance: create a single "continue" choice
                     node.choices = [{ label: '続ける', next: nextNode }];
                 }
@@ -191,18 +246,30 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
             };
 
             // Apply choice-specific params
-            if (params.cost_gold) choice.cost_gold = parseInt(params.cost_gold, 10);
+            if (params.cost_gold) choice.cost_gold = parseInt(String(params.cost_gold), 10);
             if (params.cost_type === 'vitality' && params.cost_val) {
-                choice.cost_vitality = parseInt(params.cost_val, 10);
+                choice.cost_vitality = parseInt(String(params.cost_val), 10);
             }
+            if (params.cost_vitality) choice.cost_vitality = parseInt(String(params.cost_vitality), 10);
             if (params.req_card) choice.req_card = params.req_card;
             if (params.req_tag) choice.req_tag = params.req_tag;
 
-            // Map special CHOICE labels for branch nodes
             if (!nodes[currentNodeId].choices) {
                 nodes[currentNodeId].choices = [];
             }
+
+            // ★ CHOICE行が追加される際、auto-generated「続ける」を削除
+            // （NODE行のnext_nodeから自動生成された「続ける」はプレースホルダにすぎない）
+            const existingChoices = nodes[currentNodeId].choices!;
+            if (existingChoices.length === 1 && existingChoices[0].label === '続ける') {
+                nodes[currentNodeId].choices = [];
+            }
+
             nodes[currentNodeId].choices!.push(choice);
+            // ★ battleノードの場合、最初のCHOICE行のnextをbattle_success_nextに設定
+            if (nodes[currentNodeId].type === 'battle' && !nodes[currentNodeId].battle_success_next) {
+                nodes[currentNodeId].battle_success_next = choice.next;
+            }
         }
     }
 

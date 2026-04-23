@@ -46,6 +46,7 @@ export async function GET(req: Request) {
             }
 
             // PartyMember互換オブジェクトとして返す
+            const guestMaxHp = npcData.max_hp || npcData.hp || 50;
             data = {
                 id: npcData.id,
                 slug: npcData.slug,
@@ -53,19 +54,18 @@ export async function GET(req: Request) {
                 epithet: npcData.epithet || '', // 通り名
                 job_class: npcData.job_class || 'Guest',
                 level: npcData.level || 1,
-                hp: npcData.hp || 50,
-                maxHp: npcData.max_hp || npcData.hp || 50,
-                mp: npcData.mp || 10,
-                maxMp: npcData.max_mp || npcData.mp || 10,
-                attack: npcData.attack || 10,
-                defense: npcData.defense || 5,
-                speed: npcData.speed || 10,
+                hp: guestMaxHp,
+                maxHp: guestMaxHp,
+                atk: npcData.atk || npcData.attack || 10,
+                def: npcData.def || npcData.defense || 5,
                 // image: DBスキーマにカラムがないためデフォルトを使用
                 image: '/assets/chara/guest_default.png',
+                icon_url: npcData.icon_url || null,
+                image_url: npcData.image_url || null,
                 inject_cards: npcData.default_cards || [],
                 is_active: true,
-                durability: 3,
-                max_durability: 3,
+                durability: guestMaxHp,
+                max_durability: guestMaxHp,
                 introduction: npcData.introduction
             };
         } else {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer as supabase } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +23,8 @@ export async function GET(req: Request) {
         if (tab === 'all' || tab === 'news') {
             const { data: worldNews, error: newsError } = await supabase
                 .from('world_states_history')
-                .select('id, news_content, old_status, new_status, occured_at, location:locations(name)')
-                .order('occured_at', { ascending: false })
+                .select('id, message, old_value, new_value, event_type, created_at, location:locations(name)')
+                .order('created_at', { ascending: false })
                 .limit(10);
 
             if (newsError) throw newsError;
@@ -143,118 +143,40 @@ export async function GET(req: Request) {
         // タブ④「酒場」: 同拠点にいる他プレイヤー(active) + システム傭兵(npcs)
         // ─────────────────────────────────────────────
         if (tab === 'all' || tab === 'tavern') {
-            // 拠点情報を取得（国籍フィルタ用）
-            let rulingNation: string | null = null;
-            if (locationId) {
-                const { data: locInfo } = await supabase
-                    .from('locations')
-                    .select('ruling_nation_id')
-                    .eq('id', locationId)
-                    .maybeSingle();
-                rulingNation = locInfo?.ruling_nation_id?.toLowerCase() || null;
-            }
+            // v2.9.3f: ShadowService統一 — tavern/list APIと同じデータを返すことで表示不一致を解消
+            const { ShadowService } = await import('@/services/shadowService');
+            const shadowService = new ShadowService(supabase);
+            const shadows = locationId
+                ? await shadowService.findShadowsAtLocation(locationId, userId)
+                : [];
 
-            // ① 同拠点で最近アクティブな他プレイヤー（24h以内）
-            // ※ name=NULLのユーザーはタバーンリストに出ないので除外（整合性確保）
-            // ※ Supabaseクエリビルダーはimmutableなので必ずletで再代入
-            let activeUsersQuery = supabase
-                .from('user_profiles')
-                .select('id, name, title_name, level, avatar_url, updated_at, atk, def, max_hp, job_class')
-                .eq('is_alive', true)
-                .not('name', 'is', null)   // name=NULLを除外（tavernListと整合）
-                .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-            if (locationId) {
-                activeUsersQuery = activeUsersQuery
-                    .eq('current_location_id', locationId)
-                    .neq('id', userId);
-            }
-
-            activeUsersQuery = activeUsersQuery.limit(5); // 多すぎないよう制限
-            const { data: activeUsers } = await activeUsersQuery;
-
-            // v25: active_shadow ユーザーの装備スキルを一括取得
-            const activeUserIds = (activeUsers || []).map((u: any) => u.id);
-            const skillsByUser: Record<string, string[]> = {};
-            if (activeUserIds.length > 0) {
-                const { data: equippedSkills } = await supabase
-                    .from('user_skills')
-                    .select('user_id, cards!inner(name)')
-                    .in('user_id', activeUserIds)
-                    .eq('is_equipped', true)
-                    .limit(30);
-
-                if (equippedSkills) {
-                    for (const s of equippedSkills) {
-                        if (!skillsByUser[s.user_id]) skillsByUser[s.user_id] = [];
-                        const cardName = (s as any).cards?.name;
-                        if (cardName) skillsByUser[s.user_id].push(cardName);
-                    }
-                }
-            }
-
-            // ② システム傭兵 - shadowServiceと同じslug.includes(rulingNation)ロジックで絞り込み
-            // 全npcsを取得後にJS側でフィルタ（Supabase ilike構文の複雑さを回避）
-            const { data: allNpcMercs } = await supabase
-                .from('npcs')
-                .select('id, slug, name, epithet, level, job_class, image_url, introduction')
-                .eq('is_hireable', true)
-                .eq('origin', 'system_mercenary');
-
-            // shadowServiceと同じロジックでフィルタリング
-            let npcMercs = allNpcMercs || [];
-            if (rulingNation && rulingNation !== 'unknown') {
-                const nativeNpcs = npcMercs.filter(n => n.slug?.toLowerCase().includes(rulingNation!));
-                const freeNpcs = npcMercs.filter(n => n.slug?.toLowerCase().includes('free'));
-                // nativeNpcsがある場合はそちらを優先、なければ全員
-                npcMercs = nativeNpcs.length > 0 ? [...nativeNpcs, ...freeNpcs] : npcMercs;
-            }
-            npcMercs = npcMercs.slice(0, 10);
-
-            // activeUsersをTavernShadow形式に整形（v25: atk/def/hp/skills追加）
+            // ShadowSummary → TavernShadow 形式に変換
             const JOB_CLASS_JP_GOSSIP: Record<string, string> = {
                 Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Mage: '魔法使い',
                 Ranger: '狩人', Thief: '盗賊', Cleric: '僧侶', Bard: '吟遊詩人',
                 Adventurer: '冒険者', Samurai: '侍', Ninja: '忍者', Mercenary: '傭兵',
             };
-            const activeShadows = (activeUsers || []).map((u: any) => ({
-                id: u.id,
-                profile_id: u.id,
-                name: u.name || '名もなき旅人',
-                epithet: u.title_name || '',
-                job_class: JOB_CLASS_JP_GOSSIP[u.job_class] || u.job_class || '冒険者',
-                durability: u.max_hp || 100,
-                max_durability: u.max_hp || 100,
+            const shuffledShadows = shadows.map(s => ({
+                id: s.profile_id,
+                profile_id: s.profile_id,
+                name: s.name,
+                epithet: s.epithet || '',
+                job_class: JOB_CLASS_JP_GOSSIP[s.job_class] || s.job_class || '傭兵',
+                durability: s.stats?.hp || 100,
+                max_durability: s.stats?.hp || 100,
                 cover_rate: 0,
-                avatar_url: u.avatar_url,
-                icon_url: u.avatar_url,
-                origin_type: 'active_shadow',
-                level: u.level,
-                // v25: スナップショットステータス
-                stats: { atk: u.atk || 0, def: u.def || 0, hp: u.max_hp || 100 },
-                signature_deck_preview: skillsByUser[u.id] || [],
-                contract_fee: (u.level || 1) * 50, // 仮計算（hireShadow 側でサーバー再計算）
-                subscription_tier: 'free',
+                avatar_url: s.npc_image_url || s.icon_url || s.image_url || undefined,
+                origin_type: s.origin_type,
+                level: s.level,
+                flavor_text: s.flavor_text || undefined,
+                // v2.9.3f: TavernModal用に完全データを保持
+                stats: s.stats || { atk: 0, def: 0, hp: 100 },
+                signature_deck_preview: s.signature_deck_preview || [],
+                contract_fee: s.contract_fee || 0,
+                subscription_tier: s.subscription_tier || 'free',
+                icon_url: s.icon_url,
+                npc_image_url: s.npc_image_url,
             }));
-
-            // npcをTavernShadow形式に整形
-            const npcShadows = npcMercs.map(n => ({
-                id: n.id,
-                name: n.name,
-                epithet: n.epithet || '',
-                job_class: n.job_class || '傭兵',
-                durability: 100,
-                max_durability: 100,
-                cover_rate: 0,
-                avatar_url: n.image_url || (n.slug ? `/images/npcs/${n.slug}.png` : undefined),
-                origin_type: 'system_mercenary',
-                level: n.level,
-                flavor_text: n.introduction,
-            }));
-
-            // 合算してランダム3件
-            const allCandidates = [...activeShadows, ...npcShadows];
-            const shuffledShadows = allCandidates.sort(() => Math.random() - 0.5).slice(0, 3);
 
             // 同じ拠点にいる他プレイヤー数 - is_alive & 24h以内に限定
             let resonanceCount = 0;
@@ -265,6 +187,7 @@ export async function GET(req: Request) {
                     .eq('current_location_id', locationId)
                     .neq('id', userId)
                     .eq('is_alive', true)
+                    .not('name', 'is', null)
                     .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
                 resonanceCount = count || 0;
             }

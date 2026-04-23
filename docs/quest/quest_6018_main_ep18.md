@@ -1,4 +1,4 @@
-# クエスト仕様書：6018 — 第18話「四国会戦」
+﻿# クエスト仕様書：6018 — 第18話「四国会戦」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 50 |
 | **難度** | 5 |
 | **依頼主** | 冒険者ギルド |
-| **出現条件** | 前提クエストクリア: main_ep17 / 必須滞在拠点: loc_holy_empire |
+| **出現条件** | 前提クエストクリア: main_ep17 / 必須滞在拠点: loc_regalia |
 | **サムネイル画像** | `/images/quests/bg_wasteland.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+四大国が国境を越えて結集する史上初の会戦。天使軍の降臨を前に、人類は一致団結して最後の防衛線を築く。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:5000|Rep:10
+Gold:8000|Rep:30
 ```
 
 ---
@@ -65,8 +65,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -83,8 +83,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -101,8 +101,8 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -119,15 +119,15 @@ battle1
 
 #### `battle1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 ローランの大盾を連ねた重装歩兵団が、地響きを立てながら君に迫る！玉座へ向かうには、彼らの陣形を真っ向から破るしかない。
 ```
-**次ノード:** `{type:battle, enemy_group_id:4}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:218}` (auto-advance)
 **params:**
 ```json
 choice1
@@ -137,8 +137,8 @@ choice1
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -155,15 +155,15 @@ battle2
 
 #### `battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 「死ね、死ね、死ねぇ！」泡を吹きながら突っ込んでくる暗殺者たち。もはや過去の面影はない。
 ```
-**次ノード:** `{type:battle, enemy_group_id:5}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:219}` (auto-advance)
 **params:**
 ```json
 choice2
@@ -173,8 +173,8 @@ choice2
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -191,15 +191,15 @@ battle3
 
 #### `battle3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 全方位からの同時攻撃。これは単なる人間同士の戦争ではない。世界そのものが君を排除しようと牙を剥いているのだ！
 ```
-**次ノード:** `{type:battle, enemy_group_id:6}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:219}` (auto-advance)
 **params:**
 ```json
 choice3
@@ -209,8 +209,8 @@ choice3
 
 #### `text4`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -227,8 +227,8 @@ text4_1
 
 #### `text4_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -245,8 +245,8 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**

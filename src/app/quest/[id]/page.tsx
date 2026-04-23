@@ -15,6 +15,8 @@ import QuestHeader from '@/components/quest/QuestHeader';
 import QuestSettingsModal from '@/components/quest/QuestSettingsModal';
 import { Swords, ScrollText } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useBgm } from '@/hooks/useBgm';
+import { soundManager } from '@/lib/soundManager';
 
 export default function QuestPage() {
     const params = useParams();
@@ -25,8 +27,14 @@ export default function QuestPage() {
     const [loading, setLoading] = useState(true);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
+    const [battleBgUrl, setBattleBgUrl] = useState<string>('/images/quests/bg_wasteland.png');
 
     useAuthGuard(); // タイトル画面経由チェック
+
+    // BGM管理: シナリオ中はクエストBGM、バトル中はバトルBGM
+    // ScenarioEngineのノードプロセッサーが個別ノードのbgmを処理するが、
+    // ページマウント時にタイトルBGMを停止するための初期BGMが必要
+    useBgm(viewMode === 'battle' ? 'bgm_battle' : 'bgm_quest_calm');
 
     const resultOverlayState = useState<{ // Renamed variable to avoid conflict
         result: 'success' | 'failure';
@@ -40,7 +48,7 @@ export default function QuestPage() {
 
     // UI States for SPA
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [isPartyOpen, setIsPartyOpen] = useState(false);
+    const [isPartyOpen, setIsPartyOpen] = useState(true);
     const [vitalityPulse, setVitalityPulse] = useState(true);
 
     useEffect(() => {
@@ -194,7 +202,7 @@ export default function QuestPage() {
         );
     }
 
-    const startBattle = async (enemyId: string, successNodeId: string) => {
+    const startBattle = async (enemyId: string, successNodeId: string, bgKey?: string) => {
         let enemies: Enemy[] = [{ id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 }];
 
         if (enemyId && enemyId !== 'slime') {
@@ -240,8 +248,9 @@ export default function QuestPage() {
                             name: e.name,
                             hp: e.hp,
                             maxHp: e.hp, // Use max_hp from DB if valid, else hp
+                            atk: e.atk || 0,  // v2.9.3g: CSVのATK値を渡す
                             def: e.def || 0, // Map defense
-                            level: Math.floor(e.hp / 10) || 1,
+                            level: e.level || Math.floor(e.hp / 10) || 1, // v2.9.3g: DB level優先
                             // UGC image_url を優先、なければデフォルトパス
                             image_url: e.image_url || `/images/enemies/${e.slug}.png`,
                             status_effects: [],
@@ -253,8 +262,17 @@ export default function QuestPage() {
                     }).filter(Boolean) as Enemy[];
                 } else {
                     console.error(`[QuestPage] Enemies data not found for slugs: ${targetSlugs.join(',')}`);
-                    alert(`敵データが見つかりませんでした: ${targetSlugs.join(',')}\n管理者に連絡してください。`);
-                    return; // Prevent fallback to Slime
+                    // フォールバック敵で戦闘続行を許可（進行不能防止）
+                    console.warn('[QuestPage] Using fallback enemy data to prevent soft-lock');
+                    enemies = [{
+                        id: `fallback_${Date.now()}`,
+                        name: '正体不明の敵',
+                        hp: 80,
+                        maxHp: 80,
+                        def: 3,
+                        level: Math.max(1, userProfile?.level || 1),
+                        status_effects: [],
+                    }];
                 }
             } catch (e) {
                 console.error("Failed to fetch enemy data:", e);
@@ -275,20 +293,32 @@ export default function QuestPage() {
         }));
 
         setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
+        setBattleBgUrl(getAssetUrl(bgKey || 'bg_wasteland'));
         setViewMode('battle');
     };
 
-    const handleBattleEnd = (result: 'win' | 'lose' | 'escape') => {
+    const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
         if (result === 'win') {
+            // バトル後のHPをDBに永続化（クエスト完了API が正しい値を参照できるように）
+            const currentHp = useGameStore.getState().userProfile?.hp;
+            if (currentHp != null && userProfile?.id) {
+                try {
+                    await supabase.from('user_profiles').update({ hp: Math.max(0, currentHp) }).eq('id', userProfile.id);
+                    // ストアも同期
+                    await fetchUserProfile();
+                } catch (e) {
+                    console.warn('[QuestPage] Failed to persist post-battle HP:', e);
+                }
+            }
             setViewMode('scenario');
         } else {
-            router.push('/inn'); // 敗北や逃走時は一旦宿屋へ
+            router.push('/inn');
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
-            <div className="relative w-full max-w-[430px] h-screen sm:h-[844px] sm:border-[6px] sm:border-slate-800 sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
+        <div className="flex items-center justify-center min-h-[100dvh] bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
+            <div className="relative w-full h-[100dvh] lg:max-w-[430px] lg:h-[844px] lg:border-[6px] lg:border-slate-800 lg:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
 
                 {isSettingsOpen && (
                     <QuestSettingsModal
@@ -299,13 +329,16 @@ export default function QuestPage() {
                     />
                 )}
 
-                <QuestHeader
-                    isSettingsOpen={isSettingsOpen}
-                    setIsSettingsOpen={setIsSettingsOpen}
-                    isPartyOpen={isPartyOpen}
-                    setIsPartyOpen={setIsPartyOpen}
-                    vitalityPulse={vitalityPulse}
-                />
+                {/* バトル中はヘッダーを非表示（画面下部のUI切れ防止） */}
+                {viewMode === 'scenario' && (
+                    <QuestHeader
+                        isSettingsOpen={isSettingsOpen}
+                        setIsSettingsOpen={setIsSettingsOpen}
+                        isPartyOpen={isPartyOpen}
+                        setIsPartyOpen={setIsPartyOpen}
+                        vitalityPulse={vitalityPulse}
+                    />
+                )}
 
                 <main className="flex-1 overflow-hidden relative flex flex-col">
                     {viewMode === 'scenario' ? (
@@ -335,6 +368,13 @@ export default function QuestPage() {
                                     try {
                                         const { data: { session: sess } } = await supabase.auth.getSession();
                                         const authToken = sess?.access_token;
+
+                                        // バトルでHP0になったパーティメンバーIDを収集
+                                        const bs = useGameStore.getState().battleState;
+                                        const defeatedMemberIds = (bs?.party || [])
+                                            .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
+                                            .map((m: any) => String(m.id));
+
                                         const res = await fetch('/api/quest/complete', {
                                             method: 'POST',
                                             headers: {
@@ -346,7 +386,8 @@ export default function QuestPage() {
                                                 result: result === 'success' ? 'success' : 'failure',
                                                 history: history || [],
                                                 loot_pool: [],
-                                                consumed_items: []
+                                                consumed_items: [],
+                                                defeated_member_ids: defeatedMemberIds
                                             })
                                         });
 
@@ -373,22 +414,26 @@ export default function QuestPage() {
                         </div>
                     ) : (
                         <div className="flex-1 relative w-full h-full">
-                            <BattleView onBattleEnd={handleBattleEnd} />
+                            <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} />
                         </div>
                     )}
                 </main>
-
-                {/* Mobile indicators */}
-                <div className="w-32 h-1 bg-slate-800 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2" />
 
                 {/* Quest Result Overlay */}
                 {resultOverlay && (
                     <div className="absolute inset-0 z-[110]">
                         <QuestResultModal
+                            result={resultOverlay.result}
+                            questTitle={resultOverlay.data?.quest_title}
                             rewards={resultOverlay.data?.rewards}
                             changes={resultOverlay.data?.changes}
                             daysPassed={resultOverlay.data?.days_passed || 0}
                             shareText={resultOverlay.data?.share_text}
+                            repChange={resultOverlay.data?.rep_change}
+                            partyChanges={resultOverlay.data?.party_changes}
+                            newLocationName={resultOverlay.data?.new_location_name}
+                            earnedExp={resultOverlay.data?.earned_exp}
+                            lootSaved={resultOverlay.data?.loot_saved}
                             onClose={() => router.push('/inn')}
                         />
                     </div>

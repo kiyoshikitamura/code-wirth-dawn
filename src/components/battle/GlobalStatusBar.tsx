@@ -98,6 +98,10 @@ export default function GlobalStatusBar({ viewMode }: GlobalStatusBarProps) {
                                                     <Heart className="w-2.5 h-2.5 text-green-500" />
                                                     {member.durability}/{member.max_durability}
                                                 </div>
+                                                <div className={`flex items-center gap-1 text-[9px] ${((member as any).vitality ?? 100) <= 20 ? 'text-red-400' : 'text-amber-400'}`}>
+                                                    <Flame className="w-2.5 h-2.5" />
+                                                    VIT {(member as any).vitality ?? 100}/100
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

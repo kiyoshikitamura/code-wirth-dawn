@@ -9,9 +9,9 @@
 | **クエスト種別** | メインエピソード（Main） |
 | **推奨レベル** | 1 |
 | **難度** | 1 |
-| **依頼主** | 帝国軍 |
-| **出現条件** | 必須滞在拠点: loc_holy_empire / プレイヤーLv 1以上 |
-| **サムネイル画像** | `/images/quests/bg_wasteland.png` |
+| **依頼主** | 王国軍 |
+| **出現条件** | 必須滞在拠点: loc_border_town / プレイヤーLv 1以上 |
+| **サムネイル画像** | `/images/quests/bg_road_day.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
 
@@ -21,12 +21,12 @@
 
 ### 短文説明
 ```
-公式メインシナリオ
+メインシナリオ第1話
 ```
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+王国辺境の国境の町。荒涼たる大地を渡る風に身を晒しながら、一介の傭兵として生き抜く日々が始まる。王国軍の輸送部隊護衛という最初の仕事が、君を戦乱の渦中へと引きずり込むことになるとは、まだ知る由もなかった。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:100|Rep:10
+Gold:150|Rep:5
 ```
 
 ---
@@ -67,15 +67,15 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
-- **背景画像**: `bg_wasteland`
+- **BGM**: `bgm_quest_calm`
+- **SE**: `—`
+- **背景画像**: `bg_road_day`
 
 **テキスト:**
 ```
-肌を焦がすような乾いた風が、荒涼たる砂丘を撫でる音がする。ここは軍事国家たる聖帝国ローランの辺境、名もなき村の外れだ。
+肌を焦がすような乾いた風が、荒涼たる砂丘を撫でる音がする。ここは軍事国家たる聖王国ローランの辺境、名もなき村の外れだ。
 ```
-**次ノード:** `{type:text, bg:bg_wasteland}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_road_day}` (auto-advance)
 **params:**
 ```json
 text1
@@ -85,13 +85,13 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_calm`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
-かつて栄華を極めた帝国の威光もここまで届くことはなく、村の壁は崩れかけ、人々は日々の糧を得るのにも苦労している。
+かつて栄華を極めた王国の威光もここまで届くことはなく、村の壁は崩れかけ、人々は日々の糧を得るのにも苦労している。
 ```
 **次ノード:** `{type:text, bg:bg_wasteland}` (auto-advance)
 **params:**
@@ -103,13 +103,13 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_calm`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
-そんな場所から、君の物語は始まる。名もなき一介の傭兵として身を立てるため、君は帝国軍の輜重（しちょう）部隊を手伝う運搬依頼を引き受けた。
+そんな場所から、君の物語は始まる。名もなき一介の傭兵として身を立てるため、君は王国軍の輸送部隊を手伝う運搬依頼を引き受けた。
 ```
 **次ノード:** `{type:text, bg:bg_wasteland}` (auto-advance)
 **params:**
@@ -121,8 +121,8 @@ text1_2
 
 #### `text1_2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_calm`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -139,15 +139,15 @@ text2
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 「おい、そこの新入り！ぼんやりするな。太陽が高くなれば、野盗の連中がいつ湧いてきてもおかしくないぞ！」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 choice1
@@ -157,15 +157,15 @@ choice1
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 男は鼻で笑うと、鈍く光る長剣の柄に手を当てた。「威勢はいいが、口ほどにもない奴はすぐ死ぬのが戦場だ」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text3_1
@@ -175,15 +175,15 @@ text3_1
 
 #### `text3_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
-「ワシはガウェイン。この部隊の小隊長にして、お前たち新米を死なせないための監視役といったところだ。……お前、その剣の腕には自信があるんだろうな？」
+「俺はガウェイン。この部隊の小隊長にして、お前たち新米を死なせないための監視役といったところだ。……お前、その剣の腕には自信があるんだろうな？」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text4
@@ -193,8 +193,8 @@ text4
 
 #### `text4`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -211,8 +211,8 @@ text4_1
 
 #### `text4_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
@@ -229,15 +229,15 @@ text4_2
 
 #### `text4_2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 ガウェインが素早く抜刀し、鋭い眼光を砂塵に向ける。「チッ……言葉の先からこれだ。おい新入り、あの木箱は死守しろ。荷を奪われりゃ俺たちの首が飛ぶぞ」
 ```
-**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 battle
@@ -247,15 +247,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_battle`
+- **SE**: `se_battle_start`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 己の力と生き残る意志を示す、最初の手柄を立てる時が来た。震える手で武器を握り直せ！
 ```
-**次ノード:** `{type:battle, enemy_group_id:1}` (auto-advance)
+**次ノード:** `{type:battle, bg:bg_wasteland, enemy_group_id:200}` (auto-advance)
 **params:**
 ```json
 choice2
@@ -265,13 +265,13 @@ choice2
 
 #### `text_post_battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_calm`
+- **SE**: `—`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
-剣を振り抜き、最後の一人を砂に沈める。荒い息を吐く君の前で、ガウェインが刀の血振るいをした。
+剣を振り抜き、最後の一人を砂に沈める。荒い息を吐く君の前で、ガウェインが剣の血振るいをした。
 ```
 **次ノード:** `{type:text, bg:bg_wasteland}` (auto-advance)
 **params:**
@@ -283,15 +283,15 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_calm`
+- **SE**: `se_quest_complete`
 - **背景画像**: `bg_wasteland`
 
 **テキスト:**
 ```
 「悪くない太刀筋だ。これなら戦場でも生き残れるかもしれんな。……さあ、荷馬車を出すぞ！」
 ```
-**次ノード:** `{type:end_success, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:end_success, bg:bg_wasteland, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 

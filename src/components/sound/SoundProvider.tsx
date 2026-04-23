@@ -3,7 +3,7 @@
  *
  * layout.tsx に配置し、以下を担当:
  * 1. 初回ユーザー操作で AudioContext を resume (Autoplay Policy 対応)
- * 2. soundStore の volume 設定を SoundManager に反映
+ * 2. soundStore の ON/OFF 設定を SoundManager に反映
  */
 
 'use client';
@@ -13,35 +13,38 @@ import { soundManager } from '@/lib/soundManager';
 import { useSoundStore } from '@/store/soundStore';
 
 export default function SoundProvider() {
-    const bgmVolume = useSoundStore((s) => s.bgmVolume);
-    const seVolume = useSoundStore((s) => s.seVolume);
+    const bgmEnabled = useSoundStore((s) => s.bgmEnabled);
+    const seEnabled = useSoundStore((s) => s.seEnabled);
 
-    // 初期化: localStorage から復元された volume を SoundManager に反映
+    // 初期化: localStorage から復元された ON/OFF を SoundManager に反映
     useEffect(() => {
         if (!soundManager) return;
 
         soundManager.init();
-        soundManager.setBgmVolume(bgmVolume);
-        soundManager.setSeVolume(seVolume);
+        soundManager.setBgmEnabled(bgmEnabled);
+        soundManager.setSeEnabled(seEnabled);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // volume 変更の即時反映
+    // ON/OFF 変更の即時反映
     useEffect(() => {
-        soundManager?.setBgmVolume(bgmVolume);
-    }, [bgmVolume]);
+        soundManager?.setBgmEnabled(bgmEnabled);
+    }, [bgmEnabled]);
 
     useEffect(() => {
-        soundManager?.setSeVolume(seVolume);
-    }, [seVolume]);
+        soundManager?.setSeEnabled(seEnabled);
+    }, [seEnabled]);
 
-    // Autoplay Policy 解除: 初回のユーザー操作で AudioContext.resume()
+    // Autoplay Policy 解除: 初回のユーザー操作で AudioContext.resume() + 保留BGM再生
     useEffect(() => {
         if (!soundManager) return;
-        const sm = soundManager; // null narrowing for callback scope
+        const sm = soundManager;
 
+        // iOS Safari: audio.play()はユーザージェスチャの同期コールスタック内でないとブロックされる
+        // そのためasyncにせず、resume()はfire-and-forget、playPendingBgmも同期で呼ぶ
         const handleInteraction = () => {
             sm.init();
-            sm.resume();
+            sm.resume(); // fire-and-forget (Promise無視)
+            sm.playPendingBgm(); // 同期的にaudio.play()を呼ぶ
             // 一度だけ実行
             window.removeEventListener('click', handleInteraction);
             window.removeEventListener('touchstart', handleInteraction);

@@ -264,7 +264,7 @@ export default function WorldMapPage() {
                                         maxHp: e.hp,
                                         atk: e.atk,
                                         def: e.def || 0,
-                                        level: Math.floor(e.hp / 10) || 1,
+                                        level: e.level || Math.floor(e.hp / 10) || 1, // v2.9.3g: DB level優先
                                         image_url: e.image_url || `/images/enemies/${e.slug}.png`,
                                         status_effects: [],
                                         vit_damage: e.vit_damage,

@@ -4,11 +4,13 @@ Code: Wirth-Dawn Specification v14.0
 ## 1. 概要 (Overview)
 NPCおよびShadow（影の残像）がバトル中に自動的に行動するためのAIロジックを定義する。
 AIは全て**クライアントサイド**（`battleSlice.processPartyTurn()` / 旧: `gameStore.processPartyTurn()`）で実行される。
-<!-- v1.0 refactor: processPartyTurn は src/store/slices/battleSlice.ts に移動 (2026-04-15) -->
-
+<!-- v2.8.1 (2026-04-17): 行動上限(3)追加・ミッドターンリターゲット・ゴールド反映修正 -->
+<!-- v2.8 (2026-04-17): 同一カード制限撤廃・ATK基礎値追加・基本攻撃式変更 -->
+<!-- v15.0: フェーズ制バトルフロー導入 -->
 <!-- v14.0: ターン進行順序正規化・NPCステータス取得優先順位確定・npcsテーブルHP列廃止 -->
 <!-- v13.0: startBattle時のdurability正規化、resolveNpcTurn null-safe guard追加 -->
 <!-- v12.0: v3.3の heal action / durability更新 / HPバー同期対応 -->
+<!-- v2.7 (2026-04-15): バトルログに対象（エネミー名/パーティメンバー名）を追加 -->
 
 ---
 
@@ -16,9 +18,12 @@ AIは全て**クライアントサイド**（`battleSlice.processPartyTurn()` / 
 
 | 項目 | ルール | 実装 |
 |---|---|---|
-| 行動 | 固定・シグネチャデッキ (`signature_deck`) からランダムに1枚ずつ選出 | `processPartyTurn()` 内で `Math.random()` による選出 |
-| AP制約 | プレイヤーと同じAP制約に従う | `current_ap >= ap_cost` チェック |
-| カード使用制限 | 1ターンにつき同一カード1枚 | `used_this_turn` 配列で管理 |
+| 行動 | シグネチャデッキ (`signature_deck`) からAPが許す限りカードを使用 | `resolveNpcTurn()` 内で高コスト順にループ |
+| AP制約 | 毎ターン+5（上限10）。カード使用時にap_costを消費 | `current_ap >= ap_cost` チェック |
+| **行動上限** | **1ターンあたり最大3アクション（v2.8.1）** | `MAX_ACTIONS_PER_TURN = 3` |
+| カード使用制限 | **なし（v2.8で撤廃）**。同一カードもAPがある限り連続使用可 | `used_this_turn` は非推奨（互換用に残存） |
+| ATK基礎値 | NPCのATK（`npcs.attack`）がカードダメージ・基本攻撃に加算される | `npc.atk \|\| 0` |
+| 基本攻撃 | 攻撃カードが1枚も使えなかった場合のフォールバック: `ATK + 0〜6` | `createBasicAttack()` |
 | 行動不能 | Stun状態の場合はスキップ | `isStunned()` チェック |
 | 死亡 | `durability <= 0` で行動不能 | `is_active: false` |
 
@@ -84,34 +89,63 @@ flowchart TD
     CheckAlive -->|No| Skip["Skip"]
     CheckAlive -->|Yes| CheckStun{"Stunned?"}
     CheckStun -->|Yes| Skip
-    CheckStun -->|No| SelectCard["Select Card from signature_deck"]
-    SelectCard --> CheckAP{"AP >= card.ap_cost?"}
-    CheckAP -->|No| Skip
-    CheckAP -->|Yes| CheckUsed{"Used this card this turn?"}
-    CheckUsed -->|Yes| TryAnother["Try next card"]
-    CheckUsed -->|No| Execute["Execute Card Action"]
-    Execute --> ApplyDamage["Apply Damage/Effect"]
+    CheckStun -->|No| APRecovery["AP Recovery: +5, cap 10"]
+    APRecovery --> EmergencyHeal{"Medic/Smart: Ally HP < 50%?"}
+    EmergencyHeal -->|Yes| UseHealCard["Use Heal Card"]
+    EmergencyHeal -->|No| RoleBuff["Role-based Buff Check"]
+    UseHealCard --> RoleBuff
+    RoleBuff --> SelectCard["Select highest-cost attack card"]
+    SelectCard --> CheckCap{"actions < MAX_ACTIONS_PER_TURN (3)?"}
+    CheckCap -->|No| End["Turn End"]
+    CheckCap -->|Yes| CheckAP{"AP >= card.ap_cost?"}
+    CheckAP -->|No| BasicAttack["Fallback: Basic Attack ATK+0~6"]
+    CheckAP -->|Yes| Execute["Execute Card: damage = card.power + ATK"]
+    Execute --> LoopBack["Try next card from highest cost"]
+    LoopBack --> CheckCap
 ```
 
 ### 4.3 カード選択ロジック
 
-**`random` グレード:**
-1. `signature_deck` からランダムに1枚を優先的に選出。
-2. AP不足の場合 → 行動スキップ。
-3. `used_this_turn` に含まれている場合 → 別のカードを再選出。
-4. 有効なカードが見つからない場合 → 行動スキップ。
+**全グレード共通（v2.8）:**
+1. 攻撃カード（Skill/Magic型）を高コスト順にソート。
+2. APが足りるカードを使用 → AP消費 → 再度最高コストのカードから試行。
+3. **同一カードは何度でも使用可能**（APが許す限り）。
+4. **1ターンあたりの行動上限は3回**（ヒール・バフ・攻撃の合計。v2.8.1）。
+5. APが全カードのコスト未満になるか、行動上限に達したらループ終了。
+5. 攻撃アクションが1件もなかった場合 → 基本攻撃（`ATK + 0〜6`）にフォールバック。
 
-**`smart` グレード（英雄・特殊NPC）:**
+**`smart` グレード（英雄・特殊NPC）追加ルール:**
 1. **緊急回復チェック**: プレイヤー or 味方の HP が50%以下 → 先頭の回復系カードを優先使用。
 2. **AP貯蓄判断**: 高コストスキル（AP≥ 5）があり AP不足する場合 → 行動を「スキップ」し次ターンに向けてAPを貯蓄。
-3. APを使い切れる限り、高コスト順にカードを使用。
 
-実装: `npcAI.ts` 内の `evaluateWaitLogic()` および `tryEmergencyHeal()`。
+### 4.3.1 NPCダメージ計算
+
+```
+// カード攻撃
+CardDamage = Card.effect_val + NPC.ATK
+FinalDamage = max(1, CardDamage - Enemy.DEF)  // 魔法は DEF 無視
+
+// 基本攻撃（カードが使えなかった場合のフォールバック）
+BasicDamage = NPC.ATK + random(0, 6)
+FinalDamage = max(1, BasicDamage - Enemy.DEF)
+```
+
+実装: `npcAI.ts` 内の `executeCard()`, `createBasicAttack()`, `evaluateWaitLogic()`, `tryEmergencyHeal()`。
 
 ### 4.4 ターゲット選択
 <!-- v11.0: processPartyTurn()のターゲットロジックを反映 -->
-- **攻撃カード**: 最初の生存敵に対して実行。
+<!-- v2.8.1: ミッドターンリターゲット追加 -->
+- **攻撃カード**: 現在のターゲット敵に対して実行。
 - **バフ/回復カード (self系)**: 自身に対して実行。
+
+#### ミッドターンリターゲット (v2.8.1)
+NPCの攻撃によりターゲット敵のHPが0以下になった場合:
+1. `trackedEnemies` 配列から次の生存敵を検索
+2. 生存敵がいれば即座にリターゲット（`currentTargetId` / `enemyHp` / `enemyDef` を更新）
+3. 後続NPCは新ターゲットに対して行動を継続
+4. 全敵が死亡している場合のみNPCループを終了
+
+> **v2.8.1以前**: ターゲット死亡時に全NPCのループが即座に終了し、後続NPCが行動不能になる問題があった。
 
 ### 4.5 heal action の詳細 (v3.3+)
 
@@ -124,7 +158,56 @@ flowchart TD
 
 ---
 
-## 5. バトル開始時の初期化 (Battle Initialization)
+## 5. バトルログ仕様 (v2.7) — 対象名の明示
+<!-- v2.7 (2026-04-15): NPC/エネミー攻撃ログに対象名を追加 -->
+
+### 5.1 NPCターンのログフォーマット
+
+NPCの攻撃・サポートアクションは、**「誰が」「何のスキルで」「どの対象に」「何ダメージ/回復」**を一行で表現する。
+
+| アクション種別 | ログフォーマット例 |
+|---|---|
+| 攻撃（スキルあり） | `田中の『烈風斬』！ → ゴブリンに 45 のダメージ！` |
+| 攻撃（基本） | `田中の援護攻撃！ → ゴブリンに 20 のダメージ！` |
+| 回復（プレイヤー対象） | `マリアの癒しの光！ あなたのHPが 30 回復した。` |
+| バフ | `田中の強化！ 田中に効果が発動した。` |
+
+**実装:** `npcAI.ts` の `executeCard()` / `createBasicAttack()` にて `context.enemyName` を参照。
+
+```typescript
+// NpcAction に targetEnemyName フィールドを追加 (v2.7)
+export interface NpcAction {
+    type: 'attack' | 'heal' | 'pass' | 'buff';
+    targetEnemyName?: string; // 攻撃対象エネミー名
+    // ...
+    message: string;
+}
+
+// BattleContext に enemyName フィールドを追加 (v2.7)
+export interface BattleContext {
+    enemyName: string; // ダメージ対象エネミー名
+    // ...
+}
+```
+
+### 5.2 エネミーターンのログフォーマット
+
+エネミーの攻撃は、スキル名と対象（プレイヤー or パーティメンバー）を一行に統合する。
+
+| 状況 | ログフォーマット例 |
+|---|---|
+| プレイヤーへの通常攻撃 | `ゴブリンの『攻撃』！ → あなたに 25 ダメージ (HP: 80 → 55)` |
+| プレイヤーへのスキル攻撃 | `ドラゴンの『炎の息』！ → あなたに 60 ダメージ (DEF -10) (HP: 80 → 20)` |
+| パーティへの攻撃 | `ゴブリンの『攻撃』！ → 田中に 30 ダメージ (HP: 100 → 70)` |
+| かばい | `ゴブリンの『攻撃』！ → 田中がかばった！ 30 ダメージ (HP: 100 → 70)` |
+| 自己回復スキル | `ゴブリンの『回復の息吹』！ → 自身の HP 50 回復！` |
+
+**実装:** `battleSlice.ts` の `processEnemyTurn()` にて `selectedSkillName` 変数でスキル名を保持し、
+`routeDamage()` で対象確定後に一本化したメッセージを生成する。
+
+---
+
+## 6. バトル開始時の初期化 (Battle Initialization)
 <!-- v14.0: HP取得優先順位確定・npcsテーブルカラム廃止反映 -->
 
 ### 5.1 NPCのHP取得優先順位（確定版）
@@ -237,6 +320,10 @@ export interface PartyMember {
 | resolveNpcTurn の null-safe durability guard | ✅ **実装済み** (v13.0) |
 | ターン番号更新タイミング | ✅ **修正済み** (v14.0: エネミーターン完了後に更新) |
 | npcsテーブルHP列廃止 (hp / max_durability) | ✅ **DB変更済み** (2026-04-14) |
+| バトルログに対象名（エネミー名/パーティメンバー名）を含める | ✅ **実装済み** (v2.7: 2026-04-15) |
+| 1ターン行動上限 (MAX_ACTIONS_PER_TURN = 3) | ✅ **実装済み** (v2.8.1) |
+| ミッドターンリターゲット | ✅ **実装済み** (v2.8.1: trackedEnemiesで全敵HP追跡) |
+| 酒場雇用後のゴールド即時反映 | ✅ **修正済み** (v2.8.1: TavernModal.handleHire) |
 
 ---
 
@@ -250,3 +337,6 @@ export interface PartyMember {
 | **v14.0** | **2026-04-14** | **ターン進行順序正規化（エネミー完了後にターン番号更新）・NPCのHP取得優先順位確定（party_members.max_durability → npcs.max_hp）・npcsテーブルhp/max_durabilityカラム廃止反映** |
 | v15.0 | 2026-04-15 | フェーズ制バトルフロー（player/npc_done/enemy_done）導入。endTurn→runNpcPhase に改名。setTimeout連鎖廃止 |
 | **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。processPartyTurn を含む全バトルアクションを `src/store/slices/battleSlice.ts` に移動。詳細: spec_v18_code_architecture.md 参照** |
+| **v2.7** | **2026-04-15** | **バトルログに対象名を追加。`NpcAction.targetEnemyName` / `BattleContext.enemyName` フィールド追加。NPCログを「NPC名の『スキル名』！ → エネミー名に〇ダメージ！」形式に統一。エネミーログを「エネミー名の『スキル名』！ → 対象名に〇ダメージ (HP変化)」形式に統合。** |
+| **v2.8** | **2026-04-17** | **同一カード制限撤廃（`used_this_turn` 非推奨化）。ATK基礎値のNPCダメージ加算を正式化（`npcs.attack` → `npc.atk`）。基本攻撃式を `ATK + 0~6` に変更（旧: 8~12固定 + Class bonus）。** |
+| **v2.8.1** | **2026-04-17** | **1ターン行動上限 `MAX_ACTIONS_PER_TURN = 3` 追加（AP過剰消費防止）。ミッドターンリターゲット実装（`trackedEnemies` で全敵HP追跡、ターゲット死亡時に後続NPCが新ターゲットに行動継続）。酒場雇用後の `fetchUserProfile()` 追加でゴールド即時反映。** |

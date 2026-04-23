@@ -64,7 +64,8 @@ export async function GET(req: Request) {
             hp: e.hp,
             maxHp: e.hp,
             def: e.def || 0,
-            level: Math.floor(e.hp / 10) || 1,
+            atk: e.atk || 0, // v2.9.3h: DB ATK反映
+            level: e.level || Math.floor(e.hp / 10) || 1, // v2.9.3g: DB level優先
             image_url: e.image_url || `/images/enemies/${e.slug || 'default'}.png`,
             status_effects: [],
             vit_damage: e.vit_damage,
@@ -136,7 +137,8 @@ async function getEnemiesFromGroup(groupSlug: string) {
             hp: e.hp,
             maxHp: e.hp,
             def: e.def || 0,
-            level: Math.floor(e.hp / 10) || 1,
+            atk: e.atk || 0, // v2.9.3h: DB ATK反映
+            level: e.level || Math.floor(e.hp / 10) || 1, // v2.9.3g: DB level優先
             image_url: e.image_url || `/images/enemies/${e.slug}.png`,
             status_effects: [],
             vit_damage: e.vit_damage,

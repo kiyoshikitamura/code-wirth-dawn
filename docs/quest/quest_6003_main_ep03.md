@@ -1,4 +1,4 @@
-# クエスト仕様書：6003 — 第3話「オアシスの陰謀」
+﻿# クエスト仕様書：6003 — 第3話「オアシスの陰謀」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 3 |
 | **難度** | 1 |
 | **依頼主** | 交易商会 |
-| **出現条件** | 前提クエストクリア: main_ep02 / 必須滞在拠点: loc_marcund |
+| **出現条件** | 前提クエストクリア: main_ep02 / 必須滞在拠点: loc_oasis |
 | **サムネイル画像** | `/images/quests/bg_desert.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+砂塵王国マルカンドのオアシスの村。平和に見えるこの地に潜む間諜の影。君は戦場で培った直感を頼りに、水面下で蠢く陰謀の正体を暴こうとする。
 ```
 
 ---
@@ -69,8 +69,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -87,8 +87,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -105,8 +105,8 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -123,8 +123,8 @@ text2
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -141,8 +141,8 @@ text2_1
 
 #### `text2_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -159,8 +159,8 @@ text2_2
 
 #### `text2_2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -177,15 +177,15 @@ choice_search
 
 #### `gawain_talk`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
 ```
 「慌てるな。この短時間だ、実行犯はまだ遠くへは行けていないはずだ。慌てて走り回るより、地面の違和感を探せ」
 ```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 search_area
@@ -195,8 +195,8 @@ search_area
 
 #### `search_area`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
@@ -213,8 +213,8 @@ text3
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
@@ -231,8 +231,8 @@ text3_1
 
 #### `text3_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
@@ -249,8 +249,8 @@ text4
 
 #### `text4`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
@@ -267,15 +267,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
 ```
 彼らは帝国軍の強硬派を名乗る工作員たちだった。この街に戦争の火種を落とし、大義名分を作ろうとしているのだ！
 ```
-**次ノード:** `{type:battle, enemy_group_id:1}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:201}` (auto-advance)
 **params:**
 ```json
 choice_battle
@@ -285,8 +285,8 @@ choice_battle
 
 #### `text_post_battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
@@ -303,8 +303,8 @@ text_post_battle2
 
 #### `text_post_battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**
@@ -321,8 +321,8 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_slum`
 
 **テキスト:**

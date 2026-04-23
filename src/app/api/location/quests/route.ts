@@ -83,13 +83,41 @@ export async function GET(req: Request) {
 
         const completedQuestIds = new Set((completedQuests || []).map((q: any) => String(q.scenario_id)));
 
+        // 4.6 Fetch current location's ruling_nation_id for P2 location filtering
+        let currentNationSlug: string | null = null;
+        if (locationId) {
+            const { data: locData } = await supabaseServer
+                .from('locations')
+                .select('ruling_nation_id')
+                .eq('id', locationId)
+                .maybeSingle();
+            currentNationSlug = locData?.ruling_nation_id || null;
+        }
+
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabaseServer
             .from('scenarios')
-            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, is_urgent, client_name, impact, location_id, max_reputation, script_data')
+            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data')
             .in('quest_type', ['normal', 'special'])
             .not('slug', 'like', 'ugc_%') // v21: UGCクエスト（slug が ugc_ 始まり）を除外
-            .limit(100);
+            .limit(200);
+
+        // 5.1 Build slug→id map for completed_quest prerequisite resolution
+        const slugToIdMap: Record<string, string> = {};
+        if (quests) {
+            for (const q of quests) {
+                if (q.slug) slugToIdMap[q.slug] = String(q.id);
+            }
+        }
+
+        // Nation slug mapping for P2 location filtering
+        const nationSlugToLocationTag: Record<string, string> = {
+            'Roland': 'loc_holy_empire',
+            'Markand': 'loc_marcund',
+            'Yato': 'loc_yatoshin',
+            'Karyu': 'loc_haryu',
+        };
+        const currentLocationTag = currentNationSlug ? nationSlugToLocationTag[currentNationSlug] || null : null;
 
         debug.push(`quest_fetch: ${qError ? 'ERROR: ' + qError.message : 'OK, count=' + (quests?.length || 0)} `);
 
@@ -102,9 +130,23 @@ export async function GET(req: Request) {
             return NextResponse.json({ special_quests: [], normal_quests: [], debug });
         }
 
+        // Helper: resolve completed_quest value (slug or id) to check against completedQuestIds
+        const hasCompletedPrereq = (reqValue: string | number): boolean => {
+            const reqStr = String(reqValue);
+            // Direct ID match
+            if (completedQuestIds.has(reqStr)) return true;
+            // Slug → ID resolution
+            const resolvedId = slugToIdMap[reqStr];
+            if (resolvedId && completedQuestIds.has(resolvedId)) return true;
+            return false;
+        };
+
         // 6. Filter Special Quests (v3.1 Requirements Evaluation)
         const specialQuests = quests.filter((q: any) => {
             if (q.quest_type !== 'special') return false;
+
+            // P0: クリア済クエストは非表示
+            if (completedQuestIds.has(String(q.id))) return false;
 
             const reqs = q.requirements || {};
 
@@ -121,10 +163,9 @@ export async function GET(req: Request) {
             // has_item: アイテム所持は完全に限定（スポイラー防止）
             if (reqs.has_item && !ownedItemIds.has(String(reqs.has_item))) return false;
 
-            // completed_quest: 前提クエスト完了必須
+            // completed_quest: 前提クエスト完了必須 (P0: slug/ID両対応)
             if (reqs.completed_quest) {
-                const reqId = String(reqs.completed_quest);
-                if (!completedQuestIds.has(reqId)) return false;
+                if (!hasCompletedPrereq(reqs.completed_quest)) return false;
             }
 
             // 陰陽/秩序 alignment（隠しクエスト）
@@ -162,6 +203,9 @@ export async function GET(req: Request) {
         const normalQuests = quests.filter((q: any) => {
             if (q.quest_type !== 'normal') return false;
 
+            // P0: クリア済クエストは非表示 (normalクエストはリピート可能なので除外しない)
+            // if (completedQuestIds.has(String(q.id))) return false;
+
             const conds = q.conditions || {};
             const reqs = q.requirements || {};
 
@@ -169,19 +213,25 @@ export async function GET(req: Request) {
             if (conds.min_prosperity && currentProsperity < conds.min_prosperity) return false;
             if (conds.max_prosperity && currentProsperity > conds.max_prosperity) return false;
 
-            // Location tag check
-            if (conds.location_tags && locationId) {
+            // P2: Location tag check — ruling_nation_id ベースで照合
+            if (conds.location_tags) {
                 const tags = Array.isArray(conds.location_tags)
                     ? conds.location_tags
                     : String(conds.location_tags).split(',').map((t: string) => t.trim());
-                if (!tags.includes('all') && !tags.includes(locationId)) return false;
+                if (!tags.includes('all')) {
+                    // currentLocationTag (e.g. 'loc_holy_empire') と照合
+                    if (!currentLocationTag || !tags.includes(currentLocationTag)) return false;
+                }
+            }
+
+            // P0: completed_quest 前提条件 (normalクエストのconditions内)
+            if (conds.completed_quest) {
+                if (!hasCompletedPrereq(conds.completed_quest)) return false;
             }
 
             // rec_level は UI（❗アイコン）で警告表示するのみ。受注自体は制限しない。
-            // const rec = q.rec_level || reqs.min_level || 0;
-            // if (rec > 0 && user.level < rec) return false;
 
-            const minRep = reqs.min_reputation;
+            const minRep = conds.min_reputation || reqs.min_reputation;
             if (minRep) {
                 const repRequired = typeof minRep === 'number'
                     ? minRep
@@ -191,9 +241,10 @@ export async function GET(req: Request) {
             }
 
             // v16: max_reputation フィルタ（悪人限定クエスト）
-            if (q.max_reputation !== null && q.max_reputation !== undefined) {
+            const maxRep = conds.max_reputation ?? q.max_reputation;
+            if (maxRep !== null && maxRep !== undefined) {
                 const repActual = repMap[locationId || q.location_id] || 0;
-                if (repActual > q.max_reputation) return false;
+                if (repActual > maxRep) return false;
             }
 
             return true;
@@ -201,10 +252,10 @@ export async function GET(req: Request) {
 
         debug.push(`filtered: special = ${specialQuests.length}, normal = ${normalQuests.length} `);
 
-        // Map DB columns to frontend format with difficulty_tier and flavor text
+        // difficulty_tier: rec_level ベースで分類 (Easy≤3, Normal4-7, Hard≥8)
         const getDifficultyTier = (recLevel: number): 'easy' | 'normal' | 'hard' => {
             if (recLevel <= 3) return 'easy';
-            if (recLevel <= 10) return 'normal';
+            if (recLevel <= 7) return 'normal';
             return 'hard';
         };
 
@@ -217,18 +268,32 @@ export async function GET(req: Request) {
                 impacts: q.impact,
                 difficulty_tier: getDifficultyTier(recLevel),
                 short_flavor: q.script_data?.short_description || q.description || '',
-                long_flavor: q.script_data?.nodes?.start?.text || q.description || '', // v21: スタートノードのテキストをロング説明として使用
+                long_flavor: q.script_data?.nodes?.start?.text || q.description || '',
                 is_ugc: q.slug?.startsWith('ugc_') || false,
             };
         };
 
         // 8. Merge all quests, sort: urgent first, then by rec_level
-        const allQuests = [...specialQuests, ...normalQuests]
+        // normalクエストをシャッフルし、tierごとに件数制限 (Easy=5, Normal=3, Hard=1)
+        const shuffled = [...normalQuests].sort(() => Math.random() - 0.5);
+        const tierLimits: Record<string, number> = { easy: 0, normal: 0, hard: 0 };
+        const TIER_MAX: Record<string, number> = { easy: 5, normal: 3, hard: 1 };
+        const limitedNormalQuests = shuffled.filter((q: any) => {
+            const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            const tier = getDifficultyTier(recLevel);
+            if (tierLimits[tier] >= TIER_MAX[tier]) return false;
+            tierLimits[tier]++;
+            return true;
+        });
+
+        const allQuests = [...specialQuests, ...limitedNormalQuests]
             .sort((a: any, b: any) => {
                 if (a.is_urgent !== b.is_urgent) return (b.is_urgent ? 1 : 0) - (a.is_urgent ? 1 : 0);
                 return (a.rec_level || 1) - (b.rec_level || 1);
             })
             .map(mapQuest);
+
+        debug.push(`limited: normal=${limitedNormalQuests.length}/${normalQuests.length}, nationTag=${currentLocationTag || 'none'} `);
 
         return NextResponse.json({
             quests: allQuests,

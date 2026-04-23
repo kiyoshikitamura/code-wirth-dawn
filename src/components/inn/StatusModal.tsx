@@ -27,6 +27,7 @@ const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
 interface StatusModalProps {
     onClose: () => void;
     isCampMode?: boolean;
+    questLocked?: boolean;
 }
 
 type TabKey = 'deck' | 'items' | 'equip' | 'party';
@@ -34,13 +35,15 @@ type TabKey = 'deck' | 'items' | 'equip' | 'party';
 type DetailType = 'skill' | 'item' | 'npc';
 interface DetailTarget { type: DetailType; data: any; }
 
-export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
+export default function StatusModal({ onClose, isCampMode, questLocked }: StatusModalProps) {
     const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile,
             fetchEquipment, equippedItems: equipped, equipBonus } = useGameStore();
     const [activeTab, setActiveTab] = React.useState<TabKey>('deck');
     const [detail, setDetail] = React.useState<DetailTarget | null>(null);
     const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
     const [enlargedImage, setEnlargedImage] = React.useState<string | null>(null);
+    const [equipLoadingSlot, setEquipLoadingSlot] = React.useState<string | null>(null);
+    const [skillToggleLoading, setSkillToggleLoading] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         fetchInventory();
@@ -63,6 +66,10 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     const currentDeckCost = skills.filter(i => i.is_equipped).reduce((sum, i) => sum + (i.cost || 0), 0);
 
     const handleToggleSkill = async (item: any) => {
+        if (questLocked) {
+            alert("クエスト進行中はスキルの装備変更ができません。");
+            return;
+        }
         const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
         if (!item.is_equipped) {
             if (currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10)) {
@@ -78,7 +85,12 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 }
             }
         }
-        await toggleEquip(item.id, item.is_equipped, isCampMode);
+        setSkillToggleLoading(item.id);
+        try {
+            await toggleEquip(item.id, item.is_equipped, isCampMode);
+        } finally {
+            setSkillToggleLoading(null);
+        }
     };
 
     // v25: フィールド場面での消耗品使用
@@ -141,6 +153,11 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
     };
 
     const handleEquipItem = async (invItem: any, slot: string) => {
+        if (questLocked) {
+            alert("クエスト進行中は装備の変更ができません。");
+            return;
+        }
+        setEquipLoadingSlot(slot);
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
@@ -165,15 +182,20 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                     body: JSON.stringify({ inventory_id: invItem.id, is_equipped: true })
                 });
                 await Promise.all([fetchEquipment(), fetchInventory()]);
-                alert(`${invItem.name}を装備しました！`);
             } else {
                 const data = await res.json();
                 alert(data.error || '装備に失敗しました。');
             }
         } catch (e) { console.error(e); alert('通信エラー'); }
+        finally { setEquipLoadingSlot(null); }
     };
 
     const handleUnequip = async (slot: string) => {
+        if (questLocked) {
+            alert("クエスト進行中は装備の変更ができません。");
+            return;
+        }
+        setEquipLoadingSlot(slot);
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
@@ -206,6 +228,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                 await Promise.all([fetchEquipment(), fetchInventory()]);
             }
         } catch (e) { console.error(e); }
+        finally { setEquipLoadingSlot(null); }
     };
 
     const vitalityStatus = userProfile?.vitality ? getVitalityStatus(userProfile.vitality) : 'Prime';
@@ -458,7 +481,7 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleUnequip(slot)} className="text-[9px] text-red-500 border border-red-900/50 px-1.5 py-0.5 rounded hover:bg-red-900/30 shrink-0 ml-1">外す</button>
+                                                <button onClick={() => handleUnequip(slot)} disabled={equipLoadingSlot === slot} className={`text-[9px] border px-1.5 py-0.5 rounded shrink-0 ml-1 transition-all ${equipLoadingSlot === slot ? 'text-gray-500 border-gray-700 cursor-wait animate-pulse' : 'text-red-500 border-red-900/50 hover:bg-red-900/30'}`}>{equipLoadingSlot === slot ? '解除中…' : '外す'}</button>
                                             </div>
                                         ) : (
                                             <div className="text-center text-gray-600 py-2 text-[10px] border border-dashed border-gray-700 rounded">未装備</div>
@@ -493,8 +516,9 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                                     </div>
                                                     <button
                                                         onClick={() => handleEquipItem(item, subType)}
-                                                        className="text-[9px] text-orange-400 border border-orange-800/50 px-1.5 py-0.5 rounded hover:bg-orange-900/30 shrink-0 ml-1"
-                                                    >装備</button>
+                                                        disabled={!!equipLoadingSlot}
+                                                        className={`text-[9px] border px-1.5 py-0.5 rounded shrink-0 ml-1 transition-all ${equipLoadingSlot ? 'text-gray-500 border-gray-700 cursor-wait animate-pulse' : 'text-orange-400 border-orange-800/50 hover:bg-orange-900/30'}`}
+                                                    >{equipLoadingSlot ? '装備中…' : '装備'}</button>
                                                 </div>
                                             );
                                         })}
@@ -623,10 +647,10 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                 {detail.type === 'npc' && (
                                     <>
                                         {/* ステータスグリッド */}
-                                        <div className="grid grid-cols-3 gap-2">
+                                        <div className="grid grid-cols-4 gap-2">
                                             <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
                                                 <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
-                                                <div className="text-green-400 font-bold font-mono">{detail.data.max_hp ?? detail.data.hp ?? detail.data.durability ?? '—'}</div>
+                                                <div className="text-green-400 font-bold font-mono">{detail.data.max_hp ?? detail.data.hp ?? '—'}</div>
                                             </div>
                                             <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
                                                 <div className="text-[10px] text-gray-500 mb-0.5">ATK</div>
@@ -636,10 +660,13 @@ export default function StatusModal({ onClose, isCampMode }: StatusModalProps) {
                                                 <div className="text-[10px] text-gray-500 mb-0.5">DEF</div>
                                                 <div className="text-blue-400 font-bold font-mono">{detail.data.def ?? '—'}</div>
                                             </div>
+                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
+                                                <div className="text-[10px] text-gray-500 mb-0.5">VIT</div>
+                                                <div className={`font-bold font-mono ${((detail.data as any).vitality ?? detail.data.durability ?? 100) <= 20 ? 'text-red-400' : 'text-amber-400'}`}>{(detail.data as any).vitality ?? detail.data.durability ?? 100}</div>
+                                            </div>
                                         </div>
                                         <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700 space-y-1.5">
                                             <div className="flex justify-between text-xs"><span className="text-gray-500">職種</span><span className="text-gray-200">{detail.data.job_class || '冒険者'}</span></div>
-                                            <div className="flex justify-between text-xs"><span className="text-gray-500">耐久値</span><span className="text-gray-200">{detail.data.max_hp ?? detail.data.hp ?? detail.data.durability ?? '—'}</span></div>
                                             <div className="flex justify-between text-xs"><span className="text-gray-500">タイプ</span><span className="text-gray-200">{detail.data.origin_type === 'shadow_active' ? '影の残像' : detail.data.origin_type === 'shadow_heroic' ? '英霊' : '傭兵'}</span></div>
                                         </div>
                                         {/* 所持スキル */}
@@ -801,7 +828,7 @@ function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; 
                         </div>
                         <div>
                             <div className="text-xs text-blue-300 font-bold">{member.name}</div>
-                            <div className="text-[10px] text-gray-500">{member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / HP:{member.hp ?? member.durability}</div>
+                            <div className="text-[10px] text-gray-500">{member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / VIT:{(member as any).vitality ?? member.durability ?? '—'}</div>
                         </div>
                     </div>
                     <span className="text-[9px] text-gray-600 shrink-0">▶</span>

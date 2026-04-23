@@ -1,5 +1,5 @@
 /**
- * soundStore — BGM/SE ボリューム設定の状態管理
+ * soundStore — BGM/SE ON/OFF 設定の状態管理
  * Zustand + localStorage persist でリロード後も設定保持
  */
 
@@ -8,28 +8,28 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { soundManager } from '@/lib/soundManager';
 
 interface SoundState {
-    bgmVolume: number;   // 0.0 ~ 1.0 (0 = OFF)
-    seVolume: number;    // 0.0 ~ 1.0 (0 = OFF)
-    setBgmVolume: (vol: number) => void;
-    setSeVolume: (vol: number) => void;
+    bgmEnabled: boolean;
+    seEnabled: boolean;
+    toggleBgm: () => void;
+    toggleSe: () => void;
 }
 
 export const useSoundStore = create<SoundState>()(
     persist(
-        (set) => ({
-            bgmVolume: 0.7,
-            seVolume: 0.8,
+        (set, get) => ({
+            bgmEnabled: true,
+            seEnabled: true,
 
-            setBgmVolume: (vol: number) => {
-                const clamped = Math.max(0, Math.min(1, vol));
-                soundManager?.setBgmVolume(clamped);
-                set({ bgmVolume: clamped });
+            toggleBgm: () => {
+                const next = !get().bgmEnabled;
+                soundManager?.setBgmEnabled(next);
+                set({ bgmEnabled: next });
             },
 
-            setSeVolume: (vol: number) => {
-                const clamped = Math.max(0, Math.min(1, vol));
-                soundManager?.setSeVolume(clamped);
-                set({ seVolume: clamped });
+            toggleSe: () => {
+                const next = !get().seEnabled;
+                soundManager?.setSeEnabled(next);
+                set({ seEnabled: next });
             },
         }),
         {

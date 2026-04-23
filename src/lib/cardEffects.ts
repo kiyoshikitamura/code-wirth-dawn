@@ -69,7 +69,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     // ─── 夜刀神国 (21-25) ────────────────────────────────────────
     '21': { effectType: 'attack' },                                                        // ツバメ返し（※counter確認中 → attack扱い）
     '22': { effectType: 'attack', effectId: 'bleed', effectDuration: 2 },                 // クナイ投げ（出血）
-    '23': { effectType: 'debuff_enemy', effectId: 'stun', effectDuration: 1, skipDamage: true }, // 影縫い（スタン）
+    '23': { effectType: 'debuff_enemy', effectId: 'stun', effectDuration: 2, skipDamage: true }, // 影縫い（スタン 2T）
     '24': { effectType: 'cure_self', cureType: 'debuff', skipDamage: true },              // 清め（デバフ解除）
     '25': { effectType: 'attack' },                                                        // 居合斬り（デフォルト高威力）
 
@@ -156,7 +156,7 @@ export function getCardEffectInfo(card: Card): CardEffectInfo {
     if (card.type === 'Defense' || card.name.includes('防御') || card.name.includes('鉄壁')) {
         return { effectType: 'buff_self', effectId: 'def_up', effectDuration: card.effect_duration || 2, defValue: card.power || 10, skipDamage: true };
     }
-    if (card.type === 'Heal' || card.name.includes('回復') || card.name.includes('ヒール')) {
+    if (card.type === 'Heal' || card.name.includes('回復') || card.name.includes('ヒール') || card.name.includes('治癒') || card.name.includes('癒') || card.name.includes('応急')) {
         return { effectType: 'heal', skipDamage: true };
     }
     if (card.type === 'Support') {

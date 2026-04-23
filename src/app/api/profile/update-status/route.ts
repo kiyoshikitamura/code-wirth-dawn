@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        // Expect keys like { hp, mp, gold, exp }
+        // Expect keys like { hp, gold, exp }
         // We only update what is provided.
 
         // 1. Dynamic User Identification
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
         const updates: any = {};
         if (typeof body.hp === 'number') updates.hp = body.hp;
-        if (typeof body.mp === 'number') updates.mp = body.mp;
+
         if (typeof body.gold === 'number') updates.gold = body.gold;
         if (typeof body.exp === 'number') updates.exp = body.exp;
 

@@ -1,4 +1,4 @@
-# クエスト仕様書：6007 — 第7話「刃の掟」
+﻿# クエスト仕様書：6007 — 第7話「刃の掟」
 
 ## 0. ファイル概要
 
@@ -8,9 +8,9 @@
 | **Slug** | `main_ep07` |
 | **クエスト種別** | メインエピソード（Main） |
 | **推奨レベル** | 7 |
-| **難度** | 1 |
+| **難度** | 2 |
 | **依頼主** | 代官所 |
-| **出現条件** | 前提クエストクリア: main_ep06 / 必須滞在拠点: loc_yatoshin |
+| **出現条件** | 前提クエストクリア: main_ep06 / 必須滞在拠点: loc_temple_town |
 | **サムネイル画像** | `/images/quests/bg_spot_yato_entrance.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+門前町に伝わる「刃の掟」。異邦の剣士として、夜刀の地で認められるための試練が始まる。鍛え抜かれた天狗の武技が、君の覚悟を試す。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:700|Rep:10
+Gold:800|Rep:10
 ```
 
 ---
@@ -66,8 +66,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -84,8 +84,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -102,8 +102,8 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -120,8 +120,8 @@ text2
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -138,8 +138,8 @@ choice1
 
 #### `path_betray`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -156,8 +156,8 @@ text2_betray
 
 #### `text2_betray`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -174,8 +174,8 @@ end_node
 
 #### `path_normal`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -192,8 +192,8 @@ path_normal_2
 
 #### `path_normal_2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -210,15 +210,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_forest_night`
 
 **テキスト:**
 ```
 薄暗い裏山の竹林。血と獣の臭いが立ち込める中、人間を丸呑みにするほどの巨大な蛇の群れが、君を獲物と見定めて這い寄ってきた！
 ```
-**次ノード:** `{type:battle, enemy_group_id:2}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:205}` (auto-advance)
 **params:**
 ```json
 choice2
@@ -228,8 +228,8 @@ choice2
 
 #### `text2_normal`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -246,8 +246,8 @@ text2_normal_2
 
 #### `text2_normal_2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**
@@ -264,8 +264,8 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_tense`
+- **SE**: `—`
 - **背景画像**: `bg_spot_yato_entrance`
 
 **テキスト:**

@@ -290,7 +290,7 @@ export async function POST(req: Request) {
 /**
  * 指定拠点に紐づくエンカウント用エネミーグループスラッグを抽選する。
  * location_encounters テーブルの weight に基づいた重み付き抽選。
- * データがなければデフォルトとして 'goblin_squad' を返す。
+ * データがなければデフォルトとして 'bandit_group' を返す。
  */
 async function pickEncounterEnemy(locationId: string, encounterType: 'random' | 'bounty_hunter'): Promise<string> {
     const { data: rows } = await supabase
@@ -299,8 +299,6 @@ async function pickEncounterEnemy(locationId: string, encounterType: 'random' | 
         .eq('location_id', locationId)
         .eq('encounter_type', encounterType);
 
-    // [Logic-Expert] デフォルトをDBに存在する正規エネミースラッグに変更
-    // goblin_squad は未登録のためエンカウントが空になっていた
     if (!rows || rows.length === 0) return 'bandit_group';
 
     // 重み付き抽選

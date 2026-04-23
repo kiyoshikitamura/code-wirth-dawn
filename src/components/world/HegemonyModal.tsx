@@ -22,7 +22,7 @@ export default function HegemonyModal({ worldState, onClose }: Props) {
     const controllingNation = worldState.controlling_nation === 'Neutral' ? '中立 (支配国なし)' : worldState.controlling_nation;
 
     const nationMap: Record<string, string> = {
-        'Roland': '蒼なるローランド王国',
+        'Roland': '蒼なるローランド聖王国',
         'Markand': '翠なるマーカンド連邦',
         'Karyu': '紅なる華龍神朝',
         'Yato': '宵なる夜刀神国',

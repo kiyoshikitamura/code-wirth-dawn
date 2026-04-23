@@ -66,10 +66,54 @@ CREATE TABLE inventory (
 **`conditions` で指定可能な主なキー:**
 *   `min_reputation` (Number): プレイヤーの名声がこの値**以上**でなければ受注不可。（例: `80` = 英雄向け）
 *   `max_reputation` (Number): プレイヤーの名声がこの値**以下**でなければ受注不可。（例: `-80` = 悪党向け）
-*   `completed_quest` (String): 前提となるクエストの `slug`（あるいはID）をクリア済みか。
-*   `location_tags` (Array): 出現拠点フラグ。
+*   `completed_quest` (String|Number): 前提となるクエストの `slug`（あるいはID）をクリア済みか。
+*   `location_tags` (Array): 出現拠点フラグ。`'all'` または国別タグ（`loc_holy_empire`, `loc_marcund`, `loc_yatoshin`, `loc_haryu`）。
 
 > **⚠ 重要**: 過去存在した単独カラムとしての `min_reputation`, `max_reputation` 等は廃止（または無視）し、すべて `conditions` JSONB内で数値ベースで管理・判定する。
+
+### 3.1 `completed_quest` の照合ロジック (v11.3)
+`completed_quest` の値は slug（例: `"main_ep01"`）または数値ID（例: `7013`）のどちらでも指定可能。
+API側で `slugToIdMap` を構築し、slug → ID 変換後に `user_completed_quests.scenario_id` と照合する。
+
+### 3.2 クリア済クエストの非表示ルール (v11.3)
+
+| クエスト種別 | クリア済非表示 | 理由 |
+|---|---|---|
+| **normal** (汎用クエスト 7000番台) | 非表示にしない（リピート可能） | 同じクエストを繰り返し受注できる |
+| **special** (スポット/イベント) | 現世代では非表示 | 継承後は再出現する |
+| **special (main_ep*)** | 永久に非表示 | メインシナリオはアカウント通じて1回のみ |
+
+### 3.3 難易度タイア (difficulty_tier) 分類 (v11.3)
+
+`rec_level` 値に基づき、ギルドUIのタブに振り分ける：
+
+| Tier | rec_level 範囲 | UI表示 |
+|---|---|---|
+| **Easy** | 1–3 | 初心者向け |
+| **Normal** | 4–7 | 中級者向け |
+| **Hard** | 8+ | 上級者向け |
+
+### 3.4 汎用クエストの表示件数制限 (v11.3)
+
+normalクエストはAPI側でシャッフル後、tierごとに上限件数を設ける：
+
+| Tier | 最大表示件数 |
+|---|---|
+| Easy | 5件 |
+| Normal | 3件 |
+| Hard | 1件 |
+
+specialクエストは件数制限なし（条件を満たすものが全て表示される）。
+
+### 3.5 国別フィルタリング (v11.3)
+normalクエストの `location_tags` は、現在拠点の `ruling_nation_id` を以下のマッピングで変換して照合する：
+
+| ruling_nation_id | location_tag |
+|---|---|
+| `Roland` | `loc_holy_empire` |
+| `Markand` | `loc_marcund` |
+| `Yato` | `loc_yatoshin` |
+| `Karyu` | `loc_haryu` |
 
 ---
 
@@ -111,8 +155,115 @@ CREATE TABLE inventory (
 
 ---
 
-## 6. クエスト完了処理 & 履歴管理 (Quest Complete)
+## 6. 背景画像システム (Background Image System)
+
+### 6.1 概要
+各シナリオノードは `bg_key` フィールドにより背景画像を指定する。`bg_key` は `src/config/assets.ts` の `SCENARIO_ASSETS` マップを通じて実ファイルパスに解決される。
+
+### 6.2 bg_key → ファイルパスの管理
+- **定義元**: `src/config/assets.ts` の `SCENARIO_ASSETS` オブジェクト
+- **画像格納先**: `public/images/quests/` 配下
+- **仕様書との整合性**: `docs/quest/quest_60*.md` の各ノードに記載された `背景画像` フィールドが正となる
+
+### 6.3 CSVでの指定方法
+CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
+- `bg` キーの値が `bg_key` としてSQLに変換される
+- 1シナリオ内で複数の背景を使い分け可能（ノードごとに指定）
+
+### 6.4 バトル時の背景
+- **クエストバトル**: シナリオ側のバトルノード近傍の `bg_key` を `BattleView` の `bgImageUrl` prop に渡す
+- **フリーバトル**: `bg_default` にフォールバック
+- `ScenarioEngine.onBattleStart(enemyId, successNodeId, bgKey?)` → `QuestPage.startBattle()` → `getAssetUrl(bgKey)` → `BattleView.bgImageUrl`
+
+### 6.5 話者アイコン
+- テキストダイアログ内にアイコンを表示（`speaker_image_url` パラメータで指定）
+- 背景レイヤーでの二重表示は行わない（v11.3で廃止）
+
+---
+
+## 7. パーティメンバーUI (Quest Header Party Display)
+
+### 7.1 表示要件
+- QuestHeader内にパーティメンバーアイコン一覧を表示（折りたたみUI）
+- アイコンタップでステータス詳細ポップアップ（HP, ATK, DEF, スキル一覧）
+- ポップアップは `ReactDOM.createPortal` で `document.body` に直接描画（`overflow:hidden` の祖先要素を回避）
+- z-index: `9999`（他のUIの最前面）
+
+### 7.2 BattleViewとの統一
+- BattleView内のメンバーポップアップと同一のレイアウト・情報量を維持
+- skill_names / skills / abilities 配列からスキルをピル形式で表示
+
+---
+
+## 8. クエスト完了処理 & 履歴管理 (Quest Complete)
 1. **加齢・成長処理**: 経過日数に基づく年齢計算。
 2. **報酬付与**: `quest.rewards` の金額・EXP・アイテム・最終名声変動を適用。
 3. **クリア履歴の保存**: `user_completed_quests` テーブルに記録。
+    - **normalクエスト**: クリア記録は保存するが、依頼一覧からの非表示には使用しない（リピート可能）。
+    - **specialクエスト**: 現世代で非表示。継承時にクリア記録が削除されるため再出現する。
+    - **メインシナリオ (main_ep*)**: 継承時もクリア記録を保持（永久非表示）。
 4. **ステートリセット**: ゲストNPCの離脱・内部フラグ（呪い・正解数など）の完全破棄。
+5. **Vitality摩耗**: パーティメンバーのVIT減少処理。
+
+### 8.1 Vitality (VIT) 摩耗ルール
+パーティメンバーはクエスト完了時にVitalityが減少する。VITが0になるとパーティから離脱する。
+
+| 条件 | VIT減少量 | 備考 |
+|------|-----------|------|
+| クエスト成功 | -5 | 全メンバーに適用 |
+| クエスト失敗・撤退 | -10 | 全メンバーに適用 |
+| バトルでHP0 | 追加 -10 | 該当メンバーのみ |
+
+- VIT初期値: 100（雇用時）
+- VIT最大値: 100
+- VIT 0到達: パーティから離脱（party_members削除）、形見アイテム生成
+- UI表記: **VIT** (略称), **Vitality** (正式名)
+- DBカラム: `party_members.durability` (内部名は変更しない)
+
+### 8.2 完了画面 (QuestResultModal) API レスポンス構造
+```json
+{
+  "success": true,
+  "quest_title": "荒野の出発",
+  "days_passed": 3,
+  "new_location": "uuid",
+  "new_location_name": "国境の町",
+  "rewards": { "exp": 80, "gold": 200, "reputation": 10 },
+  "earned_exp": 80,
+  "loot_saved": [],
+  "share_text": "...",
+  "rep_change": { "amount": 10, "location": "マルカンド" },
+  "party_changes": [
+    { "name": "影の傭兵", "oldDurability": 95, "newDurability": 90, "perished": false },
+    { "name": "古い剣士", "oldDurability": 10, "newDurability": 0, "perished": true, "memento": "古剣の欠片" }
+  ],
+  "changes": {
+    "gold_gained": 200,
+    "old_age": 18, "new_age": 18,
+    "aged_up": false,
+    "vit_penalty": 0,
+    "atk_decay": 0, "def_decay": 0,
+    "level_up": {
+      "level_up": true,
+      "new_level": 3,
+      "hp_increase": 8,
+      "atk_increase": 1,
+      "def_increase": 1,
+      "new_max_hp": 93,
+      "new_max_cost": 12
+    }
+  }
+}
+```
+
+### 8.3 完了画面 UI セクション構成
+| セクション | 表示内容 | 条件 |
+|------------|----------|------|
+| ヘッダー | 完了/失敗バッジ、クエストタイトル | 常時 |
+| 報酬 | ゴールド、経験値、名声変動、ドロップアイテム | 成功時 |
+| 名声ペナルティ | 名声減少（拠点名付き） | 失敗時 |
+| キャラクター変化 | レベルアップ（Lv/HP/ATK/DEF/コスト数値表示）、加齢、ATK/DEF減衰 | 該当変化がある場合 |
+| 時間経過 | 経過日数、到着地名 | 常時 |
+| パーティ状態 | メンバーVIT変化（VIT XX ▸ YY）、離脱、形見獲得 | パーティ変化がある場合 |
+| シェア | SNS投稿ボタン | share_textがある場合 |
+

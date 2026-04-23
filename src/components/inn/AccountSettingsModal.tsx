@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, Link as LinkIcon, AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2, Coins } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2, Coins, Pencil, User, Hash, Settings } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useGameStore } from '@/store/gameStore';
+import { clearGameStarted } from '@/hooks/useAuthGuard';
 import { UI_RULES } from '@/constants/game_rules';
 import SoundSettingsPanel from '@/components/sound/SoundSettingsPanel';
 
@@ -12,7 +13,7 @@ interface Props {
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 type SubscriptionTier = 'free' | 'basic' | 'premium';
 
@@ -30,8 +31,8 @@ const TIER_COLORS: Record<SubscriptionTier, string> = {
 
 export default function AccountSettingsModal({ onClose }: Props) {
     const { userProfile, fetchUserProfile } = useGameStore();
-    const [identities, setIdentities] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // UI States
     const [error, setError] = useState('');
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [avatarError, setAvatarError] = useState('');
@@ -39,36 +40,62 @@ export default function AccountSettingsModal({ onClose }: Props) {
     const [billingLoading, setBillingLoading] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        async function fetchIdentities() {
-            setLoading(true);
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                setError(error.message);
-            } else if (user) {
-                setIdentities(user.identities || []);
-            }
-            setLoading(false);
-        }
-        fetchIdentities();
-    }, []);
+    // ユーザー名編集
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editName, setEditName] = useState(userProfile?.name || '');
+    const [nameLoading, setNameLoading] = useState(false);
+    const [nameError, setNameError] = useState('');
+    const [nameSuccess, setNameSuccess] = useState('');
 
-    const isAnonymous = identities.length === 0 || identities.every(id => id.provider === 'anonymous');
+    const isAnonymous = userProfile?.is_anonymous === true;
     const currentTier: SubscriptionTier = (userProfile as any)?.subscription_tier ?? 'free';
 
-    const handleLinkIdentity = async (provider: 'google' | 'twitter') => {
+    // ── ユーザー名変更 ──
+    const handleNameSave = async () => {
+        const trimmed = editName.trim();
+        if (trimmed === userProfile?.name) {
+            setIsEditingName(false);
+            return;
+        }
+
+        setNameLoading(true);
+        setNameError('');
+        setNameSuccess('');
         try {
-            const { data, error } = await supabase.auth.linkIdentity({
-                provider: provider,
-                options: { redirectTo: `${window.location.origin}/inn` }
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) throw new Error('認証セッションがありません');
+
+            const res = await fetch('/api/character/name', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ name: trimmed }),
             });
-            if (error) throw error;
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || '名前の変更に失敗しました');
+
+            await fetchUserProfile();
+            setNameSuccess('名前を変更しました');
+            setIsEditingName(false);
+            setTimeout(() => setNameSuccess(''), 3000);
         } catch (e: any) {
-            console.error('Link Identity Error:', e);
-            setError(e.message || 'アカウント連携に失敗しました');
+            setNameError(e.message);
+        } finally {
+            setNameLoading(false);
         }
     };
 
+    const handleNameCancel = () => {
+        setEditName(userProfile?.name || '');
+        setIsEditingName(false);
+        setNameError('');
+    };
+
+    // ── プランアップグレード ──
     const handleUpgradeTier = async (tier: 'basic' | 'premium') => {
         setBillingLoading(tier);
         try {
@@ -87,6 +114,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
         }
     };
 
+    // ── ゴールド購入 ──
     const handleBuyGold = async (packageKey: 'gold_10k' | 'gold_50k') => {
         setBillingLoading(packageKey);
         try {
@@ -105,15 +133,24 @@ export default function AccountSettingsModal({ onClose }: Props) {
         }
     };
 
-    const handleReturnToTitle = () => {
+    // ── タイトルに戻る ──
+    const handleReturnToTitle = async () => {
         if (isAnonymous) {
-            if (!confirm("現在、未連携アカウントのため、タイトルに戻るとデータにアクセスできなくなります。本当にタイトルに戻りますか？")) {
+            if (!confirm("テストプレイのデータは保存されません。タイトルに戻るとこのデータは失われます。本当にタイトルに戻りますか？")) {
                 return;
             }
         }
+        clearGameStarted();
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('game-storage');
+            localStorage.removeItem('quest-storage');
+            sessionStorage.setItem('cwd_return_to_title', '1');
+        }
+        try { await supabase.auth.signOut(); } catch (_) {}
         window.location.href = '/title';
     };
 
+    // ── アバターアップロード ──
     const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -126,7 +163,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
             return;
         }
         if (file.size > MAX_FILE_SIZE) {
-            setAvatarError('ファイルサイズが大きすぎます。2MB以下の画像を選択してください。');
+            setAvatarError('ファイルサイズが大きすぎます。10MB以下の画像を選択してください。');
             return;
         }
 
@@ -194,91 +231,85 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 </button>
 
                 <h2 className="text-2xl font-serif font-bold text-[#e3d5b8] mb-6 flex items-center gap-2 border-b border-[#a38b6b]/40 pb-2">
-                    <LinkIcon className="w-6 h-6" />
-                    アカウント設定
+                    <Settings className="w-6 h-6" />
+                    設定
                 </h2>
 
-                {/* ── サブスクリプション Tier 表示 ── */}
-                <div className="mb-6 pb-6 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <Crown className="w-4 h-4" />
-                        プラン
-                    </h3>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 border rounded text-sm font-bold mb-4 ${TIER_COLORS[currentTier]}`}>
-                        {currentTier === 'premium' && <Crown className="w-3.5 h-3.5" />}
-                        {currentTier === 'basic' && <Zap className="w-3.5 h-3.5" />}
-                        {TIER_LABELS[currentTier]}
+                {/* ── エラー表示 ── */}
+                {error && (
+                    <div className="bg-red-900/40 border border-red-500 text-red-200 p-3 rounded mb-4 text-sm flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <p>{error}</p>
                     </div>
+                )}
 
-                    {currentTier !== 'premium' && (
+                {/* ══════════════════════════════════════════════
+                    §1  ユーザー名（編集可能）
+                   ══════════════════════════════════════════════ */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        ユーザー名
+                    </h3>
+                    {isEditingName ? (
                         <div className="space-y-2">
-                            {currentTier === 'free' && (
+                            <input
+                                type="text"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                maxLength={16}
+                                className="w-full bg-[#0d0906] border border-[#a38b6b]/50 text-[#e3d5b8] px-3 py-2 rounded text-sm font-serif focus:border-amber-500 outline-none transition-colors"
+                                placeholder="1〜16文字"
+                                autoFocus
+                            />
+                            <div className="flex gap-2">
                                 <button
-                                    onClick={() => handleUpgradeTier('basic')}
-                                    disabled={!!billingLoading || isAnonymous}
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-blue-600 text-blue-300 text-sm font-bold rounded hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    onClick={handleNameSave}
+                                    disabled={nameLoading || editName.trim().length === 0}
+                                    className="flex-1 py-1.5 text-xs font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors disabled:opacity-40"
                                 >
-                                    <Zap className="w-4 h-4" />
-                                    {billingLoading === 'basic' ? '処理中...' : 'Basic にアップグレード'}
+                                    {nameLoading ? '保存中...' : '保存'}
                                 </button>
-                            )}
+                                <button
+                                    onClick={handleNameCancel}
+                                    disabled={nameLoading}
+                                    className="flex-1 py-1.5 text-xs font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                                >
+                                    キャンセル
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-gray-600">※ 名前の変更は週1回まで</p>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between">
+                            <span className="text-[#e3d5b8] text-lg font-serif italic">
+                                {userProfile?.name || '名もなき旅人'}
+                            </span>
                             <button
-                                onClick={() => handleUpgradeTier('premium')}
-                                disabled={!!billingLoading || isAnonymous}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-yellow-500 text-yellow-300 text-sm font-bold rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                onClick={() => { setEditName(userProfile?.name || ''); setIsEditingName(true); setNameError(''); setNameSuccess(''); }}
+                                className="p-1.5 text-[#a38b6b] hover:text-amber-400 transition-colors"
+                                title="名前を変更"
                             >
-                                <Crown className="w-4 h-4" />
-                                {billingLoading === 'premium' ? '処理中...' : 'Premium にアップグレード'}
+                                <Pencil className="w-4 h-4" />
                             </button>
-                            {isAnonymous && (
-                                <p className="text-xs text-gray-500 text-center">※ 課金にはアカウント連携が必要です</p>
-                            )}
+                        </div>
+                    )}
+                    {nameError && (
+                        <div className="mt-2 text-red-400 text-xs flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> {nameError}
+                        </div>
+                    )}
+                    {nameSuccess && (
+                        <div className="mt-2 text-green-400 text-xs flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> {nameSuccess}
                         </div>
                     )}
                 </div>
 
-                {/* ── ゴールド購入セクション ── */}
-                <div className="mb-6 pb-6 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <Coins className="w-4 h-4" />
-                        ゴールド購入
-                    </h3>
-                    <div className="space-y-2">
-                        <button
-                            onClick={() => handleBuyGold('gold_10k')}
-                            disabled={!!billingLoading || isAnonymous}
-                            className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            <span className="flex items-center gap-2">
-                                <span className="text-yellow-400 font-bold">🪙 10,000 G</span>
-                                <span className="text-gray-400 text-xs">スターターパック</span>
-                            </span>
-                            <span className="font-bold text-yellow-300">
-                                {billingLoading === 'gold_10k' ? '処理中...' : '330円（税込）'}
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => handleBuyGold('gold_50k')}
-                            disabled={!!billingLoading || isAnonymous}
-                            className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
-                        >
-                            <span className="flex items-center gap-2">
-                                <span className="text-yellow-400 font-bold">🪙 50,000 G</span>
-                                <span className="text-gray-400 text-xs">アドベンチャーパック</span>
-                                <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded font-bold">おすすめ</span>
-                            </span>
-                            <span className="font-bold text-yellow-300">
-                                {billingLoading === 'gold_50k' ? '処理中...' : '1,460円（税込）'}
-                            </span>
-                        </button>
-                        {isAnonymous && (
-                            <p className="text-xs text-gray-500 text-center">※ ゴールド購入にはアカウント連携が必要です</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── アバター変更セクション ── */}
-                <div className="mb-6 pb-6 border-b border-[#3e2723]">
+                {/* ══════════════════════════════════════════════
+                    §2  プロフィールアイコン変更
+                   ══════════════════════════════════════════════ */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
                     <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
                         <Camera className="w-4 h-4" />
                         プロフィールアイコン
@@ -311,7 +342,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                 <Upload className="w-4 h-4" />
                                 {avatarUploading ? 'アップロード中...' : '画像を変更'}
                             </label>
-                            <p className="text-xs text-gray-600 mt-1">JPEG / PNG / WebP・2MB以下</p>
+                            <p className="text-xs text-gray-600 mt-1">JPEG / PNG / WebP・10MB以下</p>
                         </div>
                     </div>
                     {avatarError && (
@@ -326,82 +357,137 @@ export default function AccountSettingsModal({ onClose }: Props) {
                     )}
                 </div>
 
-                {/* ── エラー表示 ── */}
-                {error && (
-                    <div className="bg-red-900/40 border border-red-500 text-red-200 p-3 rounded mb-6 text-sm flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                        <p>{error}</p>
+                {/* ══════════════════════════════════════════════
+                    §3  登録プラン表示
+                   ══════════════════════════════════════════════ */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                        <Crown className="w-4 h-4" />
+                        プラン
+                    </h3>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 border rounded text-sm font-bold ${TIER_COLORS[currentTier]}`}>
+                        {currentTier === 'premium' && <Crown className="w-3.5 h-3.5" />}
+                        {currentTier === 'basic' && <Zap className="w-3.5 h-3.5" />}
+                        {TIER_LABELS[currentTier]}
                     </div>
-                )}
+                </div>
 
-                {loading ? (
-                    <div className="text-center py-8 text-gray-500 animate-pulse font-serif italic">
-                        読み込み中...
-                    </div>
-                ) : (
-                    <div className="space-y-6">
-                        {isAnonymous ? (
-                            <div className="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-sm">
-                                <div className="flex items-center gap-2 text-yellow-500 mb-2 font-bold">
-                                    <ShieldAlert className="w-5 h-5" />
-                                    <span>未連携アカウント</span>
+                {/* ══════════════════════════════════════════════
+                    §4  内部ID（お問い合わせ用）
+                   ══════════════════════════════════════════════ */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                        <Hash className="w-4 h-4" />
+                        内部ID
+                    </h3>
+                    <span className="text-xs text-gray-500 font-mono break-all bg-black/50 p-2 rounded block">
+                        {userProfile?.id || 'Unknown'}
+                    </span>
+                    <p className="text-[10px] text-gray-600 mt-1">※ お問い合わせ時にこのIDをお伝えください</p>
+                </div>
+
+                {/* ══════════════════════════════════════════════
+                    §5  BGM / SE 音量変更
+                   ══════════════════════════════════════════════ */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                        <Volume2 className="w-4 h-4" />
+                        サウンド設定
+                    </h3>
+                    <SoundSettingsPanel />
+                </div>
+
+                {/* ══════════════════════════════════════════════
+                    §6-7  課金セクション（テストプレイユーザーには非表示）
+                   ══════════════════════════════════════════════ */}
+                {!isAnonymous && (
+                    <>
+                        {/* ── プランアップグレード ── */}
+                        {currentTier !== 'premium' && (
+                            <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                                <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                                    <Zap className="w-4 h-4" />
+                                    プランアップグレード
+                                </h3>
+                                <div className="space-y-2">
+                                    {currentTier === 'free' && (
+                                        <button
+                                            onClick={() => handleUpgradeTier('basic')}
+                                            disabled={!!billingLoading}
+                                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-blue-600 text-blue-300 text-sm font-bold rounded hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            <Zap className="w-4 h-4" />
+                                            {billingLoading === 'basic' ? '処理中...' : 'Basic にアップグレード'}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleUpgradeTier('premium')}
+                                        disabled={!!billingLoading}
+                                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-yellow-500 text-yellow-300 text-sm font-bold rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <Crown className="w-4 h-4" />
+                                        {billingLoading === 'premium' ? '処理中...' : 'Premium にアップグレード'}
+                                    </button>
                                 </div>
-                                <p className="text-gray-400 text-sm leading-relaxed font-serif">
-                                    現在、あなたのデータは端末にのみ保存される「匿名プレイ」状態です。
-                                    ブラウザのデータを削除したり、別の端末からプレイしたい場合は、外部アカウントと連携(データ引き継ぎ)を行ってください。
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="bg-green-900/20 border border-green-700/50 p-4 rounded-sm">
-                                <div className="flex items-center gap-2 text-green-400 mb-2 font-bold">
-                                    <CheckCircle2 className="w-5 h-5" />
-                                    <span>アカウント連携済み</span>
-                                </div>
-                                <p className="text-gray-400 text-sm mb-3">
-                                    以下のプロバイダでデータ引き継ぎが有効です:
-                                </p>
-                                <ul className="list-disc list-inside text-sm text-gray-300 ml-2 space-y-1">
-                                    {identities.filter(id => id.provider !== 'anonymous').map(id => (
-                                        <li key={id.identity_id} className="capitalize">{id.provider}</li>
-                                    ))}
-                                </ul>
                             </div>
                         )}
-                        {/* ── サウンド設定 ── */}
-                        <div className="mb-6 pb-6 border-b border-[#3e2723]">
+
+                        {/* ── ゴールド購入 ── */}
+                        <div className="mb-5 pb-5 border-b border-[#3e2723]">
                             <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                                <Volume2 className="w-4 h-4" />
-                                サウンド設定
+                                <Coins className="w-4 h-4" />
+                                ゴールド購入
                             </h3>
-                            <SoundSettingsPanel />
+                            <div className="space-y-2">
+                                <button
+                                    onClick={() => handleBuyGold('gold_10k')}
+                                    disabled={!!billingLoading}
+                                    className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span className="text-yellow-400 font-bold">🪙 10,000 G</span>
+                                        <span className="text-gray-400 text-xs">スターターパック</span>
+                                    </span>
+                                    <span className="font-bold text-yellow-300">
+                                        {billingLoading === 'gold_10k' ? '処理中...' : '330円（税込）'}
+                                    </span>
+                                </button>
+                                <button
+                                    onClick={() => handleBuyGold('gold_50k')}
+                                    disabled={!!billingLoading}
+                                    className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span className="text-yellow-400 font-bold">🪙 50,000 G</span>
+                                        <span className="text-gray-400 text-xs">アドベンチャーパック</span>
+                                        <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded font-bold">おすすめ</span>
+                                    </span>
+                                    <span className="font-bold text-yellow-300">
+                                        {billingLoading === 'gold_50k' ? '処理中...' : '1,430円（税込）'}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
-
-                        <div className="pt-4 border-t border-[#3e2723] space-y-3">
-                            <p className="text-[#a38b6b] text-sm font-bold text-center mb-4">連携するアカウントを選択</p>
-                            <button
-                                onClick={() => handleLinkIdentity('google')}
-                                className="w-full bg-white text-gray-900 hover:bg-gray-100 font-bold py-3 px-4 rounded transition-colors shadow flex items-center justify-center gap-2"
-                            >
-                                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                                Google で連携する
-                            </button>
-                        </div>
-
-                        <div className="text-center mt-6 space-y-4">
-                            <span className="text-xs text-gray-600 font-mono break-all bg-black/50 p-2 rounded block">
-                                内部ID: {userProfile?.id || 'Unknown'}
-                            </span>
-
-                            <button
-                                onClick={handleReturnToTitle}
-                                className="w-full bg-red-900/20 border border-red-800 text-red-400 hover:bg-red-900/40 font-bold py-3 px-4 rounded transition-colors shadow flex items-center justify-center gap-2"
-                            >
-                                <LogOut className="w-5 h-5" />
-                                タイトルに戻る
-                            </button>
-                        </div>
-                    </div>
+                    </>
                 )}
+
+                {/* ══════════════════════════════════════════════
+                    §8  タイトルに戻る
+                   ══════════════════════════════════════════════ */}
+                <div className="pt-2">
+                    <button
+                        onClick={handleReturnToTitle}
+                        className="w-full bg-red-900/20 border border-red-800 text-red-400 hover:bg-red-900/40 font-bold py-3 px-4 rounded transition-colors shadow flex items-center justify-center gap-2"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        タイトルに戻る
+                    </button>
+                    {isAnonymous && (
+                        <p className="text-[10px] text-red-400/60 text-center mt-2">
+                            ⚠ テストプレイのデータは保存されません
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );

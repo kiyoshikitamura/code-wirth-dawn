@@ -278,32 +278,44 @@ export async function POST(req: Request) {
             }
         }
 
-        // 7.5 Moore Wear Cycle (摩耗サイクル) & Memento Generation
-        if (result === 'success') {
+        // 7.5 Vitality摩耗サイクル (Wear Cycle) & Memento Generation
+        // 成功: -5, 失敗/撤退: -10, バトルHP0: 追加 -10
+        const partyChanges: any[] = [];
+        const defeatedIds: string[] = Array.isArray(body.defeated_member_ids)
+            ? body.defeated_member_ids.map((id: any) => String(id))
+            : [];
+
+        {
+            const basePenalty = result === 'success' ? 5 : 10;
             const { data: activeParty } = await supabase
                 .from('party_members')
-                .select('id, name, durability, inject_cards')
-                .eq('owner_id', user_id)
-                .eq('is_active', true);
+                .select('id, name, durability, inject_cards, is_active')
+                .eq('owner_id', user_id);
             
             if (activeParty && activeParty.length > 0) {
                 for (const member of activeParty) {
-                    const newDurability = Math.max(0, (member.durability || 100) - 10); // Minus 10 per quest
+                    const oldDurability = member.durability ?? 100;
+                    // is_active=false（バトルで力尽きた）メンバーは durability=0 として扱う
+                    const effectiveOldDur = member.is_active === false ? 0 : oldDurability;
+                    // バトルでHP0になったメンバーは追加 -10
+                    const defeatedPenalty = defeatedIds.includes(String(member.id)) ? 10 : 0;
+                    const totalPenalty = basePenalty + defeatedPenalty;
+                    const newDurability = Math.max(0, effectiveOldDur - totalPenalty);
                     
                     if (newDurability <= 0) {
-                        // Delete member
-                        await supabase.from('party_members').delete().eq('id', member.id);
-                        console.log(`[Moore] Party member ${member.name} perished due to wear.`);
+                        const { error: deleteError } = await supabase.from('party_members').delete().eq('id', member.id);
+                        if (deleteError) {
+                            console.error(`[Vitality] Failed to delete party member ${member.name}:`, deleteError.message);
+                            // フォールバック: 削除失敗時は is_active=false, durability=0 に更新
+                            await supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id);
+                        }
+                        console.log(`[Vitality] Party member ${member.name} perished (VIT 0). penalty=${totalPenalty}`);
 
-                        // Generate Memento Item (形見アイテム) from their signature deck
+                        let mementoName: string | null = null;
                         if (member.inject_cards && member.inject_cards.length > 0) {
-                            // Give them the first valid card as an item or just a generic Memento
                             const skillCardId = member.inject_cards[0];
                             const { data: card } = await supabase.from('cards').select('id, name').eq('id', skillCardId).maybeSingle();
                             if (card) {
-                                // Assume there's a corresponding item_id for this card, or we just insert it
-                                // For simplicity, we insert the skill item directly if we can find its item master,
-                                // but we need the `items` table id. We can look it up by `linked_card_id`.
                                 const { data: item } = await supabase.from('items').select('id, name').eq('linked_card_id', card.id).maybeSingle();
                                 if (item) {
                                     const { data: existingInv } = await supabase
@@ -312,19 +324,20 @@ export async function POST(req: Request) {
                                         .eq('user_id', user_id)
                                         .eq('item_id', item.id)
                                         .maybeSingle();
-
                                     if (existingInv) {
                                         await supabase.from('inventory').update({ quantity: existingInv.quantity + 1 }).eq('id', existingInv.id);
                                     } else {
                                         await supabase.from('inventory').insert({ user_id, item_id: item.id, quantity: 1 });
                                     }
+                                    mementoName = item.name;
                                     console.log(`[Memento] Created memento item ${item.name} from perished shadow ${member.name}.`);
                                 }
                             }
                         }
+                        partyChanges.push({ name: member.name, oldDurability, newDurability: 0, perished: true, memento: mementoName });
                     } else {
-                        // Just update durability
                         await supabase.from('party_members').update({ durability: newDurability }).eq('id', member.id);
+                        partyChanges.push({ name: member.name, oldDurability, newDurability, perished: false });
                     }
                 }
             }
@@ -368,35 +381,48 @@ export async function POST(req: Request) {
             }
         }
 
-        // 8.7 クエスト失敗時の名声ペナルティ (spec_v16 §3.1)
+        // 8.7 名声変動（成功: 報酬名声 / 失敗: ペナルティ）
+        let repChange: { amount: number; location: string } | null = null;
+
+        // 成功時: rewards.reputation を名声報酬として加算
+        if (result === 'success' && quest.rewards?.reputation) {
+            const repAmount = quest.rewards.reputation;
+            const locId = updates.current_location_id || user.current_location_id;
+            if (locId) {
+                const { data: locForRep } = await supabase.from('locations').select('name').eq('id', locId).maybeSingle();
+                const repLocName = locForRep?.name;
+                if (repLocName) {
+                    const { data: existingRep } = await supabase
+                        .from('reputations').select('id, score').eq('user_id', user_id).eq('location_name', repLocName).maybeSingle();
+                    if (existingRep) {
+                        await supabase.from('reputations').update({ score: existingRep.score + repAmount }).eq('id', existingRep.id);
+                    } else {
+                        await supabase.from('reputations').insert({ user_id, location_name: repLocName, score: repAmount });
+                    }
+                    repChange = { amount: repAmount, location: repLocName };
+                    console.log(`[QuestComplete] Success rep reward: +${repAmount} at ${repLocName}`);
+                }
+            }
+        }
+
+        // 失敗時: ランダムペナルティ
         if (result === 'failure' && user.current_location_id) {
-            const penaltyMin = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MIN); // 5
-            const penaltyMax = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MAX); // 10
+            const penaltyMin = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MIN);
+            const penaltyMax = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MAX);
             const repPenalty = -(Math.floor(Math.random() * (penaltyMax - penaltyMin + 1)) + penaltyMin);
 
-            // upsert: 既存レコードがあれば加算、なければ新規作成
-            // location_nameを取得
             const { data: locForRep } = await supabase.from('locations').select('name').eq('id', user.current_location_id).maybeSingle();
             const repLocName = locForRep?.name;
             if (repLocName) {
                 const { data: existingRep } = await supabase
-                    .from('reputations')
-                    .select('id, score')
-                    .eq('user_id', user_id)
-                    .eq('location_name', repLocName)
-                    .maybeSingle();
-
+                    .from('reputations').select('id, score').eq('user_id', user_id).eq('location_name', repLocName).maybeSingle();
                 if (existingRep) {
-                    await supabase
-                        .from('reputations')
-                        .update({ score: existingRep.score + repPenalty })
-                        .eq('id', existingRep.id);
+                    await supabase.from('reputations').update({ score: existingRep.score + repPenalty }).eq('id', existingRep.id);
                 } else {
-                    await supabase
-                        .from('reputations')
-                        .insert({ user_id, location_name: repLocName, score: repPenalty });
+                    await supabase.from('reputations').insert({ user_id, location_name: repLocName, score: repPenalty });
                 }
-                console.log(`[QuestComplete] Failure rep penalty: ${repPenalty} for user ${user_id} at ${repLocName}`);
+                repChange = { amount: repPenalty, location: repLocName };
+                console.log(`[QuestComplete] Failure rep penalty: ${repPenalty} at ${repLocName}`);
             }
         }
 
@@ -421,13 +447,20 @@ export async function POST(req: Request) {
             // (Simplified World Impact logic was here, kept omitted as in original)
         }
 
+        // Resolve location name for UI
+        let newLocationName: string | null = null;
+        if (updates.current_location_id) {
+            const { data: locData } = await supabase.from('locations').select('name').eq('id', updates.current_location_id).maybeSingle();
+            newLocationName = locData?.name || null;
+        }
+
         // Calculate changes for UI
         const changes = {
             gold_gained: (quest.rewards?.gold || 0),
             old_age: user.age,
             new_age: updates.age,
             aged_up: (newAge - (user.age || 18)) > 0,
-            years_added: Math.floor(daysPassed / 365), // Approx
+            years_added: Math.floor(daysPassed / 365),
             vit_penalty: decay.vit,
             atk_decay: decay.atk,
             def_decay: decay.def,
@@ -436,11 +469,16 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             success: true,
+            quest_title: quest.title || '',
             days_passed: daysPassed,
             new_location: updates.current_location_id,
+            new_location_name: newLocationName,
             rewards: quest.rewards,
+            earned_exp: result === 'success' ? (quest.rewards?.exp || 0) : 0,
             loot_saved: lootSaved,
             share_text: finalShareText,
+            rep_change: repChange,
+            party_changes: partyChanges,
             changes
         });
 

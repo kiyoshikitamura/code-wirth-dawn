@@ -22,7 +22,7 @@ interface NodeProcessorOptions {
     setShowingTravel: (data: any) => void;
     setEndReady: (data: { result: 'success' | 'failure' | 'abort'; history: string[] } | null) => void;
     history: string[];
-    onBattleStart?: (enemyId: string, successNodeId: string) => void;
+    onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string) => void;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
     showingTravel: any;
     showToast: (text: string, type?: 'success' | 'error' | 'info') => void;

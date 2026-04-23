@@ -1,15 +1,15 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,オアシス都市での一件から数日後。君とガウェインは、マルカンド領内を移動する大規模な中立商隊の護衛任務に就いていた。,"{""type"":""text"", ""bg"":""bg_default""}",text1
-NODE,text1,毒物事件の噂は瞬く間に広がり、マルカンド側の帝国に対するヘイトは限界に達している。すれ違う商人たちの目つきも鋭い。,"{""type"":""text"", ""bg"":""bg_default""}",text1_1
-NODE,text1_1,「いつ火を吹いてもおかしくない。……むしろ、上層部は火が吹くのを待っているようにも見えるな」,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",text2
-NODE,text2,ガウェインが馬上でそう呟き、深く溜息をついた直後だった。,"{""type"":""text"", ""bg"":""bg_battle""}",text2_1
-NODE,text2_1,凄まじい轟音と共に、隊商の先頭付近で巨大な爆発・砂塵が上がり、護衛の兵士や商人たちが吹き飛ばされた！,"{""type"":""text"", ""bg"":""bg_battle""}",text3
-NODE,text3,「敵襲！！……馬鹿な、あれを見ろ！信じられん、ローランの紋章だと！？」,"{""type"":""text"", ""bg"":""bg_battle"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",text3_1
-NODE,text3_1,砂煙の中から姿を現したのは、他ならぬ君たちの祖国――聖帝国ローランの正規軍、その先遣隊だった。,"{""type"":""text"", ""bg"":""bg_battle""}",text4
-NODE,text4,宣戦布告などない。彼らは『大義』や『制裁』といった空虚な言葉を並べ立てながら、丸腰同然のマルカンド商隊に容赦なく牙を剥いた。,"{""type"":""text"", ""bg"":""bg_battle""}",text4_1
-NODE,text4_1,「これが……大義を掲げた国のやることか！俺たちは何のために剣を振るっているんだ！」君は思わず叫んだ。,"{""type"":""text"", ""bg"":""bg_battle""}",battle
-NODE,battle,迷っている暇はない。今は目の前で殺されようとしている人々を救うため、同国人に向かって剣を抜くしかなかった。,"{""type"":""battle"", ""enemy_group_id"":2}",choice_battle
+NODE,start,オアシス都市での一件から数日後。君とガウェインは、マルカンド領内を移動する大規模な中立商隊の護衛任務に就いていた。,"{""bgm"":""bgm_quest_tense"", ""type"":""text"", ""bg"":""bg_desert""}",text1
+NODE,text1,毒物事件の噂は瞬く間に広がり、マルカンド側の帝国に対するヘイトは限界に達している。すれ違う商人たちの目つきも鋭い。,"{""type"":""text"", ""bg"":""bg_desert""}",text1_1
+NODE,text1_1,「いつ火を吹いてもおかしくない。……むしろ、上層部は火が吹くのを待っているようにも見えるな」,"{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text2
+NODE,text2,ガウェインが馬上でそう呟き、深く溜息をついた直後だった。,"{""type"":""text"", ""bg"":""bg_desert""}",text2_1
+NODE,text2_1,凄まじい轟音と共に、隊商の先頭付近で巨大な爆発・砂塵が上がり、護衛の兵士や商人たちが吹き飛ばされた！,"{""type"":""text"", ""bg"":""bg_desert""}",text3
+NODE,text3,「敵襲！！……馬鹿な、あれを見ろ！信じられん、ローランの紋章だと！？」,"{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text3_1
+NODE,text3_1,砂煙の中から姿を現したのは、他ならぬ君たちの祖国――聖帝国ローランの正規軍、その先遣隊だった。,"{""type"":""text"", ""bg"":""bg_desert""}",text4
+NODE,text4,宣戦布告などない。彼らは『大義』や『制裁』といった空虚な言葉を並べ立てながら、丸腰同然のマルカンド商隊に容赦なく牙を剥いた。,"{""type"":""text"", ""bg"":""bg_desert""}",text4_1
+NODE,text4_1,「これが……大義を掲げた国のやることか！俺たちは何のために剣を振るっているんだ！」君は思わず叫んだ。,"{""type"":""text"", ""bg"":""bg_desert""}",battle
+NODE,battle,迷っている暇はない。今は目の前で殺されようとしている人々を救うため、同国人に向かって剣を抜くしかなかった。,"{""type"":""battle"", ""enemy_group_id"":202}",choice_battle
 CHOICE,,「商隊を護る！」,,text_post_battle
-NODE,text_post_battle,帝国兵を退け、先遣隊を一時的に後退させることには成功した。しかし、辺り一面には無残な商隊の残骸と遺体が散乱している。,"{""type"":""text"", ""bg"":""bg_default""}",text_post_battle2
-NODE,text_post_battle2,「……ついに、開戦の口火が切られてしまったか。引き返せない泥沼の始まりだ」,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",end_node
-NODE,end_node,ガウェインの顔に深く刻まれた疲労と絶望は、これから始まる地獄の戦場を予見していた。君の手は、同朋を斬った感触に小刻みに震えている。,"{""type"":""end_success"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",
+NODE,text_post_battle,帝国兵を退け、先遣隊を一時的に後退させることには成功した。しかし、辺り一面には無残な商隊の残骸と遺体が散乱している。,"{""type"":""text"", ""bg"":""bg_desert""}",text_post_battle2
+NODE,text_post_battle2,「……ついに、開戦の口火が切られてしまったか。引き返せない泥沼の始まりだ」,"{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
+NODE,end_node,ガウェインの顔に深く刻まれた疲労と絶望は、これから始まる地獄の戦場を予見していた。君の手は、同朋を斬った感触に小刻みに震えている。,"{""type"":""end_success"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",

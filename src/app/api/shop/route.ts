@@ -69,9 +69,9 @@ export async function GET(req: Request) {
             locationName !== 'Unknown'
                 ? supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locationName).maybeSingle()
                 : Promise.resolve({ data: null, error: null }),
-            supabaseService.from('items').select('*').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v5.4: スキル・キーアイテム・素材を除外
-            supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, nation_tags, min_prosperity, is_black_market, image_url, description'),
-            supabaseService.from('cards').select('id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url'),
+            supabaseService.from('items').select('*').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v2.9.3d: スキル・キーアイテム・素材を除外（装備品は枠数制限付きで表示）
+            supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, nation_tags, min_prosperity, is_black_market, image_url'),
+            supabaseService.from('cards').select('id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description'),
             // 通行許可証は全道具屋で表示するため別途取得
             supabaseService.from('items').select('*').in('slug', PASS_SLUGS),
             // ユーザーが既に所持している通行許可証を確認
@@ -101,8 +101,6 @@ export async function GET(req: Request) {
         const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
         const priceMultiplier = inflationMap[prosperityLevel] || 1.0;
 
-        // 初心者保護フラグのみ保持（割引はmap()内でインフレ後に適用）
-        const isNewbie = (profile.level || 1) <= 5;
 
         // 3. Helper: nation_tags フィルタ共通ロジック
         const nationTag = `loc_${rulingNation.toLowerCase()}`;
@@ -117,7 +115,22 @@ export async function GET(req: Request) {
         // 4. Items Filtering Logic
         const isRuined = prosperityLevel === 1;
         const playerLevel = profile.level || 1;
+        // v2.9.3e: ボスドロップ専用装備をショップから除外
+        // v2.9.3m: 効果未実装のフレーバーアイテムも除外
+        const SHOP_EXCLUDE_SLUGS = new Set([
+            // ボスドロップ専用
+            'item_white_robe', 'item_thief_blade', 'item_pirate_hat', 'item_mino_axe',
+            'item_dragon_blood',
+            // ストーリー限定装備（クエスト報酬専用）
+            'story_gawain_gauntlet', 'story_dragon_fang', 'story_heroic_mail', 'story_dawn_blade',
+            // 効果未実装のフレーバーアイテム
+            'item_ration', 'item_torch', 'item_ruins_map',
+            'item_repair_kit', 'item_revive_incense',
+            'item_royal_decree', 'grimoire_teleport', 'item_world_map',
+        ]);
         const filteredItems = allItems.filter(item => {
+            // 除外リストのアイテムはショップに並べない
+            if (item.slug && SHOP_EXCLUDE_SLUGS.has(item.slug)) return false;
             // クエスト専売アイテムは常に表示
             if (questId && item.quest_req_id === questId) return true;
             if (item.quest_req_id && item.quest_req_id !== questId) return false;
@@ -139,7 +152,6 @@ export async function GET(req: Request) {
             return true;
         }).map(item => {
             let price = Math.floor(item.base_price * priceMultiplier);
-            if (isNewbie && !item.is_black_market) price = Math.floor(price * 0.5);
             return {
                 ...item,
                 image_url: item.slug ? `/images/items/${item.slug}.png` : null,
@@ -152,7 +164,6 @@ export async function GET(req: Request) {
         // 4b. 通行許可証をショップに追加（全道具屋共通、国・繁栄度フィルタ無視）
         const filteredPasses = passItems.map(item => {
             let price = Math.floor(item.base_price * priceMultiplier);
-            if (isNewbie && !item.is_black_market) price = Math.floor(price * 0.5);
             const isOwned = ownedPassSlugs.has(item.slug);
             return {
                 ...item,
@@ -200,17 +211,17 @@ export async function GET(req: Request) {
             return true;
         }).map(skill => {
             let price = Math.floor(skill.base_price * priceMultiplier);
-            if (isNewbie && !skill.is_black_market) price = Math.floor(price * 0.5);
             const card = cardsMap.get(skill.card_id);
+            const cardDesc = card?.description || null;
             const effectData = card ? {
                 power: card.effect_val || 0,
-                cost_type: card.cost_type,
-                cost_val: card.cost_val,
+                ap_cost: card.ap_cost ?? 0,
+                deck_cost: skill.deck_cost ?? 0,
                 card_type: card.type,
                 target_type: card.target_type,
                 effect_id: card.effect_id || null,
-                description: skill.description || null,
-            } : { description: skill.description || null };
+                description: cardDesc,
+            } : { description: cardDesc };
             return {
                 id: skill.id,
                 slug: skill.slug,
@@ -224,14 +235,36 @@ export async function GET(req: Request) {
                 is_black_market: skill.is_black_market,
                 image_url: skill.image_url || (skill.slug ? `/images/items/${skill.slug}.png` : null),
                 effect_data: effectData,
-                description: skill.description,
+                description: cardDesc,
                 current_price: price,
                 _source: 'skill' as const
             };
         });
 
-        // 6. 統合してカテゴリ優先ソート（武器→防具→アクセサリー→スキル→通行許可証→消耗品→交易品）
-        // カテゴリ内は価格昇順
+        // 6. v2.9.3d: カテゴリ別枠数制限付きランダム陳列
+        // 消耗品5, スキル5, 武器3, 防具3, アクセサリ3, 通行許可証1, 交易品2 = 最大22点
+        const shuffleAndPick = <T>(arr: T[], n: number): T[] => {
+            const shuffled = [...arr].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, n);
+        };
+
+        const consumables = filteredItems.filter(i => i.type === 'consumable');
+        const tradeGoods = filteredItems.filter(i => i.type === 'trade_good');
+        const weapons = filteredItems.filter(i => i.type === 'equipment' && (i as any).sub_type === 'weapon');
+        const armors = filteredItems.filter(i => i.type === 'equipment' && (i as any).sub_type === 'armor');
+        const accessories = filteredItems.filter(i => i.type === 'equipment' && (i as any).sub_type === 'accessory');
+        // クエスト専売アイテムは枠制限の対象外（常に表示）
+        const questExclusives = filteredItems.filter(i => i.is_quest_exclusive);
+
+        const pickedConsumables = shuffleAndPick(consumables, 5);
+        const pickedSkills = shuffleAndPick(filteredSkills, 5);
+        const pickedWeapons = shuffleAndPick(weapons, 3);
+        const pickedArmors = shuffleAndPick(armors, 3);
+        const pickedAccessories = shuffleAndPick(accessories, 3);
+        const pickedPasses = shuffleAndPick(filteredPasses, 1);
+        const pickedTradeGoods = shuffleAndPick(tradeGoods, 2);
+
+        // カテゴリ優先ソート（武器→防具→アクセサリ→スキル→通行許可証→消耗品→交易品）
         const CATEGORY_ORDER: Record<string, number> = {
             'weapon': 0,
             'armor': 1,
@@ -242,18 +275,21 @@ export async function GET(req: Request) {
             'trade_good': 6,
         };
         const getCategoryOrder = (item: any): number => {
-            // 装備品はsub_typeで分類
-            if (item.type === 'equipment' && item.sub_type) {
-                return CATEGORY_ORDER[item.sub_type] ?? 99;
-            }
-            // スキルカード
-            if (item._source === 'skill' || item.type === 'skill_card') {
-                return CATEGORY_ORDER['skill_card'];
-            }
-            // その他（consumable, trade_good など）
+            if (item.type === 'equipment' && item.sub_type) return CATEGORY_ORDER[item.sub_type] ?? 99;
+            if (item._source === 'skill' || item.type === 'skill_card') return CATEGORY_ORDER['skill_card'];
             return CATEGORY_ORDER[item.type] ?? 99;
         };
-        const allShopItems = [...filteredItems, ...filteredPasses, ...filteredSkills].sort((a, b) => {
+
+        const allShopItems = [
+            ...questExclusives,
+            ...pickedWeapons,
+            ...pickedArmors,
+            ...pickedAccessories,
+            ...pickedSkills,
+            ...pickedPasses,
+            ...pickedConsumables,
+            ...pickedTradeGoods
+        ].sort((a, b) => {
             const catA = getCategoryOrder(a);
             const catB = getCategoryOrder(b);
             if (catA !== catB) return catA - catB;
@@ -272,14 +308,14 @@ export async function GET(req: Request) {
                 prosperity: prosperityLevel,
                 inflation: priceMultiplier,
                 ruling_nation: rulingNation,
-                is_newbie_protected: isNewbie,
                 is_embargoed: isEmbargoed
             },
             debug: {
                 skills_raw_count: allSkills.length,
-                skills_filtered_count: filteredSkills.length,
+                skills_filtered_count: pickedSkills.length,
+                consumables_pool: consumables.length,
+                trade_goods_pool: tradeGoods.length,
                 skills_error: skillsResult.error ? JSON.stringify(skillsResult.error) : null,
-                first_skill_sample: allSkills[0] ? { slug: allSkills[0].slug, nation_tags: allSkills[0].nation_tags, min_prosperity: allSkills[0].min_prosperity, is_black_market: allSkills[0].is_black_market } : null
             }
         });
     } catch (e: any) {
@@ -336,9 +372,7 @@ async function handleSkillPurchase(profile: UserProfileDB, skillId: number) {
     }
     const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
     const priceMultiplier = inflationMap[prosperityLevel] || 1.0;
-    const isNewbie = (profile.level || 1) <= 5;
     let finalPrice = Math.floor(skillData.base_price * priceMultiplier);
-    if (isNewbie && !skillData.is_black_market) finalPrice = Math.floor(finalPrice * 0.5);
 
     // 3. Check Gold
     if (profile.gold < finalPrice) {
@@ -396,9 +430,7 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
     }
     const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
     const priceMultiplier = inflationMap[prosperityLevel] || 1.0;
-    const isNewbie = (profile.level || 1) <= 5;
     let finalPrice = Math.floor(item.base_price * priceMultiplier);
-    if (isNewbie && !item.is_black_market) finalPrice = Math.floor(finalPrice * 0.5);
 
     // 2b. 通行許可証の重複購入チェック
     const PASS_SLUGS = ['item_pass_roland', 'item_pass_karyu', 'item_pass_yato', 'item_pass_markand'];

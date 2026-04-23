@@ -1,4 +1,4 @@
-# クエスト仕様書：6013 — 第13話「不死の傭兵王」
+﻿# クエスト仕様書：6013 — 第13話「不死の傭兵王」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 25 |
 | **難度** | 3 |
 | **依頼主** | 冒険者ギルド |
-| **出現条件** | 前提クエストクリア: main_ep12 / 必須滞在拠点: loc_haryu |
+| **出現条件** | 前提クエストクリア: main_ep12 / 必須滞在拠点: loc_coliseum |
 | **サムネイル画像** | `/images/quests/bg_bandit_camp.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+闘技都市に君臨する「不死の傭兵王」。神を討つための力を得るため、君は伝説の戦士に挑む。この男を越えられなければ、天上の神々を討つことなど叶わない。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:2500|Rep:10
+Gold:3500|Rep:20
 ```
 
 ---
@@ -62,8 +62,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -80,8 +80,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -98,8 +98,8 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -116,15 +116,15 @@ text2
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「……よくここまで生き延びたな、若僧。だが、お前の眼はもう限界だと叫んでいるぜ」ヴォルグは君の剣を見て、鼻で笑った。
 ```
-**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:https://picsum.photos/seed/volg/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:/images/npcs/npc_guest_volg.png}` (auto-advance)
 **params:**
 ```json
 text3
@@ -134,15 +134,15 @@ text3
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「神だか何だか知らねェが、相手が強すぎるって顔だ。だがな、壁を越えられねぇ奴はここで死ぬ。生き恥を晒して老いさらばえるか、世界を変える特異点になるか……俺に証明してみせろ！」
 ```
-**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:https://picsum.photos/seed/volg/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:/images/npcs/npc_guest_volg.png}` (auto-advance)
 **params:**
 ```json
 text4
@@ -152,8 +152,8 @@ text4
 
 #### `text4`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -170,15 +170,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 彼との戦いは、神を討つための試練だ。伝説の傭兵王を越えられなくて、どうして天上の神々を討てようか！
 ```
-**次ノード:** `{type:battle, enemy_group_id:6}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:213}` (auto-advance)
 **params:**
 ```json
 choice1
@@ -188,8 +188,8 @@ choice1
 
 #### `text_post_battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -206,15 +206,15 @@ text_post_battle2
 
 #### `text_post_battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「……フン、悪くない。ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。
 ```
-**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:https://picsum.photos/seed/volg/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:/images/npcs/npc_guest_volg.png}` (auto-advance)
 **params:**
 ```json
 end_node
@@ -224,15 +224,15 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「お前なら、あの『天上の神』の眉間に一矢報いれるかもしれんな。……行け。俺たちの代わりに、神の玉座に唾を吐いてこい！」その言葉を受けた君の目に、再び強い光が宿った。
 ```
-**次ノード:** `{type:end_success, speaker_image_url:https://picsum.photos/seed/volg/120}` (auto-advance)
+**次ノード:** `{type:end_success, speaker_image_url:/images/npcs/npc_guest_volg.png}` (auto-advance)
 **params:**
 ```json
 

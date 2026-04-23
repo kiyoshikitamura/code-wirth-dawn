@@ -32,6 +32,7 @@ export function clearGameStarted(): void {
  *
  * - タイトル画面を経由せずに直接アクセスされた場合は /title にリダイレクト。
  * - Supabase セッションが失効している場合もリダイレクト。
+ * - ブラウザバックを検知して /title にリダイレクト（全保護ページ共通）。
  * - /battle-test は対象外にするため、そのページでは呼ばない。
  *
  * 使い方:
@@ -49,6 +50,12 @@ export function useAuthGuard(): void {
         if (checked.current) return;
         checked.current = true;
 
+        // linkIdentity OAuth コールバック中（?code= あり）はガードをスキップ
+        // linkIdentity は既存セッションに identity を追加するだけなので認証は有効
+        if (typeof window !== 'undefined' && window.location.search.includes('code=')) {
+            return;
+        }
+
         // ① タイトル経由フラグをチェック
         const gameStarted = sessionStorage.getItem(GAME_STARTED_KEY);
         if (!gameStarted) {
@@ -63,5 +70,15 @@ export function useAuthGuard(): void {
                 router.replace('/title');
             }
         });
+
+        // ③ ブラウザバック検知 → /title にリダイレクト（全保護ページ共通）
+        const handlePopState = () => {
+            clearGameStarted();
+            // タイトル画面で自動リダイレクトされないようにフラグを立てる
+            sessionStorage.setItem('cwd_return_to_title', '1');
+            router.replace('/title');
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
     }, [router]);
 }

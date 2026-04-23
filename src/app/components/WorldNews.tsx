@@ -24,10 +24,10 @@ export default function WorldNews({ history, onClose, isModal = true }: WorldNew
     const justiceP = Math.min(100, ((h.justice_score || 0) / maxScore) * 100);
     const evilP = Math.min(100, ((h.evil_score || 0) / maxScore) * 100);
 
-    const dateStr = h.occured_at ? new Date(h.occured_at).toLocaleDateString() : 'Unknown Date';
+    const dateStr = h.created_at ? new Date(h.created_at).toLocaleDateString() : 'Unknown Date';
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `【号外】${history.headline}\n世界の情勢: ${history.new_status || '不明'} - ${history.new_attribute}\n\n#WirthDawn #世界の観測`
+        `【号外】${history.message}\n世界の情勢: ${history.new_value || '不明'} (${history.event_type})\n\n#WirthDawn #世界の観測`
     )}`;
 
     const content = (
@@ -46,7 +46,7 @@ export default function WorldNews({ history, onClose, isModal = true }: WorldNew
                     号 外
                 </h1>
                 <p className="text-3xl font-bold mt-4 leading-tight">
-                    {history.headline}
+                    {history.message}
                 </p>
             </div>
 
@@ -60,16 +60,13 @@ export default function WorldNews({ history, onClose, isModal = true }: WorldNew
                         <div className="text-center space-y-2">
                             <div className="text-sm opacity-70">STATUS</div>
                             <div className="text-xl font-bold flex items-center justify-center gap-2">
-                                <span className="line-through opacity-50 text-base">{history.old_status}</span>
+                                <span className="line-through opacity-50 text-base">{history.old_value}</span>
                                 <span>→</span>
-                                <span className="text-2xl text-gold-500">{history.new_status}</span>
+                                <span className="text-2xl text-gold-500">{history.new_value}</span>
                             </div>
-                            <div className="text-sm opacity-70 mt-4">ATTRIBUTE</div>
+                            <div className="text-sm opacity-70 mt-4">EVENT TYPE</div>
                             <div className="text-lg font-bold leading-tight">
-                                {history.old_attribute && (
-                                    <div className="line-through opacity-50 text-sm mb-1">{history.old_attribute}</div>
-                                )}
-                                <div className="text-gold-200">{history.new_attribute}</div>
+                                <div className="text-gold-200">{history.event_type}</div>
                             </div>
                         </div>
                     </div>

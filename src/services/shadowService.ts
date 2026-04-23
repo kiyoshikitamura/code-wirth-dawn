@@ -41,6 +41,8 @@ function getDailyRoyaltyCap(level: number): number {
     return 50000;
 }
 
+
+
 export class ShadowService {
     private economy: EconomyService;
 
@@ -123,40 +125,8 @@ export class ShadowService {
             console.error("ShadowService: Failed to fetch active users", e);
         }
 
-        // 2. Fetch Heroic Shadows from historical_logs
-        // 候補を多めに取得してからランダムシャッフルして最大3体を選抜（見渡すごとにリフレッシュ）
-        try {
-            const { data: heroicLogs } = await this.supabase
-                .from('historical_logs')
-                .select('*')
-                .order('death_date', { ascending: false })
-                .limit(30); // 候補を多めに取得
-
-            if (heroicLogs) {
-                // 雇用済みを除外してからシャッフル → 最大3体を選抜
-                const eligibleLogs = heroicLogs.filter(log => !hiredSourceIds.has(log.user_id));
-                const shuffledLogs = [...eligibleLogs].sort(() => Math.random() - 0.5).slice(0, 3);
-
-                for (const log of shuffledLogs) {
-                    const d = log.data;
-                    const level = d.final_level || 1;
-                    results.push({
-                        profile_id: log.user_id,
-                        name: `Ghost of ${d.name || 'Unknown'}`,
-                        level,
-                        job_class: 'Heroic Spirit',
-                        origin_type: 'shadow_heroic',
-                        // タスク1: 5,000G + Level × 1,000G の算出式を適用
-                        contract_fee: calcHeroicContractFee(level),
-                        stats: d.stats,
-                        signature_deck_preview: [],
-                        subscription_tier: 'basic' as const
-                    });
-                }
-            }
-        } catch (e) {
-            console.error("ShadowService: Failed to fetch heroic shadows", e);
-        }
+        // 2. Heroic Shadows は除外（英霊は「影の記録」タブ専用、酒場リストには表示しない）
+        // v2.9.3f: 英霊がFree/国家枠と混在して表示不整合を引き起こしていたため撤廃
 
         // 3. System Mercenaries
         const systems = await this.generateSystemMercenaries(locationId);
@@ -165,26 +135,24 @@ export class ShadowService {
             results.push(sys);
         }
 
-        // 4. 合計表示上限: active → heroic → mercenary の優先順で最大10体
-        // 同一タイプ内の順序はそれぞれのシャッフル済み順序を維持
+        // 4. 合計表示上限: active → mercenary の優先順で最大10体
         const MAX_DISPLAY = 10;
+        let finalResults = results;
         if (results.length > MAX_DISPLAY) {
             const active   = results.filter(r => r.origin_type === 'shadow_active');
-            const heroic   = results.filter(r => r.origin_type === 'shadow_heroic');
             const mercenary = results.filter(r => r.origin_type === 'system_mercenary');
-
             const capped: ShadowSummary[] = [];
-            for (const bucket of [active, heroic, mercenary]) {
+            for (const bucket of [active, mercenary]) {
                 for (const shadow of bucket) {
                     if (capped.length >= MAX_DISPLAY) break;
                     capped.push(shadow);
                 }
                 if (capped.length >= MAX_DISPLAY) break;
             }
-            return capped;
+            finalResults = capped;
         }
 
-        return results;
+        return finalResults;
     }
 
     async generateSystemMercenaries(locationId: string): Promise<ShadowSummary[]> {
@@ -200,11 +168,11 @@ export class ShadowService {
             const rulingNation = loc?.ruling_nation_id?.toLowerCase() || 'unknown';
             const isCapital = loc?.prosperity_level && loc.prosperity_level >= 4;
 
+            // v2.9.3e: originフィルタを撤廃（カラム未存在の環境対応）
             const { data: npcs } = await this.supabase
                 .from('npcs')
                 .select('*')
-                .eq('is_hireable', true)
-                .eq('origin', 'system_mercenary');
+                .eq('is_hireable', true);
 
             if (npcs) {
                 // 1. Filter native NPCs
@@ -212,21 +180,17 @@ export class ShadowService {
                     ? npcs
                     : npcs.filter(n => n.slug?.toLowerCase().includes(rulingNation));
 
-                // 2. Freelance / Hero NPCs rotation (capitals only)
-                const freelanceNpcs = npcs.filter(n => n.slug?.toLowerCase().includes('free'));
-                const targetNpcs = [...nativeNpcs];
+                // 2. Free NPCs（全拠点で出現、1枠保証）
+                // ※ guest NPCは特殊キャラのため候補から除外
+                const freeNpcs = npcs.filter(n => n.slug?.toLowerCase().includes('free'));
+                const nonGuestNpcs = [...nativeNpcs, ...freeNpcs].filter(n => !n.slug?.toLowerCase().includes('guest'));
 
-                if (isCapital && freelanceNpcs.length > 0) {
-                    const todaySeed = Math.floor(Date.now() / 86400000);
-                    const locationHash = Array.from(locationId).reduce((acc, char) => acc + char.charCodeAt(0), todaySeed);
-                    const index1 = locationHash % freelanceNpcs.length;
-                    const index2 = (locationHash + 7) % freelanceNpcs.length;
-                    targetNpcs.push(freelanceNpcs[index1]);
-                    if (index1 !== index2) targetNpcs.push(freelanceNpcs[index2]);
-                }
-
-                // 3. ランダムシャッフルして最大5体を選抜（見渡すごとにリフレッシュ）
-                const shuffledNpcs = [...targetNpcs].sort(() => Math.random() - 0.5).slice(0, 5);
+                // 3. Free NPC 1枠保証 + 残り4枠をランダム選出
+                const freeCandidates = nonGuestNpcs.filter(n => n.slug?.toLowerCase().includes('free'));
+                const nonFreeCandidates = nonGuestNpcs.filter(n => !n.slug?.toLowerCase().includes('free'));
+                const guaranteedFree = [...freeCandidates].sort(() => Math.random() - 0.5).slice(0, 1);
+                const rest = [...nonFreeCandidates].sort(() => Math.random() - 0.5).slice(0, 4);
+                const shuffledNpcs = [...guaranteedFree, ...rest].sort(() => Math.random() - 0.5);
 
                 // 4. 選抜NPCのinject_cards（数値ID）を収集してcardsテーブルで一括名前解決
                 const allCardIds: number[] = [];
@@ -266,15 +230,15 @@ export class ShadowService {
                         level: npc.level || 1,
                         job_class: npc.job_class || 'Mercenary',
                         origin_type: 'system_mercenary',
-                        contract_fee: (npc.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL,
+                        contract_fee: npc.hire_cost || ((npc.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL),
                         // npcsテーブルのHP: max_hpが各NPC個別の上限HP値。
                         // hp=50は固定デフォルト値、max_durability=100はDBデフォルト値のため両方使用不可
                         stats: { atk: npc.attack || npc.atk || 0, def: npc.defense || npc.def || 0, hp: npc.max_hp || 100 },
                         signature_deck_preview: deckNames,
                         subscription_tier: 'free' as const,
                         flavor_text: npc.introduction || npc.flavor_text || undefined,
-                        // DBにimage_urlがない場合はslugからパスを自動生成
-                        npc_image_url: npc.image_url || (npc.slug ? `/images/npcs/${npc.slug}.png` : undefined),
+                        // slugからイメージパスを自動生成
+                        npc_image_url: npc.slug ? `/images/npcs/${npc.slug}.png` : undefined,
                     });
                 }
             }
@@ -373,16 +337,15 @@ export class ShadowService {
             // npcs から level を取得して再計算
             const { data: npcData } = await this.supabase
                 .from('npcs')
-                .select('level')
+                .select('level, hire_cost')
                 .eq('id', shadow.profile_id)
-                .eq('origin', 'system_mercenary')
                 .eq('is_hireable', true)
                 .single();
                 
             if (!npcData) {
                 return { success: false, error: '無効または現在雇用不可能な傭兵IDです。' };
             }
-            finalContractFee = (npcData.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL;
+            finalContractFee = npcData.hire_cost || ((npcData.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL);
         }
 
         // 2. ゴールド残高チェック
@@ -574,13 +537,13 @@ export class ShadowService {
             const { supabaseServer: adminClient } = await import('@/lib/supabase-admin');
             const { data: npcInfo } = await adminClient
                 .from('npcs')
-                .select('slug, epithet, image_url')
+                .select('slug, epithet')
                 .eq('id', shadow.profile_id)
                 .single();
             if (npcInfo) {
                 npcSlug = npcInfo.slug;
                 npcEpithet = npcInfo.epithet || null;
-                npcImageUrl = npcInfo.image_url || (npcInfo.slug ? `/images/npcs/${npcInfo.slug}.png` : null);
+                npcImageUrl = npcInfo.slug ? `/images/npcs/${npcInfo.slug}.png` : null;
             }
         } else {
             // shadow_active / shadow_heroic: ShadowSummaryから取得

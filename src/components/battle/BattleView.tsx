@@ -10,6 +10,7 @@ import { hasTaunt, StatusEffect, getEffectName } from '@/lib/statusEffects';
 import XShareButton from '../shared/XShareButton';
 import { Enemy } from '@/types/game';
 import StatusEffectBadges from './StatusEffectBadges';
+import { getCardEffectInfo } from '@/lib/cardEffects';
 
 interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
@@ -46,6 +47,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [showUserDetail, setShowUserDetail] = useState(false);
     const [showItemPanel, setShowItemPanel] = useState(false); // v25: バトルアイテムパネル
+    const [healTargetMode, setHealTargetMode] = useState<{ cardIndex: number; card: any } | null>(null); // v2.9.3i: ヒール対象選択モード
 
     // ─── タイプライターフック ────────────────────────────────────────────────
     const {
@@ -191,6 +193,20 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
         if (selectedCardIndex === index) {
             // 2段階目: 実行
+
+            // v2.9.3i: ヒールカードの場合、ターゲット選択モードに移行
+            // target_typeがDB未設定でもcardEffectsのheal判定でフォールバック
+            const cardEffect = getCardEffectInfo(card);
+            const isHealCard = card.target_type === 'single_ally' ||
+                cardEffect.effectType === 'heal' ||
+                card.type === 'Heal' || card.name.includes('回復') || card.name.includes('治癒') || card.name.includes('応急') || card.name.includes('ヒール') || card.name.includes('癒');
+            const isAllyHeal = isHealCard && cardEffect.effectType !== 'buff_party';
+            if (isAllyHeal && (battleState.party?.length ?? 0) > 0) {
+                setSelectedCardIndex(null);
+                setHealTargetMode({ cardIndex: index, card });
+                return;
+            }
+
             setSelectedCardIndex(null);
             // バフ・防御系カードはSLASHアニメーションを出さない
             const isBuff = card.type === 'Support' ||
@@ -226,6 +242,16 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     };
 
+    // v2.9.3i: ヒール対象選択コールバック
+    const handleHealTargetSelect = async (targetMemberId: string) => {
+        if (!healTargetMode) return;
+        const { card } = healTargetMode;
+        setHealTargetMode(null);
+        setActiveEffect('BUFF');
+        setTimeout(() => setActiveEffect(null), 700);
+        await attackEnemy(card, targetMemberId);
+    };
+
     const handleFlee = () => {
         if (!canInteract) return; // プレイヤーフェーズのみ
         if (confirm("本当に撤退しますか？\n敗北扱いとなります。")) {
@@ -241,7 +267,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             flushQueue();
             await runNpcPhase();
         } else if (battlePhase === 'npc_done' && isTypingDone) {
-            // NPC 完了 → ENEMY オーバーレイ表示 → 敵フェーズ実行
+            // NPC 完了 → 勝利済みならスキップ、そうでなければ ENEMY フェーズ
+            if (battleState.isVictory || battleState.battle_result === 'victory') {
+                // 勝利済み: enemy_done相当へ
+                useGameStore.getState().advanceTurn();
+                return;
+            }
             setShowPhaseOverlay('enemy');
             setTimeout(() => setShowPhaseOverlay(null), 1200);
             // オーバーレイと同タイミングで敵フェーズ開始（600ms後）
@@ -303,8 +334,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (returnUrl) {
             const separator = returnUrl.includes('?') ? '&' : '?';
             router.push(`${returnUrl}${separator}battle_result=${resultType}${bType ? `&type=${bType}` : ''}`);
-        } else if (selectedScenario) {
+        } else if (onBattleEnd) {
+            // クエスト中バトル: 親コンポーネント(QuestPage)のハンドラーを呼ぶ
             onBattleEnd(resultType);
+        } else if (selectedScenario) {
+            // battle-testなどスタンドアロンバトル
+            router.push(`/inn?battle_result=${resultType}`);
         } else {
             router.push(`/inn?battle_result=${resultType}${bType ? `&type=${bType}` : ''}`);
         }
@@ -344,7 +379,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div 
                     className="absolute inset-0 bg-cover bg-center opacity-60" 
-                    style={{ backgroundImage: `url('${bgImageUrl || "https://images.unsplash.com/photo-1542261226-9fcfd06ec4da?auto=format&fit=crop&w=1000&q=80"}')` }} 
+                    style={{ backgroundImage: bgImageUrl ? `url('${bgImageUrl}')` : 'none' }} 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             </div>
@@ -612,6 +647,69 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* v2.9.3i: ヒール対象選択オーバーレイ */}
+            {healTargetMode && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setHealTargetMode(null)}>
+                    <div className="bg-black/70 backdrop-blur-xl border border-emerald-500/30 rounded-xl p-4 w-[300px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <Heart size={16} className="text-emerald-400" />
+                                <span className="text-sm font-bold text-emerald-300">{healTargetMode.card.name} — 対象選択</span>
+                            </div>
+                            <button onClick={() => setHealTargetMode(null)} className="text-slate-500 hover:text-slate-300">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mb-3">回復する味方を選んでください</p>
+                        <div className="space-y-2">
+                            {/* プレイヤー自身 */}
+                            <button
+                                onClick={() => handleHealTargetSelect('player')}
+                                className="w-full flex items-center gap-3 px-3 py-2 bg-slate-800/50 hover:bg-emerald-900/30 border border-white/10 hover:border-emerald-500/40 rounded-lg transition-all"
+                            >
+                                <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-black/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    {userProfile?.avatar_url ? (
+                                        <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={14} className="text-amber-500" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[11px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</div>
+                                    <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden mt-1">
+                                        <div className="h-full bg-green-500 transition-all" style={{ width: `${((userProfile?.hp ?? 0) / (userProfile?.max_hp || 1)) * 100}%` }} />
+                                    </div>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{userProfile?.hp ?? 0}/{userProfile?.max_hp ?? 0}</span>
+                            </button>
+                            {/* パーティメンバー */}
+                            {(battleState.party || []).filter(m => m.is_active && (m.durability ?? 0) > 0).map((member: any) => (
+                                <button
+                                    key={member.id}
+                                    onClick={() => handleHealTargetSelect(String(member.id))}
+                                    className="w-full flex items-center gap-3 px-3 py-2 bg-slate-800/50 hover:bg-emerald-900/30 border border-white/10 hover:border-emerald-500/40 rounded-lg transition-all"
+                                >
+                                    <div className="w-8 h-8 rounded-full border-2 border-sky-500 bg-black/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {(member.icon_url || member.image_url) ? (
+                                            <img src={member.icon_url || member.image_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={14} className="text-sky-400" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-[11px] font-bold text-slate-200 truncate">{member.name}</div>
+                                        <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden mt-1">
+                                            <div className="h-full bg-green-500 transition-all" style={{ width: `${((member.durability ?? 0) / ((member as any).max_hp || member.max_durability || member.durability || 1)) * 100}%` }} />
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{member.durability ?? 0}/{(member as any).max_hp || member.max_durability || '?'}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>

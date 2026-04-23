@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v16.1 (Character Creation)
+Code: Wirth-Dawn Specification v16.2 (Character Creation)
 # Character Creation & Aging Mechanics
 
 ## 1. 概要 (Overview)
@@ -6,6 +6,7 @@ Code: Wirth-Dawn Specification v16.1 (Character Creation)
 
 <!-- v16.0: ゲーム開始フローを3モードに刷新。New Game は Google OAuth 必須。Test Play（匿名）は7日間失効。 -->
 <!-- v16.1: OAuthコールバック方式修正（onAuthStateChangeへの統一）、UIアップデート（ボタン可読性・確認モーダル改善）、アバター上限5MB化 -->
+<!-- v16.2: キャラクター削除フロー仕様追加。sessionStorage Intent フラグ優先順位の明確化。アカウント連携（linkIdentity）を正式仕様化。プロファイルリセットAPIの対象テーブル網羅。 -->
 
 ---
 
@@ -41,6 +42,23 @@ Code: Wirth-Dawn Specification v16.1 (Character Creation)
   → プロフィールなし → CHAR_CREATION（新規キャラクター作成）
 ```
 
+#### キャラクター削除フロー（v16.2）
+```
+[Continue / Transfer] → [キャラクター削除（リセット）] ボタン
+  → 確認モーダル（2つのチェックボックス必須）
+  → sessionStorage に cwd_delete_intent='1' を設定
+  → Google OAuth 画面（本人確認）
+  → /title?code=xxx → onAuthStateChange SIGNED_IN → checkUserStatus
+  → isDeleteIntent フラグ検出
+  → POST /api/profile/reset（Bearer トークン認証）
+  → 全関連テーブル削除 → user_profiles 削除
+  → signOut → MENU に戻る
+```
+
+> [!IMPORTANT]
+> キャラクター削除は **Google OAuth による本人確認** を必須とする。
+> 削除完了後は自動的にサインアウトされ、メニューに戻る。
+
 #### Test Play フロー
 ```
 [Test Play] ボタン
@@ -52,7 +70,7 @@ Code: Wirth-Dawn Specification v16.1 (Character Creation)
 
 > [!WARNING]
 > Test Play のデータは **7日後に daily cron で自動削除** される。
-> 引き継ぎ不可。ゲーム内のアカウント連携で Google アカウントに紐付けることで永続化できる（Phase 6 予定）。
+> ゲーム内のアカウント設定画面から Google アカウントに紐付けることで永続化できる（§6.3 参照）。
 
 > [!NOTE]
 > Test Play キャラクターも **残影（影）として酒場に表示される**ため、
@@ -187,10 +205,31 @@ export interface UserProfile {
 5. 「世界に降り立つ」→ 確認モーダル → `POST /api/profile/init` → `/inn` へ遷移。
 
 ### 5.2 認証コールバック
-- Google OAuth 完了後、`/auth/callback` でコードを受け取り `/title?code=xxx` へリダイレクト。
-- `/title` ページが `exchangeCodeForSession(code)` でセッションを確立する。
+- Google OAuth 完了後、Supabase が `/title?code=xxx` へ直接リダイレクト。
+- Supabase client の `detectSessionInUrl` が自動的にコードを消費しセッションを確立。
+- `onAuthStateChange` の `SIGNED_IN` / `INITIAL_SESSION` イベントで `checkUserStatus()` を発火。
 
-### 5.3 老化通知
+### 5.3 sessionStorage Intent フラグ管理（v16.2）
+
+`checkUserStatus()` は複数の Intent フラグを読み取り、以下の **優先順位** で処理する:
+
+| 優先度 | フラグ | 設定タイミング | 処理内容 |
+|---|---|---|---|
+| 1（最高） | `cwd_delete_intent` | キャラクター削除確認後 | `/api/profile/reset` → signOut → MENU |
+| 2 | `cwd_new_game_intent` | New Game ボタン押下時 | 既存キャラあり → エラー表示、なし → CHAR_CREATION |
+| 3 | `cwd_return_to_title` | ゲーム内「タイトルに戻る」 | signOut → MENU（自動リダイレクト抑止） |
+| 4（最低） | なし | 通常の OAuth 完了 | プロフィールあり → /inn、なし → CHAR_CREATION |
+
+> [!IMPORTANT]
+> **フラグの残存防止**: `handleNewGame()` / `handleContinue()` 実行時に、古い `cwd_return_to_title` / `cwd_delete_intent` フラグを明示的にクリアする。これにより、ゲームから「タイトルに戻る」→「キャラクター削除」のフローで古いフラグが干渉しない。
+
+> [!NOTE]
+> sessionStorage はタブ内で永続するが、`checkUserStatus()` は認証イベント時にのみ呼ばれる。
+> ゲーム内からタイトルに戻った時は signOut 済みのため認証イベントが発火せず、
+> `cwd_return_to_title` がクリアされないまま残存する可能性がある。
+> これが優先順位ルールが必要な理由である。
+
+### 5.4 老化通知
 - 年齢増加時にバトルログまたはクエスト結果画面で通知。
 - Vitality が 20 以下になったら赤色警告。
 
@@ -209,9 +248,54 @@ export interface UserProfile {
 - 削除対象: `is_anonymous = true AND expires_at < NOW()`
 - 関連テーブル（party_members, user_skills, inventory 等）の CASCADE 削除は DB レベルで処理。
 
-### 6.3 アカウント連携（将来実装予定）
-- 匿名ユーザーが Google アカウントと連携（`linkIdentity`）することで永続化できる。
-- 連携後: `is_anonymous = false`, `expires_at = NULL` に更新。
+### 6.3 アカウント連携（v16.2 実装済み）
+
+テストプレイ（匿名）ユーザーが Google アカウントに紐付けることでデータを永続化できる。
+
+```
+[ゲーム内: 設定 → アカウント連携]
+  → supabase.auth.linkIdentity({ provider: 'google' })
+  → Google OAuth 画面
+  → /inn?code=xxx にリダイレクト
+     ↳ useAuthGuard が ?code= パラメータ検出時はガードをスキップ
+     ↳ Supabase client が自動的にコード交換
+     ↳ URLクリーンアップ（?code= 除去）
+  → is_anonymous = false, expires_at = NULL に更新
+```
+
+> [!NOTE]
+> `linkIdentity` は既存セッションに OAuth Identity を追加する。新しいユーザーは作成されない。
+> 既に別ユーザーに連携済みの Google アカウントを指定した場合はエラーとなる。
+
+### 6.4 手動キャラクター削除（v16.2）
+
+`POST /api/profile/reset` は以下のテーブルを **FK 依存順** で削除する:
+
+| 順序 | テーブル | カラム | 操作 |
+|---|---|---|---|
+| 1 | `historical_logs` | `user_id` | DELETE |
+| 2 | `royalty_logs` | `source_user_id` | DELETE |
+| 3 | `royalty_logs` | `target_user_id` | DELETE |
+| 4 | `party_members` | `source_user_id` | SET NULL（他ユーザーの傭兵参照） |
+| 5 | `party_members` | `owner_id` | DELETE |
+| 6 | `inventory` | `user_id` | DELETE |
+| 7 | `reputations` | `user_id` | DELETE |
+| 8 | `prayer_logs` | `user_id` | DELETE |
+| 9 | `equipped_items` | `user_id` | DELETE |
+| 10 | `user_skills` | `user_id` | DELETE |
+| 11 | `quest_progress` | `user_id` | DELETE |
+| 12 | `user_completed_quests` | `user_id` | DELETE |
+| 13 | `user_hub_states` | `user_id` | DELETE |
+| 14 | `user_world_views` | `user_id` | DELETE |
+| 15 | `royalty_daily_log` | `user_id` | DELETE |
+| 16 | `retired_characters` | `user_id` | DELETE |
+| 17 | `battle_sessions` | `user_id` | DELETE |
+| 18 | `user_profiles` | `id` | DELETE（最後） |
+
+> [!WARNING]
+> 新しいテーブルに `user_profiles(id)` への FK を追加した場合、
+> `/api/profile/reset/route.ts` にも対応する削除処理を追加すること。
+> 漏れがあると FK 制約違反でキャラクター削除が失敗する。
 
 ---
 
@@ -222,4 +306,5 @@ export interface UserProfile {
 | v11.0 | 2026-04 | processAging()の実装に合わせて全面改訂 |
 | v12.1 | 2026-04 | avatar_url 追加 |
 | v15.0 | 2026-04-13 | 初期ステータス上方修正。HP/ATK/DEF/Gold の基底値・年齢補正にランダム変数を導入 |
-| **v16.0** | **2026-04-15** | **ゲーム開始フロー刷新。New Game = Google OAuth 必須、Test Play = 匿名7日間失効に分離。Auth コールバックルート追加（`/auth/callback`）。`user_profiles` に `is_anonymous` / `expires_at` カラム追加。daily cron に匿名データ自動削除を追加。** |
+| v16.0 | 2026-04-15 | ゲーム開始フロー刷新。New Game = Google OAuth 必須、Test Play = 匿名7日間失効に分離。Auth コールバックルート追加。`user_profiles` に `is_anonymous` / `expires_at` カラム追加。daily cron に匿名データ自動削除を追加。 |
+| **v16.2** | **2026-04-16** | **キャラクター削除フロー仕様追加（§2.1, §6.4）。sessionStorage Intent フラグ優先順位の規定（§5.3）。アカウント連携（linkIdentity）を正式仕様化（§6.3）。プロファイルリセット API の対象テーブル18個を網羅（§6.4）。** |

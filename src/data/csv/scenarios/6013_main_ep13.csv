@@ -1,12 +1,12 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,黄河の大防衛戦を生き延びた君は、負傷兵たちでごった返す後方の野戦陣地で、ある一人の男と出会った。,"{""type"":""text"", ""bg"":""bg_default""}",text1
-NODE,text1,無精髭を生やし、酒瓶を傾ける老境の剣士。だが、その瞳の奥には異常なほど獰猛な狂気と、計り知れない覇気が宿っている。,"{""type"":""text"", ""bg"":""bg_default""}",text1_1
-NODE,text1_1,彼は噂に名高い「不死の傭兵王」――ヴォルグ。これまで数え切れないほどの戦場を渡り歩き、死線を超え続けてきた生きた伝説だった。,"{""type"":""text"", ""bg"":""bg_default""}",text2
-NODE,text2,「……よくここまで生き延びたな、若僧。だが、お前の眼はもう限界だと叫んでいるぜ」ヴォルグは君の剣を見て、鼻で笑った。,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/volg/120""}",text3
-NODE,text3,「神だか何だか知らねェが、相手が強すぎるって顔だ。だがな、壁を越えられねぇ奴はここで死ぬ。生き恥を晒して老いさらばえるか、世界を変える特異点になるか……俺に証明してみせろ！」,"{""type"":""text"", ""bg"":""bg_battle"", ""speaker_image_url"":""https://picsum.photos/seed/volg/120""}",text4
-NODE,text4,ヴォルグが背に負った大剣を抜いた瞬間、周囲の空気が重く沈み込んだ。先ほど黄河で対峙した熾天使すら凌駕するほどの、濃密な血の匂いと殺気が君を包み込む。,"{""type"":""text"", ""bg"":""bg_battle""}",battle
-NODE,battle,彼との戦いは、神を討つための試練だ。伝説の傭兵王を越えられなくて、どうして天上の神々を討てようか！,"{""type"":""battle"", ""enemy_group_id"":6}",choice1
+NODE,start,黄河の大防衛戦を生き延びた君は、負傷兵たちでごった返す後方の野戦陣地で、ある一人の男と出会った。,"{""bgm"":""bgm_quest_tense"", ""type"":""text"", ""bg"":""bg_bandit_camp""}",text1
+NODE,text1,無精髭を生やし、酒瓶を傾ける老境の剣士。だが、その瞳の奥には異常なほど獰猛な狂気と、計り知れない覇気が宿っている。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1_1
+NODE,text1_1,彼は噂に名高い「不死の傭兵王」――ヴォルグ。これまで数え切れないほどの戦場を渡り歩き、死線を超え続けてきた生きた伝説だった。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text2
+NODE,text2,「……よくここまで生き延びたな、若僧。だが、お前の眼はもう限界だと叫んでいるぜ」ヴォルグは君の剣を見て、鼻で笑った。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text3
+NODE,text3,「神だか何だか知らねェが、相手が強すぎるって顔だ。だがな、壁を越えられねぇ奴はここで死ぬ。生き恥を晒して老いさらばえるか、世界を変える特異点になるか……俺に証明してみせろ！」,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text4
+NODE,text4,ヴォルグが背に負った大剣を抜いた瞬間、周囲の空気が重く沈み込んだ。先ほど黄河で対峙した熾天使すら凌駕するほどの、濃密な血の匂いと殺気が君を包み込む。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle
+NODE,battle,彼との戦いは、神を討つための試練だ。伝説の傭兵王を越えられなくて、どうして天上の神々を討てようか！,"{""type"":""battle"", ""enemy_group_id"":213}",choice1
 CHOICE,,限界を越えて証明する,,text_post_battle
-NODE,text_post_battle,火花の散る激しい打ち合い。君の体力はとっくに尽きていたが、死地で研ぎ澄まされた直感が、最後の一撃を誘導した。重い剣撃を紙一重で躱し、君の切っ先がヴォルグの首筋で止まる。,"{""type"":""text"", ""bg"":""bg_default""}",text_post_battle2
-NODE,text_post_battle2,「……フン、悪くない。ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/volg/120""}",end_node
-NODE,end_node,「お前なら、あの『天上の神』の眉間に一矢報いれるかもしれんな。……行け。俺たちの代わりに、神の玉座に唾を吐いてこい！」その言葉を受けた君の目に、再び強い光が宿った。,"{""type"":""end_success"", ""speaker_image_url"":""https://picsum.photos/seed/volg/120""}",
+NODE,text_post_battle,火花の散る激しい打ち合い。君の体力はとっくに尽きていたが、死地で研ぎ澄まされた直感が、最後の一撃を誘導した。重い剣撃を紙一重で躱し、君の切っ先がヴォルグの首筋で止まる。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_post_battle2
+NODE,text_post_battle2,「……フン、悪くない。ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",end_node
+NODE,end_node,「お前なら、あの『天上の神』の眉間に一矢報いれるかもしれんな。……行け。俺たちの代わりに、神の玉座に唾を吐いてこい！」その言葉を受けた君の目に、再び強い光が宿った。,"{""type"":""end_success"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",

@@ -1,16 +1,16 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,泥と血に塗れた敗残兵の群れに紛れ、マルカンドの前線拠点から逃げ延びた君は、東の果て——夜刀神国の国境域である密林地帯へと足を踏み入れていた。,"{""type"":""text"", ""bg"":""bg_default""}",text1
-NODE,text1,肩の傷が熱を持つ。目を閉じれば、今でも無数の槍に貫かれて笑った老騎士、ガウェインの最期の顔がフラッシュバックする。,"{""type"":""text"", ""bg"":""bg_default""}",text1_1
-NODE,text1_1,「生き延びて、この目で世界の果てを見届けろ……」その呪いのような、祈りのような言葉だけが、今の君を突き動かしていた。,"{""type"":""text"", ""bg"":""bg_default""}",text2
-NODE,text2,しかし現実は過酷だ。帝国の執拗な残党狩りの捜索網が敷き詰められ、水筒はとうに空。食料も底を突いている。,"{""type"":""text"", ""bg"":""bg_default""}",text2_1
-NODE,text2_1,遠くから、軍用犬の吠え声と軍靴の足音が聞こえてくる。休息を取る時間は残されていない。だが、どちらへ逃げるべきか。,"{""type"":""text"", ""bg"":""bg_default""}",choice1
+NODE,start,泥と血に塗れた敗残兵の群れに紛れ、マルカンドの前線拠点から逃げ延びた君は、東の果て——夜刀神国の国境域である密林地帯へと足を踏み入れていた。,"{""bgm"":""bgm_quest_calm"", ""type"":""text"", ""bg"":""bg_forest_day""}",text1
+NODE,text1,肩の傷が熱を持つ。目を閉じれば、今でも無数の槍に貫かれて笑った老騎士、ガウェインの最期の顔がフラッシュバックする。,"{""type"":""text"", ""bg"":""bg_forest_day""}",text1_1
+NODE,text1_1,「生き延びて、この目で世界の果てを見届けろ……」その呪いのような、祈りのような言葉だけが、今の君を突き動かしていた。,"{""type"":""text"", ""bg"":""bg_forest_day""}",text2
+NODE,text2,しかし現実は過酷だ。帝国の執拗な残党狩りの捜索網が敷き詰められ、水筒はとうに空。食料も底を突いている。,"{""type"":""text"", ""bg"":""bg_forest_day""}",text2_1
+NODE,text2_1,遠くから、軍用犬の吠え声と軍靴の足音が聞こえてくる。休息を取る時間は残されていない。だが、どちらへ逃げるべきか。,"{""type"":""text"", ""bg"":""bg_forest_day""}",choice1
 CHOICE,,「険しい『けもの道』を進む」,,text_safepath
 CHOICE,,「見つかりやすいが『川沿い』を急ぐ」,,text_danger
-NODE,text_safepath,足場は最悪で、蔦や棘が容赦なく体力を奪っていく。（Vitality-5）,"{""type"":""text"", ""bg"":""bg_default"", ""vitality_dmg"": 5}",text_safepath_2
-NODE,text_safepath_2,だがその甲斐あって、追手の目を完全に欺くことに成功した。疲労困憊になりながらも密林を抜ける。,"{""type"":""text"", ""bg"":""bg_default""}",end_node
-NODE,text_danger,川のせせらぎが喉の渇きを癒してくれる。だが、開けた場所に出た代償はすぐに支払わされることとなった。,"{""type"":""text"", ""bg"":""bg_battle""}",text_danger_2
-NODE,text_danger_2,茂みが揺れ、帝国軍の追討部隊が姿を現す。「見つけたぞ！マルカンドの残党だ。一人残らず首を刎ねろ！」,"{""type"":""text"", ""bg"":""bg_battle""}",battle
-NODE,battle,生き延びると決めたんだ。こんなところで犬死にするわけにはいかない！,"{""type"":""battle"", ""enemy_group_id"":1}",choice2
+NODE,text_safepath,足場は最悪で、蔦や棘が容赦なく体力を奪っていく。（Vitality-5）,"{""type"":""text"", ""bg"":""bg_forest_day"", ""vitality_dmg"": 5}",text_safepath_2
+NODE,text_safepath_2,だがその甲斐あって、追手の目を完全に欺くことに成功した。疲労困憊になりながらも密林を抜ける。,"{""type"":""text"", ""bg"":""bg_forest_day""}",end_node
+NODE,text_danger,川のせせらぎが喉の渇きを癒してくれる。だが、開けた場所に出た代償はすぐに支払わされることとなった。,"{""type"":""text"", ""bg"":""bg_river""}",text_danger_2
+NODE,text_danger_2,茂みが揺れ、帝国軍の追討部隊が姿を現す。「見つけたぞ！マルカンドの残党だ。一人残らず首を刎ねろ！」,"{""type"":""text"", ""bg"":""bg_river""}",battle
+NODE,battle,生き延びると決めたんだ。こんなところで犬死にするわけにはいかない！,"{""type"":""battle"", ""enemy_group_id"":204}",choice2
 CHOICE,,血路を切り開く,,text_danger_3
-NODE,text_danger_3,追討部隊を返り討ちにすると、君は血のついた剣を洗いもせずに走り出した。,"{""type"":""text"", ""bg"":""bg_default""}",end_node
+NODE,text_danger_3,追討部隊を返り討ちにすると、君は血のついた剣を洗いもせずに走り出した。,"{""type"":""text"", ""bg"":""bg_river""}",end_node
 NODE,end_node,幾多の苦難を越え、密林が途切れる。その先には、重厚な木造建築が並ぶ夜刀神国の『関所』が、巨大な影を落として君を待っていた。,"{""type"":""end_success""}",

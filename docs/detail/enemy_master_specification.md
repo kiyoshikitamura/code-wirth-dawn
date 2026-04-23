@@ -2,6 +2,69 @@
 
 本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**51種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UXの追加実装案を統合したものです。
 
+> **v2.9.3g (2026-04-18) 変更点 — エネミーバランス修正:**
+> - **敵ATK反映**: `battleSlice.ts` のダメージ計算で `baseAtk = enemy.atk || (level*3+5)` に変更。CSV/DBの `atk` 値が戦闘ダメージに直接反映されるようになった。
+> - **Levelカラム追加**: `enemies` テーブルに `level` カラムを追加。全76種に仕様書準拠のレベルを設定。
+> - **クエスト/マップ修正**: enemy spawn時に `e.level` と `e.atk` をDBから取得しバトルに渡すよう修正（旧: `HP/10` でlevel計算、atk未送信）。
+> - **6000番台ボス報酬減額**: Gold/EXPを×0.20〜0.30に減額（例: 骸骨狂王 2000G→500G）。同HP帯の通常ボスと報酬水準を統一。
+> - **6000番台ボスLevel設定**: Lv15〜32を新規設定。
+
+> **v2.9.3h (2026-04-18) 変更点 — 敵スキル拡張:**
+> - **状態異常付与の実装**: `battleSlice.ts` に `damage_poison`/`damage_blind`/`damage_bleed`/`damage_stun`/`buff_self_atk`/`debuff_atk_down`/`debuff_def_down` の7種のeffect_typeを追加。敵がプレイヤーに毒・目潰し・出血・スタン・DEF DOWNを付与可能に。
+> - **DEF DOWN状態異常**: `statusEffects.ts` に `def_down` を追加（DEF半減）。プレイヤーダメージ計算に `getDefDownMod` を適用。
+> - **毒針修正**: `skill_poison_attack` の `effect_type` を `damage` → `damage_poison` に変更。毒が実際に付与されるように。
+> - **新規敵スキル12種追加**: 毒の息, 雷撃, 砂塵, 裂傷の爪, 魅惑の歌, 石化の視線, 魂抜き, 強力再生, 雄叫び, 呪詛, 鎧砕き。
+> - **6000番台ボス全20体にアクションパターン設定**: 各ボス3〜4種の行動パターン（条件付き回復・必殺技・デバフ等）。
+
+> **v2.9.3i (2026-04-19) 変更点 — エネミー多様化 & DB最終反映:**
+> - **強打/強攻撃の倍率修正**: value 2→1.5 に下方修正。ダークフレア/ホーリーレイ(×2)との差別化。
+> - **通常エネミー全種の行動パターン多様化**: 単スキル100%の敵を解消。全敵が2〜4種のスキルを持つように。
+> - **DEFカラム追加**: `enemies` テーブルに `def` カラムを追加し全76種に設定。
+> - **enemy_skills CHECK制約更新**: 新effect_type（`damage_poison`等11種）をDB CHECK制約に追加。
+> - **レガシーコード修正**: debug/battle-test の HP/10 レベル計算を DB level 優先に修正、ATKフィールド追伝。
+> - **マイグレーションSQL**: `20260419000001_enemy_skill_expansion.sql` にスキル/パターン/DEF一括反映。
+
+> **v2.9.3j (2026-04-19) 変更点 — 味方回復スキル修正:**
+> - **パーティメンバーへの回復実装**: `battleSlice.ts` の `case 'heal'` を拡張。`target_type: 'single_ally'` 時にパーティメンバーの `durability` を回復する分岐を追加。`target_type: 'all_allies'` 時にプレイヤー + 全パーティメンバーを一括回復する分岐を追加。
+> - **ヒール対象選択UI**: `BattleView.tsx` に `healTargetMode` を追加。`single_ally` ヒールカード使用時、プレイヤーとパーティメンバーの一覧（HPバー付き）を表示し、タップで対象を決定。
+> - **party_members slug制約修正**: `UNIQUE(slug)` をテーブル全体から削除し、`owner_id IS NULL` のみの部分一意インデックスに変更。同一NPC傭兵の複数ユーザー雇用を可能に。
+
+> **v2.9.3k (2026-04-19) 変更点 — NPC AIスキル使用ロジック修正:**
+> - **攻撃カードフィルター修正**: `npcAI.ts` の `attackCards` フィルターで、`target_type` が敵対象の Defense/Support カード（シールドバッシュ等）を攻撃候補に含めるように修正。従来は `type=Defense/Support` を一律除外していた。
+> - **バフ認識拡張**: `tryRoleBasedBuff` で `atk_up_fatal`/`morale_up`/`berserk` をATK UP系、`def_up_heavy`/`invulnerable`/`absolute_def`/`counter` をDEF UP系として認識。Guardianの `taunt` も使用対象に追加。ロール不問の一般バフ使用フォールバックも追加。
+> - **敵デバフカード使用パス追加**: `tryDebuffEnemy` 関数を新設。`stun`/`bind`/`blind`/`atk_down`/`freeze`/`poison`/`curse` の敵対象カードをバフフェーズ後・攻撃フェーズ前に使用。
+> - **battleSlice同期**: `isSelfBuff` リストを14種に拡張。`debuff` アクションのダメージ処理（HP減算）を追加。
+
+> **v2.9.3l (2026-04-19) 変更点 — デバフ成功率システム:**
+> - **成功率テーブル導入**: `statusEffects.ts` に `DEBUFF_SUCCESS_RATES` と `rollDebuffSuccess()` を追加。全デバフにeffect_idごとの発動確率を設定。
+> - **成功率**: スタン/拘束 40%、凍結 45%、目潰し/恐怖 50%、ATK DOWN/DEF DOWN 60%、軽微目潰し 65%、毒/出血 70%、軽微出血 80%。バフ系は常に100%。
+> - **3箇所の適用**: ①プレイヤーカード→敵 ②NPC AI→敵 ③敵攻撃→プレイヤー の全デバフ付与ポイントに確率判定を追加。
+> - **レジスト演出**: 失敗時「〜に抵抗した！」「〜に耐え抜いた！」等のログメッセージを表示。
+> - **StatusEffectId拡張**: `freeze`（凍結）、`curse`（呪い）を型定義・名前マップに追加。
+
+> **v2.9.3m (2026-04-20) 変更点 — 道具屋ポップアップ表示修正:**
+> - **`getEffectList` 拡張**: `damage`, `aoe_damage`, `escape`, `remove_effect`, `heal_full`/`heal_all`, `heal_pct`, `vit_restore`, `hp_bonus`, `use_timing`, `ap_cost`, `deck_cost` を認識。effectIdLabelを24種に拡大。負のDEF bonusも正しく表示。
+> - **`formatEffectData` 拡張**: description優先を維持しつつ、description未設定時に全effect_dataキーを網羅的にパースして概要テキストを生成。
+> - **power:0 抑制**: `power > 0` のみ表示し、サポート/防御スキルの「威力 0」表示を解消。
+> - **スキル表示整理**: `cost_type`/`cost_val` → `ap_cost`/`deck_cost` に変更。Shop APIがカードの `ap_cost` とスキルの `deck_cost` をeffect_dataに含めるよう修正。
+> - **effect表示ラベル化**: `effect` フィールドの生値（`buff_all` 等）を日本語ラベル（「全体バフ」等）に変換する11種のマップを追加。
+> - **消耗品バフ処理**: `useBattleItem` に `atk_bonus`/`def_bonus` を持つ消耗品（大聖堂の祝福等）の一時バフ適用ロジックを追加。
+> - **装備品description修正(8件)**: 砂漠の外套、青龍偃月刀、鉄の爪、冒険者の靴、幸運のコイン、ヌンチャク、盗賊の七つ道具、旅人のリュック — 未実装効果（回避率、クリティカル、ドロップ率等）の参照を実際のステータスボーナスに修正。
+> - **消耗品データ修正(10件)**: 火炎瓶、煙玉、強い酒、中和薬、上級中和薬、護法符、竜血、大聖堂の祝福、天使の涙、龍井茶。
+> - **ショップ除外**: 効果未実装フレーバーアイテム8種（携帯保存食、松明、宝の地図(偽)、応急修理キット、反魂香、王家の勅令書、魔導書:転移、詳細な世界地図）と竜血をショップから除外。
+> - **MP回復表示削除**: MP未実装のため `mp_heal` の表示を `getEffectList` から除去。龍井茶の `mp_heal`/`mp_restore` も除去。
+
+> **v2.9.3n (2026-04-20) 変更点 — 消耗品リバランス + 新機能:**
+> - **炎上(burn)ステータス追加**: `StatusEffectId` に `burn` を新設。毒と同じDoT (MaxHP×5%/T) だが表示は「炎上」「炎に包まれている」。
+> - **逃走確率化**: `escape_chance` (0.0〜1.0) を `useBattleItem` に追加。煙玉を70%成功率に、忍玉は100%維持。失敗時もアイテム消費。
+> - **自己スタン**: `stun_self_chance` / `stun_self_duration` を追加。強い酒で50%確率の1Tスタン。
+> - **DEFペナルティ**: `def_penalty` を `useBattleItem` で `def_down` エフェクトとして適用。熱砂の香辛料のATK UP代償。
+> - **複数バフ**: `extra_effects` 配列を `useBattleItem` で処理。禁術の秘薬が regen(5T) + atk_up(10T) を同時付与。
+> - **名声リセット**: `/api/item/use` に `reputation_reset` 処理を追加。帳簿の改竄で全reputationsレコードを削除。
+> - **スキルdescription**: Shop APIの `cards` selectに `description` を追加。スキルポップアップにカードの説明文が表示されるように。
+> - **価格リバランス(14件)**: 聖水(dmg30)、火炎瓶(dmg20/burn)、煙玉(70%)、強い酒(50G/HP50/スタン)、高級傷薬(200G/HP100)、最高級傷薬(300G/HP200)、龍井茶(500G/毒解除)、忍玉(名称変更)、熱砂の香辛料(8T/DEF DOWN)、天狗の羽団扇(4T/atk_bonus除去)、禁術の秘薬(10000G/複合効果)、帳簿の改竄(field使用)、竜血(50000G)、簡易テント(300G統一)。
+> - **マイグレーション**: `20260420000002_consumable_rebalance.sql`
+
 ---
 
 ## 🟢 STEP 1: データ構造と50種リストの作成 (Logic-Expert)
@@ -112,11 +175,11 @@
 
 **`data/enemies.csv` (抜粋)**
 ```csv
-id,slug,name,hp,atk,def,exp,gold,drop_item_id,spawn_type
-1001,enemy_slime_blue,ブルースライム,20,3,1,5,10,,random
-1015,enemy_lich,リッチ,300,45,20,500,800,,random
-1019,enemy_bandit_boss,盗賊団の頭領,150,25,10,150,500,216,quest_only
-1048,enemy_bounty_legend,伝説の傭兵,800,80,40,2000,0,,bounty
+id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type
+1001,enemy_slime_blue,ブルースライム,1,20,5,1,3,10,,random
+1015,enemy_lich,リッチ,20,300,65,10,200,500,,random
+1019,enemy_bandit_boss,盗賊団の頭領,12,200,45,8,80,200,216,quest_only
+1048,enemy_bounty_legend,伝説の傭兵,90,900,160,30,600,0,,bounty
 ```
 
 **`data/enemy_actions.csv` (抜粋)**

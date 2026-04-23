@@ -30,17 +30,15 @@ Response: { items: ShopItem[] }
 ```
 
 ### 3.2 価格計算
-<!-- v12.0 (Phase 2-A): インフレ係数と初心者保護の適用順序を正式定義 -->
+<!-- v12.0 (Phase 2-A): インフレ係数を正式定義 -->
+<!-- v2.9.3p: 初心者保護割引を廃止 -->
 ```typescript
-// ステップ1: 繁栄度インフレ係数を適用
+// 繁栄度インフレ係数を適用
 const inflationMap = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
 let price = Math.floor(basePrice * inflationMap[prosperityLevel]);
-
-// ステップ2: 初心者保護（Lv <= 5）は闇市アイテム以外に 50%割引（インフレ後に適用）
-if (userLevel <= 5 && !item.is_black_market) price = Math.floor(price * 0.5);
 ```
 
-> **Note (v12.0)**: `is_black_market` アイテム（禁術の秘薬等）は強力なゴールドシンクのため、初心者保護割引の対象外とする。
+> **Note (v2.9.3p)**: 初心者保護割引（Lv5以下50%OFF）は廃止済み。全プレイヤーに同一価格を適用。
 
 ### 3.3 闇市専用アイテム (Black Market Exclusives)
 <!-- v12.0 (Phase 2-A): 崩壊拠点での動作を正式仕様として追記 -->

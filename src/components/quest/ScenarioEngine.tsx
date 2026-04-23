@@ -16,7 +16,7 @@ import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 interface Props {
     scenario: ScenarioDB;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
-    onBattleStart?: (enemyId: string, successNodeId: string) => void;
+    onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string) => void;
     initialNodeId?: string;
 }
 
@@ -39,8 +39,28 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
     // Phase 2: UX改善 State
     const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; history: string[] } | null>(null);
+    const [isProcessingResult, setIsProcessingResult] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Phase 3: タイプライター演出
+    const [displayedText, setDisplayedText] = useState('');
+    const [typewriterDone, setTypewriterDone] = useState(false);
+    const typewriterRef = useRef<NodeJS.Timeout | null>(null);
+    const setTypewriterComplete = (complete: boolean) => {
+        if (complete && typewriterRef.current) {
+            clearInterval(typewriterRef.current);
+            typewriterRef.current = null;
+        }
+        if (complete) {
+            const fullText = currentNode?.text || (
+                currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
+                currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
+            );
+            setDisplayedText(fullText);
+        }
+        setTypewriterDone(complete);
+    };
 
     // グローバル状態へのアクセス
     const { userProfile, worldState, battleState, inventory } = useGameStore();
@@ -98,7 +118,52 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         return s;
     }, [scenario]);
 
-    const currentNode = script.nodes?.[currentNodeId];
+    let currentNode = script.nodes?.[currentNodeId];
+
+    // --- タイプライターeffect ---
+    useEffect(() => {
+        // リセット
+        setDisplayedText('');
+        setTypewriterDone(false);
+        if (typewriterRef.current) {
+            clearInterval(typewriterRef.current);
+            typewriterRef.current = null;
+        }
+
+        const fullText = currentNode?.text || (
+            currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
+            currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
+        );
+
+        // 非テキストノードは即時表示
+        if (!currentNode || ['battle', 'camp', 'shop_access', 'supply'].includes(currentNode.type || '')) {
+            setDisplayedText(fullText);
+            setTypewriterDone(true);
+            return;
+        }
+
+        let charIndex = 0;
+        typewriterRef.current = setInterval(() => {
+            charIndex++;
+            if (charIndex >= fullText.length) {
+                setDisplayedText(fullText);
+                setTypewriterDone(true);
+                if (typewriterRef.current) {
+                    clearInterval(typewriterRef.current);
+                    typewriterRef.current = null;
+                }
+            } else {
+                setDisplayedText(fullText.substring(0, charIndex));
+            }
+        }, 30);
+
+        return () => {
+            if (typewriterRef.current) {
+                clearInterval(typewriterRef.current);
+                typewriterRef.current = null;
+            }
+        };
+    }, [currentNodeId]);
 
     // --- ノードプロセッサー (useScenarioNodeProcessor フックに委譲) ---
     useScenarioNodeProcessor({
@@ -241,9 +306,19 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         );
     }
 
-    // 安全性チェック
     if (!currentNode) {
-        return <div className="p-8 text-red-500">Error: Node '{currentNodeId}' not found.</div>;
+        // ★ ノード未発見フォールバック — DB未更新時でもクラッシュしない
+        console.warn(`[ScenarioEngine] Node "${currentNodeId}" not found. Recovery mode.`);
+        
+        const endNodeEntry = Object.entries(script.nodes || {}).find(([, n]: [string, any]) => n.type === 'end' && n.result === 'success');
+        const recoveryNext = endNodeEntry ? endNodeEntry[0] : undefined;
+        
+        currentNode = {
+            text: `（シナリオデータの読み込みに問題がありました。ここから続けることができます）`,
+            type: recoveryNext ? 'text' : 'end',
+            result: recoveryNext ? undefined : 'success',
+            choices: recoveryNext ? [{ label: '物語を続ける', next: recoveryNext }] : [],
+        };
     }
 
     const handleChoice = (choice: any) => {
@@ -289,56 +364,80 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 </div>
             )}
 
-            {/* Background Image Layer */}
+            {/* Background Image Layer — 背景画像を全面表示 */}
             <div
-                className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-40 mix-blend-overlay"
+                className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
                 style={{ backgroundImage: `url(${bgUrl})` }}
             />
+            {/* 下部グラデーション（テキスト領域の可読性確保） */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent pointer-events-none" />
 
-            <div className="absolute inset-0 flex items-center justify-center opacity-80 pointer-events-none">
-                <div className="w-full h-full bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent z-10" />
-                <div className="w-64 h-[80%] bg-slate-800 rounded-t-full border-t border-amber-900/30 flex flex-col items-center justify-end overflow-hidden mb-8 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-                    {currentNode.speaker_image_url ? (
-                        <div className="w-[120%] h-auto max-h-[100%] flex items-end justify-center z-0 opacity-80 mix-blend-screen transition-all duration-1000 ease-in-out">
-                            <img
-                                src={currentNode.speaker_image_url}
-                                alt="Speaker"
-                                className="w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-                                style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }}
-                            />
-                        </div>
-                    ) : (
-                        <div className="text-slate-700 transform scale-[4] opacity-20 mb-12"><User size={200} /></div>
-                    )}
-                </div>
-            </div>
+            {/* 話者キャラ画像 — テキストログ内にアイコンがあるため背景表示は削除 */}
 
             <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
                 {/* Main Text Dialog */}
-                <div className="bg-slate-900/85 backdrop-blur-md border border-amber-900/50 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
-                    <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
-                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden shadow-inner">
-                            {currentNode.speaker_image_url ? (
-                                <img src={currentNode.speaker_image_url} alt="Face" className="w-full h-full object-cover" />
-                            ) : (
-                                <User size={32} className="text-amber-600/40" />
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex-1 relative pb-1 pt-1 min-h-[60px]">
-                        {currentNode.speaker && (
-                            <div className="absolute -top-6 -left-1 bg-amber-900 text-amber-100 text-[10px] px-3 py-0.5 rounded-sm border border-amber-600 font-bold uppercase tracking-widest shadow-lg">
-                                {currentNode.speaker}
-                            </div>
-                        )}
-                        <div className="h-full max-h-[30vh] overflow-y-auto no-scrollbar pt-1 pr-1">
+                <div className="bg-slate-950/40 backdrop-blur-sm border border-amber-900/40 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
+                    {/* アイコン: 話者画像あり→ポートレート / 「」台詞→汎用アイコン / ナレーション→非表示 */}
+                    {(() => {
+                        const speakerName = currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name;
+                        const hasPortrait = !!currentNode.speaker_image_url;
+                        const isDialogue = currentNode.text?.startsWith('「');
+                        
+                        if (hasPortrait) {
+                            return (
+                                <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
+                                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden shadow-inner">
+                                        <img src={currentNode.speaker_image_url} alt="Face" className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                            );
+                        } else if (isDialogue && !speakerName) {
+                            // 汎用キャラ台詞（「」で始まるがspeaker_nameなし）
+                            return (
+                                <div className="flex-shrink-0">
+                                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800/50 border-2 border-slate-600/30 flex items-center justify-center shadow-inner">
+                                        <User size={28} className="text-slate-500/50" />
+                                    </div>
+                                </div>
+                            );
+                        }
+                        // ナレーション → アイコンなし
+                        return null;
+                    })()}
+                    <div className="flex-1 relative pb-1 pt-1">
+                        {/* 話者名タグ: キャラ名あり→金色 / 「」台詞→灰色「名もなき者」 / ナレーション→なし */}
+                        {(() => {
+                            const speakerName = currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name;
+                            const isDialogue = currentNode.text?.startsWith('「');
+                            
+                            if (speakerName) {
+                                return (
+                                    <div className="text-amber-400 text-[10px] font-bold tracking-widest mb-1">
+                                        ◆ {speakerName}
+                                    </div>
+                                );
+                            } else if (isDialogue) {
+                                return (
+                                    <div className="text-slate-500 text-[10px] tracking-wider mb-1">
+                                        ◇ 名もなき者
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
+                        {/* 固定高さテキスト領域 + スクロール */}
+                        <div
+                            className="h-[140px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 pt-1 pr-1 cursor-pointer"
+                            onClick={() => setTypewriterComplete(true)}
+                        >
                             <p className="text-slate-200 text-sm leading-relaxed font-serif whitespace-pre-wrap selection:bg-amber-900/50">
                                 {showingTravel ? (
                                     <span className="text-gray-500 italic animate-pulse">移動準備中...</span>
-                                ) : currentNode.text || (
-                                    currentNode.type === 'travel' ? "移動中... (数日が経過した)" :
-                                        currentNode.type === 'guest_join' ? "新たな仲間が合流したようだ。" :
-                                            "..."
+                                ) : (
+                                    <>
+                                        {displayedText}
+                                        {!typewriterDone && <span className="inline-block w-0.5 h-4 bg-amber-500 ml-0.5 animate-pulse align-middle" />}
+                                    </>
                                 )}
                             </p>
                         </div>
@@ -349,7 +448,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 <div className="flex flex-col gap-2 shrink-0">
                     {currentNode.type === 'battle' ? (
                         <div className="flex flex-col gap-3">
-                            {/* Phase 2: 遭遇演出 — 敵情報の事前表示 */}
+                            {/* 遭遇演出 — 敵情報の事前表示 */}
                             <div className="bg-red-950/50 border border-red-900/50 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <div className="w-12 h-12 rounded-lg bg-red-900/30 border border-red-800/50 flex items-center justify-center shrink-0">
                                     <Skull size={24} className="text-red-400" />
@@ -357,7 +456,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 <div className="flex-1 min-w-0">
                                     <p className="text-red-300 text-xs font-bold tracking-wider uppercase">⚠ 敵遭遇</p>
                                     <p className="text-red-200/80 text-sm font-serif truncate">
-                                        {currentNode.enemy_name || currentNode.params?.enemy_name || '未知の敵'}
+                                        {currentNode.enemy_name || currentNode.params?.enemy_name || '敵勢力'}
                                     </p>
                                     {(currentNode.enemy_level || currentNode.params?.enemy_level) && (
                                         <p className="text-red-500/70 text-[10px] font-mono">推定脅威度 Lv.{currentNode.enemy_level || currentNode.params?.enemy_level}</p>
@@ -367,10 +466,13 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             <button
                                 onClick={() => {
                                     if (onBattleStart) {
-                                        const successChoice = currentNode.choices?.find((c: any) => c.label === 'win') || currentNode.choices?.[0];
-                                        const successId = successChoice?.next || 'end_success';
+                                        // 勝利後ノード: battle_success_next（CSVのnext_node由来） → choices[0].next → fallback
+                                        const successId = currentNode.battle_success_next
+                                            || currentNode.choices?.[0]?.next
+                                            || currentNode.next
+                                            || 'end_success';
                                         const enemyId = currentNode.enemy_group_id || 'slime';
-                                        onBattleStart(enemyId, successId);
+                                        onBattleStart(enemyId, successId, currentNode.bg_key);
                                     }
                                 }}
                                 className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
@@ -426,16 +528,24 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 {/* Phase 2: ユーザーボタン操作による遷移 */}
                                 <button
                                     onClick={() => {
-                                        if (endReady) onComplete(endReady.result, endReady.history);
+                                        if (endReady && !isProcessingResult) {
+                                            setIsProcessingResult(true);
+                                            onComplete(endReady.result, endReady.history);
+                                        }
                                     }}
-                                    disabled={!endReady}
+                                    disabled={!endReady || isProcessingResult}
                                     className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
                                         currentNode.result === 'success'
                                             ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
                                             : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
-                                    } ${!endReady ? 'opacity-50 cursor-wait' : ''}`}
+                                    } ${(!endReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
                                 >
-                                    {endReady ? '結果を確認する' : '判定中...'}
+                                    {isProcessingResult ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            結果を処理中...
+                                        </span>
+                                    ) : endReady ? '結果を確認する' : '判定中...'}
                                 </button>
                             </div>
                         ) : (

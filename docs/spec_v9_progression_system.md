@@ -89,6 +89,19 @@ const newCost = Math.min(30, BASE_DECK_COST + (level * COST_PER_LEVEL));
 <!-- v11.0: quest/complete API の実装を反映 -->
 - **HP全回復**: `updates.hp = info.new_max_hp`（レベルアップ時にMaxHPまで回復）。
 
+### 4.2.1 レベルアップUI表示仕様
+クエスト完了時にレベルアップが発生した場合、QuestResultModal内のキャラクター変化セクションに以下の数値を表示する:
+
+| 項目 | 表示例 | APIフィールド |
+|------|--------|---------------|
+| レベル変化 | Lv.2 ▸ Lv.3 | `level_up.new_level` |
+| 最大HP増加 | 最大HP +5 (90) | `level_up.hp_increase`, `level_up.new_max_hp` |
+| ATK増加 | ATK +1 | `level_up.atk_increase` |
+| DEF増加 | DEF +1 | `level_up.def_increase` |
+| デッキコスト | デッキコスト 12 | `level_up.new_max_cost` |
+
+増加値が0の項目は非表示。
+
 ### 4.3 静的ステータス
 
 | ステータス | 説明 | 変動ルール |
@@ -168,3 +181,4 @@ export interface UserProfile {
 | v11.0 | 2026-04 | questService.calculateGrowth()の実装定数に合わせて全面改訂 |
 | v12.1 | 2026-04 | BASE_DECK_COSTを10→8に修正 |
 | **v15.0** | **2026-04-13** | **HP増加をランダム化(+3〜6/Lv)、ATK/DEF毎Lv加算(+0〜2)・上限廃止、DeckCost上限30に変更** |
+| **v15.1** | **2026-04-23** | **レベルアップUI表示仕様追加（HP/ATK/DEF/コスト数値表示）** |

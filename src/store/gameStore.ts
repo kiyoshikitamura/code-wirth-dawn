@@ -76,6 +76,7 @@ export const useGameStore = create<GameState>()(
                 discardPile: state.discardPile,
                 selectedScenario: state.selectedScenario,
                 userProfile: state.userProfile,
+                equipBonus: state.equipBonus,
             }),
             storage: createJSONStorage(() =>
                 typeof window !== 'undefined' ? window.localStorage : {

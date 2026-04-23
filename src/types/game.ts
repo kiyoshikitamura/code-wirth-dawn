@@ -101,7 +101,9 @@ export interface EnemySkillMaster {
   id: number;
   slug: string;
   name: string;
-  effect_type: 'damage' | 'heal' | 'drain_vit' | 'status_effect';
+  effect_type: 'damage' | 'heal' | 'drain_vit' | 'status_effect'
+    | 'damage_poison' | 'damage_blind' | 'damage_bleed' | 'damage_stun'  // v2.9.3h: 状態異常付きダメージ
+    | 'buff_self_atk' | 'debuff_atk_down' | 'debuff_def_down';            // v2.9.3h: バフ/デバフ
   value: number;       // damage倍率 / heal量 / etc.
   description?: string;
 }
@@ -137,8 +139,7 @@ export interface UserProfile {
   max_vitality?: number;
   max_hp?: number;
   hp?: number;
-  max_mp?: number;
-  mp?: number;
+
   atk?: number; // v8.1: 基礎攻撃力 (1-15)
   def?: number; // Added v2.2
   age_days?: number; // v9.3: 現年齢内の経過日数 (365でリセット)
@@ -161,6 +162,8 @@ export interface UserProfile {
   quest_started_at?: string;
   blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null; // v16: Prayer Buff
   pass_expires_at?: Record<string, number>; // { loc_slug: expiry_day }
+  is_anonymous?: boolean; // v16.0: テストプレイフラグ
+  last_name_change?: string; // v16.2: 最終名前変更日時（ISO 8601）
 }
 
 // ...
@@ -196,7 +199,7 @@ export interface PartyMember {
   ai_grade?: 'smart' | 'random';
   current_ap?: number; // Per-NPC AP in battle
   signature_deck?: Card[]; // Resolved card objects for AI use
-  used_this_turn?: string[]; // Card IDs used this turn (1-per-turn limit)
+  used_this_turn?: string[]; // (Deprecated v2.8) Previously enforced per-turn same-card limit. No longer checked.
   status_effects?: { id: string; duration: number }[]; // v2.5
 }
 
@@ -395,15 +398,14 @@ export interface WorldState {
 }
 
 export interface WorldHistory {
-  id: number;
-  location_name: string;
-  headline: string;
-  news_content: string;
-  old_status: string;
-  new_status: string;
-  old_attribute: string;
-  new_attribute: string;
-  occured_at: string;
+  id: string;          // UUID
+  location_id?: string;
+  event_type: string;  // 'prosperity_change' | 'alignment_change'
+  old_value?: string;
+  new_value?: string;
+  message: string;
+  created_at: string;
+  location?: { name: string };
 }
 
 export interface PartyMemberDB {

@@ -1,11 +1,5 @@
 
 id,slug,members
-1,slime_squad,enemy_slime_blue|enemy_slime_red
-2,goblin_squad,enemy_goblin|enemy_goblin_archer
-3,succubus_pair,enemy_succubus|enemy_succubus
-4,group_boss_ep5,enemy_boss_ep5_squad
-5,group_boss_ep10,enemy_boss_ep10_dragon
-6,group_boss_ep20,enemy_boss_ep20_god
 
 9001,enemy_grp_boss_skel_king,boss_skeleton_king
 9002,enemy_grp_boss_worm,boss_queen_worm
@@ -40,3 +34,27 @@ id,slug,members
 109,karyu_terracotta_group,enemy_karyu_terracotta|enemy_karyu_jiangshi
 110,neutral_goblin_group,enemy_goblin|enemy_goblin_archer
 111,neutral_wolf_group,enemy_wild_dog|enemy_killer_wolf
+
+200,main_bandit_squad,enemy_bandit_thug|enemy_bandit_thug
+201,main_markand_spy,enemy_bandit_guard|enemy_markand_scorpion
+202,main_empire_clash,enemy_bandit_guard|enemy_bandit_guard
+203,main_empire_elite,enemy_boss_ep5_squad
+204,main_yato_pursuit,enemy_yato_onibi|enemy_yato_karakasa
+205,main_samurai_trial,enemy_yato_tengu|enemy_yato_tengu
+206,main_assassin_night,enemy_assassin_trainee|enemy_assassin_trainee
+207,main_assassin_boss,enemy_assassin_master
+208,main_escort_ambush,enemy_yato_tengu|enemy_yato_onibi
+209,main_guardian_dragon,enemy_boss_ep10_dragon
+210,main_karyu_wall,enemy_karyu_terracotta|enemy_karyu_terracotta
+211,main_river_defense,enemy_karyu_jiangshi|enemy_karyu_terracotta
+212,main_river_boss,enemy_karyu_fox|enemy_karyu_fox
+213,main_mercenary_king,enemy_boss_mercenary_king
+214,main_castle_siege,enemy_karyu_terracotta|enemy_karyu_jiangshi|enemy_karyu_terracotta
+215,main_ruin_guardian,enemy_boss_ruin_guardian
+216,main_reunion_test,enemy_bandit_guard|enemy_bandit_guard
+217,main_gate_keeper,enemy_boss_gate_keeper
+218,main_angel_army_a,enemy_angel_soldier|enemy_angel_soldier
+219,main_angel_army_b,enemy_angel_soldier|enemy_boss_archangel
+220,main_system_guard,enemy_boss_system_guard
+221,main_god_dragon,enemy_boss_god_dragon
+222,main_god_core,enemy_boss_ep20_god

@@ -1,16 +1,16 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,名もなき村での野盗撃退の功績、あるいは小隊長ガウェインの引き立てにより、君はローランと砂塵王国マルカンドの国境地帯における警備任務に就くこととなった。,"{""type"":""text"", ""bg"":""bg_default""}",text0_1
-NODE,text0_1,国境の荒野は見渡す限りの赤茶けた土と、吹き荒れる空風の音ばかりが続く。兵士たちの間には、得体の知れない緊張感が蔓延していた。,"{""type"":""text"", ""bg"":""bg_default""}",text1
-NODE,text1,「最近、この辺りでは武装した集団が頻繁に出没している。ただのゴロツキや盗賊団にしては、妙に動きに統率が取れているのが気掛かりだ」,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",text1_1
-NODE,text1_1,ガウェインは厳しい顔で地平線を睨んでいる。「それに……あの野盗どもが使っていた武器の質。どう見てもどこかの正規のものだ」,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",choice1
+NODE,start,名もなき村での野盗撃退の功績、あるいは小隊長ガウェインの引き立てにより、君はローランと砂塵王国マルカンドの国境地帯における警備任務に就くこととなった。,"{""bgm"":""bgm_quest_calm"", ""type"":""text"", ""bg"":""bg_wasteland""}",text0_1
+NODE,text0_1,国境の荒野は見渡す限りの赤茶けた土と、吹き荒れる空風の音ばかりが続く。兵士たちの間には、得体の知れない緊張感が蔓延していた。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text1
+NODE,text1,「最近、この辺りでは武装した集団が頻繁に出没している。ただのゴロツキや盗賊団にしては、妙に動きに統率が取れているのが気掛かりだ」,"{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text1_1
+NODE,text1_1,ガウェインは厳しい顔で地平線を睨んでいる。「それに……あの野盗どもが使っていた武器の質。どう見てもどこかの正規のものだ」,"{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice1
 CHOICE,,「隣国、マルカンドの兵士では？」,,text2
 CHOICE,,「誰であろうと、斬るだけです」,,text2
-NODE,text2,「……かもしれん。マルカンド側も、我が帝国の膨張を警戒して水面下で作戦を展開しているという噂はある。いずれにせよ、油断するなよ」,"{""type"":""text"", ""bg"":""bg_default"", ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",text2_1
-NODE,text2_1,もしも相手がマルカンドの息のかかった者たちであるならば、これは単なる盗賊討伐ではなく「国境紛争」の引き金になりかねない。君はゴクリと唾を呑み込んだ。,"{""type"":""text"", ""bg"":""bg_default""}",text3
-NODE,text3,やがて、砂丘の向こうから黒い布で顔を覆った集団が、小隊を半包囲するような陣形で音もなく接近してくるのが見えた。,"{""type"":""text"", ""bg"":""bg_battle""}",text3_1
-NODE,text3_1,その足運びは明らかに素人のそれではない。練度を積んだ軍人の歩法だ。,"{""type"":""text"", ""bg"":""bg_battle""}",battle
-NODE,battle,「舌の根も乾かぬうちに来たぞ！陣形を崩すな、背中を取られるなよ！」,"{""type"":""battle"", ""enemy_group_id"":1, ""speaker_image_url"":""https://picsum.photos/seed/gawain/120""}",choice2
+NODE,text2,「……かもしれん。マルカンド側も、我が帝国の膨張を警戒して水面下で作戦を展開しているという噂はある。いずれにせよ、油断するなよ」,"{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text2_1
+NODE,text2_1,もしも相手がマルカンドの息のかかった者たちであるならば、これは単なる盗賊討伐ではなく「国境紛争」の引き金になりかねない。君はゴクリと唾を呑み込んだ。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text3
+NODE,text3,やがて、砂丘の向こうから黒い布で顔を覆った集団が、小隊を半包囲するような陣形で音もなく接近してくるのが見えた。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text3_1
+NODE,text3_1,その足運びは明らかに素人のそれではない。練度を積んだ軍人の歩法だ。,"{""type"":""text"", ""bg"":""bg_wasteland""}",battle
+NODE,battle,「舌の根も乾かぬうちに来たぞ！陣形を崩すな、背中を取られるなよ！」,"{""type"":""battle"", ""enemy_group_id"":200, ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice2
 CHOICE,,武器を構える,,text_post_battle
-NODE,text_post_battle,統率の取れた激しい攻撃を辛くも凌ぎ切り、一帯の制圧に成功した。死体の顔を確認しようと布を剥ぐが、認識章のようなものは一切持っていない。,"{""type"":""text"", ""bg"":""bg_default""}",text_post_battle2
-NODE,text_post_battle2,だが、彼らが落とした武器には、意図的に削り潰された「正規軍の紋章」らしき痕跡が残されていた。ガウェインは無言でそれを蹴り飛ばす。,"{""type"":""text"", ""bg"":""bg_default""}",end_node
+NODE,text_post_battle,統率の取れた激しい攻撃を辛くも凌ぎ切り、一帯の制圧に成功した。死体の顔を確認しようと布を剥ぐが、認識章のようなものは一切持っていない。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text_post_battle2
+NODE,text_post_battle2,だが、彼らが落とした武器には、意図的に削り潰された「正規軍の紋章」らしき痕跡が残されていた。ガウェインは無言でそれを蹴り飛ばす。,"{""type"":""text"", ""bg"":""bg_wasteland""}",end_node
 NODE,end_node,国境地帯に、泥沼の戦乱を予感させる重く不穏な空気が漂い始めている……。,"{""type"":""end_success""}",

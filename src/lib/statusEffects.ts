@@ -20,6 +20,7 @@ export type StatusEffectId =
     | 'taunt'        // 挑発: 敵の攻撃を自分に引きつける
     | 'regen'        // リジェネ: ターン終了時 MaxHP×5%回復
     | 'poison'       // 毒: ターン終了時 MaxHP×5%ダメージ
+    | 'burn'         // 炎上: 毒と同じDoTだが表示が「炎上」
     | 'stun'         // スタン: 次ターン行動不能 (AP回復もスキップ)
     | 'bind'         // 拘束: stunの別名（ターン行動不能）
     | 'bleed'        // 出血: カード使用時3ダメージ
@@ -32,7 +33,39 @@ export type StatusEffectId =
     | 'atk_down'     // 攻撃DOWN: 与ダメージ x0.7
     | 'cure_status'  // 状態異常解除（poison/bleed/stun等を即時解除）
     | 'cure_debuff'  // デバフ解除（atk_down/blind等を即時解除）
+    | 'def_down'     // 防御DOWN: 被ダメージ 1.3倍相当（DEF半減）
+    | 'freeze'       // 凍結: stunの上位互換（行動不能）
+    | 'curse'        // 呪い: ATK DOWN相当
     | 'ap_max';      // AP全回復（card_dark_pact用）
+
+// ─── v2.9.3k: デバフ成功率テーブル ─────────────────────────────
+// 各デバフeffect_idごとの付与成功率（0.0〜1.0）
+// ここに定義のないeffect_idはデフォルト100%成功
+const DEBUFF_SUCCESS_RATES: Partial<Record<StatusEffectId, number>> = {
+    stun:        0.40,  // スタン: 40% — 最も強力な行動不能
+    bind:        0.40,  // 拘束: 40% — スタン同等
+    freeze:      0.45,  // 凍結: 45%
+    blind:       0.50,  // 目潰し: 50%
+    blind_minor: 0.65,  // 軽微な目潰し: 65%
+    fear:        0.50,  // 恐怖: 50%
+    poison:      0.70,  // 毒: 70%
+    burn:        0.70,  // 炎上: 70%（毒と同率）
+    bleed:       0.70,  // 出血: 70%
+    bleed_minor: 0.80,  // 軽微な出血: 80%
+    atk_down:    0.60,  // ATK DOWN: 60%
+    def_down:    0.60,  // DEF DOWN: 60%
+};
+
+/**
+ * デバフ付与の成功判定。
+ * @param effectId 付与しようとしている状態異常ID
+ * @returns true = 付与成功、false = レジストされた
+ */
+export function rollDebuffSuccess(effectId: StatusEffectId | string): boolean {
+    const rate = DEBUFF_SUCCESS_RATES[effectId as StatusEffectId];
+    if (rate === undefined) return true; // テーブルにないID（バフ系など）は常に成功
+    return Math.random() < rate;
+}
 
 export interface TickResult {
     newEffects: StatusEffect[];
@@ -50,6 +83,7 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     taunt:        '挑発',
     regen:        'リジェネ',
     poison:       '毒',
+    burn:         '炎上',
     stun:         'スタン',
     bind:         '拘束',
     bleed:        '出血',
@@ -62,6 +96,9 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     atk_down:     '攻撃力DOWN',
     cure_status:  '状態回復',
     cure_debuff:  'デバフ解除',
+    def_down:     '防御力DOWN',
+    freeze:       '凍結',
+    curse:        '呪い',
     ap_max:       'AP全回復',
 };
 
@@ -137,6 +174,13 @@ export function getAtkDownMod(effects: StatusEffect[]): number {
 }
 
 /**
+ * 防御デバフの DEF 減算率を返す。def_down → DEF半減(0.5倍)、それ以外 → 1.0
+ */
+export function getDefDownMod(effects: StatusEffect[]): number {
+    return hasEffect(effects, 'def_down') ? 0.5 : 1.0;
+}
+
+/**
  * 目潰し状態のミス確率を返す（0.0〜1.0）。
  * blind → 50%ミス、blind_minor → 30%ミス
  */
@@ -178,6 +222,12 @@ export function tickEffects(
         const dmg = Math.max(1, Math.floor(maxHp * 0.05));
         hpDelta -= dmg;
         messages.push(`${targetName}は毒に侵まれている... HP -${dmg}`);
+    }
+
+    if (hasEffect(effects, 'burn')) {
+        const dmg = Math.max(1, Math.floor(maxHp * 0.05));
+        hpDelta -= dmg;
+        messages.push(`${targetName}は炎に包まれている... HP -${dmg}`);
     }
 
     const newEffects = effects
@@ -231,9 +281,9 @@ export function hasTaunt(effects: StatusEffect[]): boolean {
 // ─── 状態解除ヘルパー ────────────────────────────────────────
 
 /** 負の状態異常（毒/出血/スタン/睡眠等）を全解除 */
-export const NEGATIVE_EFFECTS: StatusEffectId[] = ['poison', 'bleed', 'bleed_minor', 'stun', 'bind', 'fear', 'blind', 'blind_minor', 'atk_down'];
+export const NEGATIVE_EFFECTS: StatusEffectId[] = ['poison', 'burn', 'bleed', 'bleed_minor', 'stun', 'bind', 'fear', 'blind', 'blind_minor', 'atk_down', 'def_down'];
 /** デバフ効果（atk_down/blind等）を解除 */
-export const DEBUFF_EFFECTS: StatusEffectId[] = ['atk_down', 'blind', 'blind_minor'];
+export const DEBUFF_EFFECTS: StatusEffectId[] = ['atk_down', 'def_down', 'blind', 'blind_minor'];
 
 export function cureStatus(effects: StatusEffect[]): StatusEffect[] {
     return effects.filter(e => !NEGATIVE_EFFECTS.includes(e.id));

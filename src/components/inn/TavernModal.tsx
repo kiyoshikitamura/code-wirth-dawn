@@ -28,7 +28,8 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [shadows, setShadows] = useState<ShadowSummary[]>([]);
     const [currentParty, setCurrentParty] = useState<PartyMember[]>([]);
     const [loading, setLoading] = useState(true);
-    const [hireStatus, setHireStatus] = useState<string | null>(null);
+    const [hirePhase, setHirePhase] = useState<'idle' | 'loading' | 'done'>('idle');
+    const [hireResultMsg, setHireResultMsg] = useState<string>('');
     const [reportTarget, setReportTarget] = useState<ShadowSummary | null>(null);
     const [reportReason, setReportReason] = useState('');
     const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
@@ -40,7 +41,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     useEffect(() => {
         if (isOpen) {
             setLoading(true);
-            Promise.all([fetchPartyData(), fetchShadows()]).finally(() => setLoading(false));
+            Promise.all([fetchPartyData(), fetchShadowsWithCache()]).finally(() => setLoading(false));
         }
     }, [isOpen, locationId]);
 
@@ -81,11 +82,50 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         }
     };
 
+    // v2.9.3f: sessionStorageキャッシュがあればそれを使い、なければAPIから取得
+    const fetchShadowsWithCache = async () => {
+        try {
+            const cached = sessionStorage.getItem('tavern_shadows_cache');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    // gossipのShadowSummary形式をTavernModalのShadowSummary形式に変換
+                    // gossipはprofile_idをidとして返すがTavernModalはprofile_idを期待
+                    const asApiFormat = parsed.map((s: any) => ({
+                        profile_id: s.id || s.profile_id,
+                        name: s.name,
+                        epithet: s.epithet || '',
+                        level: s.level || 1,
+                        job_class: s.job_class || 'Mercenary',
+                        origin_type: s.origin_type || 'system_mercenary',
+                        contract_fee: s.contract_fee || ((s.level || 1) * 50),
+                        stats: s.stats || { atk: 0, def: 0, hp: s.durability || 100 },
+                        signature_deck_preview: s.signature_deck_preview || [],
+                        subscription_tier: s.subscription_tier || 'free',
+                        icon_url: s.icon_url || s.avatar_url,
+                        npc_image_url: s.npc_image_url || s.avatar_url,
+                        flavor_text: s.flavor_text,
+                    }));
+                    setShadows(asApiFormat);
+                    return;
+                }
+            }
+        } catch { /* sessionStorage unavailable */ }
+        // キャッシュなし → API取得
+        await fetchShadows();
+    };
+
     const fetchShadows = async () => {
         try {
             const res = await fetch(`/api/tavern/list?location_id=${locationId}&user_id=${userProfile.id}`);
             const data = await res.json();
-            if (data.shadows) setShadows(data.shadows);
+            if (data.shadows) {
+                setShadows(data.shadows);
+                // 取得結果をキャッシュに保存（次回gossip↔tavern間で共有）
+                try {
+                    sessionStorage.setItem('tavern_shadows_cache', JSON.stringify(data.shadows));
+                } catch { /* ignore */ }
+            }
         } catch (e) {
             console.error("Failed to fetch shadows", e);
         }
@@ -112,11 +152,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     };
 
     const handleHire = async (shadow: ShadowSummary) => {
-        if (isAlreadyHired(shadow)) { setHireStatus('この冒険者は既に契約済みです。'); setTimeout(() => setHireStatus(null), 2000); return; }
-        if (currentParty.length >= 4) { setHireStatus('パーティが満員です。'); setTimeout(() => setHireStatus(null), 2000); return; }
-        if (userProfile.gold < shadow.contract_fee) { setHireStatus('ゴールドが足りません！'); setTimeout(() => setHireStatus(null), 2000); return; }
+        if (isAlreadyHired(shadow)) { setHireResultMsg('この冒険者は既に契約済みです。'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
+        if (currentParty.length >= 4) { setHireResultMsg('パーティが満員です。'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
+        if (userProfile.gold < shadow.contract_fee) { setHireResultMsg('ゴールドが足りません！'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
 
-        setHireStatus('雇用処理中...');
+        setHirePhase('loading');
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch('/api/tavern/hire', {
@@ -129,24 +169,29 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-                setHireStatus(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
-                setTimeout(() => setHireStatus(null), 2500);
+                setHireResultMsg(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
+                setHirePhase('done');
+                setTimeout(() => setHirePhase('idle'), 2500);
                 return;
             }
             const data = await res.json();
             if (data.success) {
-                setHireStatus('雇用契約が成立しました！ ✨');
-                setLoading(true);
-                await Promise.all([fetchPartyData(), fetchShadows()]);
-                setLoading(false);
-                setTimeout(() => setHireStatus(null), 2000);
+                setHireResultMsg('パーティに加入した！ ✨');
+                setHirePhase('done');
+                Promise.all([fetchPartyData(), fetchShadows()]);
+                // ゴールド消費をUI即時反映
+                const { useGameStore } = await import('@/store/gameStore');
+                await useGameStore.getState().fetchUserProfile();
+                setTimeout(() => setHirePhase('idle'), 2200);
             } else {
-                setHireStatus(`エラー: ${data.error || '不明なエラー'}`);
-                setTimeout(() => setHireStatus(null), 2500);
+                setHireResultMsg(`エラー: ${data.error || '不明なエラー'}`);
+                setHirePhase('done');
+                setTimeout(() => setHirePhase('idle'), 2500);
             }
         } catch (e) {
-            setHireStatus('通信エラーが発生しました');
-            setTimeout(() => setHireStatus(null), 2500);
+            setHireResultMsg('通信エラーが発生しました');
+            setHirePhase('done');
+            setTimeout(() => setHirePhase('idle'), 2500);
         }
     };
 
@@ -288,7 +333,14 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 影の記録
                             </button>
                             {activeTab === 'hire' && (
-                                <button onClick={async () => { setLoading(true); await Promise.all([fetchPartyData(), fetchShadows()]); setLoading(false); }} disabled={loading}
+                                <button
+                                    onClick={async () => {
+                                        setLoading(true);
+                                        try { sessionStorage.removeItem('tavern_shadows_cache'); } catch {}
+                                        await fetchShadows();
+                                        setLoading(false);
+                                    }}
+                                    disabled={loading}
                                     className="px-3 py-2 flex items-center gap-1.5 bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e] hover:text-[#e3d5b8] transition-colors rounded-sm">
                                     <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                                     <span className="text-xs font-bold">見渡す</span>
@@ -301,10 +353,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             {loading ? (
                                 <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
                                     酒場を見回しています...
-                                </div>
-                            ) : hireStatus ? (
-                                <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
-                                    {hireStatus}
                                 </div>
                             ) : activeTab === 'hire' ? (
                                 <div className="space-y-2">
@@ -617,7 +665,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             ) : (
                                 <button
                                     onClick={async () => { if (isAlreadyHired(selectedShadow)) return; await handleHire(selectedShadow); setSelectedShadow(null); }}
-                                    disabled={!!hireStatus || userProfile.gold < selectedShadow.contract_fee || currentParty.length >= 4}
+                                    disabled={hirePhase !== 'idle' || userProfile.gold < selectedShadow.contract_fee || currentParty.length >= 4}
                                     className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
                                         currentParty.length >= 4 ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
                                         : userProfile.gold < selectedShadow.contract_fee ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
@@ -651,6 +699,27 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         alt="Enlarged view" 
                         className="object-contain max-w-full max-h-[85vh] rounded shadow-2xl"
                     />
+                </div>
+            </div>
+        )}
+        {/* ===== 加入中 / 加入完了 Overlay ===== */}
+        {hirePhase !== 'idle' && (
+            <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                <div className={`px-8 py-6 rounded-2xl shadow-2xl text-center animate-in fade-in zoom-in-90 duration-200 border ${
+                    hirePhase === 'loading'
+                        ? 'bg-[#3e2723]/95 border-[#8b5a2b] text-amber-300'
+                        : hireResultMsg.includes('エラー') || hireResultMsg.includes('失敗') || hireResultMsg.includes('満員') || hireResultMsg.includes('足り')
+                            ? 'bg-red-950/95 border-red-700 text-red-200'
+                            : 'bg-[#1a3a2a]/95 border-emerald-700 text-emerald-300'
+                }`}>
+                    {hirePhase === 'loading' ? (
+                        <>
+                            <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                            <p className="text-base font-serif font-bold tracking-widest animate-pulse">加入中...</p>
+                        </>
+                    ) : (
+                        <p className="text-base font-bold font-serif tracking-wide">{hireResultMsg}</p>
+                    )}
                 </div>
             </div>
         )}

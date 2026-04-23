@@ -1,57 +1,145 @@
-id,slug,name,type,sub_type,base_price,min_prosperity,nation_tags,effect_data,_comment
-3001,item_potion_s,傷薬,consumable,,100,1,any,"{""heal"":30}",共通: 基本的な回復アイテム。
-3002,item_ration,携帯保存食,consumable,,50,1,any,"{""heal"":10}",共通: 安価な食料。
-3003,item_torch,松明,consumable,,80,2,any,"{""effect"":""illuminate""}",共通: 探索用。衰退以上で入荷。
-3004,item_tent,簡易テント,consumable,,300,3,any,"{""effect"":""camp"",""heal"":50}",共通: 野営用。
-3005,item_antidote,解毒剤,consumable,,150,2,any,"{""effect"":""cure_poison""}",共通: 毒消し。
-3006,item_holy_water,聖水,consumable,,200,3,loc_holy_empire|loc_yatoshin,"{""power"":30,""effect"":""holy""}",聖・夜刀: アンデッド特効。
-3007,item_oil_pot,火炎瓶,consumable,,250,2,loc_marcund|any,"{""power"":25,""effect"":""burn""}",共通: 炎上ダメージ。
-3008,item_whetstone,砥石,consumable,,100,2,loc_yatoshin|loc_holy_empire,"{""atk_bonus"":5,""duration"":3}",聖・夜刀: 物理ダメージ強化。
-3009,item_smokescreen,煙玉,consumable,,200,2,loc_yatoshin|loc_marcund,"{""effect"":""escape""}",夜刀・マルカンド: 逃走用。
-3010,item_whiskey,強い酒,consumable,,120,1,any,"{""mp_heal"":20,""effect"":""drunk""}",共通: MP回復/酩酊。
-3037,item_ruins_map,宝の地図(偽),consumable,,50,1,any,"{""effect"":""noise_trap""}",共通(崩壊): ノイズ混入罠。
-3039,item_repair_kit,応急修理キット,consumable,,200,2,any,"{""effect"":""repair_npc"",""heal"":30}",共通: NPC耐久回復。
-3040,item_revive_incense,反魂香,consumable,,5000,5,any,"{""effect"":""revive_npc""}",共通(絶頂): NPC蘇生。
-3044,item_bomb_large,大型爆弾,consumable,,500,3,loc_marcund,"{""power"":40,""effect"":""aoe""}",マルカンド: 全体ダメ。
-3047,item_royal_decree,王家の勅令書,consumable,,1000,4,loc_holy_empire,"{""effect"":""reputation_boost""}",聖帝国: 名声倍増。
-3050,item_debris_clear,瓦礫撤去許可証,key_item,,0,1,any,"{""effect"":""quest_key""}",共通(崩壊): クエストキー。
-3079,grimoire_teleport,魔導書:転移,consumable,,3000,5,any,"{""effect"":""teleport""}",共通(絶頂): 好きな拠点へ即時移動。
-3101,item_relic_bone,聖遺物の欠片,material,,500,,any,"{}",骸骨狂王の討伐証明
-3102,item_desert_worm_meat,大砂蟲の極上肉,material,,800,,any,"{}",マザーワームから採れる希少部位
-3103,item_red_ogre_horn,剛腕赤鬼の金棒碎片,material,,600,,any,"{}",赤鬼討伐の証
-3104,item_thunder_fur,雷獣の帯電毛皮,material,,1000,,any,"{}",雷獣のレア素材
-3105,item_griffon_feather,暴風グリフォンの王羽,material,,900,,any,"{}",グリフォンロードの巨大羽
-3106,item_treant_core,エントの輝く心材,material,,700,,any,"{}",長年の魔力を蓄えた芯
-3111,item_white_robe,極白の法衣,equipment,armor,5000,,any,"{""def_bonus"":10,""description"":""異端へと堕ちた元大司教の法衣""}",ボスドロップ装備
-3112,item_thief_blade,義賊の刀,equipment,weapon,4000,,any,"{""atk_bonus"":15,""description"":""民を救えなかった狂剣の遺品""}",ボスドロップ装備
-3113,item_pirate_hat,大海賊の帽子,equipment,accessory,3500,,any,"{""hp_bonus"":20,""description"":""血塗られた艦隊の長の帽子""}",ボスドロップ装備
-3121,item_demon_heart,悪魔の心臓,material,,3000,,any,"{}",バフォメットの脈打つ心臓
-3122,item_angel_record,天使の手記,material,,3000,,any,"{}",天界の真実が記された冒涜的な書
-3123,item_dragon_blood,竜血,consumable,,8000,,any,"{""effect"":""restore_vitality"",""vit_restore"":3}",デザートドラゴンから採れる貴重な血。Vitを3回復する
-3124,item_kirin_horn,麒麟の雷角,material,,5000,,any,"{}",神域の幻獣の力を持つ角
-3125,item_omega_part,謎の金属部品,material,,4000,,any,"{}",オメガ・ゴーレムの未知の機関
-3126,item_kraken_proof,海王の証,material,,5000,,any,"{}",クラーケン討伐の揺るぎない証明
-3127,item_mino_axe,大斧,equipment,weapon,4000,,any,"{""atk_bonus"":20,""description"":""ミノタウロス・キングの巨大な斧""}",ボスドロップ装備
-3128,item_maze_seal,迷宮の宝印,material,,2000,,any,"{}",迷宮走破の印
-3129,item_potion,中和薬,consumable,,50,1,any,"{""heal"":15}",共通: 最安価の回復薬。
-3130,item_high_potion,上級中和薬,consumable,,250,3,any,"{""heal"":80}",共通: 高品質な回復薬。
-3131,item_roland_blessing,大聖堂の祝福,consumable,,1000,3,loc_holy_empire,"{""effect"":""buff_all"",""atk_bonus"":5,""def_bonus"":5,""duration"":3}",聖帝国: ATK/DEFを一時強化。
-3132,item_roland_elixir,天使の涙,consumable,,3000,5,loc_holy_empire,"{""effect"":""revive_full"",""heal"":9999}",聖帝国(絶頂): 死亡復活＋完全回復。
-3133,item_karyu_tea,龍井茶,consumable,,800,3,loc_haryu,"{""mp_heal"":50,""effect"":""mp_restore""}",華龍: 枯渇した魔力を大回復。
-3134,item_karyu_charm,護法符,consumable,,1200,3,loc_haryu,"{""effect"":""evasion_up"",""duration"":3}",華龍: 回避率UP。
-3135,item_yato_poison,毒塗りの粉,consumable,,800,2,loc_yatoshin,"{""effect"":""poison_weapon"",""power"":10,""duration"":3}",夜刀: 武器に毒付与。
-3136,item_yato_smoke,煙玉(夜刀),consumable,,600,2,loc_yatoshin,"{""effect"":""escape""}",夜刀: 確実に逃走する煙玉。
-3137,item_oasis_water,霊泉の水,consumable,,1000,3,loc_marcund,"{""heal"":40,""effect"":""regen"",""duration"":5}",マルカンド: 継続HP回復。
-3138,item_desert_spice,熱砂の香辛料,consumable,,900,2,loc_marcund,"{""effect"":""berserk"",""atk_bonus"":15,""def_penalty"":10,""duration"":3}",マルカンド: ATK大幅UP・DEFダウン。
-3139,item_trade_iron,良質な鉄鉱石,trade_good,,100,2,any,"{}",交易品: 手堅い資金源。
-3140,item_trade_silk,煌びやかな絹織物,trade_good,,300,3,any,"{}",交易品: 貴族に需要。
-3141,item_trade_gem,古代遺跡の宝石,trade_good,,1000,4,any,"{}",交易品: 歴史的価値が高い。
-3142,item_trade_dragon,飛竜の鱗,trade_good,,5000,5,any,"{}",交易品: 最高級防具の素材。
-3143,item_trade_mithril,ミスリル鋼,trade_good,,10000,5,any,"{}",交易品: 天文学的な値で取引。
-3144,item_pass_roland,聖帝国通行許可証,key_item,,20000,3,loc_holy_empire,"{""effect"":""capital_pass"",""nation"":""roland"",""duration_days"":365}",聖帝国首都への通行許可証。
-3145,item_pass_karyu,神朝通行許可証,key_item,,20000,3,loc_haryu,"{""effect"":""capital_pass"",""nation"":""karyu"",""duration_days"":365}",華龍首都への通行許可証。
-3146,item_pass_yato,夜刀秘密通行符,key_item,,20000,3,loc_yatoshin,"{""effect"":""capital_pass"",""nation"":""yato"",""duration_days"":365}",夜刀首都への通行許可証。
-3147,item_pass_markand,熱砂の隊商証,key_item,,20000,3,loc_marcund,"{""effect"":""capital_pass"",""nation"":""markand"",""duration_days"":365}",マルカンド首都への通行許可証。
-3148,item_black_market_elixir,禁術の秘薬,consumable,,50000,1,any,"{""heal"":9999,""effect"":""full_restore""}",闇市: 完全回復(代償あり)。
-3149,item_launder_scroll,帳簿の改竄,consumable,,100000,1,any,"{""effect"":""reputation_reset""}",闇市: 全拠点の関係値リセット。
-3150,item_dark_matter,謎の黒鉱石,trade_good,,30000,1,any,"{}",闇市: 禍々しい高額交易品。
+id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market,effect_data
+15,item_potion_s,傷薬,consumable,,100,,1,false,"{""heal"":50,""use_timing"":""battle"",""description"":""HPを少量回復する基本的な薬。""}"
+16,item_ration,携帯保存食,consumable,,50,,1,false,"{""description"":""冒険に必須の保存食料。""}"
+17,item_torch,松明,consumable,,80,,2,false,"{""description"":""暗い場所を照らす探索用の松明。""}"
+18,item_tent,簡易テント,consumable,,300,,3,false,"{""heal_pct"":0.5,""use_timing"":""field"",""description"":""野営しながらHPを回復する簡易テント。宿屋が利用できない時の代替手段。""}"
+19,item_antidote,解毒剤,consumable,,150,,2,false,"{""use_timing"":""battle"",""description"":""毒状態を解除する薬。"",""remove_effect"":""poison""}"
+20,item_holy_water,聖水,consumable,,200,loc_holy_empire|loc_yatoshin,3,false,"{""damage"":30,""use_timing"":""battle"",""description"":""聖なる水を投げつけ、敵に30ダメージ。アンデッド系への投擲に最適。""}"
+21,item_oil_pot,火炎瓶,consumable,,250,loc_marcund|any,2,false,"{""damage"":20,""target"":""enemy"",""effect_id"":""burn"",""use_timing"":""battle"",""description"":""火炎瓶を投げつけ20ダメージ。さらに炎上（2ターン持続ダメージ）を与える。"",""effect_duration"":2}"
+22,item_whetstone,砥石,consumable,,250,loc_yatoshin|loc_holy_empire,2,false,"{""effect_id"":""atk_up"",""use_timing"":""battle"",""description"":""武器を研いで攻撃力を一時的に強化する。3ターンATK1.5倍。"",""effect_duration"":3}"
+23,item_smokescreen,煙玉,consumable,,200,loc_yatoshin|loc_marcund,2,false,"{""escape_chance"":0.7,""use_timing"":""battle"",""description"":""煙幕を張って戦闘から逃走を試みる。成功率70%。""}"
+24,item_whiskey,強い酒,consumable,,50,,1,false,"{""heal"":50,""use_timing"":""battle"",""stun_self_chance"":0.5,""stun_self_duration"":1,""description"":""癖の強い蒸留酒。HP50回復するが、50%の確率で酔って1ターン行動不能。""}"
+51,item_ruins_map,宝の地図(偽),consumable,,50,,1,false,"{""description"":""偽物の宝の地図。罠の可能性あり。""}"
+53,item_repair_kit,応急修理キット,consumable,,200,,2,false,"{""description"":""NPC仲間の耐久値を回復する修理キット。""}"
+54,item_revive_incense,反魂香,consumable,,5000,,5,false,"{""description"":""死亡したNPC仲間を蘇生させる希少な香。""}"
+58,item_bomb_large,大型爆弾,consumable,,500,loc_marcund,3,false,"{""aoe_damage"":80,""use_timing"":""battle"",""description"":""敵全体に80ダメージを与える大型爆弾。集団戦の切り札。""}"
+61,item_royal_decree,王家の勅令書,consumable,,1000,loc_holy_empire,4,false,"{""description"":""使用すると名声が大幅に上昇する勅令書。""}"
+64,item_debris_clear,瓦礫撤去許可証,key_item,,0,,1,false,"{""description"":""崩壊した地域の瓦礫撤去に必要な許可証。""}"
+93,grimoire_teleport,魔導書:転移,consumable,,3000,,5,false,"{""description"":""好きな拠点へ即時移動できる転移の魔法書。""}"
+187,book_iron_sword,教本:鉄の剣,skill,,500,,2,false,"{""description"":""基本的な剣術。攻撃スキル。""}"
+188,book_dagger,教本:護身短剣,skill,,300,,1,false,"{""description"":""護身用の短剣術。0コスト攻撃。""}"
+189,book_axe,教本:樵の斧,skill,,600,,2,false,"{""description"":""斧を振り下ろす高威力だが命中率が低い攻撃。""}"
+190,book_heal_s,聖書:癒やしの祈り,skill,,800,loc_holy_empire,3,false,"{""description"":""神聖な祈りで味方のHPを回復する。""}"
+191,gear_knight_shield,騎士の盾,equipment,armor,1200,loc_holy_empire,4,false,"{""def_bonus"":8,""description"":""帝国正規軍の重装騎士に支給される頑強な盾。""}"
+192,gear_silver_lance,白銀の槍,equipment,weapon,1500,loc_holy_empire,4,false,"{""atk_bonus"":8,""description"":""光を美しく反射する装飾が見事な白銀のランス。""}"
+193,scroll_holy_smite,巻物:聖なる一撃,skill,,2000,loc_holy_empire,5,false,"{""description"":""聖なる力で敵に大ダメージを与える。""}"
+194,acc_crusader_ring,十字軍の指輪,equipment,accessory,2500,loc_holy_empire,5,false,"{""hp_bonus"":10,""def_bonus"":3,""description"":""神の御加護が宿った奇跡の指輪。""}"
+195,book_scimitar,教本:曲刀術,skill,,600,loc_marcund,2,false,"{""description"":""曲刀で斬りつけ、出血状態にする。""}"
+196,item_alchemy_kit,錬金術セット,equipment,accessory,1000,loc_marcund,4,false,"{""atk_bonus"":4,""description"":""火球などの魔法試薬を作り出せる機材。""}"
+197,item_merchant_bag,商人の鞄,equipment,accessory,5000,loc_marcund,5,false,"{""hp_bonus"":15,""atk_bonus"":2,""description"":""お金が増えると言われる魔法の鞄。""}"
+198,gear_desert_cloak,砂漠の外套,equipment,armor,800,loc_marcund,3,false,"{""def_bonus"":4,""description"":""砂漠の砂嵐から身を守る外套。DEF+4。""}"
+199,item_poison_manual,教本:調毒,skill,,1200,loc_marcund,2,false,"{""description"":""毒を調合して敵に投げつける暗器術。30ダメージ+毒(5T)付与。""}"
+200,gear_magic_lamp,魔法のランプ,equipment,accessory,3000,loc_marcund,5,false,"{""atk_bonus"":6,""description"":""ランプから魔人を召喚して攻撃させる。""}"
+201,book_katana,奥義書:居合,skill,,1000,loc_yatoshin,3,false,"{""description"":""居合の一撃。クリティカル率が高い。""}"
+202,item_ofuda_set,呪符セット,equipment,accessory,800,loc_yatoshin,3,false,"{""def_bonus"":4,""description"":""魔除けの呪符で結界を張るお札の束。""}"
+203,gear_samurai_armor,当世具足,equipment,armor,2000,loc_yatoshin,4,false,"{""def_bonus"":10,""description"":""夜刀神国の侍が身につける鎧。""}"
+204,scroll_shikigami,巻物:式神使役,skill,,1500,loc_yatoshin,4,false,"{""description"":""式神を呼び出して自動攻撃させる。""}"
+205,gear_ninja_tool,忍具入れ,equipment,accessory,1200,loc_yatoshin,3,false,"{""atk_bonus"":4,""description"":""クナイや手裏剣など暗器を素早く取り出す腰袋。""}"
+206,sword_kusanagi,神器:草薙(模造),equipment,weapon,5000,loc_yatoshin,5,false,"{""atk_bonus"":18,""description"":""夜刀神国の神話に登場する剣の模造品。""}"
+207,book_kungfu,教本:少林拳,skill,,500,loc_haryu,2,false,"{""description"":""連続攻撃を繰り出す拳法。2回攻撃。""}"
+208,gear_dragon_spear,青龍偃月刀,equipment,weapon,1800,loc_haryu,4,false,"{""atk_bonus"":12,""description"":""圧倒的な攻撃力を誇る大薙刀。ATK+12。""}"
+209,scroll_chi_blast,巻物:気功砲,skill,,1500,loc_haryu,4,false,"{""description"":""気功の力で防御を無視した攻撃を放つ。""}"
+210,gear_iron_fist,鉄の爪,equipment,weapon,1000,loc_haryu,3,false,"{""atk_bonus"":6,""description"":""鉄の爪で敵を引き裂く格闘武器。ATK+6。""}"
+211,manual_assassination,教本:暗殺術,skill,,2000,loc_haryu,2,false,"{""description"":""一撃で敵を仕留める暗殺術。即死効果。""}"
+212,item_forbidden_scroll,禁術:血の契約書,skill,,10000,loc_haryu,1,false,"{""description"":""命を代償に戦闘能力を極限まで引き上げる禁術。12Tの間ATK UPとDEF UPを同時付与。VIT1消費。""}"
+214,gear_adventurer_boots,冒険者の靴,equipment,accessory,400,,2,false,"{""def_bonus"":2,""description"":""軽量で丈夫な冒険者用のブーツ。DEF+2。""}"
+217,skill_provoke,教本:挑発,skill,,400,,2,false,"{""description"":""敵の注意を引きつけるタンク用スキル。""}"
+218,skill_meditation,教本:瞑想,skill,,600,,3,false,"{""description"":""瞑想してMPを回復する。""}"
+219,gear_heavy_armor,重装鎧,equipment,armor,1500,,4,false,"{""hp_bonus"":10,""def_bonus"":12,""description"":""全身を鋼鉄で覆い隠す防御力重視の鎧。""}"
+221,skill_berserk,教本:狂戦士,skill,,1200,loc_haryu,2,false,"{""description"":""防御を捨てて攻撃力を倍化する狂戦士の技。""}"
+222,item_lucky_coin,幸運のコイン,equipment,accessory,3000,loc_marcund,5,false,"{""atk_bonus"":4,""hp_bonus"":5,""description"":""不思議な力が宿る硬貨。ATK+4、最大HP+5。""}"
+224,gear_cursed_mask,呪いの仮面,equipment,accessory,1000,loc_yatoshin,1,false,"{""atk_bonus"":4,""def_bonus"":-4,""description"":""圧倒的な力と引き換えに正気を削り取る仮面。""}"
+225,skill_vital_strike,奥義書:命削り,skill,,5000,loc_haryu,1,false,"{""description"":""Vitalityを犠牲に超火力を放つ命削りの奥義。""}"
+227,grimoire_fire,魔導書:火球,skill,,1200,,3,false,"{""description"":""火球を放つ基本的な魔法攻撃。""}"
+228,grimoire_ice,魔導書:氷槍,skill,,1200,,3,false,"{""description"":""氷の槍で攻撃し、鈍足状態を付与。""}"
+229,grimoire_thunder,魔導書:雷撃,skill,,1500,,4,false,"{""description"":""雷撃で攻撃し、スタン状態を付与。""}"
+230,gear_archmage_staff,大賢者の杖,equipment,weapon,4000,loc_holy_empire,5,false,"{""atk_bonus"":12,""hp_bonus"":10,""description"":""装備すると魔法攻撃の威力が大幅に上がる。""}"
+231,skill_barrier_all,聖書:広域防壁,skill,,2500,loc_holy_empire,4,false,"{""description"":""パーティ全員にバリアを張る広域防壁。""}"
+232,gear_inquisitor_mace,異端審問官の槌,equipment,weapon,2000,loc_holy_empire,3,false,"{""atk_bonus"":10,""description"":""カオス属性の敵に特効の聖なる槌。""}"
+233,item_golden_dice,黄金のサイコロ,equipment,accessory,3000,loc_marcund,5,false,"{""atk_bonus"":5,""def_bonus"":2,""description"":""戦場の結果を運否天賦に任せる純金のサイコロ。""}"
+234,skill_bribe,教本:賄賂術,skill,,1500,loc_marcund,3,false,"{""description"":""Goldを支払い敵を帰還させる賄賂術。""}"
+235,gear_snake_flute,蛇使いの笛,equipment,accessory,1000,loc_marcund,3,false,"{""atk_bonus"":5,""description"":""蛇を呼び寄せ敵に仕向ける伝統的な木管楽器。""}"
+236,gear_longbow,大弓,equipment,weapon,1800,loc_yatoshin,3,false,"{""atk_bonus"":7,""description"":""遠距離から高命中の矢を放つ大弓。""}"
+237,item_tea_set,茶器セット,equipment,accessory,1200,loc_yatoshin,4,false,"{""def_bonus"":3,""hp_bonus"":3,""description"":""お茶で精神を統一し乱れた魔力を回復させる茶器。""}"
+238,gear_hannya_mask,般若の面,equipment,accessory,2200,loc_yatoshin,4,false,"{""atk_bonus"":6,""hp_bonus"":-20,""description"":""見る者を震え上がらせる般若の面。大きな力を得るが体が蛙まれる。""}"
+239,skill_zen,教本:禅,skill,,800,loc_yatoshin,3,false,"{""description"":""瞑想し次ターンの攻撃を完全無効化する禅の技。""}"
+240,manual_dim_mak,秘伝:点穴,skill,,3500,loc_haryu,5,false,"{""description"":""確率で即死、外れても麻痺にする秘技。""}"
+241,gear_nunchaku,ヌンチャク,equipment,weapon,800,loc_haryu,2,false,"{""atk_bonus"":5,""description"":""振り回して攻撃する格闘武器。ATK+5。""}"
+242,skill_iron_skin,教本:鋼鉄の肌,skill,,1500,loc_haryu,3,false,"{""description"":""物理ダメージを1回だけ完全無効化。""}"
+243,skill_lion_roar,奥義:獅子吼,skill,,2500,loc_haryu,4,false,"{""description"":""雄叫びで敵全体をスタンさせる獅子吼。""}"
+244,tool_lockpick,盗賊の七つ道具,equipment,accessory,1000,,2,false,"{""def_bonus"":3,""description"":""身を守る暗器も仕込まれた盗賊の道具一式。DEF+3。""}"
+245,gear_travel_bag,旅人のリュック,equipment,accessory,500,,2,false,"{""hp_bonus"":5,""description"":""旅の荷物をたっぷり収納できるリュック。最大HP+5。""}"
+246,skill_survival,教本:サバイバル,skill,,600,,2,false,"{""description"":""野営時のHP回復量が増加するサバイバル術。""}"
+247,skill_first_aid,教本:応急手当,skill,,400,,1,false,"{""description"":""MPを使わずにHPを微量回復する応急手当。""}"
+248,item_cursed_idol,呪いの偶像,equipment,accessory,200,,1,false,"{""atk_bonus"":1,""def_bonus"":-2,""description"":""不運を撒き散らす呪われた木彫りの人形。""}"
+249,gear_rusty_sword,錆びた剣,equipment,weapon,50,,1,false,"{""atk_bonus"":2,""description"":""最も弱い武器。しかし無いよりはマシ。""}"
+250,skill_necromancy,禁書:死体操作,skill,,5000,,1,false,"{""description"":""倒した敵を操り盾にする禁断の死霊術。""}"
+251,skill_cannibalism,禁忌:人食い,skill,,500,,1,false,"{""description"":""敵を食べてHP回復。Vitalityを消費する禁忌。""}"
+252,gear_merchant_abacus,商人のそろばん,equipment,weapon,1200,loc_marcund,3,false,"{""atk_bonus"":7,""description"":""所持金に応じたダメージを与える商人のそろばん。""}"
+253,gear_paper_fan,鉄扇,equipment,weapon,1500,loc_yatoshin,4,false,"{""atk_bonus"":4,""def_bonus"":3,""description"":""攻撃と同時に防御バフを付与する鉄扇術。""}"
+254,skill_pressure_point,教本:経絡秘孔,skill,,2000,loc_haryu,3,false,"{""description"":""敵の防御力を完全に無視する経絡秘孔の技。""}"
+256,item_world_map,詳細な世界地図,consumable,,2000,,4,false,"{""description"":""移動時のランダムイベント回避率が上昇する地図。""}"
+420,item_potion,高級傷薬,consumable,,200,,1,false,"{""heal"":100,""use_timing"":""battle"",""description"":""上質な薬草を調合した傷薬。HPを100回復する。""}"
+421,item_high_potion,最高級傷薬,consumable,,300,,3,false,"{""heal"":200,""use_timing"":""battle"",""description"":""名匠が精製した最高級の傷薬。HPを200回復する。""}"
+422,item_roland_blessing,大聖堂の祝福,consumable,,1000,loc_holy_empire,3,false,"{""effect"":""buff_all"",""duration"":3,""heal_pct"":0.5,""atk_bonus"":5,""def_bonus"":5,""use_timing"":""battle"",""description"":""聖なる祝福でHP50%回復し、ATK・DEFが3ターン上昇する。""}"
+423,item_roland_elixir,天使の涙,consumable,,3000,loc_holy_empire,5,false,"{""heal"":9999,""effect"":""revive_full"",""heal_full"":true,""use_timing"":""battle"",""description"":""天使の涙を注ぐと、HPが完全に回復する奇跡の霊薬。""}"
+424,item_karyu_tea,龍井茶,consumable,,500,loc_haryu,3,false,"{""heal"":200,""use_timing"":""battle"",""remove_effect"":""poison"",""description"":""神朝の名茶。飲むとHP200回復し、毒状態も解除する。""}"
+425,item_karyu_charm,護法符,consumable,,1200,loc_haryu,3,false,"{""target"":""enemy"",""effect_id"":""stun"",""use_timing"":""battle"",""description"":""神朝の霊符を投げつけ、敵をスタンさせる。"",""effect_duration"":1}"
+426,item_yato_poison,毒塗りの粉,consumable,,800,loc_yatoshin,2,false,"{""power"":10,""effect"":""poison_weapon"",""target"":""enemy"",""duration"":3,""effect_id"":""poison"",""use_timing"":""battle"",""effect_duration"":3}"
+427,item_yato_smoke,忍玉,consumable,,600,loc_yatoshin,2,false,"{""escape"":true,""use_timing"":""battle"",""description"":""忍者が用いる特殊な逃走玉。確実に戦闘から離脱できる。""}"
+428,item_oasis_water,霊泉の水,consumable,,1000,loc_marcund,3,false,"{""heal"":200,""effect"":""regen"",""duration"":5,""effect_id"":""regen"",""use_timing"":""battle""}"
+429,item_desert_spice,熱砂の香辛料,consumable,,900,loc_marcund,2,false,"{""effect"":""berserk"",""duration"":3,""effect_id"":""atk_up"",""use_timing"":""battle"",""def_penalty"":10,""effect_duration"":8,""description"":""熱砂の香辛料。ATKが8ターン上昇するが、DEFが低下する副作用あり。""}"
+430,item_trade_iron,良質な鉄鉱石,trade_good,,100,,2,false,"{""category"":""trade_good"",""description"":""山岳の鉱脈から採掘された不純物の少ない鉄鉱石。鑑定士が大喜びする品質。""}"
+431,item_trade_silk,煌びやかな絹織物,trade_good,,300,,3,false,"{""category"":""trade_good"",""description"":""東方の織師が繊細な手仕事で織り上げた絹。貴族の間で高値で取引される。""}"
+432,item_trade_gem,古代遺跡の宝石,trade_good,,1000,,4,false,"{""category"":""trade_good"",""description"":""古代文明の遺跡から発掘された神秘的な光を放つ宝石。収集家垂涎の逸品。""}"
+433,item_trade_dragon,飛竜の鱗,trade_good,,5000,,5,false,"{""category"":""trade_good"",""description"":""飛竜の全身を覆う硬質な鱗。武具や防具の素材として極めて高価。""}"
+434,item_trade_mithril,ミスリル鋼,trade_good,,10000,,5,false,"{""category"":""trade_good"",""description"":""伝説の魔法金属・ミスリルの鋼材。世界中の鋳造師が感涙する至宝。""}"
+435,item_pass_roland,聖帝国通行許可証,key_item,,20000,loc_holy_empire,3,false,"{""effect"":""capital_pass"",""nation"":""roland"",""category"":""key_item"",""duration_days"":365}"
+436,item_pass_karyu,神朝通行許可証,key_item,,20000,loc_haryu,3,false,"{""effect"":""capital_pass"",""nation"":""karyu"",""category"":""key_item"",""duration_days"":365}"
+437,item_pass_yato,夜刀秘密通行符,key_item,,20000,loc_yatoshin,3,false,"{""effect"":""capital_pass"",""nation"":""yato"",""category"":""key_item"",""duration_days"":365}"
+438,item_pass_markand,熱砂の隊商証,key_item,,20000,loc_marcund,3,false,"{""effect"":""capital_pass"",""nation"":""markand"",""category"":""key_item"",""duration_days"":365}"
+439,item_black_market_elixir,禁術の秘薬,consumable,,10000,,1,true,"{""heal"":9999,""effect"":""full_restore"",""heal_full"":true,""use_timing"":""battle"",""remove_effect"":""poison"",""effect_id"":""regen"",""effect_duration"":5,""extra_effects"":[{""id"":""atk_up"",""duration"":10}],""description"":""禁断の魔術で調合された秘薬。HP全回復・毒解除・リジェネ・ATK UP。""}"
+440,item_launder_scroll,帳簿の改竄,consumable,,100000,,1,true,"{""effect"":""reputation_reset"",""use_timing"":""field"",""description"":""闇の帳簿を改竄し、全国での名声をリセットする。""}"
+441,item_dark_matter,謎の黒鉱石,trade_good,,30000,,1,true,"{""category"":""trade_good"",""description"":""光すら飲み込む漆黒の鉱石。その正体を知る者は少なく、闇市でのみ取引される。""}"
+459,item_relic_bone,聖遺物の欠片,material,,500,,1,false,"{}"
+460,item_desert_worm_meat,大砂蟲の極上肉,material,,800,,1,false,"{}"
+461,item_red_ogre_horn,剛腕赤鬼の金棒碎片,material,,600,,1,false,"{}"
+462,item_thunder_fur,雷獣の帯電毛皮,material,,1000,,1,false,"{}"
+463,item_griffon_feather,暴風グリフォンの王羽,material,,900,,1,false,"{}"
+464,item_treant_core,エントの輝く心材,material,,700,,1,false,"{}"
+465,item_white_robe,極白の法衣,equipment,armor,5000,,1,false,"{""def_bonus"":10,""description"":""異端へと堕ちた元大司教の法衣。""}"
+466,item_thief_blade,義賊の刀,equipment,weapon,4000,,1,false,"{""atk_bonus"":15,""description"":""民を救えなかった狂剣の遺品。""}"
+467,item_pirate_hat,大海賊の帽子,equipment,accessory,3500,,1,false,"{""hp_bonus"":20,""description"":""血塗られた艦隊の長の帽子。""}"
+468,item_demon_heart,悪魔の心臓,material,,3000,,1,false,"{}"
+469,item_angel_record,天使の手記,material,,3000,,1,false,"{}"
+470,item_dragon_blood,竜血,consumable,,50000,,1,false,"{""use_timing"":""field"",""vit_restore"":3,""description"":""竜の血液。服用するとVitalityが3回復する希少な霊薬。""}"
+471,item_kirin_horn,麒麟の雷角,material,,5000,,1,false,"{}"
+472,item_omega_part,謎の金属部品,material,,4000,,1,false,"{}"
+473,item_kraken_proof,海王の証,material,,5000,,1,false,"{}"
+474,item_mino_axe,大斧,equipment,weapon,4000,,1,false,"{""atk_bonus"":20,""description"":""ミノタウロス・キングの巨大な斧。""}"
+475,item_maze_seal,迷宮の宝印,material,,2000,,1,false,"{}"
+554,item_tengu_fan,天狗の羽団扇,consumable,,300,,1,false,"{""effect_id"":""atk_up"",""use_timing"":""battle"",""description"":""天狗が操る風の力を封じた団扇。使用するとATKが4ターン上昇する。"",""effect_duration"":4}"
+555,item_bandit_treasure,盗賊の隠し財宝,trade_good,,500,,1,false,"{""category"":""trade_good"",""description"":""盗賊団が密かに蓄えていた金品の入った袋。""}"
+556,mat_djinn_orb,魔人の宝珠,material,,800,,1,false,"{""description"":""砂漠の魔人の核から取り出した、魔力を帯びた神秘の宝珠。""}"
+557,mat_kirin_mane,麒麟の鬣,material,,2000,,1,false,"{""description"":""伝説の霊獣・麒麟の鬣。雷の力が宿り、髪一筋でも莫大な価値がある。""}"
+,gear_short_sword,ショートソード,equipment,weapon,300,,1,false,"{""atk_bonus"":3,""description"":""軽量で扱いやすい短剣。冒険者の最初の一振りに最適。""}"
+,gear_broadsword,鍛鉄の剣,equipment,weapon,800,,2,false,"{""atk_bonus"":6,""description"":""鍛冶師が鍛えた標準的な鉄の剣。バランスの良い一振り。""}"
+,gear_bastard_sword,バスタードソード,equipment,weapon,1500,,3,false,"{""atk_bonus"":9,""description"":""片手でも両手でも扱える大型の剣。熟練者向けの重量級武器。""}"
+,gear_scimitar,シミター,equipment,weapon,1000,loc_marcund,2,false,"{""atk_bonus"":6,""description"":""砂漠の戦士が愛用する反りの深い曲刀。素早い斬撃に適する。""}"
+,gear_djinn_blade,魔人の曲刃,equipment,weapon,2500,loc_marcund,4,false,"{""atk_bonus"":11,""description"":""砂漠の魔人が鍛えたとされる妖しく輝く曲刃。""}"
+,gear_leather_armor,革鎧,equipment,armor,200,,1,false,"{""def_bonus"":2,""description"":""なめし革を縫い合わせた基本的な防具。ないよりはマシ。""}"
+,gear_chain_mail,鎖帷子,equipment,armor,600,,2,false,"{""def_bonus"":5,""description"":""金属の輪を編み込んだ鎖帷子。斬撃をよく防ぐ。""}"
+,gear_plate_armor,板金鎧,equipment,armor,1200,,3,false,"{""def_bonus"":8,""description"":""厚い鉄板で要所を覆う実戦的な鎧。重いが頼りになる。""}"
+,gear_holy_vestment,聖職者の祭服,equipment,armor,800,loc_holy_empire,3,false,"{""def_bonus"":5,""hp_bonus"":5,""description"":""聖職者が身に纏う祝福された祭服。治癒の力が宿る。""}"
+,gear_paladin_plate,聖騎士の全身鎧,equipment,armor,3000,loc_holy_empire,5,false,"{""def_bonus"":14,""description"":""帝国最精鋭の聖騎士にのみ許される白銀の全身鎧。""}"
+,gear_sand_guard,砂防の革甲,equipment,armor,500,loc_marcund,2,false,"{""def_bonus"":3,""hp_bonus"":5,""description"":""砂漠の過酷な環境に耐えるために設計された軽量な革甲。""}"
+,gear_sultan_robe,王宮の絹衣,equipment,armor,2000,loc_marcund,4,false,"{""def_bonus"":7,""hp_bonus"":8,""description"":""マルカンド王宮に仕える者だけが着用を許される絹の衣。""}"
+,gear_shinobi_garb,忍装束,equipment,armor,600,loc_yatoshin,2,false,"{""def_bonus"":3,""description"":""音を立てず身を隠すための黒い装束。軽量で動きやすい。""}"
+,gear_oni_yoroi,鬼武者の鎧,equipment,armor,3000,loc_yatoshin,5,false,"{""def_bonus"":13,""description"":""鬼の力が宿ると伝えられる古の武者鎧。圧倒的な重厚感。""}"
+,gear_monk_robe,僧衣,equipment,armor,500,loc_haryu,2,false,"{""def_bonus"":3,""description"":""少林寺の僧侶が纏う質素な衣。修行の証。""}"
+,gear_karyu_vest,道着,equipment,armor,1200,loc_haryu,3,false,"{""def_bonus"":6,""description"":""拳法家が鍛錬時に着用する丈夫な道着。動きを妨げない。""}"
+,gear_dragon_scale,龍鱗の鎧,equipment,armor,2800,loc_haryu,4,false,"{""def_bonus"":11,""description"":""龍の鱗を編み込んで作られた伝説の鎧。炎にも刃にも強い。""}"
+501,story_gawain_gauntlet,ガウェインの小手,equipment,armor,0,,1,false,"{""def_bonus"":7,""hp_bonus"":5,""description"":""「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。""}"
+502,story_dragon_fang,竜牙の剣,equipment,weapon,0,,1,false,"{""atk_bonus"":12,""def_bonus"":2,""description"":""神代の守護竜の牙から鍛えた剣。刀身には天界の紋様が浮かび上がり、『神に弓引く者』の証として、持ち主に叛逆の力を宿す。""}"
+503,story_heroic_mail,英霊の鎖帷子,equipment,armor,0,,1,false,"{""def_bonus"":14,""hp_bonus"":10,""description"":""神々に抗った古代の英雄たちの残留魔力が編み込まれた鎖帷子。纏う者の傷を癒し、折れかけた心を奮い立たせる不思議な温もりがある。""}"
+504,story_dawn_blade,蒼暁の剣,equipment,weapon,0,,1,false,"{""atk_bonus"":25,""hp_bonus"":15,""description"":""主神を打ち砕いた光が凝縮した、蒼く輝く剣。全ての戦場で流された血と涙が、この一振りに『自由』という名の意味を刻んだ。ゲームクリアの証。""}"

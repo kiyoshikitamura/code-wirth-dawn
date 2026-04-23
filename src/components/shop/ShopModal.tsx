@@ -59,6 +59,9 @@ export default function ShopModal({ onClose }: Props) {
     const [meta, setMeta] = useState<ShopMeta | null>(null);
     const [loading, setLoading] = useState(true);
     const [purchasing, setPurchasing] = useState<string | null>(null); // itemId being bought/sold
+    const [purchasePhase, setPurchasePhase] = useState<'idle' | 'loading' | 'done'>('idle');
+    const [purchaseResultMsg, setPurchaseResultMsg] = useState<string>('');
+    const [purchaseIsError, setPurchaseIsError] = useState(false);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
     const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null); // 詳細ポップアップ用
 
@@ -103,12 +106,16 @@ export default function ShopModal({ onClose }: Props) {
     const handleBuy = async (item: ShopItem) => {
         if (item.is_rumored) return;
         if (gold < (item.current_price as number)) {
-            alert("金貨が足りません！");
+            setPurchaseResultMsg('金貨が足りません！');
+            setPurchaseIsError(true);
+            setPurchasePhase('done');
+            setTimeout(() => setPurchasePhase('idle'), 2000);
             return;
         }
         if (purchasing) return;
 
         setPurchasing(item.id);
+        setPurchasePhase('loading');
         try {
             const token = await getToken();
             const res = await fetch('/api/shop', {
@@ -123,19 +130,28 @@ export default function ShopModal({ onClose }: Props) {
             const data = await res.json();
 
             if (res.ok) {
-                alert(`${item.name} を購入しました！`);
-                useGameStore.getState().fetchUserProfile(); // Refresh gold
-                fetchInventory(); // Refresh inventory
+                setPurchaseResultMsg(`${item.name}を購入した！`);
+                setPurchaseIsError(false);
+                setPurchasePhase('done');
+                useGameStore.getState().fetchUserProfile();
+                fetchInventory();
+                setTimeout(() => setPurchasePhase('idle'), 2200);
             } else {
                 if (res.status === 401) {
-                    alert("認証エラー: 再ログインしてください。");
+                    setPurchaseResultMsg('認証エラー: 再ログインしてください。');
                 } else {
-                    alert(data.error || '購入に失敗しました。');
+                    setPurchaseResultMsg(data.error || '購入に失敗しました。');
                 }
+                setPurchaseIsError(true);
+                setPurchasePhase('done');
+                setTimeout(() => setPurchasePhase('idle'), 2500);
             }
         } catch (e) {
             console.error(e);
-            alert("通信エラーが発生しました。");
+            setPurchaseResultMsg('通信エラーが発生しました。');
+            setPurchaseIsError(true);
+            setPurchasePhase('done');
+            setTimeout(() => setPurchasePhase('idle'), 2500);
         } finally {
             setPurchasing(null);
         }
@@ -520,6 +536,28 @@ export default function ShopModal({ onClose }: Props) {
         <>
             {renderItemDetail()}
             {mainContent}
+            {/* ===== 購入中 / 購入完了 Overlay ===== */}
+            {purchasePhase !== 'idle' && createPortal(
+                <div className="fixed inset-0 z-[99998] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                    <div className={`px-8 py-6 rounded-2xl shadow-2xl text-center animate-in fade-in zoom-in-90 duration-200 border ${
+                        purchasePhase === 'loading'
+                            ? 'bg-[#3e2723]/95 border-[#8b5a2b] text-amber-300'
+                            : purchaseIsError
+                                ? 'bg-red-950/95 border-red-700 text-red-200'
+                                : 'bg-[#1a3a2a]/95 border-emerald-700 text-emerald-300'
+                    }`}>
+                        {purchasePhase === 'loading' ? (
+                            <>
+                                <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                                <p className="text-base font-serif font-bold tracking-widest animate-pulse">購入中...</p>
+                            </>
+                        ) : (
+                            <p className="text-base font-bold font-serif tracking-wide">{purchaseResultMsg}</p>
+                        )}
+                    </div>
+                </div>,
+                document.body
+            )}
         </>
     );
 }

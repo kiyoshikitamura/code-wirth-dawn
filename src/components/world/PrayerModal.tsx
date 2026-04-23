@@ -27,9 +27,9 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
     const getNationName = (nation: string) => {
         switch (nation) {
-            case 'Roland': return 'ローランド王国';
+            case 'Roland': return 'ローランド聖王国';
             case 'Karyu': return '華龍神朝';
-            case 'Yato': return '夜刀神組国';
+            case 'Yato': return '夜刀神国';
             case 'Markand': return '商業都市マーカンド';
             case 'Neutral': return '中立地帯';
             default: return nation;

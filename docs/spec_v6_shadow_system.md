@@ -39,8 +39,8 @@ CREATE TABLE party_members (
   origin TEXT DEFAULT 'system',       -- 'system' | 'ghost'
   origin_type TEXT,                    -- 'system_mercenary' | 'shadow_heroic' | 'active_shadow'
   job_class TEXT,
-  durability INT DEFAULT 100,
-  max_durability INT DEFAULT 100,
+  durability INT DEFAULT 100,          -- Vitality (VIT): パーティメンバーの寿命。クエスト毎に減少。
+  max_durability INT DEFAULT 100,       -- バトルHP上限 (npcs.max_hp からスナップショット)
   atk INT DEFAULT 0,                  -- v8.1: 基礎攻撃力 (0-15). カード攻撃に加算される。英靈登録時に user_profiles.atk をコピー。
   def INT DEFAULT 0,
   cover_rate INT DEFAULT 20,          -- 0-100
@@ -64,7 +64,13 @@ CREATE TABLE party_members (
 - 固定手札: `inject_cards` → `signature_deck` として解決。
 - AI行動: `processPartyTurn()` 内で実行（詳細: v2 Addendum NPC AI 仕様）。
 - Cover: `cover_rate` に基づき確率でプレイヤーへのダメージを庇う。
-- 死亡: `durability <= 0` → `is_active: false`, DBに即反映。
+- バトルHP0: バトル中のHPが0になった場合、バトルから脱落。DBで`is_active=false, durability=0`に即時更新。
+- VIT0離脱: クエスト完了時にVIT（`durability`カラム）が0以下になると`party_members`から削除され離脱。形見アイテム生成。
+- **VIT摩耗計算** (`POST /api/quest/complete`):
+  - 成功: -5, 失敗/撤退: -10, バトルHP0追加: -10
+  - `is_active=false`（バトルで力尽きた）メンバーは `durability=0` として扱い確実に削除対象にする
+  - 全`owner_id`メンバーを取得（`is_active`フィルタなし）し、バトル脱落メンバーの漏れを防止
+  - `delete()` 失敗時は `update({is_active: false, durability: 0})` でフォールバック
 
 ### 4.2 AI Grade別の挙動
 | Grade | 特徴 |
@@ -163,7 +169,7 @@ CREATE TABLE party_members (
 
 | フィールド | 参照先 (`user_profiles`) | `party_members` 保存先 |
 |---|---|---|
-| HP | `max_hp` | `durability`（耒久値として使用） |
+| HP | `max_hp` | `max_durability`（バトルHP上限として使用） |
 | ATK | `attack` | `atk` |
 | DEF | `defense` | `def` |
 | デッキ | `signature_deck`（card ID配列） | `inject_cards`（card ID配列） |
@@ -205,7 +211,7 @@ CREATE TABLE party_members (
 2. Lv ・ 職業（日本語） + スキルタグ 最大4枚（二行目）
 
 #### 詳細ポップアップ ステータス表示順
-- HP → 攻撃 → 防御（この順序固定）
+- HP → ATK → DEF → VIT（この順序固定）
 
 ### 5.6 影の記録タブ (v12.0新規)
 酒場UIの「影の記録」タブは「自分の英霊ダッシュボード」として実装される。

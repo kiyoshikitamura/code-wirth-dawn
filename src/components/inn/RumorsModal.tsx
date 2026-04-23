@@ -97,7 +97,7 @@ export default function RumorsModal({ onClose, worldState, reputationScore }: Ru
 
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
                     <h2 className="text-slate-300 text-xs font-bold flex items-center gap-2 uppercase tracking-widest">
-                        <MessageSquare size={14} className="text-amber-500" /> 街の噂話
+                        <MessageSquare size={14} className="text-amber-500" /> 冒険者の噂
                     </h2>
                     <div className="flex items-center gap-2">
                         <button
@@ -130,7 +130,7 @@ export default function RumorsModal({ onClose, worldState, reputationScore }: Ru
                     )}
                     {displayedRumors.length === 0 && !typingText && (
                         <div className="h-32 flex items-center justify-center text-slate-600 text-sm italic">
-                            酒場の喧噪に耳を澄ませている...
+                            今は冒険者の噂話がないようだ...
                         </div>
                     )}
 

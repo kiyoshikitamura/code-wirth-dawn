@@ -3,30 +3,30 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 2,card_slash,斬撃,Skill,1,vitality,5,12,single_enemy,bleed_minor,/images/items/book_slash.png,鋭い一撃とともに相手の肌を薄く引き裂く。ダメージに加え、出血（軽微）を2ターン付与：カード使用ごとに1の追加ダメージ。
 3,card_thrust,突き,Skill,1,vitality,5,18,single_enemy,,/images/items/book_thrust.png,鎧の隙間を突く貫通攻撃。基礎ダメージが高い単体攻撃。
 4,card_guard,防御,Defense,1,vitality,3,10,self,def_up,/images/items/skill_barrier_all.png,身を低くして攻撃に備える。2ターンの間、受けるダメージをDEF+10分だけ軽減する。
-5,card_first_aid,応急手当,Heal,1,vitality,3,20,single_ally,,/images/items/skill_first_aid.png,傷口を素早く処置する。20の体力を回復する。
+5,card_first_aid,応急手当,Heal,1,vitality,3,40,single_ally,,/images/items/skill_first_aid.png,傷口を素早く処置する。40の体力を回復する。
 6,card_shield_bash,シールドバッシュ,Defense,2,vitality,8,10,single_enemy,stun,/images/items/book_shield_bash.png,盾で相手の顔面を強打する。10のダメージとともに1ターンのスタン（行動不能）を付与する。
-7,card_focus,集中,Support,1,vitality,5,0,self,atk_up,/images/items/book_focus.png,精神を研ぎ澄ます。次の攻撃から3ターンの間、与ダメージが1.5倍になる（ATK UP）。
-8,card_quick_step,クイックステップ,Support,1,vitality,5,0,self,evasion_up,/images/items/book_quick_step.png,素早く身をかわす体勢をとる。3ターンの間、敵の攻撃を30%の確率で完全回避する。
-9,card_taunt,挑発,Support,2,vitality,8,0,all_enemies,taunt,/images/items/skill_provoke.png,敵全体の注意を自身に引きつける。2ターンの間、敵の単体攻撃を自分が引き受ける（挑発）。
+7,card_focus,集中,Support,2,vitality,5,0,self,atk_up,/images/items/book_focus.png,精神を研ぎ澄ます。次の攻撃から3ターンの間、与ダメージが1.5倍になる（ATK UP）。
+8,card_quick_step,クイックステップ,Support,2,vitality,5,0,self,evasion_up,/images/items/book_quick_step.png,素早く身をかわす体勢をとる。3ターンの間、敵の攻撃を30%の確率で完全回避する。
+9,card_taunt,挑発,Support,1,vitality,8,0,all_enemies,taunt,/images/items/skill_provoke.png,敵全体の注意を自身に引きつける。2ターンの間、敵の単体攻撃を自分が引き受ける（挑発）。
 10,card_throw_stone,石投げ,Skill,1,vitality,3,5,single_enemy,blind_minor,/images/items/book_throw_stone.png,小石を力強く投げつける。5のダメージとともに2ターンの間、敵の攻撃を30%の確率でミスさせる（軽微な目潰し）。
-11,card_holy_sword,聖剣,Magic,3,mp,20,45,single_enemy,holy_burn,/images/items/scroll_holy_sword.png,聖なる炎を宿した魔法の剣で斬りつける。DEFを無視して45のダメージを与える魔法攻撃。
-12,card_holy_smite,裁き,Magic,3,mp,25,50,random_enemy,,/images/items/scroll_holy_smite.png,神の裁きを乱数攻撃として降らせる。ランダムな敵に50の魔法ダメージを与える。
-13,card_prayer,祈り,Heal,2,mp,15,15,all_allies,regen,/images/items/book_heal_s.png,神への祈りで仲間を癒す。15の体力を回復し、さらに3ターンのリジェネ（毎ターンHP5%回復）を付与する。
-14,card_heal,治癒,Heal,2,mp,12,40,single_ally,,/images/items/book_heal_s.png,光の力で傷を塞ぐ。単体の体力を40回復する。
+11,card_holy_sword,聖剣,Magic,3,mp,20,50,single_enemy,holy_burn,/images/items/scroll_holy_sword.png,聖なる炎を宿した魔法の剣で斬りつける。DEFを無視して50のダメージを与える魔法攻撃。
+12,card_holy_smite,裁き,Magic,3,mp,25,80,random_enemy,,/images/items/scroll_holy_smite.png,神の裁きを乱数攻撃として降らせる。ランダムな敵に80の魔法ダメージを与える。
+13,card_prayer,祈り,Heal,2,mp,15,30,all_allies,regen,/images/items/book_heal_s.png,神への祈りで仲間を癒す。30の体力を回復し、さらに3ターンのリジェネ（毎ターンHP5%回復）を付与する。
+14,card_heal,治癒,Heal,2,mp,12,80,single_ally,,/images/items/book_heal_s.png,光の力で傷を塞ぐ。単体の体力を80回復する。
 15,card_holy_wall,聖壁,Defense,3,mp,20,20,all_allies,barrier,/images/items/skill_barrier_all.png,聖なる光の壁でパーティ全体を守る。2ターンの間、受けるダメージをDEF+20分だけ軽減する（パーティ全体）。
 16,card_sand_trap,砂の罠,Support,2,vitality,8,10,single_enemy,bind,/images/items/book_sand_trap.png,砂に仕掛けた罠で動きを封じる。1ターンの間、敵の行動を完全に封じる（拘束）。ダメージなし。
-17,card_sandstorm,砂塵の目眩まし,Support,2,vitality,10,0,all_enemies,blind,/images/items/book_sandstorm.png,砂嵐で視界を奪う。2ターンの間、敵全体の攻撃を50%の確率でミスさせる（目潰し）。
+17,card_sandstorm,砂塵の目眩まし,Support,3,vitality,10,0,all_enemies,blind,/images/items/book_sandstorm.png,砂嵐で視界を奪う。2ターンの間、敵全体の攻撃を50%の確率でミスさせる（目潰し）。
 18,card_poison_dagger,毒刃,Skill,2,vitality,8,20,single_enemy,poison,/images/items/book_poison_dagger.png,毒を塗った短刀で攻撃する。20のダメージを与え、3ターンの間、毎ターンHP5%の毒ダメージを付与する。
 19,card_mirage,蜃気楼,Support,3,vitality,12,0,all_allies,evasion_up,/images/items/scroll_mirage.png,蜃気楼の幻影でパーティ全体を守る。3ターンの間、パーティ全体が敵の攻撃を30%の確率で回避する。
-20,card_oasis_water,オアシスの水,Heal,2,mp,10,30,single_ally,cure_status,/images/items/book_oasis_water.png,霊泉の水で状態異常を解除する。30の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。
-21,card_swallow_rev,ツバメ返し,Skill,3,vitality,15,50,single_enemy,,/images/items/book_swallow_rev.png,神速の抜刀術で敵を切り払う高威力の一撃。防御カードを使ったかのような素早さで50の大ダメージを叩き込む。
+20,card_oasis_water,オアシスの水,Heal,2,mp,10,60,single_ally,cure_status,/images/items/book_oasis_water.png,霊泉の水で状態異常を解除する。60の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。
+21,card_swallow_rev,ツバメ返し,Skill,3,vitality,15,60,single_enemy,,/images/items/book_swallow_rev.png,神速の抜刀術で敵を切り払う高威力の一撃。防御カードを使ったかのような素早さで60の大ダメージを叩き込む。
 22,card_kunai,クナイ投げ,Skill,1,vitality,5,15,single_enemy,bleed,/images/items/book_kunai.png,素早くクナイを投擲する。15のダメージとともに2ターンの間、出血（カード使用ごとに3の追加ダメージ）を付与する。
-23,card_shadow_stitch,影縫い,Support,2,vitality,10,0,single_enemy,stun,/images/items/book_shadow_stitch.png,敵の影を縫いとめて動きを封じる。1ターンの間、敵を完全に行動不能（スタン）にする。ダメージなし。
-24,card_purify,清め,Heal,2,mp,10,25,single_ally,cure_debuff,/images/items/book_purify.png,禊の水でデバフを払い除ける。25の体力を回復し、ATK DOWN・目潰し等のデバフを即座に解除する。
-25,card_iai_slash,居合切り,Skill,3,vitality,15,60,single_enemy,,/images/items/scroll_iai_slash.png,刹那に放つ鞘からの一閃。スタンや目潰し等の状態異常を無視して60の大ダメージを与える。
-26,card_qigong_heal,氣の癒やし,Heal,2,mp,12,35,single_ally,regen,/images/items/skill_zen.png,氣の流れを整えて傷を癒す。35の体力を回復し、さらに3ターンのリジェネ（毎ターンHP5%回復）を付与する。
+23,card_shadow_stitch,影縫い,Support,2,vitality,10,0,single_enemy,stun,/images/items/book_shadow_stitch.png,敵の影を縫いとめて動きを封じる。2ターンの間、敵を完全に行動不能（スタン）にする。ダメージなし。
+24,card_purify,清め,Heal,2,mp,10,50,single_ally,cure_debuff,/images/items/book_purify.png,禊の水でデバフを払い除ける。50の体力を回復し、ATK DOWN・目潰し等のデバフを即座に解除する。
+25,card_iai_slash,居合切り,Skill,4,vitality,15,100,single_enemy,,/images/items/scroll_iai_slash.png,刹那に放つ鞘からの一閃。スタンや目潰し等の状態異常を無視して100の大ダメージを与える。
+26,card_qigong_heal,氣の癒やし,Heal,2,mp,12,70,single_ally,regen,/images/items/skill_zen.png,氣の流れを整えて傷を癒す。70の体力を回復し、さらに3ターンのリジェネ（毎ターンHP5%回復）を付与する。
 27,card_dragon_roar,龍の咆哮,Support,3,vitality,15,0,all_enemies,atk_down,/images/items/book_dragon_roar.png,龍の咆哮で敵の戦意を砕く。2ターンの間、敵全体の攻撃力を30%ダウンさせる（ATK DOWN）。
-28,card_iron_body,鉄布衫,Defense,2,vitality,10,30,self,def_up_heavy,/images/items/skill_iron_skin.png,鋼のごとく体を鍛え上げる防御体勢。3ターンの間、受けるダメージをDEF+30分だけ軽減する（鉄壁防御）。
+28,card_iron_body,鉄布衫,Defense,3,vitality,10,30,self,def_up_heavy,/images/items/skill_iron_skin.png,鋼のごとく体を鍛え上げる防御体勢。3ターンの間、受けるダメージをDEF+30分だけ軽減する（鉄壁防御）。
 29,card_continuous,連撃,Skill,3,vitality,15,40,single_enemy,multi_hit,/images/items/book_continuous.png,素早い連続攻撃で敵を翻弄する。2回攻撃し、合計40のダメージ（各20）を与える。2撃目はDEFを無視する。
 30,card_flying_blade,飛刀,Skill,2,vitality,8,25,random_enemy,pierce,/images/items/book_flying_blade.png,暗器の投刀でDEFを無視して攻撃する。25の貫通ダメージを与える。
 31,card_kings_wall,王の城壁,Defense,4,vitality,20,0,all_allies,absolute_def,,パーティ全体を鉄壁の守りで包む。3ターンの間、受けるダメージをDEF+50分だけ軽減する（全体）。
@@ -51,7 +51,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 50,card_royal_guard,近衛の盾,Defense,3,vitality,15,30,single_ally,cover,,高い防御力で指定した仲間を庇い守る。DEF+30で仲間へのダメージを肩代わりする。
 51,card_dragon_scale,竜の鱗,Defense,4,vitality,20,40,self,counter,,竜の鱗のごとき防御体勢をとる。2ターンの間、受けるダメージをDEF+40分だけ軽減する（自身）。
 52,card_void_strike,虚空撃,Skill,4,vitality,20,80,single_enemy,pierce,,防御を完全に無視する虚空の斬撃。DEFを貫通して80の大ダメージを与える。
-53,card_blessing,女神の祝福,Heal,4,mp,25,50,all_allies,regen,/images/items/skill_meditation.png,女神の祝福でパーティ全体を回復・強化する。全体を50回復し、3ターンのリジェネを付与する。
+53,card_blessing,女神の祝福,Heal,4,mp,25,100,all_allies,regen,/images/items/skill_meditation.png,女神の祝福でパーティ全体を回復・強化する。全体を100回復し、3ターンのリジェネを付与する。
 54,card_death_dance,死の舞踊,Skill,4,vitality,20,50,all_enemies,bleed,,死の舞踊で敵全体に出血を撒き散らす。全体に50のダメージとともに出血（2ターン、カード使用ごとに3ダメ）を付与する。
 55,card_time_stop,時止めの法,Support,5,mp,40,0,all_enemies,freeze,,時の流れを止める大魔法。敵全体を2ターンの間、完全に行動不能（スタン）にする。
 56,card_blood_drain,吸血,Magic,3,mp,15,40,single_enemy,drain,/images/items/skill_cannibalism.png,生命力を吸い取る禁断の魔法。40の魔法ダメージを与える。
@@ -59,4 +59,6 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 58,card_death_strike,即死攻撃,Skill,4,vitality,30,0,single_enemy,instakill,/images/items/grimoire_death_strike.png,30%の確率で敵を即死させる死の一撃。成功時：敵HP→0（即死）。失敗時：通常攻撃として機能する。
 59,card_mad_frenzy,狂戦士の薬,Support,1,vitality,30,0,self,berserk,/images/items/skill_berserk.png,使用後に制御不能となるが攻撃力が大幅上昇する狂戦士の薬。3ターンの間、ATK UPを付与する。
 60,card_soul_sac,魂の生贄,Magic,5,vitality,50,150,all_enemies,recoil,/images/items/grimoire_soul_sac.png,魂を生贄に捧げ全敵に超絶ダメージを与える。全体に150の大ダメージ（DEF無視）。代償：使用者の最大HP10%を自傷する。
-61,card_citizen_support,市民の支援,Heal,0,,0,300,self,,,
+61,card_citizen_support,市民の支援,Heal,0,,0,600,self,,,
+62,card_poison_brew,調毒,Skill,2,vitality,5,30,single_enemy,poison,/images/items/item_poison_manual.png,毒を調合して敵に投げつける。30のダメージを与え、5ターンの間、毎ターンHP5%の毒ダメージを付与する。
+63,card_blood_pact,血の契約,Support,3,vitality,1,0,self,atk_up,/images/items/item_forbidden_scroll.png,命を代償に戦闘能力を極限まで引き上げる禁術。12ターンの間ATK UPとDEF UPを同時に付与する。

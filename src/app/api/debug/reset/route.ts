@@ -185,8 +185,6 @@ export async function POST(req: Request) {
                 // Fix: Reset Battle Stats (Regression Fix)
                 hp: 100,
                 max_hp: 100,
-                mp: 10,
-                max_mp: 10,
                 atk: 5, // Default base atk
                 def: 0,
 

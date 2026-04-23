@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 /**
  * GET /api/tavern/my-heroic?user_id={userId}
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
         }
 
-        const client = createAuthClient(req);
+        const client = supabaseServer;
 
         // historical_logs から自分の英霊レコードを取得
         const { data: heroicLogs, error } = await client

@@ -222,6 +222,25 @@ EnemyATK = Enemy.level × 5 + 10
 MitigatedDamage = Max(1, EnemyATK - Player.DEF - DefBonus)
 ```
 
+### 5.3.1 NPCの攻撃ダメージ計算（v2.8）
+
+<!-- v2.8: ATK基礎値追加・基本攻撃式変更 -->
+
+NPCは `npcs.attack`（→ `npc.atk`）に基礎ATK値を持ち、カードダメージおよび基本攻撃に加算される。
+
+```
+// カード攻撃
+CardDamage = Card.effect_val + NPC.ATK
+FinalDamage = max(1, CardDamage - Enemy.DEF)  // 魔法系は DEF 無視
+
+// 基本攻撃（攻撃カードが使えなかった場合のフォールバック）
+BasicDamage = NPC.ATK + random(0, 6)
+FinalDamage = max(1, BasicDamage - Enemy.DEF)
+```
+
+**ATK値の取得パス**: `npcs.attack` → `shadowService` → `party_members.atk` → `party/list API` → `battleSlice` → `npc.atk`
+
+詳細は `spec_v3_addendum_npc_ai.md` §4.3.1 を参照。
 ### 5.4 特殊ダメージ：Vitality (寿命)
 
 - **Effect**: `drain_vit` トレイトまたは `vit_damage > 0` を持つ敵攻撃は、HPではなく `user.vitality` を直接減らす。
@@ -453,6 +472,8 @@ function getEffectiveMaxHp(userProfile, battleState): number {
 | v13.0 | 2026-04-11 | 装備ボーナスのバトル計算への適用（equipBonus）のストアレベル管理移行、状態異常バッジUI追加（StatusEffectBadges） |
 | **v14.0** | **2026-04-12** | **HPバーリアルタイム同期（マーカー方式）、カードimage_url/description取得フロー改善、パーティHP同期（max_durability取得修正）、startBattle での fetchInventory 強制実行** |
 | v14.1 | 2026-04-15 | spec_v2 文字化け修復（Shift-JIS二重化け → UTF-8完全再構築） |
+| **v2.8** | **2026-04-17** | **NPC ATK基礎値追加 (§5.3.1)。NPC基本攻撃式を `ATK + 0~6` に変更。同一カード制限撤廃（→ spec_v3_addendum_npc_ai.md §4.3）** |
+| **v16.0** | **2026-04-23** | **ヒールスキルNPC対象回復修正（cardEffects.tsフォールバックに「治癒」「癒」「応急」追加、NPC回復時early returnで共通パスの上書き回避）。勝利判定改善（runNpcPhase冒頭に全敵HP0チェック、isVictoryフラグ保護）。VIT離脱処理強化（quest/complete APIのis_activeフィルタ撤廃、delete()エラーハンドリング追加）** |
 
 ---
 
@@ -481,16 +502,24 @@ explicit player actions rather than timer-based automation.
   [NEXT tapped]
   runNpcPhase(): AP recovery, tick effects, NPC actions
   -> battlePhase: 'npc_done', NPC messages added
+  -> If all enemies HP<=0: isVictory = true (skip enemy phase)
   -> Logs flow (NEXT disabled)
   -> Logs complete (NEXT enabled)
     |
   [NEXT tapped]
+  Victory check: if isVictory -> skip enemy phase, advance turn
   ENEMY overlay shown
-  runEnemyPhase(): Enemy attacks
+  runEnemyPhase(): processEnemyTurn()
+  -> Guard: if isVictory or all enemies HP<=0 -> immediate return
+  -> Enemy attacks (only enemies with HP > 0)
   -> battlePhase: 'enemy_done', enemy messages added
-  -> Currently auto-advances via processEnemyTurn setting battlePhase:'player'
 [Turn N+1 Start]
 ```
+
+> **⚠ v15.1 修正 (2026-04-23)**: `processEnemyTurn` 冒頭で `isVictory` フラグおよび
+> 全敵HP≤0を厳格にチェックする。従来は `battleState.enemy` オブジェクトが
+> HP=0のまま残存していると死亡エネミーがアクションを実行するバグがあった。
+> BattleView側でもNPC完了→エネミー遷移時に `isVictory` ガードを追加。
 
 ### Store Actions (v15.0)
 
@@ -525,6 +554,7 @@ explicit player actions rather than timer-based automation.
 |---|---|---|
 | v15.0 | 2026-04-15 | フェーズ制バトルフロー導入（battlePhase: player→npc_done→enemy_done）、NEXTボタン実装、setTimeout連鎖廃止、evasion_up敵誤付与バグ修正 |
 | **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。gameStore.ts(2154行)→スライス分割(~75行)。useBattleTypewriter / useScenarioNodeProcessor フック抽出。ScenarioEngine 988行→559行。詳細: spec_v18_code_architecture.md 参照** |
+| **v2.8.1** | **2026-04-17** | **NPC行動上限 `MAX_ACTIONS_PER_TURN = 3` 追加。ミッドターンリターゲット実装（`trackedEnemies` で全敵HP追跡）。酒場雇用後のゴールド即時反映修正。NPC AI仕様詳細: spec_v3_addendum_npc_ai.md §4.4 参照** |
 
 > getEffectiveAtk / getEffectiveDef / getEffectiveMaxHp は v1.0 リファクタリングにより
 > src/store/gameStore.ts から src/store/slices/profileSlice.ts に移動した。

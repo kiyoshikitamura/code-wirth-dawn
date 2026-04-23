@@ -1,4 +1,4 @@
-# Wirth-Dawn Item Master Specification (v16.3) & Security/UX Audit
+# Wirth-Dawn Item Master Specification (v16.4) & Security/UX Audit
 
 本ドキュメントは、「Code: Wirth-Dawn」の経済システムおよびゲーム体験の基盤となるアイテムマスタ（itemsテーブル）全57種の定義、およびそれに伴うセキュリティ監査検証とUI/UX追加実装提案を統合したものです。
 
@@ -23,8 +23,9 @@
     - バフ/デバフ: `effect_id` (効果ID), `effect_duration` (持続ターン), `target` (`'enemy'` or 省略=自身)
     - 状態異常解除: `remove_effect` (解除する効果ID)
     - 逃走: `escape: true`
-    - フィールド専用: `vit_restore` (Vit回復量)
-    - 例: `{"use_timing": "battle", "heal": 150}` / `{"use_timing": "battle", "effect_id": "regen"}` / `{"use_timing": "field", "vit_restore": 1}`
+    - フィールド専用: `heal_pct` (HP割合回復), `vit_restore` (Vit回復量 ※竜血のみ)
+    - 攻撃アイテム: `damage` (単体固定ダメージ), `aoe_damage` (全体固定ダメージ)
+    - 例: `{"use_timing": "battle", "heal": 150}` / `{"use_timing": "battle", "damage": 50}` / `{"use_timing": "battle", "aoe_damage": 80}`
 *   `image_url` (string): アイコン画像URL (任意)
 *   `description` (string): 説明文
 
@@ -36,7 +37,7 @@
 2. `item_high_potion` (上級中和薬 / consumable / 250G): 澄んだ青色をした上質な霊薬。致命傷でなければ瞬時に塞ぐ。
 3. `item_antidote` (解毒草 / consumable / 30G): 強烈な苦味を持つ薬草。噛み砕くことで血中の毒素を中和する。
 4. `item_holy_water` (聖水 / consumable / 100G): 教会で清められた水。穢れや呪いを払い、精神を落ち着かせる。
-5. `item_tent` (野営キット / consumable / 500G): 防水の布と簡素な調理器具のセット。厳しい路銀での休息を支える（フィールド専用）。
+5. `item_tent` (簡易テント / consumable / 300G): effect_data: `{use_timing: 'field', heal_pct: 0.5}`. 野営しながらHPを50%回復する。宿屋が利用できない（名声低下等）プレイヤーのフィールド唯一のHP回復手段。
 
 #### ② 国家限定消費アイテム（8種 / 各国首都限定 / 中〜高価）
 *   **聖帝国ローラン限定:**
@@ -74,7 +75,7 @@
 強敵ボスの討伐を果たした証明。インベントリに所持していることで特殊クエスト（スポットシナリオ）の出現トリガー等となる。
 *   `item_relic_bone`, `item_desert_worm_meat`, `item_red_ogre_horn`, `item_thunder_fur`, `item_griffon_feather`: (拠点周辺クエスト等の中ボス素材)
 *   `item_treant_core`, `item_demon_heart`, `item_angel_record`, `item_kirin_horn`, `item_omega_part`, `item_kraken_proof`: (特殊フラグ強敵ボスの素材・証明)
-*   `item_dragon_blood` (竜血 / consumable): 例外的なVit3回復の実用消費アイテム。
+*   `item_dragon_blood` (竜血 / consumable / 8000G): ゲーム内 **唯一** のVitality回復手段（+3）。闇市経由でのみ入手可能。Vitalityの減少は原則不可逆であり、この超高額アイテムだけが例外。
 
 #### ⑦ 第7カテゴリ：ボスドロップ限定武具 (非売品 / `equipment`)
 ショップでは手に入らない非常に強力なステータス上昇補正を持つ武具。インベントリ内で装備指定するだけで純粋なステータス強化をもたらす。
@@ -84,6 +85,77 @@
 *   `item_mino_axe` (大斧 / weapon): 攻撃力20の極大上昇。
 
 > **※補足**: 実データ稼働に伴い追加された「基本消費アイテムのバリエーション（松明、解毒剤等）」や「上記ボス関連素材・武具」を含め、計57種のアクティブなアイテムを**すべて公式正史**として承認する。
+
+> **v2.9.2 更新 (2026-04-17)**:
+> - `item_tent` を Vit回復 → **HP50%回復**(フィールド専用) に再設計。Vit回復は竜血(`item_dragon_blood`)のみに限定。
+> - `item/use/route.ts` にフィールドアイテムのサーバー側効果適用を実装 (`heal`, `heal_pct`, `heal_full`, `vit_restore`)。
+> - 敵ドロップアイテム修正：欠落3件の新規アイテム追加、スキルドロップ5件を消耗品に変更。
+> - 未実装バトルアイテム4種の効果実装:
+>   - `item_whetstone`(砥石): ATK×1.5 バフ 3ターン (既存atk_upエンジン利用)
+>   - `item_holy_water`(聖水): 単体50ダメージ (新規`damage`ハンドラ)
+>   - `item_oil_pot`(火炎瓶): 単体30ダメージ + 炎上持続DoT 2T (damage + poison流用)
+>   - `item_bomb_large`(大型爆弾): 全体80ダメージ (新規`aoe_damage`ハンドラ)
+> - `battleSlice.ts` に `damage`(単体ダメージ) と `aoe_damage`(全体ダメージ) ハンドラを追加。
+> - DB上のアイテム総数: 119件 → 123件（新規ドロップ4種追加）。
+
+> **v2.9.3 更新 (2026-04-17) — 装備品バランス調整**:
+> - 既存装備10件のステータス修正:
+>   - `item_merchant_bag`(商人の鞄): HP+5→HP+15,ATK+2（旅リュックとの差別化）
+>   - `item_lucky_coin`(幸運のコイン): ATK+2→ATK+4,HP+5
+>   - `item_golden_dice`(黄金のサイコロ): ATK+3→ATK+5,DEF+2
+>   - `gear_merchant_abacus`(商人のそろばん): ATK+3→ATK+7
+>   - `gear_cursed_mask`(呪いの仮面): ATK+8→ATK+8,DEF-3（デメリット追加）
+>   - `tool_lockpick`(盗賊の七つ道具): ステなし→DEF+1
+>   - `item_tea_set`(茶器セット): DEF+2→DEF+3,HP+3
+>   - `gear_dragon_spear`(青龍偃月刀): ATK+14→ATK+12（ナーフ）
+>   - `gear_archmage_staff`(大賢者の杖): ATK+12→ATK+12,HP+10（バフ）
+> - 新規武器5種: ショートソード(ATK+3), 鉄の剣(ATK+6), バスタードソード(ATK+9), シミター(ATK+6), 魔人の曲刃(ATK+11)
+> - 新規防具12種: 革鎧(DEF+2), 鎖帷子(DEF+5), 板金鎧(DEF+8), 聖職者の祭服(DEF+5,HP+5), 聖騎士の全身鎧(DEF+14), 砂防の革甲(DEF+3,HP+5), 王宮の絹衣(DEF+7,HP+8), 忍装束(DEF+3), 鬼武者の鎧(DEF+13), 僧衣(DEF+3), 道着(DEF+6), 龍鱗の鎧(DEF+11)
+> - 装備品総数: 37種 → **54種**。各国家の武器・防具を均等化（武器3種/防具3種ずつ）。
+> - items.csv をDB同期済み（全140件）。
+
+> **v2.9.3b 更新 (2026-04-17) — スキル vs アイテム価格バランス調整**:
+> - ダメージ計算式 `FinalDmg = (UserATK + CardPower) × AtkMod - TargetDEF` に基づく装備/スキル/消耗品の価格整合性監査。
+> - 砥石: 100G → **250G**（ATK UPスキルとの価格差緩和）
+> - 奥義書:命削り: 8,000G → **5,000G**（Vitリスク考慮で減額）
+> - 禁書:死体操作: 8,000G → **5,000G**（ニッチスキルの価格適正化）
+> - 秘伝:点穴: 5,000G → **3,500G**（即死+麻痺+Vitコスト考慮）
+> - 奥義:獅子吼: 3,000G → **2,500G**（同価格帯装備との調整）
+> - 武器「鉄の剣」→ **「鍛鉄の剣」** に改名（教本:鉄の剣との名称衝突回避）
+
+> **v2.9.3c 更新 (2026-04-17) — 酒場NPC出現ロジック修正**:
+> - `gossip/route.ts` のタブ④「酒場」NPCリスト表示を改修。
+> - 表示上限: **3件 → 5件** に拡大。
+> - **Free NPC 1枠保証**: 国籍NPC 8-10体に埋もれて Free NPC が出現しにくかった問題を解消。Free候補からランダム1件を確定枠とし、残り4枠を国籍NPC+他候補からランダム選出。
+> - **ゲストNPC対応**: `npc_guest_*` slugのNPCもフィルタ対象に追加（以前は国籍NPC+Freeのみ）。
+> - フィルタ上限を 10件 → **15件** に拡大（候補プールの充実化）。
+
+> **v2.9.3d 更新 (2026-04-17) — ショップ陳列ロジック改修**:
+> - `shop/route.ts` のGET処理を改修。カテゴリ別枠数制限付きランダム陳列に変更。
+> - **カテゴリ別枠数制限**: 全品一括表示 → カテゴリ別ランダム抽選。
+>   - 武器: **3点**
+>   - 防具: **3点**
+>   - アクセサリ: **3点**
+>   - 消耗品: **5点**
+>   - スキル: **5点**
+>   - 通行許可証(キーアイテム): **1点**
+>   - 交易品: **2点**
+>   - クエスト専売品: 枠制限対象外（常時表示）
+>   - **合計最大22点**（旧: 無制限）
+> - ソート順:「武器 → 防具 → アクセサリ → スキル → 通行許可証 → 消耗品 → 交易品」
+> - 既存の国家フィルタ・繁栄度フィルタ・闇市フィルタはそのまま維持。初心者割引はv2.9.3pで廃止。
+
+> **v2.9.3e 更新 (2026-04-18) — 酒場/ショップ表示バグ修正**:
+> - **酒場 Free NPC不出現バグ修正**: `npcShadows` にslugを保持し、Free判定を直接slugベースに変更。旧実装は `allNpcMercs` 経由のID lookupで型不一致により常にFree候補が空配列になっていた。
+> - **ショップ ボスドロップ除外**: `item_white_robe`, `item_thief_blade`, `item_pirate_hat`, `item_mino_axe` の4件をショップ販売対象から明示的に除外。これらは `min_prosperity=1, nation_tags=null` のため既存フィルタを全て通過していた。
+
+> **v2.9.3f 更新 (2026-04-18) — 酒場/噂話システム統一**:
+> - **データソース統一**: 噂話モーダルの酒場タブを `ShadowService.findShadowsAtLocation` に委譲。gossip独自ロジックを撤廃し、`/api/tavern/list` と同一データを返すように統一。
+> - **sessionStorageキャッシュ**: 噂話→酒場の遷移で同じNPCリストを引き継ぐクライアント側キャッシュ。「見渡す」ボタンでキャッシュクリア＆再取得。
+> - **英霊除外**: `findShadowsAtLocation` から英霊(shadow_heroic)を除外。英霊は酒場の「影の記録」タブ専用に。
+> - **ゲストNPC除外**: `npc_guest_*`（ガウェイン、ヴォルグ、英霊）を酒場候補から除外。ゲストNPCはシナリオ専用。
+> - **API認証統一**: tavern/list, tavern/hire, tavern/my-heroic を全て `supabaseServer`(service role) に移行。`createAuthClient` の使用を撤廃。
+> - **噂話タブUI改善**: 酒場タブを `SequentialCards` + `TypewriterCardWithNext`（1件ずつ「もっと聞く」で進捗）に変更。
 
 ---
 
@@ -215,3 +287,4 @@ theme: {
 | v16.1 | 2026-04 | ボス素材・武具拡張追加 |
 | v16.2 | 2026-04-11 | バトルエンジンv3.0対応：スキル説明文更新・ツバメ返し仕様変更反映 |
 | **v16.3** | **2026-04-13** | **effect_data key仕様を明確化（heal/heal_pct/heal_full/escape等）・item_potion_s heal:50 追加・バトルアイテムログ仕様追加** |
+| **v16.4** | **2026-04-22** | **メインシナリオ限定装備4種追加（ID 501-504: ガウェインの小手/竜牙の剣/英霊の鎖帷子/蒼暁の剣）。ショップ除外リストに追加。装備品総数: 54種 → 58種** |

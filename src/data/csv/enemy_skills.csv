@@ -1,10 +1,10 @@
 id,slug,name,effect_type,value,description
 2001,skill_tackle,体当たり,damage,1,敵に物理ダメージを与える
-2002,skill_heavy_blow,強打,damage,2,敵に強力な物理ダメージを与える
+2002,skill_heavy_blow,強打,damage,1.5,敵に強力な物理ダメージを与える
 2003,skill_arrow,矢を射る,damage,1,敵を遠隔から攻撃する
 2004,skill_fireball,火の玉,damage,1,敵に炎のダメージを与える
 2005,skill_dark_flare,ダークフレア,damage,2,強力な闇の魔法ダメージ
-2006,skill_poison_attack,毒針,damage,1,敵にダメージを与え毒を付与する（未実装の場合は通常ダメージ）
+2006,skill_poison_attack,毒針,damage_poison,1,敵にダメージを与え毒(3T)を付与する
 2007,skill_drain_vit,生命吸収,drain_vit,1,対象の寿命（Vitality）を直接奪う
 2008,skill_heal_self,自己再生,heal,50,自身のHPを回復する
 2009,skill_heal_minor,小回復,heal,30,自身のHPを少し回復する
@@ -17,10 +17,20 @@ id,slug,name,effect_type,value,description
 2016,skill_bounty_strike,処刑の一撃,damage,3,賞金首を狙う必殺の一撃
 2017,skill_bounty_combo,滅多斬り,damage,2,連続で斬りつける
 2018,skill_bounty_hunt,追跡の刃,damage,2,逃がさないための鋭い一撃
+2020,skill_poison_breath,毒の息,damage_poison,1,毒の塊を吐き出しダメージと毒(3T)を付与する
+2021,skill_thunder_strike,雷撃,damage_stun,2,雷を落とし大ダメージとスタン(1T)を与える
+2022,skill_sand_blind,砂塵,damage_blind,1,砂を巻き上げダメージと目潰し(2T)を付与する
+2023,skill_claw_rend,裂傷の爪,damage_bleed,1,鋭い爪で引き裂きダメージと出血(2T)を付与する
+2024,skill_charm,魅惑の歌,damage_stun,1,妖艶な歌で魅了しスタン(1T)を与える
+2025,skill_petrify_gaze,石化の視線,damage_stun,2,石化の視線でダメージとスタン(1T)を与える
+2026,skill_soul_drain,魂抜き,drain_vit,1,魂を引き抜き寿命を奪う
+2027,skill_regenerate,強力再生,heal,100,強力な再生能力でHPを大きく回復する
+2030,skill_war_cry,雄叫び,buff_self_atk,0,雄叫びを上げて攻撃力を高める(ATK UP 3T)
+2031,skill_curse,呪詛,debuff_atk_down,0,呪いの言葉で攻撃力を奪う(ATK DOWN 2T)
+2032,skill_armor_break,鎧砕き,debuff_def_down,0,防具を叩き壊し防御力を下げる(DEF DOWN 2T)
 2045,skill_defense_pierce,防御貫通強打,damage,5,防御を無視する強打
 2088,skill_god_purge,神の粛清,damage,8,大ダメージと全体スタン
 2099,skill_god_enrage,神の怒り,damage,12,発狂時の超絶大ダメージ
-
-501,skill_boss_heal,暗黒の癒し,heal,200,,5ターンに一度、自身を大きく回復させる
-502,skill_boss_nuke,終焉の息吹,damage,50,,防御を貫通しうる強烈な全体ダメージ
-503,skill_boss_stun,咆哮,status_effect,1,,1ターンの間スタンさせる
+501,skill_boss_heal,暗黒の癒し,heal,200,5ターンに一度自身を大きく回復する
+502,skill_boss_nuke,終焉の息吹,damage,50,防御を貫通しうる強烈な全体ダメージ
+503,skill_boss_stun,咆哮,status_effect,1,1ターンの間スタンさせる

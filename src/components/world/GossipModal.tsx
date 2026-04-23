@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X, RefreshCw, Newspaper, Sparkles, KeyRound, Beer, Users } from 'lucide-react';
+import { X, RefreshCw, Newspaper, Sparkles, KeyRound, Beer, Users, ChevronDown } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 
 // ─── 型定義 ───────────────────────────────────────────────────
 interface WorldNewsItem {
     id: number;
-    news_content: string;
-    old_status: string;
-    new_status: string;
-    occured_at: string;
+    message: string;
+    old_value: string;
+    new_value: string;
+    event_type: string;
+    created_at: string;
     location?: { name: string };
 }
 
@@ -83,7 +84,49 @@ function useTypewriter(text: string, speed = 22, active = true) {
     return { displayed, done };
 }
 
-// ─── タイプライターカード ─────────────────────────────────────
+// ─── タイプライターカード（タップで次へボタン付き） ──────────
+function TypewriterCardWithNext({
+    text,
+    icon,
+    footer,
+    className = '',
+    onNext,
+    isLast,
+    allDone,
+}: {
+    text: string;
+    icon?: React.ReactNode;
+    footer?: React.ReactNode;
+    className?: string;
+    onNext?: () => void;   // タイプライター完了後、次カードへ進む
+    isLast: boolean;       // これが最後のカードか
+    allDone: boolean;      // このカードが「もはや最後まで表示済み」か
+}) {
+    const { displayed, done } = useTypewriter(text, 22, true);
+
+    return (
+        <div className={`relative bg-gray-800/60 border border-gray-700/60 rounded-xl p-3.5 ${className}`}>
+            {icon && <div className="mb-2">{icon}</div>}
+            <p className="text-sm text-gray-200 leading-relaxed">
+                {displayed}
+                {!done && <span className="animate-pulse text-amber-400">▍</span>}
+            </p>
+            {done && footer && <div className="mt-2.5">{footer}</div>}
+            {/* タイプライター完了後、最後でなければ「もっと聞く」を表示 */}
+            {done && !isLast && !allDone && onNext && (
+                <button
+                    onClick={onNext}
+                    className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 bg-gray-700/60 hover:bg-gray-700 border border-gray-600 rounded-lg text-xs font-bold text-gray-300 hover:text-white transition-all active:scale-[0.98]"
+                >
+                    <ChevronDown size={12} />
+                    もっと聞く
+                </button>
+            )}
+        </div>
+    );
+}
+
+// ─── 旧スタイルタイプライターカード（newsタブ用に残す） ──────
 function TypewriterCard({
     text, icon, footer, delay = 0, className = '', onDone,
 }: {
@@ -121,28 +164,35 @@ function TypewriterCard({
     );
 }
 
-// ─── 順次タイプライター表示（1つずつ） ───────────────────────
-function SequentialTypewriterCards<T>({
+// ─── 順次タイプライター表示（タップで次へ/最後はフッターボタンで更新） ─
+function SequentialCards<T>({
     items,
     renderCard,
     tabKey,
 }: {
     items: T[];
-    renderCard: (item: T, index: number, onDone: () => void) => React.ReactNode;
+    renderCard: (item: T, index: number, isLast: boolean, allDone: boolean, onNext: () => void) => React.ReactNode;
     tabKey: number;
 }) {
     const [visibleCount, setVisibleCount] = useState(1);
-    // tabKeyが変わるたびにリセット
     useEffect(() => { setVisibleCount(1); }, [tabKey]);
+
+    const allDone = visibleCount >= items.length;
 
     return (
         <>
             {items.slice(0, visibleCount).map((item, i) =>
-                renderCard(item, i, () => {
-                    if (i === visibleCount - 1 && visibleCount < items.length) {
-                        setVisibleCount(v => v + 1);
+                renderCard(
+                    item,
+                    i,
+                    i === items.length - 1,  // isLast
+                    allDone,
+                    () => {
+                        if (i === visibleCount - 1 && visibleCount < items.length) {
+                            setVisibleCount(v => v + 1);
+                        }
                     }
-                })
+                )
             )}
         </>
     );
@@ -152,10 +202,10 @@ function SequentialTypewriterCards<T>({
 type TabKey = 'news' | 'lore' | 'secret' | 'tavern';
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'news',   label: '噂話',     icon: <Newspaper   size={13} /> },
-    { key: 'lore',   label: 'こぼれ話', icon: <Sparkles    size={13} /> },
-    { key: 'secret', label: '路地裏',   icon: <KeyRound    size={13} /> },
-    { key: 'tavern', label: '酒場',     icon: <Beer        size={13} /> },
+    { key: 'news',   label: '冒険者の噂', icon: <Newspaper   size={13} /> },
+    { key: 'lore',   label: '噂話',      icon: <Sparkles    size={13} /> },
+    { key: 'secret', label: '路地裏',    icon: <KeyRound    size={13} /> },
+    { key: 'tavern', label: '酒場',      icon: <Beer        size={13} /> },
 ];
 
 // ─── メインコンポーネント ──────────────────────────────────────
@@ -188,6 +238,12 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
             const json = await res.json();
             setData(prev => ({ ...prev, ...json }));
             setTabKey(prev => ({ ...prev, [tab]: prev[tab] + 1 }));
+            // v2.9.3f: 酒場データをsessionStorageにキャッシュ（TavernModalとの一致用）
+            if (tab === 'tavern' && json.tavern_shadows) {
+                try {
+                    sessionStorage.setItem('tavern_shadows_cache', JSON.stringify(json.tavern_shadows));
+                } catch { /* sessionStorage unavailable */ }
+            }
         } catch (e) {
             console.error('[gossip] fetch error', e);
         } finally {
@@ -225,7 +281,6 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
 
     // ─── タイプライター遅延アキュムレーター（newsタブ用）───
     let newsDelay = 0;
-    let tavernDelay = 0;
 
     // ─── レンダリング ───────────────────────────────────────
     return (
@@ -236,7 +291,7 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
-            {/* Panel — 他施設モーダルと同系統の暗青+グレー配色 */}
+            {/* Panel */}
             <div className="relative z-10 w-full max-w-lg max-h-[90dvh] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-gray-900 border border-gray-700">
 
                 {/* ─ ヘッダー ─ */}
@@ -286,14 +341,14 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                 {/* ─ タブコンテンツ ─ */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 px-4 py-4 space-y-3">
 
-                    {/* ── タブ①「噂話」 ── */}
+                    {/* ── タブ①「冒険者の噂」 ── */}
                     {activeTab === 'news' && (
                         <>
                             {loading.news ? <Spinner /> : (
-                                data.world_news?.length === 0
-                                    ? <EmptyHint text="まだ世界に大きな変化はないようだ…" />
-                                    : data.world_news?.map((item, i) => {
-                                        const textText = item.news_content || '（情報なし）';
+                                (!data.world_news || data.world_news.length === 0)
+                                    ? <EmptyHint text="今は冒険者の噂話がないようだ..." />
+                                    : data.world_news.map((item, i) => {
+                                        const textText = item.message || '（情報なし）';
                                         const d = newsDelay;
                                         newsDelay += textText.length * 22 + 500;
                                         return (
@@ -302,18 +357,18 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                                                 delay={d}
                                                 icon={
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-base">{statusEmoji(item.old_status, item.new_status)}</span>
+                                                        <span className="text-base">{statusEmoji(item.old_value, item.new_value)}</span>
                                                         <span className="text-[10px] font-bold text-amber-400">
                                                             {item.location?.name ?? '???'}
                                                         </span>
                                                         <span className="text-[9px] text-gray-500 ml-auto">
-                                                            {new Date(item.occured_at).toLocaleDateString('ja-JP')}
+                                                            {new Date(item.created_at).toLocaleDateString('ja-JP')}
                                                         </span>
                                                     </div>
                                                 }
                                                 text={textText}
                                                 footer={
-                                                    <p className="text-[9px] text-gray-500 italic">{item.old_status} → {item.new_status}</p>
+                                                    <p className="text-[9px] text-gray-500 italic">{item.old_value} → {item.new_value}</p>
                                                 }
                                             />
                                         );
@@ -322,20 +377,21 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                         </>
                     )}
 
-                    {/* ── タブ②「こぼれ話」 ── */}
+                    {/* ── タブ②「噂話」（旧こぼれ話）── */}
                     {activeTab === 'lore' && (
                         <>
                             {loading.lore ? <Spinner /> : (
-                                data.lore_tips?.length === 0
+                                !data.lore_tips || data.lore_tips.length === 0
                                     ? <EmptyHint text="今日は特に面白い話を耳にしていないな…" />
-                                    : <SequentialTypewriterCards
-                                        items={data.lore_tips ?? []}
+                                    : <SequentialCards
+                                        items={data.lore_tips}
                                         tabKey={tabKey.lore}
-                                        renderCard={(item, i, onDone) => (
-                                            <TypewriterCard
+                                        renderCard={(item, i, isLast, allDone, onNext) => (
+                                            <TypewriterCardWithNext
                                                 key={`${tabKey.lore}-lore-${item.id}`}
-                                                delay={0}
-                                                onDone={onDone}
+                                                isLast={isLast}
+                                                allDone={allDone}
+                                                onNext={onNext}
                                                 icon={
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="text-base">💬</span>
@@ -356,19 +412,20 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                         <>
                             {loading.secret ? <Spinner /> : (
                                 <>
-                                    {(data.secret_info?.quests.length ?? 0) === 0 
+                                    {(data.secret_info?.quests.length ?? 0) === 0
                                         ? <EmptyHint text="今は大した情報はない。また後で聞いてみろ。" />
                                         : null}
 
                                     {(data.secret_info?.quests?.length ?? 0) > 0 && (
-                                        <SequentialTypewriterCards
+                                        <SequentialCards
                                             items={data.secret_info!.quests}
                                             tabKey={tabKey.secret}
-                                            renderCard={(q, i, onDone) => (
-                                                <TypewriterCard
+                                            renderCard={(q, i, isLast, allDone, onNext) => (
+                                                <TypewriterCardWithNext
                                                     key={`${tabKey.secret}-secret-${q.id}`}
-                                                    delay={0}
-                                                    onDone={onDone}
+                                                    isLast={isLast}
+                                                    allDone={allDone}
+                                                    onNext={onNext}
                                                     className="border-l-2 border-l-red-700"
                                                     icon={
                                                         <div className="flex items-center gap-2">
@@ -406,40 +463,44 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
 
                                     {data.tavern_shadows?.length === 0
                                         ? <EmptyHint text="今日は凄腕の傭兵の姿が見当たらない。またいつか来るだろう。" />
-                                        : data.tavern_shadows?.map((s, i) => {
-                                            const textText = s.flavor_text
-                                                ? `「${s.flavor_text}」`
-                                                : s.origin_type === 'system_mercenary'
-                                                    ? `「${s.name}……${s.job_class || '傭兵'}の腕前は確かだと評判だ。話しかけてみるのも一興かもしれない。」`
-                                                    : `「${s.name}という旅人が酒場に立ち寄っている。冒険者と見受けるが、一緒に旅をしてみるのも悪くはないだろう。」`;
-                                            const d = tavernDelay;
-                                            tavernDelay += textText.length * 22 + 500;
-                                            return (
-                                                <TypewriterCard
-                                                    key={`${tabKey.tavern}-sh-${s.id}`}
-                                                    delay={d}
-                                                    icon={
-                                                        <div className="flex items-center gap-2.5">
-                                                            <div className="w-9 h-9 rounded-full border-2 border-gray-600 bg-gray-800 overflow-hidden flex-shrink-0 shadow">
-                                                                {s.avatar_url
-                                                                    ? <img src={s.avatar_url} alt={s.name} className="w-full h-full object-cover" />
-                                                                    : <div className="w-full h-full flex items-center justify-center text-gray-400 text-base">⚔</div>
-                                                                }
+                                        : <SequentialCards
+                                            items={data.tavern_shadows || []}
+                                            tabKey={tabKey.tavern}
+                                            renderCard={(s, i, isLast, allDone, onNext) => {
+                                                const textText = s.flavor_text
+                                                    ? `「${s.flavor_text}」`
+                                                    : s.origin_type === 'system_mercenary'
+                                                        ? `「${s.name}……${s.job_class || '傭兵'}の腕前は確かだと評判だ。話しかけてみるのも一興かもしれない。」`
+                                                        : `「${s.name}という旅人が酒場に立ち寄っている。冒険者と見受けるが、一緒に旅をしてみるのも悪くはないだろう。」`;
+                                                return (
+                                                    <TypewriterCardWithNext
+                                                        key={`${tabKey.tavern}-sh-${s.id}`}
+                                                        isLast={isLast}
+                                                        allDone={allDone}
+                                                        onNext={onNext}
+                                                        icon={
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-9 h-9 rounded-full border-2 border-gray-600 bg-gray-800 overflow-hidden flex-shrink-0 shadow">
+                                                                    {s.avatar_url
+                                                                        ? <img src={s.avatar_url} alt={s.name} className="w-full h-full object-cover" />
+                                                                        : <div className="w-full h-full flex items-center justify-center text-gray-400 text-base">⚔</div>
+                                                                    }
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[11px] font-black text-gray-100">{s.epithet} {s.name}</p>
+                                                                    <p className="text-[9px] text-gray-400">
+                                                                        {s.job_class}
+                                                                        {s.level ? ` — Lv.${s.level}` : ''}
+                                                                        {s.origin_type === 'system_mercenary' ? ' 〔公式傭兵〕' : ''}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="text-[11px] font-black text-gray-100">{s.epithet} {s.name}</p>
-                                                                <p className="text-[9px] text-gray-400">
-                                                                    {s.job_class}
-                                                                    {s.level ? ` — Lv.${s.level}` : ''}
-                                                                    {s.origin_type === 'system_mercenary' ? ' 〔公式傭兵〕' : ''}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                    text={textText}
-                                                />
-                                            );
-                                        })
+                                                        }
+                                                        text={textText}
+                                                    />
+                                                );
+                                            }}
+                                        />
                                     }
 
                                     {/* 酒場への誘導ボタン */}

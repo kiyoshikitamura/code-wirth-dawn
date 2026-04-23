@@ -1,4 +1,4 @@
-# クエスト仕様書：6015 — 第15話「未来への楔」
+﻿# クエスト仕様書：6015 — 第15話「未来への楔」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 35 |
 | **難度** | 4 |
 | **依頼主** | 冒険者ギルド |
-| **出現条件** | 前提クエストクリア: main_ep14 / 必須滞在拠点: loc_haryu |
+| **出現条件** | 前提クエストクリア: main_ep14 / 必須滞在拠点: loc_ancient_ruins |
 | **サムネイル画像** | `/images/quests/bg_spot_karyu_thunder.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+古代遺跡の町に眠る先人たちの遺志。神々に抗った英霊たちの残留魔力が、君の剣に新たな力を宿す。未来を切り拓く楔を、この手で打ち込め。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:3500|Rep:10
+Gold:5000|Rep:30|Item:503
 ```
 
 ---
@@ -63,8 +63,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_ruins_field`
 
 **テキスト:**
@@ -81,8 +81,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_ruins_field`
 
 **テキスト:**
@@ -99,8 +99,8 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_ruins_field`
 
 **テキスト:**
@@ -117,8 +117,8 @@ text2
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
@@ -135,8 +135,8 @@ text2_1
 
 #### `text2_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
@@ -153,8 +153,8 @@ text3
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
@@ -171,8 +171,8 @@ text3_1
 
 #### `text3_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
@@ -189,15 +189,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
 ```
 「来い、神の遣い！俺の命と引き換えに、てめえのその冷たい羽を毟り取ってやる！！」君はありったけの闘気を振り絞り、特攻した。
 ```
-**次ノード:** `{type:battle, enemy_group_id:6}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:215}` (auto-advance)
 **params:**
 ```json
 choice1
@@ -207,8 +207,8 @@ choice1
 
 #### `text_post_battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
@@ -225,8 +225,8 @@ text_post_battle2
 
 #### `text_post_battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**
@@ -243,8 +243,8 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_mystery`
+- **SE**: `—`
 - **背景画像**: `bg_spot_karyu_thunder`
 
 **テキスト:**

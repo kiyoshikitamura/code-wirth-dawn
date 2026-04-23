@@ -173,6 +173,8 @@ export async function GET(req: Request) {
                 skill_names: skillNames,
                 // flavor_text
                 flavor_text: npc?.introduction || npc?.flavor_text || member.introduction || member.flavor_text || undefined,
+                // Vitality (摩耗値: party_members.durability = 寿命/VIT)
+                vitality: member.durability ?? 100,
             };
         });
 

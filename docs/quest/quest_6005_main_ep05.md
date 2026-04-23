@@ -1,4 +1,4 @@
-# クエスト仕様書：6005 — 第5話「大義という名の虚妄」
+﻿# クエスト仕様書：6005 — 第5話「大義という名の虚妄」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 5 |
 | **難度** | 1 |
 | **依頼主** | 交易商会 |
-| **出現条件** | 前提クエストクリア: main_ep04 / 必須滞在拠点: loc_marcund |
+| **出現条件** | 前提クエストクリア: main_ep04 / 必須滞在拠点: loc_meridia |
 | **サムネイル画像** | `/images/quests/bg_bandit_camp.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+黄金都市イスハーク近郊。「大義」の名のもとに繰り広げられる殺戮の果てに、老騎士ガウェインが命を散らす。戦争の虚しさを胸に刻みながら、君は新たな道を歩み始める。
 ```
 
 ---
@@ -35,7 +35,7 @@
 
 **CSV記載形式:**
 ```
-Gold:500|Rep:10
+Gold:600|Rep:15|Item:501
 ```
 
 ---
@@ -67,8 +67,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -85,8 +85,8 @@ text0_1
 
 #### `text0_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -103,8 +103,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -121,15 +121,15 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「もはや小競り合いではない……本物の戦争だ！各員、死にたくなければ配置につけ！」ガウェインの悲痛ともとれる叫びが戦場に響き渡る。
 ```
-**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 battle1
@@ -139,15 +139,15 @@ battle1
 
 #### `battle1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 怒涛の如く押し寄せる帝国兵の群れ。彼らの目には熱狂的な『大義』が宿っており、命の惜しさなど微塵も感じられない。まずは先陣を切り抜けろ！
 ```
-**次ノード:** `{type:battle, enemy_group_id:3}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:203}` (auto-advance)
 **params:**
 ```json
 choice_1
@@ -157,8 +157,8 @@ choice_1
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -175,8 +175,8 @@ text2_1
 
 #### `text2_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -193,15 +193,15 @@ text3
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「無理だ、多すぎる！……新入り、お前はまだ死ぬべきではない。ここはワシが引き受ける、お前だけでも逃げろ！」
 ```
-**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text3_1
@@ -211,8 +211,8 @@ text3_1
 
 #### `text3_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -229,15 +229,15 @@ battle2
 
 #### `battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 ガウェインが君の前に立ち塞がり、精鋭たちの猛攻をその巨大な盾と剣で受け止める。その背後から迫る別働隊の刃が、君に向かって牙を剥いた！
 ```
-**次ノード:** `{type:battle, enemy_group_id:4}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:203}` (auto-advance)
 **params:**
 ```json
 choice_2
@@ -247,8 +247,8 @@ choice_2
 
 #### `text4`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -265,8 +265,8 @@ text4_1
 
 #### `text4_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
@@ -283,15 +283,15 @@ text5
 
 #### `text5`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**
 ```
 「……行け。……新米。生き延びて、この目で……世界の果てを、見届けろ……」
 ```
-**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_bandit_camp, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 end_node
@@ -301,8 +301,8 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_bandit_camp`
 
 **テキスト:**

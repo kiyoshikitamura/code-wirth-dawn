@@ -48,4 +48,24 @@ id,slug,title,rec_level,difficulty,time_cost,trigger_condition,rewards_summary,_
 5048,qst_gambling_match,命がけの賭博,1,1,1,nation:loc_marcund,Item:3057|Gold:-1000,マルカンド: 勝てば大金、負ければ借金。
 5049,qst_training_camp,新兵の教官,2,2,5,nation:loc_holy_empire,Rep:20|Order:5,聖帝国: 長期間拘束されるが名声は稼げる。
 5050,qst_final_stand,崩壊都市の最終防衛線,5,5,1,prosp:1,Rep:100|Order:20,共通(崩壊): 街がLv1の時のみ発生。成功すれば「復興(Lv2)」へ即時移行。
+6001,main_ep01,第1話「始まりの轍」,1,1,1,loc:loc_border_town,Gold:150|Rep:5,メイン: 王国辺境の輸送部隊護衛。
+6002,main_ep02,第2話「砂礫の国境線」,2,1,1,loc:loc_border_town&pre:main_ep01,Gold:200|Rep:5,メイン: 国境警備と武装集団。
+6003,main_ep03,第3話「オアシスの陰謀」,3,1,1,loc:loc_oasis&pre:main_ep02,Gold:300|Rep:10,メイン: マルカンドでの潜入任務。
+6004,main_ep04,第4話「砂塵の激突」,4,1,1,loc:loc_plains_city&pre:main_ep03,Gold:400|Rep:10,メイン: 帝国軍との全面衝突。
+6005,main_ep05,第5話「大義という名の虚妄」,5,1,1,loc:loc_meridia&pre:main_ep04,Gold:600|Rep:15|Item:501,メイン: ガウェイン戦死。第1部完。
+6006,main_ep06,第6話「逃亡者の道」,6,2,1,loc:loc_frontier_village&pre:main_ep05,Gold:700|Rep:10,メイン: 夜刀神国への逃亡。
+6007,main_ep07,第7話「刃の掟」,7,2,1,loc:loc_temple_town&pre:main_ep06,Gold:800|Rep:10,メイン: 侍の試練。
+6008,main_ep08,第8話「夜霧の凶刃」,8,2,1,loc:loc_yato&pre:main_ep07,Gold:900|Rep:10,メイン: 暗殺者の襲撃。
+6009,main_ep09,第9話「大名行列の護衛」,9,2,1,loc:loc_valley&pre:main_ep08,Gold:1000|Rep:10,メイン: 護衛任務と陰謀。
+6010,main_ep10,第10話「世界の底が抜ける日」,10,2,1,loc:loc_yato&pre:main_ep09,Gold:1500|Rep:20|Item:502,メイン: 神々の遊戯判明。第2部完。
+6011,main_ep11,第11話「天の壁」,15,2,1,loc:loc_north_fort&pre:main_ep10,Gold:2000|Rep:15,メイン: 万里の長城。
+6012,main_ep12,第12話「黄河の防衛戦」,20,2,1,loc:loc_monitor_post&pre:main_ep11,Gold:2500|Rep:15,メイン: 大規模防衛戦。
+6013,main_ep13,第13話「不死の傭兵王」,25,3,1,loc:loc_coliseum&pre:main_ep12,Gold:3500|Rep:20,メイン: 傭兵王との決闘。
+6014,main_ep14,第14話「落城の陽光」,30,3,1,loc:loc_charon&pre:main_ep13,Gold:4000|Rep:20,メイン: 城塞攻防戦。
+6015,main_ep15,第15話「未来への楔」,35,4,1,loc:loc_ancient_ruins&pre:main_ep14,Gold:5000|Rep:30|Item:503,メイン: 英霊の遺志。第3部完。
+6016,main_ep16,第16話「受け継がれし剣」,40,4,1,loc:loc_regalia&pre:main_ep15,Gold:6000|Rep:20,メイン: 王都帰還。
+6017,main_ep17,第17話「鉄の門、黄金の鍵」,45,5,1,loc:loc_white_fort&pre:main_ep16,Gold:7000|Rep:25,メイン: 天界への門。
+6018,main_ep18,第18話「四国会戦」,50,5,1,loc:loc_regalia&pre:main_ep17,Gold:8000|Rep:30,メイン: 四国連合vs天使軍。
+6019,main_ep19,第19話「システム・オーバーライド」,55,6,1,loc:loc_regalia&pre:main_ep18,Gold:10000|Rep:40,メイン: 神のシステム突破。
+6020,main_ep20,第20話「蒼き暁」,60,6,1,loc:loc_regalia&pre:main_ep19,Gold:15000|Rep:50|Item:504,メイン: 最終戦。ゲームクリア。
 クエストデータの設計意図,,,,,,,,

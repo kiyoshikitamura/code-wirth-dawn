@@ -92,16 +92,6 @@ function InnPageInner() {
 
     useAuthGuard(); // タイトル画面経由チェック
 
-    // ブラウザバック制御: /inn からのバックナビゲーションを捕捉し /title に導く
-    useEffect(() => {
-        const handlePopState = () => {
-            clearGameStarted();
-            router.replace('/title');
-        };
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-    }, [router]);
-
     // Initial load
     useEffect(() => {
         Promise.all([

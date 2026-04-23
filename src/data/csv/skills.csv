@@ -34,3 +34,5 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3058,grimoire_death_strike,禁書:即死攻撃,58,50000,4,any,1,true,/images/items/grimoire_death_strike.png,闇市: 極大ダメージ。
 3059,grimoire_mad_frenzy,禁薬:狂戦士の薬,59,20000,2,any,1,true,/images/items/skill_berserk.png,闇市: 制御不能・攻撃力3倍。
 3060,grimoire_soul_sac,禁書:魂の生贄,60,40000,5,any,1,true,/images/items/grimoire_soul_sac.png,闇市: 超絶ダメージ/自傷。
+3061,book_poison_brew,教本:調毒,62,1200,2,loc_marcund,2,false,/images/items/item_poison_manual.png,マルカンド: 毒付与攻撃。
+3062,scroll_blood_pact,禁術:血の契約書,63,10000,3,loc_haryu,1,false,/images/items/item_forbidden_scroll.png,華龍: ATK/DEF UP（12T）代償VIT消費。

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 import { ShadowService } from '@/services/shadowService';
 
 export async function GET(req: Request) {
@@ -13,9 +12,8 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing location_id or user_id' }, { status: 400 });
         }
 
-        // Use auth client so RLS enforces viewing permissions
-        const client = createAuthClient(req);
-        const shadowService = new ShadowService(client);
+        // v2.9.3e: service role client に変更（RLS問題の回避）
+        const shadowService = new ShadowService(supabaseServer);
         const shadows = await shadowService.findShadowsAtLocation(location_id, user_id);
 
         return NextResponse.json({ shadows });

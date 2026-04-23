@@ -1,4 +1,4 @@
-# クエスト仕様書：6004 — 第4話「砂塵の激突」
+﻿# クエスト仕様書：6004 — 第4話「砂塵の激突」
 
 ## 0. ファイル概要
 
@@ -10,7 +10,7 @@
 | **推奨レベル** | 4 |
 | **難度** | 1 |
 | **依頼主** | 交易商会 |
-| **出現条件** | 前提クエストクリア: main_ep03 / 必須滞在拠点: loc_marcund |
+| **出現条件** | 前提クエストクリア: main_ep03 / 必須滞在拠点: loc_plains_city |
 | **サムネイル画像** | `/images/quests/bg_desert.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+平原の都市を舞台に、帝国軍とマルカンド軍が遂に激突する。国境を越え押し寄せる鉄の波。君の剣が、その濁流を切り裂く。
 ```
 
 ---
@@ -65,8 +65,8 @@ start
 
 #### `start`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -83,8 +83,8 @@ text1
 
 #### `text1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -101,15 +101,15 @@ text1_1
 
 #### `text1_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
 ```
 「いつ火を吹いてもおかしくない。……むしろ、上層部は火が吹くのを待っているようにも見えるな」
 ```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text2
@@ -119,8 +119,8 @@ text2
 
 #### `text2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -137,8 +137,8 @@ text2_1
 
 #### `text2_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -155,15 +155,15 @@ text3
 
 #### `text3`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
 ```
 「敵襲！！……馬鹿な、あれを見ろ！信じられん、ローランの紋章だと！？」
 ```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 text3_1
@@ -173,8 +173,8 @@ text3_1
 
 #### `text3_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -191,8 +191,8 @@ text4
 
 #### `text4`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -209,8 +209,8 @@ text4_1
 
 #### `text4_1`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -227,15 +227,15 @@ battle
 
 #### `battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
 ```
 迷っている暇はない。今は目の前で殺されようとしている人々を救うため、同国人に向かって剣を抜くしかなかった。
 ```
-**次ノード:** `{type:battle, enemy_group_id:2}` (auto-advance)
+**次ノード:** `{type:battle, enemy_group_id:202}` (auto-advance)
 **params:**
 ```json
 choice_battle
@@ -245,8 +245,8 @@ choice_battle
 
 #### `text_post_battle`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
@@ -263,15 +263,15 @@ text_post_battle2
 
 #### `text_post_battle2`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
 ```
 「……ついに、開戦の口火が切られてしまったか。引き返せない泥沼の始まりだ」
 ```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 end_node
@@ -281,15 +281,15 @@ end_node
 
 #### `end_node`
 **演出パラメータ:**
-- **BGM**: `[要定義]`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_quest_crisis`
+- **SE**: `—`
 - **背景画像**: `bg_desert`
 
 **テキスト:**
 ```
 ガウェインの顔に深く刻まれた疲労と絶望は、これから始まる地獄の戦場を予見していた。君の手は、同朋を斬った感触に小刻みに震えている。
 ```
-**次ノード:** `{type:end_success, speaker_image_url:https://picsum.photos/seed/gawain/120}` (auto-advance)
+**次ノード:** `{type:end_success, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
 **params:**
 ```json
 
