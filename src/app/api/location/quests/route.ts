@@ -261,10 +261,16 @@ export async function GET(req: Request) {
 
         const mapQuest = (q: any) => {
             const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            const rewards = q.rewards || {};
             return {
                 ...q,
-                reward_gold: q.rewards?.gold || 0,
-                reward_exp: q.rewards?.exp || 0,
+                reward_gold: rewards.gold || 0,
+                reward_exp: rewards.exp || 0,
+                reward_reputation: rewards.reputation || 0,
+                reward_items: rewards.items || [],
+                reward_alignment: rewards.alignment_shift || null,
+                reward_vitality: rewards.vitality_cost || 0,
+                reward_npc: rewards.npc_reward || null,
                 impacts: q.impact,
                 difficulty_tier: getDifficultyTier(recLevel),
                 short_flavor: q.script_data?.short_description || q.description || '',

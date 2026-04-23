@@ -174,12 +174,9 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                     })()}
                                     <h3 className="text-lg font-serif font-bold text-amber-400">{detailQuest.title}</h3>
                                 </div>
-                                <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-700 text-amber-200">
                                         Lv.{detailQuest.rec_level || 1}
-                                    </span>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-amber-800 text-amber-200">
-                                        報酬: {(detailQuest as any).reward_gold || 0}G
                                     </span>
                                     {(detailQuest as any).quest_type === 'special' && (
                                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold">Special</span>
@@ -200,6 +197,67 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                             <p className="text-sm leading-relaxed text-[#3e2723] whitespace-pre-wrap font-serif">
                                 {(detailQuest as any).long_flavor || detailQuest.description || 'クエストの詳細情報は準備中です。'}
                             </p>
+
+                            {/* Rewards Section */}
+                            <div className="bg-[#f5deb3]/60 border border-[#c2b280] rounded p-3">
+                                <div className="text-[11px] font-bold text-[#5d4037] mb-2 tracking-wider">報酬</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {((detailQuest as any).reward_gold > 0) && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-bold border border-yellow-300">
+                                            💰 {(detailQuest as any).reward_gold}G
+                                        </span>
+                                    )}
+                                    {((detailQuest as any).reward_reputation > 0) && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-300">
+                                            ⭐ 名声 +{(detailQuest as any).reward_reputation}
+                                        </span>
+                                    )}
+                                    {((detailQuest as any).reward_reputation < 0) && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-red-100 text-red-800 font-bold border border-red-300">
+                                            💀 名声 {(detailQuest as any).reward_reputation}
+                                        </span>
+                                    )}
+                                    {(detailQuest as any).reward_alignment?.order > 0 && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-300">
+                                            ⚖️ 秩序 +{(detailQuest as any).reward_alignment.order}
+                                        </span>
+                                    )}
+                                    {(detailQuest as any).reward_alignment?.chaos > 0 && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-purple-100 text-purple-800 font-bold border border-purple-300">
+                                            🌀 混沌 +{(detailQuest as any).reward_alignment.chaos}
+                                        </span>
+                                    )}
+                                    {(detailQuest as any).reward_alignment?.justice > 0 && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300">
+                                            ✨ 正義 +{(detailQuest as any).reward_alignment.justice}
+                                        </span>
+                                    )}
+                                    {(detailQuest as any).reward_alignment?.evil > 0 && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-red-100 text-red-800 font-bold border border-red-300">
+                                            🔥 悪 +{(detailQuest as any).reward_alignment.evil}
+                                        </span>
+                                    )}
+                                    {((detailQuest as any).reward_items?.length > 0) && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                                            🎁 アイテム ×{(detailQuest as any).reward_items.length}
+                                        </span>
+                                    )}
+                                    {((detailQuest as any).reward_vitality !== 0) && (
+                                        <span className={`inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full font-bold border ${
+                                            (detailQuest as any).reward_vitality < 0
+                                                ? 'bg-orange-100 text-orange-800 border-orange-300'
+                                                : 'bg-green-100 text-green-800 border-green-300'
+                                        }`}>
+                                            💪 VIT {(detailQuest as any).reward_vitality > 0 ? '+' : ''}{(detailQuest as any).reward_vitality}
+                                        </span>
+                                    )}
+                                    {(detailQuest as any).reward_npc && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 font-bold border border-indigo-300">
+                                            👤 仲間加入
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
 
                             {/* Meta Info */}
                             <div className="bg-[#f5deb3]/40 p-3 rounded text-xs text-[#5d4037] space-y-1">
