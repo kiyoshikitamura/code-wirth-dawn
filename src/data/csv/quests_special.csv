@@ -1,5 +1,5 @@
 id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rewards_summary,client_name,_comment
-5012,qst_relic_recovery,盗まれた聖遺物の奪還,5,4,2,"{""min_level"": 10, ""nation_id"": ""loc_holy_empire""}",true,,"Item:3018|Gold:1000",教会,聖帝国: レア装備。
+5012,qst_relic_recovery,盗まれた聖遺物の奪還,5,4,2,"{""min_level"": 10, ""nation_id"": ""loc_holy_empire""}",true,,"Item:3018|Gold:1000",教会,聖王国: レア装備。
 5024,qst_tiger_hunt,人喰い虎の討伐,6,4,2,"{""min_level"": 12, ""nation_id"": ""loc_haryu""}",true,,"Gold:1200|Item:3034",地方太守,華龍: ボス戦。
 5026,qst_forbidden_experiment,禁術の被験体募集,8,5,5,"{""min_align_chaos"": 30, ""min_vitality"": 20}",true,,"Item:3036|Vitality:-5",禁術師,華龍: 禁術習得。
 5028,qst_vip_bodyguard,王族の極秘警護,8,5,3,"{""min_reputation"": 50, ""min_prosperity"": 4}",true,,"Gold:3000|Rep:50",王室近衛,共通(絶頂): 高難度護衛。
@@ -9,28 +9,28 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 5035,qst_automaton_rampage,暴走した古代兵器,9,5,1,"{""min_level"": 20}",true,,"Item:3044",冒険者ギルド,共通: レイドボス級。
 5037,qst_arena_finals,闘技大会・決勝,10,5,1,"{""completed_quest"": ""qst_arena_tournament""}",true,qst_arena_tournament,"Item:3021|Rep:50",闘技場の主催,マルカンド: 決勝戦。
 5041,qst_dragon_slaying,邪竜討伐,12,5,3,"{""event_trigger"": ""dragon_raid""}",true,,"Item:3050|Rep:100",冒険者ギルド,イベント: 邪竜。
-5044,qst_cursed_armor_seal,呪いの鎧の封印,7,4,2,"{""min_level"": 18, ""nation_id"": ""loc_holy_empire""}",true,,"NPC:4046",教会,聖帝国: 呪いの鎧。
+5044,qst_cursed_armor_seal,呪いの鎧の封印,7,4,2,"{""min_level"": 18, ""nation_id"": ""loc_holy_empire""}",true,,"NPC:4046",教会,聖王国: 呪いの鎧。
 5050,qst_final_stand,崩壊都市の最終防衛線,10,5,1,"{""max_prosperity"": 1, ""min_align_order"": 20}",true,,"Rep:100|Order:20",自治会,共通(崩壊): 復興へ。
 6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""nation_id"":""loc_holy_empire"",""min_level"":1}",true,,"Gold:100|Rep:10",王国軍,メインシナリオ第1話
-6002,,メインシナリオ第2話
-6003,,メインシナリオ第3話
-6004,,メインシナリオ第4話
-6005,,メインシナリオ第5話
-6006,,メインシナリオ第6話
-6007,,メインシナリオ第7話
-6008,,メインシナリオ第8話
-6009,,メインシナリオ第9話
-6010,,メインシナリオ第10話
-6011,,メインシナリオ第11話
-6012,,メインシナリオ第12話
-6013,,メインシナリオ第13話
-6014,,メインシナリオ第14話
-6015,,メインシナリオ第15話
-6016,,メインシナリオ第16話
-6017,,メインシナリオ第17話
-6018,,メインシナリオ第18話
-6019,,メインシナリオ第19話
-6020,,メインシナリオ第20話
+6002,main_ep02,第2話「砂礫の国境線」,2,1,2,"{""completed_quest"":""main_ep01"",""nation_id"":""loc_holy_empire""}",true,,"Gold:200|Rep:10",王国軍,メインシナリオ第2話
+6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,"{""completed_quest"":""main_ep02"",""nation_id"":""loc_marcund""}",true,,"Gold:300|Rep:10",交易商会,メインシナリオ第3話
+6004,main_ep04,第4話「砂塵の激突」,4,1,2,"{""completed_quest"":""main_ep03"",""nation_id"":""loc_marcund""}",true,,"Gold:400|Rep:10",交易商会,メインシナリオ第4話
+6005,main_ep05,第5話「大義という名の虚妄」,5,1,2,"{""completed_quest"":""main_ep04"",""nation_id"":""loc_marcund""}",true,,"Gold:500|Rep:10",交易商会,メインシナリオ第5話
+6006,main_ep06,第6話「逃亡者の道」,6,1,2,"{""completed_quest"":""main_ep05"",""nation_id"":""loc_yatoshin""}",true,,"Gold:600|Rep:10",忍び衆,メインシナリオ第6話
+6007,main_ep07,第7話「刃の掟」,7,1,2,"{""completed_quest"":""main_ep06"",""nation_id"":""loc_yatoshin""}",true,,"Gold:700|Rep:10",代官所,メインシナリオ第7話
+6008,main_ep08,第8話「夜霧の凶刃」,8,1,2,"{""completed_quest"":""main_ep07"",""nation_id"":""loc_yatoshin""}",true,,"Gold:800|Rep:10",忍び衆,メインシナリオ第8話
+6009,main_ep09,第9話「大名行列の護衛」,9,1,2,"{""completed_quest"":""main_ep08"",""nation_id"":""loc_yatoshin""}",true,,"Gold:900|Rep:10",代官所,メインシナリオ第9話
+6010,main_ep10,第10話「世界の底が抜ける日」,10,1,2,"{""completed_quest"":""main_ep09"",""nation_id"":""loc_yatoshin""}",true,,"Gold:1000|Rep:10",冒険者ギルド,メインシナリオ第10話
+6011,main_ep11,第11話「天の壁」,11,2,2,"{""completed_quest"":""main_ep10"",""nation_id"":""loc_haryu""}",true,,"Gold:1500|Rep:10",地方太守,メインシナリオ第11話
+6012,main_ep12,第12話「黄河の防衛戦」,12,2,2,"{""completed_quest"":""main_ep11"",""nation_id"":""loc_haryu""}",true,,"Gold:2000|Rep:10",地方太守,メインシナリオ第12話
+6013,main_ep13,第13話「不死の傭兵王」,13,3,2,"{""completed_quest"":""main_ep12"",""nation_id"":""loc_haryu""}",true,,"Gold:2500|Rep:10",冒険者ギルド,メインシナリオ第13話
+6014,main_ep14,第14話「落城の陽光」,14,3,2,"{""completed_quest"":""main_ep13"",""nation_id"":""loc_haryu""}",true,,"Gold:3000|Rep:10",冒険者ギルド,メインシナリオ第14話
+6015,main_ep15,第15話「未来への楔」,15,4,2,"{""completed_quest"":""main_ep14"",""nation_id"":""loc_haryu""}",true,,"Gold:3500|Rep:10",冒険者ギルド,メインシナリオ第15話
+6016,main_ep16,第16話「受け継がれし剣」,16,4,2,"{""completed_quest"":""main_ep15"",""required_generations"":2,""nation_id"":""loc_holy_empire""}",true,,"Gold:4000|Rep:10",王国軍,メインシナリオ第16話
+6017,main_ep17,第17話「鉄の門、黄金の鍵」,18,5,2,"{""completed_quest"":""main_ep16"",""nation_id"":""loc_holy_empire""}",true,,"Gold:4500|Rep:10",王国軍,メインシナリオ第17話
+6018,main_ep18,第18話「四国会戦」,20,5,2,"{""completed_quest"":""main_ep17"",""nation_id"":""loc_holy_empire""}",true,,"Gold:5000|Rep:10",冒険者ギルド,メインシナリオ第18話
+6019,main_ep19,第19話「システム・オーバーライド」,22,6,2,"{""completed_quest"":""main_ep18"",""nation_id"":""loc_holy_empire""}",true,,"Gold:5500|Rep:10",冒険者ギルド,メインシナリオ第19話
+6020,main_ep20,第20話「蒼き暁」,25,6,2,"{""completed_quest"":""main_ep19"",""nation_id"":""loc_holy_empire""}",true,,"Gold:6000|Rep:10",冒険者ギルド,メインシナリオ第20話
 8001,qst_boss_skeleton,旧市街の暴君討伐,8,5,5,"{""completed_quest"":7013}",false,,Gold:2000|Item:3101,聖騎士団,[強敵] 旧市街の奥に潜む骸骨王を討伐せよ。
 8002,qst_boss_worm,マザー大砂蟲討伐,8,5,5,"{""completed_quest"":7023}",false,,Gold:2500|Item:3102,交易商会,[強敵] 砂漠の脅威を撃破せよ。
 8003,qst_boss_ogre,剛腕赤鬼の退治,8,5,5,"{""completed_quest"":7030}",false,,Gold:2000|Rep:15|Item:3103,自警団,[強敵] 山道で旅人を食らう巨大赤鬼を退治せよ。
