@@ -1,4 +1,4 @@
-row_type,node_id,text_label,params,next_node
+﻿row_type,node_id,text_label,params,next_node
 NODE,start,黄河の大防衛戦を生き延びた君は、負傷兵たちでごった返す後方の野戦陣地で、ある一人の男と出会った。,"{""bgm"":""bgm_quest_tense"", ""type"":""text"", ""bg"":""bg_bandit_camp""}",text1
 NODE,text1,無精髭を生やし、酒瓶を傾ける老境の剣士。だが、その瞳の奥には異常なほど獰猛な狂気と、計り知れない覇気が宿っている。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1_1
 NODE,text1_1,彼は噂に名高い「不死の傭兵王」――ヴォルグ。これまで数え切れないほどの戦場を渡り歩き、死線を超え続けてきた生きた伝説だった。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text2
@@ -8,5 +8,6 @@ NODE,text4,ヴォルグが背に負った大剣を抜いた瞬間、周囲の空
 NODE,battle,彼との戦いは、神を討つための試練だ。伝説の傭兵王を越えられなくて、どうして天上の神々を討てようか！,"{""type"":""battle"", ""enemy_group_id"":213}",choice1
 CHOICE,,限界を越えて証明する,,text_post_battle
 NODE,text_post_battle,火花の散る激しい打ち合い。君の体力はとっくに尽きていたが、死地で研ぎ澄まされた直感が、最後の一撃を誘導した。重い剣撃を紙一重で躱し、君の切っ先がヴォルグの首筋で止まる。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_post_battle2
-NODE,text_post_battle2,「……フン、悪くない。ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",end_node
+NODE,text_post_battle2,「……フン、悪くない。ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",volg_join
+NODE,volg_join,ヴォルグが仲間に加わった。「面白ェ奴だ。しばらく付き合ってやるよ」,"{""type"":""guest_join"", ""guest_id"":""4102"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",end_node
 NODE,end_node,「お前なら、あの『天上の神』の眉間に一矢報いれるかもしれんな。……行け。俺たちの代わりに、神の玉座に唾を吐いてこい！」その言葉を受けた君の目に、再び強い光が宿った。,"{""type"":""end_success"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",

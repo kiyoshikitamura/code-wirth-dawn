@@ -1,5 +1,6 @@
-row_type,node_id,text_label,params,next_node
-NODE,start,国境地帯での任務を終え、君とガウェインの属する小隊はマルカンド領内にある小さなオアシス都市に駐屯していた。,"{""bgm"":""bgm_quest_mystery"", ""type"":""text"", ""bg"":""bg_desert""}",text1
+﻿row_type,node_id,text_label,params,next_node
+NODE,start,国境地帯での任務を終え、君とガウェインの属する小隊はマルカンド領内にある小さなオアシス都市に駐屯していた。,"{""bgm"":""bgm_quest_mystery"", ""type"":""text"", ""bg"":""bg_desert""}",gawain_join
+NODE,gawain_join,ガウェインと共にオアシス都市に駐屯している。,"{""type"":""guest_join"", ""guest_id"":""4101""}",text1
 NODE,text1,ここは本来、両国を繋ぐ貴重な水源地であり、交易の要所として中立的な立場を保っているはずの街だ。,"{""type"":""text"", ""bg"":""bg_desert""}",text1_1
 NODE,text1_1,しかし街を歩く人々の瞳には、帝国出身である君たち傭兵や兵士に対する明確な警戒態勢——あるいは憎悪——の色が浮かんでいる。,"{""type"":""text"", ""bg"":""bg_desert""}",text2
 NODE,text2,ある朝、静寂を切り裂くような悲鳴が広場から上がった。「大変だ！井戸があくせく泡を立てている。何者かが毒を撒いたに違いない！」,"{""type"":""text"", ""bg"":""bg_desert""}",text2_1
@@ -15,5 +16,6 @@ NODE,text4,男たちは悪びれる様子もなく、むしろ「帝国への忠
 NODE,battle,彼らは帝国軍の強硬派を名乗る工作員たちだった。この街に戦争の火種を落とし、大義名分を作ろうとしているのだ！,"{""type"":""battle"", ""enemy_group_id"":201}",choice_battle
 CHOICE,,「なぜこんな非道を！」,,text_post_battle
 NODE,text_post_battle,工作員たちを撃退し、懐から解毒薬らしき成分を確保することに成功した。死の間際、口から血を流す男が薄ら笑いを浮かべる。,"{""type"":""text"", ""bg"":""bg_slum""}",text_post_battle2
-NODE,text_post_battle2,「遅いさ……。火種はもはや止められん。俺たちの血が、聖戦の狼煙となるのだ……」,"{""type"":""text"", ""bg"":""bg_slum""}",end_node
+NODE,text_post_battle2,「遅いさ……。火種はもはや止められん。俺たちの血が、聖戦の狼煙となるのだ……」,"{""type"":""text"", ""bg"":""bg_slum""}",gawain_leave
+NODE,gawain_leave,事態の収拾のため、ガウェインは本隊への報告に向かった。,"{""type"":""leave"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
 NODE,end_node,解毒薬により井戸の最悪の事態は免れたが、これが仕組まれた「開戦の口実」であることは明白だった。君の胸に、重い鉛のような感情が沈んでいく。,"{""type"":""end_success""}",

@@ -60,6 +60,7 @@ export async function GET(request: Request) {
             gold: number;
             reputation?: number;
             items?: number[];
+            move_to?: string;
             alignment_shift?: {
                 order?: number;
                 chaos?: number;
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
         {
             id: 6002, slug: 'main_ep02', rec_level: 2, difficulty: 1,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 200, reputation: 5, alignment_shift: { order: 5 } },
+            rewards: { gold: 200, reputation: 5, move_to: 'loc_marcund', alignment_shift: { order: 5 } },
         },
         {
             id: 6003, slug: 'main_ep03', rec_level: 3, difficulty: 1,
@@ -94,7 +95,7 @@ export async function GET(request: Request) {
         {
             id: 6005, slug: 'main_ep05', rec_level: 5, difficulty: 1,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 600, reputation: 15, items: [501], alignment_shift: { justice: 10 } },
+            rewards: { gold: 600, reputation: 15, items: [501], move_to: 'loc_yatoshin', alignment_shift: { justice: 10 } },
         },
         {
             id: 6006, slug: 'main_ep06', rec_level: 6, difficulty: 2,
@@ -119,7 +120,7 @@ export async function GET(request: Request) {
         {
             id: 6010, slug: 'main_ep10', rec_level: 10, difficulty: 2,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 1500, reputation: 20, items: [502], alignment_shift: { justice: 15 } },
+            rewards: { gold: 1500, reputation: 20, items: [502], move_to: 'loc_haryu', alignment_shift: { justice: 15 } },
         },
         {
             id: 6011, slug: 'main_ep11', rec_level: 11, difficulty: 2,
@@ -144,7 +145,7 @@ export async function GET(request: Request) {
         {
             id: 6015, slug: 'main_ep15', rec_level: 15, difficulty: 4,
             time_cost: 7, days_success: 7, days_failure: 4,
-            rewards: { gold: 5000, reputation: 30, items: [503], alignment_shift: { justice: 20 } },
+            rewards: { gold: 5000, reputation: 30, items: [503], move_to: 'loc_holy_empire', alignment_shift: { justice: 20 } },
         },
         {
             id: 6016, slug: 'main_ep16', rec_level: 16, difficulty: 4,

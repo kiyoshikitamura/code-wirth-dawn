@@ -1,11 +1,13 @@
-row_type,node_id,text_label,params,next_node
+﻿row_type,node_id,text_label,params,next_node
 NODE,start,先代が神界の門を打ち破ってから、数十年の歳月が流れた。「生ける伝説」として名を残した初代は既にこの世になく、君はその遠い子孫、あるいは意志を継ぐ第二世代の傭兵だ。,"{""bgm"":""bgm_quest_calm"", ""type"":""text"", ""bg"":""bg_tavern_night""}",text1
 NODE,text1,君は先代が遺した手記と、血塗られた古びた短剣を握りしめ、かつて彼らが集ったという伝説の酒場の扉を叩いた。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text2
 NODE,text2,「よう、見ない顔だな。……いや、違うな。その眼の奥の狂気は、見覚えがある。手記を見るに、あいつの『跡継ぎ』ってわけか」,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text2_1
 NODE,text2_1,薄暗い酒場の奥には、生気を失ってはいるが確かな存在感を放つ者たちが座っていた。彼らはかつて世界を救いかけた「英霊（シャドウ）」たちだ。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text3
 NODE,text3,彼らは初代が命と引き換えに刻んだ歴史の残滓であり、意志の強さを物語っている。君は手記をテーブルに叩きつけ、彼らをねめつけた。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",choice1
 CHOICE,,「力を貸してくれ。終わらせに行く」,,text4
+CHOICE,,「……まだその時ではない（立ち去る）」,,text4_refuse
 NODE,text4,英霊の長がニヤリと笑う。「いいぜ。あいつが命と引き換えに繋いだこの道、無駄にはさせねぇ！行こうぜ、クソッタレな神々を殺しによ！」,"{""type"":""text"", ""bg"":""bg_tavern_night""}",battle
+NODE,text4_refuse,英霊の長が目を細める。「……臆したか？ならば、自分の力で道を切り開いてみせろ」その冷たい言葉が胸に突き刺さった。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",battle
 NODE,battle,だが平穏は長く続かない。酒場を出た直後、街の自警団に化けていた異形の刺客（堕天使）が襲い掛かる。継承の証を持つ者を消すためだ！,"{""type"":""battle"", ""enemy_group_id"":216}",choice2
 CHOICE,,討破する,,text_post_battle
 NODE,text_post_battle,英霊たちの支援を受け、君はいとも簡単に刺客を退けた。先代の無念を晴らし、本当の世界の夜明けを取り戻すための、最後の旅がいま始まる。,"{""type"":""text"", ""bg"":""bg_road_night""}",end_node
