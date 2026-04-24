@@ -43,10 +43,16 @@ export async function GET(req: Request) {
             }
 
             // --- SECURITY VALIDATION ---
-            const validation = await QuestService.validateRequirements(supabaseServer, userId, quest.requirements);
-            if (!validation.valid) {
-                console.warn(`[Security] User ${userId} blocked from scenario ${id}: ${validation.reason}`);
-                return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
+            // debug_bypass=true の場合は前提条件チェックをスキップ（デバッグ用クエストテスト）
+            const debugBypass = searchParams.get('debug_bypass') === 'true';
+            if (!debugBypass) {
+                const validation = await QuestService.validateRequirements(supabaseServer, userId, quest.requirements);
+                if (!validation.valid) {
+                    console.warn(`[Security] User ${userId} blocked from scenario ${id}: ${validation.reason}`);
+                    return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
+                }
+            } else {
+                console.log(`[Debug] Bypassing requirement validation for scenario ${id}`);
             }
             // ---------------------------
 

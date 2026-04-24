@@ -103,7 +103,10 @@ export default function QuestPage() {
                 const headers: HeadersInit = { 'Cache-Control': 'no-store' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
-                const res = await fetch(`/api/scenarios?id=${id}`, {
+                // デバッグバイパス: URLパラメータからAPIに転送
+                const debugBypass = searchParams.get('debug_bypass') === 'true' ? '&debug_bypass=true' : '';
+
+                const res = await fetch(`/api/scenarios?id=${id}${debugBypass}`, {
                     cache: 'no-store',
                     headers
                 });

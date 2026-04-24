@@ -529,7 +529,7 @@ function InnPageInner() {
                     </button>
 
                     {/* クエストテスト */}
-                    <QuestTestPanel userId={userProfile?.id} onSelectQuest={(id) => router.push(`/quest/${id}`)} />
+                    <QuestTestPanel userId={userProfile?.id} onSelectQuest={(id) => router.push(`/quest/${id}?debug_bypass=true`)} />
 
                     {/* 拠点属性パラメータ表示 */}
                     {worldState && (
