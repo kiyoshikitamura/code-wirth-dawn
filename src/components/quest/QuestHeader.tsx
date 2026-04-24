@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom';
 import { User, Settings, Shield, Heart, Sword, Flame, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getEffectiveMaxHp } from '@/store/slices/profileSlice';
+import { useQuestState } from '@/store/useQuestState';
 import { PartyMember } from '@/types/game';
 import StatusModal from '@/components/inn/StatusModal';
 
@@ -43,7 +44,16 @@ export default function QuestHeader({
 
     // battleState.party はバトル中のみ使用（前回バトルの残留データで新規パーティが隠れる問題を防止）
     const isBattleActive = battleState?.enemy && battleState?.party?.length > 0;
-    const party_members = isBattleActive ? battleState.party : fetchedParty;
+    const questGuest = useQuestState((s) => s.guest);
+    const baseParty = isBattleActive ? battleState.party : fetchedParty;
+    // クエスト中のゲストNPCをパーティリストに含める（バトル中はbattleState.partyに既に含まれているため除外）
+    const party_members = React.useMemo(() => {
+        if (!questGuest || isBattleActive) return baseParty;
+        // 重複防止: IDが既に含まれていないか確認
+        const alreadyInParty = baseParty.some((m: PartyMember) => m.id === questGuest.id || (m as any).slug === (questGuest as any).slug);
+        if (alreadyInParty) return baseParty;
+        return [...baseParty, { ...questGuest, origin_type: 'quest_guest' } as PartyMember];
+    }, [baseParty, questGuest, isBattleActive]);
 
     // HP: 装備ボーナス込み
     const effectiveMaxHp = getEffectiveMaxHp(userProfile ?? null, { equipBonus });

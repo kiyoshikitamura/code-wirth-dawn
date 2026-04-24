@@ -1,6 +1,6 @@
 ﻿row_type,node_id,text_label,params,next_node
 NODE,start,開戦の口火が切られてから数週間。君たちは、なし崩し的にマルカンド王国の前線拠点での防衛戦に巻き込まれていた。,"{""bgm"":""bgm_quest_crisis"", ""type"":""text"", ""bg"":""bg_bandit_camp""}",gawain_join
-NODE,gawain_join,最後の戦いが始まる。ガウェインが剣を抜き、隣に立った。,"{""type"":""guest_join"", ""guest_id"":""4101""}",text0_1
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_gawain""}",text0_1
 NODE,text0_1,傭兵として雇い主（マルカンド側）に付くか、祖国（ローラン）の軍に下るか。戦場の混乱の中で、そんな選択肢など意味を持たなかった。生き残るために目の前の敵を斬る、それだけだ。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1
 NODE,text1,突如として大地の揺れる音が響く。地平線を埋め尽くすほどの砂埃を上げて、帝国軍の本隊が拠点への全面侵攻を開始したのだ。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1_1
 NODE,text1_1,「もはや小競り合いではない……本物の戦争だ！各員、死にたくなければ配置につけ！」ガウェインの悲痛ともとれる叫びが戦場に響き渡る。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",battle1

@@ -11,7 +11,7 @@ CHOICE,,「急いで積み込みます」,,text3
 CHOICE,,「あんたはここで指図するだけか？」,,text3
 NODE,text3,男は鼻で笑うと、鈍く光る長剣の柄に手を当てた。「威勢はいいが、口ほどにもない奴はすぐ死ぬのが戦場だ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text3_1
 NODE,text3_1,「俺はガウェイン。この部隊の小隊長にして、お前たち新米を死なせないための監視役といったところだ。……お前、その剣の腕には自信があるんだろうな？」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_join
-NODE,gawain_join,ガウェインが隊列に加わった。,"{""type"":""guest_join"", ""guest_id"":""4101""}",text4
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_road_day"", ""guest_id"":""npc_guest_gawain""}",text4
 NODE,text4,君が応えようとしたその瞬間、砂埃の向こうからけたたましい怒声と馬の嘶きが迫ってきた。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",text4_1
 NODE,text4_1,「小隊長！前方の丘より正体不明の集団が接近！十、いや二十……武器を持っています。野盗です！」見張りの兵士の声が裏返る。,"{""type"":""text"", ""bg"":""bg_road_day""}",text4_2
 NODE,text4_2,ガウェインが素早く抜刀し、鋭い眼光を砂塵に向ける。「チッ……言葉の先からこれだ。おい新入り、あの木箱は死守しろ。荷を奪われりゃ俺たちの首が飛ぶぞ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",battle
