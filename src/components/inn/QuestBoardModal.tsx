@@ -207,6 +207,11 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                             💰 {(detailQuest as any).reward_gold}G
                                         </span>
                                     )}
+                                    {((detailQuest as any).reward_exp > 0) && (
+                                        <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-300">
+                                            ✨ {(detailQuest as any).reward_exp} Exp
+                                        </span>
+                                    )}
                                     {((detailQuest as any).reward_reputation > 0) && (
                                         <span className="inline-flex items-center gap-0.5 text-[11px] px-2 py-1 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-300">
                                             ⭐ 名声 +{(detailQuest as any).reward_reputation}

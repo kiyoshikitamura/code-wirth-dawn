@@ -58,6 +58,7 @@ export async function GET(request: Request) {
         days_failure: number;
         rewards: {
             gold: number;
+            exp: number;
             reputation?: number;
             items?: number[];
             move_to?: string;
@@ -75,102 +76,102 @@ export async function GET(request: Request) {
         {
             id: 6001, slug: 'main_ep01', rec_level: 1, difficulty: 1,
             time_cost: 2, days_success: 2, days_failure: 1,
-            rewards: { gold: 150, reputation: 5, alignment_shift: { order: 5 } },
+            rewards: { gold: 150, exp: 80, reputation: 5, alignment_shift: { order: 5 } },
         },
         {
             id: 6002, slug: 'main_ep02', rec_level: 2, difficulty: 1,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 200, reputation: 5, move_to: 'loc_marcund', alignment_shift: { order: 5 } },
+            rewards: { gold: 200, exp: 100, reputation: 5, move_to: 'loc_marcund', alignment_shift: { order: 5 } },
         },
         {
             id: 6003, slug: 'main_ep03', rec_level: 3, difficulty: 1,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 300, reputation: 10, alignment_shift: { justice: 5 } },
+            rewards: { gold: 300, exp: 120, reputation: 10, alignment_shift: { justice: 5 } },
         },
         {
             id: 6004, slug: 'main_ep04', rec_level: 4, difficulty: 1,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 400, reputation: 10, alignment_shift: { justice: 10 } },
+            rewards: { gold: 400, exp: 150, reputation: 10, alignment_shift: { justice: 10 } },
         },
         {
             id: 6005, slug: 'main_ep05', rec_level: 5, difficulty: 1,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 600, reputation: 15, items: [501], move_to: 'loc_yatoshin', alignment_shift: { justice: 10 } },
+            rewards: { gold: 600, exp: 200, reputation: 15, items: [501], move_to: 'loc_yatoshin', alignment_shift: { justice: 10 } },
         },
         {
             id: 6006, slug: 'main_ep06', rec_level: 6, difficulty: 2,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 700, reputation: 10, alignment_shift: { chaos: 5 } },
+            rewards: { gold: 700, exp: 250, reputation: 10, alignment_shift: { chaos: 5 } },
         },
         {
             id: 6007, slug: 'main_ep07', rec_level: 7, difficulty: 2,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 800, reputation: 10, alignment_shift: { justice: 5 } },
+            rewards: { gold: 800, exp: 300, reputation: 10, alignment_shift: { justice: 5 } },
         },
         {
             id: 6008, slug: 'main_ep08', rec_level: 8, difficulty: 2,
             time_cost: 1, days_success: 1, days_failure: 1,
-            rewards: { gold: 900, reputation: 10 },
+            rewards: { gold: 900, exp: 350, reputation: 10 },
         },
         {
             id: 6009, slug: 'main_ep09', rec_level: 9, difficulty: 2,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 1000, reputation: 10, alignment_shift: { evil: 5 } },
+            rewards: { gold: 1000, exp: 400, reputation: 10, alignment_shift: { evil: 5 } },
         },
         {
             id: 6010, slug: 'main_ep10', rec_level: 10, difficulty: 2,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 1500, reputation: 20, items: [502], move_to: 'loc_haryu', alignment_shift: { justice: 15 } },
+            rewards: { gold: 1500, exp: 500, reputation: 20, items: [502], move_to: 'loc_haryu', alignment_shift: { justice: 15 } },
         },
         {
             id: 6011, slug: 'main_ep11', rec_level: 11, difficulty: 2,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 2000, reputation: 15, alignment_shift: { order: 10 } },
+            rewards: { gold: 2000, exp: 600, reputation: 15, alignment_shift: { order: 10 } },
         },
         {
             id: 6012, slug: 'main_ep12', rec_level: 12, difficulty: 2,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 2500, reputation: 15, alignment_shift: { order: 10 } },
+            rewards: { gold: 2500, exp: 700, reputation: 15, alignment_shift: { order: 10 } },
         },
         {
             id: 6013, slug: 'main_ep13', rec_level: 13, difficulty: 3,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 3500, reputation: 20 },
+            rewards: { gold: 3500, exp: 800, reputation: 20 },
         },
         {
             id: 6014, slug: 'main_ep14', rec_level: 14, difficulty: 3,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 4000, reputation: 20, alignment_shift: { justice: 15 } },
+            rewards: { gold: 4000, exp: 900, reputation: 20, alignment_shift: { justice: 15 } },
         },
         {
             id: 6015, slug: 'main_ep15', rec_level: 15, difficulty: 4,
             time_cost: 7, days_success: 7, days_failure: 4,
-            rewards: { gold: 5000, reputation: 30, items: [503], move_to: 'loc_holy_empire', alignment_shift: { justice: 20 } },
+            rewards: { gold: 5000, exp: 1200, reputation: 30, items: [503], move_to: 'loc_holy_empire', alignment_shift: { justice: 20 } },
         },
         {
             id: 6016, slug: 'main_ep16', rec_level: 16, difficulty: 4,
             time_cost: 3, days_success: 3, days_failure: 2,
-            rewards: { gold: 6000, reputation: 20 },
+            rewards: { gold: 6000, exp: 1500, reputation: 20 },
         },
         {
             id: 6017, slug: 'main_ep17', rec_level: 18, difficulty: 5,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 7000, reputation: 25, alignment_shift: { order: 10 } },
+            rewards: { gold: 7000, exp: 2000, reputation: 25, alignment_shift: { order: 10 } },
         },
         {
             id: 6018, slug: 'main_ep18', rec_level: 20, difficulty: 5,
             time_cost: 7, days_success: 7, days_failure: 4,
-            rewards: { gold: 8000, reputation: 30, alignment_shift: { chaos: 10 } },
+            rewards: { gold: 8000, exp: 2500, reputation: 30, alignment_shift: { chaos: 10 } },
         },
         {
             id: 6019, slug: 'main_ep19', rec_level: 22, difficulty: 6,
             time_cost: 5, days_success: 5, days_failure: 3,
-            rewards: { gold: 10000, reputation: 40, alignment_shift: { justice: 20 } },
+            rewards: { gold: 10000, exp: 3500, reputation: 40, alignment_shift: { justice: 20 } },
         },
         {
             id: 6020, slug: 'main_ep20', rec_level: 25, difficulty: 6,
             time_cost: 8, days_success: 8, days_failure: 5,
-            rewards: { gold: 15000, reputation: 50, items: [504], alignment_shift: { justice: 30 } },
+            rewards: { gold: 15000, exp: 5000, reputation: 50, items: [504], alignment_shift: { justice: 30 } },
         },
     ];
 
