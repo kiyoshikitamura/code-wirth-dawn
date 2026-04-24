@@ -105,55 +105,48 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                             {activeTab === 'hard' && '現在、上級の依頼はありません。'}
                         </div>
                     ) : (
-                        <div className="space-y-1.5">
-                            {filteredQuests.map((s: any) => (
+                        <div className="space-y-2">
+                            {filteredQuests.map((s: any) => {
+                                const userLevel = userProfile?.level || 1;
+                                const isDangerous = (s.rec_level || 1) > userLevel + 1;
+                                return (
                                 <div
                                     key={s.id}
-                                    className={`group flex items-center gap-2 p-2.5 border rounded cursor-pointer transition-all hover:shadow-sm ${(() => {
-                                        const userLevel = userProfile?.level || 1;
-                                        const isDangerous = (s.rec_level || 1) > userLevel + 1;
-                                        if (isDangerous) return 'bg-red-900/10 border-red-400/40 hover:border-red-500';
-                                        return 'bg-[#fdfbf7] border-[#c2b280] hover:border-[#a38b6b]';
-                                    })()}`}
+                                    className={`group p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                                        isDangerous
+                                            ? 'bg-red-900/10 border-red-400/40 hover:border-red-500'
+                                            : 'bg-[#fdfbf7] border-[#c2b280] hover:border-[#a38b6b]'
+                                    }`}
                                     onClick={() => setDetailQuest(s)}
                                 >
-                                    {/* Quest Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-[#3e2723] text-sm font-serif truncate">{s.title}</h3>
-                                        <p className="text-[11px] text-[#8b6f4e] line-clamp-1 mt-0.5">{s.short_flavor}</p>
-                                    </div>
-
-                                    {/* Badges + Level & Reward - Stacked */}
-                                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                        {(() => {
-                                            const userLevel = userProfile?.level || 1;
-                                            const isDangerous = (s.rec_level || 1) > userLevel + 1;
-                                            const hasBadge = s.quest_type === 'special' || s.is_ugc || isDangerous;
-                                            return hasBadge ? (
-                                                <div className="flex gap-1 items-center">
-                                                    {isDangerous && (
-                                                        <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
-                                                    )}
-                                                    {s.quest_type === 'special' && (
-                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
-                                                    )}
-                                                    {s.is_ugc && (
-                                                        <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
-                                                    )}
-                                                </div>
-                                            ) : null;
-                                        })()}
-                                        <div className="flex items-center gap-1">
+                                    {/* Row 1: Title + Badges + Level */}
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="font-bold text-[#3e2723] text-sm font-serif truncate flex-1 min-w-0">
+                                            {s.title}
+                                        </h3>
+                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                            {isDangerous && (
+                                                <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
+                                            )}
+                                            {s.quest_type === 'special' && (
+                                                <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
+                                            )}
+                                            {s.is_ugc && (
+                                                <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600 text-white font-bold">UGC</span>
+                                            )}
                                             <span className="text-[10px] w-[38px] text-center py-0.5 rounded font-bold bg-[#a38b6b] text-white">
                                                 Lv.{s.rec_level || 1}
                                             </span>
+                                            <ChevronRight className="w-4 h-4 text-[#a38b6b] opacity-40 group-hover:opacity-100 transition-opacity" />
                                         </div>
                                     </div>
-
-                                    {/* Arrow */}
-                                    <ChevronRight className="w-4 h-4 text-[#a38b6b] opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    {/* Row 2: Flavor text - full width */}
+                                    <p className="text-[11px] text-[#8b6f4e] leading-relaxed line-clamp-2">
+                                        {s.short_flavor}
+                                    </p>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

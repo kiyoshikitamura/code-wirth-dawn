@@ -292,14 +292,28 @@ export async function GET(req: Request) {
             return true;
         });
 
-        const allQuests = [...specialQuests, ...limitedNormalQuests]
+        // specialクエストにもtier制限を適用（メインシナリオは免除: チェーン条件で最大1件に制限されるため）
+        const SPECIAL_TIER_MAX: Record<string, number> = { easy: 3, normal: 2, hard: 2 };
+        const specialTierLimits: Record<string, number> = { easy: 0, normal: 0, hard: 0 };
+        const shuffledSpecial = [...specialQuests].sort(() => Math.random() - 0.5);
+        const limitedSpecialQuests = shuffledSpecial.filter((q: any) => {
+            const isMainScenario = q.slug && q.slug.startsWith('main_ep');
+            if (isMainScenario) return true; // メインシナリオは常に表示（前提条件で自然に1件に絞られる）
+            const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            const tier = getDifficultyTier(recLevel);
+            if (specialTierLimits[tier] >= SPECIAL_TIER_MAX[tier]) return false;
+            specialTierLimits[tier]++;
+            return true;
+        });
+
+        const allQuests = [...limitedSpecialQuests, ...limitedNormalQuests]
             .sort((a: any, b: any) => {
                 if (a.is_urgent !== b.is_urgent) return (b.is_urgent ? 1 : 0) - (a.is_urgent ? 1 : 0);
                 return (a.rec_level || 1) - (b.rec_level || 1);
             })
             .map(mapQuest);
 
-        debug.push(`limited: normal=${limitedNormalQuests.length}/${normalQuests.length}, nationTag=${currentLocationTag || 'none'} `);
+        debug.push(`limited: special=${limitedSpecialQuests.length}/${specialQuests.length}, normal=${limitedNormalQuests.length}/${normalQuests.length}, nationTag=${currentLocationTag || 'none'} `);
 
         return NextResponse.json({
             quests: allQuests,
