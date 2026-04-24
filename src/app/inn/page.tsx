@@ -28,6 +28,7 @@ import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
 import { getBgmKey } from '@/lib/getBgmKey';
 import XShareButton from '@/components/shared/XShareButton';
+import QuestTestPanel from '@/components/debug/QuestTestPanel';
 
 export default function InnPage() {
     return (
@@ -526,6 +527,9 @@ function InnPageInner() {
                     >
                         ⚔️ バトルテスト
                     </button>
+
+                    {/* クエストテスト */}
+                    <QuestTestPanel userId={userProfile?.id} onSelectQuest={(id) => router.push(`/quest/${id}`)} />
 
                     {/* 拠点属性パラメータ表示 */}
                     {worldState && (
