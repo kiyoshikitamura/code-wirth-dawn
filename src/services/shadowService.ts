@@ -51,12 +51,12 @@ export class ShadowService {
     }
 
     /**
-     * Finds available shadows (mercenaries) at the specific location.
+     * 指定拠点で雇用可能な影（傭兵）を検索する。
      */
     async findShadowsAtLocation(locationId: string, currentUserId: string): Promise<ShadowSummary[]> {
         const results: ShadowSummary[] = [];
 
-        // 0. Fetch Current Party to Exclude
+        // 0. 現在のパーティメンバーを取得（重複除外用）
         const { data: myParty } = await this.supabase
             .from('party_members')
             .select('source_user_id, name, origin_type')
@@ -66,7 +66,7 @@ export class ShadowService {
         const hiredSourceIds = new Set(myParty?.map(p => p.source_user_id).filter(Boolean));
         const hiredNames = new Set(myParty?.map(p => p.name));
 
-        // 1. Fetch Active Shadows (Players currently here)
+        // 1. アクティブシャドウ（現在同じ拠点にいるプレイヤー）
         try {
             const { data: activeUsers } = await this.supabase
                 .from('user_profiles')
@@ -122,14 +122,14 @@ export class ShadowService {
                 }
             }
         } catch (e) {
-            console.error("ShadowService: Failed to fetch active users", e);
+            console.error("[ShadowService] アクティブユーザーの取得に失敗", e);
         }
 
         // 2. Heroic Shadows は除外（英霊は「影の記録」タブ専用、酒場リストには表示しない）
         // v2.9.3f: 英霊がFree/国家枠と混在して表示不整合を引き起こしていたため撤廃
 
-        // 3. System Mercenaries
-        const systems = await this.generateSystemMercenaries(locationId);
+        // 3. システム傭兵
+        const systems = await this.generateSystemMercenaries(locationId, currentUserId);
         for (const sys of systems) {
             if (hiredNames.has(sys.name)) continue;
             results.push(sys);
@@ -155,10 +155,10 @@ export class ShadowService {
         return finalResults;
     }
 
-    async generateSystemMercenaries(locationId: string): Promise<ShadowSummary[]> {
+    async generateSystemMercenaries(locationId: string, currentUserId?: string): Promise<ShadowSummary[]> {
         const results: ShadowSummary[] = [];
         try {
-            // Get location context (ruling nation, prosperity)
+            // ロケーションコンテキストを取得（支配国、繁栄度）
             const { data: loc } = await this.supabase
                 .from('locations')
                 .select('ruling_nation_id, prosperity_level')
@@ -175,7 +175,7 @@ export class ShadowService {
                 .eq('is_hireable', true);
 
             if (npcs) {
-                // 1. Filter native NPCs
+                // 1. 支配国のネイティブNPCをフィルタ
                 const nativeNpcs = rulingNation === 'unknown'
                     ? npcs
                     : npcs.filter(n => n.slug?.toLowerCase().includes(rulingNation));
@@ -184,6 +184,51 @@ export class ShadowService {
                 // ※ guest NPCは特殊キャラのため候補から除外
                 const freeNpcs = npcs.filter(n => n.slug?.toLowerCase().includes('free'));
                 const nonGuestNpcs = [...nativeNpcs, ...freeNpcs].filter(n => !n.slug?.toLowerCase().includes('guest'));
+
+                // 2.5 クエストクリア条件付きゲストNPCの酒場ランダム出現
+                // ヴォルグ: main_ep13クリア後に50%の確率で酒場に出現
+                if (currentUserId) {
+                    const guestUnlockMap: Record<string, string> = {
+                        'npc_guest_volg': 'main_ep13',
+                    };
+                    const guestSlugs = Object.keys(guestUnlockMap);
+                    // guest NPCはis_hireable=falseの可能性があるため、slug指定で別途取得
+                    const { data: guestNpcRows } = await this.supabase
+                        .from('npcs')
+                        .select('*')
+                        .in('slug', guestSlugs);
+                    const guestNpcs = guestNpcRows || [];
+                    if (guestNpcs.length > 0) {
+                        const requiredSlugs = [...new Set(guestNpcs.map(n => guestUnlockMap[n.slug!]))];
+                        // scenariosテーブルからslug→idを解決
+                        const { data: scenarios } = await this.supabase
+                            .from('scenarios')
+                            .select('id, slug')
+                            .in('slug', requiredSlugs);
+                        const slugToScenarioId: Record<string, string> = {};
+                        if (scenarios) {
+                            for (const s of scenarios) slugToScenarioId[s.slug] = String(s.id);
+                        }
+                        // ユーザーのクリア済みクエストを確認
+                        const scenarioIds = Object.values(slugToScenarioId);
+                        let clearedScenarioIds = new Set<string>();
+                        if (scenarioIds.length > 0) {
+                            const { data: cleared } = await this.supabase
+                                .from('user_completed_quests')
+                                .select('scenario_id')
+                                .eq('user_id', currentUserId)
+                                .in('scenario_id', scenarioIds);
+                            clearedScenarioIds = new Set((cleared || []).map((c: any) => String(c.scenario_id)));
+                        }
+                        for (const npc of guestNpcs) {
+                            const reqSlug = guestUnlockMap[npc.slug!];
+                            const reqId = slugToScenarioId[reqSlug];
+                            if (reqId && clearedScenarioIds.has(reqId) && Math.random() < 0.5) {
+                                nonGuestNpcs.push(npc);
+                            }
+                        }
+                    }
+                }
 
                 // 3. Free NPC 1枠保証 + 残り4枠をランダム選出
                 const freeCandidates = nonGuestNpcs.filter(n => n.slug?.toLowerCase().includes('free'));
@@ -243,7 +288,7 @@ export class ShadowService {
                 }
             }
         } catch (e) {
-            console.error("ShadowService: Failed to fetch system mercenaries", e);
+            console.error("[ShadowService] システム傭兵の生成に失敗", e);
         }
         return results;
     }
@@ -261,7 +306,7 @@ export class ShadowService {
      *   - Free=10%, Sub=30% のロイヤリティを source_user_id へ付与
      */
     async hireShadow(hirerId: string, shadow: ShadowSummary): Promise<{ success: boolean; error?: string }> {
-        // 1. Fetch Hirer Profile
+        // 1. 雇用者のプロフィールを取得
         const { data: hirer } = await this.supabase
             .from('user_profiles')
             .select('gold, current_location_id')
@@ -335,12 +380,27 @@ export class ShadowService {
 
         } else if (shadow.origin_type === 'system_mercenary') {
             // npcs から level を取得して再計算
-            const { data: npcData } = await this.supabase
+            // クエスト解放型ゲストNPC（npc_guest_*）はis_hireableがfalseの場合があるため、
+            // まずis_hireable=trueで検索し、見つからなければslugで再検索
+            let npcData: any = null;
+            const { data: hireableNpc } = await this.supabase
                 .from('npcs')
-                .select('level, hire_cost')
+                .select('level, hire_cost, slug')
                 .eq('id', shadow.profile_id)
                 .eq('is_hireable', true)
-                .single();
+                .maybeSingle();
+            npcData = hireableNpc;
+
+            if (!npcData) {
+                // クエスト解放型ゲストNPCの場合はis_hireable条件なしで取得
+                const { data: guestNpc } = await this.supabase
+                    .from('npcs')
+                    .select('level, hire_cost, slug')
+                    .eq('id', shadow.profile_id)
+                    .like('slug', 'npc_guest_%')
+                    .maybeSingle();
+                npcData = guestNpc;
+            }
                 
             if (!npcData) {
                 return { success: false, error: '無効または現在雇用不可能な傭兵IDです。' };
@@ -382,9 +442,9 @@ export class ShadowService {
 
         if (existingMembers && existingMembers.length > 0) {
             const isDuplicate = existingMembers.some((m: any) => {
-                // Name match
+                // 名前一致チェック
                 if (m.name === shadow.name) return true;
-                // source_user_id match (for player shadows)
+                // source_user_id 一致チェック（プレイヤーシャドウ用）
                 if (shadow.profile_id && m.source_user_id && m.source_user_id === shadow.profile_id) return true;
                 return false;
             });
@@ -451,7 +511,7 @@ export class ShadowService {
 
                     const taxed = finalContractFee - effectiveRoyalty;
                     console.log(
-                        `[HeroicHire] Fee: ${finalContractFee}G | Cap: ${dailyCap}G | Royalty: ${effectiveRoyalty}G → ${heroicOwnerId} | Tax: ${taxed}G → System`
+                        `[英霊雇用] 契約金: ${finalContractFee}G | 日額上限: ${dailyCap}G | ロイヤリティ: ${effectiveRoyalty}G → ${heroicOwnerId} | システム税: ${taxed}G`
                     );
                 }
             }
@@ -459,7 +519,7 @@ export class ShadowService {
             // v13.0: shadow_active にも日額CAP を適用（spec_v6 §5A.4）
             // 自己雇用は分配なし
             if (shadow.profile_id === hirerId) {
-                console.log(`[ActiveHire] Self-hire detected. No royalty paid.`);
+                console.log(`[影雇用] 自己雇用を検出。ロイヤリティ分配なし。`);
             } else {
                 const rate = shadow.subscription_tier === 'premium' ? 0.5
                     : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1);
@@ -504,7 +564,7 @@ export class ShadowService {
 
                     const taxed = finalContractFee - effectiveRoyalty;
                     console.log(
-                        `[ActiveHire] Fee: ${finalContractFee}G | Cap: ${dailyCap}G | Royalty: ${effectiveRoyalty}G → ${shadow.profile_id} | Tax: ${taxed}G → System`
+                        `[影雇用] 契約金: ${finalContractFee}G | 日額上限: ${dailyCap}G | ロイヤリティ: ${effectiveRoyalty}G → ${shadow.profile_id} | システム税: ${taxed}G`
                     );
                 }
             }
