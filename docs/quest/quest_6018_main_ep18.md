@@ -39,7 +39,7 @@
 
 **CSV記載形式:**
 ```
-Gold:8000|Rep:30|Chaos:10
+Exp:2500|Gold:8000|Rep:30|Chaos:10
 ```
 
 ---

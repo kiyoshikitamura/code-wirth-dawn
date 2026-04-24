@@ -204,6 +204,7 @@ CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
     - **メインシナリオ (main_ep*)**: 継承時もクリア記録を保持（永久非表示）。
 4. **ステートリセット**: ゲストNPCの離脱・内部フラグ（呪い・正解数など）の完全破棄。
 5. **Vitality摩耗**: パーティメンバーのVIT減少処理。
+6. **ゲストNPC→通常雇用変換** (v15.2): クエスト成功時に`leave`ノードを通過せず残留したゲストNPCを`party_members`テーブルにINSERTし、正規メンバーとして永続化。パーティ上限(4名)・重複チェック付き。
 
 ### 8.1 Vitality (VIT) 摩耗ルール
 パーティメンバーはクエスト完了時にVitalityが減少する。VITが0になるとパーティから離脱する。
@@ -237,6 +238,10 @@ CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
     { "name": "影の傭兵", "oldDurability": 95, "newDurability": 90, "perished": false },
     { "name": "古い剣士", "oldDurability": 10, "newDurability": 0, "perished": true, "memento": "古剣の欠片" }
   ],
+  "guest_conversion": {
+    "name": "ヴォルグ",
+    "success": true
+  },
   "changes": {
     "gold_gained": 200,
     "old_age": 18, "new_age": 18,
@@ -265,5 +270,6 @@ CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
 | キャラクター変化 | レベルアップ（Lv/HP/ATK/DEF/コスト数値表示）、加齢、ATK/DEF減衰 | 該当変化がある場合 |
 | 時間経過 | 経過日数、到着地名 | 常時 |
 | パーティ状態 | メンバーVIT変化（VIT XX ▸ YY）、離脱、形見獲得 | パーティ変化がある場合 |
+| ゲストNPC加入 | 「○○が正式にパーティに加入！」または加入見送り理由 | guest_conversionがある場合 |
 | シェア | SNS投稿ボタン | share_textがある場合 |
 

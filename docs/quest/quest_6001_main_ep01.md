@@ -39,7 +39,7 @@
 
 **CSV記載形式:**
 ```
-Gold:150|Rep:5|Order:5
+Exp:80|Gold:150|Rep:5|Order:5
 ```
 
 ---
