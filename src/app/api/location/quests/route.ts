@@ -46,7 +46,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'User not found', debug, uError: uError?.message }, { status: 404 });
         }
 
-        // 2. Fetch World State
+        // 2. Fetch World State (single for prosperity)
         const { data: worldState } = await supabaseServer
             .from('world_states')
             .select('*')
@@ -55,6 +55,33 @@ export async function GET(req: Request) {
         // prosperity_level は DB上で1-5のスケール
         const currentProsperity = worldState?.prosperity_level || 3;
         debug.push(`prosperity = ${currentProsperity} (scale: 1-5) `);
+
+        // 2.5 Fetch all world_states for alignment percentage calculation (spot quest conditions)
+        const { data: allWorldStates } = await supabaseServer
+            .from('world_states')
+            .select('order_score, chaos_score, justice_score, evil_score');
+
+        // Calculate global alignment percentages
+        let alignmentPcts: Record<string, number> = { order: 0, chaos: 0, justice: 0, evil: 0 };
+        if (allWorldStates && allWorldStates.length > 0) {
+            let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
+            for (const ws of allWorldStates) {
+                totalOrder += (ws as any).order_score || 0;
+                totalChaos += (ws as any).chaos_score || 0;
+                totalJustice += (ws as any).justice_score || 0;
+                totalEvil += (ws as any).evil_score || 0;
+            }
+            const totalAll = totalOrder + totalChaos + totalJustice + totalEvil;
+            if (totalAll > 0) {
+                alignmentPcts = {
+                    order: (totalOrder / totalAll) * 100,
+                    chaos: (totalChaos / totalAll) * 100,
+                    justice: (totalJustice / totalAll) * 100,
+                    evil: (totalEvil / totalAll) * 100,
+                };
+            }
+        }
+        debug.push(`alignment_pcts: O=${alignmentPcts.order.toFixed(1)}% C=${alignmentPcts.chaos.toFixed(1)}% J=${alignmentPcts.justice.toFixed(1)}% E=${alignmentPcts.evil.toFixed(1)}% `);
 
         // 3. Fetch User Inventory (for has_item checks)
         const { data: inventory } = await supabaseServer
@@ -168,10 +195,19 @@ export async function GET(req: Request) {
                 if (!hasCompletedPrereq(reqs.completed_quest)) return false;
             }
 
-            // 陰陽/秩序 alignment（隠しクエスト）
+            // 陰陽/秩序 alignment（隠しクエスト — ユーザー個人の属性値）
             if (reqs.align_evil && !(user.evil_pts > user.justice_pts)) return false;
             if (reqs.min_align_chaos && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
             if (reqs.min_align_order && (user.order_pts || 0) < reqs.min_align_order) return false;
+
+            // v24: 情勢割合条件（スポットクエスト用 — 世界全体の情勢割合）
+            // requirements.min_alignment_pct: { alignment: "order", min_pct: 50 }
+            if (reqs.min_alignment_pct) {
+                const reqAlign = reqs.min_alignment_pct.alignment; // "order" | "chaos" | "justice" | "evil"
+                const reqMinPct = reqs.min_alignment_pct.min_pct || 50;
+                const currentPct = alignmentPcts[reqAlign] || 0;
+                if (currentPct < reqMinPct) return false;
+            }
 
             // 繁栄度条件
             if (reqs.max_prosperity && currentProsperity > reqs.max_prosperity) return false;
