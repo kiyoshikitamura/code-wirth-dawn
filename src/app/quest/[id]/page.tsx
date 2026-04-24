@@ -368,6 +368,28 @@ export default function QuestPage() {
                                         return;
                                     }
 
+                                    // デバッグモード: パラメータ変更をスキップし結果だけ表示
+                                    const isDebugMode = searchParams.get('debug_bypass') === 'true';
+                                    if (isDebugMode) {
+                                        setResultOverlay({
+                                            result: result === 'success' ? 'success' : 'failure',
+                                            data: {
+                                                quest_title: scenario.title,
+                                                rewards: scenario.rewards || {},
+                                                days_passed: 0,
+                                                earned_exp: 0,
+                                                share_text: `【デバッグ】${scenario.title} を ${result === 'success' ? 'クリア' : '失敗'}しました`,
+                                                changes: {},
+                                                rep_change: null,
+                                                party_changes: null,
+                                                loot_saved: [],
+                                                guest_conversion: null,
+                                                new_location_name: null,
+                                            }
+                                        });
+                                        return;
+                                    }
+
                                     try {
                                         const { data: { session: sess } } = await supabase.auth.getSession();
                                         const authToken = sess?.access_token;
