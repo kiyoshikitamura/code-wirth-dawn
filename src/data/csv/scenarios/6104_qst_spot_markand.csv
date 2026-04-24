@@ -1,0 +1,25 @@
+row_type,node_id,text_label,params,next_node
+META,gold,0,,
+META,exp,0,,
+META,reputation,0,,
+NODE,start,マルカンドの砂漠の奥地に、歴史から消された「禁忌の王墓」が出現した。無名王の呪いにより都市は砂に呑まれ始めている。呪いの根源を断つため、王墓へ潜入する。,"{""type"":""text"", ""bg"":""bg_spot_markand_exterior"", ""bgm"":""bgm_markand""}",text_trap1
+NODE,text_trap1,王墓の入口に足を踏み入れた瞬間、床が崩落し、針の罠が飛んできた！,"{""type"":""trap"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_quest_tense"", ""params"":{""hp_percent"":10}}",text_guard1
+NODE,text_guard1,罠を抜けた先に、黄金の光で形作られた兵士が立ちはだかっていた。古代の自動防衛兵器だ。,"{""type"":""text"", ""bg"":""bg_spot_markand_interior""}",battle_guard1
+NODE,battle_guard1,光の衛兵との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":330, ""enemy_name"":""光の衛兵"", ""enemy_level"":18}",choice_g1
+CHOICE,,勝利,,text_trap2
+NODE,text_trap2,通路を進むと、壁から無数の矢が飛んできた！古代の自動防衛だ。,"{""type"":""trap"", ""bg"":""bg_spot_markand_interior"", ""params"":{""hp_percent"":8}}",text_golem
+NODE,text_golem,砂が渦を巻きながら人型に凝固していく。砂のゴーレムだ。斬っても砂に戻って再構成される。,"{""type"":""text"", ""bg"":""bg_spot_markand_interior""}",battle_golem
+NODE,battle_golem,砂のゴーレムとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":331, ""enemy_name"":""砂のゴーレム"", ""enemy_level"":20}",choice_golem
+CHOICE,,勝利,,text_trap3
+NODE,text_trap3,床に不気味な紋章が浮かんだ。呪いの結界だ！触れた者の体力を蝕む。,"{""type"":""trap"", ""bg"":""bg_spot_markand_interior"", ""params"":{""hp_percent"":12}}",text_guard2
+NODE,text_guard2,呪いの結界の奥で、ゴーレムと衛兵が同時に現れた。,"{""type"":""text"", ""bg"":""bg_spot_markand_interior""}",battle_guard2
+NODE,battle_guard2,砂の守護者たちとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":332, ""enemy_name"":""砂の守護者"", ""enemy_level"":20}",choice_g2
+CHOICE,,勝利,,text_king
+NODE,text_king,王墓の最深部に辿り着いた。黄金の棺が安置されている。棺の蓋が開き、漆黒の影が湧き出した。歴史から名前すら消された暴君「無名王」だ。,"{""type"":""text"", ""bg"":""bg_spot_markand_throne"", ""bgm"":""bgm_spot_final_boss""}",boss_king
+NODE,boss_king,無名王の影との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_markand_throne"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":333, ""enemy_name"":""無名王の影"", ""enemy_level"":25}",choice_king
+CHOICE,,勝利,,final_choice
+NODE,final_choice,無名王を倒した。棺の中に、暴君が使っていた処刑の大剣と、呪術の書が残されている。呪術の書には都市を支配する禁忌の術が記されている。,"{""type"":""text"", ""bg"":""bg_spot_markand_throne"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+CHOICE,,処刑の大剣を持ち帰る（国へ献上）,,end_sword
+CHOICE,,呪術の書から力を得る（禁忌の力）,,end_curse
+NODE,end_sword,暴君の大剣を回収し、王墓を封印した。都市を蝕む呪いは解け、マルカンドに再び砂漠の風が吹く。大きな功績を認められた。,"{""type"":""end_success"", ""bg"":""bg_spot_markand_throne"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""632""]}}",
+NODE,end_curse,呪術の書から禁忌の力を抜き出した。都市への呪いは解けたが、書は永遠に失われた。王家はこの選択を問題視したが、手に入れた力は本物だ。固有スキル『砂塵の支配』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_markand_throne"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""631""]}}",

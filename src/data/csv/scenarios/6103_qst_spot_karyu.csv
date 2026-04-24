@@ -1,0 +1,35 @@
+row_type,node_id,text_label,params,next_node
+META,gold,0,,
+META,exp,0,,
+META,reputation,0,,
+NODE,start,華龍の霊山に天を衝く「虚無の塔」が出現した。塔の頂には「神」が座し、四方に四神を配置して世界を遊戯として眺めているという。華龍の皇帝は塔の攻略を命じた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_karyu""}",text_branch
+NODE,text_branch,四神はそれぞれ塔の四方を守護している。まず東の間へ向かう。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",text_seiryu
+NODE,text_seiryu,東の間に雷雲が渦巻いている。蒼い鱗を持つ龍「青龍」が天井から降下してきた。東方の守護神だ。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong""}",boss_seiryu
+NODE,boss_seiryu,青龍との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":320, ""enemy_name"":""青龍"", ""enemy_level"":22}",choice_seiryu
+CHOICE,,勝利,,reward_seiryu
+NODE,reward_seiryu,青龍を退けた。青龍の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""621""]}",text_byakko
+NODE,text_byakko,西の間に猛吹雪が吹き荒れている。白銀の毛並みを持つ「白虎」が鋼の爪を研ぎ澄ませていた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",boss_byakko
+NODE,boss_byakko,白虎との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":321, ""enemy_name"":""白虎"", ""enemy_level"":22}",choice_byakko
+CHOICE,,勝利,,reward_byakko
+NODE,reward_byakko,白虎を退けた。白虎の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""622""]}",text_suzaku
+NODE,text_suzaku,南の間に紅蓮の炎が燃え盛っている。不死の炎を纏う「朱雀」が五色の尾羽を広げた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",boss_suzaku
+NODE,boss_suzaku,朱雀との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":322, ""enemy_name"":""朱雀"", ""enemy_level"":22}",choice_suzaku
+CHOICE,,勝利,,reward_suzaku
+NODE,reward_suzaku,朱雀を退けた。朱雀の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""623""]}",text_genbu
+NODE,text_genbu,北の間に紫の毒霧が立ち込めている。漆黒の甲羅を持つ「玄武」が不動の構えをとっていた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",boss_genbu
+NODE,boss_genbu,玄武との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":323, ""enemy_name"":""玄武"", ""enemy_level"":22}",choice_genbu
+CHOICE,,勝利,,reward_genbu
+NODE,reward_genbu,玄武を退けた。玄武の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""624""]}",check_orb_1
+NODE,check_orb_1,四神を全て倒した。塔の頂への扉が現れた。宝珠が揃っているか確認する。,"{""type"":""check_possession"", ""item_id"":""621"", ""next"":""check_orb_2"", ""fallback"":""orb_fail""}",
+NODE,check_orb_2,,"{""type"":""check_possession"", ""item_id"":""622"", ""next"":""check_orb_3"", ""fallback"":""orb_fail""}",
+NODE,check_orb_3,,"{""type"":""check_possession"", ""item_id"":""623"", ""next"":""check_orb_4"", ""fallback"":""orb_fail""}",
+NODE,check_orb_4,,"{""type"":""check_possession"", ""item_id"":""624"", ""next"":""text_kami"", ""fallback"":""orb_fail""}",
+NODE,orb_fail,宝珠が足りない……門は開かなかった。塔は崩壊し始めた。,"{""type"":""end"", ""result"":""failure"", ""bg"":""bg_spot_karyu_tower""}",
+NODE,text_kami,四つの宝珠を祭壇に捧げた。塔の頂への道が開かれた。星空のような体を持つ超越存在が玉座に座っていた。「ほう……四神を退けたか。退屈が紛れそうだ」,"{""type"":""text"", ""bg"":""bg_spot_karyu_summit"", ""bgm"":""bgm_spot_final_boss""}",boss_kami
+NODE,boss_kami,「神」との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_summit"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":324, ""enemy_name"":""神"", ""enemy_level"":28}",choice_kami
+CHOICE,,勝利,,final_choice
+NODE,final_choice,「面白い……久々に身体に傷がついた」神は興味深そうに微笑む。「望みを言え。この塔の力を託すか、それとも……」,"{""type"":""text"", ""bg"":""bg_spot_karyu_summit"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+CHOICE,,神の力を受け入れ武器を授かる,,end_weapon
+CHOICE,,神を完全に打倒し、力を奪い取る,,end_skill
+NODE,end_weapon,神の玉座から天道の薙刀が出現した。四神の力を宿す神器だ。皇帝にもたらした功績は大きく、華龍に新たな伝説が生まれた。,"{""type"":""end_success"", ""bg"":""bg_spot_karyu_summit"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""625""]}}",
+NODE,end_skill,最後の力を振り絞り、神の核を砕いた。塔は崩壊したが、砕けた核から究極のスキルが生まれた。固有スキル『神殺しの光芒』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_karyu_summit"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""626""]}}",

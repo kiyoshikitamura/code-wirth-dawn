@@ -1,0 +1,39 @@
+row_type,node_id,text_label,params,next_node
+META,gold,0,,
+META,exp,0,,
+META,reputation,0,,
+NODE,start,「冥食」が始まり、空が赤黒く染まった。隠れ里から、白装束の少女「撫子」が現れた。彼女は冥の門を封じるための「生贄」だ。,"{""type"":""text"", ""bg"":""bg_spot_yato_eclipse"", ""bgm"":""bgm_yato""}",join_nadeshiko
+NODE,join_nadeshiko,少女「撫子」が同行者になった。戦闘に参加するが、彼女が倒れれば儀式は失敗となる。,"{""type"":""guest_join"", ""bg"":""bg_spot_yato_eclipse"", ""guest_id"":""npc_nadeshiko"", ""is_escort_target"":true}",text_spider1
+NODE,text_spider1,門の守護者、鬼蜘蛛の群れが襲いかかってきた！,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong""}",battle_spider1
+NODE,battle_spider1,冥の門の魔物たちとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":310, ""enemy_name"":""鬼蜘蛛の群れ"", ""enemy_level"":15}",choice_sp1
+CHOICE,,勝利,,text_spider2
+NODE,text_spider2,門の奥から、さらに大きな蜘蛛の群れが這い出てきた。撫子を守りながら戦え。,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",battle_spider2
+NODE,battle_spider2,第二の群れとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":311, ""enemy_name"":""冥の魔物"", ""enemy_level"":16}",choice_sp2
+CHOICE,,勝利,,text_spider3
+NODE,text_spider3,天井から糸が垂れてくる。上から奇襲だ！,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",battle_spider3
+NODE,battle_spider3,頭上からの奇襲！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":312, ""enemy_name"":""奇襲の魔物"", ""enemy_level"":17}",choice_sp3
+CHOICE,,勝利,,text_spider4
+NODE,text_spider4,門の守護者、最後の一群。この先に四大妖怪が待つ。,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",battle_spider4
+NODE,battle_spider4,最後の守護者との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":313, ""enemy_name"":""門の守護者"", ""enemy_level"":18}",choice_sp4
+CHOICE,,勝利,,text_wani
+NODE,text_wani,地を揺るがす咆哮と共に、甲羅を纏った巨大な大鰐が現れた。「水底の覇者」と恐れられた古の妖怪。第一の試練だ。,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_wani
+NODE,boss_wani,大鰐との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":314, ""enemy_name"":""大鰐"", ""enemy_level"":20}",choice_wani
+CHOICE,,勝利,,reward_m1
+NODE,reward_m1,大鰐を打倒した。朱の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""611""]}",text_tori
+NODE,text_tori,空を覆い尽くす漆黒の翼。不吉な鳴き声が響く。「以津真天」。死の前兆を告げる凶鳥が、撫子を狙って急降下してきた。,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_tori
+NODE,boss_tori,以津真天との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":315, ""enemy_name"":""以津真天"", ""enemy_level"":20}",choice_tori
+CHOICE,,勝利,,reward_m2
+NODE,reward_m2,以津真天を退けた。蒼の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""612""]}",text_kuruma
+NODE,text_kuruma,闇の奥から車輪の軋む音が聞こえる。炎を纏った巨大な牛車が突進してきた。「朧車」。生者を轢き殺し冥界へ運ぶ、怨念の乗り物。,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_kuruma
+NODE,boss_kuruma,朧車との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":316, ""enemy_name"":""朧車"", ""enemy_level"":22}",choice_kuruma
+CHOICE,,勝利,,reward_m3
+NODE,reward_m3,朧車を粉砕した。翠の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""613""]}",text_shuten
+NODE,text_shuten,最後にして最強の妖怪「酒呑童子」。歴代の儀式に失敗し、鬼へと堕ちた伝説の戦士が立ちはだかる。,"{""type"":""text"", ""bg"":""bg_spot_yato_gate"", ""bgm"":""bgm_spot_final_boss""}",boss_shuten
+NODE,boss_shuten,酒呑童子との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_yato_gate"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":317, ""enemy_name"":""酒呑童子"", ""enemy_level"":25}",choice_shuten
+CHOICE,,勝利,,reward_m4
+NODE,reward_m4,酒呑童子を打倒した。黄の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_gate"", ""items"":[""614""]}",final_choice
+NODE,final_choice,四大妖怪を退け、冥の門が完全に開いた。いよいよ撫子を門の奥へ送り出す時が来たが……。,"{""type"":""text"", ""bg"":""bg_spot_yato_gate"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+CHOICE,,儀式を完遂させる（撫子を送り出す）,,end_sacrifice
+CHOICE,,因習を打ち砕く（撫子を救う）,,end_save
+NODE,end_sacrifice,撫子を門の奥へ送り出した。門は完全に閉じ、夜刀に平和が戻る。彼女の名は歴史から消え、犠牲を知るのは自分だけだ。,"{""type"":""end_success"", ""bg"":""bg_spot_yato_gate"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""615""]}}",
+NODE,end_save,儀式を拒絶し、門から漏れ出す「冥府の王」の思念を力でねじ伏せた。夜刀の国は困難な時代に突入するが、撫子の命は救われた。固有スキル『冥食の理』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_yato_gate"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""616""]}}",
