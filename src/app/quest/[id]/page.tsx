@@ -375,6 +375,9 @@ export default function QuestPage() {
                                             .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
                                             .map((m: any) => String(m.id));
 
+                                        // クエスト終了時にゲストが残っている場合、通常雇用変換のためにAPIへ送信
+                                        const remainingGuest = useQuestState.getState().guest;
+
                                         const res = await fetch('/api/quest/complete', {
                                             method: 'POST',
                                             headers: {
@@ -387,7 +390,12 @@ export default function QuestPage() {
                                                 history: history || [],
                                                 loot_pool: [],
                                                 consumed_items: [],
-                                                defeated_member_ids: defeatedMemberIds
+                                                defeated_member_ids: defeatedMemberIds,
+                                                remaining_guest: remainingGuest ? {
+                                                    slug: (remainingGuest as any).slug,
+                                                    name: remainingGuest.name,
+                                                    npc_id: remainingGuest.id,
+                                                } : null
                                             })
                                         });
 
@@ -434,6 +442,7 @@ export default function QuestPage() {
                             newLocationName={resultOverlay.data?.new_location_name}
                             earnedExp={resultOverlay.data?.earned_exp}
                             lootSaved={resultOverlay.data?.loot_saved}
+                            guestConversion={resultOverlay.data?.guest_conversion}
                             onClose={() => router.push('/inn')}
                         />
                     </div>

@@ -45,6 +45,12 @@ interface PartyChange {
     memento?: string | null;
 }
 
+interface GuestConversion {
+    name: string;
+    success: boolean;
+    reason?: string;
+}
+
 interface QuestResultModalProps {
     onClose: () => void;
     result: 'success' | 'failure';
@@ -58,11 +64,12 @@ interface QuestResultModalProps {
     newLocationName?: string | null;
     earnedExp?: number;
     lootSaved?: any[];
+    guestConversion?: GuestConversion | null;
 }
 
 export default function QuestResultModal({
     onClose, result, questTitle, changes, rewards, daysPassed, shareText,
-    repChange, partyChanges, newLocationName, earnedExp, lootSaved
+    repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion
 }: QuestResultModalProps) {
     const { level_up, gold_gained, aged_up } = changes;
     const isSuccess = result === 'success';
@@ -329,6 +336,33 @@ export default function QuestResultModal({
                                     </div>
                                 ))}
                             </div>
+                        </section>
+                    )}
+
+                    {/* ── §5.5 ゲストNPC正式加入通知 ── */}
+                    {guestConversion && (
+                        <section className="border-t border-gray-800 pt-3">
+                            {guestConversion.success ? (
+                                <div className="flex items-center gap-3 bg-gradient-to-r from-amber-900/30 to-amber-950/20 border border-amber-600/40 rounded-lg p-3">
+                                    <div className="p-2 bg-amber-900/50 rounded-full text-amber-400 shrink-0">
+                                        <Users className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-amber-300 font-bold text-sm">🤝 {guestConversion.name} が正式にパーティに加入！</div>
+                                        <div className="text-[9px] text-amber-500/70 mt-0.5">これからは常に共に旅を続けます。</div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3 bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                                    <div className="p-2 bg-slate-800 rounded-full text-slate-500 shrink-0">
+                                        <Users className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-slate-400 text-xs">{guestConversion.name} の加入を見送り</div>
+                                        <div className="text-[9px] text-slate-600 mt-0.5">{guestConversion.reason}</div>
+                                    </div>
+                                </div>
+                            )}
                         </section>
                     )}
 

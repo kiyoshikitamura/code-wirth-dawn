@@ -278,6 +278,97 @@ export async function POST(req: Request) {
             }
         }
 
+        // 7.3 ゲストNPC → 通常雇用変換
+        // クエスト成功時にゲストが離脱せず残っている場合、party_membersテーブルにINSERTして正規雇用化
+        let guestConversion: { name: string; success: boolean; reason?: string } | null = null;
+        if (result === 'success' && body.remaining_guest?.slug) {
+            const guestSlug = body.remaining_guest.slug;
+            const guestName = body.remaining_guest.name || 'ゲストNPC';
+            console.log(`[QuestComplete] ゲスト残留検出: ${guestName} (${guestSlug})`);
+
+            try {
+                // NPCマスターデータ取得
+                const { data: npcData } = await supabase
+                    .from('npcs')
+                    .select('*')
+                    .eq('slug', guestSlug)
+                    .maybeSingle();
+
+                if (npcData) {
+                    // パーティ上限チェック
+                    const { count: partyCount } = await supabase
+                        .from('party_members')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('owner_id', user_id)
+                        .eq('is_active', true);
+
+                    if ((partyCount || 0) >= 4) {
+                        console.log(`[QuestComplete] パーティ満員のため ${guestName} の自動雇用をスキップ`);
+                        guestConversion = { name: guestName, success: false, reason: 'パーティが満員です（最大4名）。酒場で再契約できます。' };
+                    } else {
+                        // 重複チェック
+                        const { data: existingMember } = await supabase
+                            .from('party_members')
+                            .select('id')
+                            .eq('owner_id', user_id)
+                            .eq('name', npcData.name)
+                            .eq('is_active', true)
+                            .maybeSingle();
+
+                        if (existingMember) {
+                            console.log(`[QuestComplete] ${guestName} は既にパーティに在籍`);
+                            guestConversion = { name: guestName, success: false, reason: '既にパーティに在籍しています。' };
+                        } else {
+                            // party_membersに挿入（無料雇用）
+                            const guestMaxHp = npcData.max_hp || npcData.hp || 100;
+                            const guestIconUrl = `/images/npcs/${npcData.slug}.png`;
+
+                            // inject_cards: default_cardsまたはinject_card_idsカラムからカードIDを取得
+                            let cardIds: number[] = [];
+                            if (npcData.default_cards && Array.isArray(npcData.default_cards)) {
+                                cardIds = npcData.default_cards;
+                            } else if (npcData.inject_card_ids && typeof npcData.inject_card_ids === 'string') {
+                                cardIds = npcData.inject_card_ids.split('|').map(Number).filter(Boolean);
+                            }
+
+                            const { error: insertError } = await supabase
+                                .from('party_members')
+                                .insert({
+                                    owner_id: user_id,
+                                    name: npcData.name,
+                                    slug: npcData.slug,
+                                    epithet: npcData.epithet || null,
+                                    image_url: guestIconUrl,
+                                    origin_type: 'quest_guest',
+                                    level: npcData.level || 1,
+                                    atk: npcData.atk || 0,
+                                    def: npcData.def || 0,
+                                    durability: guestMaxHp,
+                                    max_durability: guestMaxHp,
+                                    inject_cards: cardIds,
+                                    is_active: true,
+                                    royalty_rate: 0,
+                                });
+
+                            if (insertError) {
+                                console.error(`[QuestComplete] ゲスト雇用INSERT失敗:`, insertError.message);
+                                guestConversion = { name: guestName, success: false, reason: insertError.message };
+                            } else {
+                                console.log(`[QuestComplete] ✅ ${guestName} がパーティに正式加入`);
+                                guestConversion = { name: guestName, success: true };
+                            }
+                        }
+                    }
+                } else {
+                    console.warn(`[QuestComplete] ゲストNPC "${guestSlug}" がnpcsテーブルに見つかりません`);
+                    guestConversion = { name: guestName, success: false, reason: 'NPCデータが見つかりません。' };
+                }
+            } catch (guestErr: any) {
+                console.error('[QuestComplete] ゲスト→雇用変換エラー:', guestErr);
+                guestConversion = { name: guestName, success: false, reason: guestErr.message };
+            }
+        }
+
         // 7.5 Vitality摩耗サイクル (Wear Cycle) & Memento Generation
         // 成功: -5, 失敗/撤退: -10, バトルHP0: 追加 -10
         const partyChanges: any[] = [];
@@ -479,6 +570,7 @@ export async function POST(req: Request) {
             share_text: finalShareText,
             rep_change: repChange,
             party_changes: partyChanges,
+            guest_conversion: guestConversion,
             changes
         });
 

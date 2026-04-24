@@ -47,6 +47,8 @@ export async function GET(req: Request) {
 
             // PartyMember互換オブジェクトとして返す
             const guestMaxHp = npcData.max_hp || npcData.hp || 50;
+            // アイコン画像: DB値 → slugベースのフォールバック
+            const guestIconUrl = npcData.icon_url || npcData.image_url || `/images/npcs/${npcData.slug}.png`;
             data = {
                 id: npcData.id,
                 slug: npcData.slug,
@@ -58,15 +60,15 @@ export async function GET(req: Request) {
                 maxHp: guestMaxHp,
                 atk: npcData.atk || npcData.attack || 10,
                 def: npcData.def || npcData.defense || 5,
-                // image: DBスキーマにカラムがないためデフォルトを使用
-                image: '/assets/chara/guest_default.png',
-                icon_url: npcData.icon_url || null,
-                image_url: npcData.image_url || null,
+                image: guestIconUrl,
+                icon_url: guestIconUrl,
+                image_url: guestIconUrl,
                 inject_cards: npcData.default_cards || [],
                 is_active: true,
                 durability: guestMaxHp,
                 max_durability: guestMaxHp,
-                introduction: npcData.introduction
+                introduction: npcData.introduction,
+                origin_type: 'quest_guest'
             };
         } else {
             const { data: member, error: memberError } = await supabase
