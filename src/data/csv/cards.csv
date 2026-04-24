@@ -59,7 +59,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 58,card_death_strike,即死攻撃,Skill,4,vitality,30,0,single_enemy,instakill,/images/items/grimoire_death_strike.png,30%の確率で敵を即死させる死の一撃。成功時：敵HP→0（即死）。失敗時：通常攻撃として機能する。
 59,card_mad_frenzy,狂戦士の薬,Support,1,vitality,30,0,self,berserk,/images/items/skill_berserk.png,使用後に制御不能となるが攻撃力が大幅上昇する狂戦士の薬。3ターンの間、ATK UPを付与する。
 60,card_soul_sac,魂の生贄,Magic,5,vitality,50,150,all_enemies,recoil,/images/items/grimoire_soul_sac.png,魂を生贄に捧げ全敵に超絶ダメージを与える。全体に150の大ダメージ（DEF無視）。代償：使用者の最大HP10%を自傷する。
-61,card_citizen_support,市民の支援,Heal,0,,0,600,self,,,
+61,card_citizen_support,市民の支援,Heal,0,vitality,0,600,self,,,
 62,card_poison_brew,調毒,Skill,2,vitality,5,30,single_enemy,poison,/images/items/item_poison_manual.png,毒を調合して敵に投げつける。30のダメージを与え、5ターンの間、毎ターンHP5%の毒ダメージを付与する。
 63,card_blood_pact,血の契約,Support,3,vitality,1,0,self,atk_up,/images/items/item_forbidden_scroll.png,命を代償に戦闘能力を極限まで引き上げる禁術。12ターンの間ATK UPとDEF UPを同時に付与する。
 71,card_regalia_brave,五星の加護,Skill,2,vitality,10,35,single_enemy,atk_up,,英霊たちの魂が一斉に呼応し五芒星の光が剣に宿る。高威力の一撃に加えATKが上昇する。
