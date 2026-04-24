@@ -159,102 +159,124 @@ id,enemy_slug,skill_slug,prob,condition_type,condition_value
 158,enemy_succubus,skill_fireball,30,,
 159,enemy_succubus,skill_dark_flare,40,,
 
-1001,boss_skeleton_king,skill_boss_nuke,20,turn_mod,4
-1002,boss_skeleton_king,skill_heavy_attack,50,,
-1003,boss_skeleton_king,skill_curse,100,turn_mod,3
-1004,boss_skeleton_king,skill_attack,100,,
+1001,boss_skeleton_king,skill_heavy_blow,50,,
+1002,boss_skeleton_king,skill_armor_break,100,turn_mod,3
+1003,boss_skeleton_king,skill_enrage,100,hp_under,50
+1004,boss_skeleton_king,skill_boss_nuke,100,turn_mod,5
+1005,boss_skeleton_king,skill_war_cry,100,turn_mod,4
 
-1010,boss_desert_dragon,skill_boss_heal,100,hp_under,500
-1011,boss_desert_dragon,skill_boss_nuke,30,turn_mod,3
-1012,boss_desert_dragon,skill_boss_stun,40,turn_mod,5
-1013,boss_desert_dragon,skill_heavy_attack,100,,
+1010,boss_desert_dragon,skill_dragon_breath,40,,
+1011,boss_desert_dragon,skill_heavy_blow,60,,
+1012,boss_desert_dragon,skill_boss_nuke,100,turn_mod,4
+1013,boss_desert_dragon,skill_boss_stun,100,turn_mod,5
+1014,boss_desert_dragon,skill_berserk_rage,100,hp_under,25
+1015,boss_desert_dragon,skill_boss_heal,100,hp_under,40
 
-1020,boss_fallen_angel,skill_boss_heal,100,turn_mod,5
-1021,boss_fallen_angel,skill_boss_nuke,50,hp_under,400
-1022,boss_fallen_angel,skill_curse,100,turn_mod,4
-1023,boss_fallen_angel,skill_heavy_attack,100,,
+1020,boss_fallen_angel,skill_holy_ray,50,,
+1021,boss_fallen_angel,skill_dark_flare,50,,
+1022,boss_fallen_angel,skill_boss_heal,100,turn_mod,5
+1023,boss_fallen_angel,skill_death_sentence,100,turn_mod,4
+1024,boss_fallen_angel,skill_berserk_rage,100,hp_under,25
 
-1030,boss_demon_baphomet,skill_boss_nuke,100,turn_mod,4
-1031,boss_demon_baphomet,skill_boss_heal,80,hp_under,450
-1032,boss_demon_baphomet,skill_armor_break,100,turn_mod,3
-1033,boss_demon_baphomet,skill_attack,100,,
+1030,boss_demon_baphomet,skill_dark_flare,40,,
+1031,boss_demon_baphomet,skill_aoe_blast,30,,
+1032,boss_demon_baphomet,skill_boss_nuke,100,turn_mod,4
+1033,boss_demon_baphomet,skill_armor_break,100,turn_mod,3
+1034,boss_demon_baphomet,skill_boss_heal,100,hp_under,40
+1035,boss_demon_baphomet,skill_berserk_rage,100,hp_under,25
 
 1040,boss_queen_worm,skill_poison_breath,40,,
 1041,boss_queen_worm,skill_heavy_blow,60,,
 1042,boss_queen_worm,skill_boss_nuke,100,turn_mod,4
-1043,boss_queen_worm,skill_boss_heal,100,hp_under,300
+1043,boss_queen_worm,skill_enrage,100,hp_under,50
+1044,boss_queen_worm,skill_boss_heal,100,hp_under,30
 
-1050,boss_red_ogre,skill_heavy_blow,60,,
-1051,boss_red_ogre,skill_war_cry,100,turn_mod,3
-1052,boss_red_ogre,skill_boss_nuke,100,turn_mod,5
-1053,boss_red_ogre,skill_armor_break,30,,
+1050,boss_red_ogre,skill_heavy_blow,50,,
+1051,boss_red_ogre,skill_aoe_blast,30,,
+1052,boss_red_ogre,skill_war_cry,100,turn_mod,3
+1053,boss_red_ogre,skill_boss_nuke,100,turn_mod,5
+1054,boss_red_ogre,skill_berserk_rage,100,hp_under,25
 
-1060,boss_thunder_beast,skill_thunder_strike,30,,
-1061,boss_thunder_beast,skill_heavy_blow,70,,
+1060,boss_thunder_beast,skill_thunder_strike,40,,
+1061,boss_thunder_beast,skill_heavy_blow,60,,
 1062,boss_thunder_beast,skill_boss_nuke,100,turn_mod,5
-1063,boss_thunder_beast,skill_boss_stun,100,hp_under,200
+1063,boss_thunder_beast,skill_enrage,100,hp_under,50
+1064,boss_thunder_beast,skill_boss_stun,100,turn_mod,4
 
-1070,boss_griffon_lord,skill_heavy_blow,50,,
-1071,boss_griffon_lord,skill_claw_rend,40,,
-1072,boss_griffon_lord,skill_boss_nuke,100,turn_mod,4
-1073,boss_griffon_lord,skill_boss_heal,100,hp_under,250
+1070,boss_griffon_lord,skill_heavy_blow,40,,
+1071,boss_griffon_lord,skill_claw_rend,30,,
+1072,boss_griffon_lord,skill_multi_strike,30,,
+1073,boss_griffon_lord,skill_boss_nuke,100,turn_mod,4
+1074,boss_griffon_lord,skill_enrage,100,hp_under,50
 
-1080,boss_treant_elder,skill_attack,60,,
-1081,boss_treant_elder,skill_regenerate,100,turn_mod,3
-1082,boss_treant_elder,skill_poison_breath,30,,
-1083,boss_treant_elder,skill_boss_heal,100,hp_under,400
+1080,boss_treant_elder,skill_heavy_blow,50,,
+1081,boss_treant_elder,skill_aoe_blast,30,,
+1082,boss_treant_elder,skill_regenerate,100,turn_mod,3
+1083,boss_treant_elder,skill_poison_breath,20,,
+1084,boss_treant_elder,skill_enrage,100,hp_under,50
 
-1090,boss_fallen_bishop,skill_dark_flare,60,,
+1090,boss_fallen_bishop,skill_dark_flare,50,,
 1091,boss_fallen_bishop,skill_curse,100,turn_mod,3
-1092,boss_fallen_bishop,skill_boss_heal,100,turn_mod,5
-1093,boss_fallen_bishop,skill_boss_nuke,100,hp_under,200
+1092,boss_fallen_bishop,skill_death_sentence,100,turn_mod,4
+1093,boss_fallen_bishop,skill_boss_heal,100,turn_mod,5
+1094,boss_fallen_bishop,skill_berserk_rage,100,hp_under,25
 
-1100,boss_corrupt_cardinal,skill_dark_flare,50,,
-1101,boss_corrupt_cardinal,skill_curse,100,turn_mod,3
-1102,boss_corrupt_cardinal,skill_armor_break,100,turn_mod,4
-1103,boss_corrupt_cardinal,skill_boss_heal,100,hp_under,250
+1100,boss_corrupt_cardinal,skill_dark_flare,40,,
+1101,boss_corrupt_cardinal,skill_life_steal,20,,
+1102,boss_corrupt_cardinal,skill_curse,100,turn_mod,3
+1103,boss_corrupt_cardinal,skill_armor_break,100,turn_mod,4
+1104,boss_corrupt_cardinal,skill_enrage,100,hp_under,50
 
-1110,boss_mad_ronin,skill_katana_slash,50,,
-1111,boss_mad_ronin,skill_heavy_blow,50,,
-1112,boss_mad_ronin,skill_war_cry,100,turn_mod,3
-1113,boss_mad_ronin,skill_boss_nuke,100,hp_under,150
+1110,boss_mad_ronin,skill_katana_slash,40,,
+1111,boss_mad_ronin,skill_multi_strike,30,,
+1112,boss_mad_ronin,skill_counter_stance,100,turn_mod,3
+1113,boss_mad_ronin,skill_boss_nuke,100,hp_under,30
+1114,boss_mad_ronin,skill_berserk_rage,100,hp_under,25
 
 1120,boss_assassin_master,skill_assassinate,30,,
-1121,boss_assassin_master,skill_poison_attack,40,,
-1122,boss_assassin_master,skill_heavy_blow,30,,
-1123,boss_assassin_master,skill_boss_nuke,100,hp_under,150
+1121,boss_assassin_master,skill_poison_attack,30,,
+1122,boss_assassin_master,skill_multi_strike,40,,
+1123,boss_assassin_master,skill_armor_break,100,turn_mod,3
+1124,boss_assassin_master,skill_berserk_rage,100,hp_under,25
 
-1130,boss_pirate_king,skill_heavy_blow,60,,
-1131,boss_pirate_king,skill_claw_rend,30,,
-1132,boss_pirate_king,skill_armor_break,100,turn_mod,4
-1133,boss_pirate_king,skill_boss_heal,100,hp_under,200
+1130,boss_pirate_king,skill_heavy_blow,40,,
+1131,boss_pirate_king,skill_shield_bash,30,,
+1132,boss_pirate_king,skill_claw_rend,30,,
+1133,boss_pirate_king,skill_armor_break,100,turn_mod,4
+1134,boss_pirate_king,skill_enrage,100,hp_under,50
 
-1140,boss_rebel_leader,skill_heavy_blow,50,,
-1141,boss_rebel_leader,skill_war_cry,100,turn_mod,3
-1142,boss_rebel_leader,skill_armor_break,100,turn_mod,5
-1143,boss_rebel_leader,skill_boss_nuke,100,hp_under,250
+1140,boss_rebel_leader,skill_heavy_blow,40,,
+1141,boss_rebel_leader,skill_aoe_blast,30,,
+1142,boss_rebel_leader,skill_war_cry,100,turn_mod,3
+1143,boss_rebel_leader,skill_death_sentence,100,turn_mod,5
+1144,boss_rebel_leader,skill_berserk_rage,100,hp_under,25
 
-1150,boss_gold_merchant,skill_heavy_blow,40,,
-1151,boss_gold_merchant,skill_armor_break,30,,
-1152,boss_gold_merchant,skill_boss_heal,100,turn_mod,4
-1153,boss_gold_merchant,skill_boss_nuke,100,hp_under,350
+1150,boss_gold_merchant,skill_heavy_blow,30,,
+1151,boss_gold_merchant,skill_shield_bash,30,,
+1152,boss_gold_merchant,skill_armor_break,30,,
+1153,boss_gold_merchant,skill_boss_heal,100,turn_mod,4
+1154,boss_gold_merchant,skill_berserk_rage,100,hp_under,25
 
 1160,boss_holy_kirin,skill_thunder_strike,40,,
-1161,boss_holy_kirin,skill_holy_ray,60,,
-1162,boss_holy_kirin,skill_boss_heal,100,turn_mod,5
-1163,boss_holy_kirin,skill_boss_nuke,100,hp_under,400
+1161,boss_holy_kirin,skill_holy_ray,40,,
+1162,boss_holy_kirin,skill_aoe_blast,20,,
+1163,boss_holy_kirin,skill_boss_heal,100,turn_mod,5
+1164,boss_holy_kirin,skill_berserk_rage,100,hp_under,25
 
-1170,boss_omega_golem,skill_heavy_blow,60,,
-1171,boss_omega_golem,skill_armor_break,30,,
-1172,boss_omega_golem,skill_regenerate,100,turn_mod,4
-1173,boss_omega_golem,skill_boss_nuke,100,hp_under,500
+1170,boss_omega_golem,skill_heavy_blow,40,,
+1171,boss_omega_golem,skill_shield_bash,30,,
+1172,boss_omega_golem,skill_armor_break,30,,
+1173,boss_omega_golem,skill_regenerate,100,turn_mod,4
+1174,boss_omega_golem,skill_berserk_rage,100,hp_under,25
 
-1180,boss_kraken_prime,skill_heavy_blow,50,,
-1181,boss_kraken_prime,skill_poison_breath,30,,
-1182,boss_kraken_prime,skill_boss_stun,100,turn_mod,4
-1183,boss_kraken_prime,skill_boss_heal,100,hp_under,400
+1180,boss_kraken_prime,skill_heavy_blow,30,,
+1181,boss_kraken_prime,skill_aoe_blast,30,,
+1182,boss_kraken_prime,skill_poison_breath,30,,
+1183,boss_kraken_prime,skill_boss_stun,100,turn_mod,4
+1184,boss_kraken_prime,skill_enrage,100,hp_under,50
 
-1190,boss_mino_king,skill_heavy_blow,60,,
-1191,boss_mino_king,skill_war_cry,100,turn_mod,3
-1192,boss_mino_king,skill_boss_nuke,100,turn_mod,5
-1193,boss_mino_king,skill_armor_break,30,,
+1190,boss_mino_king,skill_heavy_blow,40,,
+1191,boss_mino_king,skill_multi_strike,30,,
+1192,boss_mino_king,skill_war_cry,100,turn_mod,3
+1193,boss_mino_king,skill_boss_nuke,100,turn_mod,5
+1194,boss_mino_king,skill_berserk_rage,100,hp_under,25

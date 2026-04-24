@@ -1,17 +1,17 @@
 id,slug,name,effect_type,value,description
 2001,skill_tackle,体当たり,damage,1,敵に物理ダメージを与える
-2002,skill_heavy_blow,強打,damage,1.5,敵に強力な物理ダメージを与える
-2003,skill_arrow,矢を射る,damage,1,敵を遠隔から攻撃する
-2004,skill_fireball,火の玉,damage,1,敵に炎のダメージを与える
+2002,skill_heavy_blow,強打,damage,2,敵に強力な物理ダメージを与える
+2003,skill_arrow,矢を射る,damage,1.3,敵を遠隔から攻撃する
+2004,skill_fireball,火の玉,damage,1.5,敵に炎のダメージを与える
 2005,skill_dark_flare,ダークフレア,damage,2,強力な闇の魔法ダメージ
-2006,skill_poison_attack,毒針,damage_poison,1,敵にダメージを与え毒(3T)を付与する
+2006,skill_poison_attack,毒針,damage_poison,1.2,敵にダメージを与え毒(3T)を付与する
 2007,skill_drain_vit,生命吸収,drain_vit,1,対象の寿命（Vitality）を直接奪う
 2008,skill_heal_self,自己再生,heal,50,自身のHPを回復する
 2009,skill_heal_minor,小回復,heal,30,自身のHPを少し回復する
-2010,skill_roar,咆哮,damage,1,全体にダメージを与える
+2010,skill_roar,咆哮,damage,1.5,全体にダメージを与える
 2011,skill_assassinate,暗殺術,damage,3,急所を突く極大ダメージ
 2012,skill_holy_ray,ホーリーレイ,damage,2,神聖な光でダメージを与える
-2013,skill_sand_breath,砂のブレス,damage,1,砂の塊を吐き出す
+2013,skill_sand_breath,砂のブレス,damage,1.3,砂の塊を吐き出す
 2014,skill_katana_slash,居合斬り,damage,2,鋭い刀による一撃
 2015,skill_dragon_breath,竜の息吹,damage,3,全てを焼き尽くす高威力ダメージ
 2016,skill_bounty_strike,処刑の一撃,damage,3,賞金首を狙う必殺の一撃
@@ -19,10 +19,10 @@ id,slug,name,effect_type,value,description
 2018,skill_bounty_hunt,追跡の刃,damage,2,逃がさないための鋭い一撃
 2020,skill_poison_breath,毒の息,damage_poison,1,毒の塊を吐き出しダメージと毒(3T)を付与する
 2021,skill_thunder_strike,雷撃,damage_stun,2,雷を落とし大ダメージとスタン(1T)を与える
-2022,skill_sand_blind,砂塵,damage_blind,1,砂を巻き上げダメージと目潰し(2T)を付与する
-2023,skill_claw_rend,裂傷の爪,damage_bleed,1,鋭い爪で引き裂きダメージと出血(2T)を付与する
-2024,skill_charm,魅惑の歌,damage_stun,1,妖艶な歌で魅了しスタン(1T)を与える
-2025,skill_petrify_gaze,石化の視線,damage_stun,2,石化の視線でダメージとスタン(1T)を与える
+2022,skill_sand_blind,砂塵,damage_blind,1.2,砂を巻き上げダメージと目潰し(2T)を付与する
+2023,skill_claw_rend,裂傷の爪,damage_bleed,1.3,鋭い爪で引き裂きダメージと出血(2T)を付与する
+2024,skill_charm,魅惑の歌,damage_stun,1.2,妖艶な歌で魅了しスタン(1T)を与える
+2025,skill_petrify_gaze,石化の視線,damage_stun,2.5,石化の視線でダメージとスタン(1T)を与える
 2026,skill_soul_drain,魂抜き,drain_vit,1,魂を引き抜き寿命を奪う
 2027,skill_regenerate,強力再生,heal,100,強力な再生能力でHPを大きく回復する
 2030,skill_war_cry,雄叫び,buff_self_atk,0,雄叫びを上げて攻撃力を高める(ATK UP 3T)
@@ -32,5 +32,13 @@ id,slug,name,effect_type,value,description
 2088,skill_god_purge,神の粛清,damage,8,大ダメージと全体スタン
 2099,skill_god_enrage,神の怒り,damage,12,発狂時の超絶大ダメージ
 501,skill_boss_heal,暗黒の癒し,heal,200,5ターンに一度自身を大きく回復する
-502,skill_boss_nuke,終焉の息吹,damage,50,防御を貫通しうる強烈な全体ダメージ
+502,skill_boss_nuke,終焉の息吹,damage,6,防御を貫通しうる強烈な全体ダメージ
 503,skill_boss_stun,咆哮,status_effect,1,1ターンの間スタンさせる
+2033,skill_enrage,激昂,damage,2.5,HP50%以下で暴走する高威力攻撃
+2034,skill_shield_bash,シールドバッシュ,damage_stun,1.5,盾で殴りつけスタン(1T)を付与する
+2035,skill_multi_strike,連続攻撃,damage,0.6,2-3回の連続ヒット
+2036,skill_death_sentence,死の宣告,debuff_def_down,0,呪いの力で防御力を大きく下げる(DEF DOWN 3T)
+2037,skill_counter_stance,反撃の構え,buff_self_atk,0,身構えて攻撃力を高める(ATK UP 5T)
+2038,skill_aoe_blast,全体攻撃,damage,1.5,全体にダメージを与える
+2039,skill_life_steal,命の収奪,drain_vit,2,寿命(Vitality)を大きく奪い取る
+2040,skill_berserk_rage,狂暴化,damage,4,HP25%以下で発狂する超高威力攻撃
