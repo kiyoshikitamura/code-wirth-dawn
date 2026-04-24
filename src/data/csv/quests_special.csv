@@ -51,3 +51,7 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 8025,qst_boss_golem,オメガ・ゴーレム,15,5,5,"{""require_item_id"":3001}",false,,"Item:3125",冒険者ギルド,[探索特務] 古代の機械兵器を破壊せよ。
 8026,qst_boss_kraken,大海の悪夢 クラーケン,15,5,5,"{""require_item_id"":3001}",false,,Gold:5000|Item:3126,港町の長,[討伐特務] 海獣を討伐せよ。
 8027,qst_boss_mino,迷宮の覇者 牛頭王,15,5,5,"{""require_item_id"":3001}",false,,"Item:3127|Item:3128",冒険者ギルド,[討伐] 牛頭王を狩れ。
+6101,qst_spot_roland,忘却の五英霊,20,5,7,"{""completed_quest"":""main_ep08"",""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,,,王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。
+6102,qst_spot_yato,冥食の残滓,20,5,7,"{""completed_quest"":""main_ep09"",""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,,忍び衆,夜刀スポット: 冥食の夜。生贄の少女を護衛し冥の門の四大妖怪を退けよ。
+6103,qst_spot_karyu,天を衝く塔,20,5,7,"{""completed_quest"":""main_ep12"",""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,,地方太守,華龍スポット: 霊山に虚無の塔が出現。四神を退け頂の神に挑め。
+6104,qst_spot_markand,黄金の沈黙,20,5,7,"{""completed_quest"":""main_ep10"",""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,,交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。
