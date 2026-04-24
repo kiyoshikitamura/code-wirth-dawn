@@ -1,6 +1,6 @@
-# Wirth-Dawn Enemy Master Specification (v16.3) & Security/UX Audit
+# Wirth-Dawn Enemy Master Specification (v16.4) & Security/UX Audit
 
-本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**51種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UXの追加実装案を統合したものです。
+本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**99種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UXの追加実装案を統合したものです。
 
 > **v2.9.3g (2026-04-18) 変更点 — エネミーバランス修正:**
 > - **敵ATK反映**: `battleSlice.ts` のダメージ計算で `baseAtk = enemy.atk || (level*3+5)` に変更。CSV/DBの `atk` 値が戦闘ダメージに直接反映されるようになった。
@@ -64,6 +64,14 @@
 > - **スキルdescription**: Shop APIの `cards` selectに `description` を追加。スキルポップアップにカードの説明文が表示されるように。
 > - **価格リバランス(14件)**: 聖水(dmg30)、火炎瓶(dmg20/burn)、煙玉(70%)、強い酒(50G/HP50/スタン)、高級傷薬(200G/HP100)、最高級傷薬(300G/HP200)、龍井茶(500G/毒解除)、忍玉(名称変更)、熱砂の香辛料(8T/DEF DOWN)、天狗の羽団扇(4T/atk_bonus除去)、禁術の秘薬(10000G/複合効果)、帳簿の改竄(field使用)、竜血(50000G)、簡易テント(300G統一)。
 > - **マイグレーション**: `20260420000002_consumable_rebalance.sql`
+
+> **v2.9.4a (2026-04-25) 変更点 — エネミーATK/スキル大幅リバランス:**
+> - **T1-T2雑魚ATK上方修正（×1.5〜2倍）**: ブルースライム 5→10, ゴブリン 8→14, スケルトン 15→22, ゾンビ 20→30 等。序盤から「回復が必要」と感じる被ダメージ量に調整。
+> - **T5旧ボスATK上方修正（×3〜6倍）**: 骸骨狂王 10→55, エント長 8→45, 腐敗枢機卿 10→60, バフォメット 22→85, デザートドラゴン 30→100 等。ボスとしての脅威感を確保。
+> - **スキル倍率修正**: 強打 1.5→2, 火の玉 1→1.5, 咆哮 1→1.5, 矢 1→1.3, 砂ブレス 1→1.3, 裂傷の爪 1→1.3, 毒針 1→1.2, 石化の視線 2→2.5。1倍率スキルの多さを解消。
+> - **boss_nuke倍率修正 50→6**: ATK上方修正との整合。旧ATK10×50=500が新ATK55×6=330に。即死回避しつつ重い一撃として成立。
+> - **新規エネミースキル8種追加（計43種）**: 激昂(2.5x/HP条件), 狂暴化(4x/HP条件), 連続攻撃(0.6x), 全体攻撃(1.5x), シールドバッシュ(1.5x/スタン), 死の宣告(DEF DOWN 3T), 反撃の構え(ATK UP 5T), 命の収奪(VIT吸収2x)。
+> - **T5ボスアクションパターン全面改修**: 未定義スキル(`skill_attack`/`skill_heavy_attack`)を排除。HP条件トリガー(enrage/berserk_rage)で後半の戦闘が激化する設計に。DEF DOWN/ATK UPローテーションを追加。
 
 ---
 
@@ -202,30 +210,38 @@
 
 ### 1-3. 投入用CSVフォーマットとサンプル
 
-**`data/enemies.csv` (抜粋)**
+**`data/enemies.csv` (抜粋 — v2.9.4a ATK修正後)**
 ```csv
 id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type
-1001,enemy_slime_blue,ブルースライム,1,20,5,1,3,10,,random
-1015,enemy_lich,リッチ,20,300,65,10,200,500,,random
-1019,enemy_bandit_boss,盗賊団の頭領,12,200,45,8,80,200,216,quest_only
-1048,enemy_bounty_legend,伝説の傭兵,90,900,160,30,600,0,,bounty
+1001,enemy_slime_blue,ブルースライム,1,20,10,1,3,10,,random
+1034,enemy_lich,リッチ,20,300,78,10,200,500,,random
+1104,enemy_bandit_boss,盗賊団の頭領,12,200,60,8,80,200,,quest_only
+6001,boss_skeleton_king,骸骨狂王,15,500,55,10,150,500,,quest_only
+6023,boss_desert_dragon,デザートドラゴン,32,1500,100,25,600,2000,,quest_only
+1322,enemy_bounty_legend,伝説の傭兵,90,900,160,30,600,0,,bounty
 ```
 
-**`data/enemy_actions.csv` (抜粋)**
+**`data/enemy_actions.csv` (抜粋 — v2.9.4a パターン改修後)**
 *JSONBを構築するための関連テーブルCSV*
 ```csv
 id,enemy_slug,skill_slug,prob,condition_type,condition_value
 1,enemy_slime_blue,skill_tackle,100,,
-2,enemy_lich,skill_drain_vit,30,turn_mod,3
-3,enemy_lich,skill_dark_flare,70,,
+37,enemy_lich,skill_dark_flare,50,,
+38,enemy_lich,skill_soul_drain,10,turn_mod,3
+1001,boss_skeleton_king,skill_heavy_blow,50,,
+1003,boss_skeleton_king,skill_enrage,100,hp_under,50
+1004,boss_skeleton_king,skill_boss_nuke,100,turn_mod,5
 ```
 
-**`data/enemy_skills.csv` (抜粋)**
+**`data/enemy_skills.csv` (抜粋 — v2.9.4a 倍率修正+新スキル後 / 計43種)**
 ```csv
 id,slug,name,effect_type,value,description
-2001,skill_tackle,体当たり,damage,10,敵に物理ダメージを与える
-2002,skill_drain_vit,生命吸収,drain_vit,1,対象の寿命（Vitality）を直接奪う
-2003,skill_heal_self,自己再生,heal,50,自身のHPを回復する
+2001,skill_tackle,体当たり,damage,1,敵に物理ダメージを与える
+2002,skill_heavy_blow,強打,damage,2,敵に強力な物理ダメージを与える
+2004,skill_fireball,火の玉,damage,1.5,敵に炎のダメージを与える
+502,skill_boss_nuke,終焉の息吹,damage,6,防御を貫通しうる強烈な全体ダメージ
+2033,skill_enrage,激昂,damage,2.5,HP50%以下で暴走する高威力攻撃
+2040,skill_berserk_rage,狂暴化,damage,4,HP25%以下で発狂する超高威力攻撃
 ```
 
 ---
