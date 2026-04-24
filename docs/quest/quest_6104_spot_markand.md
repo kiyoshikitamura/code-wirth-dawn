@@ -1,17 +1,20 @@
-# クエスト仕様書：6104 — 黄金の沈黙 ―マルクカンド、禁忌の王墓―
+# クエスト仕様書：6104 — 黄金の沈黙 ―マルカンド、禁忌の王墓―
 
 ## 0. ファイル概要
 
 | 項目 | 値 |
 |-----|-----|
-| **Quest ID** | `[要定義: 6104 等]` |
-| **Slug** | `scenario_04_markand` |
-| **クエスト種別** | スポットシナリオ / ダンジョン探索 |
-| **推奨レベル** | 5 |
+| **Quest ID** | 6104 |
+| **Slug** | `qst_spot_markand` |
+| **クエスト種別** | スポットシナリオ / ダンジョン探索（Special） |
+| **推奨レベル** | 20（Hard） |
 | **難度** | 5 |
-| **依頼主** | - |
-| **出現拠点** | マルクカンド（`loc_marcund`等） |
-| **出現条件** | スポット専用: 発生条件未定義（[要定義]） |
+| **依頼主** | 砂漠の語り部 |
+| **出現条件** | メインep10クリア / マルカンド拠点滞在 / 混沌(Chaos)50%以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **難易度Tier** | Hard（rec_level: 20） |
+| **経過日数 (time_cost)** | 7（成功: 7日 / 失敗: 5日） |
+| **ノード数** | [CSV作成後に追記] |
 | **サムネイル画像** | `/images/quests/bg_spot_markand_king.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -27,7 +30,7 @@
 
 ### 長文説明
 ```
-マルクカンドの地下深く、数千年間呪いに守られてきた「無名王の王墓」。
+マルカンドの地下深く、数千年間呪いに守られてきた「無名王の王墓」。
 一歩進むたびに命を削る「呪い」と「言葉の罠」が待ち受ける。
 謎を解き明かし、最深部に眠る王の呪いを止めろ。
 ```
@@ -36,10 +39,22 @@
 
 ## 2. 報酬定義
 
-| 種別 | 内容 |
-|-----|-----|
-| ルートA報酬 | 名声 `[要定義]` |
-| ルートB報酬 | 固有スキル『砂塵の支配（デザート・カース）』 `[要定義]` |
+**ルートA（心臓破壊ルート）CSV記載形式:**
+```
+Exp:500|Gold:10000|Rep:200|Item:632
+```
+
+**ルートB（心臓を宿すルート）— endノードparamsで付与:**
+```
+Exp:500|Rep:-100|Item:631
+```
+
+### 報酬アイテム詳細
+
+| ID | Slug | 名前 | Type | 効果 | 入手 |
+|---|---|---|---|---|---|
+| 631 | `spot_desert_curse` | 砂塵の支配 | skill(card) | dmg20(全体)+DEF DOWN(3T), deck_cost:12 | ルートB |
+| 632 | `spot_sand_cleaver` | 砂王の断罪刃 | equipment/weapon | ATK+40, DEF-15 | ルートA |
 
 ---
 
@@ -48,25 +63,27 @@
 ### 全体フロー
 ```text
 start
-  └─[続ける]→ trap_01 (太陽の像)
-       ├─[正解]→ trap_02 (秤の間)
-       └─[不正解]→ battle_trap_01
-            ├─[勝利]→ trap_02
+  └─[続ける]→ trap_01 (鏡の間)
+       ├─[正解の像]→ trap_02
+       └─[不正解の像]→ battle_trap_01
+            └─[勝利]→ trap_02
+                 ├─[正解]→ trap_03
+                 └─[不正解]→ battle_trap_02
+                      └─[勝利]→ trap_03
+                           ├─[正解]→ boss_king
+                           └─[不正解]→ battle_trap_03
+                                └─[勝利]→ boss_king
+       boss_king
+            ├─[勝利]→ final_choice
+            │    ├─[心臓を破壊]→ end_break
+            │    └─[心臓を宿す]→ end_curse
             └─[敗北]→ end_failure
-                ... (同様に trap_03 へ)
-                   └─[続ける]→ boss_king
-                        ├─[勝利]→ final_choice
-                        │    ├─[心臓を破壊]→ end_break
-                        │    └─[心臓を宿す]→ end_curse
-                        └─[敗北]→ end_failure
 ```
 
 ### ノード詳細
 
 #### `start`（type: text）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_quest_dark]`
-- **背景画像**: `bg_spot_markand_ruins`
+- **BGM**: `bgm_markand` / **背景**: `bg_spot_markand_ruins`
 
 **テキスト:**
 ```
@@ -74,16 +91,12 @@ start
 石板には「王は右手に真実を、左手に沈黙を、足元に謙譲を求めた」とある。
 （※これ以降、ノードを進むたびに「呪い蓄積」によるHPダメージのギミックが発生する）
 ```
-**params:**
-```
-type:text, bgm_key:[要定義], bg_image:bg_spot_markand_ruins, next:trap_01
-```
+**params:** `{"type":"text", "bgm":"bgm_markand", "bg":"bg_spot_markand_ruins"}`
 
 ---
 
 #### `trap_01`（type: text）
-**演出パラメータ:**
-- **背景画像**: `bg_spot_markand_ruins`
+- **BGM**: `bgm_quest_mystery` / **背景**: `bg_spot_markand_mirror`
 
 **テキスト:**
 ```
@@ -99,46 +112,75 @@ type:text, bgm_key:[要定義], bg_image:bg_spot_markand_ruins, next:trap_01
 ---
 
 #### `battle_trap_01`（type: battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_normal]`
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_markand_mirror`
 
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `[要定義: 光の衛兵 (例: enemy_group_id: guard_light)]` |
+**テキスト:** `罠だ！ 光の衛兵が襲いかかってきた！`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":"spot_markand_guard_1"}`
+
+---
+
+#### `trap_02`（type: text）
+- **BGM**: `bgm_quest_mystery` / **背景**: `bg_spot_markand_mirror`
 
 **テキスト:**
 ```
-罠だ！ 光の衛兵が襲いかかってきた！
+第2の審判：秤の間
+「あなたの手に最も重い物を乗せよ」
 ```
-**params:**
+**選択肢:**
+| ラベル | 次ノード |
+|--------|---------|
+| 正解を選ぶ | `trap_03` |
+| 不正解を選ぶ | `battle_trap_02` |
+
+---
+
+#### `battle_trap_02`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_markand_mirror`
+
+**テキスト:** `罠に引っかかった！ 砂のゴーレムが召喚された！`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":"spot_markand_guard_2"}`
+
+---
+
+#### `trap_03`（type: text）
+- **BGM**: `bgm_quest_mystery` / **背景**: `bg_spot_markand_mirror`
+
+**テキスト:**
 ```
-type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:trap_02, fail:end_failure
+第3の審判：棺の間
+「死者に捧げるべき言葉は何か」
 ```
-*(※中略: trap_02, 03 も同様の実装)*
+**選択肢:**
+| ラベル | 次ノード |
+|--------|---------|
+| 正解を選ぶ | `boss_king` |
+| 不正解を選ぶ | `battle_trap_03` |
+
+---
+
+#### `battle_trap_03`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_markand_mirror`
+
+**テキスト:** `最後の守護者が目覚めた！ 混成の守護者が襲いかかる！`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":"spot_markand_guard_3"}`
 
 ---
 
 #### `boss_king`（type: battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_boss_final]`
-- **背景画像**: `bg_spot_markand_ruins`
+- **BGM**: `bgm_spot_final_boss` / **背景**: `bg_spot_markand_king`
 
 **テキスト:**
 ```
 実体のない「無名王の影」が現れた。王墓を荒らす不遜な者に牙を剥く！
 ```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `[要定義: 無名王の影 (例: enemy_group_id: boss_nameless_king)]` |
-
-**params:**
-```
-type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:final_choice, fail:end_failure
-```
+**params:** `{"type":"battle", "bgm":"bgm_spot_final_boss", "bg":"bg_spot_markand_king", "enemy_group_id":"spot_markand_king"}`
 
 ---
 
 #### `final_choice`（type: text）
+- **BGM**: `bgm_spot_final_choice` / **背景**: `bg_spot_markand_king`
+
 **テキスト:**
 ```
 王を打倒し、「王の心臓」を前にした。
@@ -156,12 +198,9 @@ type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:final_choice,
 **テキスト:**
 ```
 心臓を破壊した。王墓は崩壊し、街は救われた。
-多大な名声を得たが、古代の知恵は永遠に失われた。
+多大な名声を得たが、古代の知恵は永遠に失われた。砂王の断罪刃を手に入れた。
 ```
-**params:**
-```
-type:end, result:success, reputation_change:[要定義]
-```
+**params:** `{"type":"end", "result":"success", "rewards":{"exp":500, "gold":10000, "reputation":200, "items":["632"]}}`
 
 ---
 
@@ -172,7 +211,13 @@ type:end, result:success, reputation_change:[要定義]
 砂の紋章が体に刻まれ、恐るべき力を手に入れた。
 人々からは畏れられるようになるだろう。固有スキル『砂塵の支配』を入手した！
 ```
-**params:**
+**params:** `{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["631"]}}`
+
+---
+
+#### `end_failure`（type: end）
+**テキスト:**
 ```
-type:end, result:success, item:[要定義: デザート・カース]
+王墓の呪いに蝕まれ、意識が遠のいていく。砂が全てを覆い隠した。
 ```
+**params:** `{"type":"end", "result":"failure"}`

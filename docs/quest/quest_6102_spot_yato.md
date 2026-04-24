@@ -4,14 +4,18 @@
 
 | 項目 | 値 |
 |-----|-----|
-| **Quest ID** | `[要定義: 6102 等]` |
-| **Slug** | `scenario_02_yato` |
-| **クエスト種別** | スポットシナリオ / 護衛 |
-| **推奨レベル** | 5 |
+| **Quest ID** | 6102 |
+| **Slug** | `qst_spot_yato` |
+| **クエスト種別** | スポットシナリオ / 護衛（Special） |
+| **推奨レベル** | 20（Hard） |
 | **難度** | 5 |
-| **依頼主** | - |
-| **出現拠点** | 夜刀（`loc_yatoshin`等） |
-| **出現条件** | スポット専用: 発生条件未定義（[要定義]） |
+| **依頼主** | 隠れ里の長老 |
+| **出現条件** | メインep09クリア / 夜刀拠点滞在 / 正義(Justice)50%以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **難易度Tier** | Hard（rec_level: 20） |
+| **経過日数 (time_cost)** | 7（成功: 7日 / 失敗: 5日） |
+| **ゲストNPC** | 撫子（護衛対象としてパーティ加入 / クエスト終了後に離脱） |
+| **ノード数** | [CSV作成後に追記] |
 | **サムネイル画像** | `/images/quests/bg_spot_yato_eclipse.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -37,11 +41,26 @@
 
 ## 2. 報酬定義
 
-| 種別 | 内容 |
-|-----|-----|
-| 道中報酬 | 四神の勾玉（パッシブスキル4種）`[要定義]` |
-| ルートA報酬 | 名声 および 高額換金アイテム `[要定義]` |
-| ルートB報酬 | 固有スキル『冥食の理（ルナ・クリプス）』 `[要定義]` |
+**ルートA（儀式完遂ルート）CSV記載形式:**
+```
+Exp:500|Gold:10000|Rep:200|Item:615
+```
+
+**ルートB（撫子救出ルート）— endノードparamsで付与:**
+```
+Exp:500|Rep:-100|Item:616
+```
+
+### 報酬アイテム詳細
+
+| ID | Slug | 名前 | Type | 効果 | 入手 |
+|---|---|---|---|---|---|
+| 611 | `spot_magatama_1` | 朱の勾玉 | passive | HP+3 | 道中(boss_01勝利後) |
+| 612 | `spot_magatama_2` | 蒼の勾玉 | passive | DEF+2 | 道中(boss_02勝利後) |
+| 613 | `spot_magatama_3` | 翠の勾玉 | passive | ATK+2 | 道中(boss_03勝利後) |
+| 614 | `spot_magatama_4` | 黄の勾玉 | passive | HP+5 | 道中(boss_04勝利後) |
+| 615 | `spot_yato_talisman` | 冥界の護符 | equipment/accessory | ATK+8, DEF+8, HP+8 | ルートA |
+| 616 | `spot_luna_eclips` | 冥食の理 | skill(card) | dmg25+呪い(3T), deck_cost:12 | ルートB |
 
 ---
 
@@ -56,10 +75,10 @@ start
             │    ├─[勝利]→ battle_spider_3
             │    │    ├─[勝利]→ battle_spider_4
             │    │    │    ├─[勝利]→ boss_01_wani
-            │    │    │    │    ├─[勝利]→ boss_02_tori
-            │    │    │    │    │    ├─[勝利]→ boss_03_kuruma
-            │    │    │    │    │    │    ├─[勝利]→ boss_04_shuten
-            │    │    │    │    │    │    │    ├─[勝利]→ final_choice
+            │    │    │    │    ├─[勝利]→ reward_magatama_1 → boss_02_tori
+            │    │    │    │    │    ├─[勝利]→ reward_magatama_2 → boss_03_kuruma
+            │    │    │    │    │    │    ├─[勝利]→ reward_magatama_3 → boss_04_shuten
+            │    │    │    │    │    │    │    ├─[勝利]→ reward_magatama_4 → final_choice
             │    │    │    │    │    │    │    │    ├─[完遂する]→ end_sacrifice
             │    │    │    │    │    │    │    │    └─[拒絶する]→ end_save
             │    │    │    │    │    │    │    └─[敗北]→ end_failure
@@ -75,78 +94,136 @@ start
 ### ノード詳細
 
 #### `start`（type: text）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_quest_dark]`
-- **背景画像**: `bg_spot_yato_eclipse`
+- **BGM**: `bgm_yato` / **背景**: `bg_spot_yato_eclipse`
 
 **テキスト:**
 ```
 「冥食」が始まり、空が赤黒く染まった。
 隠れ里から、白装束の少女「撫子」が現れた。彼女は冥の門を封じるための「生贄」だ。
 ```
-**params:**
-```
-type:text, bgm_key:[要定義], bg_image:bg_spot_yato_eclipse, next:join_nadeshiko
-```
+**params:** `{"type":"text", "bgm":"bgm_yato", "bg":"bg_spot_yato_eclipse"}`
 
 ---
 
-#### `join_nadeshiko`（type: join）
-**演出パラメータ:**
-- **SE**: `[要定義: 加入音]`
+#### `join_nadeshiko`（type: guest_join）
+- **背景**: `bg_spot_yato_eclipse`
 
 **テキスト:**
 ```
 少女「撫子」が同行者になった。
 戦闘に参加するが、彼女が倒れれば儀式は失敗となる。
 ```
-**params:**
-```
-type:join, npc_slug:[要定義: npc_nadeshiko], is_escort_target:true, next:battle_spider_1
-```
+**params:** `{"type":"guest_join", "npc_slug":"npc_nadeshiko", "bg":"bg_spot_yato_eclipse"}`
 
 ---
 
 #### `battle_spider_1`（type: battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_normal]`
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
 
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `[要定義: 門の守護者・鬼蜘蛛1 (例: enemy_spider)]` |
+**テキスト:** `門の守護者、鬼蜘蛛の群れが襲いかかってきた！`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_spider_1"}`
+
+---
+
+#### `battle_spider_2`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
+
+**テキスト:** `門の奥から、さらに大きな蜘蛛の群れが這い出てきた。撫子を守りながら戦え。`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_spider_2"}`
+
+---
+
+#### `battle_spider_3`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
+
+**テキスト:** `天井から糸が垂れてくる。上から奇襲だ！`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_spider_3"}`
+
+---
+
+#### `battle_spider_4`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
+
+**テキスト:** `門の守護者、最後の一群。この先に四大妖怪が待つ。`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_spider_4"}`
+
+---
+
+#### `boss_01_wani`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
 
 **テキスト:**
-*(勝利時報酬として勾玉アイテムを付与する場合、別途rewardノードを挟むか、drop_itemに仕込む)*
-**params:**
 ```
-type:battle, enemy_group_id:[要定義], next:battle_spider_2, fail:end_failure
+地を揺るがす咆哮と共に、甲羅を纏った巨大な大鰐が現れた。
+「水底の覇者」と恐れられた古の妖怪。第一の試練だ。
 ```
-*(※中略: 蜘蛛2〜4 と 妖怪ボス 01〜04 も同様に実装)*
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_wani"}`
+
+---
+
+#### `reward_magatama_1`（type: reward）
+**テキスト:** `大鰐を打倒した。朱の勾玉を手に入れた！`
+**params:** `{"type":"reward", "items":["611"]}`
+
+---
+
+#### `boss_02_tori`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
+
+**テキスト:**
+```
+空を覆い尽くす漆黒の翼。不吉な鳴き声が響く。
+「以津真天」。死の前兆を告げる凶鳥が、撫子を狙って急降下してきた。
+```
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_tori"}`
+
+---
+
+#### `reward_magatama_2`（type: reward）
+**テキスト:** `以津真天を退けた。蒼の勾玉を手に入れた！`
+**params:** `{"type":"reward", "items":["612"]}`
+
+---
+
+#### `boss_03_kuruma`（type: battle）
+- **BGM**: `bgm_battle_strong` / **背景**: `bg_spot_yato_entrance`
+
+**テキスト:**
+```
+闇の奥から車輪の軋む音が聞こえる。炎を纏った巨大な牛車が突進してきた。
+「朧車」。生者を轢き殺し冥界へ運ぶ、怨念の乗り物。
+```
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_yato_entrance", "enemy_group_id":"spot_yato_kuruma"}`
+
+---
+
+#### `reward_magatama_3`（type: reward）
+**テキスト:** `朧車を粉砕した。翠の勾玉を手に入れた！`
+**params:** `{"type":"reward", "items":["613"]}`
 
 ---
 
 #### `boss_04_shuten`（type: battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_boss_final]`
-- **背景画像**: `bg_spot_yato_eclipse`
+- **BGM**: `bgm_spot_final_boss` / **背景**: `bg_spot_yato_gate`
 
 **テキスト:**
 ```
 最後にして最強の妖怪「酒呑童子」。
 歴代の儀式に失敗し、鬼へと堕ちた伝説の戦士が立ちはだかる。
 ```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `[要定義: 酒呑童子 (例: enemy_group_id: boss_shuten)]` |
+**params:** `{"type":"battle", "bgm":"bgm_spot_final_boss", "bg":"bg_spot_yato_gate", "enemy_group_id":"spot_yato_shuten"}`
 
-**params:**
-```
-type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:final_choice, fail:end_failure
-```
+---
+
+#### `reward_magatama_4`（type: reward）
+**テキスト:** `酒呑童子を打倒した。黄の勾玉を手に入れた！`
+**params:** `{"type":"reward", "items":["614"]}`
 
 ---
 
 #### `final_choice`（type: text）
+- **BGM**: `bgm_spot_final_choice` / **背景**: `bg_spot_yato_gate`
+
 **テキスト:**
 ```
 四大妖怪を退け、冥の門が完全に開いた。
@@ -166,10 +243,7 @@ type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:final_choice,
 撫子を門の奥へ送り出した。門は完全に閉じ、夜刀に平和が戻る。
 彼女の名は歴史から消え、犠牲を知るのは自分だけだ。
 ```
-**params:**
-```
-type:end, result:success, reputation_change:[要定義], item:[要定義]
-```
+**params:** `{"type":"end", "result":"success", "rewards":{"exp":500, "gold":10000, "reputation":200, "items":["615"]}}`
 
 ---
 
@@ -180,7 +254,13 @@ type:end, result:success, reputation_change:[要定義], item:[要定義]
 夜刀の国は困難な時代に突入するが、撫子の命は救われた。
 固有スキル『冥食の理』を手に入れた！
 ```
-**params:**
+**params:** `{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["616"]}}`
+
+---
+
+#### `end_failure`（type: end）
+**テキスト:**
 ```
-type:end, result:success, item:[要定義: ルナ・クリプス]
+力及ばず、妖怪たちの前に倒れた。冥食の闇が全てを飲み込んでいく。
 ```
+**params:** `{"type":"end", "result":"failure"}`

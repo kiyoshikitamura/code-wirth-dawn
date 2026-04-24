@@ -4,15 +4,17 @@
 
 | 項目 | 値 |
 |-----|-----|
-| **Quest ID** | `[要定義: 6101 等]` |
-| **Slug** | `scenario_01_roland` |
+| **Quest ID** | 6101 |
+| **Slug** | `qst_spot_roland` |
 | **クエスト種別** | スポットシナリオ（Special） |
-| **推奨レベル** | 5 |
+| **推奨レベル** | 20（Hard） |
 | **難度** | 5 |
-| **無効化条件** | なし |
-| **依頼主** | - |
-| **出現拠点** | 王都レガリア（`loc_holy_empire`等） |
-| **出現条件** | スポット専用: 発生条件未定義（[要定義]） |
+| **依頼主** | 聖騎士団 |
+| **出現条件** | メインep08クリア / 聖王国拠点滞在 / 秩序(Order)50%以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **難易度Tier** | Hard（rec_level: 20） |
+| **経過日数 (time_cost)** | 7（成功: 7日 / 失敗: 5日） |
+| **ノード数** | [CSV作成後に追記] |
 | **サムネイル画像** | `/images/quests/bg_spot_roland_tomb.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -21,12 +23,12 @@
 
 ## 1. クエスト概要
 
-### 短文説明（クエストボード表示・40文字以内）
+### 短文説明
 ```
 王都レガリアに突如現れた「五英霊」。暴走する彼らを止め、真実を暴け。
 ```
 
-### 長文説明（詳細モーダル・フレーバーテキスト）
+### 長文説明
 ```
 王都レガリアで、禁忌の術「英霊再臨」が失敗した。
 かつての守護者である『五英霊』が、王家への復讐者として蘇り、街を破壊している。
@@ -38,11 +40,23 @@
 
 ## 2. 報酬定義
 
-| 種別 | 内容 |
-|-----|-----|
-| アイテム | （道中入手）パッシブスキル『五英霊の誓約（エクリプス・バインド）』 |
-| 最終報酬ルートA | 名声、神の法衣（高額換金アイテム）等の`[要定義]` |
-| 最終報酬ルートB | 固有スキル『五星の加護（レガリア・ブレイブ）』等の`[要定義]` |
+**ルートA（討伐ルート）CSV記載形式:**
+```
+Exp:500|Gold:10000|Rep:200|Item:602
+```
+
+**ルートB（封印ルート）— endノードparamsで付与:**
+```
+Exp:500|Rep:-100|Item:603
+```
+
+### 報酬アイテム詳細
+
+| ID | Slug | 名前 | Type | 効果 | 入手 |
+|---|---|---|---|---|---|
+| 601 | `spot_eclipse_bind` | 五英霊の誓約 | passive | DEF+3, HP+5 | 道中(get_promise) |
+| 602 | `spot_god_robe` | 神の法衣 | equipment/armor | DEF+8, HP+50 | ルートA |
+| 603 | `spot_regalia_brave` | 五星の加護 | skill(card) | dmg35+ATK UP(5T), deck_cost:12 | ルートB |
 
 ---
 
@@ -74,9 +88,8 @@ start
 
 #### `start`（type: text）
 **演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_quest_tense]`
-- **背景画像**: `bg_spot_roland_tomb`
-- **SE**: `[要定義]`
+- **BGM**: `bgm_roland`
+- **背景画像**: `bg_spot_roland_fire`
 
 **テキスト:**
 ```
@@ -85,14 +98,15 @@ start
 人々を守りながら、安全な王宮の地下墓所へと逃げ込むしかない。
 ```
 **params:**
-```
-type:text, bgm_key:[要定義], bg_image:bg_spot_roland_tomb, next:escape_underground
+```json
+{"type":"text", "bgm":"bgm_roland", "bg":"bg_spot_roland_fire", "next":"escape_underground"}
 ```
 
 ---
 
 #### `escape_underground`（type: text）
 **演出パラメータ:**
+- **BGM**: `bgm_quest_mystery`
 - **背景画像**: `bg_spot_roland_tomb`
 
 **テキスト:**
@@ -101,31 +115,32 @@ type:text, bgm_key:[要定義], bg_image:bg_spot_roland_tomb, next:escape_underg
 だが、そこには自動兵器が立ち塞がっていた！
 ```
 **params:**
-```
-type:text, bg_image:bg_spot_roland_tomb, next:battle_protos
+```json
+{"type":"text", "bgm":"bgm_quest_mystery", "bg":"bg_spot_roland_tomb", "next":"battle_protos"}
 ```
 
 ---
 
 #### `battle_protos`（type: battle）
 **演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_midboss]`
+- **BGM**: `bgm_battle_strong`
+- **背景画像**: `bg_spot_roland_tomb`
 
 | 設定 | 値 |
 |-----|-----|
-| 敵グループ | `[要定義: 墓所の守護者プロトス (例: enemy_group_id: boss_protos)]` |
+| 敵グループ | `spot_roland_protos` (墓所の守護者プロトス) |
 
 **params:**
-```
-type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:get_promise, fail:end_failure
+```json
+{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_protos"}
 ```
 
 ---
 
 #### `get_promise`（type: reward）
 **演出パラメータ:**
-- **SE**: `[要定義: アイテム入手SE]`
-- **BGM**: `[要定義: 例 bgm_quest_calm]`
+- **BGM**: `bgm_quest_mystery`
+- **背景画像**: `bg_spot_roland_tomb`
 
 **テキスト:**
 ```
@@ -133,15 +148,15 @@ type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:get_promise, 
 パッシブスキル『五英霊の誓約』を入手した。これがあれば、彼らの暴走する絶技を防げるかもしれない。
 ```
 **params:**
-```
-type:reward, items:[要定義: 五英霊の誓約のアイテムID、またはSlug], next:boss_01_eluka
+```json
+{"type":"reward", "bgm":"bgm_quest_mystery", "bg":"bg_spot_roland_tomb", "items":["601"]}
 ```
 
 ---
 
 #### `boss_01_eluka`（type: battle）
 **演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_boss]`
+- **BGM**: `bgm_battle_strong`
 - **背景画像**: `bg_spot_roland_tomb`
 
 **テキスト:**
@@ -151,20 +166,82 @@ type:reward, items:[要定義: 五英霊の誓約のアイテムID、またはSl
 ```
 | 設定 | 値 |
 |-----|-----|
-| 敵グループ | `[要定義: 聖女エルーカ (例: enemy_group_id: boss_eluka)]` |
+| 敵グループ | `spot_roland_eluka` (聖女エルーカ) |
 
 **params:**
+```json
+{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_eluka"}
 ```
-type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:boss_02_baram, fail:end_failure
+
+---
+
+#### `boss_02_baram`（type: battle）
+**演出パラメータ:**
+- **BGM**: `bgm_battle_strong`
+- **背景画像**: `bg_spot_roland_tomb`
+
+**テキスト:**
 ```
-*(※中略: 02_baram, 03_shirasu, 04_lyra も同様のフォーマットとして実装)*
+地下通路を塞ぐように、黒いローブの男が浮かんでいる。
+「知恵の賢者バラム」。王に禁術の知識を独占され、幽閉の末に処刑された魔術師だ。
+```
+| 設定 | 値 |
+|-----|-----|
+| 敵グループ | `spot_roland_baram` (賢者バラム) |
+
+**params:**
+```json
+{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_baram"}
+```
+
+---
+
+#### `boss_03_shirasu`（type: battle）
+**演出パラメータ:**
+- **BGM**: `bgm_battle_strong`
+- **背景画像**: `bg_spot_roland_tomb`
+
+**テキスト:**
+```
+巨大な盾を構えた亡霊が道を阻む。
+「盾の守護者シラス」。王の身代わりとなって毒杯を仰いだ、忠義の騎士。
+```
+| 設定 | 値 |
+|-----|-----|
+| 敵グループ | `spot_roland_shirasu` (盾のシラス) |
+
+**params:**
+```json
+{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_shirasu"}
+```
+
+---
+
+#### `boss_04_lyra`（type: battle）
+**演出パラメータ:**
+- **BGM**: `bgm_battle_strong`
+- **背景画像**: `bg_spot_roland_tomb`
+
+**テキスト:**
+```
+蒼い矢が闇を切り裂いた。壁に背を預ける女の姿が見える。
+「千里の射手リラ」。戦勝の立役者でありながら、口封じのために暗殺された弓の名手。
+```
+| 設定 | 値 |
+|-----|-----|
+| 敵グループ | `spot_roland_lyra` (射手リラ) |
+
+**params:**
+```json
+{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_lyra"}
+```
 
 ---
 
 #### `boss_05_alvin`（type: battle）
 **演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_boss_final]`
-- **背景画像**: `bg_spot_roland_tomb`
+- **BGM**: `bgm_spot_final_boss`
+- **背景画像**: `bg_spot_roland_core`
 
 **テキスト:**
 ```
@@ -173,18 +250,19 @@ type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:boss_02_baram
 ```
 | 設定 | 値 |
 |-----|-----|
-| 敵グループ | `[要定義: 王アルヴィン (例: enemy_group_id: boss_alvin)]` |
+| 敵グループ | `spot_roland_alvin` (不滅の王アルヴィン) |
 
 **params:**
-```
-type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:final_choice, fail:end_failure
+```json
+{"type":"battle", "bgm":"bgm_spot_final_boss", "bg":"bg_spot_roland_core", "enemy_group_id":"spot_roland_alvin"}
 ```
 
 ---
 
 #### `final_choice`（type: text）
 **演出パラメータ:**
-- **BGM**: `[要定義: 決断のBGM]`
+- **BGM**: `bgm_spot_final_choice`
+- **背景画像**: `bg_spot_roland_core`
 
 **テキスト:**
 ```
@@ -207,8 +285,8 @@ type:battle, bgm_key:[要定義], enemy_group_id:[要定義], next:final_choice,
 あなたは新時代の英雄として祭り上げられた。
 ```
 **params:**
-```
-type:end, result:success, reputation_change:[要定義: 名声値増加], item:[要定義: 神の法衣]
+```json
+{"type":"end", "result":"success", "rewards":{"exp":500, "gold":10000, "reputation":200, "items":["602"]}}
 ```
 
 ---
@@ -221,6 +299,18 @@ type:end, result:success, reputation_change:[要定義: 名声値増加], item:[
 固有スキル『五星の加護』を手に入れた！
 ```
 **params:**
+```json
+{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["603"]}}
 ```
-type:end, result:success, item:[要定義: 五星の加護スキルのアイテムID]
+
+---
+
+#### `end_failure`（type: end）
+**テキスト:**
+```
+力及ばず、英霊たちの前に倒れた。意識が途絶える中、墓所の冷たい石床が最後に触れたものだった。
+```
+**params:**
+```json
+{"type":"end", "result":"failure"}
 ```
