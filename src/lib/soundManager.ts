@@ -24,6 +24,9 @@ const BGM_FILES: Record<string, string> = {
     bgm_yato:           '/audio/bgm/bgm_yato.ogg',
     bgm_karyu:          '/audio/bgm/bgm_karyu.ogg',
     bgm_collapse:       '/audio/bgm/bgm_collapse.ogg',
+    // スポットクエスト専用BGM (6101-6104)
+    bgm_spot_final_boss:   '/audio/bgm/bgm_spot_final_boss.ogg',
+    bgm_spot_final_choice: '/audio/bgm/bgm_spot_final_choice.ogg',
 };
 
 const SE_FILES: Record<string, string> = {

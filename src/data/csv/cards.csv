@@ -62,3 +62,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 61,card_citizen_support,市民の支援,Heal,0,,0,600,self,,,
 62,card_poison_brew,調毒,Skill,2,vitality,5,30,single_enemy,poison,/images/items/item_poison_manual.png,毒を調合して敵に投げつける。30のダメージを与え、5ターンの間、毎ターンHP5%の毒ダメージを付与する。
 63,card_blood_pact,血の契約,Support,3,vitality,1,0,self,atk_up,/images/items/item_forbidden_scroll.png,命を代償に戦闘能力を極限まで引き上げる禁術。12ターンの間ATK UPとDEF UPを同時に付与する。
+71,card_regalia_brave,五星の加護,Skill,2,vitality,10,35,single_enemy,atk_up,,英霊たちの魂が一斉に呼応し五芒星の光が剣に宿る。高威力の一撃に加えATKが上昇する。
+72,card_luna_eclips,冥食の理,Skill,2,vitality,10,25,single_enemy,curse,,冥界の門から引きずり出した禁忌の力。対象に闇のダメージを与え呪いを付与する。
+73,card_deus_machina,神殺しの光芒,Skill,3,vitality,15,50,single_enemy,recoil,,神を打倒した光を再現する究極の一撃。絶大なダメージを与えるが術者自身も力の反動を受ける。
+74,card_desert_curse,砂塵の支配,Skill,2,vitality,10,20,all_enemies,def_down,,王墓から得た砂の呪力で嵐を巻き起こす。全敵にダメージを与えDEFを低下させる。
