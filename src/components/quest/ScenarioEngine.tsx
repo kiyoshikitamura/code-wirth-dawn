@@ -563,8 +563,16 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             新たな仲間
                         </div>
 
-                        <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-amber-600/40 flex items-center justify-center mx-auto mt-4 mb-3">
-                            <User size={32} className="text-amber-500/60" />
+                        <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-amber-600/40 flex items-center justify-center mx-auto mt-4 mb-3 overflow-hidden">
+                            {(showingGuestJoin.data.image_url || showingGuestJoin.data.icon_url || showingGuestJoin.data.image) ? (
+                                <img
+                                    src={showingGuestJoin.data.image_url || showingGuestJoin.data.icon_url || showingGuestJoin.data.image}
+                                    alt={showingGuestJoin.data.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling && ((e.target as HTMLImageElement).nextElementSibling as HTMLElement).style.removeProperty('display'); }}
+                                />
+                            ) : null}
+                            <User size={36} className="text-amber-500/60" style={(showingGuestJoin.data.image_url || showingGuestJoin.data.icon_url || showingGuestJoin.data.image) ? { display: 'none' } : undefined} />
                         </div>
 
                         <h3 className="text-xl font-serif text-amber-400 mb-1">{showingGuestJoin.data.name}</h3>
