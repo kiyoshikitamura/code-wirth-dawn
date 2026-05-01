@@ -1,7 +1,31 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"祈りは痛みを忘れさせますが、傷は塞ぎません。せめて、神の代わりとなる薬草を運んできてくださいませんか。",node_1,"type:text"
-NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3001, quantity:1"
-CHOICE,,"success",end_success,
-CHOICE,,"failure",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,掲示板に貼られた依頼書は、他のものとは紙の質が違っていた。安い紙に、震える字で書かれている。,"{""type"":""text"", ""bg"":""bg_guild"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[救援] 癒やし草を採取して傷ついた難民の野営地へ届ける。""}",text_1a
+NODE,text_1a,依頼書にはこう書かれていた。「薬草を集めて、野営地の修道女に届けてください。報酬はほとんど出せません。すみません」金にならない仕事だ。だが——掲示板に残っているということは、誰も手をつけていないということだ。,"{""type"":""text"", ""bg"":""bg_guild""}",meet_sister
+NODE,meet_sister,依頼主に会いに行くと、酒場の片隅で修道女が待っていた。白い法衣は薄汚れ、目の下に深い隈がある。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",meet_sister_2
+NODE,meet_sister_2,「来てくださったのですか……ありがとうございます。私はシスター・エレナ。街の東にある難民の野営地で、怪我人の手当てをしています。ですが、薬草が底をついてしまって」,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""シスター・エレナ""}",meet_sister_3
+NODE,meet_sister_3,声は落ち着いているが、指先が細かく震えていた。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",visit_camp
+NODE,visit_camp,エレナに案内されて、野営地を訪れた。粗末なテントが並んでいる。毛布は足りていない。子供たちが泥だらけの顔で、ぼんやりとこちらを見ている。,"{""type"":""text"", ""bg"":""bg_road_day""}",visit_camp_2
+NODE,visit_camp_2,テントの奥では、熱にうなされる老人が横たわっていた。布を巻いた腕から、染みた血が滲んでいる。,"{""type"":""text"", ""bg"":""bg_road_day""}",visit_camp_3
+NODE,visit_camp_3,「あの方は先週の戦で逃げてきた人です。矢傷が化膿しています。癒やし草があれば……せめて、痛みだけでも」エレナの目に涙はなかった。泣き尽くしたのだろう。,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""シスター・エレナ""}",depart_forest
+NODE,depart_forest,野営地を後にし、森の外れに向かった。癒やし草の群生地があると、エレナが教えてくれた場所だ。,"{""type"":""text"", ""bg"":""bg_forest_day""}",depart_forest_2
+NODE,depart_forest_2,「沢の近く、苔の生えた岩の周りに生えています。白い小さな花が目印です。五束は必要です」,"{""type"":""text"", ""bg"":""bg_forest_day"", ""speaker_name"":""シスター・エレナ""}",gather_01
+NODE,gather_01,森に入った。木漏れ日の下、湿った土の匂い。沢沿いを歩き、苔むした岩の陰に白い花を見つけた。指先で慎重に根元から摘み取る。一束目。,"{""type"":""text"", ""bg"":""bg_forest_day""}",gather_01b
+NODE,gather_01b,まだ足りない。もう少し奥を探そう。,"{""type"":""text"", ""bg"":""bg_forest_day""}",gather_02
+NODE,gather_02,倒木の影にも群生を見つけた。三束目。採取しながら、野営地の老人の顔を思い出す。あの傷では、遅れれば命に関わる。急がねば。,"{""type"":""text"", ""bg"":""bg_forest_day""}",gather_03
+NODE,gather_03,沢の上流まで足を伸ばした。岸辺の一角を探す。群生があるはずだが——,"{""type"":""text"", ""bg"":""bg_forest_day""}",gather_branch
+NODE,gather_branch,採取の成否,"{""type"":""random_branch"", ""prob"":70}",
+CHOICE,,hit,,gather_complete
+CHOICE,,miss,,gather_fail_text
+NODE,gather_complete,四束目、五束目。規定の数が揃った。布で丁寧に包む。傷んだら効果が落ちるからだ。日が傾き始めている。野営地まで、急ぎ足で一刻ほど。,"{""type"":""text"", ""bg"":""bg_forest_day""}",deliver_herbs
+NODE,gather_fail_text,……だめだ。日照りの影響か、群生地が枯れている。三束しか集まらなかった。五束には足りない。,"{""type"":""text"", ""bg"":""bg_forest_day""}",gather_fail_text_2
+NODE,gather_fail_text_2,手持ちの荷物を確かめる。以前どこかで手に入れた癒やし草があれば、足りない分を補えるかもしれない。,"{""type"":""text"", ""bg"":""bg_forest_day""}",check_herb
+NODE,check_herb,所持品を確認する。,"{""type"":""check_possession"", ""item_id"":702, ""quantity"":5, ""fallback"":""not_enough""}",deliver_herbs_backup
+NODE,deliver_herbs_backup,手持ちの癒やし草を合わせれば、なんとか五束分になる。これで足りるはずだ。急いで野営地へ戻ろう。,"{""type"":""text"", ""bg"":""bg_forest_day""}",deliver_herbs
+NODE,not_enough,手持ちにも癒やし草はなかった。三束では……薬としては不十分だ。それでも、持っていくしかない。,"{""type"":""text"", ""bg"":""bg_forest_day""}",not_enough_2
+NODE,not_enough_2,野営地に戻り、三束だけの癒やし草をエレナに渡した。彼女は受け取り、中身を確認して……静かに目を伏せた。,"{""type"":""text"", ""bg"":""bg_road_day""}",not_enough_3
+NODE,not_enough_3,「……ありがとうございます。でも、これでは足りないのです。煎じ薬にするには最低五束が……」声が震えている。こちらを責めているのではない。ただ、現実を受け入れようとしているだけだ。,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""シスター・エレナ""}",end_failure
+NODE,deliver_herbs,野営地に戻ると、エレナが入口で待っていた。癒やし草の包みを渡すと、彼女は両手で受け取り、深く息をついた。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",deliver_herbs_2
+NODE,deliver_herbs_2,「これで……これで助けられます。ありがとう、本当に」すぐに煎じ薬の準備に取りかかった。手際がいい。慣れているのだ——こういう状況に。,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""シスター・エレナ""}",deliver_herbs_3
+NODE,deliver_herbs_3,「報酬は……ほとんど出せないのですが」エレナが申し訳なさそうに、小さな革袋を差し出した。中には銅貨が数枚。,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""シスター・エレナ""}",end_success
+NODE,end_success,薬草の納品完了。報酬は銅貨10枚——腹は膨れない。だが、テントの奥から老人の呻き声が小さくなったのが聞こえた。エレナが振り返り、遠くから深々と頭を下げた。帰り道。いつもの酒場が見えた頃、不思議と足取りが軽くなっていることに気づいた。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_road_day""}",
+NODE,end_failure,薬草が足りなかった。エレナは微笑んだ。「大丈夫です。きっと別の方が……」その笑顔が、何より辛かった。あの老人の呻き声が、帰り道もずっと耳から離れなかった。,"{""type"":""end"", ""result"":""failure"", ""bg"":""bg_road_day""}",

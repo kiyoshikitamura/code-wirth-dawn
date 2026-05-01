@@ -1,16 +1,34 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,泥と血に塗れた敗残兵の群れに紛れ、マルカンドの前線拠点から逃げ延びた君は、東の果て——夜刀神国の国境域である密林地帯へと足を踏み入れていた。,"{""bgm"":""bgm_quest_calm"", ""type"":""text"", ""bg"":""bg_forest_day""}",text1
-NODE,text1,肩の傷が熱を持つ。目を閉じれば、今でも無数の槍に貫かれて笑った老騎士、ガウェインの最期の顔がフラッシュバックする。,"{""type"":""text"", ""bg"":""bg_forest_day""}",text1_1
-NODE,text1_1,「生き延びて、この目で世界の果てを見届けろ……」その呪いのような、祈りのような言葉だけが、今の君を突き動かしていた。,"{""type"":""text"", ""bg"":""bg_forest_day""}",text2
-NODE,text2,しかし現実は過酷だ。帝国の執拗な残党狩りの捜索網が敷き詰められ、水筒はとうに空。食料も底を突いている。,"{""type"":""text"", ""bg"":""bg_forest_day""}",text2_1
-NODE,text2_1,遠くから、軍用犬の吠え声と軍靴の足音が聞こえてくる。休息を取る時間は残されていない。だが、どちらへ逃げるべきか。,"{""type"":""text"", ""bg"":""bg_forest_day""}",choice1
-CHOICE,,「険しい『けもの道』を進む」,,text_safepath
-CHOICE,,「見つかりやすいが『川沿い』を急ぐ」,,text_danger
-NODE,text_safepath,足場は最悪で、蔦や棘が容赦なく体力を奪っていく。（Vitality-5）,"{""type"":""text"", ""bg"":""bg_forest_day"", ""vitality_dmg"": 5}",text_safepath_2
-NODE,text_safepath_2,だがその甲斐あって、追手の目を完全に欺くことに成功した。疲労困憊になりながらも密林を抜ける。,"{""type"":""text"", ""bg"":""bg_forest_day""}",end_node
-NODE,text_danger,川のせせらぎが喉の渇きを癒してくれる。だが、開けた場所に出た代償はすぐに支払わされることとなった。,"{""type"":""text"", ""bg"":""bg_river""}",text_danger_2
-NODE,text_danger_2,茂みが揺れ、帝国軍の追討部隊が姿を現す。「見つけたぞ！マルカンドの残党だ。一人残らず首を刎ねろ！」,"{""type"":""text"", ""bg"":""bg_river""}",battle
-NODE,battle,生き延びると決めたんだ。こんなところで犬死にするわけにはいかない！,"{""type"":""battle"", ""enemy_group_id"":204}",choice2
-CHOICE,,血路を切り開く,,text_danger_3
-NODE,text_danger_3,追討部隊を返り討ちにすると、君は血のついた剣を洗いもせずに走り出した。,"{""type"":""text"", ""bg"":""bg_river""}",end_node
-NODE,end_node,幾多の苦難を越え、密林が途切れる。その先には、重厚な木造建築が並ぶ夜刀神国の『関所』が、巨大な影を落として君を待っていた。,"{""type"":""end_success""}",
+META,gold,200,,
+META,exp,150,,
+META,reputation,5,,
+NODE,start,"泥と血に塗れた敗残兵の群れに紛れ、前線拠点から逃げ延びた。","{""type"":""text"", ""bg"":""bg_forest_day"", ""bgm"":""bgm_quest_calm""}",text_start2
+NODE,text_start2,"東へ。ただ東へ走った。何日走ったかわからない。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_start3
+NODE,text_start3,"気がつけば——鬱蒼とした密林の中にいた。夜刀神国の国境域。人の気配はない。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_wound
+NODE,text_wound,"肩の傷が熱を持っている。水筒はとうに空。食料も底をついた。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_wound2
+NODE,text_wound2,"座り込みたい。だが——座ったら、もう立てない気がした。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_flashback
+NODE,text_flashback,"目を閉じれば、フラッシュバックする。無数の槍に貫かれながら——笑った老騎士の顔。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_flashback2
+NODE,text_flashback2,"「生き延びて、この目で世界の果てを見届けろ」呪いのような。祈りのような。その言葉だけが、折れそうな膝を支えていた。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_pursuit
+NODE,text_pursuit,"王国の残党狩りは執拗だった。戦場から逃げた傭兵や脱走兵は、見つけ次第処刑される。","{""type"":""text"", ""bg"":""bg_forest_day"", ""bgm"":""bgm_quest_tense""}",text_pursuit2
+NODE,text_pursuit2,"「裏切り者に慈悲はない」——それが王国軍の鉄の掟だ。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_dogs
+NODE,text_dogs,"遠くから軍用犬の吠え声が聞こえた。軍靴が落ち葉を踏む音。近い。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_dogs2
+NODE,text_dogs2,"前方に道が二本。険しいけもの道と、開けた川沿いの道。","{""type"":""text"", ""bg"":""bg_forest_day""}",choice1
+CHOICE,,険しいけもの道を進む,,text_path_hard
+CHOICE,,見つかりやすいが川沿いを急ぐ,,text_river
+NODE,text_path_hard,"崖沿いのけもの道を選んだ。足場は最悪だ。蔦が足首に絡みつき、棘が腕を引っ掻く。","{""type"":""text"", ""bg"":""bg_forest_day"", ""vitality_dmg"":5}",text_path_hard2
+NODE,text_path_hard2,"岩場を這い上がるたびに肩の傷が開く。だが——追手の犬の声が、少しずつ遠くなっていく。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_path_exhaust
+NODE,text_path_exhaust,"険しい道の甲斐あって、追手の目を完全に欺くことに成功した。","{""type"":""text"", ""bg"":""bg_forest_day""}",text_path_exhaust2
+NODE,text_path_exhaust2,"最後の崖を登りきった時——膝が折れた。だが——密林の向こうに、木造の建物が見えた。夜刀神国の関所だ。","{""type"":""text"", ""bg"":""bg_forest_day""}",end_node
+NODE,text_river,"川沿いの道を選んだ。せせらぎの音が耳に心地よい。手を伸ばして水を掬い、乾いた喉に流し込んだ。","{""type"":""text"", ""bg"":""bg_river""}",text_river2
+NODE,text_river2,"冷たい。生き返る心地がした。だが——開けた場所に出た代償は、すぐに支払わされることになった。","{""type"":""text"", ""bg"":""bg_river""}",text_ambush
+NODE,text_ambush,"茂みが揺れた。黒い軍服を着た男たちが、川の両岸から姿を現した。","{""type"":""text"", ""bg"":""bg_river""}",text_ambush2
+NODE,text_ambush2,"追討部隊だ。全員、剣を抜いている。","{""type"":""text"", ""bg"":""bg_river""}",text_hunter_taunt
+NODE,text_hunter_taunt,"部隊長が鼻で笑った。「見つけたぞ、マルカンドの残党が」","{""type"":""text"", ""bg"":""bg_river""}",text_hunter_taunt2
+NODE,text_hunter_taunt2,"「殺してもいいが——首は綺麗に刎ねろ。戦果報告に使う。一人でも多けりゃ、俺たちの飯の種になる」","{""type"":""text"", ""bg"":""bg_river""}",battle
+NODE,battle,"王国軍追討部隊との戦闘！ 生き延びると決めたんだ。こんなところで犬死にするわけにはいかない！","{""type"":""battle"", ""bg"":""bg_river"", ""enemy_group_id"":406, ""bgm"":""bgm_battle""}",choice2
+CHOICE,,生き残る,,text_hunter_dying
+NODE,text_hunter_dying,"部隊長が川辺に倒れた。水が赤く染まっていく。","{""type"":""text"", ""bg"":""bg_river""}",text_hunter_dying2
+NODE,text_hunter_dying2,"「……へへ。やるじゃねえか、残党。だがな……俺たちは先遣だ。後ろに……あと三十人いる」目が閉じた。背後から犬の声が近づいてくる。","{""type"":""text"", ""bg"":""bg_river""}",text_run
+NODE,text_run,"血のついた剣を洗いもせずに走り出した。走った。ただ走った。","{""type"":""text"", ""bg"":""bg_river""}",text_run2
+NODE,text_run2,"——密林が途切れた。木造の建物が見えた。夜刀神国の関所だ。","{""type"":""text"", ""bg"":""bg_river""}",end_node
+NODE,end_node,"関所の影が立ちはだかっている。振り返った。追手の姿は——ない。膝をついた。——生きている。ガウェイン。自分は、まだ生きている。","{""type"":""end_success"", ""bg"":""bg_forest_day""}",

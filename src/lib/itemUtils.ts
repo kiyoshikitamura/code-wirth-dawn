@@ -124,7 +124,7 @@ export function getEffectList(effectData: any): { label: string; value: string; 
         list.push({ label: '副作用', value: `${Math.floor(effectData.stun_self_chance * 100)}%でスタン`, color: 'text-red-500' });
     }
     if (effectData.def_penalty != null && effectData.def_penalty > 0) {
-        list.push({ label: '副作用', value: `DEF DOWN`, color: 'text-red-500' });
+        list.push({ label: '副作用', value: `防御力低下`, color: 'text-red-500' });
     }
     if (effectData.remove_effect != null) {
         const removeLabel: Record<string, string> = {

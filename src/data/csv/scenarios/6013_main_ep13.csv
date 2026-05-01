@@ -1,13 +1,28 @@
-﻿row_type,node_id,text_label,params,next_node
-NODE,start,黄河の大防衛戦を生き延びた君は、負傷兵たちでごった返す後方の野戦陣地で、ある一人の男と出会った。,"{""bgm"":""bgm_quest_tense"", ""type"":""text"", ""bg"":""bg_bandit_camp""}",text1
-NODE,text1,無精髭を生やし、酒瓶を傾ける老境の剣士。だが、その瞳の奥には異常なほど獰猛な狂気と、計り知れない覇気が宿っている。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1_1
-NODE,text1_1,彼は噂に名高い「不死の傭兵王」――ヴォルグ。これまで数え切れないほどの戦場を渡り歩き、死線を超え続けてきた生きた伝説だった。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text2
-NODE,text2,「……よくここまで生き延びたな、若僧。だが、お前の眼はもう限界だと叫んでいるぜ」ヴォルグは君の剣を見て、鼻で笑った。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text3
-NODE,text3,「神だか何だか知らねェが、相手が強すぎるって顔だ。だがな、壁を越えられねぇ奴はここで死ぬ。生き恥を晒して老いさらばえるか、世界を変える特異点になるか……俺に証明してみせろ！」,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text4
-NODE,text4,ヴォルグが背に負った大剣を抜いた瞬間、周囲の空気が重く沈み込んだ。先ほど黄河で対峙した熾天使すら凌駕するほどの、濃密な血の匂いと殺気が君を包み込む。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle
-NODE,battle,彼との戦いは、神を討つための試練だ。伝説の傭兵王を越えられなくて、どうして天上の神々を討てようか！,"{""type"":""battle"", ""enemy_group_id"":213}",choice1
-CHOICE,,限界を越えて証明する,,text_post_battle
-NODE,text_post_battle,火花の散る激しい打ち合い。君の体力はとっくに尽きていたが、死地で研ぎ澄まされた直感が、最後の一撃を誘導した。重い剣撃を紙一重で躱し、君の切っ先がヴォルグの首筋で止まる。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_post_battle2
-NODE,text_post_battle2,「……フン、悪くない。ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",volg_join
-NODE,volg_join,ヴォルグがパーティに加わった。「面白ェ奴だ。しばらく付き合ってやるよ」,"{""type"":""guest_join"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_volg"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",end_node
-NODE,end_node,「お前なら、あの『天上の神』の眉間に一矢報いれるかもしれんな。……行け。俺たちの代わりに、神の玉座に唾を吐いてこい！」その言葉を受けた君の目に、再び強い光が宿った。,"{""type"":""end_success"", ""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",
+row_type,node_id,text_label,params,next_node
+META,gold,1800,,
+META,exp,350,,
+META,reputation,20,,
+NODE,start,イスハークの炎を消し、東へ急いだ。\n大天使は一人ではない。\nウリエルが退き際に残した言葉が耳に残っている。\n『他ノ同胞ガ、他ノ都ヲ裁イテイル』次の標的は——華龍の首都、龍京。\nヴォルグとの合流地点へ向かった。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",volg_join
+NODE,volg_join,ヴォルグがパーティに加わった。,"{""type"":""guest_join"",""bg"":""bg_road_day"",""guest_id"":""npc_guest_volg""}",text_arrival
+NODE,text_arrival,龍京の城門が見えた。\nだが——おかしい。\n門番がいない。\n見張り台に人影がない。\n旗が、風に揺れているだけだ。\n城門は開いたまま。\nまるで——この都市が、死んだかのように。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_silence
+NODE,text_silence,城門をくぐった。\n市場に人がいない。\n茶館の椅子が倒れている。\n鍋の火が消えかけたまま放置されている。\n——いや、人はいた。\n道端に、座り込んだまま動かない人々がいる。\n目を閉じている。\n呼吸はある。\nだが——呼びかけても、揺すっても、目を覚まさない。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_sleeping_city
+NODE,text_sleeping_city,通りを進むほど、倒れている人が増えていった。\n兵士が槍を握ったまま眠っている。\n子供が母親にしがみついたまま、二人とも動かない。\n犬までもが、目を閉じて横たわっていた。\n都市全体が——眠りに落ちている。\n異常な静寂が、耳鳴りのように響いた。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_volg_unease
+NODE,text_volg_unease,「……気に入らねぇな。　炎で焼くのとは違う。もっと陰湿だ」ヴォルグが眠る兵士の脈を取った。「生きちゃいる。だが起きねぇ。　まるで魂だけ抜かれたみてぇだ。　これがあの天使の仕業か——？」,"{""type"":""text"",""bg"":""bg_ryukyo_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_soldiers
+NODE,text_soldiers,宮城の前に、かろうじて意識を保っている兵士がいた。\n壁に寄りかかり、朦朧とした目でこちらを見る。\n「天極城に……光の存在が……　あれが来てから……みんな……眠って……」声が途切れた。\n兵士の目が閉じていく。\n——宮城の中に、元凶がいる。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_raphael_presence
+NODE,text_raphael_presence,天極城に近づくほど、空気が重くなった。\n甘い香りが漂っている。\n花のような、果実のような。\nだが——その甘さの中に、意識を蝕む何かが混じっている。\n瞼が重い。\n足が鈍る。\n思考が霞がかかったように曖昧になっていく。\n頬を叩いた。\n歯を食いしばった。\n眠るわけにはいかない。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined"",""bgm"":""bgm_quest_crisis""}",text_apostle_guard
+NODE,text_apostle_guard,宮城の門前に、使徒の一団が並んでいた。\n他の使徒と違い、武器を構えていない。\n両手を広げて——祈っている。\nその周囲に、淡い光の膜が漂っていた。\nあの光に触れた者が、眠りに落ちているのだ。\n祈る使徒たちを突破しなければ、宮城には入れない。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",battle1
+NODE,battle1,眠りの使徒が行く手を阻む！意識を保ったまま、突破せよ！,"{""type"":""battle"",""bg"":""bg_ryukyo_ruined"",""bgm"":""bgm_battle"",""enemy_group_id"":""503""}",text_throne_approach
+CHOICE,,続ける,,text_throne_approach
+NODE,text_throne_approach,使徒を退け、宮城の大広間に踏み込んだ。\n玉座の前に——光の存在が浮かんでいた。\n六枚の翼。\nだがウリエルの炎とは違う。\n柔らかな光。\n温かな光。\n見つめていると——安らかな気持ちになってくる。\nその安らぎが、罠なのだと頭ではわかっていた。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_raphael_appear
+NODE,text_raphael_appear,大天使ラファエル。\n「癒し」を司る天使。\nその名の通り、ラファエルの力は傷を癒し、苦痛を取り除く。\nだが——癒しの果てにあるのは、永遠の眠り。\n痛みも恐怖もない代わりに、目覚めることも、生きることもない世界。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_raphael_voice
+NODE,text_raphael_voice,ラファエルが微笑んだ。\n温かく、穏やかな声が広間に響く。\n『苦シミハ、モウ終ワリニシヨウ。\n　戦イモ、飢エモ、病モ——全テ、眠リノ中デ癒サレル。\n　コレガ、私ニデキル最大ノ慈悲デス』微笑みの奥に——感情がない。\n機械的な慈悲。\nプログラムされた優しさ。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined"",""speaker_name"":""大天使ラファエル""}",text_raphael_mercy
+NODE,text_raphael_mercy,ラファエルの手が光り始めた。\n『サア、貴方モ——安ラカニ眠リナサイ』意識が揺らぐ。\n膝が折れかける。\n甘い眠気が全身を包み込んでくる。\nこのまま眠ったら、二度と目覚めない——そう直感が叫んでいた。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",text_volg_rage
+NODE,text_volg_rage,ヴォルグが自分の腕に大剣の刃を押し当てた。\n血が流れる。\n痛みで意識を繋ぎ止める。\n「ふざけんな……！　こんなもんが慈悲だと？　人間は苦しんで、傷ついて、　それでも立ち上がるから生きてるんだ！　——テメェの偽物の安らぎなんざ、いらねェ！」,"{""type"":""text"",""bg"":""bg_ryukyo_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",battle2
+NODE,battle2,大天使ラファエルとの戦闘！偽りの癒しを打ち破り、龍京を目覚めさせろ！,"{""type"":""battle"",""bg"":""bg_ryukyo_ruined"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":""9041""}",text_raphael_retreat
+CHOICE,,続ける,,text_raphael_retreat
+NODE,text_raphael_retreat,ラファエルの翼が砕けた。\n光の粒が、花弁のように舞い散る。\n『……理解デキマセン。\n　ナゼ、苦シミヲ選ブノデスカ。\n　安ラカナ眠リヲ、拒ムノデスカ……』困惑した表情のまま、ラファエルは天へ退いていった。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined"",""speaker_name"":""大天使ラファエル""}",text_awakening
+NODE,text_awakening,ラファエルが去った瞬間——あちこちから声が聞こえ始めた。\n「……ここは……？ 何が……？」眠りに落ちていた人々が、一人、また一人と目を覚ましていく。\n兵士が槍を握り直した。\n子供が泣き始めた。\n龍京が——息を吹き返した。,"{""type"":""text"",""bg"":""bg_ryukyo_ruined""}",volg_leave
+NODE,volg_leave,ヴォルグが離脱した。\n「次は夜刀の首都、出雲だ。\n先に偵察に行く」腕の傷を雑に布で巻きながら、南東へ駆けていった。,"{""type"":""leave"",""bg"":""bg_ryukyo_ruined""}",text_next_destination
+NODE,text_next_destination,龍京の人々が目覚め、街に活気が戻り始めた。\nだが被害は大きい。\n多くの建物が崩れ、物資が尽きている。\n残された時間は少ない。\n大天使はまだ二体——あるいはそれ以上いる。\n次は出雲。\n夜刀の都を守らなければ。,"{""type"":""text"",""bg"":""bg_road_day""}",end_node
+NODE,end_node,ラファエルの「慈悲」は、人間から生きる意志を奪うものだった。\n苦しみも、痛みも、全てが生きている証だ。\nヴォルグの言葉が、改めて胸に刻まれた。\n出雲へ急ぐ。\n次の大天使が、あの街を狙っている。,"{""type"":""end_success"",""bg"":""bg_road_day""}",
+NODE,end_failure,意識が溶けていく。\n甘い眠気に抗えなかった。\nラファエルの光に包まれ、深い眠りに落ちていく。\n苦しみはない。\nだが——もう、目覚めることはない。,"{""type"":""end_failure"",""bg"":""bg_ryukyo_ruined""}",

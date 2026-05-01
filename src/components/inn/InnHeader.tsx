@@ -11,9 +11,10 @@ interface InnHeaderProps {
     reputation?: { rank: string; score: number } | null;
     onOpenSettings?: () => void;
     onOpenStatus?: () => void;
+    equipBonus?: { atk: number; def: number; hp: number };
 }
 
-export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus }: InnHeaderProps) {
+export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, equipBonus }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
     const [showHegemony, setShowHegemony] = useState(false);
 
@@ -31,7 +32,8 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
 
     const isLowVit = (userProfile?.vitality ?? 100) <= 20;
 
-    const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100));
+    const effectiveMaxHp = (userProfile?.max_hp || 1) + (equipBonus?.hp || 0);
+    const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / effectiveMaxHp) * 100));
     const vitalityPercent = Math.max(0, Math.min(100, ((userProfile?.vitality ?? 0) / (userProfile?.max_vitality || 100)) * 100));
     const isLowVitBar = isLowVit;
 

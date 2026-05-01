@@ -22,7 +22,7 @@ interface NodeProcessorOptions {
     setShowingTravel: (data: any) => void;
     setEndReady: (data: { result: 'success' | 'failure' | 'abort'; history: string[] } | null) => void;
     history: string[];
-    onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string) => void;
+    onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
     showingTravel: any;
     showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
@@ -91,9 +91,36 @@ export function useScenarioNodeProcessor({
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
                 const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
-                const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+                const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
                 setCurrentNodeId(hasItem ? successNode : failNode);
+            }
+
+            else if (currentNode.type === 'check_item') {
+                // 複数アイテム一括所持チェック（6020 ゼウス分岐用）
+                const requiredItems: number[] = currentNode.params?.items || [];
+                const successNode = currentNode.params?.success_node || currentNode.next || currentNode.choices?.[0]?.next;
+                const failNode = currentNode.params?.fail_node || currentNode.fallback || currentNode.choices?.[1]?.next;
+
+                // インベントリ最新化してからチェック
+                await useGameStore.getState().fetchInventory();
+                const latestInventory = useGameStore.getState().inventory || [];
+
+                const ownedIds = new Set(latestInventory.map((i: any) => Number(i.item_id)));
+                const hasAll = requiredItems.length > 0 && requiredItems.every(id => ownedIds.has(id));
+                const ownedCount = requiredItems.filter(id => ownedIds.has(id)).length;
+
+                if (hasAll) {
+                    showToast(`✅ 英霊の遺産が全て揃っている！ (${ownedCount}/${requiredItems.length})`, 'success');
+                } else {
+                    showToast(`❌ 英霊の遺産が足りない… (${ownedCount}/${requiredItems.length})`, 'error');
+                }
+                setHistory(prev => [...prev, `[Check] 遺産チェック: ${ownedCount}/${requiredItems.length} → ${hasAll ? '加護あり' : '加護なし'}`]);
+
+                // 少し間を空けて結果を見せる
+                timeoutId = setTimeout(() => {
+                    setCurrentNodeId(hasAll ? successNode : failNode);
+                }, 1500);
             }
 
             else if (currentNode.type === 'check_equipped') {
@@ -101,7 +128,7 @@ export function useScenarioNodeProcessor({
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
                 const hasEquipped = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId) && i.is_equipped).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
-                const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+                const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasEquipped ? '✅ 指定の装備を確認。' : '❌ 指定の装備がされていない...', hasEquipped ? 'success' : 'error');
                 setCurrentNodeId(hasEquipped ? successNode : failNode);
             }
@@ -112,7 +139,7 @@ export function useScenarioNodeProcessor({
                 const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
                 const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
-                const failNode = currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+                const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
 
                 if (hasItem) {
                     if (removeOnSuccess) {
@@ -207,12 +234,13 @@ export function useScenarioNodeProcessor({
                 } else if (nextId) setCurrentNodeId(nextId);
             }
             else if (currentNode.type === 'leave') {
-                const guestName = questState.guest?.name || '仲間';
-                questState.removeGuest();
-                setHistory(prev => [...prev, `[Leave] ${guestName} が離脱した。`]);
-                showToast(`${guestName} が離脱した。`, 'info');
-                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
-                if (nextId) timeoutId = setTimeout(() => setCurrentNodeId(nextId), 1000);
+                // leaveはテキスト表示ノードとして扱い、removeGuestのみサイドエフェクトで実行
+                // 「続ける」ボタン（CSV auto-advance）でユーザーが手動で次ノードへ進む
+                if (questState.guest) {
+                    const guestName = questState.guest.name || '仲間';
+                    questState.removeGuest();
+                    showToast(`${guestName} が離脱した。`, 'info');
+                }
             }
             else if (currentNode.type === 'trap' || currentNode.type === 'modify_state') {
                 const hpPercent = currentNode.params?.hp_percent;
@@ -303,7 +331,7 @@ export function useScenarioNodeProcessor({
                 const questId = questState.questId;
                 window.location.href = `/shop?quest_id=${questId}&return_to=quest`;
             }
-            else if (currentNode.type === 'end' || currentNode.result) {
+            else if (currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || currentNode.result) {
                 const res = currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
                 setEndReady({ result: res, history });
             }

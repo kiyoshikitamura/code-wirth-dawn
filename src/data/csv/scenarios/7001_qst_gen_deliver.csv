@@ -1,5 +1,24 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"出張中の主人に宛てたものです。どうか封は開けないでください。あの中には……いえ、あなたには関係のないことです。",node_1,"type:text"
-NODE,node_1,"目的地へ出発する。",end_success,"type:travel"
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,配達組合の窓口に、小太りの受付がうんざりした顔で座っていた。,"{""type"":""text"", ""bg"":""bg_guild"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[配達] 隣街の旅籠へ封書を届けて戻る。道中の追い剥ぎに注意。""}",text_1a
+NODE,text_1a,「ああ、来たか。隣街の旅籠『黄昏亭』の主人宛てに、封書を一通。内容は知らん。組合は中身に関知しない決まりだ」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""配達組合の受付""}",text_1b
+NODE,text_1b,書類にサインを走らせると、受付は奥から蝋封された手紙を持ってきた。,"{""type"":""text"", ""bg"":""bg_guild""}",briefing
+NODE,briefing,「往復で八日は見ておけ。街道の整備が追いつかなくなってから、追い剥ぎが出るようになった。何人か帰ってきてない配達人もいる」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""配達組合の受付""}",briefing_2
+NODE,briefing_2,受付は淡々と言い、煙管に火をつけた。「まあ、そのぶん報酬は上乗せしてある。死んだら払えんがな」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""配達組合の受付""}",receive_letter
+NODE,receive_letter,二重封印の封書を受け取った。思ったより重い。蝋に押された紋章は見覚えがない——どこかの商家のものだろうか。指で封を確かめると、かすかに薬草の匂いがした。気にしても仕方ない。運ぶだけだ。,"{""type"":""text"", ""bg"":""bg_guild""}",depart
+NODE,depart,街を出て、隣街へ続く街道を歩く。乾いた風が土埃を巻き上げ、道端の草は薄汚れている。轍の跡が途中で途切れている場所がある——荷馬車が引き返したのだろう。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",encounter_thief
+NODE,encounter_thief,街道の曲がり角で、大柄な男が道を塞いでいた。背後の茂みからもう二人、やせぎすの男たちが姿を見せる。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",encounter_thief_2
+NODE,encounter_thief_2,「おう、配達屋さんよ。その手紙、金目のものが入ってんだろ？」大柄な男がナイフを弄びながら、にやりと笑った。「置いていきな。手紙だけでいい。命までは取らねえよ——たぶんな」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""追い剥ぎの頭""}",battle_thief
+NODE,battle_thief,追い剥ぎが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_road_day"", ""enemy_group_id"":400, ""enemy_name"":""追い剥ぎ一味"", ""enemy_level"":3}",
+CHOICE,,win,,after_battle
+CHOICE,,lose,,end_failure
+NODE,after_battle,追い剥ぎを退けた。倒れた男の懐から、安っぽい銅貨が数枚こぼれ落ちた。こいつらも食い詰めて道に落ちた連中か。同情はしないが、後味は悪い。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",after_battle_2
+NODE,after_battle_2,封書を確認する。無事だ。先を急ごう。,"{""type"":""text"", ""bg"":""bg_road_day""}",arrive_inn
+NODE,arrive_inn,旅籠・黄昏亭に到着した。看板の文字は半ば消えかけ、壁板は雨に晒されて黒ずんでいる。それでも酒場の明かりだけは煌々と灯っていた。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",arrive_inn_2
+NODE,arrive_inn_2,奥のカウンターに立つ初老の男がこちらを見た。「……配達か。組合から？」無愛想だが、目だけは鋭い。,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""黄昏亭の主人""}",deliver_choice
+NODE,deliver_choice,封書を渡すか。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",
+CHOICE,,封書を渡す,,delivery_ok
+NODE,delivery_ok,手紙を差し出すと、主人はゆっくりと封を確かめ、懐に収めた。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",delivery_ok_2
+NODE,delivery_ok_2,「……ご苦労だった。組合への返答は、また別の使いに頼む」一瞬、主人の目に複雑な色が浮かんだように見えたが、すぐにいつもの無表情に戻った。「帰りも気をつけろ。最近は物騒だ」,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""黄昏亭の主人""}",delivery_ok_3
+NODE,delivery_ok_3,何かありそうな雰囲気だが、こちらの仕事は終わった。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",end_success
+NODE,end_success,往復八日の旅を終え、組合に帰還した。受付は相変わらず退屈そうな顔で報酬の袋を投げてよこした。「次もあるぞ。生きて戻ったんなら、また頼む」,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_guild""}",
+NODE,end_failure,追い剥ぎに叩きのめされ、封書を奪われた。ボロボロの体で組合に戻ると、受付はため息をひとつついた。「……補償は出せんぞ。次があるかどうかも、お前次第だ」,"{""type"":""end"", ""result"":""failure""}",

@@ -32,6 +32,12 @@ const BADGE_MAP: Partial<Record<StatusEffectId, BadgeDef>> = {
     bleed_minor:  { label: '✧',   category: 'debuff', color: 'text-red-400',    bg: 'bg-red-900/80',    border: 'border-red-600',     blink: 'fast' },
     fear:         { label: '!',   category: 'debuff', color: 'text-orange-200', bg: 'bg-orange-900/80', border: 'border-orange-400',  blink: 'mid' },
     atk_down:     { label: '↓A', category: 'debuff', color: 'text-red-300',    bg: 'bg-red-950/80',    border: 'border-red-700',     blink: null },
+    def_down:     { label: '↓D', category: 'debuff', color: 'text-blue-300',   bg: 'bg-blue-950/80',   border: 'border-blue-700',    blink: null },
+    burn:         { label: '🔥',  category: 'debuff', color: 'text-orange-300', bg: 'bg-orange-900/80', border: 'border-orange-500',  blink: 'fast' },
+    freeze:       { label: '❄',   category: 'debuff', color: 'text-cyan-200',   bg: 'bg-cyan-900/80',   border: 'border-cyan-400',    blink: 'mid' },
+    curse:        { label: '☯',   category: 'debuff', color: 'text-purple-300', bg: 'bg-purple-900/80', border: 'border-purple-500',  blink: 'mid' },
+    // ─ 特殊バフ ──────────────────────────────────────
+    barrier:      { label: '🛡',  category: 'buff',   color: 'text-amber-300',  bg: 'bg-amber-900/80',  border: 'border-amber-500',   blink: 'slow' },
     // cure_* / ap_max は即時効果のため表示不要
 };
 
@@ -99,10 +105,20 @@ export default function StatusEffectBadges({
                 {sorted.map((e, idx) => {
                     const def = BADGE_MAP[e.id as StatusEffectId]!;
                     const blinkCls = def.blink ? BLINK_CLASS[def.blink] : '';
+                    const jaNames: Record<string, string> = {
+                        atk_up: '攻撃力上昇', def_up: '防御強化', def_up_heavy: '鉄壁防御',
+                        regen: 'リジェネ', evasion_up: '回避上昇', taunt: '挑発',
+                        stun_immune: 'スタン耐性', stun: 'スタン', bind: '拘束',
+                        blind: '目潰し', blind_minor: '目潰し(軽)', poison: '毒',
+                        bleed: '出血', bleed_minor: '出血(軽)', fear: '恐怖',
+                        atk_down: '攻撃力低下', def_down: '防御力低下',
+                        burn: '炎上', freeze: '凍結', curse: '呪い', barrier: 'バリア',
+                    };
+                    const jaName = jaNames[e.id] || e.id;
                     return (
                         <span
                             key={`${e.id}-${idx}`}
-                            title={`${e.id} (残り${e.duration}T)`}
+                            title={`${jaName} (残り${e.duration}T)`}
                             className={`${badgeBase} ${def.bg} ${def.color} ${def.border} ${blinkCls} shadow-sm`}
                         >
                             {def.label}

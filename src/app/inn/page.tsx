@@ -29,6 +29,8 @@ import { soundManager } from '@/lib/soundManager';
 import { getBgmKey } from '@/lib/getBgmKey';
 import XShareButton from '@/components/shared/XShareButton';
 import QuestTestPanel from '@/components/debug/QuestTestPanel';
+import DebugInventoryPanel from '@/components/debug/DebugInventoryPanel';
+import DebugPartyPanel from '@/components/debug/DebugPartyPanel';
 
 export default function InnPage() {
     return (
@@ -45,7 +47,7 @@ export default function InnPage() {
 function InnPageInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus } = useGameStore();
 
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
     const bgmKey = getBgmKey(
@@ -342,10 +344,22 @@ function InnPageInner() {
 
         setRestLoading(true);
         try {
-            const res = await fetch('/api/inn/rest', { method: 'POST', body: JSON.stringify({ id: userProfile?.id }) });
+            const effectiveMaxHp = (userProfile?.max_hp || 100) + (equipBonus?.hp || 0);
+            const res = await fetch('/api/inn/rest', { method: 'POST', body: JSON.stringify({ id: userProfile?.id, effectiveMaxHp }) });
             if (res.ok) {
                 spendGold(cost);
                 await useGameStore.getState().fetchUserProfile();
+                // v4.1: バトル残留パーティデータをクリア（QuestHeaderのstale HP表示防止）
+                useGameStore.setState(state => ({
+                    battleState: {
+                        ...state.battleState,
+                        party: [],
+                        enemy: null,
+                        enemies: [],
+                        isVictory: false,
+                        isDefeat: false,
+                    }
+                }));
                 showToast(`✨ HPが全快しました（宿泊費: ${cost} G）`);
             } else {
                 const err = await res.json();
@@ -408,7 +422,7 @@ function InnPageInner() {
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
-                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} />
+                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} equipBonus={equipBonus} />
 
                 {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
                 {showVitalityDeath && userProfile && (
@@ -530,6 +544,12 @@ function InnPageInner() {
 
                     {/* クエストテスト */}
                     <QuestTestPanel userId={userProfile?.id} onSelectQuest={(id) => router.push(`/quest/${id}?debug_bypass=true`)} />
+
+                    {/* インベントリ・スキル追加 */}
+                    <DebugInventoryPanel userId={userProfile?.id} onRefresh={() => useGameStore.getState().fetchInventory()} />
+
+                    {/* NPC加入 */}
+                    <DebugPartyPanel userId={userProfile?.id} />
 
                     {/* 拠点属性パラメータ表示 */}
                     {worldState && (

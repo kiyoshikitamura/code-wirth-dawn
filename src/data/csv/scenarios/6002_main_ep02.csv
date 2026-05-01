@@ -1,18 +1,27 @@
-﻿row_type,node_id,text_label,params,next_node
-NODE,start,名もなき村での野盗撃退の功績、あるいは小隊長ガウェインの引き立てにより、君はローランと砂塵王国マルカンドの国境地帯における警備任務に就くこととなった。,"{""bgm"":""bgm_quest_calm"", ""type"":""text"", ""bg"":""bg_wasteland""}",gawain_join
-NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_wasteland"", ""guest_id"":""npc_guest_gawain""}",text0_1
-NODE,text0_1,国境の荒野は見渡す限りの赤茶けた土と、吹き荒れる空風の音ばかりが続く。兵士たちの間には、得体の知れない緊張感が蔓延していた。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text1
-NODE,text1,「最近、この辺りでは武装した集団が頻繁に出没している。ただのゴロツキや盗賊団にしては、妙に動きに統率が取れているのが気掛かりだ」,"{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text1_1
-NODE,text1_1,ガウェインは厳しい顔で地平線を睨んでいる。「それに……あの野盗どもが使っていた武器の質。どう見てもどこかの正規のものだ」,"{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice1
-CHOICE,,「隣国、マルカンドの兵士では？」,,text2
-CHOICE,,「誰であろうと、斬るだけです」,,text2
-NODE,text2,「……かもしれん。マルカンド側も、我が帝国の膨張を警戒して水面下で作戦を展開しているという噂はある。いずれにせよ、油断するなよ」,"{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text2_1
-NODE,text2_1,もしも相手がマルカンドの息のかかった者たちであるならば、これは単なる盗賊討伐ではなく「国境紛争」の引き金になりかねない。君はゴクリと唾を呑み込んだ。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text3
-NODE,text3,やがて、砂丘の向こうから黒い布で顔を覆った集団が、小隊を半包囲するような陣形で音もなく接近してくるのが見えた。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text3_1
-NODE,text3_1,その足運びは明らかに素人のそれではない。練度を積んだ軍人の歩法だ。,"{""type"":""text"", ""bg"":""bg_wasteland""}",battle
-NODE,battle,「舌の根も乾かぬうちに来たぞ！陣形を崩すな、背中を取られるなよ！」,"{""type"":""battle"", ""enemy_group_id"":200, ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice2
-CHOICE,,武器を構える,,text_post_battle
-NODE,text_post_battle,統率の取れた激しい攻撃を辛くも凌ぎ切り、一帯の制圧に成功した。死体の顔を確認しようと布を剥ぐが、認識章のようなものは一切持っていない。,"{""type"":""text"", ""bg"":""bg_wasteland""}",text_post_battle2
-NODE,text_post_battle2,だが、彼らが落とした武器には、意図的に削り潰された「正規軍の紋章」らしき痕跡が残されていた。ガウェインは無言でそれを蹴り飛ばす。,"{""type"":""text"", ""bg"":""bg_wasteland""}",gawain_leave
-NODE,gawain_leave,ガウェインは報告のため本隊へ戻ることになった。「また別の任務で会うだろう。……死ぬなよ」,"{""type"":""leave"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
-NODE,end_node,国境地帯に、泥沼の戦乱を予感させる重く不穏な空気が漂い始めている……。,"{""type"":""end_success""}",
+row_type,node_id,text_label,params,next_node
+META,gold,200,,
+META,exp,100,,
+META,reputation,5,,
+NODE,start,"野盗撃退の働きが認められ、ガウェインの推薦で国境警備任務に配属された。","{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",text_deploy
+NODE,text_deploy,"配属先は、ローランドとマルカンド砂塵王国の国境地帯。赤茶けた荒野が地平線まで続いている。吹きつける砂風だけが唯一の挨拶だ。","{""type"":""text"", ""bg"":""bg_road_day""}",gawain_join
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_road_day"", ""guest_id"":""npc_guest_gawain""}",text_patrol
+NODE,text_patrol,"国境の荒野を並んで歩く。見渡す限りの赤茶けた土と、吹き荒れる空風の音。兵士たちの間には、得体の知れない緊張感が蔓延していた。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_suspicion
+NODE,text_gawain_suspicion,"「最近、この辺りでは武装した集団が頻繁に出没している。ただのゴロツキにしては、妙に動きに統率が取れているのが気掛かりだ」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_weapons
+NODE,text_gawain_weapons,"ガウェインは歩きながら、地面に残された足跡を見ていた。軍靴の跡。等間隔。訓練された歩幅だ。「それに——あの野盗どもが使っていた武器の質。紋章は削ってあったが、鋼の色でわかる。あれはどこかの正規軍の官給品だ」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_hunch
+NODE,text_gawain_hunch,"声を落とした。「……嫌な予感がするんだよ。二十年の勘がな」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice1
+CHOICE,,「隣国マルカンドの兵士では？」,,text_gawain_reply
+CHOICE,,「誰であろうと、斬るだけです」,,text_gawain_reply
+NODE,text_gawain_reply,"「……かもしれん。マルカンド側も、我が王国の膨張を警戒して水面下で動いているという噂はある」ガウェインは砂を蹴った。","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_doubt
+NODE,text_gawain_doubt,"「だがな。もし逆だったらどうする。——あの武器を持たせたのが、俺たちの側だったら」沈黙。風だけが吹いている。「いずれにせよ、油断するなよ」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_approach
+NODE,text_approach,"砂丘の向こうから、黒い布で顔を覆った集団が現れた。小隊を半包囲するような陣形。音もなく、等間隔で展開している。練度を積んだ軍人の歩法だ。","{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",text_formation
+NODE,text_formation,"「……来たか。見ろ、あの展開速度。野盗がこんな動きをするものか」ガウェインが剣を抜いた。「陣形を崩すな。背中を取られるなよ。——死にたくなければ、隣の奴を守れ！」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_enemy_taunt
+NODE,text_enemy_taunt,"黒布の男の一人が叫んだ。声には訛りがない。訓練された発声だった。「——王国の犬は、ここまで鼻が利くのか。仕方ない。証拠は残すな。全員殺せ」","{""type"":""text"", ""bg"":""bg_road_day""}",battle
+NODE,battle,正体不明の武装集団との戦闘！統率された軍人相手の実戦だ！,"{""type"":""battle"", ""bg"":""bg_road_day"", ""enemy_group_id"":202, ""bgm"":""bgm_battle""}",choice2
+CHOICE,,迎撃する,,text_post_battle
+NODE,text_post_battle,"統率の取れた激しい攻撃を辛くも凌ぎ切った。最後の一人が膝をついた。黒布の下の顔は——若い。","{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",text_dying
+NODE,text_dying,"「……お前たちも、いずれわかる。命令に従わなければ、家族が殺される。俺たちには……選択肢がなかった」男は砂の上に倒れた。","{""type"":""text"", ""bg"":""bg_road_day""}",text_corpse
+NODE,text_corpse,"死体の顔を確認しようと布を剥ぐ。認識章は一切持っていない。だが、落とした武器には——意図的に削り潰された「正規軍の紋章」の痕跡が残されていた。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_silent
+NODE,text_gawain_silent,"ガウェインが武器を拾い上げ、紋章の痕跡を親指でなぞった。長い沈黙の後、武器を砂の上に投げ捨てた。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_report
+NODE,text_gawain_report,"「……国境地帯に、泥沼の戦乱を予感させる不穏な空気が漂っている。俺は本隊に報告してくる。お前は宿営地で待て」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
+NODE,gawain_leave,"ガウェインは報告のため本隊へ戻ることになった。「また別の任務で会うだろう。……死ぬなよ」振り返らなかった。","{""type"":""leave"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
+NODE,end_node,"武装集団の正体は、結局わからなかった。だが、一つだけ確かなことがある。あの若い兵士が最後に言った言葉。「命令に従わなければ、家族が殺される」——この戦いは、誰のためのものなのか。","{""type"":""end_success"", ""bg"":""bg_road_day""}",

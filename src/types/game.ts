@@ -265,6 +265,8 @@ export interface ScenarioCondition {
 
 export interface ScenarioReward {
   gold?: number;
+  exp?: number;
+  reputation?: number;
   items?: string[]; // Item IDs
   alignment_shift?: {
     order?: number;
@@ -528,6 +530,7 @@ export interface BattleState {
   battle_session_id?: string; // v17 Server-Authoritative Battle
   activeSupportBuffs: string[]; // v19: 使用済みSupportカードのcard_idリスト（バトル内永続効果）
   equipBonus?: { atk: number; def: number; hp: number }; // v24: 装備品ボーナス（バトル中永続）
+  equipCountBonusHand?: number; // v4.1: 装備枚数ボーナスによる初期手札追加
   battleItems: InventoryItem[]; // v25: バトル中使用可能な消耗品リスト
   _pendingNextTurnLabel?: number | null; // 非推奨: 削除予定
   isPlayerTurn?: boolean; // 非推奨: battlePhaseに統合

@@ -123,6 +123,15 @@ export async function GET(req: Request) {
             'item_dragon_blood',
             // ストーリー限定装備（クエスト報酬専用）
             'story_gawain_gauntlet', 'story_dragon_fang', 'story_heroic_mail', 'story_dawn_blade',
+            // スポットクエスト報酬装備
+            'spot_eclipse_bind', 'spot_god_robe',
+            'spot_magatama_1', 'spot_magatama_2', 'spot_magatama_3', 'spot_magatama_4',
+            'spot_yato_talisman',
+            'spot_orb_seiryu', 'spot_orb_byakko', 'spot_orb_suzaku', 'spot_orb_genbu',
+            'spot_divine_glaive', 'spot_desert_curse', 'spot_sand_cleaver',
+            // クエスト報酬素材・交易品（ショップ販売不可）
+            'item_bear_pelt', 'item_supply_box', 'item_healing_herb',
+            'item_tengu_fan', 'item_bandit_treasure',
             // 効果未実装のフレーバーアイテム
             'item_ration', 'item_torch', 'item_ruins_map',
             'item_repair_kit', 'item_revive_incense',
@@ -131,6 +140,8 @@ export async function GET(req: Request) {
         const filteredItems = allItems.filter(item => {
             // 除外リストのアイテムはショップに並べない
             if (item.slug && SHOP_EXCLUDE_SLUGS.has(item.slug)) return false;
+            // base_price=0 の装備品はクエスト限定報酬のためショップに並べない
+            if (item.type === 'equipment' && (item.base_price || 0) <= 0) return false;
             // クエスト専売アイテムは常に表示
             if (questId && item.quest_req_id === questId) return true;
             if (item.quest_req_id && item.quest_req_id !== questId) return false;
@@ -177,6 +188,8 @@ export async function GET(req: Request) {
 
         // 5. Skills Filtering Logic
         const filteredSkills = allSkills.filter(skill => {
+            // base_price=0 のスキルはクエスト報酬専用のためショップに並べない
+            if ((skill.base_price || 0) <= 0) return false;
             if (isRuined && !skill.is_black_market) {
                 console.log(`[Shop] SKIP skill ${skill.slug}: isRuined && not black market`);
                 return false;

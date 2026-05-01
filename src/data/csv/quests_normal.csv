@@ -1,12 +1,12 @@
-id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_prosperity,min_reputation,max_reputation,rewards_summary,client_name,_comment
-7001,qst_gen_deliver,隣街への親書配達,2,2,1,all,,,,, Gold:150,配達組合,[配達] 隣街の親族へ仕送り入りの手紙を無事に届ける。
-7002,qst_gen_escort,放浪商人の護衛,2,2,1,all,,,,,Gold:300,旅商人組合,[護衛] 旅の商人を目的地まで護衛し、夜盗の襲撃から商品を守る。
-7003,qst_gen_scavenge,廃墟からの物資回収,2,2,1,all,,,,,Gold:200|Item:3002,冒険者ギルド,[探索] 崩壊した街区の金庫から、貴重な物資を回収する。
-7004,qst_gen_riot,食料暴動の事前鎮圧,2,2,1,all,,,,,Gold:400|Evil:5,自治会,[討伐] 暴動を企てる飢えた市民のデモ隊を、力でねじ伏せる。
-7005,qst_gen_bear,冬ごもりの凶熊狩り,2,2,1,all,,,,,Gold:250|Item:3001,開拓村の長,[討伐] 開拓村の脅威となっている大型の熊を狩る。
-7006,qst_gen_smuggle,禁制品の闇ルート輸送,2,2,1,all,,,,-50,Gold:800|Chaos:5,闇商人,[密輸] 危険な禁制品を運搬する。検問や敵の襲撃に備えよ。
-7007,qst_gen_rat,地下水路の害獣駆除,2,2,1,all,,,,,Gold:150,自治会,[討伐] はびこる巨大ネズミを退治し、衛生環境を取り戻せ。
-7008,qst_gen_mercy,野営地への薬草納品,2,2,1,all,,,,,Gold:100|Justice:5,救護団,[納品] 傷ついた難民のため、癒やし草を規定数集める。
+﻿id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_prosperity,min_reputation,max_reputation,rewards_summary,client_name,_comment
+7001,qst_gen_deliver,隣街への封書配達,2,2,8,all,,,,,Gold:250|Rep:2,配達組合,[配達] 隣街の旅籠へ封書を届けて戻る。道中の追い剥ぎに注意。
+7002,qst_gen_escort,放浪商人の護衛,2,2,8,all,,,,,Gold:350|Rep:3,旅商人組合,[護衛] 旅の商人を隣街まで護衛する。商人が倒れれば失敗。
+7003,qst_gen_scavenge,廃墟の金庫回収,2,2,3,all,,,,,Gold:250|Rep:2,冒険者ギルド,[探索] 廃墟の金庫から物資を回収する。届けるか売りさばくか。
+7004,qst_gen_riot,食料暴動の事前鎮圧,2,2,1,all,,,,,Gold:200|Rep:5|Order:5|Justice:5,自治会,[鎮圧] 暴動を企てる飢えた市民を力でねじ伏せる。
+7005,qst_gen_bear,凶熊狩り,2,2,4,all,,,,,Gold:200|Rep:5|Item:item_bear_pelt,開拓村の長,[討伐] 開拓村を襲う凶暴な大熊を狩る。前任の猟師は行方不明。
+7006,qst_gen_smuggle,禁制品の闇ルート輸送,2,2,8,all,,,,-50,Gold:800|Rep:-5|Evil:5|Chaos:5,闇商人,[密輸] 中身不明の禁制品を隣街まで運ぶ。追手に注意。
+7007,qst_gen_rat,地下水路の害獣駆除,2,2,2,all,,,,,Gold:400|Rep:2,自治会,[駆除] 地下水路の巨大ネズミの群れを2連戦で殲滅せよ。
+7008,qst_gen_mercy,難民野営地への薬草救援,2,2,4,all,,,,,Gold:10|Rep:10|Justice:10|Order:10,救護団,[救援] 癒やし草を採取して傷ついた難民の野営地へ届ける。
 7010,qst_rol_heretic,異端者の粛清,4,2,1,loc_holy_empire,,,80,,Gold:400|Order:5,聖騎士団,[討伐] 教会に背く異端の信徒たちを、騎士団に代わって処理する。
 7011,qst_rol_holywater,最前線への聖水輸送,4,2,1,loc_holy_empire,,,,,Gold:350,教会,[輸送] アンデッド対策として、前線の拠点に祝福された聖水を運ぶ。
 7012,qst_rol_pilgrim,聖地巡礼者の護衛,4,2,1,loc_holy_empire,,,,,Gold:500,教会,[護衛] 狂信的な巡礼者を護送する。彼が死ねば報酬はない。

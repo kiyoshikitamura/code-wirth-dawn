@@ -34,16 +34,19 @@ export default function QuestHeader({
     }, [userProfile?.id]);
 
     // バトル前はAPIからパーティ取得、バトル開始後はbattleState.partyを使用
+    // マウント時にも必ず最新のパーティを取得（仲間と別れた後のクエスト開始対策）
+    const [mountKey] = useState(() => Date.now());
     useEffect(() => {
         if (!userProfile?.id) return;
         fetch(`/api/party/list?owner_id=${userProfile.id}`)
             .then(r => r.json())
             .then(data => setFetchedParty(data.party || []))
             .catch(() => {});
-    }, [userProfile?.id]);
+    }, [userProfile?.id, mountKey]);
 
     // battleState.party はバトル中のみ使用（前回バトルの残留データで新規パーティが隠れる問題を防止）
-    const isBattleActive = battleState?.enemy && battleState?.party?.length > 0;
+    // v4.1: 勝利/敗北後のバトルは非アクティブ扱い（stale partyデータの表示を防止）
+    const isBattleActive = battleState?.enemy && battleState?.party?.length > 0 && !battleState?.isVictory && !battleState?.isDefeat;
     const questGuest = useQuestState((s) => s.guest);
     const baseParty = isBattleActive ? battleState.party : fetchedParty;
     // クエスト中のゲストNPCをパーティリストに含める（バトル中はbattleState.partyに既に含まれているため除外）

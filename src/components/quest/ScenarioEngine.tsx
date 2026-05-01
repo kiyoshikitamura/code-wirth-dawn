@@ -16,7 +16,7 @@ import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 interface Props {
     scenario: ScenarioDB;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
-    onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string) => void;
+    onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
     initialNodeId?: string;
 }
 
@@ -135,8 +135,8 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
         );
 
-        // 非テキストノードは即時表示
-        if (!currentNode || ['battle', 'camp', 'shop_access', 'supply'].includes(currentNode.type || '')) {
+        // 非テキストノードは即時表示（guest_joinはプロセッサが自動遷移するためスキップ）
+        if (!currentNode || ['battle', 'camp', 'shop_access', 'supply', 'guest_join'].includes(currentNode.type || '')) {
             setDisplayedText(fullText);
             setTypewriterDone(true);
             return;
@@ -310,13 +310,19 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         // ★ ノード未発見フォールバック — DB未更新時でもクラッシュしない
         console.warn(`[ScenarioEngine] Node "${currentNodeId}" not found. Recovery mode.`);
         
-        const endNodeEntry = Object.entries(script.nodes || {}).find(([, n]: [string, any]) => n.type === 'end' && n.result === 'success');
-        const recoveryNext = endNodeEntry ? endNodeEntry[0] : undefined;
+        // まず end_success / end_failure ノードを探す
+        // end_success を優先する理由: ユーザーが最後まで進んでノード欠落が発生した場合、
+        // 「クエスト失敗」を出すのは理不尽。end_success のほうが安全なフォールバック先。
+        const endSuccessEntry = Object.entries(script.nodes || {}).find(([, n]: [string, any]) =>
+            n.type === 'end_success' || (n.type === 'end' && n.result === 'success'));
+        const endFailureEntry = Object.entries(script.nodes || {}).find(([, n]: [string, any]) =>
+            n.type === 'end_failure' || (n.type === 'end' && n.result === 'failure'));
+        const recoveryNext = endSuccessEntry ? endSuccessEntry[0] : (endFailureEntry ? endFailureEntry[0] : undefined);
         
         currentNode = {
             text: `（シナリオデータの読み込みに問題がありました。ここから続けることができます）`,
             type: recoveryNext ? 'text' : 'end',
-            result: recoveryNext ? undefined : 'success',
+            result: recoveryNext ? undefined : 'failure',
             choices: recoveryNext ? [{ label: '物語を続ける', next: recoveryNext }] : [],
         };
     }
@@ -446,23 +452,11 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
                 {/* Choices */}
                 <div className="flex flex-col gap-2 shrink-0">
-                    {currentNode.type === 'battle' ? (
+                    {/* 自動処理ノードはボタンを出さない（プロセッサが自動遷移） */}
+                    {['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_world', 'modify_flag', 'modify_state', 'trap'].includes(currentNode.type || '') ? (
+                        <div className="text-center text-slate-500 text-sm py-3 animate-pulse">処理中...</div>
+                    ) : currentNode.type === 'battle' ? (
                         <div className="flex flex-col gap-3">
-                            {/* 遭遇演出 — 敵情報の事前表示 */}
-                            <div className="bg-red-950/50 border border-red-900/50 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                <div className="w-12 h-12 rounded-lg bg-red-900/30 border border-red-800/50 flex items-center justify-center shrink-0">
-                                    <Skull size={24} className="text-red-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-red-300 text-xs font-bold tracking-wider uppercase">⚠ 敵遭遇</p>
-                                    <p className="text-red-200/80 text-sm font-serif truncate">
-                                        {currentNode.enemy_name || currentNode.params?.enemy_name || '敵勢力'}
-                                    </p>
-                                    {(currentNode.enemy_level || currentNode.params?.enemy_level) && (
-                                        <p className="text-red-500/70 text-[10px] font-mono">推定脅威度 Lv.{currentNode.enemy_level || currentNode.params?.enemy_level}</p>
-                                    )}
-                                </div>
-                            </div>
                             <button
                                 onClick={() => {
                                     if (onBattleStart) {
@@ -472,7 +466,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                             || currentNode.next
                                             || 'end_success';
                                         const enemyId = currentNode.enemy_group_id || 'slime';
-                                        onBattleStart(enemyId, successId, currentNode.bg_key);
+                                        onBattleStart(enemyId, successId, currentNode.bg_key, currentNode.bgm);
                                     }
                                 }}
                                 className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
@@ -516,10 +510,10 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                             <ArrowRight size={14} className="opacity-70" />
                         </button>
                     ) : (
-                        currentNode.type === 'end' || currentNode.result ? (
+                        currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || currentNode.result ? (
                             <div className="flex flex-col items-center gap-3">
                                 <div className="text-center font-bold text-xl py-2 animate-pulse tracking-widest">
-                                    {currentNode.result === 'success' ? (
+                                    {currentNode.result === 'success' || currentNode.type === 'end_success' ? (
                                         <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
                                     ) : (
                                         <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
@@ -535,7 +529,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                     }}
                                     disabled={!endReady || isProcessingResult}
                                     className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
-                                        currentNode.result === 'success'
+                                        currentNode.result === 'success' || currentNode.type === 'end_success'
                                             ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
                                             : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
                                     } ${(!endReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}

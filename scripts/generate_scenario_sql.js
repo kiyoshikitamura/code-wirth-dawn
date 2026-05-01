@@ -81,8 +81,9 @@ function parseCsvToScenarioJson(csvText) {
             if (textLabel) node.text = textLabel.replace(/\\n/g, '\n');
             if (params.type) {
                 node.type = params.type;
-                if (params.type === 'end_success' || params.type === 'end') { node.type = 'end'; node.result = 'success'; }
+                if (params.type === 'end_success') { node.type = 'end'; node.result = 'success'; }
                 else if (params.type === 'end_failure') { node.type = 'end'; node.result = 'failure'; }
+                else if (params.type === 'end') { node.type = 'end'; node.result = params.result || 'success'; }
             }
             if (params.bg) node.bg_key = params.bg;
             if (params.bgm) node.bgm = params.bgm;
@@ -94,7 +95,7 @@ function parseCsvToScenarioJson(csvText) {
             if (params.enemy_level) node.enemy_level = params.enemy_level;
             if (params.guest_id) { node.params = node.params || {}; node.params.guest_id = params.guest_id; }
             if (params.prob) node.prob = parseInt(String(params.prob), 10);
-            const passthrough = ['item_id','quantity','remove_on_success','target_location_slug','hp_percent','hp_flat','flag','key','delta','value','threshold','operator','amount','location_name','items','gold','encounter_rate'];
+            const passthrough = ['item_id','quantity','remove_on_success','target_location_slug','hp_percent','hp_flat','flag','key','delta','value','threshold','operator','amount','location_name','items','gold','success_node','fail_node','encounter_rate','fallback'];
             for (const k of passthrough) {
                 if (params[k] !== undefined) { node.params = node.params || {}; node.params[k] = params[k]; }
             }

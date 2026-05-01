@@ -59,6 +59,19 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_spot_markand_king': '/images/quests/bg_spot_markand_king.png',
     'bg_spot_markand_mirror': '/images/quests/bg_spot_markand_mirror.png',
     'bg_spot_markand_ruins': '/images/quests/bg_spot_markand_ruins.png',
+    // 大天使侵攻編 + 英霊の遺産編 背景 (6011-6020)
+    'bg_heroic_stele': '/images/quests/bg_heroic_stele.png',
+    'bg_ishaq_ruined': '/images/quests/bg_ishaq_ruined.png',
+    'bg_island': '/images/quests/bg_island.png',
+    'bg_izumo_ruined': '/images/quests/bg_izumo_ruined.png',
+    'bg_memory_forest': '/images/quests/bg_memory_forest.png',
+    'bg_memory_gawain': '/images/quests/bg_memory_gawain.png',
+    'bg_memory_mountain': '/images/quests/bg_memory_mountain.png',
+    'bg_memory_oasis': '/images/quests/bg_memory_oasis.png',
+    'bg_mountain_shrine': '/images/quests/bg_mountain_shrine.png',
+    'bg_pyramid_chamber': '/images/quests/bg_pyramid_chamber.png',
+    'bg_regalia_ruined': '/images/quests/bg_regalia_ruined.png',
+    'bg_ryukyo_ruined': '/images/quests/bg_ryukyo_ruined.png',
 };
 
 export function getAssetUrl(key: string): string {

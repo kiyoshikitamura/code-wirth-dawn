@@ -28,13 +28,14 @@ export default function QuestPage() {
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
     const [battleBgUrl, setBattleBgUrl] = useState<string>('/images/quests/bg_wasteland.png');
+    const [battleBgm, setBattleBgm] = useState<string>('bgm_battle'); // CSVのbattle BGMを保持
 
     useAuthGuard(); // タイトル画面経由チェック
 
-    // BGM管理: シナリオ中はクエストBGM、バトル中はバトルBGM
+    // BGM管理: シナリオ中はクエストBGM、バトル中はCSV指定のバトルBGM
     // ScenarioEngineのノードプロセッサーが個別ノードのbgmを処理するが、
     // ページマウント時にタイトルBGMを停止するための初期BGMが必要
-    useBgm(viewMode === 'battle' ? 'bgm_battle' : 'bgm_quest_calm');
+    useBgm(viewMode === 'battle' ? battleBgm : 'bgm_quest_calm');
 
     const resultOverlayState = useState<{ // Renamed variable to avoid conflict
         result: 'success' | 'failure';
@@ -44,7 +45,7 @@ export default function QuestPage() {
     const setResultOverlay = resultOverlayState[1];
 
     const searchParams = useSearchParams();
-    const isTestPlay = searchParams.get('test_play') === 'true';
+    const isTestPlay = searchParams.get('test_play') === 'true' || searchParams.get('debug_bypass') === 'true';
 
     // UI States for SPA
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -134,23 +135,59 @@ export default function QuestPage() {
     const handleGiveUp = async () => {
         if (!confirm("クエストを放棄して撤退しますか？\n※ 進行状況は失われ、安全な場所まで戻ります。")) return;
 
+        useQuestState.getState().resetQuest();
+        setIsSettingsOpen(false);
+
+        // テストプレイ/デバッグモード: APIを呼ばずモック結果を表示
+        if (isTestPlay) {
+            setResultOverlay({
+                result: 'failure',
+                data: {
+                    quest_title: scenario?.title,
+                    rewards: {},
+                    days_passed: 0,
+                    earned_exp: 0,
+                    changes: { gold_gained: 0, old_age: 0, new_age: 0, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
+                    rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
+                }
+            });
+            return;
+        }
+
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-            await fetch('/api/quest/give-up', {
+
+            const res = await fetch('/api/quest/complete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({
+                    quest_id: scenario?.id,
+                    result: 'failure',
+                    history: [],
+                    loot_pool: [],
+                    consumed_items: [],
+                    defeated_member_ids: [],
+                    remaining_guest: null,
+                    battle_defeat: false,
+                })
             });
-            useQuestState.getState().resetQuest();
-            await fetchUserProfile(); // Refresh profile to clear current_quest_id
-            router.push('/inn');
+
+            if (res.ok) {
+                const data = await res.json();
+                await fetchUserProfile();
+                setResultOverlay({ result: 'failure', data });
+            } else {
+                console.error('[QuestPage] Give up complete API error');
+                await fetchUserProfile();
+                router.push('/inn');
+            }
         } catch (e) {
             console.error("Give up failed", e);
-            alert("撤退に失敗しました。");
+            router.push('/inn');
         }
     };
 
@@ -205,7 +242,7 @@ export default function QuestPage() {
         );
     }
 
-    const startBattle = async (enemyId: string, successNodeId: string, bgKey?: string) => {
+    const startBattle = async (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => {
         let enemies: Enemy[] = [{ id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 }];
 
         if (enemyId && enemyId !== 'slime') {
@@ -230,6 +267,14 @@ export default function QuestPage() {
                     // Fallback for single enemy referenced by ID/Slug directly if not a group
                     else if (!isNumeric) {
                         targetSlugs = [enemyId];
+                    }
+                } else {
+                    // enemy_groups テーブルにレコードが存在しない
+                    console.error(`[QuestPage] enemy_group not found: id/slug=${enemyId} (isNumeric=${isNumeric}). DB同期が必要な可能性があります。`);
+                    if (isNumeric) {
+                        // 数値IDの場合、スラッグとして使えないためフォールバック敵を直接使用
+                        console.warn(`[QuestPage] Numeric enemy_group_id=${enemyId} not found in DB. Falling back to placeholder enemy.`);
+                        targetSlugs = [];
                     }
                 }
 
@@ -297,25 +342,162 @@ export default function QuestPage() {
 
         setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
         setBattleBgUrl(getAssetUrl(bgKey || 'bg_wasteland'));
+        setBattleBgm(bgm || 'bgm_battle'); // CSVのバトルBGMを保存（指定なしの場合はデフォルト）
         setViewMode('battle');
     };
 
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
         if (result === 'win') {
-            // バトル後のHPをDBに永続化（クエスト完了API が正しい値を参照できるように）
-            const currentHp = useGameStore.getState().userProfile?.hp;
-            if (currentHp != null && userProfile?.id) {
+            // バトル後のHP/VITをストアから取得（battleSliceが更新済み）
+            const storeState = useGameStore.getState();
+            const battleHp = storeState.userProfile?.hp;
+            const battleVit = storeState.userProfile?.vitality;
+            const battleParty = storeState.battleState?.party || [];
+
+            // 1. プレイヤーHP/VITをDBに永続化（Service Role APIで確実に書き込み）
+            const { data: { session: sess } } = await supabase.auth.getSession();
+            const authToken = sess?.access_token;
+            if (battleHp != null && userProfile?.id) {
                 try {
-                    await supabase.from('user_profiles').update({ hp: Math.max(0, currentHp) }).eq('id', userProfile.id);
-                    // ストアも同期
-                    await fetchUserProfile();
+                    const updateBody: any = { hp: Math.max(0, battleHp) };
+                    if (battleVit != null) updateBody.vitality = battleVit;
+                    await fetch('/api/profile/update-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                        },
+                        body: JSON.stringify(updateBody)
+                    });
                 } catch (e) {
-                    console.warn('[QuestPage] Failed to persist post-battle HP:', e);
+                    console.warn('[QuestPage] Failed to persist post-battle HP/VIT:', e);
                 }
             }
+
+            // 2. パーティメンバーのHPをDBに永続化（連戦時のHP引き継ぎ用）
+            const partyUpdates = battleParty
+                .filter((pm: any) => pm.id && pm.durability != null)
+                .map((pm: any) => ({ id: pm.id, durability: Math.max(0, pm.durability) }));
+            if (partyUpdates.length > 0) {
+                try {
+                    await fetch('/api/party/update-hp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                        },
+                        body: JSON.stringify({ members: partyUpdates })
+                    });
+                } catch (e) {
+                    console.warn('[QuestPage] Failed to persist party HP:', e);
+                }
+            }
+
+            // 3. ストアを最新DB値で同期（ヘッダー/次バトルの正確なHP表示のため）
+            await fetchUserProfile();
+            // 4. バトル表示フラグをクリア（パーティHP情報は連戦引き継ぎ用に保持）
+            useGameStore.setState((state: any) => ({
+                battleState: { ...state.battleState, enemy: null, enemies: [] }
+            }));
             setViewMode('scenario');
         } else {
-            router.push('/inn');
+            // バトル敗北/撤退: end_failure ノードに遷移してシナリオテキストを表示
+            // バトルステートをクリア（ゲストNPCのparty残留防止）
+            useGameStore.setState((state: any) => ({
+                battleState: { ...state.battleState, enemy: null, enemies: [], party: [] }
+            }));
+
+            // シナリオ内の end_failure ノードを検索
+            const scriptNodes = scenario?.script_data?.nodes || {};
+            const failNodeId = Object.entries(scriptNodes)
+                .find(([, n]: [string, any]) =>
+                    n.type === 'end' && n.result === 'failure'
+                )?.[0];
+
+            if (failNodeId) {
+                // end_failure ノードに遷移 → シナリオエンジンが失敗テキストを表示
+                // → ユーザーが「結果を確認する」を押した時に onComplete(failure) が発火
+                setInitialNodeId(failNodeId);
+                setViewMode('scenario');
+            } else {
+                // フォールバック: end_failure ノードが存在しない場合は従来通り直接ポップアップ
+                useQuestState.getState().resetQuest();
+
+                // テストプレイ/デバッグモード: APIを呼ばずモック結果を表示
+                if (isTestPlay) {
+                    setViewMode('scenario');
+                    setResultOverlay({
+                        result: 'failure',
+                        data: {
+                            quest_title: scenario?.title,
+                            rewards: {},
+                            days_passed: 0,
+                            earned_exp: 0,
+                            changes: { gold_gained: 0, old_age: 0, new_age: 0, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
+                            rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
+                        }
+                    });
+                    return;
+                }
+
+                try {
+                    const { data: { session: sess } } = await supabase.auth.getSession();
+                    const authToken = sess?.access_token;
+
+                    const bs = useGameStore.getState().battleState;
+                    const defeatedMemberIds = (bs?.party || [])
+                        .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
+                        .map((m: any) => String(m.id));
+
+                    // 撤退時: バトル中に受けたダメージをDBに永続化（HP保持のため）
+                    const escapeState = useGameStore.getState().userProfile;
+                    const escapeHp = escapeState?.hp;
+                    const escapeVit = escapeState?.vitality;
+                    if (escapeHp != null && userProfile?.id) {
+                        const updateBody: any = { hp: Math.max(0, escapeHp) };
+                        if (escapeVit != null) updateBody.vitality = escapeVit;
+                        await fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                            },
+                            body: JSON.stringify(updateBody)
+                        });
+                    }
+
+                    const res = await fetch('/api/quest/complete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                        },
+                        body: JSON.stringify({
+                            quest_id: scenario?.id,
+                            result: 'failure',
+                            history: [],
+                            loot_pool: [],
+                            consumed_items: [],
+                            defeated_member_ids: defeatedMemberIds,
+                            remaining_guest: null,
+                            battle_defeat: result === 'lose',
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        await fetchUserProfile();
+                        setViewMode('scenario');
+                        setResultOverlay({ result: 'failure', data });
+                    } else {
+                        console.error('[QuestPage] Battle failure complete API error');
+                        router.push('/inn');
+                    }
+                } catch (e) {
+                    console.error('[QuestPage] Battle failure handling error:', e);
+                    router.push('/inn');
+                }
+            }
         }
     };
 
@@ -360,33 +542,74 @@ export default function QuestPage() {
                                     if (isTestPlay) {
                                         if (result === 'success') {
                                             localStorage.setItem(`ugc_tested_${scenario.id}`, 'true');
-                                            alert("【テストプレイ完了】\nクエストのクリア条件を満たしました。公開申請が可能です。");
-                                        } else {
-                                            alert("【テストプレイ失敗】\nクエストをクリアできませんでした。構成を見直してください。");
                                         }
-                                        router.push('/editor');
-                                        return;
-                                    }
-
-                                    // デバッグモード: パラメータ変更をスキップし結果だけ表示
-                                    const isDebugMode = searchParams.get('debug_bypass') === 'true';
-                                    if (isDebugMode) {
+                                        // テストプレイ: DBを変更せずシナリオ定義から結果を構築
+                                        const rewards = scenario.rewards || {};
+                                        const isSuccess = result === 'success';
                                         setResultOverlay({
-                                            result: result === 'success' ? 'success' : 'failure',
+                                            result: isSuccess ? 'success' : 'failure',
                                             data: {
                                                 quest_title: scenario.title,
-                                                rewards: scenario.rewards || {},
-                                                days_passed: 0,
-                                                earned_exp: 0,
-                                                share_text: `【デバッグ】${scenario.title} を ${result === 'success' ? 'クリア' : '失敗'}しました`,
-                                                changes: {},
-                                                rep_change: null,
+                                                rewards: rewards,
+                                                days_passed: scenario.time_cost || 0,
+                                                earned_exp: isSuccess ? (rewards?.exp || 0) : 0,
+                                                share_text: null, // テストプレイではXシェアを非表示
+                                                changes: {
+                                                    gold_gained: isSuccess ? (rewards?.gold || 0) : 0,
+                                                    old_age: 0,
+                                                    new_age: 0,
+                                                    aged_up: false,
+                                                    vit_penalty: 0,
+                                                    atk_decay: 0,
+                                                    def_decay: 0,
+                                                    alignment_shift: isSuccess ? (rewards?.alignment_shift || null) : null,
+                                                },
+                                                rep_change: isSuccess && rewards?.reputation
+                                                    ? { amount: rewards.reputation, location: '現在地' }
+                                                    : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
                                                 party_changes: null,
                                                 loot_saved: [],
                                                 guest_conversion: null,
                                                 new_location_name: null,
                                             }
                                         });
+                                        useQuestState.getState().resetQuest();
+                                        return;
+                                    }
+
+                                    // デバッグモード（チートツール）: DB変更せず結果を表示
+                                    const isDebugMode = searchParams.get('debug_bypass') === 'true';
+                                    if (isDebugMode) {
+                                        const rewards = scenario.rewards || {};
+                                        const isSuccess = result === 'success';
+                                        setResultOverlay({
+                                            result: isSuccess ? 'success' : 'failure',
+                                            data: {
+                                                quest_title: scenario.title,
+                                                rewards: rewards,
+                                                days_passed: scenario.time_cost || 0,
+                                                earned_exp: isSuccess ? (rewards?.exp || 0) : 0,
+                                                share_text: null, // Xシェア非表示
+                                                changes: {
+                                                    gold_gained: isSuccess ? (rewards?.gold || 0) : 0,
+                                                    old_age: 0,
+                                                    new_age: 0,
+                                                    aged_up: false,
+                                                    vit_penalty: 0,
+                                                    atk_decay: 0,
+                                                    def_decay: 0,
+                                                    alignment_shift: isSuccess ? (rewards?.alignment_shift || null) : null,
+                                                },
+                                                rep_change: isSuccess && rewards?.reputation
+                                                    ? { amount: rewards.reputation, location: '現在地' }
+                                                    : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
+                                                party_changes: null,
+                                                loot_saved: [],
+                                                guest_conversion: null,
+                                                new_location_name: null,
+                                            }
+                                        });
+                                        useQuestState.getState().resetQuest();
                                         return;
                                     }
 
@@ -430,6 +653,7 @@ export default function QuestPage() {
                                             alert(`結果の保存に失敗しました: ${err.error || res.statusText}`);
                                         } else {
                                             const data = await res.json();
+                                            useQuestState.getState().resetQuest();
                                             await fetchUserProfile();
 
                                             setResultOverlay({
@@ -439,8 +663,21 @@ export default function QuestPage() {
                                         }
                                     } catch (e: any) {
                                         console.error(e);
-                                        alert(`通信エラーが発生しました: ${e.message}`);
-                                        router.push('/inn');
+                                        // 通信エラー時: /inn に飛ばすとAuthGuardで更にタイトルに飛ばされるため、
+                                        // フォールバックとして結果モーダルを表示する
+                                        alert(`通信エラーが発生しました: ${e.message}\n結果の保存に失敗した可能性があります。`);
+                                        useQuestState.getState().resetQuest();
+                                        setResultOverlay({
+                                            result: result === 'success' ? 'success' : 'failure',
+                                            data: {
+                                                quest_title: scenario.title,
+                                                rewards: result === 'success' ? (scenario.rewards || {}) : {},
+                                                days_passed: scenario.time_cost || 0,
+                                                earned_exp: 0,
+                                                changes: { gold_gained: 0, old_age: 0, new_age: 0, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
+                                                rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
+                                            }
+                                        });
                                     }
                                 }}
                             />
@@ -461,14 +698,15 @@ export default function QuestPage() {
                             rewards={resultOverlay.data?.rewards}
                             changes={resultOverlay.data?.changes}
                             daysPassed={resultOverlay.data?.days_passed || 0}
-                            shareText={resultOverlay.data?.share_text}
+                            shareText={isTestPlay ? undefined : resultOverlay.data?.share_text}
                             repChange={resultOverlay.data?.rep_change}
                             partyChanges={resultOverlay.data?.party_changes}
                             newLocationName={resultOverlay.data?.new_location_name}
                             earnedExp={resultOverlay.data?.earned_exp}
                             lootSaved={resultOverlay.data?.loot_saved}
                             guestConversion={resultOverlay.data?.guest_conversion}
-                            onClose={() => router.push('/inn')}
+                            isTestPlay={isTestPlay}
+                            onClose={() => router.push(isTestPlay ? '/editor' : '/inn')}
                         />
                     </div>
                 )}

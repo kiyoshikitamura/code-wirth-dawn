@@ -2,24 +2,29 @@ row_type,node_id,text_label,params,next_node
 META,gold,0,,
 META,exp,0,,
 META,reputation,0,,
-NODE,start,マルカンドの砂漠の奥地に、歴史から消された「禁忌の王墓」が出現した。無名王の呪いにより都市は砂に呑まれ始めている。呪いの根源を断つため、王墓へ潜入する。,"{""type"":""text"", ""bg"":""bg_spot_markand_exterior"", ""bgm"":""bgm_markand""}",text_trap1
-NODE,text_trap1,王墓の入口に足を踏み入れた瞬間、床が崩落し、針の罠が飛んできた！,"{""type"":""trap"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_quest_tense"", ""params"":{""hp_percent"":10}}",text_guard1
-NODE,text_guard1,罠を抜けた先に、黄金の光で形作られた兵士が立ちはだかっていた。古代の自動防衛兵器だ。,"{""type"":""text"", ""bg"":""bg_spot_markand_interior""}",battle_guard1
-NODE,battle_guard1,光の衛兵との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":330, ""enemy_name"":""光の衛兵"", ""enemy_level"":18}",choice_g1
-CHOICE,,勝利,,text_trap2
-NODE,text_trap2,通路を進むと、壁から無数の矢が飛んできた！古代の自動防衛だ。,"{""type"":""trap"", ""bg"":""bg_spot_markand_interior"", ""params"":{""hp_percent"":8}}",text_golem
-NODE,text_golem,砂が渦を巻きながら人型に凝固していく。砂のゴーレムだ。斬っても砂に戻って再構成される。,"{""type"":""text"", ""bg"":""bg_spot_markand_interior""}",battle_golem
-NODE,battle_golem,砂のゴーレムとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":331, ""enemy_name"":""砂のゴーレム"", ""enemy_level"":20}",choice_golem
-CHOICE,,勝利,,text_trap3
-NODE,text_trap3,床に不気味な紋章が浮かんだ。呪いの結界だ！触れた者の体力を蝕む。,"{""type"":""trap"", ""bg"":""bg_spot_markand_interior"", ""params"":{""hp_percent"":12}}",text_guard2
-NODE,text_guard2,呪いの結界の奥で、ゴーレムと衛兵が同時に現れた。,"{""type"":""text"", ""bg"":""bg_spot_markand_interior""}",battle_guard2
-NODE,battle_guard2,砂の守護者たちとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_markand_interior"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":332, ""enemy_name"":""砂の守護者"", ""enemy_level"":20}",choice_g2
+NODE,start,マルカンドの市場で老婆が倒れた。肌が灰色に変色し指先が砂のように崩れていく。「砂の病」だ。酒場で語り部の老人が言った。「原因はわかっとるよ。あの墓だ。千年前の王が呪いをかけた。自分を忘れるなという身勝手な呪いだ」,"{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""bgm"":""bgm_markand""}",text_start2
+NODE,text_start2,老人は地図を指差した。「無名王の王墓。三千年誰も踏み込めなかった。入口の石板に『右手に真実を、左手に沈黙を、足元に謙譲を求めた』とある」老人はにやりと笑った。「行くなら止めんが——帰ってきた者は一人もおらんぞ」,"{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""speaker_name"":""語り部の老人""}",trap_01
+NODE,trap_01,王墓の奥。第一の間「鏡の間」。三体の石像が並んでいる。両手を広げた像、片膝をついた像、目を伏せた像。壁に「太陽はどの姿を照らすか。答えを誤れば光が牙を剥く」と刻まれている。足元に骨が散らばっている。前に来た者の成れの果てだ。,"{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",choice_trap1
+CHOICE,,目を伏せた像（謙譲）,,trap_02
+CHOICE,,両手を広げた像（傲慢）,,battle_trap_01
+NODE,battle_trap_01,像に触れた瞬間、壁の鏡が光った。鏡の中から自分と同じ姿をした光の戦士が抜け出してくる。顔が歪んでいる。嘲笑っている。壁に「傲慢なる者よ。己の影と戦え」と浮かんだ。,"{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":330, ""enemy_name"":""光の衛兵"", ""enemy_level"":18}",choice_bt1
+CHOICE,,勝利,,trap_02
+NODE,trap_02,第二の間「秤の間」。巨大な天秤の横に三つの箱。宝石、砂、空の箱。壁に「あなたの手に最も重い物を乗せよ」と刻まれている。宝石の箱の前に最も多くの骨がある——欲に目が眩んだのだろう。,"{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",choice_trap2
+CHOICE,,空の箱を選ぶ（沈黙）,,trap_03
+CHOICE,,宝石の箱を選ぶ（欲望）,,battle_trap_02
+NODE,battle_trap_02,宝石に手を伸ばした瞬間、箱から砂が噴き出した。砂が渦を巻き人の形を作っていく。砂のゴーレムだ。壁に「沈黙は言葉より重い。欲を捨てよ」と浮かんだ。,"{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":331, ""enemy_name"":""砂のゴーレム"", ""enemy_level"":20}",choice_bt2
+CHOICE,,勝利,,trap_03
+NODE,trap_03,第三の間「棺の間」。中央に空の棺。縁に「死者に捧げるべき言葉は何か」と刻まれている。壁に「称賛」と「忘却」の選択肢。「称賛」の壁の前に骨が多い。この王は忘れられることを何より恐れた。だが正解は——,"{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",choice_trap3
+CHOICE,,「忘却」を選ぶ（真実）,,text_king
+CHOICE,,「称賛」を選ぶ（偽り）,,battle_trap_03
+NODE,battle_trap_03,棺から二体の守護者が這い出してきた。かつて王に仕えた近衛兵の成れの果て。兵士の一体が口を開いた。だが声はない。顎が上下に動いているだけだった——もう言葉を忘れているのだ。千年の間に。,"{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":332, ""enemy_name"":""混成の守護者"", ""enemy_level"":22}",choice_bt3
 CHOICE,,勝利,,text_king
-NODE,text_king,王墓の最深部に辿り着いた。黄金の棺が安置されている。棺の蓋が開き、漆黒の影が湧き出した。歴史から名前すら消された暴君「無名王」だ。,"{""type"":""text"", ""bg"":""bg_spot_markand_throne"", ""bgm"":""bgm_spot_final_boss""}",boss_king
-NODE,boss_king,無名王の影との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_markand_throne"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":333, ""enemy_name"":""無名王の影"", ""enemy_level"":25}",choice_king
+NODE,text_king,最深部。黄金の広間。壁一面に一人の男の生涯が描かれていた。戦争、征服、建設、繁栄。そして孤独。最後の壁画は玉座に独り座る男の後ろ姿だった。広間の中央のミイラが動いた。「…………来たか」,"{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_boss""}",text_king2
+NODE,text_king2,「三千年だ。三千年ここで待った。誰か来るのを。俺の名を呼ぶ者を」ミイラから砂の鎧が形成されていく。「俺は名前すら忘れた。千年かけて築いた王国の名すら誰も覚えていない。だから呪った。忘れるなら——道連れだ」砂の嵐が広間を満たした。,"{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""speaker_name"":""無名王""}",boss_king
+NODE,boss_king,無名王との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":333, ""enemy_name"":""無名王の影"", ""enemy_level"":25}",choice_king
 CHOICE,,勝利,,final_choice
-NODE,final_choice,無名王を倒した。棺の中に、暴君が使っていた処刑の大剣と、呪術の書が残されている。呪術の書には都市を支配する禁忌の術が記されている。,"{""type"":""text"", ""bg"":""bg_spot_markand_throne"", ""bgm"":""bgm_spot_final_choice""}",choice_final
-CHOICE,,処刑の大剣を持ち帰る（国へ献上）,,end_sword
-CHOICE,,呪術の書から力を得る（禁忌の力）,,end_curse
-NODE,end_sword,暴君の大剣を回収し、王墓を封印した。都市を蝕む呪いは解け、マルカンドに再び砂漠の風が吹く。大きな功績を認められた。,"{""type"":""end_success"", ""bg"":""bg_spot_markand_throne"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""632""]}}",
-NODE,end_curse,呪術の書から禁忌の力を抜き出した。都市への呪いは解けたが、書は永遠に失われた。王家はこの選択を問題視したが、手に入れた力は本物だ。固有スキル『砂塵の支配』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_markand_throne"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""631""]}}",
+NODE,final_choice,砂王が崩れた。だがまだ動いている。胸の中央に黒い宝石が脈打っている。呪いの核「王の心臓」だ。砂王が笑った。「好きにしろ。壊すか飲むか。壊せば呪いは消えるが俺の知恵も失われる。飲めば力を得るがお前の体に俺の恨みが宿る。……もう疲れたのだ。三千年も恨み続けるのは」,"{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+CHOICE,,心臓を破壊し呪いを断つ,,end_break
+CHOICE,,心臓を宿し呪いを制御する,,end_curse
+NODE,end_break,黒い宝石を地面に叩きつけた。砂王の体が塵になり広間が灰色の石に戻っていく。街に戻ると砂の病に倒れていた者たちが目を覚ましていた。語り部の老人が出迎えた。「やったか。あの王の名はもう誰も知らん。だがお前がやったことは覚えておく」報酬として『砂王の断罪刃』を受け取った。三千年分の怒りが鋼に宿っている。,"{""type"":""end_success"", ""bg"":""bg_spot_markand_king"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""632""]}}",
+NODE,end_curse,黒い宝石を飲み込んだ。体の中を砂が駆け巡る。腕に砂色の渦巻き紋章が浮かんだ。砂王の最後の言葉。「すまなかった。民を巻き込むべきではなかった」呪いは止まったが力は残った。人々は紋章を見て後ずさりした。語り部の老人だけが笑っていた。「面白い話が増えるのは語り部としては歓迎だ」固有スキル『砂塵の支配』を入手した！,"{""type"":""end_success"", ""bg"":""bg_spot_markand_king"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""631""]}}",

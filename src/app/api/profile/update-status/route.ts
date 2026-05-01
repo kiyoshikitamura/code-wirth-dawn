@@ -1,20 +1,28 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/supabase-admin';
+import { supabase as anonSupabase } from '@/lib/supabase';
 
-// Generic endpoint to update transient user status
+// Generic endpoint to update transient user status (HP, Gold, VIT, etc.)
+// Uses Service Role key to bypass RLS for reliable writes.
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        // Expect keys like { hp, gold, exp }
+        // Expect keys like { hp, gold, exp, vitality }
         // We only update what is provided.
 
-        // 1. Dynamic User Identification
-        const { data: { user } } = await supabase.auth.getUser();
-        let userId = user?.id || body.profileId;
+        // 1. User Identification: Authorization header → body.profileId → fallback
+        let userId: string | null = null;
+        const authHeader = req.headers.get('authorization');
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user } } = await anonSupabase.auth.getUser(token);
+            if (user) userId = user.id;
+        }
+        if (!userId) userId = body.profileId || null;
 
         if (!userId) {
-            const { data: latest } = await supabase.from('user_profiles').select('id').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-            userId = latest?.id;
+            const { data: latest } = await supabaseServer.from('user_profiles').select('id').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+            userId = latest?.id || null;
         }
 
         if (!userId) {
@@ -23,7 +31,7 @@ export async function POST(req: Request) {
 
         const updates: any = {};
         if (typeof body.hp === 'number') updates.hp = body.hp;
-
+        if (typeof body.vitality === 'number') updates.vitality = body.vitality;
         if (typeof body.gold === 'number') updates.gold = body.gold;
         if (typeof body.exp === 'number') updates.exp = body.exp;
 
@@ -33,7 +41,7 @@ export async function POST(req: Request) {
 
         updates.updated_at = new Date().toISOString();
 
-        const { error } = await supabase
+        const { error } = await supabaseServer
             .from('user_profiles')
             .update(updates)
             .eq('id', userId);

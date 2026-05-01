@@ -1,14 +1,23 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,次元の狭間を越え、神々の中枢たる「天界の玉座」へ至るには、4大国家が古代より秘匿管理してきた黄金の鍵が必要だ。,"{""bgm"":""bgm_quest_mystery"", ""type"":""text"", ""bg"":""bg_spot_roland_core""}",text1
-NODE,text1,君は始まりの地、聖帝国ローランの王城に辿り着いた。かつて小隊長ガウェインが命を賭して守ろうとしたこの国の中心。,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",text1_1
-NODE,text1_1,だが、玉座の間へ続く「鉄の門」は固く閉ざされ、重装備の近衛兵団が槍を交差させて君の行く手を阻んでいる。,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",text2
-NODE,text2,「ここから先は聖域である。帝の許可なき者の立ち入りは、いかなる理由があろうと死罪に処す」,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",text2_1
-NODE,text2_1,近衛隊長の眼には、狂信的な光が宿っていた。すでに各国の指導者層は、神々の精神支配を受けつつあるという噂は本当だったのだ。,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",choice1
-CHOICE,,「膨大な資産で通行証を提示する」,,text3
-CHOICE,,「強行突破する」,,battle
-NODE,text3,君はこれまでの世代が血の滲むような思いで積み上げた資産（20,000G相当）と、長年の外交的影響力を証明する特約状を突きつけた。,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",text3_1
-NODE,text3_1,どれほど狂信に囚われていようとも、国家を動かすシステムとしての「富と権力」の重みは無視できない。門兵は青ざめ、黙って震える手で道を開けた。,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",end_node
-NODE,battle,問答無用で剣を抜く。「ならば力ずくでこじ開けるまでだ」。近衛隊長が激昂し、殺到する近衛兵団との激戦の火蓋が切られた！,"{""type"":""battle"", ""enemy_group_id"":217}",choice2
-CHOICE,,神の操り人形たちを退ける,,text_win
-NODE,text_win,血に染まる王城の階段。君は立ちはだかる精鋭たちを薙ぎ払い、強引に分厚い鉄の門をこじ開けた。「黄金の鍵」はすぐそこだ。,"{""type"":""text"", ""bg"":""bg_spot_roland_core""}",end_node
-NODE,end_node,ついに神域へと至る鍵を手に入れた。しかしその直後、城全体を揺るがすほどの地響きが起こり、世界中で神々による「大粛清の儀式」が本格稼働を始めたという絶望的な報せが入る。,"{""type"":""end_success""}",
+META,gold,3500,,
+META,exp,450,,
+META,reputation,25,,
+NODE,start,英霊の導きに従い、イスハークへ向かった。黄金都市はかつての輝きを取り戻し、市場には商人たちの活気ある声が響いている。目的地は街の外——砂漠の中のピラミッドだ。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",text_ishaq
+NODE,text_ishaq,イスハークの東に、古代のピラミッドが聳えている。マルカンドの建国よりも遥か昔——名もなき文明が築いた巨大な石造りの墓所。観光名所として知られているが、内部の大半は未踏査のまま残されている。その奥に——英霊の石碑がある。,"{""type"":""text"",""bg"":""bg_desert""}",text_pyramid
+NODE,text_pyramid,ピラミッドの入口を抜け、内部に入った。松明の光が石壁に揺れる。壁面には古代の壁画が描かれていた。星の配置。人間の営み。そして——翼を持つ存在との戦い。この文明も、かつて神と戦ったのかもしれない。,"{""type"":""text"",""bg"":""bg_catacombs""}",text_hidden_passage
+NODE,text_hidden_passage,奥へ進むと、行き止まりに突き当たった。だが——壁の一部に、石碑と同じ紋様が刻まれている。手を当てると、壁が音を立てて動き始めた。砂が崩れ落ち、隠し通路が現れた。空気が変わった。古い空気。何千年も閉じ込められていた空気。その奥から、微かな光が漏れている。,"{""type"":""text"",""bg"":""bg_catacombs""}",text_chamber
+NODE,text_chamber,通路の先に、広い部屋があった。天井が高い。壁面全体に紋様が刻まれている。部屋の中央に——石碑が立っていた。国境の町で見つけたものと同じ紋様。だが、こちらの方が大きく、光が強い。中に眠る記憶が——呼んでいる。,"{""type"":""text"",""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_calm""}",text_stele_found
+NODE,text_stele_found,石碑の表面に文字が浮かび上がった。古代の言語。読めないはずなのに——意味が伝わる。「此処に、英霊の記憶を封じる。　継承者よ。触れよ。　我が戦いを追体験し、力の欠片を受け継げ」,"{""type"":""text"",""bg"":""bg_pyramid_chamber""}",text_touch
+NODE,text_touch,石碑に手を触れた。前回と同じように、意識が飛んだ。だが今度は——より深く、より鮮明に。目を開けると、見知らぬ場所に立っていた。ここは——先代の英霊の記憶の中だ。,"{""type"":""text"",""bg"":""bg_pyramid_chamber""}",text_memory_start
+NODE,text_memory_start,記憶の中の風景が広がった。砂漠の中のオアシス。椰子の木が揺れ、泉が陽光を反射している。だが——空気が張り詰めていた。このオアシスで、英霊は何かと戦ったのだ。,"{""type"":""text"",""bg"":""bg_memory_oasis""}",text_memory_oasis
+NODE,text_memory_oasis,記憶が再生される。先代の英霊は、このオアシスで追い詰められていた。水を求めて辿り着いた泉の底から——冥界の門が開いたのだ。泉の水が黒く染まる。地面が裂け、暗い霧が噴き出した。その霧の中から——冥王が姿を現した。,"{""type"":""text"",""bg"":""bg_memory_oasis""}",text_hades_appear
+NODE,text_hades_appear,黒い霧が人の形を取った。蒼白い肌。深い闇を湛えた瞳。黒い衣を纏い、手には闇の錫杖を持っている。冥王ハデス——死者の国を統べる神。生命そのものを奪い取る力の持ち主。記憶の中の存在だが——殺意は本物だ。,"{""type"":""text"",""bg"":""bg_memory_oasis"",""bgm"":""bgm_battle_strong""}",text_hades_voice
+NODE,text_hades_voice,ハデスが口を開いた。低く、冷たく、地の底から響くような声。「また来たか、英霊の欠片よ。　先代も同じ顔をしていた。　死を恐れぬ目。だが——」錫杖が地面を突いた。地面に亀裂が走る。「死を恐れぬことと、　死を超えることは違う」,"{""type"":""text"",""bg"":""bg_memory_oasis"",""speaker_name"":""冥王ハデス""}",text_hades_challenge
+NODE,text_hades_challenge,「冥府の門を越えられるか、試してやろう。　先代は——越えた。　だが代償に、寿命の半分を差し出した。　お前はどうだ？　同じ覚悟があるか？」冥王の錫杖が光り、暗い霧が渦を巻いた。,"{""type"":""text"",""bg"":""bg_memory_oasis"",""speaker_name"":""冥王ハデス""}",battle
+NODE,battle,冥王ハデスとの戦闘！記憶の中の死神を打ち倒し、英霊の遺産を勝ち取れ！,"{""type"":""battle"",""bg"":""bg_memory_oasis"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9050""}",text_hades_defeat
+CHOICE,,続ける,,text_hades_defeat
+NODE,text_hades_defeat,ハデスの錫杖が砕けた。黒い霧が晴れ、オアシスに陽光が戻る。「……見事だ。先代と同じ力を感じる。　いや——それ以上かもしれん」ハデスの姿が薄れていく。「覚えておけ。死は終わりではない。　次の始まりだ。　——お前が来た時、冥府の門は開いている」,"{""type"":""text"",""bg"":""bg_memory_oasis"",""speaker_name"":""冥王ハデス""}",text_talisman
+NODE,text_talisman,意識が現実に戻った。石碑の足元に——光る物体が落ちていた。古い護符。暗い輝きを放つ石が嵌め込まれている。手に取ると、冷たいが——力が込められている。冥王の護符。英霊がハデスから勝ち取った遺産の一つ。,"{""type"":""text"",""bg"":""bg_pyramid_chamber""}",text_return
+NODE,text_return,ピラミッドを出ると、砂漠の夕陽が眩しかった。護符を懐に収めた。四つの遺産のうち、一つを手にした。残りは三つ。龍京の無人島に剣。出雲の秘境に鎧。レガリアの遺跡に——最後の記憶。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",end_node
+NODE,end_node,冥王ハデスの試練を乗り越え、護符を手に入れた。英霊の記憶は、鮮烈だった。あの英霊もまた、一人の人間として神に抗い続けたのだ。自分はその続きを歩いている。次の石碑を目指して、旅を続ける。,"{""type"":""end_success"",""bg"":""bg_road_day""}",
+NODE,end_failure,冥王の霧に呑み込まれた。意識が暗闇に沈んでいく。記憶の中で——ハデスの声が遠くから聞こえた。「まだ、早かったか……」,"{""type"":""end_failure"",""bg"":""bg_memory_oasis""}",

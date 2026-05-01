@@ -1,19 +1,25 @@
-﻿row_type,node_id,text_label,params,next_node
-NODE,start,開戦の口火が切られてから数週間。君たちは、なし崩し的にマルカンド王国の前線拠点での防衛戦に巻き込まれていた。,"{""bgm"":""bgm_quest_crisis"", ""type"":""text"", ""bg"":""bg_bandit_camp""}",gawain_join
-NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_gawain""}",text0_1
-NODE,text0_1,傭兵として雇い主（マルカンド側）に付くか、祖国（ローラン）の軍に下るか。戦場の混乱の中で、そんな選択肢など意味を持たなかった。生き残るために目の前の敵を斬る、それだけだ。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1
-NODE,text1,突如として大地の揺れる音が響く。地平線を埋め尽くすほどの砂埃を上げて、帝国軍の本隊が拠点への全面侵攻を開始したのだ。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text1_1
-NODE,text1_1,「もはや小競り合いではない……本物の戦争だ！各員、死にたくなければ配置につけ！」ガウェインの悲痛ともとれる叫びが戦場に響き渡る。,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",battle1
-NODE,battle1,怒涛の如く押し寄せる帝国兵の群れ。彼らの目には熱狂的な『大義』が宿っており、命の惜しさなど微塵も感じられない。まずは先陣を切り抜けろ！,"{""type"":""battle"", ""enemy_group_id"":203}",choice_1
-CHOICE,,狂気の群れに剣を振るう,,text2
-NODE,text2,数名を切り伏せたが、敵の数は減るどころか津波のように増していく。仲間の傭兵やマルカンドの兵士たちが次々と赤い海に沈んでいく。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text2_1
-NODE,text2_1,矢衾の中から、重装装甲に身を包んだ帝国の精鋭部隊が現れた。彼らの標的は、最前線で踏み留まっているガウェインだ。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text3
-NODE,text3,「無理だ、多すぎる！……新入り、お前はまだ死ぬべきではない。ここはワシが引き受ける、お前だけでも逃げろ！」,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text3_1
-NODE,text3_1,「そんなことできるわけが――」君の言葉を、耳を劈く烈白な剣戟の音が遮った。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle2
-NODE,battle2,ガウェインが君の前に立ち塞がり、精鋭たちの猛攻をその巨大な盾と剣で受け止める。その背後から迫る別働隊の刃が、君に向かって牙を剥いた！,"{""type"":""battle"", ""enemy_group_id"":203}",choice_2
-CHOICE,,死力を尽くし、生き延びる,,text4
-NODE,text4,死に物狂いで別働隊を退けた。だが、息をつく暇もなく振り返った君の目に飛び込んできたのは――無数の槍や剣に貫かれ、血だまりの中に崩れ落ちる老騎士の姿だった。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text4_1
-NODE,text4_1,「ガウェイン……ッ！！」君は泥に塗れた手を伸ばすが、届かない。彼を貫いた兵士たちは、すでに次の獲物を探して遠ざかっていた。,"{""type"":""text"", ""bg"":""bg_bandit_camp""}",text5
-NODE,text5,「……行け。……新米。生き延びて、この目で……世界の果てを、見届けろ……」,"{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_death
-NODE,gawain_death,ガウェインは君を庇い、壮絶な最期を遂げた。その魂は永遠にこの地に眠る。,"{""type"":""leave""}",end_node
-NODE,end_node,それが、厳しいながらも君を導き続けた老騎士の最期の言葉だった。大義という名の下に散った数多の命の重さを背負い、敗走兵となった君の孤独な真の旅がはじまる。,"{""type"":""end_success""}",
+row_type,node_id,text_label,params,next_node
+META,gold,500,,
+META,exp,200,,
+META,reputation,15,,
+NODE,start,"嫌な予感は的中した。王国が「反逆者」としてガウェインの名を公表した。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_tense""}",text_start2
+NODE,text_start2,"虐殺の真実を報告しようとしただけで。王国軍の精鋭部隊「鉄騎隊」がこちらに向かっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",gawain_join
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_gawain""}",text_ambush
+NODE,text_ambush,"逃走中のマルカンド前線拠点付近。四方から包囲された。精鋭部隊が、音もなく陣形を敷いていた。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_crisis""}",text_commander
+NODE,text_commander,"部隊長が馬上から見下ろした。若い。三十前後。だが——目が据わっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_commander2
+NODE,text_commander2,"「反逆者ガウェイン。王命により、ここで処断する。投降すれば一思いに殺してやる」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_gawain_resolve
+NODE,text_gawain_resolve,"ガウェインが剣を抜いた。「お前がこの目で見たものは全て真実だ」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_resolve2
+NODE,text_gawain_resolve2,"「王国が何をしているか——世界に知らせなければならない。自分たちが何のために戦っているのかを」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_sacrifice
+NODE,text_gawain_sacrifice,"「ここは自分が引き受ける。お前は東へ行け。夜刀神国の国境を越えれば、王国の手は届かない」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_first_wave
+NODE,text_first_wave,"ガウェインの言葉を遮るように、第一波の兵士たちが突撃してきた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle1
+NODE,battle1,"王国軍精鋭部隊・第一波との戦闘！","{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":203, ""bgm"":""bgm_battle_strong""}",choice1
+CHOICE,,切り抜ける,,text_wave1_clear
+NODE,text_wave1_clear,"第一波を退けた。だが次の波が来る。ガウェインが背中を押した。「行け！今だ！」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_commander_second
+NODE,text_commander_second,"部隊長が叫んだ。「第二隊、回り込め！逃がすな！」新たな兵士たちが迫る。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle2
+NODE,battle2,"王国軍精鋭部隊・第二波との戦闘！","{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":203, ""bgm"":""bgm_battle_strong""}",choice2
+CHOICE,,道を切り拓く,,text_gawain_last
+NODE,text_gawain_last,"第二波を退けた。だが——ガウェインが膝をついた。背中に矢が三本刺さっている。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_last2
+NODE,text_gawain_last2,"「お前は生き延びろ。生き延びて、この目で世界の果てを見届けろ。自分の分まで……な……」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
+NODE,gawain_leave,"ガウェインは立ち上がり、残る兵士たちの前に一人で立ちはだかった。もう振り返らなかった。","{""type"":""leave"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_run
+NODE,text_run,"走った。振り返らなかった。背後で剣戟の音がした。叫び声。——そして、静寂。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",end_node
+NODE,end_node,"走り続けた。太陽が沈むまで。東へ。ただ東へ。「生き延びて、この目で世界の果てを見届けろ」","{""type"":""end_success"", ""bg"":""bg_bandit_camp""}",

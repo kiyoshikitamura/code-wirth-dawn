@@ -1,4 +1,4 @@
-﻿# クエスト仕様書：6004 — 第4話「砂塵の激突」
+# クエスト仕様書：6004 — 第4話「砂漠の追跡者」
 
 ## 0. ファイル概要
 
@@ -15,10 +15,7 @@
 | **難易度Tier** | Normal（rec_level: 4） |
 | **経過日数 (time_cost)** | 5（成功: 5日 / 失敗: 3日） |
 | **ゲストNPC** | ガウェイン（パーティ加入あり / クエスト終了後に離脱） |
-| **ノード数** | 15ノード（うち選択肢1件） |
 | **サムネイル画像** | `/images/quests/bg_desert.png` |
-
-※BGM、SE、進行中の背景画像などはノードごとに指定します。
 
 ---
 
@@ -26,12 +23,15 @@
 
 ### 短文説明
 ```
-メインシナリオ第4話
+交易路で商人が消えている。王国が放った追跡者の正体を暴け。
 ```
 
 ### 長文説明
 ```
-平原の都市を舞台に、王国軍とマルカンド軍が遂に激突する。国境を越え押し寄せる鉄の波。君の剣が、その濁流を切り裂く。
+オアシス都市での毒物事件から数日。
+マルカンドの交易路で有力商人が次々と行方不明になる事件が発生。
+犯人は「賞金稼ぎ」を名乗る者たちだが、
+その背後にはローランド王国の影がちらついていた。
 ```
 
 ---
@@ -47,259 +47,297 @@ Exp:150|Gold:400|Rep:10|Justice:10
 
 ## 3. シナリオノード構成
 
-### 簡易フロー
+### 全体フロー
 ```text
 start
-  └─ start
-  └─ text1
-  └─ text1_1
-  └─ text2
-  └─ text2_1
-  └─ text3
-  └─ text3_1
-  └─ text4
-  └─ text4_1
-  └─ battle
-      ├─[「商隊を護る！」]→ N/A
-  └─ text_post_battle
-  └─ text_post_battle2
-  └─ end_node
+  └─→ gawain_join → text_patrol → text_rumor
+       └─→ text_merchant → text_merchant_plea
+            └─→ text_gawain_analysis → text_gawain_analysis2
+                 └─→ text_trail → text_ambush_site
+                      └─→ text_hunter_reveal → text_hunter_taunt → battle
+                           ├─[勝利]→ text_aftermath → text_identity
+                           │    └─→ text_gawain_omen → gawain_leave → end_node
+                           └─[敗北]→ end_failure
 ```
 
 ### ノード詳細
 
-#### `start`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `start`（type: text）
+- **BGM**: `bgm_quest_tense` / **背景**: `bg_desert`
 
 **テキスト:**
 ```
-オアシス都市での一件から数日後。君とガウェインは、マルカンド領内を移動する大規模な中立商隊の護衛任務に就いていた。
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text1
+オアシス都市での毒物事件から数日。
+ガウェインの小隊と共に、マルカンド領内の
+交易路の安全確認任務に就いていた。
 ```
 
 ---
 
-#### `text1`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `gawain_join`（type: guest_join）
+- **背景**: `bg_desert`
 
 **テキスト:**
 ```
-毒物事件の噂は瞬く間に広がり、マルカンド側の王国に対するヘイトは限界に達している。すれ違う商人たちの目つきも鋭い。
+ガウェインがパーティに加わった。
 ```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text1_1
+**params:** `{"type":"guest_join", "bg":"bg_desert", "guest_id":"npc_guest_gawain"}`
+
+---
+
+#### `text_patrol`（type: text）
+- **背景**: `bg_desert`
+
+**テキスト:**
+```
+砂漠の交易路を馬で進む。
+荷馬車の轍は残っているが、行き交う商人の姿が少ない。
+以前はラクダの隊列が途切れなかったこの道が、
+妙に静かだった。
 ```
 
 ---
 
-#### `text1_1`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_rumor`（type: text）
+- **背景**: `bg_desert` / **speaker_name**: `ガウェイン`
 
 **テキスト:**
 ```
-「いつ火を吹いてもおかしくない。……むしろ、上層部は火が吹くのを待っているようにも見えるな」
-```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
-**params:**
-```json
-text2
+「おかしいな。この道は本来、
+　マルカンド有数の交易路のはずだが」
+
+ガウェインが馬の手綱を引いた。
+
+「……最近、商人が消えているという噂を聞いた」
 ```
 
 ---
 
-#### `text2`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_merchant`（type: text）
+- **背景**: `bg_desert`
 
 **テキスト:**
 ```
-ガウェインが馬上でそう呟き、深く溜息をついた直後だった。
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text2_1
+交易路の中継点に着いた。
+普段なら賑わう隊商宿が、閑散としている。
+
+宿の主人が怯えた顔でこちらを見ている。
+奥から、血まみれの男がよろめき出てきた。
 ```
 
 ---
 
-#### `text2_1`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_merchant_plea`（type: text）
+- **背景**: `bg_desert`
 
 **テキスト:**
 ```
-凄まじい轟音と共に、隊商の先頭付近で巨大な爆発・砂塵が上がり、護衛の兵士や商人たちが吹き飛ばされた！
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text3
+「た、助けてくれ……！
+　賞金稼ぎだ。奴らが……商隊を襲った。
+　仲間は皆殺しにされた。
+　自分だけ、荷馬車の下に隠れて逃げてきたんだ……」
+
+男は震えながら、砂漠の東を指さした。
 ```
 
 ---
 
-#### `text3`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_gawain_analysis`（type: text）
+- **背景**: `bg_desert` / **speaker_name**: `ガウェイン`
 
 **テキスト:**
 ```
-「敵襲！！……馬鹿な、あれを見ろ！信じられん、ローランの紋章だと！？」
-```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
-**params:**
-```json
-text3_1
+ガウェインの顔が険しくなった。
+
+「賞金稼ぎだと？
+　この辺りで活動する賞金稼ぎは、
+　通常は懸賞金リストの犯罪者しか狙わない」
 ```
 
 ---
 
-#### `text3_1`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_gawain_analysis2`（type: text）
+- **背景**: `bg_desert` / **speaker_name**: `ガウェイン`
 
 **テキスト:**
 ```
-砂煙の中から姿を現したのは、他ならぬ君たちの祖国――聖王国ローランドの正規軍、その先遣隊だった。
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text4
+「ましてや中立の商人を襲う理由がない。
+　——王国の依頼でなければ、な」
+
+声を落とした。目が鋭い。
+
+「消えている商人に共通点がある。
+　全員、ローランドとの交易に反対する有力者だ」
 ```
 
 ---
 
-#### `text4`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_trail`（type: text）
+- **背景**: `bg_wasteland`
 
 **テキスト:**
 ```
-宣戦布告などない。彼らは『大義』や『制裁』といった空虚な言葉を並べ立てながら、丸腰同然のマルカンド商隊に容赦なく牙を剥いた。
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text4_1
+商人の証言を頼りに、砂漠の東へ向かった。
+岩場の陰に、野営の跡があった。
+消した焚き火。砂に埋められた食料の残骸。
+
+——そして、複数の足跡が一方向に向かっている。
 ```
 
 ---
 
-#### `text4_1`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_ambush_site`（type: text）
+- **背景**: `bg_wasteland`
 
 **テキスト:**
 ```
-「これが……大義を掲げた国のやることか！俺たちは何のために剣を振るっているんだ！」君は思わず叫んだ。
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-battle
+岩場の先に、開けた場所があった。
+そこで——賞金稼ぎの一団が、
+別の商隊を包囲しているのが見えた。
+
+商人たちが荷車の陰に隠れ、震えている。
 ```
 
 ---
 
-#### `battle`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_hunter_reveal`（type: text）
+- **背景**: `bg_wasteland`
 
 **テキスト:**
 ```
-迷っている暇はない。今は目の前で殺されようとしている人々を救うため、同国人に向かって剣を抜くしかなかった。
-```
-**次ノード:** `{type:battle, enemy_group_id:202}` (auto-advance)
-**params:**
-```json
-choice_battle
+賞金稼ぎのリーダーらしき男が、
+馬から降りて商人の前に立った。
+
+「——悪く思うなよ。これは仕事だ。
+　お前たちの名前は、リストに載っている」
+
+男の腰に、見覚えのある紋章が刻まれた許可証が光った。
+ローランド王国の公印だ。
 ```
 
 ---
 
-#### `text_post_battle`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_hunter_taunt`（type: text）
+- **背景**: `bg_wasteland`
 
 **テキスト:**
 ```
-王国兵を退け、先遣隊を一時的に後退させることには成功した。しかし、辺り一面には無残な商隊の残骸と遺体が散乱している。
-```
-**次ノード:** `{type:text, bg:bg_desert}` (auto-advance)
-**params:**
-```json
-text_post_battle2
+こちらに気づいたリーダーが、薄ら笑いを浮かべた。
+
+「おや、お節介な連中が来たか。
+　お前たちも標的リストに載っているぞ。
+　"マルカンドに協力する裏切り者"としてな」
+
+剣を抜いた。背後の仲間たちも武器を構える。
 ```
 
 ---
 
-#### `text_post_battle2`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `battle`（type: battle）
+- **BGM**: `bgm_battle` / **背景**: `bg_wasteland`
 
 **テキスト:**
 ```
-「……ついに、開戦の口火が切られてしまったか。引き返せない泥沼の始まりだ」
+王国公認の賞金稼ぎとの戦闘！
+商人たちを守り、追跡者を撃退しろ！
 ```
-**次ノード:** `{type:text, bg:bg_desert, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
-**params:**
-```json
-end_node
+
+| 設定 | 値 |
+|-----|-----|
+| 敵グループ | `230` (main_bounty_hunters: 新米ハンター + 賞金稼ぎの狩人) |
+| 敵レベル | 6 |
+
+---
+
+#### `text_aftermath`（type: text）
+- **背景**: `bg_wasteland`
+
+**テキスト:**
+```
+賞金稼ぎたちを撃退した。
+リーダーの男が岩壁にもたれかかり、
+荒い息をついている。
+
+「……ふ。まさか、こんなところで負けるとはな」
 ```
 
 ---
 
-#### `end_node`
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **SE**: `—`
-- **背景画像**: `bg_desert`
+#### `text_identity`（type: text）
+- **背景**: `bg_wasteland`
 
 **テキスト:**
 ```
-ガウェインの顔に深く刻まれた疲労と絶望は、これから始まる地獄の戦場を予見していた。君の手は、同朋を斬った感触に小刻みに震えている。
-```
-**次ノード:** `{type:end_success, speaker_image_url:/images/npcs/npc_guest_gawain.png}` (auto-advance)
-**params:**
-```json
+男の懐から、折り畳まれた書類が落ちた。
+拾い上げると——王国軍の身分証だった。
 
+「ローランド王国軍・第三遠征大隊・元伍長」
+
+退役した正規兵だ。
+王国が「民間の賞金稼ぎ」を装わせて、
+汚れ仕事をさせていた。
 ```
 
 ---
 
+#### `text_gawain_omen`（type: text）
+- **背景**: `bg_wasteland` / **speaker_name**: `ガウェイン`
 
+**テキスト:**
+```
+ガウェインが身分証を見つめた。長い沈黙。
+
+「……賞金稼ぎを使って邪魔者を消す。
+　工作員で世論を操る。
+　そしてその次は——正規軍が来る」
+
+拳を握った。
+
+「これは戦争の前哨戦だ。
+　もう——止められないかもしれん」
+```
+
+---
+
+#### `gawain_leave`（type: leave）
+- **背景**: `bg_wasteland` / **speaker_name**: `ガウェイン`
+
+**テキスト:**
+```
+ガウェインは証拠を持ち帰り、
+上層部に報告するため一時離脱した。
+
+「この身分証があれば、王国の関与を証明できる。
+　——だが、上が握り潰す可能性もある」
+
+背を向ける直前、低く呟いた。
+「……時間がない」
+```
+
+---
+
+#### `end_node`（type: end）
+**テキスト:**
+```
+助けた商人たちが、何度も頭を下げて去っていった。
+
+だが——これは氷山の一角に過ぎない。
+工作員。賞金稼ぎ。次は正規軍が来る。
+ガウェインの言葉が、頭から離れなかった。
+
+戦争の歯車は、もう回り始めている。
+```
+**params:** `{"type":"end", "result":"success"}`
+
+---
+
+#### `end_failure`（type: end）
+**テキスト:**
+```
+賞金稼ぎの刃に阻まれ、商人を守りきれなかった。
+砂の上に膝をつく。
+
+遠くで商人の悲鳴が聞こえる。
+——またしても、何も守れなかった。
+```
+**params:** `{"type":"end", "result":"failure"}`

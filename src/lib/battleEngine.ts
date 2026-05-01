@@ -2,11 +2,60 @@
 import { Card, PartyMember, UserProfile } from '@/types/game';
 import { StatusEffect, getAttackMod, getDefBonus } from '@/lib/statusEffects';
 import { getNoiseInjectionCount } from '@/lib/passiveEffects';
+import { BATTLE_RULES } from '@/constants/battle_rules';
 
 /**
- * v3.0 決定論的ダメージ計算 (Deterministic)
- * Formula: FinalDamage = (UserATK + CardPower) * AtkMod - TargetDEF - DefBonus
- * DefBonus は StatusEffect(def_up/def_up_heavy).value から取得（提案A）。
+ * v4.0 ダメージ計算（揺らぎ + クリティカル対応）
+ * 
+ * 計算フロー:
+ *   1. base = (UserATK + CardPower) * AtkMod
+ *   2. 揺らぎ: base2 = base * (0.85 ~ 1.15)
+ *   3. クリティカル: base3 = base2 * 1.5 (発動時)
+ *   4. DEF減算: result = base3 - TargetDEF - DefBonus (物理のみ)
+ *   5. 最終ダメージ = max(1, floor(result))
+ */
+export interface DamageCalcResult {
+    damage: number;
+    isCritical: boolean;
+}
+
+export function calculateDamageV4(
+    cardPower: number,
+    targetDef: number,
+    attackerEffects: StatusEffect[] = [],
+    defenderEffects: StatusEffect[] = [],
+    isMagic: boolean = false,
+    userAtk: number = 0,
+    critRate: number = BATTLE_RULES.PLAYER_CRIT_RATE
+): DamageCalcResult {
+    // 1. Base = (Card.Power + User.ATK) * atkMod
+    let dmg = (cardPower + userAtk) * getAttackMod(attackerEffects);
+
+    // 2. ダメージ揺らぎ (±15%)
+    const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN
+        + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
+    dmg = dmg * variance;
+
+    // 3. クリティカル判定
+    const isCritical = Math.random() < critRate;
+    if (isCritical) {
+        dmg = dmg * BATTLE_RULES.CRIT_MULTIPLIER;
+    }
+
+    // 4. DEF減算: 物理のみ。魔法はDEF・defBonusともに貫通。
+    if (!isMagic) {
+        const defBonus = getDefBonus(defenderEffects);
+        dmg = dmg - targetDef - defBonus;
+    }
+
+    // 5. 最終ダメージ
+    const finalDamage = Math.max(1, Math.floor(dmg));
+    return { damage: finalDamage, isCritical };
+}
+
+/**
+ * v3.0互換: 旧シグネチャ（既存の呼び出し元が多いため維持）
+ * 内部でv4.0を呼び出し、damage値のみ返す。
  */
 export function calculateDamage(
     cardPower: number,
@@ -14,22 +63,20 @@ export function calculateDamage(
     attackerEffects: StatusEffect[] = [],
     defenderEffects: StatusEffect[] = [],
     isMagic: boolean = false,
-    userAtk: number = 0  // v2.11: プレイヤーATK加算
+    userAtk: number = 0
 ): number {
-    // 1. Base = Card.Power + User.ATK
-    let dmg = cardPower + userAtk;
+    return calculateDamageV4(cardPower, targetDef, attackerEffects, defenderEffects, isMagic, userAtk).damage;
+}
 
-    // 2. Attacker atk_up buff (x1.5)
-    dmg = Math.floor(dmg * getAttackMod(attackerEffects));
-
-    // 3. DEF mitigation: 物理は targetDEF + defBonus を引く
-    if (!isMagic) {
-        const defBonus = getDefBonus(defenderEffects); // value付きdef_upの固定値
-        dmg = Math.max(1, dmg - targetDef - defBonus);
-    }
-    // 魔法はDEF・defBonusともに無視（貫通）
-
-    return Math.max(1, dmg);
+/**
+ * ミス判定 (加算方式)
+ * @param baseMissRate 基礎ミス率 (BATTLE_RULES から)
+ * @param blindMissRate blind等による追加ミス率
+ * @returns true = ミス
+ */
+export function rollMiss(baseMissRate: number, blindMissRate: number = 0): boolean {
+    const totalMissRate = Math.min(0.95, baseMissRate + blindMissRate); // 95%キャップ
+    return Math.random() < totalMissRate;
 }
 
 // Helper to look up card by ID (should be provided or fetched)
@@ -50,24 +97,24 @@ export function buildBattleDeck(
     let finalDeck = [...userDeck];
     let didProtectFromNoise = false;
 
-    // ... (Party Injection omitted for brevity in diff if unchanged, but included in tool) ...
-    // Since we are replacing block, we need to respect the original content or targeted replace.
-    // I will target the function signature and the specific noise block.
-
-    // Actually, let's use the replacement tool carefully.
-    // I'll replace the signature first, then the noise block.
+    // v4.1 案C: パーティ注入上限6枚
+    const MAX_PARTY_INJECT = 6;
+    let partyInjected = 0;
     partyMembers.forEach(member => {
         if (!member.is_active || member.durability <= 0) return;
+        if (partyInjected >= MAX_PARTY_INJECT) return;
 
         (member.inject_cards || []).forEach(cardId => {
+            if (partyInjected >= MAX_PARTY_INJECT) return;
             const card = cardLookup(String(cardId));
             if (card) {
                 finalDeck.push({
                     ...card,
-                    id: `${card.id}_${member.id}_${Math.random().toString(36).substr(2, 5)}`, // Unique ID for battle instance check
+                    id: `${card.id}_${member.id}_${Math.random().toString(36).substr(2, 5)}`,
                     source: `Party:${member.name}`,
                     isInjected: true
                 } as any);
+                partyInjected++;
             }
         });
     });
@@ -111,14 +158,26 @@ export function buildBattleDeck(
         }
     }
 
-    // 4. Basic Validation (Ensure usable cards exist)
-    // card_slash (id=2), card_guard (id=4) を参照 — DBのslugキーでルックアップ
-    const basicAttack = cardLookup('2') || cardLookup('card_slash') || { id: 'card_slash', name: '斬撃', type: 'Skill', description: '基本攻撃', cost: 0, power: 20 };
-    const basicDefend = cardLookup('4') || cardLookup('card_guard') || { id: 'card_guard', name: '防御', type: 'Defense', description: '防御バフ', cost: 0, power: 0 };
+    // 4. v4.1 案A: 最小デッキ枚数の保証（min(手札上限×2, 12)）
+    // 手札上限を取得
+    const handSize = userLevel >= 30 ? 7 : userLevel >= 20 ? 6 : userLevel >= 5 ? 5 : 4;
+    const MIN_DECK_SIZE = Math.max(handSize * 2, 12);
 
-    if (finalDeck.length < 5) {
-        for (let i = 0; i < 3; i++) finalDeck.push({ ...basicAttack, id: `basic_atk_${i}` });
-        for (let i = 0; i < 2; i++) finalDeck.push({ ...basicDefend, id: `basic_def_${i}` });
+    if (finalDeck.length < MIN_DECK_SIZE) {
+        // 基本カード10種(ID 1-10)からランダムに補充
+        const BASIC_CARD_IDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+        const basicCards = BASIC_CARD_IDS
+            .map(id => cardLookup(id))
+            .filter((c): c is Card => !!c);
+
+        if (basicCards.length > 0) {
+            let fillIndex = 0;
+            while (finalDeck.length < MIN_DECK_SIZE) {
+                const card = basicCards[fillIndex % basicCards.length];
+                finalDeck.push({ ...card, id: `basic_fill_${finalDeck.length}_${fillIndex}`, source: 'BasicFill' });
+                fillIndex++;
+            }
+        }
     }
 
     return { deck: finalDeck, didProtectFromNoise };

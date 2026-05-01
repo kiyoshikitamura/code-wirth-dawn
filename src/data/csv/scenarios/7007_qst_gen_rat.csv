@@ -1,7 +1,20 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"下水溝のネズミが犬ほどに育っている。疫病が広がる前に、あの不快な牙をへし折ってきてくれ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_slime_blue"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,自治会の事務所で、衛生担当の役人が鼻を押さえながら言った。,"{""type"":""text"", ""bg"":""bg_office"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[駆除] 地下水路の巨大ネズミの群れを殲滅し、ネズミの女王を討て。""}",text_1a
+NODE,text_1a,「地下水路に巨大ネズミが大量発生している。悪臭と伝染病の原因だ。駆除してくれ」,"{""type"":""text"", ""bg"":""bg_office"", ""speaker_name"":""衛生担当の役人""}",briefing
+NODE,briefing,「先月、下水道の修繕工が噛まれて熱を出した。犬ほどの大きさがあるらしい」,"{""type"":""text"", ""bg"":""bg_office"", ""speaker_name"":""衛生担当の役人""}",briefing_2
+NODE,briefing_2,「しかも最近、奥の方から気味の悪い鳴き声が聞こえるという報告もある」役人は地下水路の地図を広げた。「入口はここだ。深追いはするな……と言いたいところだが、根絶しないと意味がない」,"{""type"":""text"", ""bg"":""bg_office"", ""speaker_name"":""衛生担当の役人""}",enter_sewer
+NODE,enter_sewer,地下水路に降りた。足元を汚水が流れ、壁には苔がびっしりと生えている。松明の灯りに、無数の小さな赤い目が光った。すぐに闇に消えたが——奥から、カリカリと爪で石を引っ掻く音が聞こえる。,"{""type"":""text"", ""bg"":""bg_catacombs"", ""bgm"":""bgm_quest_tense""}",first_encounter
+NODE,first_encounter,通路を進むと、巨大なネズミが3匹、腐肉を漁っていた。こちらに気づくと、歯を剥き出して威嚇してきた。犬ほどの大きさという報告は本当だった。,"{""type"":""text"", ""bg"":""bg_catacombs""}",battle_rat_1
+NODE,battle_rat_1,巨大ネズミの群れが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_catacombs"", ""enemy_group_id"":407, ""enemy_name"":""巨大ネズミ x3"", ""enemy_level"":2}",
+CHOICE,,win,,after_first
+CHOICE,,lose,,end_failure
+NODE,after_first,群れを退けた。だが、奥からさらに不気味な音が聞こえる。地響きのような、重い足音。何かがこちらに向かってくる。,"{""type"":""text"", ""bg"":""bg_catacombs"", ""bgm"":""bgm_quest_tense""}",nest_approach
+NODE,nest_approach,水路の最深部。そこには巨大な巣があった。骨と布切れで作られた巣の中央に、一回り大きなネズミが鎮座している。,"{""type"":""text"", ""bg"":""bg_catacombs""}",nest_approach_2
+NODE,nest_approach_2,頭に骨のような突起。禍々しい紫の目がこちらを捉えた。ネズミの女王だ。その足元に、取り巻きの巨大ネズミが2匹控えている。,"{""type"":""text"", ""bg"":""bg_catacombs""}",battle_rat_2
+NODE,battle_rat_2,ネズミの女王と取り巻きが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_catacombs"", ""enemy_group_id"":408, ""enemy_name"":""ネズミの女王"", ""enemy_level"":5}",
+CHOICE,,win,,after_queen
+CHOICE,,lose,,end_failure
+NODE,after_queen,ネズミの女王が倒れた。巣が崩れ、残った子ネズミたちが蜘蛛の子を散らすように逃げていった。,"{""type"":""text"", ""bg"":""bg_catacombs"", ""bgm"":""bgm_quest_calm""}",after_queen_2
+NODE,after_queen_2,悪臭が薄れていくのを感じた。これで地下水路は清掃できる。,"{""type"":""text"", ""bg"":""bg_catacombs""}",end_success
+NODE,end_success,害獣駆除完了。自治会に報告し、報酬を受け取った。しばらくはネズミの夢を見そうだ。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_office""}",
+NODE,end_failure,ネズミの群れに圧倒された。地下水路から這い出すのがやっとだった。,"{""type"":""end"", ""result"":""failure""}",

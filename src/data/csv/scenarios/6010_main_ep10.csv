@@ -1,13 +1,28 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,夜刀神国の深奥部、誰も立ち入らないとされる禁域の古代神殿。君は一連の騒乱――大名行列の襲撃や暗部たちの不気味な暗躍――を裏で操っていた「黒幕」の痕跡を追って、ここまでやってきた。,"{""bgm"":""bgm_quest_crisis"", ""type"":""text"", ""bg"":""bg_boss_altar""}",text1
-NODE,text1,神殿の内部は異様な空気に満ちていた。苔むした石畳の奥に、人の手によるものではない、神々しい光を放つ巨大な「神託の祭壇」が鎮座している。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text2
-NODE,text2,祭壇の周囲には、これまで君が越えてきた国々の幻影――炎上するマルカンドの砂漠、血に染まるローランの城壁、そして夜刀の竹林――が、水晶玉のように浮かび上がっていた。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text3
-NODE,text3,『……地上の穢れ、規定量に達す。闘争の気、収穫を完了。これより第3フェーズ・地上の大浄化へ移行する』,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text3_1
-NODE,text3_1,感情を一切持たない非情な「使徒」の声が、頭の中に直接響き渡る。君はその声の色に、背筋が凍るような絶望を覚えた。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text4
-NODE,text4,ローランの大義も、マルカンドの防衛も、夜刀神国の一揆も。全ては人間同士の意思ではなく、この「天上の神々」によって仕組まれ、コントロールされた「間引き」の遊戯に過ぎなかったのだ。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text4_1
-NODE,text4_1,「ふざけるな……。俺たちが、あの老騎士が流した血は……盤上の駒の戯れだったと言うのか！」君は剣を抜き放ち、祭壇に向かって怒声を上げた。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text5
-NODE,text5,『不浄なる因子の接近を感知。神の理に刃向かう愚者よ。……神代の守護竜、顕現せよ』,"{""type"":""text"", ""bg"":""bg_boss_altar""}",battle
-NODE,battle,祭壇の光が激しく明滅し、空間が裂ける。そこから現れたのは、現代の魔獣とは次元が違う、圧倒的な質量と魔力を持った純白の巨竜だった。,"{""type"":""battle"", ""enemy_group_id"":209}",choice1
-CHOICE,,神の理に叛逆する,,text_post_battle
-NODE,text_post_battle,幾度も死の淵を彷徨いながらも、君の剣がついに守護竜の逆鱗を貫いた。光の粒子となって消え去る巨竜の残骸を見下ろし、荒い息を吐く。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",end_node
-NODE,end_node,しかし、真の絶望はこれからだ。祭壇の水晶には「天上の神々」の傲慢な瞳が、未だ世界中を見下ろしている光景が映し出されていた。神々の遊戯は終わっていない。（第2部完）,"{""type"":""end_success""}",
+META,gold,600,,
+META,exp,300,,
+META,reputation,20,,
+NODE,start,"夜刀神国の深奥部。誰も立ち入らないとされる禁域の古代神殿。","{""type"":""text"", ""bg"":""bg_boss_altar"", ""bgm"":""bgm_quest_crisis""}",text_start2
+NODE,text_start2,"一揆、暗殺者の暗躍、大名の不正——それら全てを裏で操っていた「何か」の痕跡を追って、ここまで来た。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_start3
+NODE,text_start3,"苔むした石段を登りきると、巨大な石の扉が口を開けていた。まるで——招かれているかのように。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_interior
+NODE,text_interior,"神殿の内部は異様な空気に満ちていた。苔むした石畳。天井が見えないほど高い。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_interior2
+NODE,text_interior2,"壁の古代文字が淡く光っている。奥に——巨大な祭壇が、神々しい光を放っていた。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_visions
+NODE,text_visions,"祭壇の表面は水晶のように透明だった。中に世界が映っている。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_visions2
+NODE,text_visions2,"炎上するマルカンドの砂漠。血に染まるローランドの城壁。夜刀の竹林で鎌を握ったまま倒れた農民。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_visions3
+NODE,text_visions3,"全てが記録映像のように再生されていた。その上に——死者数、破壊された都市の数が数値化されて浮かんでいた。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_voice
+NODE,text_voice,"祭壇が脈打った。声が頭の中に直接響いた。感情がない非情な声。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_voice2
+NODE,text_voice2,"『……地上の穢れ、規定量に達す。闘争の気、収穫を完了。これより第3フェーズ——地上の大浄化へ移行する』","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_realization
+NODE,text_realization,"背筋が凍った。理解した。全てが繋がった。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_realization2
+NODE,text_realization2,"ローランドの大義も、マルカンドの防衛も、夜刀の一揆も——全ては天上の「神々」によって仕組まれた「間引き」の遊戯に過ぎなかった。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_realization3
+NODE,text_realization3,"ガウェインが命を賭けて守ろうとした「大義」は——脚本だった。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_rage
+NODE,text_rage,"剣を抜いた。手が震えている。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_rage2
+NODE,text_rage2,"ふざけるな——自分たちが流した血は、あの老騎士が命を懸けた戦いは、盤上の駒の戯れだったというのか。声にならない叫びが喉を焼いた。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_rage3
+NODE,text_rage3,"祭壇に向かって剣を突きつけた。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_dragon_summon
+NODE,text_dragon_summon,"祭壇が反応した。『不浄なる因子の接近を感知。神の理に刃向かう愚者よ。——神代の守護竜、顕現せよ』","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_dragon_summon2
+NODE,text_dragon_summon2,"空間が裂け、そこから現れたのは圧倒的な質量を持った純白の巨竜だった。","{""type"":""text"", ""bg"":""bg_boss_altar""}",battle
+NODE,battle,"神代の守護竜との戦闘！ 神の理に叛逆する！","{""type"":""battle"", ""bg"":""bg_boss_altar"", ""enemy_group_id"":209, ""bgm"":""bgm_battle_boss""}",choice1
+CHOICE,,神の理に叛逆する,,text_aftermath
+NODE,text_aftermath,"幾度も死の淵を彷徨いながら、剣がついに守護竜の逆鱗を貫いた。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_aftermath2
+NODE,text_aftermath2,"巨竜が光の粒子となって崩壊していく。荒い息を吐いた。立っているのがやっとだった。","{""type"":""text"", ""bg"":""bg_boss_altar""}",end_node
+NODE,end_node,"守護竜は消えた。だが祭壇の水晶はまだ光っている。「天上の神々」の傲慢な瞳が、未だ世界中を見下ろしている。","{""type"":""text"", ""bg"":""bg_boss_altar""}",end_node2
+NODE,end_node2,"神々の遊戯は終わっていない。答えを求めて西へ。華龍神朝の地を目指す。あの国には「天に届く塔」の伝説がある。（第2部完）","{""type"":""end_success"", ""bg"":""bg_boss_altar""}",

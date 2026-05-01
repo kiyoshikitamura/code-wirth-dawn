@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * PATCH /api/character/avatar
@@ -45,7 +45,7 @@ export async function PATCH(req: Request) {
         // 3. バリデーション（バックエンド側）
         if (file_size !== undefined && file_size > MAX_FILE_SIZE) {
             return NextResponse.json(
-                { error: 'File too large. Maximum size is 2MB.' },
+                { error: 'File too large. Maximum size is 10MB.' },
                 { status: 413 }
             );
         }

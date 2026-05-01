@@ -36,7 +36,9 @@ export type StatusEffectId =
     | 'def_down'     // 防御DOWN: 被ダメージ 1.3倍相当（DEF半減）
     | 'freeze'       // 凍結: stunの上位互換（行動不能）
     | 'curse'        // 呪い: ATK DOWN相当
-    | 'ap_max';      // AP全回復（card_dark_pact用）
+    | 'ap_max'      // AP全回復（card_dark_pact用）
+    | 'barrier'     // バリア: def_upの全体版（聖壁等）
+    | 'berserk';    // v4.1: 狂戦士 ATK×2.0 + DEF半減
 
 // ─── v2.9.3k: デバフ成功率テーブル ─────────────────────────────
 // 各デバフeffect_idごとの付与成功率（0.0〜1.0）
@@ -100,10 +102,16 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     freeze:       '凍結',
     curse:        '呪い',
     ap_max:       'AP全回復',
+    barrier:      'バリア',
+    berserk:      '狂戦士',
 };
 
 export function getEffectName(id: StatusEffectId): string {
     return EFFECT_NAMES[id] || id;
+}
+
+export function isValidEffectId(id: string): boolean {
+    return id in EFFECT_NAMES;
 }
 
 // ─── 付与 ────────────────────────────────────────────────────
@@ -120,13 +128,40 @@ export function applyEffect(
 ): StatusEffect[] {
     const existing = effects.find(e => e.id === id);
     if (existing) {
-        return effects.map(e =>
-            e.id === id
-                ? { ...e, duration, value: value !== undefined ? value : e.value }
-                : e
-        );
+        return effects.map(e => {
+            if (e.id === id) {
+                const stackableBuffs: StatusEffectId[] = ['atk_up', 'def_up', 'def_up_heavy', 'barrier', 'evasion_up'];
+                let newValue = value !== undefined ? value : e.value;
+                
+                if (stackableBuffs.includes(id)) {
+                    // デフォルト効果量（valueが指定されていない場合）
+                    let addedValue = value;
+                    if (addedValue === undefined) {
+                        if (id === 'atk_up') addedValue = 0.5; // +50%
+                        else if (id === 'evasion_up') addedValue = 0.3; // +30%
+                        else addedValue = 0;
+                    }
+                    
+                    const currentValue = e.value !== undefined ? e.value : (
+                        id === 'atk_up' ? 0.5 : (id === 'evasion_up' ? 0.3 : 0)
+                    );
+                    newValue = currentValue + addedValue;
+                }
+                
+                return { ...e, duration: Math.max(e.duration, duration), value: newValue };
+            }
+            return e;
+        });
     }
-    return [...effects, { id, duration, value }];
+    
+    // 初回付与時のデフォルト効果量補完
+    let initialValue = value;
+    if (initialValue === undefined) {
+        if (id === 'atk_up') initialValue = 0.5;
+        else if (id === 'evasion_up') initialValue = 0.3;
+    }
+    
+    return [...effects, { id, duration, value: initialValue }];
 }
 
 /**
@@ -149,19 +184,23 @@ export function hasEffect(effects: StatusEffect[], id: StatusEffectId): boolean 
 }
 
 /**
- * 攻撃力の乗算係数を返す。atk_up → x1.5、それ以外 → x1.0
+ * 攻撃力の乗算係数を返す。atk_up → 1.0 + 累積値(デフォ0.5)、それ以外 → 1.0
  */
 export function getAttackMod(effects: StatusEffect[]): number {
-    return hasEffect(effects, 'atk_up') ? 1.5 : 1.0;
+    const atkEffect = effects.find(e => e.id === 'atk_up' && e.duration > 0);
+    if (atkEffect) {
+        return 1.0 + (atkEffect.value ?? 0.5);
+    }
+    return 1.0;
 }
 
 /**
  * 防御バフによる固定DEF加算値を返す（提案A）。
- * def_up / def_up_heavy の value を返す。なければ 0。
+ * def_up / def_up_heavy / barrier の value を返す。なければ 0。
  */
 export function getDefBonus(effects: StatusEffect[]): number {
     const defEffect = effects.find(
-        e => (e.id === 'def_up' || e.id === 'def_up_heavy') && e.duration > 0
+        e => (e.id === 'def_up' || e.id === 'def_up_heavy' || e.id === 'barrier') && e.duration > 0
     );
     return defEffect?.value ?? 0;
 }
@@ -191,10 +230,14 @@ export function getMissChance(effects: StatusEffect[]): number {
 }
 
 /**
- * 回避UP状態の回避確率を返す（0.0〜1.0）。
+ * 回避UP状態の回避確率を返す（0.0〜1.0）。最大90%まで。
  */
 export function getEvasionChance(effects: StatusEffect[]): number {
-    return hasEffect(effects, 'evasion_up') ? 0.3 : 0;
+    const evaEffect = effects.find(e => e.id === 'evasion_up' && e.duration > 0);
+    if (evaEffect) {
+        return Math.min(0.9, evaEffect.value ?? 0.3);
+    }
+    return 0;
 }
 
 // ─── ターン終了処理 ──────────────────────────────────────────
@@ -239,7 +282,9 @@ export function tickEffects(
         .filter(e => {
             if (e.duration <= 0) {
                 expired.push(e.id);
-                messages.push(`${targetName}の${getEffectName(e.id)}が切れた。`);
+                if (e.id !== 'stun_immune') {
+                    messages.push(`${targetName}の${getEffectName(e.id)}が切れた。`);
+                }
                 return false;
             }
             return true;

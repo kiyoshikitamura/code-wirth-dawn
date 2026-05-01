@@ -64,12 +64,31 @@ export function useAuthGuard(): void {
         }
 
         // ② Supabase セッションの有効性を非同期で検証
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                clearGameStarted();
-                router.replace('/title');
+        // 通信断などで一時的にセッション取得に失敗するケースを考慮し、
+        // 1回目の失敗時はリトライしてから判定する。
+        const verifySession = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (session) return; // セッション有効
+
+                // セッションが null の場合、リフレッシュを試みる
+                // (ネットワーク瞬断でトークンリフレッシュが失敗した可能性がある)
+                if (!session) {
+                    // 2秒待ってリトライ
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    const retry = await supabase.auth.getSession();
+                    if (retry.data.session) return; // リトライで復帰
+
+                    // それでもセッションがない場合はタイトルへ
+                    clearGameStarted();
+                    router.replace('/title');
+                }
+            } catch (e) {
+                // ネットワークエラー等の例外: リダイレクトしない（一時的な通信断の可能性）
+                console.warn('[useAuthGuard] Session check failed (network?), skipping redirect:', e);
             }
-        });
+        };
+        verifySession();
 
         // ③ ブラウザバック検知 → /title にリダイレクト（全保護ページ共通）
         const handlePopState = () => {

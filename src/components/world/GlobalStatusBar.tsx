@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function GlobalStatusBar({ currentLocationName, onEnterLocation, onReturnHome }: Props) {
-    const { userProfile, worldState, gold, showStatus, setShowStatus } = useGameStore();
+    const { userProfile, worldState, gold, showStatus, setShowStatus, equipBonus } = useGameStore();
     const [showHegemony, setShowHegemony] = React.useState(false);
     const [showSettings, setShowSettings] = React.useState(false);
 
@@ -35,7 +35,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
 
     const maxVitality = userProfile?.max_vitality || 100;
     const currentVitality = userProfile?.vitality ?? maxVitality;
-    const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / (userProfile?.max_hp || 1)) * 100));
+    const hpPercent = Math.max(0, Math.min(100, ((userProfile?.hp || 0) / ((userProfile?.max_hp || 1) + (equipBonus?.hp || 0))) * 100));
 
     return (
         <header className="relative shrink-0 w-full z-50 bg-slate-950 p-4 pt-6 border-b border-amber-900/30 shadow-lg">
@@ -96,7 +96,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
                         {/* HP表示 */}
                         <div className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded border border-green-900/30">
                             <Shield size={10} className="text-green-500" />
-                            <span className="text-[10px] font-bold text-green-100">{userProfile?.hp || 0}/{userProfile?.max_hp || 0}</span>
+                            <span className="text-[10px] font-bold text-green-100">{userProfile?.hp || 0}/{(userProfile?.max_hp || 0) + (equipBonus?.hp || 0)}</span>
                         </div>
                         {/* Vitality表示 */}
                         <div className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded border border-red-900/30">

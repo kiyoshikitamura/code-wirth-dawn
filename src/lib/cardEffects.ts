@@ -41,7 +41,7 @@ export interface CardEffectInfo {
 
 const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     // ─── 汎用スキル (1-10) ────────────────────────────────────────
-    // 1: card_strike    → デフォルトattack（マップ定義不要）
+    '1':  { effectType: 'attack', effectId: 'stun' as StatusEffectId, effectDuration: 1 },  // v4.1: 強打（stun_minor: 10%スタン → battleSliceで確率制御）
     '2':  { effectType: 'attack', effectId: 'bleed_minor', effectDuration: 2 },          // 斬撃（軽微な出血付与）
     // 3: card_thrust    → デフォルトattack（マップ定義不要）
     '4':  { effectType: 'buff_self', effectId: 'def_up', effectDuration: 2, defValue: 10, skipDamage: true },  // 防御
@@ -81,7 +81,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '30': { effectType: 'pierce_attack' },                                                 // 飛刀（DEF無視貫通）
 
     // ─── NPC専用 (31-55) ─────────────────────────────────────────
-    '31': { effectType: 'buff_party', effectId: 'def_up', effectDuration: 3, defValue: 0, skipDamage: true },  // 王の城壁
+    '31': { effectType: 'buff_party', effectId: 'def_up', effectDuration: 3, defValue: 50, skipDamage: true },  // 王の城壁（DEF+50）
     '32': { effectType: 'aoe_attack' },                                                    // ドラゴンダイブ
     '33': { effectType: 'heal', skipDamage: true },                                        // 奇跡
     '34': { effectType: 'taunt', effectId: 'taunt', effectDuration: 3, skipDamage: true }, // 皇帝の盾
@@ -108,11 +108,27 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '55': { effectType: 'debuff_enemy', effectId: 'stun', effectDuration: 2, skipDamage: true }, // 時止め（スタン）
 
     // ─── 闇市 (56-60) ─────────────────────────────────────────────
-    '56': { effectType: 'attack' },                                                        // 吸血
+    '56': { effectType: 'attack', effectId: 'drain' as any },                               // 吸血（ダメージの50%回復）
     '57': { effectType: 'support_activate', skipDamage: true },                            // 闇の代償（AP全回復）
     '58': { effectType: 'instakill' },                                                     // 死殺剣（確率即死）
-    '59': { effectType: 'support_activate', skipDamage: true },                            // 狂戦士の薬
+    '59': { effectType: 'support_activate', effectId: 'berserk' as any, effectDuration: 3, skipDamage: true }, // v4.1: 狂戦士の薬 (ATK×2.0 + DEF半減)
     '60': { effectType: 'recoil_attack' },                                                 // 魂の生贄（全体+自傷）
+
+    // ─── 魔導書 (65-67) ──────────────────────────────────────────
+    '65': { effectType: 'attack', effectId: 'burn', effectDuration: 2 },                    // 火球（40dmg+炎上2T）
+    '66': { effectType: 'attack', effectId: 'bind', effectDuration: 1 },                    // 氷槍（35dmg+拘束1T）
+    '67': { effectType: 'attack', effectId: 'stun', effectDuration: 1 },                    // 雷撃（45dmg+スタン1T）
+
+    // ─── 英霊専用 (71-74) ────────────────────────────────────────
+    '71': { effectType: 'attack', effectId: 'atk_up', effectDuration: 3 },                  // 五星の加護（35dmg+ATK UP 3T）
+    '73': { effectType: 'recoil_attack' },                                                   // 神殺しの光芒（50dmg+自傷）
+    '74': { effectType: 'aoe_attack', effectId: 'def_down', effectDuration: 2 },             // 砂塵の支配（全体20dmg+DEF DOWN）
+
+    // ─── マルカンド 追加 (62) ─────────────────────────────────────
+    '62': { effectType: 'attack', effectId: 'poison', effectDuration: 3 },                    // v4.1: 調毒（15dmg+毒3T）
+
+    // ─── 華龍闇市 (63) ───────────────────────────────────────
+    '63': { effectType: 'support_activate', effectId: 'atk_up', effectDuration: 5, skipDamage: true }, // v4.1: 血の契約（ATK+DEF UP 5T）
 };
 
 // ─── ユーティリティ ─────────────────────────────────────────
@@ -139,13 +155,22 @@ export function getCardEffectInfo(card: Card): CardEffectInfo {
 
     // 2. card.effect_id からの推定
     if (card.effect_id) {
-        const selfBuffIds: string[] = ['atk_up', 'def_up', 'def_up_heavy', 'regen', 'stun_immune', 'evasion_up'];
+        if (card.effect_id === 'instakill') return { effectType: 'instakill' };
+        if (card.effect_id === 'holy_burn' || card.effect_id === 'pierce' || card.effect_id === 'def_ignore') return { effectType: 'pierce_attack' };
+        if (card.effect_id === 'multi_hit') return { effectType: 'multi_attack' };
+        if (card.effect_id === 'recoil') return { effectType: 'recoil_attack' };
+        if (card.effect_id === 'barrier') return { effectType: 'buff_party', effectId: 'barrier', effectDuration: card.effect_duration || 2, defValue: card.power || 20, skipDamage: true };
+
+        const selfBuffIds: string[] = ['atk_up', 'def_up', 'def_up_heavy', 'regen', 'stun_immune', 'evasion_up', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'];
         const healIds: string[] = ['cure_status', 'cure_debuff'];
         const isSelfBuff = selfBuffIds.includes(card.effect_id);
         const isHeal = healIds.includes(card.effect_id);
         if (isHeal) return { effectType: 'cure_self', cureType: card.effect_id === 'cure_status' ? 'status' : 'debuff', skipDamage: true };
+        
+        const isDebuff = ['atk_down', 'def_down', 'poison', 'burn', 'stun', 'bind', 'bleed', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'bleed_minor'].includes(card.effect_id);
+        
         return {
-            effectType: isSelfBuff ? 'buff_self' : 'attack',
+            effectType: isSelfBuff ? 'buff_self' : (isDebuff ? 'debuff_enemy' : 'attack'),
             effectId: card.effect_id as StatusEffectId,
             effectDuration: card.effect_duration || 3,
             skipDamage: isSelfBuff,

@@ -155,6 +155,37 @@ export async function DELETE(req: Request) {
 
         if (error) throw error;
 
+        // 装備解除後: 残りの装備ボーナスを再計算してHPをクランプ
+        const { data: remainingEquipped } = await supabaseService
+            .from('equipped_items')
+            .select('item_id, items!inner(effect_data)')
+            .eq('user_id', userId);
+
+        let newHpBonus = 0;
+        if (remainingEquipped) {
+            for (const eq of remainingEquipped) {
+                const effectData = (eq as any).items?.effect_data;
+                if (effectData?.hp_bonus) newHpBonus += effectData.hp_bonus;
+            }
+        }
+
+        // ユーザーのHP/max_hpを取得してクランプ
+        const { data: profile } = await supabaseService
+            .from('user_profiles')
+            .select('hp, max_hp')
+            .eq('id', userId)
+            .single();
+
+        if (profile) {
+            const effectiveMaxHp = (profile.max_hp || 100) + newHpBonus;
+            if ((profile.hp || 0) > effectiveMaxHp) {
+                await supabaseService
+                    .from('user_profiles')
+                    .update({ hp: effectiveMaxHp })
+                    .eq('id', userId);
+            }
+        }
+
         return NextResponse.json({ success: true });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

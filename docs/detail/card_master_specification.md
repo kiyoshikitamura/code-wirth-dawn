@@ -1,8 +1,9 @@
-# カード（スキル）マスタ60種 仕様定義書 (v3.0)
+# カード（スキル）マスタ仕様定義書 (v4.1)
 
-本仕様書は、「Code: Wirth-Dawn」のバトルロジックおよび経済システムの基盤となる、プレイヤブルおよびNPC向けのスキル（カード）マスタデータ全60種の設計ドキュメントです。
+本仕様書は、「Code: Wirth-Dawn」のバトルロジックおよび経済システムの基盤となる、プレイヤブルおよびNPC向けのスキル（カード）マスタデータの設計ドキュメントです。
 
-> **v3.0 改定内容**: バトルエンジンv3.0（`statusEffects.ts` 提案A実装）に基づき、全スキル効果の実装仕様を更新。def_upを固定倍率から固定値DEF加算に変更、bleed_minor・blind・evasion_up・atk_down等の未定義効果を全実装。ツバメ返しのcounter効果を高威力攻撃に変更。
+> **v4.1 改定内容**: バトルエンジンv4.1対応。即死防止のためのバフ効果（`atk_up`, `def_up`, `evasion_up` 等）重複加算仕様の実装。裁きのダメージ値を50に調整。
+> **v4.0 改定内容**: バトルエンジンv4.0対応。魔導書カード3種(火球/氷槍/雷撃)追加、即死攻撃失敗時フォールバックダメージ、吸血(drain)HP回復実装、王の城壁DEF+50修正、五星の加護攻撃+バフ化、デバフ付与成功率テーブル追加。ダメージ計算は揺らぎ(±15%)→クリティカル(×1.5)→DEF減算の順。
 
 ---
 
@@ -44,9 +45,9 @@
 
 | ID | 効果 | 付与先 | 実装詳細 |
 |---|---|---|---|
-| `atk_up` | 攻撃力UP | プレイヤー | 与ダメージ ×1.5 |
-| `def_up` | 防御強化 | プレイヤー | **固定値加算**：受けるダメージを `value`（effect_val）分軽減 |
-| `def_up_heavy` | 鉄壁防御 | プレイヤー | def_upと同処理、value=30等の高い値を持つ |
+| `atk_up` | 攻撃力UP | プレイヤー | **重複加算**：与ダメージ倍率に `value`（基本+0.5）を加算。2回で+100%（2倍） |
+| `def_up` | 防御強化 | プレイヤー | **重複加算**：受けるダメージを `value`（effect_val）分軽減。重ね掛けで加算 |
+| `def_up_heavy` | 鉄壁防御 | プレイヤー | **重複加算**：def_upと同処理、重ね掛けで加算 |
 | `taunt` | 挑発 | プレイヤー | 敵の単体攻撃を自身に引きつける |
 | `regen` | リジェネ | プレイヤー | ターン終了時 MaxHP×5%回復 |
 | `poison` | 毒 | 敵/プレイヤー | ターン終了時 MaxHP×5%ダメージ |
@@ -56,13 +57,33 @@
 | `bleed_minor` | 軽微な出血 | プレイヤー | カード使用ごとに**1**の追加ダメージ |
 | `blind` | 目潰し | 敵 | 敵の攻撃が**50%**の確率でミス |
 | `blind_minor` | 軽微な目潰し | 敵 | 敵の攻撃が**30%**の確率でミス |
-| `evasion_up` | 回避UP | プレイヤー | 敵の攻撃を**30%**の確率で完全回避 |
+| `evasion_up` | 回避UP | プレイヤー | **重複加算**：回避率を `value`（基本+30%）加算。最大90%上限 |
 | `atk_down` | 攻撃力DOWN | 敵 | 敵の与ダメージ **×0.7**（30%軽減） |
 | `fear` | 恐怖 | プレイヤー | デッキに使用不可カード混入 |
 | `stun_immune` | スタン耐性 | プレイヤー | 次のスタン付与を1回無効化 |
 | `cure_status` | 状態異常解除 | — | 即時：poison/bleed/stun等を解除 |
 | `cure_debuff` | デバフ解除 | — | 即時：atk_down/blind等を解除 |
 | `ap_max` | AP全回復 | — | 即時：APを最大値まで回復 |
+| `def_down` | 防御力DOWN | 敵 | DEF **×0.5**（半減） |
+| `freeze` | 凍結 | 敵 | stunの上位互換（行動不能） |
+| `curse` | 呪い | 敵 | ATK DOWN相当 |
+| `burn` | 炎上 | 敵/プレイヤー | 毒と同じDoT（ターン終了時 MaxHP×5%ダメージ） |
+| `barrier` | バリア | プレイヤー | **重複加算**：def_upの全体版（聖壁等） |
+| `drain` | 吸血 | — | ダメージの50%をHP回復 |
+
+### デバフ付与成功率テーブル（v4.0追加）
+
+| 効果ID | 成功率 | 備考 |
+|--------|--------|------|
+| stun / bind | 40% | 最強の行動不能 |
+| freeze | 45% | |
+| blind | 50% | |
+| blind_minor | 65% | |
+| fear | 50% | |
+| poison / burn | 70% | |
+| bleed | 70% | |
+| bleed_minor | 80% | |
+| atk_down / def_down | 60% | |
 
 ---
 
@@ -131,7 +152,7 @@
 
 | No | slug | name | type | AP | target_type | effect_val | effect_id | 実装効果 |
 |---|---|---|---|---|---|---|---|---|
-| 31 | `card_kings_wall` | 王の城壁 | Defense | 4 | all_allies | 0→50 | def_up | 3T間DEF+50（全体）|
+| 31 | `card_kings_wall` | 王の城壁 | Defense | 4 | all_allies | 50 | def_up | 3T間DEF+50（全体）|
 | 32 | `card_dragon_dive` | ドラゴンダイブ | Skill | 5 | all_enemies | 80 | pierce | 全体80魔法ダメ（DEF無視） |
 | 33 | `card_miracle` | 奇跡 | Heal | 5 | all_allies | 999 | revive | 全体HP全回復 |
 | 34 | `card_emp_shield` | 皇帝の盾 | Defense | 3 | single_ally | 0 | taunt | 確定タウント（単体） |
@@ -163,11 +184,30 @@
 
 | No | slug | name | type | AP | target_type | effect_val | effect_id | base_price | 実装効果 |
 |---|---|---|---|---|---|---|---|---|---|
-| 56 | `card_blood_drain` | 吸血 | Magic | 3 | single_enemy | 40 | drain | 25,000 | 40魔法ダメ |
+| 56 | `card_blood_drain` | 吸血 | Magic | 3 | single_enemy | 40 | drain | 25,000 | 40魔法ダメ＋**ダメージの50%をHP回復** |
 | 57 | `card_dark_pact` | 闇の代償 | Support | 1 | self | 0 | ap_max | 30,000 | AP全回復。代償：MaxHP10%自傷 |
-| 58 | `card_death_strike`| 即死攻撃 | Skill | 4 | single_enemy | 0 | instakill | 50,000 | **30%確率で即死**。失敗時通常攻撃 |
+| 58 | `card_death_strike`| 即死攻撃 | Skill | 4 | single_enemy | 0 | instakill | 50,000 | **30%確率で即死**。失敗時：ATK基準のフォールバックダメージ（揺らぎ・クリティカル適用） |
 | 59 | `card_mad_frenzy` | 狂戦士の薬 | Support | 1 | self | 0 | berserk | 20,000 | 3T間ATK UP |
 | 60 | `card_soul_sac` | 魂の生贄 | Magic | 5 | all_enemies | 150 | recoil | 40,000 | 全体150大ダメ（DEF無視）＋MaxHP10%自傷 |
+### 🟠 カテゴリ5: 魔導書スキル（3種）（v4.0追加）
+**販売条件**: 各拠点のショップで中層の価格（1,200〜1,500G）で販売。
+**特徴**: MP消費の魔法攻撃＋状態異常付与。
+
+| No | slug | name | type | AP | target_type | effect_val | effect_id | base_price | 実装効果 |
+|---|---|---|---|---|---|---|---|---|---|
+| 65 | `card_fireball` | 火球 | Magic | 2 | single_enemy | 40 | burn | 1,200 | 40魔法ダメ＋炎上2T（HP5%/T DoT） |
+| 66 | `card_ice_lance` | 氷槍 | Magic | 2 | single_enemy | 35 | bind | 1,200 | 35魔法ダメ＋拘束1T（行動不能） |
+| 67 | `card_thunder_strike` | 雷撃 | Magic | 3 | single_enemy | 45 | stun | 1,500 | 45魔法ダメ＋スタン1T（行動不能） |
+
+### 🟤 カテゴリ6: 英霊専用スキル（4種）（v4.0追加）
+**販売条件**: 非売品。特定クエスト報酬としてのみ取得。
+
+| No | slug | name | type | AP | target_type | effect_val | effect_id | 実装効果 |
+|---|---|---|---|---|---|---|---|---|
+| 71 | `card_regalia_brave` | 五星の加護 | Skill | 2 | single_enemy | 35 | atk_up | 35ダメージ＋ATK UP 3T（×1.5倍） |
+| 72 | `card_luna_eclips` | 冥食の理 | Skill | 2 | single_enemy | 25 | curse | 25ダメ＋呪い付与 |
+| 73 | `card_deus_machina` | 神殺しの光芒 | Skill | 3 | single_enemy | 50 | recoil | 50ダメ＋自傷20% |
+| 74 | `card_desert_curse` | 砂塵の支配 | Skill | 2 | all_enemies | 20 | def_down | 全体20ダメ＋DEF DOWN 2T（DEF×0.5） |
 
 ---
 
@@ -182,10 +222,55 @@
 
 ---
 
-## 5. 変更履歴
+## 5. バトルエンジン v4.0 ダメージ計算フロー
+
+```
+1. ミス判定 → ミスなら 0ダメージ + ログ
+2. base = (ATK + CardPower) * atkMod
+3. ダメージ揺らぎ → base2 = base × (0.85〜1.15)
+4. クリティカル判定 → クリティカルなら base3 = base2 × 1.5
+5. DEF減算 → result = base3 - DEF
+6. 最終ダメージ = max(1, floor(result))
+```
+
+### ミス率
+| 対象 | 基礎ミス率 | blind加算 |
+|------|-----------|----------|
+| プレイヤー | 5% | +30%/+50% |
+| エネミー | 8% | +30%/+50% |
+| NPC味方 | 5% | +30%/+50% |
+
+### クリティカル率
+| 対象 | クリティカル率 | 倍率 |
+|------|-------------|------|
+| プレイヤー | 8% | ×1.5 |
+| エネミー | 5〜8% | ×1.5 |
+| NPC味方 | 5〜8% | ×1.5 |
+
+---
+
+## 6. DB同期手順
+
+cards.csv のマスタデータをDBに反映するseed API:
+
+```
+GET https://code-wirth-dawn.vercel.app/api/debug/seed-cards?secret=admin_user
+```
+
+| パラメータ | 説明 |
+|-----------|------|
+| `secret` | `admin_user`（ADMIN_SECRET_KEY） |
+| `dry_run=true` | プレビュー（書き込みなし） |
+| `id=65` | 特定IDのみ同期 |
+
+---
+
+## 7. 変更履歴
 
 | バージョン | 日付 | 主な変更内容 |
 |---|---|---|
 | v1.0 | 2026-03 | 初版：60種カードマスタ定義 |
 | v2.0 | 2026-04-10 | ショップアイテム連携、画像URL追加 |
-| **v3.0** | **2026-04-11** | **バトルエンジンv3.0対応：def_up固定値化、9種StatusEffectId追加、全カード説明文更新、ツバメ返し仕様変更** |
+| v3.0 | 2026-04-11 | バトルエンジンv3.0対応：def_up固定値化、9種StatusEffectId追加 |
+| v4.0 | 2026-04-28 | 魔導書3種(65-67)追加、即死攻撃フォールバック修正、吸血drain実装、王の城壁DEF+50、五星の加護攻撃+バフ化、英霊カード(71-74)MAP追加、デバフ成功率テーブル、ダメージ計算v4.0、seed-cards API追加 |
+| **v4.1** | **2026-05-01** | **バフ効果の重複加算仕様（atk_up, def_up, evasion_up 等）実装、裁きのダメージ50調整、NPCのダメージ計算デバフ反映** |

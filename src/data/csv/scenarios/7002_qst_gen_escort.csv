@@ -1,10 +1,29 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"この道は最近、""野犬より質の悪い連中""が出るらしい。護衛料は払う、私の命とこの荷を次の街まで頼む。",node_1,"type:text"
-NODE,node_1,"新たな同行者が合流した。",node_2,"type:guest_join, guest_id:npc_merchant, is_escort_target:true"
-NODE,node_2,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_thug"
-CHOICE,,"win",node_3,
-CHOICE,,"lose",end_failure,
-NODE,node_3,"目的地へ出発する。",node_4,"type:travel"
-NODE,node_4,"同行者が別れを告げた。",end_success,"type:leave"
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,旅商人組合の窓口で依頼書を受け取った。,"{""type"":""text"", ""bg"":""bg_guild"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[護衛] 旅の商人を隣街まで護衛する。商人が倒れれば失敗。""}",text_1a
+NODE,text_1a,「護衛対象は行商人のマルコ。隣街まで往復八日の旅だ。積み荷は雑貨と薬品。狙われやすい品ばかりだな」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""旅商人組合の受付""}",text_1b
+NODE,text_1b,受付の女が書類をめくりながら付け加えた。「先月、同じ路線で護衛二名が殺された。気を抜くなよ」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""旅商人組合の受付""}",meet_merchant
+NODE,meet_merchant,酒場の片隅で、小柄な中年男が荷物に囲まれて待っていた。額の汗を拭きながら、こちらに気づくと大袈裟に手を振った。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",meet_merchant_2
+NODE,meet_merchant_2,「あんたが護衛かい？ ありがてえ！ マルコだ。見ての通り、腕っぷしはからきしでね。でも商売の話なら一晩中でも付き合うぜ」,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""マルコ""}",meet_merchant_3
+NODE,meet_merchant_3,人懐こいが、どこか落ち着きがない。何か気にかかることがあるのだろう。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",join_escort
+NODE,join_escort,マルコがパーティに加わった。大きな背負い箱を担ぎ、よたよたと歩き出す。,"{""type"":""guest_join"", ""bg"":""bg_tavern_day"", ""guest_id"":""npc_gen_merchant""}",join_talk
+NODE,join_talk,「よし、行こう！ ……ところで、前の護衛はどうなったんだい？」「殺されたそうだ」「…………はは、冗談きついな旦那」,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""マルコ""}",travel_start
+NODE,travel_start,街を出て、隣街へ続く街道を歩き始めた。マルコの歩調は遅い。荷が重いのもあるが、息が上がるのが早い。,"{""type"":""text"", ""bg"":""bg_road_day""}",road_talk
+NODE,road_talk,日が傾き始めた頃、マルコが荷物越しに話しかけてきた。,"{""type"":""text"", ""bg"":""bg_road_day""}",road_talk_2
+NODE,road_talk_2,「なあ旦那、この荷の中に薬草が何束か入ってるんだが……正直に言うと、表向きは雑貨だが、中に少しだけ""特別な品""がある」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""マルコ""}",road_talk_3
+NODE,road_talk_3,こちらの表情を窺うように目を細めた。「あんたの報酬には響かねえよ。ただ、もし追い剥ぎに荷を見られたら——少し面倒なことになるかもしれねえって、それだけの話さ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""マルコ""}",road_talk_4
+NODE,road_talk_4,何を運んでいるかは、深く聞かないことにした。,"{""type"":""text"", ""bg"":""bg_road_day""}",midway
+NODE,midway,街道の曲がり角。林の向こうに煙が見える——焚き火か、あるいは。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",bandit_encounter
+NODE,bandit_encounter,怒声が飛んだ。「止まれ！ 荷を置いていけ！」木の陰から数人の男が飛び出してきた。粗末な革鎧に、刃こぼれした剣。食い詰めた夜盗の類だ。,"{""type"":""text"", ""bg"":""bg_road_day""}",bandit_encounter_2
+NODE,bandit_encounter_2,「旦那ッ！ 頼むッ！ 荷だけは——荷だけは守ってくれ！」背後でマルコが荷物を抱えて縮こまっている。こいつを守りながら戦わなければならない。,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""マルコ""}",battle_bandit
+NODE,battle_bandit,夜盗が襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_road_day"", ""enemy_group_id"":400, ""enemy_name"":""夜盗一味"", ""enemy_level"":3}",
+CHOICE,,win,,after_battle
+CHOICE,,lose,,end_failure
+NODE,after_battle,夜盗を蹴散らした。逃げていく背中を見送ると、マルコがおそるおそる荷物から顔を出した。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",after_battle_2
+NODE,after_battle_2,「……終わったかい？ 全部あるか確認させてくれ」震える手で荷を検める。しばらくして、深い息をついた。「……全部ある。あんた、本物だ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""マルコ""}",travel_end
+NODE,travel_end,残りの道のりは平穏だった。マルコは黙って歩いていたが、やがてぽつりと呟いた。「……前の護衛が死んだ話、冗談じゃなかったんだな。あんたに頼んでよかったよ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""マルコ""}",arrive_town
+NODE,arrive_town,隣街に到着した。マルコは通りかかる知人に声をかけながら、慣れた手つきで荷を降ろし始めた。「ここまで来りゃ安心だ。知り合いの問屋に卸してくる」,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""マルコ""}",farewell
+NODE,farewell,取引を終えたマルコが、上機嫌で戻ってきた。懐から報酬の入った革袋を差し出す。,"{""type"":""text"", ""bg"":""bg_tavern_day""}",farewell_2
+NODE,farewell_2,「約束通りだ、受け取ってくれ。……あの""特別な品""のこと、口外しないでくれよ？ ははっ」冗談めかしてはいるが、目は笑っていなかった。,"{""type"":""text"", ""bg"":""bg_tavern_day"", ""speaker_name"":""マルコ""}",leave_escort
+NODE,leave_escort,マルコがパーティから離脱した。「またいい仕事があったら組合に顔を出してくれ。次も頼むよ、旦那！」,"{""type"":""leave"", ""bg"":""bg_tavern_day"", ""speaker_name"":""マルコ""}",end_success
+NODE,end_success,護衛任務完了。組合に帰還し、報酬を受け取った。マルコの""特別な品""が何だったかは、考えないことにした。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_guild""}",
+NODE,end_failure,マルコが倒れた。荷物は散乱し、夜盗に奪われた。組合に戻ると、受付の女が冷たい目で書類を処理していた。「護衛失敗。報酬はなし。次があるかは、組合の判断だ」,"{""type"":""end"", ""result"":""failure""}",

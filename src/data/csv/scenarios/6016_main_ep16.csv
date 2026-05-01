@@ -1,14 +1,24 @@
-﻿row_type,node_id,text_label,params,next_node
-NODE,start,先代が神界の門を打ち破ってから、数十年の歳月が流れた。「生ける伝説」として名を残した初代は既にこの世になく、君はその遠い子孫、あるいは意志を継ぐ第二世代の傭兵だ。,"{""bgm"":""bgm_quest_calm"", ""type"":""text"", ""bg"":""bg_tavern_night""}",text1
-NODE,text1,君は先代が遺した手記と、血塗られた古びた短剣を握りしめ、かつて彼らが集ったという伝説の酒場の扉を叩いた。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text2
-NODE,text2,「よう、見ない顔だな。……いや、違うな。その眼の奥の狂気は、見覚えがある。手記を見るに、あいつの『跡継ぎ』ってわけか」,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text2_1
-NODE,text2_1,薄暗い酒場の奥には、生気を失ってはいるが確かな存在感を放つ者たちが座っていた。彼らはかつて世界を救いかけた「英霊（シャドウ）」たちだ。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text3
-NODE,text3,彼らは初代が命と引き換えに刻んだ歴史の残滓であり、意志の強さを物語っている。君は手記をテーブルに叩きつけ、彼らをねめつけた。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",choice1
-CHOICE,,「力を貸してくれ。終わらせに行く」,,text4
-CHOICE,,「……まだその時ではない（立ち去る）」,,text4_refuse
-NODE,text4,英霊の長がニヤリと笑う。「いいぜ。あいつが命と引き換えに繋いだこの道、無駄にはさせねぇ！行こうぜ、クソッタレな神々を殺しによ！」,"{""type"":""text"", ""bg"":""bg_tavern_night""}",battle
-NODE,text4_refuse,英霊の長が目を細める。「……臆したか？ならば、自分の力で道を切り開いてみせろ」その冷たい言葉が胸に突き刺さった。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",battle
-NODE,battle,だが平穏は長く続かない。酒場を出た直後、街の自警団に化けていた異形の刺客（堕天使）が襲い掛かる。継承の証を持つ者を消すためだ！,"{""type"":""battle"", ""enemy_group_id"":216}",choice2
-CHOICE,,討破する,,text_post_battle
-NODE,text_post_battle,英霊たちの支援を受け、君はいとも簡単に刺客を退けた。先代の無念を晴らし、本当の世界の夜明けを取り戻すための、最後の旅がいま始まる。,"{""type"":""text"", ""bg"":""bg_road_night""}",end_node
-NODE,end_node,「さて、まずは天に至るための『鍵』集めといこうか」英霊の声と共に、遠い空の向こうで雷鳴が轟いた。,"{""type"":""end_success""}",
+row_type,node_id,text_label,params,next_node
+META,gold,3000,,
+META,exp,400,,
+META,reputation,20,,
+NODE,start,かつて世界を揺るがした大天使の侵攻。それは遠い過去の出来事となっていた。四つの首都は完全に復興し、レガリアの城壁は以前よりも堅牢に、イスハークの黄金のドームは眩いばかりに輝いている。平和な時代。だが——胸の奥に、何かが引っかかっていた。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",text_peace
+NODE,text_peace,英霊が退けた大天使たちの記憶は、語り継がれている。だが——神そのものには、誰も届いていない。いつまた、天から裁きが降ってくるかわからない。何かを——探さなければならない気がしていた。その「何か」が、まだわからなかった。,"{""type"":""text"",""bg"":""bg_road_day""}",text_border_town
+NODE,text_border_town,足は自然と、国境の町に向かっていた。ローランドとマルカンドの境にある小さな町。ここは交易路の中継地で、旅人や商人が行き交っている。町外れの丘に登った時——不思議な光が目に入った。草むらの中に、何かが埋もれている。,"{""type"":""text"",""bg"":""bg_road_day""}",text_strange_pull
+NODE,text_strange_pull,草を掻き分けると、苔むした石碑が現れた。風化した表面に、微かな紋様が刻まれている。どこかの古代文明のものか。だが——見覚えがある気がした。いや、見覚えではない。体が——この石碑を「知っている」と訴えている。,"{""type"":""text"",""bg"":""bg_road_day""}",text_stele_discovery
+NODE,text_stele_discovery,石碑の前に立った。紋様が淡く光り始めた。手を伸ばすと——石碑が温かい。生きているような温もり。まるで、中に誰かがいるかのような。導かれるように——石碑に、手を触れた。,"{""type"":""text"",""bg"":""bg_heroic_stele"",""bgm"":""bgm_quest_tense""}",text_touch
+NODE,text_touch,触れた瞬間——意識が飛んだ。目の前が真っ白になり、次の瞬間、自分が知らない場所に立っていた。荒野。遠くに山脈。見たことのない星空。——これは、記憶だ。自分の記憶ではない。誰かの——遠い過去の記憶。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_vision_start
+NODE,text_vision_start,記憶の中で、一人の戦士が剣を振るっていた。顔は見えない。だが——その背中を知っている。魂の奥底で、繋がっている感覚。この人物は——かつて、この世界を救った英霊。神の裁きに立ち向かい、人間の未来を勝ち取った存在。そして——自分は、その継承者だった。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_vision_hero
+NODE,text_vision_hero,英霊の声が聞こえた。天使の声とは違う。温かく、人間の言葉だった。「……やっと、目覚めたか。　待っていた。ずっと、待っていた。　お前の中に、俺の力の欠片が眠っている。　だが今のままでは、まだ足りない。　世界に散らばった石碑を巡れ。　俺が遺した武具を集めろ。　全てが揃った時——お前は、神に届く」,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_vision_end
+NODE,text_vision_end,「石碑は四つの都市の近くにある。　イスハーク、龍京、出雲、レガリア——　それぞれに、俺の記憶と遺産が眠っている」英霊の姿が薄れていく。「……時間がない。奴らも気づき始めている。　お前が継承者であることに。　——急げ」,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_awakening
+NODE,text_awakening,意識が戻った。石碑の前に、膝をついていた。どのくらいの時間が経ったのかわからない。だが——全身に、微かな力が満ちている。今まで感じたことのない力。英霊の力の、ほんの欠片。,"{""type"":""text"",""bg"":""bg_heroic_stele"",""bgm"":""bgm_quest_calm""}",text_inheritance
+NODE,text_inheritance,自分が——世界を救った英霊の継承者。信じがたい話だ。だが、体が知っている。この力は本物だ。四つの都市に、石碑と遺産が眠っている。全てを集めれば——神に届く力が手に入る。立ち上がった。新たな旅の目的が、定まった。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_ambush_warning
+NODE,text_ambush_warning,その時——空気が変わった。英霊が言っていた。「奴らも気づき始めている」と。空が暗くなる。だが雲ではない。黒い翼の群れが、上空を覆い始めた。堕天使——天から追放された者たち。神に仕えながらも、穢れに染まった存在。,"{""type"":""text"",""bg"":""bg_heroic_stele"",""bgm"":""bgm_quest_crisis""}",text_fallen_descent
+NODE,text_fallen_descent,堕天使の群れが、丘の上に降り立った。天使とは異なる、黒い翼と歪んだ光。だが——力は本物だ。石碑を壊そうとしている。あるいは——継承者を、ここで潰そうとしている。,"{""type"":""text"",""bg"":""bg_road_day""}",text_fallen_taunt
+NODE,text_fallen_taunt,堕天使の一体が嗤った。「英霊ノ継承者カ。　マタ、人間ガ分ヲ弁エズニ足掻クノカ。　先代モ同ジダッタ。強カッタガ——所詮ハ人間。　滅ビル運命ハ変ワラナイ」黒い翼が広がった。嗤いながら——襲いかかってきた。,"{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""堕天使""}",battle
+NODE,battle,堕天使の群れが急襲！英霊の石碑を守り抜け！,"{""type"":""battle"",""bg"":""bg_road_day"",""bgm"":""bgm_battle"",""enemy_group_id"":""216""}",text_aftermath
+CHOICE,,続ける,,text_aftermath
+NODE,text_aftermath,堕天使を退けた。石碑は無事だ。紋様がまだ淡く光っている。まるで——「よくやった」と言っているかのように。石碑に手を当てた。今度は幻視は来ない。だが——温かさが、手のひらに伝わった。,"{""type"":""text"",""bg"":""bg_heroic_stele"",""bgm"":""bgm_quest_calm""}",text_guidance
+NODE,text_guidance,四つの都市に散らばった石碑と遺産。イスハークのピラミッドに——護符。龍京の沖合の無人島に——剣。出雲の山奥の秘境に——鎧。レガリアの郊外の遺跡に——最後の記憶。全てを集めた時、神に届く力が手に入る。英霊の導きに従い、旅に出る。,"{""type"":""text"",""bg"":""bg_road_day""}",end_node
+NODE,end_node,自分が何者であるかを知った。英霊の継承者——かつて世界を救った者の後継。まだ力は足りない。だが、道は示された。四つの都市に眠る遺産を集め、英霊が果たせなかった決着をつける。丘を下り、旅立った。石碑の光が背中を押すように、静かに瞬いていた。,"{""type"":""end_success"",""bg"":""bg_road_day""}",
+NODE,end_failure,堕天使の爪に引き裂かれ、地に伏した。石碑の光が——消えていく。英霊の遺産は、また長い眠りにつくのだろうか。,"{""type"":""end_failure"",""bg"":""bg_road_day""}",

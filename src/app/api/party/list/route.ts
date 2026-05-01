@@ -141,9 +141,11 @@ export async function GET(req: Request) {
             const rawMaxDur = member.max_durability;
             const npcHp = npc?.max_hp ?? null;
             // max_durabilityが100以外（=個別設定済み）ならそれを優先、なければnpcsのmax_hpを使用
-            const resolvedHp = (rawMaxDur && rawMaxDur !== 100)
+            const resolvedMaxHp = (rawMaxDur && rawMaxDur !== 100)
                 ? rawMaxDur
-                : (npcHp ?? member.durability ?? 100);
+                : (npcHp ?? rawMaxDur ?? 100);
+            // 現在HP: party_members.durabilityがDBに保存された最新値
+            const currentDurability = member.durability ?? resolvedMaxHp;
 
             return {
                 ...member,
@@ -155,9 +157,11 @@ export async function GET(req: Request) {
                 level: member.origin_type === 'active_shadow'
                     ? (member.level ?? npc?.level ?? null)
                     : (npc?.level ?? member.level ?? null),
-                // HP: 上記で計算した resolvedHp を使用
-                hp: resolvedHp,
-                max_hp: resolvedHp,
+                // HP: 現在値と最大値を正しく分離
+                hp: currentDurability,
+                max_hp: resolvedMaxHp,
+                durability: currentDurability,
+                max_durability: resolvedMaxHp,
                 // ATK: active_shadow は party_members.atk 優先
                 atk: member.origin_type === 'active_shadow'
                     ? (member.atk ?? npc?.attack ?? npc?.atk ?? null)
@@ -173,8 +177,8 @@ export async function GET(req: Request) {
                 skill_names: skillNames,
                 // flavor_text
                 flavor_text: npc?.introduction || npc?.flavor_text || member.introduction || member.flavor_text || undefined,
-                // Vitality (摩耗値: party_members.durability = 寿命/VIT)
-                vitality: member.durability ?? 100,
+                // Vitality (party_membersのVIT情報)
+                vitality: member.vitality ?? 100,
             };
         });
 

@@ -2,21 +2,28 @@ row_type,node_id,text_label,params,next_node
 META,gold,150,,
 META,exp,80,,
 META,reputation,5,,
-NODE,start,肌を焦がすような乾いた風が、荒涼たる砂丘を撫でる音がする。ここは軍事国家たる聖王国ローランの辺境、名もなき村の外れだ。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",text1
-NODE,text1,かつて栄華を極めた王国の威光もここまで届くことはなく、村の壁は崩れかけ、人々は日々の糧を得るのにも苦労している。,"{""type"":""text"", ""bg"":""bg_road_day""}",text1_1
-NODE,text1_1,そんな場所から、君の物語は始まる。名もなき一介の傭兵として身を立てるため、君は王国軍の輸送部隊を手伝う運搬依頼を引き受けた。,"{""type"":""text"", ""bg"":""bg_road_day""}",text1_2
-NODE,text1_2,荷馬車に積まれた大量の木箱を数え終えるかどうかの時、背後からしゃがれた太い声が飛んできた。,"{""type"":""text"", ""bg"":""bg_road_day""}",text2
-NODE,text2,「おい、そこの新入り！ぼんやりするな。太陽が高くなれば、野盗の連中がいつ湧いてきてもおかしくないぞ！」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice1
-CHOICE,,「急いで積み込みます」,,text3
-CHOICE,,「あんたはここで指図するだけか？」,,text3
-NODE,text3,男は鼻で笑うと、鈍く光る長剣の柄に手を当てた。「威勢はいいが、口ほどにもない奴はすぐ死ぬのが戦場だ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text3_1
-NODE,text3_1,「俺はガウェイン。この部隊の小隊長にして、お前たち新米を死なせないための監視役といったところだ。……お前、その剣の腕には自信があるんだろうな？」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_join
-NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_road_day"", ""guest_id"":""npc_guest_gawain""}",text4
-NODE,text4,君が応えようとしたその瞬間、砂埃の向こうからけたたましい怒声と馬の嘶きが迫ってきた。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",text4_1
-NODE,text4_1,「小隊長！前方の丘より正体不明の集団が接近！十、いや二十……武器を持っています。野盗です！」見張りの兵士の声が裏返る。,"{""type"":""text"", ""bg"":""bg_road_day""}",text4_2
-NODE,text4_2,ガウェインが素早く抜刀し、鋭い眼光を砂塵に向ける。「チッ……言葉の先からこれだ。おい新入り、あの木箱は死守しろ。荷を奪われりゃ俺たちの首が飛ぶぞ」,"{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",battle
-NODE,battle,己の力と生き残る意志を示す、最初の手柄を立てる時が来た。震える手で武器を握り直せ！,"{""type"":""battle"", ""bg"":""bg_road_day"", ""enemy_group_id"":200, ""enemy_name"":""野盗の一隊"", ""enemy_level"":3}",choice2
+NODE,start,"肌を焦がすような乾いた風が、荒涼たる砂丘を撫でる。ここはローランド聖王国の辺境。かつて栄華を極めた王国の威光も、この村までは届かない。","{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",text_village
+NODE,text_village,"崩れかけた土壁。痩せた家畜。乾いた井戸の底に溜まった泥水。そんな場所から——君の物語は始まる。","{""type"":""text"", ""bg"":""bg_road_day""}",text_board
+NODE,text_board,"村の入口の掲示板に釘で留められた黄ばんだ紙。「傭兵募集——王国軍輸送部隊の護衛。報酬は銀貨十五枚。死亡時の補償はなし」銀貨十五枚。この村で一ヶ月は食いつなげる額だ。迷う理由はなかった。","{""type"":""text"", ""bg"":""bg_road_day""}",text_cargo
+NODE,text_cargo,"荷馬車が三台。積まれた木箱の中身は「軍需物資」とだけ書かれている。兵士が六人。全員、目が死んでいた。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_appear
+NODE,text_gawain_appear,"木箱を数え終えようとした時——背後から、しゃがれた太い声が飛んできた。「おい、そこの新入り！ ぼんやりするな。太陽が高くなれば、野盗の連中がいつ湧いてきてもおかしくないぞ！」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_look
+NODE,text_gawain_look,"振り返ると、甲冑の上に砂埃を被った大柄な男が立っていた。額の傷跡が古い。歴戦の証だ。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_intro
+NODE,text_gawain_intro,"男はこちらを値踏みするように見てから、顎をしゃくった。「で、お前が今日の新しい肉壁か。剣の腕はどうだ。振れるか？ それとも、振るフリだけか？」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",choice1
+CHOICE,,「急いで積み込みます」,,text_gawain_react
+CHOICE,,「あんたはここで指図するだけか？」,,text_gawain_react
+NODE,text_gawain_react,"男は鼻で笑った。だが、目は笑っていなかった。「威勢はいいが、口ほどにもない奴はすぐ死ぬのが戦場だ。俺はこの二十年で、そういう奴を百人以上見送った」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_name
+NODE,text_gawain_name,"「俺はガウェイン。この部隊の小隊長にして——お前たち新米を死なせないための監視役だ」ガウェインは砂漠の地平線を見た。その目には——疲労と、それでも消えない何かが残っていた。","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_join
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_road_day"", ""guest_id"":""npc_guest_gawain""}",text_alarm
+NODE,text_alarm,"ガウェインが何かを言いかけた、その瞬間——砂埃の向こうから、けたたましい怒声と馬の嘶きが迫ってきた。","{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_tense""}",text_scout
+NODE,text_scout,"丘の上から斥候が転がり落ちてきた。「小隊長！ 前方の丘より正体不明の集団が接近！十、いや二十……武器を持っています。野盗です！」","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_order
+NODE,text_gawain_order,"ガウェインが素早く抜刀した。「チッ……言葉の先からこれだ。おい新入り、あの木箱は死守しろ。荷を奪われりゃ俺たちの首が飛ぶ。——文字通りにな」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_bandit_taunt
+NODE,text_bandit_taunt,"野盗の頭目らしき男が、丘の上から叫んだ。「おう、王国の犬ども！ おとなしく荷を置いて消えな！抵抗するなら——女房と子供に遺言を書く暇くらいはやるぜ！」","{""type"":""text"", ""bg"":""bg_road_day""}",battle
+NODE,battle,己の力と生き残る意志を示す最初の手柄を立てる時が来た。震える手で武器を握り直せ！,"{""type"":""battle"", ""bg"":""bg_road_day"", ""enemy_group_id"":200, ""bgm"":""bgm_battle""}",choice2
 CHOICE,,迎撃する,,text_post_battle
-NODE,text_post_battle,剣を振り抜き、最後の一人を砂に沈める。荒い息を吐く君の前で、ガウェインが剣の血振るいをした。,"{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",gawain_leave
-NODE,gawain_leave,「悪くない太刀筋だ。これなら戦場でも生き残れるかもしれんな。……さあ、荷馬車を出すぞ！」任務完了に伴い、ガウェインは部隊と共に別行動を取ることになった。,"{""type"":""leave"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
-NODE,end_node,初めての実戦を終え、君の傭兵としての旅路が幕を開けた。,"{""type"":""end_success"", ""bg"":""bg_road_day""}",
+NODE,text_post_battle,"剣を振り抜き、最後の一人を砂に沈めた。荒い息を吐く。手が震えている。","{""type"":""text"", ""bg"":""bg_road_day"", ""bgm"":""bgm_quest_calm""}",text_bandit_dying
+NODE,text_bandit_dying,"足元に転がった野盗が、薄れゆく目でこちらを見上げた。「……へへ。やるじゃねえか、新入り。だがな——俺たちを雇ったのは、お前らの国の連中だぜ」男の目から光が消えた。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_look2
+NODE,text_gawain_look2,"ガウェインが死体を一瞥した。その顔は、何かを察したように険しかった。","{""type"":""text"", ""bg"":""bg_road_day""}",text_gawain_praise
+NODE,text_gawain_praise,"「……悪くない太刀筋だ。初陣にしては、な。これなら戦場でも生き残れるかもしれん」ガウェインは一度だけ、こちらの肩を叩いた。岩のように硬い手だった。","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_depart
+NODE,text_gawain_depart,"「さあ、荷馬車を出すぞ。日が暮れる前に次の宿場に着かなければ、今度は本物の盗賊団に囲まれる」","{""type"":""text"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
+NODE,gawain_leave,"宿場に着き、任務完了。ガウェインは部隊と共に別行動を取ることになった。「また会うこともあるだろう。……死ぬなよ、新入り」大きな背中が砂埃の向こうに消えていく。","{""type"":""leave"", ""bg"":""bg_road_day"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
+NODE,end_node,"初めての実戦を終え、君の傭兵としての旅路が幕を開けた。死に際の野盗が遺した言葉が、耳の奥で反芻していた。「俺たちを雇ったのは、お前らの国の連中だ」——考えるのは、後にしよう。今はただ、生きている。","{""type"":""end_success"", ""bg"":""bg_road_day""}",

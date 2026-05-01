@@ -4,17 +4,17 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3013,book_thrust,教本:突き,3,600,2,any,2,false,/images/items/book_thrust.png,汎用: 威力やや高め。
 3014,book_guard,教本:防御,4,500,2,any,1,false,/images/items/skill_barrier_all.png,汎用: 防御力を一時上昇。
 3015,book_first_aid,教本:応急手当,5,800,2,any,1,false,/images/items/skill_first_aid.png,汎用: 基礎的な回復。
-3016,book_shield_bash,教本:シールドバッシュ,6,1200,2,any,2,false,/images/items/book_shield_bash.png,汎用: 低確率で行動阻害。
+3016,book_shield_bash,教本:シールドバッシュ,6,1200,1,any,2,false,/images/items/book_shield_bash.png,汎用: 低確率で行動阻害。
 3017,book_focus,教本:集中,7,1000,2,any,2,false,/images/items/book_focus.png,汎用: 次の攻撃ダメージ増加。
 3018,book_quick_step,教本:クイックステップ,8,1200,2,any,2,false,/images/items/book_quick_step.png,汎用: 回避率上昇。
 3019,book_taunt,教本:挑発,9,1000,2,any,2,false,/images/items/skill_provoke.png,汎用: 敵の攻撃を自身に集める。
-3020,book_throw_stone,教本:石投げ,10,500,2,any,1,false,/images/items/book_throw_stone.png,汎用: 微小ダメージと目眩まし。
+3020,book_throw_stone,教本:石投げ,10,500,1,any,1,false,/images/items/book_throw_stone.png,汎用: 微小ダメージと目眩まし。
 3021,scroll_holy_sword,巻物:聖剣,11,6500,3,loc_holy_empire,4,false,/images/items/scroll_holy_sword.png,ローラン: 聖属性大ダメージ。
 3022,scroll_holy_smite,巻物:裁き,12,6000,3,loc_holy_empire,4,false,/images/items/scroll_holy_smite.png,ローラン: ランダム高ダメージ。
 3023,book_prayer,聖書:祈り,13,4500,2,loc_holy_empire,3,false,/images/items/book_heal_s.png,ローラン: 全体リジェネ回復。
 3024,book_heal,聖書:治癒,14,4000,2,loc_holy_empire,3,false,/images/items/book_heal_s.png,ローラン: 単体大回復。
 3025,scroll_holy_wall,巻物:聖壁,15,7000,3,loc_holy_empire,4,false,/images/items/skill_barrier_all.png,ローラン: 全体バリア。
-3026,book_sand_trap,教本:砂の罠,16,3500,2,loc_marcund,3,false,/images/items/book_sand_trap.png,マルカンド: 拘束付与。
+3026,book_sand_trap,教本:砂の罠,16,2000,1,loc_marcund,3,false,/images/items/book_sand_trap.png,マルカンド: 拘束付与。
 3027,book_sandstorm,教本:砂塵の目眩まし,17,4000,2,loc_marcund,3,false,/images/items/book_sandstorm.png,マルカンド: 全体暗闇。
 3028,book_poison_dagger,教本:毒刃,18,4500,2,loc_marcund,3,false,/images/items/book_poison_dagger.png,マルカンド: 毒付与攻撃。
 3029,scroll_mirage,巻物:蜃気楼,19,6500,3,loc_marcund,4,false,/images/items/scroll_mirage.png,マルカンド: 全体回避UP。
@@ -23,7 +23,7 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3032,book_kunai,教本:クナイ投げ,22,3000,2,loc_yatoshin,2,false,/images/items/book_kunai.png,夜刀: 出血付与。
 3033,book_shadow_stitch,教本:影縫い,23,4500,2,loc_yatoshin,3,false,/images/items/book_shadow_stitch.png,夜刀: スタン付与。
 3034,book_purify,聖書:清め,24,5500,2,loc_yatoshin,3,false,/images/items/book_purify.png,夜刀: デバフ解除。
-3035,scroll_iai_slash,奥義書:居合切り,25,8000,3,loc_yatoshin,4,false,/images/items/scroll_iai_slash.png,夜刀: 最強の一撃。
+3035,scroll_iai_slash,奥義書:居合切り,25,8000,4,loc_yatoshin,4,false,/images/items/scroll_iai_slash.png,夜刀: 最強の一撃。
 3036,book_qigong_heal,教本:氣の癒やし,26,5500,2,loc_haryu,3,false,/images/items/skill_zen.png,華龍: リジェネ付き回復。
 3037,book_dragon_roar,教本:龍の咆哮,27,6000,3,loc_haryu,4,false,/images/items/book_dragon_roar.png,華龍: 全体ATKダウン。
 3038,book_iron_body,教本:鉄布衫,28,4500,2,loc_haryu,3,false,/images/items/skill_iron_skin.png,華龍: 重防御UP。
@@ -31,12 +31,15 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3040,book_flying_blade,教本:飛刀,30,4000,2,loc_haryu,3,false,/images/items/book_flying_blade.png,華龍: 貫通遠距離攻撃。
 3056,grimoire_blood_drain,禁書:吸血,56,25000,3,any,1,true,/images/items/skill_cannibalism.png,闇市: ダメージの半分回復。
 3057,grimoire_dark_pact,禁書:闇の代償,57,30000,3,any,1,true,/images/items/grimoire_dark_pact.png,闇市: AP全回復/HP-10%。
-3058,grimoire_death_strike,禁書:即死攻撃,58,50000,4,any,1,true,/images/items/grimoire_death_strike.png,闇市: 極大ダメージ。
-3059,grimoire_mad_frenzy,禁薬:狂戦士の薬,59,20000,2,any,1,true,/images/items/skill_berserk.png,闇市: 制御不能・攻撃力3倍。
-3060,grimoire_soul_sac,禁書:魂の生贄,60,40000,5,any,1,true,/images/items/grimoire_soul_sac.png,闇市: 超絶ダメージ/自傷。
-3061,book_poison_brew,教本:調毒,62,1200,2,loc_marcund,2,false,/images/items/item_poison_manual.png,マルカンド: 毒付与攻撃。
-3062,scroll_blood_pact,禁術:血の契約書,63,10000,3,loc_haryu,1,false,/images/items/item_forbidden_scroll.png,華龍: ATK/DEF UP（12T）代償VIT消費。
-3071,spot_regalia_brave,五星の加護,71,0,12,,1,false,,スポット報酬: 高威力+ATK UP。
-3072,spot_luna_eclips,冥食の理,72,0,12,,1,false,,スポット報酬: 闇ダメージ+呪い。
-3073,spot_deus_machina,神殺しの光芒,73,0,12,,1,false,,スポット報酬: 最高威力+自傷。
-3074,spot_desert_curse,砂塵の支配,74,0,12,,1,false,,スポット報酬: 全体攻撃+DEF DOWN。
+3058,grimoire_death_strike,禁書:即死攻撃,58,50000,3,any,1,true,/images/items/grimoire_death_strike.png,闇市: 極大ダメージ。
+3059,grimoire_mad_frenzy,禁薬:狂戦士の薬,59,20000,3,any,1,true,/images/items/skill_berserk.png,闇市: 制御不能・ATK2倍/DEF半減。
+3060,grimoire_soul_sac,禁書:魂の生贄,60,40000,4,any,1,true,/images/items/grimoire_soul_sac.png,闇市: 超絶ダメージ/自傷。
+3061,book_poison_brew,教本:調毒,62,2000,2,loc_marcund,2,false,/images/items/item_poison_manual.png,マルカンド: 毒付与攻撃。
+3062,scroll_blood_pact,禁術:血の契約書,63,15000,4,loc_haryu,1,false,/images/items/item_forbidden_scroll.png,華龍: ATK/DEF UP（5T）代償VIT消費。
+3071,spot_regalia_brave,五星の加護,71,0,4,,1,false,,スポット報酬: 高威力+ATK UP。
+3072,spot_luna_eclips,冥食の理,72,0,4,,1,false,,スポット報酬: 闇ダメージ+呪い。
+3073,spot_deus_machina,神殺しの光芒,73,0,5,,1,false,,スポット報酬: 最高威力+自傷。
+3074,spot_desert_curse,砂塵の支配,74,0,4,,1,false,,スポット報酬: 全体攻撃+DEF DOWN。
+3065,grimoire_fire,魔導書:火球,65,3500,3,any,3,false,/images/items/grimoire_fire.png,魔法攻撃+炎上付与。
+3066,grimoire_ice,魔導書:氷槍,66,3500,3,any,3,false,/images/items/grimoire_ice.png,魔法攻撃+拘束付与。
+3067,grimoire_thunder,魔導書:雷撃,67,4500,3,any,4,false,/images/items/grimoire_thunder.png,魔法攻撃+スタン付与。

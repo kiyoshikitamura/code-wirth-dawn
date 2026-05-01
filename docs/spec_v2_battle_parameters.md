@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v15.0 (Battle System v3.3)
+Code: Wirth-Dawn Specification v16.0 (Battle System v4.1)
 # Battle System & Data Architecture
 
 ## 1. 概要 (Overview)
@@ -32,7 +32,7 @@ Code: Wirth-Dawn Specification v15.0 (Battle System v3.3)
 <!-- v12.0: StatusEffect に value フィールド追加（仕様書追記）を反映 -->
 
 ```typescript
-export type CardType = 'Skill' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise';
+export type CardType = 'Skill' | 'Magic' | 'Item' | 'Basic' | 'Personality' | 'Consumable' | 'noise';
 // ⚠ 重要な仕様変更 (Passiveの廃止):
 // 永続的に効果を発動・管理する「Passive」型は実装・UIの複雑化を招くため完全に廃止する。
 // 以降はすべて「APを払って発動・バフを付与する Support 型」などに統合される。
@@ -145,7 +145,7 @@ export interface BattleState {
 ### 4.1 フェーズ詳細
 
 1. **Draw Phase (ドロー)**: `dealHand()` — 手札が上限枚数になるまで引く。山札不足時は捨て札をリシャッフル。
-   - **手札上限**: Lv1-4: 4枚 / Lv5-9: 5枚 / Lv10+: 6枚（`HAND_SIZE_BY_LEVEL` 定義）
+   - **手札上限**: Lv1-4: 4枚 / Lv5-19: 5枚 / Lv20-29: 6枚 / Lv30+: 7枚（`HAND_SIZE_BY_LEVEL` 定義）
 2. **Energy Phase (AP回復)**: `AP = Min(10, CurrentAP + 5)`。Stun/Bind状態時はAP回復なし。
 3. **Action Phase (行動)**: APがある限り行動可能。
    - **Purge (ノイズ廃棄)**: `type: noise` のカードは `discard_cost`（デフォルト1 AP）を支払って手札から消滅（Exhaust）。
@@ -179,6 +179,7 @@ FinalDamage = Max(1, BuffedDamage - Enemy.DEF)  // 通常（貫通なし）
 ```
 
 - `AtkMod`: `atk_up` 効果時 1.5、それ以外 1.0。
+- **魔法攻撃判定** (`isMagic`): `card.type === 'Magic'` またはカード名に「魔法」を含む場合、魔法攻撃として計算。魔法攻撃では一部のDEF軽減が異なる。
 
 ### 5.2 敵の攻撃・プレイヤーへのダメージ計算（v3.0）
 
@@ -321,6 +322,9 @@ FinalDamage = max(1, BasicDamage - Enemy.DEF)
 | `cure_debuff` | — | 即時（atk_down/blind等）を解除。 |
 | `taunt` | プレイヤー | 敵の単体攻撃を引き受ける。 |
 | `stun_immune` | プレイヤー | 次回スタン効果を1回無効化。 |
+| `stun_minor` | 敵 | v4.1: 10%の確率でスタン1T。強打用。 |
+| `def_down_self` | プレイヤー | v4.1: 自身DEF半減。狂戦士の薬の副作用。 |
+| `berserk` | プレイヤー | v4.1: ATK×2.0 + DEF半減。狂戦士の薬。 |
 
 ---
 
@@ -473,7 +477,9 @@ function getEffectiveMaxHp(userProfile, battleState): number {
 | **v14.0** | **2026-04-12** | **HPバーリアルタイム同期（マーカー方式）、カードimage_url/description取得フロー改善、パーティHP同期（max_durability取得修正）、startBattle での fetchInventory 強制実行** |
 | v14.1 | 2026-04-15 | spec_v2 文字化け修復（Shift-JIS二重化け → UTF-8完全再構築） |
 | **v2.8** | **2026-04-17** | **NPC ATK基礎値追加 (§5.3.1)。NPC基本攻撃式を `ATK + 0~6` に変更。同一カード制限撤廃（→ spec_v3_addendum_npc_ai.md §4.3）** |
-| **v16.0** | **2026-04-23** | **ヒールスキルNPC対象回復修正（cardEffects.tsフォールバックに「治癒」「癒」「応急」追加、NPC回復時early returnで共通パスの上書き回避）。勝利判定改善（runNpcPhase冒頭に全敵HP0チェック、isVictoryフラグ保護）。VIT離脱処理強化（quest/complete APIのis_activeフィルタ撤廃、delete()エラーハンドリング追加）** |
+| **v16.0** | **2026-04-23** | **ヒールスキルNPC対象回復修正、勝利判定改善、VIT離脱処理強化** |
+| **v4.1** | **2026-04-28** | **デッキバランス改善: 最小デッキ12枚/NPC注入上限6枚/装備枚数ボーナス。手札上限拡張(Lv20:6枚/Lv30:7枚)。stun_minor/def_down_self/berserkステータス追加** |
+| **v4.2** | **2026-04-30** | **雷撃(Magic型)のisMagic判定修正: `card.type === 'Magic'` を判定条件に追加。CardType型に'Magic'を追加。アバターアップロード制限をフロント/API共に10MBに統一。クエスト終了判定でend_success/end_failureタイプを直接認識** |
 
 ---
 

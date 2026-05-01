@@ -8,7 +8,7 @@ interface GlobalStatusBarProps {
 }
 
 export default function GlobalStatusBar({ viewMode }: GlobalStatusBarProps) {
-    const { userProfile, battleState, selectedScenario } = useGameStore();
+    const { userProfile, battleState, selectedScenario, equipBonus } = useGameStore();
     const [party, setParty] = useState<PartyMember[]>([]);
     const [partyExpanded, setPartyExpanded] = useState(false);
 
@@ -23,7 +23,8 @@ export default function GlobalStatusBar({ viewMode }: GlobalStatusBarProps) {
 
     if (!userProfile) return null;
 
-    const hpPercent = Math.min(100, Math.max(0, ((userProfile?.hp ?? 0) / Math.max(1, userProfile?.max_hp ?? 1)) * 100));
+    const effectiveMaxHp = Math.max(1, (userProfile?.max_hp ?? 1) + (equipBonus?.hp || 0));
+    const hpPercent = Math.min(100, Math.max(0, ((userProfile?.hp ?? 0) / effectiveMaxHp) * 100));
     const apPercent = Math.min(100, Math.max(0, ((battleState.current_ap ?? 0) / 10) * 100)); // Max AP 10
     const isVitalityCritical = (userProfile?.vitality ?? 100) <= 20;
 
@@ -58,7 +59,7 @@ export default function GlobalStatusBar({ viewMode }: GlobalStatusBarProps) {
                         <div className="relative h-2.5 bg-gray-900 rounded-full border border-gray-700 overflow-hidden">
                             <div className="absolute inset-y-0 left-0 bg-green-500 transition-all duration-300" style={{ width: `${hpPercent}%` }} />
                             <div className="absolute inset-0 flex items-center justify-center text-[8px] text-white font-mono drop-shadow-md">
-                                {userProfile?.hp ?? 0}/{userProfile?.max_hp ?? 1}
+                                {userProfile?.hp ?? 0}/{effectiveMaxHp}
                             </div>
                         </div>
                         {/* AP Bar (only relevant in battle, but good to show as resource) */}

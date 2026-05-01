@@ -1,5 +1,5 @@
 id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,image_url,description
-1,card_strike,強打,Skill,1,vitality,5,15,single_enemy,,/images/items/skill_vital_strike.png,基礎的な物理攻撃。ステータスATK+15の固定ダメージを与える。
+1,card_strike,強打,Skill,1,vitality,5,12,single_enemy,stun_minor,/images/items/skill_vital_strike.png,基礎的な物理攻撃。ATK+12の固定ダメージを与え、10%の確率でスタン（1T）を付与する。
 2,card_slash,斬撃,Skill,1,vitality,5,12,single_enemy,bleed_minor,/images/items/book_slash.png,鋭い一撃とともに相手の肌を薄く引き裂く。ダメージに加え、出血（軽微）を2ターン付与：カード使用ごとに1の追加ダメージ。
 3,card_thrust,突き,Skill,1,vitality,5,18,single_enemy,,/images/items/book_thrust.png,鎧の隙間を突く貫通攻撃。基礎ダメージが高い単体攻撃。
 4,card_guard,防御,Defense,1,vitality,3,10,self,def_up,/images/items/skill_barrier_all.png,身を低くして攻撃に備える。2ターンの間、受けるダメージをDEF+10分だけ軽減する。
@@ -8,15 +8,15 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 7,card_focus,集中,Support,2,vitality,5,0,self,atk_up,/images/items/book_focus.png,精神を研ぎ澄ます。次の攻撃から3ターンの間、与ダメージが1.5倍になる（ATK UP）。
 8,card_quick_step,クイックステップ,Support,2,vitality,5,0,self,evasion_up,/images/items/book_quick_step.png,素早く身をかわす体勢をとる。3ターンの間、敵の攻撃を30%の確率で完全回避する。
 9,card_taunt,挑発,Support,1,vitality,8,0,all_enemies,taunt,/images/items/skill_provoke.png,敵全体の注意を自身に引きつける。2ターンの間、敵の単体攻撃を自分が引き受ける（挑発）。
-10,card_throw_stone,石投げ,Skill,1,vitality,3,5,single_enemy,blind_minor,/images/items/book_throw_stone.png,小石を力強く投げつける。5のダメージとともに2ターンの間、敵の攻撃を30%の確率でミスさせる（軽微な目潰し）。
+10,card_throw_stone,石投げ,Skill,1,vitality,3,8,single_enemy,blind_minor,/images/items/book_throw_stone.png,小石を力強く投げつける。8のダメージとともに2ターンの間、敵の攻撃を30%の確率でミスさせる（軽微な目潰し）。
 11,card_holy_sword,聖剣,Magic,3,mp,20,50,single_enemy,holy_burn,/images/items/scroll_holy_sword.png,聖なる炎を宿した魔法の剣で斬りつける。DEFを無視して50のダメージを与える魔法攻撃。
-12,card_holy_smite,裁き,Magic,3,mp,25,80,random_enemy,,/images/items/scroll_holy_smite.png,神の裁きを乱数攻撃として降らせる。ランダムな敵に80の魔法ダメージを与える。
+12,card_holy_smite,裁き,Magic,3,mp,25,50,random_enemy,,/images/items/scroll_holy_smite.png,神の裁きを乱数攻撃として降らせる。ランダムな敵に50の魔法ダメージを与える。
 13,card_prayer,祈り,Heal,2,mp,15,30,all_allies,regen,/images/items/book_heal_s.png,神への祈りで仲間を癒す。30の体力を回復し、さらに3ターンのリジェネ（毎ターンHP5%回復）を付与する。
 14,card_heal,治癒,Heal,2,mp,12,80,single_ally,,/images/items/book_heal_s.png,光の力で傷を塞ぐ。単体の体力を80回復する。
 15,card_holy_wall,聖壁,Defense,3,mp,20,20,all_allies,barrier,/images/items/skill_barrier_all.png,聖なる光の壁でパーティ全体を守る。2ターンの間、受けるダメージをDEF+20分だけ軽減する（パーティ全体）。
-16,card_sand_trap,砂の罠,Support,2,vitality,8,10,single_enemy,bind,/images/items/book_sand_trap.png,砂に仕掛けた罠で動きを封じる。1ターンの間、敵の行動を完全に封じる（拘束）。ダメージなし。
+16,card_sand_trap,砂の罠,Support,1,vitality,8,10,single_enemy,bind,/images/items/book_sand_trap.png,砂に仕掛けた罠で動きを封じる。1ターンの間、敵の行動を完全に封じる（拘束）。ダメージなし。
 17,card_sandstorm,砂塵の目眩まし,Support,3,vitality,10,0,all_enemies,blind,/images/items/book_sandstorm.png,砂嵐で視界を奪う。2ターンの間、敵全体の攻撃を50%の確率でミスさせる（目潰し）。
-18,card_poison_dagger,毒刃,Skill,2,vitality,8,20,single_enemy,poison,/images/items/book_poison_dagger.png,毒を塗った短刀で攻撃する。20のダメージを与え、3ターンの間、毎ターンHP5%の毒ダメージを付与する。
+18,card_poison_dagger,毒刃,Skill,2,vitality,8,25,single_enemy,poison,/images/items/book_poison_dagger.png,毒を塗った短刀で攻撃する。25のダメージを与え、3ターンの間、毎ターンHP5%の毒ダメージを付与する。
 19,card_mirage,蜃気楼,Support,3,vitality,12,0,all_allies,evasion_up,/images/items/scroll_mirage.png,蜃気楼の幻影でパーティ全体を守る。3ターンの間、パーティ全体が敵の攻撃を30%の確率で回避する。
 20,card_oasis_water,オアシスの水,Heal,2,mp,10,60,single_ally,cure_status,/images/items/book_oasis_water.png,霊泉の水で状態異常を解除する。60の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。
 21,card_swallow_rev,ツバメ返し,Skill,3,vitality,15,60,single_enemy,,/images/items/book_swallow_rev.png,神速の抜刀術で敵を切り払う高威力の一撃。防御カードを使ったかのような素早さで60の大ダメージを叩き込む。
@@ -56,13 +56,16 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 55,card_time_stop,時止めの法,Support,5,mp,40,0,all_enemies,freeze,,時の流れを止める大魔法。敵全体を2ターンの間、完全に行動不能（スタン）にする。
 56,card_blood_drain,吸血,Magic,3,mp,15,40,single_enemy,drain,/images/items/skill_cannibalism.png,生命力を吸い取る禁断の魔法。40の魔法ダメージを与える。
 57,card_dark_pact,闇の代償,Support,1,vitality,50,0,self,ap_max,/images/items/grimoire_dark_pact.png,魂を担保にAPを全回復する禁断の契約。即座にAP全回復。代償：使用後、最大HP-10%（自傷）。
-58,card_death_strike,即死攻撃,Skill,4,vitality,30,0,single_enemy,instakill,/images/items/grimoire_death_strike.png,30%の確率で敵を即死させる死の一撃。成功時：敵HP→0（即死）。失敗時：通常攻撃として機能する。
+58,card_death_strike,即死攻撃,Skill,4,vitality,30,30,single_enemy,instakill,/images/items/grimoire_death_strike.png,30%の確率で敵を即死させる死の一撃。成功時：敵HP→0（即死）。失敗時：30の通常ダメージを与える。
 59,card_mad_frenzy,狂戦士の薬,Support,1,vitality,30,0,self,berserk,/images/items/skill_berserk.png,使用後に制御不能となるが攻撃力が大幅上昇する狂戦士の薬。3ターンの間、ATK UPを付与する。
 60,card_soul_sac,魂の生贄,Magic,5,vitality,50,150,all_enemies,recoil,/images/items/grimoire_soul_sac.png,魂を生贄に捧げ全敵に超絶ダメージを与える。全体に150の大ダメージ（DEF無視）。代償：使用者の最大HP10%を自傷する。
 61,card_citizen_support,市民の支援,Heal,0,vitality,0,600,self,,,
-62,card_poison_brew,調毒,Skill,2,vitality,5,30,single_enemy,poison,/images/items/item_poison_manual.png,毒を調合して敵に投げつける。30のダメージを与え、5ターンの間、毎ターンHP5%の毒ダメージを付与する。
-63,card_blood_pact,血の契約,Support,3,vitality,1,0,self,atk_up,/images/items/item_forbidden_scroll.png,命を代償に戦闘能力を極限まで引き上げる禁術。12ターンの間ATK UPとDEF UPを同時に付与する。
+62,card_poison_brew,調毒,Skill,2,vitality,5,15,single_enemy,poison,/images/items/item_poison_manual.png,毒を調合して敵に投げつける。15のダメージを与え、3ターンの間、毎ターンHP5%の毒ダメージを付与する。
+63,card_blood_pact,血の契約,Support,3,vitality,1,0,self,atk_up,/images/items/item_forbidden_scroll.png,命を代償に戦闘能力を極限まで引き上げる禁術。5ターンの間ATK UPとDEF UPを同時に付与する。
 71,card_regalia_brave,五星の加護,Skill,2,vitality,10,35,single_enemy,atk_up,,英霊たちの魂が一斉に呼応し五芒星の光が剣に宿る。高威力の一撃に加えATKが上昇する。
 72,card_luna_eclips,冥食の理,Skill,2,vitality,10,25,single_enemy,curse,,冥界の門から引きずり出した禁忌の力。対象に闇のダメージを与え呪いを付与する。
 73,card_deus_machina,神殺しの光芒,Skill,3,vitality,15,50,single_enemy,recoil,,神を打倒した光を再現する究極の一撃。絶大なダメージを与えるが術者自身も力の反動を受ける。
 74,card_desert_curse,砂塵の支配,Skill,2,vitality,10,20,all_enemies,def_down,,王墓から得た砂の呪力で嵐を巻き起こす。全敵にダメージを与えDEFを低下させる。
+65,card_fireball,火球,Magic,2,mp,10,40,single_enemy,burn,/images/items/grimoire_fire.png,火球を放ち敵を攻撃する。40の魔法ダメージを与え、2ターンの間、炎上（毎ターンHP5%ダメージ）を付与する。
+66,card_ice_lance,氷槍,Magic,2,mp,10,35,single_enemy,bind,/images/items/grimoire_ice.png,氷の槍で敵を貫く。35の魔法ダメージを与え、1ターンの間、敵を拘束（行動不能）にする。
+67,card_thunder_strike,雷撃,Magic,3,mp,15,45,single_enemy,stun,/images/items/grimoire_thunder.png,雷を落とし敵を攻撃する。45の魔法ダメージを与え、1ターンの間、スタン（行動不能）を付与する。

@@ -1,7 +1,17 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"腹を空かせた豚どもが、我々の倉庫を狙って集会を開いている。武器を持った暴れん坊を数人間引けば、あとは散るだろう。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_thug"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,自治会の事務所に呼ばれた。窓の外から怒声が聞こえる。,"{""type"":""text"", ""bg"":""bg_office"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[鎮圧] 暴動を企てる飢えた市民を力でねじ伏せる。""}",text_1a
+NODE,text_1a,事務官が苦い顔で書類を差し出した。「東区画の広場に、飢えた市民が集まっている。このままでは暴動になる。鎮圧してくれ」,"{""type"":""text"", ""bg"":""bg_office"", ""speaker_name"":""自治会事務官""}",briefing
+NODE,briefing,「連中は先月の凶作で食い詰めた農民だ。配給が回らず、自治会の倉庫を襲う計画を立てている」事務官は窓の方を見た。,"{""type"":""text"", ""bg"":""bg_office"", ""speaker_name"":""自治会事務官""}",briefing_2
+NODE,briefing_2,「正直に言えば、連中の気持ちは分からんでもない。だが暴動を許せば秩序が崩れる。力で抑えてくれ——なるべく殺さずに」,"{""type"":""text"", ""bg"":""bg_office"", ""speaker_name"":""自治会事務官""}",go_square
+NODE,go_square,東区画の広場に向かった。石畳の広場に、ぼろ切れを纏った市民たちが群がっている。子供を抱えた女、杖にすがる老人、そして——鎌や棒切れを握った若い男たち。,"{""type"":""text"", ""bg"":""bg_slum"", ""bgm"":""bgm_quest_tense""}",go_square_2
+NODE,go_square_2,リーダーらしき男が声を張り上げていた。「俺たちは飢えてるんだ！ 倉庫を開けろ！ 食わせろ！」,"{""type"":""text"", ""bg"":""bg_slum"", ""speaker_name"":""暴徒のリーダー""}",confront
+NODE,confront,群衆の前に立ちはだかった。一瞬、静寂が広がった。,"{""type"":""text"", ""bg"":""bg_slum""}",confront_2
+NODE,confront_2,「自治会の犬か……。俺たちを殺すのか？ 飢えた子供を守ろうとしてるだけだぞ！」後ろの群衆がざわめく。棒切れを握る手に力が入ったのが見えた。,"{""type"":""text"", ""bg"":""bg_slum"", ""speaker_name"":""暴徒のリーダー""}",battle_mob
+NODE,battle_mob,暴動が始まった！ 武装した市民たちが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_slum"", ""enemy_group_id"":404, ""enemy_name"":""飢えた市民 x5"", ""enemy_level"":2}",
+CHOICE,,win,,after_riot
+CHOICE,,lose,,end_failure
+NODE,after_riot,暴徒を鎮圧した。地面にうずくまる市民たち。呻き声が広場に響いている。,"{""type"":""text"", ""bg"":""bg_slum"", ""bgm"":""bgm_quest_calm""}",after_riot_2
+NODE,after_riot_2,リーダーの男が血を吐きながら、こちらを見上げた。「……俺たちが悪いんじゃねえ。飢えさせた奴らが悪いんだ……」,"{""type"":""text"", ""bg"":""bg_slum"", ""speaker_name"":""暴徒のリーダー""}",after_riot_3
+NODE,after_riot_3,自治会の衛兵が到着し、残った群衆を解散させた。子供の泣き声が、いつまでも耳に残った。,"{""type"":""text"", ""bg"":""bg_slum""}",end_success
+NODE,end_success,鎮圧任務完了。自治会から報酬を受け取った。秩序は守られた——だが、あの男の言葉が胸に刺さったままだ。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_office""}",
+NODE,end_failure,暴徒に押し返された。鎮圧は失敗に終わった。,"{""type"":""end"", ""result"":""failure""}",

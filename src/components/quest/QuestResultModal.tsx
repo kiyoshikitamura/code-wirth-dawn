@@ -30,6 +30,8 @@ interface QuestChanges {
     atk_decay: number;
     def_decay: number;
     level_up?: LevelUpInfo;
+    battle_defeat_vit_penalty?: number;
+    alignment_shift?: Record<string, number>;
 }
 
 interface RepChange {
@@ -55,7 +57,7 @@ interface QuestResultModalProps {
     onClose: () => void;
     result: 'success' | 'failure';
     questTitle?: string;
-    changes: QuestChanges;
+    changes?: QuestChanges;
     rewards: any;
     daysPassed: number;
     shareText?: string;
@@ -65,13 +67,15 @@ interface QuestResultModalProps {
     earnedExp?: number;
     lootSaved?: any[];
     guestConversion?: GuestConversion | null;
+    isTestPlay?: boolean;
 }
 
 export default function QuestResultModal({
     onClose, result, questTitle, changes, rewards, daysPassed, shareText,
-    repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion
+    repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion, isTestPlay
 }: QuestResultModalProps) {
-    const { level_up, gold_gained, aged_up } = changes;
+    const safeChanges = changes || {} as QuestChanges;
+    const { level_up, gold_gained = 0, aged_up } = safeChanges;
     const isSuccess = result === 'success';
 
     return (
@@ -91,6 +95,11 @@ export default function QuestResultModal({
                     </div>
                     {questTitle && (
                         <h2 className="text-lg font-serif font-bold text-slate-200 mt-1">「{questTitle}」</h2>
+                    )}
+                    {isTestPlay && (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] bg-purple-900/40 border border-purple-600/40 text-purple-300 mt-1.5">
+                            🧪 テストプレイ結果
+                        </div>
                     )}
                     <div className="w-16 h-0.5 bg-amber-600/50 mx-auto mt-2 rounded-full" />
                 </header>
@@ -158,20 +167,36 @@ export default function QuestResultModal({
                     {/* 失敗時の名声ペナルティ */}
                     {!isSuccess && repChange && repChange.amount !== 0 && (
                         <section>
-                            <div className="flex items-center gap-2.5 bg-red-950/30 p-2.5 rounded border border-red-900/50">
-                                <div className="p-1.5 bg-red-900/30 rounded-full text-red-400">
-                                    <Shield className="w-4 h-4" />
+                            <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <ArrowDown className="w-3 h-3" /> ペナルティ
+                            </h3>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2.5 bg-red-950/30 p-2.5 rounded border border-red-900/50">
+                                    <div className="p-1.5 bg-red-900/30 rounded-full text-red-400">
+                                        <Shield className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <div className="text-red-300 font-bold text-sm">{repChange.amount} 名声</div>
+                                        <div className="text-[9px] text-gray-500">{repChange.location} での評判が下がった</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-red-300 font-bold text-sm">{repChange.amount} 名声</div>
-                                    <div className="text-[9px] text-gray-500">{repChange.location} での評判が下がった</div>
-                                </div>
+                                {(safeChanges?.battle_defeat_vit_penalty ?? 0) > 0 && (
+                                    <div className="flex items-center gap-2.5 bg-red-950/30 p-2.5 rounded border border-red-900/50">
+                                        <div className="p-1.5 bg-red-900/30 rounded-full text-red-400">
+                                            <Heart className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <div className="text-red-300 font-bold text-sm">VIT -{safeChanges.battle_defeat_vit_penalty}</div>
+                                            <div className="text-[9px] text-gray-500">バトル敗北による消耗</div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </section>
                     )}
 
                     {/* ── §3 キャラクター変化セクション ── */}
-                    {(level_up || aged_up || (changes.atk_decay > 0) || (changes.def_decay > 0)) && (
+                    {(level_up || aged_up || (safeChanges.atk_decay > 0) || (safeChanges.def_decay > 0)) && (
                         <section>
                             <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                 <Swords className="w-3 h-3" /> キャラクター変化
@@ -233,16 +258,16 @@ export default function QuestResultModal({
 
                                 {/* 加齢 */}
                                 {aged_up && (
-                                    changes.vit_penalty > 0 ? (
+                                    safeChanges.vit_penalty > 0 ? (
                                         <div className="relative overflow-hidden rounded-lg border border-red-900/50 bg-black/80 p-4 text-center">
                                             <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(80,0,0,0.4)_0%,transparent_70%)] animate-pulse pointer-events-none" />
                                             <div className="relative z-10 space-y-1.5">
                                                 <div className="text-red-600 font-serif font-bold text-base tracking-widest">⚠ 老化の兆候 ⚠</div>
-                                                <div className="text-gray-400 text-xs">{changes.new_age}歳の誕生日を迎えました...</div>
+                                                <div className="text-gray-400 text-xs">{safeChanges.new_age}歳の誕生日を迎えました...</div>
                                                 <div className="flex items-center justify-center gap-3 mt-2">
                                                     <div className="flex items-center gap-1 text-sm text-red-400">
                                                         <Heart className="w-4 h-4" />
-                                                        <span>体力上限 -{changes.vit_penalty}</span>
+                                                        <span>体力上限 -{safeChanges.vit_penalty}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -255,7 +280,7 @@ export default function QuestResultModal({
                                             <div>
                                                 <div className="text-amber-300 font-bold text-sm">誕生日おめでとう！</div>
                                                 <div className="text-xs text-amber-400">
-                                                    無事に {changes.new_age} 歳を迎えました。
+                                                    無事に {safeChanges.new_age} 歳を迎えました。
                                                 </div>
                                             </div>
                                         </div>
@@ -263,24 +288,51 @@ export default function QuestResultModal({
                                 )}
 
                                 {/* ATK/DEF減衰 */}
-                                {(changes.atk_decay > 0 || changes.def_decay > 0) && (
+                                {(safeChanges.atk_decay > 0 || safeChanges.def_decay > 0) && (
                                     <div className="flex gap-2">
-                                        {changes.atk_decay > 0 && (
+                                        {safeChanges.atk_decay > 0 && (
                                             <div className="flex-1 flex items-center gap-2 bg-red-950/20 border border-red-900/40 rounded px-2.5 py-1.5 text-xs">
                                                 <ArrowDown className="w-3 h-3 text-red-400" />
-                                                <span className="text-red-300">攻撃力 -{changes.atk_decay}</span>
+                                                <span className="text-red-300">攻撃力 -{safeChanges.atk_decay}</span>
                                                 <span className="text-gray-600 text-[9px]">（加齢）</span>
                                             </div>
                                         )}
-                                        {changes.def_decay > 0 && (
+                                        {safeChanges.def_decay > 0 && (
                                             <div className="flex-1 flex items-center gap-2 bg-blue-950/20 border border-blue-900/40 rounded px-2.5 py-1.5 text-xs">
                                                 <ArrowDown className="w-3 h-3 text-blue-400" />
-                                                <span className="text-blue-300">防御力 -{changes.def_decay}</span>
+                                                <span className="text-blue-300">防御力 -{safeChanges.def_decay}</span>
                                                 <span className="text-gray-600 text-[9px]">（加齢）</span>
                                             </div>
                                         )}
                                     </div>
                                 )}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* ── §3.5 属性変化セクション ── */}
+                    {isSuccess && safeChanges.alignment_shift && Object.keys(safeChanges.alignment_shift).length > 0 && (
+                        <section>
+                            <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                ⚖️ 属性変化
+                            </h3>
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {Object.entries(safeChanges.alignment_shift).map(([key, val]) => {
+                                    if (!val || val === 0) return null;
+                                    const labels: Record<string, { name: string; color: string; icon: string }> = {
+                                        order: { name: '秩序', color: 'text-sky-300', icon: '⚖️' },
+                                        chaos: { name: '混沌', color: 'text-purple-300', icon: '🌀' },
+                                        justice: { name: '正義', color: 'text-emerald-300', icon: '✨' },
+                                        evil: { name: '悪意', color: 'text-red-300', icon: '🔥' },
+                                    };
+                                    const info = labels[key] || { name: key, color: 'text-gray-300', icon: '◆' };
+                                    return (
+                                        <div key={key} className="flex items-center gap-2 bg-black/30 border border-gray-800 rounded px-2.5 py-1.5 text-xs">
+                                            <span>{info.icon}</span>
+                                            <span className={info.color}>{info.name} {val > 0 ? '+' : ''}{val}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </section>
                     )}
@@ -388,7 +440,7 @@ export default function QuestResultModal({
                         onClick={onClose}
                         className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-6 rounded transition-colors shadow-lg hover:shadow-amber-500/20"
                     >
-                        冒険を続ける
+                        {isTestPlay ? 'エディターに戻る' : '冒険を続ける'}
                     </button>
                 </footer>
             </div>

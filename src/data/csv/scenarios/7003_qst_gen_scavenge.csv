@@ -1,10 +1,29 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"先日の暴動で焼け落ちた区画に、まだ金庫が残っているはずだ。火事場泥棒どもより先に見つけ出してくれ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_goblin"
-CHOICE,,"win",node_2,
-CHOICE,,"lose",end_failure,
-NODE,node_2,"依頼品の納品を行う。",,"type:check_delivery, item_id:3002, quantity:1"
-CHOICE,,"success",end_success,
-CHOICE,,"failure",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,冒険者ギルドの掲示板に、急ぎの依頼が貼られていた。,"{""type"":""text"", ""bg"":""bg_guild"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[探索] 廃墟の金庫から物資を回収する。届けるか売りさばくか。""}",text_1a
+NODE,text_1a,依頼書にはこうある。「崩壊街区の廃墟金庫から物資を回収。中身は開封不可。ギルドの管理品につき、持ち逃げ厳禁」,"{""type"":""text"", ""bg"":""bg_guild""}",text_1b
+NODE,text_1b,担当の男がぶっきらぼうに言った。「場所は知ってるな？ 先週の地震で通路が崩れてる。ゴブリンが住み着いてるって話もある」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""ギルド担当""}",accept_job
+NODE,accept_job,「回収できたら真っ直ぐ持って来い。余計なことはするなよ」依頼書にサインを入れ、廃墟の地図を受け取った。道のりは近い。日が暮れる前には戻れるだろう。,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""ギルド担当""}",enter_ruins
+NODE,enter_ruins,廃墟に足を踏み入れた。天井の半ばが崩れ、瓦礫が散乱している。壁に刻まれた古い紋章が、かつてここが商家の倉庫だったことを示していた。,"{""type"":""text"", ""bg"":""bg_ruins_field"", ""bgm"":""bgm_quest_tense""}",enter_ruins_2
+NODE,enter_ruins_2,奥に進むと、薄暗い通路の先に錆びた鉄扉が見えた。,"{""type"":""text"", ""bg"":""bg_ruins_field""}",encounter_goblin
+NODE,encounter_goblin,鉄扉の前に、ゴブリンが2匹屯していた。壊れた木箱を漁り、中身を品定めしている。こちらに気づくと、甲高い声で威嚇してきた。,"{""type"":""text"", ""bg"":""bg_ruins_field""}",battle_goblin
+NODE,battle_goblin,ゴブリンが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_ruins_field"", ""enemy_group_id"":402, ""enemy_name"":""ゴブリン x2"", ""enemy_level"":2}",
+CHOICE,,win,,after_goblin
+CHOICE,,lose,,end_failure
+NODE,after_goblin,ゴブリンを倒した。鉄扉に近づき、錆びた錠前をこじ開ける。中には頑丈な金庫が一つ。ギルドの紋章が刻まれた封印が施されている。,"{""type"":""text"", ""bg"":""bg_ruins_field"", ""bgm"":""bgm_quest_calm""}",after_goblin_2
+NODE,after_goblin_2,金庫の横に、もう一つの通路が見えた。,"{""type"":""text"", ""bg"":""bg_ruins_field""}",second_battle
+NODE,second_battle,奥の通路からホブゴブリンが現れた！ 体格が違う。こいつが巣のボスか。取り巻きのゴブリンが2匹、その後ろに控えている。,"{""type"":""text"", ""bg"":""bg_ruins_field"", ""bgm"":""bgm_quest_tense""}",battle_hob
+NODE,battle_hob,ホブゴブリンと取り巻きが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_ruins_field"", ""enemy_group_id"":403, ""enemy_name"":""ホブゴブリンの群れ"", ""enemy_level"":3}",
+CHOICE,,win,,recover_box
+CHOICE,,lose,,end_failure
+NODE,recover_box,ホブゴブリンを退けた。金庫を担ぎ上げ、廃墟を後にする。ずっしりと重い。中身は何だろう——いや、開封不可と言われている。,"{""type"":""text"", ""bg"":""bg_ruins_field"", ""bgm"":""bgm_quest_calm""}",recover_box_2
+NODE,recover_box_2,だが、ふと考えた。闇市に持ち込めば、ギルドに届けるよりはるかに高く売れるだろう。,"{""type"":""text"", ""bg"":""bg_road_day""}",choice_moral
+NODE,choice_moral,金庫を手にしたまま、岐路に立つ。,"{""type"":""text"", ""bg"":""bg_road_day""}",
+CHOICE,,ギルドに届ける,,deliver_guild
+CHOICE,,闇市に売る,,sell_black
+NODE,deliver_guild,金庫をギルドに持ち帰った。担当が封印を確認し、満足げに頷いた。,"{""type"":""text"", ""bg"":""bg_guild""}",deliver_guild_2
+NODE,deliver_guild_2,「無事だな。よくやった。報酬だ」約束通りの金貨を受け取った。正しいことをした——はずだ。,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""ギルド担当""}",end_success
+NODE,sell_black,闇市の裏路地に金庫を持ち込んだ。目利きの男が中身を検め、にやりと笑った。,"{""type"":""text"", ""bg"":""bg_slum""}",sell_black_2
+NODE,sell_black_2,「いい品だ。倍額で買おう」金貨の入った袋を受け取った。ギルドには「廃墟が崩落して回収不能だった」と報告した。嘘がバレなければいいが。,"{""type"":""text"", ""bg"":""bg_slum"", ""speaker_name"":""闇商人""}",end_dark
+NODE,end_success,物資回収完了。正当な報酬を受け取った。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_guild""}",
+NODE,end_dark,闇市で金庫を売りさばいた。報酬は倍。だが、良心が少し痛む。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_slum""}",
+NODE,end_failure,ゴブリンに叩きのめされた。金庫の回収は失敗に終わった。,"{""type"":""end"", ""result"":""failure""}",

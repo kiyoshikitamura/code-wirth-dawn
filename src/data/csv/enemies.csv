@@ -25,6 +25,9 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 1121,enemy_assassin_trainee,見習い暗殺者,8,70,42,2,20,50,,random
 1122,enemy_assassin_master,凄腕の刺客,15,150,75,5,50,150,,random
 1123,enemy_assassin_boss,影の頭目,22,400,90,12,200,500,224,quest_only
+1131,enemy_mob,飢えた市民,2,15,5,1,2,5,,quest_only
+1132,enemy_giant_rat,巨大ネズミ,2,20,8,1,3,10,,random
+1133,enemy_giant_rat_alpha,ネズミの女王,5,180,14,3,15,30,,quest_only
 1201,enemy_roland_ghost_knight,聖騎士の亡霊,10,120,40,10,40,80,,random
 1202,enemy_roland_gargoyle,ガーゴイル,12,150,45,25,60,100,214,random
 1203,enemy_roland_witch,異端の魔女,15,100,60,5,80,120,,random
@@ -51,7 +54,7 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 1322,enemy_bounty_legend,伝説の傭兵,90,900,160,30,600,0,,bounty
 1323,enemy_bounty_reaper,静寂の死神,75,750,180,15,600,0,,bounty
 2101,enemy_boss_ep5_squad,帝国精鋭部隊,12,500,45,10,0,0,,quest_only
-2102,enemy_boss_ep10_dragon,神代の守護竜,25,3500,80,18,0,0,,quest_only
+2102,enemy_boss_ep10_dragon,神代の守護竜,25,1800,55,18,0,0,,quest_only
 2103,enemy_boss_ep20_god,主神,50,9999,150,25,0,0,,quest_only
 2104,enemy_boss_mercenary_king,不死の傭兵王,25,2000,75,15,0,0,,quest_only
 2105,enemy_boss_ruin_guardian,遺跡の守護者,35,3000,90,20,0,0,,quest_only
@@ -60,6 +63,17 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 2108,enemy_boss_archangel,大天使,48,3500,100,20,0,0,,quest_only
 2109,enemy_boss_system_guard,システムの守護者,55,6000,130,25,0,0,,quest_only
 2110,enemy_boss_god_dragon,神竜,58,8000,145,28,0,0,,quest_only
+2111,enemy_apostle_soldier,白磁の使徒,15,300,55,10,0,0,,quest_only
+2112,enemy_seraphim,熾天使,17,600,70,12,0,0,,quest_only
+2120,enemy_archangel_uriel,大天使ウリエル,14,800,65,12,0,0,,quest_only
+2121,enemy_archangel_raphael,大天使ラファエル,15,900,60,14,0,0,,quest_only
+2122,enemy_archangel_gabriel,大天使ガブリエル,16,1000,70,13,0,0,,quest_only
+2123,enemy_archangel_michael,大天使ミカエル,17,1200,80,16,0,0,,quest_only
+2130,enemy_god_hades,冥王ハデス,20,2000,85,18,0,0,,quest_only
+2131,enemy_god_ares,軍神アレス,20,1800,95,15,0,0,,quest_only
+2132,enemy_god_artemis,女神アルテミス,20,1600,90,20,0,0,,quest_only
+2133,enemy_god_zeus_weak,全能神ゼウス,25,3000,110,22,0,0,,quest_only
+2134,enemy_god_zeus_strong,全能神ゼウス,25,4500,165,33,0,0,,quest_only
 
 6001,boss_skeleton_king,骸骨狂王,15,500,55,10,150,500,,quest_only
 6002,boss_queen_worm,マザーワーム,18,700,60,8,200,600,,quest_only

@@ -1,17 +1,15 @@
 /**
- * NPC AI Engine (spec v2.4 → v2.8)
+ * NPC AI Engine (spec v2.4 → v4.0)
  * 
- * Handles NPC decision-making in battle: role determination,
- * AP management, card selection, and targeting.
- * 
- * v2.8 Changes:
- *   - Removed per-turn same-card limit (used_this_turn): NPCs can now use
- *     the same card multiple times per turn if AP permits.
- *   - Basic attack formula changed: ATK + 0~6 (was: 8~12 fixed).
- *   - Added MAX_ACTIONS_PER_TURN (3) to prevent excessive action spam.
+ * v4.0 Changes:
+ *   - Heal check expanded to all roles (medic/guardian/striker) with role-based thresholds.
+ *   - lastUsedCardId cooldown to prevent same-card spam.
+ *   - Miss / Critical integrated via BATTLE_RULES.
+ *   - Basic attack uses v4.0 damage formula.
  */
 
 import { Card, PartyMember } from '@/types/game';
+import { BATTLE_RULES } from '@/constants/battle_rules';
 
 // ─── Types ───────────────────────────────────────────────
 export type AIRole = 'striker' | 'guardian' | 'medic';
@@ -23,9 +21,12 @@ export interface NpcAction {
     damage?: number;
     healAmount?: number;
     targetName?: string;
-    targetEnemyName?: string; // v2.7: 攻撃対象エネミー名
-    effectId?: string; // v2.5: バフ/デバフID
+    targetEnemyName?: string;
+    effectId?: string;
     effectDuration?: number;
+    isMiss?: boolean;
+    isCritical?: boolean;
+    usedCardId?: string; // v4.0: 連打防止用
     message: string;
 }
 
@@ -111,16 +112,21 @@ export function resolveNpcTurn(
         return actions;
     }
 
-    // 2. Emergency Heal Check
-    //    smartグレード（英霊）または medic ロールの場合、
-    //    HPが50%以下なら「局面判断でヒール优先」。
-    //    仕様: spec_v2_addendum_npc_ai.md §4
-    if (npc.ai_grade === 'smart' || npc.ai_role === 'medic') {
-        if (actions.length < MAX_ACTIONS_PER_TURN) {
-            const emergencyAction = tryEmergencyHeal(npc, deck, context);
-            if (emergencyAction) {
-                actions.push(emergencyAction);
-            }
+    // 2. Heal Check (v4.0: 全ロール対応、ロール別閾値)
+    const healThreshold = npc.ai_role === 'medic' ? BATTLE_RULES.HEAL_THRESHOLD_MEDIC
+        : npc.ai_grade === 'smart' ? BATTLE_RULES.HEAL_THRESHOLD_SMART
+        : BATTLE_RULES.HEAL_THRESHOLD_DEFAULT;
+
+    const needsHeal = context.playerHp < context.playerMaxHp * healThreshold
+        || context.partyMembers.some(m =>
+            m.id !== npc.id && m.is_active && m.durability > 0
+            && m.durability < m.max_durability * healThreshold
+        );
+
+    if (needsHeal && actions.length < MAX_ACTIONS_PER_TURN) {
+        const emergencyAction = tryEmergencyHeal(npc, deck, context);
+        if (emergencyAction) {
+            actions.push(emergencyAction);
         }
     }
 
@@ -155,37 +161,41 @@ export function resolveNpcTurn(
         }
     }
 
-    // 5. Aggressive Execution: Use cards by descending AP cost
-    // v2.9.3j: 攻撃用カード = Skill/Magic + 敵対象のDefense/Support（シールドバッシュ等）
-    // 純粋なバフ/ヒール（味方対象）のみ除外。
+    // 5. Attack: 1ターンにつき攻撃カード1枚のみ使用（v4.0）
+    // v4.0: lastUsedCardId による連打防止 — 直前ターンと同じカードは使わない
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
     const attackCards = deck
         .filter(c => {
-            // Skill/Magic → 常に攻撃候補
             if (c.type === 'Skill' || c.type === 'Magic') return true;
-            // Defense/Support でも target_type が敵対象なら攻撃候補に含める
             if ((c.type === 'Defense' || c.type === 'Support') && c.target_type && ENEMY_TARGETS.includes(c.target_type)) return true;
-            // Heal / 味方対象のDefense/Support → 除外
             return false;
         })
         .sort((a, b) => (b.ap_cost ?? 1) - (a.ap_cost ?? 1));
 
-    // Use cards in a loop: try highest cost first, repeat until AP runs out or action cap hit
-    let cardUsed = true;
-    while (cardUsed && actions.length < MAX_ACTIONS_PER_TURN) {
-        cardUsed = false;
-        for (const card of attackCards) {
-            if ((npc.current_ap || 0) < (card.ap_cost ?? 1)) continue;
+    const lastUsed = (npc as any).lastUsedCardId as string | undefined;
 
+    if (actions.length < MAX_ACTIONS_PER_TURN) {
+        // 直前ターンに使ったカードを除外
+        const candidates = attackCards.filter(c => c.id !== lastUsed && (npc.current_ap || 0) >= (c.ap_cost ?? 1));
+
+        if (candidates.length > 0) {
+            // 使用可能な別カードがある → 1枚使用
+            const card = candidates[0];
             const action = executeCard(npc, card, context);
             actions.push(action);
             npc.current_ap = (npc.current_ap || 0) - (card.ap_cost ?? 1);
-            cardUsed = true;
-            break; // restart from highest cost
+            (npc as any).lastUsedCardId = card.id;
+        } else {
+            // 別カードがない（1枚しかない or AP不足）→ 基本攻撃
+            if (!actions.some(a => a.type === 'attack')) {
+                actions.push(createBasicAttack(npc, context));
+            }
+            // lastUsedCardId をリセット → 次ターンでカード使用可能に
+            (npc as any).lastUsedCardId = undefined;
         }
     }
 
-    // 攻撃アクションが1件もない場合は基本攻撃（バフのみのguardianも攻撃する）
+    // 攻撃アクションが1件もない場合は基本攻撃フォールバック
     const hasAttackAction = actions.some(a => a.type === 'attack');
     if (!hasAttackAction) {
         actions.push(createBasicAttack(npc, context));
@@ -417,7 +427,6 @@ function executeCard(
     const power = card.power ?? 0;
     const isBuff = card.type === 'Defense' || card.type === 'Support' || (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id));
 
-    // v2.5: バフ/防御カード
     if (isBuff) {
         const isSelf = card.effect_id && ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id);
         const targetName = isSelf ? npc.name : '味方';
@@ -427,47 +436,74 @@ function executeCard(
             effectId: card.effect_id,
             effectDuration: card.effect_duration || 3,
             targetName,
+            usedCardId: card.id,
             message: `${npc.name}の${card.name}！ ${targetName}に効果が発動した。`
         };
     }
 
     if (power <= 0 && (card.name.includes('回復') || card.name.includes('ヒール'))) {
-        // Heal card
         const healAmount = Math.abs(power) || 15;
         return {
             type: 'heal',
             card,
             healAmount,
             targetName: 'あなた',
+            usedCardId: card.id,
             message: `${npc.name}の${card.name}！ HPが ${healAmount} 回復した。`
         };
     }
 
-    // Attack card
-    let damage = power || (8 + Math.floor(Math.random() * 5));
+    // v4.0: ミス判定
+    const critRate = npc.ai_grade === 'smart' ? BATTLE_RULES.NPC_HIGH_GRADE_CRIT_RATE : BATTLE_RULES.NPC_CRIT_RATE;
+    if (Math.random() < BATTLE_RULES.NPC_MISS_RATE) {
+        return {
+            type: 'attack',
+            card,
+            damage: 0,
+            isMiss: true,
+            targetEnemyName: context.enemyName,
+            usedCardId: card.id,
+            message: `${npc.name}の${card.name}！ ミス！ 攻撃は外れた！`
+        };
+    }
 
-    // v8.1: NPC基礎ATK加算 (プレイヤーと同様)
+    // v4.0: ダメージ計算フロー (base → 揺らぎ → クリティカル → DEF)
     const npcAtk = npc.atk || 0;
-    damage = damage + npcAtk;
+    let dmg = (power + npcAtk) || (8 + Math.floor(Math.random() * 5) + npcAtk);
 
-    // Apply DEF mitigation (non-magic)
+    // 揺らぎ
+    const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN
+        + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
+    dmg = dmg * variance;
+
+    // クリティカル判定
+    const isCritical = Math.random() < critRate;
+    if (isCritical) {
+        dmg = dmg * BATTLE_RULES.CRIT_MULTIPLIER;
+    }
+
+    // DEF減算 (魔法は貫通)
     const isMagic = card.name.includes('魔法') ||
         card.name.toLowerCase().includes('magic') ||
         card.name.toLowerCase().includes('fire') ||
         card.name.toLowerCase().includes('ice');
-
     if (!isMagic) {
-        damage = Math.max(1, damage - context.enemyDef);
+        dmg = dmg - context.enemyDef;
     }
+
+    const finalDmg = Math.max(1, Math.floor(dmg));
+    const critLabel = isCritical ? ' クリティカルヒット！' : '';
 
     return {
         type: 'attack',
         card,
-        damage,
+        damage: finalDmg,
+        isCritical,
         effectId: card.effect_id,
         effectDuration: card.effect_duration || 3,
         targetEnemyName: context.enemyName,
-        message: `${npc.name}の${card.name}！ ${context.enemyName}に ${damage} のダメージ！`
+        usedCardId: card.id,
+        message: `${npc.name}の${card.name}！${critLabel} ${context.enemyName}に ${finalDmg} のダメージ！`
     };
 }
 
@@ -475,20 +511,47 @@ function createBasicAttack(
     npc: PartyMember,
     context: BattleContext
 ): NpcAction {
-    // v2.8: Basic attack = ATK + 0~6 (was: 8~12 fixed + ATK)
-    const npcAtk = npc.atk || 0;
-    let baseDmg = npcAtk + Math.floor(Math.random() * 7); // ATK + 0~6
-
-    const isMagic = npc.job_class === 'Mage';
-    let finalDmg = baseDmg;
-    if (!isMagic) {
-        finalDmg = Math.max(1, baseDmg - context.enemyDef);
+    // v4.0: ミス判定
+    if (Math.random() < BATTLE_RULES.NPC_MISS_RATE) {
+        return {
+            type: 'attack',
+            damage: 0,
+            isMiss: true,
+            targetEnemyName: context.enemyName,
+             message: `${npc.name}の援護攻撃！ ミス！ 攻撃は外れた！`
+        };
     }
+
+    // v4.0: ダメージ計算フロー
+    const npcAtk = npc.atk || 0;
+    let baseDmg = npcAtk + Math.floor(Math.random() * 7);
+
+    // 揺らぎ
+    const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN
+        + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
+    baseDmg = baseDmg * variance;
+
+    // クリティカル
+    const critRate = npc.ai_grade === 'smart' ? BATTLE_RULES.NPC_HIGH_GRADE_CRIT_RATE : BATTLE_RULES.NPC_CRIT_RATE;
+    const isCritical = Math.random() < critRate;
+    if (isCritical) {
+        baseDmg = baseDmg * BATTLE_RULES.CRIT_MULTIPLIER;
+    }
+
+    // DEF減算
+    const isMagic = npc.job_class === 'Mage';
+    if (!isMagic) {
+        baseDmg = baseDmg - context.enemyDef;
+    }
+
+    const finalDmg = Math.max(1, Math.floor(baseDmg));
+    const critLabel = isCritical ? ' クリティカルヒット！' : '';
 
     return {
         type: 'attack',
         damage: finalDmg,
+        isCritical,
         targetEnemyName: context.enemyName,
-        message: `${npc.name}の援護攻撃！ ${context.enemyName}に ${finalDmg} のダメージ！`
+        message: `${npc.name}の援護攻撃！${critLabel} ${context.enemyName}に ${finalDmg} のダメージ！`
     };
 }

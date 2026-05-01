@@ -11,10 +11,10 @@ export const GROWTH_RULES = {
     HP_LEVEL_GAIN_MIN: 3,       // レベルアップごとの最小HP増加
     HP_LEVEL_GAIN_MAX: 6,       // レベルアップごとの最大HP増加
 
-    // Deck Cost (Spec v15.0: 上限30)
+    // Deck Cost (Spec v16.0: 上限40, Lv×1成長)
     BASE_DECK_COST: 8,
-    COST_PER_LEVEL: 2,
-    MAX_DECK_COST: 30,          // v15.0: 上限追加（Lv11で到達）
+    COST_PER_LEVEL: 1,          // v16.0: 2→1に減速（中盤以降の成長感維持）
+    MAX_DECK_COST: 40,          // v16.0: 30→40（Lv32で到達）
 
     // ATK/DEF Growth (Spec v15.0: 毎Lv +0〜2、上限廃止)
     ATK_LEVEL_GAIN_MIN: 0,      // レベルアップごとの最小ATK増加
@@ -26,10 +26,11 @@ export const GROWTH_RULES = {
     INITIAL_GOLD_MIN: 900,      // 800 + 100
     INITIAL_GOLD_MAX: 1200,     // 800 + 400
 
-    // Hand Size by Level (spec_v2_battle_parameters.md §4.1)
-    // Lv1-4: 4枚 / Lv5-9: 5枚 / Lv10+: 6枚
+    // Hand Size by Level (spec v16.0: Lv20+:6枚, Lv30+:7枚 追加)
+    // Lv1-4: 4枚 / Lv5-19: 5枚 / Lv20-29: 6枚 / Lv30+: 7枚
     HAND_SIZE_BY_LEVEL: [
-        { minLevel: 10, size: 6 },
+        { minLevel: 30, size: 7 },
+        { minLevel: 20, size: 6 },
         { minLevel: 5, size: 5 },
         { minLevel: 1, size: 4 },
     ] as const,
@@ -66,8 +67,9 @@ export const ECONOMY_RULES = {
     BRIBE_COST: 10_000,                 // 賄賂費用 (G)
 
     // §3: クエスト失敗ペナルティ
-    QUEST_FAIL_REP_PENALTY_MIN: -5,
-    QUEST_FAIL_REP_PENALTY_MAX: -10,
+    QUEST_FAIL_REP_PENALTY_MIN: -3,     // 名声ペナルティ最小値
+    QUEST_FAIL_REP_PENALTY_MAX: -10,    // 名声ペナルティ最大値
+    BATTLE_DEFEAT_VIT_PENALTY: 1,       // バトル敗北時VIT減算量（全バトル共通）
 
     // §4: 祈りの強化
     CAPITAL_PRAYER_MULTIPLIER: 2.0,     // 首都での祈りの影響力倍率

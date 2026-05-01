@@ -1,7 +1,19 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"冬ごもりに失敗した飢えた熊が降りてきた。村の若者が二人やられたよ。あんたたち傭兵でなんとかしてくれ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_giant_bear"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,開拓村の長が待つ集会所に入った。初老の男が地図を広げ、こちらを見た。,"{""type"":""text"", ""bg"":""bg_guild"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[討伐] 開拓村を襲う凶暴な大熊を狩る。前任の猟師は行方不明。""}",text_1a
+NODE,text_1a,「来てくれたか。村の東の森に、凶暴な大熊が棲みついた。畑を荒らし、家畜を襲う。先週、見回りの猟師が行方不明になった」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""開拓村の長""}",briefing
+NODE,briefing,「猟師のヨルンは腕利きだったが、三日経っても戻らん。森の中に血痕が点々と続いていたそうだ」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""開拓村の長""}",briefing_2
+NODE,briefing_2,村長は声を落とした。「あの熊は普通じゃない。傷跡だらけで、片目が潰れている。何かに追われて狂ったのかもしれん」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""開拓村の長""}",enter_forest
+NODE,enter_forest,森に入った。木々は密に茂り、日光がほとんど届かない。地面に大きな獣の足跡が残っている。爪の跡が異常に深い。,"{""type"":""text"", ""bg"":""bg_forest_day"", ""bgm"":""bgm_quest_tense""}",find_trail
+NODE,find_trail,足跡を追った先に、引き裂かれた罠が転がっていた。猟師ヨルンのものだろう。近くの木の幹に深い爪痕が刻まれている。樹液が血のように滲み出していた。,"{""type"":""text"", ""bg"":""bg_forest_day""}",find_trail_2
+NODE,find_trail_2,さらに奥へ進むと、獣の匂いが濃くなった。低い唸り声が、藪の向こうから聞こえる。,"{""type"":""text"", ""bg"":""bg_forest_day""}",encounter_bear
+NODE,encounter_bear,茂みを掻き分けると、巨大な熊が立ち上がった。体中に古傷が走り、片目は白く濁っている。口元に赤いものがこびりついていた。,"{""type"":""text"", ""bg"":""bg_forest_day""}",encounter_bear_2
+NODE,encounter_bear_2,こちらを認めると、大地を揺らすような咆哮を上げた。逃げ場はない。,"{""type"":""text"", ""bg"":""bg_forest_day""}",battle_bear
+NODE,battle_bear,ジャイアントベアが襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_forest_day"", ""enemy_group_id"":405, ""enemy_name"":""ジャイアントベア"", ""enemy_level"":4}",
+CHOICE,,win,,after_bear
+CHOICE,,lose,,end_failure
+NODE,after_bear,大熊が崩れ落ちた。最後に一度だけ、残った片目でこちらを見た。その目に宿っていたのは、怒りではなく——疲労だった。,"{""type"":""text"", ""bg"":""bg_forest_day"", ""bgm"":""bgm_quest_calm""}",after_bear_2
+NODE,after_bear_2,分厚い毛皮を剥いだ。これだけでも報酬になる。熊の近くに、猟師の外套の切れ端が見つかった。ヨルンの最期を想像すると、胃の辺りが重くなった。,"{""type"":""text"", ""bg"":""bg_forest_day""}",return_village
+NODE,return_village,村に戻り、毛皮を見せると村長が深く頷いた。,"{""type"":""text"", ""bg"":""bg_guild""}",return_village_2
+NODE,return_village_2,「やってくれたか……。ヨルンの遺品は見つかったか？」外套の切れ端を差し出すと、村長は黙って受け取った。しばらくして、報酬と獣の毛皮を手渡された。「ありがとう。これで村の連中も安心できる」,"{""type"":""text"", ""bg"":""bg_guild"", ""speaker_name"":""開拓村の長""}",end_success
+NODE,end_success,凶熊狩り完了。報酬と獣の毛皮を受け取った。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_guild""}",
+NODE,end_failure,大熊の猛攻に倒れた。意識が薄れていく中、獣の咆哮が遠ざかっていった。,"{""type"":""end"", ""result"":""failure""}",

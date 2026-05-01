@@ -1,8 +1,15 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"この木箱を運ぶだけだ。中身？ 聞かない方が長生きできるぞ。関所の連中には賄賂が通っているはずだが、用心しろ。",node_1,"type:text"
-NODE,node_1,"目的地へ出発する。",node_2,"type:travel"
-NODE,node_2,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_guard"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,路地裏で闇商人が待っていた。フードの奥から鋭い目がこちらを見据える。,"{""type"":""text"", ""bg"":""bg_slum"", ""bgm"":""bgm_quest_calm"", ""short_description"":""[密輸] 中身不明の禁制品を隣街まで運ぶ。追手に注意。""}",text_1a
+NODE,text_1a,「話は通してある。中身は聞くな。この箱を隣街の『赤猫亭』の主人に届けろ。それだけだ」,"{""type"":""text"", ""bg"":""bg_slum"", ""speaker_name"":""闇商人""}",briefing
+NODE,briefing,「街道は使うな。検問がある。旧道を通れ。……追手がかかるかもしれんが、そのときはお前の腕で何とかしろ」,"{""type"":""text"", ""bg"":""bg_slum"", ""speaker_name"":""闇商人""}",briefing_2
+NODE,briefing_2,闇商人は木箱を押しつけ、闇に消えた。箱はずっしりと重い。中で何かが鈍く音を立てた。,"{""type"":""text"", ""bg"":""bg_slum""}",depart
+NODE,depart,旧道に入った。舗装されていない獣道。月明かりだけが頼りだ。箱を背負い、足音を殺して進む。,"{""type"":""text"", ""bg"":""bg_road_night"", ""bgm"":""bgm_quest_tense""}",travel_night
+NODE,travel_night,道の途中で、背後に気配を感じた。振り返ると、闇の中に人影が二つ。こちらを追ってきている。検問の兵か、あるいは別の組織の追手か。,"{""type"":""text"", ""bg"":""bg_road_night""}",encounter_guard
+NODE,encounter_guard,「止まれ！ その荷を置いていけ！」追手が武器を構えた。逃げるか、戦うか——答えは決まっている。,"{""type"":""text"", ""bg"":""bg_road_night"", ""speaker_name"":""追手""}",battle_guard
+NODE,battle_guard,追手が襲いかかってきた！,"{""type"":""battle"", ""bg"":""bg_road_night"", ""enemy_group_id"":406, ""enemy_name"":""追手部隊"", ""enemy_level"":5}",
+CHOICE,,win,,after_fight
+CHOICE,,lose,,end_failure
+NODE,after_fight,追手を退けた。荷を確認する。無事だ。これ以上長居は危険だ。走れ。,"{""type"":""text"", ""bg"":""bg_road_night"", ""bgm"":""bgm_quest_calm""}",safe_arrival
+NODE,safe_arrival,夜明け前に隣街に辿り着いた。「赤猫亭」の裏口を叩くと、無言の男が現れ、箱を受け取った。代わりに重い革袋を押しつけられた。中身は金貨。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",end_success
+NODE,end_success,密輸完了。金は多いが、後味は悪い。何を運んだのかは、知らないままのほうがいい。,"{""type"":""end"", ""result"":""success"", ""bg"":""bg_tavern_night""}",
+NODE,end_failure,追手に捕まり、荷を没収された。闇商人への報告が怖い。,"{""type"":""end"", ""result"":""failure""}",

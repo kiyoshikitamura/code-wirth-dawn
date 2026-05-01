@@ -8,14 +8,14 @@ interface QuestModalProps {
     scenario: ScenarioDB;
     onClose: () => void;
     onComplete: (result: any, history?: any[]) => void;
-    onBattleStart?: (scenario: ScenarioDB, enemyId: string, successNodeId?: string, bgKey?: string) => void;
+    onBattleStart?: (scenario: ScenarioDB, enemyId: string, successNodeId?: string, bgKey?: string, bgm?: string) => void;
     initialNodeId?: string;
 }
 
 export default function QuestModal({ scenario, onClose, onComplete, onBattleStart, initialNodeId }: QuestModalProps) {
-    const handleBattleWrapper = (enemyId: string, successNodeId: string, bgKey?: string) => {
+    const handleBattleWrapper = (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => {
         if (onBattleStart) {
-            onBattleStart(scenario, enemyId, successNodeId, bgKey);
+            onBattleStart(scenario, enemyId, successNodeId, bgKey, bgm);
         }
     };
 

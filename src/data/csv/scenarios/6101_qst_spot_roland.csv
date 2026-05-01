@@ -2,29 +2,35 @@ row_type,node_id,text_label,params,next_node
 META,gold,0,,
 META,exp,0,,
 META,reputation,0,,
-NODE,start,「慈愛の聖女」が祈るだけで噴水が血に染まり、「不滅の王」が睨むだけで城門が崩れる。王家の禁術により蘇った『五英霊』が、王都を破壊し始めた。,"{""type"":""text"", ""bg"":""bg_spot_roland_fire"", ""bgm"":""bgm_roland""}",text_escape
-NODE,text_escape,人々を守りながら、安全な王宮の地下墓所へと逃げ込むしかない。,"{""type"":""text"", ""bg"":""bg_spot_roland_fire""}",escape_underground
-NODE,escape_underground,地下墓所の奥深くで、歴史から抹消された真の英雄墓所を発見した。だが、そこには自動兵器が立ち塞がっていた！,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_quest_mystery""}",battle_protos
+NODE,start,王都レガリア中央広場。噴水の水が赤黒く染まっていた。聖騎士が血だらけで走ってきた。「逃げろ！ やつらは……やつらは人じゃない！ 英霊が……蘇った英霊が街を壊してる！」,"{""type"":""text"", ""bg"":""bg_spot_roland_fire"", ""bgm"":""bgm_roland""}",text_start2
+NODE,text_start2,背後の大聖堂が爆発した。「慈愛の聖女」が手を翳しただけで兵士たちが崩れ落ちた。「不滅の王」が睨んだだけで城門が折れた。もう立ち向かえる者はいない。地下墓所へ逃げ込むしかない。,"{""type"":""text"", ""bg"":""bg_spot_roland_fire""}",escape_underground
+NODE,escape_underground,地下墓所の最奥で壁の一角に不自然な隙間を見つけた。押すと崩れ、地図にない部屋が広がっていた。壁には歴史書に載っていない英雄たちの名が刻まれている——歴史から抹消された、本当の英雄たちの墓所だ。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_quest_mystery""}",text_protos
+NODE,text_protos,部屋の中央に朽ちた祭壇がある。何かが光っている。手を伸ばそうとした瞬間——石造りの巨人が壁から這い出てきた。祭壇の守護者だ。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",battle_protos
 NODE,battle_protos,墓所の守護者プロトスが起動した！,"{""type"":""battle"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":300, ""enemy_name"":""墓所の守護者"", ""enemy_level"":18}",choice_protos
 CHOICE,,勝利,,get_promise
-NODE,get_promise,守護者を倒し、奥の祭壇から輝く石を手に入れた。パッシブスキル『五英霊の誓約』を入手した。これがあれば、彼らの暴走する絶技を防げるかもしれない。,"{""type"":""reward"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_quest_mystery"", ""items"":[""601""]}",text_eluka
-NODE,text_eluka,地下まで追ってきた英霊の一人、「慈愛の聖女エルーカ」が立ちはだかる。彼女は病の身代わりとして地下に幽閉され、見捨てられた過去を持っていた。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",boss_eluka
+NODE,get_promise,祭壇の奥から五角形に並んだ宝珠が現れた。手に取ると頭の中に声が響いた。「我らの誓約を受け継ぐ者よ。我らは王に裏切られた。この石があれば暴走する我らの絶技を打ち消せる。……頼む。我らを止めてくれ」パッシブスキル『五英霊の誓約』を入手した。,"{""type"":""reward"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_quest_mystery"", ""items"":[""601""]}",text_eluka
+NODE,text_eluka,白い法衣をまとった女が浮かんでいる。目には涙の跡が凍りついていた。「……あなた、生きているのね。珍しいわ」慈愛の聖女エルーカ。王家に「生きた薬」として幽閉され、三年間血を抜かれ続けた女性。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",text_eluka2
+NODE,text_eluka2,「私は三年間、暗闇の中で血を抜かれ続けたの。祈っても祈っても、誰も来なかった。……それでもまだ、私に『慈愛』を求めるの？」彼女の周囲の空気が凍りつく。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb"", ""speaker_name"":""聖女エルーカ""}",boss_eluka
 NODE,boss_eluka,聖女エルーカとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":301, ""enemy_name"":""聖女エルーカ"", ""enemy_level"":20}",choice_eluka
 CHOICE,,勝利,,text_baram
-NODE,text_baram,地下通路を塞ぐように、黒いローブの男が浮かんでいる。「知恵の賢者バラム」。王に禁術の知識を独占され、幽閉の末に処刑された魔術師だ。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",boss_baram
+NODE,text_baram,エルーカは消え際に小さく呟いた。「……ありがとう。やっと、眠れる」次の通路は壁一面に数式と魔法陣が刻まれていた。中央で黒いローブの痩せた男が本を読んでいる。「おや、客人か。最後に人と話したのは……処刑される前日だったかな」,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",text_baram2
+NODE,text_baram2,知恵の賢者バラム。王に研究成果を全て奪われ、口封じに毒殺された魔術師。「私の研究は王家の『神聖魔術』として発表された。さて、死後の暇つぶしに付き合ってもらおうか」空中に無数の魔法陣が展開された。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb"", ""speaker_name"":""賢者バラム""}",boss_baram
 NODE,boss_baram,賢者バラムとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":302, ""enemy_name"":""賢者バラム"", ""enemy_level"":20}",choice_baram
 CHOICE,,勝利,,text_shirasu
-NODE,text_shirasu,巨大な盾を構えた亡霊が道を阻む。「盾の守護者シラス」。王の身代わりとなって毒杯を仰いだ、忠義の騎士。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",boss_shirasu
+NODE,text_shirasu,バラムが霧のように散った。「負けるのは嫌いじゃないよ。研究者は常に仮説を修正するものだ」次の部屋には壁に無数の傷ついた盾。奥に全身傷痕だらけの男が巨大な盾を地面に突き立て、無言でこちらを見据えている。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",text_shirasu2
+NODE,text_shirasu2,盾の守護者シラス。王の身代わりとして毒杯を仰いだ騎士。王は彼の死を「不慮の事故」として処理し、遺族への補償すら行わなかった。「言葉はいらん。俺は死んでも王を守った。だが王は、俺の家族すら守らなかった」盾が軋む音を立てた。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb"", ""speaker_name"":""盾のシラス""}",boss_shirasu
 NODE,boss_shirasu,盾のシラスとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":303, ""enemy_name"":""盾のシラス"", ""enemy_level"":20}",choice_shirasu
 CHOICE,,勝利,,text_lyra
-NODE,text_lyra,蒼い矢が闇を切り裂いた。壁に背を預ける女の姿が見える。「千里の射手リラ」。戦勝の立役者でありながら、口封じのために暗殺された弓の名手。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",boss_lyra
+NODE,text_lyra,シラスが膝をついた。「……強いな。俺の家族のことは……もういい。ただ、あの子らが飯を食えていたなら、それでいい」次の広間に入った瞬間、蒼い光が頬を掠めた。矢だ。壁に背を預ける女が長弓を構えている。片方の目が潰されている。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb""}",text_lyra2
+NODE,text_lyra2,千里の射手リラ。三つの戦争を勝利に導いた弓の名手。軍事機密が不都合だったため「戦死扱い」で暗殺された。「英雄なんて、使い捨ての道具よ。役目が終われば、口を塞がれて消される。——私がその証拠」二本目の矢が放たれた。,"{""type"":""text"", ""bg"":""bg_spot_roland_tomb"", ""speaker_name"":""射手リラ""}",boss_lyra
 NODE,boss_lyra,射手リラとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_roland_tomb"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":304, ""enemy_name"":""射手リラ"", ""enemy_level"":20}",choice_lyra
 CHOICE,,勝利,,text_alvin
-NODE,text_alvin,最後に立ちはだかったのは「不滅の王アルヴィン」。建国の父たる彼は、仲間の犠牲の上に国を築いた自責と憎悪で狂っていた。,"{""type"":""text"", ""bg"":""bg_spot_roland_core"", ""bgm"":""bgm_spot_final_boss""}",boss_alvin
+NODE,text_alvin,リラが弓を降ろした。「……ごめんね。でもあなたが勝ったなら——少しだけ、信じてみてもいいかもしれない」最深部。天井のない巨大な空間。光る粒子が漂う中央の玉座に、金色の鎧を纏い王冠を被った男が座っていた。目は虚ろだった。,"{""type"":""text"", ""bg"":""bg_spot_roland_core"", ""bgm"":""bgm_spot_final_boss""}",text_alvin2
+NODE,text_alvin2,「不滅の王」アルヴィン。建国者にして四人の仲間を殺した男。「俺は四人を殺した。四人の友を、国のために殺した。その罪は……この身が何度滅びても、消えやしない」金色の鎧が黒く染まっていく。「だから——来い！ 俺を止められる者がいるなら、止めてみろ！」,"{""type"":""text"", ""bg"":""bg_spot_roland_core"", ""speaker_name"":""不滅の王アルヴィン""}",boss_alvin
 NODE,boss_alvin,不滅の王アルヴィンとの最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_roland_core"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":305, ""enemy_name"":""不滅の王アルヴィン"", ""enemy_level"":25}",choice_alvin
 CHOICE,,勝利,,final_choice
-NODE,final_choice,全ての英霊を無力化した。駆けつけた現国王は「彼らを完全に消し去り、英雄の魔力的遺産を回収せよ」と身勝手な命令を下した。どうする？,"{""type"":""text"", ""bg"":""bg_spot_roland_core"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+NODE,final_choice,アルヴィンが膝をついた。金の鎧が剥がれ、痩せた老人の体が現れた。「すまなかった。エルーカ。バラム。シラス。リラ」そこへ現国王が駆けつけた。「英霊の残骸を回収しろ。あと——この地下墓所の存在は知らなかったことにしてくれ」アルヴィンが血走った目で国王を睨んだ。「冒険者よ。お前が決めろ。俺たちをどうする」,"{""type"":""text"", ""bg"":""bg_spot_roland_core"", ""bgm"":""bgm_spot_final_choice""}",choice_final
 CHOICE,,王の命令に従い討伐する,,end_kill
 CHOICE,,誓約の力で彼らを安らかに封印する,,end_seal
-NODE,end_kill,王家の命令に従い、怨嗟の根源を断った。王家は不都合な真実を隠蔽した。あなたは新時代の英雄として祭り上げられた。,"{""type"":""end_success"", ""bg"":""bg_spot_roland_core"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""602""]}}",
-NODE,end_seal,彼らの魂を誓約の力で浄化し、安らかな眠りにつかせた。王家からは失策と見なされたが、英霊たちは感謝と共にその力を託してくれた。固有スキル『五星の加護』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_roland_core"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""603""]}}",
+NODE,end_kill,王家の命令に従い、五英霊を完全に消滅させた。アルヴィンは最後に一言だけ残した。「……歴史は、また繰り返すのだな」王家は地下墓所を封鎖し、あなたは「王都を救った英雄」として祭り上げられた。報酬として『神の法衣』を授かった。口止め料としては、少々露骨だった。,"{""type"":""end_success"", ""bg"":""bg_spot_roland_core"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""602""]}}",
+NODE,end_seal,誓約の石を掲げ五つの魂に語りかけた。アルヴィンが目を閉じた。「……ああ。お前のような奴がいてくれて、よかった」五つの光が穏やかに消えていく。最後にアルヴィンが呟いた。「——次の世代に、期待する」国王は苦虫を噛み潰した顔をしたが、英霊たちが託してくれた力は王の命令では消せない。固有スキル『五星の加護』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_roland_core"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""603""]}}",

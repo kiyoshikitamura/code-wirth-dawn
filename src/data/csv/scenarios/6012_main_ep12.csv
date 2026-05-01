@@ -1,16 +1,28 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,華龍神朝の命綱であり、国を東西に分断する大河「黄河」。君は神朝の正規軍に合流し、そこで決死の防衛線を張っていた。,"{""bgm"":""bgm_quest_crisis"", ""type"":""text"", ""bg"":""bg_river""}",text1
-NODE,text1,河川敷には数万規模の華龍軍が展開しているが、彼らの顔にあるのは武者震いではなく、天上の脅威に対する根源的な恐怖だった。,"{""type"":""text"", ""bg"":""bg_river""}",text1_1
-NODE,text1_1,「来たぞ……川面を見ろ！」誰かが叫ぶ。川上から、まるで流氷のように白い大群が押し寄せてくる。白磁の鎧を纏った使徒の群れだ。,"{""type"":""text"", ""bg"":""bg_river""}",text2
-NODE,text2,「防衛陣形を崩すな！弓兵、放て！」神朝の老将軍の号令と共に、果てしない神との連戦の幕が上がる。,"{""type"":""text"", ""bg"":""bg_river""}",battle1
-NODE,battle1,第一波。空と川面の両方から、天界の尖兵たちが一斉に光の魔法を放ちながら迫る！,"{""type"":""battle"", ""enemy_group_id"":211}",choice1
-CHOICE,,迎撃する,,text3
-NODE,text3,君を含めた前線部隊の必死の奮闘で第一波を押し返したが、使徒たちは死体を残さない。光となって消え、また新たな群れが補充されるだけだ。,"{""type"":""text"", ""bg"":""bg_river""}",battle2
-NODE,battle2,間髪入れずに第二波が到達する。敵の放つ魔力の激しさが一段と増し、防衛線の一部が崩壊を始めた！,"{""type"":""battle"", ""enemy_group_id"":211}",choice2
-CHOICE,,死線を越える,,text4
-NODE,text4,体力の限界に達し、腕が引き千切れそうなほどの疲労の中で、天が割れた。雲の間から、一際巨大な六枚の翼を持つ熾天使（上位使徒）が降臨する。,"{""type"":""text"", ""bg"":""bg_river""}",text4_1
-NODE,text4_1,その圧倒的な威圧感に、華龍の兵士たちが次々と膝をつき、戦意を喪失していく。だが、君だけは剣を杖代わりに立ち上がった。,"{""type"":""text"", ""bg"":""bg_river""}",battle3
-NODE,battle3,第三波・熾天使（上位使徒）。こいつさえ倒せば、この前線はいったん持ちこたえられるはずだ！,"{""type"":""battle"", ""enemy_group_id"":212}",choice3
-CHOICE,,すべてを賭して戦う,,text_post_battle
-NODE,text_post_battle,君の放った一撃が熾天使の胸を貫き、耳を聾するほどの轟音と共に光の粒となって消散した。それを合図にしたかのように、周囲の神兵たちも黄河を退き、天へ帰せられていった。,"{""type"":""text"", ""bg"":""bg_river""}",end_node
-NODE,end_node,なんとか防衛線を死守したものの、被害は甚大だった。華龍軍の半数が壊滅し、川底には沈んだ人間の死体が無数に転がっている。「これが……神の力か」君はその場に崩れ落ちた。,"{""type"":""end_success""}",
+META,gold,1500,,
+META,exp,350,,
+META,reputation,15,,
+NODE,start,ヴォルグと共に、西へ急いだ。\n道中、東から西へ逃げる避難民の列とすれ違った。\n焼け焦げた衣服。\n泣き叫ぶ子供。\n目に光のない老人たちが、力なく足を引きずっている。\n「イスハークが……イスハークが燃えている……」呟く女の言葉が、嫌な予感を裏付けた。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_crisis""}",volg_join
+NODE,volg_join,ヴォルグがパーティに加わった。,"{""type"":""guest_join"",""bg"":""bg_road_day"",""guest_id"":""npc_guest_volg""}",text_arrival
+NODE,text_arrival,黄金都市イスハーク。\nマルカンドの首都であり、砂漠の中の楽園と謳われた都。\nだが——目の前に広がる光景は、楽園の面影を留めていなかった。\n黄金のドームが半壊している。\n市場の屋台が炭になっている。\n噴水の水が蒸発し、乾いた噴水台だけが残されていた。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_flames
+NODE,text_flames,空から降り注ぐ炎の柱が、街区を一つずつ焼いている。\n通常の火災ではない。\n炎が意思を持っているかのように、建物を舐め尽くしていく。\n水をかけても消えない。\n燃え尽きるまで止まらない。\nこれが——天使の力。\n人間の消火など、意味を為さない。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_refugees
+NODE,text_refugees,瓦礫の影に、逃げ遅れた住民がいた。\n母親が二人の子供を庇っている。\n商人が焼けた店の前で立ち尽くしている。\n兵士が一人、折れた槍を杖代わりに呻いていた。\n「逃げろ！ 北門はまだ開いている！」叫んだ。\nだが——北門の方角にも、炎の柱が落ちた。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_volg_fury
+NODE,text_volg_fury,ヴォルグが大剣を抜いた。\n「チッ——間に合わなかったか。\n　だが、まだ全部は焼けちゃいねェ」炎の柱の根元——空中に浮かぶ光の存在を睨んだ。\n「あの野郎が元凶だ。\n　あいつを叩けば、この炎も止まる。\n行くぞ！」,"{""type"":""text"",""bg"":""bg_ishaq_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_plaza
+NODE,text_plaza,中央広場に向かって走った。\nかつて賑わった大市場は瓦礫の山と化していた。\n砕けた陶器。\n焦げた絨毯。\n散乱する香辛料の袋。\n砂漠の都の富と文化が、灰に変わっていく。\n広場の中央に——白い使徒の一団が展開していた。\n住民が逃げる道を塞いでいる。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_apostle_block
+NODE,text_apostle_block,使徒が光の槍を構えた。\n無表情。\n無感情。\n逃げ惑う人間たちを、害虫の如く処理しようとしている。\n住民たちの退路を確保するには、まずこの使徒の壁を突破するしかない。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",battle1
+NODE,battle1,使徒の前衛が行く手を阻む！住民の退路を確保するため、突破せよ！,"{""type"":""battle"",""bg"":""bg_ishaq_ruined"",""bgm"":""bgm_battle"",""enemy_group_id"":""502""}",text_path_clear
+CHOICE,,続ける,,text_path_clear
+NODE,text_path_clear,使徒の一団を退けた。\n住民たちが瓦礫の隙間を縫って北へ逃げていく。\n母親が子供の手を引いて走る姿が見えた。\nだが——空が、一際強く輝いた。\n広場の上空に、巨大な光の存在が降りてくる。\n六枚の翼。\n全身が炎で構成された人型の存在。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_uriel_descent
+NODE,text_uriel_descent,熱波が押し寄せた。\n肌が焼けるような熱さに、思わず腕で顔を覆った。\n使徒たちとは次元が違う。\n存在そのものが——炎だ。\n大天使ウリエル。\n炎を司る審判者が、イスハークの上空に君臨していた。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_uriel_voice
+NODE,text_uriel_voice,ウリエルが口を開いた。\n炎が言葉の形を取るような、灼熱の声。\n『穢レタ砂ノ都ヨ。\n　汝ラノ贅沢ト強欲ガ、天ヲ汚シタ。\n　炎ニヨリ清メラレヨ——コレハ慈悲デアル』慈悲——この惨状が、慈悲だと。,"{""type"":""text"",""bg"":""bg_ishaq_ruined"",""speaker_name"":""大天使ウリエル""}",text_uriel_judgment
+NODE,text_uriel_judgment,ウリエルの手に、巨大な炎の剣が現れた。\n振り下ろされれば、広場ごと消し飛ぶ。\nまだ逃げきれていない住民がいる。\nここで止めなければ——全員が灰になる。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_volg_charge
+NODE,text_volg_charge,ヴォルグが大剣を肩に担いで、にやりと笑った。\n「慈悲だぁ？ 笑わせるな。\n　テメェの慈悲とやらが、何人の命を灰にした？　——おい若僧、ビビってる暇はねェぞ。\n　あのデカブツ、一緒にぶっ倒すぞ！」,"{""type"":""text"",""bg"":""bg_ishaq_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",battle2
+NODE,battle2,大天使ウリエルとの戦闘！炎の審判者を撃退し、イスハークを救え！,"{""type"":""battle"",""bg"":""bg_ishaq_ruined"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":""9040""}",text_uriel_retreat
+CHOICE,,続ける,,text_uriel_retreat
+NODE,text_uriel_retreat,渾身の一撃がウリエルの翼を捉えた。\n炎の翼が砕け、光の粒となって散った。\nウリエルの巨体が揺らぐ。\n『……人間ノ抵抗ハ、予定ニナカッタ。\n　ダガ——コレハ始マリニ過ギナイ。\n　他ノ同胞ガ、他ノ都ヲ裁イテイル』光に包まれ、ウリエルが天へ退いていった。\n空を覆っていた炎の柱が、一つずつ消えていく。,"{""type"":""text"",""bg"":""bg_ishaq_ruined"",""speaker_name"":""大天使ウリエル""}",text_aftermath
+NODE,text_aftermath,ウリエルが去り、炎が止んだ。\nだが——都市の半分は既に焼け落ちていた。\n黄金のドームは黒く煤け、市場は瓦礫の山だ。\n生き残った住民たちが、茫然と焼け跡を見つめている。\n泣く気力すら残っていない者もいた。,"{""type"":""text"",""bg"":""bg_ishaq_ruined""}",text_survivors
+NODE,text_survivors,「奴が言っていた。　『他の同胞が、他の都を裁いている』——　つまり、ここだけじゃねえってことだ」ヴォルグが東を指差した。「次は華龍の首都、龍京だ。　あそこが落ちたら、東方全域が終わる。　急ぐぞ——のんびりしてる暇はねェ」,"{""type"":""text"",""bg"":""bg_ishaq_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",volg_leave
+NODE,volg_leave,ヴォルグが離脱した。\n「先に行って偵察してくる。\n龍京で合流だ」大剣を背負い直し、東へ走り去っていった。\nその足は、使徒を七体斬り伏せた男のものとは思えないほど速い。,"{""type"":""leave"",""bg"":""bg_ishaq_ruined""}",text_next_destination
+NODE,text_next_destination,イスハークの住民に水と食料を分け、東へ向かった。\n焼けた都市を背に、砂漠の道を急ぐ。\n空の色は普通に戻っていたが、東の地平線に——また、黄金の光が見えた。\n龍京が、次の標的にされている。,"{""type"":""text"",""bg"":""bg_road_day""}",end_node
+NODE,end_node,大天使ウリエルを退けたが、勝利とは言い難い。\nイスハークは半壊し、多くの命が失われた。\nだが——残った命がある。\n守れた命がある。\n次は龍京。\nあの街を、同じ目には遭わせない。,"{""type"":""end_success"",""bg"":""bg_road_day""}",
+NODE,end_failure,炎の中に倒れた。\nウリエルの灼熱が、意識を焼き尽くしていく。\nイスハークの炎が——止まらない。,"{""type"":""end_failure"",""bg"":""bg_ishaq_ruined""}",

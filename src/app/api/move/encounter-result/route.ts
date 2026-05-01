@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         // プロフィール取得
         const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('id, gold, vitality, accumulated_days, age')
+            .select('id, gold, vitality, accumulated_days, age, max_hp')
             .eq('id', userId)
             .single();
 
@@ -66,21 +66,24 @@ export async function POST(req: Request) {
 
         if (result === 'lose') {
             if (encounter_type === 'bounty_hunter_ambush') {
-                // §1.2 賞金稼ぎ敗北: ゴールド50%没収（死亡なし）
+                // §1.2 賞金稼ぎ敗北: ゴールド50%没収 + VIT -1
                 const currentGold = profile.gold || 0;
                 const goldLost = Math.floor(currentGold * ECONOMY_RULES.BOUNTY_PENALTY_RATE);
                 updatePayload.gold = currentGold - goldLost;
-                penaltyMessage = `賞金稼ぎに敗れた…${goldLost}Gを奪われた。だが命は繋いだ。`;
-                console.log(`[EncounterResult] Bounty hunter defeat: ${goldLost}G forfeited for user ${userId}`);
+                const currentVitality = profile.vitality || 0;
+                updatePayload.vitality = Math.max(0, currentVitality - 1);
+                penaltyMessage = `賞金稼ぎに敗れた…${goldLost}Gを奪われた。（VIT -1）`;
+                console.log(`[EncounterResult] Bounty hunter defeat: ${goldLost}G forfeited, VIT -1 for user ${userId}`);
             } else if (encounter_type === 'random_encounter') {
-                // §1.1 通常エンカウント敗北: Vitality -1
+                // §1.1 通常エンカウント敗北: VIT -1
                 const currentVitality = profile.vitality || 0;
                 updatePayload.vitality = Math.max(0, currentVitality - ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS);
-                penaltyMessage = `傷を負いながら出発地へ引き返された。（Vitality -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS}）`;
-                console.log(`[EncounterResult] Random encounter defeat: Vitality -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS} for user ${userId}`);
+                penaltyMessage = `傷を負いながら出発地へ引き返された。（VIT -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS}）`;
+                console.log(`[EncounterResult] Random encounter defeat: VIT -${ECONOMY_RULES.ENCOUNTER_VITALITY_LOSS} for user ${userId}`);
             }
-            // spec_v16 §1.1/1.2: 敗北時は出発地へ強制送還
+            // spec_v16 §1.1/1.2: 敗北時は出発地へ強制送還 + HP全回復（VIT減少がペナルティ代わり）
             updatePayload.current_location_id = origin_location_id;
+            updatePayload.hp = profile.max_hp || 100;
         }
 
         // DBを更新（移動完了 + ペナルティ）

@@ -1,11 +1,23 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,神々が座す天界――「神域」への回廊は、冷たく透明なクリスタルで形成されていた。空間そのものが聖なる威圧感に満ちており、ただ息をするのすら苦しい。,"{""bgm"":""bgm_quest_crisis"", ""type"":""text"", ""bg"":""bg_boss_altar""}",text1
-NODE,text1,足元には、数多の星々の瞬きや、下界で今なお続く戦争の炎が透けて見え、神々がどれほど高い場所から人間を見下してきたのかが痛いほど伝わってくる。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text2
-NODE,text2,『神意ニ逆ラウ愚者ヨ。分ヲ弁エヌ傲慢ナル命ニ、天罰ヲ下ス』,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text2_1
-NODE,text2_1,玉座へ続く天の回廊に、三対の黄金の翼を背負った、これまでの戦いでも見たことのない最高位の熾天使（神兵）が舞い降りた。神の門番だ。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text3
-NODE,text3,「……悪いが、こっちには死に急ぐ暇はないんでね。そこをどけ」君が剣を構えた、その時だった。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",text3_1
-NODE,text3_1,君の背後にある裂け目から、荒々しい足音と共に何者かが次々と飛び込んでくる。彼らのマントには、ローラン、マルカンド、夜刀、華龍……様々な国の紋章が刻まれていた。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",battle
-NODE,battle,かつて国境で、砂漠で、街で共に戦った傭兵や兵士たちが、国境や人種の壁を越え、君という刃の『後陣』を務めるために駆けつけてきたのだ！,"{""type"":""battle"", ""enemy_group_id"":220}",choice1
-CHOICE,,仲間と共に道を切り開く,,text_post_battle
-NODE,text_post_battle,「前だけ見て走れェ！背中の羽虫どもは俺たちが引き受ける！」傭兵たちの雄叫びを背に受け、君は最高位の神兵の胸を真っ向から貫き、弾き飛ばした。,"{""type"":""text"", ""bg"":""bg_boss_altar""}",end_node
-NODE,end_node,無数の支援を受けながら、ついに最後の関門を突破した。全ての争いの元凶である主神の玉座へと続く、白亜の扉がゆっくりと開かれる。,"{""type"":""end_success""}",
+META,gold,3500,,
+META,exp,450,,
+META,reputation,25,,
+NODE,start,英霊の導きに従い、出雲へ向かった。古き神々の信仰が息づく祐地は穏やかで、大社の境内には参拝者が絶えない。街の老人が教えてくれた。「北の山奥に、誰も行かない谷がある。　霧が深くて道がわからないが——光る石を見た者がいる」,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",text_izumo
+NODE,text_izumo,出雲の北に連なる山脈に分け入った。杉の大木が空を覆い、昼でも薄暗い。獣道すら途切れる場所まで来ると、人間の気配は完全に消えた。鳥の声だけが、静かに響いている。,"{""type"":""text"",""bg"":""bg_mountain""}",text_mountain_path
+NODE,text_mountain_path,山道は険しかった。崩れかけた岩場を越え、急な斜面を登る。木の根に足を取られ、何度も転びそうになった。だが——腕に浮かぶ石碑の紋様が、正しい道を示し続けている。紋様が強く光る方へ、進んだ。,"{""type"":""text"",""bg"":""bg_mountain""}",text_fog
+NODE,text_fog,標高が上がるにつれ、霧が濃くなった。手を伸ばせば目の前すら見えない白い世界。音も吸い込まれ、自分の足音だけが反響する。この霧は自然のものではない。英霊の石碑が——無関係な者を遠ざけているのだ。,"{""type"":""text"",""bg"":""bg_mountain""}",text_shrine_gate
+NODE,text_shrine_gate,霧を抜けると、突然視界が開けた。谷間の底に——朽ちた鳥居が立っていた。注連縄は切れ、苔に覆われている。だがその奥に、微かな光が見える。誰にも知られずに、何千年もここで待ち続けていたのだ。,"{""type"":""text"",""bg"":""bg_mountain_shrine"",""bgm"":""bgm_quest_tense""}",text_valley
+NODE,text_valley,鳥居をくぐり、谷の奥へ進んだ。清流が岩を縫って流れている。苔むした石段が、谷の底へ続いていた。石段の終着点に——石碑が立っていた。月光のような銀色の光を放っている。夜ではないのに——この谷だけは、月に照らされていた。,"{""type"":""text"",""bg"":""bg_mountain_shrine""}",text_stele_found
+NODE,text_stele_found,石碑に近づいた。表面に文字が浮かび上がる。「此処に、英霊の記憶を封じる。　継承者よ。触れよ。　月光の試練を越え、力の欠片を受け継げ」覚悟を決めて——石碑に手を触れた。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_touch
+NODE,text_touch,意識が飛んだ。白い光が銀に変わり——気づくと、月明かりの山道に立っていた。英霊の記憶。この山で、英霊は追い詰められた。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_memory_mountain
+NODE,text_memory_mountain,記憶が再生される。英霊は、月夜の山道を駆けていた。木々の間から——銀色の矢が飛んでくる。音もなく。気配もなく。ただ正確に、急所を狙って射抜いてくる。どの木の陰にも、どの岩の裏にも——銀色の瞳が光っていた。狩りの女神に——標的にされていた。,"{""type"":""text"",""bg"":""bg_memory_mountain""}",text_artemis_appear
+NODE,text_artemis_appear,月光の中に、影が現れた。銀の髪。冷たい瞳。背に銀の弓を負い、白い狩衣を纏っている。女神アルテミス——月と狩りを司る神。狩猟を司る女神にして、最も正確な射手。その矢は——一度も的を外したことがないという。,"{""type"":""text"",""bg"":""bg_memory_mountain"",""bgm"":""bgm_battle_strong""}",text_artemis_voice
+NODE,text_artemis_voice,アルテミスが弓を構えた。静かな声。感情を排した、研ぎ澄まされた声。「狩りの作法を教えよう。　獲物は——逃げれば追う。　隠れれば見つける。　立ち向かえば——射抜く。　英霊は、三つ目を選んだ。　お前はどうする？」,"{""type"":""text"",""bg"":""bg_memory_mountain"",""speaker_name"":""女神アルテミス""}",text_artemis_challenge
+NODE,text_artemis_challenge,「答えは聞くまでもないか。　その目を見ればわかる。　——良いだろう。　月の狩りに、挑む勇気は認める」銀の弓が引き絞られた。月光が矢に凝縮される。「だが——覚悟だけでは、矢は止められない」,"{""type"":""text"",""bg"":""bg_memory_mountain"",""speaker_name"":""女神アルテミス""}",battle
+NODE,battle,女神アルテミスとの戦闘！月光の矢を掻い潜り、狩りの女神を打ち倒せ！,"{""type"":""battle"",""bg"":""bg_memory_mountain"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9052""}",text_artemis_defeat
+CHOICE,,続ける,,text_artemis_defeat
+NODE,text_artemis_defeat,銀の弓の弦が——断ち切られた。アルテミスが弓を下ろし、初めて——僅かに、口元が緩んだ。「……英霊と同じだ。　追い詰めても、追い詰めても、前に出てくる。　人間の、そういうところが——厄介だ」月光に溶けるように、アルテミスの姿が消えた。「鎧はお前に預ける。　——次の狩りを、楽しみにしている」,"{""type"":""text"",""bg"":""bg_memory_mountain"",""speaker_name"":""女神アルテミス""}",text_armor
+NODE,text_armor,意識が現実に戻った。石碑の足元に——鎧が置かれていた。銀色に輝く鎧。月光を編み込んだような繊細な意匠。手に取ると、驚くほど軽い。だが、確かな守りの力が宿っている。女神の鎧。英霊がアルテミスから勝ち取った遺産の一つ。,"{""type"":""text"",""bg"":""bg_mountain_shrine""}",text_return
+NODE,text_return,山を下り、出雲の街に戻った。手の中の鎧が、月光のように淡く光っている。四つの遺産のうち、また一つを手にした。ハデスの護符。アレスの剣。アルテミスの鎧。残るは——レガリアの遺跡に眠る、最後の記憶。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",end_node
+NODE,end_node,女神アルテミスの試練を乗り越え、鎧を手に入れた。狩りの女神は手強かった。だが——最後の微笑みには、敵意はなかった。英霊は、これだけの神々と渡り合ってきたのだ。自分はその遺産を受け継ぎ、先へ進む。最後の石碑が待っている。,"{""type"":""end_success"",""bg"":""bg_road_day""}",
+NODE,end_failure,銀の矢が胸を貫いた。月光の中に倒れ、意識が消えていく。遠くで——アルテミスの声が聞こえた。「まだ……獲物ではなかったか」,"{""type"":""end_failure"",""bg"":""bg_memory_mountain""}",

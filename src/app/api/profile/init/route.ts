@@ -6,7 +6,7 @@ import { LifeCycleService } from '@/services/lifeCycleService';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids, atk, def } = body;
+        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids, atk, def, avatar_url } = body;
 
         const { user_id } = body; // クライアントから明示的に渡される場合
 
@@ -64,6 +64,7 @@ export async function POST(req: Request) {
         };
 
         if (current_location_id) updates.current_location_id = current_location_id;
+        if (avatar_url) updates.avatar_url = avatar_url;
 
         // 匿名ユーザー（テストプレイ）フラグ＆失効日時を設定
         const isAnonymous = jwtUser?.is_anonymous ?? false;

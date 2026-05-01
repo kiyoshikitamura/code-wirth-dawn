@@ -561,7 +561,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                     </div>
                                 )}
                                 <div className="w-10 h-1.5 mt-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-900 shadow-inner">
-                                    <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, ((liveHp ?? userProfile?.hp ?? 0) / (userProfile?.max_hp || 1)) * 100))}%` }} />
+                                    <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, ((liveHp ?? userProfile?.hp ?? 0) / ((userProfile?.max_hp || 1) + (battleState.equipBonus?.hp || 0))) * 100))}%` }} />
                                 </div>
                                 <span className="text-[9px] text-slate-100 font-bold w-[44px] text-center truncate mt-0.5 drop-shadow-md">{userProfile?.name || '旅人'}</span>
                             </button>
@@ -682,10 +682,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                 <div className="flex-1 min-w-0">
                                     <div className="text-[11px] font-bold text-slate-200 truncate">{userProfile?.name || '旅人'}</div>
                                     <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden mt-1">
-                                        <div className="h-full bg-green-500 transition-all" style={{ width: `${((userProfile?.hp ?? 0) / (userProfile?.max_hp || 1)) * 100}%` }} />
+                                        <div className="h-full bg-green-500 transition-all" style={{ width: `${((userProfile?.hp ?? 0) / ((userProfile?.max_hp || 1) + (battleState.equipBonus?.hp || 0))) * 100}%` }} />
                                     </div>
                                 </div>
-                                <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{userProfile?.hp ?? 0}/{userProfile?.max_hp ?? 0}</span>
+                                <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{userProfile?.hp ?? 0}/{(userProfile?.max_hp ?? 0) + (battleState.equipBonus?.hp || 0)}</span>
                             </button>
                             {/* パーティメンバー */}
                             {(battleState.party || []).filter(m => m.is_active && (m.durability ?? 0) > 0).map((member: any) => (

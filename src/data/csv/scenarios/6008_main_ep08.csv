@@ -1,14 +1,28 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,夜刀神国に入境して数日が経った。君は都からは遠く離れた、辺境に近い寂れた宿屋で久しぶりの休息を取っていた。,"{""bgm"":""bgm_quest_tense"", ""type"":""text"", ""bg"":""bg_tavern_night""}",text1
-NODE,text1,粗末なベッドに横たわり、これまでの激戦で負った傷を癒す。だが、傭兵として染み付いた勘が、無意識に危険を察知して君の眠りを浅くしていた。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text2
-NODE,text2,真夜中。窓の外で、草木が擦れるのとは明らかに違う、衣擦れの音が微かに響いた。さらには窓ガラスが立てる、細かく不自然な振動。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text3
-NODE,text3,「……囲まれているな。しかもプロだ」君はゆっくりと身を起こし、枕元に置いていた剣の柄を握る。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text3_1
-NODE,text3_1,この国は平穏に見えて、裏では各勢力が血みどろの暗闘を繰り広げている。君が関所に現れた情報、あるいは帝国の生き残りであるという事実が、誰かの気に障ったのだろうか。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text4
-NODE,text4,次の瞬間、扉が音もなく吹き飛び、煙幕と共に黒装束の集団が部屋になだれ込んできた！,"{""type"":""text"", ""bg"":""bg_tavern_night""}",battle
-NODE,battle,「標的を確認。……これより排除する」感情の一切こもっていない声と共に、鋭い刃が暗闇から迫る。,"{""type"":""battle"", ""enemy_group_id"":206}",choice1
-CHOICE,,暗闇の中で迎撃する,,text5
-NODE,text5,数合の打ち合いの末、第一波を切り伏せた。だが、死体は音もなく崩れ落ち、悲鳴一つ上げない。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",text5_1
-NODE,text5_1,「ただのゴロツキじゃない……夜刀の暗部（プロ）か！」息をつく暇もなく、窓からさらなる刺客が音もなく滑り込んでくる。,"{""type"":""text"", ""bg"":""bg_tavern_night""}",battle2
-NODE,battle2,「抵抗は無意味だ。貴様はここで夜霧に消える運命にある」月明かりに照らされた刃が乱舞する！,"{""type"":""battle"", ""enemy_group_id"":207}",choice2
-CHOICE,,生き残るために命を削る,,end_node
-NODE,end_node,最後の刺客を窓の外へ蹴り落とすと、夜は再び不気味なほどの静寂を取り戻した。誰が、何の目的で刺客を差し向けたのか……夜刀の闇は深く、底知れないほど冷たい。,"{""type"":""end_success""}",
+META,gold,350,,
+META,exp,200,,
+META,reputation,10,,
+NODE,start,"夜刀神国に入境して数日が経った。都からは遠く離れた、辺境の寂れた宿屋。","{""type"":""text"", ""bg"":""bg_tavern_night"", ""bgm"":""bgm_quest_tense""}",text_start2
+NODE,text_start2,"粗末な寝台。薄い布団。久しぶりに屋根の下で眠れる。それだけで十分に贅沢だった。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_rest
+NODE,text_rest,"横になった。肩の傷はまだ痛む。だが熱は引いた。三日ぶりの白米は、涙が出るほど美味かった。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_rest2
+NODE,text_rest2,"目を閉じた。——だが、傭兵として染みついた勘が、眠りを浅くしていた。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_sound
+NODE,text_sound,"真夜中。ふと目が覚めた。虫の声が——止まっている。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_sound2
+NODE,text_sound2,"窓の外で衣擦れの音。窓ガラスが細かく不自然に振動している。——鍵を探っている。三方向から気配がある。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_analysis
+NODE,text_analysis,"ゆっくりと身を起こした。枕元の剣の柄を握った。囲まれている。しかもプロだ。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_analysis2
+NODE,text_analysis2,"この国は平穏に見えて、裏では各勢力が血みどろの暗闘を繰り広げている。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_door_break
+NODE,text_door_break,"次の瞬間——扉が音もなく吹き飛んだ。煙幕。白い煙が部屋を満たす。視界がゼロになった。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_assassin_first
+NODE,text_assassin_first,"煙の中から声がした。感情が一切ない声。「——標的を確認。これより排除する」鋭い刃が暗闇から迫った。","{""type"":""text"", ""bg"":""bg_tavern_night""}",battle1
+NODE,battle1,"暗殺者第一波との戦闘！ 闇の中で迎撃しろ！","{""type"":""battle"", ""bg"":""bg_tavern_night"", ""enemy_group_id"":206, ""bgm"":""bgm_battle""}",choice1
+CHOICE,,迎撃する,,text_first_wave
+NODE,text_first_wave,"三人を切り伏せた。だが死体は音もなく崩れ落ちた。悲鳴一つ上げない。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_first_wave2
+NODE,text_first_wave2,"顔に表情がない。ただのゴロツキではない。夜刀の暗部——国が飼っている暗殺組織だ。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_first_wave3
+NODE,text_first_wave3,"息をつく暇もなく、窓から新たな影が滑り込んできた。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_assassin_second
+NODE,text_assassin_second,"二人目の暗殺者が月明かりの中で刃を構えた。格が違う。立ち姿に隙がない。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_assassin_second2
+NODE,text_assassin_second2,"低い声。女の声だった。「抵抗は無意味だ。貴様はここで夜霧に消える運命にある。——恨むなら、この国に足を踏み入れた己を恨め」","{""type"":""text"", ""bg"":""bg_tavern_night""}",battle2
+NODE,battle2,"暗殺者精鋭との戦闘！ 月明かりに照らされた刃が乱舞する！","{""type"":""battle"", ""bg"":""bg_tavern_night"", ""enemy_group_id"":207, ""bgm"":""bgm_battle""}",choice2
+CHOICE,,生き残る,,text_silence
+NODE,text_silence,"最後の刺客を窓の外へ蹴り落とした。","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_silence2
+NODE,text_silence2,"女の暗殺者は落ちる寸前に一言だけ残した。「……強いな。だが——これで終わりではない。我らの主は、貴様を放ってはおかぬ」","{""type"":""text"", ""bg"":""bg_tavern_night""}",text_silence3
+NODE,text_silence3,"夜刀の闇は深い。底知れないほど——冷たい。","{""type"":""text"", ""bg"":""bg_tavern_night""}",end_node
+NODE,end_node,"朝が来た。宿の主人が血だまりを見て腰を抜かした。金を置いて宿を出た。","{""type"":""text"", ""bg"":""bg_tavern_night""}",end_node2
+NODE,end_node2,"誰が、何の目的で刺客を差し向けたのか。それを知るには——もっと深く、この国の闇に踏み込むしかない。","{""type"":""end_success"", ""bg"":""bg_tavern_night""}",

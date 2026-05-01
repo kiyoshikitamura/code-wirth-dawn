@@ -2,34 +2,35 @@ row_type,node_id,text_label,params,next_node
 META,gold,0,,
 META,exp,0,,
 META,reputation,0,,
-NODE,start,華龍の霊山に天を衝く「虚無の塔」が出現した。塔の頂には「神」が座し、四方に四神を配置して世界を遊戯として眺めているという。華龍の皇帝は塔の攻略を命じた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_karyu""}",text_branch
-NODE,text_branch,四神はそれぞれ塔の四方を守護している。まず東の間へ向かう。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",text_seiryu
-NODE,text_seiryu,東の間に雷雲が渦巻いている。蒼い鱗を持つ龍「青龍」が天井から降下してきた。東方の守護神だ。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong""}",boss_seiryu
-NODE,boss_seiryu,青龍との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":320, ""enemy_name"":""青龍"", ""enemy_level"":22}",choice_seiryu
-CHOICE,,勝利,,reward_seiryu
-NODE,reward_seiryu,青龍を退けた。青龍の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""621""]}",text_byakko
-NODE,text_byakko,西の間に猛吹雪が吹き荒れている。白銀の毛並みを持つ「白虎」が鋼の爪を研ぎ澄ませていた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",boss_byakko
-NODE,boss_byakko,白虎との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":321, ""enemy_name"":""白虎"", ""enemy_level"":22}",choice_byakko
-CHOICE,,勝利,,reward_byakko
-NODE,reward_byakko,白虎を退けた。白虎の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""622""]}",text_suzaku
-NODE,text_suzaku,南の間に紅蓮の炎が燃え盛っている。不死の炎を纏う「朱雀」が五色の尾羽を広げた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",boss_suzaku
-NODE,boss_suzaku,朱雀との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":322, ""enemy_name"":""朱雀"", ""enemy_level"":22}",choice_suzaku
-CHOICE,,勝利,,reward_suzaku
-NODE,reward_suzaku,朱雀を退けた。朱雀の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""623""]}",text_genbu
-NODE,text_genbu,北の間に紫の毒霧が立ち込めている。漆黒の甲羅を持つ「玄武」が不動の構えをとっていた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower""}",boss_genbu
-NODE,boss_genbu,玄武との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":323, ""enemy_name"":""玄武"", ""enemy_level"":22}",choice_genbu
-CHOICE,,勝利,,reward_genbu
-NODE,reward_genbu,玄武を退けた。玄武の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_tower"", ""items"":[""624""]}",check_orb_1
-NODE,check_orb_1,四神を全て倒した。塔の頂への扉が現れた。宝珠が揃っているか確認する。,"{""type"":""check_possession"", ""item_id"":""621"", ""next"":""check_orb_2"", ""fallback"":""orb_fail""}",
-NODE,check_orb_2,,"{""type"":""check_possession"", ""item_id"":""622"", ""next"":""check_orb_3"", ""fallback"":""orb_fail""}",
-NODE,check_orb_3,,"{""type"":""check_possession"", ""item_id"":""623"", ""next"":""check_orb_4"", ""fallback"":""orb_fail""}",
-NODE,check_orb_4,,"{""type"":""check_possession"", ""item_id"":""624"", ""next"":""text_kami"", ""fallback"":""orb_fail""}",
-NODE,orb_fail,宝珠が足りない……門は開かなかった。塔は崩壊し始めた。,"{""type"":""end"", ""result"":""failure"", ""bg"":""bg_spot_karyu_tower""}",
-NODE,text_kami,四つの宝珠を祭壇に捧げた。塔の頂への道が開かれた。星空のような体を持つ超越存在が玉座に座っていた。「ほう……四神を退けたか。退屈が紛れそうだ」,"{""type"":""text"", ""bg"":""bg_spot_karyu_summit"", ""bgm"":""bgm_spot_final_boss""}",boss_kami
-NODE,boss_kami,「神」との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_summit"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":324, ""enemy_name"":""神"", ""enemy_level"":28}",choice_kami
+NODE,start,華龍の都の外れ。雲を突く巨塔が聳えている。道端に盲目の老人が座っていた。「塔を目指すのか。何人目だろうな」老人は茶を飲み干すと言った。「四方に四神がおる。全て倒さねば塔には入れん。……すべては上にいる『あれ』が仕掛けた遊びだよ」老人はそう言って闇に消えた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_karyu""}",choose_path
+NODE,choose_path,塔の足元。四方に道が伸びている。東の空には稲光、西からは吹雪、南には陽炎が揺れ、北の大地がわずかに震えている。どの試練から挑むか。,"{""type"":""text"", ""bg"":""bg_spot_karyu_tower"", ""bgm"":""bgm_quest_mystery""}",choice_direction
+CHOICE,,東の青龍,,trap_seiryu
+CHOICE,,西の白虎,,trap_byakko
+CHOICE,,南の朱雀,,trap_suzaku
+CHOICE,,北の玄武,,trap_genbu
+CHOICE,,中央の塔へ進む,,check_orbs
+NODE,trap_seiryu,東の道を進むと空が暗転した。足元に落雷。衝撃が体を打った。遠くから声が聞こえる。「——来たか。遊び相手が」,"{""type"":""modify_state"", ""bg"":""bg_spot_karyu_thunder"", ""hp_percent"":-20}",boss_seiryu
+NODE,boss_seiryu,雷雲の中から蒼い鱗の巨龍が姿を現した。「我は青龍。東方の守護者なり。千年この地で番をしておる」龍が首をもたげた。「正直に言えば退屈なのだ。だが手は抜かぬ。——さあ来い。我を楽しませてみせよ」,"{""type"":""battle"", ""bg"":""bg_spot_karyu_thunder"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":320, ""enemy_name"":""青龍"", ""enemy_level"":20}",choice_seiryu
+CHOICE,,勝利,,reward_orb1
+NODE,reward_orb1,青龍が崩れ落ちた。龍は消え際に低く笑った。「見事。千年ぶりに膝をついたぞ。あの方に会ったら伝えてくれ。もう退屈は嫌だ、と」青龍の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_thunder"", ""items"":[""621""]}",choose_path
+NODE,trap_byakko,西の道に踏み出した途端、気温が急降下した。猛吹雪が吹き荒れ視界が白に塗りつぶされた。風の中に獣の唸り声が混じっている。,"{""type"":""modify_state"", ""bg"":""bg_spot_karyu_thunder"", ""hp_percent"":-20}",boss_byakko
+NODE,boss_byakko,吹雪の隙間に白銀の獣が見えた。肩の高さだけで馬ほどある白虎。「……言葉は要らぬ」虎が地面を蹴った。「牙で語る。それが我の流儀だ」,"{""type"":""battle"", ""bg"":""bg_spot_karyu_thunder"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":321, ""enemy_name"":""白虎"", ""enemy_level"":20}",choice_byakko
+CHOICE,,勝利,,reward_orb2
+NODE,reward_orb2,白虎が倒れた。「……強いな。認めよう」虎は目を閉じた。「我は戦うことしか知らなかった。だが……悪くない最期だ」白虎の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_thunder"", ""items"":[""622""]}",choose_path
+NODE,trap_suzaku,南の道は灼熱だった。足元の石が赤く焼けている。突然足元から業火が噴き上がった。上空で赤い羽根が舞っている。,"{""type"":""modify_state"", ""bg"":""bg_spot_karyu_thunder"", ""hp_percent"":-20}",boss_suzaku
+NODE,boss_suzaku,紅蓮の翼が空を覆った。巨大な火の鳥が舞い降りてきた。「我は朱雀。南方の守護者。千年も火を灯し続けた。消えることが許されぬ炎というのは辛いものよ。だが——お主が我を消してくれるなら、それもまた良い。全力で来い」,"{""type"":""battle"", ""bg"":""bg_spot_karyu_thunder"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":322, ""enemy_name"":""朱雀"", ""enemy_level"":20}",choice_suzaku
+CHOICE,,勝利,,reward_orb3
+NODE,reward_orb3,朱雀が散った。「……ありがとう。やっと……消えられる」残ったのは朱色の宝珠だけだった。温かい。朱雀の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_thunder"", ""items"":[""623""]}",choose_path
+NODE,trap_genbu,北の道は暗く足場が悪い。突然大地が裂けた。岩の雨が降り注ぐ。地鳴りが低く響いている。何かが地中で蠢いている。,"{""type"":""modify_state"", ""bg"":""bg_spot_karyu_thunder"", ""hp_percent"":-20}",boss_genbu
+NODE,boss_genbu,大地が盛り上がり黒曜石の甲羅が姿を現した。巨大な亀。尾が蛇だった。「急ぐな。千年待った」蛇の尾が毒を吐く。「我は玄武。亀と蛇、二つの命を縫い合わされた。あの方の実験作のひとつよ。だから恨みはあるが……務めは務め。参る」,"{""type"":""battle"", ""bg"":""bg_spot_karyu_thunder"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":323, ""enemy_name"":""玄武"", ""enemy_level"":22}",choice_genbu
+CHOICE,,勝利,,reward_orb4
+NODE,reward_orb4,玄武が崩れた。「ようやくばらばらになれる。亀は亀に、蛇は蛇に。本来の姿に——」二つの光が別々の方向に消えていった。玄武の宝珠を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_karyu_thunder"", ""items"":[""624""]}",choose_path
+NODE,check_orbs,四つの宝珠が共鳴し塔の扉が開いた。螺旋階段を登りきると——頂上は拍子抜けするほど簡素だった。石の椅子に十歳ほどの少年が退屈そうに座っている。少年の目の奥に星が回っていた。人間の目ではない。,"{""type"":""text"", ""bg"":""bg_spot_karyu_throne"", ""bgm"":""bgm_spot_final_boss""}",text_kami2
+NODE,text_kami2,「おう、来たか。千年待ったぞ」少年が碁盤を蹴り飛ばした。「ここまで来たのはお前で百四十三人目だ。全員死んだ。今度こそ楽しませてくれよ。退屈で退屈でもう千年も碁を打ち続けてたんだからな」地面が揺れた。,"{""type"":""text"", ""bg"":""bg_spot_karyu_throne"", ""speaker_name"":""神""}",boss_kami
+NODE,boss_kami,「神」との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_karyu_throne"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":324, ""enemy_name"":""神"", ""enemy_level"":25}",choice_kami
 CHOICE,,勝利,,final_choice
-NODE,final_choice,「面白い……久々に身体に傷がついた」神は興味深そうに微笑む。「望みを言え。この塔の力を託すか、それとも……」,"{""type"":""text"", ""bg"":""bg_spot_karyu_summit"", ""bgm"":""bgm_spot_final_choice""}",choice_final
-CHOICE,,神の力を受け入れ武器を授かる,,end_weapon
-CHOICE,,神を完全に打倒し、力を奪い取る,,end_skill
-NODE,end_weapon,神の玉座から天道の薙刀が出現した。四神の力を宿す神器だ。皇帝にもたらした功績は大きく、華龍に新たな伝説が生まれた。,"{""type"":""end_success"", ""bg"":""bg_spot_karyu_summit"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""625""]}}",
-NODE,end_skill,最後の力を振り絞り、神の核を砕いた。塔は崩壊したが、砕けた核から究極のスキルが生まれた。固有スキル『神殺しの光芒』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_karyu_summit"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""626""]}}",
+NODE,final_choice,少年が膝をついた。子供の姿が崩れ光の塊になっていく。「負けたよ。百四十三人目にして初めて負けた。勝者には選ぶ権利がある。俺の力を継いで新しい主になるか。塔ごと壊して全部なかったことにするか。どっちでもいいぞ。俺はもう退屈じゃなくなったからな」,"{""type"":""text"", ""bg"":""bg_spot_karyu_throne"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+CHOICE,,神の代理人として統べる,,end_rule
+CHOICE,,神の理を破壊し自由を掴む,,end_destroy
+NODE,end_rule,光を受け入れた。体に力が流れ込む。世界の全てが見える。石の椅子に座った。碁盤が新しくなっていた。「なるほど。これがあいつの見ていた景色か」退屈の意味が少しわかった気がした。天道の薙刀を手に入れた。重い。神の業は——とても重い。,"{""type"":""end_success"", ""bg"":""bg_spot_karyu_throne"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""625""]}}",
+NODE,end_destroy,碁盤を踏み砕いた。石の椅子を蹴り倒した。「俺はお前の遊び道具じゃない」塔が根元から崩壊を始めた。地上に飛び出した瞬間背後で塔が倒れた。跡には何もなかった。四神もいない。神もいない。人々は自分の足で歩かなければならなくなった。固有スキル『神殺しの光芒』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_karyu_throne"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""626""]}}",

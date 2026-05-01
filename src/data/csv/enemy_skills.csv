@@ -42,3 +42,13 @@ id,slug,name,effect_type,value,description
 2038,skill_aoe_blast,全体攻撃,damage,1.5,全体にダメージを与える
 2039,skill_life_steal,命の収奪,drain_vit,2,寿命(Vitality)を大きく奪い取る
 2040,skill_berserk_rage,狂暴化,damage,4,HP25%以下で発狂する超高威力攻撃
+3001,skill_uriel_flame,炎獄の裁き,damage,2.5,炎攻撃+burn(3T)を付与する
+3002,skill_raphael_chain,慈悲の鎖,damage_stun,2,ダメージ+スタン(1T)+自己回復
+3003,skill_gabriel_horn,啓示の角笛,debuff_atk_down,0,パーティ全体ATK DOWN(3T)
+3004,skill_michael_blade,天軍の剣,damage,5,防御貫通の大ダメージ
+3005,skill_hades_gate,冥府の門,drain_vit,3,VIT吸収+DEF DOWN(2T)
+3006,skill_ares_strike,戦神の剛撃,damage,4,必中の高威力攻撃
+3007,skill_artemis_hunt,月光の狩り,damage,1.5,連続2Hit+bleed(2T)
+3008,skill_zeus_thunder,雷霆,damage_stun,4,大ダメージ+スタン(1T)
+3009,skill_zeus_storm,神罰の嵐,debuff_def_down,0,全体DEF DOWN(3T) ※ゼウス強のみ
+3010,skill_zeus_aegis,イージスの盾,buff_self_def,0,DEF UP(5T)+HP回復 ※ゼウス強のみ

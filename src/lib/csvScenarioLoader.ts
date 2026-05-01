@@ -167,12 +167,15 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 node.type = params.type;
 
                 // Map end types to result
-                if (params.type === 'end_success' || params.type === 'end') {
+                if (params.type === 'end_success') {
                     node.type = 'end';
                     node.result = 'success';
                 } else if (params.type === 'end_failure') {
                     node.type = 'end';
                     node.result = 'failure';
+                } else if (params.type === 'end') {
+                    node.type = 'end';
+                    node.result = params.result || 'success';
                 }
             }
 
@@ -213,7 +216,8 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 'target_location_slug', 'hp_percent', 'hp_flat',
                 'flag', 'key', 'delta', 'value', 'threshold', 'operator',
                 'amount', 'location_name', 'items', 'gold',
-                'encounter_rate'];
+                'success_node', 'fail_node',
+                'encounter_rate', 'fallback'];
             for (const k of passthrough) {
                 if (params[k] !== undefined) {
                     node.params = node.params || {};

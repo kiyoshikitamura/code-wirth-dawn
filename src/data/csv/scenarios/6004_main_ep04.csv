@@ -1,17 +1,37 @@
-﻿row_type,node_id,text_label,params,next_node
-NODE,start,オアシス都市での一件から数日後。君とガウェインは、マルカンド領内を移動する大規模な中立商隊の護衛任務に就いていた。,"{""bgm"":""bgm_quest_tense"", ""type"":""text"", ""bg"":""bg_desert""}",gawain_join
-NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_desert"", ""guest_id"":""npc_guest_gawain""}",text1
-NODE,text1,毒物事件の噂は瞬く間に広がり、マルカンド側の帝国に対するヘイトは限界に達している。すれ違う商人たちの目つきも鋭い。,"{""type"":""text"", ""bg"":""bg_desert""}",text1_1
-NODE,text1_1,「いつ火を吹いてもおかしくない。……むしろ、上層部は火が吹くのを待っているようにも見えるな」,"{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text2
-NODE,text2,ガウェインが馬上でそう呟き、深く溜息をついた直後だった。,"{""type"":""text"", ""bg"":""bg_desert""}",text2_1
-NODE,text2_1,凄まじい轟音と共に、隊商の先頭付近で巨大な爆発・砂塵が上がり、護衛の兵士や商人たちが吹き飛ばされた！,"{""type"":""text"", ""bg"":""bg_desert""}",text3
-NODE,text3,「敵襲！！……馬鹿な、あれを見ろ！信じられん、ローランの紋章だと！？」,"{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text3_1
-NODE,text3_1,砂煙の中から姿を現したのは、他ならぬ君たちの祖国――聖帝国ローランの正規軍、その先遣隊だった。,"{""type"":""text"", ""bg"":""bg_desert""}",text4
-NODE,text4,宣戦布告などない。彼らは『大義』や『制裁』といった空虚な言葉を並べ立てながら、丸腰同然のマルカンド商隊に容赦なく牙を剥いた。,"{""type"":""text"", ""bg"":""bg_desert""}",text4_1
-NODE,text4_1,「これが……大義を掲げた国のやることか！俺たちは何のために剣を振るっているんだ！」君は思わず叫んだ。,"{""type"":""text"", ""bg"":""bg_desert""}",battle
-NODE,battle,迷っている暇はない。今は目の前で殺されようとしている人々を救うため、同国人に向かって剣を抜くしかなかった。,"{""type"":""battle"", ""enemy_group_id"":202}",choice_battle
-CHOICE,,「商隊を護る！」,,text_post_battle
-NODE,text_post_battle,帝国兵を退け、先遣隊を一時的に後退させることには成功した。しかし、辺り一面には無残な商隊の残骸と遺体が散乱している。,"{""type"":""text"", ""bg"":""bg_desert""}",text_post_battle2
-NODE,text_post_battle2,「……ついに、開戦の口火が切られてしまったか。引き返せない泥沼の始まりだ」,"{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
-NODE,gawain_leave,ガウェインは負傷者の救護と撤収指揮のため、一時離脱した。,"{""type"":""leave"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
-NODE,end_node,ガウェインの顔に深く刻まれた疲労と絶望は、これから始まる地獄の戦場を予見していた。君の手は、同朋を斬った感触に小刻みに震えている。,"{""type"":""end_success"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",
+row_type,node_id,text_label,params,next_node
+META,gold,400,,
+META,exp,150,,
+META,reputation,10,,
+NODE,start,"オアシス都市での毒物事件から数日。ガウェインの小隊と共に、マルカンド領内の交易路の安全確認任務に就いていた。","{""type"":""text"", ""bg"":""bg_desert"", ""bgm"":""bgm_quest_tense""}",gawain_join
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_desert"", ""guest_id"":""npc_guest_gawain""}",text_patrol
+NODE,text_patrol,"砂漠の交易路を馬で進む。荷馬車の轍は残っているが、行き交う商人の姿が少ない。","{""type"":""text"", ""bg"":""bg_desert""}",text_patrol2
+NODE,text_patrol2,"以前はラクダの隊列が途切れなかったこの道が、妙に静かだった。","{""type"":""text"", ""bg"":""bg_desert""}",text_rumor
+NODE,text_rumor,"「おかしいな。この道はマルカンド有数の交易路のはずだが」ガウェインが馬の手綱を引いた。","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_rumor2
+NODE,text_rumor2,"「……最近、商人が消えているという噂を聞いた」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_merchant
+NODE,text_merchant,"交易路の中継点に着いた。普段なら賑わう隊商宿が、閑散としている。","{""type"":""text"", ""bg"":""bg_desert""}",text_merchant2
+NODE,text_merchant2,"宿の主人が怯えた顔でこちらを見ている。奥から、血まみれの男がよろめき出てきた。","{""type"":""text"", ""bg"":""bg_desert""}",text_merchant_plea
+NODE,text_merchant_plea,"「た、助けてくれ……！ 賞金稼ぎだ。奴らが……商隊を襲った。仲間は皆殺しにされた」","{""type"":""text"", ""bg"":""bg_desert""}",text_merchant_plea2
+NODE,text_merchant_plea2,"「自分だけ、荷馬車の下に隠れて逃げてきたんだ……」男は震えながら、砂漠の東を指さした。","{""type"":""text"", ""bg"":""bg_desert""}",text_gawain_analysis
+NODE,text_gawain_analysis,"「賞金稼ぎだと？ この辺りで活動する賞金稼ぎは、通常は懸賞金リストの犯罪者しか狙わない」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_analysis2
+NODE,text_gawain_analysis2,"「ましてや中立の商人を襲う理由がない。——王国の依頼でなければ、な」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_analysis3
+NODE,text_gawain_analysis3,"「消えている商人に共通点がある。全員、ローランドとの交易に反対する有力者だ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_trail
+NODE,text_trail,"商人の証言を頼りに、砂漠の東へ向かった。岩場の陰に、野営の跡があった。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_trail2
+NODE,text_trail2,"消した焚き火。砂に埋められた食料の残骸。——そして、複数の足跡が一方向に向かっている。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_ambush_site
+NODE,text_ambush_site,"岩場の先に、開けた場所があった。賞金稼ぎの一団が、別の商隊を包囲しているのが見えた。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_ambush_site2
+NODE,text_ambush_site2,"商人たちが荷車の陰に隠れ、震えている。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_hunter_reveal
+NODE,text_hunter_reveal,"賞金稼ぎのリーダーらしき男が、馬から降りて商人の前に立った。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_hunter_reveal2
+NODE,text_hunter_reveal2,"「——悪く思うなよ。これは仕事だ。お前たちの名前は、リストに載っている」","{""type"":""text"", ""bg"":""bg_wasteland""}",text_hunter_reveal3
+NODE,text_hunter_reveal3,"男の腰に、見覚えのある紋章が刻まれた許可証が光った。ローランド王国の公印だ。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_hunter_taunt
+NODE,text_hunter_taunt,"こちらに気づいたリーダーが、薄ら笑いを浮かべた。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_hunter_taunt2
+NODE,text_hunter_taunt2,"「おや、お節介な連中が来たか。お前たちも標的リストに載っているぞ。"マルカンドに協力する裏切り者"としてな」","{""type"":""text"", ""bg"":""bg_wasteland""}",battle
+NODE,battle,"王国公認の賞金稼ぎとの戦闘！ 商人たちを守り、追跡者を撃退しろ！","{""type"":""battle"", ""bg"":""bg_wasteland"", ""enemy_group_id"":230, ""bgm"":""bgm_battle""}",choice1
+CHOICE,,生き延びるために戦う,,text_aftermath
+NODE,text_aftermath,"賞金稼ぎたちを撃退した。リーダーの男が岩壁にもたれかかり、荒い息をついている。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_aftermath2
+NODE,text_aftermath2,"「……ふ。まさか、こんなところで負けるとはな」","{""type"":""text"", ""bg"":""bg_wasteland""}",text_identity
+NODE,text_identity,"男の懐から、折り畳まれた書類が落ちた。拾い上げると——王国軍の身分証だった。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_identity2
+NODE,text_identity2,"「ローランド王国軍・第三遠征大隊・元伍長」退役した正規兵だ。王国が賞金稼ぎを装わせて、汚れ仕事をさせていた。","{""type"":""text"", ""bg"":""bg_wasteland""}",text_gawain_omen
+NODE,text_gawain_omen,"ガウェインが身分証を見つめた。長い沈黙の後、口を開いた。","{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_omen2
+NODE,text_gawain_omen2,"「……賞金稼ぎを使って邪魔者を消す。工作員で世論を操る。そしてその次は——正規軍が来る」","{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_omen3
+NODE,text_gawain_omen3,"「これは戦争の前哨戦だ。もう——止められないかもしれん」","{""type"":""text"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
+NODE,gawain_leave,"「この身分証があれば、王国の関与を証明できる。——だが、上が握り潰す可能性もある」背を向ける直前、低く呟いた。「……時間がない」","{""type"":""leave"", ""bg"":""bg_wasteland"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
+NODE,end_node,"助けた商人たちが、何度も頭を下げて去っていった。だが——これは氷山の一角に過ぎない。戦争の歯車は、もう回り始めている。","{""type"":""end_success"", ""bg"":""bg_wasteland""}",

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { quest_id, result, history, loot_pool, consumed_items } = body;
+        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat } = body;
 
         // [Security] JWT認証必須化 — body.user_idを信頼しない
         let user_id: string | null = null;
@@ -96,6 +96,16 @@ export async function POST(req: Request) {
             updates.def = Math.max(1, currentDef - decay.def);
         }
 
+        // バトル敗北ペナルティ: VIT -1 + HP全回復
+        let battleDefeatVitPenalty = 0;
+        if (result === 'failure' && battle_defeat) {
+            battleDefeatVitPenalty = 1;
+            const currentVit = updates.vitality ?? user.vitality ?? 100;
+            updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
+            // バトル敗北時はHP全回復（VIT減少がペナルティ代わり）
+            updates.hp = user.max_hp || 100;
+        }
+
 
         // 5. EXP & Level Up Logic
         let levelUpInfo: any = null;
@@ -152,6 +162,7 @@ export async function POST(req: Request) {
         updates.accumulated_days = currentTotalDays + daysPassed;
 
         // 4. Rewards & Travel (Success Only)
+        let alignmentShift: Record<string, number> | null = null;
         if (result === 'success') {
             const rewards = quest.rewards || {};
 
@@ -168,6 +179,24 @@ export async function POST(req: Request) {
                 } else {
                     console.warn(`Quest Complete: Location '${rewards.move_to}' not found.`);
                 }
+            }
+
+            // 4属性変動 (Order/Chaos/Justice/Evil)
+            if (rewards.alignment_shift && typeof rewards.alignment_shift === 'object') {
+                alignmentShift = rewards.alignment_shift;
+                // DBカラムは order_pts, chaos_pts, justice_pts, evil_pts
+                const columnMap: Record<string, string> = {
+                    order: 'order_pts', chaos: 'chaos_pts',
+                    justice: 'justice_pts', evil: 'evil_pts'
+                };
+                for (const [key, val] of Object.entries(rewards.alignment_shift)) {
+                    const col = columnMap[key];
+                    if (col && typeof val === 'number') {
+                        const currentVal = (user as any)[col] || 0;
+                        updates[col] = Math.max(0, currentVal + val);
+                    }
+                }
+                console.log(`[QuestComplete] Alignment shift:`, rewards.alignment_shift);
             }
         }
 
@@ -498,9 +527,7 @@ export async function POST(req: Request) {
 
         // 失敗時: ランダムペナルティ
         if (result === 'failure' && user.current_location_id) {
-            const penaltyMin = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MIN);
-            const penaltyMax = Math.abs(ECONOMY_RULES.QUEST_FAIL_REP_PENALTY_MAX);
-            const repPenalty = -(Math.floor(Math.random() * (penaltyMax - penaltyMin + 1)) + penaltyMin);
+            const repPenalty = -(Math.floor(Math.random() * 8) + 3); // ランダム -3〜-10
 
             const { data: locForRep } = await supabase.from('locations').select('name').eq('id', user.current_location_id).maybeSingle();
             const repLocName = locForRep?.name;
@@ -555,7 +582,9 @@ export async function POST(req: Request) {
             vit_penalty: decay.vit,
             atk_decay: decay.atk,
             def_decay: decay.def,
-            level_up: levelUpInfo
+            level_up: levelUpInfo,
+            battle_defeat_vit_penalty: battleDefeatVitPenalty,
+            alignment_shift: alignmentShift,
         };
 
         return NextResponse.json({

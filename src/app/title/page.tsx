@@ -20,10 +20,10 @@ export default function TitlePage() {
     //   MENU   → New Game / Continue / Test Play ボタン
     //   CHAR_CREATION → キャラクター作成フォーム
     //   CREATING      → 作成中ローディング
-    const [mode, setModeRaw] = useState<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
-    const modeRef = useRef<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING'>('ENTRY');
+    const [mode, setModeRaw] = useState<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'DELETING'>('ENTRY');
+    const modeRef = useRef<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'DELETING'>('ENTRY');
     // mode を変更するときは必ずこのラッパーを使う（modeRef を同期更新するため）
-    const setMode = useCallback((m: 'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING') => {
+    const setMode = useCallback((m: 'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'DELETING') => {
         modeRef.current = m;
         setModeRaw(m);
     }, []);
@@ -38,7 +38,7 @@ export default function TitlePage() {
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 5 * 1024 * 1024) { alert('画像は5MB以内にしてください。'); return; }
+        if (file.size > 10 * 1024 * 1024) { alert('画像は10MB以内にしてください。'); return; }
         const ok = ['image/jpeg', 'image/png', 'image/webp'];
         if (!ok.includes(file.type)) { alert('JPEG / PNG / WebP のみ対応しています。'); return; }
         setAvatarFile(file);
@@ -115,15 +115,18 @@ export default function TitlePage() {
                         headers: { 'Authorization': `Bearer ${session.access_token}` },
                     });
                     if (!res.ok) throw new Error((await res.json()).error);
-                    await supabase.auth.signOut();
                     clearGameStarted();
                     // ローカルストレージもクリア（New Game が stale データを参照しないように）
                     if (typeof window !== 'undefined') {
                         localStorage.removeItem('game-storage');
                         localStorage.removeItem('quest-storage');
                     }
+                    // 削除成功 → サインアウトせずにキャラ作成画面へ直行
+                    // （再度OAuth認証する冗長ステップを省く）
+                    await new Promise(r => setTimeout(r, 1500));
                     setAuthError(null);
-                    setMode('MENU');
+                    setIsTestPlay(false);
+                    setMode('CHAR_CREATION');
                 } catch (err: any) {
                     setAuthError(`削除に失敗しました: ${err.message}`);
                     setMode('MENU');
@@ -189,8 +192,10 @@ export default function TitlePage() {
                 }
                 // Test Play は handleTestPlay 内で checkUserStatus を直接呼ぶため
                 // CREATING モード中は onAuthStateChange からの二重呼び出しをスキップ
-                if (modeRef.current !== 'CREATING') {
-                    setMode('CREATING');
+                if (modeRef.current !== 'CREATING' && modeRef.current !== 'DELETING') {
+                    // 削除意図がある場合は削除中画面を表示（「世界に降り立っています」を見せない）
+                    const hasDeleteIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_delete_intent') === '1';
+                    setMode(hasDeleteIntent ? 'DELETING' : 'CREATING');
                     checkUserStatus();
                 }
             }
@@ -324,12 +329,17 @@ export default function TitlePage() {
                     const { error: uploadError } = await supabase.storage
                         .from('avatars')
                         .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
-                    if (!uploadError) {
+                    if (uploadError) {
+                        console.warn('[avatar upload] Storage error:', uploadError.message);
+                        // アップロード失敗を通知（キャラ作成は続行）
+                        alert(`アイコン画像のアップロードに失敗しました。\nアイコンなしでキャラクターを作成します。\n(${uploadError.message})`);
+                    } else {
                         const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
                         uploadedAvatarUrl = urlData.publicUrl;
                     }
-                } catch (uploadErr) {
+                } catch (uploadErr: any) {
                     console.warn('[avatar upload] 失敗（続行）:', uploadErr);
+                    alert(`アイコン画像のアップロードに失敗しました。\nアイコンなしでキャラクターを作成します。\n(${uploadErr.message || uploadErr})`);
                 }
             }
             setIsUploading(false);
@@ -366,7 +376,7 @@ export default function TitlePage() {
 
             if (!res.ok) throw new Error((await res.json()).error);
 
-            await new Promise(r => setTimeout(r, 4000));
+            await new Promise(r => setTimeout(r, 2000));
             await fetchUserProfile();
             setGameStarted();
             router.push('/inn');
@@ -386,14 +396,28 @@ export default function TitlePage() {
                     <div className="w-[200vw] h-[200vw] bg-[radial-gradient(circle,rgba(163,139,107,0.1)_0%,transparent_70%)] animate-pulse-slow"></div>
                 </div>
                 <MapIcon className="w-24 h-24 animate-spin-slow mb-8 text-amber-500 opacity-80" />
-                <h2 className="text-3xl md:text-5xl text-[#e3d5b8] mb-8 animate-fade-in tracking-[0.2em] font-bold drop-shadow-lg">世界を構築中...</h2>
-                <div className="space-y-4 text-center text-gray-400 font-mono text-sm md:text-base h-32 relative z-10">
-                    <p className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>&gt; 因果律の定着を確認...</p>
-                    <p className="animate-fade-in-up" style={{ animationDelay: '1.5s' }}>&gt; 歴史の編纂を開始...</p>
-                    <p className="animate-fade-in-up" style={{ animationDelay: '2.5s' }}>&gt; 魂の座標を確定。</p>
-                </div>
+                <h2 className="text-xl md:text-2xl text-[#e3d5b8] mb-8 animate-fade-in tracking-[0.2em] font-bold drop-shadow-lg">世界に降り立っています...</h2>
+                <div className="h-32 relative z-10"></div>
                 <div className="absolute bottom-10 w-64 h-1 bg-gray-800 rounded-full overflow-hidden z-10">
                     <div className="h-full bg-amber-500 animate-progress-indeterminate"></div>
+                </div>
+            </div>
+        );
+    }
+
+    // ─── DELETING 画面（キャラクター削除処理中） ─────────────────────────────
+    if (mode === 'DELETING') {
+        return (
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#a38b6b 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-[200vw] h-[200vw] bg-[radial-gradient(circle,rgba(163,139,107,0.1)_0%,transparent_70%)] animate-pulse-slow"></div>
+                </div>
+                <MapIcon className="w-16 h-16 animate-spin-slow mb-6 text-red-400 opacity-80" />
+                <h2 className="text-xl md:text-2xl text-red-300/80 mb-4 animate-fade-in tracking-[0.2em] font-bold drop-shadow-lg">データを削除中...</h2>
+                <p className="text-sm text-slate-500 tracking-widest">しばらくお待ちください</p>
+                <div className="absolute bottom-10 w-64 h-1 bg-gray-800 rounded-full overflow-hidden z-10">
+                    <div className="h-full bg-red-500 animate-progress-indeterminate"></div>
                 </div>
             </div>
         );
@@ -502,103 +526,104 @@ export default function TitlePage() {
                             <span className="text-[10px] text-slate-400/80 tracking-wide">アカウント連携なし・7日間限定・データ引き継ぎ不可</span>
                         </button>
 
-                        {/* New Game 上書き確認モーダル */}
-                        {showNewGameOverwrite && (
-                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-                                <div className="bg-[#100808] border-2 border-amber-700/70 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-5">
-                                    <div className="text-center">
-                                        <div className="text-4xl mb-3">⚔️</div>
-                                        <h3 className="text-xl font-serif text-amber-400 tracking-widest mb-2">既存データの検出</h3>
-                                        <p className="text-amber-300/80 text-xs leading-relaxed">
-                                            このGoogleアカウントには<strong className="text-amber-400">既にキャラクターが存在</strong>します。<br />
-                                            New Gameを開始するには、<strong className="text-red-400">既存の全データを削除</strong>する必要があります。
-                                        </p>
-                                    </div>
-                                    <div className="bg-red-950/40 border border-red-900/50 rounded-lg p-4 space-y-3">
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <input type="checkbox" checked={deleteCheck1} onChange={(e) => setDeleteCheck1(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
-                                            <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
-                                                キャラクターに紐づく<strong>全ての資産・履歴が削除される</strong>ことを理解しました
-                                            </span>
-                                        </label>
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <input type="checkbox" checked={deleteCheck2} onChange={(e) => setDeleteCheck2(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
-                                            <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
-                                                この操作は<strong>絶対に元に戻せない</strong>ことを理解しました
-                                            </span>
-                                        </label>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={async () => {
-                                                setShowNewGameOverwrite(false);
-                                                setDeleteCheck1(false);
-                                                setDeleteCheck2(false);
-                                                await supabase.auth.signOut();
-                                                setMode('MENU');
-                                            }}
-                                            className="flex-1 py-3 border border-slate-700 text-slate-400 font-serif rounded-lg text-sm hover:border-slate-500 hover:text-slate-300 transition-colors"
-                                        >
-                                            キャンセル
-                                        </button>
-                                        <button
-                                            onClick={async () => {
-                                                setShowNewGameOverwrite(false);
-                                                setDeleteCheck1(false);
-                                                setDeleteCheck2(false);
-                                                setMode('CREATING'); // 削除中のローディング演出
-                                                try {
-                                                    const { data: { session: freshSession } } = await supabase.auth.getSession();
-                                                    const token = freshSession?.access_token || pendingSessionToken;
-                                                    if (!token) throw new Error('セッションが無効です。再度お試しください。');
-                                                    const res = await fetch('/api/profile/reset', {
-                                                        method: 'POST',
-                                                        headers: { 'Authorization': `Bearer ${token}` },
-                                                    });
-                                                    // 404 = プロフィール未検出 = 既に削除済み → 成功扱い
-                                                    if (!res.ok && res.status !== 404) {
-                                                        throw new Error((await res.json()).error);
-                                                    }
-                                                    // 削除成功 → ローディング演出後にキャラ作成画面へ
-                                                    if (typeof window !== 'undefined') {
-                                                        localStorage.removeItem('game-storage');
-                                                        localStorage.removeItem('quest-storage');
-                                                    }
-                                                    await new Promise(r => setTimeout(r, 2500));
-                                                    setIsTestPlay(false);
-                                                    setAuthError(null);
-                                                    setMode('CHAR_CREATION');
-                                                } catch (err: any) {
-                                                    setAuthError(`削除に失敗しました: ${err.message}`);
-                                                    await supabase.auth.signOut();
-                                                    setMode('MENU');
-                                                } finally {
-                                                    setIsDeleting(false);
-                                                    setPendingSessionToken(null);
-                                                }
-                                            }}
-                                            disabled={!deleteCheck1 || !deleteCheck2 || isDeleting}
-                                            className="flex-1 py-3 bg-red-900/40 border border-red-700 text-red-300 font-serif font-bold rounded-lg text-sm hover:bg-red-900/60 hover:border-red-500 hover:text-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            {isDeleting ? '削除中...' : '削除して新規作成'}
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={async () => {
-                                            setShowNewGameOverwrite(false);
-                                            setDeleteCheck1(false);
-                                            setDeleteCheck2(false);
-                                            setPendingSessionToken(null);
-                                            setGameStarted();
-                                            router.push('/inn');
-                                        }}
-                                        className="w-full text-center text-[10px] text-slate-500 hover:text-slate-300 transition-colors py-1"
-                                    >
-                                        既存キャラクターで続ける →
-                                    </button>
-                                </div>
+                    </div>
+                )}
+
+                {/* ─── New Game 上書き確認モーダル（MENU外に配置して位置ズレ防止） ─── */}
+                {showNewGameOverwrite && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={async () => { setShowNewGameOverwrite(false); setDeleteCheck1(false); setDeleteCheck2(false); await supabase.auth.signOut(); setMode('MENU'); }}>
+                        <div className="bg-[#100808] border-2 border-amber-700/70 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                            <div className="text-center">
+                                <div className="text-4xl mb-3">⚔️</div>
+                                <h3 className="text-xl font-serif text-amber-400 tracking-widest mb-2">既存データの検出</h3>
+                                <p className="text-amber-300/80 text-xs leading-relaxed">
+                                    このGoogleアカウントには<strong className="text-amber-400">既にキャラクターが存在</strong>します。<br />
+                                    New Gameを開始するには、<strong className="text-red-400">既存の全データを削除</strong>する必要があります。
+                                </p>
                             </div>
-                        )}
+                            <div className="bg-red-950/40 border border-red-900/50 rounded-lg p-4 space-y-3">
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" checked={deleteCheck1} onChange={(e) => setDeleteCheck1(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
+                                    <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
+                                        キャラクターに紐づく<strong>全ての資産・履歴が削除される</strong>ことを理解しました
+                                    </span>
+                                </label>
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" checked={deleteCheck2} onChange={(e) => setDeleteCheck2(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
+                                    <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
+                                        この操作は<strong>絶対に元に戻せない</strong>ことを理解しました
+                                    </span>
+                                </label>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={async () => {
+                                        setShowNewGameOverwrite(false);
+                                        setDeleteCheck1(false);
+                                        setDeleteCheck2(false);
+                                        await supabase.auth.signOut();
+                                        setMode('MENU');
+                                    }}
+                                    className="flex-1 py-3 border border-slate-700 text-slate-400 font-serif rounded-lg text-sm hover:border-slate-500 hover:text-slate-300 transition-colors"
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setShowNewGameOverwrite(false);
+                                        setDeleteCheck1(false);
+                                        setDeleteCheck2(false);
+                                        setMode('DELETING');
+                                        try {
+                                            const { data: { session: freshSession } } = await supabase.auth.getSession();
+                                            const token = freshSession?.access_token || pendingSessionToken;
+                                            if (!token) throw new Error('セッションが無効です。再度お試しください。');
+                                            const res = await fetch('/api/profile/reset', {
+                                                method: 'POST',
+                                                headers: { 'Authorization': `Bearer ${token}` },
+                                            });
+                                            // 404 = プロフィール未検出 = 既に削除済み → 成功扱い
+                                            if (!res.ok && res.status !== 404) {
+                                                throw new Error((await res.json()).error);
+                                            }
+                                            // 削除成功 → ローディング演出後にキャラ作成画面へ
+                                            if (typeof window !== 'undefined') {
+                                                localStorage.removeItem('game-storage');
+                                                localStorage.removeItem('quest-storage');
+                                            }
+                                            await new Promise(r => setTimeout(r, 2500));
+                                            setIsTestPlay(false);
+                                            setAuthError(null);
+                                            setMode('CHAR_CREATION');
+                                        } catch (err: any) {
+                                            setAuthError(`削除に失敗しました: ${err.message}`);
+                                            await supabase.auth.signOut();
+                                            setMode('MENU');
+                                        } finally {
+                                            setIsDeleting(false);
+                                            setPendingSessionToken(null);
+                                        }
+                                    }}
+                                    disabled={!deleteCheck1 || !deleteCheck2 || isDeleting}
+                                    className="flex-1 py-3 bg-red-900/40 border border-red-700 text-red-300 font-serif font-bold rounded-lg text-sm hover:bg-red-900/60 hover:border-red-500 hover:text-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    {isDeleting ? '削除中...' : '削除して新規作成'}
+                                </button>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    setShowNewGameOverwrite(false);
+                                    setDeleteCheck1(false);
+                                    setDeleteCheck2(false);
+                                    setPendingSessionToken(null);
+                                    setGameStarted();
+                                    router.push('/inn');
+                                }}
+                                className="w-full text-center text-[10px] text-slate-500 hover:text-slate-300 transition-colors py-1"
+                            >
+                                既存キャラクターで続ける →
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -646,56 +671,58 @@ export default function TitlePage() {
                             タイトルに戻る
                         </button>
 
-                        {showDeleteConfirm && (
-                            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-                                <div className="bg-[#100808] border-2 border-red-800/70 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-5">
-                                    <div className="text-center">
-                                        <div className="text-4xl mb-3">⚠️</div>
-                                        <h3 className="text-xl font-serif text-red-400 tracking-widest mb-2">キャラクター削除</h3>
-                                        <p className="text-red-300/80 text-xs leading-relaxed">
-                                            この操作は<strong className="text-red-400">絶対に元に戻せません</strong>。<br />
-                                            キャラクター・所持金・装備・クエスト履歴など<br />
-                                            <strong className="text-red-400">すべての資産と記録が永久に消滅</strong>します。
-                                        </p>
-                                    </div>
-                                    <div className="bg-red-950/40 border border-red-900/50 rounded-lg p-4 space-y-3">
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <input type="checkbox" checked={deleteCheck1} onChange={(e) => setDeleteCheck1(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
-                                            <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
-                                                キャラクターに紐づく<strong>全ての資産・履歴が削除される</strong>ことを理解しました
-                                            </span>
-                                        </label>
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <input type="checkbox" checked={deleteCheck2} onChange={(e) => setDeleteCheck2(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
-                                            <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
-                                                この操作は<strong>絶対に元に戻せない</strong>ことを理解しました
-                                            </span>
-                                        </label>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => { setShowDeleteConfirm(false); setDeleteCheck1(false); setDeleteCheck2(false); }}
-                                            className="flex-1 py-3 border border-slate-700 text-slate-400 font-serif rounded-lg text-sm hover:border-slate-500 hover:text-slate-300 transition-colors"
-                                        >
-                                            キャンセル
-                                        </button>
-                                        <button
-                                            disabled={!deleteCheck1 || !deleteCheck2}
-                                            onClick={async () => {
-                                                setShowDeleteConfirm(false);
-                                                setDeleteCheck1(false);
-                                                setDeleteCheck2(false);
-                                                if (typeof window !== 'undefined') sessionStorage.setItem('cwd_delete_intent', '1');
-                                                await handleContinue();
-                                            }}
-                                            className="flex-1 py-3 bg-red-900/40 border border-red-700 text-red-300 font-serif font-bold rounded-lg text-sm hover:bg-red-900/60 hover:border-red-500 hover:text-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            削除して再スタート
-                                        </button>
-                                    </div>
-                                </div>
+                    </div>
+                )}
+
+                {/* ─── 削除確認ポップアップ（CONTINUE_MENU外に配置して位置ズレ防止） ─── */}
+                {showDeleteConfirm && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={() => { setShowDeleteConfirm(false); setDeleteCheck1(false); setDeleteCheck2(false); }}>
+                        <div className="bg-[#100808] border-2 border-red-800/70 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                            <div className="text-center">
+                                <div className="text-4xl mb-3">⚠️</div>
+                                <h3 className="text-xl font-serif text-red-400 tracking-widest mb-2">キャラクター削除</h3>
+                                <p className="text-red-300/80 text-xs leading-relaxed">
+                                    この操作は<strong className="text-red-400">絶対に元に戻せません</strong>。<br />
+                                    キャラクター・所持金・装備・クエスト履歴など<br />
+                                    <strong className="text-red-400">すべての資産と記録が永久に消滅</strong>します。
+                                </p>
                             </div>
-                        )}
+                            <div className="bg-red-950/40 border border-red-900/50 rounded-lg p-4 space-y-3">
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" checked={deleteCheck1} onChange={(e) => setDeleteCheck1(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
+                                    <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
+                                        キャラクターに紐づく<strong>全ての資産・履歴が削除される</strong>ことを理解しました
+                                    </span>
+                                </label>
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" checked={deleteCheck2} onChange={(e) => setDeleteCheck2(e.target.checked)} className="mt-0.5 accent-red-600 w-4 h-4 flex-shrink-0" />
+                                    <span className="text-red-300/80 text-xs leading-relaxed group-hover:text-red-200 transition-colors">
+                                        この操作は<strong>絶対に元に戻せない</strong>ことを理解しました
+                                    </span>
+                                </label>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => { setShowDeleteConfirm(false); setDeleteCheck1(false); setDeleteCheck2(false); }}
+                                    className="flex-1 py-3 border border-slate-700 text-slate-400 font-serif rounded-lg text-sm hover:border-slate-500 hover:text-slate-300 transition-colors"
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    disabled={!deleteCheck1 || !deleteCheck2}
+                                    onClick={async () => {
+                                        setShowDeleteConfirm(false);
+                                        setDeleteCheck1(false);
+                                        setDeleteCheck2(false);
+                                        if (typeof window !== 'undefined') sessionStorage.setItem('cwd_delete_intent', '1');
+                                        await handleContinue();
+                                    }}
+                                    className="flex-1 py-3 bg-red-900/40 border border-red-700 text-red-300 font-serif font-bold rounded-lg text-sm hover:bg-red-900/60 hover:border-red-500 hover:text-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    削除して再スタート
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
 

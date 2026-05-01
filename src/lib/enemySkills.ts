@@ -62,6 +62,14 @@ export const ENEMY_SKILL_MAP: Record<string, EnemySkillMaster> = {
   skill_heavy_attack: { id: 9002, slug: 'skill_heavy_attack', name: '強攻撃',       effect_type: 'damage', value: 1.5, description: '力を込めた攻撃' },
   // typo in CSV (skill_poision_attack → skill_poison_attack へマップ)
   skill_poision_attack: { id: 2006, slug: 'skill_poison_attack', name: '毒針', effect_type: 'damage_poison', value: 1, description: '毒を帯びた攻撃' },
+
+  // ─── 大天使専用スキル ──────────────────────
+  skill_uriel_flame:   { id: 3001, slug: 'skill_uriel_flame',   name: '炎獄の裁き',   effect_type: 'damage', value: 2.5, description: '炎攻撃+burn(3T)を付与する' },
+  skill_raphael_chain: { id: 3002, slug: 'skill_raphael_chain', name: '慈悲の鎖',     effect_type: 'damage_stun', value: 2, description: 'ダメージ+スタン(1T)+自己回復' },
+  skill_gabriel_horn:  { id: 3003, slug: 'skill_gabriel_horn',  name: '啓示の角笛',   effect_type: 'debuff_atk_down', value: 0, description: 'パーティ全体ATK DOWN(3T)' },
+  skill_michael_blade: { id: 3004, slug: 'skill_michael_blade', name: '天軍の剣',     effect_type: 'damage', value: 5, description: '防御貫通の大ダメージ' },
+  skill_enrage:        { id: 3005, slug: 'skill_enrage',        name: '激昂',         effect_type: 'buff_self_atk', value: 0, description: 'HP低下時に攻撃力を高める(ATK UP 3T)' },
+  skill_berserk_rage:  { id: 3006, slug: 'skill_berserk_rage',  name: '狂戦の雄叫び', effect_type: 'buff_self_atk', value: 0, description: 'HP低下時に攻撃力を大きく高める(ATK UP 3T)' },
 };
 
 /**

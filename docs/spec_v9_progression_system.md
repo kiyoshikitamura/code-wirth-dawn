@@ -1,10 +1,11 @@
-Code: Wirth-Dawn Specification v15.0 (Progression System)
+Code: Wirth-Dawn Specification v16.0 (Progression System)
 # Progression System — Leveling, Growth, Deck Cost
 
 ## 1. 概要 (Overview)
 キャラクターの成長ルール（EXP計算、レベルアップ時のステータス増加、デッキコスト制度）を定義する。
 
 <!-- v15.0: HP/ATK/DEFを全体的に上方修正。ATK/DEFの上限を廃止、毎レベルランダム加算に変更。DeckCost上限を30に変更。 -->
+<!-- v16.0: DeckCost成長速度をLv×2→Lv×1に減速、上限を30→40に拡張。手札上限にLv20+(6枚)とLv30+(7枚)の段階を追加。 -->
 
 ---
 
@@ -16,8 +17,8 @@ const BASE_HP = 85;            // キャラクター作成時の基底HP（v15.0
 const HP_PER_LEVEL_MIN = 3;    // v15.0: レベルアップごとの最小HP増加
 const HP_PER_LEVEL_MAX = 6;    // v15.0: レベルアップごとの最大HP増加
 const BASE_DECK_COST = 8;      // Lv1時の基底デッキコスト
-const COST_PER_LEVEL = 2;      // レベルあたりのデッキコスト増加
-const MAX_DECK_COST = 30;      // v15.0: デッキコスト上限（旧: 上限なし）
+const COST_PER_LEVEL = 1;      // v16.0: レベルあたりのデッキコスト増加（旧: 2）
+const MAX_DECK_COST = 40;      // v16.0: デッキコスト上限（旧: 30。Lv32で到達）
 // ATK/DEF: 上限廃止（v15.0）。毎レベルにランダム加算。
 ```
 
@@ -83,19 +84,29 @@ NextLevelExp = 50 * (CurrentLevel ^ 2)
 
 ### 4.1 レベルアップ時の自動成長
 
-<!-- v15.0: HP をランダム増加に変更、ATK/DEFを毎レベルランダム加算・上限撤廃、DeckCost上限を30に設定 -->
+<!-- v16.0: DeckCost成長速度をLv×1に減速、上限を40に拡張 -->
 
 | ステータス | 増加 | 計算式 | 上限 |
 |---|---|---|---|
 | Max HP | `+randInt(3, 6)` / Lv | `baseStat.max_hp + hpIncrease` (累積加算) | なし |
-| Max Deck Cost | `+2` / Lv | `BASE_DECK_COST + (Level * COST_PER_LEVEL)` | **30** |
+| Max Deck Cost | `+1` / Lv | `BASE_DECK_COST + (Level * COST_PER_LEVEL)` | **40** |
 | ATK | `+randInt(0, 2)` / Lv | 毎レベルで加算 | **なし** |
 | DEF | `+randInt(0, 2)` / Lv | 毎レベルで加算 | **なし** |
 
-> **v15.0 変更点まとめ:**
-> - HP: 固定 +5/Lv → ランダム **+3〜6/Lv**
-> - ATK/DEF: 3Lv毎に+1（上限15）→ **毎Lv +0〜2（上限なし）**
-> - Max Deck Cost: 上限なし → **上限 30**（Lv11以降はコスト増加せず上限に張り付く）
+> **v16.0 変更点:**
+> - Max Deck Cost: Lv×2(上限30, Lv11到達) → **Lv×1(上限40, Lv32到達)**
+> - 中盤〜終盤(Lv11-32)でデッキコストが成長し続け、レベルアップの実感を維持
+
+| Lv | max_deck_cost |
+|-----|---------------|
+| 1 | 9 |
+| 5 | 13 |
+| 10 | 18 |
+| 15 | 23 |
+| 20 | 28 |
+| 25 | 33 |
+| 30 | 38 |
+| 32+ | 40（上限） |
 
 **実装例 (`calculateGrowth` 内):**
 ```typescript
@@ -107,8 +118,8 @@ hpInc += hpGain;
 atkInc += Math.floor(Math.random() * 3); // randInt(0, 2)
 defInc += Math.floor(Math.random() * 3); // randInt(0, 2)
 
-// Deck Cost: 上限 30 に制限
-const newCost = Math.min(30, BASE_DECK_COST + (level * COST_PER_LEVEL));
+// Deck Cost: 上限 40 に制限（v16.0: Lv×1成長）
+const newCost = Math.min(40, BASE_DECK_COST + (level * COST_PER_LEVEL));
 ```
 
 ### 4.2 レベルアップ時の特殊効果
@@ -146,13 +157,16 @@ const newCost = Math.min(30, BASE_DECK_COST + (level * COST_PER_LEVEL));
 
 > ATK/DEFの減衰は、高レベルで積み上げた値から削られていく。上限廃止により高齢でも高ステータスが維持されやすくなったが、減衰リスクとのバランスが重要。
 
-#### Hand Size 値一覧 (spec v15 更新)
+#### Hand Size 値一覧 (spec v16 更新)
 
 | レベル | 手札枚数 |
 |---|---|
 | Lv 1 〜 4 | 4枚 |
-| Lv 5 〜 9 | 5枚 |
-| Lv 10以上 | 6枚 |
+| Lv 5 〜 19 | 5枚 |
+| Lv 20 〜 29 | 6枚 |
+| Lv 30以上 | 7枚 |
+
+> **v16.0 変更**: 手札拡張のタイミングを後ろにずらし、中盤〜終盤の成長感を維持。Lv10で即6枚だった旧仕様から、Lv20で6枚、Lv30で7枚に変更。
 
 実装: `battleSlice.dealHand()` 内で `GROWTH_RULES.HAND_SIZE_BY_LEVEL` を追従。（旧: `gameStore.dealHand()` / v1.0 リファクタリングにより `src/store/slices/battleSlice.ts` に移動）
 * 【UI/モバイル対応】SPA化に伴い、レベル10以上の最大6枚の手札は、画面下部の領域に扇状（Fan Layout）で重ねて配置およびホバー拡大変換される仕様とした。
@@ -169,10 +183,18 @@ const newCost = Math.min(30, BASE_DECK_COST + (level * COST_PER_LEVEL));
 ```
 sum(Card.cost for Card in EquippedDeck) <= user.max_deck_cost
 ```
-- `max_deck_cost` は `min(30, BASE_DECK_COST + (Level * COST_PER_LEVEL))` で決定。
+- `max_deck_cost` は `min(40, BASE_DECK_COST + (Level * COST_PER_LEVEL))` で決定。
 - 環境カード (`isInjected: true`) は Cost 0 扱い。
-- NPCの `inject_cards` はコスト検証の対象外。
-- **Lv11 到達時点で MAX_DECK_COST = 30 に達し、それ以降は増加しない。**
+- NPCの `inject_cards` はコスト検証の対象外（ただし注入上限6枚）。
+- **Lv32 到達時点で MAX_DECK_COST = 40 に達し、それ以降は増加しない。**
+
+### 5.3 デッキ構築改善（v16.0）
+
+| ルール | 内容 |
+|--------|------|
+| **最小デッキ枚数** | `max(手札上限×2, 12)`枚。不足分は基本カード(ID 1-10)からランダム補充 |
+| **パーティ注入上限** | NPC inject_cards の合計は最大 **6枚** |
+| **装備枚数ボーナス** | 6枚以上: AP+1 / 8枚以上: AP+1,初ターン手札+1 / 10枚以上: AP+2,初ターン手札+1 |
 
 ### 5.3 バリデーション
 - クライアントサイド: `buildBattleDeck()` 内でコスト合計チェック。
@@ -186,7 +208,7 @@ sum(Card.cost for Card in EquippedDeck) <= user.max_deck_cost
 export interface UserProfile {
   level?: number;
   exp?: number;
-  max_deck_cost?: number;     // min(30, BASE_DECK_COST + level * COST_PER_LEVEL)
+  max_deck_cost?: number;     // min(40, BASE_DECK_COST + level * COST_PER_LEVEL)
   max_hp?: number;            // 累積加算（各Lvで randInt(3,6) 増加）
   hp?: number;
   atk?: number;               // 上限なし（毎Lv +0〜2、老化で減衰）
@@ -209,3 +231,4 @@ export interface UserProfile {
 | **v15.0** | **2026-04-13** | **HP増加をランダム化(+3〜6/Lv)、ATK/DEF毎Lv加算(+0〜2)・上限廃止、DeckCost上限30に変更** |
 | **v15.1** | **2026-04-23** | **レベルアップUI表示仕様追加（HP/ATK/DEF/コスト数値表示）** |
 | **v15.2** | **2026-04-24** | **メインクエスト(6001-6020)全20件にrewards.expを定義。フォールバックランダム式への依存を廃止。EXP一覧テーブル追加** |
+| **v16.0** | **2026-04-28** | **DeckCost成長速度をLv×1に減速（旧:×2）、上限を40に拡張（旧:30、Lv32到達）。手札上限にLv20+(6枚)/Lv30+(7枚)段階追加。デッキ構築改善（最小12枚/NPC注入上限6枚/装備枚数ボーナス）追加** |
