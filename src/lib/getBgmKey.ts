@@ -2,16 +2,22 @@
  * getBgmKey — 拠点状態からBGMキーを決定するユーティリティ
  *
  * 優先順位:
- * 1. 名もなき旅人の拠所 → bgm_inn
- * 2. prosperity_level = 1（崩壊） → bgm_collapse
- * 3. controlling_nation に応じた国家テーマ
- * 4. その他（Neutral等） → bgm_field
+ * 1. データ未読込み → null（BGM切替なし、前のBGMを維持）
+ * 2. 名もなき旅人の拠所 → bgm_inn
+ * 3. prosperity_level = 1（崩壊） → bgm_collapse
+ * 4. controlling_nation に応じた国家テーマ
+ * 5. その他（Neutral等） → bgm_field
  */
 export function getBgmKey(
     locationName: string | null | undefined,
     controllingNation: string | null | undefined,
     prosperityLevel: number | null | undefined
-): string {
+): string | null {
+    // 0. worldState 未読込み時は null を返し、BGM切替を抑制する
+    if (!locationName) {
+        return null;
+    }
+
     // 1. ハブ（名もなき旅人の拠所）は固定
     if (locationName === '名もなき旅人の拠所' || locationName === 'Hub') {
         return 'bgm_inn';

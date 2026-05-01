@@ -32,7 +32,7 @@ interface StatusModalProps {
 
 type TabKey = 'deck' | 'items' | 'equip' | 'party';
 
-type DetailType = 'skill' | 'item' | 'npc';
+type DetailType = 'skill' | 'item' | 'npc' | 'equip';
 interface DetailTarget { type: DetailType; data: any; }
 
 export default function StatusModal({ onClose, isCampMode, questLocked }: StatusModalProps) {
@@ -467,7 +467,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{slotLabel}</span>
                                         </div>
                                         {eq?.item ? (
-                                            <div className="flex items-center gap-2 p-1.5 bg-orange-900/15 rounded border border-orange-800/30 overflow-hidden">
+                                            <div onClick={() => setDetail({ type: 'equip', data: { ...eq.item, _slot: slot, _isEquipped: true } })} className="flex items-center gap-2 p-1.5 bg-orange-900/15 rounded border border-orange-800/30 overflow-hidden cursor-pointer hover:border-orange-700/50 active:bg-orange-900/25 transition-colors">
                                                 <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
                                                     {eq.item.image_url ? <img src={eq.item.image_url} alt={eq.item.name} className="w-full h-full object-cover" /> : slotIcon}
                                                 </div>
@@ -479,7 +479,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                                         {eq.item.effect_data?.hp_bonus ? <span className="text-green-400">HP+{eq.item.effect_data.hp_bonus}</span> : null}
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleUnequip(slot)} disabled={equipLoadingSlot === slot} className={`text-[9px] border px-1.5 py-0.5 rounded shrink-0 transition-all whitespace-nowrap ${equipLoadingSlot === slot ? 'text-gray-500 border-gray-700 cursor-wait animate-pulse' : 'text-red-500 border-red-900/50 hover:bg-red-900/30'}`}>{equipLoadingSlot === slot ? '解除中…' : '外す'}</button>
+                                                <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
                                             </div>
                                         ) : (
                                             <div className="text-center text-gray-600 py-2 text-[10px] border border-dashed border-gray-700 rounded">未装備</div>
@@ -498,7 +498,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                             const subType = (item as any).sub_type || ((item as any).item_type === 'equipment' ? 'weapon' : 'weapon');
                                             const bonus = getEquipmentBonus(item.effect_data);
                                             return (
-                                                <div key={item.id} className="flex items-center gap-2 p-1.5 bg-black/30 rounded border border-gray-800 overflow-hidden">
+                                                <div key={item.id} onClick={() => setDetail({ type: 'equip', data: { ...item, _slot: subType, _isEquipped: false } })} className="flex items-center gap-2 p-1.5 bg-black/30 rounded border border-gray-800 overflow-hidden cursor-pointer hover:border-gray-600 active:bg-gray-800/60 transition-colors">
                                                     <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
                                                         {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Shield className="w-3 h-3 text-orange-400" />}
                                                     </div>
@@ -510,15 +510,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                                             {bonus.hp > 0 && <span className="text-green-400">HP+{bonus.hp}</span>}
                                                         </div>
                                                     </div>
-                                                    {equippedItemIds.has(String((item as any).item_id || item.id)) ? (
-                                                        <span className="text-[9px] text-amber-400 border border-amber-800/50 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">装備中</span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleEquipItem(item, subType)}
-                                                            disabled={!!equipLoadingSlot}
-                                                            className={`text-[9px] border px-1.5 py-0.5 rounded shrink-0 transition-all whitespace-nowrap ${equipLoadingSlot === subType ? 'text-gray-500 border-gray-700 cursor-wait animate-pulse' : equipLoadingSlot ? 'text-gray-500 border-gray-700 cursor-not-allowed opacity-50' : 'text-orange-400 border-orange-800/50 hover:bg-orange-900/30'}`}
-                                                        >{equipLoadingSlot === subType ? '装備中…' : '装備'}</button>
-                                                    )}
+                                                    <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
                                                 </div>
                                             );
                                         })}
@@ -604,6 +596,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                     <div className="flex items-center gap-2 text-[10px] text-gray-400">
                                         {detail.type === 'skill' && <><span className="text-purple-400">スキル</span><span className="text-cyan-500">Cost:{detail.data.cost || 0}</span>{detail.data.is_equipped && <span className="text-amber-400">装備中</span>}</>}
                                         {detail.type === 'item' && <><span className="text-green-400">所持品</span><span>x{detail.data.quantity}</span></>}
+                                        {detail.type === 'equip' && <><span className="text-orange-400">装備品</span>{detail.data._isEquipped && <span className="text-amber-400">装備中</span>}</>}
                                         {detail.type === 'npc' && <><span className="text-blue-400">Lv.{detail.data.level || '?'} {detail.data.job_class || '冒険者'}</span></>}
                                     </div>
                                 </div>
@@ -625,7 +618,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                 )}
 
                                 {/* 効果詳細（構造化グリッド） */}
-                                {detail.type !== 'npc' && detail.data.effect_data && (() => {
+                                {(detail.type !== 'npc' && detail.type !== 'equip') && detail.data.effect_data && (() => {
                                     const effectList = getEffectList(detail.data.effect_data);
                                     if (effectList.length === 0) return null;
                                     return (
@@ -640,6 +633,40 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                                 ))}
                                             </div>
                                         </div>
+                                    );
+                                })()}
+
+                                {/* 装備品詳細 */}
+                                {detail.type === 'equip' && detail.data.effect_data && (() => {
+                                    const bonus = getEquipmentBonus(detail.data.effect_data);
+                                    const effectList = getEffectList(detail.data.effect_data);
+                                    const hasBonuses = bonus.atk > 0 || bonus.def > 0 || bonus.hp > 0;
+                                    return (
+                                        <>
+                                            {hasBonuses && (
+                                                <div className="bg-orange-900/20 rounded-lg p-2.5 border border-orange-800/30">
+                                                    <div className="text-[10px] text-orange-400 mb-1.5">装備ボーナス</div>
+                                                    <div className="flex gap-3">
+                                                        {bonus.atk > 0 && <span className="text-sm text-red-400 font-bold font-mono">ATK+{bonus.atk}</span>}
+                                                        {bonus.def > 0 && <span className="text-sm text-blue-400 font-bold font-mono">DEF+{bonus.def}</span>}
+                                                        {bonus.hp > 0 && <span className="text-sm text-green-400 font-bold font-mono">HP+{bonus.hp}</span>}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {effectList.length > 0 && (
+                                                <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700">
+                                                    <div className="text-[10px] text-gray-500 mb-1.5">効果</div>
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        {effectList.map((eff, i) => (
+                                                            <div key={i} className="flex items-center justify-between bg-black/30 rounded px-2 py-1 border border-gray-800">
+                                                                <span className="text-[10px] text-gray-400">{eff.label}</span>
+                                                                <span className={`text-xs font-bold ${eff.color}`}>{eff.value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     );
                                 })()}
 
@@ -698,6 +725,26 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                             }`}
                                         >
                                             {detail.data.is_equipped ? '装備を外す' : '装備する'}
+                                        </button>
+                                    )}
+                                    {detail.type === 'equip' && (
+                                        <button
+                                            onClick={async () => {
+                                                if (detail.data._isEquipped) {
+                                                    await handleUnequip(detail.data._slot);
+                                                } else {
+                                                    await handleEquipItem(detail.data, detail.data._slot);
+                                                }
+                                                setDetail(null);
+                                            }}
+                                            disabled={!!equipLoadingSlot}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                                                detail.data._isEquipped
+                                                    ? 'bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50'
+                                                    : 'bg-orange-900/30 text-orange-400 border border-orange-800 hover:bg-orange-900/50'
+                                            } ${equipLoadingSlot ? 'opacity-50 cursor-wait' : ''}`}
+                                        >
+                                            {equipLoadingSlot ? '処理中…' : detail.data._isEquipped ? '装備を外す' : '装備する'}
                                         </button>
                                     )}
                                     {/* v25: 消耗品の使用ボタン */}
