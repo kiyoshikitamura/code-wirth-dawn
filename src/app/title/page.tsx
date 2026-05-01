@@ -319,38 +319,14 @@ export default function TitlePage() {
                 throw new Error('認証セッションが見つかりません。再度お試しください。');
             }
 
-            // アバターアップロード（任意）
-            let uploadedAvatarUrl: string | null = null;
-            if (avatarFile && userId) {
-                try {
-                    const ext = avatarFile.name.split('.').pop();
-                    const folder = isTestPlay ? 'anon' : 'users';
-                    const path = `${folder}/${userId}/${Date.now()}.${ext}`;
-                    const { error: uploadError } = await supabase.storage
-                        .from('avatars')
-                        .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
-                    if (uploadError) {
-                        console.warn('[avatar upload] Storage error:', uploadError.message);
-                        // アップロード失敗を通知（キャラ作成は続行）
-                        alert(`アイコン画像のアップロードに失敗しました。\nアイコンなしでキャラクターを作成します。\n(${uploadError.message})`);
-                    } else {
-                        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-                        uploadedAvatarUrl = urlData.publicUrl;
-                    }
-                } catch (uploadErr: any) {
-                    console.warn('[avatar upload] 失敗（続行）:', uploadErr);
-                    alert(`アイコン画像のアップロードに失敗しました。\nアイコンなしでキャラクターを作成します。\n(${uploadErr.message || uploadErr})`);
-                }
-            }
-            setIsUploading(false);
-
             const { data: startLoc } = await supabase.from('locations').select('id').eq('slug', 'loc_border_town').maybeSingle();
 
             const dummyBirthDate = new Date();
             dummyBirthDate.setFullYear(dummyBirthDate.getFullYear() - age);
             const birthDateStr = dummyBirthDate.toISOString().split('T')[0];
 
-            const res = await fetch('/api/profile/init', {
+            // 1. まずプロフィール初期化を実行（アバターURLは一旦空で）
+            const resInit = await fetch('/api/profile/init', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -370,11 +346,37 @@ export default function TitlePage() {
                     gold: previewStats.gold,
                     accumulated_days: 0,
                     current_location_id: startLoc?.id,
-                    ...(uploadedAvatarUrl ? { avatar_url: uploadedAvatarUrl } : {}),
                 })
             });
 
-            if (!res.ok) throw new Error((await res.json()).error);
+            if (!resInit.ok) throw new Error((await resInit.json()).error);
+
+            // 2. プロフィール作成後、アバターがあればサーバー経由でアップロード
+            if (avatarFile && userId) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', avatarFile);
+
+                    const uploadRes = await fetch('/api/character/avatar', {
+                        method: 'POST',
+                        headers: {
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                            'x-user-id': userId,
+                        },
+                        body: formData,
+                    });
+
+                    if (!uploadRes.ok) {
+                        const errData = await uploadRes.json();
+                        throw new Error(errData.error || 'アップロード失敗');
+                    }
+                } catch (uploadErr: any) {
+                    console.warn('[avatar upload] 例外発生:', uploadErr);
+                    alert(`アイコン画像のアップロード中にエラーが発生しました。\nアイコンなしでキャラクターを作成します。\n(${uploadErr.message || uploadErr})`);
+                }
+            }
+
+            setIsUploading(false);
 
             await new Promise(r => setTimeout(r, 2000));
             await fetchUserProfile();

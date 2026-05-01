@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { GROWTH_RULES } from '@/constants/game_rules';
 
 // Spec v8.1 Growth Logic
 // Max Deck Cost: +2 per level
@@ -28,26 +29,34 @@ export async function POST(req: Request) {
         let maxHp = profile.max_hp || 100;
 
         const targetLevel = currentLevel + levels;
+        if (targetLevel < 1) return NextResponse.json({ error: 'Level cannot be less than 1' }, { status: 400 });
 
-        // Apply Growth
-        for (let l = currentLevel + 1; l <= targetLevel; l++) {
-            // HP: Simulating +5 per level (Example, user didn't specify formula, but said "Recalculate")
-            // Let's assume Base 100 + (Lv-1)*5
-            maxHp = 100 + (l - 1) * 5;
+        // レベルダウン・アップに関わらず、Lv1からtargetLevelまで再計算して整合性を保つ
+        maxHp = GROWTH_RULES.BASE_HP_FALLBACK; // 100
+        maxDeckCost = GROWTH_RULES.BASE_DECK_COST;
+        baseAtk = 1; // 初期値
+        baseDef = 1; // 初期値
 
-            // Deck Cost: +2
-            maxDeckCost += 2;
+        for (let l = 1; l < targetLevel; l++) {
+            // HP: (可変成長の中央値を使用)
+            const { min, max } = GROWTH_RULES.getHpLevelGain(l);
+            maxHp += Math.floor((min + max) / 2);
 
-            // Threshold: Every 3 levels
-            if (l % 3 === 0) {
-                baseAtk += 1;
-                baseDef += 1;
+            // Deck Cost
+            const projectedCost = GROWTH_RULES.BASE_DECK_COST + (l * GROWTH_RULES.COST_PER_LEVEL);
+            if (projectedCost <= GROWTH_RULES.MAX_DECK_COST) {
+                maxDeckCost = projectedCost;
+            } else {
+                maxDeckCost = GROWTH_RULES.MAX_DECK_COST;
             }
+
+            // ATK/DEF: (平均値の1を使用)
+            baseAtk += 1;
+            baseDef += 1;
         }
 
-        // EXP: Set to minimum required for target level (Mock formula: Lv^2 * 100)
-        // User said "reset to min value".
-        const newExp = (targetLevel ** 2) * 100;
+        // EXP: ターゲットレベルの必要EXPに合わせる
+        const newExp = GROWTH_RULES.EXP_FORMULA(targetLevel);
 
         const updates = {
             level: targetLevel,

@@ -52,11 +52,9 @@ export function calculateGrowth(
         level++;
         leveledUp = true;
 
-        // HP: randInt(3, 6) / Lv（累積加算）
-        hpInc += randInt(
-            GROWTH_RULES.HP_LEVEL_GAIN_MIN,
-            GROWTH_RULES.HP_LEVEL_GAIN_MAX
-        );
+        // HP: レベル帯ごとの可変成長（累積加算）
+        const { min, max } = GROWTH_RULES.getHpLevelGain(level);
+        hpInc += randInt(min, max);
 
         // DeckCost: 上限 MAX_DECK_COST でキャップ
         const projectedCost = BASE_DECK_COST + (level * COST_PER_LEVEL);

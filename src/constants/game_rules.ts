@@ -2,14 +2,18 @@
 // Protocol v15.0: Progression & Growth Rules (上方修正・ランダム成長)
 
 export const GROWTH_RULES = {
-    // HP Scale (Spec v15.0)
-    BASE_HP_MIN: 85,            // 15歳の基底HP
-    BASE_HP_MAX: 135,           // 40歳の基底HP上限（ランダム幅含む）
-    BASE_HP_FALLBACK: 85,       // questService等のフォールバック用（v15.0: 80→85に引き上げ）
+    // HP Scale (Spec v16.1)
+    BASE_HP_MIN: 100,           // 15歳の基底HP（v16.1で85→100に引き上げ）
+    BASE_HP_MAX: 150,           // 40歳の基底HP上限（ランダム幅含む）
+    BASE_HP_FALLBACK: 100,      // questService等のフォールバック用
 
-    // HP Level Growth (Spec v15.0: ランダム増加)
-    HP_LEVEL_GAIN_MIN: 3,       // レベルアップごとの最小HP増加
-    HP_LEVEL_GAIN_MAX: 6,       // レベルアップごとの最大HP増加
+    // HP Level Growth (Spec v16.1: レベル帯ごとの可変成長率)
+    getHpLevelGain: (level: number) => {
+        if (level < 10) return { min: 10, max: 12 }; // 平均11
+        if (level < 20) return { min: 9, max: 11 };  // 平均10
+        if (level < 30) return { min: 7, max: 9 };   // 平均8
+        return { min: 6, max: 8 };                   // 平均7
+    },
 
     // Deck Cost (Spec v16.0: 上限40, Lv×1成長)
     BASE_DECK_COST: 8,

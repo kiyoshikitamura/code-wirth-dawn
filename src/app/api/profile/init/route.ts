@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 import { LifeCycleService } from '@/services/lifeCycleService';
 
 export async function POST(req: Request) {
@@ -94,12 +95,12 @@ export async function POST(req: Request) {
         }
 
         if (!profileId) {
-            // INSERT モード
+            // INSERT モード（Service Role を使用して RLS をバイパス）
             console.log('[Init Profile] プロファイルが存在しないため新規作成します... ID:', resolvedUserId);
             // resolvedUserId で必ず登録する（auth.users.idと連携させる）
             updates.id = resolvedUserId;
 
-            const { data: newProfile, error: insertError } = await client
+            const { data: newProfile, error: insertError } = await supabaseServer
                 .from('user_profiles')
                 .insert([updates])
                 .select('id')

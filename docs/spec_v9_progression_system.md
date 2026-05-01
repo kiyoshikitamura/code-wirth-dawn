@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v16.0 (Progression System)
+Code: Wirth-Dawn Specification v16.1 (Progression System)
 # Progression System — Leveling, Growth, Deck Cost
 
 ## 1. 概要 (Overview)
@@ -6,19 +6,27 @@ Code: Wirth-Dawn Specification v16.0 (Progression System)
 
 <!-- v15.0: HP/ATK/DEFを全体的に上方修正。ATK/DEFの上限を廃止、毎レベルランダム加算に変更。DeckCost上限を30に変更。 -->
 <!-- v16.0: DeckCost成長速度をLv×2→Lv×1に減速、上限を30→40に拡張。手札上限にLv20+(6枚)とLv30+(7枚)の段階を追加。 -->
+<!-- v16.1: NPC等のステータスインフレに合わせ、HP基底値を100に引き上げ。レベルアップ時のHP成長率をレベル帯ごとの可変式に変更。 -->
 
 ---
 
 ## 2. 成長定数 (Growth Constants)
-<!-- v15.0: 上方修正後の実装値に更新 -->
+<!-- v16.1: HP可変成長ロジックに更新 -->
 
 ```typescript
-const BASE_HP = 85;            // キャラクター作成時の基底HP（v15.0で80→85に引き上げ）
-const HP_PER_LEVEL_MIN = 3;    // v15.0: レベルアップごとの最小HP増加
-const HP_PER_LEVEL_MAX = 6;    // v15.0: レベルアップごとの最大HP増加
+const BASE_HP_MIN = 100;       // キャラクター作成時の基底HP（v16.1で85→100に引き上げ）
 const BASE_DECK_COST = 8;      // Lv1時の基底デッキコスト
 const COST_PER_LEVEL = 1;      // v16.0: レベルあたりのデッキコスト増加（旧: 2）
 const MAX_DECK_COST = 40;      // v16.0: デッキコスト上限（旧: 30。Lv32で到達）
+
+// HP成長: レベル帯ごとの可変成長率 (v16.1)
+function getHpLevelGain(level: number) {
+    if (level < 10) return { min: 10, max: 12 }; // 平均11
+    if (level < 20) return { min: 9, max: 11 };  // 平均10
+    if (level < 30) return { min: 7, max: 9 };   // 平均8
+    return { min: 6, max: 8 };                   // 平均7
+}
+
 // ATK/DEF: 上限廃止（v15.0）。毎レベルにランダム加算。
 ```
 
