@@ -15,7 +15,6 @@ import QuestHeader from '@/components/quest/QuestHeader';
 import QuestSettingsModal from '@/components/quest/QuestSettingsModal';
 import { Swords, ScrollText } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
 
 export default function QuestPage() {
@@ -31,11 +30,6 @@ export default function QuestPage() {
     const [battleBgm, setBattleBgm] = useState<string>('bgm_battle'); // CSVのbattle BGMを保持
 
     useAuthGuard(); // タイトル画面経由チェック
-
-    // BGM管理: シナリオ中はクエストBGM、バトル中はCSV指定のバトルBGM
-    // ScenarioEngineのノードプロセッサーが個別ノードのbgmを処理するが、
-    // ページマウント時にタイトルBGMを停止するための初期BGMが必要
-    useBgm(viewMode === 'battle' ? battleBgm : 'bgm_quest_calm');
 
     const resultOverlayState = useState<{ // Renamed variable to avoid conflict
         result: 'success' | 'failure';
@@ -293,6 +287,7 @@ export default function QuestPage() {
                         if (!e) return null;
                         return {
                             id: `${e.slug}_${index}_${Date.now()}`, // Unique ID for battle instance
+                            slug: e.slug, // 元のslugを保持（target_slug照合用）
                             name: e.name,
                             hp: e.hp,
                             maxHp: e.hp, // Use max_hp from DB if valid, else hp
@@ -340,10 +335,20 @@ export default function QuestPage() {
             nextNodeId: successNodeId
         }));
 
+        // デバッグ/テストプレイモード: バトルを自動勝利でスキップ
+        if (isTestPlay) {
+            console.log('[QuestPage][Debug] Auto-win battle, advancing to:', successNodeId);
+            setInitialNodeId(successNodeId);
+            setViewMode('scenario');
+            return;
+        }
+
         setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
         setBattleBgUrl(getAssetUrl(bgKey || 'bg_wasteland'));
-        setBattleBgm(bgm || 'bgm_battle'); // CSVのバトルBGMを保存（指定なしの場合はデフォルト）
+        const targetBgm = bgm || 'bgm_battle';
+        setBattleBgm(targetBgm); // CSVのバトルBGMを保存（指定なしの場合はデフォルト）
         setViewMode('battle');
+        if (soundManager) soundManager.playBgm(targetBgm);
     };
 
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
@@ -399,6 +404,22 @@ export default function QuestPage() {
             useGameStore.setState((state: any) => ({
                 battleState: { ...state.battleState, enemy: null, enemies: [] }
             }));
+
+            // 5. 護衛対象HP0チェック: ゲストがバトル中に倒れた場合は敗北扱い
+            const questState = useQuestState.getState();
+            if (questState.isEscortMission && questState.guest) {
+                const guestId = String(questState.guest.id);
+                const guestSlug = (questState.guest as any).slug;
+                const guestInBattle = battleParty.find((pm: any) => String(pm.id) === guestId || (guestSlug && pm.slug === guestSlug));
+                const guestHp = (guestInBattle as any)?.durability ?? (guestInBattle as any)?.hp ?? -1;
+                if (guestHp <= 0) {
+                    // 護衛対象が死亡 → 敗北として end_failure に遷移
+                    questState.removeGuest();
+                    handleBattleEnd('lose');
+                    return;
+                }
+            }
+
             setViewMode('scenario');
         } else {
             // バトル敗北/撤退: end_failure ノードに遷移してシナリオテキストを表示
@@ -408,10 +429,15 @@ export default function QuestPage() {
             }));
 
             // シナリオ内の end_failure ノードを検索
-            const scriptNodes = scenario?.script_data?.nodes || {};
+            let scriptNodes = scenario?.script_data?.nodes || {};
+            if (Object.keys(scriptNodes).length === 0 && scenario?.flow_nodes && Array.isArray(scenario.flow_nodes)) {
+                const nodesObj: Record<string, any> = {};
+                scenario.flow_nodes.forEach((node: any) => { nodesObj[node.id] = node; });
+                scriptNodes = nodesObj;
+            }
             const failNodeId = Object.entries(scriptNodes)
                 .find(([, n]: [string, any]) =>
-                    n.type === 'end' && n.result === 'failure'
+                    (n.type === 'end' && (n.result === 'failure' || n.params?.result === 'failure')) || n.type === 'end_failure'
                 )?.[0];
 
             if (failNodeId) {
@@ -533,7 +559,7 @@ export default function QuestPage() {
                                 scenario={scenario}
                                 initialNodeId={initialNodeId}
                                 onBattleStart={startBattle}
-                                onComplete={async (result, history) => {
+                                onComplete={async (result, history, nodeRewards) => {
                                     if (result === 'abort') {
                                         router.push(isTestPlay ? '/editor' : '/inn');
                                         return;
@@ -544,8 +570,29 @@ export default function QuestPage() {
                                             localStorage.setItem(`ugc_tested_${scenario.id}`, 'true');
                                         }
                                         // テストプレイ: DBを変更せずシナリオ定義から結果を構築
-                                        const rewards = scenario.rewards || {};
+                                        const rewards = nodeRewards || scenario.rewards || {};
                                         const isSuccess = result === 'success';
+                                        const dummyLoot: any[] = [];
+                                        if (isSuccess && rewards.items) {
+                                            const itemsArr = Array.isArray(rewards.items) ? rewards.items : [rewards.items];
+                                            for (const id of itemsArr) {
+                                                const itemId = parseInt(String(id), 10);
+                                                if (isNaN(itemId)) continue;
+                                                const { data: itemDef } = await supabase.from('items').select('name, type').eq('id', itemId).maybeSingle();
+                                                const lootType = itemDef?.type === 'skill' ? 'skill' : 'item';
+                                                dummyLoot.push({ itemId: itemId, name: itemDef?.name || `アイテム #${itemId}`, quantity: 1, type: lootType });
+                                            }
+                                        }
+                                        if (isSuccess && rewards.skills) {
+                                            const skillsArr = Array.isArray(rewards.skills) ? rewards.skills : [rewards.skills];
+                                            for (const id of skillsArr) {
+                                                const skillId = parseInt(String(id), 10);
+                                                if (isNaN(skillId)) continue;
+                                                const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
+                                                dummyLoot.push({ itemId: skillId, name: skillDef?.name || `スキル #${skillId}`, quantity: 1, type: 'skill' });
+                                            }
+                                        }
+
                                         setResultOverlay({
                                             result: isSuccess ? 'success' : 'failure',
                                             data: {
@@ -568,7 +615,7 @@ export default function QuestPage() {
                                                     ? { amount: rewards.reputation, location: '現在地' }
                                                     : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
                                                 party_changes: null,
-                                                loot_saved: [],
+                                                loot_saved: dummyLoot,
                                                 guest_conversion: null,
                                                 new_location_name: null,
                                             }
@@ -580,8 +627,29 @@ export default function QuestPage() {
                                     // デバッグモード（チートツール）: DB変更せず結果を表示
                                     const isDebugMode = searchParams.get('debug_bypass') === 'true';
                                     if (isDebugMode) {
-                                        const rewards = scenario.rewards || {};
+                                        const rewards = nodeRewards || scenario.rewards || {};
                                         const isSuccess = result === 'success';
+                                        const dummyLoot: any[] = [];
+                                        if (isSuccess && rewards.items) {
+                                            const itemsArr = Array.isArray(rewards.items) ? rewards.items : [rewards.items];
+                                            for (const id of itemsArr) {
+                                                const itemId = parseInt(String(id), 10);
+                                                if (isNaN(itemId)) continue;
+                                                const { data: itemDef } = await supabase.from('items').select('name, type').eq('id', itemId).maybeSingle();
+                                                const lootType = itemDef?.type === 'skill' ? 'skill' : 'item';
+                                                dummyLoot.push({ itemId: itemId, name: itemDef?.name || `アイテム #${itemId}`, quantity: 1, type: lootType });
+                                            }
+                                        }
+                                        if (isSuccess && rewards.skills) {
+                                            const skillsArr = Array.isArray(rewards.skills) ? rewards.skills : [rewards.skills];
+                                            for (const id of skillsArr) {
+                                                const skillId = parseInt(String(id), 10);
+                                                if (isNaN(skillId)) continue;
+                                                const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
+                                                dummyLoot.push({ itemId: skillId, name: skillDef?.name || `スキル #${skillId}`, quantity: 1, type: 'skill' });
+                                            }
+                                        }
+
                                         setResultOverlay({
                                             result: isSuccess ? 'success' : 'failure',
                                             data: {
@@ -604,7 +672,7 @@ export default function QuestPage() {
                                                     ? { amount: rewards.reputation, location: '現在地' }
                                                     : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
                                                 party_changes: null,
-                                                loot_saved: [],
+                                                loot_saved: dummyLoot,
                                                 guest_conversion: null,
                                                 new_location_name: null,
                                             }
@@ -639,6 +707,7 @@ export default function QuestPage() {
                                                 loot_pool: [],
                                                 consumed_items: [],
                                                 defeated_member_ids: defeatedMemberIds,
+                                                node_rewards: nodeRewards || null,
                                                 remaining_guest: remainingGuest ? {
                                                     slug: (remainingGuest as any).slug,
                                                     name: remainingGuest.name,
