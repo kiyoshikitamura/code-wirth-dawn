@@ -20,8 +20,8 @@ interface NodeProcessorOptions {
     setHistory: React.Dispatch<React.SetStateAction<string[]>>;
     setShowingGuestJoin: (data: any) => void;
     setShowingTravel: (data: any) => void;
-    setEndReady: (data: { result: 'success' | 'failure' | 'abort'; history: string[] } | null) => void;
-    history: string[];
+    setEndReady: (data: { result: 'success' | 'failure' | 'abort'; nodeRewards?: any } | null) => void;
+    historyRef: React.MutableRefObject<string[]>;
     onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
     showingTravel: any;
@@ -117,10 +117,8 @@ export function useScenarioNodeProcessor({
                 }
                 setHistory(prev => [...prev, `[Check] 遺産チェック: ${ownedCount}/${requiredItems.length} → ${hasAll ? '加護あり' : '加護なし'}`]);
 
-                // 少し間を空けて結果を見せる
-                timeoutId = setTimeout(() => {
-                    setCurrentNodeId(hasAll ? successNode : failNode);
-                }, 1500);
+                // 即時遷移（setTimeoutによる無限ループ防止）
+                setCurrentNodeId(hasAll ? successNode : failNode);
             }
 
             else if (currentNode.type === 'check_equipped') {
@@ -303,18 +301,33 @@ export function useScenarioNodeProcessor({
                 if (nextId) timeoutId = setTimeout(() => setCurrentNodeId(nextId), 1000);
             }
             else if (currentNode.type === 'reward') {
-                const rewardItems = currentNode.params?.items;
+                const rawItems = currentNode.params?.items;
                 const rewardGold = currentNode.params?.gold;
+                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'gold:', rewardGold);
+                // items の正規化: ["601"] 形式 → [{item_id: 601, quantity: 1}] 形式に変換
+                let rewardItems: any[] | undefined;
+                if (Array.isArray(rawItems)) {
+                    rewardItems = rawItems.map((item: any) => {
+                        if (typeof item === 'string' || typeof item === 'number') {
+                            return { item_id: parseInt(String(item), 10), quantity: 1 };
+                        }
+                        return item; // 既に {item_id, quantity} 形式
+                    });
+                }
+                console.log('[reward] normalized rewardItems:', JSON.stringify(rewardItems));
                 try {
                     const { data: { session } } = await supabase.auth.getSession();
                     const token = session?.access_token;
+                    console.log('[reward] Calling grant API, token present:', !!token);
                     const res = await fetch('/api/inventory/grant', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                         body: JSON.stringify({ items: rewardItems, gold: rewardGold })
                     });
+                    console.log('[reward] Grant API status:', res.status);
                     if (res.ok) {
                         const data = await res.json();
+                        console.log('[reward] Grant API response:', JSON.stringify(data));
                         const msgs: string[] = [];
                         if (data.gold > 0) msgs.push(`${data.gold}G`);
                         if (data.items?.length > 0) msgs.push(data.items.map((i: any) => `${i.name} x${i.quantity}`).join(', '));
@@ -322,6 +335,9 @@ export function useScenarioNodeProcessor({
                         setHistory(prev => [...prev, `[Reward] ${msgs.join(' / ')} を獲得`]);
                         await useGameStore.getState().fetchInventory();
                         if (rewardGold) await useGameStore.getState().fetchUserProfile();
+                    } else {
+                        const errText = await res.text();
+                        console.error('[reward] Grant API error response:', res.status, errText);
                     }
                 } catch (e) { console.error('[reward] Grant API error:', e); }
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
@@ -333,19 +349,21 @@ export function useScenarioNodeProcessor({
             }
             else if (currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || currentNode.result) {
                 const res = currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
-                setEndReady({ result: res, history });
+                // endノードにrewardsが埋め込まれている場合（ルート分岐報酬等）、nodeRewardsとして渡す
+                const nodeRewards = currentNode.params?.rewards || currentNode.rewards || null;
+                setEndReady({ result: res, nodeRewards });
             }
 
             // 護衛失敗チェック
             if (questState.isEscortMission && questState.checkEscortFailure()) {
                 showToast('⚠ 護衛対象が倒れた… クエスト失敗', 'error');
                 setHistory(prev => [...prev, '[Escort] 護衛対象が死亡し、クエストは失敗となった。']);
-                setEndReady({ result: 'failure', history });
+                setEndReady({ result: 'failure' });
             }
         };
 
         processNode();
         return () => { if (timeoutId) clearTimeout(timeoutId); };
 
-    }, [currentNodeId, currentNode, userProfile, history]);
+    }, [currentNodeId, currentNode, userProfile]);
 }

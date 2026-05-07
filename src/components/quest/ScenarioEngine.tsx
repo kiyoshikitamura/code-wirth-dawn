@@ -15,7 +15,7 @@ import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 
 interface Props {
     scenario: ScenarioDB;
-    onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
+    onComplete: (result: 'success' | 'failure' | 'abort', history: string[], nodeRewards?: any) => void;
     onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
     initialNodeId?: string;
 }
@@ -38,10 +38,13 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     const [showCampStatus, setShowCampStatus] = useState(false);
 
     // Phase 2: UX改善 State
-    const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; history: string[] } | null>(null);
+    const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; nodeRewards?: any } | null>(null);
     const [isProcessingResult, setIsProcessingResult] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const historyRef = useRef(history);
+    useEffect(() => { historyRef.current = history; }, [history]);
 
     // Phase 3: タイプライター演出
     const [displayedText, setDisplayedText] = useState('');
@@ -64,6 +67,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
     // グローバル状態へのアクセス
     const { userProfile, worldState, battleState, inventory } = useGameStore();
+    const { questFlags } = useQuestState();
     const questState = useQuestState();
     const router = useRouter();
 
@@ -169,16 +173,16 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     useScenarioNodeProcessor({
         currentNode,
         currentNodeId,
-        setCurrentNodeId,
+        questState: { ...questState, questFlags },
         setHistory,
         setShowingGuestJoin,
         setShowingTravel,
         setEndReady,
-        history,
+        historyRef,
         onBattleStart,
         onComplete,
         showingTravel,
-        showToast,
+        showToast
     });
 
 
@@ -383,54 +387,21 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
                 {/* Main Text Dialog */}
                 <div className="bg-slate-950/40 backdrop-blur-sm border border-amber-900/40 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
-                    {/* アイコン: 話者画像あり→ポートレート / 「」台詞→汎用アイコン / ナレーション→非表示 */}
-                    {(() => {
-                        const speakerName = currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name;
-                        const hasPortrait = !!currentNode.speaker_image_url;
-                        const isDialogue = currentNode.text?.startsWith('「');
-                        
-                        if (hasPortrait) {
-                            return (
-                                <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
-                                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden shadow-inner">
-                                        <img src={currentNode.speaker_image_url} alt="Face" className="w-full h-full object-cover" />
-                                    </div>
-                                </div>
-                            );
-                        } else if (isDialogue && !speakerName) {
-                            // 汎用キャラ台詞（「」で始まるがspeaker_nameなし）
-                            return (
-                                <div className="flex-shrink-0">
-                                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800/50 border-2 border-slate-600/30 flex items-center justify-center shadow-inner">
-                                        <User size={28} className="text-slate-500/50" />
-                                    </div>
-                                </div>
-                            );
-                        }
-                        // ナレーション → アイコンなし
-                        return null;
-                    })()}
+                    {/* アイコン: 話者画像あり→ポートレート / なし→非表示 */}
+                    {currentNode.speaker_image_url ? (
+                        <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-slate-800 border-2 border-amber-600/30 flex items-center justify-center overflow-hidden shadow-inner">
+                                <img src={currentNode.speaker_image_url} alt="Face" className="w-full h-full object-cover" />
+                            </div>
+                        </div>
+                    ) : null}
                     <div className="flex-1 relative pb-1 pt-1">
-                        {/* 話者名タグ: キャラ名あり→金色 / 「」台詞→灰色「名もなき者」 / ナレーション→なし */}
-                        {(() => {
-                            const speakerName = currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name;
-                            const isDialogue = currentNode.text?.startsWith('「');
-                            
-                            if (speakerName) {
-                                return (
-                                    <div className="text-amber-400 text-[10px] font-bold tracking-widest mb-1">
-                                        ◆ {speakerName}
-                                    </div>
-                                );
-                            } else if (isDialogue) {
-                                return (
-                                    <div className="text-slate-500 text-[10px] tracking-wider mb-1">
-                                        ◇ 名もなき者
-                                    </div>
-                                );
-                            }
-                            return null;
-                        })()}
+                        {/* 話者名タグ: speaker指定あり→金色表示 / なし→非表示 */}
+                        {(currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker) ? (
+                            <div className="text-amber-400 text-[10px] font-bold tracking-widest mb-1">
+                                ◆ {currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker}
+                            </div>
+                        ) : null}
                         {/* 固定高さテキスト領域 + スクロール */}
                         <div
                             className="h-[140px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 pt-1 pr-1 cursor-pointer"
@@ -466,7 +437,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                             || currentNode.next
                                             || 'end_success';
                                         const enemyId = currentNode.enemy_group_id || 'slime';
-                                        onBattleStart(enemyId, successId, currentNode.bg_key, currentNode.bgm);
+                                        onBattleStart(enemyId, successId, currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key, currentNode.bgm_key || currentNode.bgm || currentNode.params?.bgm);
                                     }
                                 }}
                                 className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
@@ -524,7 +495,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                     onClick={() => {
                                         if (endReady && !isProcessingResult) {
                                             setIsProcessingResult(true);
-                                            onComplete(endReady.result, endReady.history);
+                                            onComplete(endReady.result, history, endReady.nodeRewards);
                                         }
                                     }}
                                     disabled={!endReady || isProcessingResult}
@@ -584,6 +555,10 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                         <button
                             onClick={() => {
                                 questState.addGuest(showingGuestJoin.data);
+                                // 護衛対象フラグが設定されている場合、エスコートミッションを有効化
+                                if (currentNode?.params?.is_escort_target) {
+                                    questState.setEscortMission(true);
+                                }
                                 setHistory(prev => [...prev, `[Guest] ${showingGuestJoin.data.name} が同行した。`]);
                                 setShowingGuestJoin(null);
                                 if (showingGuestJoin.next) setCurrentNodeId(showingGuestJoin.next);
