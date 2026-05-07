@@ -532,13 +532,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             <div className="relative z-20 px-3 mt-1 w-full flex-shrink-0">
                 <div className="bg-black/40 border border-white/20 rounded-lg p-2 backdrop-blur-md drop-shadow-md">
                     <div className="flex items-center gap-1.5">
-                        <div className="flex flex-col justify-center items-center w-12 h-14 bg-white/10 rounded-lg border border-white/20 flex-shrink-0 shadow-inner mr-1 backdrop-blur-sm">
-                            <span className="text-[9px] text-slate-300 font-bold mb-0.5 drop-shadow-md">AP</span>
-                            <span className="text-xl font-bold text-amber-400 font-mono leading-none drop-shadow-md">{battleState.current_ap || 0}</span>
-                        </div>
-
                         {/* Scrolling Members List — pt-3 でバッジが上に飛び出せる余白を確保 */}
-                        <div className="flex-1 flex items-start gap-3 overflow-x-auto no-scrollbar pb-1 pt-3">
+                        <div className="flex-1 overflow-x-auto no-scrollbar pb-1 pt-3">
+                            <div className="flex items-start justify-center gap-3 w-max min-w-full px-2">
                             {/* Player Icon */}
                             <button
                                 onClick={() => setShowUserDetail(true)}
@@ -593,6 +589,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                     <span className="text-[9px] text-slate-200 font-bold w-[44px] text-center truncate mt-0.5 drop-shadow-md">{member.name?.slice(0, 4) || 'NPC'}</span>
                                 </button>
                             ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -843,7 +840,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             <div className="relative z-20 px-3 w-full flex-shrink-0 drop-shadow-md">
                 <div
                     ref={logContainerRef}
-                    className="bg-black/30 backdrop-blur-md border border-white/20 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-y-auto scroll-smooth shadow-inner"
+                    className="bg-black/60 backdrop-blur-lg border border-white/20 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-y-auto scroll-smooth shadow-inner"
                     style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
                 >
                     {displayedLogs.map((log, idx) => {
@@ -878,6 +875,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* BOTTOM: CARDS + ACTION BUTTONS — フロー配置 */}
             <div className="w-full relative z-30 px-3 pb-2 flex-shrink-0">
+                {/* AP Display (Moved from player status panel) */}
+                <div className="absolute top-0 left-3 z-40 flex flex-col justify-center items-center w-12 h-14 bg-black/60 rounded-lg border border-white/20 flex-shrink-0 shadow-lg backdrop-blur-md">
+                    <span className="text-[9px] text-slate-300 font-bold mb-0.5 drop-shadow-md">AP</span>
+                    <span className="text-xl font-bold text-amber-400 font-mono leading-none drop-shadow-md">{battleState.current_ap || 0}</span>
+                </div>
 
                 {/* Hand Cards (Fan Layout) — 2段階アクション対応 */}
                 <div className="relative w-full h-36 flex justify-center items-end overflow-visible">
@@ -991,6 +993,37 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                         撤退
                     </button>
                 )}
+                {/* デバッグ/テストプレイモード: 即時勝利ボタン */}
+                {(() => {
+                    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+                    const isDebug = urlParams.get('debug_bypass') === 'true' || urlParams.get('test_play') === 'true';
+                    if (!isDebug || battleState.isVictory || battleState.isDefeat) return null;
+                    return (
+                        <button
+                            onClick={() => {
+                                // 全敵を即死させて勝利判定を発火
+                                const store = useGameStore.getState();
+                                const allEnemies = store.battleState.enemies || (store.battleState.enemy ? [store.battleState.enemy] : []);
+                                for (const e of allEnemies) {
+                                    e.hp = 0;
+                                }
+                                useGameStore.setState((state: any) => ({
+                                    battleState: {
+                                        ...state.battleState,
+                                        enemies: allEnemies,
+                                        enemy: { ...allEnemies[0], hp: 0 },
+                                        isVictory: true,
+                                        battle_result: 'victory',
+                                        messages: [...state.battleState.messages, '--- 🏆 デバッグ: 即時勝利 ---'],
+                                    }
+                                }));
+                            }}
+                            className="bg-emerald-900/60 backdrop-blur-md border border-emerald-400/60 text-emerald-200 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-emerald-800/70"
+                        >
+                            🏆 勝利
+                        </button>
+                    );
+                })()}
             </div>
 
 

@@ -335,14 +335,6 @@ export default function QuestPage() {
             nextNodeId: successNodeId
         }));
 
-        // デバッグ/テストプレイモード: バトルを自動勝利でスキップ
-        if (isTestPlay) {
-            console.log('[QuestPage][Debug] Auto-win battle, advancing to:', successNodeId);
-            setInitialNodeId(successNodeId);
-            setViewMode('scenario');
-            return;
-        }
-
         setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
         setBattleBgUrl(getAssetUrl(bgKey || 'bg_wasteland'));
         const targetBgm = bgm || 'bgm_battle';
