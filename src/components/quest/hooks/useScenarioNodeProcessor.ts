@@ -36,7 +36,7 @@ export function useScenarioNodeProcessor({
     setShowingGuestJoin,
     setShowingTravel,
     setEndReady,
-    history,
+    historyRef,
     onBattleStart,
     onComplete,
     showingTravel,

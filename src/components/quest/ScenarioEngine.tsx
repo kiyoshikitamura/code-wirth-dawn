@@ -173,7 +173,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     useScenarioNodeProcessor({
         currentNode,
         currentNodeId,
-        questState: { ...questState, questFlags },
+        setCurrentNodeId,
         setHistory,
         setShowingGuestJoin,
         setShowingTravel,
