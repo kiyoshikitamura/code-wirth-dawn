@@ -1,7 +1,30 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"教区の共同墓地を閉鎖した。罪深き霊が肉体を求めて彷徨っている。彼らの手足を切り落とし、物理的に昇天させたまえ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_zombie"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"聖騎士団の詰め所に呼ばれた。\n緊迫した空気が漂う中、担当の騎士が地図を広げる。","{""type"":""text"",""bg"":""bg_guild"",""bgm"":""bgm_quest_calm""}",intro_1
+NODE,intro_1,"「教区の共同墓地を閉鎖した。\n　罪深き霊が肉体を求めて彷徨い、死体が動き出している」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""担当の騎士""}",intro_2
+NODE,intro_2,"「彼らの手足を切り落とし、物理的に昇天させたまえ。\n　そして、なぜ瘴気が発生しているのか、原因を突き止めてくれ」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""担当の騎士""}",enter_crypt
+NODE,enter_crypt,"閉鎖された遺体安置所の鉄格子を開け、地下への石段を下りる。\n途端に、強烈な腐敗臭と冷気が押し寄せてきた。","{""type"":""text"",""bg"":""bg_crypt"",""bgm"":""bgm_quest_tense""}",crypt_desc
+NODE,crypt_desc,"壁面に並んだ棺の一部が破壊され、中身がもぬけの殻になっている。\n暗闇の奥から、湿った足音とうめき声が聞こえてきた。","{""type"":""text"",""bg"":""bg_crypt""}",encounter_wave1
+NODE,encounter_wave1,"松明を掲げると、通路を塞ぐように異なる種類の亡者たちが立っていた。\n骸骨、腐敗した死体、そして半透明の幽鬼——生者の熱を感知し、こちらへ向き直る。","{""type"":""text"",""bg"":""bg_crypt""}",battle_wave1
+NODE,battle_wave1,"遺体安置所の亡者たちが襲いかかってきた！","{""type"":""battle"",""bg"":""bg_crypt"",""bgm"":""bgm_battle"",""enemy_group_id"":413,""enemy_name"":""混成亡者""}",
+CHOICE,,win,,after_wave1
+CHOICE,,lose,,end_failure
+NODE,after_wave1,"最初の群れを切り伏せた。\n腐肉を焼く匂いが地下にこもる。だが、奥からさらに濃い瘴気が流れてくる。","{""type"":""text"",""bg"":""bg_crypt"",""bgm"":""bgm_quest_tense""}",deeper
+NODE,deeper,"血糊を払い、安置所のさらに深部へと進む。\n床は冷たく湿り、壁には黒いカビのようなものがびっしりと生えている。","{""type"":""text"",""bg"":""bg_crypt""}",encounter_wave2
+NODE,encounter_wave2,"通路の奥から、不気味な青白い光が漂ってきた。\n実体を持たないレイスたちだ。壁を透過しながらこちらへ忍び寄ってくる。","{""type"":""text"",""bg"":""bg_crypt""}",battle_wave2
+NODE,battle_wave2,"レイスの群れが壁から湧き出てくる！物理攻撃が通りにくい厄介な相手だ！","{""type"":""battle"",""bg"":""bg_crypt"",""bgm"":""bgm_battle"",""enemy_group_id"":416,""enemy_name"":""レイスの群れ""}",
+CHOICE,,win,,after_wave2
+CHOICE,,lose,,end_failure
+NODE,after_wave2,"レイスの群れを退けた。だが、まだ終わりではない。\n最奥から、一段と強烈な瘴気の波動が押し寄せてくる。","{""type"":""text"",""bg"":""bg_crypt"",""bgm"":""bgm_quest_tense""}",find_altar
+NODE,find_altar,"最奥の広間。かつては祈りを捧げる場所だったのだろう。\n祭壇の上には、黒く脈打つ不気味な石が置かれている。","{""type"":""text"",""bg"":""bg_crypt""}",boss_desc
+NODE,boss_desc,"石を中心に、圧倒的な数のレイスが渦を巻いている。\n瘴気の源であるあの石を破壊するには、まずこの群れを突破しなければならない。","{""type"":""text"",""bg"":""bg_crypt""}",encounter_wave3
+NODE,encounter_wave3,"レイスたちが一斉にこちらへ向き直った。\n石を守るように、5体のレイスが壁のように立ちはだかる。","{""type"":""text"",""bg"":""bg_crypt""}",battle_wave3
+NODE,battle_wave3,"瘴気の源を守るレイスの大群との最終決戦！","{""type"":""battle"",""bg"":""bg_crypt"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":417,""enemy_name"":""大量のレイス""}",
+CHOICE,,win,,after_wave3
+CHOICE,,lose,,end_failure
+NODE,after_wave3,"最後のレイスが消滅し、広間に静寂が戻った。\n残るは、祭壇で不気味な波動を放つ黒い石だけだ。","{""type"":""text"",""bg"":""bg_crypt"",""bgm"":""bgm_quest_calm""}",destroy_stone
+NODE,destroy_stone,"剣を振り下ろし、黒い石を真っ二つに叩き割る。\nガラスが割れるような甲高い音と共に、地下を満たしていた瘴気が一気に霧散した。","{""type"":""text"",""bg"":""bg_crypt""}",purge_done
+NODE,purge_done,"空気が澄んでいくのが分かる。もう死体が起き上がることはないだろう。\nそれにしても、誰がこんなものを持ち込んだのか。","{""type"":""text"",""bg"":""bg_crypt""}",report
+NODE,report,"騎士団に戻り、討伐の完了と黒い石の破片を報告した。","{""type"":""text"",""bg"":""bg_guild""}",knight_thanks
+NODE,knight_thanks,"「見事だ。この石は……異端の呪具か。\n　背後関係はこちらで洗おう。助かった」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""担当の騎士""}",end_success
+NODE,end_success,"報酬を受け取った。\n地下の腐臭は、まだ鼻の奥にこびりついている気がした。","{""type"":""end"",""bg"":""bg_guild"",""result"":""success""}",
+NODE,end_failure,"無数の亡者の手に引きずり倒された。\n自分もまた、この冷たい地下で永遠に彷徨う肉の塊となるのだ。","{""type"":""end"",""bg"":""bg_crypt"",""result"":""failure""}",

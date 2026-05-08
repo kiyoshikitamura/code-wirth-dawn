@@ -1,7 +1,21 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"地下で禁忌の儀式を行う愚か者どもがいます。手荒な真似は問いません。あの廃村を文字通り""浄化""してください。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_cultist"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"聖騎士団の詰め所に呼ばれた。\n薄暗い執務室で、副隊長が分厚い羊皮紙を机に放り投げる。","{""type"":""text"",""bg"":""bg_guild"",""bgm"":""bgm_quest_calm""}",intro_1
+NODE,intro_1,"「旧市街の廃教会で、異端者どもが夜な夜な集会を開いている。\n　『偽りの神を捨て、真の星の導きに従え』などと妄言を吐く連中だ」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""副隊長""}",intro_2
+NODE,intro_2,"「我々が直接動けば、無用な騒ぎになる。\n　冒険者よ、お前に『浄化』を頼みたい。手荒な真似になっても構わん」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""副隊長""}",arrive_slum
+NODE,arrive_slum,"王都の華やかな表通りから外れ、旧市街へと足を踏み入れる。\n日差しが遮られ、じめじめとした空気が肌を撫でた。","{""type"":""text"",""bg"":""bg_slums"",""bgm"":""bgm_quest_tense""}",slum_desc
+NODE,slum_desc,"やせ細った野良犬が路地裏へ逃げ込む。\nこの辺りの住民たちは、異端の教えに救いを求めるほど追い詰められているのだろうか。","{""type"":""text"",""bg"":""bg_slums""}",church_out
+NODE,church_out,"目的の廃教会に到着した。\nステンドグラスは割れ、女神の彫像は顔が削り取られている。","{""type"":""text"",""bg"":""bg_ruined_church""}",church_in
+NODE,church_in,"きしむ木の扉を押し開け、地下への階段を下りる。\nカビの匂いに混じって、甘ったるい香の匂いが漂ってきた。","{""type"":""text"",""bg"":""bg_ruined_church""}",ritual_scene
+NODE,ritual_scene,"地下の礼拝堂。\n黒いローブを着た十数人の男女が、奇妙な文様を描いた祭壇を囲んでいる。","{""type"":""text"",""bg"":""bg_ruined_church""}",ritual_dialogue
+NODE,ritual_dialogue,"「光は我らを救わない！ 真の救済は、星の海から訪れる！\n　今こそ偽りの偶像を打ち砕き——」","{""type"":""text"",""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭""}",confront
+NODE,confront,"松明の光がこちらを照らし出した。\n信徒たちが一斉にこちらを振り返る。その目には異常な熱が宿っていた。","{""type"":""text"",""bg"":""bg_ruined_church""}",cultist_shout
+NODE,cultist_shout,"「騎士団の犬め！\n　星の導きを邪魔する者は、我らが手で排除する！」","{""type"":""text"",""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭""}",battle_cultists
+NODE,battle_cultists,"異端者たちが隠し持っていた短剣を抜き、襲いかかってきた！","{""type"":""battle"",""bg"":""bg_ruined_church"",""bgm"":""bgm_battle"",""enemy_group_id"":410,""enemy_name"":""異端の信徒たち""}",
+CHOICE,,win,,after_battle_1
+CHOICE,,lose,,end_failure
+NODE,after_battle_1,"狂信者たちは床に伏し、動かなくなった。\n祭壇の火が消え、地下室に再び冷たい静寂が戻る。","{""type"":""text"",""bg"":""bg_ruined_church"",""bgm"":""bgm_quest_calm""}",after_battle_2
+NODE,after_battle_2,"彼らが本当に国を脅かす存在だったのかは分からない。\nだが、これが依頼だ。証拠となる異端の教典を回収し、教会を後にした。","{""type"":""text"",""bg"":""bg_ruined_church""}",report_knights
+NODE,report_knights,"騎士団の詰め所に戻り、教典を机の上に置く。","{""type"":""text"",""bg"":""bg_guild""}",knight_reply
+NODE,knight_reply,"「見事な働きだ。これで王都の秩序は守られた。\n　お前のことは、口の堅い使える者として記憶しておこう」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""副隊長""}",end_success
+NODE,end_success,"報酬を受け取った。\n手の中の金貨の重さが、命の重さのように感じられた。","{""type"":""end"",""bg"":""bg_guild"",""result"":""success""}",
+NODE,end_failure,"狂信者たちの数の暴力に押し潰された。\n意識が遠のく中、彼らの祈りの声が不気味に響いていた。","{""type"":""end"",""bg"":""bg_ruined_church"",""result"":""failure""}",

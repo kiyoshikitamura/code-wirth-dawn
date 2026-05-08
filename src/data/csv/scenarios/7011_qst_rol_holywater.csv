@@ -1,8 +1,29 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"最前線の砦では腐臭が充満し、戦死者が歩き出している。この聖水瓶を届け、安らかな眠りを与えてやらねば。",node_1,"type:text"
-NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3006, quantity:1"
-CHOICE,,"success",node_2,
-CHOICE,,"failure",end_failure,
-NODE,node_2,"目的地へ出発する。",end_success,"type:travel"
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"教会の地下室で、大司祭から木箱を引き渡された。\n中には銀色の小瓶が何十本も隙間なく詰められている。","{""type"":""text"",""bg"":""bg_guild"",""bgm"":""bgm_quest_calm""}",intro_1
+NODE,intro_1,"「最前線の砦で、死者が歩き出しているという報告がありました。\n　この聖水は、彼らに安らかな眠りを与えるためのものです」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""大司祭""}",intro_2
+NODE,intro_2,"「道中は危険ですが、兵士たちの命がかかっています。\n　どうか、無事に届けてください」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""大司祭""}",travel_start
+NODE,travel_start,"木箱を荷車に載せ、王都の門を出発した。\n前線までは片道二日の道のりだ。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_field""}",travel_mid
+NODE,travel_mid,"街道は荒れ果て、すれ違う旅人もほとんどいない。\nただ、時折冷たい風に乗って、微かな腐臭が漂ってくる。","{""type"":""text"",""bg"":""bg_road_day""}",camp
+NODE,camp,"夜が訪れ、街道沿いの廃墟で野営の準備をする。\n焚き火の光だけが、周囲の闇を押し返していた。","{""type"":""text"",""bg"":""bg_camp"",""bgm"":""bgm_quest_calm""}",night_watch
+NODE,night_watch,"見張りに立っていると、暗闇の奥から引きずるような足音が聞こえた。\n一つではない。複数だ。","{""type"":""text"",""bg"":""bg_camp"",""bgm"":""bgm_quest_tense""}",encounter_wave1
+NODE,encounter_wave1,"焚き火の光の端に、甲冑を着た骸骨たちの姿が浮かび上がった。\n荷車に積まれた聖水の気配に引かれて集まってきたらしい。","{""type"":""text"",""bg"":""bg_camp""}",battle_wave1
+NODE,battle_wave1,"亡者の群れが荷車に向かって群がってくる。聖水を守り抜け！","{""type"":""battle"",""bg"":""bg_camp"",""bgm"":""bgm_battle"",""enemy_group_id"":411,""enemy_name"":""骸骨の群れ""}",
+CHOICE,,win,,after_wave1
+CHOICE,,lose,,end_failure
+NODE,after_wave1,"骸骨たちを打ち砕いた。骨の破片が地面に散らばる。\n荷車を確認する。木箱は無事だ。だが、まだ腐臭が薄れない。","{""type"":""text"",""bg"":""bg_camp"",""bgm"":""bgm_quest_calm""}",deeper_night
+NODE,deeper_night,"焚き火の薪を足した直後、今度は地面から這い出すような音がした。\n腐敗した手が、土の中から突き出てくる。","{""type"":""text"",""bg"":""bg_camp"",""bgm"":""bgm_quest_tense""}",encounter_wave2
+NODE,encounter_wave2,"ゾンビの群れだ。半ば腐り落ちた肉体を引きずりながら、\nこちらへと迫ってくる。聖水の匂いに狂ったように目が光っている。","{""type"":""text"",""bg"":""bg_camp""}",battle_wave2
+NODE,battle_wave2,"腐乱死体たちが聖水を求めて襲いかかってくる！","{""type"":""battle"",""bg"":""bg_camp"",""bgm"":""bgm_battle"",""enemy_group_id"":412,""enemy_name"":""ゾンビの群れ""}",
+CHOICE,,win,,after_wave2
+CHOICE,,lose,,end_failure
+NODE,after_wave2,"二度目の襲撃も退けた。体力が削がれてきたが、聖水は無事だ。\n夜明けまでもう少し。持ちこたえなければ。","{""type"":""text"",""bg"":""bg_camp"",""bgm"":""bgm_quest_calm""}",dawn_road
+NODE,dawn_road,"薄明が差し込み、ようやく出発の準備をする。\nしかし、前方の街道に霧のような瘴気が立ち込めている。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_field""}",encounter_wave3
+NODE,encounter_wave3,"霧の中から、怨嗟の声が響く。\n骸骨と腐敗した肉体、そして実体を持たない幽鬼——三種の亡者が行く手を阻んでいた。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",battle_wave3
+NODE,battle_wave3,"最後の関門——三種の亡者が同時に襲いかかってきた！","{""type"":""battle"",""bg"":""bg_road_day"",""bgm"":""bgm_battle"",""enemy_group_id"":413,""enemy_name"":""混成亡者""}",
+CHOICE,,win,,arrive_fort
+CHOICE,,lose,,end_failure
+NODE,arrive_fort,"砦の門をくぐると、負傷兵のうめき声と血の匂いが充満していた。\n誰もが疲弊しきった顔をしている。","{""type"":""text"",""bg"":""bg_fort""}",meet_commander
+NODE,meet_commander,"「教会からの支援物資か！ 助かった……！\n　これで今夜は、死んだ仲間と戦わずに済む」","{""type"":""text"",""bg"":""bg_fort"",""speaker_name"":""砦の守備隊長""}",deliver
+NODE,deliver,"守備隊長に木箱を引き渡す。\n彼は丁寧に木箱を受け取り、深く頭を下げた。","{""type"":""text"",""bg"":""bg_fort""}",end_success
+NODE,end_success,"王都に戻り、教会に完了を報告した。\n報酬を受け取る。前線の兵士たちの安堵の顔が目に浮かんだ。","{""type"":""end"",""bg"":""bg_guild"",""result"":""success""}",
+NODE,end_failure,"亡者の群れに押し切られ、荷車を奪われた。\n散乱した聖水が地面に吸い込まれていくのを、朦朧とする意識の中で見ていた。","{""type"":""end"",""bg"":""bg_camp"",""result"":""failure""}",
