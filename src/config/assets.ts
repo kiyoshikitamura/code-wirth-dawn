@@ -79,6 +79,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_ruined_church': '/images/quests/bg_ruined_church.png',
     'bg_slums': '/images/quests/bg_slum.png',  // alias: CSVで bg_slums を使うケースのフォールバック
     'bg_camp': '/images/quests/bg_camp.png',
+    'bg_fort': '/images/quests/bg_fort.png',
     'bg_shrine': '/images/quests/bg_shrine.png',
     'bg_crypt': '/images/quests/bg_crypt.png',
     'bg_desert_night': '/images/quests/bg_desert.png',  // 夜砂漠 → 砂漠共通にフォールバック
