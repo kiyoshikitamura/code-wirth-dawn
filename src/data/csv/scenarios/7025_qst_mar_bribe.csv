@@ -1,8 +1,27 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"この革袋を、北端のオアシスにいる『隻眼』に渡せ。合言葉は""流砂の果て""。くれぐれも誰にも見られるな。",node_1,"type:text"
-NODE,node_1,"目的地へ出発する。",node_2,"type:travel"
-NODE,node_2,"依頼品の納品を行う。",,"type:check_delivery, item_id:3141, quantity:1"
-CHOICE,,"success",end_success,
-CHOICE,,"failure",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"マルカンドの裏通りで、顔を隠した男と接触した。\n彼は周囲を何度も確認してから、革袋と封筒を差し出した。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",intro_1
+NODE,intro_1,"「この革袋を、北のオアシスに駐屯する『隻眼のハルム』に渡せ。\n　合言葉は『流砂の果て』。彼だけに渡すこと」","{""bg"":""bg_slums"",""speaker_name"":""軍閥の密使"",""type"":""text""}",intro_2
+NODE,intro_2,"「行商人に変装して近づけ。怪しまれたら斬り合いになる。\n　くれぐれも中身は見るな。見れば——お前も消される側になる」","{""bg"":""bg_slums"",""speaker_name"":""軍閥の密使"",""type"":""text""}",disguise
+NODE,disguise,"密使から受け取った行商人の衣装に着替える。\n革袋を荷物の底に隠し、商品のスパイスで匂いを消した。","{""bg"":""bg_slums"",""type"":""text""}",travel_desert
+NODE,travel_desert,"北のオアシスへ向けて砂漠を行く。三日の旅路。\n途中、軍閥の旗印を掲げた騎馬兵とすれ違った。目を合わせないように歩く。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",approach_camp
+NODE,approach_camp,"オアシスの手前に、軍閥の野営地が見えてきた。\n天幕が並び、兵士たちが巡回している。ここを越えなければならない。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",camp_desc
+NODE,camp_desc,"正面の入り口には見張りが二人。後ろの岩場に迂回路らしき獣道がある。\nどちらから行くか——判断を下す時だ。","{""bg"":""bg_desert"",""type"":""text""}",choice_approach
+NODE,choice_approach,"野営地への接近方法を選べ。","{""bg"":""bg_desert"",""type"":""choice""}",
+CHOICE,,正面から堂々と近づく,,front_approach
+CHOICE,,迂回路で潜入する,,sneak_route
+NODE,front_approach,"行商人の笑顔を貼り付けて、正面から野営地に歩いていく。\n「やあ、スパイスの行商だ。将校殿に良い品を——」","{""bg"":""bg_desert"",""type"":""text""}",front_check
+NODE,front_check,"「待て。行商人なんぞに用はない。荷物を見せろ」\n見張り兵が荷を漁り始めた。革袋が見つかるのは時間の問題だ——！","{""bg"":""bg_desert"",""speaker_name"":""見張り兵"",""type"":""text""}",battle_militia
+NODE,battle_militia,"見張り兵に正体を見抜かれた！ 斬り合いだ！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":429,""enemy_name"":""軍閥の見張り兵"",""type"":""battle""}",
+CHOICE,,win,,forced_entry
+CHOICE,,lose,,end_failure
+NODE,forced_entry,"見張りを倒した。騒ぎで他の兵が来る前に、天幕の奥へ走る。\n混乱に乗じてハルム将校を探さなければ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",find_officer_front
+NODE,find_officer_front,"奥の天幕で、隻眼の男を見つけた。\n彼はこちらの血まみれの姿を見て、事情を察したようだ。","{""bg"":""bg_desert"",""type"":""text""}",deliver_front
+NODE,deliver_front,"「『流砂の果て』——」\n合言葉を囁き、革袋と封筒を手渡した。","{""bg"":""bg_desert"",""type"":""text""}",end_success
+NODE,sneak_route,"岩場の獣道を這うように進む。\n砂利を踏まないよう、一歩一歩慎重に足を運んだ。","{""bg"":""bg_desert"",""type"":""text""}",sneak_desc
+NODE,sneak_desc,"天幕の裏手に出た。兵士たちは食事中で、こちらに気づいていない。\n幸運だ。このまま将校の天幕を探す。","{""bg"":""bg_desert"",""type"":""text""}",sneak_close
+NODE,sneak_close,"ひときわ大きな天幕を見つけた。入り口の旗印が将校のものだ。\n裏の隙間から中を覗くと、隻眼の男が地図を眺めている。","{""bg"":""bg_desert"",""type"":""text""}",find_officer_sneak
+NODE,find_officer_sneak,"天幕の中に滑り込む。ハルム将校がこちらを見た。\n「『流砂の果て』——」合言葉を囁く。","{""bg"":""bg_desert"",""type"":""text""}",deliver_sneak
+NODE,deliver_sneak,"革袋と封筒を手渡した。\n将校は素早く懐に収め、何事もなかったように地図に視線を戻した。","{""bg"":""bg_desert"",""type"":""text""}",officer_reply
+NODE,officer_reply,"「予定通りだ。確かに受け取った。\n　帰りは東の谷を抜けろ。そちらの方が安全だ」","{""bg"":""bg_desert"",""speaker_name"":""ハルム将校"",""type"":""text""}",end_success
+NODE,end_success,"マルカンドに戻り、密使に完了を報告した。\n報酬を受け取る。この金がどんな戦争を引き起こすのか——考えないことにした。","{""bg"":""bg_guild"",""rewards"":{""gold"":350,""alignment_shift"":{""chaos"":10},""exp"":100,""reputation"":-5},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"軍閥の兵に囲まれ、身動きが取れなくなった。\n革袋は押収され、スパイとして拘束された。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",

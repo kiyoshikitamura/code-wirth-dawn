@@ -1,7 +1,32 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"あいつは私の財産だ、勝手な真似は許さん。足の二、三本へし折っても構わん。私の金を引きずって連れてこい。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_assassin_trainee"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"マルカンドの闇市場の裏手。\n太った男が金歯を光らせながら近づいてきた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",intro_1
+NODE,intro_1,"「あいつは私の財産だ。借金を踏み倒して逃げやがった。\n　足の二三本へし折っても構わん。私の金を引きずって連れてこい」","{""bg"":""bg_slums"",""speaker_name"":""奴隷商"",""type"":""text""}",intro_2
+NODE,intro_2,"「居場所は掴んである。砂漠の端の無法者集落だ。\n　用心棒どもに匿われているが、お前なら楽勝だろう？」","{""bg"":""bg_slums"",""speaker_name"":""奴隷商"",""type"":""text""}",travel_desert
+NODE,travel_desert,"砂漠の東端へ向かう。半日ほど歩くと、\n岩山の影にバラック小屋が寄り集まった集落が見えてきた。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",reach_colony
+NODE,reach_colony,"無法者集落。逃亡者、犯罪者、捨てられた者たちの吹き溜まり。\nここには法もなければ、秩序もない。","{""bg"":""bg_slums"",""type"":""text""}",colony_desc
+NODE,colony_desc,"路地に座り込む男たちの目が、こちらを値踏みしている。\nよそ者が来れば、それだけで警戒される場所だ。","{""bg"":""bg_slums"",""type"":""text""}",watchman
+NODE,watchman,"集落の入り口で、槍を持った大柄な男に呼び止められた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",watchman_threat
+NODE,watchman_threat,"「お前、奴隷商の犬か？ アイツには渡さないぞ。\n　ここの住民は、もう誰にも支配されない」","{""bg"":""bg_slums"",""speaker_name"":""集落の見張り"",""type"":""text""}",sneak_in
+NODE,sneak_in,"見張りの隙をついて集落の奥へ忍び込む。\nバラック小屋の隙間を縫い、目的の男がいる家を探した。","{""bg"":""bg_slums"",""type"":""text""}",find_fugitive
+NODE,find_fugitive,"奥の小屋から、若い男が顔を出した。\n痩せてはいるが、目に覚悟が宿っている。逃亡者だ。","{""bg"":""bg_slums"",""type"":""text""}",fugitive_story
+NODE,fugitive_story,"「……俺は知っている。奴隷商のやり方を。\n　返済が終わっても、新しい借金を捏造して一生離さない。あいつはそういう男だ」","{""bg"":""bg_slums"",""speaker_name"":""逃亡した男"",""type"":""text""}",choice_fate
+NODE,choice_fate,"男の言葉が嘘かどうかは分からない。\nだが、奴隷商の金歯の笑みを思い出すと、真実味がある。どうする？","{""bg"":""bg_slums"",""type"":""choice""}",
+CHOICE,,連れ戻す（依頼通りに）,,refuse_mercy
+CHOICE,,見逃す（逃がしてやる）,,let_go
+NODE,refuse_mercy,"「悪いが、これは仕事だ」\n男の顔が絶望に歪んだ。\n外から怒号が聞こえる。仲間たちが駆けつけてくる。","{""bg"":""bg_slums"",""type"":""text""}",battle_wave1
+NODE,battle_wave1,"逃亡者の仲間たちが武器を手に立ちはだかった！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":423,""enemy_name"":""集落の用心棒"",""type"":""battle""}",
+CHOICE,,win,,after_wave1
+CHOICE,,lose,,end_failure
+NODE,after_wave1,"用心棒どもを蹴散らした。だが、騒ぎを聞きつけた精鋭が現れる。\n先ほどの見張りの男もいる。刃物の構えが違う——こいつらは手練れだ。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_wave2
+NODE,battle_wave2,"集落の精鋭たちとの激戦！ここを越えなければ男を連れ出せない！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":424,""enemy_name"":""集落の精鋭"",""type"":""battle""}",
+CHOICE,,win,,capture
+CHOICE,,lose,,end_failure
+NODE,capture,"精鋭を倒した。逃亡者は抵抗をやめ、うなだれた。\n「……負けだ。好きにしろ」","{""bg"":""bg_slums"",""bgm"":""bgm_quest_calm"",""type"":""text""}",drag_back
+NODE,drag_back,"男の手を縛り、砂漠を歩かせてマルカンドへ戻る。\n背中越しに、集落の住民たちの憎悪に満ちた視線を感じた。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",deliver_slave
+NODE,deliver_slave,"「ああ、よくやった。この目、この覚悟——折り甲斐があるぞ。\n　お前のような仕事人は好きだ。報酬は弾もう」","{""bg"":""bg_slums"",""speaker_name"":""奴隷商"",""type"":""text""}",end_success
+NODE,end_success,"金袋を受け取った。手の中の金が、やけに重く感じる。\n男の最後の目が——いつまでも脳裏に焼きついて消えなかった。","{""bg"":""bg_slums"",""rewards"":{""gold"":450,""alignment_shift"":{""evil"":10,""chaos"":5},""exp"":100,""reputation"":-5},""type"":""end"",""result"":""success""}",
+NODE,let_go,"「……行け。二度と捕まるな」\n男は一瞬、信じられないという顔をした。","{""bg"":""bg_slums"",""type"":""text""}",fugitive_thanks
+NODE,fugitive_thanks,"「……ありがとう。俺はここで、やり直す。\n　あんたのことは一生忘れない」","{""bg"":""bg_slums"",""speaker_name"":""逃亡した男"",""type"":""text""}",leave_colony
+NODE,leave_colony,"集落を後にした。奴隷商には「すでに別の国へ逃げていた」と報告しよう。\n報酬はもらえないが、今夜は少しだけ眠れそうだ。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",end_mercy
+NODE,end_mercy,"報酬は0。だが、正しいことをした確信がある。\n砂漠の風が、少しだけ涼しく感じた。","{""bg"":""bg_desert"",""rewards"":{""gold"":0,""alignment_shift"":{""justice"":15},""reputation"":10},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"無法者集落の守りは想像以上に堅かった。\n意識が薄れていく中、男たちの嘲笑が遠くに聞こえた。","{""bg"":""bg_slums"",""type"":""end"",""result"":""failure""}",

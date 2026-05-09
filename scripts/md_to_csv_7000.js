@@ -7,7 +7,14 @@ const QUESTS = [
     { md: 'quest_7012_pilgrim.md', csv: '7012_qst_rol_pilgrim.csv' },
     { md: 'quest_7013_undead.md', csv: '7013_qst_rol_undead.csv' },
     { md: 'quest_7014_tithe.md', csv: '7014_qst_rol_tithe.csv' },
-    { md: 'quest_7015_relic.md', csv: '7015_qst_rol_relic.csv' }
+    { md: 'quest_7015_relic.md', csv: '7015_qst_rol_relic.csv' },
+    // マルカンドクエスト
+    { md: 'quest_7020_caravan.md', csv: '7020_qst_mar_caravan.csv' },
+    { md: 'quest_7021_scorpion.md', csv: '7021_qst_mar_scorpion.csv' },
+    { md: 'quest_7022_debt.md', csv: '7022_qst_mar_debt.csv' },
+    { md: 'quest_7023_sandworm.md', csv: '7023_qst_mar_sandworm.csv' },
+    { md: 'quest_7024_auction.md', csv: '7024_qst_mar_auction.csv' },
+    { md: 'quest_7025_bribe.md', csv: '7025_qst_mar_bribe.csv' },
 ];
 
 function processQuest(mdFile, csvFile) {
@@ -148,6 +155,10 @@ function processQuest(mdFile, csvFile) {
                 else if (k === 'chaos') {
                     if (!rewards.alignment_shift) rewards.alignment_shift = {};
                     rewards.alignment_shift.chaos = v;
+                }
+                else if (k === 'justice') {
+                    if (!rewards.alignment_shift) rewards.alignment_shift = {};
+                    rewards.alignment_shift.justice = v;
                 }
             }
             currentNode.parsedParams.rewards = rewards;

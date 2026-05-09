@@ -1,7 +1,25 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"今夜の客は品が良いが、鼻が利くハイエナも引き寄せる。騒ぎを起こす輩がいれば、目立たぬように始末しろ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_guard"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"マルカンドの地下水路の入り口で、目隠しをされた。\n案内人に手を引かれ、長い階段を下りる。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",intro_1
+NODE,intro_1,"目隠しが外された。地下の広間に、\n豪華な絨毯と燭台が並ぶ即席の競売場が設けられている。","{""bg"":""bg_slums"",""type"":""text""}",intro_2
+NODE,intro_2,"「今夜の客は品が良いが、鼻が利くハイエナも引き寄せる。\n　騒ぎを起こす輩がいれば、目立たぬように始末しろ」","{""bg"":""bg_slums"",""speaker_name"":""闇市の元締め"",""type"":""text""}",wait_outside
+NODE,wait_outside,"指示通り、会場の入り口付近で待機する。\n壁越しに、競りの声と金貨が積み上がる音が聞こえてくる。","{""bg"":""bg_slums"",""type"":""text""}",auction_start
+NODE,auction_start,"オークションが始まった。\n最初の出品は、どこかの国の王宮から盗み出された宝冠だ。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_calm"",""type"":""text""}",auction_item_1
+NODE,auction_item_1,"「200金貨！ 300！ 500金貨！」\n競りの声が熱を帯びる。壁の向こうで、途方もない額の金が動いている。","{""bg"":""bg_slums"",""type"":""text""}",first_alarm
+NODE,first_alarm,"見張りの男が駆け込んできた。\n「入口に怪しい連中が来た。武装している。間違いなく狙いはここだ」","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",intruder_1
+NODE,intruder_1,"地下水路の入り口に、粗末な武装の男たちが群がっている。\n闇市の噂を聞きつけた盗賊崩れだ。中の金品を狙っている。","{""bg"":""bg_slums"",""type"":""text""}",battle_wave1
+NODE,battle_wave1,"闇市を嗅ぎつけた盗賊どもが乱入してきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":427,""enemy_name"":""乱入者の先遣隊"",""type"":""battle""}",
+CHOICE,,win,,after_wave1
+CHOICE,,lose,,end_failure
+NODE,after_wave1,"盗賊崩れを排除した。死体を水路に流し、血痕を砂で隠す。\n元締めが顔を出し、「見事だ」と一言だけ言って戻っていった。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_calm"",""type"":""text""}",auction_item_2
+NODE,auction_item_2,"オークションは続いている。\n次の出品は——禁制品の毒薬。競りの声がさらに上がる。","{""bg"":""bg_slums"",""type"":""text""}",second_alarm
+NODE,second_alarm,"再び見張りが来た。今度は顔色が違う。\n「やべえ……今度のは盗賊じゃねえ。腕利きだ」","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",intruder_2_desc
+NODE,intruder_2_desc,"暗闘用の黒装束に身を包んだ男たちが、音もなく水路を進んでくる。\n動きが違う。訓練された暗殺者——誰かに雇われた連中だ。","{""bg"":""bg_slums"",""type"":""text""}",intruder_2_talk
+NODE,intruder_2_talk,"「邪魔をするな。我々の標的は元締めだけだ。\n　道を空けるなら命は助けてやる」","{""bg"":""bg_slums"",""speaker_name"":""黒装束の男"",""type"":""text""}",battle_wave2
+NODE,battle_wave2,"暗殺者の精鋭部隊が襲いかかってきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":428,""enemy_name"":""暗殺者の精鋭"",""type"":""battle""}",
+CHOICE,,win,,after_wave2
+CHOICE,,lose,,end_failure
+NODE,after_wave2,"暗殺者を退けた。今度の死体は水路に流すだけでは済まない。\n元締めの手下たちが、手際よく痕跡を処理していく。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_calm"",""type"":""text""}",auction_end
+NODE,auction_end,"深夜。オークションが無事に終了した。\n客たちは目隠しをされ、一人ずつ違うルートで帰っていく。","{""bg"":""bg_slums"",""type"":""text""}",payment
+NODE,payment,"「いい仕事だ。お前のおかげで今夜の売り上げは過去最高だ。\n　また声をかける。口は堅いだろうな？」","{""bg"":""bg_slums"",""speaker_name"":""闇市の元締め"",""type"":""text""}",end_success
+NODE,end_success,"厚い封筒を受け取った。\n闇の競売場は跡形もなく片付けられ、もう何もなかったかのようだ。","{""bg"":""bg_slums"",""rewards"":{""gold"":500,""alignment_shift"":{""chaos"":10,""evil"":5},""exp"":120,""reputation"":-5},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"暗殺者の刃は正確だった。\n崩れ落ちる視界の端で、オークション会場が蹂躙されていくのが見えた。","{""bg"":""bg_slums"",""type"":""end"",""result"":""failure""}",

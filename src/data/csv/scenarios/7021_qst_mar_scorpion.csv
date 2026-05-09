@@ -1,7 +1,20 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"薬にするのかって？ ははっ、お前は少し詮索しすぎだ。赤いサソリの尾っぽだけあればいい。新鮮なやつをな。",node_1,"type:text"
-NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3005, quantity:1"
-CHOICE,,"success",end_success,
-CHOICE,,"failure",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"マルカンドの裏路地。香辛料と汗の匂いが混じる路地の奥で、\nフードを目深に被った男が待っていた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",intro_1
+NODE,intro_1,"「幻覚サソリの毒針が欲しい。新鮮なやつを3本。\n　何に使うかは聞くな。それが商売のルールだ」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",intro_2
+NODE,intro_2,"「奴らの巣は砂漠の東にある岩場だ。\n　赤い尾を光らせているのが目印。刺されたら……まあ、気をつけろ」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",travel_desert
+NODE,travel_desert,"砂漠の東へ向かう。乾いた風が砂を巻き上げ、\n視界が霞む中をひたすら歩き続けた。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",reach_rocks
+NODE,reach_rocks,"半日ほど歩くと、赤茶けた岩場が見えてきた。\n巨大な岩の隙間から、微かに紫色の光が漏れている。","{""bg"":""bg_desert"",""type"":""text""}",search_1
+NODE,search_1,"岩の隙間に手を伸ばすのは自殺行為だ。\n石を投げて反応を見る。暗闇の奥で、何かがカサカサと動いた。","{""bg"":""bg_desert"",""type"":""text""}",find_nest
+NODE,find_nest,"岩の裏側に回り込むと、地面にいくつもの穴が空いている。\nサソリの巣穴だ。穴の縁が紫色に染まっているのは、毒のせいだろう。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",nest_desc
+NODE,nest_desc,"穴の一つから、尾の先を紫色に光らせたサソリが這い出てきた。\n大人の腕ほどの大きさ。こちらを威嚇するように、鋏を打ち鳴らしている。","{""bg"":""bg_desert"",""type"":""text""}",battle_scorpion
+NODE,battle_scorpion,"巣穴から次々とサソリが這い出してくる！毒針に注意しろ！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":422,""enemy_name"":""幻覚サソリの群れ"",""type"":""battle""}",
+CHOICE,,win,,harvest_1
+CHOICE,,lose,,end_failure
+NODE,harvest_1,"サソリを仕留めた。紫色に光る尾を慎重に切り取る。\nナイフの先が微かに痺れた。素手で触ったら終わりだったろう。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",harvest_2
+NODE,harvest_2,"3本分の毒針を布に包み、革袋に入れた。\n砂漠の熱で変質しないうちに、急いで戻らなければ。","{""bg"":""bg_desert"",""type"":""text""}",travel_back
+NODE,travel_back,"岩場を後にし、マルカンドへの帰路を急ぐ。\n革袋の中身を考えると、あまり気分の良いものではない。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",back_alley
+NODE,back_alley,"日が暮れた頃、マルカンドの裏路地に戻ってきた。\nあの闇商人は、同じ場所で待っていた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deliver_1
+NODE,deliver_1,"革袋を差し出す。闇商人は中身を確認し、\n一本ずつ光に透かして品質を確かめた。","{""bg"":""bg_slums"",""type"":""text""}",dealer_reply
+NODE,dealer_reply,"「上物だ。鮮度も申し分ない。\n　金は約束通り。また入り用になったら声をかける」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",end_success
+NODE,end_success,"金袋を受け取った。この毒針が誰かの命を奪う道具になるのだろう。\nだが、それは自分の知ったことではない——そう言い聞かせた。","{""bg"":""bg_slums"",""rewards"":{""gold"":300,""alignment_shift"":{""evil"":5,""chaos"":5},""exp"":100},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"サソリの毒が全身に回り始めた。\n視界が歪み、砂漠が紫色に溶けていく——これが幻覚か。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",
