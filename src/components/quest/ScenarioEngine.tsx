@@ -43,6 +43,10 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+    // 背景クロスフェード用: 前回の背景URLを保持し、2レイヤーでスムーズに切り替え
+    const [prevBgUrl, setPrevBgUrl] = useState<string>('');
+    const [bgReady, setBgReady] = useState(false);
+
     const historyRef = useRef(history);
     useEffect(() => { historyRef.current = history; }, [history]);
 
@@ -357,8 +361,25 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         setCurrentNodeId(choice.next);
     };
 
-    // ビジュアル
+    // 背景画像のプリロードとクロスフェード制御
     const bgUrl = getAssetUrl(currentNode.bg_key || 'default');
+    useEffect(() => {
+        if (!bgUrl) return;
+        // 同じURLなら何もしない
+        if (bgUrl === prevBgUrl && bgReady) return;
+        // 新しい背景をプリロードしてからフェードイン
+        setBgReady(false);
+        const img = new Image();
+        img.onload = () => {
+            setPrevBgUrl(bgUrl);
+            setBgReady(true);
+        };
+        img.onerror = () => {
+            setPrevBgUrl(bgUrl);
+            setBgReady(true);
+        };
+        img.src = bgUrl;
+    }, [bgUrl]);
 
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
@@ -374,10 +395,14 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 </div>
             )}
 
-            {/* Background Image Layer — 背景画像を全面表示 */}
+            {/* Background Image Layer — プリロード済み画像のみ表示し、フェードインで切り替え */}
             <div
-                className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
-                style={{ backgroundImage: `url(${bgUrl})` }}
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                    backgroundImage: prevBgUrl ? `url(${prevBgUrl})` : undefined,
+                    opacity: bgReady ? 1 : 0,
+                    transition: 'opacity 0.6s ease-in-out',
+                }}
             />
             {/* 下部グラデーション（テキスト領域の可読性確保） */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent pointer-events-none" />

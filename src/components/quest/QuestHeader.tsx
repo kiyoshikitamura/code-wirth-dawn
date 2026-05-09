@@ -27,6 +27,7 @@ export default function QuestHeader({
     const { userProfile, battleState, equipBonus, fetchEquipment } = useGameStore();
     const [fetchedParty, setFetchedParty] = useState<PartyMember[]>([]);
     const [showStatus, setShowStatus] = useState(false);
+    const [isPartyLoading, setIsPartyLoading] = useState(true);
 
     // 装備ボーナス取得
     useEffect(() => {
@@ -38,10 +39,14 @@ export default function QuestHeader({
     const [mountKey] = useState(() => Date.now());
     useEffect(() => {
         if (!userProfile?.id) return;
+        setIsPartyLoading(true);
         fetch(`/api/party/list?owner_id=${userProfile.id}`)
             .then(r => r.json())
-            .then(data => setFetchedParty(data.party || []))
-            .catch(() => {});
+            .then(data => {
+                setFetchedParty(data.party || []);
+                setIsPartyLoading(false);
+            })
+            .catch(() => { setIsPartyLoading(false); });
     }, [userProfile?.id, mountKey]);
 
     // battleState.party はバトル中のみ使用（前回バトルの残留データで新規パーティが隠れる問題を防止）
@@ -149,7 +154,18 @@ export default function QuestHeader({
                     </button>
                     {isPartyOpen && (
                         <div className="flex gap-2 py-1.5 px-3 overflow-x-auto no-scrollbar scrollbar-hide pb-2">
-                            {party_members.length === 0 && (
+                            {isPartyLoading && party_members.length === 0 && (
+                                <>
+                                    {[0,1,2].map(i => (
+                                        <div key={i} className="flex flex-col items-center flex-shrink-0">
+                                            <div className="w-10 h-10 rounded-full bg-slate-800 animate-pulse border-2 border-slate-700/50" />
+                                            <div className="w-10 h-1.5 mt-1 bg-slate-800 rounded-full animate-pulse" />
+                                            <div className="w-8 h-2 mt-0.5 bg-slate-800 rounded animate-pulse" />
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                            {!isPartyLoading && party_members.length === 0 && (
                                 <span className="text-[10px] text-slate-600 italic">同行者なし</span>
                             )}
                             {party_members.map((m: PartyMember) => {
