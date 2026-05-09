@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation'; // Added useSearchParams
 import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
@@ -45,12 +45,26 @@ export default function QuestPage() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isPartyOpen, setIsPartyOpen] = useState(true);
     const [vitalityPulse, setVitalityPulse] = useState(true);
+    const isStartingBattleRef = useRef(false); // 戦闘開始連打防止ガード
 
     useEffect(() => {
         const interval = setInterval(() => {
             setVitalityPulse(prev => !prev);
         }, 800);
         return () => clearInterval(interval);
+    }, []);
+
+    // クエストページ離脱時にゲストNPCをクリーンアップ（ブラウザバック対策）
+    useEffect(() => {
+        return () => {
+            // アンマウント時: クエストが完了していない場合（中断）、ゲストをクリア
+            // (isInQuestに関わらず、guestが存在すればブラウザバック等による離脱とみなしてクリアする)
+            const qs = useQuestState.getState();
+            if (qs.guest) {
+                console.log('[QuestPage] Unmount: clearing guest NPC on quest exit');
+                useQuestState.getState().removeGuest();
+            }
+        };
     }, []);
 
     // Battle Return Logic
@@ -237,6 +251,14 @@ export default function QuestPage() {
     }
 
     const startBattle = async (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => {
+        // 連打防止: 既にバトル開始処理中なら無視
+        if (isStartingBattleRef.current) {
+            console.warn('[QuestPage] startBattle already in progress, ignoring duplicate call');
+            return;
+        }
+        isStartingBattleRef.current = true;
+
+        try {
         let enemies: Enemy[] = [{ id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 }];
 
         if (enemyId && enemyId !== 'slime') {
@@ -341,6 +363,11 @@ export default function QuestPage() {
         setBattleBgm(targetBgm); // CSVのバトルBGMを保存（指定なしの場合はデフォルト）
         setViewMode('battle');
         if (soundManager) soundManager.playBgm(targetBgm);
+        } finally {
+            // バトル画面から戻った後に次のバトルを開始できるようにリセット
+            // 少し遅延させてビュー切り替え後にリセット
+            setTimeout(() => { isStartingBattleRef.current = false; }, 500);
+        }
     };
 
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {

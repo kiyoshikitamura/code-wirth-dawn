@@ -179,7 +179,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     // v15.0: canInteract = プレイヤーフェーズ中のみ操作可能
     // battlePhaseが'player'でない間（npc_done / enemy_done）は常にロック
     const battlePhase = battleState.battlePhase ?? 'player';
-    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat;
+    // Bug fix: ターン1のボーナスログ再生中はカード操作をロック（ログ乱れ防止）
+    const isInitialLogPlaying = battleState.turn === 1 && !isTypingDone && displayedLogs.length < battleState.messages.length;
+    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat && !isInitialLogPlaying;
     // NEXT ボタンの押下可否: ログ再生中（isTypingDone=false）かつプレイヤーフェーズ外は不可
     // プレイヤーフェーズ中はログ再生中でも NEXT 可能（早送り）
     const canPressNext = !battleState.isVictory && !battleState.isDefeat &&

@@ -23,8 +23,8 @@ CHOICE,,教会に届ける,,report
 CHOICE,,闇市で売却する,,sell_market
 NODE,report,"王都に戻り、司教に聖杯を献上する。\n彼は聖杯を受け取ると、震える手でそれを高く掲げた。","{""bg"":""bg_guild"",""type"":""text""}",bishop_thanks
 NODE,bishop_thanks,"「おお……主よ。あなたの器が戻りました。\n　冒険者よ、大儀であった。これは教会からの感謝の印だ」","{""bg"":""bg_guild"",""speaker_name"":""司教"",""type"":""text""}",end_success
-NODE,end_success,"報酬を受け取った。正義を果たし、教会の信頼を得た。\n盗賊たちの命の代償としては、十分すぎる額だった。","{""bg"":""bg_guild"",""type"":""end"",""result"":""success""}",
+NODE,end_success,"報酬を受け取った。正義を果たし、教会の信頼を得た。\n盗賊たちの命の代償としては、十分すぎる額だった。","{""bg"":""bg_guild"",""rewards"":{""gold"":500,""alignment_shift"":{""order"":10},""exp"":200,""reputation"":10},""type"":""end"",""result"":""success""}",
 NODE,sell_market,"裏路地の闇市に聖杯を持ち込んだ。\n胡散臭い商人が金布を剥がし、聖杯の表面を指で撫でた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",sell_deal
 NODE,sell_deal,"「教会の国宝か……これは高く売れる。\n　倍額で買おう。出所は聞かん。ここではそういう決まりだ」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",end_dark
-NODE,end_dark,"重い金袋を受け取った。教会への報酬の倍以上。\n司教には「盗賊団が既に売り払っていた」と報告しておいた。\n嘘がバレなければいいが。","{""bg"":""bg_slums"",""type"":""end"",""result"":""success""}",
+NODE,end_dark,"重い金袋を受け取った。教会への報酬の倍以上。\n司教には「盗賊団が既に売り払っていた」と報告しておいた。\n嘘がバレなければいいが。","{""bg"":""bg_slums"",""rewards"":{""gold"":1000,""alignment_shift"":{""evil"":20},""reputation"":-30},""type"":""end"",""result"":""success""}",
 NODE,end_failure,"盗賊団の連携は見事だった。\n多勢に無勢。剣を弾かれ、意識が闇に沈んでいく。","{""bg"":""bg_forest_day"",""type"":""end"",""result"":""failure""}",

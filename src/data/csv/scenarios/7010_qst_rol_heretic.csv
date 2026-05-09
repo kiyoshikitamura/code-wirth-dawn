@@ -17,5 +17,5 @@ NODE,after_battle_1,"狂信者たちは床に伏し、動かなくなった。\n
 NODE,after_battle_2,"彼らが本当に国を脅かす存在だったのかは分からない。\nだが、これが依頼だ。証拠となる異端の教典を回収し、教会を後にした。","{""bg"":""bg_ruined_church"",""type"":""text""}",report_knights
 NODE,report_knights,"騎士団の詰め所に戻り、教典を机の上に置く。","{""bg"":""bg_guild"",""type"":""text""}",knight_reply
 NODE,knight_reply,"「見事な働きだ。これで王都の秩序は守られた。\n　お前のことは、口の堅い使える者として記憶しておこう」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",end_success
-NODE,end_success,"報酬を受け取った。\n手の中の金貨の重さが、命の重さのように感じられた。","{""bg"":""bg_guild"",""type"":""end"",""result"":""success""}",
+NODE,end_success,"報酬を受け取った。\n手の中の金貨の重さが、命の重さのように感じられた。","{""bg"":""bg_guild"",""rewards"":{""gold"":600,""alignment_shift"":{""order"":20},""exp"":100,""reputation"":5},""type"":""end"",""result"":""success""}",
 NODE,end_failure,"狂信者たちの数の暴力に押し潰された。\n意識が遠のく中、彼らの祈りの声が不気味に響いていた。","{""bg"":""bg_ruined_church"",""type"":""end"",""result"":""failure""}",

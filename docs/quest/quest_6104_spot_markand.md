@@ -14,7 +14,7 @@
 | **リピート** | 現世代で1回（継承後は再出現） |
 | **難易度Tier** | Hard（rec_level: 20） |
 | **経過日数 (time_cost)** | 7（成功: 7日 / 失敗: 5日） |
-| **ノード数** | [CSV作成後に追記] |
+| **ノード数** | 21 |
 | **サムネイル画像** | `/images/quests/bg_spot_markand_king.png` |
 
 ※BGM、SE、進行中の背景画像などはノードごとに指定します。
@@ -46,14 +46,14 @@ Exp:500|Gold:10000|Rep:200|Item:632
 
 **ルートB（心臓を宿すルート）— endノードparamsで付与:**
 ```
-Exp:500|Rep:-100|Item:631
+Exp:500|Rep:-100|Item:631|Align:混沌+100
 ```
 
 ### 報酬アイテム詳細
 
 | ID | Slug | 名前 | Type | 効果 | 入手 |
 |---|---|---|---|---|---|
-| 631 | `spot_desert_curse` | 砂塵の支配 | skill(card) | dmg20(全体)+DEF DOWN(3T), deck_cost:12 | ルートB |
+| 631 | `spot_desert_curse` | 砂塵の支配 | skill(card) | dmg20(全体)+DEF DOWN(3T), deck_cost:4 | ルートB |
 | 632 | `spot_sand_cleaver` | 砂王の断罪刃 | equipment/weapon | ATK+40, DEF-15 | ルートA |
 
 ---
@@ -63,22 +63,44 @@ Exp:500|Rep:-100|Item:631
 ### 全体フロー
 ```text
 start
-  └─[続ける]→ trap_01 (鏡の間)
-       ├─[正解の像]→ trap_02
-       └─[不正解の像]→ battle_trap_01
-            └─[勝利]→ trap_02
-                 ├─[正解]→ trap_03
-                 └─[不正解]→ battle_trap_02
-                      └─[勝利]→ trap_03
-                           ├─[正解]→ boss_king
-                           └─[不正解]→ battle_trap_03
-                                └─[勝利]→ boss_king
-       boss_king
-            ├─[勝利]→ final_choice
-            │    ├─[心臓を破壊]→ end_break
-            │    └─[心臓を宿す]→ end_curse
-            └─[敗北]→ end_failure
+  └─→ start_2（語り部の台詞）
+      └─→ trap_01（第一の間：導入）
+           └─→ trap_01_q（4択）
+                ├─[不正解: 両手を広げた像（傲慢）]→ battle_trap_01 → punish_01 → trap_01
+                ├─[不正解: 片膝をついた像（服従）]→ battle_trap_01 → punish_01 → trap_01
+                ├─[正解: 目を伏せた像（謙譲）]→ trap_02
+                └─[不正解: 天を仰ぐ像（祈願）]→ battle_trap_01 → punish_01 → trap_01
+
+trap_02（第二の間：導入）
+  └─→ trap_02_q（4択）
+       ├─[正解: 空の箱（沈黙）]→ trap_03
+       ├─[不正解: 宝石の箱（欲望）]→ battle_trap_02 → punish_02 → trap_01 ★第1の間
+       ├─[不正解: 砂の箱（虚無）]→ battle_trap_02 → punish_02 → trap_01
+       └─[不正解: 封印された箱（好奇）]→ battle_trap_02 → punish_02 → trap_01
+
+trap_03（第三の間：導入）
+  └─→ trap_03_q（4択）
+       ├─[不正解:「称賛」（偽り）]→ battle_trap_03 → punish_03 → trap_01 ★第1の間
+       ├─[不正解:「哀悼」（同情）]→ battle_trap_03 → punish_03 → trap_01
+       ├─[不正解:「永遠」（執着）]→ battle_trap_03 → punish_03 → trap_01
+       └─[正解:「忘却」（真実）]→ text_king
+
+text_king → text_king_2 → boss_king
+  ├─[勝利]→ final_choice
+  │    ├─→ end_break（ルートA）
+  │    └─→ end_curse（ルートB）
+  └─[敗北]→ end_failure
 ```
+
+### 正解配置表
+
+| 問 | 正解 | 配置位置 |
+|---|------|---------|
+| 第一の間 | 目を伏せた像（謙譲） | **3番目** |
+| 第二の間 | 空の箱（沈黙） | **1番目** |
+| 第三の間 | 「忘却」（真実） | **4番目** |
+
+---
 
 ### ノード詳細
 
@@ -90,49 +112,72 @@ start
 マルカンドの市場で、老婆が倒れた。
 肌が灰色に変色し、指先が砂のように崩れていく。
 「砂の病」だ。ここ数ヶ月で三百人以上が罹った原因不明の病。
-
-酒場で語り部の老人が茶を啜りながら言った。
-「原因はわかっとるよ。あの墓だ。
-　千年前の王が呪いをかけた。自分を忘れるなという、身勝手な呪いだ」
-
-老人は壁の地図を指差した。砂漠の奥、廃墟の印がある。
-
-「無名王の王墓。三千年、誰も踏み込めなかった。
-　入口の石板に書いてある。
-　『右手に真実を、左手に沈黙を、足元に謙譲を求めた』と」
-
-老人はにやりと笑った。
-「行くなら止めんが——帰ってきた者は、一人もおらんぞ」
 ```
 **params:** `{"type":"text", "bgm":"bgm_markand", "bg":"bg_spot_markand_ruins"}`
 
 ---
 
-#### `trap_01`（type: text）
+#### `start_2`（type: text）
+- **BGM**: `bgm_markand` / **背景**: `bg_spot_markand_ruins`
+- **speaker_name**: `語り部の老人`
+
+**テキスト:**
+```
+「原因はわかっとるよ。あの墓だ。
+　千年前の王が呪いをかけた。自分を忘れるなという、身勝手な呪いだ」
+
+老人は壁の地図を指差した。
+
+「無名王の王墓。三千年、誰も踏み込めなかった。
+　入口の石板にこう書いてある。
+　『右手に真実を、左手に沈黙を、足元に謙譲を求めた』と。
+　行くなら止めんが——帰ってきた者は、一人もおらんぞ」
+```
+**params:** `{"type":"text", "bg":"bg_spot_markand_ruins", "speaker_name":"語り部の老人"}`
+
+---
+
+#### `trap_01`（type: text）— 第一の間：鏡の間
 - **BGM**: `bgm_quest_mystery` / **背景**: `bg_spot_markand_mirror`
 
 **テキスト:**
 ```
-王墓の入口を抜けると、空気が変わった。乾いた砂漠から一転、冷たく湿っている。
-松明が壁の装飾を照らした。金と青の模様。かつての栄華の残滓だ。
+王墓の入口を抜けると、空気が変わった。
+乾いた砂漠から一転、冷たく湿っている。
 
 第一の間。「鏡の間」。
 
-部屋の中央に、三体の石像が並んでいる。
-一体は両手を広げ、一体は片膝をつき、一体は目を伏せている。
+部屋の中央に、四体の石像が並んでいる。
+一体は両手を広げ、一体は片膝をつき、
+一体は目を伏せ、一体は天を仰いでいる。
 
-壁に文字が刻まれている。古代語だが、辛うじて読める。
+壁に文字が刻まれている。
 「太陽はどの姿を照らすか。
 　答えを誤れば、光が牙を剥く」
 
-足元に骨が散らばっている。前に来た者の成れの果てだろう。
-その骨が、不正解の像の前に集中している。
+足元に骨が散らばっている。
+前に来た者の成れの果てだ。
 ```
-**選択肢:**
+**params:** `{"type":"text", "bgm":"bgm_quest_mystery", "bg":"bg_spot_markand_mirror"}`
+
+---
+
+#### `trap_01_q`（type: text / 4択）— 第一の間：選択
+
+**テキスト:**
+```
+石板の碑文を思い出す。
+『足元に謙譲を求めた』——
+
+四つの像が、答えを待っている。
+```
+**選択肢（正解: 3番目）:**
 | ラベル | 次ノード |
 |--------|---------|
-| 目を伏せた像（謙譲） | `trap_02` |
 | 両手を広げた像（傲慢） | `battle_trap_01` |
+| 片膝をついた像（服従） | `battle_trap_01` |
+| 目を伏せた像（謙譲） | `trap_02` |
+| 天を仰ぐ像（祈願） | `battle_trap_01` |
 
 ---
 
@@ -146,16 +191,32 @@ start
 鏡の中から、自分と同じ姿をした光の戦士が抜け出してくる。
 だが顔が歪んでいる。嘲笑っている。
 
-壁に新たな文字が浮かんだ。
 「傲慢なる者よ。己の影と戦え」
 
 光の衛兵が剣を構えた。
 ```
-**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":"spot_markand_guard_1"}`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":330}`
 
 ---
 
-#### `trap_02`（type: text）
+#### `punish_01`（type: text）— 第1の間への強制送還
+
+**テキスト:**
+```
+光の衛兵を退けた。
+だが足元の床が崩れ、暗闇に落ちた。
+
+気がつくと——入口に戻されていた。
+壁の文字が薄く光っている。
+「間違えた者は、最初からやり直せ」
+
+再び第一の間の入口が見えた。
+```
+**次ノード:** `trap_01`
+
+---
+
+#### `trap_02`（type: text）— 第二の間：秤の間
 - **BGM**: `bgm_quest_mystery` / **背景**: `bg_spot_markand_mirror`
 
 **テキスト:**
@@ -168,17 +229,30 @@ start
 壁の文字。
 「あなたの手に最も重い物を乗せよ」
 
-天秤の横に、三つの箱がある。
-一つには宝石、一つには砂、一つには何も入っていない。
-
-足元の骨が語っている。宝石の箱の前に、最も多くの骨がある。
-——欲に目が眩んだのだろう。
+天秤の横に、四つの箱がある。
+宝石の箱、砂の箱、何も入っていない箱、
+そして——封印された箱。
 ```
-**選択肢:**
+**params:** `{"type":"text", "bgm":"bgm_quest_mystery", "bg":"bg_spot_markand_mirror"}`
+
+---
+
+#### `trap_02_q`（type: text / 4択）— 第二の間：選択
+
+**テキスト:**
+```
+石板の碑文を思い出す。
+『左手に沈黙を求めた』——
+
+四つの箱が、答えを待っている。
+```
+**選択肢（正解: 1番目）:**
 | ラベル | 次ノード |
 |--------|---------|
 | 空の箱を選ぶ（沈黙） | `trap_03` |
 | 宝石の箱を選ぶ（欲望） | `battle_trap_02` |
+| 砂の箱を選ぶ（虚無） | `battle_trap_02` |
+| 封印された箱を選ぶ（好奇） | `battle_trap_02` |
 
 ---
 
@@ -187,22 +261,35 @@ start
 
 **テキスト:**
 ```
-宝石に手を伸ばした瞬間、箱から砂が噴き出した。
+箱に手を伸ばした瞬間、砂が噴き出した。
 砂が渦を巻き、人の形を作っていく。
 
 砂のゴーレムだ。体内に宝石が埋め込まれている。
-触れれば砂に呑み込まれる。
 
-壁に文字が浮かんだ。
 「沈黙は言葉より重い。欲を捨てよ」
 
 ゴーレムが拳を振り上げた。
 ```
-**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":"spot_markand_guard_2"}`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":331}`
 
 ---
 
-#### `trap_03`（type: text）
+#### `punish_02`（type: text）— 第1の間への強制送還
+
+**テキスト:**
+```
+ゴーレムを退けた。
+だが壁の模様が輝き、砂嵐が視界を奪った。
+
+目を開けると——再び第一の間の入口だった。
+壁の文字が冷たく告げる。
+「理解なき者に、先はない」
+```
+**次ノード:** `trap_01`
+
+---
+
+#### `trap_03`（type: text）— 第三の間：棺の間
 - **BGM**: `bgm_quest_mystery` / **背景**: `bg_spot_markand_mirror`
 
 **テキスト:**
@@ -212,22 +299,31 @@ start
 部屋の中央に棺がある。蓋が半分開いている。
 中には——何もない。空だ。
 
-だが棺の縁に、二行の文字が刻まれていた。
+棺の縁に、文字が刻まれていた。
 「死者に捧げるべき言葉は何か」
-
-壁に選択肢が浮かんでいる。
-「称賛」と「忘却」。
-
-足元の骨。今度は「称賛」の壁の前に多い。
-——死者は称えられたいのではない。静かに忘れられたいのだ。
-だが、この王墓の主は「忘れられること」を何より恐れた。
-矛盾している。正解はどちらだ。
 ```
-**選択肢:**
+**params:** `{"type":"text", "bgm":"bgm_quest_mystery", "bg":"bg_spot_markand_mirror"}`
+
+---
+
+#### `trap_03_q`（type: text / 4択）— 第三の間：選択
+
+**テキスト:**
+```
+石板の碑文を思い出す。
+『右手に真実を求めた』——
+
+四つの言葉が壁に浮かんでいる。
+この王墓の主は「忘れられること」を何より恐れた。
+だが、真実は何だ。
+```
+**選択肢（正解: 4番目）:**
 | ラベル | 次ノード |
 |--------|---------|
-| 「忘却」を選ぶ（真実） | `boss_king` |
 | 「称賛」を選ぶ（偽り） | `battle_trap_03` |
+| 「哀悼」を選ぶ（同情） | `battle_trap_03` |
+| 「永遠」を選ぶ（執着） | `battle_trap_03` |
+| 「忘却」を選ぶ（真実） | `text_king` |
 
 ---
 
@@ -239,19 +335,33 @@ start
 壁に触れた瞬間、棺が動いた。
 蓋が完全に開き、中から——二体の守護者が這い出してきた。
 
-一体は剣を持ち、一体は盾を持っている。
 かつて王に仕えた近衛兵の成れの果て。
 死してなお、主の墓を守り続けている。
 
 兵士の一体が口を開いた。だが声はない。
-ただ、顎が上下に動いているだけだった。
+顎が上下に動いているだけだった。
 ——もう言葉を忘れているのだ。千年の間に。
 ```
-**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":"spot_markand_guard_3"}`
+**params:** `{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_markand_mirror", "enemy_group_id":332}`
 
 ---
 
-#### `boss_king`（type: battle）
+#### `punish_03`（type: text）— 第1の間への強制送還
+
+**テキスト:**
+```
+守護者を退けた。
+だが棺が閉じ、床が沈んだ。
+
+再び——第一の間。
+壁の文字が嘲笑うように光る。
+「真実を知らぬ者は、永遠にここを彷徨え」
+```
+**次ノード:** `trap_01`
+
+---
+
+#### `text_king`（type: text）
 - **BGM**: `bgm_spot_final_boss` / **背景**: `bg_spot_markand_king`
 
 **テキスト:**
@@ -265,16 +375,21 @@ start
 広間の中央に、黄金の玉座がある。
 そこに座っているのは——ミイラだった。
 だが、ミイラが動いた。
+```
+**params:** `{"type":"text", "bgm":"bgm_spot_final_boss", "bg":"bg_spot_markand_king"}`
 
-「…………来たか」
+---
 
-声は砂が擦れるような音だった。
+#### `text_king_2`（type: text）
+- **BGM**: `bgm_spot_final_boss` / **背景**: `bg_spot_markand_king`
+- **speaker_name**: `無名王`
 
+**テキスト:**
+```
 「三千年だ。三千年、ここで待った。
 　誰か来るのを。俺の名を呼ぶ者を」
 
-ミイラが立ち上がった。干からびた体から、砂の鎧が形成されていく。
-玉座の背後に、巨大な影が立ち上がった。
+ミイラが立ち上がった。砂の鎧が形成されていく。
 
 「俺は——名前すら忘れた。
 　民も、将軍も、妃も、全員が俺を忘れた。
@@ -287,7 +402,18 @@ start
 
 砂王が腕を振り上げた。
 ```
-**params:** `{"type":"battle", "bgm":"bgm_spot_final_boss", "bg":"bg_spot_markand_king", "enemy_group_id":"spot_markand_king"}`
+**params:** `{"type":"text", "bg":"bg_spot_markand_king", "speaker_name":"無名王"}`
+
+---
+
+#### `boss_king`（type: battle）
+- **BGM**: `bgm_battle_boss` / **背景**: `bg_spot_markand_king`
+
+**テキスト:**
+```
+無名王との最終決戦！
+```
+**params:** `{"type":"battle", "bgm":"bgm_battle_boss", "bg":"bg_spot_markand_king", "enemy_group_id":333}`
 
 ---
 
@@ -345,7 +471,7 @@ start
 刀身に砂の模様が走っている。重い刃だ。
 三千年分の怒りが、鋼に宿っている。
 ```
-**params:** `{"type":"end", "result":"success", "rewards":{"exp":500, "gold":10000, "reputation":200, "items":["632"]}}`
+**params:** `{"type":"end_success", "bg":"bg_spot_markand_king", "rewards":{"exp":500, "gold":10000, "reputation":200, "items":["632"]}}`
 
 ---
 
@@ -375,7 +501,7 @@ start
 
 固有スキル『砂塵の支配』を入手した！
 ```
-**params:** `{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["631"]}}`
+**params:** `{"type":"end_success", "bg":"bg_spot_markand_king", "rewards":{"exp":500, "reputation":-100, "items":["631"], "alignment_shift":{"chaos":100}}}`
 
 ---
 
@@ -390,4 +516,4 @@ start
 
 意識が砂に埋もれていった。
 ```
-**params:** `{"type":"end", "result":"failure"}`
+**params:** `{"type":"end_failure"}`

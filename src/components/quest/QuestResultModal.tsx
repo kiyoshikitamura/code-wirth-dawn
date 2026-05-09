@@ -149,14 +149,14 @@ export default function QuestResultModal({
                                     </div>
                                 )}
                             </div>
-                            {/* ドロップアイテム */}
+                            {/* 獲得アイテム・スキル */}
                             {lootSaved && lootSaved.length > 0 && (
                                 <div className="mt-2 space-y-1">
                                     {lootSaved.map((loot: any, i: number) => (
                                         <div key={i} className="flex items-center gap-2 bg-black/30 px-2.5 py-1.5 rounded border border-gray-800 text-xs">
-                                            <span className="text-purple-400">📦</span>
+                                            <span className="text-purple-400">{loot.type === 'skill' ? '📜' : '📦'}</span>
                                             <span className="text-slate-300">{loot.name || `Item #${loot.itemId}`}</span>
-                                            <span className="text-gray-500 ml-auto">x{loot.quantity || 1}</span>
+                                            <span className="text-gray-500 ml-auto">{loot.type === 'skill' ? '習得' : `x${loot.quantity || 1}`}</span>
                                         </div>
                                     ))}
                                 </div>

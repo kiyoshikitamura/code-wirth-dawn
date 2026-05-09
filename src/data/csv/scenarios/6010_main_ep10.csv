@@ -25,4 +25,4 @@ CHOICE,,神の理に叛逆する,,text_aftermath
 NODE,text_aftermath,"幾度も死の淵を彷徨いながら、剣がついに守護竜の逆鱗を貫いた。","{""type"":""text"", ""bg"":""bg_boss_altar""}",text_aftermath2
 NODE,text_aftermath2,"巨竜が光の粒子となって崩壊していく。荒い息を吐いた。立っているのがやっとだった。","{""type"":""text"", ""bg"":""bg_boss_altar""}",end_node
 NODE,end_node,"守護竜は消えた。だが祭壇の水晶はまだ光っている。「天上の神々」の傲慢な瞳が、未だ世界中を見下ろしている。","{""type"":""text"", ""bg"":""bg_boss_altar""}",end_node2
-NODE,end_node2,"神々の遊戯は終わっていない。答えを求めて西へ。華龍神朝の地を目指す。あの国には「天に届く塔」の伝説がある。（第2部完）","{""type"":""end_success"", ""bg"":""bg_boss_altar""}",
+NODE,end_node2,"神々の遊戯は終わっていない。答えを求めて西へ。華龍神朝の地を目指す。あの国には「天に届く塔」の伝説がある。（第2部完）","{""type"":""end_success"", ""bg"":""bg_boss_altar"", ""rewards"":{""items"":[""502""]}}",

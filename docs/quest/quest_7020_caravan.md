@@ -1,4 +1,4 @@
-# クエスト仕様書：7020 — 大砂漠の長距離交易護衛
+﻿# クエスト仕様書：7020 — 大砂漠の長距離交易護衛
 
 ## 0. ファイル概要
 
@@ -8,143 +8,272 @@
 | **Slug** | `qst_mar_caravan` |
 | **クエスト種別** | マルカンドクエスト（Markand） |
 | **推奨レベル** | 5（Normal） |
-| **難度** | 2 |
+| **難度** | 3 |
 | **依頼主** | 交易商会 |
 | **出現条件** | 制限なし / 出現拠点: loc_marcund |
 | **リピート** | リピート可能 |
 | **難易度Tier** | Normal（rec_level: 5） |
-| **経過日数 (time_cost)** | 1（成功: 1日 / 失敗: 1日） |
-| **ノード数** | 7ノード（うち選択肢2件） |
-| **サムネイル画像** | `/images/quests/bg_guild.png` |
-
-※BGM、SE、進行中の背景画像などはノードごとに指定します。
-
----
+| **経過日数 (time_cost)** | 8（成功: 8日 / 失敗: 4日） |
+| **ノード数** | 20ノード |
+| **サムネイル画像** | `/images/quests/bg_desert.png` |
 
 ## 1. クエスト概要
 
 ### 短文説明
 ```
-[要定義: 短文説明]
+[護衛] 広大な砂漠を越える商隊の用心棒。盗賊と魔獣の連戦を耐え抜け。
 ```
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+マルカンドの交易商会から大口の護衛依頼が入った。砂漠横断の交易ルート——ラクダ20頭分の香辛料と絹織物を、隣国の交易都市まで無事に届ける仕事だ。片道8日の長丁場。道中には砂漠の盗賊団と、砂の中に潜む魔獣が待ち構えている。商品が無事に届けば高額の報酬が約束されるが、砂漠の旅に「安全」という二文字は存在しない。
 ```
-
----
 
 ## 2. 報酬定義
 
-**CSV記載形式:**
 ```
-Gold:800
+Gold:500|Chaos:10|Exp:150|Rep:5
 ```
 
----
+## 2.5. 失敗ペナルティ（共通仕様）
 
-## 3. シナリオノードフロー
+| 条件 | ペナルティ |
+|------|-----------|
+| クエスト失敗（敗北/撤退/ギブアップ） | 名声 -3〜-10（ランダム、現在拠点） |
+| バトル敗北（全般） | VIT -1（クエスト/ランダムエンカウント/賞金稼ぎ共通） |
+| 経過日数 | クエスト定義の days_failure 値を適用 |
 
+## 3. シナリオノード構成
+
+### 全体フロー
+
+```text
+start → intro_1 → intro_2 → depart
+  → desert_day1 → desert_heat → desert_night → campfire
+    → ambush_alert → ambush_desc
+      → battle_wave1 (チンピラ x2 / 野盗の射手 x2)
+         ├─ [勝利] → after_wave1 → travel_resume → sandstorm
+         │    → sandstorm_pass → beast_alert → beast_desc
+         │      → battle_wave2 (サンドワーム x1 / デザートスコーピオン x2)
+         │         ├─ [勝利] → after_wave2 → arrive → reward_scene → end_success
+         │         └─ [敗北] → end_failure
+         └─ [敗北] → end_failure
 ```
-start → join_caravan → travel_desert → battle_bandits
-  ├─ 勝利 → midpoint_rest → sandstorm → battle_beast
-  │    ├─ 勝利 → arrive_destination → leave_caravan → end_success
-  │    └─ 敗北 → end_failure
-  └─ 敗北 → end_failure
-```
+
+### ノード詳細
 
 #### `start`（text）
-```
-交易商会の隊長から依頼を受けた。砂漠横断の護衛任務だ。
-商隊はラクダ20頭の大規模編成。出発前から砂埃が舞っている。
-```
-
-#### `join_caravan`（join）
-```
-params: type:join, npc_slug:npc_caravan_leader, is_escort_target:false, next:travel_desert
-```
-> is_escort_target: false —— 隊長の死亡は即失敗ではなく、商品の消失が失敗条件。
-
-#### `travel_desert`（text）
-```
-砂漠に入って半日。地平線まで砂砂砂だ。
-そこに砂煙が上がった——砂漠の盗賊だ。商隊を狙っている。
+**演出:** bg: bg_guild, bgm: bgm_quest_calm
+```text
+交易商会の待合室に呼ばれた。
+壁一面に地図が貼られ、砂漠のルートに赤い線が引かれている。
 ```
 
-#### `battle_bandits`（battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_normal]`
+#### `intro_1`（text）
+**演出:** bg: bg_guild, speaker: 交易商会の隊長
+```text
+「今回の荷は香辛料と絹だ。ラクダ20頭分。
+　片道8日の旅になる。途中で荷を一つでも失えば、お前の報酬から差し引く」
+```
+
+#### `intro_2`（text）
+**演出:** bg: bg_guild, speaker: 交易商会の隊長
+```text
+「砂漠の盗賊団が最近活発でな。
+　おまけに砂の中に化け物が棲みついている。腕に自信がなければ断れ」
+```
+
+#### `depart`（text）
+**演出:** bg: bg_desert, bgm: bgm_field
+```text
+王都の門をくぐり、砂漠へと踏み出す。
+ラクダの列が砂丘の向こうまで続いている。長い旅が始まった。
+```
+
+#### `desert_day1`（text）
+**演出:** bg: bg_desert
+```text
+出発から二日目。
+砂と空の境界線が溶け合い、前も後ろも同じ景色が続く。
+```
+
+#### `desert_heat`（text）
+**演出:** bg: bg_desert
+```text
+陽炎が揺れる。水筒の中身は半分を切った。
+ラクダの足取りも重くなり始めている。
+```
+
+#### `desert_night`（text）
+**演出:** bg: bg_desert_night, bgm: bgm_quest_calm
+```text
+夜になり、砂漠の気温が急激に下がる。
+星空の下、商隊は円陣を組んで野営の準備をした。
+```
+
+#### `campfire`（text）
+**演出:** bg: bg_camp
+```text
+焚き火を囲む。隊商の男たちが、砂漠の怪談を囁いている。
+見張りを交代しながら、短い眠りについた。
+```
+
+#### `ambush_alert`（text）
+**演出:** bg: bg_camp, bgm: bgm_quest_tense
+```text
+深夜。見張りの男が声を殺して起こしにきた。
+「砂丘の向こうに、松明の光が見える……来やがった」
+```
+
+#### `ambush_desc`（text）
+**演出:** bg: bg_desert_night
+```text
+砂丘を越えて近づいてくる影。十人以上いる。
+ターバンで顔を隠した砂漠の盗賊団だ。商隊の荷を狙っている。
+```
+
+#### `battle_wave1`（battle）【第1戦】
+**演出:** bg: bg_desert_night, bgm: bgm_battle
 
 | 設定 | 値 |
 |-----|-----|
-| 敵グループ | `enemy_desert_bandit` |
-| 敵名 | 砂漠の盗賊 |
+| 敵グループID | `420`（新規作成） |
+| 敵グループSlug | `grp_desert_bandit` |
+| 構成 | チンピラ(1101) x2 / 野盗の射手(1102) x2 |
+| 敵表示名 | 砂漠の盗賊団 |
 
-```
-params: type:battle, enemy_group_id:[要定義: enemy_desert_bandit が含まれるグループ], next:midpoint_rest, fail:end_failure
+```text
+砂漠の盗賊団が商隊に襲いかかってきた！
 ```
 
-#### `midpoint_rest`（text）
+#### `after_wave1`（text）
+**演出:** bg: bg_desert_night, bgm: bgm_quest_calm
+```text
+盗賊どもを蹴散らした。数人が砂丘の向こうへ逃げていく。
+荷を確認する。無事だ。ラクダも全頭健在。
 ```
-盗賊を撃退した。商隊はオアシスで小休止。
-「よくやった。後半も頼む」と隊長が言った。
+
+#### `travel_resume`（text）
+**演出:** bg: bg_desert, bgm: bgm_field
+```text
+夜明けと共に出発。盗賊に襲われた疲労が残るが、
+立ち止まっていれば次はもっと大きな群れが来るかもしれない。
 ```
 
 #### `sandstorm`（text）
-```
-砂嵐が起きた。視界が塞がれた瞬間、砂の中から巨大な影が現れた。
-砂漠の魔獣だ——キャラバンを獲物と判断している。
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+五日目の昼過ぎ。空が突然褐色に染まった。
+砂嵐だ。視界が数メートル先まで塞がれる。
 ```
 
-#### `battle_beast`（battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_normal]`
+#### `sandstorm_pass`（text）
+**演出:** bg: bg_desert
+```text
+ラクダの手綱を握りしめ、嵐が過ぎるのを待った。
+砂が収まったとき、足元の砂が不自然に盛り上がっているのに気づいた。
+```
+
+#### `beast_alert`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+地面が震えている。ラクダたちが怯えて鳴き始めた。
+砂の中から、巨大な何かが這い寄ってくる——！
+```
+
+#### `beast_desc`（text）
+**演出:** bg: bg_desert
+```text
+砂が爆発的に噴き上がり、巨大な口が空を仰いだ。
+サンドワーム——砂漠の支配者だ。その脇には大型のサソリも這い出てくる。
+```
+
+#### `battle_wave2`（battle）【第2戦】
+**演出:** bg: bg_desert, bgm: bgm_battle_boss
 
 | 設定 | 値 |
 |-----|-----|
-| 敵グループ | `enemy_sand_beast` |
-| 敵名 | 砂漠の魔獣 |
-| 備考 | HP高め・ボス格。第2戦のため強め設定 |
+| 敵グループID | `421`（新規作成） |
+| 敵グループSlug | `grp_desert_beast` |
+| 構成 | サンドワーム(1212) x1 / デザートスコーピオン(1211) x2 |
+| 敵表示名 | 砂漠の魔獣 |
 
-```
-params: type:battle, enemy_group_id:[要定義: enemy_sand_beast が含まれるグループ], next:arrive_destination, fail:end_failure
-```
-
-#### `arrive_destination`（text）
-```
-砂漠を抜け、目的地の交易都市に到着した。
-商品は全て無事。商会の代理人が笑顔で出迎えてくれた。
+```text
+砂漠の魔獣が商隊を襲う！荷を守り抜け！
 ```
 
-#### `leave_caravan`（leave）
-```
-params: type:leave, npc_slug:npc_caravan_leader, next:end_success
+#### `after_wave2`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_calm
+```text
+サンドワームが砂の中に沈んでいった。もう動かない。
+サソリの死骸を踏み越え、商隊を急かす。もう少しだ。
 ```
 
-#### `end_success` / `end_failure`
-（標準定義）
+#### `arrive`（text）
+**演出:** bg: bg_guild
+```text
+八日目の夕暮れ。ついに交易都市の城壁が見えた。
+門をくぐると、商会の代理人が笑顔で出迎えてくれた。
+```
+
+#### `reward_scene`（text）
+**演出:** bg: bg_guild, speaker: 交易商会の代理人
+```text
+「全頭無事！ 荷も完品！ さすがだな、傭兵。
+　約束の報酬だ。また頼むぞ」
+```
+
+#### `end_success`（end_success）
+**演出:** bg: bg_guild
+```text
+重い金袋を受け取った。
+8日間の砂と汗の代償。それでも、生きて帰れたことに感謝した。
+```
+**rewards:** Gold:500, Chaos:10, Exp:150, Rep:5
+
+#### `end_failure`（end_failure）
+**演出:** bg: bg_desert
+```text
+砂漠の容赦ない牙の前に、膝をついた。
+荷は奪われ、商隊は散り散りになった。
+```
 
 ---
 
-## 4. CSVエントリ
+## 4. 敵定義参照（新規エネミーグループ 2件）
+
+### エネミーグループ: `grp_desert_bandit` (ID: 420)
+
+| Slug | 名前 | Lv | HP | ATK | DEF |
+|------|------|----|----|-----|-----|
+| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
+| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
+| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
+| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
+
+### エネミーグループ: `grp_desert_beast` (ID: 421)
+
+| Slug | 名前 | Lv | HP | ATK | DEF |
+|------|------|----|----|-----|-----|
+| enemy_markand_sand_worm | サンドワーム | 14 | 180 | 45 | 5 |
+| enemy_markand_scorpion | デザートスコーピオン | 8 | 90 | 30 | 15 |
+| enemy_markand_scorpion | デザートスコーピオン | 8 | 90 | 30 | 15 |
+
+---
+
+## 5. CSVエントリ（quests_normal.csv）
 
 ```csv
-7020,qst_mar_caravan,大砂漠の長距離交易護衛,2,2,1,loc_marcund,,,,,Gold:800,交易商会,[護衛] 広大な砂漠を越える商隊の用心棒。盗賊と魔獣の連戦を耐え抜け。
+7020,qst_mar_caravan,大砂漠の長距離交易護衛,5,3,8,loc_marcund,,,,,Gold:500|Chaos:10|Exp:150|Rep:5,交易商会,[護衛] 広大な砂漠を越える商隊の用心棒。盗賊と魔獣の連戦を耐え抜け。
 ```
 
 ---
 
-## 5. 実装チェックリスト
+## 6. 実装チェックリスト
 
 - [ ] 出現拠点 `loc_marcund` のみ
-- [ ] `enemy_desert_bandit` がDBに登録済み
-- [ ] `enemy_sand_beast` がDBに登録済み（HP高め・ボス設定）
-- [ ] 2連戦フローが正しく動作する
-
----
-
-## 6. 拡張メモ
-
-- 砂漠オアシスでの`camp`ノード（HP回復・デッキ調整）
-- 商品の種類によって報酬が変動するシステム（将来実装）
+- [ ] エネミーグループ `grp_desert_bandit`（420）がenemy_groups.csvに登録済み
+- [ ] エネミーグループ `grp_desert_beast`（421）がenemy_groups.csvに登録済み
+- [ ] 2連戦フローが正しく遷移する
+- [ ] Gold:500 + Chaos:10 + Exp:150 + Rep:5 が付与される
+- [ ] time_cost: 8（成功）/ 4（失敗）が正しく経過する

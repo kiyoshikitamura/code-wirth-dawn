@@ -272,7 +272,9 @@ async function main() {
                         next: r.next_node || undefined, // v21: テキストノードの遷移先を正しくマッピング
                         bg_key: params.bg || params.bg_key, // Alias
                         bgm_key: params.bgm || params.bgm_key,
+                        bgm: params.bgm || params.bgm_key, // v22: バトルBGM用エイリアス
                         enemy_group_id: params.enemy || params.enemy_group_id,
+                        speaker_name: params.speaker || params.speaker_name || undefined, // v22: 話者名マッピング
                         speaker_image_url: params.speaker_image_url || undefined,
                         result: (params.type === 'end_success' || params.type === 'end') ? 'success' : (params.type === 'end_failure' ? 'failure' : undefined),
                         choices: [],

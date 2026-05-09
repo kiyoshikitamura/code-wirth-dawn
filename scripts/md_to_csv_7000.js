@@ -121,6 +121,37 @@ function processQuest(mdFile, csvFile) {
                 currentNode.choices.push({ text: choiceText, next: choiceNext });
             }
         }
+
+        // **rewards:** 行のパース（endノード等にrewardsパラメータを埋め込む）
+        const rewardsMatch = line.match(/^\*\*rewards:\*\*\s*(.+)$/i);
+        if (rewardsMatch && currentNode) {
+            if (!currentNode.parsedParams) currentNode.parsedParams = {};
+            const rewardsStr = rewardsMatch[1];
+            const rewards = {};
+            for (const token of rewardsStr.split(/[,|]/)) {
+                const [key, val] = token.trim().split(':');
+                if (!key || !val) continue;
+                const k = key.trim().toLowerCase();
+                const v = parseInt(val.trim(), 10);
+                if (isNaN(v)) continue;
+                if (k === 'gold') rewards.gold = v;
+                else if (k === 'exp') rewards.exp = v;
+                else if (k === 'rep') rewards.reputation = v;
+                else if (k === 'order') {
+                    if (!rewards.alignment_shift) rewards.alignment_shift = {};
+                    rewards.alignment_shift.order = v;
+                }
+                else if (k === 'evil') {
+                    if (!rewards.alignment_shift) rewards.alignment_shift = {};
+                    rewards.alignment_shift.evil = v;
+                }
+                else if (k === 'chaos') {
+                    if (!rewards.alignment_shift) rewards.alignment_shift = {};
+                    rewards.alignment_shift.chaos = v;
+                }
+            }
+            currentNode.parsedParams.rewards = rewards;
+        }
     }
 
     // ============================================================
@@ -149,6 +180,30 @@ function processQuest(mdFile, csvFile) {
             // text やその他 → 明示的に type が未設定なら 'text'
             if (!node.parsedParams.type) {
                 node.parsedParams.type = 'text';
+            }
+        }
+
+        // バトルノードのbg/bgm 継承: 演出行がなかった場合、直前ノードから引き継ぐ
+        if (node.parsedParams.type === 'battle' && !node.parsedParams.bg) {
+            const idx = nodes.indexOf(node);
+            for (let j = idx - 1; j >= 0; j--) {
+                if (nodes[j].parsedParams?.bg) {
+                    node.parsedParams.bg = nodes[j].parsedParams.bg;
+                    break;
+                }
+            }
+        }
+        if (node.parsedParams.type === 'battle' && !node.parsedParams.bgm) {
+            node.parsedParams.bgm = 'bgm_battle'; // バトルのデフォルトBGM
+        }
+        // 非バトルノードのbg/bgm 継承: 演出行がなかった場合、直前ノードから引き継ぐ
+        if (!node.parsedParams.bg) {
+            const idx = nodes.indexOf(node);
+            for (let j = idx - 1; j >= 0; j--) {
+                if (nodes[j].parsedParams?.bg) {
+                    node.parsedParams.bg = nodes[j].parsedParams.bg;
+                    break;
+                }
             }
         }
     }

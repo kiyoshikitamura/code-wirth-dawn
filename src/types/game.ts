@@ -103,7 +103,7 @@ export interface EnemySkillMaster {
   name: string;
   effect_type: 'damage' | 'heal' | 'drain_vit' | 'status_effect'
     | 'damage_poison' | 'damage_blind' | 'damage_bleed' | 'damage_stun'  // v2.9.3h: 状態異常付きダメージ
-    | 'buff_self_atk' | 'debuff_atk_down' | 'debuff_def_down';            // v2.9.3h: バフ/デバフ
+    | 'buff_self_atk' | 'buff_self_def' | 'debuff_atk_down' | 'debuff_def_down';            // v2.9.3h: バフ/デバフ
   value: number;       // damage倍率 / heal量 / etc.
   description?: string;
 }

@@ -2,29 +2,54 @@ row_type,node_id,text_label,params,next_node
 META,gold,0,,
 META,exp,0,,
 META,reputation,0,,
-NODE,start,マルカンドの市場で老婆が倒れた。肌が灰色に変色し指先が砂のように崩れていく。「砂の病」だ。酒場で語り部の老人が言った。「原因はわかっとるよ。あの墓だ。千年前の王が呪いをかけた。自分を忘れるなという身勝手な呪いだ」,"{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""bgm"":""bgm_markand""}",text_start2
-NODE,text_start2,老人は地図を指差した。「無名王の王墓。三千年誰も踏み込めなかった。入口の石板に『右手に真実を、左手に沈黙を、足元に謙譲を求めた』とある」老人はにやりと笑った。「行くなら止めんが——帰ってきた者は一人もおらんぞ」,"{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""speaker_name"":""語り部の老人""}",trap_01
-NODE,trap_01,王墓の奥。第一の間「鏡の間」。三体の石像が並んでいる。両手を広げた像、片膝をついた像、目を伏せた像。壁に「太陽はどの姿を照らすか。答えを誤れば光が牙を剥く」と刻まれている。足元に骨が散らばっている。前に来た者の成れの果てだ。,"{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",choice_trap1
-CHOICE,,目を伏せた像（謙譲）,,trap_02
+NODE,start,"マルカンドの市場で、老婆が倒れた。\n肌が灰色に変色し、\n指先が砂のように崩れていく。\n\n「砂の病」だ。\nここ数ヶ月で三百人以上が罹った\n原因不明の病。","{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""bgm"":""bgm_markand""}",start_2
+NODE,start_2,"酒場で語り部の老人が茶を啜りながら言った。\n\n「原因はわかっとるよ。あの墓だ。\n　千年前の王が呪いをかけた。\n　自分を忘れるなという、\n　身勝手な呪いだ」","{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""speaker_name"":""語り部の老人""}",start_3
+NODE,start_3,"老人は壁の地図を指差した。\n\n「無名王の王墓。\n　三千年、誰も踏み込めなかった」\n\n「入口の石板にこう書いてある。\n　『右手に真実を、左手に沈黙を、\n　　足元に謙譲を求めた』と」","{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""speaker_name"":""語り部の老人""}",start_4
+NODE,start_4,"老人はにやりと笑った。\n\n「行くなら止めんが——\n　帰ってきた者は、\n　一人もおらんぞ」","{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""speaker_name"":""語り部の老人""}",trap_01
+NODE,trap_01,"王墓の入口を抜けると、\n空気が変わった。\n乾いた砂漠から一転、冷たく湿っている。\n\n第一の間。「鏡の間」。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",trap_01_2
+NODE,trap_01_2,"部屋の中央に、四体の石像が並んでいる。\n\n一体は両手を広げ、\n一体は片膝をつき、\n一体は目を伏せ、\n一体は天を仰いでいる。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror""}",trap_01_3
+NODE,trap_01_3,"壁に文字が刻まれている。\n\n「太陽はどの姿を照らすか。\n　答えを誤れば、光が牙を剥く」\n\n足元に骨が散らばっている。\n前に来た者の成れの果てだ。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror""}",trap_01_q
+NODE,trap_01_q,"石板の碑文を思い出す。\n『足元に謙譲を求めた』——\n\n四つの像が、答えを待っている。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror""}",choice_trap1
 CHOICE,,両手を広げた像（傲慢）,,battle_trap_01
-NODE,battle_trap_01,像に触れた瞬間、壁の鏡が光った。鏡の中から自分と同じ姿をした光の戦士が抜け出してくる。顔が歪んでいる。嘲笑っている。壁に「傲慢なる者よ。己の影と戦え」と浮かんだ。,"{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":330, ""enemy_name"":""光の衛兵"", ""enemy_level"":18}",choice_bt1
-CHOICE,,勝利,,trap_02
-NODE,trap_02,第二の間「秤の間」。巨大な天秤の横に三つの箱。宝石、砂、空の箱。壁に「あなたの手に最も重い物を乗せよ」と刻まれている。宝石の箱の前に最も多くの骨がある——欲に目が眩んだのだろう。,"{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",choice_trap2
+CHOICE,,片膝をついた像（服従）,,battle_trap_01
+CHOICE,,目を伏せた像（謙譲）,,trap_02
+CHOICE,,天を仰ぐ像（祈願）,,battle_trap_01
+NODE,battle_trap_01,"像に触れた瞬間、\n壁の鏡が一斉に光った。\n\n鏡の中から、自分と同じ姿をした\n光の戦士が抜け出してくる。\n顔が歪んでいる。嘲笑っている。\n\n「傲慢なる者よ。己の影と戦え」","{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":330, ""enemy_name"":""光の衛兵"", ""enemy_level"":18}",choice_bt1
+CHOICE,,勝利,,punish_01
+NODE,punish_01,"光の衛兵を退けた。\nだが足元の床が崩れ、暗闇に落ちた。\n\n気がつくと——\n入口に戻されていた。\n\n壁の文字が薄く光っている。\n「間違えた者は、最初からやり直せ」","{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",trap_01
+NODE,trap_02,"第二の間。「秤の間」。\n\n部屋の中央に巨大な天秤がある。\n左の皿には金貨の山。\n右の皿には石ころ一つ。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",trap_02_2
+NODE,trap_02_2,"壁の文字。\n「あなたの手に最も重い物を乗せよ」\n\n天秤の横に、四つの箱がある。\n宝石の箱、砂の箱、\n何も入っていない箱、\nそして——封印された箱。\n\n宝石の箱の前に最も多くの骨がある。\n——欲に目が眩んだのだろう。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror""}",trap_02_q
+NODE,trap_02_q,"石板の碑文を思い出す。\n『左手に沈黙を求めた』——\n\n四つの箱が、答えを待っている。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror""}",choice_trap2
 CHOICE,,空の箱を選ぶ（沈黙）,,trap_03
 CHOICE,,宝石の箱を選ぶ（欲望）,,battle_trap_02
-NODE,battle_trap_02,宝石に手を伸ばした瞬間、箱から砂が噴き出した。砂が渦を巻き人の形を作っていく。砂のゴーレムだ。壁に「沈黙は言葉より重い。欲を捨てよ」と浮かんだ。,"{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":331, ""enemy_name"":""砂のゴーレム"", ""enemy_level"":20}",choice_bt2
-CHOICE,,勝利,,trap_03
-NODE,trap_03,第三の間「棺の間」。中央に空の棺。縁に「死者に捧げるべき言葉は何か」と刻まれている。壁に「称賛」と「忘却」の選択肢。「称賛」の壁の前に骨が多い。この王は忘れられることを何より恐れた。だが正解は——,"{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",choice_trap3
-CHOICE,,「忘却」を選ぶ（真実）,,text_king
+CHOICE,,砂の箱を選ぶ（虚無）,,battle_trap_02
+CHOICE,,封印された箱を選ぶ（好奇）,,battle_trap_02
+NODE,battle_trap_02,"箱に手を伸ばした瞬間、\n砂が噴き出した。\n砂が渦を巻き、人の形を作っていく。\n\n砂のゴーレムだ。\n体内に宝石が埋め込まれている。\n\n「沈黙は言葉より重い。欲を捨てよ」","{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":331, ""enemy_name"":""砂のゴーレム"", ""enemy_level"":20}",choice_bt2
+CHOICE,,勝利,,punish_02
+NODE,punish_02,"ゴーレムを退けた。\nだが壁の模様が輝き、\n砂嵐が視界を奪った。\n\n目を開けると——\n再び第一の間の入口だった。\n\n壁の文字が冷たく告げる。\n「理解なき者に、先はない」","{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",trap_01
+NODE,trap_03,"第三の間。「棺の間」。\n\n部屋の中央に棺がある。\n蓋が半分開いている。\n中には——何もない。空だ。\n\n棺の縁に、文字が刻まれていた。\n「死者に捧げるべき言葉は何か」","{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",trap_03_q
+NODE,trap_03_q,"石板の碑文を思い出す。\n『右手に真実を求めた』——\n\n四つの言葉が壁に浮かんでいる。\n\nこの王墓の主は\n「忘れられること」を何より恐れた。\nだが、真実は何だ。","{""type"":""text"", ""bg"":""bg_spot_markand_mirror""}",choice_trap3
 CHOICE,,「称賛」を選ぶ（偽り）,,battle_trap_03
-NODE,battle_trap_03,棺から二体の守護者が這い出してきた。かつて王に仕えた近衛兵の成れの果て。兵士の一体が口を開いた。だが声はない。顎が上下に動いているだけだった——もう言葉を忘れているのだ。千年の間に。,"{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":332, ""enemy_name"":""混成の守護者"", ""enemy_level"":22}",choice_bt3
-CHOICE,,勝利,,text_king
-NODE,text_king,最深部。黄金の広間。壁一面に一人の男の生涯が描かれていた。戦争、征服、建設、繁栄。そして孤独。最後の壁画は玉座に独り座る男の後ろ姿だった。広間の中央のミイラが動いた。「…………来たか」,"{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_boss""}",text_king2
-NODE,text_king2,「三千年だ。三千年ここで待った。誰か来るのを。俺の名を呼ぶ者を」ミイラから砂の鎧が形成されていく。「俺は名前すら忘れた。千年かけて築いた王国の名すら誰も覚えていない。だから呪った。忘れるなら——道連れだ」砂の嵐が広間を満たした。,"{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""speaker_name"":""無名王""}",boss_king
-NODE,boss_king,無名王との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":333, ""enemy_name"":""無名王の影"", ""enemy_level"":25}",choice_king
+CHOICE,,「哀悼」を選ぶ（同情）,,battle_trap_03
+CHOICE,,「永遠」を選ぶ（執着）,,battle_trap_03
+CHOICE,,「忘却」を選ぶ（真実）,,text_king
+NODE,battle_trap_03,"壁に触れた瞬間、棺が動いた。\n蓋が完全に開き、中から——\n二体の守護者が這い出してきた。\n\nかつて王に仕えた近衛兵の成れの果て。\n\n兵士の一体が口を開いた。\nだが声はない。\n顎が上下に動いているだけだった。\n——もう言葉を忘れているのだ。","{""type"":""battle"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":332, ""enemy_name"":""亡霊の守護者"", ""enemy_level"":22}",choice_bt3
+CHOICE,,勝利,,punish_03
+NODE,punish_03,"守護者を退けた。\nだが棺が閉じ、床が沈んだ。\n\n再び——第一の間。\n\n壁の文字が嘲笑うように光る。\n「真実を知らぬ者は、\n　永遠にここを彷徨え」","{""type"":""text"", ""bg"":""bg_spot_markand_mirror"", ""bgm"":""bgm_quest_mystery""}",trap_01
+NODE,text_king,"最深部。黄金の広間。\n\n壁一面に、一人の男の生涯が\n描かれていた。\n戦争、征服、建設、繁栄。\nそして——孤独。\n\n最後の壁画は、\n玉座に独り座る男の後ろ姿だった。","{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_boss""}",text_king_2
+NODE,text_king_2,"広間の中央に、黄金の玉座がある。\nそこに座っているのは——ミイラだった。\n\nだが、ミイラが動いた。\n\n「…………来たか」","{""type"":""text"", ""bg"":""bg_spot_markand_king""}",text_king_3
+NODE,text_king_3,"「三千年だ。\n　三千年、ここで待った。\n　誰か来るのを。\n　俺の名を呼ぶ者を」\n\nミイラが立ち上がった。\n干からびた体から、\n砂の鎧が形成されていく。","{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""speaker_name"":""無名王""}",text_king_4
+NODE,text_king_4,"「俺は——名前すら忘れた。\n　民も、将軍も、妃も、\n　全員が俺を忘れた。\n　千年かけて築いた王国の名すら、\n　誰も覚えていない」\n\n砂の嵐が広間を満たした。\n\n「だから呪った。\n　忘れるなら——道連れだ」\n\n砂王が腕を振り上げた。","{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""speaker_name"":""無名王""}",boss_king
+NODE,boss_king,無名王との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_battle_boss"", ""enemy_group_id"":333, ""enemy_name"":""無名王の影"", ""enemy_level"":25}",choice_king
 CHOICE,,勝利,,final_choice
-NODE,final_choice,砂王が崩れた。だがまだ動いている。胸の中央に黒い宝石が脈打っている。呪いの核「王の心臓」だ。砂王が笑った。「好きにしろ。壊すか飲むか。壊せば呪いは消えるが俺の知恵も失われる。飲めば力を得るがお前の体に俺の恨みが宿る。……もう疲れたのだ。三千年も恨み続けるのは」,"{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_choice""}",choice_final
+NODE,final_choice,"砂王が崩れた。\n砂の鎧が剥がれ、\n干からびた体が露になる。\n\nだが——まだ動いている。\n\n「……強いな。だが……俺は死なん。\n　この心臓がある限り」\n\n胸の中央に、黒い宝石が脈打っている。\n呪いの核。「王の心臓」だ。","{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""bgm"":""bgm_spot_final_choice""}",final_choice_2
+NODE,final_choice_2,"砂王が笑った。\n干からびた顔が裂けるように。\n\n「好きにしろ。壊すか、飲むか。\n　壊せば呪いは消える。\n　だが——俺の知恵も、\n　永遠に失われる」\n\n「飲めば力を得る。\n　だが——お前の体に、\n　俺の恨みが宿る」\n\n「……もう、疲れたのだ。\n　三千年も恨み続けるのは」","{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""speaker_name"":""無名王""}",choice_final
 CHOICE,,心臓を破壊し呪いを断つ,,end_break
 CHOICE,,心臓を宿し呪いを制御する,,end_curse
-NODE,end_break,黒い宝石を地面に叩きつけた。砂王の体が塵になり広間が灰色の石に戻っていく。街に戻ると砂の病に倒れていた者たちが目を覚ましていた。語り部の老人が出迎えた。「やったか。あの王の名はもう誰も知らん。だがお前がやったことは覚えておく」報酬として『砂王の断罪刃』を受け取った。三千年分の怒りが鋼に宿っている。,"{""type"":""end_success"", ""bg"":""bg_spot_markand_king"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""632""]}}",
-NODE,end_curse,黒い宝石を飲み込んだ。体の中を砂が駆け巡る。腕に砂色の渦巻き紋章が浮かんだ。砂王の最後の言葉。「すまなかった。民を巻き込むべきではなかった」呪いは止まったが力は残った。人々は紋章を見て後ずさりした。語り部の老人だけが笑っていた。「面白い話が増えるのは語り部としては歓迎だ」固有スキル『砂塵の支配』を入手した！,"{""type"":""end_success"", ""bg"":""bg_spot_markand_king"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""631""]}}",
+NODE,end_break,"黒い宝石を地面に叩きつけた。\n\n砕けた瞬間、広間全体が震えた。\n砂王の体が塵になり、\n壁画が色を失い、\n黄金の広間が灰色の石に戻っていく。\n\n三千年の魔力が、一瞬で消え去った。","{""type"":""text"", ""bg"":""bg_spot_markand_king""}",end_break_2
+NODE,end_break_2,"地上に出ると、空が青かった。\n街に戻ると、砂の病に倒れていた者たちが、\n一人、また一人と目を覚ましていた。\n\n語り部の老人が出迎えた。\n「やったか。\n　いや——やったんだな。\n　顔を見ればわかる」","{""type"":""text"", ""bg"":""bg_spot_markand_ruins"", ""speaker_name"":""語り部の老人""}",end_break_3
+NODE,end_break_3,"老人は少し黙ってから言った。\n\n「あの王の名は、もう誰も知らん。\n　だが、お前がやったことは\n　覚えておく」\n\n報酬として『砂王の断罪刃』を\n受け取った。\n刀身に砂の模様が走っている。\n重い刃だ。\n三千年分の怒りが、鋼に宿っている。","{""type"":""end_success"", ""bg"":""bg_spot_markand_ruins"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""632""]}}",
+NODE,end_curse,"黒い宝石を飲み込んだ。\n\n喉が焼ける。\n体の中を砂が駆け巡る感覚。\n腕に紋章が浮かび上がった。\n砂色の渦巻き模様。","{""type"":""text"", ""bg"":""bg_spot_markand_king""}",end_curse_2
+NODE,end_curse_2,"砂王の記憶が流れ込んでくる。\n三千年分の怒りと、孤独と、\n——後悔が。\n\n「……すまなかった。\n　民を巻き込むべきではなかった」\n\nそれが砂王の最後の言葉だった。\n呪いは止まった。だが、力は残った。","{""type"":""text"", ""bg"":""bg_spot_markand_king"", ""speaker_name"":""無名王""}",end_curse_3
+NODE,end_curse_3,"地上に出ると、\n人々の視線が変わっていた。\n腕の紋章を見て、\n後ずさりする者がいる。\n——恐れられている。\n砂王の力を宿した者として。\n\n語り部の老人だけが、笑っていた。\n「お前さん、変わった選択をしたな。\n　まあ——面白い話が増えるのは、\n　語り部としては歓迎だ」\n\n固有スキル『砂塵の支配』を入手した！","{""type"":""end_success"", ""bg"":""bg_spot_markand_ruins"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""631""], ""alignment_shift"":{""chaos"":100}}}",
+NODE,end_failure,"砂に飲まれていく。\n口の中が砂でいっぱいだ。\n目を開けられない。\n\nどこかで、砂の擦れる声が聞こえた。\n「……やはり、つまらぬ」\n\n意識が砂に埋もれていった。","{""type"":""end_failure"", ""bg"":""bg_spot_markand_king""}",

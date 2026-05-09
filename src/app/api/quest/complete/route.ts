@@ -27,7 +27,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat } = body;
+        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards } = body;
+        const lootSaved = Array.isArray(loot_pool) ? loot_pool : [];
 
         // [Security] JWT認証必須化 — body.user_idを信頼しない
         let user_id: string | null = null;
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
             .eq('id', quest_id)
             .single();
 
-        console.log(`[QuestComplete] ID: ${quest_id}, Rewards:`, quest?.rewards);
+        console.log(`[QuestComplete] ID: ${quest_id}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
 
         if (qError || !quest) return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
 
@@ -164,7 +165,8 @@ export async function POST(req: Request) {
         // 4. Rewards & Travel (Success Only)
         let alignmentShift: Record<string, number> | null = null;
         if (result === 'success') {
-            const rewards = quest.rewards || {};
+            // node_rewardsがある場合はそちらを優先（ルート分岐報酬: end_kill / end_seal等）
+            const rewards = node_rewards || quest.rewards || {};
 
             // Gold (handled via RPC now, do not put in updates)
             if (rewards.gold) {
@@ -299,11 +301,72 @@ export async function POST(req: Request) {
         if (updateError) throw updateError;
         
         // Apply Gold Update via RPC if rewards.gold exists
-        if (result === 'success' && quest.rewards?.gold) {
+        const effectiveRewards = (result === 'success' && node_rewards) ? node_rewards : quest.rewards;
+        if (result === 'success' && effectiveRewards?.gold) {
             const { error: goldError } = await supabase
-                .rpc('increment_gold', { p_user_id: user_id, p_amount: quest.rewards.gold });
+                .rpc('increment_gold', { p_user_id: user_id, p_amount: effectiveRewards.gold });
             if (goldError) {
                 console.error("Failed to increment gold via RPC:", goldError);
+            }
+        }
+
+        // node_rewardsにアイテムやスキルがある場合、インベントリ/スキルに付与
+        if (result === 'success' && effectiveRewards) {
+            // アイテム付与
+            if (effectiveRewards.items && Array.isArray(effectiveRewards.items)) {
+                for (const itemIdStr of effectiveRewards.items) {
+                    const itemId = parseInt(String(itemIdStr), 10);
+                    if (isNaN(itemId)) continue;
+
+                    // Fetch item name for UI
+                    const { data: itemDef } = await supabase.from('items').select('name').eq('id', itemId).maybeSingle();
+                    const itemName = itemDef?.name || `アイテム #${itemId}`;
+
+                    const { data: existing } = await supabase
+                        .from('inventory')
+                        .select('id, quantity')
+                        .eq('user_id', user_id)
+                        .eq('item_id', itemId)
+                        .maybeSingle();
+                    
+                    if (existing) {
+                        await supabase.from('inventory').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
+                    } else {
+                        await supabase.from('inventory').insert({ user_id, item_id: itemId, quantity: 1 });
+                    }
+                    console.log(`[QuestComplete] Granted item ${itemId} from node_rewards`);
+                    
+                    // Display in UI
+                    lootSaved.push({ itemId, name: itemName, quantity: 1, type: 'item' });
+                }
+            }
+
+            // スキル付与
+            if (effectiveRewards.skills && Array.isArray(effectiveRewards.skills)) {
+                for (const skillIdStr of effectiveRewards.skills) {
+                    const skillId = parseInt(String(skillIdStr), 10);
+                    if (isNaN(skillId)) continue;
+
+                    // Fetch skill name for UI
+                    const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
+                    const skillName = skillDef?.name || `スキル #${skillId}`;
+
+                    const { data: existingSkill } = await supabase
+                        .from('user_skills')
+                        .select('id')
+                        .eq('user_id', user_id)
+                        .eq('skill_id', skillId)
+                        .maybeSingle();
+                    
+                    if (!existingSkill) {
+                        await supabase.from('user_skills').insert({ user_id, skill_id: skillId });
+                        console.log(`[QuestComplete] Granted skill ${skillId} from node_rewards`);
+                        // Display in UI
+                        lootSaved.push({ itemId: skillId, name: skillName, quantity: 1, type: 'skill' });
+                    } else {
+                        console.log(`[QuestComplete] Skill ${skillId} already owned.`);
+                    }
+                }
             }
         }
 
@@ -464,7 +527,6 @@ export async function POST(req: Request) {
         }
 
         // 8. Loot Pool Persistence (Success only)
-        let lootSaved: any[] = [];
         if (result === 'success' && Array.isArray(loot_pool) && loot_pool.length > 0) {
             for (const loot of loot_pool) {
                 const { data: existing } = await supabase
@@ -484,7 +546,6 @@ export async function POST(req: Request) {
                         .from('inventory')
                         .insert({ user_id, item_id: loot.itemId, quantity: loot.quantity || 1 });
                 }
-                lootSaved.push(loot);
             }
         }
 
@@ -505,8 +566,8 @@ export async function POST(req: Request) {
         let repChange: { amount: number; location: string } | null = null;
 
         // 成功時: rewards.reputation を名声報酬として加算
-        if (result === 'success' && quest.rewards?.reputation) {
-            const repAmount = quest.rewards.reputation;
+        if (result === 'success' && effectiveRewards?.reputation) {
+            const repAmount = effectiveRewards.reputation;
             const locId = updates.current_location_id || user.current_location_id;
             if (locId) {
                 const { data: locForRep } = await supabase.from('locations').select('name').eq('id', locId).maybeSingle();
@@ -574,7 +635,7 @@ export async function POST(req: Request) {
 
         // Calculate changes for UI
         const changes = {
-            gold_gained: (quest.rewards?.gold || 0),
+            gold_gained: (effectiveRewards?.gold || 0),
             old_age: user.age,
             new_age: updates.age,
             aged_up: (newAge - (user.age || 18)) > 0,
@@ -593,8 +654,8 @@ export async function POST(req: Request) {
             days_passed: daysPassed,
             new_location: updates.current_location_id,
             new_location_name: newLocationName,
-            rewards: quest.rewards,
-            earned_exp: result === 'success' ? (quest.rewards?.exp || 0) : 0,
+            rewards: effectiveRewards,
+            earned_exp: result === 'success' ? (effectiveRewards?.exp || 0) : 0,
             loot_saved: lootSaved,
             share_text: finalShareText,
             rep_change: repChange,

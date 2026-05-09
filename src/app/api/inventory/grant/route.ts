@@ -24,13 +24,23 @@ export async function POST(req: Request) {
         }
 
         const { items, gold } = await req.json();
+        console.log('[Grant] Received items:', JSON.stringify(items), 'gold:', gold);
         const grantedItems: { item_id: number; name: string; quantity: number }[] = [];
 
         // アイテム付与
         if (items && Array.isArray(items)) {
             for (const grant of items) {
-                const { item_id, quantity = 1 } = grant;
-                if (!item_id || quantity <= 0) continue;
+                // 正規化: "601" (string/number) → {item_id: 601, quantity: 1}
+                let item_id: number;
+                let quantity: number = 1;
+                if (typeof grant === 'string' || typeof grant === 'number') {
+                    item_id = parseInt(String(grant), 10);
+                } else {
+                    item_id = grant.item_id;
+                    quantity = grant.quantity || 1;
+                }
+                console.log('[Grant] Processing item_id:', item_id, 'quantity:', quantity, 'raw:', JSON.stringify(grant));
+                if (!item_id || isNaN(item_id) || quantity <= 0) continue;
 
                 // アイテム名を取得
                 const { data: itemData } = await supabaseService

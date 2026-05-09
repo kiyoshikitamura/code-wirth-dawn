@@ -101,7 +101,7 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 2203,enemy_spot_baram,賢者バラム,20,450,70,8,0,0,,quest_only
 2204,enemy_spot_shirasu,盾のシラス,20,530,45,22,0,0,,quest_only
 2205,enemy_spot_lyra,射手リラ,20,390,75,6,0,0,,quest_only
-2206,enemy_spot_alvin,不滅の王,25,1050,85,18,0,0,,quest_only
+2206,enemy_spot_alvin,不滅の王,25,3050,85,18,0,0,,quest_only
 2207,enemy_spot_wani,大鰐,20,570,55,20,0,0,,quest_only
 2208,enemy_spot_tori,以津真天,20,450,65,10,0,0,,quest_only
 2209,enemy_spot_kuruma,朧車,22,510,70,14,0,0,,quest_only

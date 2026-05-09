@@ -71,6 +71,27 @@ export async function GET(request: Request) {
             default_cards: [],
             inject_cards: [],
         },
+        {
+            id: '00000000-0000-4000-a000-000000004105',
+            slug: 'npc_pilgrim_albert',
+            name: '巡礼者アルバート',
+            gender: 'Male',
+            job_class: 'Priest',
+            level: 3,
+            max_hp: 50,
+            attack: 5,
+            defense: 8,
+            speed: 3,
+            mp: 0,
+            max_mp: 0,
+            origin: 'system_guest',
+            epithet: '狂信の巡礼者',
+            introduction: '「主神の声が聞こえるのです。あの危険な谷の奥底へ行かねばなりません」',
+            is_hireable: false,
+            hire_cost: 0,
+            default_cards: [],
+            inject_cards: [],
+        },
     ];
 
     for (const npc of guestNpcs) {
@@ -88,6 +109,47 @@ export async function GET(request: Request) {
             target: 'npcs',
             id: npc.id,
             slug: npc.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // ─────────────────────────────────────────────
+    // 0.5 party_members テーブル: ゲストNPCを登録
+    //   guest_join は party_members テーブルを slug で参照するため、
+    //   npcs と party_members の両方にレコードが必要。
+    // ─────────────────────────────────────────────
+    const guestPartyMembers = guestNpcs.map((npc, index) => ({
+        id: 900000 + index,
+        slug: npc.slug,
+        name: npc.name,
+        job_class: npc.job_class,
+        durability: npc.max_hp,
+        max_durability: npc.max_hp,
+        owner_id: null,
+        loyalty: 100,
+        cover_rate: 0,
+        is_active: true,
+        inject_cards: [],
+    }));
+
+    for (const pm of guestPartyMembers) {
+        if (dryRun) {
+            results.push({ target: 'party_members', id: pm.id, slug: pm.slug, status: 'dry_run', payload: pm });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('party_members')
+            .upsert(pm, { onConflict: 'id' });
+
+        results.push({
+            target: 'party_members',
+            id: pm.id,
+            slug: pm.slug,
             status: error ? 'error' : 'upserted',
             error: error?.message,
         });
@@ -383,13 +445,146 @@ export async function GET(request: Request) {
         }
     }
 
+    // ─────────────────────────────────────────────
+    // 6. ローランド地方クエスト 7010-7015 のメタデータ更新
+    // ─────────────────────────────────────────────
+    const rolandQuests: NormalQuestSeed[] = [
+        {
+            id: 7010, slug: 'qst_rol_heretic', rec_level: 4, difficulty: 3,
+            time_cost: 2, days_success: 2, days_failure: 1,
+            rewards: { gold: 600, exp: 100, reputation: 5, alignment_shift: { order: 20 } },
+            requirements: { min_reputation: 80 },
+        },
+        {
+            id: 7011, slug: 'qst_rol_holywater', rec_level: 4, difficulty: 2,
+            time_cost: 3, days_success: 3, days_failure: 2,
+            rewards: { gold: 400, exp: 120, reputation: 5, alignment_shift: { order: 10 } },
+        },
+        {
+            id: 7012, slug: 'qst_rol_pilgrim', rec_level: 4, difficulty: 3,
+            time_cost: 10, days_success: 10, days_failure: 5,
+            rewards: { gold: 700, exp: 150, reputation: -10, alignment_shift: { chaos: 10 } },
+        },
+        {
+            id: 7013, slug: 'qst_rol_undead', rec_level: 4, difficulty: 4,
+            time_cost: 4, days_success: 4, days_failure: 2,
+            rewards: { gold: 450, exp: 100, reputation: 15, alignment_shift: { order: 10 } },
+        },
+        {
+            id: 7014, slug: 'qst_rol_tithe', rec_level: 4, difficulty: 2,
+            time_cost: 1, days_success: 1, days_failure: 1,
+            rewards: { gold: 200, exp: 0, reputation: -10, alignment_shift: { evil: 10 } },
+            requirements: { max_reputation: -50 },
+        },
+        {
+            id: 7015, slug: 'qst_rol_relic', rec_level: 4, difficulty: 4,
+            time_cost: 5, days_success: 5, days_failure: 3,
+            rewards: { gold: 500, exp: 200, reputation: 10, alignment_shift: { order: 10 } },
+        },
+    ];
+
+    for (const quest of rolandQuests) {
+        const updatePayload: Record<string, any> = {
+            rec_level: quest.rec_level,
+            difficulty: quest.difficulty,
+            time_cost: quest.time_cost,
+            days_success: quest.days_success,
+            days_failure: quest.days_failure,
+            rewards: quest.rewards,
+        };
+        if (quest.requirements) {
+            updatePayload.requirements = quest.requirements;
+        }
+
+        if (dryRun) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'dry_run',
+                payload: updatePayload,
+            });
+            successCount++;
+            continue;
+        }
+
+        const { data, error } = await supabase
+            .from('scenarios')
+            .update(updatePayload)
+            .eq('id', quest.id)
+            .select('id');
+
+        if (error) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'error',
+                error: error.message,
+            });
+            errorCount++;
+        } else if (!data || data.length === 0) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'not_found_skipped',
+            });
+        } else {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'updated',
+            });
+            successCount++;
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 7. ローランド地方 enemy_groups (410-418)
+    // ─────────────────────────────────────────────
+    const rolandEnemyGroups = [
+        { id: 410, slug: 'grp_heretic_cultists', name: '異端の信徒たち', members: ['enemy_cultist', 'enemy_cultist', 'enemy_cultist', 'enemy_cult_priest', 'enemy_cult_priest'], formation: 'front_row' },
+        { id: 411, slug: 'grp_holywater_undead_1', name: '汚染されたアンデッド', members: ['enemy_skeleton', 'enemy_skeleton', 'enemy_zombie', 'enemy_zombie'], formation: 'front_row' },
+        { id: 412, slug: 'grp_holywater_undead_2', name: '上級アンデッド', members: ['enemy_skeleton', 'enemy_zombie', 'enemy_wraith'], formation: 'front_row' },
+        { id: 413, slug: 'grp_holywater_lich', name: '地下礼拝堂の番人', members: ['enemy_lich'], formation: 'front_row' },
+        { id: 414, slug: 'grp_pilgrim_bandit_1', name: '山賊の先遣隊', members: ['enemy_bandit_thug', 'enemy_bandit_thug', 'enemy_bandit_archer', 'enemy_bandit_archer'], formation: 'front_row' },
+        { id: 415, slug: 'grp_pilgrim_bandit_2', name: '山賊の精鋭', members: ['enemy_bandit_archer', 'enemy_bandit_archer', 'enemy_bandit_guard', 'enemy_bandit_guard'], formation: 'front_row' },
+        { id: 416, slug: 'grp_undead_patrol', name: '辻に彷徨う亡者', members: ['enemy_skeleton', 'enemy_skeleton', 'enemy_skeleton', 'enemy_skeleton'], formation: 'front_row' },
+        { id: 417, slug: 'grp_undead_swarm', name: '墓地の腐敗者', members: ['enemy_zombie', 'enemy_zombie', 'enemy_zombie'], formation: 'front_row' },
+        { id: 418, slug: 'grp_undead_boss', name: '復讐の亡霊', members: ['enemy_skeleton', 'enemy_zombie', 'enemy_wraith'], formation: 'front_row' },
+    ];
+
+    for (const group of rolandEnemyGroups) {
+        if (dryRun) {
+            results.push({ target: 'enemy_groups', id: group.id, slug: group.slug, status: 'dry_run', payload: group });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('enemy_groups')
+            .upsert(group, { onConflict: 'id' });
+
+        results.push({
+            target: 'enemy_groups',
+            id: group.id,
+            slug: group.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
     return NextResponse.json({
         summary: {
             total: results.length,
             success: successCount,
             errors: errorCount,
             dry_run: dryRun,
-            description: '汎用クエスト7001-7008 マスタデータシード（エネミー3種・アイテム3種・シナリオメタデータ）',
+            description: '汎用クエスト7001-7008 + ローランド地方7010-7015 マスタデータシード',
         },
         results,
     });

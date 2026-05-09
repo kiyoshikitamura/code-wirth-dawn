@@ -1,4 +1,4 @@
-﻿id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_prosperity,min_reputation,max_reputation,rewards_summary,client_name,_comment
+id,slug,title,rec_level,difficulty,time_cost,location_tags,min_prosperity,max_prosperity,min_reputation,max_reputation,rewards_summary,client_name,_comment
 7001,qst_gen_deliver,隣街への封書配達,2,2,8,all,,,,,Gold:250|Rep:2,配達組合,[配達] 隣街の旅籠へ封書を届けて戻る。道中の追い剥ぎに注意。
 7002,qst_gen_escort,放浪商人の護衛,2,2,8,all,,,,,Gold:350|Rep:3,旅商人組合,[護衛] 旅の商人を隣街まで護衛する。商人が倒れれば失敗。
 7003,qst_gen_scavenge,廃墟の金庫回収,2,2,3,all,,,,,Gold:250|Rep:2,冒険者ギルド,[探索] 廃墟の金庫から物資を回収する。届けるか売りさばくか。
@@ -7,12 +7,12 @@
 7006,qst_gen_smuggle,禁制品の闇ルート輸送,2,2,8,all,,,,-50,Gold:800|Rep:-5|Evil:5|Chaos:5,闇商人,[密輸] 中身不明の禁制品を隣街まで運ぶ。追手に注意。
 7007,qst_gen_rat,地下水路の害獣駆除,2,2,2,all,,,,,Gold:400|Rep:2,自治会,[駆除] 地下水路の巨大ネズミの群れを2連戦で殲滅せよ。
 7008,qst_gen_mercy,難民野営地への薬草救援,2,2,4,all,,,,,Gold:10|Rep:10|Justice:10|Order:10,救護団,[救援] 癒やし草を採取して傷ついた難民の野営地へ届ける。
-7010,qst_rol_heretic,異端者の粛清,4,2,1,loc_holy_empire,,,80,,Gold:400|Order:5,聖騎士団,[討伐] 教会に背く異端の信徒たちを、騎士団に代わって処理する。
-7011,qst_rol_holywater,最前線への聖水輸送,4,2,1,loc_holy_empire,,,,,Gold:350,教会,[輸送] アンデッド対策として、前線の拠点に祝福された聖水を運ぶ。
-7012,qst_rol_pilgrim,聖地巡礼者の護衛,4,2,1,loc_holy_empire,,,,,Gold:500,教会,[護衛] 狂信的な巡礼者を護送する。彼が死ねば報酬はない。
-7013,qst_rol_undead,遺体安置所の亡者討伐,4,2,1,loc_holy_empire,,,,,Gold:300,聖騎士団,[討伐] 瘴気によって動き出した腐乱死体たちを土へと還す。
-7014,qst_rol_tithe,強圧的な十分の一税徴収,4,2,1,loc_holy_empire,,,,-50,Gold:600|Evil:10,教会,[徴収] 貧民層から無理やり税を取り立てる任務。抵抗者は斬れ。
-7015,qst_rol_relic,盗まれた聖遺物の奪還,4,2,1,loc_holy_empire,,,,,Gold:450,教会,[奪還] 盗賊団のアジトを襲撃し、教会から盗まれた聖杯を奪い返す。
+7010,qst_rol_heretic,異端者の粛清,4,3,2,loc_holy_empire,,,80,,Gold:600|Order:20|Exp:100|Rep:5,聖騎士団,[討伐] 教会に背く異端の信徒たちを、騎士団に代わって旧市街の廃教会で処理する。
+7011,qst_rol_holywater,最前線への聖水輸送,4,2,4,loc_holy_empire,,,,,Gold:400|Order:10|Exp:120|Rep:5,教会,[輸送] アンデッド対策として、前線の砦に祝福された聖水を運ぶ。
+7012,qst_rol_pilgrim,聖地巡礼者の護衛,4,3,10,loc_holy_empire,,,,,Gold:700|Chaos:10|Exp:150|Rep:-10,教会,[護衛] 狂信的な巡礼者を護送する。彼が死ねば報酬はない。
+7013,qst_rol_undead,遺体安置所の亡者討伐,4,3,2,loc_holy_empire,,,,,Gold:450|Order:10|Exp:100|Rep:15,聖騎士団,[討伐] 瘴気によって動き出した腐乱死体たちを土へと還す。
+7014,qst_rol_tithe,貧民窟からの税徴収,4,2,1,loc_holy_empire,,,,-50,Gold:200|Evil:10,教会,[徴収] 貧民窟の住民たちから十分の一税を取り立てる。見逃すか取り立てるかはあなた次第。
+7015,qst_rol_relic,盗まれた聖遺物の奪還,4,4,3,loc_holy_empire,,,,,Gold:500|Order:10|Exp:200|Rep:10,教会,[奪還] 盗賊団のアジトを襲撃し、教会から盗まれた聖杯を奪い返す。
 7020,qst_mar_caravan,大砂漠の長距離交易護衛,5,2,1,loc_marcund,,,,,Gold:800,交易商会,[護衛] 広大な砂漠を越える商隊の用心棒。盗賊と魔獣の連戦を耐え抜け。
 7021,qst_mar_scorpion,幻覚サソリの毒針調達,5,2,1,loc_marcund,,,,,Gold:300|Item:3005,闇商人,[納品] 暗殺の薬や違法薬物の原料となる、希少なサソリの毒針を納品。
 7022,qst_mar_debt,逃亡奴隷の連れ戻し,5,2,1,loc_marcund,,,,-50,Gold:450|Evil:5,奴隷商,[捕縛] 借金を踏み倒して逃げた元奴隷を、生死問わず連れ戻す。

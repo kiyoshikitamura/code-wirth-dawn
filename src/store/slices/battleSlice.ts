@@ -89,7 +89,10 @@ export const createBattleSlice = (
             }
         } catch (e) { console.error('Party fetch failed', e); }
 
-        const guest = useQuestState.getState().guest;
+        const questState = useQuestState.getState();
+        const guest = questState.guest;
+        // ゲストNPCが現在のクエストに紐づいている場合のみ参加
+        // (注: isInQuestの厳格チェックは行わず、ゲストが存在すればパーティに加える)
         if (guest) {
             console.log('Guest joining battle:', guest.name);
             partyMembers.push({ ...guest, is_active: true });
@@ -254,11 +257,16 @@ export const createBattleSlice = (
             `--- ターン 1 ---`
         ];
 
-        const battleItems = (get().inventory || []).filter(i =>
+        const allInventory = get().inventory || [];
+        console.log('[startBattle] inventory count:', allInventory.length);
+        const consumables = allInventory.filter(i => i.item_type === 'consumable' || (i as any).type === 'consumable');
+        console.log('[startBattle] consumables:', consumables.map(i => ({name: i.name, item_type: i.item_type, use_timing: (i as any).effect_data?.use_timing, qty: i.quantity})));
+        const battleItems = allInventory.filter(i =>
             (i.item_type === 'consumable' || (i as any).type === 'consumable') &&
             ((i as any).effect_data?.use_timing === 'battle' || (i as any).use_timing === 'battle') &&
             (i.quantity || 0) > 0
         );
+        console.log('[startBattle] battleItems:', battleItems.map(i => ({name: i.name, qty: i.quantity})));
 
         set({
             battleState: {
@@ -336,15 +344,23 @@ export const createBattleSlice = (
         }
 
         let newAp = battleState.current_ap || 0;
-        if (!isStunned(battleState.player_effects as StatusEffect[])) {
-            newAp = Math.min(10, newAp + 5);
-        }
 
+        // Bug fix: tickEffectsを先に実行し、tick後のeffectsでスタン判定する
+        // 修正前は tickEffects 前の古い effects で isStunned を判定していたため、
+        // スタンの付与/解除とAP回復が1ターンずれていた
         let playerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
+        const wasStunned = isStunned(playerEffects); // tick前のスタン状態を記録
         const playerMaxHp = getEffectiveMaxHp(userProfile, battleState);
         const playerTick = tickEffects(playerEffects, playerMaxHp, 'あなた');
         playerEffects = playerTick.newEffects;
         const tickMessages: string[] = [...playerTick.messages];
+
+        // tick後もスタン中（= duration >= 2 で付与された場合）はAP回復スキップ
+        // tick前にスタンだったが tick後に解除された場合もこのターンはAP回復スキップ
+        // （スタン中のターンではAP回復しない仕様）
+        if (!wasStunned) {
+            newAp = Math.min(10, newAp + 5);
+        }
 
         if (playerTick.hpDelta !== 0 && userProfile) {
             const newHp = Math.max(0, Math.min(playerMaxHp, (userProfile.hp || 0) + playerTick.hpDelta));
@@ -591,15 +607,28 @@ export const createBattleSlice = (
         // ■ 単体ダメージ（聖水・火炎瓶等）
         if (ed.damage && ed.damage > 0) {
             effectApplied = true;
-            const targetEnemy = updatedEnemies.find((e: any) => e.id === battleState.enemy?.id && e.hp > 0)
-                || updatedEnemies.find((e: any) => e.hp > 0);
+            // target_slug指定: 特定の敵にのみダメージを与える（五英霊の誓約等）
+            const targetSlug = ed.target_slug;
+            let targetEnemy: any = null;
+            if (targetSlug) {
+                targetEnemy = updatedEnemies.find((e: any) => e.slug === targetSlug && e.hp > 0);
+                if (!targetEnemy) {
+                    itemMessages.push(`⚠️ ${item.name}を使用したが、この敵には効果がないようだ…`);
+                }
+            } else {
+                targetEnemy = updatedEnemies.find((e: any) => e.id === battleState.enemy?.id && e.hp > 0)
+                    || updatedEnemies.find((e: any) => e.hp > 0);
+            }
             if (targetEnemy) {
-                const dmg = Math.max(1, ed.damage - (targetEnemy.def || 0));
+                // target_slug指定時はDEF無視で固定ダメージ（五英霊の誓約は2000固定ダメージ）
+                const dmg = targetSlug ? ed.damage : Math.max(1, ed.damage - (targetEnemy.def || 0));
                 const newEnemyHp = Math.max(0, targetEnemy.hp - dmg);
                 updatedEnemies = updatedEnemies.map((e: any) =>
                     e.id === targetEnemy.id ? { ...e, hp: newEnemyHp } : e
                 );
-                if (newEnemyHp <= 0) {
+                if (targetSlug) {
+                    itemMessages.push(`⚡ ${item.name}が共鳴した！ 五英霊の怨念が${targetEnemy.name}に解放された！ ${dmg}ダメージ！ (HP: ${targetEnemy.hp} → ${newEnemyHp})`);
+                } else if (newEnemyHp <= 0) {
                     itemMessages.push(`💥 ${item.name}を投げつけた！ ${targetEnemy.name}に${dmg}ダメージ！ ${targetEnemy.name}を倒した！`);
                 } else {
                     itemMessages.push(`💥 ${item.name}を投げつけた！ ${targetEnemy.name}に${dmg}ダメージ！ (HP: ${targetEnemy.hp} → ${newEnemyHp})`);
@@ -1503,8 +1532,12 @@ export const createBattleSlice = (
         if (allEnemiesDead) {
             const { selectedScenario } = get();
             const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！'];
+            const isQuestBattle = useQuestState.getState().isInQuest;
             try {
-                await fetch('/api/report-action', { method: 'POST', body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id }) });
+                // クエスト外バトル（パブバトル等）のみ世界への影響を報告
+                if (!isQuestBattle) {
+                    await fetch('/api/report-action', { method: 'POST', body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id }) });
+                }
                 // バトル後のHP/VITをDB保存（Service Role API使用でRLSバイパス）
                 const battleHp = get().userProfile?.hp;
                 const battleVit = get().userProfile?.vitality;
@@ -1530,14 +1563,17 @@ export const createBattleSlice = (
                             : state.userProfile
                     }));
                 }
-                const partyCount = (initialBattle.party.length || 0) + 1;
-                const rewardGold = selectedScenario?.reward_gold || 50;
-                const reward = Math.floor(rewardGold / partyCount);
-                get().addGold(reward);
-                finalMessages.push(`報酬 金貨 ${rewardGold} 枚を獲得。`);
-                if (partyCount > 1) finalMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
-                fetch('/api/profile/update-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gold: get().gold }) }).catch(console.error);
-                finalMessages.push('あなたの活躍が、世界の情勢に微かな変化をもたらしました。');
+                // クエスト外バトルのみ金貨報酬を付与（クエスト中バトルの報酬はクエスト完了APIで処理）
+                if (!isQuestBattle) {
+                    const partyCount = (initialBattle.party.length || 0) + 1;
+                    const rewardGold = selectedScenario?.reward_gold || 50;
+                    const reward = Math.floor(rewardGold / partyCount);
+                    get().addGold(reward);
+                    finalMessages.push(`報酬 金貨 ${rewardGold} 枚を獲得。`);
+                    if (partyCount > 1) finalMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
+                    fetch('/api/profile/update-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gold: get().gold }) }).catch(console.error);
+                    finalMessages.push('あなたの活躍が、世界の情勢に微かな変化をもたらしました。');
+                }
             } catch (e) { console.error(e); }
             set(state => ({ battleState: { ...state.battleState, isVictory: true, messages: finalMessages } }));
             return;
@@ -1695,6 +1731,21 @@ export const createBattleSlice = (
                             updatedEnemies[eIdx] = { ...updatedEnemies[eIdx], status_effects: eEffects };
                         }
                         newMessages.push(`${enemy.name}の『${skillDef.name}』！ 攻撃力が上がった！ (攻撃力上昇 3T)`);
+                        continue;
+                    }
+                    case 'buff_self_def': {
+                        // 自身にDEF UP(5T)を付与し、HPを回復する
+                        const healAmount = skillDef.value || 0;
+                        const newEnemyHp = Math.min(enemy.maxHp, enemy.hp + healAmount);
+                        const actualHeal = newEnemyHp - enemy.hp;
+
+                        const eIdx = updatedEnemies.findIndex(e => e.id === enemy.id);
+                        if (eIdx !== -1) {
+                            let eEffects = [...(updatedEnemies[eIdx].status_effects || [])] as StatusEffect[];
+                            eEffects = applyEffect(eEffects, 'def_up', 5);
+                            updatedEnemies[eIdx] = { ...updatedEnemies[eIdx], hp: newEnemyHp, status_effects: eEffects };
+                        }
+                        newMessages.push(`${enemy.name}の『${skillDef.name}』！ 自身の防御力が上がり、HPが${actualHeal}回復した！ (防御力上昇 5T)`);
                         continue;
                     }
                     case 'debuff_atk_down': {

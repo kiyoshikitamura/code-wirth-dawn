@@ -26,5 +26,5 @@ NODE,destroy_stone,"剣を振り下ろし、黒い石を真っ二つに叩き割
 NODE,purge_done,"空気が澄んでいくのが分かる。もう死体が起き上がることはないだろう。\nそれにしても、誰がこんなものを持ち込んだのか。","{""bg"":""bg_crypt"",""type"":""text""}",report
 NODE,report,"騎士団に戻り、討伐の完了と黒い石の破片を報告した。","{""bg"":""bg_guild"",""type"":""text""}",knight_thanks
 NODE,knight_thanks,"「見事だ。この石は……異端の呪具か。\n　背後関係はこちらで洗おう。助かった」","{""bg"":""bg_guild"",""speaker_name"":""担当の騎士"",""type"":""text""}",end_success
-NODE,end_success,"報酬を受け取った。\n地下の腐臭は、まだ鼻の奥にこびりついている気がした。","{""bg"":""bg_guild"",""type"":""end"",""result"":""success""}",
+NODE,end_success,"報酬を受け取った。\n地下の腐臭は、まだ鼻の奥にこびりついている気がした。","{""bg"":""bg_guild"",""rewards"":{""gold"":450,""alignment_shift"":{""order"":10},""exp"":100,""reputation"":15},""type"":""end"",""result"":""success""}",
 NODE,end_failure,"無数の亡者の手に引きずり倒された。\n自分もまた、この冷たい地下で永遠に彷徨う肉の塊となるのだ。","{""bg"":""bg_crypt"",""type"":""end"",""result"":""failure""}",

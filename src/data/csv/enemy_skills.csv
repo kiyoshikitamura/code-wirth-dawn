@@ -51,4 +51,4 @@ id,slug,name,effect_type,value,description
 3007,skill_artemis_hunt,月光の狩り,damage,1.5,連続2Hit+bleed(2T)
 3008,skill_zeus_thunder,雷霆,damage_stun,4,大ダメージ+スタン(1T)
 3009,skill_zeus_storm,神罰の嵐,debuff_def_down,0,全体DEF DOWN(3T) ※ゼウス強のみ
-3010,skill_zeus_aegis,イージスの盾,buff_self_def,0,DEF UP(5T)+HP回復 ※ゼウス強のみ
+3010,skill_zeus_aegis,イージスの盾,buff_self_def,300,HPを300回復し防御力を高める(DEF UP 5T) ※ゼウス強のみ

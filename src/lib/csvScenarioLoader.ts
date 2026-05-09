@@ -192,15 +192,18 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
 
             // 話者情報
             if (params.speaker_image_url) node.speaker_image_url = params.speaker_image_url;
-            if (params.speaker_name) {
-                node.speaker_name = params.speaker_name;
-                node.speaker = params.speaker_name;
+            if (params.speaker_name || params.speaker) {
+                node.speaker_name = params.speaker_name || params.speaker;
+                node.speaker = params.speaker_name || params.speaker;
             }
 
             // ゲスト参加
             if (params.guest_id) {
                 node.params = node.params || {};
                 node.params.guest_id = params.guest_id;
+                if (params.is_escort_target) {
+                    node.params.is_escort_target = true;
+                }
             }
 
             // 分岐・条件系
@@ -217,7 +220,7 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 'flag', 'key', 'delta', 'value', 'threshold', 'operator',
                 'amount', 'location_name', 'items', 'gold',
                 'success_node', 'fail_node',
-                'encounter_rate', 'fallback'];
+                'encounter_rate', 'fallback', 'rewards'];
             for (const k of passthrough) {
                 if (params[k] !== undefined) {
                     node.params = node.params || {};

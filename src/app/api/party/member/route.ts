@@ -18,16 +18,16 @@ export async function GET(req: Request) {
             const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
             if (isUuid) {
-                const { data, error } = await supabase.from('npcs').select('*').eq('id', id).maybeSingle();
+                const { data, error } = await supabase.from('party_members').select('*').eq('id', id).is('owner_id', null).maybeSingle();
                 npcData = data;
                 npcErr = error;
             } else {
                 // まずslugを試す
-                let { data, error } = await supabase.from('npcs').select('*').eq('slug', id).maybeSingle();
+                let { data, error } = await supabase.from('party_members').select('*').eq('slug', id).is('owner_id', null).maybeSingle();
 
                 // 見つからず、IDが数値に見える場合はIDを試す
                 if (!data && /^\d+$/.test(id)) {
-                    const { data: dataById, error: errorById } = await supabase.from('npcs').select('*').eq('id', id).maybeSingle();
+                    const { data: dataById, error: errorById } = await supabase.from('party_members').select('*').eq('id', id).is('owner_id', null).maybeSingle();
                     data = dataById;
                     if (errorById) error = errorById;
                 }

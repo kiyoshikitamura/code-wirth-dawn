@@ -1,4 +1,4 @@
-# クエスト仕様書：7025 — 敵対軍閥への賄賂裏工作
+﻿# クエスト仕様書：7025 — 敵対軍閥への賄賂裏工作
 
 ## 0. ファイル概要
 
@@ -13,123 +13,252 @@
 | **出現条件** | 制限なし / 出現拠点: loc_marcund |
 | **リピート** | リピート可能 |
 | **難易度Tier** | Normal（rec_level: 5） |
-| **経過日数 (time_cost)** | 1（成功: 1日 / 失敗: 1日） |
-| **ノード数** | 5ノード（うち選択肢2件） |
-| **サムネイル画像** | `/images/quests/bg_guild.png` |
-
-※BGM、SE、進行中の背景画像などはノードごとに指定します。
-
----
+| **経過日数 (time_cost)** | 6（成功: 6日 / 失敗: 3日） |
+| **ノード数** | 22ノード |
+| **サムネイル画像** | `/images/quests/bg_desert.png` |
 
 ## 1. クエスト概要
 
 ### 短文説明
 ```
-[要定義: 短文説明]
+[裏工作] 工作資金と宝石を、密かに敵対軍閥の将校へ手渡してこい。
 ```
 
 ### 長文説明
 ```
-[要定義: フレーバーテキスト]
+マルカンドの軍閥の密使から極秘の依頼を受けた。敵対する軍閥の将校ハルムに、行商人を装って賄賂の革袋を届ける仕事だ。中身は金貨と宝石。合言葉は「流砂の果て」。道中は敵の見張りが巡回しており、怪しまれれば即座に斬りかかられる。正面から堂々と近づくか、迂回路で潜入するか——選択を誤れば、命はない。
 ```
-
----
 
 ## 2. 報酬定義
 
-**CSV記載形式:**
 ```
-Gold:350
+Gold:350|Chaos:10|Exp:100|Rep:-5
 ```
+
+## 2.5. 失敗ペナルティ（共通仕様）
+
+| 条件 | ペナルティ |
+|------|-----------|
+| クエスト失敗（敗北/撤退/ギブアップ） | 名声 -3〜-10（ランダム、現在拠点） |
+| バトル敗北（全般） | VIT -1（クエスト/ランダムエンカウント/賞金稼ぎ共通） |
+| 経過日数 | クエスト定義の days_failure 値を適用 |
+
+## 3. シナリオノード構成
+
+### 全体フロー
+
+```text
+start → intro_1 → intro_2 → disguise
+  → travel_desert → approach_camp → camp_desc → choice_approach（分岐）
+     ├─ [正面から近づく] → front_approach → front_check → battle_militia
+     │    (野盗の用心棒 x2 / 野盗の射手 x2)
+     │    ├─ [勝利] → forced_entry → find_officer_front → deliver_front → officer_reply → end_success
+     │    └─ [敗北] → end_failure
+     └─ [迂回路で潜入する] → sneak_route → sneak_desc → sneak_close
+          → find_officer_sneak → deliver_sneak → officer_reply → end_success
+```
+
+### ノード詳細
+
+#### `start`（text）
+**演出:** bg: bg_slums, bgm: bgm_quest_tense
+```text
+マルカンドの裏通りで、顔を隠した男と接触した。
+彼は周囲を何度も確認してから、革袋と封筒を差し出した。
+```
+
+#### `intro_1`（text）
+**演出:** bg: bg_slums, speaker: 軍閥の密使
+```text
+「この革袋を、北のオアシスに駐屯する『隻眼のハルム』に渡せ。
+　合言葉は『流砂の果て』。彼だけに渡すこと」
+```
+
+#### `intro_2`（text）
+**演出:** bg: bg_slums, speaker: 軍閥の密使
+```text
+「行商人に変装して近づけ。怪しまれたら斬り合いになる。
+　くれぐれも中身は見るな。見れば——お前も消される側になる」
+```
+
+#### `disguise`（text）
+**演出:** bg: bg_slums
+```text
+密使から受け取った行商人の衣装に着替える。
+革袋を荷物の底に隠し、商品のスパイスで匂いを消した。
+```
+
+#### `travel_desert`（text）
+**演出:** bg: bg_desert, bgm: bgm_field
+```text
+北のオアシスへ向けて砂漠を行く。三日の旅路。
+途中、軍閥の旗印を掲げた騎馬兵とすれ違った。目を合わせないように歩く。
+```
+
+#### `approach_camp`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+オアシスの手前に、軍閥の野営地が見えてきた。
+天幕が並び、兵士たちが巡回している。ここを越えなければならない。
+```
+
+#### `camp_desc`（text）
+**演出:** bg: bg_desert
+```text
+正面の入り口には見張りが二人。後ろの岩場に迂回路らしき獣道がある。
+どちらから行くか——判断を下す時だ。
+```
+
+#### `choice_approach`（choice）
+**演出:** bg: bg_desert
+```text
+野営地への接近方法を選べ。
+```
+| 選択肢 | 次ノード |
+|--------|---------|
+| 正面から堂々と近づく | `front_approach` |
+| 迂回路で潜入する | `sneak_route` |
 
 ---
 
-## 3. シナリオノードフロー
-
-```
-start → receive_bribe_package → approach_camp
-  ├─ [check_status / 選択: 堂々と近づく] → random_branch
-  │    ├─ [60%発覚] → exposed → battle_militia → forced_deliver → end_success
-  │    └─ [40%通過] → find_officer → deliver → end_success
-  └─ [選択: 迂回路を探す] → find_officer → deliver → end_success
-各バトル敗北 → end_failure
+#### `front_approach`（text）【正面ルート】
+**演出:** bg: bg_desert
+```text
+行商人の笑顔を貼り付けて、正面から野営地に歩いていく。
+「やあ、スパイスの行商だ。将校殿に良い品を——」
 ```
 
-#### `start`（text）
-```
-軍閥の密使から革袋と封筒を受け取った。
-「将校の名前はハルムだ。彼だけに渡せ」
-行商人に変装して、軍閥の野営地へ向かう。
-```
-
-#### `approach_camp`（choice）
-- 選択: 「堂々と正面から近づく」→ `random_branch`
-- 選択: 「迂回路を探してこっそり潜入する」→ `find_officer`
-
-#### `random_branch`（random_branch）
-```
-params: type:random_branch, prob:60, next:exposed, fallback:find_officer
-```
-
-#### `exposed`（text）
-```
-「おい、行商人なんぞに用はない。荷物を見せろ」
-見張り兵が荷を調べようとしている——誤魔化すより戦う方が早い。
+#### `front_check`（text）
+**演出:** bg: bg_desert, speaker: 見張り兵
+```text
+「待て。行商人なんぞに用はない。荷物を見せろ」
+見張り兵が荷を漁り始めた。革袋が見つかるのは時間の問題だ——！
 ```
 
 #### `battle_militia`（battle）
-**演出パラメータ:**
-- **BGM**: `[要定義: 例 bgm_battle_normal]`
+**演出:** bg: bg_desert, bgm: bgm_battle
 
 | 設定 | 値 |
 |-----|-----|
-| 敵グループ | `enemy_militia` |
-| 敵名 | 軍閥の見張り兵 |
+| 敵グループID | `429`（新規作成） |
+| 敵グループSlug | `grp_militia_patrol` |
+| 構成 | 野盗の用心棒(1103) x2 / 野盗の射手(1102) x2 |
+| 敵表示名 | 軍閥の見張り兵 |
 
-```
-params: type:battle, enemy_group_id:[要定義: enemy_militia が含まれるグループ], next:forced_deliver, fail:end_failure
-```
-
-#### `forced_deliver`（text）
-```
-混乱に乗じてハルム将校を見つけ、素早く荷を押し付けた。
-将校は事情を察し、静かにうなずいた。
+```text
+見張り兵に正体を見抜かれた！ 斬り合いだ！
 ```
 
-#### `find_officer`（text）
-```
-天幕の奥でハルム将校を見つけた。
-彼はこちらをちらりと見て、「予定通りか」と呟いた。
-```
-
-#### `deliver`（check_delivery or text）
-```
-革袋と封筒を手渡した。将校は素早く懐に収め、去っていった。
+#### `forced_entry`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+見張りを倒した。騒ぎで他の兵が来る前に、天幕の奥へ走る。
+混乱に乗じてハルム将校を探さなければ。
 ```
 
-#### `end_success` / `end_failure`
-（標準定義）
+#### `find_officer_front`（text）
+**演出:** bg: bg_desert
+```text
+奥の天幕で、隻眼の男を見つけた。
+彼はこちらの血まみれの姿を見て、事情を察したようだ。
+```
+
+#### `deliver_front`（text）
+**演出:** bg: bg_desert
+```text
+「『流砂の果て』——」
+合言葉を囁き、革袋と封筒を手渡した。
+```
 
 ---
 
-## 4. CSVエントリ
+#### `sneak_route`（text）【潜入ルート】
+**演出:** bg: bg_desert
+```text
+岩場の獣道を這うように進む。
+砂利を踏まないよう、一歩一歩慎重に足を運んだ。
+```
+
+#### `sneak_desc`（text）
+**演出:** bg: bg_desert
+```text
+天幕の裏手に出た。兵士たちは食事中で、こちらに気づいていない。
+幸運だ。このまま将校の天幕を探す。
+```
+
+#### `sneak_close`（text）
+**演出:** bg: bg_desert
+```text
+ひときわ大きな天幕を見つけた。入り口の旗印が将校のものだ。
+裏の隙間から中を覗くと、隻眼の男が地図を眺めている。
+```
+
+#### `find_officer_sneak`（text）
+**演出:** bg: bg_desert
+```text
+天幕の中に滑り込む。ハルム将校がこちらを見た。
+「『流砂の果て』——」合言葉を囁く。
+```
+
+#### `deliver_sneak`（text）
+**演出:** bg: bg_desert
+```text
+革袋と封筒を手渡した。
+将校は素早く懐に収め、何事もなかったように地図に視線を戻した。
+```
+
+---
+
+#### `officer_reply`（text）
+**演出:** bg: bg_desert, speaker: ハルム将校
+```text
+「予定通りだ。確かに受け取った。
+　帰りは東の谷を抜けろ。そちらの方が安全だ」
+```
+
+#### `end_success`（end_success）
+**演出:** bg: bg_guild
+```text
+マルカンドに戻り、密使に完了を報告した。
+報酬を受け取る。この金がどんな戦争を引き起こすのか——考えないことにした。
+```
+**rewards:** Gold:350, Chaos:10, Exp:100, Rep:-5
+
+#### `end_failure`（end_failure）
+**演出:** bg: bg_desert
+```text
+軍閥の兵に囲まれ、身動きが取れなくなった。
+革袋は押収され、スパイとして拘束された。
+```
+
+---
+
+## 4. 敵定義参照（新規エネミーグループ 1件）
+
+### エネミーグループ: `grp_militia_patrol` (ID: 429)
+
+| Slug | 名前 | Lv | HP | ATK | DEF |
+|------|------|----|----|-----|-----|
+| enemy_bandit_guard | 野盗の用心棒 | 6 | 80 | 36 | 5 |
+| enemy_bandit_guard | 野盗の用心棒 | 6 | 80 | 36 | 5 |
+| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
+| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
+
+---
+
+## 5. CSVエントリ（quests_normal.csv）
 
 ```csv
-7025,qst_mar_bribe,敵対軍閥への賄賂裏工作,2,2,1,loc_marcund,,,,,Gold:350|Chaos:5,軍閥の密使,[裏工作] 工作資金と宝石を、密かに敵対軍閥の将校へ手渡してこい。
+7025,qst_mar_bribe,敵対軍閥への賄賂裏工作,5,2,6,loc_marcund,,,,,Gold:350|Chaos:10|Exp:100|Rep:-5,軍閥の密使,[裏工作] 工作資金と宝石を、密かに敵対軍閥の将校へ手渡してこい。
 ```
 
 ---
 
-## 5. 実装チェックリスト
+## 6. 実装チェックリスト
 
 - [ ] 出現拠点 `loc_marcund` のみ
-- [ ] `enemy_militia` がDBに登録済み
-- [ ] `random_branch` 60%発覚が機能する
-- [ ] Chaos +5 アライメント変動が適用される
-
----
-
-## 6. 拡張メモ
-
-- `check_status` による「隠密スキル保有者は発覚率低下」システム（将来実装）
-- 将校ハルムが後続ストーリーで同盟者として登場する伏線
+- [ ] エネミーグループ `grp_militia_patrol`（429）がenemy_groups.csvに登録済み
+- [ ] 正面ルート/潜入ルートの分岐が機能する
+- [ ] 正面ルートのみバトル発生。潜入ルートは戦闘なし
+- [ ] Gold:350 + Chaos:10 + Exp:100 + Rep:-5 が付与される
+- [ ] time_cost: 6（成功）/ 3（失敗）が正しく経過する

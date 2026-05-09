@@ -47,16 +47,16 @@ Exp:500|Gold:10000|Rep:200|Item:602
 
 **ルートB（封印ルート）— endノードparamsで付与:**
 ```
-Exp:500|Rep:-100|Item:603
+Exp:500|Rep:-100|Item:603|Align:秩序+100
 ```
 
 ### 報酬アイテム詳細
 
 | ID | Slug | 名前 | Type | 効果 | 入手 |
 |---|---|---|---|---|---|
-| 601 | `spot_eclipse_bind` | 五英霊の誓約 | passive | DEF+3, HP+5 | 道中(get_promise) |
+| 601 | `spot_eclipse_bind` | 五英霊の誓約 | consumable | アルヴィンに2000固定ダメージ | 道中(get_promise) |
 | 602 | `spot_god_robe` | 神の法衣 | equipment/armor | DEF+8, HP+50 | ルートA |
-| 603 | `spot_regalia_brave` | 五星の加護 | skill(card) | dmg35+ATK UP(5T), deck_cost:12 | ルートB |
+| 603 | `spot_regalia_brave` | 五星の加護 | skill(card) | dmg35+ATK UP(5T), deck_cost:4 | ルートB |
 
 ---
 
@@ -68,19 +68,28 @@ start
   └─[続ける]→ escape_underground
        └─[続ける]→ battle_protos
             ├─[勝利]→ get_promise
-            │    └─[続ける]→ boss_01_eluka
-            │         ├─[勝利]→ boss_02_baram
-            │         │    ├─[勝利]→ boss_03_shirasu
-            │         │    │    ├─[勝利]→ boss_04_lyra
-            │         │    │    │    ├─[勝利]→ boss_05_alvin
-            │         │    │    │    │    ├─[勝利]→ final_choice
-            │         │    │    │    │    │    ├─[討伐する]→ end_kill
-            │         │    │    │    │    │    └─[封印する]→ end_seal
-            │         │    │    │    │    └─[敗北]→ end_failure
-            │         │    │    │    └─[敗北]→ end_failure
-            │         │    │    └─[敗北]→ end_failure
-            │         │    └─[敗北]→ end_failure
-            │         └─[敗北]→ end_failure
+            │    └─[続ける]→ text_eluka
+            │         └─[続ける]→ boss_eluka
+            │              ├─[勝利]→ after_eluka
+            │              │    └─[続ける]→ text_baram
+            │              │         └─[続ける]→ boss_baram
+            │              │              ├─[勝利]→ after_baram
+            │              │              │    └─[続ける]→ text_shirasu
+            │              │              │         └─[続ける]→ boss_shirasu
+            │              │              │              ├─[勝利]→ after_shirasu
+            │              │              │              │    └─[続ける]→ text_lyra
+            │              │              │              │         └─[続ける]→ boss_lyra
+            │              │              │              │              ├─[勝利]→ after_lyra
+            │              │              │              │              │    └─[続ける]→ text_alvin
+            │              │              │              │              │         └─[続ける]→ boss_alvin
+            │              │              │              │              │              ├─[勝利]→ final_choice
+            │              │              │              │              │              │    ├─[討伐する]→ end_kill
+            │              │              │              │              │              │    └─[封印する]→ end_seal
+            │              │              │              │              │              └─[敗北]→ end_failure
+            │              │              │              │              └─[敗北]→ end_failure
+            │              │              │              └─[敗北]→ end_failure
+            │              │              └─[敗北]→ end_failure
+            │              └─[敗北]→ end_failure
             └─[敗北]→ end_failure
 ```
 
@@ -88,7 +97,7 @@ start
 
 #### `start`（type: text）
 **演出パラメータ:**
-- **BGM**: `bgm_roland`
+- **BGM**: `bgm_quest_crisis`
 - **背景画像**: `bg_spot_roland_fire`
 
 **テキスト:**
@@ -110,7 +119,7 @@ start
 ```
 **params:**
 ```json
-{"type":"text", "bgm":"bgm_roland", "bg":"bg_spot_roland_fire", "next":"escape_underground"}
+{"type":"text", "bgm":"bgm_quest_crisis", "bg":"bg_spot_roland_fire", "next":"escape_underground"}
 ```
 
 ---
@@ -457,7 +466,7 @@ start
 ```
 **params:**
 ```json
-{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["603"]}}
+{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["603"], "alignment_shift":{"order":100}}}
 ```
 
 ---

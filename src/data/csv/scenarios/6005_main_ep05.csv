@@ -22,4 +22,4 @@ NODE,text_gawain_last,"第二波を退けた。だが——ガウェインが膝
 NODE,text_gawain_last2,"「お前は生き延びろ。生き延びて、この目で世界の果てを見届けろ。自分の分まで……な……」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
 NODE,gawain_leave,"ガウェインは立ち上がり、残る兵士たちの前に一人で立ちはだかった。もう振り返らなかった。","{""type"":""leave"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_run
 NODE,text_run,"走った。振り返らなかった。背後で剣戟の音がした。叫び声。——そして、静寂。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",end_node
-NODE,end_node,"走り続けた。太陽が沈むまで。東へ。ただ東へ。「生き延びて、この目で世界の果てを見届けろ」","{""type"":""end_success"", ""bg"":""bg_bandit_camp""}",
+NODE,end_node,"走り続けた。太陽が沈むまで。東へ。ただ東へ。「生き延びて、この目で世界の果てを見届けろ」","{""type"":""end_success"", ""bg"":""bg_bandit_camp"", ""rewards"":{""items"":[""501""]}}",

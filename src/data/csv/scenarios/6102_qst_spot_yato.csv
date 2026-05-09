@@ -2,39 +2,45 @@ row_type,node_id,text_label,params,next_node
 META,gold,0,,
 META,exp,0,,
 META,reputation,0,,
-NODE,start,空が赤黒く染まった。太陽が消え、血のような月が昇る。百年に一度の「冥食」だ。隠れ里の長老が杖を突きながら近づいてきた。「異界の門が開き始めておる。儀式を行うしかない。撫子を——あの子を、門の最深部まで連れていってくれ」,"{""type"":""text"", ""bg"":""bg_spot_yato_eclipse"", ""bgm"":""bgm_yato""}",join_nadeshiko
-NODE,join_nadeshiko,里の裏手。白い装束に身を包んだ少女が静かに待っていた。「……撫子と申します。門まで、お供させてください」声は震えていなかった。だが握りしめた両手の指先が白かった。「私のことは気にしないでください。覚悟は……とうにできています」,"{""type"":""guest_join"", ""bg"":""bg_spot_yato_eclipse"", ""guest_id"":""npc_nadeshiko"", ""is_escort_target"":true}",text_spider1
-NODE,text_spider1,冥の門の入口。鳥居の朱塗りが黒ずんで剥がれ落ちている。門をくぐった瞬間、足元に犬ほどの大きさの鬼蜘蛛が天井から糸を垂らしながら降りてくる。撫子が小さく声を上げた。「……来ます」,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong""}",battle_spider1
-NODE,battle_spider1,鬼蜘蛛の群れとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":310, ""enemy_name"":""鬼蜘蛛の群れ"", ""enemy_level"":15}",choice_sp1
-CHOICE,,勝利,,text_spider2
-NODE,text_spider2,蜘蛛の残骸を踏み越えて奥へ進む。撫子が呟いた。「この門の中には百年分の怨念が溜まっているそうです。蜘蛛はその怨念を食べて育ったのだと」天井がざわめいた。さっきより大きな群れだ。,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",battle_spider2
-NODE,battle_spider2,第二の群れとの戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":311, ""enemy_name"":""冥の魔物"", ""enemy_level"":16}",choice_sp2
-CHOICE,,勝利,,text_spider3
-NODE,text_spider3,三度目の群れ。壁の隙間から這い出してきた。撫子が懐から御札を取り出し祈りを唱えた。御札が淡く光り蜘蛛が一瞬怯んだ。「……少しですが時間を稼げます。今のうちに」,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",battle_spider3
-NODE,battle_spider3,頭上からの奇襲！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":312, ""enemy_name"":""奇襲の魔物"", ""enemy_level"":17}",choice_sp3
-CHOICE,,勝利,,text_spider4
-NODE,text_spider4,最後の蜘蛛の群れ。ひときわ巨大な個体が通路いっぱいに体を広げて立ちはだかっている。撫子が錫杖を構えた。「この先に……四大妖怪がいます。百年の間、この闇の中で力を蓄えた者たちです」,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",battle_spider4
-NODE,battle_spider4,最後の守護者との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":313, ""enemy_name"":""門の守護者"", ""enemy_level"":18}",choice_sp4
-CHOICE,,勝利,,text_wani
-NODE,text_wani,地下に広大な水場が広がっていた。水面が割れた。甲羅を纏った巨大な鰐が顎を開いて浮上する。全長は六間。鰐が低い咆哮を上げた。撫子が息を飲んだ。「あの大きさは聞いていた話と違います。水に引き込まれたら、終わりです」,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_wani
-NODE,boss_wani,大鰐との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":314, ""enemy_name"":""大鰐"", ""enemy_level"":20}",choice_wani
+NODE,start,"空が赤黒く染まった。太陽が消え、代わりに血のような月が昇る。\n百年に一度の「冥食」だ。\n\n隠れ里の長老が杖を突きながら近づいてきた。\n白髪が風になびく。目は濁っているが、声は澄んでいた。","{""type"":""text"", ""speaker"":""長老"", ""bgm"":""bgm_yato"", ""bg"":""bg_spot_yato_eclipse""}",start_2
+NODE,start_2,"「異界の門が開き始めておる。このまま放置すれば、冥の者どもがこの地を呑み込む。\n　……儀式を行うしかない。\n　門を封じるには、宿命の子を贄として捧げねばならん」\n\n長老は深く頭を下げた。","{""type"":""text"", ""speaker"":""長老"", ""bgm"":""bgm_yato"", ""bg"":""bg_spot_yato_eclipse""}",join_nadeshiko
+NODE,join_nadeshiko,"「撫子を——あの子を、門の最深部まで連れていってくれ」\n\n遠くから、祭太鼓の音が低く響いている。\n里の裏手。白い装束に身を包んだ少女が、静かに待っていた。","{""type"":""text"", ""speaker"":""長老"", ""bgm"":""bgm_yato"", ""bg"":""bg_spot_yato_eclipse""}",join_nadeshiko_2
+NODE,join_nadeshiko_2,"黒い髪に白い花飾り。年は十五、六だろうか。\n少女はこちらに気づくと、小さく頭を下げた。だが、その唇は微かに震えていた。\n\n「……撫子と申します。門まで、お供させてください。\n　私のことは気にしないでください。覚悟は……とうにできています」","{""type"":""guest_join"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_eclipse"", ""guest_id"":""npc_nadeshiko"", ""is_escort_target"":true}",battle_1
+NODE,battle_1,"冥の門の入口。鳥居の朱塗りが黒ずんで剥がれ落ちている。\n門をくぐった瞬間、青白い炎が宙を舞い、一本足の唐傘が不気味に跳ねながら迫ってきた。\n\n「……来ます。冥府から漏れ出た者たちです」","{""type"":""battle"", ""speaker"":""撫子"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance"", ""enemy_group_id"":""310""}",
+CHOICE,,勝利,,text_after_b1
+CHOICE,,敗北,,end_failure
+NODE,text_after_b1,"妖怪たちを退け、奥へ進む。\n撫子が袖で埃を払いながら、ぽつりと呟いた。\n\n「……この門の中には、百年分の怨念が溜まっているそうです。\n　先ほどの妖怪たちは、その怨念を食べて育ったのだと、長老が」","{""type"":""text"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_entrance""}",text_after_b1_2
+NODE,text_after_b1_2,"その声には、隠しきれない恐れが滲んでいた。\n\n「大丈夫です……進みましょう」","{""type"":""text"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_entrance""}",battle_2
+NODE,battle_2,"さらに奥へ進むと、突如として突風が吹き荒れた。\n風の中から、カラスの羽を持った天狗が姿を現す。背後には無数の鬼火が付き従っている。\n\n撫子が杖代わりの錫杖を強く握りしめた。\n「これを越えれば……四大妖怪がいます」","{""type"":""battle"", ""speaker"":""撫子"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance"", ""enemy_group_id"":""313""}",
+CHOICE,,勝利,,boss_01_wani_pre
+CHOICE,,敗北,,end_failure
+NODE,boss_01_wani_pre,"妖怪の群れを抜けると、地下に広大な水場が広がっていた。\n腐った水の匂い。水面が揺れている。何かが潜んでいる。\n\n水面が割れた。甲羅を纏った巨大な鰐が、顎を開いて浮上する。","{""type"":""text"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance""}",boss_01_wani
+NODE,boss_01_wani,"「水底の覇者」大鰐。百年の間、冥の水を飲み続けて異形に育った古の妖怪だ。\n\n「……あの大きさは、聞いていた話と違います。\n　気をつけてください。水に引き込まれたら、終わりです」","{""type"":""battle"", ""speaker"":""撫子"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance"", ""enemy_group_id"":""314""}",
 CHOICE,,勝利,,reward_m1
-NODE,reward_m1,大鰐が沈んだ。水面に赤い光が浮かび上がる。撫子が光を掬い上げた。朱色の勾玉だ。「四大妖怪を討つたびに門を開く鍵が現れるそうです。……あと三体」朱の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""611""]}",text_tori
-NODE,text_tori,吹き抜けの大空洞に出た。空が翳った。漆黒の鳥が旋回している。翼を広げると空洞の幅いっぱいだ。「イツマデ、イツマデ」と聞こえる。「以津真天」。百年分の死者を喰らった凶鳥。鳥が急降下してきた。狙いは撫子だ。撫子が叫んだ。「——伏せて！」,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_tori
-NODE,boss_tori,以津真天との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":315, ""enemy_name"":""以津真天"", ""enemy_level"":20}",choice_tori
+CHOICE,,敗北,,end_failure
+NODE,reward_m1,"大鰐が沈んだ。水面に赤い光が浮かび上がる。\n撫子が水際に膝をつき、光を掬い上げた。朱色の勾玉だ。温かい。\n\n「四大妖怪を討つたびに、門を開く鍵が現れるそうです。\n　……あと三体」","{""type"":""reward"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""611""]}",boss_02_tori_pre
+NODE,boss_02_tori_pre,"水場を越えると、吹き抜けの大空洞に出た。\n空が翳った。巨大な翼が光を遮ったのだ。\n\n漆黒の鳥が旋回している。「以津真天」。死の前兆を告げる凶鳥。","{""type"":""text"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance""}",boss_02_tori
+NODE,boss_02_tori,"鳥が急降下してきた。狙いは撫子だ。\n\n「——伏せて！」","{""type"":""battle"", ""speaker"":""撫子"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance"", ""enemy_group_id"":""315""}",
 CHOICE,,勝利,,reward_m2
-NODE,reward_m2,凶鳥が断末魔の鳴き声を上げて堕ちた。黒い羽根が舞い散る中、蒼い光が残された。撫子が少し微笑んだ。「ありがとうございます。残り——あと二体です」蒼の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""612""]}",text_kuruma
-NODE,text_kuruma,車輪の軋む音が聞こえてきた。曲がり角の向こうから炎を纏った巨大な牛車が突進してきた。「朧車」。怨念の乗り物。撫子が壁に張り付いた。「避けてください！ あれは止まりません！ 壊すしか——壊すしかないんです！」,"{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_kuruma
-NODE,boss_kuruma,朧車との戦闘！,"{""type"":""battle"", ""bg"":""bg_spot_yato_entrance"", ""bgm"":""bgm_battle_strong"", ""enemy_group_id"":316, ""enemy_name"":""朧車"", ""enemy_level"":22}",choice_kuruma
+CHOICE,,敗北,,end_failure
+NODE,reward_m2,"凶鳥が断末魔の鳴き声を上げて堕ちた。\n蒼い光が残された。撫子が羽根を払いながら勾玉を拾い上げる。\n\n「……ありがとうございます。助けていただいて。\n　残り——あと二体です」","{""type"":""reward"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""612""]}",reward_m2_2
+NODE,reward_m2_2,"私を守ってくれる貴方の背中が、とても大きく見えます、と彼女は微かに微笑んだ。\n\n蒼の勾玉を手に入れた！","{""type"":""text"", ""bg"":""bg_spot_yato_entrance""}",boss_03_kuruma_pre
+NODE,boss_03_kuruma_pre,"暗闇の中に、車輪の転がる音が響き始めた。\nゴロゴロ、ゴロゴロ。\n音は壁を反響し、どこから来るのか分からない。\n\n不意に、巨大な牛車が炎を纏って突っ込んできた。","{""type"":""text"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance""}",boss_03_kuruma
+NODE,boss_03_kuruma,"炎の車輪の中央には、怨嗟に歪む巨大な顔がある。「朧車」。\n\n「熱い……！\n　下がってください、火の粉が！」","{""type"":""battle"", ""speaker"":""撫子"", ""bgm"":""bgm_battle_strong"", ""bg"":""bg_spot_yato_entrance"", ""enemy_group_id"":""316""}",
 CHOICE,,勝利,,reward_m3
-NODE,reward_m3,朧車が砕け散った。撫子が額の汗を拭いた。「あと一体。最後の妖怪を倒せば門の最深部に入れます。でも……最後の相手が一番強いと長老は言っていました」翠の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""613""]}",text_shuten
-NODE,text_shuten,門の最奥。朱塗りの巨大な扉の前に男が座っていた。瓢箪を掴んで一口呷った。額から角が二本。「おう、来たか。久しぶりだなあ、人間ってやつは」酒呑童子。伝説の鬼。撫子を見てにやりと笑った。「ほう。いい面構えだ。覚悟が決まってやがる」,"{""type"":""text"", ""bg"":""bg_spot_yato_gate"", ""bgm"":""bgm_spot_final_boss""}",text_shuten2
-NODE,text_shuten2,「だがな、嬢ちゃん。覚悟だけじゃ、ここは通れねえ」瓢箪を投げ捨て両腕を広げた。「さあ来い。俺を楽しませろ。退屈で死にそうなんだ——百年も独りでよ！」地面が揺れた。鬼が笑っている。,"{""type"":""text"", ""bg"":""bg_spot_yato_gate"", ""speaker_name"":""酒呑童子""}",boss_shuten
-NODE,boss_shuten,酒呑童子との最終決戦！,"{""type"":""battle"", ""bg"":""bg_spot_yato_gate"", ""bgm"":""bgm_spot_final_boss"", ""enemy_group_id"":317, ""enemy_name"":""酒呑童子"", ""enemy_level"":25}",choice_shuten
+CHOICE,,敗北,,end_failure
+NODE,reward_m3,"炎が消え、車輪が崩れ落ちた。\n灰の中から、翠の勾玉が現れる。\n\n「……あと、一体。\n　これを越えれば、儀式の間です」","{""type"":""reward"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_entrance"", ""items"":[""613""]}",boss_04_shuten_pre
+NODE,boss_04_shuten_pre,"門の最奥。朱塗りの巨大な扉の前に、男が一人、座っていた。\n巨大な瓢箪を片手に、退屈そうに酒を煽っている。\n\n「……遅かったな。待ちくたびれたぜ」","{""type"":""text"", ""speaker"":""酒呑童子"", ""bgm"":""bgm_spot_final_boss"", ""bg"":""bg_spot_yato_gate""}",boss_04_shuten_pre_2
+NODE,boss_04_shuten_pre_2,"男が立ち上がると、その背に生えた巨大な角が闇に浮かび上がった。\n「酒呑童子」。四大妖怪の筆頭にして、この門の守護者。\n\n「生贄のガキと、その護衛か。\n　ご苦労なこって。だが、ここを通すわけにはいかねぇな」","{""type"":""text"", ""speaker"":""酒呑童子"", ""bgm"":""bgm_spot_final_boss"", ""bg"":""bg_spot_yato_gate""}",boss_04_shuten
+NODE,boss_04_shuten,"強大な妖気が、肌を刺すようにビリビリと伝わってくる。\n\n「……これが、最後の試練。\n　お願いします、どうか私を……あの門まで！」","{""type"":""battle"", ""speaker"":""撫子"", ""bgm"":""bg_spot_final_boss"", ""bg"":""bg_spot_yato_gate"", ""enemy_group_id"":""317""}",
 CHOICE,,勝利,,reward_m4
-NODE,reward_m4,酒呑童子が膝をついた。角が一本折れている。だが笑っていた。「がはは……やるじゃねえか。百年ぶりにいい汗かいたぜ」鬼が光に溶けながら呟いた。「門の向こうには冥府の王がいる。俺なんかよりずっと厄介だぞ。気をつけな」黄の勾玉を手に入れた！,"{""type"":""reward"", ""bg"":""bg_spot_yato_gate"", ""items"":[""614""]}",final_choice
-NODE,final_choice,四つの勾玉が光り巨大な扉が開いた。撫子が門の前に出てこちらを振り返った。「ここから先は私一人で行きます。お役目ですから」目が赤い。「怖くないと言えば嘘になります。でも——これで里のみんなが助かるなら」撫子は小さく笑った。「あなたに会えてよかった。守ってくれて——ありがとうございました」判断しなければならない。,"{""type"":""text"", ""bg"":""bg_spot_yato_gate"", ""bgm"":""bgm_spot_final_choice""}",choice_final
-CHOICE,,儀式を完遂させる（撫子を送り出す）,,end_sacrifice
-CHOICE,,因習を打ち砕く（撫子を救う）,,end_save
-NODE,end_sacrifice,撫子の背中を見送った。彼女は振り返らなかった。白い装束が闇に溶けていく。門が閉じた。空に太陽が戻った。里に戻ると長老が深々と頭を下げた。村人たちは祭りの準備を始めていた。撫子の名を口にする者はもう誰もいなかった。報酬として『冥界の護符』を授かった。護符からは微かに花の匂いがした。,"{""type"":""end_success"", ""bg"":""bg_spot_yato_gate"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""615""]}}",
-NODE,end_save,撫子の手を掴んだ。門から漏れ出す冥府の王の思念が怒涛のように押し寄せてきた。四つの勾玉が盾となって耐えた。力でねじ伏せた。門を内側から破壊した。撫子が泣いていた。「……生きてて、いいんですか。私——」「いい」「……っ、ありがとうございます……」固有スキル『冥食の理』を手に入れた！,"{""type"":""end_success"", ""bg"":""bg_spot_yato_gate"", ""rewards"":{""exp"":500, ""reputation"":-100, ""items"":[""616""]}}",
+CHOICE,,敗北,,end_failure
+NODE,reward_m4,"酒呑童子が膝をついた。\n「……へっ、悪くねえ腕だ。\n　いいだろう、通れ。どうせここから先は、俺たち妖怪の手に負える場所じゃねえ」","{""type"":""reward"", ""speaker"":""酒呑童子"", ""bg"":""bg_spot_yato_gate"", ""items"":[""614""]}",final_choice
+NODE,final_choice,"男が姿を消すと同時に、朱塗りの扉が重い音を立てて重厚に開いた。\n扉の奥には、漆黒の虚無が広がっている。全てを呑み込む「冥の底」だ。\n\n撫子が、ゆっくりと扉へと歩み寄る。\n「……ここで、お別れです」","{""type"":""text"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_gate""}",
+CHOICE,,完遂する,,end_sacrifice
+CHOICE,,拒絶する,,end_save
+NODE,end_sacrifice,"黙って頷いた。\n撫子は微かに微笑むと、深々と一礼した。\n\n「……私の短い命に、意味を与えてくれてありがとうございました」","{""type"":""text"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_gate""}",end_sacrifice_2
+NODE,end_sacrifice_2,"彼女は躊躇うことなく、虚無の闇へとその身を投じた。\n瞬時に扉が閉まり、空を覆っていた赤黒い月が嘘のように晴れていく。\n\n冥の門は封じられた。一人の少女の命と引き換えに。","{""type"":""end_success"", ""bg"":""bg_spot_yato_gate"", ""rewards"":{""exp"":500, ""gold"":10000, ""reputation"":200, ""items"":[""615""]}}",
+NODE,end_save,"——ふざけるな。\n反射的に手を伸ばし、彼女の細い腕を強く掴んで引き戻した。\n\n「……！？ なにを……放してください！\n　私が往かねば、国が——！」","{""type"":""text"", ""speaker"":""撫子"", ""bg"":""bg_spot_yato_gate""}",end_save_2
+NODE,end_save_2,"「誰かの犠牲で成り立つ世界など、知るものか」\n無理矢理に扉を閉ざし、力尽ずくで封印の札を叩きつけた。\n\n代償は計り知れないだろう。だが、少女は生きて隣にいる。\n冥食の理は崩れた。新たなる道を探すしかない。","{""type"":""end_success"", ""bg"":""bg_spot_yato_gate"", ""rewards"":{""exp"":500, ""reputation"":-100, ""skills"":[""616""], ""alignment_shift"":{""justice"":100}}}",
+NODE,end_failure,"闇の中に倒れた。妖怪の咆哮が遠くなっていく。\n\n最後に聞こえたのは、撫子の声だった。\n「——立ってください。お願い、立って……」\n\n応えられなかった。","{""type"":""end_failure"", ""bg"":""bg_spot_yato_gate"", ""result"":""failure""}",
