@@ -7,6 +7,7 @@ Code: Wirth-Dawn における世界は、全プレイヤーの行動集計によ
 
 <!-- v11.0: 実装に合わせてスキーマ定義を更新、world_statesテーブル追記 -->
 <!-- v11.1: 日次→6時間毎サイクルへ変更、Resistanceロジック・繁栄度価格乗数を仕様化 -->
+<!-- v26.0: アライメント対立軸モデル導入、6時間遅延リセット、拠点同期、闇市条件変更 -->
 
 ---
 
@@ -33,8 +34,10 @@ export type NationId = 'Roland' | 'Markand' | 'Karyu' | 'Yato' | 'Neutral';
 
 ### 3.1 集計フェーズ (Aggregation)
 全プレイヤーの以下のログを集計し、各拠点（全20箇所）の属性値を更新する。
-- **Clear Log**: 依頼達成による属性変動。
+- **Clear Log**: 依頼達成による属性変動。クエスト報酬の `alignment_shift` がクエスト受注拠点の `world_states` に自動加算される。
 - **Prayer Log**: 「祈り（通貨消費）」による直接干渉。
+
+> **v26.0 遅延リセット**: バッチ処理の代替として、APIリクエスト時に `world_states.updated_at` が6時間以上経過していた場合、前回期間の結果を覇権に反映した上でスコアをリセットする「遅延評価方式」を採用。
 
 ### 3.2 領土遷移ロジック (Territory Shift)
 1. **Global Power**: 全拠点の属性合計比率を算出。
@@ -198,6 +201,64 @@ export interface Location {
 Friction = ABS(RulingNation.PrimaryAttribute − Location.CurrentPrimaryAttribute)
 ```
 摩擦係数が高いほど繁栄度は低下に向かう。また、**摩擦スコアが51以上**の場合は Resistance（§3.2）が発動する。
+
+---
+
+## 6A. アライメントシステム (v26.0)
+
+### 6A.1 対立軸モデル (Dual-Axis)
+
+アライメントは「累積絶対値」ではなく「対立軸ベースの割合」で評価する。
+
+```
+秩序(Order) ←── 50% ──→ 混沌(Chaos)
+  order_ratio = order_pts / (order_pts + chaos_pts) × 100
+
+正義(Justice) ←── 50% ──→ 悪(Evil)
+  justice_ratio = justice_pts / (justice_pts + evil_pts) × 100
+```
+
+- 各軸は **0〜100** のスケール。**50 = 中立**。
+- DBカラム `order_pts`, `chaos_pts`, `justice_pts`, `evil_pts` の累積加算は従来通り維持。
+- **読み取り時に割合を算出**する方式（既存データ移行不要）。
+- 実装: `src/lib/alignment.ts` の `calcAlignmentPcts()` 関数。
+
+### 6A.2 個人アライメント
+
+| 判定項目 | 旧方式 | 新方式 (v26) |
+|---------|--------|-------------|
+| 闇市出現 | `evil > 20`（絶対値） | `evil_ratio >= 60%` OR `chaos_ratio >= 60%` |
+| 称号判定 | `order > 50 && justice > 50` | `order_ratio >= 65% && justice_ratio >= 65%` |
+| クエスト出現 | `min_align_order: 30`（絶対値） | `min_align_order_pct: 60`（割合%） |
+
+### 6A.3 世界・拠点アライメント
+
+- 各拠点の `world_states` に `order_score` / `chaos_score` / `justice_score` / `evil_score` を蓄積。
+- **6時間ごとに遅延リセット**: API呼び出し時に `updated_at` が6時間超経過なら覇権反映→スコアリセット。
+- **クエスト報酬の拠点反映**: クエスト完了時の `alignment_shift` を受注拠点の `world_states` にも加算。
+- 祈り (`POST /api/world/pray`) でも同様に拠点スコアに加算。
+
+### 6A.4 クエスト出現条件（個人/世界 AND条件）
+
+`requirements` JSONB で以下のキーを使用:
+
+| キー | 説明 | 例 |
+|------|------|----|
+| `min_align_order_pct` | 個人の秩序率が指定%以上 | `60` |
+| `min_align_evil_pct` | 個人の悪率が指定%以上 | `70` |
+| `min_world_alignment` | 世界の指定軸が指定%以上 | `{ "axis": "chaos", "min_pct": 40 }` |
+| `alignment_and` | **AND条件**: 個人+世界を同時に要求 | 下記参照 |
+
+**AND条件の使用例:**
+```json
+{
+  "alignment_and": [
+    { "scope": "personal", "axis": "evil", "min_pct": 60 },
+    { "scope": "world", "axis": "chaos", "min_pct": 40 }
+  ]
+}
+```
+→ 「個人がevil寄り60%以上」かつ「世界がchaos寄り40%以上」の時のみ出現。
 
 ---
 

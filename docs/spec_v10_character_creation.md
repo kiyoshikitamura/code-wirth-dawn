@@ -177,7 +177,7 @@ export interface UserProfile {
   vitality?: number;      // 現在Vitality
   max_vitality?: number;  // 加齢で減少するVitality上限
   gender?: 'Male' | 'Female' | 'Unknown';
-  title_name?: string;    // ランダム生成等で付与される称号
+  title_name?: string;    // アライメント割合ベースで動的算出される称号（§4.2参照）
   is_anonymous?: boolean; // v16.0: テストプレイフラグ
   expires_at?: string;    // v16.0: 匿名プロフィール失効日時 (ISO 8601)
   // ...
@@ -189,6 +189,26 @@ export interface UserProfile {
 - **暦（カレンダー）表示**: `age_days`（クエスト経過日数の累計）を利用し、ゲーム内の世界観に合わせた暦に変換して画面上部のヘッダーに表示する。
 - **健康状態 (Vitality)**: `vitality` が **20以下** となった場合、赤色点滅等の目立つ警告表示を行う。
 - **テストプレイバナー (v16.0)**: `is_anonymous === true` の場合、CHAR_CREATION 画面上部に7日間失効警告バナーを表示する。
+
+### 4.2 称号（タイトル）システム (v26.0)
+
+`src/lib/character.ts` の `calculateTitle()` がプレイヤーのアライメント割合に基づいて称号を動的に決定する。
+プロフィール取得時 (`GET /api/profile`) に自動更新される。
+
+| 優先度 | 称号名 | 条件（対立軸割合） |
+|:---:|:---|:---|
+| 10 | 聖騎士 | `order_ratio ≥ 65` AND `justice_ratio ≥ 65` |
+| 10 | 暗黒卿 | `chaos_ratio ≥ 65` AND `evil_ratio ≥ 65` |
+| 8 | 義賊 | `chaos_ratio ≥ 60` AND `justice_ratio ≥ 60` |
+| 8 | 冷徹な執行者 | `order_ratio ≥ 60` AND `evil_ratio ≥ 60` |
+| 5 | 法の番人 | `order_ratio ≥ 75` |
+| 5 | 混沌の使徒 | `chaos_ratio ≥ 75` |
+| 5 | 英雄 | `justice_ratio ≥ 75` |
+| 5 | 悪鬼 | `evil_ratio ≥ 75` |
+| 1 | 駆け出しの冒険者 | `level ≤ 3` |
+| 0 | 名もなき旅人 | フォールバック（常時true） |
+
+> **Note**: `order_ratio`, `justice_ratio` 等は `src/lib/alignment.ts` の `calcAlignmentPcts()` で算出される対立軸ベースの割合値。
 
 ---
 
@@ -308,3 +328,4 @@ export interface UserProfile {
 | v15.0 | 2026-04-13 | 初期ステータス上方修正。HP/ATK/DEF/Gold の基底値・年齢補正にランダム変数を導入 |
 | v16.0 | 2026-04-15 | ゲーム開始フロー刷新。New Game = Google OAuth 必須、Test Play = 匿名7日間失効に分離。Auth コールバックルート追加。`user_profiles` に `is_anonymous` / `expires_at` カラム追加。daily cron に匿名データ自動削除を追加。 |
 | **v16.2** | **2026-04-16** | **キャラクター削除フロー仕様追加（§2.1, §6.4）。sessionStorage Intent フラグ優先順位の規定（§5.3）。アカウント連携（linkIdentity）を正式仕様化（§6.3）。プロファイルリセット API の対象テーブル18個を網羅（§6.4）。** |
+| **v26.0** | **2026-05-14** | **称号システムをアライメント対立軸割合ベースに移行（§4.2）。`calculateTitle()` が割合判定を使用するように変更。** |

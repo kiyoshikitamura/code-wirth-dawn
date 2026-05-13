@@ -63,13 +63,22 @@ CREATE TABLE inventory (
 
 クエストの表示・受注制限は `conditions` JSONB に集約される（`api/location/quests` でフィルタリングを行う）。
 
-**`conditions` で指定可能な主なキー:**
+**`conditions` / `requirements` で指定可能な主なキー:**
 *   `min_reputation` (Number): プレイヤーの名声がこの値**以上**でなければ受注不可。（例: `80` = 英雄向け）
 *   `max_reputation` (Number): プレイヤーの名声がこの値**以下**でなければ受注不可。（例: `-80` = 悪党向け）
 *   `completed_quest` (String|Number): 前提となるクエストの `slug`（あるいはID）をクリア済みか。
 *   `location_tags` (Array): 出現拠点フラグ。`'all'` または国別タグ（`loc_holy_empire`, `loc_marcund`, `loc_yatoshin`, `loc_haryu`）。
+*   `min_align_order_pct` (Number): 個人の秩序率（Order⇔Chaos軸）がこの%以上で出現。（v26）
+*   `min_align_chaos_pct` (Number): 個人の混沌率がこの%以上で出現。（v26）
+*   `min_align_justice_pct` (Number): 個人の正義率（Justice⇔Evil軸）がこの%以上で出現。（v26）
+*   `min_align_evil_pct` (Number): 個人の悪率がこの%以上で出現。（v26）
+*   `min_world_alignment` (Object): 世界の対立軸割合が条件を満たすか。（v26）
+    *   例: `{ "axis": "chaos", "min_pct": 40 }`
+*   `alignment_and` (Array): 個人+世界のアライメントAND条件。全要素を同時に満たす必要がある。（v26）
+    *   例: `[{ "scope": "personal", "axis": "evil", "min_pct": 60 }, { "scope": "world", "axis": "chaos", "min_pct": 40 }]`
 
 > **⚠ 重要**: 過去存在した単独カラムとしての `min_reputation`, `max_reputation` 等は廃止（または無視）し、すべて `conditions` JSONB内で数値ベースで管理・判定する。
+> **v26 変更**: アライメント条件は旧方式（`min_align_chaos`=絶対値）から新方式（`min_align_chaos_pct`=対立軸割合%）に移行。旧キーもフォールバックとして動作する。
 
 ### 3.1 `completed_quest` の照合ロジック (v11.3)
 `completed_quest` の値は slug（例: `"main_ep01"`）または数値ID（例: `7013`）のどちらでも指定可能。
