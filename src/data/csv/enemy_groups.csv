@@ -113,3 +113,7 @@ id,slug,members
 503,main_ep13_vanguard,enemy_karyu_fox|enemy_karyu_terracotta|enemy_karyu_terracotta
 504,main_ep14_vanguard,enemy_yato_tengu|enemy_yato_akaoni|enemy_yato_tengu
 505,main_ep15_vanguard,enemy_apostle_soldier|enemy_apostle_soldier|enemy_apostle_soldier|enemy_apostle_soldier
+9101,grp_boss_graverobber,boss_graverobber_leader
+9102,grp_boss_scorpion,boss_giant_scorpion
+9103,grp_boss_toll_bandit,boss_toll_bandit
+9104,grp_boss_river_god,boss_river_god

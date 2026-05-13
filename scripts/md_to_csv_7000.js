@@ -15,6 +15,41 @@ const QUESTS = [
     { md: 'quest_7023_sandworm.md', csv: '7023_qst_mar_sandworm.csv' },
     { md: 'quest_7024_auction.md', csv: '7024_qst_mar_auction.csv' },
     { md: 'quest_7025_bribe.md', csv: '7025_qst_mar_bribe.csv' },
+    // 夜刀クエスト
+    { md: 'quest_7030_yokai.md', csv: '7030_qst_yat_yokai.csv' },
+    { md: 'quest_7031_ninja.md', csv: '7031_qst_yat_ninja.csv' },
+    { md: 'quest_7032_shrine.md', csv: '7032_qst_yat_shrine.csv' },
+    { md: 'quest_7033_ronin.md', csv: '7033_qst_yat_ronin.csv' },
+    { md: 'quest_7034_shogun.md', csv: '7034_qst_yat_shogun.csv' },
+    { md: 'quest_7035_mansion.md', csv: '7035_qst_yat_mansion.csv' },
+    // 華龍クエスト
+    { md: 'quest_7040_jiangshi.md', csv: '7040_qst_har_jiangshi.csv' },
+    { md: 'quest_7041_herb.md', csv: '7041_qst_har_herb.csv' },
+    { md: 'quest_7042_rebel.md', csv: '7042_qst_har_rebel.csv' },
+    { md: 'quest_7043_official.md', csv: '7043_qst_har_official.csv' },
+    { md: 'quest_7044_pirate.md', csv: '7044_qst_har_pirate.csv' },
+    { md: 'quest_7045_foxwed.md', csv: '7045_qst_har_foxwed.csv' },
+    // 伝説級ボス
+    { md: 'quest_6105_baphomet.md', csv: '6105_qst_legend_baphomet.csv' },
+    { md: 'quest_6106_angel.md', csv: '6106_qst_legend_angel.csv' },
+    { md: 'quest_6107_dragon.md', csv: '6107_qst_legend_dragon.csv' },
+    { md: 'quest_6108_kirin.md', csv: '6108_qst_legend_kirin.csv' },
+    { md: 'quest_6109_golem.md', csv: '6109_qst_legend_golem.csv' },
+    { md: 'quest_6110_kraken.md', csv: '6110_qst_legend_kraken.csv' },
+    { md: 'quest_6111_minotaur.md', csv: '6111_qst_legend_minotaur.csv' },
+    // 名声連動 Tier 1
+    { md: 'quest_5101_graverobber.md', csv: '5101_qst_rep_graverobber.csv' },
+    { md: 'quest_5102_scorpion_hunt.md', csv: '5102_qst_rep_scorpion_hunt.csv' },
+    { md: 'quest_5103_toll_bandit.md', csv: '5103_qst_rep_toll_bandit.csv' },
+    { md: 'quest_5104_river_god.md', csv: '5104_qst_rep_river_god.csv' },
+    // 名声連動ボス
+    { md: 'quest_5201_crusader.md', csv: '5201_qst_rep_crusader.csv' },
+    { md: 'quest_5202_sand_king.md', csv: '5202_qst_rep_sand_king.csv' },
+    { md: 'quest_5203_oni_general.md', csv: '5203_qst_rep_oni_general.csv' },
+    { md: 'quest_5204_jade_serpent.md', csv: '5204_qst_rep_jade_serpent.csv' },
+    { md: 'quest_5205_heretic_sage.md', csv: '5205_qst_rep_heretic_sage.csv' },
+    { md: 'quest_5206_war_djinn.md', csv: '5206_qst_rep_war_djinn.csv' },
+    { md: 'quest_5207_nine_tails.md', csv: '5207_qst_rep_nine_tails.csv' },
 ];
 
 function processQuest(mdFile, csvFile) {
@@ -47,7 +82,15 @@ function processQuest(mdFile, csvFile) {
                 type: nodeMatch[2],
                 text: '',
                 parsedParams: null,
-                choices: []   // choice ノード用の選択肢リスト
+                choices: [],   // choice ノード用の選択肢リスト
+                explicitNext: null,     // **パラメータ:** で指定された明示的な next
+                explicitFallback: null,  // **パラメータ:** で指定された明示的な fallback
+                explicitFail: null,      // **パラメータ:** で指定された明示的な fail (バトル敗北先)
+                explicitItemId: null,    // reward/check_delivery 用 item_id
+                explicitQuantity: null,  // check_delivery 用 quantity
+                explicitProb: null,      // random_branch 用 prob
+                explicitPercent: null,   // hp_damage 用 percent
+                overrideNextNode: null,  // **次ノード:** で指定されたループ等の遷移先
             };
             nodes.push(currentNode);
             continue;
@@ -88,14 +131,56 @@ function processQuest(mdFile, csvFile) {
             currentNode.parsedParams = paramObj;
         }
 
-        // バトルパラメータ: 敵グループID
+        // **パラメータ:** 行のパース（新ノードタイプ対応）
+        const paramLineMatch = line.match(/^\*\*パラメータ:\*\*\s*(.+)$/);
+        if (paramLineMatch && currentNode) {
+            const rawStr = paramLineMatch[1];
+            // key: value のペアをパース（カンマ区切り）
+            const pairs = rawStr.split(',').map(p => p.trim());
+            for (const pair of pairs) {
+                const colonIdx = pair.indexOf(':');
+                if (colonIdx < 0) continue;
+                const k = pair.substring(0, colonIdx).trim().toLowerCase();
+                const v = pair.substring(colonIdx + 1).trim().replace(/`/g, '');
+                if (k === 'next') currentNode.explicitNext = v;
+                else if (k === 'fallback') currentNode.explicitFallback = v;
+                else if (k === 'fail') currentNode.explicitFail = v;
+                else if (k === 'item_id') currentNode.explicitItemId = v;
+                else if (k === 'quantity') currentNode.explicitQuantity = parseInt(v, 10);
+                else if (k === 'prob') currentNode.explicitProb = parseInt(v, 10);
+                else if (k === 'percent') currentNode.explicitPercent = parseInt(v, 10);
+                else if (k === 'enemy_group_id') {
+                    if (!currentNode.parsedParams) currentNode.parsedParams = {};
+                    currentNode.parsedParams.enemy_group_id = parseInt(v, 10);
+                }
+                else if (k === 'guest_id' || k === 'npc_slug') {
+                    if (!currentNode.parsedParams) currentNode.parsedParams = {};
+                    currentNode.parsedParams.guest_id = v;
+                }
+                else if (k === 'is_escort_target') {
+                    if (!currentNode.parsedParams) currentNode.parsedParams = {};
+                    currentNode.parsedParams.is_escort_target = v === 'true';
+                }
+            }
+        }
+
+        // **次ノード:** 行のパース（ループ等の明示的な遷移指定）
+        const nextNodeMatch = line.match(/^\*\*次ノード:\*\*\s*(.+)$/);
+        if (nextNodeMatch && currentNode) {
+            // "battle_scorpion（ループ）" のような形式から node_id を抽出
+            const raw = nextNodeMatch[1].trim();
+            const idMatch = raw.match(/^([a-z0-9_]+)/);
+            if (idMatch) currentNode.overrideNextNode = idMatch[1];
+        }
+
+        // バトルパラメータ: 敵グループID（テーブル形式）
         if (currentNode.type === 'battle' && line.startsWith('| 敵グループID |')) {
             if (!currentNode.parsedParams) currentNode.parsedParams = {};
             const parts = line.split('|').map(p => p.trim());
             const idMatch = parts[2].match(/\d+/);
             if (idMatch) currentNode.parsedParams.enemy_group_id = parseInt(idMatch[0], 10);
         }
-        // バトルパラメータ: 敵表示名
+        // バトルパラメータ: 敵表示名（テーブル形式）
         if (currentNode.type === 'battle' && line.startsWith('| 敵表示名 |')) {
             if (!currentNode.parsedParams) currentNode.parsedParams = {};
             const parts = line.split('|').map(p => p.trim());
@@ -115,11 +200,8 @@ function processQuest(mdFile, csvFile) {
             currentNode.parsedParams.is_escort_target = parts[2] === 'true';
         }
 
-        // choice ノードの選択肢テーブル: | 選択肢テキスト | `next_node_id` |
-        // ヘッダ行 (| 選択肢 | 次ノード |) はスキップし、区切り行 (|---|---| ) もスキップ
-        // データ行のみ取得: | テキスト | `node_id` |
+        // choice ノードの選択肢テーブル
         if (currentNode.type === 'choice' && line.match(/^\|[^|]+\|[^|]+\|$/)) {
-            // ヘッダ行と区切り行をスキップ
             if (line.includes('選択肢') || line.includes('---')) continue;
             const parts = line.split('|').map(p => p.trim()).filter(p => p);
             if (parts.length >= 2) {
@@ -129,7 +211,15 @@ function processQuest(mdFile, csvFile) {
             }
         }
 
-        // **rewards:** 行のパース（endノード等にrewardsパラメータを埋め込む）
+        // choice ノードの選択肢リスト形式: - 選択肢: 「テキスト」→ `next_node`
+        if (currentNode.type === 'choice') {
+            const listChoiceMatch = line.match(/^-\s*選択肢:\s*[「『]([^」』]+)[」』]\s*→\s*`([^`]+)`/);
+            if (listChoiceMatch) {
+                currentNode.choices.push({ text: listChoiceMatch[1], next: listChoiceMatch[2] });
+            }
+        }
+
+        // **rewards:** 行のパース
         const rewardsMatch = line.match(/^\*\*rewards:\*\*\s*(.+)$/i);
         if (rewardsMatch && currentNode) {
             if (!currentNode.parsedParams) currentNode.parsedParams = {};
@@ -171,7 +261,6 @@ function processQuest(mdFile, csvFile) {
     for (const node of nodes) {
         if (!node.parsedParams) node.parsedParams = {};
 
-        // type の設定: ノードヘッダの type をパラメータに反映
         const headerType = node.type;
         if (headerType === 'end_success') {
             node.parsedParams.type = 'end';
@@ -187,14 +276,34 @@ function processQuest(mdFile, csvFile) {
             node.parsedParams.type = 'battle';
         } else if (headerType === 'choice') {
             node.parsedParams.type = 'choice';
+        } else if (headerType === 'random_branch') {
+            node.parsedParams.type = 'random_branch';
+            if (node.explicitProb != null) node.parsedParams.prob = node.explicitProb;
+        } else if (headerType === 'check_delivery') {
+            node.parsedParams.type = 'check_delivery';
+            if (node.explicitItemId) node.parsedParams.item_id = node.explicitItemId;
+            if (node.explicitQuantity != null) node.parsedParams.quantity = node.explicitQuantity;
+        } else if (headerType === 'reward') {
+            node.parsedParams.type = 'reward';
+            if (node.explicitItemId) node.parsedParams.item_id = node.explicitItemId;
+        } else if (headerType === 'hp_damage') {
+            node.parsedParams.type = 'hp_damage';
+            if (node.explicitPercent != null) {
+                node.parsedParams.percent = node.explicitPercent;
+                // エンジン互換: hp_percent も同時に設定
+                node.parsedParams.hp_percent = node.explicitPercent;
+            }
+        } else if (headerType === 'modify_flag') {
+            node.parsedParams.type = 'modify_flag';
+        } else if (headerType === 'check_flags') {
+            node.parsedParams.type = 'check_flags';
         } else {
-            // text やその他 → 明示的に type が未設定なら 'text'
             if (!node.parsedParams.type) {
                 node.parsedParams.type = 'text';
             }
         }
 
-        // バトルノードのbg/bgm 継承: 演出行がなかった場合、直前ノードから引き継ぐ
+        // bg/bgm 継承
         if (node.parsedParams.type === 'battle' && !node.parsedParams.bg) {
             const idx = nodes.indexOf(node);
             for (let j = idx - 1; j >= 0; j--) {
@@ -205,9 +314,8 @@ function processQuest(mdFile, csvFile) {
             }
         }
         if (node.parsedParams.type === 'battle' && !node.parsedParams.bgm) {
-            node.parsedParams.bgm = 'bgm_battle'; // バトルのデフォルトBGM
+            node.parsedParams.bgm = 'bgm_battle';
         }
-        // 非バトルノードのbg/bgm 継承: 演出行がなかった場合、直前ノードから引き継ぐ
         if (!node.parsedParams.bg) {
             const idx = nodes.indexOf(node);
             for (let j = idx - 1; j >= 0; j--) {
@@ -222,22 +330,15 @@ function processQuest(mdFile, csvFile) {
     // ============================================================
     // Phase 2.5: choice 分岐の合流点を解決
     // ============================================================
-    // choice ノードの分岐先から順方向にノードを辿り、合流点を特定する。
-    // 例: choice_1 → [見逃す]mercy_1 / [取り立てる]battle_1→extort_1
-    //   → 合流点 = house_2_intro
-    // mercy_1 の next を house_2_intro に設定する必要がある。
-    
     const nodeIndex = {};
     nodes.forEach((n, idx) => { nodeIndex[n.id] = idx; });
     
-    // choiceの分岐先ノードセットを構築（分岐内ノードのIDを収集）
-    const overrideNextNode = {}; // nodeId → overridden next_node
+    const overrideNextNode = {};
     
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         if (node.type !== 'choice' || node.choices.length < 2) continue;
         
-        // 分岐先のノードインデックスを取得し、MD記述順でソート
         const branchStartIndices = node.choices
             .map(c => ({ text: c.text, next: c.next, idx: nodeIndex[c.next] }))
             .filter(c => c.idx !== undefined)
@@ -245,9 +346,6 @@ function processQuest(mdFile, csvFile) {
         
         if (branchStartIndices.length < 2) continue;
         
-        // 各ブランチの範囲を特定:
-        // ブランチN: branchStartIndices[N].idx から branchStartIndices[N+1].idx - 1 まで
-        // 最後のブランチ: branchStartIndices[last].idx から次のchoice/end_successまで
         const branches = [];
         for (let b = 0; b < branchStartIndices.length; b++) {
             const startIdx = branchStartIndices[b].idx;
@@ -255,13 +353,11 @@ function processQuest(mdFile, csvFile) {
             if (b + 1 < branchStartIndices.length) {
                 endIdx = branchStartIndices[b + 1].idx - 1;
             } else {
-                // 最後のブランチ: バトルがあればそのwin先（sequential next）までを含む
                 endIdx = startIdx;
                 for (let j = startIdx; j < nodes.length; j++) {
                     const n = nodes[j];
                     if (n.type === 'end_success' || n.type === 'end_failure' || n.type === 'end') break;
                     endIdx = j;
-                    // バトルノードの場合、win先（次ノード）もブランチに含める
                     if (n.type === 'battle' && j + 1 < nodes.length) {
                         endIdx = j + 1;
                         break;
@@ -276,28 +372,23 @@ function processQuest(mdFile, csvFile) {
             });
         }
         
-        // 合流点 = 最後のブランチの末端ノードの次のノード
         const lastBranch = branches[branches.length - 1];
         const mergeIdx = lastBranch.endIdx + 1;
         if (mergeIdx >= nodes.length) continue;
         const mergePoint = nodes[mergeIdx].id;
         
-        // 全ブランチのノードID集合
         const allBranchNodes = new Set();
         for (const br of branches) {
             for (const id of br.nodeIds) allBranchNodes.add(id);
         }
         
-        // 短いブランチの末端ノードの next を合流点に上書き
         for (const br of branches) {
             const lastNodeId = br.nodeIds[br.nodeIds.length - 1];
             const lastNode = nodes[nodeIndex[lastNodeId]];
             
-            // バトルノードやendノードの場合は上書き不要
             if (lastNode.type === 'battle' || lastNode.type === 'end_success' || 
                 lastNode.type === 'end_failure' || lastNode.type === 'end') continue;
             
-            // sequential next が同じ分岐内のノードなら、合流点に上書き
             const seqNextIdx = nodeIndex[lastNodeId] + 1;
             if (seqNextIdx < nodes.length && allBranchNodes.has(nodes[seqNextIdx].id)) {
                 overrideNextNode[lastNodeId] = mergePoint;
@@ -315,32 +406,57 @@ function processQuest(mdFile, csvFile) {
         let nextNode = '';
         let choices = [];
 
-        // 順番上の次のノード
         const sequentialNext = (i + 1 < nodes.length) ? nodes[i + 1].id : '';
         
         if (node.type === 'battle') {
-            // バトルノード: 勝利→順番上の次ノード, 敗北→end_failure
-            nextNode = ''; // バトルノード自体は next_node 空
+            // バトルノード: 明示的な next/fail があればそれを使用、なければ順序解決
+            nextNode = '';
+            const winNext = node.explicitNext || sequentialNext || 'end_success';
+            const loseNext = node.explicitFail || 'end_failure';
             choices = [
-                { text: 'win', next: sequentialNext || 'end_success' },
-                { text: 'lose', next: 'end_failure' }
+                { text: 'win', next: winNext },
+                { text: 'lose', next: loseNext }
             ];
         } else if (node.type === 'choice') {
-            // 選択肢ノード: MD内の選択肢テーブルから分岐先を取得
-            nextNode = ''; // 選択肢ノード自体は next_node 空
+            nextNode = '';
             if (node.choices.length > 0) {
                 choices = node.choices.map(c => ({ text: c.text, next: c.next }));
             } else {
-                console.warn(`  [WARN] Choice node "${node.id}" has no choices, falling back to sequential next`);
                 nextNode = sequentialNext;
             }
-        } else if (node.type === 'end_success' || node.type === 'end_failure' || node.type === 'end') {
-            // 終了ノード: 遷移先なし
+        } else if (node.type === 'random_branch') {
+            // random_branch: next と fallback を CHOICE 行で出力
             nextNode = '';
+            const nextTarget = node.explicitNext || sequentialNext;
+            const fallbackTarget = node.explicitFallback || sequentialNext;
+            choices = [
+                { text: 'success', next: nextTarget },
+                { text: 'failure', next: fallbackTarget }
+            ];
+        } else if (node.type === 'check_delivery') {
+            // check_delivery: next と fallback を CHOICE 行で出力
+            nextNode = '';
+            const nextTarget = node.explicitNext || sequentialNext;
+            const fallbackTarget = node.explicitFallback || sequentialNext;
+            choices = [
+                { text: 'success', next: nextTarget },
+                { text: 'failure', next: fallbackTarget }
+            ];
+        } else if (node.type === 'check_flags') {
+            // check_flags: 既存のCHOICEを使う（7014等）
+            nextNode = '';
+            if (node.choices.length > 0) {
+                choices = node.choices.map(c => ({ text: c.text, next: c.next }));
+            }
+        } else if (node.type === 'end_success' || node.type === 'end_failure' || node.type === 'end') {
+            nextNode = '';
+        } else if (node.type === 'reward' || node.type === 'hp_damage') {
+            // reward / hp_damage: 明示的な next があればそれを使用、なければ順序解決
+            nextNode = node.explicitNext || overrideNextNode[node.id] || sequentialNext;
         } else {
-            // テキスト / guest_join / leave / その他: 順番上の次のノードへ遷移
-            // ただし、choice分岐の合流点上書きがあればそちらを優先
-            nextNode = overrideNextNode[node.id] || sequentialNext;
+            // text / guest_join / leave / modify_flag / その他
+            // overrideNextNode（合流点上書き）またはループ指定を優先
+            nextNode = node.overrideNextNode || overrideNextNode[node.id] || sequentialNext;
         }
 
         // パラメータJSON

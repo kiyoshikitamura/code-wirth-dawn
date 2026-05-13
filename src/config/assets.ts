@@ -63,6 +63,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_spot_markand_mirror': '/images/quests/bg_spot_markand_mirror.png',
     'bg_spot_markand_ruins': '/images/quests/bg_spot_markand_ruins.png',
     // 大天使侵攻編 + 英霊の遺産編 背景 (6011-6020)
+    'bg_holy_empire': '/images/quests/bg_holy_empire.png',
     'bg_heroic_stele': '/images/quests/bg_heroic_stele.png',
     'bg_ishaq_ruined': '/images/quests/bg_ishaq_ruined.png',
     'bg_island': '/images/quests/bg_island.png',
@@ -83,6 +84,21 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_shrine': '/images/quests/bg_shrine.png',
     'bg_crypt': '/images/quests/bg_crypt.png',
     'bg_desert_night': '/images/quests/bg_desert.png',  // 夜砂漠 → 砂漠共通にフォールバック
+    // ── 夜刀地方クエスト用背景 (7030-7034) ──
+    'bg_yato_road': '/images/quests/bg_yato_road.png',
+    'bg_yato_forest': '/images/quests/bg_yato_forest.png',
+    'bg_yato_city': '/images/quests/bg_yato_city.png',
+    'bg_yato_den': '/images/quests/bg_yato_den.png',
+    'bg_yato_mountain': '/images/quests/bg_yato_mountain.png',
+    'bg_yato_shrine': '/images/quests/bg_yato_shrine.png',
+    // ── 華龍地方クエスト用背景 (7040-7044) ──
+    'bg_karyu_mountain': '/images/quests/bg_karyu_mountain.png',
+    'bg_karyu_palace': '/images/quests/bg_karyu_palace.png',
+    'bg_karyu_village': '/images/quests/bg_karyu_village.png',
+    'bg_karyu_coast': '/images/quests/bg_karyu_coast.png',
+    'bg_karyu_port': '/images/quests/bg_karyu_port.png',
+    'bg_karyu_river': '/images/quests/bg_karyu_village.png',  // 河畔 → 村共通にフォールバック
+    'bg_yato_street_night': '/images/quests/bg_yato_city.png',  // 夜の城下町 → 城下町共通にフォールバック
 };
 
 export function getAssetUrl(key: string): string {
