@@ -99,6 +99,9 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_karyu_port': '/images/quests/bg_karyu_port.png',
     'bg_karyu_river': '/images/quests/bg_karyu_village.png',  // 河畔 → 村共通にフォールバック
     'bg_yato_street_night': '/images/quests/bg_yato_city.png',  // 夜の城下町 → 城下町共通にフォールバック
+    // ── 伝説級クエスト用背景 (6105-6111) ──
+    'bg_ruin_crypt': '/images/quests/bg_crypt.png',  // 遺跡地下墓地 → 地下墓地にフォールバック
+    'bg_marcund_desert': '/images/quests/bg_desert.png',  // マルカンド砂漠 → 砂漠共通にフォールバック
 };
 
 export function getAssetUrl(key: string): string {
