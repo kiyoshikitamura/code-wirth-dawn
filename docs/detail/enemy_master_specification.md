@@ -1,6 +1,17 @@
-# Wirth-Dawn Enemy Master Specification (v16.4) & Security/UX Audit
+# Wirth-Dawn Enemy Master Specification (v16.6) & Security/UX Audit
 
-本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**101種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UXの追加実装案を統合したものです。
+本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**131種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UXの追加実装案を統合したものです。
+
+> **v16.6 (2026-05-13) 変更点 — Phase 2 Rep連動ボス追加 & 監査修正:**
+> - **T1 Rep連動ボス4体追加（5101-5104）**: `boss_graverobber_leader`, `boss_giant_scorpion`, `boss_toll_bandit`, `boss_river_god`。序盤地方クエスト用。
+> - **T2 Rep連動ボス4体追加（5111-5114）**: `boss_mutant_chimera`, `boss_bandit_king`, `boss_cursed_ronin`, `boss_false_sage`。中盤地方クエスト用。
+> - **Rep固有エネミー2体追加**: `enemy_mutant_chimera`（失敗作キメラ / 5111用）、`enemy_jade_snake_infant`（翡翠蛇の幼体 / 5204用）。
+> - エネミー総数: 123種 → **131種**。
+
+> **v16.5 (2026-05-12) 変更点 — Phase 3 名声連動ボス＆地方クエスト追加:**
+> - **名声連動ボス7体追加（5201-5207）**: `boss_fallen_crusader`, `boss_sand_king`, `boss_oni_general`, `boss_jade_serpent`, `boss_heretic_sage`, `boss_war_djinn`, `boss_nine_tails`。Rep 50-100で段階的に開放。
+> - **地方クエスト専用エネミー2体追加**: `enemy_yato_kagemon`（影守の怨霊 / 7035用）、`enemy_karyu_fox_bride`（妖狐の姫 / 7045用）。
+> - エネミー総数: 114種 → **123種**。
 
 > **v2.9.4b (2026-04-26) 変更点 — 汎用クエスト用エネミー追加:**
 > - **新規エネミー2種追加**: `enemy_mob`（飢えた市民 / Lv2 / quest_only）、`enemy_giant_rat`（巨大ネズミ / Lv2 / random）。
@@ -166,6 +177,26 @@
 39. **妖狐 (enemy_karyu_fox / 華龍神朝 Lv15)**: 人を化かす狡猾な狐の妖怪。美しい女の姿で近づき、強力な妖術で獲物を仕留める。
 40. **兵馬俑 (enemy_karyu_terracotta / 華龍神朝 Lv18)**: 古代の皇帝を守るため造られた土人形の兵士。決して崩れぬ陣形と岩のように硬い守りを誇る。
 41. **麒麟 (enemy_karyu_kirin / 華龍神朝 Boss Lv28)**: 瑞獣とされる伝説の神獣だが、大地が荒れると凶暴化する。雷を纏った神聖な蹄で邪悪を蹴散らす。
+
+#### ③-b 地方クエスト専用エネミー（13種）
+7030-7034（夜刀地方）および7040-7044（華龍地方）のクエスト専用エネミー。`spawn_type: quest_only`。
+
+**夜刀地方クエスト専用（5種）:**
+42. **抜け忍 (enemy_yato_ninja / Lv12 / quest_only)**: かつて暗部に属していた忍者が裏切り逃亡した姿。短刀と手裏剣で素早い攻撃を仕掛ける。
+43. **間者 (enemy_yato_spy / Lv10 / quest_only)**: 敵国から潜入した密偵。毒と罠を駆使する厄介な相手。
+44. **浪人 (enemy_yato_ronin / Lv10 / quest_only)**: 主家を失い流浪する元侍。生きるために辻斬りに手を染めた落ちぶれた剣士。
+45. **浪人の頭目 (enemy_yato_ronin_leader / Lv15 / quest_only)**: 浪人たちを束ねる元藩士。かつての剣術の腕は確かで、配下を率いて街道を荒らし回る。
+46. **怨霊 (enemy_yato_onryo / Lv12 / quest_only)**: 無念の死を遂げた者の魂が凝り固まった悪霊。白い着物に長い黒髪、生者への憎悪を撒き散らす。
+
+**華龍地方クエスト専用（8種）:**
+47. **古キョンシー (enemy_karyu_jiangshi_old / Lv12 / quest_only)**: 数百年の時を経て朽ちかけたキョンシー。蓄積された死気で触れるだけで生命力を奪う。
+48. **霊草の守護獣 (enemy_karyu_guardian_beast / Lv11 / quest_only)**: 霊山に自生する霊草を守護する聖獣。額に一本角を持つ大型の獣。
+49. **反乱農民 (enemy_karyu_rebel_farmer / Lv5 / quest_only)**: 重税に耐えかね鎌や鍬を手に立ち上がった農民。戦闘力は低いが集団の怒りは侮れない。
+50. **農民の首謀者 (enemy_karyu_rebel_leader / Lv10 / quest_only)**: 農民反乱の中心人物。元は村の長老で知恵があり、組織的な抵抗を指揮する。
+51. **刺客 (enemy_karyu_assassin / Lv10 / quest_only)**: 華龍の裏社会で暗躍する暗殺者。暗器と毒を駆使して標的を仕留める。
+52. **精鋭刺客 (enemy_karyu_assassin_elite / Lv14 / quest_only)**: 暗殺ギルドの中でも選りすぐりの上位刺客。一撃必殺の技と完璧な隠密行動。
+53. **水賊 (enemy_karyu_pirate / Lv10 / quest_only)**: 華龍の河川や沿岸を荒らし回る海賊。商船を襲い積み荷と命を奪う荒くれ者。
+54. **水賊の頭目 (enemy_karyu_pirate_captain / Lv15 / quest_only)**: 水賊団を率いる凶悪な首領。華龍式の大刀を振るい、部下からも恐れられる残忍な男。
 
 #### ④ 賞金稼ぎ / バウンティハンター（9種）
 プレイヤーの「名声（Reputation）」が大きくマイナス（例：-100以下）になった際にランダムエンカウントで強襲してくるエリートNPC。
@@ -339,3 +370,84 @@ id,slug,name,effect_type,value,description
 )}
 ```
 *   **解説**: プレイヤーに「これは通常の雑魚ではなく、名声ペナルティによるペナルティバトルである」ことを強烈に視認させ、逃走や全力を出すべきという判断を促します。
+
+---
+
+## ⑦ 名声連動ボス（7体）— 5201-5207
+
+名声（Reputation）が一定値以上になると出現する強敵ボス。`spawn_type: quest_only`。EP5/EP10クリアで段階的に開放。
+
+| # | キャラクタ名 | ID (slug) | Lv | HP | ATK | DEF | EXP | Gold | 出現Rep |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 堕落聖騎士 | `boss_fallen_crusader` | 22 | 800 | 65 | 18 | 300 | 800 | 50 |
+| 2 | 砂の僭王 | `boss_sand_king` | 24 | 900 | 70 | 15 | 350 | 1000 | 50 |
+| 3 | 鬼将・蛮骨 | `boss_oni_general` | 24 | 1000 | 75 | 12 | 350 | 1000 | 60 |
+| 4 | 翡翠大蛇 | `boss_jade_serpent` | 26 | 1100 | 70 | 20 | 400 | 1200 | 70 |
+| 5 | 異端の大賢者 | `boss_heretic_sage` | 28 | 900 | 80 | 15 | 400 | 1200 | 80 |
+| 6 | 戦魔ジン | `boss_war_djinn` | 28 | 1200 | 85 | 18 | 450 | 1500 | 90 |
+| 7 | 九尾の大妖狐 | `boss_nine_tails` | 30 | 1500 | 90 | 20 | 500 | 1800 | 100 |
+
+> [!NOTE]
+> 5201-5207にはエネミーユニークスキルは設定されていません。汎用エネミースキルの行動パターンで構成されています。
+
+---
+
+## ③-c 地方クエスト追加エネミー（2体）— 7035/7045
+
+7035（夜刀地方）および7045（華龍地方）のクエスト専用追加エネミー。`spawn_type: quest_only`。
+
+**夜刀地方追加（1体 / 7035）:**
+
+| キャラクタ名 | ID (slug) | Lv | HP | ATK | DEF | EXP | Gold |
+|---|---|---|---|---|---|---|---|
+| 影守の怨霊 | `enemy_yato_kagemon` | 14 | 220 | 52 | 18 | 120 | 150 |
+
+**華龍地方追加（1体 / 7045）:**
+
+| キャラクタ名 | ID (slug) | Lv | HP | ATK | DEF | EXP | Gold |
+|---|---|---|---|---|---|---|---|
+| 妖狐の姫 | `enemy_karyu_fox_bride` | 16 | 280 | 55 | 10 | 120 | 200 |
+
+---
+
+## ⑧ T1 Rep連動ボス（4体）— 5101-5104
+
+序盤の地方名声クエスト（Tier 1）のボスエネミー。各地方の名声を一定値以上まで上げると出現する初級ボス。`spawn_type: quest_only`。
+
+| # | キャラクタ名 | ID (slug) | Lv | HP | ATK | DEF | EXP | Gold | 出現クエスト |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 盗掘団の頭目 | `boss_graverobber_leader` | 7 | 180 | 25 | 6 | 60 | 200 | 5101 |
+| 2 | 巨大毒蠍 | `boss_giant_scorpion` | 8 | 200 | 28 | 12 | 70 | 250 | 5102 |
+| 3 | 山賊の頭 | `boss_toll_bandit` | 7 | 190 | 27 | 5 | 60 | 200 | 5103 |
+| 4 | 河伯 | `boss_river_god` | 8 | 210 | 26 | 8 | 70 | 250 | 5104 |
+
+> [!NOTE]
+> T1ボスは序盤ボスのため、HP180-210と低く設定。行動パターンも2-3スキルのシンプルな構成。
+
+---
+
+## ⑨ T2 Rep連動ボス（4体）— 5111-5114
+
+中盤の地方名声クエスト（Tier 2）のボスエネミー。T1をクリアした後に出現する中級ボス。`spawn_type: quest_only`。
+
+| # | キャラクタ名 | ID (slug) | Lv | HP | ATK | DEF | EXP | Gold | 出現クエスト |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 完成体キメラ | `boss_mutant_chimera` | 12 | 350 | 35 | 8 | 120 | 300 | 5111 |
+| 2 | 盗賊王バシム | `boss_bandit_king` | 13 | 380 | 40 | 10 | 150 | 400 | 5112 |
+| 3 | 妖刀の剣客 | `boss_cursed_ronin` | 14 | 420 | 50 | 5 | 180 | 500 | 5113 |
+| 4 | 邪仙・道士 | `boss_false_sage` | 15 | 450 | 45 | 12 | 200 | 600 | 5114 |
+
+> [!NOTE]
+> T2ボスは3-4スキル構成で、HP条件付きスキル（enrage/berserk_rage）によるフェーズ変化がある。
+
+---
+
+## ⑩ Rep固有エネミー（2体）
+
+名声連動クエスト内の道中戦闘で使用される固有エネミー。`spawn_type: quest_only`。
+
+| キャラクタ名 | ID (slug) | Lv | HP | ATK | DEF | EXP | Gold | 使用クエスト |
+|---|---|---|---|---|---|---|---|---|
+| 失敗作キメラ | `enemy_mutant_chimera` | 10 | 250 | 30 | 8 | 80 | 150 | 5111 |
+| 翡翠蛇の幼体 | `enemy_jade_snake_infant` | 17 | 300 | 55 | 10 | 150 | 250 | 5204 |
+

@@ -110,3 +110,59 @@
 ```
 JRPG anime art style background illustration, (no text, no letters, no characters, no people), wide landscape aspect ratio, (Luxurious hot spring resort town, incredibly beautiful traditional japanese ryokan inns, warm thick steam rising from onsens, brilliant deep red autumn maple trees, relaxing and healing atmosphere), (extremely prosperous, wealthy metropolis, vibrant and rich colors, golden hour lighting, flying colorful banners, beautifully decorated buildings, festival atmosphere, sparkling light rays, magnificent and lively)
 ```
+
+---
+
+## 🗡️ クエスト専用シーン背景（11種）
+
+各地方クエスト（7030-7034, 7040-7044）で使用するシーン背景画像。拠点背景とは異なり、繁栄度パターンは不要（単一パターン）。
+`src/config/assets.ts` の `QUEST_BACKGROUNDS` に登録。
+
+### 夜刀地方クエスト背景（6種 / 7030-7034）
+
+| slug | 使用クエスト | Base Prompt |
+|------|------------|-------------|
+| `bg_yato_road` | 7030: 街道シーン | `(Traditional japanese countryside road, rice paddy fields, gentle hills, wooden bridge over a small stream, serene rural atmosphere)` |
+| `bg_yato_forest` | 7030, 7031: 森林シーン | `(Dense japanese bamboo and cedar forest, dappled sunlight filtering through thick canopy, mossy ancient stone path, mystical and quiet atmosphere)` |
+| `bg_yato_city` | 7031, 7034: 城下町シーン | `(Traditional japanese castle town streets, wooden merchant shops, paper lanterns, stone walls, busy yet orderly atmosphere)` |
+| `bg_yato_den` | 7031: 忍びの隠れ家 | `(Hidden underground ninja hideout, dim torch lighting, wooden planks and secret doors, weapons hanging on walls, tense secretive atmosphere)` |
+| `bg_yato_mountain` | 7032, 7033: 山岳シーン | `(Steep japanese mountain trail, ancient torii gates along the path, misty peaks in background, autumn leaves, dramatic and sacred atmosphere)` |
+| `bg_yato_shrine` | 7032: 廃神社シーン | `(Abandoned traditional japanese shrine in deep forest, broken torii gate, overgrown with vines and moss, eerie spiritual atmosphere, faint ghostly glow)` |
+
+### 華龍地方クエスト背景（5種 / 7040-7044）
+
+| slug | 使用クエスト | Base Prompt |
+|------|------------|-------------|
+| `bg_karyu_mountain` | 7040, 7041: 霊山シーン | `(Mystical chinese fantasy mountain, steep rocky cliffs, clouds swirling below, ancient stone steps carved into mountainside, spiritual qi energy visible in the air)` |
+| `bg_karyu_palace` | 7041, 7043: 宮殿・屋敷シーン | `(Luxurious chinese imperial palace interior, ornate red and gold pillars, silk curtains, jade decorations, grand throne room, opulent atmosphere)` |
+| `bg_karyu_village` | 7042: 農村シーン | `(Poor chinese farming village, thatched-roof mud houses, dried rice paddies, simple wooden fences, struggling but resilient rural atmosphere)` |
+| `bg_karyu_coast` | 7044: 海岸シーン | `(Chinese fantasy coastal scenery, rocky shore with crashing waves, distant fishing junks, old stone dock, dramatic stormy sky, salty wind atmosphere)` |
+| `bg_karyu_port` | 7044: 港町シーン | `(Bustling chinese fantasy river port, wooden trading junks with colorful sails, waterfront market stalls, stone bridges, lanterns reflecting on water)` |
+
+### 追加地方クエスト背景（2種 / 7035, 7045）
+
+| slug | 使用クエスト | Base Prompt |
+|------|------------|-------------|
+| `bg_yato_den` | 7035: 影守の怨霊屋敷 | ※既存（忍びの隠れ家）を流用 |
+| `bg_karyu_village` | 7045: 妖狐の婚礼 | ※既存（農村シーン）を流用 |
+
+### 伝説級ボス専用背景（1種 / 6106）
+
+| slug | 使用クエスト | Base Prompt |
+|------|------------|-------------|
+| `bg_holy_empire` | 6106: 天使の降臨 | `(Magnificent holy empire capital city, towering white marble cathedrals, grand castle spires, golden sunlight streaming through stained glass windows, grand stone architecture with religious motifs, beautiful blue sky)` |
+
+### エイリアス背景（既存画像へのフォールバック）
+
+以下のBGキーは `src/config/assets.ts` 内で既存画像へのフォールバックとして定義されています。専用画像は未生成。
+
+| slug | フォールバック先 | 使用クエスト | 概要 |
+|------|----------------|------------|------|
+| `bg_ruin_crypt` | `bg_crypt.png` | 6105, 6109, 6111 | 遺跡の地下墓地。暗い石壁と松明の灯り |
+| `bg_marcund_desert` | `bg_desert.png` | 6107, 6110 | マルカンド砂漠の広大な砂原 |
+| `bg_karyu_river` | `bg_karyu_village.png` | 5104 | 華龍地方の河畔 |
+| `bg_yato_street_night` | `bg_yato_city.png` | 5113 | 夜の夜刀城下町 |
+| `bg_desert_night` | `bg_desert.png` | 7020 | 夜の砂漠 |
+
+
+
