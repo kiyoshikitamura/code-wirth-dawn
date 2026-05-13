@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { WORLD_ID } from '@/utils/constants';
 import { getAvatarByTitle } from '@/utils/visuals';
+import { calculateTitle } from '@/lib/character';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,17 +125,15 @@ export async function POST(req: Request) {
 
             // ... (in function)
 
-            // Title Logic
-            let newTitle = "名もなき旅人";
-            const maxScore = Math.max(newOrderPts, newChaosPts, newJusticePts, newEvilPts);
-
-            if (maxScore >= 20) {
-                if (maxScore === newEvilPts) newTitle = "混沌の放浪者";
-                else if (maxScore === newJusticePts) newTitle = "光差す騎士";
-                else if (maxScore === newOrderPts) newTitle = "冷徹なる執行者";
-                // Add more variations or combinations here?
-                // e.g., if Chaos & Evil are both high -> "災厄の使徒"
-            }
+            // Title Logic (割合ベースの称号判定)
+            const profileForTitle = {
+                ...profile,
+                order_pts: newOrderPts,
+                chaos_pts: newChaosPts,
+                justice_pts: newJusticePts,
+                evil_pts: newEvilPts,
+            };
+            const newTitle = calculateTitle(profileForTitle);
 
             const avatar_url = getAvatarByTitle(newTitle);
 
@@ -147,7 +146,7 @@ export async function POST(req: Request) {
                     justice_pts: newJusticePts,
                     evil_pts: newEvilPts,
                     title_name: newTitle,
-                    avatar_url: avatar_url, // Added
+                    avatar_url: avatar_url,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', profile.id);

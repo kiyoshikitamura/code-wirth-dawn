@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { ItemDB, UserProfileDB, SkillDB } from '@/types/game';
+import { getUserAlignmentPcts, isDarkMarketEligible } from '@/lib/alignment';
 
 // Helper to get user profile 
 async function getUserProfile(req: Request) {
@@ -156,7 +157,7 @@ export async function GET(req: Request) {
             if (!matchesNation(tags)) return false;
 
             if (item.is_black_market) {
-                const isDark = (profile.alignment?.evil || 0) > 20;
+                const isDark = isDarkMarketEligible(getUserAlignmentPcts(profile as any));
                 if (!isRuined && !isDark) return false;
             }
 
@@ -206,7 +207,7 @@ export async function GET(req: Request) {
             }
 
             if (skill.is_black_market) {
-                const isDark = (profile.alignment?.evil || 0) > 20;
+                const isDark = isDarkMarketEligible(getUserAlignmentPcts(profile as any));
                 if (!isRuined && !isDark) {
                     console.log(`[Shop] SKIP skill ${skill.slug}: black market but not dark/ruined`);
                     return false;

@@ -199,6 +199,32 @@ export async function POST(req: Request) {
                     }
                 }
                 console.log(`[QuestComplete] Alignment shift:`, rewards.alignment_shift);
+
+                // 拠点アライメント加算: クエスト受注拠点の world_states にも反映
+                const questLocationId = user.current_location_id;
+                if (questLocationId) {
+                    const worldColMap: Record<string, string> = {
+                        order: 'order_score', chaos: 'chaos_score',
+                        justice: 'justice_score', evil: 'evil_score'
+                    };
+                    for (const [key, val] of Object.entries(rewards.alignment_shift)) {
+                        const wCol = worldColMap[key];
+                        if (wCol && typeof val === 'number' && val > 0) {
+                            const { data: ws } = await supabase
+                                .from('world_states')
+                                .select('*')
+                                .eq('location_id', questLocationId)
+                                .maybeSingle();
+                            if (ws) {
+                                await supabase
+                                    .from('world_states')
+                                    .update({ [wCol]: ((ws as any)[wCol] || 0) + val })
+                                    .eq('id', (ws as any).id);
+                            }
+                        }
+                    }
+                    console.log(`[QuestComplete] Location alignment synced to ${questLocationId}`);
+                }
             }
         }
 

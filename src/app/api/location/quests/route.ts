@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer } from '@/lib/supabase-admin';
+import { calcAlignmentPcts, getUserAlignmentPcts } from '@/lib/alignment';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,10 +60,34 @@ export async function GET(req: Request) {
         // 2.5 Fetch all world_states for alignment percentage calculation (spot quest conditions)
         const { data: allWorldStates } = await supabaseServer
             .from('world_states')
-            .select('order_score, chaos_score, justice_score, evil_score');
+            .select('id, order_score, chaos_score, justice_score, evil_score, updated_at');
 
-        // Calculate global alignment percentages
-        let alignmentPcts: Record<string, number> = { order: 0, chaos: 0, justice: 0, evil: 0 };
+        // 6時間リセット遅延評価: updated_at が6時間以上前なら覇権反映＋スコアリセット
+        const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+        if (allWorldStates) {
+            for (const ws of allWorldStates) {
+                const lastUpdate = new Date((ws as any).updated_at).getTime();
+                if (Date.now() - lastUpdate > SIX_HOURS_MS) {
+                    // 前回期間の結果を覇権判定に使用後、スコアをリセット
+                    await supabaseServer.from('world_states')
+                        .update({
+                            order_score: 0, chaos_score: 0,
+                            justice_score: 0, evil_score: 0,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', (ws as any).id);
+                    // リセット後は0に上書き
+                    (ws as any).order_score = 0;
+                    (ws as any).chaos_score = 0;
+                    (ws as any).justice_score = 0;
+                    (ws as any).evil_score = 0;
+                    debug.push(`world_state ${(ws as any).id} reset (6h elapsed)`);
+                }
+            }
+        }
+
+        // Calculate global alignment percentages (対立軸ベース)
+        let worldAlignPcts = { order_ratio: 50, justice_ratio: 50, chaos_ratio: 50, evil_ratio: 50 };
         if (allWorldStates && allWorldStates.length > 0) {
             let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
             for (const ws of allWorldStates) {
@@ -71,17 +96,9 @@ export async function GET(req: Request) {
                 totalJustice += (ws as any).justice_score || 0;
                 totalEvil += (ws as any).evil_score || 0;
             }
-            const totalAll = totalOrder + totalChaos + totalJustice + totalEvil;
-            if (totalAll > 0) {
-                alignmentPcts = {
-                    order: (totalOrder / totalAll) * 100,
-                    chaos: (totalChaos / totalAll) * 100,
-                    justice: (totalJustice / totalAll) * 100,
-                    evil: (totalEvil / totalAll) * 100,
-                };
-            }
+            worldAlignPcts = calcAlignmentPcts(totalOrder, totalChaos, totalJustice, totalEvil);
         }
-        debug.push(`alignment_pcts: O=${alignmentPcts.order.toFixed(1)}% C=${alignmentPcts.chaos.toFixed(1)}% J=${alignmentPcts.justice.toFixed(1)}% E=${alignmentPcts.evil.toFixed(1)}% `);
+        debug.push(`world_align: Or=${worldAlignPcts.order_ratio}% Ch=${worldAlignPcts.chaos_ratio}% Ju=${worldAlignPcts.justice_ratio}% Ev=${worldAlignPcts.evil_ratio}%`);
 
         // 3. Fetch User Inventory (for has_item checks)
         const { data: inventory } = await supabaseServer
@@ -195,18 +212,37 @@ export async function GET(req: Request) {
                 if (!hasCompletedPrereq(reqs.completed_quest)) return false;
             }
 
-            // 陰陽/秩序 alignment（隠しクエスト — ユーザー個人の属性値）
-            if (reqs.align_evil && !(user.evil_pts > user.justice_pts)) return false;
-            if (reqs.min_align_chaos && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
-            if (reqs.min_align_order && (user.order_pts || 0) < reqs.min_align_order) return false;
+            // 個人アライメント割合判定（対立軸ベース）
+            const userAlignPcts = getUserAlignmentPcts(user as any);
+            if (reqs.align_evil && userAlignPcts.evil_ratio <= 50) return false;
+            if (reqs.min_align_chaos_pct && userAlignPcts.chaos_ratio < reqs.min_align_chaos_pct) return false;
+            if (reqs.min_align_order_pct && userAlignPcts.order_ratio < reqs.min_align_order_pct) return false;
+            if (reqs.min_align_evil_pct && userAlignPcts.evil_ratio < reqs.min_align_evil_pct) return false;
+            if (reqs.min_align_justice_pct && userAlignPcts.justice_ratio < reqs.min_align_justice_pct) return false;
+            // 旧互換: 絶対値ベースの閾値もフォールバック
+            if (reqs.min_align_chaos && !reqs.min_align_chaos_pct && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
+            if (reqs.min_align_order && !reqs.min_align_order_pct && (user.order_pts || 0) < reqs.min_align_order) return false;
 
-            // v24: 情勢割合条件（スポットクエスト用 — 世界全体の情勢割合）
-            // requirements.min_alignment_pct: { alignment: "order", min_pct: 50 }
-            if (reqs.min_alignment_pct) {
-                const reqAlign = reqs.min_alignment_pct.alignment; // "order" | "chaos" | "justice" | "evil"
-                const reqMinPct = reqs.min_alignment_pct.min_pct || 50;
-                const currentPct = alignmentPcts[reqAlign] || 0;
-                if (currentPct < reqMinPct) return false;
+            // v24: 世界情勢割合条件（スポットクエスト用 — 世界全体の対立軸割合）
+            // requirements.min_world_alignment: { axis: "order", min_pct: 60 }
+            // 旧形式 requirements.min_alignment_pct も互換サポート
+            const worldAlignReq = reqs.min_world_alignment || reqs.min_alignment_pct;
+            if (worldAlignReq) {
+                const axis = worldAlignReq.axis || worldAlignReq.alignment;
+                const minPct = worldAlignReq.min_pct || 50;
+                const currentPct = (worldAlignPcts as any)[axis + '_ratio'] || 50;
+                if (currentPct < minPct) return false;
+            }
+
+            // AND条件: 個人＋世界のアライメントを同時に要求
+            // requirements.alignment_and: [{ scope: "personal", axis: "evil", min_pct: 60 }, { scope: "world", axis: "chaos", min_pct: 40 }]
+            if (reqs.alignment_and && Array.isArray(reqs.alignment_and)) {
+                for (const cond of reqs.alignment_and) {
+                    const source = cond.scope === 'world' ? worldAlignPcts : userAlignPcts;
+                    const ratioKey = cond.axis + '_ratio';
+                    const currentVal = (source as any)[ratioKey] || 50;
+                    if (currentVal < (cond.min_pct || 0)) return false;
+                }
             }
 
             // 繁栄度条件

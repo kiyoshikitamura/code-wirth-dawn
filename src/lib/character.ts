@@ -1,4 +1,5 @@
 import { UserProfile } from '@/types/game';
+import { getUserAlignmentPcts } from '@/lib/alignment';
 
 // 称号の定義
 type TitleDef = {
@@ -8,17 +9,17 @@ type TitleDef = {
 };
 
 const TITLES: TitleDef[] = [
-    // 複合属性 (優先度高)
-    { name: '聖騎士', condition: (p) => p.order_pts > 50 && p.justice_pts > 50, priority: 10 },
-    { name: '暗黒卿', condition: (p) => p.chaos_pts > 50 && p.evil_pts > 50, priority: 10 },
-    { name: '義賊', condition: (p) => p.chaos_pts > 30 && p.justice_pts > 30, priority: 8 },
-    { name: '冷徹な執行者', condition: (p) => p.order_pts > 30 && p.evil_pts > 30, priority: 8 },
+    // 複合属性 (優先度高): 両軸が同じ方向に偏っている
+    { name: '聖騎士', condition: (p) => { const a = getUserAlignmentPcts(p); return a.order_ratio >= 65 && a.justice_ratio >= 65; }, priority: 10 },
+    { name: '暗黒卿', condition: (p) => { const a = getUserAlignmentPcts(p); return a.chaos_ratio >= 65 && a.evil_ratio >= 65; }, priority: 10 },
+    { name: '義賊', condition: (p) => { const a = getUserAlignmentPcts(p); return a.chaos_ratio >= 60 && a.justice_ratio >= 60; }, priority: 8 },
+    { name: '冷徹な執行者', condition: (p) => { const a = getUserAlignmentPcts(p); return a.order_ratio >= 60 && a.evil_ratio >= 60; }, priority: 8 },
 
-    // 単一属性 (優先度中)
-    { name: '法の番人', condition: (p) => p.order_pts > 80, priority: 5 },
-    { name: '混沌の使徒', condition: (p) => p.chaos_pts > 80, priority: 5 },
-    { name: '英雄', condition: (p) => p.justice_pts > 80, priority: 5 },
-    { name: '悪鬼', condition: (p) => p.evil_pts > 80, priority: 5 },
+    // 単一属性 (優先度中): いずれかの軸が強く偏っている
+    { name: '法の番人', condition: (p) => { const a = getUserAlignmentPcts(p); return a.order_ratio >= 75; }, priority: 5 },
+    { name: '混沌の使徒', condition: (p) => { const a = getUserAlignmentPcts(p); return a.chaos_ratio >= 75; }, priority: 5 },
+    { name: '英雄', condition: (p) => { const a = getUserAlignmentPcts(p); return a.justice_ratio >= 75; }, priority: 5 },
+    { name: '悪鬼', condition: (p) => { const a = getUserAlignmentPcts(p); return a.evil_ratio >= 75; }, priority: 5 },
 
     // 初心者・その他 (優先度低)
     { name: '駆け出しの冒険者', condition: (p) => p.level !== undefined && p.level <= 3, priority: 1 },
