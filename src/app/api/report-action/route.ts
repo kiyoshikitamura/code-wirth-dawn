@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { WORLD_ID } from '@/utils/constants';
-import { getAvatarByTitle } from '@/utils/visuals';
 import { calculateTitle } from '@/lib/character';
 
 export const dynamic = 'force-dynamic';
@@ -135,8 +134,6 @@ export async function POST(req: Request) {
             };
             const newTitle = calculateTitle(profileForTitle);
 
-            const avatar_url = getAvatarByTitle(newTitle);
-
             // Update Profile
             await supabase
                 .from('user_profiles')
@@ -146,7 +143,6 @@ export async function POST(req: Request) {
                     justice_pts: newJusticePts,
                     evil_pts: newEvilPts,
                     title_name: newTitle,
-                    avatar_url: avatar_url,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', profile.id);
