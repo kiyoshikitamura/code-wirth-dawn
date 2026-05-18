@@ -215,6 +215,34 @@ CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
 5. **Vitality摩耗**: パーティメンバーのVIT減少処理。
 6. **ゲストNPC→通常雇用変換** (v15.2): クエスト成功時に`leave`ノードを通過せず残留したゲストNPCを`party_members`テーブルにINSERTし、正規メンバーとして永続化。パーティ上限(4名)・重複チェック付き。
 
+### 8.0.1 クエスト放棄ペナルティ (v27)
+クエスト放棄（`POST /api/quest/give-up`）にはペナルティが課される。
+
+| ペナルティ | 値 | 備考 |
+|---|---|---|
+| 名声減少 | -5〜-10（ランダム） | クエスト失敗と同等の重みを持たせる |
+| VIT消費 | -1 | 時間浪費の代償 |
+
+### 8.0.2 クエスト完了APIリファクタリング構造 (v27)
+`quest/complete/route.ts` は以下のヘルパーモジュールに分割されている:
+
+| ヘルパー | ファイル | 担当 |
+|---|---|---|
+| `applyAlignmentShift` | `services/questCompleteHelpers.ts` | アライメントpt更新 |
+| `updateHubAndWorldState` | 同上 | Hub/世界情勢スコア反映 |
+| `grantRewardItems` | 同上 | アイテム・スキル付与 |
+| `convertGuestToPartyMember` | 同上 | ゲストNPC正規雇用 |
+| `processPartyWearCycle` | 同上 | パーティVIT摩耗+形見 |
+| `processReputationChange` | 同上 | 名声変動 |
+| `persistLootPool` | 同上 | 戦利品保存 |
+
+### 8.0.3 世界情勢リセットのCron分離 (v27)
+世界情勢アライメントスコアの6時間リセットロジックは `services/worldStateReset.ts` に分離。
+
+- **Cronエンドポイント**: `GET /api/cron/world-reset`（`CRON_SECRET`ヘッダーで保護）
+- **フォールバック**: `location/quests` APIでもリセットモジュールを呼び出し（Cron未実行時の安全策）
+- **設計原則**: 読み取りAPIに副作用を持たせない。副作用はCron/専用APIに分離する。
+
 ### 8.1 Vitality (VIT) 摩耗ルール
 パーティメンバーはクエスト完了時にVitalityが減少する。VITが0になるとパーティから離脱する。
 
@@ -269,6 +297,8 @@ CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
   }
 }
 ```
+
+> **Note (v27)**: クエスト掲示板（`QuestBoardModal`）のアイテム詳細には「所要日数: 成功 X日 / 失敗 Y日」が表示される。`days_success` / `days_failure` は `location/quests` APIから返却。
 
 ### 8.3 完了画面 UI セクション構成
 | セクション | 表示内容 | 条件 |

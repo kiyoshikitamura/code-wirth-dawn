@@ -342,6 +342,50 @@ FinalDamage = max(1, BasicDamage - Enemy.DEF)
 > **Note (v13.0)**: 現在、バトルの主要ロジック（ダメージ計算、ターン進行、勝敗判定）は全てクライアントサイド（`battleSlice.ts`）で処理されている。
 > `/api/battle/turn` は現在デッドコード状態だが、将来の不正防止・マルチプレイヤー対応のための「権威サーバー」能力として保持・整備する。
 
+### 9.2 POST /api/battle/validate-result (v27.2)
+
+バトル結果のサーバーサイド検証API。クライアントの勝利/敗北主張をサーバーが検証し、HMAC署名付きの `battle_completion_token` を発行する。
+
+**検証フロー**:
+1. JWT認証でリクエスト送信元のユーザーを特定
+2. `battle_sessions` テーブルから当該セッションを取得（本人のセッションのみ）
+3. `enemy_data` の全敵HPが0以下かを検証
+4. バトル開始からの経過時間が5秒以上かを検証（即時勝利チート対策）
+5. HMAC-SHA256署名付き `battle_completion_token` を生成（有効期限: 10分）
+
+**リクエスト**:
+```json
+{
+  "battle_session_id": "uuid",
+  "claimed_result": "victory" | "defeat" | "escape"
+}
+```
+
+**レスポンス**:
+```json
+{
+  "success": true,
+  "validated": true,
+  "result": "victory",
+  "battle_completion_token": "<base64-encoded-signed-token>"
+}
+```
+
+**設計原則**:
+- クライアントサイドバトルロジックの結果を「完全に否定」するのではなく、「最低限の妥当性チェック」を行う
+- サーバーの `enemy_data` はリアルタイム同期されていない場合があるため、クライアントの主張も条件付きで受け入れる
+- `battle_completion_token` は報酬付与パス（`quest/complete` 等）で検証可能
+
+### 9.3 セキュリティアーキテクチャ (v27.2)
+
+| レイヤー | 対策 | 実装 |
+|----------|------|------|
+| **認証** | JWT Bearer認証のみ | x-user-id ヘッダー全廃済み |
+| **デバッグ保護** | ADMIN_SECRET_KEY必須 | BattleView即時勝利ボタン: `?admin_secret=<16文字以上>` |
+| **結果検証** | サーバーサイド検証 | `/api/battle/validate-result` → HMAC署名トークン |
+| **最低時間制約** | 5秒未満の即時勝利を拒否 | `validate-result` API内で `updated_at - created_at` チェック |
+| **トークン有効期限** | 10分 | `verifyBattleCompletionToken()` で期限検証 |
+
 ---
 
 ## 10. 装備ボーナスのバトルへの適用 (v3.1)
@@ -480,6 +524,7 @@ function getEffectiveMaxHp(userProfile, battleState): number {
 | **v16.0** | **2026-04-23** | **ヒールスキルNPC対象回復修正、勝利判定改善、VIT離脱処理強化** |
 | **v4.1** | **2026-04-28** | **デッキバランス改善: 最小デッキ12枚/NPC注入上限6枚/装備枚数ボーナス。手札上限拡張(Lv20:6枚/Lv30:7枚)。stun_minor/def_down_self/berserkステータス追加** |
 | **v4.2** | **2026-04-30** | **雷撃(Magic型)のisMagic判定修正: `card.type === 'Magic'` を判定条件に追加。CardType型に'Magic'を追加。アバターアップロード制限をフロント/API共に10MBに統一。クエスト終了判定でend_success/end_failureタイプを直接認識** |
+| **v27.2** | **2026-05-18** | **セキュリティ改善: x-user-idヘッダー全廃（全12ファイル）。validate-result API新設（HMAC署名トークン）。デバッグ勝利ボタンADMIN_SECRET_KEY必須化。battle/action APIのJWT認証追加。§9.2-9.3追加。** |
 
 ---
 
@@ -559,8 +604,85 @@ explicit player actions rather than timer-based automation.
 | バージョン | 日付 | 変更内容 |
 |---|---|---|
 | v15.0 | 2026-04-15 | フェーズ制バトルフロー導入（battlePhase: player→npc_done→enemy_done）、NEXTボタン実装、setTimeout連鎖廃止、evasion_up敵誤付与バグ修正 |
-| **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。gameStore.ts(2154行)→スライス分割(~75行)。useBattleTypewriter / useScenarioNodeProcessor フック抽出。ScenarioEngine 988行→559行。詳細: spec_v18_code_architecture.md 参照** |
+| **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。gameStore.ts(2154行)→スライス分割(~75行)。useBattleTypewriter / useScenarioNodeProcessor フック抽出。ScenarioEngine 988行→559行。** |
 | **v2.8.1** | **2026-04-17** | **NPC行動上限 `MAX_ACTIONS_PER_TURN = 3` 追加。ミッドターンリターゲット実装（`trackedEnemies` で全敵HP追跡）。酒場雇用後のゴールド即時反映修正。NPC AI仕様詳細: spec_v3_addendum_npc_ai.md §4.4 参照** |
 
 > getEffectiveAtk / getEffectiveDef / getEffectiveMaxHp は v1.0 リファクタリングにより
 > src/store/gameStore.ts から src/store/slices/profileSlice.ts に移動した。
+
+---
+
+## 15. バトル敗北・クエスト失敗 共通ペナルティ
+<!-- 旧: docs/spec/battle_failure_penalties.md から統合 (2026-05-16) -->
+
+### 15.1 バトル敗北ペナルティ（全バトル共通）
+
+| ペナルティ | 値 | 備考 |
+|-----------|-----|------|
+| **VIT -1** | 固定 | クエスト中/ランダムエンカウント/賞金稼ぎ戦 全て共通 |
+| **HP全回復** | max_hp | 敗北時はHPが全回復する（VIT減少がペナルティ代わり） |
+
+**適用箇所**:
+- **クエスト中バトル**: `quest/complete` API の `battle_defeat` フラグで適用
+- **ランダムエンカウント**: `move/encounter-result` API の `random_encounter` 敗北時
+- **賞金稼ぎ戦**: `move/encounter-result` API の `bounty_hunter_ambush` 敗北時（ゴールド没収に加えて）
+
+**定数** (`src/constants/game_rules.ts`):
+```typescript
+BATTLE_DEFEAT_VIT_PENALTY: 1,
+ENCOUNTER_VITALITY_LOSS: 1,
+```
+
+### 15.2 HP管理ルール
+
+| シーン | HP挙動 |
+|--------|--------|
+| バトル勝利 | ダメージを受けたHPはそのまま保持される |
+| バトル敗北 | HP全回復（max_hp）+ VIT -1 |
+| バトル撤退（クエスト中） | ダメージを受けたHPはそのまま保持される（VIT減少なし） |
+| バトル撤退（ランダムエンカウント） | HP全回復 + VIT -1（敗北扱い） |
+| クエスト成功 | ダメージを受けたHPはそのまま保持される |
+| クエスト失敗（ギブアップ等） | ダメージを受けたHPはそのまま保持される |
+| 連戦（7007等） | 1戦目のダメージが2戦目に引き継がれる（パーティメンバーも同様） |
+| 宿屋で休息 | HP全回復 |
+| 簡易テント使用 | HP全回復 |
+
+### 15.3 クエスト失敗ペナルティ
+
+| ペナルティ | 値 | 備考 |
+|-----------|-----|------|
+| **名声低下** | -3〜-10（ランダム） | 現在拠点の名声が減少 |
+| **経過日数** | `days_failure` 値 | クエストごとに定義 |
+
+**失敗条件**: バトル敗北 / バトル撤退 / ギブアップ / シナリオノードの `end_failure` 到達
+
+**失敗フロー**:
+1. `quest/complete` API に `result: 'failure'` で送信
+2. 名声ペナルティ適用（-3〜-10ランダム）
+3. VIT -1 適用（バトル敗北の場合のみ）
+4. HP全回復（バトル敗北の場合のみ）
+5. パーティVIT摩耗適用
+6. クエスト結果画面を表示（直接拠点に戻さない）
+7. 結果画面で「冒険を続ける」押下 → 拠点へ帰還
+
+**定数** (`src/constants/game_rules.ts`):
+```typescript
+QUEST_FAIL_REP_PENALTY_MIN: -3,
+QUEST_FAIL_REP_PENALTY_MAX: -10,
+```
+
+### 15.4 賞金稼ぎ敗北ペナルティ（追加）
+
+| ペナルティ | 値 | 備考 |
+|-----------|-----|------|
+| **ゴールド没収** | 所持金の50% | `BOUNTY_PENALTY_RATE: 0.50` |
+| **VIT -1** | 固定 | バトル敗北共通ペナルティ |
+| **HP全回復** | max_hp | バトル敗北共通 |
+| **出発地送還** | - | 目的地に到達できない |
+
+### 15.5 例外
+
+以下のケースではこの共通ペナルティが上書きされる場合がある：
+- クエスト仕様書で明示的に異なるペナルティが定義されている場合
+- ボス戦で特別なペナルティが設定されている場合
+- イベント戦闘（勝敗問わず進行するタイプ）

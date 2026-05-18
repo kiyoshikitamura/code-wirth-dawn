@@ -580,7 +580,7 @@ export default function QuestPage() {
                                 onBattleStart={startBattle}
                                 onComplete={async (result, history, nodeRewards) => {
                                     if (result === 'abort') {
-                                        router.push(isTestPlay ? '/editor' : '/inn');
+                                        router.push('/inn');
                                         return;
                                     }
 
@@ -787,6 +787,7 @@ export default function QuestPage() {
                             changes={resultOverlay.data?.changes}
                             daysPassed={resultOverlay.data?.days_passed || 0}
                             shareText={isTestPlay ? undefined : resultOverlay.data?.share_text}
+                            shareDataList={isTestPlay ? undefined : resultOverlay.data?.share_data_list}
                             repChange={resultOverlay.data?.rep_change}
                             partyChanges={resultOverlay.data?.party_changes}
                             newLocationName={resultOverlay.data?.new_location_name}
@@ -794,7 +795,7 @@ export default function QuestPage() {
                             lootSaved={resultOverlay.data?.loot_saved}
                             guestConversion={resultOverlay.data?.guest_conversion}
                             isTestPlay={isTestPlay}
-                            onClose={() => router.push(isTestPlay ? '/editor' : '/inn')}
+                            onClose={() => router.push('/inn')}
                         />
                     </div>
                 )}

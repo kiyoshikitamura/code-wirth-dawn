@@ -1,8 +1,36 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"我が国を嗅ぎ回るネズミがいる。風より速く背後を取り、その首を刎ねよ。奪った書状は私が『処理』する。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_assassin_trainee"
-CHOICE,,"win",node_2,
-CHOICE,,"lose",end_failure,
-NODE,node_2,"目的地へ出発する。",end_success,"type:travel"
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"「夜分に失礼する。腕の立つ冒険者に、非公式な『掃除』を頼みたい」","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""speaker_name"":""忍び衆の使者"",""type"":""text""}",start_02
+NODE,start_02,"「他国の間者が、我が国の軍事機密を記した密書を携え、北の関所へ向かっておる」","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""speaker_name"":""忍び衆の使者"",""type"":""text""}",start_03
+NODE,start_03,"顔を黒布で覆った使者は、感情の読めない冷たい瞳でこちらを見据え、言葉を続けた。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_04
+NODE,start_04,"「間者は腕利きの護衛を連れている。お主の任務は、奴らを奇襲し、密書を奪還することだ」","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""speaker_name"":""忍び衆の使者"",""type"":""text""}",start_05
+NODE,start_05,"「……ただし、密書の中身は決して見るな。もし封が切られていれば、お主の命はないと思え」","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""speaker_name"":""忍び衆の使者"",""type"":""text""}",prep_01
+NODE,prep_01,"使者は足音一つ立てずに闇へ溶けた。警告は冗談ではないだろう。命がけの裏稼業だ。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_field_night"",""type"":""text""}",prep_02
+NODE,prep_02,"北の関所へ至る道は一本のみ。先回りして伏兵を敷くため、獣道を縫って急ぎ北上する。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_field_night"",""type"":""text""}",locate_01
+NODE,locate_01,"関所手前、両脇を深い林に囲まれた細い山道。太い枝の上に身を潜め、獲物が通るのを待つ。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_field_night"",""type"":""text""}",locate_02
+NODE,locate_02,"月が雲に隠れ、足元の道すら見えなくなった頃、微かな落ち葉を踏む音が聞こえてきた。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_field_night"",""type"":""text""}",locate_03
+NODE,locate_03,"笠を目深に被った旅姿の男。そして、その前後を固める、異様に歩みの軽い二人の護衛。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_field_night"",""type"":""text""}",locate_04
+NODE,locate_04,"一般の行商人には見えない隙のない陣形。間違いない、奴らが標的の間者と護衛だ。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_field_night"",""type"":""text""}",ambush_01
+NODE,ambush_01,"息を殺し、刀の柄に手をかける。間者がちょうど真下を通り過ぎようとした瞬間――","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_02
+NODE,ambush_02,"木の上から音もなく飛び降り、前衛の護衛の背後へと回り込んで刃を突き立てた。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_03
+NODE,ambush_03,"「何者だ！？ ええい、伏兵だ、出会えェッ！」","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""speaker_name"":""間者の護衛"",""type"":""text""}",ambush_04
+NODE,ambush_04,"奇襲は防がれた。護衛たちが素早く小太刀を抜き放ち、狂気じみた殺気で襲いかかってきた。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_spy
+NODE,battle_spy,"他国の間者と抜け忍たちが立ちはだかる！","{""bg"":""bg_yato_forest"",""bgm"":""bgm_battle"",""enemy_group_id"":432,""type"":""battle""}",
+CHOICE,,win,,after_01
+CHOICE,,lose,,end_failure
+NODE,after_01,"凄惨な殺し合いの末、護衛の一人が喉を押さえて崩れ落ちた。もはや動く気配はない。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_02
+NODE,after_02,"残された間者も、絶望の表情を浮かべたまま血だまりの中に倒れ伏している。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_03
+NODE,after_03,"林の中に再び不気味な静寂が戻った。血の匂いが獣を引き寄せる前に、任務を完遂せねば。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_04
+NODE,after_04,"間者の死体にしゃがみ込み、その衣服を探る。帯の裏に、不自然な膨らみがあるのを見つけた。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_05
+NODE,after_05,"布を切り裂くと、厳重に蠟封された黒い巻物が転がり落ちてきた。これが例の密書だ。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",take_01
+NODE,take_01,"封印には見たこともない紋様が刻まれている。もし中を見れば、命はないという警告が脳裏をよぎる。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",take_02
+NODE,take_02,"好奇心を押し殺し、密書を丁寧に布に包んで自分の懐へとしまった。急いでこの場を離れよう。","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""text""}",take_document
+NODE,take_document,"「封をされた密書」を手に入れた！","{""bg"":""bg_yato_forest"",""bgm"":""bgm_quest_calm"",""type"":""reward"",""item_id"":""item_secret_document""}",return_01
+NODE,return_01,"夜が明ける前に町へ戻り、指定された裏路地の寂れた酒場へと足を運ぶ。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",return_02
+NODE,return_02,"客のいない薄暗い店内。奥の席で笠を被った男が、盃を傾けながらこちらを待っていた。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",return_03
+NODE,return_03,"「……ご苦労だった。獲物は仕留めたな。密書を渡してもらおうか」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""忍び衆の連絡員"",""type"":""text""}",deliver_document
+NODE,deliver_document,"黙って懐から密書を取り出し、連絡員の前に置く。男は封印が無事であるかを鋭い目つきで確認した。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""check_delivery"",""item_id"":""item_secret_document"",""quantity"":1}",
+CHOICE,,success,,end_success
+CHOICE,,failure,,end_failure_lost
+NODE,end_success,"「中身は見ておらんな？ ……よろしい。約束の報酬だ。我らは会わなかった、そうだな？」\n重い金袋を受け取る。彼らが何を企んでいるのか、自分には関係のないことだ。","{""bg"":""bg_guild"",""rewards"":{""gold"":550,""exp"":120,""alignment_shift"":{""justice"":10}},""type"":""end"",""result"":""success""}",
+NODE,end_failure_lost,"「……密書がないだと？ あるいは封を切ったか。貴様、我らを愚弄するか！」\n連絡員の目が細められ、背後の闇から複数の殺気が膨れ上がった。ここで生かしてはおかれない。","{""bg"":""bg_guild"",""speaker_name"":""忍び衆の連絡員"",""type"":""end"",""result"":""failure""}",
+NODE,end_failure,"抜け忍たちの変幻自在な体術と暗器に翻弄され、冷たい刃を胸に受けた。\n薄れゆく意識の中、間者たちが何事もなかったかのように関所へと消えていくのを見た……。","{""bg"":""bg_yato_forest"",""type"":""end"",""result"":""failure""}",

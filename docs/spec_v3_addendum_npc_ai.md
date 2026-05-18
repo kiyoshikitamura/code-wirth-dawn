@@ -1,9 +1,11 @@
-Code: Wirth-Dawn Specification v14.0
+Code: Wirth-Dawn Specification v4.1 (NPC AI v4.1 2026-05-16)
 # NPC / Shadow AI 仕様書 (Addendum to v2)
 
 ## 1. 概要 (Overview)
 NPCおよびShadow（影の残像）がバトル中に自動的に行動するためのAIロジックを定義する。
 AIは全て**クライアントサイド**（`battleSlice.processPartyTurn()` / 旧: `gameStore.processPartyTurn()`）で実行される。
+<!-- v4.1 (2026-05-16): Smart AI 2枚/ターン・瀕死ターゲット優先・レガシースキル(AP付与パッシブ) -->
+<!-- v4.0 (2026-05-15): 攻撃1枚/ターン制限・lastUsedCardId連打防止・ダメージ揺らぎ+ミス+クリティカル・デバフカード使用・ロール別ヒール閾値 -->
 <!-- v2.8.1 (2026-04-17): 行動上限(3)追加・ミッドターンリターゲット・ゴールド反映修正 -->
 <!-- v2.8 (2026-04-17): 同一カード制限撤廃・ATK基礎値追加・基本攻撃式変更 -->
 <!-- v15.0: フェーズ制バトルフロー導入 -->
@@ -18,12 +20,13 @@ AIは全て**クライアントサイド**（`battleSlice.processPartyTurn()` / 
 
 | 項目 | ルール | 実装 |
 |---|---|---|
-| 行動 | シグネチャデッキ (`signature_deck`) からAPが許す限りカードを使用 | `resolveNpcTurn()` 内で高コスト順にループ |
+| 行動 | シグネチャデッキ (`signature_deck`) からフェーズ順に行動 | `resolveNpcTurn()` 内 |
 | AP制約 | 毎ターン+5（上限10）。カード使用時にap_costを消費 | `current_ap >= ap_cost` チェック |
-| **行動上限** | **1ターンあたり最大3アクション（v2.8.1）** | `MAX_ACTIONS_PER_TURN = 3` |
-| カード使用制限 | **なし（v2.8で撤廃）**。同一カードもAPがある限り連続使用可 | `used_this_turn` は非推奨（互換用に残存） |
+| **攻撃カード** | **Random AI: 1枚/ターン、Smart AI: 2枚/ターン（v4.1）** | 高コスト順に選択。Smart は異なるカードで2枚まで |
+| **連打防止** | **直前ターンに使用した攻撃カードは次ターンで使用不可（v4.0）** | `lastUsedCardId` で追跡。次ターンにリセット |
+| **行動上限** | **1ターンあたり最大3アクション（v2.8.1）** | `MAX_ACTIONS_PER_TURN = 3`（ヒール・バフ・デバフ・攻撃の合計） |
 | ATK基礎値 | NPCのATK（`npcs.attack`）がカードダメージ・基本攻撃に加算される | `npc.atk \|\| 0` |
-| 基本攻撃 | 攻撃カードが1枚も使えなかった場合のフォールバック: `ATK + 0〜6` | `createBasicAttack()` |
+| 基本攻撃 | 攻撃カードが使えなかった場合のフォールバック: `ATK + 0〜6` | `createBasicAttack()` |
 | 行動不能 | Stun状態の場合はスキップ | `isStunned()` チェック |
 | 死亡 | `durability <= 0` で行動不能 | `is_active: false` |
 
@@ -42,8 +45,8 @@ AIは全て**クライアントサイド**（`battleSlice.processPartyTurn()` / 
 
 ### 3.1 グレード (AI Grade)
 <!-- v11.0: determineGrade()の実装に基づく -->
-- `smart`: Heroic Shadow（英雄格）および特定NPC → 効率的なスキル選択
-- `random`: 通常NPC → ランダム選択
+- `smart`: Heroic Shadow（英雄格）および特定NPC → 効率的なスキル選択、**2枚攻撃/ターン**、**瀕死ターゲット優先**
+- `random`: 通常NPC → ランダム選択、1枚攻撃/ターン
 
 ```typescript
 function determineGrade(pm: PartyMember): 'smart' | 'random' {
@@ -104,33 +107,83 @@ flowchart TD
     LoopBack --> CheckCap
 ```
 
-### 4.3 カード選択ロジック
+### 4.3 カード選択ロジック（v4.0）
 
-**全グレード共通（v2.8）:**
-1. 攻撃カード（Skill/Magic型）を高コスト順にソート。
-2. APが足りるカードを使用 → AP消費 → 再度最高コストのカードから試行。
-3. **同一カードは何度でも使用可能**（APが許す限り）。
-4. **1ターンあたりの行動上限は3回**（ヒール・バフ・攻撃の合計。v2.8.1）。
-5. APが全カードのコスト未満になるか、行動上限に達したらループ終了。
-5. 攻撃アクションが1件もなかった場合 → 基本攻撃（`ATK + 0〜6`）にフォールバック。
+**ターン内行動順序:**
+1. **緊急回復チェック** → ロール別閾値に基づく回復判定
+2. **AP貯蓄判断** (Smart AIのみ) → 高コストスキルのためにスキップ
+3. **ロール別バフ使用** → Striker=atk_up / Medic=regen,def_up / Guardian=def_up,taunt
+4. **敵デバフ使用 (v2.9.3j)** → stun/bind/blind/atk_down等を敵に付与
+5. **攻撃カード1枚使用** → 高コスト順の最初のAP可能カード
+6. **基本攻撃フォールバック** → 攻撃アクションが0件なら `ATK + 0〜6`
+
+**攻撃カード選択ルール (v4.0):**
+- 攻撃カード（Skill/Magic型 + 敵対象の Defense/Support型）を高コスト順にソート
+- `lastUsedCardId` と一致するカードを除外（直前ターンの連打防止）
+- APが足りる最高コストカード1枚を使用
+- 使用不可なら `lastUsedCardId` をリセットし、基本攻撃にフォールバック
+
+**緊急回復チェック（v4.0: ロール別閾値）:**
+
+| ロール | 閾値 | 定数 |
+|---|---|---|
+| Medic | 味方HPが70%以下で発動 | `HEAL_THRESHOLD_MEDIC = 0.70` |
+| Smart (Heroic) | 味方HPが50%以下で発動 | `HEAL_THRESHOLD_SMART = 0.50` |
+| Striker/Guardian | 味方HPが40%以下で発動 | `HEAL_THRESHOLD_DEFAULT = 0.40` |
+
+- 回復カードの選択時、欠損HPに対してオーバーヒールが大きすぎる場合はスキップ（無駄な回復の抑制）
 
 **`smart` グレード（英雄・特殊NPC）追加ルール:**
-1. **緊急回復チェック**: プレイヤー or 味方の HP が50%以下 → 先頭の回復系カードを優先使用。
-2. **AP貯蓄判断**: 高コストスキル（AP≥ 5）があり AP不足する場合 → 行動を「スキップ」し次ターンに向けてAPを貯蓄。
+1. **AP貯蓄判断**: 高コストスキル（AP≥ 5）があり AP不足する場合 → 行動を「スキップ」し次ターンに向けてAPを貯蓄。
+2. **クリティカル率上昇**: `NPC_HIGH_GRADE_CRIT_RATE = 0.08`（通常NPC: `0.05`）
 
-### 4.3.1 NPCダメージ計算
+### 4.3.1 NPCダメージ計算（v4.0）
 
 ```
-// カード攻撃
-CardDamage = Card.effect_val + NPC.ATK
-FinalDamage = max(1, CardDamage - Enemy.DEF)  // 魔法は DEF 無視
+// ──── カード攻撃 ────
+// 1. ミス判定（5%）
+if (random() < NPC_MISS_RATE)  → ミス（ダメージ0）
 
-// 基本攻撃（カードが使えなかった場合のフォールバック）
-BasicDamage = NPC.ATK + random(0, 6)
-FinalDamage = max(1, BasicDamage - Enemy.DEF)
+// 2. 基礎ダメージ
+BaseDamage = Card.power + NPC.ATK
+
+// 3. ダメージ揺らぎ（±15%）
+Variance = random(0.85, 1.15)     // DAMAGE_VARIANCE_MIN ~ MAX
+Damage = BaseDamage × Variance
+
+// 4. クリティカル判定
+CritRate = (ai_grade === 'smart') ? 0.08 : 0.05
+if (random() < CritRate)  → Damage × 1.5  // CRIT_MULTIPLIER
+
+// 5. DEF減算（魔法は貫通）
+if (!isMagic)  Damage = Damage - Enemy.DEF
+FinalDamage = max(1, floor(Damage))
+
+// ──── 基本攻撃（カード使用不可時のフォールバック）────
+BaseDamage = NPC.ATK + random(0, 6)
+// 以降は同じ: 揺らぎ → クリティカル → DEF減算 → max(1, floor)
 ```
 
-実装: `npcAI.ts` 内の `executeCard()`, `createBasicAttack()`, `evaluateWaitLogic()`, `tryEmergencyHeal()`。
+### 4.3.2 敵デバフカード使用（v2.9.3j）
+
+- NPCが `stun`, `bind`, `blind`, `blind_minor`, `atk_down`, `freeze`, `poison`, `curse` 等の `effect_id` を持ち、かつ `target_type` が敵対象（`single_enemy`/`all_enemies`/`random_enemy`）のカードを使用
+- 既に敵に付与済みのデバフは除外（重複回避）
+- ダメージ付きデバフ（`power > 0`）は攻撃として処理される
+
+実装: `npcAI.ts` 内の `executeCard()`, `createBasicAttack()`, `evaluateWaitLogic()`, `tryEmergencyHeal()`, `tryRoleBasedBuff()`, `tryDebuffEnemy()`。
+
+**定数一覧** (`src/constants/battle_rules.ts`):
+
+| 定数 | 値 | 用途 |
+|---|---|---|
+| `DAMAGE_VARIANCE_MIN` / `MAX` | 0.85 / 1.15 | ダメージ揺らぎ範囲 |
+| `NPC_MISS_RATE` | 0.05 | NPCのミス率 |
+| `NPC_CRIT_RATE` | 0.05 | NPC通常クリティカル率 |
+| `NPC_HIGH_GRADE_CRIT_RATE` | 0.08 | Smart AIクリティカル率 |
+| `CRIT_MULTIPLIER` | 1.5 | クリティカル倍率 |
+| `HEAL_THRESHOLD_MEDIC` | 0.70 | Medicの回復発動閾値 |
+| `HEAL_THRESHOLD_SMART` | 0.50 | Smart AIの回復発動閾値 |
+| `HEAL_THRESHOLD_DEFAULT` | 0.40 | その他ロールの回復発動閾値 |
 
 ### 4.4 ターゲット選択
 <!-- v11.0: processPartyTurn()のターゲットロジックを反映 -->
@@ -336,7 +389,9 @@ export interface PartyMember {
 | v13.0 | 2026-04-13 | startBattle時のdurability正規化・resolveNpcTurnのnull-safe guard追加 |
 | **v14.0** | **2026-04-14** | **ターン進行順序正規化（エネミー完了後にターン番号更新）・NPCのHP取得優先順位確定（party_members.max_durability → npcs.max_hp）・npcsテーブルhp/max_durabilityカラム廃止反映** |
 | v15.0 | 2026-04-15 | フェーズ制バトルフロー（player/npc_done/enemy_done）導入。endTurn→runNpcPhase に改名。setTimeout連鎖廃止 |
-| **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。processPartyTurn を含む全バトルアクションを `src/store/slices/battleSlice.ts` に移動。詳細: spec_v18_code_architecture.md 参照** |
-| **v2.7** | **2026-04-15** | **バトルログに対象名を追加。`NpcAction.targetEnemyName` / `BattleContext.enemyName` フィールド追加。NPCログを「NPC名の『スキル名』！ → エネミー名に〇ダメージ！」形式に統一。エネミーログを「エネミー名の『スキル名』！ → 対象名に〇ダメージ (HP変化)」形式に統合。** |
-| **v2.8** | **2026-04-17** | **同一カード制限撤廃（`used_this_turn` 非推奨化）。ATK基礎値のNPCダメージ加算を正式化（`npcs.attack` → `npc.atk`）。基本攻撃式を `ATK + 0~6` に変更（旧: 8~12固定 + Class bonus）。** |
-| **v2.8.1** | **2026-04-17** | **1ターン行動上限 `MAX_ACTIONS_PER_TURN = 3` 追加（AP過剰消費防止）。ミッドターンリターゲット実装（`trackedEnemies` で全敵HP追跡、ターゲット死亡時に後続NPCが新ターゲットに行動継続）。酒場雇用後の `fetchUserProfile()` 追加でゴールド即時反映。** |
+| **v1.0 refactor** | **2026-04-15** | **コードリファクタリング。processPartyTurn を含む全バトルアクションを `src/store/slices/battleSlice.ts` に移動。** |
+| **v2.7** | **2026-04-15** | **バトルログに対象名を追加。`NpcAction.targetEnemyName` / `BattleContext.enemyName` フィールド追加。** |
+| **v2.8** | **2026-04-17** | **ATK基礎値のNPCダメージ加算を正式化。基本攻撃式を `ATK + 0~6` に変更。** |
+| **v2.8.1** | **2026-04-17** | **1ターン行動上限 `MAX_ACTIONS_PER_TURN = 3` 追加。ミッドターンリターゲット実装。** |
+| **v2.9.3j** | **2026-04** | **敵デバフカード使用（stun/bind/blind/atk_down等）。ロール別バフ優先使用。デバフ重複回避。** |
+| **v4.0** | **2026-05-15** | **攻撃カード1枚/ターン制限。`lastUsedCardId`連打防止。ダメージ計算に揺らぎ(±15%)・ミス(5%)・クリティカル(5%/8%)を導入。ロール別ヒール閾値(Medic70%/Smart50%/Default40%)。`battle_rules.ts`に定数一元管理。** |

@@ -15,8 +15,8 @@ export default function RootPage() {
       await fetchUserProfile();
       const profile = useGameStore.getState().userProfile;
 
-      // Decision Logic
-      if (profile && profile.title_name !== '名もなき旅人' && profile.gender !== 'Unknown') {
+      // v27: profile.id の存在のみで判定（名前やgenderの値に依存しない）
+      if (profile?.id) {
         router.push('/inn');
       } else {
         router.push('/title');

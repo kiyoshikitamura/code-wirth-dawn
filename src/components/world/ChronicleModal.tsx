@@ -23,9 +23,17 @@ export default function ChronicleModal({ events, onClose }: ChronicleModalProps)
     const latestEvent = events[0];
 
     // Generate aggregate share text
+    const locationName = latestEvent.location?.name || '各地';
     const shareText = events.length === 1
         ? latestEvent.message + " #Wirth_Dawn #歴史の証人"
-        : `「世界が動き始めた。${latestEvent.location?.name || '各地'}での変革を含む${events.length}件の情勢変化を確認した。歴史は、止まらない。」 #Wirth_Dawn #歴史の証人`;
+        : `「世界が動き始めた。${locationName}での変革を含む${events.length}件の情勢変化を確認した。歴史は、止まらない。」 #Wirth_Dawn #歴史の証人`;
+
+    // OGPシェアURL構築
+    const isCollapse = events.some(e => e.new_value === 'Ruined');
+    const triggerSlug = isCollapse ? 'world_collapse' : 'world_change';
+    const shareUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/share?t=${triggerSlug}&location=${encodeURIComponent(locationName)}&description=${encodeURIComponent(latestEvent.message)}`
+        : undefined;
 
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
@@ -70,7 +78,7 @@ export default function ChronicleModal({ events, onClose }: ChronicleModalProps)
 
                 {/* Footer Actions */}
                 <div className="p-6 bg-[#2c1810]/5 border-t border-[#2c1810]/10 flex flex-col gap-3">
-                    <XShareButton text={shareText} variant="large" className="!bg-[#2c1810] !text-[#f4e4bc] hover:!bg-[#4a2c1e]" />
+                    <XShareButton text={shareText} shareUrl={shareUrl} variant="large" className="!bg-[#2c1810] !text-[#f4e4bc] hover:!bg-[#4a2c1e]" />
                     <button
                         onClick={onClose}
                         className="w-full py-3 text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors"

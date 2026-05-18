@@ -1,7 +1,41 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"夜道に気をつけろ。無念の死を遂げた者たちの怨念が、形を成して旅人を襲う。斬り伏せ、その恨みを祓ってくれ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_yato_karakasa"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"「ここ数日、夜の古道を越えようとした旅人が、立て続けに神隠しに遭っている」","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""speaker_name"":""自警団の男"",""type"":""text""}",start_02
+NODE,start_02,"「荷車ごと消えた者もいる。獣の仕業ではない、得体の知れない『妖』が棲みついたのだ」","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""speaker_name"":""自警団の男"",""type"":""text""}",start_03
+NODE,start_03,"自警団の男は、怯えた顔で周囲を見回しながら、和紙に包まれた護符の束を差し出した。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_04
+NODE,start_04,"禍々しい朱墨で呪文が書き込まれている。触れるだけで指先に冷たい痺れが走る代物だ。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_05
+NODE,start_05,"「月の出ない夜、この護符を持って古道を歩き、奴らをおびき出す『囮』になってくれ」","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""speaker_name"":""自警団の男"",""type"":""text""}",prep_01
+NODE,prep_01,"護符を懐にしまい、まだ明るい内に町を出た。古道へと続く山道は不気味なほど静かだ。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field"",""type"":""text""}",prep_02
+NODE,prep_02,"夕暮れが迫ると共に、木々の影が長く伸び、まるで生き物のように地面を這い回り始めた。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field"",""type"":""text""}",patrol_01
+NODE,patrol_01,"太陽が山の端に隠れると同時に、夜刀神国の外れを通る古道は深い闇に包まれた。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",patrol_02
+NODE,patrol_02,"手元の提灯が頼りなく揺れる。先程まで聞こえていた虫の音は、いつの間にか絶えていた。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",patrol_03
+NODE,patrol_03,"突然、ピタリと風が止んだ。直後、背筋を撫でるような冷たく湿った空気が流れ込んでくる。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",patrol_04
+NODE,patrol_04,"足元に白い霧が立ち込め、提灯の炎が青白く変色した。懐の護符が微かに熱を帯びる。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",enc_01
+NODE,enc_01,"ガサリ、と前方の竹藪が大きく揺れた。獣にしては位置が高すぎる。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",enc_02
+NODE,enc_02,"飛び出してきたのは、古びた和傘に巨大な一つ目がギョロリと瞬く、異形の妖怪だった。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",enc_03
+NODE,enc_03,"ケケケッ、と人間を舐め切ったような下卑た笑い声が山霊に響き渡る。来るぞ！","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_01
+NODE,battle_01,"からかさ小僧と鬼火の群れが襲いかかってきた！","{""bg"":""bg_yato_road"",""bgm"":""bgm_battle"",""enemy_group_id"":430,""type"":""battle""}",
+CHOICE,,win,,after_01
+CHOICE,,lose,,end_failure
+NODE,after_01,"化け唐傘を両断し、荒い息を整える。足元に転がった残骸は、黒い泥のように溶けていく。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",after_02
+NODE,after_02,"懐を探ると、護符が一枚、黒焦げの灰となって崩れ落ちた。奴らの邪気を防いでくれたのだ。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",after_03
+NODE,after_03,"残りの護符はまだ微かな光を放っている。しかし、空気に纏わりつく嫌な気配は消えていない。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",after_04
+NODE,after_04,"むしろ、先程の戦闘を合図にするかのように、周囲の瘴気が一段と濃くなった気がする。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",after_05
+NODE,after_05,"引き返すなら今だ。だが、元凶を絶たねば、また次の旅人が神隠しに遭うだろう。","{""bg"":""bg_yato_road"",""bgm"":""bgm_field_night"",""type"":""text""}",deeper_01
+NODE,deeper_01,"覚悟を決めて霧の奥へと足を踏み出す。すると、ズシン、ズシンと地鳴りのような足音がした。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deeper_02
+NODE,deeper_02,"足音はゆっくりと、だが確実にこちらへ向かってくる。提灯を掲げ、暗闇の先を照らした。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deeper_03
+NODE,deeper_03,"光の先に浮かび上がったのは、そびえ立つ巨大な赤い肉の壁。いや、鬼の巨躯だ。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deeper_04
+NODE,deeper_04,"頭には捻じれた二本の角。丸太ほどの太さがある腕には、血塗られた金棒が握られている。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deeper_05
+NODE,deeper_05,"「ガハハハハ！ 小せぇ人間だ！ 怯えた瞳がたまんねぇなァ！」","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""speaker_name"":""赤鬼"",""type"":""text""}",deeper_06
+NODE,deeper_06,"「骨の髄まで啜ってやる！ 美味そうじゃねぇか！」\n血生臭い暴風が、鬼の咆哮と共に叩きつけられた。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_tense"",""speaker_name"":""赤鬼"",""type"":""text""}",battle_02
+NODE,battle_02,"古道の主、巨躯の赤鬼が立ち塞がる！","{""bg"":""bg_yato_road"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":431,""type"":""battle""}",
+CHOICE,,win,,clear_01
+CHOICE,,lose,,end_failure
+NODE,clear_01,"重い地響きと共に赤鬼が崩れ落ちた。手放された金棒が、乾いた音を立てて地面に転がる。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_calm"",""type"":""text""}",clear_02
+NODE,clear_02,"主を失ったことで、古道を覆っていた分厚い瘴気が、嘘のようにみるみる晴れていく。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_calm"",""type"":""text""}",clear_03
+NODE,clear_03,"赤鬼の亡骸は、朝露を浴びた霜のように溶け出し、やがてただの土塊と化して風に散った。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_calm"",""type"":""text""}",clear_04
+NODE,clear_04,"冷たく澄んだ夜風が通り抜け、途絶えていた秋虫の音が、再び山間に響き渡り始める。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_calm"",""type"":""text""}",clear_05
+NODE,clear_05,"懐の護符はすべて灰になっていた。どうやら、無事にその役目を全うしてくれたらしい。","{""bg"":""bg_yato_road"",""bgm"":""bgm_quest_calm"",""type"":""text""}",report_01
+NODE,report_01,"夜明けと共に町へ戻り、自警団の詰所で討伐の完了を報告する。男は信じられないものを見る目をした。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",report_02
+NODE,report_02,"「まさか、本当にあの赤鬼を討ち取るとは……見事な腕前だ。これで旅の者も安心して道を通れる」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""自警団の男"",""type"":""text""}",end_success
+NODE,end_success,"約束の報酬を受け取った。呪われた古道に、再び人々の活気と行商の灯が戻る日も近いだろう。","{""bg"":""bg_guild"",""rewards"":{""gold"":300,""exp"":100,""alignment_shift"":{""justice"":5}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"化け物たちの圧倒的な力の前に、ついに膝をついた。\n意識が薄れゆく中、獲物を貪ろうと嗤う不気味な声だけが耳にこびりついていた……。","{""bg"":""bg_yato_road"",""type"":""end"",""result"":""failure""}",

@@ -1,0 +1,48 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"「交易路が完全に止まっている。『砂の王』を名乗る男のせいだ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""商会長"",""type"":""text""}",start_02
+NODE,start_02,"「奴は元傭兵団長だ。砂漠の地理を知り尽くし、精鋭を百人以上抱えている」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""商会長"",""type"":""text""}",start_03
+NODE,start_03,"「正面からは厳しい。まずオアシスの町で情報を集めてくれ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""商会長"",""type"":""text""}",start_04
+NODE,start_04,"報酬は破格だ。それだけ商会も追い詰められているということだろう。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",travel_01
+NODE,travel_01,"砂漠の街道を東へ進む。途中、襲撃された隊商の残骸を幾つも見た。","{""bg"":""bg_road_day"",""bgm"":""bgm_field"",""type"":""text""}",travel_02
+NODE,travel_02,"砂の王の配下は組織的だ。見張り、伝令、襲撃部隊——軍隊のように統制されている。","{""bg"":""bg_road_day"",""bgm"":""bgm_field"",""type"":""text""}",oasis_01
+NODE,oasis_01,"オアシスの町に着いた。砂の王の影響で町は閑散としている。情報を集める方法は二つ。","{""bg"":""bg_memory_oasis"",""bgm"":""bgm_quest_calm"",""type"":""text""}",choice_intel
+NODE,choice_intel,"","{""bg"":""bg_memory_oasis"",""bgm"":""bgm_quest_calm"",""type"":""choice""}",
+CHOICE,,「酒場で傭兵たちから情報を聞き出す」,,tavern_01
+CHOICE,,「闇市で砂の王の内通者を探す」,,black_01
+NODE,tavern_01,"酒場に入ると、元傭兵らしき男たちが酒を飲んでいる。金を渡して話を聞く。","{""bg"":""bg_tavern_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",tavern_02
+NODE,tavern_02,"「砂の王の砦は砂丘の裏にある。護衛は交代制で、夜明け前が最も手薄だ」","{""bg"":""bg_tavern_day"",""bgm"":""bgm_quest_calm"",""speaker_name"":""元傭兵"",""type"":""text""}",tavern_03
+NODE,tavern_03,"有益な情報を得た。護衛の弱点を突けば、前哨戦の突破が楽になるだろう。","{""bg"":""bg_tavern_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",merge_approach
+NODE,black_01,"闇市の路地裏を歩く。怪しげな商人に声をかけ、内通者の情報を探る。","{""bg"":""bg_memory_oasis"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",black_02
+NODE,black_02,"「内通者？ いるにはいるが——代償が必要だ」商人が笑う。罠かもしれない。","{""bg"":""bg_memory_oasis"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",black_trap
+NODE,black_trap,"案の定、罠だった！ 路地裏で刺客に襲われた。なんとか撃退するが傷を負う。","{""bg"":""bg_memory_oasis"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":15,""hp_percent"":15}",black_03
+NODE,black_03,"刺客を尋問し、砂の王の内部事情を聞き出した。部下の不満が溜まっているらしい。","{""bg"":""bg_memory_oasis"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",merge_approach
+NODE,merge_approach,"情報を元に、砂の王の砦を目指す。砂丘を越えた先に、岩壁に囲まれた要塞が見えた。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_tense"",""type"":""text""}",desert_01
+NODE,desert_01,"砂嵐が近づいている。嵐に紛れて接近するか——","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_tense"",""type"":""text""}",desert_02
+NODE,desert_02,"砂嵐の中を突き進み、要塞の壁際まで辿り着いた。見張りの姿は見えない。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_tense"",""type"":""text""}",fortress_01
+NODE,fortress_01,"要塞の入口に、砂の王の精鋭が待ち構えている。突破するしかない。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_tense"",""type"":""text""}",fortress_02
+NODE,fortress_02,"「何者だ！ ここは砂の王の領土だ！ 帰るなら今のうちだぞ！」","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_guard
+NODE,battle_guard,"砂の王の精鋭兵が襲いかかる！","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_battle"",""enemy_group_id"":421,""type"":""battle""}",
+CHOICE,,win,,inner_01
+CHOICE,,lose,,end_failure
+NODE,inner_01,"要塞の内部は予想以上に豪華だった。略奪品で飾られた廊下を進む。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",inner_02
+NODE,inner_02,"壁に掛かった武器は一級品ばかり。砂の王は相当な財を蓄えているようだ。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",inner_03
+NODE,inner_03,"奥の大広間に、一段高い玉座が見える。そこに座る男が——砂の王だ。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",throne_01
+NODE,throne_01,"「ほう……商会の犬が来たか。自分の砦に単身で乗り込むとは、大したものだ」","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_battle_boss"",""speaker_name"":""砂の王"",""type"":""text""}",throne_02
+NODE,throne_02,"「だが砂漠の王は自分だ。この地で生き延びたければ、自分に跪け」","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_battle_boss"",""speaker_name"":""砂の王"",""type"":""text""}",throne_03
+NODE,throne_03,"砂の王が立ち上がった。巨大な湾刀を抜き、殺気が部屋を満たす。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_battle_boss"",""type"":""text""}",battle_boss
+NODE,battle_boss,"砂の僭王との決闘——！","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":9062,""type"":""battle""}",
+CHOICE,,win,,victory_01
+CHOICE,,lose,,end_failure
+NODE,victory_01,"砂の王が膝をついた。湾刀が床に転がる。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_calm"",""type"":""text""}",victory_02
+NODE,victory_02,"「……見事だ。好きにしろ。だが自分を殺しても、次の王が現れるだけだ」","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_calm"",""speaker_name"":""砂の王"",""type"":""text""}",choice_fate
+NODE,choice_fate,"","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_calm"",""type"":""choice""}",
+CHOICE,,「商会の依頼通り、討伐する」,,slay_01
+CHOICE,,「お前の組織を内側から瓦解させる。協力しろ」,,betray_01
+NODE,slay_01,"砂の王を討った。部下たちは散り散りに逃走した。交易路は再び開かれる。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_tense"",""type"":""text""}",slay_02
+NODE,slay_02,"商会に討伐の証拠を持ち帰った。正当な報酬が支払われた。","{""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success
+NODE,end_success,"「砂の王の討伐を確認。交易路は復活した。感謝する」\n冒険者としての実力を、砂漠の民にも示した。","{""bg"":""bg_guild"",""rewards"":{""gold"":3500,""exp"":350,""reputation"":15,""alignment_shift"":{""chaos"":5}},""type"":""end"",""result"":""success""}",
+NODE,betray_01,"「……瓦解だと？ 自分を生かしておいて、何を企む」","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_mystery"",""speaker_name"":""砂の王"",""type"":""text""}",betray_02
+NODE,betray_02,"砂の王の部下たちに「王は倒された」と偽情報を流す。組織は内部から崩壊を始めた。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",betray_03
+NODE,betray_03,"砂の王を「生かさず殺さず」の状態で放置し、混乱の中で要塞の財宝を回収した。汚い仕事だ。","{""bg"":""bg_pyramid_chamber"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",end_success_evil
+NODE,end_success_evil,"商会には「組織は壊滅した」と報告。裏で回収した財宝の分け前は——帳簿には載らない。\n名声は地に落ちたが、懐は潤った。","{""bg"":""bg_guild"",""rewards"":{""gold"":4000,""exp"":250,""reputation"":-10,""alignment_shift"":{""evil"":8}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"砂の王の湾刀が閃き、砂漠の熱風と共に意識が途切れた。","{""bg"":""bg_pyramid_chamber"",""type"":""end"",""result"":""failure""}",

@@ -129,6 +129,15 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
 
     // ─── 華龍闇市 (63) ───────────────────────────────────────
     '63': { effectType: 'support_activate', effectId: 'atk_up', effectDuration: 5, skipDamage: true }, // v4.1: 血の契約（ATK+DEF UP 5T）
+
+    // ─── 伝説級ボス報酬 (81-87) ──────────────────────────────────
+    '81': { effectType: 'aoe_attack', effectId: 'burn', effectDuration: 3 },                       // 獄炎の刻印（全体70+炎上3T）
+    '82': { effectType: 'heal', effectId: 'regen', effectDuration: 3, postRegen: true, skipDamage: true }, // 天使の恩寵（全体120回復+リジェネ）
+    '83': { effectType: 'aoe_attack', effectId: 'def_down', effectDuration: 2 },                   // 竜炎のブレス（全体100+DEF DOWN 2T）
+    '84': { effectType: 'buff_party', effectId: 'def_up', effectDuration: 3, defValue: 50, skipDamage: true }, // 麒麟の結界（全体DEF+50 3T）
+    '85': { effectType: 'support_activate', effectId: 'atk_up', effectDuration: 5, skipDamage: true }, // ゴーレムコア（ATK UP 5T）
+    '86': { effectType: 'aoe_attack', effectId: 'bind', effectDuration: 1 },                       // 海神の怒涛（全体90+拘束1T）
+    '87': { effectType: 'attack', effectId: 'stun', effectDuration: 1 },                           // 覇王の大斧（130dmg+スタン1T）
 };
 
 // ─── ユーティリティ ─────────────────────────────────────────

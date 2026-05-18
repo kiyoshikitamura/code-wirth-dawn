@@ -152,6 +152,65 @@ export async function POST(req: Request) {
                     appliedEffects.push('全国の名声がリセットされた');
                 }
             }
+
+            // ■ reputation_boost（王家の勅令書: 現在拠点の名声を加算）
+            if (effectData.effect === 'reputation_boost' && effectData.reputation_amount) {
+                const { data: currentProfile } = await supabaseServer
+                    .from('user_profiles')
+                    .select('current_location_id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (currentProfile?.current_location_id) {
+                    // 拠点名を取得
+                    const { data: locData } = await supabaseServer
+                        .from('locations')
+                        .select('name')
+                        .eq('id', currentProfile.current_location_id)
+                        .single();
+
+                    if (locData?.name) {
+                        const repAmount = effectData.reputation_amount;
+                        // upsert: 既存ならスコア加算、なければ新規作成
+                        const { data: existingRep } = await supabaseServer
+                            .from('reputations')
+                            .select('score')
+                            .eq('user_id', user.id)
+                            .eq('location_name', locData.name)
+                            .maybeSingle();
+
+                        if (existingRep) {
+                            await supabaseServer
+                                .from('reputations')
+                                .update({ score: (existingRep.score || 0) + repAmount })
+                                .eq('user_id', user.id)
+                                .eq('location_name', locData.name);
+                        } else {
+                            await supabaseServer
+                                .from('reputations')
+                                .insert({ user_id: user.id, location_name: locData.name, score: repAmount });
+                        }
+                        appliedEffects.push(`${locData.name}での名声が${repAmount}上昇した`);
+                    }
+                } else {
+                    appliedEffects.push('拠点外では勅令書の効果がない');
+                }
+            }
+
+            // ■ encounter_mod（松明/宝の地図: 次回移動のエンカウント率を増減）
+            if (effectData.effect === 'encounter_mod' && effectData.encounter_rate_mod != null) {
+                const mod = effectData.encounter_rate_mod; // -0.5 = 50%減少, +0.5 = 50%増加
+                await supabaseServer
+                    .from('user_profiles')
+                    .update({ next_encounter_rate_mod: mod })
+                    .eq('id', user.id);
+
+                if (mod < 0) {
+                    appliedEffects.push(`次の移動時のエンカウント率が${Math.abs(mod * 100)}%減少する`);
+                } else {
+                    appliedEffects.push(`次の移動時のエンカウント率が${mod * 100}%上昇する`);
+                }
+            }
         }
 
         return NextResponse.json({

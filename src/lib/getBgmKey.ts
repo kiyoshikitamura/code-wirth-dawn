@@ -1,3 +1,5 @@
+import { HUB_LOCATION_NAME } from '@/utils/constants';
+
 /**
  * getBgmKey — 拠点状態からBGMキーを決定するユーティリティ
  *
@@ -19,7 +21,7 @@ export function getBgmKey(
     }
 
     // 1. ハブ（名もなき旅人の拠所）は固定
-    if (locationName === '名もなき旅人の拠所' || locationName === 'Hub') {
+    if (locationName === HUB_LOCATION_NAME) {
         return 'bgm_inn';
     }
 

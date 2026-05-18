@@ -10,45 +10,31 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Target location slug is required' }, { status: 400 });
         }
 
-        // 1. Authenticate User
-        let userId: string | null = null;
+        // 1. Authenticate User (JWT認証のみ - v27.0)
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
-
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (error || !user) {
-                if (xUserId) {
-                    userId = xUserId;
-                } else {
-                    return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
-                }
-            } else {
-                userId = user.id;
-                if (xUserId && xUserId !== userId) {
-                    userId = xUserId;
-                }
-            }
-        } else if (xUserId) {
-            userId = xUserId;
-        } else {
+        if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader === 'Bearer ') {
             return NextResponse.json({ error: "Authentication required for travel cost" }, { status: 401 });
         }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+        }
+        const userId = user.id;
 
-        const { data: user } = await supabase
+        const { data: userProfile } = await supabase
             .from('user_profiles')
             .select('id, current_location_id')
             .eq('id', userId)
             .single();
 
-        if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        if (!userProfile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
         // 2. Get Current Location
         const { data: currentLoc } = await supabase
             .from('locations')
             .select('name, slug, neighbors')
-            .eq('id', user.current_location_id)
+            .eq('id', userProfile.current_location_id)
             .single();
 
         if (!currentLoc) return NextResponse.json({ error: 'Current location not found' }, { status: 404 });

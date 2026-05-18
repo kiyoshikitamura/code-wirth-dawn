@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { PERSISTENT_TRIGGERS } from '@/lib/shareUtils';
 
 interface DeathOptions {
     heirloomItemIds?: string[];
@@ -272,6 +273,36 @@ export class LifeCycleService {
             .eq('user_id', userId);
 
         await this.supabase.from('inventory').delete().eq('user_id', userId);
+
+        // 世代交代: 訪問済み拠点リセット（#11 全拠点制覇は世代1回）
+        await this.supabase.from('user_visited_locations').delete().eq('user_id', userId);
+
+        // 世代交代: 「世代1回」トリガーをクリア、「キャラ1回」「1回」は維持
+        try {
+            // PERSISTENT_TRIGGERS に含まれないトリガーを全て削除
+            for (const slug of PERSISTENT_TRIGGERS) {
+                // Keep these — do nothing
+            }
+            // Delete non-persistent triggers
+            const { data: allTriggers } = await this.supabase
+                .from('user_share_triggers')
+                .select('trigger_slug, trigger_key')
+                .eq('user_id', userId);
+            if (allTriggers) {
+                for (const t of allTriggers) {
+                    if (!PERSISTENT_TRIGGERS.includes(t.trigger_slug)) {
+                        await this.supabase
+                            .from('user_share_triggers')
+                            .delete()
+                            .eq('user_id', userId)
+                            .eq('trigger_slug', t.trigger_slug)
+                            .eq('trigger_key', t.trigger_key);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Inheritance] share_triggers reset skipped:', e);
+        }
 
         // タスク2: 形見アイテムを inventory に実際に INSERT
         if (resolvedHeirloomIds.length > 0) {

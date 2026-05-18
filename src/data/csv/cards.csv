@@ -69,3 +69,10 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 65,card_fireball,火球,Magic,2,mp,10,40,single_enemy,burn,/images/items/grimoire_fire.png,火球を放ち敵を攻撃する。40の魔法ダメージを与え、2ターンの間、炎上（毎ターンHP5%ダメージ）を付与する。
 66,card_ice_lance,氷槍,Magic,2,mp,10,35,single_enemy,bind,/images/items/grimoire_ice.png,氷の槍で敵を貫く。35の魔法ダメージを与え、1ターンの間、敵を拘束（行動不能）にする。
 67,card_thunder_strike,雷撃,Magic,3,mp,15,45,single_enemy,stun,/images/items/grimoire_thunder.png,雷を落とし敵を攻撃する。45の魔法ダメージを与え、1ターンの間、スタン（行動不能）を付与する。
+81,card_baphomet_flame,獄炎の刻印,Magic,4,mp,25,70,all_enemies,burn,,大悪魔の業火を再現する。全体に70の魔法ダメージ＋3ターンの炎上を付与する。
+82,card_angel_grace,天使の恩寵,Heal,4,mp,25,120,all_allies,regen,,天使の光で全体を120回復し、3ターンのリジェネを付与する。
+83,card_dragon_inferno,竜炎のブレス,Skill,5,vitality,30,100,all_enemies,def_down,,古代竜の灼熱のブレス。全体に100のダメージ＋DEF DOWN（2T）を付与する。
+84,card_kirin_barrier,麒麟の結界,Defense,4,vitality,20,50,all_allies,barrier,,聖獣の結界。3ターンの間、全体のDEF+50の鉄壁防御を付与する。
+85,card_golem_core,ゴーレムコア,Support,3,vitality,15,0,self,atk_up,,古代の動力源を起動する。5ターンの間、ATK×1.5＋DEF+20を付与する。
+86,card_kraken_tide,海神の怒涛,Magic,5,mp,30,90,all_enemies,bind,,海魔の触腕を召喚する。全体に90の魔法ダメージ＋1ターンの拘束を付与する。
+87,card_mino_axe,覇王の大斧,Skill,5,vitality,30,130,single_enemy,stun,,牛頭王の大斧を振り下ろす。130の超大ダメージ＋1ターンのスタンを付与する。

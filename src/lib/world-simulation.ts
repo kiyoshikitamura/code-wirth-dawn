@@ -373,9 +373,8 @@ export async function updateWorldSimulation() {
                 .from('party_members')
                 .select('id, name')
                 .eq('origin_type', 'shadow_heroic')
-                .is('owner_id', null)          // 未雇用状態
-                .lt('hired_at', thirtyDaysAgo)
-                .eq('is_active', true);
+                .eq('is_active', true)
+                .lt('last_hired_at', thirtyDaysAgo);  // v4.1: last_hired_at ベース
 
             if (!staleError && staleHeroics && staleHeroics.length > 0) {
                 const ids = staleHeroics.map(r => r.id);

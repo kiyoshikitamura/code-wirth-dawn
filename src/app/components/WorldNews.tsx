@@ -33,7 +33,7 @@ export default function WorldNews({ history, onClose, isModal = true }: WorldNew
     const content = (
         <div className="bg-[#e3d5b8] text-[#2c241b] font-serif p-8 max-w-2xl w-full relative shadow-[0_0_50px_rgba(0,0,0,0.8)] border-8 border-double border-[#2c241b] overflow-hidden">
             {/* Paper Texture Overlay */}
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] opacity-50 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-[url('/textures/aged-paper.png')] opacity-50 pointer-events-none"></div>
             <div className="absolute inset-0 bg-sepia-0 pointer-events-none mix-blend-multiply"></div>
 
             {/* Header / Title */}

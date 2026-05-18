@@ -1,56 +1,38 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { NATIONS, DEFAULT_HEGEMONY } from '@/constants/nations';
 
 export async function GET() {
     try {
-        // 全拠点の支配国を取得する
-        const { data: locations, error } = await supabase
-            .from('locations')
-            .select('ruling_nation_id');
+        // v27.0: world_states.controlling_nation を使用（ruling_nation_id は初期値のため非同期）
+        const { data: states, error } = await supabase
+            .from('world_states')
+            .select('controlling_nation');
 
-        if (error || !locations) {
-            console.error("Failed to fetch locations for hegemony:", error);
-            // エラー時はフェイルセーフとして等分データを返す
-            return NextResponse.json({
-                hegemony: [
-                    { name: 'ローランド', power: 25, color: 'bg-blue-600' },
-                    { name: 'マーカンド', power: 25, color: 'bg-emerald-600' },
-                    { name: '華龍神朝', power: 25, color: 'bg-red-600' },
-                    { name: '夜刀神国', power: 25, color: 'bg-purple-700' }
-                ]
-            });
+        if (error || !states) {
+            console.error("Failed to fetch world_states for hegemony:", error);
+            return NextResponse.json({ hegemony: DEFAULT_HEGEMONY });
         }
 
-        const totalCount = locations.length || 1;
-        const counts: Record<string, number> = {
-            'Roland': 0,
-            'Markand': 0,
-            'Karyu': 0,
-            'Yato': 0,
-            // 'Neutral' is grouped but we only show the 4 major nations in the bar usually.
-        };
+        const totalCount = states.length || 1;
+        const counts: Record<string, number> = {};
+        NATIONS.forEach(n => { counts[n.id] = 0; });
 
-        locations.forEach(loc => {
-            const nation = loc.ruling_nation_id;
+        states.forEach(s => {
+            const nation = s.controlling_nation;
             if (nation && counts[nation] !== undefined) {
                 counts[nation]++;
             }
         });
 
-        // パーセンテージ計算 (四捨五入などで合計100になるように調整)
-        // 今回は単純な比率計算
-        const calcPower = (nationId: string) => {
-            return Math.round((counts[nationId] / totalCount) * 100);
-        };
+        const hegemony = NATIONS.map(n => ({
+            name: n.nameShort,
+            power: Math.round((counts[n.id] / totalCount) * 100),
+            locations: counts[n.id],
+            color: n.color,
+        }));
 
-        const hegemony = [
-            { name: 'ローランド', power: calcPower('Roland'), locations: counts['Roland'], color: 'bg-blue-600' },
-            { name: 'マーカンド', power: calcPower('Markand'), locations: counts['Markand'], color: 'bg-emerald-600' },
-            { name: '華龍神朝', power: calcPower('Karyu'), locations: counts['Karyu'], color: 'bg-red-600' },
-            { name: '夜刀神国', power: calcPower('Yato'), locations: counts['Yato'], color: 'bg-purple-700' }
-        ];
-
-        // 合計が100%にならない場合の補正（表示崩れ対策として最大勢力に余りを追加）
+        // 合計が100%にならない場合の補正
         const totalPower = hegemony.reduce((acc, curr) => acc + curr.power, 0);
         if (totalPower !== 100 && totalPower > 0) {
             const diff = 100 - totalPower;

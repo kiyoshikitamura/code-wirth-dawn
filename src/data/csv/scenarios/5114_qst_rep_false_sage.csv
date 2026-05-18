@@ -1,0 +1,61 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"「辺境の山にある道観で、邪悪な術師が『不死の薬』と称して村人たちを洗脳しておる」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""地方役人"",""type"":""text""}",start_02
+NODE,start_02,"「薬を飲んだ者は廃人となり、ただ彼奴の命令に従うだけの人形と化すのだ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""地方役人"",""type"":""text""}",start_03
+NODE,start_03,"「どうか、あの偽りの仙人を討伐し、村人たちを解放してやってくれ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""地方役人"",""type"":""text""}",start_04
+NODE,start_04,"不死の薬などあるはずがない。人々の弱みにつけ込む外道を討つため、山へ向かう。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",travel_01
+NODE,travel_01,"華龍国の辺境。険しい山道を登っていくと、周囲に濃い霧が立ち込めてきた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",travel_02
+NODE,travel_02,"ただの霧ではない。霊力を帯びた幻術の霧だ。方向感覚が狂わされる。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",mountain_01
+NODE,mountain_01,"この霧を抜けた先に、目当ての道観があるはずだ。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",mountain_02
+NODE,mountain_02,"どうやって進む？ ギルドで買った霊符を使えば霧を払えるが、術者に気付かれる。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",choice_mist
+NODE,choice_mist,"","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""choice""}",
+CHOICE,,"「気付かれないよう、霧の中を勘で進む」",,mist_walk_01
+CHOICE,,"「霊符を使って強引に霧を払い、道を開く」",,mist_clear_01
+NODE,mist_walk_01,"幻術に惑わされないよう、精神を集中させて霧の中を歩く……。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",mist_random
+NODE,mist_random,"","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""random_branch"",""prob"":50}",mist_success_01
+CHOICE,,成功,,mist_success_01
+CHOICE,,失敗,,mist_fail_01
+NODE,mist_success_01,"見事、幻術を打ち破り、道観への正しいルートを見つけ出した。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",merge_temple
+NODE,mist_fail_01,"しまった、同じ場所をぐるぐると回っている！ 幻術が精神を蝕む……！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",mist_trap
+NODE,mist_trap,"精神的な疲労により、体力を大きく消耗した。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":15,""hp_percent"":15}",mist_fail_02
+NODE,mist_fail_02,"数時間の彷徨の末、なんとか霧を抜け、道観の入り口に辿り着いた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",merge_temple
+NODE,mist_clear_01,"霊符を掲げると、霧が晴れ道が開けた！ だが同時に、侵入者に気付いたキョンシーたちが襲いかかってきた！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_guard
+NODE,battle_guard,"道観の門番（キョンシー）との戦闘！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":440,""type"":""battle""}",
+CHOICE,,win,,merge_temple
+CHOICE,,lose,,end_failure
+NODE,merge_temple,"道観の内部に潜入した。強いお香の匂いが漂っている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",temple_01
+NODE,temple_01,"中庭には、虚ろな目をした村人たちがうろついていた。皆、洗脳されている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",temple_02
+NODE,temple_02,"彼らは侵入者であるこちらに気づき、武器（農具）を構えて立ちはだかった！","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",choice_villagers
+NODE,choice_villagers,"","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""choice""}",
+CHOICE,,"「峰打ちで気絶させ、強行突破する」",,villager_force_01
+CHOICE,,"「大声で呼びかけ、正気に戻そうとする」",,villager_talk_01
+NODE,villager_force_01,"彼らを殺すわけにはいかない。武器の峰で一人ずつ気絶させていく。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",villager_trap
+NODE,villager_trap,"手加減をした隙を突かれ、鍬で殴られた！ 痛手を負ったが全員無力化した。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":10,""hp_percent"":10}",villager_force_02
+NODE,villager_force_02,"息を整え、邪仙のいる本堂へと急ぐ。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",merge_boss
+NODE,villager_talk_01,"「目を覚ませ！ お前たちは騙されているんだ！」大声で呼びかけ、隙を突こうとする。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",villager_random
+NODE,villager_random,"","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""random_branch"",""prob"":60}",talk_success_01
+CHOICE,,成功,,talk_success_01
+CHOICE,,失敗,,talk_fail_01
+NODE,talk_success_01,"村人の一人がハッと我に返った。連鎖的に他の者も動きを止め、その隙に奥へ進む。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",merge_boss
+NODE,talk_fail_01,"言葉は届かない！ 洗脳は思いのほか深く、彼らは狂乱状態で襲いかかってきた！","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_villager
+NODE,battle_villager,"洗脳された村人たちとの戦闘！","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_battle"",""enemy_group_id"":443,""type"":""battle""}",
+CHOICE,,win,,merge_boss
+CHOICE,,lose,,end_failure
+NODE,merge_boss,"本堂に突入した。祭壇の前に、胡散臭い道着を着た男が立っている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",boss_intro_01
+NODE,boss_intro_01,"「愚かな冒険者よ。我が不死の霊薬を邪魔しに来たか」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_battle_boss"",""speaker_name"":""邪仙・道士"",""type"":""text""}",boss_intro_02
+NODE,boss_intro_02,"男が懐から札を取り出すと、周囲の空気が禍々しい妖気で満たされた。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_battle_boss"",""speaker_name"":""邪仙・道士"",""type"":""text""}",boss_intro_03
+NODE,boss_intro_03,"「貴様も我が薬の材料にしてくれるわ！」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_battle_boss"",""speaker_name"":""邪仙・道士"",""type"":""text""}",battle_boss
+NODE,battle_boss,"邪仙・道士との決戦！","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":9114,""type"":""battle""}",
+CHOICE,,win,,victory_01
+CHOICE,,lose,,end_failure
+NODE,victory_01,"邪仙が倒れ伏す。彼の使っていた怪しい薬壺をすべて叩き割った。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",victory_02
+NODE,victory_02,"外に出ると、正気に戻りつつある村人たちが集まってきた。「我々を導いてくださった仙人様は……？」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",choice_fate
+NODE,choice_fate,"","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""choice""}",
+CHOICE,,"「あれは偽者だ。お前たちは毒で操られていたんだ」",,fate_justice_01
+CHOICE,,"「彼は天に帰った。これからは自分たちの足で生きろ」",,fate_chaos_01
+NODE,fate_justice_01,"厳しい真実を告げる。村人たちは絶望し泣き崩れたが、やがて現実を受け入れた。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",fate_justice_02
+NODE,fate_justice_02,"役人に報告を終えた。「真実を知らねば、人はまた同じ過ちを繰り返す。正しい選択だ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success_justice
+NODE,end_success_justice,"依頼達成。苦い真実を与え、正しき道を示した。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:1800|Exp:220|Rep:10|Justice:5""}",
+NODE,fate_chaos_01,"真実を隠し、美しい嘘をついた。村人たちは祈りを捧げ、穏やかな顔で山を下りていった。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",fate_chaos_02
+NODE,fate_chaos_02,"役人には討伐の事実だけを報告した。「平和になったのなら、真実などどうでもよいことだ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",end_success_chaos
+NODE,end_success_chaos,"依頼達成。嘘で安寧を与えた。時には混沌とした対応が人々を救うこともある。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:1800|Exp:220|Rep:10|Chaos:5""}",
+NODE,end_failure,"邪仙の放つ毒薬を吸い込み、意識が混濁する。「さあ、お前も我が人形となるのだ……」","{""bg"":""bg_karyu_palace"",""type"":""end_failure""}",

@@ -112,6 +112,16 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                     <div className="text-[#8b6f4e] text-sm mb-6">
                         消費: {TIERS.find(t => t.tier === selectedTier)?.cost} G<br />
                         影響力: {result.impact_value}
+                        {result.days_passed > 0 && (
+                            <>
+                                <br />経過日数: {result.days_passed}日
+                                {result.aging_decay && (
+                                    <span className="text-red-700 font-bold">
+                                        {' '}（加齢: VIT-{result.aging_decay.vit}）
+                                    </span>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     <button

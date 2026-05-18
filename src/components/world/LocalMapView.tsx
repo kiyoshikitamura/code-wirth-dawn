@@ -62,7 +62,7 @@ export default function LocalMapView({ visibleLocations, onSelectLocation, onOpe
                     className="absolute inset-0 bg-no-repeat bg-cover bg-center opacity-80 mix-blend-screen"
                     style={{ backgroundImage: 'url("/backgrounds/worldmap.png")' }}
                 />
-                <div className="absolute inset-0 opacity-15 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/dark-leather.png")' }} />
+                <div className="absolute inset-0 opacity-15 pointer-events-none" style={{ backgroundImage: 'url("/textures/dark-leather.png")' }} />
 
                 {/* Dotted lines for connections could go here if we want to draw them between current and reachable (Optional enhancement) */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">

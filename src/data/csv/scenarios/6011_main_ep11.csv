@@ -2,30 +2,51 @@ row_type,node_id,text_label,params,next_node
 META,gold,1200,,
 META,exp,300,,
 META,reputation,15,,
-NODE,start,夜刀の古代神殿で知った世界の真実。\n天上の神々による「大粛清」——人間同士の戦争は全て仕組まれた間引きであり、規定量に達すれば次の段階として地上そのものが焼かれる。\nそれを阻止するために、東方の超大国「華龍神朝」へと足を踏み入れた。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",text_karyu
-NODE,text_karyu,華龍の大地は広かった。\n豊かな穀倉地帯。\n雄大な河。\n独自の文化と活気に満ちた市場。\n子供たちが凧を揚げ、老人が碁を打っている。\nローランドやマルカンドとは違う——ここには、まだ平和が残っていた。,"{""type"":""text"",""bg"":""bg_road_day""}",text_sky
-NODE,text_sky,辺境の村に身を休めた翌朝。\n空が——おかしい。\n太陽が三つある。\nいや、違う。\n太陽のように見える巨大な光球が、雲の上に浮かんでいる。\n空全体が異様な黄金色に染まり始めた。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_crisis""}",text_villagers
-NODE,text_villagers,村人たちが外に出てきた。\n空を指差している。\n「なんだあの空は……太陽が……三つ？」老婆が膝をついた。\n子供が母親にしがみついている。\n犬が吠えている。\n鳥が一羽もいない。\n——逃げたのだ。,"{""type"":""text"",""bg"":""bg_road_day""}",text_voice
-NODE,text_voice,空を覆う黄金の雲の中から——声が響いた。\n人間の声ではない。\n感情がない。\n温度がない。\n頭の中に直接、刻み込まれるような声。\n『地上の穢れを焼却せよ。\n　これより——神罰の執行を開始する』,"{""type"":""text"",""bg"":""bg_ruins_field""}",text_angels
-NODE,text_angels,声と共に、雲を割って無数の光の輪が降り注いだ。\n輪の中から——現れた。\n白磁の装甲。\n純白の翼。\n人間の形をしているが、人間ではない。\n「上位使徒」——天使の群れだ。\n彼らは言葉を発しない。\n表情がない。\n意志がない。\nただ——命令を実行する機械のように、手にした光の槍を構えた。,"{""type"":""text"",""bg"":""bg_ruins_field""}",text_slaughter
-NODE,text_slaughter,最初の槍が投げられた。\n村の家屋が一撃で消し飛んだ。\n逃げ惑う村人の背中に、二本目の槍が突き刺さった。\n煙と悲鳴が交差する。\n人間と神兵とでは——文字通り、次元が違った。,"{""type"":""text"",""bg"":""bg_ruins_field""}",text_stand
-NODE,text_stand,足が震えている。\n勝てるわけがない。\n見ればわかる。\nあの一体一体が、ローランドの精鋭部隊を単独で壊滅させるだけの力を持っている。\nだが——目の前で人が死んでいる。\n震える足を叩いた。\n剣を抜いた。\n「こんな一方的な虐殺が——許されてたまるか！」,"{""type"":""text"",""bg"":""bg_ruins_field""}",battle1
-NODE,battle1,上位使徒との戦闘！人間の力で、神の兵器に立ち向かえ！,"{""type"":""battle"",""bg"":""bg_ruins_field"",""bgm"":""bgm_battle"",""enemy_group_id"":""210""}",text_aftermath
-CHOICE,,続ける,,text_aftermath
-NODE,text_aftermath,使徒の一体を退けた。\nだが——剣が酷く刃こぼれしている。\n腕が痺れて、感覚がない。\n空を見上げた。\n倒した数の十倍以上の使徒が、新たに降下してきている。\n光の輪が、空を埋め尽くしていた。,"{""type"":""text"",""bg"":""bg_ruins_field""}",text_second_wave
-NODE,text_second_wave,逃げる暇もなく、第二波が押し寄せた。\n一体目よりも動きが速い。\n連携している。\n包囲されかけたその時——隣で戦っていた村の自警団の男が叫んだ。\n「東に抜けろ！ あっちにまだ道がある！」男は使徒に飛びかかった。\nその背中を見届ける余裕はなかった。,"{""type"":""text"",""bg"":""bg_ruins_field""}",battle2
-NODE,battle2,第二波の使徒が迫る！ 退路を確保しろ！,"{""type"":""battle"",""bg"":""bg_ruins_field"",""bgm"":""bgm_battle"",""enemy_group_id"":""210""}",text_retreat
-CHOICE,,続ける,,text_retreat
-NODE,text_retreat,死に物狂いで使徒を退け、燃え盛る村を背に走った。\n振り返った。\n村が——燃えていた。\n昨日、粥を分けてくれた場所が。\n一人では無理だ。\nだが——どうすればいい。,"{""type"":""text"",""bg"":""bg_ruins_field""}",text_volg_appear
-NODE,text_volg_appear,街道沿いの焚き火の前に——一人の男が座っていた。\n無精髭。\n酒瓶を傾けている。\nだが——近づいた瞬間、空気が変わった。\n背に負った大剣は刀身だけで人の背丈ほどある。\n周囲に転がる使徒の残骸。\n五体。\nいや、七体。\n——この男が、一人で。,"{""type"":""text"",""bg"":""bg_bandit_camp"",""bgm"":""bgm_quest_tense""}",text_volg_look
-NODE,text_volg_look,男がこちらを見た。\n瞳の奥に異常なほど獰猛な光が宿っている。\n「……よくここまで生き延びたな、若僧。\n　だがお前の眼はもう限界だと叫んでいるぜ。\n　壁にぶつかった奴の目だ」,"{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_volg_challenge
-NODE,text_volg_challenge,「神だか何だか知らねェが、　相手が強すぎるって顔だ。　だがな、壁を越えられねぇ奴はここで死ぬ。　生き恥を晒して老いさらばえるか、　世界を変える特異点になるか——　俺に証明してみせろ！」,"{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_volg_draw
-NODE,text_volg_draw,ヴォルグが大剣を抜いた瞬間、周囲の空気が重く沈み込んだ。\n焚き火が消えた。\n先ほど黄河で対峙した使徒すら凌駕するほどの濃密な殺気が全身を包み込む。\n「不死の傭兵王」ヴォルグ。\n数え切れないほどの戦場を渡り歩き、死線を超え続けてきた生きた伝説——その大剣が、こちらに向けられた。,"{""type"":""text"",""bg"":""bg_bandit_camp""}",battle3
-NODE,battle3,不死の傭兵王ヴォルグとの戦闘！お前の覚悟を、全力で示せ！,"{""type"":""battle"",""bg"":""bg_bandit_camp"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":""213""}",text_close_call
-CHOICE,,続ける,,text_close_call
-NODE,text_close_call,火花の散る激しい打ち合い。\n体力はとっくに尽きていた。\nだが死地で研ぎ澄まされた戦意が、仲間と共に最後の攻勢を押し通した。\n渾身の一撃をヴォルグの胸元に叩き込み、大剣の切っ先が地面に突き刺さった。,"{""type"":""text"",""bg"":""bg_bandit_camp"",""bgm"":""bgm_quest_calm""}",text_volg_approve
-NODE,text_volg_approve,「……フン、悪くない。　ギリギリで命を拾ったな」ヴォルグは満足げに笑い、大剣を下ろした。「面白ェ奴だ。しばらく付き合ってやるよ。　——ただし、立ち止まったら俺が斬る。覚えておけ」,"{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_volg_decision
-NODE,text_volg_decision,「俺はさっき、あの白い化け物を七体ほど叩き斬った。　一体一体は大したことねえ。だが数が多すぎる。　次から次へと空から降ってきやがる」ヴォルグが焚き火の残り火を踏み消した。「ここで潰しても意味がねぇ。　奴らが降りてくる元——都を狙っている。　マルカンドの首都、イスハークに向かうぞ」,"{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_departure
-NODE,text_departure,ヴォルグの背中を追って、西へ向かった。\n振り返ると、まだ空が黄金色に染まっている。\n光の輪が断続的に降り注いでいた。\n村を——救えなかった。\nだが、立ち止まっている暇はない。\n次の戦場が待っている。,"{""type"":""text"",""bg"":""bg_road_day""}",end_node
-NODE,end_node,一人では超えられなかった壁。\nだが今——隣に、生ける伝説がいる。\n天使が世界中の都市を焼こうとしている。\n華龍の辺境は序章に過ぎない。\nマルカンドの首都イスハークに、急がなければ。,"{""type"":""end_success"",""bg"":""bg_road_day""}",
-NODE,end_failure,力尽きて、地面に倒れた。\n視界の端で、光の槍が村を貫いている。\n「……ここで……終わるのか……」何も——守れなかった。,"{""type"":""end_failure"",""bg"":""bg_ruins_field""}",
+NODE,start,"夜刀の古代神殿で知った世界の真実。天上の神々による「大粛清」。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",start_02
+NODE,start_02,"人間同士の戦争は全て仕組まれた間引きだった。","{""type"":""text"",""bg"":""bg_road_day""}",start_03
+NODE,start_03,"それを阻止するため、東方の超大国「華龍神朝」へ足を踏み入れた。","{""type"":""text"",""bg"":""bg_road_day""}",karyu_01
+NODE,karyu_01,"華龍の大地は広かった。豊かな穀倉地帯。雄大な河。","{""type"":""text"",""bg"":""bg_road_day""}",karyu_02
+NODE,karyu_02,"独自の文化と活気に満ちた市場。ここにはまだ平和が残っていた。","{""type"":""text"",""bg"":""bg_road_day""}",sky_01
+NODE,sky_01,"辺境の村に身を休めた翌朝。空がおかしい。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_crisis""}",sky_02
+NODE,sky_02,"太陽が三つある。いや、太陽のような巨大な光球が雲の上に浮かんでいる。","{""type"":""text"",""bg"":""bg_road_day""}",sky_03
+NODE,sky_03,"空全体が異様な黄金色に染まり始めた。","{""type"":""text"",""bg"":""bg_road_day""}",villagers_01
+NODE,villagers_01,"村人たちが外に出てきた。老婆が膝をつき、子供が母親にしがみつく。","{""type"":""text"",""bg"":""bg_road_day""}",villagers_02
+NODE,villagers_02,"鳥が一羽もいない。——逃げたのだ。","{""type"":""text"",""bg"":""bg_road_day""}",voice_01
+NODE,voice_01,"黄金の雲の中から声が響いた。人間の声ではない。頭に直接刻まれる声。","{""type"":""text"",""bg"":""bg_ruins_field""}",voice_02
+NODE,voice_02,"『地上の穢れを焼却せよ。これより神罰の執行を開始する』","{""type"":""text"",""bg"":""bg_ruins_field""}",angels_01
+NODE,angels_01,"雲を割って無数の光の輪が降り注いだ。","{""type"":""text"",""bg"":""bg_ruins_field""}",angels_02
+NODE,angels_02,"白磁の装甲。純白の翼。人間の形だが人間ではない。「上位使徒」——天使の群れだ。","{""type"":""text"",""bg"":""bg_ruins_field""}",angels_03
+NODE,angels_03,"言葉も表情も意志もない。命令を実行する機械のように光の槍を構えた。","{""type"":""text"",""bg"":""bg_ruins_field""}",slaughter_01
+NODE,slaughter_01,"最初の槍が投げられた。村の家屋が一撃で消し飛んだ。","{""type"":""text"",""bg"":""bg_ruins_field""}",slaughter_02
+NODE,slaughter_02,"逃げ惑う村人の背中に二本目の槍。人間と神兵では次元が違った。","{""type"":""text"",""bg"":""bg_ruins_field""}",stand_01
+NODE,stand_01,"足が震えている。勝てるわけがない。あの一体が精鋭部隊を単独で壊滅させる。","{""type"":""text"",""bg"":""bg_ruins_field""}",stand_02
+NODE,stand_02,"だが目の前で人が死んでいる。震える足を叩いた。剣を抜いた。","{""type"":""text"",""bg"":""bg_ruins_field""}",battle1
+NODE,battle1,上位使徒との戦闘！人間の力で神の兵器に立ち向かえ！,"{""type"":""battle"",""bg"":""bg_ruins_field"",""bgm"":""bgm_battle"",""enemy_group_id"":""210""}",post_battle
+CHOICE,,続ける,,post_battle
+NODE,post_battle,"使徒の一体を退けた。だが剣が酷く刃こぼれしている。","{""type"":""text"",""bg"":""bg_ruins_field""}",post_02
+NODE,post_02,"空を見上げた。倒した数の十倍以上の使徒が新たに降下してくる。","{""type"":""text"",""bg"":""bg_ruins_field""}",wave_01
+NODE,wave_01,"逃げる暇もなく第二波が押し寄せた。一体目より速い。連携している。","{""type"":""text"",""bg"":""bg_ruins_field""}",wave_02
+NODE,wave_02,"自警団の男が叫んだ。「東に抜けろ！あっちにまだ道がある！」","{""type"":""text"",""bg"":""bg_ruins_field""}",battle2
+NODE,battle2,第二波の使徒が迫る！退路を確保しろ！,"{""type"":""battle"",""bg"":""bg_ruins_field"",""bgm"":""bgm_battle"",""enemy_group_id"":""210""}",retreat_01
+CHOICE,,続ける,,retreat_01
+NODE,retreat_01,"死に物狂いで使徒を退け、燃え盛る村を背に走った。","{""type"":""text"",""bg"":""bg_ruins_field""}",retreat_02
+NODE,retreat_02,"振り返った。村が燃えていた。昨日粥を分けてくれた場所が。","{""type"":""text"",""bg"":""bg_ruins_field""}",volg_01
+NODE,volg_01,"街道沿いの焚き火の前に一人の男が座っていた。無精髭。酒瓶を傾けている。","{""type"":""text"",""bg"":""bg_bandit_camp"",""bgm"":""bgm_quest_tense""}",volg_02
+NODE,volg_02,"近づいた瞬間、空気が変わった。背の大剣は刀身だけで人の背丈ほどある。","{""type"":""text"",""bg"":""bg_bandit_camp""}",volg_03
+NODE,volg_03,"周囲に転がる使徒の残骸。七体。この男が一人で。","{""type"":""text"",""bg"":""bg_bandit_camp""}",volg_04
+NODE,volg_04,"「よくここまで生き延びたな、若僧。だがお前の眼はもう限界だと叫んでいるぜ」","{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker"":""ヴォルグ""}",volg_05
+NODE,volg_05,"「壁を越えられねぇ奴はここで死ぬ。俺に証明してみせろ！」","{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker"":""ヴォルグ""}",volg_06
+NODE,volg_06,"ヴォルグが大剣を抜いた瞬間、周囲の空気が沈み込んだ。焚き火が消えた。","{""type"":""text"",""bg"":""bg_bandit_camp""}",volg_07
+NODE,volg_07,"「不死の傭兵王」ヴォルグ。生きた伝説の大剣がこちらに向けられた。","{""type"":""text"",""bg"":""bg_bandit_camp""}",battle3
+NODE,battle3,不死の傭兵王ヴォルグとの戦闘！覚悟を全力で示せ！,"{""type"":""battle"",""bg"":""bg_bandit_camp"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":""213""}",close_01
+CHOICE,,続ける,,close_01
+NODE,close_01,"火花の散る打ち合い。体力はとうに尽きていた。","{""type"":""text"",""bg"":""bg_bandit_camp"",""bgm"":""bgm_quest_calm""}",close_02
+NODE,close_02,"だが死地で研ぎ澄まされた戦意が最後の攻勢を押し通した。","{""type"":""text"",""bg"":""bg_bandit_camp""}",approve_01
+NODE,approve_01,"「フン、悪くない。ギリギリで命を拾ったな」ヴォルグが大剣を下ろした。","{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker"":""ヴォルグ""}",approve_02
+NODE,approve_02,"「しばらく付き合ってやるよ。ただし立ち止まったら俺が斬る」","{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker"":""ヴォルグ""}",decision_01
+NODE,decision_01,"「あの白い化け物を七体斬った。一体は大したことねぇ。だが数が多すぎる」","{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker"":""ヴォルグ""}",decision_02
+NODE,decision_02,"「ここで潰しても意味がねぇ。奴らの元——マルカンドの首都に向かうぞ」","{""type"":""text"",""bg"":""bg_bandit_camp"",""speaker"":""ヴォルグ""}",depart_01
+NODE,depart_01,"ヴォルグの背中を追って西へ。振り返ると空がまだ黄金色に染まっている。","{""type"":""text"",""bg"":""bg_road_day""}",depart_02
+NODE,depart_02,"村を救えなかった。だが立ち止まっている暇はない。","{""type"":""text"",""bg"":""bg_road_day""}",end_node
+NODE,end_node,"隣に生ける伝説がいる。マルカンドの首都イスハークに急がなければ。（第3部開始）","{""type"":""end_success"",""bg"":""bg_road_day""}",
+NODE,end_failure,"力尽きて地面に倒れた。光の槍が村を貫いている。何も守れなかった。","{""type"":""end_failure"",""bg"":""bg_ruins_field""}",

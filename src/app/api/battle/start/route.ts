@@ -14,11 +14,8 @@ export async function POST(req: Request) {
         // Fetch User Identity to enforce RLS correctly
         const { data: { user }, error: authError } = await client.auth.getUser();
         
-        let userId = user?.id;
-        if (!userId) {
-            // Fallback for custom dev/demo mode ID if provided explicitly via header
-            userId = req.headers.get('x-user-id') || undefined;
-        }
+        // [Security] JWT認証のみ — x-user-id フォールバック廃止 (v27.2)
+        const userId = user?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized. User ID is missing.' }, { status: 401 });
@@ -47,6 +44,28 @@ export async function POST(req: Request) {
 
         if (error) {
             throw error;
+        }
+
+        // Collection: Record enemy encounters in bestiary
+        try {
+            const enemyList = Array.isArray(enemies) ? enemies : [];
+            const enemyIds = enemyList
+                .map((e: any) => e.id || e.enemy_id)
+                .filter((id: any) => id != null && !isNaN(Number(id)))
+                .map(Number);
+            
+            if (enemyIds.length > 0) {
+                const bestiaryRows = enemyIds.map((eid: number) => ({
+                    user_id: userId,
+                    enemy_id: eid,
+                }));
+                await client
+                    .from('user_bestiary')
+                    .upsert(bestiaryRows, { onConflict: 'user_id,enemy_id', ignoreDuplicates: true });
+            }
+        } catch (bestiaryErr) {
+            // Non-critical: log but don't fail the battle start
+            console.warn('[Battle Start] Bestiary recording failed:', bestiaryErr);
         }
 
         return NextResponse.json({ success: true, battle_session_id: session.id });

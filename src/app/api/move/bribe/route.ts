@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { supabase } from '@/lib/supabase';
 import { ECONOMY_RULES } from '@/constants/game_rules';
+import { processAging } from '@/services/questService';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,32 +23,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'target_location_id is required' }, { status: 400 });
         }
 
-        // ユーザー認証
-        let userId: string | null = null;
+        // ユーザー認証 (JWT認証のみ - v27.0)
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
-
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (error || !user) {
-                userId = xUserId;
-            } else {
-                userId = user.id;
-                if (xUserId && xUserId !== userId) userId = xUserId;
-            }
-        } else {
-            userId = xUserId;
-        }
-
-        if (!userId) {
+        if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader === 'Bearer ') {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
+        const authToken = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(authToken);
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+        }
+        const userId = user.id;
 
         // プロフィールと現在地取得
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('id, gold, current_location_id')
+            .select('id, gold, current_location_id, age, accumulated_days, max_vitality, vitality, atk, def')
             .eq('id', userId)
             .single();
 
@@ -87,13 +78,31 @@ export async function POST(req: Request) {
             }, { status: 400 });
         }
 
-        // 賄賂実施: ゴールド消費 + 移動
+        // v27.0: 移動日数消費 + 加齢処理（首都は固定1日）
+        const daysToTravel = 1;
+        const { newAge, newAgeDays, decay } = processAging(
+            profile.age || 20,
+            profile.accumulated_days || 0,
+            daysToTravel
+        );
+
+        // 賄賂実施: ゴールド消費 + 移動 + 日数消費 + 加齢
+        const updatePayload: Record<string, any> = {
+            gold: currentGold - ECONOMY_RULES.BRIBE_COST,
+            current_location_id: target_location_id,
+            accumulated_days: newAgeDays,
+            age: newAge,
+        };
+        if (decay.vit > 0) {
+            updatePayload.max_vitality = Math.max(0, (profile.max_vitality || 100) - decay.vit);
+            updatePayload.vitality = Math.min(profile.vitality ?? 100, updatePayload.max_vitality);
+        }
+        if (decay.atk > 0) updatePayload.atk = Math.max(1, (profile.atk || 1) - decay.atk);
+        if (decay.def > 0) updatePayload.def = Math.max(1, (profile.def || 1) - decay.def);
+
         const { error: updateError } = await supabaseService
             .from('user_profiles')
-            .update({
-                gold: currentGold - ECONOMY_RULES.BRIBE_COST,
-                current_location_id: target_location_id
-            })
+            .update(updatePayload)
             .eq('id', userId);
 
         if (updateError) throw updateError;

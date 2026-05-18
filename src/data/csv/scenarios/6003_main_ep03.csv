@@ -2,23 +2,31 @@ row_type,node_id,text_label,params,next_node
 META,gold,300,,
 META,exp,120,,
 META,reputation,5,,
-NODE,start,"マルカンド砂塵王国の商業都市ジャハーラ。砂漠の交差点に位置するオアシス都市だ。","{""type"":""text"", ""bg"":""bg_desert"", ""bgm"":""bgm_quest_calm""}",text_city
-NODE,text_city,"色とりどりの布屋根が並ぶ市場。香辛料と炭火焼きの匂い。異国の音楽と笑い声。だが——何かが違う。","{""type"":""text"", ""bg"":""bg_desert""}",gawain_join
-NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_desert"", ""guest_id"":""npc_guest_gawain""}",text_suspicion
-NODE,text_suspicion,"「……気づいたか。この街の人間、自分たちを見る目が変わった」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_suspicion2
-NODE,text_suspicion2,"ガウェインが水筒の水を捨てた。匂いを嗅いで、顔を歪めた。「あの露天商、笑顔で水を売りながら——目が笑っていない」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_water
-NODE,text_water,"都市の水源であるオアシスの池に行き着いた。水面が微かに変色していた。淡い紫色。","{""type"":""text"", ""bg"":""bg_desert""}",text_water2
-NODE,text_water2,"「……毒だ。誰かが水脈に毒を流している。このまま放置すれば、住民全員が死ぬ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_trace
-NODE,text_trace,"水脈を辿って上流へ。砂漠の地下水路を進むと——洞窟の奥に毒薬の瓶が大量に隠されていた。","{""type"":""text"", ""bg"":""bg_desert"", ""bgm"":""bgm_quest_tense""}",text_trace2
-NODE,text_trace2,"そしてその隅に、逃げ遅れた工作員が一人。","{""type"":""text"", ""bg"":""bg_desert""}",text_spy_taunt
-NODE,text_spy_taunt,"工作員は観念したように笑った。「へぇ。見つけたか、大したもんだ」","{""type"":""text"", ""bg"":""bg_desert""}",text_spy_taunt2
-NODE,text_spy_taunt2,"「だが知っているか？ もう三つの都市に仲間が散っている。——それが、自分たちの仕事だ」","{""type"":""text"", ""bg"":""bg_desert""}",battle
-NODE,battle,工作員の毒使いとの戦闘！ 奴を倒して解毒の手がかりを得ろ！,"{""type"":""battle"", ""bg"":""bg_desert"", ""enemy_group_id"":201, ""bgm"":""bgm_battle""}",choice1
-CHOICE,,毒を止めるために戦う,,text_dying_spy
-NODE,text_dying_spy,"工作員が崩れ落ちた。「……自分は任務を果たした。国のため……」男の手から紋章の欠片が落ちた。","{""type"":""text"", ""bg"":""bg_desert""}",text_emblem
-NODE,text_emblem,"ガウェインが欠片を拾い上げた。顔が蒼白になった。「……この紋章は。……まさか」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_emblem2
-NODE,text_emblem2,"紋章は——ローランド聖王国の特務機関のものだった。","{""type"":""text"", ""bg"":""bg_desert""}",text_gawain_shock
-NODE,text_gawain_shock,"「嘘だろ……。毒を撒いたのが王国の人間なら……自分たちは何を守っているんだ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_shock2
-NODE,text_gawain_shock2,"ガウェインは紋章を握りつぶした。「……行くぞ。考えるのは後だ。今は——この街の人間を助けることが先だ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
-NODE,gawain_leave,"「工作員の解毒剤レシピを元に、本隊へ報告と救援要請に向かう。……後は任せたぞ」","{""type"":""leave"", ""bg"":""bg_desert"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",end_node
-NODE,end_node,"応急処置で街の水源は辛うじて浄化された。だが、紋章の事実は重い。ガウェインの目が、日に日に険しくなっていく。","{""type"":""end_success"", ""bg"":""bg_desert""}",
+NODE,start,"マルカンド砂塵王国の商業都市ジャハーラ。砂漠の交差点に位置するオアシス都市だ。","{""type"":""text"", ""bg"":""bg_desert"", ""bgm"":""bgm_quest_calm""}",start_02
+NODE,start_02,"色とりどりの布屋根が並ぶ市場。香辛料と炭火焼きの匂い。","{""type"":""text"", ""bg"":""bg_desert""}",start_03
+NODE,start_03,"異国の音楽と笑い声。だが——何かが違う。","{""type"":""text"", ""bg"":""bg_desert""}",gawain_join
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_desert"", ""guest_id"":""npc_guest_gawain""}",suspicion_01
+NODE,suspicion_01,"「気づいたか。この街の人間、俺たちを見る目が変わった」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",suspicion_02
+NODE,suspicion_02,"ガウェインが水筒の水を捨てた。匂いを嗅いで顔を歪める。","{""type"":""text"", ""bg"":""bg_desert""}",suspicion_03
+NODE,suspicion_03,"「あの露天商、笑顔で水を売りながら——目が笑っていない」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",water_01
+NODE,water_01,"オアシスの池に行き着いた。水面が微かに変色していた。淡い紫色。","{""type"":""text"", ""bg"":""bg_desert""}",water_02
+NODE,water_02,"「毒だ。誰かが水脈に毒を流している。放置すれば住民全員が死ぬ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",trace_01
+NODE,trace_01,"水脈を辿って上流へ。砂漠の地下水路を進む。","{""type"":""text"", ""bg"":""bg_desert"", ""bgm"":""bgm_quest_tense""}",trace_02
+NODE,trace_02,"洞窟の奥に毒薬の瓶が大量に隠されていた。","{""type"":""text"", ""bg"":""bg_desert""}",trace_03
+NODE,trace_03,"そしてその隅に、逃げ遅れた工作員が一人。","{""type"":""text"", ""bg"":""bg_desert""}",spy_01
+NODE,spy_01,"工作員は観念したように笑った。「へぇ、見つけたか。大したもんだ」","{""type"":""text"", ""bg"":""bg_desert""}",spy_02
+NODE,spy_02,"「もう三つの都市に仲間が散っている。——それが自分たちの仕事だ」","{""type"":""text"", ""bg"":""bg_desert""}",battle
+NODE,battle,工作員の毒使いとの戦闘！奴を倒して手がかりを得ろ！,"{""type"":""battle"", ""bg"":""bg_desert"", ""enemy_group_id"":201, ""bgm"":""bgm_battle""}",choice1
+CHOICE,,毒を止めるために戦う,,dying_01
+NODE,dying_01,"工作員が崩れ落ちた。「自分は任務を果たした。国のため……」","{""type"":""text"", ""bg"":""bg_desert""}",dying_02
+NODE,dying_02,"男の手から紋章の欠片が落ちた。","{""type"":""text"", ""bg"":""bg_desert""}",emblem_01
+NODE,emblem_01,"ガウェインが欠片を拾い上げた。顔が蒼白になった。","{""type"":""text"", ""bg"":""bg_desert""}",emblem_02
+NODE,emblem_02,"「この紋章は……まさか」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",emblem_03
+NODE,emblem_03,"紋章は——ローランド聖王国の特務機関のものだった。","{""type"":""text"", ""bg"":""bg_desert""}",shock_01
+NODE,shock_01,"「毒を撒いたのが王国の人間なら……自分たちは何を守っているんだ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",shock_02
+NODE,shock_02,"ガウェインは紋章を握りつぶした。","{""type"":""text"", ""bg"":""bg_desert""}",shock_03
+NODE,shock_03,"「行くぞ。考えるのは後だ。今はこの街の人間を助けることが先だ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",farewell_01
+NODE,farewell_01,"「解毒剤のレシピを元に本隊へ報告と救援要請に向かう。後は任せたぞ」","{""type"":""text"", ""bg"":""bg_desert"", ""speaker"":""ガウェイン""}",gawain_leave
+NODE,gawain_leave,"ガウェインは救援要請のため本隊へ戻った。","{""type"":""leave"", ""bg"":""bg_desert"", ""guest_id"":""npc_guest_gawain""}",end_01
+NODE,end_01,"応急処置で街の水源は辛うじて浄化された。だが紋章の事実は重い。","{""type"":""text"", ""bg"":""bg_desert""}",end_node
+NODE,end_node,"ガウェインの目が、日に日に険しくなっていく。","{""type"":""end_success"", ""bg"":""bg_desert""}",

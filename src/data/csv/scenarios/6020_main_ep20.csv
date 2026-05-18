@@ -2,28 +2,46 @@ row_type,node_id,text_label,params,next_node
 META,gold,15000,,
 META,exp,1000,,
 META,reputation,50,,
-NODE,start,英霊の遺産を集める旅の、最後の行程。レガリア郊外にある古代の遺跡。かつて何の遺跡かもわからなかった場所が、今は——最後の石碑が眠る場所だとわかっている。ここに、英霊の最後の記憶がある。そして——全能神ゼウスが待っている。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",text_regalia
-NODE,text_regalia,レガリアの街を抜け、郊外へ向かった。王都は完全に復興し、白亜の城壁は以前よりも立派にそびえている。この街の人々のために——この戦いを終わらせなければ。,"{""type"":""text"",""bg"":""bg_road_day""}",text_outskirts
-NODE,text_outskirts,レガリアの郊外。丘陵地帯の先に、古い石造りの遺跡が見えた。風化した柱。崩れかけた壁。かつては何かの神殿だったのだろう。だが——この遺跡には、英霊が最後の記憶を封じた石碑がある。,"{""type"":""text"",""bg"":""bg_ruins_field""}",text_ruins_entrance
-NODE,text_ruins_entrance,遺跡の入口に立った。他の石碑がある場所とは空気が違う。緊張ではない。重圧。ここに封じられた記憶は、英霊にとって最後の戦いだった。深呼吸をして、遺跡の中に足を踏み入れた。,"{""type"":""text"",""bg"":""bg_ruins_field"",""bgm"":""bgm_quest_crisis""}",text_descent
-NODE,text_descent,石段を下りていく。壁面の壁画が他の遺跡とは異なっていた。二人の人間が背中を合わせて戦う姿。一人は剣を、もう一人は盾を構えている。二人の前に——巨大な光の存在が立ちはだかっている。雷を纏った、天空の王の姿。,"{""type"":""text"",""bg"":""bg_catacombs""}",text_final_chamber
-NODE,text_final_chamber,最奥の部屋に辿り着いた。今までの石碑の部屋よりも遥かに広い。天井にはっきりと空が見える。崩れた天井から、陽光が一本の柱のように降り注いでいた。その光の中に——最後の石碑が立っていた。他のどの石碑よりも大きく、強い光を放っている。,"{""type"":""text"",""bg"":""bg_boss_altar""}",text_stele_found
-NODE,text_stele_found,石碑に近づいた。表面の文字が、今までよりも力強く輝く。「此処に、英霊の最後の記憶を封じる。　継承者よ。触れよ。　全てを終わらせる力を——受け継げ」これが、最後の試練。覚悟を決めて——石碑に、手を触れた。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_touch
-NODE,text_touch,意識が飛んだ。今までで最も深く、最も鮮明に。目を開けると——広い平原に立っていた。空は暗く、雷鳴が轟いている。そして——隣に、誰かが立っていた。,"{""type"":""text"",""bg"":""bg_heroic_stele""}",text_memory_gawain
-NODE,text_memory_gawain,記憶の中の英霊の隣に——一人の騎士がいた。額の傷跡。刃こぼれした長剣。砂埃を被った甲冑。——ガウェイン。英霊と共に戦った騎士。あの老騎士の、若き日の姿がそこにあった。,"{""type"":""text"",""bg"":""bg_memory_gawain""}",text_memory_comrade
-NODE,text_memory_comrade,記憶の中のガウェインが、英霊に声をかけた。「相棒。あの雷の野郎が最後だ。　こいつを倒せば——終わる。全部、終わる」先代の英霊が頷いた。二人は剣を構えた。その背中は——かつて見た、あの老騎士の背中と重なった。ガウェインは、英霊の時代からずっと——人間のために戦い続けていたのだ。,"{""type"":""text"",""bg"":""bg_memory_gawain""}",text_zeus_appear
-NODE,text_zeus_appear,雷鳴が一際大きく轟いた。雲の中から——巨大な存在が降りてくる。白い髭。威厳に満ちた顔。全身を雷光が包み、手には稲妻の槍を握っている。全能神ゼウス——神々の王にして、天空の支配者。全ての神の頂点に立つ存在。英霊が最後に戦い、辛くも退けた相手——その記憶が、今、目の前に再現される。,"{""type"":""text"",""bg"":""bg_memory_gawain"",""bgm"":""bgm_spot_final_boss""}",text_zeus_voice
-NODE,text_zeus_voice,ゼウスが見下ろした。雷鳴のような声が、空間を震わせる。「また来たか、人間よ。　英霊は我を退けた。だが——倒しはしなかった。　神は不滅。天は永遠。　お前たちの抵抗は、嵐の前の蝋燭に過ぎぬ」,"{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker_name"":""全能神ゼウス""}",text_zeus_challenge
-NODE,text_zeus_challenge,「だが——認めよう。　人間には、我を苛立たせるだけの力がある。　ならば見せてみよ。　英霊を超える力があるのかどうか——　この場で証明せよ！」稲妻の槍が天に掲げられた。空全体が白く輝き、雷鳴が連続して轟く。,"{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker_name"":""全能神ゼウス""}",check_items
-NODE,check_items,英霊の遺産が反応している——,"{""type"":""check_item"",""bg"":""bg_memory_gawain"",""items"":[505,506,507],""success_node"":""text_relics_glow"",""fail_node"":""text_relics_missing""}",
-NODE,text_relics_glow,冥王の護符が闇の光を放った。軍神の剣が赤い光を放った。女神の鎧が銀色に光り始めた。三つの遺産が共鳴し、全身を包む光の鎧となった。英霊が集めた神々の力——その加護が、継承者の体に宿る。ゼウスの雷を受け止められる。——いける。,"{""type"":""text"",""bg"":""bg_memory_gawain""}",battle_weak
-NODE,battle_weak,全能神ゼウスとの最終決戦！英霊の遺産の加護を纏い、神々の王を打ち倒せ！,"{""type"":""battle"",""bg"":""bg_memory_gawain"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9053""}",text_zeus_defeat
-CHOICE,,続ける,,text_zeus_defeat
-NODE,text_zeus_defeat,稲妻の槍が——砕けた。ゼウスの巨体が揺らぎ、膝をついた。雷鳴が止み、空に静寂が戻る。「……馬鹿な。人間が……二度までも……」ゼウスが顔を上げた。その目に——怒りではなく、困惑があった。「英霊は我を退けた。　そしてお前もまた——　なぜだ。なぜ人間は、神を超えようとする？」,"{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker_name"":""全能神ゼウス""}",text_dawn_sword
-NODE,text_dawn_sword,意識が現実に戻った。石碑が砕け散り、光の粒が舞っている。その光が凝縮し——一振りの剣となった。蒼く輝く剣。刃に刻まれた紋様が、夜明けの空のように煌めいている。蒼暁の剣——英霊が神を退けた時に生まれた、人間の意志の結晶。手に取った。軽く、温かく——しっくりと手に馴染んだ。,"{""type"":""text"",""bg"":""bg_boss_altar""}",text_epilogue
-NODE,text_epilogue,遺跡を出ると、夜明けだった。東の空が蒼く染まり、やがて金色に変わっていく。新しい一日が始まる。英霊は、神と戦い、人間の未来を勝ち取った。その記憶と遺産は、次の世代へ受け継がれた。蒼暁の剣を掲げた。朝日が刃に反射し、蒼い光が空に伸びた。神の審判は終わった。人間は——自分たちの手で、未来を切り拓いた。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",end_node
-NODE,end_node,全能神ゼウスを打ち破り、蒼暁の剣を手にした。英霊の記憶と共に、神々の審判から世界を救った。四つの首都は守られ、人々は生き続けている。この剣は——人間が諦めなかった証だ。英霊から受け継いだ意志と、仲間と共に戦い抜いた記憶が刻まれている。新しい朝が来た。世界は——自由だ。,"{""type"":""end_success"",""bg"":""bg_road_day"", ""rewards"":{""items"":[""504""]}}",
-NODE,end_failure,ゼウスの雷に打たれ、地に伏した。全能神の声が、遠雷のように響く。「まだ……足りぬか。人間よ」意識が——消えていく。,"{""type"":""end_failure"",""bg"":""bg_memory_gawain""}",
-NODE,text_relics_missing,英霊の遺産が——足りない。三つ全ての力が揃っていなければ、神々の加護は完全にはならない。ゼウスの力が増幅された。全能神の雷が、さらに苛烈になっていく。加護なしで、全力のゼウスに挑むことになる。——覚悟を決めるしかない。,"{""type"":""text"",""bg"":""bg_memory_gawain""}",battle_strong
-NODE,battle_strong,全能神ゼウスとの最終決戦！遺産の加護なしで、全力の神に挑め！,"{""type"":""battle"",""bg"":""bg_memory_gawain"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9054""}",text_zeus_defeat
-CHOICE,,続ける,,text_zeus_defeat
+NODE,start,"英霊の遺産を集める旅の最後の行程。レガリア郊外の古代遺跡。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",start_02
+NODE,start_02,"最後の石碑が眠る場所。そしてここに全能神ゼウスが待っている。","{""type"":""text"",""bg"":""bg_road_day""}",regalia_01
+NODE,regalia_01,"レガリアの街を抜け郊外へ。白亜の城壁は以前よりも立派にそびえている。","{""type"":""text"",""bg"":""bg_road_day""}",regalia_02
+NODE,regalia_02,"この街の人々のためにこの戦いを終わらせなければ。","{""type"":""text"",""bg"":""bg_road_day""}",ruins_01
+NODE,ruins_01,"丘陵地帯の先に古い石造りの遺跡が見えた。風化した柱と崩れかけた壁。","{""type"":""text"",""bg"":""bg_ruins_field""}",ruins_02
+NODE,ruins_02,"この遺跡に英霊が最後の記憶を封じた石碑がある。","{""type"":""text"",""bg"":""bg_ruins_field""}",entrance_01
+NODE,entrance_01,"遺跡の入口に立った。他の石碑とは空気が違う。緊張ではない。重圧。","{""type"":""text"",""bg"":""bg_ruins_field"",""bgm"":""bgm_quest_crisis""}",descent_01
+NODE,descent_01,"石段を下りていく。壁面の壁画に二人の人間が背中を合わせて戦う姿。","{""type"":""text"",""bg"":""bg_catacombs""}",descent_02
+NODE,descent_02,"二人の前に巨大な光の存在。雷を纏った天空の王の姿。","{""type"":""text"",""bg"":""bg_catacombs""}",chamber_01
+NODE,chamber_01,"最奥の部屋。今までより遥かに広い。天井から陽光が柱のように降り注ぐ。","{""type"":""text"",""bg"":""bg_boss_altar""}",chamber_02
+NODE,chamber_02,"その光の中に最後の石碑が立っていた。どの石碑よりも大きく強い光。","{""type"":""text"",""bg"":""bg_boss_altar""}",stele_01
+NODE,stele_01,"表面の文字が力強く輝く。「全てを終わらせる力を受け継げ」","{""type"":""text"",""bg"":""bg_heroic_stele""}",stele_02
+NODE,stele_02,"覚悟を決めて石碑に手を触れた。","{""type"":""text"",""bg"":""bg_heroic_stele""}",touch_01
+NODE,touch_01,"意識が飛んだ。今までで最も深く鮮明に。広い平原。暗い空。雷鳴。","{""type"":""text"",""bg"":""bg_heroic_stele""}",touch_02
+NODE,touch_02,"隣に誰かが立っていた。額の傷跡。砂埃を被った甲冑。ガウェイン。","{""type"":""text"",""bg"":""bg_memory_gawain""}",touch_03
+NODE,touch_03,"英霊と共に戦った騎士。あの老騎士の若き日の姿がそこにあった。","{""type"":""text"",""bg"":""bg_memory_gawain""}",comrade_01
+NODE,comrade_01,"記憶の中のガウェインが英霊に声をかけた。「相棒。あの雷の野郎が最後だ」","{""type"":""text"",""bg"":""bg_memory_gawain""}",comrade_02
+NODE,comrade_02,"先代の英霊が頷いた。ガウェインは英霊の時代からずっと人間のために戦い続けていた。","{""type"":""text"",""bg"":""bg_memory_gawain""}",zeus_01
+NODE,zeus_01,"雷鳴が一際大きく轟いた。雲から巨大な存在が降りてくる。","{""type"":""text"",""bg"":""bg_memory_gawain"",""bgm"":""bgm_spot_final_boss""}",zeus_02
+NODE,zeus_02,"白い髭。威厳に満ちた顔。全身を雷光が包み手には稲妻の槍。","{""type"":""text"",""bg"":""bg_memory_gawain""}",zeus_03
+NODE,zeus_03,"全能神ゼウス。神々の王にして天空の支配者。","{""type"":""text"",""bg"":""bg_memory_gawain""}",zeus_voice_01
+NODE,zeus_voice_01,"「また来たか人間よ。英霊は我を退けた。だが倒しはしなかった」","{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker"":""全能神ゼウス""}",zeus_voice_02
+NODE,zeus_voice_02,"「神は不滅。お前たちの抵抗は嵐の前の蝋燭に過ぎぬ」","{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker"":""全能神ゼウス""}",zeus_challenge_01
+NODE,zeus_challenge_01,"「だが認めよう。人間には我を苛立たせるだけの力がある」","{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker"":""全能神ゼウス""}",zeus_challenge_02
+NODE,zeus_challenge_02,"「英霊を超える力があるか——この場で証明せよ！」稲妻の槍が天に掲げられた。","{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker"":""全能神ゼウス""}",check_items
+NODE,check_items,英霊の遺産が反応している——,"{""type"":""check_item"",""bg"":""bg_memory_gawain"",""items"":[505,506,507],""success_node"":""relics_glow"",""fail_node"":""relics_missing""}",
+NODE,relics_glow,"冥王の護符が闇の光を放った。軍神の剣が赤く光った。女神の鎧が銀色に輝く。","{""type"":""text"",""bg"":""bg_memory_gawain""}",relics_02
+NODE,relics_02,"三つの遺産が共鳴し全身を包む光の鎧となった。ゼウスの雷を受け止められる。","{""type"":""text"",""bg"":""bg_memory_gawain""}",battle_weak
+NODE,battle_weak,全能神ゼウスとの最終決戦！英霊の遺産の加護を纏い神々の王を打ち倒せ！,"{""type"":""battle"",""bg"":""bg_memory_gawain"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9053""}",zeus_defeat
+CHOICE,,続ける,,zeus_defeat
+NODE,relics_missing,"英霊の遺産が足りない。三つ全て揃わなければ加護は完全にならない。","{""type"":""text"",""bg"":""bg_memory_gawain""}",relics_missing_02
+NODE,relics_missing_02,"ゼウスの力が増幅された。加護なしで全力のゼウスに挑むことになる。","{""type"":""text"",""bg"":""bg_memory_gawain""}",battle_strong
+NODE,battle_strong,全能神ゼウスとの最終決戦！遺産の加護なしで全力の神に挑め！,"{""type"":""battle"",""bg"":""bg_memory_gawain"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9054""}",zeus_defeat
+CHOICE,,続ける,,zeus_defeat
+NODE,zeus_defeat,"稲妻の槍が砕けた。ゼウスの巨体が膝をついた。雷鳴が止み静寂が戻る。","{""type"":""text"",""bg"":""bg_memory_gawain""}",zeus_defeat_02
+NODE,zeus_defeat_02,"「馬鹿な。なぜ人間は神を超えようとする？」","{""type"":""text"",""bg"":""bg_memory_gawain"",""speaker"":""全能神ゼウス""}",dawn_01
+NODE,dawn_01,"意識が現実に戻った。石碑が砕け散り光の粒が舞っている。","{""type"":""text"",""bg"":""bg_boss_altar""}",dawn_02
+NODE,dawn_02,"光が凝縮し一振りの剣となった。蒼く輝く刃。夜明けの空のように煌めく紋様。","{""type"":""text"",""bg"":""bg_boss_altar""}",dawn_03
+NODE,dawn_03,"蒼暁の剣。英霊が神を退けた時に生まれた人間の意志の結晶。","{""type"":""text"",""bg"":""bg_boss_altar""}",epilogue_01
+NODE,epilogue_01,"遺跡を出ると夜明けだった。東の空が蒼く染まり金色に変わっていく。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",epilogue_02
+NODE,epilogue_02,"蒼暁の剣を掲げた。朝日が刃に反射し蒼い光が空に伸びた。","{""type"":""text"",""bg"":""bg_road_day""}",end_node
+NODE,end_node,"全能神ゼウスを打ち破り蒼暁の剣を手にした。人間が諦めなかった証。世界は自由だ。","{""type"":""end_success"",""bg"":""bg_road_day"", ""rewards"":{""items"":[""504""]}}",
+NODE,end_failure,"ゼウスの雷に打たれ地に伏した。「まだ足りぬか、人間よ」意識が消えていく。","{""type"":""end_failure"",""bg"":""bg_memory_gawain""}",

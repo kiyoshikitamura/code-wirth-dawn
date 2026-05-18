@@ -55,3 +55,4 @@ id,slug,epithet,name,job,level,max_hp,atk,def,cover_rate,hire_cost,inject_card_i
 4051,npc_gen_merchant,旅の,商人,Merchant,1,30,1,1,10,0,8,「荷物は私が持ちますから、戦いはお任せします……」,共通: 汎用クエスト用ゲストNPC。戦闘外。
 4104,npc_nadeshiko,宿命の,撫子,Miko,10,100,5,5,10,0,4|14,「……お役目、果たします。」,専用: 撫子同行
 4105,npc_pilgrim_albert,狂信の,アルバート,Miko,10,100,5,5,10,0,4|14,「主神の声が聞こえるのです。あの聖地へ行かねばなりません。」,専用: アルバート同行
+4060,npc_corrupt_official,悪徳官僚,薛,Official,1,40,0,1,10,0,8,「文官ですから。戦いは任せます」,専用: 護衛対象。HP40。7043で使用。

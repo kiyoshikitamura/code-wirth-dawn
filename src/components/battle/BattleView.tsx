@@ -883,42 +883,40 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     <span className="text-xl font-bold text-amber-400 font-mono leading-none drop-shadow-md">{battleState.current_ap || 0}</span>
                 </div>
 
-                {/* Hand Cards (Fan Layout) — 2段階アクション対応 */}
-                <div className="relative w-full h-36 flex justify-center items-end overflow-visible">
-                    {hand.map((card, idx) => {
-                        const centerIndex = (hand.length - 1) / 2;
-                        const offset = idx - centerIndex;
-                        const rotation = selectedCardIndex === idx ? 0 : offset * 8;
-                        const translateY = selectedCardIndex === idx ? -16 : Math.abs(offset) * 12;
-                        const overlapPx = hand.length > 4 ? -16 : hand.length > 2 ? -12 : -8;
-                        const apCost = card.ap_cost ?? 1;
-                        const isActivePlayable = battleState.current_ap >= apCost;
-                        const isSelected = selectedCardIndex === idx;
+                {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
+                <div className="relative w-full h-40 flex items-end">
+                    <div 
+                        className="w-full h-full overflow-x-auto no-scrollbar snap-x snap-mandatory flex items-end px-[10%] pb-3 pt-8 gap-0"
+                        style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}
+                    >
+                        {hand.map((card, idx) => {
+                            const apCost = card.ap_cost ?? 1;
+                            const isActivePlayable = battleState.current_ap >= apCost;
+                            const isSelected = selectedCardIndex === idx;
 
-                        const getCostStyles = (ap: number) => {
-                            if (ap >= 4) return 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.8)] ring-1 ring-amber-400 animate-pulse bg-gradient-to-t from-amber-950/50 to-black/40 backdrop-blur-md';
-                            if (ap === 3) return 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] ring-1 ring-blue-400 bg-gradient-to-t from-blue-950/50 to-black/40 backdrop-blur-md';
-                            return 'border-slate-500 shadow-sm bg-black/40 backdrop-blur-md hover:border-slate-400';
-                        }
+                            const getCostStyles = (ap: number) => {
+                                if (ap >= 4) return 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.8)] ring-1 ring-amber-400 animate-pulse bg-gradient-to-t from-amber-950/50 to-black/40 backdrop-blur-md';
+                                if (ap === 3) return 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] ring-1 ring-blue-400 bg-gradient-to-t from-blue-950/50 to-black/40 backdrop-blur-md';
+                                return 'border-slate-500 shadow-sm bg-black/40 backdrop-blur-md hover:border-slate-400';
+                            }
 
-                        return (
-                            <button
-                                key={idx}
-                                onClick={() => handleCardClick(idx)}
-                                disabled={!canInteract || !isActivePlayable}
-                                className={`relative group origin-bottom transition-all duration-300 flex-shrink-0 first:ml-0
-                                    ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50' : 'w-[72px] sm:w-24'}
-                                    ${(!canInteract || !isActivePlayable) ? 'opacity-40 grayscale pointer-events-none' : isSelected ? '' : 'hover:-translate-y-4 hover:scale-105'}
-                                    ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
-                                 `}
-                                style={{
-                                    marginLeft: idx === 0 ? 0 : overlapPx,
-                                    transform: `rotate(${rotation}deg) translateY(${translateY}px)${isSelected ? ' scale(1.1)' : ''}`,
-                                    zIndex: isSelected ? 50 : idx
-                                }}
-                                onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
-                                onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
-                            >
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleCardClick(idx)}
+                                    disabled={!canInteract || !isActivePlayable}
+                                    className={`relative group transition-all duration-300 flex-shrink-0 snap-center
+                                        ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50 -translate-y-6' : 'w-[72px] sm:w-24'}
+                                        ${(!canInteract || !isActivePlayable) ? 'opacity-40 grayscale pointer-events-none' : isSelected ? '' : 'hover:-translate-y-6 hover:z-50'}
+                                        ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
+                                        ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
+                                     `}
+                                    style={{
+                                        zIndex: isSelected ? 50 : idx
+                                    }}
+                                    onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
+                                    onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
+                                >
                                 <div className={`h-32 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
                                     ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}
                                     ${!isSelected ? 'group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]' : ''}
@@ -953,6 +951,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                             </button>
                         )
                     })}
+                    </div>
                 </div>
             </div>
 
@@ -995,10 +994,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                         撤退
                     </button>
                 )}
-                {/* デバッグ/テストプレイモード: 即時勝利ボタン */}
+                {/* デバッグ/テストプレイモード: 即時勝利ボタン (ADMIN_SECRET_KEY必須) */}
                 {(() => {
                     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-                    const isDebug = urlParams.get('debug_bypass') === 'true' || urlParams.get('test_play') === 'true';
+                    // [Security] ADMIN_SECRET_KEY認証 — debug_bypass/test_play単体では発動しない (v27.2)
+                    const adminKey = urlParams.get('admin_secret');
+                    const isDebug = !!adminKey && adminKey.length >= 16;
                     if (!isDebug || battleState.isVictory || battleState.isDefeat) return null;
                     return (
                         <button
@@ -1111,6 +1112,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                     <div className="max-w-xs mx-auto mt-2">
                                         <XShareButton
                                             text={`「賞金首として狙われたが、襲撃してきた賞金稼ぎを返り討ちにしてやったぞ。私の首は貴様らには重すぎるようだ。」 #Wirth_Dawn #賞金首の意地`}
+                                            shareUrl={`${window.location.origin}/share?t=bounty_hunter_win`}
                                             variant="large"
                                         />
                                     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Bed, Activity, ShoppingBag, Church, Shield, MessageSquare } from 'lucide-react';
+import { Bed, Activity, ShoppingBag, Church, Shield, MessageSquare, BookOpen, ClipboardList, Trophy } from 'lucide-react';
 
-export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip';
+export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip' | 'collection' | 'questLog' | 'ranking';
 
 interface FacilityGridProps {
     onSelectFacility: (facility: FacilityType) => void;
@@ -25,6 +25,9 @@ export default function FacilityGrid({ onSelectFacility, isHub = false }: Facili
     const hubFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋', sub: 'Rest', icon: Bed },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
+        { id: 'collection', label: 'コレクション', sub: 'Collection', icon: BookOpen },
+        { id: 'questLog', label: 'クエスト記録', sub: 'Quest Log', icon: ClipboardList },
+        { id: 'ranking', label: 'ランキング', sub: 'Ranking', icon: Trophy },
     ];
 
     const facilities = isHub ? hubFacilities : locationFacilities;

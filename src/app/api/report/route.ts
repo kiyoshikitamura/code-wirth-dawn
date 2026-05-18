@@ -20,9 +20,7 @@ export async function POST(req: Request) {
             const { data: { user } } = await supabase.auth.getUser(token);
             if (user) reporterId = user.id;
         }
-        if (!reporterId) {
-            reporterId = req.headers.get('x-user-id');
-        }
+        // [Security] JWT認証のみ — x-user-id フォールバック廃止 (v27.2)
 
         if (!reporterId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -3,16 +3,19 @@ import { Twitter } from 'lucide-react';
 
 interface XShareButtonProps {
     text: string;
+    shareUrl?: string;  // OGPカード表示用の /share?t=... URL
     className?: string;
     variant?: 'primary' | 'outline' | 'large';
 }
 
-export default function XShareButton({ text, className = '', variant = 'primary' }: XShareButtonProps) {
+export default function XShareButton({ text, shareUrl, className = '', variant = 'primary' }: XShareButtonProps) {
     const handleShare = () => {
-        const url = new URL('https://twitter.com/intent/tweet');
-        url.searchParams.append('text', text);
-        // url.searchParams.append('url', window.location.origin); // Optional: add site URL
-        window.open(url.toString(), '_blank', 'noopener,noreferrer');
+        const tweetUrl = new URL('https://twitter.com/intent/tweet');
+        tweetUrl.searchParams.append('text', text);
+        if (shareUrl) {
+            tweetUrl.searchParams.append('url', shareUrl);
+        }
+        window.open(tweetUrl.toString(), '_blank', 'noopener,noreferrer');
     };
 
     const baseStyles = "flex items-center justify-center gap-2 font-bold transition-all duration-200 rounded-md";

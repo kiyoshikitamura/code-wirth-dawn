@@ -20,6 +20,11 @@ Code: Wirth-Dawn Specification v13.0 (Complete)
   3. 既存のメールアドレス＆パスワードによるユーザー登録画面は**完全に廃止**する。
   4. 連携完了後、ユーザーは端末が変わってもOAuthログインを用いることで、元のプロフィールデータや課金状態を完全に復元（データ引き継ぎ）できるようになる。
 
+**実装箇所** (v13.2 実装済み):
+- `AccountSettingsModal.tsx` §5.5: 匿名ユーザー向け「Google アカウントと連携する」ボタン
+- `inn/page.tsx`: linkIdentity コールバック処理（`?code=` 検出 → `is_anonymous` を `false` に更新）
+- `useAuthGuard.ts` L53-57: OAuth コールバック中のガードスキップ処理
+
 ---
 
 ## 3. データベースの変更 (Schema Update)
@@ -51,6 +56,8 @@ UPDATE user_profiles
 
 ## 4. Tier別 特権・制限一覧 (Tier Privileges)
 
+<!-- v13.2 (2026-05-16): UGC枠をPhase 2に移動、英霊ロイヤリティ/Weeklyボーナス/称号を追加 -->
+
 ユーザーの `subscription_tier` に基づき、ゲーム内で以下の機能制限を動的に適用する。
 
 | 特権 / 制限項目 | Free | Basic | Premium |
@@ -59,8 +66,11 @@ UPDATE user_profiles
 | **無料トライアル** | — | **最初の1週間無料** | **最初の1週間無料** |
 | キャラクタースロット数 | 1枠 | 3枠 | 5枠 |
 | 英霊 (Heroic) 登録数 | 不可 (0) | 最大 3体 | 最大 10体 |
-| UGC 公開枠 (published) | 最大 1クエスト | 最大 5クエスト | 最大 20クエスト |
-| UGC 保存枠 (unpublished) | 最大 3クエスト | 最大 10クエスト | 最大 50クエスト |
+| 英霊ロイヤリティ率 | — | **25%** (Free=登録不可) | **35%** |
+| Weeklyログインボーナス | なし | **2,000G/週** (約8,000G/月) | **5,000G/週** (約20,000G/月) |
+| プロフィール装飾 | なし | ⚡ 青枠 + Basicバッジ | 👑 金枠 + Premiumバッジ |
+| UGC 公開枠 *(Phase 2)* | 最大 1クエスト | 最大 5クエスト | 最大 20クエスト |
+| UGC 保存枠 *(Phase 2)* | 最大 3クエスト | 最大 10クエスト | 最大 50クエスト |
 
 ### 4.1 英霊登録時の上限ハンドリング (spec v14 実装済み)
 引退時、Basic以上のユーザーが英霊の登録上限に達している場合は、**最も古い自身の英霊を削除（押し出し）した上で新規登録を行うFIFO（First In, First Out）方式**を採用する。
@@ -128,7 +138,7 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 | パッケージ名 | 付与ゴールド | 価格 | 環境変数（Stripe Price ID） | 備考 |
 |---|---|---|---|---|
 | スタータパック | 10,000 G | **330円（税込）** | `STRIPE_PRICE_ID_GOLD_10K` | 少量の補填・緊急購入向け |
-| アドベンチャーパック | 50,000 G | **1,460円（税込）** | `STRIPE_PRICE_ID_GOLD_50K` | まとめ買い・コスパ重視向け |
+| アドベンチャーパック | 50,000 G | **1,430円（税込）** | `STRIPE_PRICE_ID_GOLD_50K` | まとめ買い・コスパ重視向け |
 
 > [!NOTE]
 > 価格はStripe管理コンソール上の Price 設定に依存する。コード側では Price ID と付与ゴールドのみを管理する。
@@ -144,12 +154,9 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 
 | ファイル | 内容 |
 |---|---|
-| `AccountSettingsModal.tsx` | ゴールド購入ボタンの配置 ⏳ **要実装** |
+| `AccountSettingsModal.tsx` | ゴールド購入ボタンの配置 ✅ **実装済み** |
 | `billing/checkout/route.ts` | `mode: 'payment'` の Checkout Session 発行 ✅ **実装済み** |
 | `webhooks/stripe/route.ts` | `gold_amount` の加算処理 ✅ **実装済み** |
-
-> [!IMPORTANT]
-> `AccountSettingsModal.tsx` へのゴールド購入UI（パッケージ選択ボタン）の追加が必要。現状はAPIバックエンドのみ実装済みでフロントエンドUIが未実装。
 
 ---
 
@@ -169,19 +176,26 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 
 ## 8. 実装状態
 
+<!-- v13.4 (2026-05-16): サブスク特典3項目の実装完了 -->
+
 | 機能 | 状態 |
 |---|---|
 | 匿名ログイン（Anonymous Sign-in） | ✅ 実装済み |
-| linkIdentity (OAuth連携 UI) | ✅ 実装済み |
+| Google OAuth (New Game / Continue) | ✅ 実装済み |
+| linkIdentity (テストプレイ→OAuth紐付け) | ✅ **実装済み** |
 | `subscription_tier` カラム追加 | ✅ 実装済み |
 | `is_subscriber` 廃止 | ✅ 実装済み |
 | POST /api/billing/checkout（サブスク・ゴールド） | ✅ 実装済み |
-| POST /api/webhooks/stripe | ✅ 実装済み |
+| POST /api/webhooks/stripe（冪等性チェック含む） | ✅ 実装済み |
 | Tier別機能制限の動的適用（UGC枠等） | ✅ 実装済み |
 | 英霊登録FIFO | ✅ 実装済み |
 | ゴールド購入 バックエンド（checkout / webhook） | ✅ 実装済み |
-| ゴールド購入 フロントエンドUI（AccountSettingsModal） | ⏳ **未実装** |
-| キャラクタースロット上限チェック | ⏳ **未実装** |
+| ゴールド購入 フロントエンドUI（AccountSettingsModal） | ✅ **実装済み** |
+| プランアップグレードUI（AccountSettingsModal） | ✅ **実装済み** |
+| 英霊ロイヤリティ強化（Tierベース: Basic=25%, Premium=35%） | ✅ **実装済み** |
+| Weeklyログインボーナス（Basic=2,000G/週, Premium=5,000G/週） | ✅ **実装済み** |
+| プロフィール装飾（Tierバッジ: Basic=⚡, Premium=👑） | ✅ **実装済み** |
+| キャラクタースロット上限チェック | ⏳ **未実装（Phase 2）** |
 
 ---
 
@@ -275,3 +289,67 @@ const { count: draftCount } = await supabase
 
 **現在の対応**: 機能として未実装だが、現構造上の被害は発生しない。別スプリントでの実装を推奨。
 
+---
+
+## 10. v27.0 改訂: 設定画面改善 (2026-05-18)
+
+### 10.1 課金確認ポップアップ（PurchaseConfirmModal）
+
+特商法に基づく最終確認画面として、プランアップグレード・ゴールド購入の前に確認ポップアップを表示する。
+
+**サブスクリプション確認画面の表示内容**:
+- プラン名と月額料金
+- 「毎月自動更新」の明記
+- 無料トライアル期間（7日間）
+- 特典一覧（キャラスロット、英霊、Weekly等）
+- 利用規約・特商法ページへのリンクと同意チェックボックス
+
+**ゴールド購入確認画面の表示内容**:
+- パッケージ名、付与ゴールド量、価格
+- 「一度限りの購入（自動更新なし）」の明記
+
+**実装ファイル**: `src/components/ui/PurchaseConfirmModal.tsx`
+
+### 10.2 billing/checkout API の JWT 認証化
+
+`POST /api/billing/checkout` に JWT 認証を追加。
+
+| 項目 | 旧 | 新 |
+|:---|:---|:---|
+| ユーザー特定 | body.userId（クライアント指定） | JWT トークンの `auth.getUser(token)` |
+| 認証 | なし | Bearer トークン必須（401を返す） |
+
+### 10.3 Stripe Customer Portal API
+
+新規 API `POST /api/billing/portal` を追加。有料プランユーザーがプラン変更・解約を行うためのStripe Customer Portal URLを発行。
+
+**実装ファイル**: `src/app/api/billing/portal/route.ts`
+
+### 10.4 汎用確認ダイアログ（ConfirmDialog）
+
+`window.confirm()` の代替として、ゲーム世界観に合わせたダークファンタジーUIの確認ダイアログを新設。
+
+- 3バリアント: `danger` / `warning` / `default`
+- アイコン、タイトル、メッセージ、確認/キャンセルボタン
+
+**実装ファイル**: `src/components/ui/ConfirmDialog.tsx`
+**適用箇所**: AccountSettingsModal の「タイトルに戻る」（匿名/連携の両パターン）
+
+### 10.5 プラン詳細表示
+
+設定画面の「プラン」セクションに詳細展開UI（アコーディオン）を追加。月額、キャラスロット数、英霊登録数、Weeklyボーナスをティアごとに表示。
+
+### 10.6 avatar API の x-user-id 全廃
+
+`character/avatar/route.ts` の PATCH / POST 両メソッドから `x-user-id` フォールバックを削除。フロント側（AccountSettingsModal）の送信も削除。
+
+### 10.7 実装状態（更新）
+
+| 機能 | 状態 |
+|---|---|
+| 課金確認ポップアップ（PurchaseConfirmModal） | ✅ **実装済み** |
+| billing/checkout JWT認証 | ✅ **実装済み** |
+| Stripeカスタマーポータル（billing/portal） | ✅ **実装済み** |
+| 汎用ConfirmDialog | ✅ **実装済み** |
+| プラン詳細表示 | ✅ **実装済み** |
+| avatar API x-user-id廃止 | ✅ **実装済み** |

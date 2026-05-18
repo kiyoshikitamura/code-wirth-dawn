@@ -6,7 +6,7 @@
  * ノードサイドエフェクト（APIコール・状態更新・サウンド）を担う。
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
@@ -44,10 +44,23 @@ export function useScenarioNodeProcessor({
 }: NodeProcessorOptions) {
     const { userProfile, inventory } = useGameStore();
     const questState = useQuestState();
+    // KI §4: 同一ノードの再処理を防止する（userProfile更新によるuseEffect再トリガー対策）
+    const processedNodeRef = useRef<string>('');
+    // タイムアウトをRefで管理（useEffectのcleanupによるキャンセルを防止）
+    const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+    // アンマウント時のクリーンアップ専用
+    useEffect(() => {
+        return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+    }, []);
 
     useEffect(() => {
         if (!currentNode) return;
-        let timeoutId: NodeJS.Timeout | undefined;
+        // 同一ノードが既に処理済みならスキップ（setState→userProfile変更→useEffect再発火の防止）
+        if (processedNodeRef.current === currentNodeId) return;
+        // 新ノード: 前のノードのタイマーをクリア
+        if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = undefined; }
+        processedNodeRef.current = currentNodeId;
 
         const processNode = async () => {
             // BGM切替
@@ -67,12 +80,27 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.type === 'random_branch') {
-                const prob = currentNode.prob || 50;
+                const prob = currentNode.prob || currentNode.params?.prob || 50;
                 const roll = Math.random() * 100;
-                const hitChoice = currentNode.choices?.find((c: any) => c.label === 'hit');
-                const missChoice = currentNode.choices?.find((c: any) => c.label === 'miss');
-                if (hitChoice && missChoice) {
-                    setCurrentNodeId(roll < prob ? hitChoice.next : missChoice.next);
+                const isSuccess = roll < prob;
+                // CSV互換: CHOICE行のlabelは hit/miss または success/failure のいずれか
+                const successChoice = currentNode.choices?.find((c: any) =>
+                    c.label === 'hit' || c.label === 'success');
+                const failChoice = currentNode.choices?.find((c: any) =>
+                    c.label === 'miss' || c.label === 'failure');
+                console.log(`[random_branch] prob=${prob}, roll=${roll.toFixed(1)}, result=${isSuccess ? 'SUCCESS' : 'FAIL'}`);
+                if (successChoice && failChoice) {
+                    setCurrentNodeId(isSuccess ? successChoice.next : failChoice.next);
+                } else {
+                    // フォールバック: choices が見つからない場合は next へ遷移
+                    const fallbackNext = currentNode.next || currentNode.condNext;
+                    const fallbackFail = currentNode.condFallback || currentNode.fallback;
+                    if (fallbackNext && fallbackFail) {
+                        setCurrentNodeId(isSuccess ? fallbackNext : fallbackFail);
+                    } else if (fallbackNext) {
+                        setCurrentNodeId(fallbackNext);
+                    }
+                    console.warn(`[random_branch] choices not found, using fallback: next=${fallbackNext}, fail=${fallbackFail}`);
                 }
             }
 
@@ -87,9 +115,18 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.type === 'check_possession') {
-                const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
+                let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
-                const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
+                // slug文字列の場合は数値IDに解決
+                if (typeof requiredItemId === 'string' && isNaN(parseInt(requiredItemId, 10))) {
+                    try {
+                        const { data: itemRow } = await supabase.from('items').select('id').eq('slug', requiredItemId).maybeSingle();
+                        if (itemRow) requiredItemId = itemRow.id;
+                    } catch (e) { console.error('[check_possession] Slug resolution error:', e); }
+                }
+                await useGameStore.getState().fetchInventory();
+                const latestInv = useGameStore.getState().inventory || [];
+                const hasItem = latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
@@ -132,22 +169,39 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.type === 'check_delivery') {
-                const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
+                let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
                 const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
-                const hasItem = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + i.quantity, 0) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+
+                // slug文字列の場合は数値IDに解決（インベントリは数値IDで格納されている）
+                if (typeof requiredItemId === 'string' && isNaN(parseInt(requiredItemId, 10))) {
+                    try {
+                        const { data: itemRow } = await supabase.from('items').select('id').eq('slug', requiredItemId).maybeSingle();
+                        if (itemRow) {
+                            console.log(`[check_delivery] Resolved slug '${requiredItemId}' → id=${itemRow.id}`);
+                            requiredItemId = itemRow.id;
+                        } else {
+                            console.error(`[check_delivery] Item slug '${requiredItemId}' not found in DB`);
+                        }
+                    } catch (e) { console.error('[check_delivery] Slug resolution error:', e); }
+                }
+
+                // 最新インベントリを取得してからチェック
+                await useGameStore.getState().fetchInventory();
+                const latestInv = useGameStore.getState().inventory || [];
+                const hasItem = latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) >= reqQty;
+                console.log(`[check_delivery] item_id=${requiredItemId}, reqQty=${reqQty}, hasItem=${hasItem}, inv count=${latestInv.length}`);
 
                 if (hasItem) {
                     if (removeOnSuccess) {
                         try {
                             const { data: { session } } = await supabase.auth.getSession();
                             const token = session?.access_token;
-                            const userId = useGameStore.getState().userProfile?.id;
                             const res = await fetch('/api/inventory/consume', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}), ...(userId ? { 'x-user-id': userId } : {}) },
+                                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                                 body: JSON.stringify({ item_id: requiredItemId, quantity: reqQty })
                             });
                             if (res.ok) {
@@ -192,10 +246,9 @@ export function useScenarioNodeProcessor({
                     try {
                         const { data: { session } } = await supabase.auth.getSession();
                         const token = session?.access_token;
-                        const userId = useGameStore.getState().userProfile?.id;
                         const res = await fetch('/api/travel/cost', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}), ...(userId ? { 'x-user-id': userId } : {}) },
+                            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                             body: JSON.stringify({ target_location_slug: targetSlug })
                         });
                         if (res.ok) {
@@ -218,9 +271,8 @@ export function useScenarioNodeProcessor({
                     try {
                         const { data: { session } } = await supabase.auth.getSession();
                         const token = session?.access_token;
-                        const userId = useGameStore.getState().userProfile?.id;
                         const res = await fetch(`/api/party/member?id=${guestId}&context=guest`, {
-                            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}), ...(userId ? { 'x-user-id': userId } : {}) }
+                            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
                         });
                         if (res.ok) {
                             const guestData = await res.json();
@@ -240,17 +292,32 @@ export function useScenarioNodeProcessor({
                     showToast(`${guestName} が離脱した。`, 'info');
                 }
             }
-            else if (currentNode.type === 'trap' || currentNode.type === 'modify_state') {
-                const hpPercent = currentNode.params?.hp_percent;
+            else if (currentNode.type === 'trap' || currentNode.type === 'modify_state' || currentNode.type === 'hp_damage') {
+                const hpPercent = currentNode.params?.hp_percent || currentNode.params?.percent;
                 const hpFlat = currentNode.params?.hp_flat;
                 if (hpPercent || hpFlat) {
+                    // questState（クエスト内HP管理）に適用
                     questState.applyTrapDamage({ hp_percent: hpPercent, hp_flat: hpFlat });
+
+                    // gameStore の userProfile.hp にも同期（バトルシステムはこちらを参照する）
+                    const profile = useGameStore.getState().userProfile;
+                    if (profile) {
+                        const maxHp = profile.max_hp || profile.hp || 100;
+                        let damage = 0;
+                        if (hpPercent) damage = Math.floor(maxHp * (hpPercent / 100));
+                        if (hpFlat) damage += hpFlat;
+                        const newHp = Math.max(1, (profile.hp || maxHp) - damage);
+                        useGameStore.setState(state => ({
+                            userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
+                        }));
+                        console.log(`[hp_damage] profile.hp: ${profile.hp} → ${newHp} (damage=${damage}, percent=${hpPercent}, flat=${hpFlat})`);
+                    }
+
                     const dmgText = hpPercent ? `最大HPの${hpPercent}%` : `${hpFlat}`;
                     showToast(`⚠ トラップ発動！ HP -${dmgText}`, 'error');
                     setHistory(prev => [...prev, `[Trap] ダメージを受けた (-${dmgText} HP)`]);
                 }
-                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
-                if (nextId) timeoutId = setTimeout(() => setCurrentNodeId(nextId), 1500);
+                // setTimeoutを削除。手動遷移（「続ける」ボタン）に変更
             }
             else if (currentNode.type === 'modify_flag') {
                 const flagKey = currentNode.params?.flag || currentNode.params?.key;
@@ -298,13 +365,15 @@ export function useScenarioNodeProcessor({
                     } catch (e) { console.error('[modify_reputation] API error:', e); }
                 }
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
-                if (nextId) timeoutId = setTimeout(() => setCurrentNodeId(nextId), 1000);
+                if (nextId) timeoutRef.current = setTimeout(() => setCurrentNodeId(nextId), 1000);
             }
             else if (currentNode.type === 'reward') {
                 const rawItems = currentNode.params?.items;
                 const rewardGold = currentNode.params?.gold;
-                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'gold:', rewardGold);
-                // items の正規化: ["601"] 形式 → [{item_id: 601, quantity: 1}] 形式に変換
+                // item_id 単一指定のサポート（slug文字列 or 数値ID）
+                const singleItemId = currentNode.params?.item_id || currentNode.item_id;
+                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold);
+                // items の正規化: [{item_id, quantity}] 形式に統一
                 let rewardItems: any[] | undefined;
                 if (Array.isArray(rawItems)) {
                     rewardItems = rawItems.map((item: any) => {
@@ -313,6 +382,24 @@ export function useScenarioNodeProcessor({
                         }
                         return item; // 既に {item_id, quantity} 形式
                     });
+                } else if (singleItemId) {
+                    // item_id 単一指定 → slug文字列の場合はDB解決が必要
+                    const singleQty = currentNode.params?.quantity || currentNode.quantity || 1;
+                    const parsedId = parseInt(String(singleItemId), 10);
+                    if (!isNaN(parsedId)) {
+                        rewardItems = [{ item_id: parsedId, quantity: singleQty }];
+                    } else {
+                        // slug文字列 → items テーブルからID解決
+                        try {
+                            const { data: itemRow } = await supabase.from('items').select('id, name').eq('slug', singleItemId).maybeSingle();
+                            if (itemRow) {
+                                rewardItems = [{ item_id: itemRow.id, quantity: singleQty }];
+                                console.log(`[reward] Resolved slug '${singleItemId}' → id=${itemRow.id} (${itemRow.name})`);
+                            } else {
+                                console.error(`[reward] Item slug '${singleItemId}' not found in DB`);
+                            }
+                        } catch (e) { console.error('[reward] Slug resolution error:', e); }
+                    }
                 }
                 console.log('[reward] normalized rewardItems:', JSON.stringify(rewardItems));
                 try {
@@ -341,7 +428,7 @@ export function useScenarioNodeProcessor({
                     }
                 } catch (e) { console.error('[reward] Grant API error:', e); }
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
-                if (nextId) timeoutId = setTimeout(() => setCurrentNodeId(nextId), 1500);
+                if (nextId) timeoutRef.current = setTimeout(() => setCurrentNodeId(nextId), 1500);
             }
             else if (currentNode.type === 'shop_access') {
                 const questId = questState.questId;
@@ -363,7 +450,7 @@ export function useScenarioNodeProcessor({
         };
 
         processNode();
-        return () => { if (timeoutId) clearTimeout(timeoutId); };
+        // cleanup不要: timeoutRefで管理、processedNodeRefガードで再実行防止
 
     }, [currentNodeId, currentNode, userProfile]);
 }

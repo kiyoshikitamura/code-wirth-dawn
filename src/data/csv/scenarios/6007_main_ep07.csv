@@ -2,30 +2,32 @@ row_type,node_id,text_label,params,next_node
 META,gold,300,,
 META,exp,180,,
 META,reputation,10,,
-NODE,start,"密林を抜けた先に、巨大な木組みの門が聳えていた。夜刀神国の国境関所だ。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_mystery""}",text_start2
-NODE,text_start2,"柱の太さは一抱え以上。屋根には注連縄が渡されている。門の両脇に、甲冑姿の関守が二人。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_gate
-NODE,text_gate,"関所の前には入国を待つ行商人や旅人の列ができていた。だが——ほとんど動いていない。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_gate2
-NODE,text_gate2,"戦乱を受けて入国審査は異常なほど厳格化されていた。通行証はない。身分証明もない。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_document
-NODE,text_document,"懐に手を当てた。紙の感触がある。道中で息絶えたローランドの兵士が最後の力で差し出した書類。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_document2
-NODE,text_document2,"「……頼む。これを……然るべき者へ……」王国の機密書。使い方次第では、門を開ける鍵にもなるだろう。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_guard_block
-NODE,text_guard_block,"関守の頭目が冷たい目で見下ろしてきた。四十代半ば。額に古傷。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_guard_block2
-NODE,text_guard_block2,"「止まれ。何者だ。通行証を持たぬ流れ者は通せぬ。——さっさと立ち去れ」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",choice1
-CHOICE,,「機密書を渡すので通してくれ」,,text_betray
-CHOICE,,「傭兵として雇ってくれ」,,text_normal
-NODE,text_betray,"懐から機密書を取り出し差し出した。関守の表情が変わった。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_betray2
-NODE,text_betray2,"「……ほう。裏切りの代償か。……良かろう。通れ。——だが覚えておけ。裏切りで得た安全は、長くは持たんぞ」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_betray_guilt
-NODE,text_betray_guilt,"関所の門が開いた。だが足が重い。あの兵士が最後に見せた目を思い出していた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_betray_guilt2
-NODE,text_betray_guilt2,"死者の想いを安全と引き換えにした。その事実が、胸の奥に冷たい石のように沈んでいく。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",betray_rep_penalty
-NODE,betray_rep_penalty,"裏切りの代価","{""type"":""modify_reputation"", ""amount"":-30}",end_betray
-NODE,end_betray,"異国の風が吹き抜ける。湿った空気。木と土の匂い。だが——生きている。門を潜った。振り返らなかった。","{""type"":""end_success"", ""bg"":""bg_bandit_camp""}",
-NODE,text_normal,"「腕には自信がある。傭兵として雇ってくれないか」関守の頭目が鼻で笑った。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_normal2
-NODE,text_normal2,"「傭兵だと？ ボロボロの敗残兵にか？ だが——ちょうど手を焼いていることがある」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_tengu_intro
-NODE,text_tengu_intro,"「裏山の竹林に天狗が巣食っていてな。旅人が三人やられた。あの天狗を追い払って証拠を持ってくれば、通行を許可してやろう」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_tengu_forest
-NODE,text_tengu_forest,"裏山の竹林。薄暗い。血と獣の臭い。竹を掻き分けた瞬間——頭上から鋭い風切り音が響いた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_tengu_appear
-NODE,text_tengu_appear,"見上げると——長い嘴と黒い翼を持つ異形が、竹の梢に佇んでいた。こちらを獲物と見定めている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle
-NODE,battle,"裏山の天狗との戦闘！ 飢えた体で化け物じみた怪鳥に立ち向かえ！","{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":205, ""bgm"":""bgm_battle""}",choice2
-CHOICE,,勝利,,text_tengu_dead
-NODE,text_tengu_dead,"血まみれの天狗の羽を関所の中庭に投げ込んだ。兵士たちが後ずさりした。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_tengu_dead2
-NODE,text_tengu_dead2,"関守の頭目がしばらく羽を見つめ——ゆっくりと振り返った。目が変わっていた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_guard_impressed
-NODE,text_guard_impressed,"「……見事な腕だ。通れ。夜刀神国はお前のような強者を歓迎する。——せいぜい長生きしろよ。この国も、外と同じくらい物騒だ」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",end_node
-NODE,end_node,"重い音を立てて関所の門が開いた。異国の風が吹き抜ける。夜刀神国。知らない土地。知らない言葉。だが——生きている。門を潜った。振り返らなかった。","{""type"":""end_success"", ""bg"":""bg_bandit_camp""}",
+NODE,start,"密林を抜けた先に巨大な木組みの門が聳えていた。夜刀神国の関所だ。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_mystery""}",start_02
+NODE,start_02,"柱は一抱え以上。屋根には注連縄。門の両脇に甲冑姿の関守が二人。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",gate_01
+NODE,gate_01,"関所の前には入国待ちの列ができていた。だがほとんど動いていない。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",gate_02
+NODE,gate_02,"戦乱で入国審査は厳格化。通行証も身分証もない。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",doc_01
+NODE,doc_01,"懐に手を当てた。紙の感触。道中で息絶えた兵士が差し出した書類。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",doc_02
+NODE,doc_02,"「これを……然るべき者へ……」王国の機密書。使い方次第で門を開ける鍵になる。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",guard_01
+NODE,guard_01,"関守の頭目が冷たい目で見下ろした。額に古傷のある四十代の男。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",guard_02
+NODE,guard_02,"「止まれ。通行証を持たぬ流れ者は通せぬ。さっさと立ち去れ」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",choice1
+CHOICE,,「機密書を渡すので通してくれ」,,betray_01
+CHOICE,,「傭兵として雇ってくれ」,,normal_01
+NODE,betray_01,"懐から機密書を取り出し差し出した。関守の表情が変わった。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",betray_02
+NODE,betray_02,"「裏切りの代償か。良かろう、通れ。だが裏切りで得た安全は長くは持たんぞ」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",betray_03
+NODE,betray_03,"関所の門が開いた。だが足が重い。あの兵士の最後の目を思い出していた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",betray_04
+NODE,betray_04,"死者の想いを安全と引き換えにした。冷たい石が胸の奥に沈んでいく。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",betray_rep
+NODE,betray_rep,裏切りの代価,"{""type"":""modify_reputation"", ""amount"":-30}",end_betray
+NODE,end_betray,"異国の風が吹き抜ける。湿った空気。木と土の匂い。門を潜った。振り返らなかった。","{""type"":""end_success"", ""bg"":""bg_bandit_camp""}",
+NODE,normal_01,"「腕には自信がある。傭兵として雇ってくれないか」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",normal_02
+NODE,normal_02,"関守が鼻で笑った。「ボロボロの敗残兵にか？だがちょうど手を焼いていることがある」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",tengu_01
+NODE,tengu_01,"「裏山の竹林に天狗が巣食っている。追い払って証拠を持ってくれば通してやろう」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",tengu_02
+NODE,tengu_02,"裏山の竹林。薄暗い。血と獣の臭い。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",tengu_03
+NODE,tengu_03,"竹を掻き分けた瞬間——頭上から鋭い風切り音が響いた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",tengu_04
+NODE,tengu_04,"長い嘴と黒い翼の異形が竹の梢に佇んでいた。獲物と見定めている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle
+NODE,battle,裏山の天狗との戦闘！飢えた体で化け物に立ち向かえ！,"{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":205, ""bgm"":""bgm_battle""}",choice2
+CHOICE,,勝利,,dead_01
+NODE,dead_01,"血まみれの天狗の羽を関所の中庭に投げ込んだ。兵士たちが後ずさりした。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",dead_02
+NODE,dead_02,"関守の頭目がしばらく羽を見つめ——目が変わっていた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",dead_03
+NODE,dead_03,"「見事な腕だ。通れ。この国はお前のような強者を歓迎する」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",dead_04
+NODE,dead_04,"「せいぜい長生きしろよ。この国も、外と同じくらい物騒だ」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",end_node
+NODE,end_node,"重い音を立てて関所の門が開いた。異国の風。知らない土地。だが——生きている。","{""type"":""end_success"", ""bg"":""bg_bandit_camp""}",

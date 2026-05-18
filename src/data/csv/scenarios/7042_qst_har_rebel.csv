@@ -1,7 +1,41 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"天子の威光に逆らう愚かな塵芥どもめ。一揆を企てた村ごと焼き払い、見せしめとして全員の首を刎ねろ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_thug"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"「よく来てくれた、裏稼業の者よ。内密に頼みたい汚れ仕事があるのだ」\nきらびやかな装飾が施された太守の館で、肥え太った役人が冷酷な笑みを浮かべていた。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""speaker_name"":""地方太守"",""type"":""text""}",start_02
+NODE,start_02,"「辺境の農村で、税の取り立てに反発した農民どもが竹槍を持って暴れ回っておる」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""speaker_name"":""地方太守"",""type"":""text""}",start_03
+NODE,start_03,"「正規兵を動かせば上に知れる。お主らのような荒くれ者に、奴らを『物理的に』黙らせてほしいのだ」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""speaker_name"":""地方太守"",""type"":""text""}",start_04
+NODE,start_04,"「奴らは完全に徒党を組み、暴徒と化している。情けは無用だ、一人残らず根絶やしにせよ」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""speaker_name"":""地方太守"",""type"":""text""}",start_05
+NODE,start_05,"太守は面倒くさそうに手を振り、大量の金貨が入った袋を見せつけた。\n辺境の村まで、ここから東に二日ほどの距離だ。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_field"",""type"":""text""}",travel_01
+NODE,travel_01,"辺境へと続く街道は、見るも無惨に荒れ果てていた。道端には飢え死にした者たちの白骨が転がっている。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_field"",""type"":""text""}",travel_02
+NODE,travel_02,"田畑の土は完全に乾ききり、作物を育てる用水路もとうの昔に枯れ果てている。これでは税など払えるはずもない。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_field"",""type"":""text""}",travel_03
+NODE,travel_03,"すれ違ったぼろ布を纏う老婆が、こちらの武装を見てひどく怯えた目を向けた。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_field"",""type"":""text""}",travel_04
+NODE,travel_04,"「……アンタ、まさか……太守様が送ってきた手先かい？ ヒィィッ！」\n老婆は地べたに這いつくばりながら、逃げるように去っていった。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_field"",""speaker_name"":""村の老婆"",""type"":""text""}",arrive_01
+NODE,arrive_01,"目的の村の入り口に到着した。広場には、農具や竹槍を手にした数十人の農民たちがバリケードを築いている。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",arrive_02
+NODE,arrive_02,"皆一様に頬がこけ、目は落ち窪んでいる。正規兵ではない、ただの飢えた人間の群れだ。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",arrive_03
+NODE,arrive_03,"こちらの接近に気づいた農民たちが、怯えと憎悪の入り混じった顔で一斉に竹槍を向けてきた。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",arrive_04
+NODE,arrive_04,"先頭に立つ初老の男が、血を吐くような声で叫んだ。\n「太守の犬め！ もう俺たちからは何も奪えないぞ！」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""speaker_name"":""農民の首謀者"",""type"":""text""}",arrive_05
+NODE,arrive_05,"「頼む、見逃してくれ！ 俺たちはただ、家族にひもじい思いをさせたくないだけなんだ！」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""speaker_name"":""農民の首謀者"",""type"":""text""}",face_mob
+NODE,face_mob,"刃を向ける相手は、魔物ではなく飢えた弱者たちだ。冒険者として太守の命令を遂行するか？","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""choice""}",
+CHOICE,,容赦なく制圧する——これが仕事だ,,charge_01
+CHOICE,,武器を収め、引き下がる,,withdraw_01
+NODE,charge_01,"感情を殺し、無言のまま武器を構える。それが裏社会を生きる者のルールだ。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",charge_02
+NODE,charge_02,"男たちの表情が絶望から殺意へと変わる。\n「……話し合いは通じないってわけか！ やるしかねぇ！」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""speaker_name"":""農民の首謀者"",""type"":""text""}",charge_03
+NODE,charge_03,"「逃げるな！ 退いたら村中の女子供が殺されるぞ！ 全員でかかれェッ！！」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""speaker_name"":""農民の首謀者"",""type"":""text""}",battle_01
+NODE,battle_01,"飢えた農民たちが捨て身の覚悟で突進してきた！","{""bg"":""bg_karyu_village"",""bgm"":""bgm_battle"",""enemy_group_id"":443,""type"":""battle""}",
+CHOICE,,win,,after_01
+CHOICE,,lose,,end_failure
+NODE,after_01,"怒号と悲鳴が入り混じる中、農民たちを次々と血祭りに上げる。血が乾いた土を赤く染めていく。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",after_02
+NODE,after_02,"数名の死体を作ると、暴徒たちは恐れをなして後ずさった。だが、首謀者の男だけは血まみれで立っている。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",leader_01
+NODE,leader_01,"「長男は重税のための強制労働で死んだ。次男は餓死した。娘は太守に売られた……！」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""speaker_name"":""農民の首謀者"",""type"":""text""}",leader_02
+NODE,leader_02,"「これ以上、何を奪うって言うんだ！ 殺すなら、俺を殺してからにしろォォッ！！」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""speaker_name"":""農民の首謀者"",""type"":""text""}",leader_03
+NODE,leader_03,"男は折れた竹槍を強く握り直し、鬼気迫る形相でこちらへ突進してきた。彼の目にもう死への恐怖はない。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_02
+NODE,battle_02,"首謀者が死に物狂いで襲いかかってきた！","{""bg"":""bg_karyu_village"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":444,""type"":""battle""}",
+CHOICE,,win,,clear_01
+CHOICE,,lose,,end_failure
+NODE,clear_01,"首謀者が力尽き、仰向けに倒れ伏す。それを見た残りの農民たちは、完全に戦意を喪失して散り散りに逃げ去った。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_calm"",""type"":""text""}",clear_02
+NODE,clear_02,"血と泥にまみれた広場には、死体にすがりついて泣き崩れる女や子供たちだけが残された。反乱は完全に鎮圧された。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success
+NODE,end_success,"血塗られた手で太守の館へと戻り、任務完了の報告と共に多額の報酬を受け取る。\n背中の奥で、村人たちの呪詛の泣き声がいつまでも響いているような気がした……。","{""bg"":""bg_guild"",""rewards"":{""gold"":450,""exp"":100,""alignment_shift"":{""evil"":10}},""type"":""end"",""result"":""success""}",
+NODE,withdraw_01,"静かに武器を下ろし、背を向けた。いくら金のためとはいえ、飢えた者たちを狩る真似はできない。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_calm"",""type"":""text""}",withdraw_02
+NODE,withdraw_02,"踵を返して歩き出した背中に、首謀者の震える声が聞こえてきた。\n「……ありがとう……ありがとう、見逃してくれて……」","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_calm"",""type"":""text""}",withdraw_03
+NODE,withdraw_03,"来た道を引き返す。太守には「手強くて制圧に失敗した」とでも言えばいい。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_calm"",""type"":""text""}",withdraw_04
+NODE,withdraw_04,"村人がその後どうなるかは分からない。だが、少なくとも自分の手で彼らの命を奪わずに済んだ。","{""bg"":""bg_karyu_village"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success_withdraw
+NODE,end_success_withdraw,"「役立たずのクズめ！ とっとと失せろ！」\n太守から激しく罵倒され、当然ながら報酬は一切支払われなかった。だが、胸の奥には確かな誇りが残っている。","{""bg"":""bg_guild"",""rewards"":{""exp"":0,""alignment_shift"":{""justice"":5},""reputation"":-10},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"武具の力は勝っていたが、彼らの「生きるための覚悟」がそれを上回った。\n無数の竹槍に身体を貫かれ、冷たい泥の中に倒れ伏す。因果応報、仕方のない結末かもしれない……。","{""bg"":""bg_karyu_village"",""type"":""end"",""result"":""failure""}",

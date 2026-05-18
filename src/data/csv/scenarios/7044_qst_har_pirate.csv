@@ -1,7 +1,42 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"海賊どもが我が国の絹と茶を強奪しおった。ヤツらの小島に夜襲をかけ、根こそぎ奪い返せ。海に沈めても構わん。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_guard"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"華龍国の南沿岸にある港町。\nその顔役である長から、手書きの海図と討伐の依頼書を受け取った。","{""bg"":""bg_karyu_port"",""bgm"":""bgm_quest_calm"",""speaker_name"":""港町の長"",""type"":""text""}",start_02
+NODE,start_02,"「沿岸を荒らしている忌々しい水賊どもめ。奴らの本拠地がようやく割れた」","{""bg"":""bg_karyu_port"",""bgm"":""bgm_quest_calm"",""speaker_name"":""港町の長"",""type"":""text""}",start_03
+NODE,start_03,"「水賊の船は岬の裏側の入り江に停泊している。奪われた荷物は一つ残らず港に返してくれ」\nそう言う長の目は、正義感からではなく、計算高く欲深い光を帯びていた。","{""bg"":""bg_karyu_port"",""bgm"":""bgm_quest_calm"",""speaker_name"":""港町の長"",""type"":""text""}",intel_01
+NODE,intel_01,"奇襲をかける前に、港の薄汚れた酒場で水賊たちの情報を集めることにした。","{""bg"":""bg_karyu_port"",""bgm"":""bgm_field"",""type"":""text""}",intel_02
+NODE,intel_02,"酔客の話によると、水賊は中型のガレオン船を三隻所有する大規模な集団らしい。","{""bg"":""bg_karyu_port"",""bgm"":""bgm_field"",""type"":""text""}",intel_03
+NODE,intel_03,"頭目は「黒鰐（くろわに）」と呼ばれる大男で、元帝国海軍の将校だったという噂だ。","{""bg"":""bg_karyu_port"",""bgm"":""bgm_field"",""type"":""text""}",intel_04
+NODE,intel_04,"「単なるならず者じゃない。戦い方は一流の軍人のそれだ」\n酒場の主人が青ざめた顔でそう忠告してくれた。","{""bg"":""bg_karyu_port"",""bgm"":""bgm_field"",""type"":""text""}",night_01
+NODE,night_01,"夜半過ぎ。月が雲に隠れたのを見計らい、用意した小舟を静かに漕ぎ出す。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_field_night"",""type"":""text""}",night_02
+NODE,night_02,"岬を大回りして迂回する。海は墨を流したように暗く、潮の匂いが鼻をつく。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_field_night"",""type"":""text""}",night_03
+NODE,night_03,"波の音だけが響く中、遠くの暗闇にポツンと浮かぶ入り江の松明が見えてきた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_field_night"",""type"":""text""}",cove_01
+NODE,cove_01,"入り江の奥に接近する。情報通り、三隻の船が寄り添うように停泊していた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",cove_02
+NODE,cove_02,"一番巨大な旗艦の舷側から、太い錨の鎖が海面に向かってぶら下がっている。あそこから登れそうだ。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",climb_01
+NODE,climb_01,"小舟を密かに接舷させ、濡れて滑る重い鎖を力一杯握りしめる。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",climb_02
+NODE,climb_02,"海に落ちないよう慎重に這い上がり、甲板の縁に指をかけた。見張りの足音が遠ざかる……今だ。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",surprise_01
+NODE,surprise_01,"音もなく甲板に翻り、背を向けていた見張りの口を塞いで一瞬で組み伏せた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",surprise_02
+NODE,surprise_02,"しかし、マストの上にいたもう一人の見張りがこちらの存在に気づいた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",surprise_03
+NODE,surprise_03,"「敵だ！ 甲板に侵入者だ！ 野郎ども起きろォッ！！」\n銅鑼の音がけたたましく鳴り響き、船全体が揺れるような怒号が巻き起こった。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""speaker_name"":""水賊"",""type"":""text""}",battle_deck
+NODE,battle_deck,"寝込みを襲われた水賊たちが、武器を手に群がってきた！","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_battle"",""enemy_group_id"":447,""type"":""battle""}",
+CHOICE,,win,,clear_01
+CHOICE,,lose,,end_failure
+NODE,clear_01,"血塗られた甲板。雑兵どもを海へと蹴り落とし、船の上層部の制圧を完了した。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",clear_02
+NODE,clear_02,"静まり返った甲板に、真下の船倉から地鳴りのような重い足音と怒号が響いてきた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ship_01
+NODE,ship_01,"階段を下り、船長室の分厚いオーク材の扉を蹴り開ける。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ship_02
+NODE,ship_02,"室内には、全身に無数の刀傷を刻んだ筋骨隆々の大男が、巨大な戦斧を手にして仁王立ちしていた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ship_03
+NODE,ship_03,"「たかが冒険者一人で俺の船に乗り込むとは、いい度胸だ。海の藻屑にしてやる！！」","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""speaker_name"":""水賊の頭目「黒鰐」"",""type"":""text""}",battle_captain
+NODE,battle_captain,"水賊の頭目「黒鰐」との決戦！","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":448,""type"":""battle""}",
+CHOICE,,win,,captain_01
+CHOICE,,lose,,end_failure
+NODE,captain_01,"激しい戦斧の猛攻を紙一重で躱し、大男の急所に刃を突き立てた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""type"":""text""}",captain_02
+NODE,captain_02,"「ガハッ……見事だ……」\n黒鰐が重い音を立てて膝をついた。血にまみれながらも、軍人としての誇り高い目は死んでいない。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""speaker_name"":""水賊の頭目「黒鰐」"",""type"":""text""}",captain_03
+NODE,captain_03,"「港の長に言っておけ。俺が襲った商船の利益の二割は、あの男の懐に入っていたとな……」\nどうやら、長の目的は「上前を撥ねていた自分たちの秘密を消すこと」だったらしい。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""speaker_name"":""水賊の頭目「黒鰐」"",""type"":""text""}",choice_captain
+NODE,choice_captain,"膝をつき、死を覚悟した黒鰐に止めを刺すか？","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""type"":""choice""}",
+CHOICE,,止めを刺す——悪党の事情は関係ない,,cargo_01
+CHOICE,,見逃す——長を強請るための手駒にする,,deal_01
+NODE,cargo_01,"誰が裏で糸を引いていようと、自分の仕事は依頼の完遂だ。\n無言で刃を振り下ろし、黒鰐の首を刎ねた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""type"":""text""}",cargo_02
+NODE,cargo_02,"船倉には絹布、陶磁器、茶箱といった略奪品が山のように積まれていた。\n生き残った水賊に船を操縦させ、港へと帰還する。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success
+NODE,end_success,"水賊討伐完了。港町の長から、安堵の表情と共に報酬を受け取った。\n「これで港も静かになる。本当にありがたい」——白々しい嘘に付き合う義理はない。","{""bg"":""bg_guild"",""rewards"":{""gold"":400,""exp"":120,""alignment_shift"":{""chaos"":5}},""type"":""end"",""result"":""success""}",
+NODE,deal_01,"刃を下ろし、黒鰐を見逃す代わりに「長との裏取引の証拠」を渡すよう持ちかけた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""type"":""text""}",deal_02
+NODE,deal_02,"「ククッ……欲の皮が突っ張った面白い冒険者だな。いいだろう」\n黒鰐は血まみれの顔で笑い、隠し金庫から分厚い帳簿を取り出して渡した。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_calm"",""speaker_name"":""水賊の頭目「黒鰐」"",""type"":""text""}",end_success_deal
+NODE,end_success_deal,"長には「頭目は逃げた。だが荷は取り返した」とだけ報告し、一部の報酬を受け取る。\n悪人と悪人の間を泳ぎ回り、利益を掠め取る……。この国で生き残るには、これが一番賢いやり方だ。","{""bg"":""bg_guild"",""rewards"":{""gold"":250,""exp"":120,""alignment_shift"":{""evil"":5}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"黒鰐の振るう戦斧の一撃をまともに受け、身体が宙に浮いた。\n冷たい海へと叩き落とされ、塩水に肺を焼かれながら、意識は深い海の底へと沈んでいった……。","{""bg"":""bg_karyu_coast"",""type"":""end"",""result"":""failure""}",

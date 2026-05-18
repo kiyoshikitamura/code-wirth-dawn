@@ -68,6 +68,7 @@ export async function GET(request: Request) {
             slug: headers.indexOf('slug'),
             name: headers.indexOf('name'),
             type: headers.indexOf('type'),
+            sub_type: headers.indexOf('sub_type'),
             base_price: headers.indexOf('base_price'),
             nation_tags: headers.indexOf('nation_tags'),
             min_prosperity: headers.indexOf('min_prosperity'),
@@ -89,8 +90,24 @@ export async function GET(request: Request) {
             const slug = row[colIdx.slug]?.trim();
             const name = row[colIdx.name]?.trim();
             const type = row[colIdx.type]?.trim() || 'equipment';
+            const sub_type = colIdx.sub_type >= 0 ? (row[colIdx.sub_type]?.trim() || null) : null;
             const basePrice = parseInt(row[colIdx.base_price]?.trim() || '0', 10);
             
+            // nation_tags: pipe-delimited string → array
+            let nationTags: string[] = [];
+            if (colIdx.nation_tags >= 0) {
+                const ntStr = row[colIdx.nation_tags]?.trim();
+                if (ntStr) nationTags = ntStr.split('|').map(t => t.trim()).filter(Boolean);
+            }
+
+            // min_prosperity
+            const minProsperity = colIdx.min_prosperity >= 0 
+                ? parseInt(row[colIdx.min_prosperity]?.trim() || '1', 10) : 1;
+
+            // is_black_market
+            const isBlackMarket = colIdx.is_black_market >= 0 
+                ? row[colIdx.is_black_market]?.trim().toLowerCase() === 'true' : false;
+
             let effectData = {};
             const effectStr = row[colIdx.effect_data]?.trim();
             if (effectStr && effectStr.startsWith('{')) {
@@ -106,7 +123,11 @@ export async function GET(request: Request) {
                 slug,
                 name,
                 type,
+                sub_type,
                 base_price: isNaN(basePrice) ? 0 : basePrice,
+                nation_tags: nationTags.length > 0 ? nationTags : null,
+                min_prosperity: isNaN(minProsperity) ? 1 : minProsperity,
+                is_black_market: isBlackMarket,
                 effect_data: effectData
             });
         }

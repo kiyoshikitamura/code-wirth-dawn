@@ -1,4 +1,4 @@
-﻿# クエスト仕様書：7023 — 交易路を脅かす大砂虫討伐
+# クエスト仕様書：7023 — 交易路を脅かす大砂虫討伐
 
 ## 0. ファイル概要
 
@@ -14,7 +14,7 @@
 | **リピート** | リピート可能 |
 | **難易度Tier** | Normal（rec_level: 5） |
 | **経過日数 (time_cost)** | 4（成功: 4日 / 失敗: 2日） |
-| **ノード数** | 22ノード |
+| **ノード数** | 24ノード |
 | **サムネイル画像** | `/images/quests/bg_desert.png` |
 
 ## 1. クエスト概要
@@ -26,7 +26,7 @@
 
 ### 長文説明
 ```
-交易商会から緊急の依頼。砂漠の主要交易路に巨大な砂虫——サンドワーム——が棲みついた。すでに商隊2つが飲み込まれ、通行不能となっている。囮の荷車を使って奴を地上におびき出し、息の根を止めてほしい。報酬は高額だが、相手は砂漠の覇者。生半可な腕では返り討ちにされるだけだ。
+交易商会から緊急の依頼。砂漠の主要交易路に巨大な砂虫——サンドワーム——が棲みついた。すでに商隊2つが飲み込まれ、通行不能となっている。囮の荷車を使って奴を地上におびき出し、息の根を止めてほしい。報酬は高額だが、相手は砂漠の覇者。商会が用意した爆薬が、唯一の切り札だ。
 ```
 
 ## 2. 報酬定義
@@ -48,17 +48,22 @@ Gold:600|Chaos:10|Exp:200|Rep:10
 ### 全体フロー
 
 ```text
-start → intro_1 → intro_2 → prepare
+start → intro_1 → intro_2 → prepare → receive_explosive (reward: item_explosive)
   → travel_to_site → site_desc → set_bait → bait_desc
     → wait_1 → tremor_1 → scouts_appear
       → battle_wave1 (デザートスコーピオン x2 / サンドワーム x1)
          ├─ [勝利] → after_wave1 → reset_bait → wait_2 → tremor_2
-         │    → boss_emerge → boss_desc
+         │    → boss_emerge → boss_desc → trap_collapse (hp_damage: 50%)
          │      → battle_wave2 (サンドワーム x2)
          │         ├─ [勝利] → after_wave2 → carcass → return_report → end_success
          │         └─ [敗北] → end_failure
          └─ [敗北] → end_failure
 ```
+
+> **ギミック説明:**
+> - `receive_explosive`: 商会から爆薬を1つ受け取る（reward ノードでインベントリに追加）。
+> - `trap_collapse`: ボス戦直前にサンドワームの奇襲でパーティHP50%減少（hp_damage ノード）。
+> - 爆薬はバトル中使用アイテムとして、サンドワームに対して大ダメージを与える（「五英霊の誓約」と同様のギミック）。
 
 ### ノード詳細
 
@@ -84,11 +89,19 @@ start → intro_1 → intro_2 → prepare
 ```
 
 #### `prepare`（text）
+**演出:** bg: bg_guild, speaker: 商会の幹部
+```text
+「それと——これを持っていけ。商会の錬金術師が用意した爆薬だ。
+　砂虫の体に叩き込めば、体内で爆発して大ダメージを与えられる」
+```
+
+#### `receive_explosive`（reward）
 **演出:** bg: bg_guild
 ```text
-囮用の荷車と爆薬を受け取った。
-商会の男たちの目には、期待と不安が入り混じっている。
+爆薬を受け取った。ずしりと重い。
+取り扱いには細心の注意が必要だ——間違っても自分に使うなよ。
 ```
+**パラメータ:** type: reward, item_id: `item_explosive`, next: travel_to_site
 
 #### `travel_to_site`（text）
 **演出:** bg: bg_desert, bgm: bgm_field
@@ -182,7 +195,7 @@ start → intro_1 → intro_2 → prepare
 ```
 
 #### `boss_emerge`（text）
-**演出:** bg: bg_desert, speaker: （独白）
+**演出:** bg: bg_desert
 ```text
 二匹——！
 白い牙を剥いた顎が、荷車を丸ごと飲み込もうとしている。
@@ -195,6 +208,16 @@ start → intro_1 → intro_2 → prepare
 無数の小さな足が地面を掻きながら、こちらに向き直った。
 ```
 
+#### `trap_collapse`（hp_damage）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+大砂虫が地面ごと砂を崩壊させた！
+足場が崩れ、砂の奔流に巻き込まれる——体中を打ちつけながら必死に這い上がった。
+```
+**パラメータ:** type: hp_damage, percent: 50, next: battle_wave2
+
+> **ギミック:** パーティのHP現在値を50%減少させた状態でボス戦に突入する。
+
 #### `battle_wave2`（battle）【第2戦：ボス戦】
 **演出:** bg: bg_desert, bgm: bgm_battle_boss
 
@@ -206,8 +229,10 @@ start → intro_1 → intro_2 → prepare
 | 敵表示名 | 大砂虫 |
 
 ```text
-砂漠の覇者——大砂虫との死闘！
+砂漠の覇者——大砂虫との死闘！ 爆薬を使え！
 ```
+
+> **ギミック:** 爆薬（`item_explosive`）はバトル中使用可能なアイテム。サンドワーム系エネミーに対して大ダメージを与える（「五英霊の誓約」と同様のターゲット限定ダメージシステム）。
 
 #### `after_wave2`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_calm
@@ -264,6 +289,14 @@ start → intro_1 → intro_2 → prepare
 | enemy_markand_sand_worm | サンドワーム | 14 | 180 | 45 | 5 |
 | enemy_markand_sand_worm | サンドワーム | 14 | 180 | 45 | 5 |
 
+## 4.5. 新規アイテム定義
+
+| ID | Slug | Name | Type | SubType | Value | Description |
+|-----|-----|-----|-----|-----|-----|-----|
+| 3010 | `item_explosive` | 爆薬 | consumable | battle_use | 0 | 商会の錬金術師が調合した特製爆薬。サンドワームに対して大ダメージを与える。バトル中のみ使用可能。 |
+
+> **ギミック仕様:** `item_explosive` は「五英霊の誓約」と同じシステムを使用し、`target_enemy_slug: enemy_markand_sand_worm` に対して固定大ダメージを与える。
+
 ---
 
 ## 5. CSVエントリ（quests_normal.csv）
@@ -279,7 +312,11 @@ start → intro_1 → intro_2 → prepare
 - [ ] 出現拠点 `loc_marcund` のみ
 - [ ] エネミーグループ `grp_sandworm_scout`（425）がenemy_groups.csvに登録済み
 - [ ] エネミーグループ `grp_sandworm_boss`（426）がenemy_groups.csvに登録済み
-- [ ] 2連戦フローが正しく遷移する（前哨戦→ボス戦）
+- [ ] `item_explosive` がitems.csvに登録済み
+- [ ] `receive_explosive` ノードで爆薬がインベントリに追加されること
+- [ ] `trap_collapse` ノードでHP50%減少が適用されること
+- [ ] 爆薬がバトル中使用可能で、サンドワームに大ダメージを与えること
+- [ ] 2連戦フローが正しく遷移する（前哨戦→HP減少→ボス戦）
 - [ ] ボス戦BGMが `bgm_battle_boss` である
 - [ ] Gold:600 + Chaos:10 + Exp:200 + Rep:10 が付与される
 - [ ] time_cost: 4（成功）/ 2（失敗）が正しく経過する

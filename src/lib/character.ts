@@ -50,6 +50,7 @@ const TITLES: TitleDef[] = [
     { name: '銭ゲバ', priority: 24, condition: (p, a) => (p.gold || 0) >= 100000 && a.evil_ratio >= 55 },
     { name: '清貧の聖人', priority: 23, condition: (p, a) => (p.gold || 0) <= 500 && a.justice_ratio >= 65 && (p.level || 1) >= 5 },
     { name: '流浪の剣聖', priority: 22, condition: (p) => (p.accumulated_days || 0) >= 500 && (p.level || 1) >= 12 },
+    { name: '神に愛されし者', priority: 21.5, condition: (p, a) => (p.prayer_count || 0) >= 50 && a.justice_ratio >= 55 && (p.level || 1) >= 10 },
     { name: '世捨て人', priority: 21, condition: (p, a) => (p.gold || 0) <= 200 && a.chaos_ratio >= 60 && (p.level || 1) >= 8 },
     { name: '鉄の規律', priority: 20, condition: (p, a) => a.order_ratio >= 70 && (p.level || 1) >= 20 && (p.gold || 0) >= 30000 },
     { name: '嵐を呼ぶ者', priority: 19, condition: (p, a) => a.chaos_ratio >= 70 && (p.level || 1) >= 20 && (p.gold || 0) >= 30000 },
@@ -60,6 +61,7 @@ const TITLES: TitleDef[] = [
     { name: '善なる心', priority: 16, condition: (p, a) => a.justice_ratio >= 58 && (p.level || 1) >= 7 },
     { name: '暗き魂', priority: 15, condition: (p, a) => a.evil_ratio >= 58 && (p.level || 1) >= 7 },
     { name: '灰色の賢者', priority: 14, condition: (p, a) => isNeutralOC(a, 45, 55) && isNeutralJE(a, 45, 55) && (p.level || 1) >= 10 },
+    { name: '祈りの求道者', priority: 13.5, condition: (p) => (p.prayer_count || 0) >= 20 && (p.level || 1) >= 5 },
     { name: '修羅の亡霊', priority: 13, condition: (p, a) => a.evil_ratio >= 55 && (p.vitality ?? 100) <= 30 && (p.level || 1) >= 8 },
     { name: '傷だらけの守護者', priority: 12, condition: (p, a) => a.justice_ratio >= 55 && (p.vitality ?? 100) <= 30 && (p.level || 1) >= 8 },
     { name: '壮年の武人', priority: 11, condition: (p) => (p.age || 20) >= 35 && (p.level || 1) >= 10 },
@@ -100,34 +102,25 @@ export function calculateTitle(profile: UserProfile): string {
 }
 
 /**
- * 加齢処理
+ * 加齢処理（ゲーム内時間ベース）
  * 365日経過で1歳加算し、Vitalityを減少させる
+ * ※メイン加齢ロジックは questService.processAging() に統一。
+ *   この関数はフォールバック/ユーティリティとして残す。
  * @returns 更新されたパラメータのオブジェクト（DB更新用）
  */
-export function processAging(currentAge: number, currentVitality: number, accumulatedDays: number, birthDate?: string | null): { age: number, vitality: number, accumulated_days: number, aged: boolean } {
+export function processAging(currentAge: number, currentVitality: number, accumulatedDays: number, _birthDate?: string | null): { age: number, vitality: number, accumulated_days: number, aged: boolean } {
     let newAge = currentAge;
     let newVitality = currentVitality;
     let newDays = accumulatedDays;
     let aged = false;
 
-    // 年齢計算: birth_dateがあれば実年齢を正確に計算、なければcurrentAge + 経過年数で推定
-    let calculatedAge: number;
-    if (birthDate) {
-        const bd = new Date(birthDate);
-        const today = new Date();
-        calculatedAge = today.getFullYear() - bd.getFullYear();
-        const m = today.getMonth() - bd.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) calculatedAge--;
-    } else {
-        // birth_dateがない旧データ向けフォールバック: currentAge + 累積日数から経過年数を加算
-        calculatedAge = currentAge + Math.floor(newDays / 365);
-    }
+    // ゲーム内時間ベースのみで加齢を計算（birth_dateリアル時間加齢は廃止）
+    const calculatedAge = currentAge + Math.floor(newDays / 365);
 
     if (calculatedAge > newAge) {
         const ageDiff = calculatedAge - newAge;
         newAge = calculatedAge;
-        // 1歳ごとにVitalityが 2〜5 減少 (ランダム要素を持たせるならここで計算だが、決定論的でもよい)
-        // ここでは固定で 3 減らす
+        // 1歳ごとにVitalityが3減少
         newVitality = Math.max(0, newVitality - (3 * ageDiff));
         aged = true;
     }

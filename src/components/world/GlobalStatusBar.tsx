@@ -3,6 +3,7 @@
 import React from 'react';
 import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Home, User as UserIcon, Shield } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
+import { DEFAULT_HEGEMONY } from '@/constants/nations';
 
 import HegemonyModal from './HegemonyModal';
 import AccountSettingsModal from '../inn/AccountSettingsModal';
@@ -26,12 +27,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
     const day = 1 + (totalDays % 30);
     const calendarString = `${year}年 ${month}月 ${day}日`;
 
-    const hegemony = worldState?.hegemony || [
-        { name: "ローランド", power: 25, color: "bg-blue-600" },
-        { name: "マーカンド", power: 25, color: "bg-emerald-600" },
-        { name: "華龍神朝", power: 25, color: "bg-red-600" },
-        { name: "夜刀神国", power: 25, color: "bg-purple-700" }
-    ];
+    const hegemony = worldState?.hegemony || DEFAULT_HEGEMONY;
 
     const maxVitality = userProfile?.max_vitality || 100;
     const currentVitality = userProfile?.vitality ?? maxVitality;

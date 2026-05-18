@@ -217,10 +217,29 @@ export const createBattleSlice = (
 
         let initialAp = 5;
         let blessingActive = false;
+        let blessingHealAmount = 0;
         if (userProfile?.blessing_data) {
             const blessing = userProfile.blessing_data as any;
             blessingActive = true;
             initialAp += (blessing.ap_bonus || 0);
+            // hp_pct: 最大HPの指定%分を回復
+            if (blessing.hp_pct && blessing.hp_pct > 0) {
+                const maxHp = getEffectiveMaxHp(userProfile, get());
+                blessingHealAmount = Math.floor(maxHp * blessing.hp_pct);
+                const currentHp = userProfile.hp || 0;
+                const newHp = Math.min(maxHp, currentHp + blessingHealAmount);
+                blessingHealAmount = newHp - currentHp; // 実際の回復量
+                if (blessingHealAmount > 0) {
+                    set(state => ({
+                        userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
+                    }));
+                    // DB同期（非同期・失敗許容）
+                    fetch('/api/profile/update-status', {
+                        method: 'POST',
+                        body: JSON.stringify({ hp: newHp, profileId: userProfile.id })
+                    }).catch(console.error);
+                }
+            }
         }
 
         const hasEquipBonus = equipBonus.atk > 0 || equipBonus.def > 0 || equipBonus.hp > 0;
@@ -248,11 +267,17 @@ export const createBattleSlice = (
             equipBonusMessages.push(`📦 デッキ充実ボーナス！ ${equippedCount}枚装備 → ${bonusParts.join(' / ')}`);
         }
 
+        const blessingMsg = blessingActive
+            ? (blessingHealAmount > 0
+                ? `✨ 祈りの加護が発動！(AP+1 & HP+${blessingHealAmount}回復)`
+                : `✨ 祈りの加護が発動！(AP+1)`)
+            : null;
+
         const startMessages = [
             `${enemies.map(e => e.name).join('と')}が現れた！`,
             ...equipBonusMessages,
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
-            ...(blessingActive ? ['✨ 祈りの加護が発動！(開始APアップ & HP回復)'] : []),
+            ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
             `--- ターン 1 ---`
         ];
@@ -830,19 +855,24 @@ export const createBattleSlice = (
             }
         }
 
+        // [Security] JWT認証付きでサーバーにアクション同期 (v27.2)
         if (card && battleState.battle_session_id) {
-            fetch('/api/battle/action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    battle_session_id: battleState.battle_session_id,
-                    action_type: 'attack_enemy',
-                    card,
-                    target_id: targetEnemyId,
-                    log_message: `Used ${card?.name}`
-                })
-            }).then(res => res.json()).then(data => {
-                if (data.error) console.warn('Server validation failed:', data.error);
+            supabase.auth.getSession().then(({ data: { session: authSession } }) => {
+                const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                if (authSession?.access_token) headers['Authorization'] = `Bearer ${authSession.access_token}`;
+                fetch('/api/battle/action', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        battle_session_id: battleState.battle_session_id,
+                        action_type: 'attack_enemy',
+                        card,
+                        target_id: targetEnemyId,
+                        log_message: `Used ${card?.name}`
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (data.error) console.warn('Server validation failed:', data.error);
+                });
             });
         }
 
@@ -1306,11 +1336,13 @@ export const createBattleSlice = (
             if (updatedTargetEnemy?.drop_rate && updatedTargetEnemy.drop_item_slug && Math.random() * 100 < updatedTargetEnemy.drop_rate) {
                 newMessages.push(`${updatedTargetEnemy.name}が「${updatedTargetEnemy.drop_item_slug}」を落とした！`);
                 const dropSlug = updatedTargetEnemy.drop_item_slug;
-                const { userProfile: up } = get();
-                const headers: HeadersInit = { 'Content-Type': 'application/json' };
-                if (up?.id) headers['x-user-id'] = up.id;
-                fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1 }) })
-                    .catch(err => console.error('Drop add failed', err));
+                // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+                    fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1 }) })
+                        .catch(err => console.error('Drop add failed', err));
+                });
             }
         }
 
@@ -1318,6 +1350,27 @@ export const createBattleSlice = (
             newMessages.push('全ての敵を倒した！ 勝利！');
             try {
                 fetch('/api/report-action', { method: 'POST', body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id }) });
+                // [Security] v27.2: サーバーサイドバトル結果検証
+                if (battleState.battle_session_id) {
+                    supabase.auth.getSession().then(({ data: { session: authSession } }) => {
+                        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                        if (authSession?.access_token) headers['Authorization'] = `Bearer ${authSession.access_token}`;
+                        fetch('/api/battle/validate-result', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({
+                                battle_session_id: battleState.battle_session_id,
+                                claimed_result: 'victory'
+                            })
+                        }).then(res => res.json()).then(data => {
+                            if (data.battle_completion_token) {
+                                set(state => ({
+                                    battleState: { ...state.battleState, battle_completion_token: data.battle_completion_token }
+                                }));
+                            }
+                        }).catch(console.error);
+                    });
+                }
                 // バトル後HPをDB保存してからプロフィール更新
                 const preservedHp = get().userProfile?.hp;
                 const preservedVit = get().userProfile?.vitality;
@@ -1537,6 +1590,26 @@ export const createBattleSlice = (
                 // クエスト外バトル（パブバトル等）のみ世界への影響を報告
                 if (!isQuestBattle) {
                     await fetch('/api/report-action', { method: 'POST', body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id }) });
+                }
+                // [Security] v27.2: サーバーサイドバトル結果検証
+                const bsid = get().battleState.battle_session_id;
+                if (bsid) {
+                    try {
+                        const { data: { session: authSession } } = await supabase.auth.getSession();
+                        const vHeaders: HeadersInit = { 'Content-Type': 'application/json' };
+                        if (authSession?.access_token) vHeaders['Authorization'] = `Bearer ${authSession.access_token}`;
+                        const vRes = await fetch('/api/battle/validate-result', {
+                            method: 'POST',
+                            headers: vHeaders,
+                            body: JSON.stringify({ battle_session_id: bsid, claimed_result: 'victory' })
+                        });
+                        const vData = await vRes.json();
+                        if (vData.battle_completion_token) {
+                            set(state => ({
+                                battleState: { ...state.battleState, battle_completion_token: vData.battle_completion_token }
+                            }));
+                        }
+                    } catch (e) { console.error('[Battle Validate] processPartyTurn:', e); }
                 }
                 // バトル後のHP/VITをDB保存（Service Role API使用でRLSバイパス）
                 const battleHp = get().userProfile?.hp;

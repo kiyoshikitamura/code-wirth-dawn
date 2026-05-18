@@ -2,28 +2,31 @@ row_type,node_id,text_label,params,next_node
 META,gold,500,,
 META,exp,250,,
 META,reputation,15,,
-NODE,start,"暗殺者による襲撃を凌いだ。その腕前が裏社会で囁かれ始めた頃——有力な大名から直接指名で護衛依頼が舞い込んだ。","{""type"":""text"", ""bg"":""bg_mountain"", ""bgm"":""bgm_quest_tense""}",text_start2
-NODE,text_start2,"報酬は破格。だが——依頼主の目が、妙に泳いでいた。","{""type"":""text"", ""bg"":""bg_mountain""}",text_procession
-NODE,text_procession,"依頼内容は領地内を横断する大名行列の護衛。表向きは「近隣の古社へ向けた祭礼行事の移動」。","{""type"":""text"", ""bg"":""bg_mountain""}",text_procession2
-NODE,text_procession2,"だが——荷車が多すぎる。車輪の跡が異常に深い。中身がとてつもなく重いのだ。","{""type"":""text"", ""bg"":""bg_mountain""}",text_captain_order
-NODE,text_captain_order,"護衛団長が声を張り上げた。「皆の者、決して油断するな！ いつ何時、野盗や『逆賊』が襲いかかるとも知れんぞ！」","{""type"":""text"", ""bg"":""bg_mountain""}",text_captain_order2
-NODE,text_captain_order2,"逆賊。その言葉に、護衛の兵士たちが微妙な顔をした。","{""type"":""text"", ""bg"":""bg_mountain""}",text_mountain
-NODE,text_mountain,"行軍が険しい山道に差し掛かった時だった。突然、両側の崖上から大量の岩が落とされた。","{""type"":""text"", ""bg"":""bg_mountain"", ""bgm"":""bgm_quest_crisis""}",text_mountain2
-NODE,text_mountain2,"地面が震え、行列の足が強制的に止まる。","{""type"":""text"", ""bg"":""bg_mountain""}",text_mob_appear
-NODE,text_mob_appear,"土埃の向こうから——ボロボロの着物を纏い、農具や竹槍で武装した集団が雪崩のように押し寄せてきた。","{""type"":""text"", ""bg"":""bg_mountain""}",text_mob_appear2
-NODE,text_mob_appear2,"野盗ではない。餓えた獣のような必死さだ。子供がいる。女がいる。老人がいる。","{""type"":""text"", ""bg"":""bg_mountain""}",text_mob_leader
-NODE,text_mob_leader,"先頭の男が血を吐くように叫んだ。痩せこけている。","{""type"":""text"", ""bg"":""bg_mountain""}",text_mob_leader2
-NODE,text_mob_leader2,"「米を返せ！！ その荷台に乗っているのは、俺たちの村から不当に収奪した年貢の米だ！」","{""type"":""text"", ""bg"":""bg_mountain""}",text_mob_leader3
-NODE,text_mob_leader3,"「家族が餓死しそうなのに——何が祭礼だ！！」男の後ろで、子供が泣いていた。","{""type"":""text"", ""bg"":""bg_mountain""}",text_captain_rage
-NODE,text_captain_rage,"護衛団長が顔を真っ赤にした。「黙れ逆賊ども！！ 者ども、討ち捨てい！！」","{""type"":""text"", ""bg"":""bg_mountain""}",text_captain_rage2
-NODE,text_captain_rage2,"刀を抜いた。兵士たちが農民に向かって駆け出す。——自分もその一人だ。金を受け取った傭兵。雇い主を守る刃。","{""type"":""text"", ""bg"":""bg_mountain""}",battle
-NODE,battle,"一揆勢との戦闘。彼らは逆賊か、それとも強欲な権力者の被害者か。だが——自分は金を受け取った傭兵だ。","{""type"":""battle"", ""bg"":""bg_mountain"", ""enemy_group_id"":404, ""bgm"":""bgm_battle""}",choice1
-CHOICE,,刃で応える,,text_aftermath
-NODE,text_aftermath,"剣が閃くたびに悲痛な叫び声が上がった。農民たちが倒れていく。","{""type"":""text"", ""bg"":""bg_mountain""}",text_aftermath2
-NODE,text_aftermath2,"鎌を振り上げた男が斬られて膝をついた。「……お前も……あいつらの犬か……」","{""type"":""text"", ""bg"":""bg_mountain""}",text_aftermath3
-NODE,text_aftermath3,"「俺の村では……子供が三人……飯が食えずに死んだ。——それでもお前は……剣を振るうのか……」目が閉じた。","{""type"":""text"", ""bg"":""bg_mountain""}",text_captain_reward
-NODE,text_captain_reward,"一揆は瞬く間に鎮圧された。護衛団長が満足げに笑った。","{""type"":""text"", ""bg"":""bg_mountain""}",text_captain_reward2
-NODE,text_captain_reward2,"「ふん、虫ケラどもが。……おい傭兵、よくやった。後で特別手当を払ってやろう」倒れた農民を踏みつけて荷車の方へ歩いていった。","{""type"":""text"", ""bg"":""bg_mountain""}",text_broken_tools
-NODE,text_broken_tools,"倒れた農民たちの手には折れた鍬や鎌がこびりついていた。錆びた刃。藁で補修された柄。武器ではない。農具だ。","{""type"":""text"", ""bg"":""bg_mountain""}",text_broken_tools2
-NODE,text_broken_tools2,"血に染まった農具を見つめながら、冷たくなった剣を鞘に納めた。——今日、自分が何をしたのか。考えないようにした。","{""type"":""text"", ""bg"":""bg_mountain""}",end_node
-NODE,end_node,"大名行列は無事に目的地に到着した。報酬は約束通り支払われた。だが——金貨の入った袋が、異様に重く感じた。","{""type"":""end_success"", ""bg"":""bg_mountain""}",
+NODE,start,"暗殺者の襲撃を凌いだ。その腕前が裏社会で囁かれ始めた頃——","{""type"":""text"", ""bg"":""bg_mountain"", ""bgm"":""bgm_quest_tense""}",start_02
+NODE,start_02,"有力な大名から直接指名の護衛依頼が舞い込んだ。報酬は破格。","{""type"":""text"", ""bg"":""bg_mountain""}",start_03
+NODE,start_03,"だが依頼主の目が、妙に泳いでいた。","{""type"":""text"", ""bg"":""bg_mountain""}",proc_01
+NODE,proc_01,"依頼は大名行列の護衛。表向きは「近隣の古社への祭礼行事」。","{""type"":""text"", ""bg"":""bg_mountain""}",proc_02
+NODE,proc_02,"だが荷車が多すぎる。車輪の跡が異常に深い。中身がとてつもなく重い。","{""type"":""text"", ""bg"":""bg_mountain""}",captain_01
+NODE,captain_01,"護衛団長が叫んだ。「油断するな！野盗や逆賊がいつ襲うかわからんぞ！」","{""type"":""text"", ""bg"":""bg_mountain""}",captain_02
+NODE,captain_02,"逆賊。その言葉に兵士たちが微妙な顔をした。","{""type"":""text"", ""bg"":""bg_mountain""}",mountain_01
+NODE,mountain_01,"険しい山道に差し掛かった時、両側の崖上から大量の岩が落とされた。","{""type"":""text"", ""bg"":""bg_mountain"", ""bgm"":""bgm_quest_crisis""}",mountain_02
+NODE,mountain_02,"地面が震え、行列の足が強制的に止まる。","{""type"":""text"", ""bg"":""bg_mountain""}",mob_01
+NODE,mob_01,"土埃の向こうからボロボロの着物を纏い農具で武装した集団が押し寄せてきた。","{""type"":""text"", ""bg"":""bg_mountain""}",mob_02
+NODE,mob_02,"野盗ではない。子供がいる。女がいる。老人がいる。","{""type"":""text"", ""bg"":""bg_mountain""}",leader_01
+NODE,leader_01,"先頭の男が血を吐くように叫んだ。痩せこけている。","{""type"":""text"", ""bg"":""bg_mountain""}",leader_02
+NODE,leader_02,"「米を返せ！その荷台は俺たちの村から不当に収奪した年貢の米だ！」","{""type"":""text"", ""bg"":""bg_mountain""}",leader_03
+NODE,leader_03,"「家族が餓死しそうなのに——何が祭礼だ！」男の後ろで子供が泣いていた。","{""type"":""text"", ""bg"":""bg_mountain""}",rage_01
+NODE,rage_01,"護衛団長が顔を赤くした。「黙れ逆賊ども！者ども、討ち捨てい！」","{""type"":""text"", ""bg"":""bg_mountain""}",rage_02
+NODE,rage_02,"兵士たちが農民に向かって駆け出す。自分もその一人だ。金を受け取った傭兵。","{""type"":""text"", ""bg"":""bg_mountain""}",battle
+NODE,battle,一揆勢との戦闘。彼らは逆賊か、権力者の被害者か。だが自分は傭兵だ。,"{""type"":""battle"", ""bg"":""bg_mountain"", ""enemy_group_id"":404, ""bgm"":""bgm_battle""}",choice1
+CHOICE,,刃で応える,,after_01
+NODE,after_01,"剣が閃くたびに悲痛な叫び声が上がった。農民たちが倒れていく。","{""type"":""text"", ""bg"":""bg_mountain""}",after_02
+NODE,after_02,"鎌を振り上げた男が斬られ膝をついた。「お前も……あいつらの犬か」","{""type"":""text"", ""bg"":""bg_mountain""}",after_03
+NODE,after_03,"「子供が三人、飯が食えず死んだ。それでも剣を振るうのか」目が閉じた。","{""type"":""text"", ""bg"":""bg_mountain""}",reward_01
+NODE,reward_01,"一揆は瞬く間に鎮圧された。護衛団長が満足げに笑った。","{""type"":""text"", ""bg"":""bg_mountain""}",reward_02
+NODE,reward_02,"「虫ケラどもが。傭兵、よくやった。特別手当を払ってやろう」","{""type"":""text"", ""bg"":""bg_mountain""}",reward_03
+NODE,reward_03,"倒れた農民を踏みつけて荷車の方へ歩いていった。","{""type"":""text"", ""bg"":""bg_mountain""}",tools_01
+NODE,tools_01,"農民たちの手には折れた鍬や鎌。錆びた刃。藁で補修された柄。武器ではない。","{""type"":""text"", ""bg"":""bg_mountain""}",tools_02
+NODE,tools_02,"血に染まった農具を見つめ、冷たくなった剣を鞘に納めた。","{""type"":""text"", ""bg"":""bg_mountain""}",end_01
+NODE,end_01,"大名行列は目的地に到着した。報酬は約束通り支払われた。","{""type"":""text"", ""bg"":""bg_mountain""}",end_node
+NODE,end_node,"だが金貨の入った袋が、異様に重く感じた。","{""type"":""end_success"", ""bg"":""bg_mountain""}",

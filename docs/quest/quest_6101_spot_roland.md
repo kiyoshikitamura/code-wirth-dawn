@@ -14,10 +14,8 @@
 | **リピート** | 現世代で1回（継承後は再出現） |
 | **難易度Tier** | Hard（rec_level: 20） |
 | **経過日数 (time_cost)** | 7（成功: 7日 / 失敗: 5日） |
-| **ノード数** | [CSV作成後に追記] |
+| **ノード数** | 78ノード |
 | **サムネイル画像** | `/images/quests/bg_spot_roland_tomb.png` |
-
-※BGM、SE、進行中の背景画像などはノードごとに指定します。
 
 ---
 
@@ -60,428 +58,166 @@ Exp:500|Rep:-100|Item:603|Align:秩序+100
 
 ---
 
-## 3. シナリオノード構成
+## 2.5 失敗ペナルティ
 
-### 全体フロー
+| 項目 | 値 |
+|-----|-----|
+| VIT変動 | VIT -1 |
+| 経過日数（失敗） | 5日 |
+
+---
+
+## 3. シナリオノードフロー
+
 ```text
 start
-  └─[続ける]→ escape_underground
-       └─[続ける]→ battle_protos
-            ├─[勝利]→ get_promise
-            │    └─[続ける]→ text_eluka
-            │         └─[続ける]→ boss_eluka
-            │              ├─[勝利]→ after_eluka
-            │              │    └─[続ける]→ text_baram
-            │              │         └─[続ける]→ boss_baram
-            │              │              ├─[勝利]→ after_baram
-            │              │              │    └─[続ける]→ text_shirasu
-            │              │              │         └─[続ける]→ boss_shirasu
-            │              │              │              ├─[勝利]→ after_shirasu
-            │              │              │              │    └─[続ける]→ text_lyra
-            │              │              │              │         └─[続ける]→ boss_lyra
-            │              │              │              │              ├─[勝利]→ after_lyra
-            │              │              │              │              │    └─[続ける]→ text_alvin
-            │              │              │              │              │         └─[続ける]→ boss_alvin
-            │              │              │              │              │              ├─[勝利]→ final_choice
-            │              │              │              │              │              │    ├─[討伐する]→ end_kill
-            │              │              │              │              │              │    └─[封印する]→ end_seal
-            │              │              │              │              │              └─[敗北]→ end_failure
-            │              │              │              │              └─[敗北]→ end_failure
-            │              │              │              └─[敗北]→ end_failure
-            │              │              └─[敗北]→ end_failure
-            │              └─[敗北]→ end_failure
-            └─[敗北]→ end_failure
+ └─ start_02 → start_03 → start_04 → start_05
+     └─ start_06 → start_07 → start_08
+         └─ ug_01 → ug_02 → ug_03 → ug_04 → ug_05
+             └─ battle_protos
+                  ├─ win → get_promise → promise_02~06
+                  │        └─ eluka_01~04 → boss_eluka
+                  │             ├─ win → after_eluka → after_eluka_02
+                  │             │        └─ baram_01~05 → boss_baram
+                  │             │             ├─ win → after_baram → after_baram_02
+                  │             │             │        └─ shirasu_01~04 → boss_shirasu
+                  │             │             │             ├─ win → after_shirasu~02
+                  │             │             │             │        └─ lyra_01~04 → boss_lyra
+                  │             │             │             │             ├─ win → after_lyra~03
+                  │             │             │             │             │        └─ alvin_01~05 → boss_alvin
+                  │             │             │             │             │             ├─ win → choice_01~07 → choice_final
+                  │             │             │             │             │             │    ├─ 討伐 → end_kill_01~end_kill
+                  │             │             │             │             │             │    └─ 封印 → end_seal_01~end_seal
+                  │             │             │             │             │             └─ lose → end_failure~fin
+                  │             │             │             │             └─ lose → end_failure
+                  │             │             │             └─ lose → end_failure
+                  │             │             └─ lose → end_failure
+                  │             └─ lose → end_failure
+                  └─ lose → end_failure
 ```
 
 ### ノード詳細
 
-#### `start`（type: text）
-**演出パラメータ:**
-- **BGM**: `bgm_quest_crisis`
-- **背景画像**: `bg_spot_roland_fire`
-
-**テキスト:**
+#### `start`（text）
+**演出:** bg: bg_spot_roland_fire, bgm: bgm_quest_crisis
+```text
+王都レガリア中央広場。
+噴水の水が赤黒く染まっていた。
 ```
-王都レガリア中央広場。噴水の水が赤黒く染まっていた。
 
-聖騎士が血だらけで走ってきた。甲冑の胸当てが拳で潰されたように凹んでいる。
-「逃げろ！ やつらは……やつらは人じゃない！
-　英霊が……蘇った英霊が街を壊してる！」
-
-背後の大聖堂が爆発した。石壁が紙のように吹き飛び、粉塵が広場を覆った。
-粉塵の向こうに、光り輝く人影が五つ、浮かんでいる。
-
-「慈愛の聖女」が手を翳しただけで、周囲の兵士たちが膝から崩れ落ちた。
-「不滅の王」が睨んだだけで、王都の象徴たる城門が根元から折れた。
-
-もう立ち向かえる者はいない。今は逃げるしかない。
-地下墓所——あそこなら英霊の力が届きにくいはずだ。
+#### `start_02`（text）
+**演出:** bg: bg_spot_roland_fire, bgm: bgm_quest_crisis
+```text
+聖騎士が血だらけで走ってきた。
+甲冑の胸当てが拳で潰されている。
 ```
-**params:**
-```json
-{"type":"text", "bgm":"bgm_quest_crisis", "bg":"bg_spot_roland_fire", "next":"escape_underground"}
+
+#### `start_03`（text）
+**演出:** bg: bg_spot_roland_fire, bgm: bgm_quest_crisis, speaker: 聖騎士
+```text
+「逃げろ！
+　やつらは……人じゃない！」
+```
+
+#### `start_04`（text）
+**演出:** bg: bg_spot_roland_fire, bgm: bgm_quest_crisis, speaker: 聖騎士
+```text
+「英霊が……蘇った英霊が
+　街を壊してる！」
+```
+
+#### `start_05`～`start_08`（text）
+**演出:** bg: bg_spot_roland_fire, bgm: bgm_quest_crisis
+大聖堂の爆発、聖女・不滅の王の威力描写、地下墓所への撤退。
+
+#### `ug_01`～`ug_05`（text）
+**演出:** bg: bg_spot_roland_tomb, bgm: bgm_quest_mystery
+地下墓所の最奥で隠し部屋を発見。祭壇の守護者が出現。
+
+#### `battle_protos`（battle）
+**演出:** bg: bg_spot_roland_tomb, bgm: bgm_battle_strong
+**パラメータ:** enemy_group_id: 300, next: get_promise, fail: end_failure
+
+#### `get_promise`（reward）
+**演出:** bg: bg_spot_roland_tomb, bgm: bgm_quest_mystery
+**アイテム:** 601（五英霊の誓約）
+
+#### `promise_02`～`promise_06`（text）
+**演出:** bg: bg_spot_roland_tomb, bgm: bgm_quest_mystery, speaker: 英霊の声（03～05）
+英霊の声が語りかけ、誓約の石の使い方を伝える。
+
+#### `eluka_01`～`eluka_04`（text）→ `boss_eluka`（battle）
+**演出:** bg: bg_spot_roland_tomb, speaker: 聖女エルーカ（02, 04）
+**パラメータ:** enemy_group_id: 301, next: after_eluka, fail: end_failure
+
+#### `after_eluka`～`after_eluka_02`（text）
+**演出:** speaker: 聖女エルーカ（02）
+エルーカの最後の言葉「……ありがとう。やっと、眠れる」
+
+#### `baram_01`～`baram_05`（text）→ `boss_baram`（battle）
+**演出:** bg: bg_spot_roland_tomb, speaker: 賢者バラム（03, 05）
+**パラメータ:** enemy_group_id: 302, next: after_baram, fail: end_failure
+
+#### `after_baram`～`after_baram_02`（text）
+**演出:** speaker: 賢者バラム（02）
+バラムの最後の言葉「研究者は常に仮説を修正するものだ」
+
+#### `shirasu_01`～`shirasu_04`（text）→ `boss_shirasu`（battle）
+**演出:** bg: bg_spot_roland_tomb, speaker: 盾のシラス（04）
+**パラメータ:** enemy_group_id: 303, next: after_shirasu, fail: end_failure
+
+#### `after_shirasu`～`after_shirasu_02`（text）
+**演出:** speaker: 盾のシラス（02）
+
+#### `lyra_01`～`lyra_04`（text）→ `boss_lyra`（battle）
+**演出:** bg: bg_spot_roland_tomb, speaker: 射手リラ（04）
+**パラメータ:** enemy_group_id: 304, next: after_lyra, fail: end_failure
+
+#### `after_lyra`～`after_lyra_03`（text）
+**演出:** speaker: 射手リラ（02, 03）
+
+#### `alvin_01`～`alvin_05`（text）→ `boss_alvin`（battle）
+**演出:** bg: bg_spot_roland_core, bgm: bgm_battle_boss, speaker: 不滅の王アルヴィン（04, 05）
+**パラメータ:** enemy_group_id: 305, next: choice_01, fail: end_failure
+
+#### `choice_01`～`choice_07`（text）→ `choice_final`（choice）
+**演出:** bg: bg_spot_roland_core, bgm: bgm_spot_final_choice
+- speaker: 不滅の王アルヴィン（02, 03, 07）, 現国王（05）
+- 選択肢: 「王の命令に従い討伐する」→ `end_kill_01` / 「誓約の力で封印する」→ `end_seal_01`
+
+#### `end_kill_01`～`end_kill`（end_success）
+**演出:** bg: bg_spot_roland_core
+**rewards:** Exp:500, Gold:10000, Rep:200, Item:602
+
+#### `end_seal_01`～`end_seal`（end_success）
+**演出:** bg: bg_spot_roland_core
+**rewards:** Exp:500, Rep:-100, Item:603, Order:100
+
+#### `end_failure`～`end_failure_fin`（end_failure）
+**演出:** bg: bg_spot_roland_tomb
+
+---
+
+## 4. 新規エネミー・アイテム定義参照
+
+既存エネミー・アイテムを使用。追加なし。
+
+---
+
+## 5. CSVエントリ
+
+`quests_special.csv`
+```csv
+6101,qst_spot_roland,忘却の五英霊 ―レガリア崩落の真実―,20,5,7,loc_roland,,,,,Exp:500|Gold:10000|Rep:200|Item:602,聖騎士団,王都レガリアに突如現れた「五英霊」。暴走する彼らを止め真実を暴け。
 ```
 
 ---
 
-#### `escape_underground`（type: text）
-**演出パラメータ:**
-- **BGM**: `bgm_quest_mystery`
-- **背景画像**: `bg_spot_roland_tomb`
-
-**テキスト:**
-```
-避難民を押しのけるようにして、地下墓所の最奥へ辿り着いた。
-歴代の王が眠る石棺が並ぶ中、壁の一角に不自然な隙間がある。
-
-押してみると——崩れた。その奥に、地図にない部屋が広がっていた。
-
-壁には英霊たちの名が刻まれている。
-だが、王都の歴史書には一切載っていない名前ばかりだ。
-
-「これは……歴史から抹消された、本当の英雄たちの墓所か」
-
-部屋の中央に、朽ちた祭壇がある。
-何かが光っている。手を伸ばそうとした瞬間——
-
-石造りの巨人が壁から這い出てきた。祭壇の守護者だ。
-```
-**params:**
-```json
-{"type":"text", "bgm":"bgm_quest_mystery", "bg":"bg_spot_roland_tomb", "next":"battle_protos"}
-```
-
----
-
-#### `battle_protos`（type: battle）
-**演出パラメータ:**
-- **BGM**: `bgm_battle_strong`
-- **背景画像**: `bg_spot_roland_tomb`
-
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `spot_roland_protos` (墓所の守護者プロトス) |
-
-**params:**
-```json
-{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_protos"}
-```
-
----
-
-#### `get_promise`（type: reward）
-**演出パラメータ:**
-- **BGM**: `bgm_quest_mystery`
-- **背景画像**: `bg_spot_roland_tomb`
-
-**テキスト:**
-```
-守護者の石体が崩れ落ちた。石片が祭壇の上に散らばる。
-
-祭壇の奥から、五角形に並んだ小さな宝珠が現れた。
-手に取ると、頭の中に声が響いた。
-
-「——我らの誓約を受け継ぐ者よ。
-　我らは王に裏切られた。功績を奪われ、名を消され、この暗闇に葬られた。
-　だがこの石があれば、暴走する我らの絶技を打ち消せる。
-　……頼む。我らを止めてくれ」
-
-声は途切れた。
-パッシブスキル『五英霊の誓約』を入手した。
-```
-**params:**
-```json
-{"type":"reward", "bgm":"bgm_quest_mystery", "bg":"bg_spot_roland_tomb", "items":["601"]}
-```
-
----
-
-#### `boss_01_eluka`（type: battle）
-**演出パラメータ:**
-- **BGM**: `bgm_battle_strong`
-- **背景画像**: `bg_spot_roland_tomb`
-
-**テキスト:**
-```
-地下通路を進むと、冷たい光が前方を塞いだ。
-
-白い法衣をまとった女が浮かんでいる。
-顔は穏やかだが、その目には涙の跡が凍りついていた。
-
-「……あなた、生きているのね。珍しいわ」
-
-慈愛の聖女エルーカ。かつて疫病から民を救った女性。
-だが真実は違った。王家は彼女を「生きた薬」として地下に幽閉し、
-その血を絞って特効薬を作っていた。助けは来なかった。
-
-「私は三年間、暗闇の中で血を抜かれ続けたの。
-　祈っても祈っても、誰も来なかった。
-　……それでもまだ、私に『慈愛』を求めるの？」
-
-彼女の周囲の空気が凍りつく。
-```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `spot_roland_eluka` (聖女エルーカ) |
-
-**params:**
-```json
-{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_eluka"}
-```
-
----
-
-#### `boss_02_baram`（type: battle）
-**演出パラメータ:**
-- **BGM**: `bgm_battle_strong`
-- **背景画像**: `bg_spot_roland_tomb`
-
-**テキスト:**
-```
-エルーカを退けた。彼女は消え際に小さく呟いた。
-「……ありがとう。やっと、眠れる」
-
-次の通路は、壁一面に数式と魔法陣が刻まれていた。
-その中央で、黒いローブの痩せた男が本を読んでいる。
-こちらに気づくと、黄ばんだ歯を見せて笑った。
-
-「おや、客人か。久しぶりだ。
-　最後に人と話したのは……処刑される前日だったかな」
-
-知恵の賢者バラム。王に禁術の研究成果を全て奪われ、
-口封じのために幽閉された末、毒殺された魔術師。
-
-「私の研究は王家の『神聖魔術』として発表された。
-　学者の名誉とは——盗まれるためにあるらしい。
-　さて、死後の暇つぶしに付き合ってもらおうか」
-
-空中に無数の魔法陣が展開された。
-```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `spot_roland_baram` (賢者バラム) |
-
-**params:**
-```json
-{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_baram"}
-```
-
----
-
-#### `boss_03_shirasu`（type: battle）
-**演出パラメータ:**
-- **BGM**: `bgm_battle_strong`
-- **背景画像**: `bg_spot_roland_tomb`
-
-**テキスト:**
-```
-バラムが霧のように散った。
-「……ふん。負けるのは嫌いじゃないよ。研究者は常に仮説を修正するものだ」
-
-次の部屋は、壁に無数の盾が飾られていた。
-その全てに深い傷がついている。
-
-奥に立つ男は、全身に傷痕だらけだった。
-巨大な盾を地面に突き立て、無言でこちらを見据えている。
-
-「…………」
-
-盾の守護者シラス。王の身代わりとして毒杯を仰ぎ、暗殺を防いだ騎士。
-だが王は彼の死を「不慮の事故」として処理し、遺族への補償すら行わなかった。
-
-「言葉はいらん。お前が王家の犬なら、この盾が相手だ。
-　——俺は死んでも王を守った。だが王は、俺の家族すら守らなかった」
-
-盾が軋む音を立てた。彼の怒りが具現化している。
-```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `spot_roland_shirasu` (盾のシラス) |
-
-**params:**
-```json
-{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_shirasu"}
-```
-
----
-
-#### `boss_04_lyra`（type: battle）
-**演出パラメータ:**
-- **BGM**: `bgm_battle_strong`
-- **背景画像**: `bg_spot_roland_tomb`
-
-**テキスト:**
-```
-シラスが膝をついた。
-「……強いな。俺の家族のことは……もういい。
-　ただ、あの子らが飯を食えていたなら、それでいい」
-
-次の広間に入った瞬間、頬を蒼い光が掠めた。矢だ。
-
-壁に背を預ける女の姿が見える。長弓を構え、弦をゆっくりと引いている。
-片方の目が潰されている。
-
-「——もう少し右だったら、死んでたわよ。わざと外したの。
-　あなたが王家の差し金じゃないなら、の話だけど」
-
-千里の射手リラ。三つの戦争を勝利に導いた弓の名手。
-だが戦後、彼女が知った軍事機密が不都合だったため、「戦死扱い」で暗殺された。
-
-「英雄なんて、使い捨ての道具よ。
-　役目が終われば、口を塞がれて消される。
-　——私がその証拠」
-
-二本目の矢が放たれた。今度はわざとではない。
-```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `spot_roland_lyra` (射手リラ) |
-
-**params:**
-```json
-{"type":"battle", "bgm":"bgm_battle_strong", "bg":"bg_spot_roland_tomb", "enemy_group_id":"spot_roland_lyra"}
-```
-
----
-
-#### `boss_05_alvin`（type: battle）
-**演出パラメータ:**
-- **BGM**: `bgm_spot_final_boss`
-- **背景画像**: `bg_spot_roland_core`
-
-**テキスト:**
-```
-リラが弓を降ろした。
-「……ごめんね。私にはもう、信じるものがないの。
-　でもあなたが勝ったなら——少しだけ、信じてみてもいいかもしれない」
-
-最深部。天井のない巨大な空間に出た。
-星空が見える。いや——違う。光る粒子が無数に漂っているだけだ。
-
-その中央に、玉座に座る男がいた。
-金色の鎧に身を包み、王冠を被っている。だが、その目は虚ろだった。
-
-「不滅の王」アルヴィン。ローランド聖王国の建国者。
-彼は四人の仲間の犠牲と裏切りの上に国を築いた男だ。
-
-男がゆっくりと立ち上がった。
-「……来たか。お前は何者だ。王家の兵か？ それとも——」
-
-長い沈黙。
-
-「——いや。そんなことはどうでもいい。
-　俺は四人を殺した。四人の友を、国のために殺した。
-　その罪は……この身が何度滅びても、消えやしない」
-
-金色の鎧が黒く染まっていく。自責と憎悪が暴走する。
-「だから——来い！ 俺を止められる者がいるなら、止めてみろ！」
-```
-| 設定 | 値 |
-|-----|-----|
-| 敵グループ | `spot_roland_alvin` (不滅の王アルヴィン) |
-
-**params:**
-```json
-{"type":"battle", "bgm":"bgm_spot_final_boss", "bg":"bg_spot_roland_core", "enemy_group_id":"spot_roland_alvin"}
-```
-
----
-
-#### `final_choice`（type: text）
-**演出パラメータ:**
-- **BGM**: `bgm_spot_final_choice`
-- **背景画像**: `bg_spot_roland_core`
-
-**テキスト:**
-```
-アルヴィンが膝をついた。金の鎧が剥がれ落ち、下から痩せた老人の体が現れた。
-
-「……すまなかった。エルーカ。バラム。シラス。リラ。
-　お前たちを犠牲にしなければ、国は作れなかった。
-　だがそれは——俺の弱さだ」
-
-そこへ、兵の一団が駆けつけた。先頭に立つのは現国王だ。
-
-「よくやった、冒険者。英霊の残骸を回収しろ。
-　彼らの魔力は国の財産だ。
-　あと——この地下墓所の存在は、知らなかったことにしてくれ」
-
-国王は薄ら笑いを浮かべている。
-アルヴィンが血走った目で国王を睨んだ。
-
-「……こいつもまた、同じことをする。変わらないな。
-　冒険者よ。お前が決めろ。俺たちをどうする」
-```
-**選択肢:**
-| ラベル | 次ノード |
-|--------|---------|
-| 王の命令に従い討伐する | `end_kill` |
-| 誓約の力で彼らを安らかに封印する | `end_seal` |
-
----
-
-#### `end_kill`（type: end）
-**テキスト:**
-```
-王家の命令に従い、五英霊を完全に消滅させた。
-アルヴィンは最後に一言だけ残した。
-「……歴史は、また繰り返すのだな」
-
-王家は地下墓所を封鎖し、英霊の存在を完全に隠蔽した。
-あなたは「王都を救った英雄」として祭り上げられた。
-だが——かつて五人がそう呼ばれたときと、何が違うのだろう。
-
-報酬として『神の法衣』を授かった。豪華な金糸が施されている。
-口止め料としては、少々露骨だった。
-```
-**params:**
-```json
-{"type":"end", "result":"success", "rewards":{"exp":500, "gold":10000, "reputation":200, "items":["602"]}}
-```
-
----
-
-#### `end_seal`（type: end）
-**テキスト:**
-```
-誓約の石を掲げ、五つの魂に語りかけた。
-
-「もう十分だ。お前たちの怒りは正しかった。
-　だが——もう休め」
-
-アルヴィンが目を閉じた。
-「……ああ。お前のような奴がいてくれて、よかった」
-
-五つの光が穏やかに消えていく。
-エルーカは微笑み、バラムは頷き、シラスは敬礼し、リラは手を振った。
-最後にアルヴィンが振り返り、小さく呟いた。
-
-「——次の世代に、期待する」
-
-国王は苦虫を噛み潰したような顔をした。
-「余計なことを。これは失策として記録する」
-だが——英霊たちが託してくれた力は、王の命令では消せない。
-
-固有スキル『五星の加護』を手に入れた！
-```
-**params:**
-```json
-{"type":"end", "result":"success", "rewards":{"exp":500, "reputation":-100, "items":["603"], "alignment_shift":{"order":100}}}
-```
-
----
-
-#### `end_failure`（type: end）
-**テキスト:**
-```
-暗い石床に叩きつけられた。
-意識が遠のく中、英霊の声が聞こえた気がした。
-
-「……すまない。お前には、まだ早かったか」
-
-冷たい石の上で、目の前が暗くなっていく。
-```
-**params:**
-```json
-{"type":"end", "result":"failure"}
-```
+## 6. 実装チェックリスト
+
+- [x] テキスト分割（30-35文字/ノード）適用
+- [x] speaker_name 全ノードに適用
+- [x] ノード数: 78ノード
+- [x] 全バトルにwin/loseの両方のCHOICE行あり
+- [ ] enemy_group_id 300-305 がDBに登録済み
+- [ ] 報酬アイテム 601-603 がDBに登録済み

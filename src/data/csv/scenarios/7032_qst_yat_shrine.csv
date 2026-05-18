@@ -1,8 +1,43 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"祠の縄が切れ、魑魅魍魎が這い出してきている。急ぎ霊石の欠片を拾い集め、綻びを縫い合わせねば、村が喰われる。",node_1,"type:text"
-NODE,node_1,"依頼品の納品を行う。",,"type:check_delivery, item_id:3008, quantity:1"
-CHOICE,,"success",node_2,
-CHOICE,,"failure",end_failure,
-NODE,node_2,"目的地へ出発する。",end_success,"type:travel"
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"「おお、冒険者殿。よくぞ来てくださった。事態は一刻を争うのです」","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""speaker_name"":""神主"",""type"":""text""}",start_02
+NODE,start_02,"老いた神主は、顔を真っ青にしながら、背後にそびえる霊山の山頂を指さした。","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_03
+NODE,start_03,"「山頂の祠に祀られていた『結界石』が、何者かによって打ち砕かれてしまったのです」","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""speaker_name"":""神主"",""type"":""text""}",start_04
+NODE,start_04,"「石の破片は山中に散らばっているはず。あれがないと、この町に妖が雪崩れ込んでくる……！」","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""speaker_name"":""神主"",""type"":""text""}",start_05
+NODE,start_05,"「どうか、散逸した三つの破片を集め、再び祠に奉納してくだされ。頼みましたぞ」","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""speaker_name"":""神主"",""type"":""text""}",mountain_01
+NODE,mountain_01,"依頼を受け、鬱蒼とした霊山へと足を踏み入れた。昼間だというのに、薄暗い霧が立ち込めている。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",mountain_02
+NODE,mountain_02,"山全体が不気味な静寂に包まれていた。本来この山を守るはずの清浄な気は、完全に失われている。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",mountain_03
+NODE,mountain_03,"獣道を掻き分けながら、斜面を登っていく。ふと、苔むした大岩の根本に、淡く光るものを見つけた。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",mountain_04
+NODE,mountain_04,"近づいてみると、それは握り拳ほどの大きさの、半透明な石の欠片だった。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",collect_shard_01
+NODE,collect_shard_01,"一つ目の破片を拾い上げた。石は氷のように冷たいが、微かに神聖な脈動を感じる。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""random_branch"",""prob"":50}",
+CHOICE,,success,,yokai_01
+CHOICE,,failure,,search_02
+NODE,yokai_01,"その時、木々の隙間からヒュードロドロという気味の悪い音が鳴り響いた。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",yokai_02
+NODE,yokai_02,"青白い鬼火が舞い、その奥から奇妙な妖怪たちが姿を現す。結界が破れた影響か！","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_yokai_01
+NODE,battle_yokai_01,"山に巣食う妖怪の群れが襲いかかってきた！","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":430,""type"":""battle""}",
+CHOICE,,win,,after_battle_01
+CHOICE,,lose,,end_failure
+NODE,after_battle_01,"妖怪たちを斬り伏せると、奴らは霧となって四散した。油断はできない、先を急ごう。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",search_02
+NODE,search_02,"さらに険しい山道を登っていく。霧が次第に濃くなり、視界が数歩先までしか効かなくなってきた。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",search_03
+NODE,search_03,"ぬかるんだ枯れ沢の跡に出た。そこは山津波で崩れた形跡があり、歩を進めるのも困難だ。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",search_04
+NODE,search_04,"泥の中に、二つ目の淡い光を見つけた。泥にまみれているが、間違いなく結界石の破片だ。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",collect_shard_02
+NODE,collect_shard_02,"布で汚れを拭い取ると、破片は再び清らかな光を取り戻した。これで二つ目だ。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""random_branch"",""prob"":50}",
+CHOICE,,success,,boss_01
+CHOICE,,failure,,search_05
+NODE,boss_01,"直後、ズンッと地面が揺れた。背後から生暖かい、ひどく血生臭い息が吹き付けられる。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",boss_02
+NODE,boss_02,"「石を集めてどうする気だァ……？ まさか、この俺を封じようってんじゃねぇだろうなァ！」","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_tense"",""speaker_name"":""赤鬼"",""type"":""text""}",battle_yokai_02
+NODE,battle_yokai_02,"霧の中から巨大な赤鬼が立ち塞がった！","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":431,""type"":""battle""}",
+CHOICE,,win,,after_battle_02
+CHOICE,,lose,,end_failure
+NODE,after_battle_02,"赤鬼が轟音と共に倒れた。この巨怪ですら、結界がなければ山に居座ってしまうということか。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",search_05
+NODE,search_05,"気を取り直し、山頂を目指す。木々がまばらになり、冷たい強風が吹きつけるようになってきた。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",search_06
+NODE,search_06,"やがて、山頂の開けた場所に出た。そこには、無残に破壊された古い石の祠があった。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",search_07
+NODE,search_07,"祠の台座の横に、最後の破片が転がっている。欠けた部分を合わせれば、元の形になりそうだ。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",collect_shard_03
+NODE,collect_shard_03,"最後の破片を拾い上げる。三つの破片が揃うと、互いに共鳴するように暖かな光を放ち始めた。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_field"",""type"":""text""}",shrine_01
+NODE,shrine_01,"破片を抱え、急いで山を駆け下りる。背後で、山そのものが安堵の吐息を漏らしたような気がした。","{""bg"":""bg_yato_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",shrine_02
+NODE,shrine_02,"町に降りると、神社の鳥居の前に神主が立っていた。焦燥に駆られた様子でこちらを待っている。","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""type"":""text""}",shrine_03
+NODE,shrine_03,"「おお、戻られましたか！ その懐の光は、間違いなく結界石……！」","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""speaker_name"":""神主"",""type"":""text""}",return_shrine
+NODE,return_shrine,"神主に三つの破片を手渡す。老人は震える手で石を受け取り、祭壇へと向かった。","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""type"":""text""}",enshrine_01
+NODE,enshrine_01,"古き祝詞が朗々と響き渡る。すると、三つの破片はまばゆい光に包まれ、一つに融合し始めた。","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""type"":""text""}",enshrine_02
+NODE,enshrine_02,"完全な球体に戻った結界石が台座に鎮座すると、町を覆っていた重い空気が、ふっと軽くなった。","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success
+NODE,end_success,"「これで、しばらくは神隠しも収まるでしょう。本当に、ありがとうございました」\n感謝の言葉と報酬を受け取り、神社を後にした。結界が破られた原因は、いずれ探る必要がある。","{""bg"":""bg_guild"",""rewards"":{""gold"":400,""exp"":120,""alignment_shift"":{""justice"":10}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"山の怪異たちの圧倒的な力の前に、ついに力尽きた。\n冷たい土の上に倒れ伏す中、誰かが結界石の破片を拾い上げ、嘲笑う声が聞こえた気がした……。","{""bg"":""bg_yato_mountain"",""type"":""end"",""result"":""failure""}",

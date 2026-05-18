@@ -138,6 +138,19 @@ export async function POST(req: Request) {
         // 16. バトルセッション
         await safeDelete('battle_sessions', 'user_id');
 
+        // 17. コレクション（図鑑）データ
+        await safeDelete('user_bestiary', 'user_id');
+        await safeDelete('user_item_history', 'user_id');
+
+        // 18. ランキングキャッシュ・ベースライン (spec_v19 §5)
+        await safeDelete('ranking_reputation_cache', 'user_id');
+        await safeDelete('ranking_alignment_cache', 'user_id');
+        await safeDelete('alignment_baseline', 'user_id');
+
+        // 19. 号外システム (spec_v21)
+        await safeDelete('user_visited_locations', 'user_id');
+        await safeDelete('user_share_triggers', 'user_id');
+
         // --- 動的 FK スキャン: user_profiles.id を参照する全テーブルを発見して削除 ---
         // SQL で information_schema を問い合わせ、まだ残っている FK 参照を動的に解決する
         try {

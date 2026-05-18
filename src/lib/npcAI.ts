@@ -38,6 +38,8 @@ export interface BattleContext {
     enemyName: string; // v2.7: ダメージ対象エネミー名
     partyMembers: PartyMember[];
     playerEffects?: { id: string; duration: number }[]; // v2.6: プレイヤーのバフ・デバフ用
+    trackedEnemies?: { id: string; name: string; hp: number; def: number }[]; // v4.1: Smart AI ターゲット最適化用
+    currentTurnNumber?: number; // v4.1: レガシースキル判定用
 }
 
 // ─── Role Determination ──────────────────────────────────
@@ -84,6 +86,38 @@ export function determineGrade(member: PartyMember): AIGrade {
 // v2.8: Max actions per NPC per turn to prevent action spam
 const MAX_ACTIONS_PER_TURN = 3;
 
+// ─── Legacy Skill (v4.1: 英霊レベル別APパッシブ) ─────────
+
+interface LegacySkillDef {
+    name: string;
+    apBonus: number;
+    interval: number; // N ターンに1回
+}
+
+function getLegacySkill(level: number): LegacySkillDef | null {
+    if (level >= 30) return { name: '不滅の加護', apBonus: 2, interval: 1 };
+    if (level >= 20) return { name: '英雄の覇気', apBonus: 1, interval: 1 };
+    if (level >= 10) return { name: '古の知恵', apBonus: 1, interval: 2 };
+    return { name: '残響の導き', apBonus: 1, interval: 3 };
+}
+
+function applyLegacySkill(
+    npc: PartyMember,
+    turnNumber: number
+): NpcAction | null {
+    if (npc.origin_type !== 'shadow_heroic') return null;
+    const level = (npc as any).level || 1;
+    const skill = getLegacySkill(level);
+    if (!skill) return null;
+    if (turnNumber % skill.interval !== 0) return null;
+
+    npc.current_ap = Math.min(10, (npc.current_ap || 0) + skill.apBonus);
+    return {
+        type: 'buff',
+        message: `${npc.name}の${skill.name}が発動！ AP+${skill.apBonus} (AP: ${npc.current_ap})`
+    };
+}
+
 // ─── Core AI Logic ───────────────────────────────────────
 
 /**
@@ -101,6 +135,13 @@ export function resolveNpcTurn(
 
     // 1. AP Recovery (+5, cap 10)
     npc.current_ap = Math.min(10, (npc.current_ap || 0) + 5);
+
+    // 1.5 v4.1: レガシースキル（英霊限定APパッシブ）
+    const turnNum = context.currentTurnNumber || 1;
+    const legacyAction = applyLegacySkill(npc, turnNum);
+    if (legacyAction) {
+        actions.push(legacyAction);
+    }
 
     // v2.8: Per-turn same-card limit removed. used_this_turn kept but not enforced.
     npc.used_this_turn = [];
@@ -161,7 +202,7 @@ export function resolveNpcTurn(
         }
     }
 
-    // 5. Attack: 1ターンにつき攻撃カード1枚のみ使用（v4.0）
+    // 5. Attack: v4.1 — Smart AI は2枚/ターン、Random AI は1枚/ターン
     // v4.0: lastUsedCardId による連打防止 — 直前ターンと同じカードは使わない
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
     const attackCards = deck
@@ -173,26 +214,50 @@ export function resolveNpcTurn(
         .sort((a, b) => (b.ap_cost ?? 1) - (a.ap_cost ?? 1));
 
     const lastUsed = (npc as any).lastUsedCardId as string | undefined;
+    const maxAttackCards = npc.ai_grade === 'smart' ? 2 : 1; // v4.1: Smart は2枚
+    let attacksUsed = 0;
 
-    if (actions.length < MAX_ACTIONS_PER_TURN) {
-        // 直前ターンに使ったカードを除外
-        const candidates = attackCards.filter(c => c.id !== lastUsed && (npc.current_ap || 0) >= (c.ap_cost ?? 1));
+    // v4.1: Smart AI — 瀕死ターゲット優先攻撃
+    let effectiveContext = context;
+    if (npc.ai_grade === 'smart' && context.trackedEnemies && context.trackedEnemies.length > 1) {
+        const aliveEnemies = context.trackedEnemies.filter(e => e.hp > 0);
+        if (aliveEnemies.length > 0) {
+            const weakest = aliveEnemies.reduce((a, b) => a.hp < b.hp ? a : b);
+            effectiveContext = {
+                ...context,
+                enemyName: weakest.name,
+                enemyHp: weakest.hp,
+                enemyDef: weakest.def,
+            };
+        }
+    }
+
+    const usedThisTurn: string[] = [];
+    while (attacksUsed < maxAttackCards && actions.length < MAX_ACTIONS_PER_TURN) {
+        // 直前ターンに使ったカード + 今ターン既使用カードを除外
+        const candidates = attackCards.filter(c =>
+            c.id !== lastUsed &&
+            !usedThisTurn.includes(c.id) &&
+            (npc.current_ap || 0) >= (c.ap_cost ?? 1)
+        );
 
         if (candidates.length > 0) {
-            // 使用可能な別カードがある → 1枚使用
             const card = candidates[0];
-            const action = executeCard(npc, card, context);
+            const action = executeCard(npc, card, effectiveContext);
             actions.push(action);
             npc.current_ap = (npc.current_ap || 0) - (card.ap_cost ?? 1);
+            usedThisTurn.push(card.id);
             (npc as any).lastUsedCardId = card.id;
+            attacksUsed++;
         } else {
-            // 別カードがない（1枚しかない or AP不足）→ 基本攻撃
-            if (!actions.some(a => a.type === 'attack')) {
-                actions.push(createBasicAttack(npc, context));
-            }
-            // lastUsedCardId をリセット → 次ターンでカード使用可能に
-            (npc as any).lastUsedCardId = undefined;
+            break; // これ以上使えるカードなし
         }
+    }
+
+    // カード攻撃が0回だった場合は基本攻撃フォールバック
+    if (attacksUsed === 0 && !actions.some(a => a.type === 'attack')) {
+        actions.push(createBasicAttack(npc, effectiveContext));
+        (npc as any).lastUsedCardId = undefined;
     }
 
     // 攻撃アクションが1件もない場合は基本攻撃フォールバック

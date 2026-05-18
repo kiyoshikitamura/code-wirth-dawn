@@ -4,6 +4,17 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase as anonSupabase } from '@/lib/supabase';
 import { QuestService, calculateGrowth, processAging, resolveLocationId } from '@/services/questService';
 import { ECONOMY_RULES } from '@/constants/game_rules';
+import { getShareText, getFlavor } from '@/lib/shareTextLoader';
+import { checkAndFireTrigger, buildShareData, LEVEL_MILESTONES, GOLD_MILESTONES, FAME_HERO_THRESHOLD, FAME_VILLAIN_THRESHOLD, FAME_BANNED_THRESHOLD } from '@/lib/shareUtils';
+import {
+    applyAlignmentShift,
+    updateHubAndWorldState,
+    grantRewardItems,
+    convertGuestToPartyMember,
+    processPartyWearCycle,
+    processReputationChange,
+    persistLootPool,
+} from '@/services/questCompleteHelpers';
 
 // Initialize Supabase Client safely (Service Role)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
@@ -17,7 +28,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 /**
  * POST /api/quest/complete
- * Handles quest completion logic v3.0 (Refactored)
+ * Handles quest completion logic v4.0 (Refactored — helpers extracted)
  */
 export async function POST(req: Request) {
     try {
@@ -30,7 +41,9 @@ export async function POST(req: Request) {
         const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards } = body;
         const lootSaved = Array.isArray(loot_pool) ? loot_pool : [];
 
-        // [Security] JWT認証必須化 — body.user_idを信頼しない
+        // ═══════════════════════════════════════
+        // §0. 認証
+        // ═══════════════════════════════════════
         let user_id: string | null = null;
         const authHeader = req.headers.get('authorization');
         if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
@@ -43,95 +56,75 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing parameters or authentication required' }, { status: 401 });
         }
 
-        // 1. Fetch Quest
+        // ═══════════════════════════════════════
+        // §1. データ取得 + バリデーション
+        // ═══════════════════════════════════════
         const { data: quest, error: qError } = await supabase
-            .from('scenarios')
-            .select('*')
-            .eq('id', quest_id)
-            .single();
+            .from('scenarios').select('*').eq('id', quest_id).single();
 
         console.log(`[QuestComplete] ID: ${quest_id}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
 
         if (qError || !quest) return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
 
-        // 2. Fetch User
         const { data: user, error: uError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', user_id)
-            .single();
+            .from('user_profiles').select('*').eq('id', user_id).single();
 
         if (uError || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        // 2.5 Security Validation
         const validation = await QuestService.validateRequirements(supabase, user_id, quest.requirements);
         if (!validation.valid) {
             console.warn(`[Security] API rejected quest completion. User ${user_id} blocked from ${quest_id}: ${validation.reason}`);
             return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
         }
 
-        // 3. Aging Logic
+        // ═══════════════════════════════════════
+        // §2. 加齢 + ステータス減衰
+        // ═══════════════════════════════════════
         let daysPassed = 1;
-        if (result === 'success') daysPassed = quest.days_success ?? 1; // Allow 0
-        else if (result === 'failure') daysPassed = quest.days_failure ?? 1; // Allow 0
+        if (result === 'success') daysPassed = quest.days_success ?? 1;
+        else if (result === 'failure') daysPassed = quest.days_failure ?? 1;
 
         const { newAge, newAgeDays, decay } = processAging(
-            user.age || 18,
-            user.age_days || 0,
-            daysPassed
+            user.age || 18, user.age_days || 0, daysPassed
         );
 
-        const updates: any = {
-            age: newAge,
-            age_days: newAgeDays
-        };
+        const updates: any = { age: newAge, age_days: newAgeDays };
 
-        // Apply Vitality/ATK/DEF Decay
         if (decay.vit > 0 || decay.atk > 0 || decay.def > 0) {
             updates.max_vitality = Math.max(0, (user.max_vitality || 100) - decay.vit);
             updates.vitality = Math.min(user.vitality || 100, updates.max_vitality);
-
-            const currentAtk = user.atk || user.attack || 1;
-            const currentDef = user.def || 1;
-            updates.atk = Math.max(1, currentAtk - decay.atk);
-            updates.def = Math.max(1, currentDef - decay.def);
+            updates.atk = Math.max(1, (user.atk || user.attack || 1) - decay.atk);
+            updates.def = Math.max(1, (user.def || 1) - decay.def);
         }
 
-        // バトル敗北ペナルティ: VIT -1 + HP全回復
+        // バトル敗北ペナルティ
         let battleDefeatVitPenalty = 0;
         if (result === 'failure' && battle_defeat) {
             battleDefeatVitPenalty = 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
-            // バトル敗北時はHP全回復（VIT減少がペナルティ代わり）
             updates.hp = user.max_hp || 100;
         }
 
-
-        // 5. EXP & Level Up Logic
+        // ═══════════════════════════════════════
+        // §3. EXP + レベルアップ
+        // ═══════════════════════════════════════
         let levelUpInfo: any = null;
         if (result === 'success') {
             const currentLevel = user.level || 1;
             const currentExp = Number(user.exp || 0);
-
             const difficulty = quest.difficulty || 1;
-            // v15.0: フォールバックEXPをランダム化 (difficulty * randInt(10, 50))
-            const expFallback = difficulty * (Math.floor(Math.random() * 41) + 10); // difficulty * 10〜50
+            const expFallback = difficulty * (Math.floor(Math.random() * 41) + 10);
             const questExp = (quest.rewards?.exp) || expFallback;
-
-            // v15.0: バトルボーナスをランダム化 (battleCount * randInt(100, 200))
             const battleCount = Array.isArray(history) ? history.filter((h: any) => h.nodeType === 'battle').length : 0;
-            const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100); // 100〜200/戦闘
+            const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100);
             const earnedExp = questExp + battleBonus;
 
-            // Use Service for calculation
             const growthResult = calculateGrowth(
-                currentLevel,
-                currentExp,
-                earnedExp,
+                currentLevel, currentExp, earnedExp,
                 updates.atk || user.atk || 1,
                 updates.def || user.def || 1,
-                user.max_hp || 85  // v15.0: currentMaxHp を渡して累積加算方式に対応
+                user.max_hp || 85
             );
 
             updates.exp = growthResult.newExp;
@@ -140,40 +133,28 @@ export async function POST(req: Request) {
                 const info = growthResult.levelInfo;
                 updates.level = info.new_level;
                 updates.max_hp = info.new_max_hp;
-                updates.hp = info.new_max_hp; // Heal on level up
+                updates.hp = info.new_max_hp;
                 updates.max_deck_cost = info.new_max_cost;
-
-                // Add growth to current (possibly decayed) stats
-                const preGrowthAtk = updates.atk || user.atk || 1;
-                const preGrowthDef = updates.def || user.def || 1;
-
-                updates.atk = preGrowthAtk + info.atk_increase;
-                updates.def = preGrowthDef + info.def_increase;
-
+                updates.atk = (updates.atk || user.atk || 1) + info.atk_increase;
+                updates.def = (updates.def || user.def || 1) + info.def_increase;
                 levelUpInfo = info;
             }
         }
 
-        // Update Accumulated Days (Total Play Time)
-        // If accumulated_days is missing/zero, approximate it from age
+        // 累積日数
         let currentTotalDays = user.accumulated_days || 0;
         if (currentTotalDays === 0 && (user.age || 18) > 18) {
             currentTotalDays = ((user.age || 18) - 18) * 365 + (user.age_days || 0);
         }
         updates.accumulated_days = currentTotalDays + daysPassed;
 
-        // 4. Rewards & Travel (Success Only)
+        // ═══════════════════════════════════════
+        // §4. 報酬 + 移動 + アライメント
+        // ═══════════════════════════════════════
         let alignmentShift: Record<string, number> | null = null;
         if (result === 'success') {
-            // node_rewardsがある場合はそちらを優先（ルート分岐報酬: end_kill / end_seal等）
             const rewards = node_rewards || quest.rewards || {};
 
-            // Gold (handled via RPC now, do not put in updates)
-            if (rewards.gold) {
-                // updates.gold = (user.gold || 0) + rewards.gold; // Removed to use RPC later
-            }
-
-            // Travel (move_to)
             if (rewards.move_to) {
                 const newLocationId = await resolveLocationId(supabase, rewards.move_to);
                 if (newLocationId) {
@@ -183,483 +164,145 @@ export async function POST(req: Request) {
                 }
             }
 
-            // 4属性変動 (Order/Chaos/Justice/Evil)
-            if (rewards.alignment_shift && typeof rewards.alignment_shift === 'object') {
-                alignmentShift = rewards.alignment_shift;
-                // DBカラムは order_pts, chaos_pts, justice_pts, evil_pts
-                const columnMap: Record<string, string> = {
-                    order: 'order_pts', chaos: 'chaos_pts',
-                    justice: 'justice_pts', evil: 'evil_pts'
-                };
-                for (const [key, val] of Object.entries(rewards.alignment_shift)) {
-                    const col = columnMap[key];
-                    if (col && typeof val === 'number') {
-                        const currentVal = (user as any)[col] || 0;
-                        updates[col] = Math.max(0, currentVal + val);
-                    }
-                }
-                console.log(`[QuestComplete] Alignment shift:`, rewards.alignment_shift);
-
-                // 拠点アライメント加算: クエスト受注拠点の world_states にも反映
-                const questLocationId = user.current_location_id;
-                if (questLocationId) {
-                    const worldColMap: Record<string, string> = {
-                        order: 'order_score', chaos: 'chaos_score',
-                        justice: 'justice_score', evil: 'evil_score'
-                    };
-                    for (const [key, val] of Object.entries(rewards.alignment_shift)) {
-                        const wCol = worldColMap[key];
-                        if (wCol && typeof val === 'number' && val > 0) {
-                            const { data: ws } = await supabase
-                                .from('world_states')
-                                .select('*')
-                                .eq('location_id', questLocationId)
-                                .maybeSingle();
-                            if (ws) {
-                                await supabase
-                                    .from('world_states')
-                                    .update({ [wCol]: ((ws as any)[wCol] || 0) + val })
-                                    .eq('id', (ws as any).id);
-                            }
-                        }
-                    }
-                    console.log(`[QuestComplete] Location alignment synced to ${questLocationId}`);
-                }
-            }
+            alignmentShift = await applyAlignmentShift(supabase, user, updates, rewards);
         }
 
-        // 6. Update Hub State (if moved)
-        if (updates.current_location_id) {
-            const hubId = await resolveLocationId(supabase, '名もなき旅人の拠所');
-            const isReturningToHub = updates.current_location_id === hubId;
+        // ═══════════════════════════════════════
+        // §5. Hub / WorldState 更新
+        // ═══════════════════════════════════════
+        await updateHubAndWorldState(supabase, user_id, user, updates);
 
-            const { error: hubError } = await supabase
-                .from('user_hub_states')
-                .upsert({
-                    user_id: user_id,
-                    is_in_hub: isReturningToHub,
-                }, { onConflict: 'user_id' });
-
-            if (hubError) {
-                console.error("Failed to update Hub State:", hubError);
-            }
-
-            // Update World State for the Target Location
-            // We want to force the world time to match the user's journey time (for consistency in single player view)
-            try {
-                // Get Location Name
-                const { data: locData } = await supabase
-                    .from('locations')
-                    .select('name')
-                    .eq('id', updates.current_location_id)
-                    .single();
-
-                if (locData) {
-                    // Update or Insert World State
-                    // If it doesn't exist, we just init with basic defaults + correct time
-                    const payload = {
-                        location_id: updates.current_location_id,
-                        location_name: locData.name,
-                        total_days_passed: updates.accumulated_days,
-                        // Default values if inserting
-                        status: '安定',
-                        prosperity_level: 50,
-                        controlling_nation: 'Neutral'
-                    };
-
-                    // We use upsert. Note: logic to not overwrite existing prosperity/nation if exists?
-                    // On conflict (location_id) DO UPDATE SET total_days_passed = EXCLUDED.total_days_passed
-                    // Supabase upsert handles this if we specify conflict target. 
-                    // However, we don't want to reset prosperity if it exists.
-
-                    const { data: existingWS } = await supabase
-                        .from('world_states')
-                        .select('id')
-                        .eq('location_id', updates.current_location_id)
-                        .maybeSingle();
-
-                    if (existingWS) {
-                        await supabase
-                            .from('world_states')
-                            .update({ total_days_passed: updates.accumulated_days })
-                            .eq('id', existingWS.id);
-                    } else {
-                        await supabase
-                            .from('world_states')
-                            .insert(payload);
-                    }
-                }
-            } catch (wsErr) {
-                console.error("Failed to update World State time:", wsErr);
-            }
-        } else {
-            // If we didn't move (stayed in same location), update current location's time?
-            // Assuming we have location_id from user profile (previous)
-            if (user.current_location_id) {
-                const { data: existingWS } = await supabase
-                    .from('world_states')
-                    .select('id')
-                    .eq('location_id', user.current_location_id)
-                    .maybeSingle();
-
-                if (existingWS) {
-                    await supabase
-                        .from('world_states')
-                        .update({ total_days_passed: updates.accumulated_days })
-                        .eq('id', existingWS.id);
-                }
-            }
-        }
-
-
-        // 7. Release Quest Lock & Clear Blessing (spec_v16 §4: バトル終了でBlessingを消費)
+        // ═══════════════════════════════════════
+        // §6. ロック解除 + プロフィール更新
+        // ═══════════════════════════════════════
         updates.current_quest_id = null;
-        updates.blessing_data = null; // Blessing は次のバトル終了で消費される
+        updates.blessing_data = null;
 
         console.log('[QuestComplete] Updates payload:', JSON.stringify(updates, null, 2));
 
-        // Apply User Updates
         const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update(updates)
-            .eq('id', user_id);
-
+            .from('user_profiles').update(updates).eq('id', user_id);
         if (updateError) throw updateError;
-        
-        // Apply Gold Update via RPC if rewards.gold exists
+
+        // ═══════════════════════════════════════
+        // §7. Gold + アイテム/スキル付与
+        // ═══════════════════════════════════════
         const effectiveRewards = (result === 'success' && node_rewards) ? node_rewards : quest.rewards;
         if (result === 'success' && effectiveRewards?.gold) {
             const { error: goldError } = await supabase
                 .rpc('increment_gold', { p_user_id: user_id, p_amount: effectiveRewards.gold });
-            if (goldError) {
-                console.error("Failed to increment gold via RPC:", goldError);
-            }
+            if (goldError) console.error("Failed to increment gold via RPC:", goldError);
         }
 
-        // node_rewardsにアイテムやスキルがある場合、インベントリ/スキルに付与
-        if (result === 'success' && effectiveRewards) {
-            // アイテム付与
-            if (effectiveRewards.items && Array.isArray(effectiveRewards.items)) {
-                for (const itemIdStr of effectiveRewards.items) {
-                    const itemId = parseInt(String(itemIdStr), 10);
-                    if (isNaN(itemId)) continue;
-
-                    // Fetch item name for UI
-                    const { data: itemDef } = await supabase.from('items').select('name').eq('id', itemId).maybeSingle();
-                    const itemName = itemDef?.name || `アイテム #${itemId}`;
-
-                    const { data: existing } = await supabase
-                        .from('inventory')
-                        .select('id, quantity')
-                        .eq('user_id', user_id)
-                        .eq('item_id', itemId)
-                        .maybeSingle();
-                    
-                    if (existing) {
-                        await supabase.from('inventory').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
-                    } else {
-                        await supabase.from('inventory').insert({ user_id, item_id: itemId, quantity: 1 });
-                    }
-                    console.log(`[QuestComplete] Granted item ${itemId} from node_rewards`);
-                    
-                    // Display in UI
-                    lootSaved.push({ itemId, name: itemName, quantity: 1, type: 'item' });
-                }
-            }
-
-            // スキル付与
-            if (effectiveRewards.skills && Array.isArray(effectiveRewards.skills)) {
-                for (const skillIdStr of effectiveRewards.skills) {
-                    const skillId = parseInt(String(skillIdStr), 10);
-                    if (isNaN(skillId)) continue;
-
-                    // Fetch skill name for UI
-                    const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
-                    const skillName = skillDef?.name || `スキル #${skillId}`;
-
-                    const { data: existingSkill } = await supabase
-                        .from('user_skills')
-                        .select('id')
-                        .eq('user_id', user_id)
-                        .eq('skill_id', skillId)
-                        .maybeSingle();
-                    
-                    if (!existingSkill) {
-                        await supabase.from('user_skills').insert({ user_id, skill_id: skillId });
-                        console.log(`[QuestComplete] Granted skill ${skillId} from node_rewards`);
-                        // Display in UI
-                        lootSaved.push({ itemId: skillId, name: skillName, quantity: 1, type: 'skill' });
-                    } else {
-                        console.log(`[QuestComplete] Skill ${skillId} already owned.`);
-                    }
-                }
-            }
+        if (result === 'success') {
+            await grantRewardItems(supabase, user_id, effectiveRewards, lootSaved);
         }
 
-        // 7.3 ゲストNPC → 通常雇用変換
-        // クエスト成功時にゲストが離脱せず残っている場合、party_membersテーブルにINSERTして正規雇用化
-        let guestConversion: { name: string; success: boolean; reason?: string } | null = null;
-        if (result === 'success' && body.remaining_guest?.slug) {
-            const guestSlug = body.remaining_guest.slug;
-            const guestName = body.remaining_guest.name || 'ゲストNPC';
-            console.log(`[QuestComplete] ゲスト残留検出: ${guestName} (${guestSlug})`);
+        // ═══════════════════════════════════════
+        // §8. ゲストNPC正規雇用
+        // ═══════════════════════════════════════
+        const guestConversion = result === 'success'
+            ? await convertGuestToPartyMember(supabase, user_id, body)
+            : null;
 
-            try {
-                // NPCマスターデータ取得
-                const { data: npcData } = await supabase
-                    .from('npcs')
-                    .select('*')
-                    .eq('slug', guestSlug)
-                    .maybeSingle();
-
-                if (npcData) {
-                    // パーティ上限チェック
-                    const { count: partyCount } = await supabase
-                        .from('party_members')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('owner_id', user_id)
-                        .eq('is_active', true);
-
-                    if ((partyCount || 0) >= 4) {
-                        console.log(`[QuestComplete] パーティ満員のため ${guestName} の自動雇用をスキップ`);
-                        guestConversion = { name: guestName, success: false, reason: 'パーティが満員です（最大4名）。酒場で再契約できます。' };
-                    } else {
-                        // 重複チェック
-                        const { data: existingMember } = await supabase
-                            .from('party_members')
-                            .select('id')
-                            .eq('owner_id', user_id)
-                            .eq('name', npcData.name)
-                            .eq('is_active', true)
-                            .maybeSingle();
-
-                        if (existingMember) {
-                            console.log(`[QuestComplete] ${guestName} は既にパーティに在籍`);
-                            guestConversion = { name: guestName, success: false, reason: '既にパーティに在籍しています。' };
-                        } else {
-                            // party_membersに挿入（無料雇用）
-                            const guestMaxHp = npcData.max_hp || npcData.hp || 100;
-                            const guestIconUrl = `/images/npcs/${npcData.slug}.png`;
-
-                            // inject_cards: default_cardsまたはinject_card_idsカラムからカードIDを取得
-                            let cardIds: number[] = [];
-                            if (npcData.default_cards && Array.isArray(npcData.default_cards)) {
-                                cardIds = npcData.default_cards;
-                            } else if (npcData.inject_card_ids && typeof npcData.inject_card_ids === 'string') {
-                                cardIds = npcData.inject_card_ids.split('|').map(Number).filter(Boolean);
-                            }
-
-                            const { error: insertError } = await supabase
-                                .from('party_members')
-                                .insert({
-                                    owner_id: user_id,
-                                    name: npcData.name,
-                                    slug: npcData.slug,
-                                    epithet: npcData.epithet || null,
-                                    image_url: guestIconUrl,
-                                    origin_type: 'quest_guest',
-                                    level: npcData.level || 1,
-                                    atk: npcData.atk || 0,
-                                    def: npcData.def || 0,
-                                    durability: guestMaxHp,
-                                    max_durability: guestMaxHp,
-                                    inject_cards: cardIds,
-                                    is_active: true,
-                                    royalty_rate: 0,
-                                });
-
-                            if (insertError) {
-                                console.error(`[QuestComplete] ゲスト雇用INSERT失敗:`, insertError.message);
-                                guestConversion = { name: guestName, success: false, reason: insertError.message };
-                            } else {
-                                console.log(`[QuestComplete] ✅ ${guestName} がパーティに正式加入`);
-                                guestConversion = { name: guestName, success: true };
-                            }
-                        }
-                    }
-                } else {
-                    console.warn(`[QuestComplete] ゲストNPC "${guestSlug}" がnpcsテーブルに見つかりません`);
-                    guestConversion = { name: guestName, success: false, reason: 'NPCデータが見つかりません。' };
-                }
-            } catch (guestErr: any) {
-                console.error('[QuestComplete] ゲスト→雇用変換エラー:', guestErr);
-                guestConversion = { name: guestName, success: false, reason: guestErr.message };
-            }
-        }
-
-        // 7.5 Vitality摩耗サイクル (Wear Cycle) & Memento Generation
-        // 成功: -5, 失敗/撤退: -10, バトルHP0: 追加 -10
-        const partyChanges: any[] = [];
+        // ═══════════════════════════════════════
+        // §9. パーティVIT摩耗 + メメント
+        // ═══════════════════════════════════════
         const defeatedIds: string[] = Array.isArray(body.defeated_member_ids)
             ? body.defeated_member_ids.map((id: any) => String(id))
             : [];
+        const partyChanges = await processPartyWearCycle(supabase, user_id, result, defeatedIds);
 
-        {
-            const basePenalty = result === 'success' ? 5 : 10;
-            const { data: activeParty } = await supabase
-                .from('party_members')
-                .select('id, name, durability, inject_cards, is_active')
-                .eq('owner_id', user_id);
-            
-            if (activeParty && activeParty.length > 0) {
-                for (const member of activeParty) {
-                    const oldDurability = member.durability ?? 100;
-                    // is_active=false（バトルで力尽きた）メンバーは durability=0 として扱う
-                    const effectiveOldDur = member.is_active === false ? 0 : oldDurability;
-                    // バトルでHP0になったメンバーは追加 -10
-                    const defeatedPenalty = defeatedIds.includes(String(member.id)) ? 10 : 0;
-                    const totalPenalty = basePenalty + defeatedPenalty;
-                    const newDurability = Math.max(0, effectiveOldDur - totalPenalty);
-                    
-                    if (newDurability <= 0) {
-                        const { error: deleteError } = await supabase.from('party_members').delete().eq('id', member.id);
-                        if (deleteError) {
-                            console.error(`[Vitality] Failed to delete party member ${member.name}:`, deleteError.message);
-                            // フォールバック: 削除失敗時は is_active=false, durability=0 に更新
-                            await supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id);
-                        }
-                        console.log(`[Vitality] Party member ${member.name} perished (VIT 0). penalty=${totalPenalty}`);
-
-                        let mementoName: string | null = null;
-                        if (member.inject_cards && member.inject_cards.length > 0) {
-                            const skillCardId = member.inject_cards[0];
-                            const { data: card } = await supabase.from('cards').select('id, name').eq('id', skillCardId).maybeSingle();
-                            if (card) {
-                                const { data: item } = await supabase.from('items').select('id, name').eq('linked_card_id', card.id).maybeSingle();
-                                if (item) {
-                                    const { data: existingInv } = await supabase
-                                        .from('inventory')
-                                        .select('id, quantity')
-                                        .eq('user_id', user_id)
-                                        .eq('item_id', item.id)
-                                        .maybeSingle();
-                                    if (existingInv) {
-                                        await supabase.from('inventory').update({ quantity: existingInv.quantity + 1 }).eq('id', existingInv.id);
-                                    } else {
-                                        await supabase.from('inventory').insert({ user_id, item_id: item.id, quantity: 1 });
-                                    }
-                                    mementoName = item.name;
-                                    console.log(`[Memento] Created memento item ${item.name} from perished shadow ${member.name}.`);
-                                }
-                            }
-                        }
-                        partyChanges.push({ name: member.name, oldDurability, newDurability: 0, perished: true, memento: mementoName });
-                    } else {
-                        await supabase.from('party_members').update({ durability: newDurability }).eq('id', member.id);
-                        partyChanges.push({ name: member.name, oldDurability, newDurability, perished: false });
-                    }
-                }
-            }
-        }
-
-        // 8. Loot Pool Persistence (Success only)
-        if (result === 'success' && Array.isArray(loot_pool) && loot_pool.length > 0) {
-            for (const loot of loot_pool) {
-                const { data: existing } = await supabase
-                    .from('inventory')
-                    .select('id, quantity')
-                    .eq('user_id', user_id)
-                    .eq('item_id', loot.itemId)
-                    .maybeSingle();
-
-                if (existing) {
-                    await supabase
-                        .from('inventory')
-                        .update({ quantity: existing.quantity + (loot.quantity || 1) })
-                        .eq('id', existing.id);
-                } else {
-                    await supabase
-                        .from('inventory')
-                        .insert({ user_id, item_id: loot.itemId, quantity: loot.quantity || 1 });
-                }
-            }
-        }
-
-        // 8.5 UGC First Blood Check & Share Text
-        let finalShareText = quest.share_text || null;
-        if (result === 'success' && quest.is_ugc) {
-            const { count: priorClears } = await supabase
-                .from('user_completed_quests')
-                .select('*', { count: 'exact', head: true })
-                .eq('scenario_id', quest_id);
-
-            if (priorClears === 0) {
-                finalShareText = `名も無き旅人の依頼『${quest.title}』を世界で初めて踏破した。 #Wirth_Dawn #未知への到達`;
-            }
-        }
-
-        // 8.7 名声変動（成功: 報酬名声 / 失敗: ペナルティ）
-        let repChange: { amount: number; location: string } | null = null;
-
-        // 成功時: rewards.reputation を名声報酬として加算
-        if (result === 'success' && effectiveRewards?.reputation) {
-            const repAmount = effectiveRewards.reputation;
-            const locId = updates.current_location_id || user.current_location_id;
-            if (locId) {
-                const { data: locForRep } = await supabase.from('locations').select('name').eq('id', locId).maybeSingle();
-                const repLocName = locForRep?.name;
-                if (repLocName) {
-                    const { data: existingRep } = await supabase
-                        .from('reputations').select('id, score').eq('user_id', user_id).eq('location_name', repLocName).maybeSingle();
-                    if (existingRep) {
-                        await supabase.from('reputations').update({ score: existingRep.score + repAmount }).eq('id', existingRep.id);
-                    } else {
-                        await supabase.from('reputations').insert({ user_id, location_name: repLocName, score: repAmount });
-                    }
-                    repChange = { amount: repAmount, location: repLocName };
-                    console.log(`[QuestComplete] Success rep reward: +${repAmount} at ${repLocName}`);
-                }
-            }
-        }
-
-        // 失敗時: ランダムペナルティ
-        if (result === 'failure' && user.current_location_id) {
-            const repPenalty = -(Math.floor(Math.random() * 8) + 3); // ランダム -3〜-10
-
-            const { data: locForRep } = await supabase.from('locations').select('name').eq('id', user.current_location_id).maybeSingle();
-            const repLocName = locForRep?.name;
-            if (repLocName) {
-                const { data: existingRep } = await supabase
-                    .from('reputations').select('id, score').eq('user_id', user_id).eq('location_name', repLocName).maybeSingle();
-                if (existingRep) {
-                    await supabase.from('reputations').update({ score: existingRep.score + repPenalty }).eq('id', existingRep.id);
-                } else {
-                    await supabase.from('reputations').insert({ user_id, location_name: repLocName, score: repPenalty });
-                }
-                repChange = { amount: repPenalty, location: repLocName };
-                console.log(`[QuestComplete] Failure rep penalty: ${repPenalty} at ${repLocName}`);
-            }
-        }
-
-        // 9. World Impact & Quest Completion History
+        // ═══════════════════════════════════════
+        // §10. 戦利品保存
+        // ═══════════════════════════════════════
         if (result === 'success') {
-            // Save quest completion history
-            // Use onConflict to ignore if already completed (though we shouldn't get here if they couldn't start it again,
-            // but for repeatable quests, we might just update completed_at or do nothing)
+            await persistLootPool(supabase, user_id, loot_pool);
+        }
+
+        // ═══════════════════════════════════════
+        // §11. 号外シェアシステム
+        // ═══════════════════════════════════════
+        const shareDataList: any[] = [];
+
+        if (result === 'success') {
+            const questSlug = quest.slug || '';
+
+            // UGC First Blood
+            if (quest.is_ugc) {
+                const { count: priorClears } = await supabase
+                    .from('user_completed_quests').select('*', { count: 'exact', head: true })
+                    .eq('scenario_id', quest_id);
+                if (priorClears === 0) {
+                    const sd = buildShareData('ugc_first_blood', { quest_name: quest.title || '' });
+                    if (sd) shareDataList.push(sd);
+                }
+            }
+
+            // メインクエスト章クリア
+            if (questSlug.startsWith('main_ep')) {
+                const fired = await checkAndFireTrigger(supabase, user_id, 'main_quest_clear', questSlug);
+                if (fired) {
+                    const chapter = questSlug.replace('main_ep', '').replace(/^0+/, '') || '?';
+                    const sd = buildShareData('main_quest_clear', { chapter, quest_name: quest.title || '' });
+                    if (sd) shareDataList.push(sd);
+                }
+            }
+
+            // 全クエスト初回クリア
+            if (questSlug) {
+                const fired = await checkAndFireTrigger(supabase, user_id, 'quest_first_clear', questSlug);
+                if (fired) {
+                    if (quest.share_text) {
+                        shareDataList.push({ text: quest.share_text, slug: 'quest_first_clear', vars: { quest_name: quest.title || '' } });
+                    } else {
+                        const sd = buildShareData('quest_first_clear', { quest_name: quest.title || '' });
+                        if (sd) shareDataList.push(sd);
+                    }
+                }
+            }
+
+            // レベルアップ節目
+            if (levelUpInfo && LEVEL_MILESTONES.includes(levelUpInfo.new_level)) {
+                const lv = levelUpInfo.new_level;
+                const fired = await checkAndFireTrigger(supabase, user_id, 'level_milestone', String(lv));
+                if (fired) {
+                    const flavor = getFlavor('level', String(lv));
+                    const sd = buildShareData('level_milestone', { level: lv, flavor });
+                    if (sd) shareDataList.push(sd);
+                }
+            }
+        }
+
+        const finalShareText = shareDataList.length > 0 ? shareDataList[0].text : null;
+
+        // ═══════════════════════════════════════
+        // §12. 名声変動
+        // ═══════════════════════════════════════
+        const repChange = await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
+
+        // ═══════════════════════════════════════
+        // §13. クエスト完了履歴
+        // ═══════════════════════════════════════
+        if (result === 'success') {
             const { error: historyError } = await supabase
                 .from('user_completed_quests')
                 .upsert({
-                    user_id: user_id,
-                    scenario_id: quest_id,
-                    // spec_v15.1 §4: はれ時のゲーム内経過日数を記録（聖界性暦変換に使用）
+                    user_id, scenario_id: quest_id,
                     accumulated_days_at_completion: user.accumulated_days ?? 0
                 }, { onConflict: 'user_id,scenario_id' });
-
-            if (historyError) {
-                console.error("Failed to save quest completion history:", historyError);
-            }
-
-            // (Simplified World Impact logic was here, kept omitted as in original)
+            if (historyError) console.error("Failed to save quest completion history:", historyError);
         }
 
-        // Resolve location name for UI
+        // ═══════════════════════════════════════
+        // §14. レスポンス構築
+        // ═══════════════════════════════════════
         let newLocationName: string | null = null;
         if (updates.current_location_id) {
             const { data: locData } = await supabase.from('locations').select('name').eq('id', updates.current_location_id).maybeSingle();
             newLocationName = locData?.name || null;
         }
 
-        // Calculate changes for UI
         const changes = {
             gold_gained: (effectiveRewards?.gold || 0),
             old_age: user.age,
@@ -674,6 +317,41 @@ export async function POST(req: Request) {
             alignment_shift: alignmentShift,
         };
 
+        // 所持金マイルストーン
+        if (result === 'success') {
+            const finalGold = (user.gold || 0) + (effectiveRewards?.gold || 0);
+            for (const milestone of GOLD_MILESTONES) {
+                if (finalGold >= milestone && (user.gold || 0) < milestone) {
+                    const fired = await checkAndFireTrigger(supabase, user_id, 'gold_milestone', String(milestone));
+                    if (fired) {
+                        const sd = buildShareData('gold_milestone', { amount: milestone.toLocaleString() });
+                        if (sd) shareDataList.push(sd);
+                    }
+                }
+            }
+        }
+
+        // 名声シェアトリガー
+        if (repChange && repChange.amount !== 0) {
+            const repLocName = repChange.location;
+            const { data: currentRep } = await supabase
+                .from('reputations').select('score')
+                .eq('user_id', user_id).eq('location_name', repLocName).maybeSingle();
+            const currentScore = currentRep?.score || 0;
+
+            if (currentScore >= FAME_HERO_THRESHOLD) {
+                const sd = buildShareData('fame_hero', { location: repLocName });
+                if (sd) shareDataList.push(sd);
+            } else if (currentScore <= FAME_VILLAIN_THRESHOLD) {
+                const sd = buildShareData('fame_villain', { location: repLocName });
+                if (sd) shareDataList.push(sd);
+            }
+            if (currentScore <= FAME_BANNED_THRESHOLD && (currentScore - repChange.amount) > FAME_BANNED_THRESHOLD) {
+                const sd = buildShareData('location_banned', { location: repLocName });
+                if (sd) shareDataList.push(sd);
+            }
+        }
+
         return NextResponse.json({
             success: true,
             quest_title: quest.title || '',
@@ -684,6 +362,7 @@ export async function POST(req: Request) {
             earned_exp: result === 'success' ? (effectiveRewards?.exp || 0) : 0,
             loot_saved: lootSaved,
             share_text: finalShareText,
+            share_data_list: shareDataList,
             rep_change: repChange,
             party_changes: partyChanges,
             guest_conversion: guestConversion,

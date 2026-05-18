@@ -15,9 +15,9 @@ export const createInventorySlice = (
         try {
             const { userProfile } = get();
             const { data: { session } } = await supabase.auth.getSession();
+            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
             const headers: HeadersInit = {};
             if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
-            if (userProfile?.id) headers['x-user-id'] = userProfile.id;
 
             const res = await fetch('/api/inventory', { headers, cache: 'no-store' });
             if (res.ok) {
@@ -40,9 +40,9 @@ export const createInventorySlice = (
 
             const { userProfile } = get();
             const { data: { session } } = await supabase.auth.getSession();
+            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
             const headers: HeadersInit = { 'Content-Type': 'application/json' };
             if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
-            if (userProfile?.id) headers['x-user-id'] = userProfile.id;
 
             const isSkill = targetItem?.is_skill || targetItem?.item_type === 'skill_card';
 

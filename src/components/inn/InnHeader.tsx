@@ -11,10 +11,11 @@ interface InnHeaderProps {
     reputation?: { rank: string; score: number } | null;
     onOpenSettings?: () => void;
     onOpenStatus?: () => void;
+    onOpenShop?: () => void;
     equipBonus?: { atk: number; def: number; hp: number };
 }
 
-export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, equipBonus }: InnHeaderProps) {
+export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, onOpenShop, equipBonus }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
     const [showHegemony, setShowHegemony] = useState(false);
 
@@ -74,8 +75,11 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                             </div>
                         </div>
                     </div>
-                    <button className="text-xs bg-orange-900 hover:bg-orange-800 text-orange-200 px-3 py-1.5 rounded transition-colors whitespace-nowrap border border-orange-700">
-                        更新する
+                    <button
+                        onClick={onOpenShop}
+                        className="text-xs bg-orange-900 hover:bg-orange-800 text-orange-200 px-3 py-1.5 rounded transition-colors whitespace-nowrap border border-orange-700 active:scale-95"
+                    >
+                        道具屋で更新
                     </button>
                 </div>
             )}

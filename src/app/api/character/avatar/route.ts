@@ -27,11 +27,7 @@ export async function PATCH(req: Request) {
             }
         }
 
-        // x-user-id ヘッダーでのフォールバック（匿名ユーザー対応）
-        if (!userId) {
-            userId = req.headers.get('x-user-id');
-        }
-
+        // v27.0: JWT認証のみ（x-user-idフォールバック廃止）
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -104,10 +100,7 @@ export async function POST(req: Request) {
             }
         }
 
-        if (!userId) {
-            userId = req.headers.get('x-user-id');
-        }
-
+        // v27.0: JWT認証のみ（x-user-idフォールバック廃止）
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

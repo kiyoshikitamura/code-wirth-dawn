@@ -8,11 +8,18 @@ NODE,search_1,"岩の隙間に手を伸ばすのは自殺行為だ。\n石を投
 NODE,find_nest,"岩の裏側に回り込むと、地面にいくつもの穴が空いている。\nサソリの巣穴だ。穴の縁が紫色に染まっているのは、毒のせいだろう。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",nest_desc
 NODE,nest_desc,"穴の一つから、尾の先を紫色に光らせたサソリが這い出てきた。\n大人の腕ほどの大きさ。こちらを威嚇するように、鋏を打ち鳴らしている。","{""bg"":""bg_desert"",""type"":""text""}",battle_scorpion
 NODE,battle_scorpion,"巣穴から次々とサソリが這い出してくる！毒針に注意しろ！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":422,""enemy_name"":""幻覚サソリの群れ"",""type"":""battle""}",
-CHOICE,,win,,harvest_1
+CHOICE,,win,,harvest_result
 CHOICE,,lose,,end_failure
-NODE,harvest_1,"サソリを仕留めた。紫色に光る尾を慎重に切り取る。\nナイフの先が微かに痺れた。素手で触ったら終わりだったろう。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",harvest_2
-NODE,harvest_2,"3本分の毒針を布に包み、革袋に入れた。\n砂漠の熱で変質しないうちに、急いで戻らなければ。","{""bg"":""bg_desert"",""type"":""text""}",travel_back
-NODE,travel_back,"岩場を後にし、マルカンドへの帰路を急ぐ。\n革袋の中身を考えると、あまり気分の良いものではない。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",back_alley
+NODE,harvest_result,"サソリを仕留めた。紫色に光る尾を慎重に切り取る。\nナイフの先が微かに痺れた——素手で触ったら終わりだったろう。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""random_branch"",""prob"":50}",
+CHOICE,,success,,harvest_success
+CHOICE,,failure,,harvest_fail
+NODE,harvest_success,"上手く切り取れた。毒針の鮮度は申し分ない。\n革袋に慎重に収める。壊さぬよう、砂が入らぬよう。","{""bg"":""bg_desert"",""type"":""reward"",""item_id"":""item_scorpion_needle""}",check_needles
+NODE,harvest_fail,"切り取ろうとした瞬間、毒針が砕けてしまった。\nサソリの毒は繊細だ。力を入れすぎれば使い物にならなくなる。","{""bg"":""bg_desert"",""type"":""text""}",check_needles
+NODE,check_needles,"革袋の中身を確認する。新鮮な毒針が3本必要だ。","{""bg"":""bg_desert"",""type"":""check_delivery"",""item_id"":""item_scorpion_needle"",""quantity"":3}",
+CHOICE,,success,,travel_back
+CHOICE,,failure,,hunt_continue
+NODE,hunt_continue,"まだ足りない。巣穴の周りにはサソリがまだ潜んでいる。\n再び砂を蹴り、次の獲物をおびき出す。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_scorpion
+NODE,travel_back,"毒針が3本揃った。岩場を後にし、マルカンドへの帰路を急ぐ。\n砂漠の熱で変質しないうちに、急いで届けなければ。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",back_alley
 NODE,back_alley,"日が暮れた頃、マルカンドの裏路地に戻ってきた。\nあの闇商人は、同じ場所で待っていた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deliver_1
 NODE,deliver_1,"革袋を差し出す。闇商人は中身を確認し、\n一本ずつ光に透かして品質を確かめた。","{""bg"":""bg_slums"",""type"":""text""}",dealer_reply
 NODE,dealer_reply,"「上物だ。鮮度も申し分ない。\n　金は約束通り。また入り用になったら声をかける」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",end_success

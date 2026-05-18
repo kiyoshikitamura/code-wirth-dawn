@@ -1,4 +1,4 @@
-# Wirth-Dawn Item Master Specification (v16.5) & Security/UX Audit
+# Wirth-Dawn Item Master Specification (v16.8) & Security/UX Audit
 
 本ドキュメントは、「Code: Wirth-Dawn」の経済システムおよびゲーム体験の基盤となるアイテムマスタ（itemsテーブル）全60種の定義、およびそれに伴うセキュリティ監査検証とUI/UX追加実装提案を統合したものです。
 
@@ -12,32 +12,37 @@
 
 *   `slug` (string): 一意な識別子（例: `item_potion`）
 *   `name` (string): アイテムの日本語名
-*   `type` (enum): `consumable`（消費）, `trade_good`（交易品）, `key_item`（貴重品）
+*   `type` (enum): `consumable`（消費）, `trade_good`（交易品）, `key_item`（貴重品）, `equipment`（装備品）, `skill`（スキル教本）, `material`（素材）
 *   `base_price` (integer): 基本価格
 *   `nation_tags` (array): `['loc_all']` または `['loc_roland']` などの入手制限タグ
 *   `min_prosperity` (integer): ショップに並ぶ最低繁栄度（通常は `2` や `3`、闇市は `1` にフィルタされるか `is_black_market=true` で制御）
 *   `is_black_market` (boolean): 繁栄度1の崩壊拠点（闇市）限定かどうか
 *   `effect_data` (JSONB): バトルやフィールドでの効果。必ず `use_timing` キーを含む。
-    - `use_timing`: `'battle'` / `'field'` / `'passive'`
+    - `use_timing`: `'battle'` / `'field'` / `'passive'` ※**未指定のconsumableはデフォルト`field`扱いになるため、必ず明示すること**
     - HP回復: `heal` (固定値), `heal_hp` (固定値alias), `heal_pct` (割合 0.0〜1.0), `heal_full` (全回復)
     - バフ/デバフ: `effect_id` (効果ID), `effect_duration` (持続ターン), `target` (`'enemy'` or 省略=自身)
     - 状態異常解除: `remove_effect` (解除する効果ID)
     - 逃走: `escape: true`
     - フィールド専用: `heal_pct` (HP割合回復), `vit_restore` (Vit回復量 ※竜血のみ)
     - 攻撃アイテム: `damage` (単体固定ダメージ), `aoe_damage` (全体固定ダメージ)
-    - 例: `{"use_timing": "battle", "heal": 150}` / `{"use_timing": "battle", "damage": 50}` / `{"use_timing": "battle", "aoe_damage": 80}`
+    - 名声操作: `effect: "reputation_reset"` (全国リセット), `effect: "reputation_boost"` + `reputation_amount` (現在拠点名声加算)
+    - エンカウント率変更: `effect: "encounter_mod"` + `encounter_rate_mod` (ワンショット。-0.5=50%減, +0.5=50%増)
+    - パッシブ所持効果: `encounter_avoid_pct` (エンカウント回避率。所持しているだけで常時適用)
+    - 例: `{"use_timing": "battle", "heal": 150}` / `{"use_timing": "field", "effect": "encounter_mod", "encounter_rate_mod": -0.5}`
 *   `image_url` (string): アイコン画像URL (任意)
 *   `description` (string): 説明文
 
 ### 1-2. 全57種アイテム設計・配分リスト（ボス素材・武具拡張含む）
 
-#### ① 汎用消費アイテム（6種 / 各都市販売 / 安価）
-0. `item_potion_s` (傷薬 S / consumable / 20G): effect_data: `{use_timing: 'battle', heal: 50}`. 小回復。最もポピュラーな傷薬の最小版。
-1. `item_potion` (中和薬 / consumable / 50G): effect_data: `{use_timing: 'battle', heal: 150}`. 薬草の緑色が残る安価な回復液。泥水よりはマシな味がする。
-2. `item_high_potion` (上級中和薬 / consumable / 250G): 澄んだ青色をした上質な霊薬。致命傷でなければ瞬時に塞ぐ。
-3. `item_antidote` (解毒草 / consumable / 30G): 強烈な苦味を持つ薬草。噛み砕くことで血中の毒素を中和する。
-4. `item_holy_water` (聖水 / consumable / 100G): 教会で清められた水。穢れや呪いを払い、精神を落ち着かせる。
-5. `item_tent` (簡易テント / consumable / 300G): effect_data: `{use_timing: 'field', heal_pct: 0.5}`. 野営しながらHPを50%回復する。宿屋が利用できない（名声低下等）プレイヤーのフィールド唯一のHP回復手段。
+#### ① 汎用消費アイテム（8種 / 各都市販売 / 安価〜中価）
+0. `item_potion_s` (傷薬 / consumable / 100G): effect_data: `{use_timing: 'battle', heal: 50}`. HPを少量回復する基本的な薬。
+1. `item_ration` (携帯保存食 / consumable / 50G): effect_data: `{use_timing: 'field', heal: 30}`. 冒険に必須の保存食料。フィールドで食べるとHP30回復。
+2. `item_torch` (松明 / consumable / 80G): effect_data: `{use_timing: 'field', effect: 'encounter_mod', encounter_rate_mod: -0.5}`. 道を照らして安全に進む。次の移動時のエンカウント率が50%減少する。
+3. `item_tent` (簡易テント / consumable / 300G): effect_data: `{use_timing: 'field', heal_pct: 0.5}`. 野営しながらHPを50%回復する。宿屋が利用できないプレイヤーのフィールド唯一の大回復手段。
+4. `item_antidote` (解毒剤 / consumable / 150G): effect_data: `{use_timing: 'battle', remove_effect: 'poison'}`. 毒状態を解除する薬。
+5. `item_repair_kit` (応急処置キット / consumable / 200G): effect_data: `{use_timing: 'field', heal: 80}`. 応急処置の道具一式。HPを80回復する。
+6. `item_ruins_map` (宝の地図(偽) / consumable / 50G): effect_data: `{use_timing: 'field', effect: 'encounter_mod', encounter_rate_mod: 0.5}`. 怪しげな地図。次の移動時のエンカウント率が50%上昇する。図鑑収集に活用できるかもしれない。
+7. `item_world_map` (詳細な世界地図 / consumable / 2000G): effect_data: `{use_timing: 'passive', encounter_avoid_pct: 20}`. 所持しているだけで移動時のエンカウント発生率が20%減少する。
 
 #### ② 国家限定消費アイテム（8種 / 各国首都限定 / 中〜高価）
 *   **聖帝国ローラン限定:**
@@ -67,8 +72,8 @@
 22. `item_pass_markand` (熱砂の隊商証 / key_item / 20000G): 金糸で刺繍された布証。王都の衛兵だけでなく、砂漠の盗賊からも一目を置かれる。
 
 #### ⑤ 闇市専用アイテム（3種 / 崩壊拠点限定 / 極めて高価）
-23. `item_black_market_elixir` (禁術の秘薬 / consumable / 50000G): どろりとした赤黒い液体。完全回復と引き換えに、何か大切なものを失う気がする。
-24. `item_launder_scroll` (帳簿の改竄 / key_item / 100000G): 各国の手配書を白紙に戻す禁忌の契約。莫大な金と引き換えに、過去の悪名を闇に葬る。
+23. `item_black_market_elixir` (禁術の秘薬 / consumable / 10000G): effect_data: `{use_timing: 'battle', heal: 9999, heal_full: true, remove_effect: 'poison', effect_id: 'regen', effect_duration: 5}`. **バトル専用**。HP全回復・毒解除・リジェネ・ATK UP。
+24. `item_launder_scroll` (帳簿の改竄 / consumable / 100000G): effect_data: `{use_timing: 'field', effect: 'reputation_reset'}`. 闇の帳簿を改竄し、全国での名声をリセットする。
 25. `item_dark_matter` (謎の黒鉱石 / trade_good / 30000G): 触れると不快な脈動を感じる、出所不明の禍々しい石。特定の愛好家が常軌を逸した額で買い取るという。
 
 #### ⑥ 第6カテゴリ：ボスドロップ素材・証明書 (非売品 / `material`, `key_item`等)
@@ -87,9 +92,19 @@
 #### ⑧ 汎用クエスト報酬・素材（3種 / クエスト報酬・フィールド入手）
 26. `item_bear_pelt` (獣の毛皮 / trade_good / 200G): 凶暴な大熊から剥いだ分厚い毛皮。防寒具や鎧の裏地として重宝され、革細工師が高値で買い取る。
 27. `item_supply_box` (物資ボックス / trade_good / 1000G): 廃墟の金庫から回収した物資の包み。中身はギルドの管理下にあるはずだが、闇市ならそれなりの値がつく。
-28. `item_healing_herb` (癒やし草 / consumable / 30G): 野原や森の外れに群生する薬草。傷口に当てれば止血程度の効果がある。大量に煎じれば薬にもなる。
+28. `item_healing_herb` (癒やし草 / **material** / 30G): 白い小花をつける薬草。煎じれば傷の化膿を防ぎ痛みを和らげる。素材アイテム（使用不可）。
+
+#### ⑨ クエスト専用アイテム（2種 / クエスト中入手 / 非売品）
+29. `item_scorpion_needle` (サソリの毒針 / material / 非売品): 幻覚サソリから採取した新鮮な毒針。暗殺薬の原料として闇市場で高値で取引される。7021「幻覚サソリの毒針調達」で使用。バトル勝利後50%で1本入手、3本揃えて闇商人に納品する。
+30. `item_explosive` (爆薬 / consumable / 非売品): effect_data: `{use_timing: 'battle', damage: 500, target_slug: 'enemy_markand_sand_worm'}`. 商会の錬金術師が調合した特製爆薬。7023「大砂虫討伐」で使用。サンドワームに対して500の大ダメージを与える特効バトルアイテム（「五英霊の誓約」と同じ `target_slug` ダメージシステムを使用）。
+31. `item_spirit_herb` (霊草 / material / 非売品): 華龍の霊山にのみ自生する稀少な薬草。7041「仙丹の材料となる霊草採集」で採取し宦官へ納品する。`check_delivery` ノードで所持確認される。ID: 3030。
+32. `item_foxfire_charm` (狐火の護符 / material / 非売品): 妖狐の姫から授かった神秘的な護符。狐火の力が宿り、持ち主を霊的な危害から守る。7045「妖狐の婚礼」のBルート報酬。ID: 3045。
 
 > **※補足**: 実データ稼働に伴い追加された「基本消費アイテムのバリエーション（松明、解毒剤等）」や「上記ボス関連素材・武具」を含め、計60種のアクティブなアイテムを**すべて公式正史**として承認する。
+> 
+> **v25 削除済みアイテム**: 以下のアイテムはゲームデザイン上の理由により削除。
+> - `item_revive_incense` (54 / 反魂香): NPC死亡概念が存在しないため。
+> - `grimoire_teleport` (93 / 魔導書:転移): ゲーム性（移動コスト・エンカウントシステム）を破壊するため。
 
 > **v2.9.2 更新 (2026-04-17)**:
 > - `item_tent` を Vit回復 → **HP50%回復**(フィールド専用) に再設計。Vit回復は竜血(`item_dragon_blood`)のみに限定。
@@ -294,3 +309,6 @@ theme: {
 | **v16.3** | **2026-04-13** | **effect_data key仕様を明確化（heal/heal_pct/heal_full/escape等）・item_potion_s heal:50 追加・バトルアイテムログ仕様追加** |
 | **v16.4** | **2026-04-22** | **メインシナリオ限定装備4種追加（ID 501-504: ガウェインの小手/竜牙の剣/英霊の鎖帷子/蒼暁の剣）。ショップ除外リストに追加。装備品総数: 54種 → 58種** |
 | **v16.5** | **2026-04-26** | **汎用クエスト報酬3種追加（ID 3001-3003: 獣の毛皮/物資ボックス/癒やし草）。アイテム総数: 57種 → 60種** |
+| **v16.6** | **2026-05-09** | **クエスト専用アイテム2種追加（ID 3005: サソリの毒針/ID 3010: 爆薬）。爆薬は`target_slug`ダメージシステム（五英霊の誓約と同等）でサンドワーム特効。アイテム総数: 60種 → 62種** |
+| **v16.7** | **2026-05-12** | **クエスト専用アイテム1種追加（ID 3045: 狐火の護符）。7045「妖狐の婚礼」Bルート報酬。アイテム総数: 62種 → 63種** |
+| **v16.8** | **2026-05-16** | **v25フィールドアイテム改修**: 携帯保存食(HP30回復), 松明(エンカウント-50%), 宝の地図(偽)(エンカウント+50%), 応急処置キット(HP80回復), 王家の勅令書(名声+100), 詳細な世界地図(passive -20%) の効果実装。反魂香・魔導書:転移を削除。癒やし草をmaterial化。禁術の秘薬をバトル専用に統一(ハードコード廃止)。`api/item/use`にreputation_boost/encounter_modを追加。`api/move`にインベントリパッシブ+ワンショットバフのエンカウント率変更を追加。 |

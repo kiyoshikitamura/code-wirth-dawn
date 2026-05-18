@@ -2,24 +2,31 @@ row_type,node_id,text_label,params,next_node
 META,gold,500,,
 META,exp,200,,
 META,reputation,15,,
-NODE,start,"嫌な予感は的中した。王国が「反逆者」としてガウェインの名を公表した。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_tense""}",text_start2
-NODE,text_start2,"虐殺の真実を報告しようとしただけで。王国軍の精鋭部隊「鉄騎隊」がこちらに向かっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",gawain_join
-NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_gawain""}",text_ambush
-NODE,text_ambush,"逃走中のマルカンド前線拠点付近。四方から包囲された。精鋭部隊が、音もなく陣形を敷いていた。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_crisis""}",text_commander
-NODE,text_commander,"部隊長が馬上から見下ろした。若い。三十前後。だが——目が据わっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_commander2
-NODE,text_commander2,"「反逆者ガウェイン。王命により、ここで処断する。投降すれば一思いに殺してやる」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",text_gawain_resolve
-NODE,text_gawain_resolve,"ガウェインが剣を抜いた。「お前がこの目で見たものは全て真実だ」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_resolve2
-NODE,text_gawain_resolve2,"「王国が何をしているか——世界に知らせなければならない。自分たちが何のために戦っているのかを」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_sacrifice
-NODE,text_gawain_sacrifice,"「ここは自分が引き受ける。お前は東へ行け。夜刀神国の国境を越えれば、王国の手は届かない」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_first_wave
-NODE,text_first_wave,"ガウェインの言葉を遮るように、第一波の兵士たちが突撃してきた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle1
-NODE,battle1,"王国軍精鋭部隊・第一波との戦闘！","{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":203, ""bgm"":""bgm_battle_strong""}",choice1
-CHOICE,,切り抜ける,,text_wave1_clear
-NODE,text_wave1_clear,"第一波を退けた。だが次の波が来る。ガウェインが背中を押した。「行け！今だ！」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_commander_second
-NODE,text_commander_second,"部隊長が叫んだ。「第二隊、回り込め！逃がすな！」新たな兵士たちが迫る。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle2
-NODE,battle2,"王国軍精鋭部隊・第二波との戦闘！","{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":203, ""bgm"":""bgm_battle_strong""}",choice2
-CHOICE,,道を切り拓く,,text_gawain_last
-NODE,text_gawain_last,"第二波を退けた。だが——ガウェインが膝をついた。背中に矢が三本刺さっている。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_gawain_last2
-NODE,text_gawain_last2,"「お前は生き延びろ。生き延びて、この目で世界の果てを見届けろ。自分の分まで……な……」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",gawain_leave
-NODE,gawain_leave,"ガウェインは立ち上がり、残る兵士たちの前に一人で立ちはだかった。もう振り返らなかった。","{""type"":""leave"", ""bg"":""bg_bandit_camp"", ""speaker_name"":""ガウェイン"", ""speaker_image_url"":""/images/npcs/npc_guest_gawain.png""}",text_run
-NODE,text_run,"走った。振り返らなかった。背後で剣戟の音がした。叫び声。——そして、静寂。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",end_node
-NODE,end_node,"走り続けた。太陽が沈むまで。東へ。ただ東へ。「生き延びて、この目で世界の果てを見届けろ」","{""type"":""end_success"", ""bg"":""bg_bandit_camp"", ""rewards"":{""items"":[""501""]}}",
+NODE,start,"嫌な予感は的中した。王国がガウェインの名を「反逆者」として公表した。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_tense""}",start_02
+NODE,start_02,"虐殺の真実を報告しようとしただけで。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",start_03
+NODE,start_03,"王国軍の精鋭部隊「鉄騎隊」がこちらに向かっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",gawain_join
+NODE,gawain_join,ガウェインがパーティに加わった。,"{""type"":""guest_join"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_gawain""}",ambush_01
+NODE,ambush_01,"逃走中のマルカンド前線拠点付近。四方から包囲された。","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""bgm"":""bgm_quest_crisis""}",ambush_02
+NODE,ambush_02,"精鋭部隊が音もなく陣形を敷いていた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",commander_01
+NODE,commander_01,"部隊長が馬上から見下ろした。若い。三十前後。だが目が据わっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",commander_02
+NODE,commander_02,"「反逆者ガウェイン。王命により、ここで処断する」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",resolve_01
+NODE,resolve_01,"ガウェインが剣を抜いた。「お前がこの目で見たものは全て真実だ」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker"":""ガウェイン""}",resolve_02
+NODE,resolve_02,"「王国が何をしているか——世界に知らせなければならない」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker"":""ガウェイン""}",resolve_03
+NODE,resolve_03,"「ここは俺が引き受ける。お前は東へ行け。夜刀の国境を越えろ」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker"":""ガウェイン""}",wave_01
+NODE,wave_01,"ガウェインの言葉を遮るように、第一波の兵士たちが突撃してきた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle1
+NODE,battle1,王国軍精鋭部隊・第一波との戦闘！,"{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":203, ""bgm"":""bgm_battle_strong""}",choice1
+CHOICE,,切り抜ける,,clear_01
+NODE,clear_01,"第一波を退けた。だが次の波が来る。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",clear_02
+NODE,clear_02,"ガウェインが背中を押した。「行け！今だ！」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker"":""ガウェイン""}",second_01
+NODE,second_01,"部隊長が叫んだ。「第二隊、回り込め！逃がすな！」","{""type"":""text"", ""bg"":""bg_bandit_camp""}",battle2
+NODE,battle2,王国軍精鋭部隊・第二波との戦闘！,"{""type"":""battle"", ""bg"":""bg_bandit_camp"", ""enemy_group_id"":203, ""bgm"":""bgm_battle_strong""}",choice2
+CHOICE,,道を切り拓く,,last_01
+NODE,last_01,"第二波を退けた。だが——ガウェインが膝をついた。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",last_02
+NODE,last_02,"背中に矢が三本刺さっている。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",last_03
+NODE,last_03,"「お前は生き延びろ。世界の果てを、この目で見届けろ」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker"":""ガウェイン""}",last_04
+NODE,last_04,"「自分の分まで……な……」","{""type"":""text"", ""bg"":""bg_bandit_camp"", ""speaker"":""ガウェイン""}",gawain_leave
+NODE,gawain_leave,"ガウェインは立ち上がり、残る兵士の前に一人で立ちはだかった。もう振り返らなかった。","{""type"":""leave"", ""bg"":""bg_bandit_camp"", ""guest_id"":""npc_guest_gawain""}",run_01
+NODE,run_01,"走った。振り返らなかった。背後で剣戟の音がした。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",run_02
+NODE,run_02,"叫び声。——そして、静寂。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",run_03
+NODE,run_03,"走り続けた。太陽が沈むまで。東へ。ただ東へ。","{""type"":""text"", ""bg"":""bg_bandit_camp""}",end_node
+NODE,end_node,"「生き延びて、この目で世界の果てを見届けろ」（第1部完）","{""type"":""end_success"", ""bg"":""bg_bandit_camp"", ""rewards"":{""items"":[""501""]}}",

@@ -110,7 +110,7 @@ export default function WorldMapPage() {
             const token = session?.access_token;
 
             // Use API to ensure robust state transition
-            // We pass the token so the API can act as the user (RLS compatible) if Admin key is missing
+            // JWT認証でuser_idを自動取得 (v27.0)
             const res = await fetch('/api/map/descend', {
                 method: 'POST',
                 headers: {
@@ -118,8 +118,7 @@ export default function WorldMapPage() {
                     'Authorization': token ? `Bearer ${token}` : ''
                 },
                 body: JSON.stringify({
-                    target_location_id: targetLoc.id,
-                    user_id: userProfile.id
+                    target_location_id: targetLoc.id
                 })
             });
 
@@ -186,8 +185,7 @@ export default function WorldMapPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    'x-user-id': userProfile.id
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({ target_location_id: targetId })
             });
@@ -232,10 +230,9 @@ export default function WorldMapPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({ target_location_name: target.name })
+                body: JSON.stringify({ target_location_slug: target.slug })
             });
 
             if (res.ok) {
@@ -250,7 +247,10 @@ export default function WorldMapPage() {
                     try {
                         const { data: groupData } = await supabase.from('enemy_groups').select('members').eq('slug', data.encounter_enemy_group_slug).single();
                         if (groupData?.members) {
-                            const enemySlugs = groupData.members.split('|');
+                            // members は JSONB配列 or レガシーのパイプ区切り文字列の両方に対応
+                            const enemySlugs: string[] = Array.isArray(groupData.members)
+                                ? groupData.members
+                                : String(groupData.members).split('|');
                             const { data: dbEnemies } = await supabase.from('enemies').select('*').in('slug', enemySlugs);
                             if (dbEnemies && dbEnemies.length > 0) {
                                 enemiesToSpawn = enemySlugs.map((slug: string) => {
@@ -278,19 +278,24 @@ export default function WorldMapPage() {
                         console.error('Failed to fetch encounter enemies', err);
                     }
 
-                    // フォールバック
+                    // フォールバック（v27.0: プレイヤーレベル連動）
                     if (enemiesToSpawn.length === 0) {
+                        const playerLv = userProfile?.level || 1;
                         const enemyName = data.require_battle === 'bounty_hunter_ambush' ? '賞金稼ぎ' : '無法者';
+                        const scaledHp = Math.max(50, playerLv * 15);
+                        const scaledAtk = Math.max(3, Math.floor(playerLv * 0.8));
+                        const scaledDef = Math.max(1, Math.floor(playerLv * 0.4));
                         enemiesToSpawn = [{
                             id: data.encounter_enemy_group_slug,
                             name: enemyName,
-                            hp: 300, maxHp: 300, atk: 15, def: 5, level: 20, status_effects: []
+                            hp: scaledHp, maxHp: scaledHp, atk: scaledAtk, def: scaledDef,
+                            level: playerLv, status_effects: []
                         }];
                     }
 
                     // startBattle は async のため、await で完了を待ってから state をセットし遷移する
                     await useGameStore.getState().startBattle(enemiesToSpawn);
-                    router.push(`/battle?type=${data.require_battle}&target=${data.target_location_id}&origin=${data.origin_location_id}`);
+                    router.push(`/battle?type=${data.require_battle}&target=${data.target_location_id}&origin=${data.origin_location_id}&days=${data.travel_days || 1}`);
                     return;
                 }
 

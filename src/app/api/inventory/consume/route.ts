@@ -4,11 +4,9 @@ import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
     try {
+        // [Security] JWT認証のみ — x-user-id フォールバックを廃止 (v27.1)
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
         let targetUserId = '';
-
-        console.log("[Consume API] Auth Header:", authHeader ? 'Present' : 'Missing', "x-user-id:", xUserId);
 
         if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
             const token = authHeader.replace('Bearer ', '');
@@ -18,20 +16,8 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
             }
             targetUserId = user.id;
-
-            // If x-user-id is provided and different from auth user, it might be a sub-profile
-            if (xUserId && xUserId !== targetUserId) {
-                console.log(`[Consume API] Using x-user-id: ${xUserId} over auth user: ${targetUserId}`);
-                targetUserId = xUserId;
-            } else {
-                console.log("[Consume API] Authenticated User:", targetUserId);
-            }
-        } else if (xUserId) {
-            targetUserId = xUserId;
-            console.log("[Consume API] Fallback to x-user-id:", targetUserId);
         } else {
-            console.error("[Consume API] Missing authorization header and x-user-id");
-            return NextResponse.json({ error: "Missing authorization" }, { status: 401 });
+            return NextResponse.json({ error: "Authentication required" }, { status: 401 });
         }
 
         const body = await req.json();

@@ -2,23 +2,26 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer } from '@/lib/supabase-admin';
 
+// JWT認証ヘルパー (x-user-id fallback removed v27)
+async function getAuthUserId(req: Request): Promise<string | null> {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        if (!error && user) return user.id;
+    }
+    return null;
+}
+
 // GET: Fetch Inventory
 export async function POST(req: Request) {
     try {
         const { item_slug, quantity = 1 } = await req.json();
         
-        let userId = req.headers.get('x-user-id');
-        const authHeader = req.headers.get('authorization');
-        
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) userId = user.id;
-        }
+        const userId = await getAuthUserId(req);
 
         if (!userId) {
-            console.warn("Inventory POST: Missing x-user-id header");
-            return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
         // 1. Get Item ID
@@ -78,16 +81,8 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     try {
         // supabaseServer (Service Role) でRLSをバイパスし、確実にデータを取得する
-        // ユーザー認証はJWTで検証済み、DBクエリはuser_idでフィルタ
 
-        let userId = req.headers.get('x-user-id');
-        const authHeader = req.headers.get('authorization');
-        
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) userId = user.id;
-        }
+        const userId = await getAuthUserId(req);
 
         let query = supabaseServer
             .from('inventory')
@@ -276,17 +271,8 @@ export async function PATCH(req: Request) {
     try {
         const { inventory_id, is_equipped, bypass_lock, is_skill } = await req.json();
         
-        // supabaseServer (Service Role) でRLSをバイパス
-        // ユーザー認証はJWTで検証済み
-
-        let userId = req.headers.get('x-user-id');
-        const authHeader = req.headers.get('authorization');
-        
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) userId = user.id;
-        }
+        // JWT認証 (v27: x-user-id fallback removed)
+        const userId = await getAuthUserId(req);
 
         // is_skill が true の場合、まず user_skills に該当IDがあるか確認
         // なければレガシースキル（inventory テーブルに保存された旧スキル）とみなす

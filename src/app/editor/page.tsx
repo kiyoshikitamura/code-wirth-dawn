@@ -256,7 +256,7 @@ export default function EditorPage() {
 
     // Hub access guard (render)
     if (userProfile && worldState) {
-        const isHubByName = worldState?.location_name === '名も無き旅人の拠所' || worldState?.location_name === HUB_LOCATION_NAME;
+        const isHubByName = worldState?.location_name === HUB_LOCATION_NAME;
         if (!isHubByName) {
             return null;
         }

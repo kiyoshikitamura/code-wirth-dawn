@@ -1,3 +1,13 @@
+/**
+ * ⚠️ DEPRECATED - このスクリプトは使用しないでください (v27.0)
+ * 
+ * このスクリプトは旧フォーマット（{ days, type } 形式）の neighbors データを使用しています。
+ * 現行DB仕様（{ days, gold_cost } 形式）とは互換性がなく、実行すると全拠点のneighborsデータが
+ * 上書きされ、移動費用が0Gにリセットされます。
+ * 
+ * 現行の拠点データは docs/detail/world_map_routes.md で管理されています。
+ * DB更新が必要な場合は Supabase SQL Editor で直接更新してください。
+ */
 
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';

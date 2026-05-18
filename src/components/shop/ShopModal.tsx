@@ -81,10 +81,10 @@ export default function ShopModal({ onClose }: Props) {
     const fetchShop = async () => {
         try {
             const token = await getToken();
+            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
             const res = await fetch('/api/shop', {
                 headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
             });
             if (res.ok) {
@@ -118,12 +118,12 @@ export default function ShopModal({ onClose }: Props) {
         setPurchasePhase('loading');
         try {
             const token = await getToken();
+            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
             const res = await fetch('/api/shop', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({ item_id: item.id, _source: item._source || 'item' })
             });
@@ -135,6 +135,7 @@ export default function ShopModal({ onClose }: Props) {
                 setPurchasePhase('done');
                 useGameStore.getState().fetchUserProfile();
                 fetchInventory();
+                fetchShop(); // 購入後にショップ一覧を更新（重複購入防止）
                 setTimeout(() => setPurchasePhase('idle'), 2200);
             } else {
                 if (res.status === 401) {
@@ -168,12 +169,12 @@ export default function ShopModal({ onClose }: Props) {
         setPurchasing('launder');
         try {
             const token = await getToken();
+            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
             const res = await fetch('/api/shop/launder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
             });
             const data = await res.json();
@@ -209,14 +210,15 @@ export default function ShopModal({ onClose }: Props) {
         if (purchasing) return;
 
         setPurchasing(String(itemId));
+        setPurchasePhase('loading');
         try {
             const token = await getToken();
+            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
             const res = await fetch('/api/shop/sell', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({ item_id: itemId, quantity: 1 })
             });
@@ -225,21 +227,30 @@ export default function ShopModal({ onClose }: Props) {
             if (res.ok) {
                 if (data.trigger_fail) {
                     alert('【裏切り発覚】\n依頼の品を売りさばいた罪により、クエストは強制失敗となり名声を失いました。');
-                    useGameStore.getState().fetchUserProfile();
-                    fetchInventory();
+                    await useGameStore.getState().fetchUserProfile();
+                    await fetchInventory();
                     onClose();
                     window.location.href = '/inn?betrayal=true';
                 } else {
-                    alert(`売却しました！ (+${data.sold_price} G)`);
-                    useGameStore.getState().fetchUserProfile();
-                    fetchInventory();
+                    setPurchaseResultMsg(`売却しました！ (+${data.sold_price} G)`);
+                    setPurchaseIsError(false);
+                    setPurchasePhase('done');
+                    await useGameStore.getState().fetchUserProfile();
+                    await fetchInventory();
+                    setTimeout(() => setPurchasePhase('idle'), 1500);
                 }
             } else {
-                alert(data.error || '売却に失敗しました。');
+                setPurchaseResultMsg(data.error || '売却に失敗しました。');
+                setPurchaseIsError(true);
+                setPurchasePhase('done');
+                setTimeout(() => setPurchasePhase('idle'), 2000);
             }
         } catch (e) {
             console.error(e);
-            alert("通信エラーが発生しました。");
+            setPurchaseResultMsg('通信エラーが発生しました。');
+            setPurchaseIsError(true);
+            setPurchasePhase('done');
+            setTimeout(() => setPurchasePhase('idle'), 2000);
         } finally {
             setPurchasing(null);
         }
@@ -478,7 +489,9 @@ export default function ShopModal({ onClose }: Props) {
                         inventory && inventory.length > 0 ? (
                             inventory.map((invItem) => {
                                 const isUgc = !!(invItem as any).is_ugc;
-                                const sellPrice = isUgc ? 1 : Math.floor(((invItem as any).base_price || 0) / 2);
+                                const sellPrice = isUgc ? 1
+                                    : (meta?.prosperity === 1) ? Math.floor(((invItem as any).base_price || 0) * 1.5)
+                                        : Math.floor(((invItem as any).base_price || 0) / 2);
                                 return (
                                     <div key={invItem.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-colors">
                                         <div className="flex-1 min-w-0 mr-4">
@@ -549,7 +562,7 @@ export default function ShopModal({ onClose }: Props) {
                         {purchasePhase === 'loading' ? (
                             <>
                                 <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                                <p className="text-base font-serif font-bold tracking-widest animate-pulse">購入中...</p>
+                                <p className="text-base font-serif font-bold tracking-widest animate-pulse">{mode === 'sell' ? '売却中...' : '購入中...'}</p>
                             </>
                         ) : (
                             <p className="text-base font-bold font-serif tracking-wide">{purchaseResultMsg}</p>

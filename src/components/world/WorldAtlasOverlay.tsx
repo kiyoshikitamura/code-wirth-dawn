@@ -26,7 +26,7 @@ export default function WorldAtlasOverlay({ show, allLocations, onClose }: Props
 
             <div className="flex-1 relative overflow-auto flex items-center justify-center bg-[#050b14] p-4">
                 {/* Texture background */}
-                <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/dark-leather.png")' }} />
+                <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'url("/textures/dark-leather.png")' }} />
 
                 <div className="w-full max-w-sm md:max-w-md aspect-square relative border-2 border-amber-900/50 rounded-xl bg-slate-900 shadow-2xl shadow-black overflow-hidden">
                     <div className="absolute inset-0 bg-no-repeat bg-cover bg-center opacity-80 mix-blend-screen" style={{ backgroundImage: 'url("/backgrounds/worldmap.png")' }} />

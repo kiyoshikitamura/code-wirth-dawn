@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { LifeCycleService } from '@/services/lifeCycleService';
+import { buildShareData } from '@/lib/shareUtils';
 
 export async function POST(req: Request) {
     try {
@@ -86,9 +87,13 @@ export async function POST(req: Request) {
             throw new Error(result.error || 'Retirement failed');
         }
 
-        // 泣年 = 基本年齢 + 経過年数 (spec_v15.1 §3.3)
+        // #12 英霊化シェア (繰返、CSV駆動)
         const ageAtDeath = (profile.age || 18) + Math.floor((profile.accumulated_days || 0) / 365);
-        const shareText = `我が名は${profile.name || profile.title_name}。${ageAtDeath}歳の若さでこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。 #Wirth_Dawn #英雄の最期`;
+        const shareData = buildShareData('heroic_death', {
+            name: profile.name || profile.title_name || '名もなき旅人',
+            age: ageAtDeath,
+        });
+        const shareText = shareData?.text || '';
 
         return NextResponse.json({
             success: true,
@@ -96,7 +101,8 @@ export async function POST(req: Request) {
             heirloom_item_ids: finalHeirlooms,
             allowed_slots: allowedSlots,
             paid_gold: paidGold,
-            share_text: shareText
+            share_text: shareText,
+            share_data_list: shareData ? [shareData] : [],
         });
 
     } catch (e: any) {

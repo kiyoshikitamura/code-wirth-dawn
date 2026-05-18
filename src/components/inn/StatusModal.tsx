@@ -6,23 +6,8 @@ import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
 import { formatEffectData, getEffectList, getItemImageUrl, getSlotLabel, getEquipmentBonus } from '@/lib/itemUtils';
 import { supabase } from '@/lib/supabase';
+import { toJpJobClass } from '@/lib/jobClass';
 
-const JOB_CLASS_JP: Record<string, string> = {
-    Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
-    Ranger: '狩人', Scout: '斥候', Archer: '弓使い', Thief: '盗賊', Rogue: '遊撃士',
-    Mage: '魔法使い', Wizard: '魔術師', Sorcerer: '術師', Warlock: '呪術師',
-    Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
-    Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
-    Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
-    Mercenary: '傭兵', Porter: '荷運び', Animal: '動物', Guard: '衛兵',
-    Hunter: '狩人', Samurai: '侍', Miko: '巫女', Ninja: '忍者',
-    Dancer: '踊り子', Lancer: '槍術士', Undead: '不死者', Chef: '料理人',
-    Taoist: '道士', Ghost: '幽霊', Armor: '鎧', Bandit: '山賊',
-    Villager: '村人', Machine: '機械', Monster: '魔獣', Object: '物体',
-    Tactician: '軍師', Gambler: '賭博師', Soldier: '兵士', Slave: '奴隷',
-    Caster: '術師', Summoner: '召喚士', 'Heroic Spirit': '英霊',
-};
-const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
 
 interface StatusModalProps {
     onClose: () => void;
@@ -107,23 +92,6 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
             return;
         }
 
-        // 特殊処理：禁術の秘薬（Vit回復）
-        const slug = item.slug || item.item_slug || '';
-        if (slug === 'item_black_market_elixir' || item.name === '禁術の秘薬') {
-            if (!confirm('禁術の秘薬を使用しますか？\n失われた寿命(VITALITY)が1回復します。')) return;
-            const { supabase } = await import('@/lib/supabase');
-            const session = await supabase.auth.getSession();
-            const res = await fetch('/api/profile/consume-elixir', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${session.data.session?.access_token || ''}`, 'x-user-id': userProfile?.id || '' }
-            });
-            const data = await res.json();
-            if (res.ok) { alert('禁術の秘薬を使用し、寿命が回復した！'); fetchInventory(); fetchUserProfile(); }
-            else { alert('使用に失敗しました: ' + (data.error || 'Unknown')); }
-            setDetail(null);
-            return;
-        }
-
         // 汎用フィールド使用 API
         if (!confirm(`「${item.name}」を使用しますか？`)) return;
         const { supabase } = await import('@/lib/supabase');
@@ -138,11 +106,8 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
         });
         const data = await res.json();
         if (res.ok) {
-            // フィールド効果の平文メッセージを構築
-            const ed = item.effect_data || {};
-            let msg = `「${item.name}」を使用しました。`;
-            if (ed.vit_restore) msg += `\n寿命(VIT) +${ed.vit_restore}回復！`;
-            if (ed.hp_restore) msg += `\nHP +${ed.hp_restore}回復！`;
+            // サーバーからの効果メッセージを優先表示
+            let msg = data.message || `「${item.name}」を使用しました。`;
             alert(msg);
             fetchInventory();
             fetchUserProfile();
@@ -161,26 +126,17 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+            if (!token) { alert('認証エラー'); return; }
             const res = await fetch('/api/equipment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ inventory_id: invItem.id, slot })
             });
             if (res.ok) {
-                // equipped_items テーブルに登録後、inventory の is_equipped も同期
-                await fetch('/api/inventory', {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                        ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
-                    },
-                    body: JSON.stringify({ inventory_id: invItem.id, is_equipped: true })
-                });
+                // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
                 await Promise.all([fetchEquipment(), fetchInventory(), fetchUserProfile()]);
             } else {
                 const data = await res.json();
@@ -199,37 +155,21 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-            // 外す前に equipped_items の item_id を記録
-            const eqItem = equipped.find((e: any) => e.slot === slot);
+            if (!token) { alert('認証エラー'); return; }
             const res = await fetch(`/api/equipment?slot=${slot}`, {
                 method: 'DELETE',
                 headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
+                    'Authorization': `Bearer ${token}`
                 }
             });
             if (res.ok) {
-                // equipped_items から削除後、inventory.is_equipped も false に同期
-                if (eqItem) {
-                    // inventory の中から item_id が一致するものを探して is_equipped = false
-                    const invItem = inventory.find((i: any) => i.item_id === eqItem.item_id || String(i.item_id) === String(eqItem.item_id));
-                    if (invItem) {
-                        await fetch('/api/inventory', {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                                ...(userProfile?.id ? { 'x-user-id': userProfile.id } : {})
-                            },
-                            body: JSON.stringify({ inventory_id: invItem.id, is_equipped: false })
-                        });
-                    }
-                }
+                // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
                 await Promise.all([fetchEquipment(), fetchInventory(), fetchUserProfile()]);
             }
         } catch (e) { console.error(e); }
         finally { setEquipLoadingSlot(null); }
     };
+
 
     const vitalityStatus = userProfile?.vitality ? getVitalityStatus(userProfile.vitality) : 'Prime';
     const flameColor = vitalityStatus === 'Prime' ? 'text-orange-500' : vitalityStatus === 'Twilight' ? 'text-orange-800' : 'text-gray-700';

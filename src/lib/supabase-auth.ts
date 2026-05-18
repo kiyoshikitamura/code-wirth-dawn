@@ -12,8 +12,7 @@ export function createAuthClient(req: Request) {
     const authHeader = req.headers.get('authorization');
     const token = authHeader ? authHeader.replace('Bearer ', '') : '';
     
-    // Fallback ID from custom header if we need it for logging or debugging, but Supabase auth relies on the JWT.
-    const customUserId = req.headers.get('x-user-id');
+    // [Security] x-user-id フォールバック廃止 (v27.2) — JWTのみで認証
 
     return createClient(supabaseUrl, supabaseAnonKey, {
         auth: {

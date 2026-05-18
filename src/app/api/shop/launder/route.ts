@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { supabase } from '@/lib/supabase';
 import { ECONOMY_RULES } from '@/constants/game_rules';
+import { getAuthenticatedProfile, AuthError } from '@/lib/shopAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,40 +13,9 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-
-        // ユーザー認証
-        let userId: string | null = null;
-        const authHeader = req.headers.get('authorization');
-        const xUserId = body.user_id || req.headers.get('x-user-id');
-
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (error || !user) {
-                userId = xUserId;
-            } else {
-                userId = user.id;
-                if (xUserId && xUserId !== userId) userId = xUserId;
-            }
-        } else {
-            userId = xUserId;
-        }
-
-        if (!userId) {
-            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-        }
-
-        // プロフィール取得
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('id, gold, current_location_id')
-            .eq('id', userId)
-            .single();
-
-        if (!profile) {
-            return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-        }
+        // JWT認証のみ（x-user-idフォールバック廃止）
+        const profile = await getAuthenticatedProfile(req);
+        const userId = profile.id;
 
         // 現在地が崩壊拠点かチェック
         if (!profile.current_location_id) {
@@ -116,6 +86,9 @@ export async function POST(req: Request) {
 
     } catch (e: any) {
         console.error('[Launder] Error:', e);
+        if (e instanceof AuthError) {
+            return NextResponse.json({ error: e.message }, { status: e.status });
+        }
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

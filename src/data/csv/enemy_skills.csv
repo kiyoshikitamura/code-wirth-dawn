@@ -52,3 +52,24 @@ id,slug,name,effect_type,value,description
 3008,skill_zeus_thunder,雷霆,damage_stun,4,大ダメージ+スタン(1T)
 3009,skill_zeus_storm,神罰の嵐,debuff_def_down,0,全体DEF DOWN(3T) ※ゼウス強のみ
 3010,skill_zeus_aegis,イージスの盾,buff_self_def,300,HPを300回復し防御力を高める(DEF UP 5T) ※ゼウス強のみ
+4001,skill_baph_hellfire,地獄の業火,damage,3.5,全体に灼熱の闇炎で高威力ダメージを与える
+4002,skill_baph_corrupt,精神汚染,debuff_atk_down,0,闇の精神攻撃でパーティ全体のATKを下げる(ATK DOWN 3T)
+4003,skill_baph_regen,暗黒再生,heal,250,闇の力でHP250を回復する
+4004,skill_angel_judge,裁きの光剣,damage,4,神聖な光の剣で防御貫通の大ダメージを与える
+4005,skill_angel_purify,浄化の光,damage_stun,2.5,光で焼き払いスタン(1T)を付与する
+4006,skill_angel_aegis,天光の護り,buff_self_def,200,HP200回復＋DEF UP(3T)を付与する
+4007,skill_dragon_nova,砂漠灼熱砲,damage,5,砂を硝子に変える超高威力ブレスを放つ
+4008,skill_dragon_wing,翼撃,damage_stun,2,巨大な翼で叩きつけスタン(1T)を付与する
+4009,skill_dragon_roar_e,威圧の咆哮,debuff_def_down,0,竜の咆哮でDEF DOWN(3T)を付与する
+4010,skill_kirin_horn,聖角一閃,damage,3.5,一本角から放つ聖なる一撃
+4011,skill_kirin_purge,浄化の波動,damage_blind,2,穢れを祓う光の波で目潰し(2T)を付与する
+4012,skill_kirin_heal,霊気充填,heal,300,霊気を集めHP300を大回復する
+4013,skill_golem_crush,鋼鉄の拳,damage,4,巨大な鉄拳による防御無視の一撃
+4014,skill_golem_quake,大地震動,damage_stun,2.5,地面を叩き全体にダメージ＋スタン(1T)を与える
+4015,skill_golem_armor,装甲硬化,buff_self_def,150,HP150回復＋DEF UP(3T)を付与する
+4016,skill_kraken_tentacle,触腕絞殺,damage_bleed,3,触腕で締め上げ出血(3T)を付与する
+4017,skill_kraken_ink,墨雲,damage_blind,1.5,墨で視界を奪い目潰し(3T)を付与する
+4018,skill_kraken_vortex,大渦,damage,4.5,海底の大渦で全体を飲み込む超高威力ダメージ
+4019,skill_mino_axe_e,覇王の大斧,damage,4.5,大斧の一振りで防御無視の大ダメージを与える
+4020,skill_mino_charge,突進,damage_stun,3,全速力の突進で大ダメージ＋スタン(1T)を与える
+4021,skill_mino_bellow,迷宮の呪い,debuff_atk_down,0,呪いの雄叫びでATK DOWN(3T)を付与する

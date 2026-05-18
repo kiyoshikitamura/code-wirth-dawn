@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { GameState } from '../types';
+import { DEFAULT_HEGEMONY } from '@/constants/nations';
 
 // ─── ヘルパー関数 (shared) ────────────────────────────────────────────────────
 export function getEffectiveAtk(
@@ -66,7 +67,6 @@ export const createProfileSlice = (
             const token = session?.access_token;
             const headers: Record<string, string> = {};
             if (token) headers['Authorization'] = `Bearer ${token}`;
-            if (userProfile?.id) headers['x-user-id'] = userProfile.id;
             const res = await fetch('/api/equipment', { headers });
             if (res.ok) {
                 const data = await res.json();
@@ -168,14 +168,23 @@ export const createProfileSlice = (
                 .eq('location_name', targetLocationName)
                 .maybeSingle();
 
+            // v27.0: hegemony キャッシュ（10分有効）
             let hegemonyData: any[] = [];
-            try {
-                const hegemonyRes = await fetch('/api/world/hegemony', { cache: 'no-store' });
-                if (hegemonyRes.ok) {
-                    const hData = await hegemonyRes.json();
-                    hegemonyData = hData.hegemony || [];
-                }
-            } catch (e) { console.error('Hegemony fetch error', e); }
+            const now = Date.now();
+            const cached = (get() as any)._hegemonyCache;
+            if (cached && (now - cached.fetchedAt) < 10 * 60 * 1000) {
+                hegemonyData = cached.data;
+            } else {
+                try {
+                    const hegemonyRes = await fetch('/api/world/hegemony', { cache: 'no-store' });
+                    if (hegemonyRes.ok) {
+                        const hData = await hegemonyRes.json();
+                        hegemonyData = hData.hegemony || [];
+                        set({ _hegemonyCache: { data: hegemonyData, fetchedAt: now } } as any);
+                    }
+                } catch (e) { console.error('Hegemony fetch error', e); }
+            }
+            if (hegemonyData.length === 0) hegemonyData = DEFAULT_HEGEMONY;
 
             if (data && !error) {
                 set({ worldState: { ...(data as any), hegemony: hegemonyData } });

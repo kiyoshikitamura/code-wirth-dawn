@@ -43,3 +43,10 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3065,grimoire_fire,魔導書:火球,65,3500,3,any,3,false,/images/items/grimoire_fire.png,魔法攻撃+炎上付与。
 3066,grimoire_ice,魔導書:氷槍,66,3500,3,any,3,false,/images/items/grimoire_ice.png,魔法攻撃+拘束付与。
 3067,grimoire_thunder,魔導書:雷撃,67,4500,3,any,4,false,/images/items/grimoire_thunder.png,魔法攻撃+スタン付与。
+3081,legend_baphomet_flame,戦利品:獄炎の刻印,81,0,4,,1,false,,伝説報酬: 全体炎上攻撃。
+3082,legend_angel_grace,戦利品:天使の恩寵,82,0,4,,1,false,,伝説報酬: 全体回復+リジェネ。
+3083,legend_dragon_inferno,戦利品:竜炎のブレス,83,0,5,,1,false,,伝説報酬: 全体攻撃+DEF DOWN。
+3084,legend_kirin_barrier,戦利品:麒麟の結界,84,0,4,,1,false,,伝説報酬: 全体鉄壁防御。
+3085,legend_golem_core,戦利品:ゴーレムコア,85,0,4,,1,false,,伝説報酬: ATK+DEF自己強化。
+3086,legend_kraken_tide,戦利品:海神の怒涛,86,0,5,,1,false,,伝説報酬: 全体攻撃+拘束。
+3087,legend_mino_axe,戦利品:覇王の大斧,87,0,5,,1,false,,伝説報酬: 超大ダメ+スタン。

@@ -29,14 +29,18 @@ function calcHeroicContractFee(level: number): number {
 }
 
 // タスク2: ロイヤリティ分配率（英霊）
-// 20% → 元プレイヤー（owner_id）へ / 残り80% → システム税（消滅）
-const HEROIC_ROYALTY_RATE = 0.20;
+// v13.2: Tierベース分配率 — Basic=25%, Premium=35% (Free=英霊登録不可)
+function getHeroicRoyaltyRate(ownerTier: string): number {
+    if (ownerTier === 'premium') return 0.35;
+    if (ownerTier === 'basic') return 0.25;
+    return 0.20; // fallback (Free は英霊登録不可だが安全弁)
+}
 
 // タスク1: ロイヤリティ日額上限
-// 仕様: spec_v7_lifecycle_economy.md §5.1
-// Lv1-10: 100G/日 / Lv11-20: 300G/日 / Lv21+: 50,000G/日
+// 仕様: spec_v6 §5A.4 (v4.1改訂)
+// Lv1-10: 500G/日 / Lv11-20: 300G/日 / Lv21+: 50,000G/日
 function getDailyRoyaltyCap(level: number): number {
-    if (level <= 10) return 100;
+    if (level <= 10) return 500;
     if (level <= 20) return 300;
     return 50000;
 }
@@ -467,18 +471,19 @@ export class ShadowService {
 
         // 6. タスク2: ロイヤリティ分配とシステム税
         if (shadow.origin_type === 'shadow_heroic' && heroicOwnerId) {
-            // 英霊: 20% → 元プレイヤーへ / 80% → システム税（消滅）
-            const royaltyAmount = Math.floor(finalContractFee * HEROIC_ROYALTY_RATE);
+            // 英霊: Tierベースのロイヤリティ率 → 元プレイヤーへ / 残り → システム税（消滅）
+            const { data: ownerProfile } = await this.supabase
+                .from('user_profiles')
+                .select('gold, level, subscription_tier')
+                .eq('id', heroicOwnerId)
+                .single();
+
+            const ownerTier = ownerProfile?.subscription_tier ?? 'free';
+            const heroicRate = getHeroicRoyaltyRate(ownerTier);
+            const royaltyAmount = Math.floor(finalContractFee * heroicRate);
             // システム税 = finalContractFee - royaltyAmount（消滅: 誰にも渡さない）
 
-            if (royaltyAmount > 0 && heroicOwnerId !== hirerId) {
-                const { data: ownerProfile } = await this.supabase
-                    .from('user_profiles')
-                    .select('gold, level')
-                    .eq('id', heroicOwnerId)
-                    .single();
-
-                if (ownerProfile) {
+            if (royaltyAmount > 0 && heroicOwnerId !== hirerId && ownerProfile) {
                     // 日額上限チェック (spec_v7 §5.1)
                     const ownerLevel = ownerProfile.level || 1;
                     const dailyCap = getDailyRoyaltyCap(ownerLevel);
@@ -513,7 +518,18 @@ export class ShadowService {
                     console.log(
                         `[英霊雇用] 契約金: ${finalContractFee}G | 日額上限: ${dailyCap}G | ロイヤリティ: ${effectiveRoyalty}G → ${heroicOwnerId} | システム税: ${taxed}G`
                     );
-                }
+
+                    // v4.1: ソーシャル通知
+                    try {
+                        await this.supabase.from('notifications').insert({
+                            user_id: heroicOwnerId,
+                            type: 'royalty',
+                            message: `英霊「${shadow.name}」が雇われました！ ロイヤリティ ${effectiveRoyalty.toLocaleString()}G を獲得！`,
+                            read: false
+                        });
+                    } catch (notifErr) {
+                        console.warn('[Notification] 通知保存失敗:', notifErr);
+                    }
             }
         } else if (shadow.origin_type === 'shadow_active') {
             // v13.0: shadow_active にも日額CAP を適用（spec_v6 §5A.4）
@@ -566,6 +582,18 @@ export class ShadowService {
                     console.log(
                         `[影雇用] 契約金: ${finalContractFee}G | 日額上限: ${dailyCap}G | ロイヤリティ: ${effectiveRoyalty}G → ${shadow.profile_id} | システム税: ${taxed}G`
                     );
+
+                    // v4.1: ソーシャル通知
+                    try {
+                        await this.supabase.from('notifications').insert({
+                            user_id: shadow.profile_id,
+                            type: 'royalty',
+                            message: `あなたの残影「${shadow.name}」が雇われました！ ロイヤリティ ${effectiveRoyalty.toLocaleString()}G を獲得！`,
+                            read: false
+                        });
+                    } catch (notifErr) {
+                        console.warn('[Notification] 通知保存失敗:', notifErr);
+                    }
                 }
             }
         }
@@ -633,11 +661,12 @@ export class ShadowService {
                 } : {}),
                 inject_cards: cardIds,
                 royalty_rate: shadow.origin_type === 'shadow_heroic'
-                    ? percentageToInteger(HEROIC_ROYALTY_RATE)
+                    ? percentageToInteger(getHeroicRoyaltyRate(shadow.subscription_tier || 'free'))
                     : shadow.origin_type === 'shadow_active'
                         ? percentageToInteger(shadow.subscription_tier === 'premium' ? 0.5 : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1))
                         : 0,
-                is_active: true
+                is_active: true,
+                last_hired_at: new Date().toISOString(), // v4.1: クリーンアップ用タイムスタンプ
             });
 
         if (insertError) return { success: false, error: insertError.message };

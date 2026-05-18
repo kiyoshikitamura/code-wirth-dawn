@@ -200,13 +200,11 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-            const userId = useGameStore.getState().userProfile?.id;
             const res = await fetch('/api/shop/purchase', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(userId ? { 'x-user-id': userId } : {})
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify({ item_id: itemId, price })
             });
@@ -386,7 +384,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
 
             {/* Phase 2: トースト通知UI */}
             {toastMessage && (
-                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[60] px-5 py-2.5 rounded-lg shadow-xl border text-sm font-bold tracking-wider animate-in fade-in slide-in-from-top-3 duration-300 ${
+                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[60] w-[85vw] max-w-[360px] px-5 py-3.5 rounded-xl shadow-xl border text-[15px] text-center leading-relaxed font-bold tracking-wider animate-in fade-in slide-in-from-top-3 duration-300 ${
                     toastMessage.type === 'success' ? 'bg-emerald-950/90 border-emerald-700/50 text-emerald-300' :
                     toastMessage.type === 'error' ? 'bg-red-950/90 border-red-700/50 text-red-300' :
                     'bg-slate-800/90 border-slate-600/50 text-slate-300'
@@ -449,7 +447,7 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                 {/* Choices */}
                 <div className="flex flex-col gap-2 shrink-0">
                     {/* 自動処理ノードはボタンを出さない（プロセッサが自動遷移） */}
-                    {['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_world', 'modify_flag', 'modify_state', 'trap'].includes(currentNode.type || '') ? (
+                    {['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward'].includes(currentNode.type || '') ? (
                         <div className="text-center text-slate-500 text-sm py-3 animate-pulse">処理中...</div>
                     ) : currentNode.type === 'battle' ? (
                         <div className="flex flex-col gap-3">
@@ -667,13 +665,11 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                     try {
                                         const { data: { session } } = await supabase.auth.getSession();
                                         const token = session?.access_token;
-                                        const userId = useGameStore.getState().userProfile?.id;
                                         const res = await fetch('/api/move', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
-                                                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                                                ...(userId ? { 'x-user-id': userId } : {})
+                                                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                                             },
                                             body: JSON.stringify({
                                                 target_location_name: showingTravel.dest,

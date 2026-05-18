@@ -53,6 +53,12 @@ interface GuestConversion {
     reason?: string;
 }
 
+interface ShareDataItem {
+    text: string;
+    slug: string;
+    vars: Record<string, string>;
+}
+
 interface QuestResultModalProps {
     onClose: () => void;
     result: 'success' | 'failure';
@@ -61,6 +67,7 @@ interface QuestResultModalProps {
     rewards: any;
     daysPassed: number;
     shareText?: string;
+    shareDataList?: ShareDataItem[];
     repChange?: RepChange | null;
     partyChanges?: PartyChange[];
     newLocationName?: string | null;
@@ -72,7 +79,7 @@ interface QuestResultModalProps {
 
 export default function QuestResultModal({
     onClose, result, questTitle, changes, rewards, daysPassed, shareText,
-    repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion, isTestPlay
+    shareDataList, repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion, isTestPlay
 }: QuestResultModalProps) {
     const safeChanges = changes || {} as QuestChanges;
     const { level_up, gold_gained = 0, aged_up } = safeChanges;
@@ -418,8 +425,30 @@ export default function QuestResultModal({
                         </section>
                     )}
 
-                    {/* ── シェアセクション ── */}
-                    {shareText && (
+                    {/* ── シェアセクション（号外システム統合） ── */}
+                    {(shareDataList && shareDataList.length > 0) ? (
+                        <section className="border-t border-gray-800 pt-3">
+                            <div className="bg-amber-900/10 border border-amber-500/20 p-3 rounded-lg space-y-2">
+                                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-[10px]">
+                                    <Trophy className="w-3 h-3" />
+                                    <span>号外！冒険を共有しよう</span>
+                                </div>
+                                {shareDataList.map((sd, idx) => {
+                                    const shareUrl = typeof window !== 'undefined'
+                                        ? `${window.location.origin}/share?t=${sd.slug}&${new URLSearchParams(sd.vars).toString()}`
+                                        : undefined;
+                                    return (
+                                        <div key={idx} className="space-y-1.5">
+                                            <p className="text-gray-300 text-xs italic leading-relaxed">
+                                                "{sd.text.length > 80 ? sd.text.substring(0, 80) + '...' : sd.text}"
+                                            </p>
+                                            <XShareButton text={sd.text} shareUrl={shareUrl} variant="large" />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    ) : shareText && (
                         <section className="border-t border-gray-800 pt-3">
                             <div className="bg-amber-900/10 border border-amber-500/20 p-3 rounded-lg space-y-2">
                                 <div className="flex items-center gap-1.5 text-amber-500 font-bold text-[10px]">
@@ -440,7 +469,7 @@ export default function QuestResultModal({
                         onClick={onClose}
                         className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-6 rounded transition-colors shadow-lg hover:shadow-amber-500/20"
                     >
-                        {isTestPlay ? 'エディターに戻る' : '冒険を続ける'}
+                        {isTestPlay ? '拠点に戻る' : '冒険を続ける'}
                     </button>
                 </footer>
             </div>

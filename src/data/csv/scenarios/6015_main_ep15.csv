@@ -2,26 +2,42 @@ row_type,node_id,text_label,params,next_node
 META,gold,2500,,
 META,exp,500,,
 META,reputation,30,,
-NODE,start,三体の大天使を退けた。\nイスハーク、龍京、出雲——それぞれに傷を負ったが、都市は生き残った。\n残る一体は——天軍の長、大天使ミカエル。\n四体の中で最も強大な存在。\nその矛先は、ローランドの首都レガリアに向けられていた。,"{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_crisis""}",volg_join
-NODE,volg_join,ヴォルグがパーティに加わった。,"{""type"":""guest_join"",""bg"":""bg_road_day"",""guest_id"":""npc_guest_volg""}",text_arrival
-NODE,text_arrival,王都レガリア。\nローランド聖王国の心臓部。\n白亜の城壁が——半分崩れていた。\n城門は瓦礫で埋まり、城壁の上に並んでいたはずの衛兵の姿がない。\n代わりに——空に、巨大な光の十字架が浮かんでいた。\nその光が、街に影を落としている。,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",text_devastation
-NODE,text_devastation,レガリアの被害は、他の三都市とは比べものにならなかった。\nウリエルの炎のように局所的ではない。\nラファエルの眠りのように穏やかでもない。\nガブリエルの混乱のように間接的でもない。\nミカエルは——純粋な武力で、都市を叩き潰していた。\n建物が斬り裂かれている。\n城壁が砕かれている。\n剣の一振りで街区が消し飛んだような痕跡が、あちこちに残されていた。,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",text_soldiers_last
-NODE,text_soldiers_last,瓦礫の影に、ローランド軍の残存部隊がいた。\n鎧が砕け、盾が割れ、槍が折れている。\nだが——まだ立っている者がいた。\n「……応援か？ 傭兵の……」隊長らしき男が、かすれた声で言った。\n「大聖堂の方角だ。\nあの化け物は……大聖堂にいる。\n　我々はもう……動けない。\n頼む……」,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",text_volg_resolve
-NODE,text_volg_resolve,ヴォルグが兵士たちを見渡した。\n「……最後の一体か。\n　今までの奴らとは格が違う。\n　それはわかっている」大剣を肩に担ぎ直した。\n「だがな——俺たちは三体倒してきた。\n　四体目が最強だろうが関係ねぇ。\n　やることは同じだ。\nぶっ倒す」,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",text_cathedral
-NODE,text_cathedral,大聖堂に向かって走った。\nかつて荘厳だった聖堂の尖塔が、斜めに傾いている。\nステンドグラスは粉々に砕け、聖者の彫像が首から上を失っていた。\n聖堂の前の広場に——光の柱が立っている。\nその光の中に、影が見えた。,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",text_michael_throne
-NODE,text_michael_throne,広場の中央に、砕けた聖堂の瓦礫で即席の「玉座」が作られていた。\nその上に——座っている。\n六枚の翼。\n全身が光の鎧に包まれた巨大な人型。\n右手に、光で構成された大剣を握っている。\n他の大天使とは——存在感が違う。\n見るだけで膝が折れそうになる、圧倒的な威圧。\n大天使ミカエル。\n天軍の長。,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",text_apostle_elite
-NODE,text_apostle_elite,ミカエルの周囲に、精鋭の使徒が展開していた。\n通常の使徒よりも一回り大きい。\n光の槍ではなく、光の剣を握っている。\nミカエルに近づくには、まずこの親衛隊を突破しなければならない。,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",battle1
-NODE,battle1,ミカエルの親衛隊が立ちはだかる！精鋭使徒を打ち破り、天軍の長への道を拓け！,"{""type"":""battle"",""bg"":""bg_regalia_ruined"",""bgm"":""bgm_battle"",""enemy_group_id"":""505""}",text_michael_descend
-CHOICE,,続ける,,text_michael_descend
-NODE,text_michael_descend,親衛隊を退けた。\n——瓦礫の玉座から、ミカエルが立ち上がった。\n地面が震えた。\n空気が凍った。\nミカエルの周囲だけ、空間が歪んでいるように見えた。\n光の大剣が持ち上げられた。\n刃の長さは——人の背丈の三倍はある。,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""bgm"":""bgm_quest_crisis""}",text_michael_voice
-NODE,text_michael_voice,ミカエルが口を開いた。\n重く、低く、大地を揺るがすような声。\n『ウリエル、ラファエル、ガブリエル。\n　三体ノ同胞ヲ退ケタ人間カ。\n　——認メヨウ。\n貴様ラハ強イ。\n　ダガ、強イダケデハ神ニハ届カナイ』,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker_name"":""大天使ミカエル""}",text_michael_declaration
-NODE,text_michael_declaration,『私ハ天軍ノ長。\n　剣ヲ以テ秩序ヲ守ル者。\n　貴様ラノ抵抗ハ、秩序ヘノ反逆デアル。\n　——故ニ、私ガ直々ニ裁ク』光の大剣が天に掲げられた。\n凄まじい光が広場を満たした。,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker_name"":""大天使ミカエル""}",text_volg_final
-NODE,text_volg_final,ヴォルグが前に出た。\n「秩序だぁ？　テメェらの秩序は、人間を家畜にすることだろうが。\n　悪ィが俺たちは飼い慣らされるつもりはねェ。\n　——来い、デカブツ。\n最後の一発だ！」大剣を構えた。\nその背中に——覚悟が見えた。,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",battle2
-NODE,battle2,大天使ミカエルとの決戦！天軍の長を退け、最後の都を守り抜け！,"{""type"":""battle"",""bg"":""bg_regalia_ruined"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9043""}",text_michael_retreat
-CHOICE,,続ける,,text_michael_retreat
-NODE,text_michael_retreat,光の大剣が——砕けた。\nミカエルの巨体が、初めて膝をついた。\n翼の一枚が欠け、光が漏れ出している。\n『……マサカ。\n人間ガ、天軍ノ長ヲ……。\n　……覚エテオクガイイ。\n　私タチハ、命令ニ従ッタダケダ。\n　命令ヲ下シタ者ハ——マダ、天ノ上ニイル』光に包まれ、ミカエルが天へ退いていった。,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker_name"":""大天使ミカエル""}",text_city_saved
-NODE,text_city_saved,ミカエルが去り、空に浮かんでいた光の十字架が消えた。\nレガリアの空に——本物の太陽が戻ってきた。\n瓦礫の中から、生き残った住民たちが顔を出し始めた。\n壊れた街。\nだが——生きている。\n四つの首都を守りきった。\n大天使の侵攻は——終わった。,"{""type"":""text"",""bg"":""bg_regalia_ruined""}",volg_leave
-NODE,volg_leave,ヴォルグが離脱した。\n瓦礫に腰を下ろし、大剣を地面に突き立てた。\n珍しく——疲れた顔をしていた。,"{""type"":""leave"",""bg"":""bg_regalia_ruined""}",text_volg_farewell
-NODE,text_volg_farewell,「四体倒したが……あの最後の野郎が言っていたな。　『命令を下した者は、まだ天の上にいる』と。　だが——今はいい。　ここまでやれりゃ上等だ」ヴォルグが立ち上がり、背伸びをした。「神の赦しを乞うよりは、　人間は人間らしく生き抜くべきだ。　——そうだろう、若僧？」にやりと笑い、瓦礫の中を歩き去っていった。,"{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker_name"":""ヴォルグ"",""speaker_image_url"":""/images/npcs/npc_guest_volg.png""}",end_node
-NODE,end_node,四大天使の侵攻は退けた。\nイスハーク、龍京、出雲、レガリア——四つの首都は傷つきながらも、生き残った。\n神そのものには届いていない。\nだが——人間は、神の軍勢に勝った。\nそれは、この世界の歴史上、初めてのことだった。\n瓦礫の街に、夕陽が差し込んでいる。\n壊れた街並みの中で、子供の泣き声が聞こえた。\n誰かが、その子を抱き上げる声が続いた。\n世界はまだ——生きている。\nそれだけで、十分だった。,"{""type"":""end_success"",""bg"":""bg_regalia_ruined"", ""rewards"":{""items"":[""503""]}}",
-NODE,end_failure,ミカエルの光の大剣が振り下ろされた。\nすべてが白い光に包まれ、意識が途切れた。\nレガリアの空に——光の十字架が、なお輝いている。,"{""type"":""end_failure"",""bg"":""bg_regalia_ruined""}",
+NODE,start,"三体の大天使を退けた。残る一体は天軍の長、大天使ミカエル。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_crisis""}",start_02
+NODE,start_02,"四体の中で最も強大な存在。矛先はローランドの首都レガリアに向いていた。","{""type"":""text"",""bg"":""bg_road_day""}",volg_join
+NODE,volg_join,ヴォルグがパーティに加わった。,"{""type"":""guest_join"",""bg"":""bg_road_day"",""guest_id"":""npc_guest_volg""}",arrival_01
+NODE,arrival_01,"王都レガリア。白亜の城壁が半分崩れていた。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",arrival_02
+NODE,arrival_02,"城門は瓦礫で埋まり衛兵の姿がない。空に巨大な光の十字架が浮かんでいた。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",devastation_01
+NODE,devastation_01,"被害は他の三都市と比べ物にならなかった。ミカエルは純粋な武力で都市を叩き潰していた。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",devastation_02
+NODE,devastation_02,"建物が斬り裂かれ城壁が砕かれている。剣の一振りで街区が消し飛んだ痕跡。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",soldiers_01
+NODE,soldiers_01,"瓦礫の影にローランド軍の残存部隊がいた。鎧が砕け盾が割れている。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",soldiers_02
+NODE,soldiers_02,"「大聖堂の方角だ。あの化け物は大聖堂にいる。我々はもう動けない。頼む」","{""type"":""text"",""bg"":""bg_regalia_ruined""}",volg_resolve_01
+NODE,volg_resolve_01,"「最後の一体か。今までの奴らとは格が違う。それはわかっている」","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",volg_resolve_02
+NODE,volg_resolve_02,"「だが俺たちは三体倒してきた。やることは同じだ。ぶっ倒す」","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",cathedral_01
+NODE,cathedral_01,"大聖堂に向かった。尖塔が傾きステンドグラスが粉々に砕けている。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",cathedral_02
+NODE,cathedral_02,"聖堂前の広場に光の柱。その光の中に影が見えた。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",michael_01
+NODE,michael_01,"砕けた瓦礫で作られた即席の玉座に——座っている。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",michael_02
+NODE,michael_02,"六枚の翼。全身が光の鎧。右手に光の大剣。圧倒的な威圧。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",michael_03
+NODE,michael_03,"大天使ミカエル。天軍の長。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",elite_01
+NODE,elite_01,"ミカエルの周囲に精鋭使徒が展開。通常より一回り大きく光の剣を握っている。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",battle1
+NODE,battle1,ミカエルの親衛隊を打ち破り天軍の長への道を拓け！,"{""type"":""battle"",""bg"":""bg_regalia_ruined"",""bgm"":""bgm_battle"",""enemy_group_id"":""505""}",descend_01
+CHOICE,,続ける,,descend_01
+NODE,descend_01,"親衛隊を退けた。瓦礫の玉座からミカエルが立ち上がった。地面が震えた。","{""type"":""text"",""bg"":""bg_regalia_ruined"",""bgm"":""bgm_quest_crisis""}",descend_02
+NODE,descend_02,"光の大剣が持ち上げられた。刃の長さは人の背丈の三倍はある。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",michael_voice_01
+NODE,michael_voice_01,"『三体ノ同胞ヲ退ケタ人間カ。認メヨウ。貴様ラハ強イ』","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""大天使ミカエル""}",michael_voice_02
+NODE,michael_voice_02,"『ダガ強イダケデハ神ニハ届カナイ。私ガ直々ニ裁ク』","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""大天使ミカエル""}",volg_final_01
+NODE,volg_final_01,"ヴォルグが前に出た。「テメェらの秩序は人間を家畜にすることだろうが」","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",volg_final_02
+NODE,volg_final_02,"「飼い慣らされるつもりはねェ。来い、デカブツ。最後の一発だ！」","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",battle2
+NODE,battle2,大天使ミカエルとの決戦！天軍の長を退け最後の都を守れ！,"{""type"":""battle"",""bg"":""bg_regalia_ruined"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9043""}",retreat_01
+CHOICE,,続ける,,retreat_01
+NODE,retreat_01,"光の大剣が砕けた。ミカエルの巨体が初めて膝をついた。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",retreat_02
+NODE,retreat_02,"『人間ガ天軍ノ長ヲ……。覚エテオクガイイ。命令ヲ下シタ者ハマダ天ノ上ニイル』","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""大天使ミカエル""}",retreat_03
+NODE,retreat_03,"ミカエルが天へ退いた。空の光の十字架が消え本物の太陽が戻った。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",saved_01
+NODE,saved_01,"瓦礫の中から生き残った住民が顔を出し始めた。四つの首都を守りきった。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",volg_leave
+NODE,volg_leave,"ヴォルグが瓦礫に腰を下ろした。珍しく疲れた顔をしていた。","{""type"":""leave"",""bg"":""bg_regalia_ruined"",""guest_id"":""npc_guest_volg""}",farewell_01
+NODE,farewell_01,"「四体倒したが……あの野郎が言っていたな。命令を下した者はまだ天にいると」","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",farewell_02
+NODE,farewell_02,"「だが今はいい。ここまでやれりゃ上等だ」","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",farewell_03
+NODE,farewell_03,"「人間は人間らしく生き抜くべきだ。そうだろう？」にやりと笑い去っていった。","{""type"":""text"",""bg"":""bg_regalia_ruined"",""speaker"":""ヴォルグ""}",end_01
+NODE,end_01,"四大天使の侵攻は退けた。四つの首都は傷つきながらも生き残った。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",end_02
+NODE,end_02,"瓦礫の街に夕陽が差し込む。子供の泣き声と誰かが抱き上げる声。","{""type"":""text"",""bg"":""bg_regalia_ruined""}",end_node
+NODE,end_node,"世界はまだ生きている。それだけで十分だった。（第3部前半完）","{""type"":""end_success"",""bg"":""bg_regalia_ruined"", ""rewards"":{""items"":[""503""]}}",
+NODE,end_failure,"ミカエルの光の大剣が振り下ろされた。全てが白い光に包まれた。","{""type"":""end_failure"",""bg"":""bg_regalia_ruined""}",

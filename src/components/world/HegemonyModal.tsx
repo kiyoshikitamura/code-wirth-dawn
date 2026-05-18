@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, Trophy, ShieldAlert, AlertCircle, MapPin } from 'lucide-react';
 import { WorldState } from '@/types/game';
+import { DEFAULT_HEGEMONY, NATION_NAME_MAP } from '@/constants/nations';
 
 interface Props {
     worldState: WorldState | null;
@@ -12,23 +13,12 @@ interface Props {
 export default function HegemonyModal({ worldState, onClose }: Props) {
     if (!worldState) return null;
 
-    const hegemony = worldState.hegemony || [
-        { name: "ローランド", power: 25, locations: 0, color: "bg-blue-600" },
-        { name: "マーカンド", power: 25, locations: 0, color: "bg-emerald-600" },
-        { name: "華龍神朝", power: 25, locations: 0, color: "bg-red-600" },
-        { name: "夜刀神国", power: 25, locations: 0, color: "bg-purple-700" }
-    ];
+    const hegemony = worldState.hegemony || DEFAULT_HEGEMONY;
 
     const controllingNation = worldState.controlling_nation === 'Neutral' ? '中立 (支配国なし)' : worldState.controlling_nation;
-
-    const nationMap: Record<string, string> = {
-        'Roland': '蒼なるローランド聖王国',
-        'Markand': '翠なるマーカンド連邦',
-        'Karyu': '紅なる華龍神朝',
-        'Yato': '宵なる夜刀神国',
-        'Neutral': '中立'
-    };
-    const cNationJp = worldState.controlling_nation ? (nationMap[worldState.controlling_nation] || controllingNation) : controllingNation;
+    const cNationJp = worldState.controlling_nation
+        ? (NATION_NAME_MAP[worldState.controlling_nation] || controllingNation)
+        : controllingNation;
 
     const totalLocations = hegemony.reduce((sum: number, n: any) => sum + (n.locations || 0), 0);
 

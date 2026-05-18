@@ -60,7 +60,9 @@ export const GROWTH_RULES = {
 // ─── spec_v16: Economy & Reputation Rules ────────────────────────────────────
 export const ECONOMY_RULES = {
     // §1: 移動エンカウント
-    RANDOM_ENCOUNTER_RATE: 0.20,        // 通常ランダムエンカウント発生率 (20%)
+    RANDOM_ENCOUNTER_RATE: 0.20,        // (旧) 固定エンカウント率（後方互換用）
+    ENCOUNTER_BASE_RATE_PER_DAY: 0.05,  // v19改善: 1日あたりの基礎エンカウント率 (5%)
+    //  → 実効率 = 1 - (1 - 0.05)^移動日数: 3日=14.3%, 5日=22.6%, 8日=33.7%
     BOUNTY_HUNTER_THRESHOLD: -100,      // 賞金稼ぎ確定エンカウント閾値（以下で確定）
     BOUNTY_PENALTY_RATE: 0.50,          // 賞金稼ぎ敗北時ゴールド没収率 (50%)
     ENCOUNTER_VITALITY_LOSS: 1,         // 通常エンカウント敗北時Vitality減算量

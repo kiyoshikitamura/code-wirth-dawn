@@ -1,0 +1,61 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"「商人ギルドからの依頼だ。キャラバンを襲う盗賊団のアジトを特定したらしい」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""ギルド受付"",""type"":""text""}",start_02
+NODE,start_02,"「相手は『砂漠の盗賊王バシム』。砂嵐を利用して神出鬼没に略奪を繰り返す男だ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""ギルド受付"",""type"":""text""}",start_03
+NODE,start_03,"「兵士の目につかない岩陰に要塞を築いているという。腕利きの冒険者の出番だ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""ギルド受付"",""type"":""text""}",start_04
+NODE,start_04,"盗賊の親玉か。報酬は悪くない。準備を整え、砂漠へと足を踏み入れた。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",travel_01
+NODE,travel_01,"強烈な日差しが降り注ぐマルカンド大砂漠。水筒の水を大事に飲みながら進む。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",travel_02
+NODE,travel_02,"アジトがあるとされる岩山地帯まではまだ距離がある。砂に足を取られ、体力が削られる。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",desert_01
+NODE,desert_01,"空が急に暗くなった。前方から巨大な砂嵐が迫ってきている！","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",desert_02
+NODE,desert_02,"盗賊たちはこの砂嵐を利用して移動するらしいが、まともに巻き込まれれば危険だ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",choice_sandstorm
+NODE,choice_sandstorm,"","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""choice""}",
+CHOICE,,"「マントで顔を覆い、強行突破する」",,storm_push_01
+CHOICE,,"「近くのオアシスに避難し、嵐が過ぎるのを待つ」",,oasis_wait_01
+NODE,storm_push_01,"砂嵐の中に飛び込む！ 視界が完全に奪われ、強風で飛んできた岩が体に当たる。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",storm_push_trap
+NODE,storm_push_trap,"鋭い岩片が直撃した！ 息も絶え絶えになりながら砂嵐を抜ける。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":15,""hp_percent"":15}",storm_push_02
+NODE,storm_push_02,"砂まみれになったが、アジトのある岩山へは予想より早く到着できた。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",merge_hideout
+NODE,oasis_wait_01,"オアシスに身を隠す。風が止むのを待つ間、周囲の気配を探る……。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",oasis_random
+NODE,oasis_random,"","{""bg"":""bg_desert"",""bgm"":""bgm_quest_mystery"",""type"":""random_branch"",""prob"":50}",oasis_safe_01
+CHOICE,,成功,,oasis_safe_01
+CHOICE,,失敗,,oasis_ambush_01
+NODE,oasis_safe_01,"砂嵐が過ぎ去った。体力を温存したまま、アジトへと向かうことができた。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",merge_hideout
+NODE,oasis_ambush_01,"「誰かいるぞ！」オアシスをねぐらにしていた砂漠の魔物に目をつけられた！","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_ambush
+NODE,battle_ambush,"砂漠の魔物との戦闘！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":422,""type"":""battle""}",
+CHOICE,,win,,merge_hideout
+CHOICE,,lose,,end_failure
+NODE,merge_hideout,"岩山に到着した。見張りの盗賊が立っている。奥がアジトへの入り口だ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",hideout_01
+NODE,hideout_01,"入り口には重武装の盗賊が複数いる。真正面から行くか、一工夫するか。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",hideout_02
+NODE,hideout_02,"ちょうど、略奪を終えて帰還してきたらしい商人の服を着た盗賊の一団がいる。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",hideout_03
+NODE,hideout_03,"あの服を奪えば変装できるかもしれない。どうする？","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",choice_infiltrate
+NODE,choice_infiltrate,"","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""choice""}",
+CHOICE,,"「小細工は無用。正面から蹴散らす」",,assault_01
+CHOICE,,"「商人の服を奪い、変装して潜入する」",,disguise_01
+NODE,assault_01,"武器を抜き、見張りに斬りかかる！「敵襲だぁ！！」","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_guard
+NODE,battle_guard,"盗賊の見張り部隊との戦闘！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":414,""type"":""battle""}",
+CHOICE,,win,,merge_boss
+CHOICE,,lose,,end_failure
+NODE,disguise_01,"商人の服を被り、うつむき加減で見張りの前を通過する……。「おい、お前。見ない顔だな？」","{""bg"":""bg_desert"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",disguise_random
+NODE,disguise_random,"","{""bg"":""bg_desert"",""bgm"":""bgm_quest_mystery"",""type"":""random_branch"",""prob"":60}",disguise_success_01
+CHOICE,,成功,,disguise_success_01
+CHOICE,,失敗,,disguise_fail_01
+NODE,disguise_success_01,"「ああ、新入りの……」適当に誤魔化すと、見張りは興味を失った。無傷で潜入に成功した。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",merge_boss
+NODE,disguise_fail_01,"「嘘をつけ！ 侵入者だ！」見張りに背後から蹴りを入れられ、囲まれた！","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",disguise_trap
+NODE,disguise_trap,"包囲を力ずくで突破し、アジトの奥へ逃げ込む。無駄な傷を負ってしまった。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":10,""hp_percent"":10}",merge_boss
+NODE,merge_boss,"騒ぎの中、アジトの最深部である広間に到達した。","{""bg"":""bg_crypt"",""bgm"":""bgm_quest_tense"",""type"":""text""}",boss_intro_01
+NODE,boss_intro_01,"「俺の要塞にネズミが入り込んだと聞いてな。随分と威勢がいいじゃねえか」","{""bg"":""bg_crypt"",""bgm"":""bgm_battle_boss"",""speaker_name"":""盗賊王バシム"",""type"":""text""}",boss_intro_02
+NODE,boss_intro_02,"豪華な絨毯の上に座る、巨体の男。彼こそが砂漠の盗賊王バシムだ。巨大な曲刀を手に、ゆっくりと立ち上がる。","{""bg"":""bg_crypt"",""bgm"":""bgm_battle_boss"",""speaker_name"":""盗賊王バシム"",""type"":""text""}",boss_intro_03
+NODE,boss_intro_03,"「砂漠の掟を教えてやる。弱い奴は、死ぬんだよ！」","{""bg"":""bg_crypt"",""bgm"":""bgm_battle_boss"",""speaker_name"":""盗賊王バシム"",""type"":""text""}",battle_boss
+NODE,battle_boss,"盗賊王バシムとの決戦！","{""bg"":""bg_crypt"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":9112,""type"":""battle""}",
+CHOICE,,win,,victory_01
+CHOICE,,lose,,end_failure
+NODE,victory_01,"「ま、待て！ 降参だ、俺の負けだ！」巨体を揺らし、盗賊王は武器を捨てて土下座した。","{""bg"":""bg_crypt"",""bgm"":""bgm_quest_calm"",""type"":""text""}",victory_02
+NODE,victory_02,"「命だけは助けてくれ！ あんたには俺が隠し持ってる財宝を全部くれてやる！ 金なら一生遊んで暮らせるだけあるんだ！」","{""bg"":""bg_crypt"",""bgm"":""bgm_quest_calm"",""speaker_name"":""盗賊王バシム"",""type"":""text""}",choice_fate
+NODE,choice_fate,"","{""bg"":""bg_crypt"",""bgm"":""bgm_quest_calm"",""type"":""choice""}",
+CHOICE,,"「悪党の命乞いなど聞く耳を持たん。斬る」",,fate_justice_01
+CHOICE,,"「……その話、乗ろう。財宝の場所を吐け」",,fate_chaos_01
+NODE,fate_justice_01,"「ひっ、やめっ——！」命乞いをする悪党に容赦なく刃を振り下ろし、その息の根を止めた。","{""bg"":""bg_crypt"",""bgm"":""bgm_quest_tense"",""type"":""text""}",fate_justice_02
+NODE,fate_justice_02,"盗賊王の首を持ち帰り、ギルドに報告した。「見事だ。これでキャラバンの安全も保たれる」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",end_success_justice
+NODE,end_success_justice,"依頼達成。悪を許さぬ正義の刃は、街の商人たちから大いに称賛された。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:1200|Exp:180|Rep:8|Justice:5""}",
+NODE,fate_chaos_01,"隠し財宝の場所を案内させ、金銀財宝をすべて自分の袋に詰め込んだ。「これでいいだろ？ 見逃してくれよな」","{""bg"":""bg_crypt"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",fate_chaos_02
+NODE,fate_chaos_02,"ギルドには「取り逃がした。だがアジトは壊滅させた」と報告した。報酬は少なかったが、そんなものはどうでもいいほどの金を既に手に入れている。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",end_success_chaos
+NODE,end_success_chaos,"依頼達成……？ ギルドの信用は落ちたが、懐は桁違いに温かくなった。悪党を利用するのも冒険者の生存戦略だ。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:2500|Exp:150|Rep:-5|Chaos:5""}",
+NODE,end_failure,"盗賊王の曲刀が胴体を薙ぎ払った。「砂漠の砂の養分になりな！」下品な笑い声が遠ざかっていく……。","{""bg"":""bg_crypt"",""type"":""end_failure""}",

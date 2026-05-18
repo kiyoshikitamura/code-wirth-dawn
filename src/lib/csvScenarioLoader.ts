@@ -216,7 +216,7 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
 
             // アイテム・移動系パラメータをparamsに保存
             const passthrough = ['item_id', 'quantity', 'remove_on_success',
-                'target_location_slug', 'hp_percent', 'hp_flat',
+                'target_location_slug', 'hp_percent', 'hp_flat', 'percent',
                 'flag', 'key', 'delta', 'value', 'threshold', 'operator',
                 'amount', 'location_name', 'items', 'gold',
                 'success_node', 'fail_node',

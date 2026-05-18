@@ -8,9 +8,10 @@ interface MainVisualAreaProps {
     onOpenHistory: () => void;
     onOpenMap?: () => void;
     showHistoryBadge?: boolean;
+    isHub?: boolean; // v27.0: ハブ判定（繁栄度バッジ非表示、フレーバー固定）
 }
 
-export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onOpenMap, showHistoryBadge }: MainVisualAreaProps) {
+export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onOpenMap, showHistoryBadge, isHub = false }: MainVisualAreaProps) {
     const prosperity = worldState?.prosperity_level || 3;
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
@@ -49,6 +50,8 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
 
     const flavorText = (() => {
         if (!worldState || locationName === '未知の土地') return '';
+        // v27.0: ハブは国家支配の影響を受けない
+        if (isHub) return 'どの国の支配も受けない、旅人たちの安息の地。';
         if (controllingNation === 'Neutral') return 'この地は誰の支配も受けていない。';
 
         const getNationName = (nation: string) => {
@@ -128,9 +131,12 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                             </p>
                         )}
                     </div>
-                    <div className={`flex-shrink-0 px-3 py-1.5 rounded-lg border backdrop-blur-sm text-xs font-black tracking-wider ${prosperityBadgeClass}`}>
-                        {prosperityLabel}
-                    </div>
+                    {/* v27.0: ハブでは繁栄度バッジ非表示 */}
+                    {!isHub && (
+                        <div className={`flex-shrink-0 px-3 py-1.5 rounded-lg border backdrop-blur-sm text-xs font-black tracking-wider ${prosperityBadgeClass}`}>
+                            {prosperityLabel}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,41 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { ItemDB, UserProfileDB, SkillDB } from '@/types/game';
 import { getUserAlignmentPcts, isDarkMarketEligible } from '@/lib/alignment';
-
-// Helper to get user profile 
-async function getUserProfile(req: Request) {
-    let targetUserId: string;
-    const authHeader = req.headers.get('authorization');
-
-    if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (error || !user) {
-            console.warn("[Shop API] Authentication failed (JWT). Deprecated x-user-id fallback rejected.");
-            throw new Error("Authentication failed. JWT is required."); // Throwing an error to be caught by the try/catch in GET/POST
-        }
-        targetUserId = user.id;
-    } else {
-        console.warn("[Shop API] Missing authorization header. Deprecated x-user-id fallback rejected.");
-        throw new Error("Login required for shop usage."); // Throwing an error to be caught by the try/catch in GET/POST
-    }
-
-    const { data: profile } = await supabaseService
-        .from('user_profiles')
-        .select('*')
-        .eq('id', targetUserId)
-        .single();
-
-    if (profile) {
-        console.log(`[Shop] Profile: ${profile.id} | Gold: ${profile.gold} | Loc: ${profile.current_location_id}`);
-    } else {
-        console.error(`[Shop] Profile NOT FOUND for ID: ${targetUserId}`);
-    }
-
-    return profile as UserProfileDB;
-}
+import { getAuthenticatedProfile, checkEmbargo, getInflationMultiplier, AuthError } from '@/lib/shopAuth';
 
 // GET: List Items (Dynamic Shop)
 export async function GET(req: Request) {
@@ -43,8 +10,7 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const questId = searchParams.get('quest_id');
 
-        const profile = await getUserProfile(req);
-        if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        const profile = await getAuthenticatedProfile(req);
 
         // 1. Get Location Context, Embargo, Items — 並列実行で高速化
         let prosperityLevel = 3;
@@ -133,10 +99,8 @@ export async function GET(req: Request) {
             // クエスト報酬素材・交易品（ショップ販売不可）
             'item_bear_pelt', 'item_supply_box', 'item_healing_herb',
             'item_tengu_fan', 'item_bandit_treasure',
-            // 効果未実装のフレーバーアイテム
-            'item_ration', 'item_torch', 'item_ruins_map',
-            'item_repair_kit', 'item_revive_incense',
-            'item_royal_decree', 'grimoire_teleport', 'item_world_map',
+            // 特殊入手のみ（ショップ販売不可）
+            'item_royal_decree',
         ]);
         const filteredItems = allItems.filter(item => {
             // 除外リストのアイテムはショップに並べない
@@ -341,19 +305,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const { item_id, _source } = await req.json();
-        const profile = await getUserProfile(req);
-        if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        const profile = await getAuthenticatedProfile(req);
 
-        // 0.5 Check Embargo Mode
-        if (profile.current_location_id) {
-            const { data: locForRep } = await supabaseService.from('locations').select('name').eq('id', profile.current_location_id).maybeSingle();
-            if (locForRep?.name) {
-                const { data: repData } = await supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locForRep.name).maybeSingle();
-                if (repData && (repData.score || 0) < 0) {
-                    return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。' }, { status: 403 });
-                }
-            }
-        }
+        // 出禁チェック（共通モジュール）
+        await checkEmbargo(profile);
 
         // 分岐: スキル購入 vs アイテム購入
         if (_source === 'skill') {
@@ -363,6 +318,9 @@ export async function POST(req: Request) {
         }
 
     } catch (e: any) {
+        if (e instanceof AuthError) {
+            return NextResponse.json({ error: e.message }, { status: e.status });
+        }
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
@@ -473,6 +431,20 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
         }
     }
 
+    // 2d. 装備品の所持上限チェック（同一アイテム最大3個）
+    if (item.type === 'equipment') {
+        const { data: existingRows } = await supabaseService
+            .from('inventory')
+            .select('id, quantity')
+            .eq('user_id', profile.id)
+            .eq('item_id', item.id);
+
+        const totalQty = (existingRows || []).reduce((sum: number, row: any) => sum + (row.quantity || 1), 0);
+        if (totalQty >= 3) {
+            return NextResponse.json({ error: `「${item.name}」は最大3個までしか所持できません。` }, { status: 400 });
+        }
+    }
+
     // 3. Check Gold
     if (profile.gold < finalPrice) {
         return NextResponse.json({ error: '金貨が足りません！' }, { status: 400 });
@@ -518,6 +490,15 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
     if (invError) {
         await supabaseService.rpc('increment_gold', { p_user_id: profile.id, p_amount: finalPrice });
         return NextResponse.json({ error: 'Transaction failed', details: invError.message }, { status: 500 });
+    }
+
+    // Collection: Record item acquisition in history
+    try {
+        await supabaseService
+            .from('user_item_history')
+            .upsert({ user_id: profile.id, item_id: item.id }, { onConflict: 'user_id,item_id', ignoreDuplicates: true });
+    } catch (histErr) {
+        console.warn('[Shop] Item history recording failed:', histErr);
     }
 
     return NextResponse.json({ success: true, new_gold: profile.gold - finalPrice });

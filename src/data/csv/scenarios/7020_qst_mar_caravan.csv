@@ -23,6 +23,6 @@ CHOICE,,win,,after_wave2
 CHOICE,,lose,,end_failure
 NODE,after_wave2,"サンドワームが砂の中に沈んでいった。もう動かない。\nサソリの死骸を踏み越え、商隊を急かす。もう少しだ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",arrive
 NODE,arrive,"八日目の夕暮れ。ついに交易都市の城壁が見えた。\n門をくぐると、商会の代理人が笑顔で出迎えてくれた。","{""bg"":""bg_guild"",""type"":""text""}",reward_scene
-NODE,reward_scene,"「全頭無事！ 荷も完品！ さすがだな、傭兵。\n　約束の報酬だ。また頼むぞ」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の代理人"",""type"":""text""}",end_success
+NODE,reward_scene,"「全頭無事！ 荷も完品！ さすがだな、冒険者。\n　約束の報酬だ。また頼むぞ」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の代理人"",""type"":""text""}",end_success
 NODE,end_success,"重い金袋を受け取った。\n8日間の砂と汗の代償。それでも、生きて帰れたことに感謝した。","{""bg"":""bg_guild"",""rewards"":{""gold"":500,""alignment_shift"":{""chaos"":10},""exp"":150,""reputation"":5},""type"":""end"",""result"":""success""}",
 NODE,end_failure,"砂漠の容赦ない牙の前に、膝をついた。\n荷は奪われ、商隊は散り散りになった。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",

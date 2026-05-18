@@ -15,14 +15,12 @@ export async function GET(req: Request) {
         let locationId: string | null = null;
         
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
         
+        // [Security] JWT認証のみ — x-user-id フォールバックを廃止 (v27.1)
         if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user }, error } = await supabase.auth.getUser(token);
             if (!error && user) userId = user.id;
-        } else if (xUserId) {
-            userId = xUserId;
         }
         
         if (!userId) {
@@ -43,8 +41,11 @@ export async function GET(req: Request) {
             }
 
             // --- SECURITY VALIDATION ---
-            // debug_bypass=true の場合は前提条件チェックをスキップ（デバッグ用クエストテスト）
-            const debugBypass = searchParams.get('debug_bypass') === 'true';
+            // debug_bypass: 開発環境では true で有効、本番では ADMIN_SECRET_KEY 一致時のみ有効
+            const debugParam = searchParams.get('debug_bypass');
+            const debugBypass = debugParam === 'true'
+                ? process.env.NODE_ENV === 'development'
+                : debugParam === process.env.ADMIN_SECRET_KEY && !!process.env.ADMIN_SECRET_KEY;
             if (!debugBypass) {
                 const validation = await QuestService.validateRequirements(supabaseServer, userId, quest.requirements);
                 if (!validation.valid) {
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
                     return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
                 }
             } else {
-                console.log(`[Debug] Bypassing requirement validation for scenario ${id}`);
+                console.log(`[Debug] Bypassing requirement validation for scenario ${id} (admin bypass)`);
             }
             // ---------------------------
 
@@ -78,8 +79,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ scenarios: [mapped] });
         }
 
-        // Case 2: Fetch Available Quests (Legacy/Location based)
-        // Fetch User Profile to get Current Location
+        // Case 2: Fetch Available Quests by Location
         const { data: profile } = await supabaseServer
             .from('user_profiles')
             .select('current_location_id')
@@ -92,46 +92,28 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'User location not set' }, { status: 400 });
         }
 
-        // 2. Use QuestService
-        const quests = await QuestService.fetchAvailableQuests(userId, locationId);
+        // v27.1: location_id ベースの直接クエリ（fetchAvailableQuests を廃止）
+        const { data: quests, error: qErr } = await supabaseServer
+            .from('scenarios')
+            .select('*')
+            .eq('location_id', locationId);
 
-        // 3. Map to Frontend Friendly Response (if needed, or send raw DB type)
-        // InnPage expects: id, title, description, client_name, reward_gold, impacts object
-        // v3 scenarios have 'rewards': { gold: ... }. We need to map this back to flat structure for compatibility 
-        // OR update frontend. Updating frontend is better, but let's provide a backward-compatible shape for now + new fields.
+        if (qErr) {
+            console.error("Scenario fetch error:", qErr);
+            return NextResponse.json({ error: qErr.message }, { status: 500 });
+        }
 
-        const mappedQuests = quests.map(q => {
+        const mappedQuests = (quests || []).map((q: any) => {
             const r = q.rewards || {};
-
-            // Map impact objects if V3 uses them
-            // V3: rewards.world_impact = { target_loc, attribute, value }
-            // Legacy: impacts: { order: number... }
-            // We should infer impacts from world_impact or alignment_shift
-
-            let order_impact = 0;
-            let chaos_impact = 0;
-            let justice_impact = 0;
-            let evil_impact = 0;
-
-            if (r.alignment_shift) {
-                order_impact += r.alignment_shift.order || 0;
-                chaos_impact += r.alignment_shift.chaos || 0;
-                justice_impact += r.alignment_shift.justice || 0;
-                evil_impact += r.alignment_shift.evil || 0;
-            }
-
-            // Also check 'rewards.world_impact' if we want to show it
-
             return {
                 ...q,
-                reward_gold: r.gold || 0, // Map from JSONB
+                reward_gold: r.gold || 0,
                 impacts: {
-                    order: order_impact,
-                    chaos: chaos_impact,
-                    justice: justice_impact,
-                    evil: evil_impact
+                    order: r.alignment_shift?.order || 0,
+                    chaos: r.alignment_shift?.chaos || 0,
+                    justice: r.alignment_shift?.justice || 0,
+                    evil: r.alignment_shift?.evil || 0,
                 },
-                // Pass raw conditions/rewards for advanced UI
                 conditions: q.conditions,
                 rewards: q.rewards,
                 flow_nodes: q.flow_nodes

@@ -1,4 +1,4 @@
-Code: Wirth-Dawn Specification v13.0 (Active Shadow 詳細仕様追記 2026-04-13)
+Code: Wirth-Dawn Specification v13.2 (v4.1 英霊改善 2026-05-16)
 # Shadow Mercenary System
 
 ## 1. 概要 (Overview)
@@ -66,6 +66,9 @@ CREATE TABLE party_members (
 - Cover: `cover_rate` に基づき確率でプレイヤーへのダメージを庇う。
 - バトルHP0: バトル中のHPが0になった場合、バトルから脱落。DBで`is_active=false, durability=0`に即時更新。
 - VIT0離脱: クエスト完了時にVIT（`durability`カラム）が0以下になると`party_members`から削除され離脱。形見アイテム生成。
+
+> **用語定義 (v4.1)**: 「バトルHP」= `max_durability`（バトル毎にリセット）。「VIT(寿命)」= `durability`（クエスト完了毎に減少、回復困難）。UIではバトルHPを緑色、VITをオレンジ色のバーで表示。
+
 - **VIT摩耗計算** (`POST /api/quest/complete`):
   - 成功: -5, 失敗/撤退: -10, バトルHP0追加: -10
   - `is_active=false`（バトルで力尽きた）メンバーは `durability=0` として扱い確実に削除対象にする
@@ -75,8 +78,21 @@ CREATE TABLE party_members (
 ### 4.2 AI Grade別の挙動
 | Grade | 特徴 |
 |---|---|
-| `random` | デッキからランダムに1枚選択して使用 |
-| `smart` | 効率的なスキル選択（※現状は random と同等の実装） |
+| `random` | デッキからコスト順に1枚選択して使用。バフ・デバフもロールに応じて使用 |
+| `smart` | 攻撃カード**2枚/ターン**、AP貯蓄判断、クリティカル率上昇(8%)、緊急回復閾値優遍(50%)、**瘀死ターゲット優先攻撃**。詳細は spec_v3 §4.3 参照 |
+
+### 4.3 レガシースキル（v4.1: 英霊固有APパッシブ）
+
+`shadow_heroic` のみ、元キャラクターのレベルに応じたターン開始APボーナスを自動付与。
+
+| 英霊レベル | レガシースキル名 | 効果 | 発動間隔 |
+|:---:|:---|:---|:---:|
+| Lv 1-9 | 残響の導き | AP+1 | 3ターンに1回 |
+| Lv 10-19 | 古の知恵 | AP+1 | 2ターンに1回 |
+| Lv 20-29 | 英雄の覇気 | AP+1 | 毎ターン |
+| Lv 30+ | 不滅の加護 | AP+2 | 毎ターン |
+
+実装: `npcAI.ts` 内の `getLegacySkill()` / `applyLegacySkill()`。
 
 ---
 
@@ -127,6 +143,8 @@ CREATE TABLE party_members (
 - **API**: `POST /api/party/dismiss`
 - パーティから除外し、酒場に戻す。
 
+> **英霊の酒場リスト非表示ポリシー (v2.9.3f)**: 英霊（`shadow_heroic`）は酒場の雇用メインリストには**表示しない**。英霊の管理・閲覧は「影の記録」タブ（§5.6）専用。これはFree/国家枚と英霊が混在して表示不整合を引き起こしていたための措置。
+
 ---
 
 ## 5A. アクティブ残影（同拠点プレイヤー雇用）の詳細仕様
@@ -140,12 +158,12 @@ CREATE TABLE party_members (
 | 条件 | 詳細 |
 |---|---|
 | 同拠点 | `current_location_id` が雇用者と同一 |
-| アクティブ判定 | `updated_at` が現在時刱30晄32分時間指定（「24時間以内」） |
+| アクティブ判定 | `updated_at` が現在時刻から24時間以内 |
 | 生存種別 | `is_alive = true` |
 
-- **服し自身は除外**: `neq(id, currentUserId)`
-- **既雇用製は除外**: 既に自パーティの `source_user_id` に存在するプレイヤーは魔除
-- **表示上限**: 10件（システムNPC・英靈と合算）
+- **ただし自身は除外**: `neq(id, currentUserId)`
+- **既雇用者は除外**: 既に自パーティの `source_user_id` に存在するプレイヤーは除外
+- **表示上限**: 10件（システムNPCと合算。英霊は含まない）
 
 ### 5A.2 雇用時のサーバー側バリデーション
 
@@ -174,7 +192,7 @@ CREATE TABLE party_members (
 | DEF | `defense` | `def` |
 | デッキ | `signature_deck`（card ID配列） | `inject_cards`（card ID配列） |
 
-> **重要**: 雇用後は `party_members` の値が固定される。元プレイヤーがステータスを山ててもリアルタイム山増しはされない。
+> **重要**: 雇用後は `party_members` の値が固定される。元プレイヤーがステータスを変更してもリアルタイム反映はされない。
 
 ### 5A.4 ロイヤリティ日額CAP（v13.0 新規定義）
 
@@ -182,18 +200,20 @@ CREATE TABLE party_members (
 
 | 元プレイヤーの Lv | 日額CAP |
 |---|---|
-| Lv 1-10 | 100G / 日 |
+| Lv 1-10 | 500G / 日 |
 | Lv 11-20 | 300G / 日 |
 | Lv 21以上 | 50,000G / 日 |
 
 - **超過分**: システム税として消滅（誤用防止）。
+- **雇用時にソーシャル通知** (v4.1): 英霊/残影が雇われた際、元プレイヤーの `notifications` テーブルに「英霊「{name}」が雇われました！」通知をINSERT。
 - **雇用者自身の残影を雇用した場合**: 分配金は発生しない。
 - **元プレイヤーがオフライン/別拠点の場合**: 雇用後に還元は発生する。
 
 ### 5A.5 AIグレード
 
-- `shadow_active` のAIは現在 `random`（デッキからランダムに1枚選択）で動作。
-- `smart` グレードは設計されているが未実装（v13.0時点）。
+- `shadow_active` のAIは `random` グレードで動作。
+- `shadow_heroic` のAIは `smart` グレードで動作（AP貯蓄・クリティカル率上昇・緊急回復閾値優遍）。
+- 詳細は spec_v3_addendum_npc_ai.md §4.3 を参照。
 
 ### 5.5 傑兵一覧 UI 仕様 (v12.0新規)
 
@@ -226,6 +246,15 @@ CREATE TABLE party_members (
   - `{ heroics: [{ name, level, job_class, created_at }], subscription_tier, max_slots }`
 
 - **登録は手動不可**: 引退/死亡時に`LifeCycleService`が自動登録。
+
+### 5.7 英霊の間タブ (v4.1新規)
+酒場UIの第3タブ「英霊の間」は、全英霊を一覧表示し雇用できる専用UI。
+
+- **API**: `GET /api/tavern/heroic-list?location_id={id}&user_id={userId}`
+  - `party_members` から `origin_type = 'shadow_heroic'` かつ `is_active = true` を取得
+  - 最大10件、レベル降順ソート
+  - `ShadowSummary` 形式で返却（カード名も解決）
+- **UI**: 傭兵カードと同様のレイアウト。英霊バッジ☆付き、クリックで詳細ポップアップ→雇用可能。
 
 ### 5.4 アバター通報 (Report)
 不適切なアバター画像（`image_url`）を発見した場合、タバーン内の残影カードから通報できる。
@@ -260,9 +289,9 @@ CREATE TABLE party_members (
 |---|---|---|
 | デッキ検証 | 登録時に消耗品 (`consumable`) の除外 | **簡略化実装** |
 | ロイヤリティ上限 | レベルに応じた日額制限 | **実装済み** |
-| 契約終了 | 30日間未使用で自動解除 | **実装済み** |
+| 契約終了 | 30日間未使用で自動解除 | **実装済み (v4.1 修正)** |
 | 同名登録 | 同名のShadow/Heroicは1人しか登録できない。再登録は前のデータを上書き（Update）する。 | **実装済み** |
-| 英霊データ清掃 | 雇用されていない状態で**30日間**経過した「英霊」のデータは、日次の世界変遷のタイミングで論理削除（`is_active = false`）される。 | **実装済み** |
+| 英霊データ清掃 | `last_hired_at` が30日以上前かつ `is_active = true` の英霊を日次バッチで論理削除（`is_active = false`） | **実装済み (v4.1 修正)** |
 
 ### 7.2 雇用ブロック (Embargo Penalty)
 - プレイヤーの該当拠点における名声 (Reputation) が **0 未満 (マイナス)** になった場合、その酒場での「残影雇用」はシステム的にブロック（APIで403エラー、UIで無効化）される。

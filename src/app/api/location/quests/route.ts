@@ -58,31 +58,21 @@ export async function GET(req: Request) {
         debug.push(`prosperity = ${currentProsperity} (scale: 1-5) `);
 
         // 2.5 Fetch all world_states for alignment percentage calculation (spot quest conditions)
-        const { data: allWorldStates } = await supabaseServer
+        let allWorldStates = (await supabaseServer
             .from('world_states')
-            .select('id, order_score, chaos_score, justice_score, evil_score, updated_at');
+            .select('id, order_score, chaos_score, justice_score, evil_score, updated_at')).data || [];
 
-        // 6時間リセット遅延評価: updated_at が6時間以上前なら覇権反映＋スコアリセット
-        const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-        if (allWorldStates) {
-            for (const ws of allWorldStates) {
-                const lastUpdate = new Date((ws as any).updated_at).getTime();
-                if (Date.now() - lastUpdate > SIX_HOURS_MS) {
-                    // 前回期間の結果を覇権判定に使用後、スコアをリセット
-                    await supabaseServer.from('world_states')
-                        .update({
-                            order_score: 0, chaos_score: 0,
-                            justice_score: 0, evil_score: 0,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', (ws as any).id);
-                    // リセット後は0に上書き
-                    (ws as any).order_score = 0;
-                    (ws as any).chaos_score = 0;
-                    (ws as any).justice_score = 0;
-                    (ws as any).evil_score = 0;
-                    debug.push(`world_state ${(ws as any).id} reset (6h elapsed)`);
-                }
+        // 6時間リセット: Cronで定期実行に移行（/api/cron/world-reset）
+        // フォールバック: Cron未実行時のために、read時にもリセットを実行
+        {
+            const { resetStaleAlignmentScores } = await import('@/services/worldStateReset');
+            const { resetCount, debug: resetDebug } = await resetStaleAlignmentScores();
+            if (resetCount > 0) {
+                debug.push(...resetDebug);
+                const { data: refreshed } = await supabaseServer
+                    .from('world_states')
+                    .select('id, order_score, chaos_score, justice_score, evil_score, updated_at');
+                if (refreshed) allWorldStates = refreshed;
             }
         }
 
@@ -141,7 +131,7 @@ export async function GET(req: Request) {
         // 5. Fetch Quests
         const { data: quests, error: qError } = await supabaseServer
             .from('scenarios')
-            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data')
+            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
             .in('quest_type', ['normal', 'special'])
             .not('slug', 'like', 'ugc_%') // v21: UGCクエスト（slug が ugc_ 始まり）を除外
             .limit(200);
@@ -348,6 +338,8 @@ export async function GET(req: Request) {
                 short_flavor: q.script_data?.short_description || q.description || '',
                 long_flavor: q.script_data?.nodes?.start?.text || q.description || '',
                 is_ugc: q.slug?.startsWith('ugc_') || false,
+                days_success: q.days_success ?? 1,
+                days_failure: q.days_failure ?? 1,
             };
         };
 

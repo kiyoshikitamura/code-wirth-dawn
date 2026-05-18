@@ -1,0 +1,6933 @@
+{
+  "summary": {
+    "totalText": 2369,
+    "over35": 989,
+    "over50": 221,
+    "over80": 8
+  },
+  "violations": [
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "check_relic",
+      "type": "text",
+      "len": 92,
+      "text": "傷ひとつない。無事だ。\\nこれを布に包んで背負い、血に染まった廃城を後にした。\\n\\n……だが、ふと考えた。この聖杯を闇市に持ち込めば、\\n教会に届けるよりはる"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "end_success_deal",
+      "type": "end",
+      "len": 87,
+      "text": "長には「頭目は逃げた。だが荷は取り返した」とだけ報告し、一部の報酬を受け取る。\\n悪人と悪人の間を泳ぎ回り、利益を掠め取る……。この国で生き残るには、これが一番"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 86,
+      "text": "怨霊の身を凍らせるような呪いと、圧倒的な執念の前に、なす術もなく意識を刈り取られた。\\n武士の面子を懸けた果たし状は、誰にも読まれることなく冷たい山道に転がった"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 84,
+      "text": "「これで、しばらくは神隠しも収まるでしょう。本当に、ありがとうございました」\\n感謝の言葉と報酬を受け取り、神社を後にした。結界が破られた原因は、いずれ探る必要"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "captain_03",
+      "type": "text",
+      "len": 83,
+      "text": "「港の長に言っておけ。俺が襲った商船の利益の二割は、あの男の懐に入っていたとな……」\\nどうやら、長の目的は「上前を撥ねていた自分たちの秘密を消すこと」だったら"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "end_failure_lost",
+      "type": "end",
+      "len": 82,
+      "text": "「……密書がないだと？ あるいは封を切ったか。貴様、我らを愚弄するか！」\\n連絡員の目が細められ、背後の闇から複数の殺気が膨れ上がった。ここで生かしてはおかれな"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 82,
+      "text": "武具の力は勝っていたが、彼らの「生きるための覚悟」がそれを上回った。\\n無数の竹槍に身体を貫かれ、冷たい泥の中に倒れ伏す。因果応報、仕方のない結末かもしれない…"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 81,
+      "text": "「天使が去った……のか。信じられんが、聖都上空の異変は収まった」\\n討伐ではなく帰還。教会はこの事実をどう解釈するだろうか。だが、少なくとも今は——空は穏やかだ"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 80,
+      "text": "「中身は見ておらんな？ ……よろしい。約束の報酬だ。我らは会わなかった、そうだな？」\\n重い金袋を受け取る。彼らが何を企んでいるのか、自分には関係のないことだ。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 79,
+      "text": "「降臨せし天使の討伐を確認。聖都の被害は甚大だが、これ以上の犠牲は免れた」\\nギルドマスターは複雑な表情だった。天使を殺した——その重みは、報酬では量れない。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 79,
+      "text": "「完璧です。全軒回収とは恐れ入りました。\\n　あなたには才能がある。また声をかけましょう」\\n教会の使いは満足げに笑った。手の中の金は、酷く汚いものに思えた。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 79,
+      "text": "キョンシーたちの異常な跳躍力と怪力に圧倒され、冷たい掌に突き飛ばされた。\\n地面に倒れ伏す中、最後の一枚の護符が手からこぼれ落ち、絶望の闇が視界を覆った……。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 79,
+      "text": "薄ら笑いを浮かべる宦官から、ずっしりと重い金袋を受け取る。\\nその仙丹が本当に「不老長寿」をもたらすのか、それとも「静かなる死」をもたらすのか、知る由もない。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 78,
+      "text": "「水賊の船は岬の裏側の入り江に停泊している。奪われた荷物は一つ残らず港に返してくれ」\\nそう言う長の目は、正義感からではなく、計算高く欲深い光を帯びていた。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 77,
+      "text": "抜け忍たちの変幻自在な体術と暗器に翻弄され、冷たい刃を胸に受けた。\\n薄れゆく意識の中、間者たちが何事もなかったかのように関所へと消えていくのを見た……。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "refuse_02",
+      "type": "text",
+      "len": 77,
+      "text": "パリンという音と共に壺が砕け、死気は陽光に触れて浄化されていく。\\n「な、何をする！ 貴様、どれほどの価値があるか分かって……愚かな！ 報酬は減額だ！！」"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 77,
+      "text": "血塗られた手で太守の館へと戻り、任務完了の報告と共に多額の報酬を受け取る。\\n背中の奥で、村人たちの呪詛の泣き声がいつまでも響いているような気がした……。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 75,
+      "text": "「それから……この件はくれぐれも内密に。仙丹の『真の使い道』は聞かないほうがよろしいかと」\\n冷たく細められた宦官の目に、底知れぬ悪意の気配を感じた。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "start",
+      "type": "text",
+      "len": 75,
+      "text": "「よく来てくれた、裏稼業の者よ。内密に頼みたい汚れ仕事があるのだ」\\nきらびやかな装飾が施された太守の館で、肥え太った役人が冷酷な笑みを浮かべていた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 75,
+      "text": "妖狐の幻術に翻弄され、気がつけば山のふもとに放り出されていた。\\nあの桃の林は幻だったのか。だが腕に残る引っ掻き傷だけが、現実だったことを告げている。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 74,
+      "text": "ギルドに凱旋した。「大悪魔バフォメットの討伐を確認。これは歴史に刻まれる偉業だ」\\nギルドマスターが深く頭を下げた。千年の脅威に、終止符が打たれた。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "encounter_wave1",
+      "type": "text",
+      "len": 74,
+      "text": "松明を掲げると、通路を塞ぐように異なる種類の亡者たちが立っていた。\\n骸骨、腐敗した死体、そして半透明の幽鬼——生者の熱を感知し、こちらへ向き直る。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "end_failure_lost",
+      "type": "end",
+      "len": 74,
+      "text": "「霊草がない？ ……まさか、折ってしまったのではあるまいな？ 役立たずめ、報酬は払えぬ！」\\n宦官の冷たい言葉と共に、宮殿から追い出されてしまった。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 74,
+      "text": "黒鰐の振るう戦斧の一撃をまともに受け、身体が宙に浮いた。\\n冷たい海へと叩き落とされ、塩水に肺を焼かれながら、意識は深い海の底へと沈んでいった……。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 73,
+      "text": "「鉱脈は無事か。ご苦労だった」太守は満足げだ。だが報酬は控えめだった。\\n山の老人が一人、深々と頭を下げてくれた。「精霊を守ってくれてありがとう」"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "end_success_justice",
+      "type": "end",
+      "len": 73,
+      "text": "怒り狂う道士から半ば強引に最低限の報酬を奪い取り、山を後にした。\\n報酬は減ったが、あの世の秩序を守ったという事実は、確かな誇りとして胸に残った。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "end_success_withdraw",
+      "type": "end",
+      "len": 73,
+      "text": "「役立たずのクズめ！ とっとと失せろ！」\\n太守から激しく罵倒され、当然ながら報酬は一切支払われなかった。だが、胸の奥には確かな誇りが残っている。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 72,
+      "text": "「麒麟の討伐を確認。結界は解除され、山麓の民は元の暮らしに戻れる」\\n報酬を受け取ったが、山頂の清浄な空気を思い出すと——少しだけ、胸が痛んだ。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 72,
+      "text": "水賊討伐完了。港町の長から、安堵の表情と共に報酬を受け取った。\\n「これで港も静かになる。本当にありがたい」——白々しい嘘に付き合う義理はない。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "end_success_chaos",
+      "type": "end",
+      "len": 72,
+      "text": "阿明は時折山に薬を届けに行くようになった。人と妖の間に、静かな絆が紡がれている。\\n人の定めた境を越えることは——罪か、それとも新しい可能性か。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 71,
+      "text": "「異端の大賢者の拘束と研究所の破壊を確認。秩序を守った功績、高く評価する」\\n禁忌の知識が世に出ることはなくなった。正しい選択だったと信じる。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 70,
+      "text": "「クラーケン討伐を確認！ 交易海域は再開される。お前の勇気が海を救った」\\n破格の報酬。だが海底で見たあの巨大な瞳は——忘れられそうにない。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 70,
+      "text": "山の怪異たちの圧倒的な力の前に、ついに力尽きた。\\n冷たい土の上に倒れ伏す中、誰かが結界石の破片を拾い上げ、嘲笑う声が聞こえた気がした……。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "start",
+      "type": "text",
+      "len": 70,
+      "text": "「よく来てくれました。他ならぬ、腕利きのあなたに頼みたい儀があるのです」\\n宮殿の奥深くに通され、宦官から古い図絵と山脈の地図を受け取った。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 70,
+      "text": "精鋭の刺客たちの変幻自在な動きに翻弄され、守備網を突破されてしまった。\\n背後で薛の断末魔の悲鳴が響き、やがて屋敷は深い静寂に包まれた……。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 69,
+      "text": "「鎮魂の儀で成仏させたか。報酬は控えめだが、村の長老たちが深く感謝している」\\n秩序を乱さず、怨霊を鎮めた。古の武士道に通じる選択だった。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "pact_04",
+      "type": "text",
+      "len": 69,
+      "text": "両国のギルドには「大妖は倒したが遺体は消えた」と報告した。嘘ではない——半分は。\\n大量の報酬を手にしたが、冒険者としての信頼は失われた。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "confront_03",
+      "type": "text",
+      "len": 69,
+      "text": "「……言葉では納得できぬ。ならば力で示してみせよ。人の意志の強さを——」\\n天使が玉座から立ち上がり、六枚の翼を広げた。光の剣が顕現する。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 69,
+      "text": "「デザートドラゴン討伐を確認！ 交易路は復旧する。お前は英雄だ」\\n交易商会から莫大な報酬を受け取った。竜の鱗は勲章として飾られるだろう。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 69,
+      "text": "「オメガ・ゴーレム、完全破壊を確認。都市は救われた。見事だ」\\n古代兵器の脅威は消えた。だがあの技術が永遠に失われたことを惜しむ声もある。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 69,
+      "text": "「牛頭王の討伐を確認。迷宮は崩壊し、村落の安全は確保された」\\n骨と武具の山——あの中には、自分と同じ夢を持った冒険者たちもいたのだろう。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 69,
+      "text": "渡された壺は禍々しい朱色の紋様で覆われており、触れると氷のように冷たかった。\\n道士の不気味な笑みに一抹の不安を覚えつつ、霊山へと向かう。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "purify_03",
+      "type": "text",
+      "len": 69,
+      "text": "壺は満杯になり、不吉な紫色の光を放ちながら熱を帯びている。\\n……この禍々しい力を、あの怪しげな道士に渡してしまって本当に良いのだろうか？"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "fate_chaos_02",
+      "type": "text",
+      "len": 68,
+      "text": "ギルドには「取り逃がした。だがアジトは壊滅させた」と報告した。報酬は少なかったが、そんなものはどうでもいいほどの金を既に手に入れている。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 68,
+      "text": "ガレスは自首し、教会の腐敗を公に告発した。報酬は減額されたが、正義の種は蒔かれた。\\n王国軍は面目を失ったが、民衆からの評価は高まった。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "end_success_pact",
+      "type": "end",
+      "len": 68,
+      "text": "莫大な報酬を手にした。だがギルドからは不信の目で見られている。\\n「本当に倒したのか？ 地脈の乱れは収まったが……」噂は尾を引くだろう。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "end_success_preserve",
+      "type": "end",
+      "len": 68,
+      "text": "「コアの回収を確認。学術院に引き渡す。古代技術の解析が始まるだろう」\\n兵器としてではなく、知識として——古代の遺産は新たな価値を得た。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "safe_02",
+      "type": "text",
+      "len": 68,
+      "text": "噂はただの噂だったのだろうか。それとも、単に運が良かっただけか。足早に峠を下る。\\n（※以降、deliver_normal_01へ合流）"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "deeper_mountain",
+      "type": "text",
+      "len": 67,
+      "text": "アルバートは戦闘の最中も足を止めず、どんどん先へ進んでしまう。\\n慌てて追いかけると、前方の峠道に武装した男たちが立ちはだかっていた。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "end_dark",
+      "type": "end",
+      "len": 66,
+      "text": "重い金袋を受け取った。教会への報酬の倍以上。\\n司教には「盗賊団が既に売り払っていた」と報告しておいた。\\n嘘がバレなければいいが。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 66,
+      "text": "配達完了。道場から謝礼の金を受け取った。\\nあの峠にいた霊が何者だったのか——それは、聞かないままにしておくのが冒険者の知恵だろう。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 66,
+      "text": "任務は完了した。約束の報酬を受け取り、不気味な道士のもとを去る。\\nあの壺の中身が禁術に使われるのかどうか、自分には関係のない話だ。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 66,
+      "text": "屋敷を後にする。重い金袋の感触だけが手元に残った。\\n守ったのは悪人であり、華龍国の腐敗は今後も続く。だが、自分にはそれだけの話だ。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "deal_02",
+      "type": "text",
+      "len": 66,
+      "text": "「ククッ……欲の皮が突っ張った面白い冒険者だな。いいだろう」\\n黒鰐は血まみれの顔で笑い、隠し金庫から分厚い帳簿を取り出して渡した。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "end_success_deal",
+      "type": "end",
+      "len": 65,
+      "text": "研究ノートを闇市で売りさばき、莫大な金を手にした。\\nだがギルドからの信頼は失墜した。「異端者を逃がした」という噂が広まっている。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 65,
+      "text": "「だが知っておけ。自分を殺せば、この遺跡に封じられた魔力が暴走する。殺すか——再び封じるか。選べ」\\nバフォメットは不敵に笑った。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "end_success_seal",
+      "type": "end",
+      "len": 65,
+      "text": "「封印強化の報告を受けた。討伐こそならなかったが、これで当面の脅威は去った」\\n報酬は控えめだったが、大地を守る選択に悔いはない。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "nest_desc",
+      "type": "text",
+      "len": 65,
+      "text": "穴の一つから、尾の先を紫色に光らせたサソリが這い出てきた。\\n大人の腕ほどの大きさ。こちらを威嚇するように、鋏を打ち鳴らしている。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 65,
+      "text": "用心棒どもを蹴散らした。だが、騒ぎを聞きつけた精鋭が現れる。\\n先ほどの見張りの男もいる。刃物の構えが違う——こいつらは手練れだ。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 65,
+      "text": "化け物たちの圧倒的な力の前に、ついに膝をついた。\\n意識が薄れゆく中、獲物を貪ろうと嗤う不気味な声だけが耳にこびりついていた……。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 65,
+      "text": "多勢に無勢。浪人たちの容赦ない凶刃が、身体のあちこちを切り裂く。\\n血の海に倒れ伏す中、頭目の見下すような冷たい視線を感じた……。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 65,
+      "text": "代官に報告した。「浄化したか。これで民が安心する。ご苦労であった」\\n屋敷の怨念は消えた。だが、歴史の闇は誰にも知られぬまま——。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "travel_04",
+      "type": "text",
+      "len": 65,
+      "text": "「……アンタ、まさか……太守様が送ってきた手先かい？ ヒィィッ！」\\n老婆は地べたに這いつくばりながら、逃げるように去っていった。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "boss_intro_02",
+      "type": "text",
+      "len": 64,
+      "text": "白衣を血と薬品で汚した男が、狂気に満ちた笑みを浮かべて振り返る。その後ろにある巨大な培養槽から、恐ろしい姿のキメラが姿を現した。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 64,
+      "text": "「叛逆者ガレスの拘束を確認。王国の秩序を守った功績、高く評価する」\\n報奨金と名声を受け取った。だがガレスの言葉が、胸に残った。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 64,
+      "text": "「結界が部分的に解除された。山麓の民は安堵している」\\n麒麟との約束——人と山の共存。それを守れるかどうかは、人間の覚悟次第だ。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "end_success_banish",
+      "type": "end",
+      "len": 64,
+      "text": "「海魔を封じたか。封印がいつまで持つかは分からんが——交易路は再開できる」\\n殺さずに済んだ。海の生態系を守った——と信じたい。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "prepare",
+      "type": "text",
+      "len": 64,
+      "text": "「それと——これを持っていけ。商会の錬金術師が用意した爆薬だ。\\n　砂虫の体に叩き込めば、体内で爆発して大ダメージを与えられる」"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "scouts_appear",
+      "type": "text",
+      "len": 64,
+      "text": "サソリの群れに混じって、地中から小型のサンドワームも姿を現した。\\n本命はまだ来ていない——だが、まずこいつらを片付けなければ。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 64,
+      "text": "守護獣の圧倒的な怪力と牙の前に、無情にも膝を突いた。\\n薄れゆく意識の中、崖に咲く白い霊草が、風に揺れて遠くに霞んで見える……。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "surprise_03",
+      "type": "text",
+      "len": 64,
+      "text": "「敵だ！ 甲板に侵入者だ！ 野郎ども起きろォッ！！」\\n銅鑼の音がけたたましく鳴り響き、船全体が揺れるような怒号が巻き起こった。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 63,
+      "text": "バフォメットの漆黒の炎に焼かれ、意識が遠のいていく。\\n最後に見えたのは、大悪魔が嗤う姿だった。「次の千年も、人は変わらぬか」"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 63,
+      "text": "「旧市街の廃教会で、異端者どもが夜な夜な集会を開いている。\\n　『偽りの神を捨て、真の星の導きに従え』などと妄言を吐く連中だ」"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "boss_desc",
+      "type": "text",
+      "len": 63,
+      "text": "石を中心に、圧倒的な数のレイスが渦を巻いている。\\n瘴気の源であるあの石を破壊するには、まずこの群れを突破しなければならない。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "end_success_chaos",
+      "type": "end",
+      "len": 63,
+      "text": "報酬は減ったが、影守一族の名誉回復の種は蒔かれた。\\n真実を暴くことが正義なのか、安寧を守ることが正義なのか——答えは出ない。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "destroy_stone",
+      "type": "text",
+      "len": 62,
+      "text": "剣を振り下ろし、黒い石を真っ二つに叩き割る。\\nガラスが割れるような甲高い音と共に、地下を満たしていた瘴気が一気に霧散した。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 62,
+      "text": "「金がなければ、家財を売ってでも。抵抗するなら、力ずくで。\\n　もちろん、見逃しても構いません。そのぶん報酬は減りますがね」"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 62,
+      "text": "金袋を受け取った。この毒針が誰かの命を奪う道具になるのだろう。\\nだが、それは自分の知ったことではない——そう言い聞かせた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 62,
+      "text": "配達完了。道場から多額の謝礼を受け取った。\\nあの霊は、かつて果たし合いに向かう途中で命を落とした剣客だったのかもしれない。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "tomb_01",
+      "type": "text",
+      "len": 62,
+      "text": "鬱蒼とした森を抜けると、巨大で豪奢な石造りの古墓が現れた。入口の石碑にはこう刻まれている。\\n「華龍六代太守　薛氏一門之墓」"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "end_success_seal",
+      "type": "end",
+      "len": 61,
+      "text": "「再封印を完了した。報酬は控えめだが、後世に禍根を残さない選択だ」\\n殺さずに済んだ——それが正しかったかは、わからない。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "roar_04",
+      "type": "text",
+      "len": 61,
+      "text": "「知ったことか。ならば力で示せ。竜に挑む愚かさの代償を——その身で味わえ」\\n竜が翼を広げた。洞窟が地鳴りのように震える。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "end_success_seal",
+      "type": "end",
+      "len": 61,
+      "text": "「迷宮の封印を確認。地割れは塞がり、村は平和を取り戻した」\\n殺すだけが答えではない。閉じ込めるのもまた——一つの決着だ。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "find_nest",
+      "type": "text",
+      "len": 61,
+      "text": "岩の裏側に回り込むと、地面にいくつもの穴が空いている。\\nサソリの巣穴だ。穴の縁が紫色に染まっているのは、毒のせいだろう。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "confront_leader_2",
+      "type": "text",
+      "len": 61,
+      "text": "「野郎ども、やっちまえ！ こいつの首を手土産に逃げるぞ！」\\n頭目の合図と共に、殺気立った浪人たちが一斉に刀を抜き放った。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "morning_01",
+      "type": "text",
+      "len": 61,
+      "text": "暗殺者たちを斬り捨て、死体を裏門から処分する。\\n夜が明けると、薛は何事もなかったようにのんびりと豪華な朝食を摂っていた。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "end_success_peace",
+      "type": "end",
+      "len": 60,
+      "text": "「竜が去ったのか……交易路の安全は確認された」\\n報酬は控えめだが、砂漠の空に黄金の影が消えていく姿は——悪くなかった。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "slum_desc",
+      "type": "text",
+      "len": 60,
+      "text": "やせ細った野良犬が路地裏へ逃げ込む。\\nこの辺りの住民たちは、異端の教えに救いを求めるほど追い詰められているのだろうか。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "after_battle_2",
+      "type": "text",
+      "len": 60,
+      "text": "彼らが本当に国を脅かす存在だったのかは分からない。\\nだが、これが依頼だ。証拠となる異端の教典を回収し、教会を後にした。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 60,
+      "text": "「最前線の砦で、死者が歩き出しているという報告がありました。\\n　この聖水は、彼らに安らかな眠りを与えるためのものです」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "beast_desc",
+      "type": "text",
+      "len": 60,
+      "text": "砂が爆発的に噴き上がり、巨大な口が空を仰いだ。\\nサンドワーム——砂漠の支配者だ。その脇には大型のサソリも這い出てくる。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "fugitive_story",
+      "type": "text",
+      "len": 60,
+      "text": "「……俺は知っている。奴隷商のやり方を。\\n　返済が終わっても、新しい借金を捏造して一生離さない。あいつはそういう男だ」"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "intruder_2_desc",
+      "type": "text",
+      "len": 60,
+      "text": "暗闘用の黒装束に身を包んだ男たちが、音もなく水路を進んでくる。\\n動きが違う。訓練された暗殺者——誰かに雇われた連中だ。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 60,
+      "text": "怨霊の冷気に意識を奪われ、床に崩れ落ちた。\\n朝になり、屋敷の外で目を覚ました。誰かに運び出されたのか……怨霊の温情か。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "fate_chaos_02",
+      "type": "text",
+      "len": 59,
+      "text": "町奉行には「妖刀は完全に破壊した」と報告した。偽りの報告で報酬を受け取る。背中の刀が、微かに喜ぶように震えた気がした。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "end_success_evil",
+      "type": "end",
+      "len": 59,
+      "text": "商会には「組織は壊滅した」と報告。裏で回収した財宝の分け前は——帳簿には載らない。\\n名声は地に落ちたが、懐は潤った。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 59,
+      "text": "天使の光の剣が体を貫いた。視界が白く焼かれていく。\\n最後に聞こえたのは、天使の静かな声だった。「やはり人は——脆い」"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "encounter_wave2",
+      "type": "text",
+      "len": 59,
+      "text": "ゾンビの群れだ。半ば腐り落ちた肉体を引きずりながら、\\nこちらへと迫ってくる。聖水の匂いに狂ったように目が光っている。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "after_battle_2",
+      "type": "text",
+      "len": 59,
+      "text": "山賊の精鋭を撃退した。もうこの辺りには敵影はない。\\nアルバートを見ると、彼はかすり傷一つ負わず、ただ祈り続けていた。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 59,
+      "text": "「今回の荷は香辛料と絹だ。ラクダ20頭分。\\n　片道8日の旅になる。途中で荷を一つでも失えば、お前の報酬から差し引く」"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 59,
+      "text": "「あいつは私の財産だ。借金を踏み倒して逃げやがった。\\n　足の二三本へし折っても構わん。私の金を引きずって連れてこい」"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "leave_colony",
+      "type": "text",
+      "len": 59,
+      "text": "集落を後にした。奴隷商には「すでに別の国へ逃げていた」と報告しよう。\\n報酬はもらえないが、今夜は少しだけ眠れそうだ。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "after_wave2",
+      "type": "text",
+      "len": 59,
+      "text": "最後のサンドワームが砂の中に沈んでいった。もう動かない。\\n砂漠に静寂が戻る。風だけが、戦いの跡を少しずつ消していく。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 59,
+      "text": "「行商人に変装して近づけ。怪しまれたら斬り合いになる。\\n　くれぐれも中身は見るな。見れば——お前も消される側になる」"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "travel_desert",
+      "type": "text",
+      "len": 59,
+      "text": "北のオアシスへ向けて砂漠を行く。三日の旅路。\\n途中、軍閥の旗印を掲げた騎馬兵とすれ違った。目を合わせないように歩く。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 59,
+      "text": "マルカンドに戻り、密使に完了を報告した。\\n報酬を受け取る。この金がどんな戦争を引き起こすのか——考えないことにした。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "captain_02",
+      "type": "text",
+      "len": 59,
+      "text": "「ガハッ……見事だ……」\\n黒鰐が重い音を立てて膝をついた。血にまみれながらも、軍人としての誇り高い目は死んでいない。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 58,
+      "text": "メルヴィンの死霊魔法が全身を蝕んだ。意識が遠のく中、老賢者の呟きが聞こえた。\\n「やはり、死は克服できない——まだ」"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 58,
+      "text": "ゴーレムの鉄拳に弾き飛ばされた。意識が遠のく中、鋼鉄の巨人は都市に向かって歩き続けている。\\n止められなかった——。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "encounter_wave1",
+      "type": "text",
+      "len": 58,
+      "text": "焚き火の光の端に、甲冑を着た骸骨たちの姿が浮かび上がった。\\n荷車に積まれた聖水の気配に引かれて集まってきたらしい。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 58,
+      "text": "亡者の群れに押し切られ、荷車を奪われた。\\n散乱した聖水が地面に吸い込まれていくのを、朦朧とする意識の中で見ていた。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "crypt_desc",
+      "type": "text",
+      "len": 58,
+      "text": "壁面に並んだ棺の一部が破壊され、中身がもぬけの殻になっている。\\n暗闇の奥から、湿った足音とうめき声が聞こえてきた。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "encounter_wave2",
+      "type": "text",
+      "len": 58,
+      "text": "通路の奥から、不気味な青白い光が漂ってきた。\\n実体を持たないレイスたちだ。壁を透過しながらこちらへ忍び寄ってくる。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "purge_done",
+      "type": "text",
+      "len": 58,
+      "text": "空気が澄んでいくのが分かる。もう死体が起き上がることはないだろう。\\nそれにしても、誰がこんなものを持ち込んだのか。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "sandstorm_pass",
+      "type": "text",
+      "len": 58,
+      "text": "ラクダの手綱を握りしめ、嵐が過ぎるのを待った。\\n砂が収まったとき、足元の砂が不自然に盛り上がっているのに気づいた。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 58,
+      "text": "前衛を退けた。だが、荷車の振動はまだ続いている。\\n地面の揺れが——さっきとは比べ物にならないほど大きくなっていく。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 58,
+      "text": "盗賊崩れを排除した。死体を水路に流し、血痕を砂で隠す。\\n元締めが顔を出し、「見事だ」と一言だけ言って戻っていった。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "resolve_02",
+      "type": "text",
+      "len": 58,
+      "text": "代官に巻物を見せた。代官は顔を青くし、「これは……大事になるぞ」と呟いた。\\n真相が世に出れば、現体制に激震が走る。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "withdraw_02",
+      "type": "text",
+      "len": 58,
+      "text": "踵を返して歩き出した背中に、首謀者の震える声が聞こえてきた。\\n「……ありがとう……ありがとう、見逃してくれて……」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 58,
+      "text": "「……明日から三日間、都より『巡検使』様が視察に見えられる。\\n　私のささやかな……帳簿の不備を、調べに来るらしい」"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "cargo_02",
+      "type": "text",
+      "len": 58,
+      "text": "船倉には絹布、陶磁器、茶箱といった略奪品が山のように積まれていた。\\n生き残った水賊に船を操縦させ、港へと帰還する。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 57,
+      "text": "「命だけは助けてくれ！ あんたには俺が隠し持ってる財宝を全部くれてやる！ 金なら一生遊んで暮らせるだけあるんだ！」"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 57,
+      "text": "「千年の大妖を討伐——これは歴史に残る偉業だ」\\n両国から手厚い報酬を受け取った。冒険者として最高峰の名声を得た。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "seal_02",
+      "type": "text",
+      "len": 57,
+      "text": "「……封じるのか。殺さぬとは、奇妙な奴だ」\\n牛頭王の声が地中から微かに聞こえた。だがもう、地上に出ることはない。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 57,
+      "text": "「彼らの手足を切り落とし、物理的に昇天させたまえ。\\n　そして、なぜ瘴気が発生しているのか、原因を突き止めてくれ」"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 57,
+      "text": "「身の程知らずのネズミどもが、主の器を汚しました。\\n　奴らの隠れ家は、東の森の奥にある廃城跡だと判明しています」"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "bait_desc",
+      "type": "text",
+      "len": 57,
+      "text": "砂漠に響く鈍い振動。それが地中深くまで伝わっていく。\\n後は待つだけだ。剣を握り直し、砂の揺れに神経を集中させる。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 57,
+      "text": "大砂虫の圧倒的な質量の前に、為す術がなかった。\\n砂の中に引きずり込まれていく意識の中で、砂漠の静寂だけが残った。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "sneak_close",
+      "type": "text",
+      "len": 57,
+      "text": "ひときわ大きな天幕を見つけた。入り口の旗印が将校のものだ。\\n裏の隙間から中を覗くと、隻眼の男が地図を眺めている。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "resolve_03",
+      "type": "text",
+      "len": 57,
+      "text": "「……あの果たし状……武士の意地か……ならば、行け」\\n霊はどこか寂しげな表情を浮かべると、霧のように消え去った。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "start",
+      "type": "text",
+      "len": 57,
+      "text": "「ほう、お主が今回引き受けてくれるのか。では、これを」\\n老道士から、墨の匂いがきつい黄色い護符の束を受け取った。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "report_01",
+      "type": "text",
+      "len": 57,
+      "text": "山を下り、待ち構えていた道士に約束通り壺を手渡した。\\n「ヒッヒッヒ……これほどの純粋な死気……なんと素晴らしい」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "over_04",
+      "type": "text",
+      "len": 57,
+      "text": "「約束の報酬だ。今後も私の身に何かあれば、必ずお前を頼ろう」\\n薛から、約束通り金の延べ棒が詰まった袋を渡された。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 57,
+      "text": "長老に青年を引き渡した。「よくぞ連れ戻してくれた。村の宝だ」\\nだが阿明の目に浮かぶのは、安堵ではなく喪失だった。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "coexist_03",
+      "type": "text",
+      "len": 56,
+      "text": "「承知した。自分は恩を忘れぬ種族だ。次に会う時は、味方として来よう」\\n竜は翼を広げ、砂嵐と共に東の空へ消えた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "encounter_wave3",
+      "type": "text",
+      "len": 56,
+      "text": "霧の中から、怨嗟の声が響く。\\n骸骨と腐敗した肉体、そして実体を持たない幽鬼——三種の亡者が行く手を阻んでいた。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 56,
+      "text": "「税を払わぬゴミ共は、聖帝国の恩恵を受ける資格がありません。\\n　リストの家から、十分の一税を回収してください」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_4",
+      "type": "text",
+      "len": 56,
+      "text": "最後の対象は、病に臥せる少女を看病する老婆だった。\\n部屋には薬草の匂いが充満しているが、効いている様子はない。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "find_relic",
+      "type": "text",
+      "len": 56,
+      "text": "頭目のテントを漁ると、厳重に鍵の掛かった木箱が見つかった。\\n錠を壊して開けると、見事な金の聖杯が鎮座している。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 56,
+      "text": "金袋を受け取った。手の中の金が、やけに重く感じる。\\n男の最後の目が——いつまでも脳裏に焼きついて消えなかった。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "tremor_1",
+      "type": "text",
+      "len": 56,
+      "text": "地鳴りが強まる。荷車がガタガタと揺れ始めた。\\n前方の砂丘に亀裂が走り、サソリが砂の中から這い出てくる。前衛だ。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "intruder_1",
+      "type": "text",
+      "len": 56,
+      "text": "地下水路の入り口に、粗末な武装の男たちが群がっている。\\n闇市の噂を聞きつけた盗賊崩れだ。中の金品を狙っている。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "approach_camp",
+      "type": "text",
+      "len": 56,
+      "text": "オアシスの手前に、軍閥の野営地が見えてきた。\\n天幕が並び、兵士たちが巡回している。ここを越えなければならない。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "front_check",
+      "type": "text",
+      "len": 56,
+      "text": "「待て。行商人なんぞに用はない。荷物を見せろ」\\n見張り兵が荷を漁り始めた。革袋が見つかるのは時間の問題だ——！"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 56,
+      "text": "太守は面倒くさそうに手を振り、大量の金貨が入った袋を見せつけた。\\n辺境の村まで、ここから東に二日ほどの距離だ。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "inspect_01",
+      "type": "text",
+      "len": 56,
+      "text": "二日目の昼。ついに都から巡検使の一団が屋敷に到着した。\\n先頭に立つのは、鋭い鷹のような目をした痩せぎすの男だ。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "bait_success_01",
+      "type": "text",
+      "len": 55,
+      "text": "背後からの殺気を完璧に読み取り、初撃を弾き返した！ 辻斬りは驚いたように後退し、町外れの廃神社へ逃げていった。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "awaken_04",
+      "type": "text",
+      "len": 55,
+      "text": "バフォメットが立ち上がった。その体躯は石棺の二倍以上。聖堂の天井に角が届く。全身から地獄の業火が噴き出す——！"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "deeper",
+      "type": "text",
+      "len": 55,
+      "text": "血糊を払い、安置所のさらに深部へと進む。\\n床は冷たく湿り、壁には黒いカビのようなものがびっしりと生えている。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "travel_back",
+      "type": "text",
+      "len": 55,
+      "text": "毒針が3本揃った。岩場を後にし、マルカンドへの帰路を急ぐ。\\n砂漠の熱で変質しないうちに、急いで届けなければ。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "travel_to_site",
+      "type": "text",
+      "len": 55,
+      "text": "砂漠の出没地点へ向かう。二日の道のり。\\n途中、砂に半分埋もれた商隊の残骸を見た。荷もラクダも——跡形もない。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "auction_item_1",
+      "type": "text",
+      "len": 55,
+      "text": "「200金貨！ 300！ 500金貨！」\\n競りの声が熱を帯びる。壁の向こうで、途方もない額の金が動いている。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "confront_leader",
+      "type": "text",
+      "len": 55,
+      "text": "奥の座敷で杯を傾けていた大柄な浪人が、ゆっくりと立ち上がった。\\n「代官所の犬か。血の匂いがプンプンしやがる」"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "reveal_02",
+      "type": "text",
+      "len": 55,
+      "text": "「……我が一族の無念、晴らしてくれるか。それとも、ただ浄化して終わりか」\\n影守の声が、地下室に静かに響いた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "coexist_03",
+      "type": "text",
+      "len": 55,
+      "text": "村に戻り、長老に事情を話した。「妖狐と……ふむ、この世は広いのう」\\n長老は複雑な顔をしたが、最後には頷いた。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "report_evil_02",
+      "type": "text",
+      "len": 54,
+      "text": "「こいつは上物だ。いくらでも買い手がつくぜ」ブローカーから渡された金袋は、騎士団の報酬よりもずっと重かった。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 54,
+      "text": "「鬼将の怨念を完全に消滅させたか。力ずくだが、確実な方法だ」\\n村人たちは安堵した。恐怖は去り、日常が戻る。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "confront_06",
+      "type": "text",
+      "len": 54,
+      "text": "「言葉で通じぬなら、力で示すがよい。自分を超えるなら——人の言葉に耳を傾けよう」\\n麒麟の一本角が白熱した。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 54,
+      "text": "「我々が直接動けば、無用な騒ぎになる。\\n　冒険者よ、お前に『浄化』を頼みたい。手荒な真似になっても構わん」"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "arrive_slum",
+      "type": "text",
+      "len": 54,
+      "text": "王都の華やかな表通りから外れ、旧市街へと足を踏み入れる。\\n日差しが遮られ、じめじめとした空気が肌を撫でた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 54,
+      "text": "骸骨たちを打ち砕いた。骨の破片が地面に散らばる。\\n荷車を確認する。木箱は無事だ。だが、まだ腐臭が薄れない。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "albert_ignore_2",
+      "type": "text",
+      "len": 54,
+      "text": "アルバートは全く動じず、山賊の脅しを完全に無視して歩き出そうとする。\\n山賊たちが怒りの形相で得物を構えた！"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "travel_resume",
+      "type": "text",
+      "len": 54,
+      "text": "夜明けと共に出発。盗賊に襲われた疲労が残るが、\\n立ち止まっていれば次はもっと大きな群れが来るかもしれない。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "boss_desc",
+      "type": "text",
+      "len": 54,
+      "text": "全長は優に船を超える。鱗のような外殻が砂にまみれ、\\n無数の小さな足が地面を掻きながら、こちらに向き直った。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 54,
+      "text": "「今夜の客は品が良いが、鼻が利くハイエナも引き寄せる。\\n　騒ぎを起こす輩がいれば、目立たぬように始末しろ」"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "after_wave2",
+      "type": "text",
+      "len": 54,
+      "text": "暗殺者を退けた。今度の死体は水路に流すだけでは済まない。\\n元締めの手下たちが、手際よく痕跡を処理していく。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 54,
+      "text": "「この革袋を、北のオアシスに駐屯する『隻眼のハルム』に渡せ。\\n　合言葉は『流砂の果て』。彼だけに渡すこと」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "seal_02",
+      "type": "text",
+      "len": 53,
+      "text": "「……賢い選択だ。だが覚えておけ。封印は永遠ではない。また千年後に——」\\n声は封印の光に呑まれ、消えた。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "albert_pray",
+      "type": "text",
+      "len": 53,
+      "text": "アルバートは祠の前に跪き、地面に額をつけて長い祈りを始めた。\\n日が暮れるまで、彼はそこから動かなかった。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "enter_crypt",
+      "type": "text",
+      "len": 53,
+      "text": "閉鎖された遺体安置所の鉄格子を開け、地下への石段を下りる。\\n途端に、強烈な腐敗臭と冷気が押し寄せてきた。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "find_altar",
+      "type": "text",
+      "len": 53,
+      "text": "最奥の広間。かつては祈りを捧げる場所だったのだろう。\\n祭壇の上には、黒く脈打つ不気味な石が置かれている。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "arrive_slum",
+      "type": "text",
+      "len": 53,
+      "text": "リストを手に、旧市街の貧民窟へ足を踏み入れる。\\nすれ違う人々の目が、警戒と敵意に満ちているのが分かった。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "plea_3",
+      "type": "text",
+      "len": 53,
+      "text": "「教会のために片足を失ったのに、まだ搾り取るか。\\n　……もう好きにしろ。これ以上奪うものがあるなら、な」"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "assault",
+      "type": "text",
+      "len": 53,
+      "text": "矢を弾き落とし、見張りの懐へ飛び込む。\\n一気にアジト内が騒がしくなり、無数の足音がこちらへ向かってきた。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "harvest_fail",
+      "type": "text",
+      "len": 53,
+      "text": "切り取ろうとした瞬間、毒針が砕けてしまった。\\nサソリの毒は繊細だ。力を入れすぎれば使い物にならなくなる。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "deliver_slave",
+      "type": "text",
+      "len": 53,
+      "text": "「ああ、よくやった。この目、この覚悟——折り甲斐があるぞ。\\n　お前のような仕事人は好きだ。報酬は弾もう」"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 53,
+      "text": "「囮の荷車を用意した。振動に反応して地上に出てくるはずだ。\\n　出てきたところを仕留めてくれ。報酬は弾む」"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "carcass",
+      "type": "text",
+      "len": 53,
+      "text": "巨大な死骸の脇を通り過ぎる。\\nこいつらの体内からは、高価な素材が取れるはずだが——今は依頼の完了が先だ。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "camp_desc",
+      "type": "text",
+      "len": 53,
+      "text": "正面の入り口には見張りが二人。後ろの岩場に迂回路らしき獣道がある。\\nどちらから行くか——判断を下す時だ。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "front_approach",
+      "type": "text",
+      "len": 53,
+      "text": "行商人の笑顔を貼り付けて、正面から野営地に歩いていく。\\n「やあ、スパイスの行商だ。将校殿に良い品を——」"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "clear_02",
+      "type": "text",
+      "len": 53,
+      "text": "血と泥にまみれた広場には、死体にすがりついて泣き崩れる女や子供たちだけが残された。反乱は完全に鎮圧された。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "end_success_chaos",
+      "type": "end_success",
+      "len": 52,
+      "text": "依頼達成……？ ギルドの信用は落ちたが、懐は桁違いに温かくなった。悪党を利用するのも冒険者の生存戦略だ。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 52,
+      "text": "巣ごと壊滅させれば鉱脈は安全になる。だが、この蛇は翡翠の精霊とも言われている。別の山に誘導する手もある。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 52,
+      "text": "九尾の幻術と妖力に呑まれ、意識が深い闇に沈んだ。\\n最後に聞こえたのは、どこか寂しげな狐の鳴き声だった。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "choice_02",
+      "type": "text",
+      "len": 52,
+      "text": "「すまなかった。エルーカ。バラム。\\n　シラス。リラ。お前たちを犠牲にしなければ\\n　国は作れなかった」"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "aftermath_03",
+      "type": "text",
+      "len": 52,
+      "text": "「だが自分はもう天に帰れぬ。降臨の代償だ。ここで朽ちるか——あるいは」\\n天使は静かにこちらを見つめた。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "throne_03",
+      "type": "text",
+      "len": 52,
+      "text": "「——また来たか。人間どもは懲りぬ」\\n闇の奥から、巨大な影が立ち上がった。牛の頭に人の体。手には大斧。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "church_in",
+      "type": "text",
+      "len": 52,
+      "text": "きしむ木の扉を押し開け、地下への階段を下りる。\\nカビの匂いに混じって、甘ったるい香の匂いが漂ってきた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "deeper_night",
+      "type": "text",
+      "len": 52,
+      "text": "焚き火の薪を足した直後、今度は地面から這い出すような音がした。\\n腐敗した手が、土の中から突き出てくる。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "ambush_desc",
+      "type": "text",
+      "len": 52,
+      "text": "砂丘を越えて近づいてくる影。十人以上いる。\\nターバンで顔を隠した砂漠の盗賊団だ。商隊の荷を狙っている。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "after_wave2",
+      "type": "text",
+      "len": 52,
+      "text": "サンドワームが砂の中に沈んでいった。もう動かない。\\nサソリの死骸を踏み越え、商隊を急かす。もう少しだ。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "drag_back",
+      "type": "text",
+      "len": 52,
+      "text": "男の手を縛り、砂漠を歩かせてマルカンドへ戻る。\\n背中越しに、集落の住民たちの憎悪に満ちた視線を感じた。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "start",
+      "type": "text",
+      "len": 52,
+      "text": "マルカンドの裏通りで、顔を隠した男と接触した。\\n彼は周囲を何度も確認してから、革袋と封筒を差し出した。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "travel_02",
+      "type": "text",
+      "len": 52,
+      "text": "田畑の土は完全に乾ききり、作物を育てる用水路もとうの昔に枯れ果てている。これでは税など払えるはずもない。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "clear_01",
+      "type": "text",
+      "len": 52,
+      "text": "首謀者が力尽き、仰向けに倒れ伏す。それを見た残りの農民たちは、完全に戦意を喪失して散り散りに逃げ去った。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "start",
+      "type": "text",
+      "len": 52,
+      "text": "都の一等地にそびえる豪邸の奥座敷。\\n脂肪で顔を膨らませた官僚、薛（せつ）が絹の長椅子に身を沈めていた。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 52,
+      "text": "薛は、机の上に金の延べ棒がぎっしりと詰まった箱を滑らせた。\\n「報酬は弾もう。私の命は何より高いからな」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "morning_02",
+      "type": "text",
+      "len": 52,
+      "text": "「おお、無事だったか。さすがだな。今夜も頼むぞ」\\n悪びれる様子もないその態度に、微かな嫌悪感を覚える。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "report_order_01",
+      "type": "text",
+      "len": 51,
+      "text": "錬金術師とすべての資料を聖騎士団に引き渡した。「見事な働きだ。この資料は異端審問会で厳重に処分しよう」"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "boss_intro_02",
+      "type": "text",
+      "len": 51,
+      "text": "豪華な絨毯の上に座る、巨体の男。彼こそが砂漠の盗賊王バシムだ。巨大な曲刀を手に、ゆっくりと立ち上がる。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "fate_chaos_01",
+      "type": "text",
+      "len": 51,
+      "text": "隠し財宝の場所を案内させ、金銀財宝をすべて自分の袋に詰め込んだ。「これでいいだろ？ 見逃してくれよな」"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "ruin_02",
+      "type": "text",
+      "len": 51,
+      "text": "近くの集落の長老が助言をくれた。「聖水で魔神の炎を鎮めるか、武器を打ち直して刃を通すか——どちらかだ」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "prepare_03",
+      "type": "text",
+      "len": 51,
+      "text": "装備を整え、ローランド聖王国の南端にある古代遺跡へと向かった。入口には既に聖騎士団が結界を張っている。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 51,
+      "text": "天使を討つ——それがどれほど途方もないことか。だが、目の前で人が死ぬのを黙って見ていることはできない。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "confront",
+      "type": "text",
+      "len": 51,
+      "text": "松明の光がこちらを照らし出した。\\n信徒たちが一斉にこちらを振り返る。その目には異常な熱が宿っていた。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "knight_reply",
+      "type": "text",
+      "len": 51,
+      "text": "「見事な働きだ。これで王都の秩序は守られた。\\n　お前のことは、口の堅い使える者として記憶しておこう」"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "travel_mid",
+      "type": "text",
+      "len": 51,
+      "text": "街道は荒れ果て、すれ違う旅人もほとんどいない。\\nただ、時折冷たい風に乗って、微かな腐臭が漂ってくる。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "after_wave2",
+      "type": "text",
+      "len": 51,
+      "text": "二度目の襲撃も退けた。体力が削がれてきたが、聖水は無事だ。\\n夜明けまでもう少し。持ちこたえなければ。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "start",
+      "type": "text",
+      "len": 51,
+      "text": "教会の入り口で、依頼主である巡礼者と対面した。\\n質素なローブを纏い、首から大きな十字架を下げた男だ。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 51,
+      "text": "教会に戻り、護衛完了を報告して報酬を受け取った。\\nあの男は今も、あの山奥で祈り続けているのだろうか。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "after_wave2",
+      "type": "text",
+      "len": 51,
+      "text": "レイスの群れを退けた。だが、まだ終わりではない。\\n最奥から、一段と強烈な瘴気の波動が押し寄せてくる。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "extort_3",
+      "type": "text",
+      "len": 51,
+      "text": "聖帝国のために戦った男の、最後の誇りを踏みにじった。\\n錆びた剣だけは残してやった。せめてもの情けだ。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 51,
+      "text": "報酬を受け取った。正義を果たし、教会の信頼を得た。\\n盗賊たちの命の代償としては、十分すぎる額だった。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 51,
+      "text": "「奴らの巣は砂漠の東にある岩場だ。\\n　赤い尾を光らせているのが目印。刺されたら……まあ、気をつけろ」"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 51,
+      "text": "「居場所は掴んである。砂漠の端の無法者集落だ。\\n　用心棒どもに匿われているが、お前なら楽勝だろう？」"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "refuse_mercy",
+      "type": "text",
+      "len": 51,
+      "text": "「悪いが、これは仕事だ」\\n男の顔が絶望に歪んだ。\\n外から怒号が聞こえる。仲間たちが駆けつけてくる。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "set_bait",
+      "type": "text",
+      "len": 51,
+      "text": "荷車を砂の上に据え、中に香辛料の袋を積み上げる。\\n振動を伝えるため、荷台を太鼓のように打ち鳴らした。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "return_report",
+      "type": "text",
+      "len": 51,
+      "text": "「交易路が復活した……！ お前は商会の恩人だ。\\n　約束通り、最上級の報酬を用意した。受け取ってくれ」"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "arrive_04",
+      "type": "text",
+      "len": 51,
+      "text": "先頭に立つ初老の男が、血を吐くような声で叫んだ。\\n「太守の犬め！ もう俺たちからは何も奪えないぞ！」"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "intel_04",
+      "type": "text",
+      "len": 51,
+      "text": "「単なるならず者じゃない。戦い方は一流の軍人のそれだ」\\n酒場の主人が青ざめた顔でそう忠告してくれた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "coexist_01",
+      "type": "text",
+      "len": 51,
+      "text": "「人の子よ……そなたの寛容、忘れぬ。これを持っていくがよい」\\n姫は懐から青白く光る護符を差し出した。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "mist_clear_01",
+      "type": "text",
+      "len": 50,
+      "text": "霊符を掲げると、霧が晴れ道が開けた！ だが同時に、侵入者に気付いたキョンシーたちが襲いかかってきた！"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 50,
+      "text": "代官の顔は蒼い。蛮骨の名は今なお夜刀の民を震え上がらせる。名声ある者でなければ引き受ける者はいまい。"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 50,
+      "text": "「戦の魔神を完全に討伐したか。凄まじい力だ」\\n砂漠の民は安堵した。キャラバンも再び動き出すだろう。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "peace_03",
+      "type": "text",
+      "len": 50,
+      "text": "「よかろう。約束は守れ——自分はこの山から離れぬ。見守っている」\\n結界が薄くなり、山道が開かれた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "start",
+      "type": "text",
+      "len": 50,
+      "text": "教会の地下室で、大司祭から木箱を引き渡された。\\n中には銀色の小瓶が何十本も隙間なく詰められている。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "albert_thanks",
+      "type": "text",
+      "len": 50,
+      "text": "「……お前がいてくれてよかったかもしれぬ。\\n　神の意志を実現する手足として、よく働いてくれました」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "plea_4",
+      "type": "text",
+      "len": 50,
+      "text": "「この子の薬代にも足りないのに……。\\n　税を払えば、この子は死にます。それでも持っていくのですか」"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 50,
+      "text": "「闇市に流される前に、必ず取り戻してください。\\n　血まみれにしてでも構いません。神罰を下すのです」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 50,
+      "text": "「砂漠の盗賊団が最近活発でな。\\n　おまけに砂の中に化け物が棲みついている。腕に自信がなければ断れ」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "arrive",
+      "type": "text",
+      "len": 50,
+      "text": "八日目の夕暮れ。ついに交易都市の城壁が見えた。\\n門をくぐると、商会の代理人が笑顔で出迎えてくれた。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "colony_desc",
+      "type": "text",
+      "len": 50,
+      "text": "路地に座り込む男たちの目が、こちらを値踏みしている。\\nよそ者が来れば、それだけで警戒される場所だ。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "wait_1",
+      "type": "text",
+      "len": 50,
+      "text": "しばらく何も起きなかった。風の音だけが砂丘を撫でていく。\\nだが——足元の砂が、微かに波打ち始めた。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "sneak_desc",
+      "type": "text",
+      "len": 50,
+      "text": "天幕の裏手に出た。兵士たちは食事中で、こちらに気づいていない。\\n幸運だ。このまま将校の天幕を探す。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 50,
+      "text": "金袋を受け取り、代官所を後にする。\\n裏社会の掃除は気が滅入るが、日銭を稼ぐには悪くない仕事だった。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "arrive_01",
+      "type": "text",
+      "len": 50,
+      "text": "目的の村の入り口に到着した。広場には、農具や竹槍を手にした数十人の農民たちがバリケードを築いている。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 49,
+      "text": "錬金術師を縄で縛り上げた。机の上には、禁忌の生体実験の詳細が記された分厚い研究資料が置かれている。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "report_order_02",
+      "type": "text",
+      "len": 49,
+      "text": "騎士団長から労いの言葉と共に、規定通りの報酬を受け取った。ローランドの秩序は、今日も一つ保たれた。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "end_failure",
+      "type": "end_failure",
+      "len": 49,
+      "text": "妖刀が首筋を捉えた。冷たい刃が肉を断つ感触。最後に見たのは、刀が自分の血を啜る恐ろしい光景だった。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 49,
+      "text": "「見事だ。お前の強さは本物だ。……さて、自分をどうする？ 縛って王国に差し出すか？ それとも——」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "baram_05",
+      "type": "text",
+      "len": 49,
+      "text": "「私の研究は王家の『神聖魔術』として\\n　発表された。さて、暇つぶしに\\n　付き合ってもらおうか」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "lyra_04",
+      "type": "text",
+      "len": 49,
+      "text": "「英雄なんて、使い捨ての道具よ。\\n　役目が終われば口を塞がれて消される。\\n　——私がその証拠」"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "start_08",
+      "type": "text",
+      "len": 49,
+      "text": "「入口の石板にこう書いてある。\\n　『右手に真実を、左手に沈黙を、\\n　　足元に謙譲を求めた』と」"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "confront_01",
+      "type": "text",
+      "len": 49,
+      "text": "天使の言葉に一理ある。人間は確かに愚かだ。だが——だからと言って、全てを焼き払っていいはずがない。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "throne_04",
+      "type": "text",
+      "len": 49,
+      "text": "「この迷宮は自分の世界だ。侵入者は例外なく——骨にしてやる」\\n大斧が振り上げられ、地面が割れた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "dawn_road",
+      "type": "text",
+      "len": 49,
+      "text": "薄明が差し込み、ようやく出発の準備をする。\\nしかし、前方の街道に霧のような瘴気が立ち込めている。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 49,
+      "text": "「あなたが護衛の方ですね。\\n　主神の声が聞こえるのです。あの危険な谷の奥底へ行かねばなりません」"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "ambush",
+      "type": "text",
+      "len": 49,
+      "text": "「そこまでだ、巡礼者さんよ」\\n前方の岩の上から、弓を番えた男が顔を出した。背後からも足音がする。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 49,
+      "text": "最初の群れを切り伏せた。\\n腐肉を焼く匂いが地下にこもる。だが、奥からさらに濃い瘴気が流れてくる。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "start",
+      "type": "text",
+      "len": 49,
+      "text": "酒場の裏口で、教会の使いと名乗る男から小袋を渡された。\\n中には旧市街の住民のリストが入っている。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "bishop_thanks",
+      "type": "text",
+      "len": 49,
+      "text": "「おお……主よ。あなたの器が戻りました。\\n　冒険者よ、大儀であった。これは教会からの感謝の印だ」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "depart",
+      "type": "text",
+      "len": 49,
+      "text": "王都の門をくぐり、砂漠へと踏み出す。\\nラクダの列が砂丘の向こうまで続いている。長い旅が始まった。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "campfire",
+      "type": "text",
+      "len": 49,
+      "text": "焚き火を囲む。隊商の男たちが、砂漠の怪談を囁いている。\\n見張りを交代しながら、短い眠りについた。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 49,
+      "text": "盗賊どもを蹴散らした。数人が砂丘の向こうへ逃げていく。\\n荷を確認する。無事だ。ラクダも全頭健在。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "search_1",
+      "type": "text",
+      "len": 49,
+      "text": "岩の隙間に手を伸ばすのは自殺行為だ。\\n石を投げて反応を見る。暗闇の奥で、何かがカサカサと動いた。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "payment",
+      "type": "text",
+      "len": 49,
+      "text": "「いい仕事だ。お前のおかげで今夜の売り上げは過去最高だ。\\n　また声をかける。口は堅いだろうな？」"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "disguise",
+      "type": "text",
+      "len": 49,
+      "text": "密使から受け取った行商人の衣装に着替える。\\n革袋を荷物の底に隠し、商品のスパイスで匂いを消した。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "forced_entry",
+      "type": "text",
+      "len": 49,
+      "text": "見張りを倒した。騒ぎで他の兵が来る前に、天幕の奥へ走る。\\n混乱に乗じてハルム将校を探さなければ。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "deeper_06",
+      "type": "text",
+      "len": 49,
+      "text": "「骨の髄まで啜ってやる！ 美味そうじゃねぇか！」\\n血生臭い暴風が、鬼の咆哮と共に叩きつけられた。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "after_02",
+      "type": "text",
+      "len": 49,
+      "text": "数名の死体を作ると、暴徒たちは恐れをなして後ずさった。だが、首謀者の男だけは血まみれで立っている。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "cargo_01",
+      "type": "text",
+      "len": 49,
+      "text": "誰が裏で糸を引いていようと、自分の仕事は依頼の完遂だ。\\n無言で刃を振り下ろし、黒鰐の首を刎ねた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "rescue_01",
+      "type": "text",
+      "len": 49,
+      "text": "姫が膝をつく。「……そうか。やはり人と妖は交われぬか」\\n涙が頬を伝い、桃の花弁に変わって散った。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "end_failure",
+      "type": "end_failure",
+      "len": 48,
+      "text": "キメラの凶爪が深々と肉を裂いた。薄れゆく意識の中で、狂気の笑い声が聞こえる。「新しい実験体だ！」"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 48,
+      "text": "「砂の王の討伐を確認。交易路は復活した。感謝する」\\n冒険者としての実力を、砂漠の民にも示した。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "choice_05",
+      "type": "text",
+      "len": 48,
+      "text": "「よくやった。英霊の残骸を回収しろ。\\n　この地下墓所の存在は\\n　知らなかったことにしてくれ」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 48,
+      "text": "ギルドマスターの目は冗談を言う色ではなかった。これは国家規模の脅威だ。覚悟を決めて準備を始める。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "execute_02",
+      "type": "text",
+      "len": 48,
+      "text": "光が消えると、雲の玉座も崩れ始めた。大聖堂の床に降り立つ。聖都の空は、元の青さを取り戻していた。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 48,
+      "text": "牛頭王の大斧が体を叩き割った。骨の山に新たな一つが加わった。\\n迷宮は、次の挑戦者を待っている。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "arrive_fort",
+      "type": "text",
+      "len": 48,
+      "text": "砦の門をくぐると、負傷兵のうめき声と血の匂いが充満していた。\\n誰もが疲弊しきった顔をしている。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "warning",
+      "type": "text",
+      "len": 48,
+      "text": "アルバートは足元の悪さも気にせず、祈りを呟きながら歩き続ける。\\n周囲の岩陰から、殺気を感じた。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "encounter_wave3",
+      "type": "text",
+      "len": 48,
+      "text": "レイスたちが一斉にこちらへ向き直った。\\n石を守るように、5体のレイスが壁のように立ちはだかる。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 48,
+      "text": "無数の亡者の手に引きずり倒された。\\n自分もまた、この冷たい地下で永遠に彷徨う肉の塊となるのだ。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_3_intro",
+      "type": "text",
+      "len": 48,
+      "text": "三軒目へ。住民たちの視線が、明確な敵意に変わっている。\\n石を投げられた。当たりはしなかったが。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "stealth_or_assault",
+      "type": "text",
+      "len": 48,
+      "text": "隠れて潜入するには見張りの数が多すぎる。\\n正面突破が手っ取り早いだろう。武器を構え、歩み出る。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "sell_deal",
+      "type": "text",
+      "len": 48,
+      "text": "「教会の国宝か……これは高く売れる。\\n　倍額で買おう。出所は聞かん。ここではそういう決まりだ」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "ambush_alert",
+      "type": "text",
+      "len": 48,
+      "text": "深夜。見張りの男が声を殺して起こしにきた。\\n「砂丘の向こうに、松明の光が見える……来やがった」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "beast_alert",
+      "type": "text",
+      "len": 48,
+      "text": "地面が震えている。ラクダたちが怯えて鳴き始めた。\\n砂の中から、巨大な何かが這い寄ってくる——！"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "start",
+      "type": "text",
+      "len": 48,
+      "text": "マルカンドの裏路地。香辛料と汗の匂いが混じる路地の奥で、\\nフードを目深に被った男が待っていた。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "reach_colony",
+      "type": "text",
+      "len": 48,
+      "text": "無法者集落。逃亡者、犯罪者、捨てられた者たちの吹き溜まり。\\nここには法もなければ、秩序もない。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "wait_outside",
+      "type": "text",
+      "len": 48,
+      "text": "指示通り、会場の入り口付近で待機する。\\n壁越しに、競りの声と金貨が積み上がる音が聞こえてくる。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "first_alarm",
+      "type": "text",
+      "len": 48,
+      "text": "見張りの男が駆け込んできた。\\n「入口に怪しい連中が来た。武装している。間違いなく狙いはここだ」"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "collect_02",
+      "type": "text",
+      "len": 48,
+      "text": "宦官の言葉通り、茎を折らないように根元からそっと引き抜き、持参した柔らかい布で優しく包み込んだ。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "deliver_02",
+      "type": "text",
+      "len": 48,
+      "text": "「おお……見事な出来だ。一片の傷もない。これで『皇帝陛下のため』の最高の上薬が練れましょう……」"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 48,
+      "text": "辺境へと続く街道は、見るも無惨に荒れ果てていた。道端には飢え死にした者たちの白骨が転がっている。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "charge_02",
+      "type": "text",
+      "len": 48,
+      "text": "男たちの表情が絶望から殺意へと変わる。\\n「……話し合いは通じないってわけか！ やるしかねぇ！」"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "leader_03",
+      "type": "text",
+      "len": 48,
+      "text": "男は折れた竹槍を強く握り直し、鬼気迫る形相でこちらへ突進してきた。彼の目にもう死への恐怖はない。"
+    },
+    {
+      "file": "8023_qst_boss_dragon.csv",
+      "node": "1",
+      "type": "text",
+      "len": 48,
+      "text": "熱砂の深淵より「古き竜」が眼を覚ましたのだ。あのような巨大な絶望を前に、軍隊など何の意味もない。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "end_failure",
+      "type": "end_failure",
+      "len": 47,
+      "text": "盗賊王の曲刀が胴体を薙ぎ払った。「砂漠の砂の養分になりな！」下品な笑い声が遠ざかっていく……。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 47,
+      "text": "外に出ると、正気に戻りつつある村人たちが集まってきた。「我々を導いてくださった仙人様は……？」"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 47,
+      "text": "「翡翠鉱脈の脅威を排除した功績、高く評価する」\\n採掘が再開し、華龍国の経済は息を吹き返した。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "after_shirasu_02",
+      "type": "text",
+      "len": 47,
+      "text": "「……強いな。俺の家族のことは\\n　もういい。あの子らが飯を食えて\\n　いたなら、それでいい」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "sanctum_01",
+      "type": "text",
+      "len": 47,
+      "text": "第二層は広大な聖堂のような空間だった。だが祭壇は逆十字に変えられ、壁には魔法陣が刻まれている。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "city_04",
+      "type": "text",
+      "len": 47,
+      "text": "市街地を進むと、天使に仕える下位の光の戦士たちが降下してきた。人間を「浄化」しようとしている。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "persuade_04",
+      "type": "text",
+      "len": 47,
+      "text": "光の柱が天を穿ち、天使の体がゆっくりと浮かび上がる。最後に一度だけ振り返り——光と共に消えた。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 47,
+      "text": "竜のブレスが全身を包んだ。砂が硝子に変わる灼熱の中、意識が溶けていく。\\n「蟻は所詮——蟻か」"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "confront_01",
+      "type": "text",
+      "len": 47,
+      "text": "「……人の子よ。なぜここに来た」\\n麒麟の声は風のように穏やかだが、底知れぬ威厳を帯びていた。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "peace_01",
+      "type": "text",
+      "len": 47,
+      "text": "「……共存か。千年待ったが、ようやくそう言う人間が現れたか」\\n麒麟の瞳に穏やかな光が戻った。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "march_04",
+      "type": "text",
+      "len": 47,
+      "text": "研究室の古文書を漁る。ゴーレムの動力源は「コア」と呼ばれる魔力結晶。それを破壊すれば停止する。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 47,
+      "text": "王都に戻り、教会に完了を報告した。\\n報酬を受け取る。前線の兵士たちの安堵の顔が目に浮かんだ。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "mountain_road",
+      "type": "text",
+      "len": 47,
+      "text": "数日後、険しい山道に差し掛かった。\\n岩肌が露出し、道幅は馬車一台がやっと通れる程度しかない。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "forest_approach",
+      "type": "text",
+      "len": 47,
+      "text": "東の森を抜け、廃城跡に近づく。\\n苔むした石壁の隙間に、見張りの男たちが立っているのが見えた。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 47,
+      "text": "「幻覚サソリの毒針が欲しい。新鮮なやつを3本。\\n　何に使うかは聞くな。それが商売のルールだ」"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "reach_rocks",
+      "type": "text",
+      "len": 47,
+      "text": "半日ほど歩くと、赤茶けた岩場が見えてきた。\\n巨大な岩の隙間から、微かに紫色の光が漏れている。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "travel_desert",
+      "type": "text",
+      "len": 47,
+      "text": "砂漠の東端へ向かう。半日ほど歩くと、\\n岩山の影にバラック小屋が寄り集まった集落が見えてきた。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "sneak_in",
+      "type": "text",
+      "len": 47,
+      "text": "見張りの隙をついて集落の奥へ忍び込む。\\nバラック小屋の隙間を縫い、目的の男がいる家を探した。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "auction_end",
+      "type": "text",
+      "len": 47,
+      "text": "深夜。オークションが無事に終了した。\\n客たちは目隠しをされ、一人ずつ違うルートで帰っていく。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 47,
+      "text": "暗殺者の刃は正確だった。\\n崩れ落ちる視界の端で、オークション会場が蹂躙されていくのが見えた。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "report_01",
+      "type": "text",
+      "len": 47,
+      "text": "夜明けと共に町へ戻り、自警団の詰所で討伐の完了を報告する。男は信じられないものを見る目をした。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 47,
+      "text": "「正規兵を動かせば上に知れる。お主らのような荒くれ者に、奴らを『物理的に』黙らせてほしいのだ」"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 47,
+      "text": "青年を取り戻すには霧の深い山道を越え、妖狐の領域に踏み込まねばならない。準備を整えて出発した。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "reunion_03",
+      "type": "text",
+      "len": 47,
+      "text": "「幼き日に毒蛇に噛まれた我を、この者が薬で救った。恩を返したいのだ」\\n姫は穏やかに微笑んだ。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "end_success_chaos",
+      "type": "end_success",
+      "len": 46,
+      "text": "依頼達成。嘘をつき妖刀を手に入れた。禁忌の力は、いつか我が身を助ける（滅ぼす）かもしれない。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "destroy_01",
+      "type": "text",
+      "len": 46,
+      "text": "大蛇と卵を全て処分した。鉱脈は完全に安全になった。だが、翡翠の輝きが少し鈍くなった気がする。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "shrine_03",
+      "type": "text",
+      "len": 46,
+      "text": "「だが来た以上は試させてもらう。お前が自分を殺すに足る者か——あるいは、手を組むに足る者か」"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "confront_01",
+      "type": "text",
+      "len": 46,
+      "text": "九尾の大妖狐が立ち上がった。体長は馬車ほどもある。九本の尾が天を覆い、妖力が大気を震わせる。"
+    },
+    {
+      "file": "6006_main_ep06.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 46,
+      "text": "関所の影に辿り着いた。振り返る。追手の姿はない。——生きている。ガウェイン、まだ生きている。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "prepare_01",
+      "type": "text",
+      "len": 46,
+      "text": "ギルドから支給された古文書を読む。バフォメットは闇と炎の二属性を操り、精神を蝕む咆哮を放つ。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 46,
+      "text": "完全に破壊すれば脅威は消える。だがこのコアを保存すれば、古代の技術を解明できるかもしれない。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "ritual_dialogue",
+      "type": "text",
+      "len": 46,
+      "text": "「光は我らを救わない！ 真の救済は、星の海から訪れる！\\n　今こそ偽りの偶像を打ち砕き——」"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 46,
+      "text": "狂信者たちの数の暴力に押し潰された。\\n意識が遠のく中、彼らの祈りの声が不気味に響いていた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "camp",
+      "type": "text",
+      "len": 46,
+      "text": "夜が訪れ、街道沿いの廃墟で野営の準備をする。\\n焚き火の光だけが、周囲の闇を押し返していた。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 46,
+      "text": "「あなたが私の盾となるのは、神の思し召しです。\\n　さあ、参りましょう。神の御導きのままに」"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "after_wave3",
+      "type": "text",
+      "len": 46,
+      "text": "最後のレイスが消滅し、広間に静寂が戻った。\\n残るは、祭壇で不気味な波動を放つ黒い石だけだ。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "plea_2",
+      "type": "text",
+      "len": 46,
+      "text": "「お願いです、この子たちだけは……。\\n　夫は戦争で死にました。もう何も残っていないのです」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_4_intro",
+      "type": "text",
+      "len": 46,
+      "text": "最後の一軒。もう、誰もこちらを見ようともしない。\\n貧民窟全体が、冷たい沈黙に包まれている。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "hunt_continue",
+      "type": "text",
+      "len": 46,
+      "text": "まだ足りない。巣穴の周りにはサソリがまだ潜んでいる。\\n再び砂を蹴り、次の獲物をおびき出す。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 46,
+      "text": "無法者集落の守りは想像以上に堅かった。\\n意識が薄れていく中、男たちの嘲笑が遠くに聞こえた。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 46,
+      "text": "「主要交易路に大砂虫が棲みついた。\\n　商隊が2つ飲み込まれ、もう誰もあのルートを通れない」"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "take_01",
+      "type": "text",
+      "len": 46,
+      "text": "封印には見たこともない紋様が刻まれている。もし中を見れば、命はないという警告が脳裏をよぎる。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "mountain_03",
+      "type": "text",
+      "len": 46,
+      "text": "獣道を掻き分けながら、斜面を登っていく。ふと、苔むした大岩の根本に、淡く光るものを見つけた。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "resolve_01",
+      "type": "text",
+      "len": 46,
+      "text": "「……感謝する」\\n影守は深く頭を下げると、静かに消えていった。巻物を懐に収め、地上に戻る。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "tomb_03",
+      "type": "text",
+      "len": 46,
+      "text": "太守とその近衛兵だろうか。並のキョンシーとは比べ物にならない、濃厚な死気と殺意を纏っている。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "report_02",
+      "type": "text",
+      "len": 46,
+      "text": "道士は恍惚とした表情で壺を愛でている。その顔は、先程討伐した亡者よりも恐ろしいものに見えた。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "climb_04",
+      "type": "text",
+      "len": 46,
+      "text": "「くっ……！」\\n宙ぶらりんになりながらも、辛うじて別の突起に指を引っ掛け、全体重を支える。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "guard_01",
+      "type": "text",
+      "len": 46,
+      "text": "霊草に手を伸ばそうとしたその瞬間、岩陰から「グルル……」と地鳴りのような低い唸り声が響いた。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "collect_01",
+      "type": "text",
+      "len": 46,
+      "text": "周囲の安全を確保し、ようやく霊草の前に膝をつく。これ以上傷つけないよう慎重に周囲の土を掘る。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "collect_03",
+      "type": "text",
+      "len": 46,
+      "text": "採取は無事に完了した。しかし、まだ仕事は半分だ。これを萎れる前に都まで持ち帰らねばならない。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "start",
+      "type": "text",
+      "len": 46,
+      "text": "華龍国の南沿岸にある港町。\\nその顔役である長から、手書きの海図と討伐の依頼書を受け取った。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "cove_02",
+      "type": "text",
+      "len": 46,
+      "text": "一番巨大な旗艦の舷側から、太い錨の鎖が海面に向かってぶら下がっている。あそこから登れそうだ。"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "forge_03",
+      "type": "text",
+      "len": 45,
+      "text": "武器を強化してもらった。刃に砂漠の古い文様が刻まれている。これなら魔神の皮も斬れるだろう。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "alvin_05",
+      "type": "text",
+      "len": 45,
+      "text": "金色の鎧が黒く染まっていく。\\n「だから——来い！\\n　俺を止められるなら、止めてみろ！」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "choice_07",
+      "type": "text",
+      "len": 45,
+      "text": "「……こいつもまた、同じことをする。\\n　冒険者よ。お前が決めろ。\\n　俺たちをどうする」"
+    },
+    {
+      "file": "6103_qst_spot_karyu.csv",
+      "node": "gb_pre3",
+      "type": "text",
+      "len": 45,
+      "text": "「我は玄武。亀と蛇、二つの命を\\n　縫い合わされた。あの方の\\n　残酷な実験作のひとつよ」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "corridor_02",
+      "type": "text",
+      "len": 45,
+      "text": "壁画の最後——聖騎士たちは勝利したのではなく、命と引き換えに封印したのだ。その数、百余名。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "puzzle_01",
+      "type": "text",
+      "len": 45,
+      "text": "文字の配列は複雑だが、パターンが見える。「光」「闇」「均衡」——三つの概念の組み合わせか。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "sanctum_04",
+      "type": "text",
+      "len": 45,
+      "text": "石棺の周囲に、バフォメットの眷属と思しき魔物が蠢いている。まずはこいつらを片付けなければ。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "city_03",
+      "type": "text",
+      "len": 45,
+      "text": "瓦礫の下から助けを求める声。だが今は立ち止まれない。天使を止めなければ被害は広がる一方だ。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 45,
+      "text": "この海溝はクラーケンの棲家だ。ここから出さなければ、人間に害はない。追い返すことも可能だ。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 45,
+      "text": "牛頭王を殺せば迷宮は無力化する。だが迷宮ごと封印すれば、内部の財宝と共に安全に埋められる。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "night_watch",
+      "type": "text",
+      "len": 45,
+      "text": "見張りに立っていると、暗闇の奥から引きずるような足音が聞こえた。\\n一つではない。複数だ。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_2",
+      "type": "text",
+      "len": 45,
+      "text": "次の対象は、幼い子供を二人抱えた若い母親だった。\\n痩せ細った顔に、深い隈が刻まれている。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 45,
+      "text": "飢えと絶望に駆られた暴徒の力は凄まじかった。\\n農具で殴り倒され、貧民窟の泥の中に沈んだ。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "boss_appear",
+      "type": "text",
+      "len": 45,
+      "text": "「てめえ、たった一人で乗り込んできやがったのか。\\n　いい度胸だが、死に場所を間違えたな」"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "start",
+      "type": "text",
+      "len": 45,
+      "text": "交易商会の待合室に呼ばれた。\\n壁一面に地図が貼られ、砂漠のルートに赤い線が引かれている。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "watchman_threat",
+      "type": "text",
+      "len": 45,
+      "text": "「お前、奴隷商の犬か？ アイツには渡さないぞ。\\n　ここの住民は、もう誰にも支配されない」"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "start",
+      "type": "text",
+      "len": 45,
+      "text": "マルカンドの地下水路の入り口で、目隠しをされた。\\n案内人に手を引かれ、長い階段を下りる。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "report_02",
+      "type": "text",
+      "len": 45,
+      "text": "「まさか、本当にあの赤鬼を討ち取るとは……見事な腕前だ。これで旅の者も安心して道を通れる」"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "mountain_01",
+      "type": "text",
+      "len": 45,
+      "text": "依頼を受け、鬱蒼とした霊山へと足を踏み入れた。昼間だというのに、薄暗い霧が立ち込めている。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "mountain_02",
+      "type": "text",
+      "len": 45,
+      "text": "山全体が不気味な静寂に包まれていた。本来この山を守るはずの清浄な気は、完全に失われている。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "search_02",
+      "type": "text",
+      "len": 45,
+      "text": "さらに険しい山道を登っていく。霧が次第に濃くなり、視界が数歩先までしか効かなくなってきた。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "shrine_01",
+      "type": "text",
+      "len": 45,
+      "text": "破片を抱え、急いで山を駆け下りる。背後で、山そのものが安堵の吐息を漏らしたような気がした。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "alley_02",
+      "type": "text",
+      "len": 45,
+      "text": "しかし、大通りから一本外れた路地裏に入ると、途端にむせ返るような生ごみの臭いが漂ってきた。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "confront_01",
+      "type": "text",
+      "len": 45,
+      "text": "ピタリ、と場内の動きが止まる。酒と汗の臭いが充満する部屋に、数十人の浪人がひしめいていた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "confronted_03",
+      "type": "text",
+      "len": 45,
+      "text": "ボロボロの着流しを着た浪人……ではない。その足元は透けており、地面から浮いている。怨霊だ。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "explore_05",
+      "type": "text",
+      "len": 45,
+      "text": "掛け軸の裏に何かがある——と思った瞬間、背後から低い唸り声が聞こえた。振り返ると、怨霊が！"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "path_02",
+      "type": "text",
+      "len": 45,
+      "text": "ふと、不自然な気配を感じて足を止めた。前方にある大樹の影に、人の形をしたものが立っている。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "deeper_02",
+      "type": "text",
+      "len": 45,
+      "text": "懐の壺を取り出すと、モヤは吸い込まれるように壺の中へ消えていった。壺が微かに振動している。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "purify_01",
+      "type": "text",
+      "len": 45,
+      "text": "激戦の末、太守の額に最後の一枚を貼り付けた。巨体が硬直して後方に倒れ、地面が大きく揺れる。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "guard_03",
+      "type": "text",
+      "len": 45,
+      "text": "霊草の放つ魔力を浴びて育った、山の「守護獣」。どうやら簡単には持ち帰らせてくれないらしい。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "withdraw_01",
+      "type": "text",
+      "len": 45,
+      "text": "静かに武器を下ろし、背を向けた。いくら金のためとはいえ、飢えた者たちを狩る真似はできない。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "ambush_02",
+      "type": "text",
+      "len": 45,
+      "text": "一人、二人、三人……。彼らの標的は明らかに、奥の部屋にいる薛だ。行かせるわけにはいかない。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "evening_01",
+      "type": "text",
+      "len": 45,
+      "text": "そして三日目の夕方。巡検使の厳しい追及をどうにか躱し、視察もいよいよ終わりに近づいていた。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "ship_02",
+      "type": "text",
+      "len": 45,
+      "text": "室内には、全身に無数の刀傷を刻んだ筋骨隆々の大男が、巨大な戦斧を手にして仁王立ちしていた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "bridge_02",
+      "type": "text",
+      "len": 45,
+      "text": "橋の向こうから、人影——いや、狐の影が現れた。番をしている妖狐だ。通すつもりはないらしい。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "prepare_01",
+      "type": "text",
+      "len": 44,
+      "text": "ガレスの情報を集める。彼は辺境のルヴァン廃城を拠点に、教会の輸送隊を襲撃しているらしい。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "confront_03",
+      "type": "text",
+      "len": 44,
+      "text": "「自分は教会の腐敗を正したいだけだ。だが、お前が王国の犬として来たのなら——剣で語ろう」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "eluka_04",
+      "type": "text",
+      "len": 44,
+      "text": "「祈っても祈っても、誰も来なかった。\\n　それでもまだ、私に\\n　『慈愛』を求めるの？」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "shirasu_04",
+      "type": "text",
+      "len": 44,
+      "text": "「言葉はいらん。\\n　俺は死んでも王を守った。\\n　だが王は、俺の家族すら守らなかった」"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 44,
+      "text": "「……儀式を行うしかない。\\n　門を封じるには、宿命の子を\\n　贄として捧げねばならん」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "prepare_02",
+      "type": "text",
+      "len": 44,
+      "text": "弱点は聖属性と光。だが古文書には「光すら喰らう闇の中では、勇気のみが武器となる」とある。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 44,
+      "text": "「……ほう。まさか倒されるとはな。千年前の聖騎士どもより、貴様の方が強いとでも言うのか」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "slay_02",
+      "type": "text",
+      "len": 44,
+      "text": "遺跡から脱出した。背後で遺跡が崩落する轟音が響いた。大悪魔は滅び、遺跡と共に地に還った。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "dialogue_02",
+      "type": "text",
+      "len": 44,
+      "text": "六枚の翼。人の姿をしているが、纏う光はこの世のものではない。降臨せし天使——その本体だ。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "dialogue_04",
+      "type": "text",
+      "len": 44,
+      "text": "「人は殺し合い、奪い合い、嘘をつく。千年見守ったが、改善の兆しはない。故に——浄化する」"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "march_01",
+      "type": "text",
+      "len": 44,
+      "text": "辺境へ急行した。街道にゴーレムの進路の痕跡が残っている——巨大な足跡が大地を抉っていた。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "ruin_battle_01",
+      "type": "text",
+      "len": 44,
+      "text": "古文書を持って遺跡を出ようとした時、崩壊した遺跡から目覚めた亡者たちが襲いかかってきた！"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "after_battle_1",
+      "type": "text",
+      "len": 44,
+      "text": "狂信者たちは床に伏し、動かなくなった。\\n祭壇の火が消え、地下室に再び冷たい静寂が戻る。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "bandit_threat",
+      "type": "text",
+      "len": 44,
+      "text": "「教会からたっぷり旅の資金を持たされてるんだろ？\\n　置いていきな。命までは取らねえよ」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "plea_1",
+      "type": "text",
+      "len": 44,
+      "text": "「税の徴収……？ 勘弁してくだされ。\\n　昨日のパンを買う金すら、もう残っとらんのです」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "extort_1",
+      "type": "text",
+      "len": 44,
+      "text": "抵抗を力でねじ伏せ、なけなしの銅貨を搾り取った。\\n老人がすすり泣く声が、耳の奥に残る。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_3",
+      "type": "text",
+      "len": 44,
+      "text": "三軒目は、片足の老兵士だった。\\n壁に立てかけた松葉杖の横に、錆びた剣が一本置いてある。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "report",
+      "type": "text",
+      "len": 44,
+      "text": "王都に戻り、司教に聖杯を献上する。\\n彼は聖杯を受け取ると、震える手でそれを高く掲げた。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "sell_market",
+      "type": "text",
+      "len": 44,
+      "text": "裏路地の闇市に聖杯を持ち込んだ。\\n胡散臭い商人が金布を剥がし、聖杯の表面を指で撫でた。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 44,
+      "text": "目隠しが外された。地下の広間に、\\n豪華な絨毯と燭台が並ぶ即席の競売場が設けられている。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 44,
+      "text": "厚い封筒を受け取った。\\n闇の競売場は跡形もなく片付けられ、もう何もなかったかのようだ。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "find_officer_front",
+      "type": "text",
+      "len": 44,
+      "text": "奥の天幕で、隻眼の男を見つけた。\\n彼はこちらの血まみれの姿を見て、事情を察したようだ。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "deliver_sneak",
+      "type": "text",
+      "len": 44,
+      "text": "革袋と封筒を手渡した。\\n将校は素早く懐に収め、何事もなかったように地図に視線を戻した。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 44,
+      "text": "「石の破片は山中に散らばっているはず。あれがないと、この町に妖が雪崩れ込んでくる……！」"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "search_05",
+      "type": "text",
+      "len": 44,
+      "text": "気を取り直し、山頂を目指す。木々がまばらになり、冷たい強風が吹きつけるようになってきた。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "shrine_02",
+      "type": "text",
+      "len": 44,
+      "text": "町に降りると、神社の鳥居の前に神主が立っていた。焦燥に駆られた様子でこちらを待っている。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "enshrine_02",
+      "type": "text",
+      "len": 44,
+      "text": "完全な球体に戻った結界石が台座に鎮座すると、町を覆っていた重い空気が、ふっと軽くなった。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 44,
+      "text": "「だが、情けないことに我が門下生は、途中の峠道で『何か』に怯え、引き返してきてしまった」"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "explore_04",
+      "type": "text",
+      "len": 44,
+      "text": "奥座敷に辿り着く。襖は全て破れ、畳が捲れ上がっている。壁の掛け軸だけが無傷で残っていた。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "inner_01",
+      "type": "text",
+      "len": 44,
+      "text": "怨霊を退けた。掛け軸の裏を確認すると、隠し扉があった。その先に地下への階段が続いている。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "purify_02",
+      "type": "text",
+      "len": 44,
+      "text": "太守の体からあふれ出た膨大な死気を壺が吸い尽くすと、周囲の瘴気が嘘のように薄れていった。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 44,
+      "text": "「霊草は茎が折れるとたちまち薬効を失います。根からそっと引き抜き、慎重に扱ってください」"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "approach_02",
+      "type": "text",
+      "len": 44,
+      "text": "雲の切れ間から、天を衝くような険しい断崖絶壁が覗いている。霊草はあの頂付近にあるという。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "after_01",
+      "type": "text",
+      "len": 44,
+      "text": "怒号と悲鳴が入り混じる中、農民たちを次々と血祭りに上げる。血が乾いた土を赤く染めていく。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "withdraw_04",
+      "type": "text",
+      "len": 44,
+      "text": "村人がその後どうなるかは分からない。だが、少なくとも自分の手で彼らの命を奪わずに済んだ。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "climb_02",
+      "type": "text",
+      "len": 44,
+      "text": "海に落ちないよう慎重に這い上がり、甲板の縁に指をかけた。見張りの足音が遠ざかる……今だ。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "report_evil_01",
+      "type": "text",
+      "len": 43,
+      "text": "錬金術師だけを騎士団に引き渡し、資料はこっそり持ち出して闇市のブローカーに売り払った。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "end_success_evil",
+      "type": "end_success",
+      "len": 43,
+      "text": "依頼達成。裏の手段で莫大な利益を得た。正義だけでは食っていけない——それもまた真理だ。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "disguise_01",
+      "type": "text",
+      "len": 43,
+      "text": "商人の服を被り、うつむき加減で見張りの前を通過する……。「おい、お前。見ない顔だな？」"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 43,
+      "text": "「犯人は紫の妖気を放つ刀を持っているそうだ。恐らく、古の妖刀に精神を乗っ取られている」"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "betray_03",
+      "type": "text",
+      "len": 43,
+      "text": "砂の王を「生かさず殺さず」の状態で放置し、混乱の中で要塞の財宝を回収した。汚い仕事だ。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "lure_01",
+      "type": "text",
+      "len": 43,
+      "text": "薬草を焚き、大蛇を別の山へ誘導する。蛇は静かに従った。精霊の知恵があるのかもしれない。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "sage_04",
+      "type": "text",
+      "len": 43,
+      "text": "「死は克服できる。自分はそれを証明する。邪魔をするなら——自分の実験台になってもらう」"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 43,
+      "text": "ジンの拳が全てを砕いた。「弱い。次の獲物を探すとしよう」\\n砂漠に魔神の哄笑が響いた。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "baram_03",
+      "type": "text",
+      "len": 43,
+      "text": "「おや、客人か。久しぶりだ。\\n　最後に人と話したのは\\n　処刑される前日だったかな」"
+    },
+    {
+      "file": "6103_qst_spot_karyu.csv",
+      "node": "end_destroy",
+      "type": "end",
+      "len": 43,
+      "text": "残骸の中から禍々しい光のカードが見つかった。\\n固有スキル『神殺しの光芒』を入手した！"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "trap_01_3",
+      "type": "text",
+      "len": 43,
+      "text": "壁に文字が刻まれている。\\n「太陽はどの姿を照らすか。\\n　答えを誤れば光が牙を剥く」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "sanctum_03",
+      "type": "text",
+      "len": 43,
+      "text": "聖堂の中央に巨大な石棺がある。石棺の蓋に刻まれた封印紋が、脈動するように明滅している。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "awaken_02",
+      "type": "text",
+      "len": 43,
+      "text": "「封じた聖騎士どもの骨はとうに朽ちたか。だがまだ生贄を送ってくるとは、人の子も愚かだ」"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "ascend_03",
+      "type": "text",
+      "len": 43,
+      "text": "大聖堂の中に入ると、床に光の魔法陣が浮かび上がっていた。これは——天に昇るための道か。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "persuade_01",
+      "type": "text",
+      "len": 43,
+      "text": "「帰す——だと？ 人間が天使を救おうと言うのか」\\n天使は信じられないという顔をした。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "persuade_03",
+      "type": "text",
+      "len": 43,
+      "text": "「……奇妙な生き物だ。だが、嫌いではない」\\n天使は微かに笑い、残った光を集め始めた。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "slay_02",
+      "type": "text",
+      "len": 43,
+      "text": "崩れゆく洞窟から脱出した。背後で竜の巣が砂に沈む。竜殺しの英雄——称号が現実になった。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "confront_04",
+      "type": "text",
+      "len": 43,
+      "text": "「千年見守ったが、人間の業は深まる一方。故に結界を張った。これは罰ではない——保護だ」"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 43,
+      "text": "「到達予測は三日後。聖騎士団は結界を張って遅延させているが、抜かれるのは時間の問題だ」"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "start",
+      "type": "text",
+      "len": 43,
+      "text": "聖騎士団の詰め所に呼ばれた。\\n薄暗い執務室で、副隊長が分厚い羊皮紙を机に放り投げる。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "ritual_scene",
+      "type": "text",
+      "len": 43,
+      "text": "地下の礼拝堂。\\n黒いローブを着た十数人の男女が、奇妙な文様を描いた祭壇を囲んでいる。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "intro_2",
+      "type": "text",
+      "len": 43,
+      "text": "「道中は危険ですが、兵士たちの命がかかっています。\\n　どうか、無事に届けてください」"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "meet_commander",
+      "type": "text",
+      "len": 43,
+      "text": "「教会からの支援物資か！ 助かった……！\\n　これで今夜は、死んだ仲間と戦わずに済む」"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 43,
+      "text": "山賊の凶刃がアルバートを貫いた。\\n神の加護は、彼を護ってはくれなかった。護衛失敗だ。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "intro_1",
+      "type": "text",
+      "len": 43,
+      "text": "「教区の共同墓地を閉鎖した。\\n　罪深き霊が肉体を求めて彷徨い、死体が動き出している」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_2_intro",
+      "type": "text",
+      "len": 43,
+      "text": "二軒目の家へ向かう。\\n噂が広まったのか、路地の住民たちがこちらを遠巻きに窺っている。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "after_wave1",
+      "type": "text",
+      "len": 43,
+      "text": "前衛の盗賊たちを斬り伏せた。\\n悲鳴と怒号を聞きつけ、廃城の奥から大柄な男が姿を現す。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "desert_night",
+      "type": "text",
+      "len": 43,
+      "text": "夜になり、砂漠の気温が急激に下がる。\\n星空の下、商隊は円陣を組んで野営の準備をした。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 43,
+      "text": "重い金袋を受け取った。\\n8日間の砂と汗の代償。それでも、生きて帰れたことに感謝した。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "back_alley",
+      "type": "text",
+      "len": 43,
+      "text": "日が暮れた頃、マルカンドの裏路地に戻ってきた。\\nあの闇商人は、同じ場所で待っていた。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 43,
+      "text": "サソリの毒が全身に回り始めた。\\n視界が歪み、砂漠が紫色に溶けていく——これが幻覚か。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "find_fugitive",
+      "type": "text",
+      "len": 43,
+      "text": "奥の小屋から、若い男が顔を出した。\\n痩せてはいるが、目に覚悟が宿っている。逃亡者だ。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "find_officer_sneak",
+      "type": "text",
+      "len": 43,
+      "text": "天幕の中に滑り込む。ハルム将校がこちらを見た。\\n「『流砂の果て』——」合言葉を囁く。"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 43,
+      "text": "軍閥の兵に囲まれ、身動きが取れなくなった。\\n革袋は押収され、スパイとして拘束された。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "after_03",
+      "type": "text",
+      "len": 43,
+      "text": "残りの護符はまだ微かな光を放っている。しかし、空気に纏わりつく嫌な気配は消えていない。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "deeper_01",
+      "type": "text",
+      "len": 43,
+      "text": "覚悟を決めて霧の奥へと足を踏み出す。すると、ズシン、ズシンと地鳴りのような足音がした。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 43,
+      "text": "約束の報酬を受け取った。呪われた古道に、再び人々の活気と行商の灯が戻る日も近いだろう。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 43,
+      "text": "「……ただし、密書の中身は決して見るな。もし封が切られていれば、お主の命はないと思え」"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "after_04",
+      "type": "text",
+      "len": 43,
+      "text": "間者の死体にしゃがみ込み、その衣服を探る。帯の裏に、不自然な膨らみがあるのを見つけた。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "take_02",
+      "type": "text",
+      "len": 43,
+      "text": "好奇心を押し殺し、密書を丁寧に布に包んで自分の懐へとしまった。急いでこの場を離れよう。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "boss_02",
+      "type": "text",
+      "len": 43,
+      "text": "「石を集めてどうする気だァ……？ まさか、この俺を封じようってんじゃねぇだろうなァ！」"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "after_battle_02",
+      "type": "text",
+      "len": 43,
+      "text": "赤鬼が轟音と共に倒れた。この巨怪ですら、結界がなければ山に居座ってしまうということか。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "search_07",
+      "type": "text",
+      "len": 43,
+      "text": "祠の台座の横に、最後の破片が転がっている。欠けた部分を合わせれば、元の形になりそうだ。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "collect_shard_03",
+      "type": "text",
+      "len": 43,
+      "text": "最後の破片を拾い上げる。三つの破片が揃うと、互いに共鳴するように暖かな光を放ち始めた。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "enshrine_01",
+      "type": "text",
+      "len": 43,
+      "text": "古き祝詞が朗々と響き渡る。すると、三つの破片はまばゆい光に包まれ、一つに融合し始めた。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "leader_fight_01",
+      "type": "text",
+      "len": 43,
+      "text": "血飛沫が舞い、障子が破れる。数人の浪人を切り伏せると、残りの者は恐れをなして後退した。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "travel_02",
+      "type": "text",
+      "len": 43,
+      "text": "空はどんよりと曇り、山間には薄い靄がかかっている。前の使者が二人も逃げ帰ってきた道だ。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "resolve_01",
+      "type": "text",
+      "len": 43,
+      "text": "ゆっくりと両手を上げ、敵意がないことを示す。そして静かに、手紙を届けるだけだと告げた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "resolve_02",
+      "type": "text",
+      "len": 43,
+      "text": "霊はピタリと動きを止め、濁った目でこちらの懐を見つめた。「……お前は、逃げないのだな」"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "arrive_02",
+      "type": "text",
+      "len": 43,
+      "text": "庭は雑草に覆われ、かつての枯山水の面影は消えている。屋敷の窓から微かな青い光が漏れる。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "arrive_03",
+      "type": "text",
+      "len": 43,
+      "text": "背筋に冷たいものが走る。だが引き返すわけにはいかない。覚悟を決めて、玄関を押し開けた。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "clue_02",
+      "type": "text",
+      "len": 43,
+      "text": "巻物には、影守一族の冤罪を証明する証拠が記されている。政変の黒幕は現在の重臣の一人だ。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "graveyard_02",
+      "type": "text",
+      "len": 43,
+      "text": "その中には、ひときわ古い衣装を纏った、長年の死気を溜め込んだ強力な個体も混じっている。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "refuse_01",
+      "type": "text",
+      "len": 43,
+      "text": "こんな悪しき力を利用させてはならない。道士の目の前で、壺を地面の岩に力強く叩きつけた！"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "cliff_danger_02",
+      "type": "text",
+      "len": 43,
+      "text": "息を荒げながら、安全な岩棚へと這い上がる。傷口から滲む血を布で縛り、応急処置を施した。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "arrive_03",
+      "type": "text",
+      "len": 43,
+      "text": "こちらの接近に気づいた農民たちが、怯えと憎悪の入り混じった顔で一斉に竹槍を向けてきた。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "tour_03",
+      "type": "text",
+      "len": 43,
+      "text": "すれ違った使用人が小声で教えてくれた。既に前の護衛が二名、毒針で暗殺されたのだという。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "over_03",
+      "type": "text",
+      "len": 43,
+      "text": "「はぁ……はぁ……助かった……」\\n薛は膝から崩れ落ち、へたり込んで安堵の息を吐いた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "road_04",
+      "type": "text",
+      "len": 43,
+      "text": "勘を頼りに左の道を選ぶ。霧が少し晴れ、澄んだ水音が聞こえてきた。正しい道だったようだ。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "grove_02",
+      "type": "text",
+      "len": 43,
+      "text": "花びらが舞い散る中に、提灯を持った小狐たちが行儀よく並んでいる。こちらを見つめている。"
+    },
+    {
+      "file": "5102_qst_rep_scorpion_hunt.csv",
+      "node": "end_success_chaos",
+      "type": "end",
+      "len": 42,
+      "text": "依頼達成。蠍は倒したが、毒素で私腹を肥やした。村人の苦しみは……まあ、いずれ忘れる。"
+    },
+    {
+      "file": "5103_qst_rep_toll_bandit.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 42,
+      "text": "山賊の斧が肩口に食い込んだ。「身ぐるみ剥いでやるぜ」という声を最後に意識が途絶えた。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 42,
+      "text": "「相手は破門された錬金術師。人間と魔物を掛け合わせる禁忌の実験を行っているとか……」"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "sewer_02",
+      "type": "text",
+      "len": 42,
+      "text": "奥へ進むと、頑丈な鉄格子で道が塞がれていた。錠前には見慣れない魔法陣が刻まれている。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "disguise_success_01",
+      "type": "text",
+      "len": 42,
+      "text": "「ああ、新入りの……」適当に誤魔化すと、見張りは興味を失った。無傷で潜入に成功した。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "fate_justice_01",
+      "type": "text",
+      "len": 42,
+      "text": "「ひっ、やめっ——！」命乞いをする悪党に容赦なく刃を振り下ろし、その息の根を止めた。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "fate_justice_02",
+      "type": "text",
+      "len": 42,
+      "text": "盗賊王の首を持ち帰り、ギルドに報告した。「見事だ。これでキャラバンの安全も保たれる」"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "fate_order_01",
+      "type": "text",
+      "len": 42,
+      "text": "このままにしては新たな被害者が出る。神社の祭壇に妖刀を安置し、周囲のお札で封印した。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "fate_chaos_02",
+      "type": "text",
+      "len": 42,
+      "text": "役人には討伐の事実だけを報告した。「平和になったのなら、真実などどうでもよいことだ」"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 42,
+      "text": "「……負けたか。好きにしろ。だが自分の研究成果は本物だ。死を克服する鍵がここにある」"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "seal_02",
+      "type": "text",
+      "len": 42,
+      "text": "「封印か……退屈な眠りだ。だが、お前との戦いは夢に見よう。……次に目覚める時は——」"
+    },
+    {
+      "file": "6004_main_ep04.csv",
+      "node": "hunter_01",
+      "type": "text",
+      "len": 42,
+      "text": "リーダーらしき男が馬から降りた。「悪く思うなよ。お前たちの名前はリストに載っている」"
+    },
+    {
+      "file": "6015_main_ep15.csv",
+      "node": "devastation_01",
+      "type": "text",
+      "len": 42,
+      "text": "被害は他の三都市と比べ物にならなかった。ミカエルは純粋な武力で都市を叩き潰していた。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "alvin_04",
+      "type": "text",
+      "len": 42,
+      "text": "「俺は四人を殺した。\\n　四人の友を、国のために殺した。\\n　その罪は消えやしない」"
+    },
+    {
+      "file": "6103_qst_spot_karyu.csv",
+      "node": "kami_pre6",
+      "type": "text",
+      "len": 42,
+      "text": "「ねえ。碁盤の向こう側に\\n　座ってみませんか？\\n　世界を一緒に支配しましょうよ」"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "end_curse_07",
+      "type": "text",
+      "len": 42,
+      "text": "語り部の老人だけが笑っていた。\\n「面白い話が増えるのは\\n　語り部としては歓迎だ」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "corridor_01",
+      "type": "text",
+      "len": 42,
+      "text": "通路の壁に、千年前の戦いを描いた壁画がある。聖騎士たちがバフォメットと対峙している。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "sandstorm_02",
+      "type": "text",
+      "len": 42,
+      "text": "砂嵐が収まると、地形が変わっていた。砂がガラス状の平原に溶けている。竜の吐息の跡だ。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "approach_02",
+      "type": "text",
+      "len": 42,
+      "text": "クレーターの底に、溶けた砂がガラスの洞窟を形成している。熱気が陽炎のように揺らめく。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "forest_04",
+      "type": "text",
+      "len": 42,
+      "text": "だが楽園の番人は来訪者を歓迎しない。森の奥から、精霊たちが警戒の眼差しを向けている。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "march_03",
+      "type": "text",
+      "len": 42,
+      "text": "進路を逆に辿ると、ゴーレムが起動した遺跡に到達した。崩壊した入口の先に研究室がある。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "intercept_03",
+      "type": "text",
+      "len": 42,
+      "text": "鋼鉄の巨体が姿を現した。錆びた装甲。赤く光るコアの眼。千年経っても止まらぬ殺戮装置。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 42,
+      "text": "コアは脈打つように光っている。これは単なる動力源ではない——古代文明の叡智の結晶だ。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "preserve_02",
+      "type": "text",
+      "len": 42,
+      "text": "コアは手の中で穏やかに脈動している。千年前の技術者たちの知恵が、ここに詰まっている。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "banish_03",
+      "type": "text",
+      "len": 42,
+      "text": "海面に浮上すると、嵐は収まっていた。クラーケンは深海に封じた——少なくとも、当面は。"
+    },
+    {
+      "file": "7002_qst_gen_escort.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 42,
+      "text": "護衛任務完了。組合に帰還し報酬を受け取った。\\n特別な品の正体は考えないことにした。"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "deliver_04",
+      "type": "text",
+      "len": 42,
+      "text": "「報酬は……ほとんど出せないのですが」\\n小さな革袋を差し出した。中には銅貨が数枚。"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 42,
+      "text": "薬草が足りなかった。エレナは微笑んだ。\\n「きっと別の方が……」その笑顔が辛かった。"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "church_out",
+      "type": "text",
+      "len": 42,
+      "text": "目的の廃教会に到着した。\\nステンドグラスは割れ、女神の彫像は顔が削り取られている。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "after_wave2",
+      "type": "text",
+      "len": 42,
+      "text": "激闘の末、頭目が崩れ落ちた。\\n残った手下たちは蜘蛛の子を散らすように逃げていった。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "sandstorm",
+      "type": "text",
+      "len": 42,
+      "text": "五日目の昼過ぎ。空が突然褐色に染まった。\\n砂嵐だ。視界が数メートル先まで塞がれる。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "site_desc",
+      "type": "text",
+      "len": 42,
+      "text": "出没地点に到着した。\\n地面のあちこちに、巨大な円形の陥没跡がある。砂虫の通り道だ。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "second_alarm",
+      "type": "text",
+      "len": 42,
+      "text": "再び見張りが来た。今度は顔色が違う。\\n「やべえ……今度のは盗賊じゃねえ。腕利きだ」"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "patrol_03",
+      "type": "text",
+      "len": 42,
+      "text": "突然、ピタリと風が止んだ。直後、背筋を撫でるような冷たく湿った空気が流れ込んでくる。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "after_02",
+      "type": "text",
+      "len": 42,
+      "text": "懐を探ると、護符が一枚、黒焦げの灰となって崩れ落ちた。奴らの邪気を防いでくれたのだ。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 42,
+      "text": "「間者は腕利きの護衛を連れている。お主の任務は、奴らを奇襲し、密書を奪還することだ」"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "locate_01",
+      "type": "text",
+      "len": 42,
+      "text": "関所手前、両脇を深い林に囲まれた細い山道。太い枝の上に身を潜め、獲物が通るのを待つ。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "ambush_04",
+      "type": "text",
+      "len": 42,
+      "text": "奇襲は防がれた。護衛たちが素早く小太刀を抜き放ち、狂気じみた殺気で襲いかかってきた。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 42,
+      "text": "ゆえに、しがらみのない冒険者が単身で乗り込み、一網打尽にする必要があるというわけだ。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 42,
+      "text": "「これは御前試合の果たし状だ。武士の面子がかかった、決して遅れの手を取れない代物だ」"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 42,
+      "text": "以来、屋敷は封印され、影守の一族の行方も知れぬままだ。依頼を引き受け、山裾へ向かう。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "path_01",
+      "type": "text",
+      "len": 42,
+      "text": "苔むした長い石段を登る。道の両脇には、風化して文字も読めなくなった墓標が並んでいる。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "deeper_03",
+      "type": "text",
+      "len": 42,
+      "text": "「死気」の収集は順調だ。さらに霧が濃くなる中、山の奥、頂上付近の霊廟へと足を進める。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 42,
+      "text": "「皇帝陛下に献上する『仙丹』……その秘薬の要となる『霊草』を摘んできてほしいのです」"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "climb_03",
+      "type": "text",
+      "len": 42,
+      "text": "中腹のオーバーハングを越えようとしたその時、踏み込んだ岩の表面がボロッと崩れ落ちた！"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "descent_01",
+      "type": "text",
+      "len": 42,
+      "text": "霊草を大切に懐へ収め、登りよりもさらに気を使いながら、危険な断崖を慎重に下っていく。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 42,
+      "text": "「奴らは完全に徒党を組み、暴徒と化している。情けは無用だ、一人残らず根絶やしにせよ」"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "arrive_05",
+      "type": "text",
+      "len": 42,
+      "text": "「頼む、見逃してくれ！ 俺たちはただ、家族にひもじい思いをさせたくないだけなんだ！」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 42,
+      "text": "「だが、真の目的は帳簿ではない。政敵が私を消すため、暗殺者を紛れ込ませたというのだ」"
+    },
+    {
+      "file": "5103_qst_rep_toll_bandit.csv",
+      "node": "end_success_evil",
+      "type": "end",
+      "len": 41,
+      "text": "依頼達成。山賊は逃がしたが、金は手に入った。正義より実利を取る——それも生き方だ。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "travel_02",
+      "type": "text",
+      "len": 41,
+      "text": "アジトがあるとされる岩山地帯まではまだ距離がある。砂に足を取られ、体力が削られる。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "victory_01",
+      "type": "text",
+      "len": 41,
+      "text": "「ま、待て！ 降参だ、俺の負けだ！」巨体を揺らし、盗賊王は武器を捨てて土下座した。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "fate_chaos_01",
+      "type": "text",
+      "len": 41,
+      "text": "真実を隠し、美しい嘘をついた。村人たちは祈りを捧げ、穏やかな顔で山を下りていった。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "approach_02",
+      "type": "text",
+      "len": 41,
+      "text": "正門は堅固に守られている。だが、城壁の東側に崩れた箇所がある。どちらから入るか——"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "lost_02",
+      "type": "text",
+      "len": 41,
+      "text": "傷を手当てし、なんとか古戦場の中心部に辿り着いた。体力は削られたが、進むしかない。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 41,
+      "text": "「……強い。百年前のどの武者よりも。自分の怨念を断つか、鎮めるか——お前が決めろ」"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "deal_02",
+      "type": "text",
+      "len": 41,
+      "text": "研究ノートだけ回収し、メルヴィンを解放した。このノートは闇市場で高値がつくだろう。"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "deep_03",
+      "type": "text",
+      "len": 41,
+      "text": "壁画の下に碑文がある。「闘争を愛し、闘争に飽きた者は永遠に眠る」——封印の言葉か。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 41,
+      "text": "夜刀と華龍の国境にある霊山へ向かう。国境では両国の兵士が共同で警戒にあたっていた。"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 41,
+      "text": "「異界の門が開き始めておる。\\n　このままでは冥の者どもが\\n　この地を呑み込む」"
+    },
+    {
+      "file": "6103_qst_spot_karyu.csv",
+      "node": "start_06",
+      "type": "text",
+      "len": 41,
+      "text": "「全て倒さねば、塔には入れん。\\n　……すべては上にいる\\n　『あれ』の遊びだよ」"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "start_07",
+      "type": "text",
+      "len": 41,
+      "text": "老人は壁の地図を指差した。\\n「無名王の王墓。\\n　三千年、誰も踏み込めなかった」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "altar_03",
+      "type": "text",
+      "len": 41,
+      "text": "闇の中に、二本の巨大な角が浮かび上がった。山羊の頭。燃える双眸。人の体に獣の四肢。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "ascend_04",
+      "type": "text",
+      "len": 41,
+      "text": "魔法陣を踏むと、体が浮き上がった。光の渦に包まれ、大聖堂の天蓋を突き抜けていく——"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "trial_02",
+      "type": "text",
+      "len": 41,
+      "text": "回廊の先に門がある。門は光の文字で封じられている。「罪なき者のみ通れ」——試練か。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "trial_fail_02",
+      "type": "text",
+      "len": 41,
+      "text": "試練は失敗したが、意志の力で門を突破した。体は痛むが、立ち止まるわけにはいかない。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "aftermath_02",
+      "type": "text",
+      "len": 41,
+      "text": "「……認めよう。貴方には意志がある。自分が裁こうとした人間にも、確かに光はあった」"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "desert_02",
+      "type": "text",
+      "len": 41,
+      "text": "砂の上に、巨大な爪跡が刻まれていた。幅は自分の両腕を広げた以上。これが竜の痕跡か。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "approach_03",
+      "type": "text",
+      "len": 41,
+      "text": "洞窟の入口付近に砂漠の魔獣たちが巣を張っている。竜の余熱に寄り付いた下等な魔物だ。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "confront_03",
+      "type": "text",
+      "len": 41,
+      "text": "「人間は山を削り、水を汚し、獣を追い立てた。自分はこの山を人間から守っているのだ」"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 41,
+      "text": "海の上での戦い。不慣れな領域だが、交易路を守るためには誰かが行かなければならない。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "sail_04",
+      "type": "text",
+      "len": 41,
+      "text": "突如、空が暗転した。雲が渦を巻き、海が荒れ始める。クラーケンが嵐を呼んでいる——！"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "deep_03",
+      "type": "text",
+      "len": 41,
+      "text": "海中に飛び込んだ。暗い深海が広がる。光は届かず、唯一の灯りは護符の微かな光だけだ。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "deep_06",
+      "type": "text",
+      "len": 41,
+      "text": "洞窟の奥から、無数の触腕が蠢いている。中央に巨大な瞳が一つ——クラーケンの本体だ。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 41,
+      "text": "触腕に絡めとられ、深海へ引きずり込まれていく。光が遠ざかり、冷たい闇だけが残った。"
+    },
+    {
+      "file": "7001_qst_gen_deliver.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 41,
+      "text": "往復八日の旅を終え、組合に帰還した。\\n「次もあるぞ。生きて戻れたなら、また頼む」"
+    },
+    {
+      "file": "7007_qst_gen_rat.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 41,
+      "text": "害獣駆除完了。自治会に報告し報酬を受け取った。\\nしばらくはネズミの夢を見そうだ。"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "text_02",
+      "type": "text",
+      "len": 41,
+      "text": "金にならない仕事だ。だが掲示板に残っている。\\n誰も手をつけていないということだ。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "house_1",
+      "type": "text",
+      "len": 41,
+      "text": "最初の対象の家。半壊した長屋の扉を叩く。\\n中から、怯えた様子の老夫婦が出てきた。"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "mercy_4",
+      "type": "text",
+      "len": 41,
+      "text": "老婆の家を後にした。\\n振り返ると、老婆が両手を合わせてこちらに祈りを捧げていた。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "boss_talk",
+      "type": "text",
+      "len": 41,
+      "text": "「あの金ピカの杯は俺たちのモンだ。\\n　あれを売れば、一生遊んで暮らせるんだよ！」"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "end_mercy",
+      "type": "end",
+      "len": 41,
+      "text": "報酬は0。だが、正しいことをした確信がある。\\n砂漠の風が、少しだけ涼しく感じた。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "reset_bait",
+      "type": "text",
+      "len": 41,
+      "text": "散乱した荷を急いで積み直し、再び荷台を打ち鳴らす。\\n今度こそ本命を引きずり出す。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "auction_start",
+      "type": "text",
+      "len": 41,
+      "text": "オークションが始まった。\\n最初の出品は、どこかの国の王宮から盗み出された宝冠だ。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "auction_item_2",
+      "type": "text",
+      "len": 41,
+      "text": "オークションは続いている。\\n次の出品は——禁制品の毒薬。競りの声がさらに上がる。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 41,
+      "text": "「荷車ごと消えた者もいる。獣の仕業ではない、得体の知れない『妖』が棲みついたのだ」"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "prep_02",
+      "type": "text",
+      "len": 41,
+      "text": "夕暮れが迫ると共に、木々の影が長く伸び、まるで生き物のように地面を這い回り始めた。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "patrol_02",
+      "type": "text",
+      "len": 41,
+      "text": "手元の提灯が頼りなく揺れる。先程まで聞こえていた虫の音は、いつの間にか絶えていた。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "after_01",
+      "type": "text",
+      "len": 41,
+      "text": "化け唐傘を両断し、荒い息を整える。足元に転がった残骸は、黒い泥のように溶けていく。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "deeper_02",
+      "type": "text",
+      "len": 41,
+      "text": "足音はゆっくりと、だが確実にこちらへ向かってくる。提灯を掲げ、暗闇の先を照らした。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "deeper_04",
+      "type": "text",
+      "len": 41,
+      "text": "頭には捻じれた二本の角。丸太ほどの太さがある腕には、血塗られた金棒が握られている。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "clear_01",
+      "type": "text",
+      "len": 41,
+      "text": "重い地響きと共に赤鬼が崩れ落ちた。手放された金棒が、乾いた音を立てて地面に転がる。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "clear_03",
+      "type": "text",
+      "len": 41,
+      "text": "赤鬼の亡骸は、朝露を浴びた霜のように溶け出し、やがてただの土塊と化して風に散った。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "after_03",
+      "type": "text",
+      "len": 41,
+      "text": "林の中に再び不気味な静寂が戻った。血の匂いが獣を引き寄せる前に、任務を完遂せねば。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "search_03",
+      "type": "text",
+      "len": 41,
+      "text": "ぬかるんだ枯れ沢の跡に出た。そこは山津波で崩れた形跡があり、歩を進めるのも困難だ。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "search_04",
+      "type": "text",
+      "len": 41,
+      "text": "泥の中に、二つ目の淡い光を見つけた。泥にまみれているが、間違いなく結界石の破片だ。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 41,
+      "text": "彼らは主君を失って食い詰め、今では善良な町人からみかじめ料を脅し取っているらしい。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "deliver_peace_03",
+      "type": "text",
+      "len": 41,
+      "text": "「無事に届いたか。……あの峠で何があった？ いや、聞かないでおこう。見事な胆力だ」"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "after_fight_01",
+      "type": "text",
+      "len": 41,
+      "text": "霊の凶刃を躱し、その半透明な身体を断ち切る。霊は断末魔と共に空気へと溶けていった。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "explore_03",
+      "type": "text",
+      "len": 41,
+      "text": "足跡を辿ると、奥座敷へと続く渡り廊下に出た。だが渡り廊下の中央で床が崩落している。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 41,
+      "text": "「爪を剥き出しにして迫る亡者の額に、直接札を貼る度胸があればの話だがな。クックッ」"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "deeper_01",
+      "type": "text",
+      "len": 41,
+      "text": "亡者たちの額に護符を叩きつけ、動きを封じた。崩れ落ちた死体から黒いモヤが立ち昇る。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "climb_01",
+      "type": "text",
+      "len": 41,
+      "text": "岩肌に指をかけ、少しずつ上を目指す。見下ろせば、目が眩むような奈落が広がっている。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "night_02",
+      "type": "text",
+      "len": 41,
+      "text": "月明かりが庭園の池を美しく照らしている。虫の音しか聞こえない、静寂に包まれた夜だ。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 41,
+      "text": "「花嫁行列はこの村の者ではない。あれは妖狐の嫁入り行列よ」\\n長老は声を落とした。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "road_03",
+      "type": "text",
+      "len": 41,
+      "text": "提灯の火がちらちらと瞬き、道が二股に分かれた。どちらも同じに見える。妖狐の幻術か。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "lost_03",
+      "type": "text",
+      "len": 41,
+      "text": "しばらく彷徨うと、ようやく水音が聞こえてきた。幻術が解けたのか、小川の橋が見える。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "reunion_01",
+      "type": "text",
+      "len": 41,
+      "text": "「あ……冒険者殿？ なぜここに」\\n妖狐の姫の隣に、薬師の青年・阿明が立っていた。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "end_success_order",
+      "type": "end_success",
+      "len": 40,
+      "text": "依頼達成。法と秩序を守り抜いた名誉は、中堅冒険者としての評価を確かなものにした。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "start",
+      "type": "text",
+      "len": 40,
+      "text": "「辺境の山にある道観で、邪悪な術師が『不死の薬』と称して村人たちを洗脳しておる」"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "villager_talk_01",
+      "type": "text",
+      "len": 40,
+      "text": "「目を覚ませ！ お前たちは騙されているんだ！」大声で呼びかけ、隙を突こうとする。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "fate_justice_02",
+      "type": "text",
+      "len": 40,
+      "text": "役人に報告を終えた。「真実を知らねば、人はまた同じ過ちを繰り返す。正しい選択だ」"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "end_failure",
+      "type": "end_failure",
+      "len": 40,
+      "text": "邪仙の放つ毒薬を吸い込み、意識が混濁する。「さあ、お前も我が人形となるのだ……」"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "travel_02",
+      "type": "text",
+      "len": 40,
+      "text": "荷が散乱しているが、人の遺体はない。ガレスは略奪はしても殺しはしていないようだ。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "merge_02",
+      "type": "text",
+      "len": 40,
+      "text": "壁には「真の信仰を取り戻せ」と書かれた檄文が貼られている。ガレスの信念が窺える。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "oasis_01",
+      "type": "text",
+      "len": 40,
+      "text": "オアシスの町に着いた。砂の王の影響で町は閑散としている。情報を集める方法は二つ。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "altar_01",
+      "type": "text",
+      "len": 40,
+      "text": "陣屋の奥に、巨大な骨が組み上げられた祭壇がある。その上に——鬼の影が立っていた。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "requiem_03",
+      "type": "text",
+      "len": 40,
+      "text": "蛮骨と共に、亡霊兵たちも光の中に消えていった。古戦場に、百年ぶりの静寂が訪れた。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "lure_02",
+      "type": "text",
+      "len": 40,
+      "text": "大蛇は隣の霊山に新しい巣を作った。翡翠鉱脈は無事だが、完全な解決とは言いづらい。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "lab_01",
+      "type": "text",
+      "len": 40,
+      "text": "アンデッドを退けると、研究室らしき部屋に辿り着いた。実験器具が整然と並んでいる。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "see_through",
+      "type": "text",
+      "len": 40,
+      "text": "「——幻術か。見事だが、自分は騙されない」花畑が霧散し、荒涼とした岩山が現れた。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "pact_03",
+      "type": "text",
+      "len": 40,
+      "text": "「地脈の乱れは抑えてやる。だが覚えておけ——妖の力には代償がある。いずれわかる」"
+    },
+    {
+      "file": "6004_main_ep04.csv",
+      "node": "hunter_04",
+      "type": "text",
+      "len": 40,
+      "text": "「お前たちも標的リストに載っているぞ。『マルカンドに協力する裏切り者』としてな」"
+    },
+    {
+      "file": "6007_main_ep07.csv",
+      "node": "normal_02",
+      "type": "text",
+      "len": 40,
+      "text": "関守が鼻で笑った。「ボロボロの敗残兵にか？だがちょうど手を焼いていることがある」"
+    },
+    {
+      "file": "6014_main_ep14.csv",
+      "node": "volg_defiance_02",
+      "type": "text",
+      "len": 40,
+      "text": "「俺がこいつと一緒にいる理由？面白ェからだよ。テメェの囁きで人の縁を壊すなよ！」"
+    },
+    {
+      "file": "6017_main_ep17.csv",
+      "node": "memory_01",
+      "type": "text",
+      "len": 40,
+      "text": "砂漠の中のオアシス。椰子の木が揺れ泉が陽光を反射する。だが空気が張り詰めている。"
+    },
+    {
+      "file": "6017_main_ep17.csv",
+      "node": "talisman_01",
+      "type": "text",
+      "len": 40,
+      "text": "意識が戻った。石碑の足元に光る護符が落ちていた。暗い輝きの石が嵌め込まれている。"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "port_02",
+      "type": "text",
+      "len": 40,
+      "text": "「あの島には行かねぇ方がいい。帰ってこなかった奴もいる」忠告を聞き流し出港した。"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "sword_02",
+      "type": "text",
+      "len": 40,
+      "text": "手に取ると重いが、振ると驚くほど速い。軍神の剣。英霊がアレスから勝ち取った遺産。"
+    },
+    {
+      "file": "6019_main_ep19.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 40,
+      "text": "街の老人が教えてくれた。「北の山奥に誰も行かない谷がある。光る石を見た者がいる」"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "comrade_02",
+      "type": "text",
+      "len": 40,
+      "text": "先代の英霊が頷いた。ガウェインは英霊の時代からずっと人間のために戦い続けていた。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "seal_03",
+      "type": "text",
+      "len": 40,
+      "text": "遺跡から戻ると、聖騎士団が新たな結界を張り直していた。今度の封印は、より強固だ。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "confront_02",
+      "type": "text",
+      "len": 40,
+      "text": "「不完全だからこそ、人は足掻く。変わろうとする。お前にはそれが分からないだけだ」"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 40,
+      "text": "「交易商会が報酬を積み上げている。だが、正直に言おう——生きて帰れる保証はない」"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 40,
+      "text": "神獣を討つのか、それとも対話するのか。まずは霊峰に向かい、真意を確かめなければ。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "forest_03",
+      "type": "text",
+      "len": 40,
+      "text": "鳥の声、獣の気配。結界の中は楽園のようだ。麒麟は山を守っている——ように見える。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "peace_02",
+      "type": "text",
+      "len": 40,
+      "text": "「薬草園と鉱脈の一部を開放する。だが奥の森と水源には人を入れるな。約束できるか」"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 40,
+      "text": "「オメガ・ゴーレム。高さ十メートル超の鋼鉄の巨人だ。都市に向かって進行している」"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "destroy_01",
+      "type": "text",
+      "len": 40,
+      "text": "渾身の一撃をコアに叩き込んだ。結晶が砕け、ゴーレムが崩壊する。大地を揺らす轟音。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "destroy_02",
+      "type": "text",
+      "len": 40,
+      "text": "鋼鉄の残骸が散らばる中、空は晴れていた。千年の殺戮装置は、ようやく眠りについた。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "deep_02",
+      "type": "text",
+      "len": 40,
+      "text": "船の錨を下ろし、潜水の準備をする。船員が魔力の護符で水中呼吸の術を施してくれた。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 40,
+      "text": "「周辺の村落から避難民が押し寄せている。迷宮から魔物が溢れ出るのも時間の問題だ」"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "entrance_03",
+      "type": "text",
+      "len": 40,
+      "text": "松明を灯し、迷宮の暗闇に足を踏み入れた。背後で入口の扉が重い音を立てて閉まった。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "maze_fork",
+      "type": "text",
+      "len": 40,
+      "text": "T字路。左右どちらにも同じような通路が続いている。壁の模様から方角を推測する——"
+    },
+    {
+      "file": "7004_qst_gen_riot.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 40,
+      "text": "鎮圧任務完了。自治会から報酬を受け取った。\\nあの男の言葉が胸に刺さったままだ。"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "text_01",
+      "type": "text",
+      "len": 40,
+      "text": "「薬草を集めて、野営地の修道女に\\n　届けてください。報酬はほとんど出せません」"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "after_battle_1",
+      "type": "text",
+      "len": 40,
+      "text": "山賊の先遣隊を撃退した。\\nだが、奥の岩場から怒号が響く。まだ増援がいるようだ。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "start",
+      "type": "text",
+      "len": 40,
+      "text": "聖騎士団の詰め所に呼ばれた。\\n緊迫した空気が漂う中、担当の騎士が地図を広げる。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "start",
+      "type": "text",
+      "len": 40,
+      "text": "教会の司教から直々の依頼を受けた。\\n宝物庫から最古の聖杯が盗み出されたという。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "desert_heat",
+      "type": "text",
+      "len": 40,
+      "text": "陽炎が揺れる。水筒の中身は半分を切った。\\nラクダの足取りも重くなり始めている。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "travel_desert",
+      "type": "text",
+      "len": 40,
+      "text": "砂漠の東へ向かう。乾いた風が砂を巻き上げ、\\n視界が霞む中をひたすら歩き続けた。"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "dealer_reply",
+      "type": "text",
+      "len": 40,
+      "text": "「上物だ。鮮度も申し分ない。\\n　金は約束通り。また入り用になったら声をかける」"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "officer_reply",
+      "type": "text",
+      "len": 40,
+      "text": "「予定通りだ。確かに受け取った。\\n　帰りは東の谷を抜けろ。そちらの方が安全だ」"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 40,
+      "text": "自警団の男は、怯えた顔で周囲を見回しながら、和紙に包まれた護符の束を差し出した。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 40,
+      "text": "禍々しい朱墨で呪文が書き込まれている。触れるだけで指先に冷たい痺れが走る代物だ。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 40,
+      "text": "「月の出ない夜、この護符を持って古道を歩き、奴らをおびき出す『囮』になってくれ」"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "prep_01",
+      "type": "text",
+      "len": 40,
+      "text": "護符を懐にしまい、まだ明るい内に町を出た。古道へと続く山道は不気味なほど静かだ。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "enc_02",
+      "type": "text",
+      "len": 40,
+      "text": "飛び出してきたのは、古びた和傘に巨大な一つ目がギョロリと瞬く、異形の妖怪だった。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "after_04",
+      "type": "text",
+      "len": 40,
+      "text": "むしろ、先程の戦闘を合図にするかのように、周囲の瘴気が一段と濃くなった気がする。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "clear_05",
+      "type": "text",
+      "len": 40,
+      "text": "懐の護符はすべて灰になっていた。どうやら、無事にその役目を全うしてくれたらしい。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "prep_02",
+      "type": "text",
+      "len": 40,
+      "text": "北の関所へ至る道は一本のみ。先回りして伏兵を敷くため、獣道を縫って急ぎ北上する。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "locate_02",
+      "type": "text",
+      "len": 40,
+      "text": "月が雲に隠れ、足元の道すら見えなくなった頃、微かな落ち葉を踏む音が聞こえてきた。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "locate_03",
+      "type": "text",
+      "len": 40,
+      "text": "笠を目深に被った旅姿の男。そして、その前後を固める、異様に歩みの軽い二人の護衛。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "return_02",
+      "type": "text",
+      "len": 40,
+      "text": "客のいない薄暗い店内。奥の席で笠を被った男が、盃を傾けながらこちらを待っていた。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 40,
+      "text": "「山頂の祠に祀られていた『結界石』が、何者かによって打ち砕かれてしまったのです」"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "boss_01",
+      "type": "text",
+      "len": 40,
+      "text": "直後、ズンッと地面が揺れた。背後から生暖かい、ひどく血生臭い息が吹き付けられる。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "alley_04",
+      "type": "text",
+      "len": 40,
+      "text": "障子越しに、サイコロの転がる音と、下品な罵声が聞こえてくる。ここが目的の賭場だ。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "leader_fight_04",
+      "type": "text",
+      "len": 40,
+      "text": "頭目が懐から取り出したのは、夜刀神国の正規軍が使う名刀だった。奪ったものだろう。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "scatter_04",
+      "type": "text",
+      "len": 40,
+      "text": "武器を放り出し、彼らは我先にと裏口から逃げ出していく。完全に戦意を喪失している。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "deliver_normal_03",
+      "type": "text",
+      "len": 40,
+      "text": "「無事に届いたか。前任者たちは逃げ帰ったというのに……お前、肝が据わっているな」"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "purify_01",
+      "type": "text",
+      "len": 40,
+      "text": "護符を額に貼ると、影守は穏やかな顔で光に包まれ、消えていった。巻物は灰になった。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "path_03",
+      "type": "text",
+      "len": 40,
+      "text": "青白い肌。生気のない瞳。朽ちた官服を着た屍が、両腕を真っ直ぐ前へ突き出している。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "path_04",
+      "type": "text",
+      "len": 40,
+      "text": "——動いた。屍は膝を曲げることなく、不気味な跳躍で一直線にこちらへと迫ってくる！"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "graveyard_01",
+      "type": "text",
+      "len": 40,
+      "text": "さらに墓地の奥へ進むと、土が不自然に盛り上がり、次々と新たな屍が這い出してきた。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "cliff_danger_03",
+      "type": "text",
+      "len": 40,
+      "text": "あのまま落ちていれば一貫の終わりだった。気を引き締め直し、さらに崖を登り続ける。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "arrive_02",
+      "type": "text",
+      "len": 40,
+      "text": "皆一様に頬がこけ、目は落ち窪んでいる。正規兵ではない、ただの飢えた人間の群れだ。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "leader_01",
+      "type": "text",
+      "len": 40,
+      "text": "「長男は重税のための強制労働で死んだ。次男は餓死した。娘は太守に売られた……！」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 40,
+      "text": "「巡検使が去るまでの三日三晩、この屋敷にとどまり、私を刺客から守り抜いてほしい」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "night_03",
+      "type": "text",
+      "len": 40,
+      "text": "だが、自分の勘が危険を告げた。風もないのに、水面に映る月が不自然に波打っている。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "evening_03",
+      "type": "text",
+      "len": 40,
+      "text": "塀の外に、初日とは比べ物にならないほど多くの、そして研ぎ澄まされた殺気を感じる。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "over_02",
+      "type": "text",
+      "len": 40,
+      "text": "翌朝。帳簿の改ざんを最後まで見抜けなかった巡検使は、不満げに屋敷を去っていった。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "reunion_02",
+      "type": "text",
+      "len": 40,
+      "text": "「僕は無理やり連れて来られたわけじゃない。彼女は……昔、僕が山で助けた狐なんだ」"
+    },
+    {
+      "file": "5102_qst_rep_scorpion_hunt.csv",
+      "node": "fire_success",
+      "type": "text",
+      "len": 39,
+      "text": "煙に耐えきれず、子蠍たちが四方八方に逃げ出した。親蠍だけが残っている。好機だ。"
+    },
+    {
+      "file": "5104_qst_rep_river_god.csv",
+      "node": "start",
+      "type": "text",
+      "len": 39,
+      "text": "「冒険者殿、どうかお力をお貸しくだされ。河が荒れ、田畑が水に沈んでおるのです」"
+    },
+    {
+      "file": "5104_qst_rep_river_god.csv",
+      "node": "end_success_evil",
+      "type": "end",
+      "len": 39,
+      "text": "依頼達成。妖怪は消えたが、河の汚染はそのままだ。いずれまた問題が起きるだろう。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "prepare_02",
+      "type": "text",
+      "len": 39,
+      "text": "聖騎士の装備は一級品。正面から挑めば苦戦は必至だ。慎重に作戦を練る必要がある。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "persuade_03",
+      "type": "text",
+      "len": 39,
+      "text": "ガレスと共に王都へ向かった。道中、彼は教会の内部事情を語った。その告発は重い。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 39,
+      "text": "ガレスの聖剣が閃き、意識が遠のいた。「お前では自分は止められぬ。出直してこい」"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "travel_02",
+      "type": "text",
+      "len": 39,
+      "text": "砂の王の配下は組織的だ。見張り、伝令、襲撃部隊——軍隊のように統制されている。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "merge_approach",
+      "type": "text",
+      "len": 39,
+      "text": "情報を元に、砂の王の砦を目指す。砂丘を越えた先に、岩壁に囲まれた要塞が見えた。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "betray_02",
+      "type": "text",
+      "len": 39,
+      "text": "砂の王の部下たちに「王は倒された」と偽情報を流す。組織は内部から崩壊を始めた。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 39,
+      "text": "古戦場へ向かう。道中、逃げてきた村人たちとすれ違った。目に恐怖が浮かんでいる。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 39,
+      "text": "聖王国の南、古い墓地の入口に着いた。地面が微かに震えている——死霊術の余波だ。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "force_03",
+      "type": "text",
+      "len": 39,
+      "text": "ボロボロだが通り抜けた。罠を解除する知恵があればと悔やむが、先に進むしかない。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "lab_02",
+      "type": "text",
+      "len": 39,
+      "text": "机の上に研究ノートがある。死霊術の理論が事細かに記されている。恐ろしい内容だ。"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 39,
+      "text": "砂漠を南下する。途中、破壊されたキャラバンの残骸を見た。凄まじい暴力の痕跡だ。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "merge_peak",
+      "type": "text",
+      "len": 39,
+      "text": "霊山の中腹。空気が澄んでいるのに、視界が歪む。妖力が空間そのものを歪めている。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "peak_01",
+      "type": "text",
+      "len": 39,
+      "text": "目の前に美しい花畑が広がった——だがこんな山頂に花畑があるはずがない。幻術だ。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 39,
+      "text": "「さて——殺すか。それとも契約を結ぶか。自分の妖力の一部を分けてやってもいい」"
+    },
+    {
+      "file": "6003_main_ep03.csv",
+      "node": "start",
+      "type": "text",
+      "len": 39,
+      "text": "マルカンド砂塵王国の商業都市ジャハーラ。砂漠の交差点に位置するオアシス都市だ。"
+    },
+    {
+      "file": "6004_main_ep04.csv",
+      "node": "start",
+      "type": "text",
+      "len": 39,
+      "text": "毒物事件から数日。ガウェインの小隊と共にマルカンド領内の交易路を巡回していた。"
+    },
+    {
+      "file": "6007_main_ep07.csv",
+      "node": "end_betray",
+      "type": "end_success",
+      "len": 39,
+      "text": "異国の風が吹き抜ける。湿った空気。木と土の匂い。門を潜った。振り返らなかった。"
+    },
+    {
+      "file": "6011_main_ep11.csv",
+      "node": "angels_02",
+      "type": "text",
+      "len": 39,
+      "text": "白磁の装甲。純白の翼。人間の形だが人間ではない。「上位使徒」——天使の群れだ。"
+    },
+    {
+      "file": "6011_main_ep11.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 39,
+      "text": "隣に生ける伝説がいる。マルカンドの首都イスハークに急がなければ。（第3部開始）"
+    },
+    {
+      "file": "6012_main_ep12.csv",
+      "node": "volg_fury_02",
+      "type": "text",
+      "len": 39,
+      "text": "炎の柱の根元の光の存在を睨んだ。「あいつが元凶だ。叩けば炎も止まる。行くぞ！」"
+    },
+    {
+      "file": "6012_main_ep12.csv",
+      "node": "end_failure",
+      "type": "end_failure",
+      "len": 39,
+      "text": "炎の中に倒れた。ウリエルの灼熱が意識を焼き尽くす。イスハークの炎が止まらない。"
+    },
+    {
+      "file": "6013_main_ep13.csv",
+      "node": "soldier_02",
+      "type": "text",
+      "len": 39,
+      "text": "「天極城に……光の存在が……あれが来てから……みんな眠って……」声が途切れた。"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "ares_01",
+      "type": "text",
+      "len": 39,
+      "text": "赤銅色の鎧。使い込まれた大剣を片手で提げた男。戦うことだけが生きがいの獣の目。"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 39,
+      "text": "全能神ゼウスを打ち破り蒼暁の剣を手にした。人間が諦めなかった証。世界は自由だ。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "after_baram_02",
+      "type": "text",
+      "len": 39,
+      "text": "「……ふん。負けるのは嫌いじゃないよ。\\n　研究者は常に仮説を修正するものだ」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "end_seal_06",
+      "type": "text",
+      "len": 39,
+      "text": "国王は苦虫を噛み潰した顔をした。\\nだが英霊が託した力は王の命令では消せない。"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "end_save",
+      "type": "end",
+      "len": 39,
+      "text": "代償は計り知れないだろう。\\nだが少女は生きて隣にいる。\\n冥食の理は崩れた。"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "text_king_5",
+      "type": "text",
+      "len": 39,
+      "text": "「三千年だ。三千年、ここで待った。\\n　誰か来るのを。\\n　俺の名を呼ぶ者を」"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "end_curse_06",
+      "type": "text",
+      "len": 39,
+      "text": "地上に出ると人々の視線が変わっていた。\\n腕の紋章を見て後ずさりする者がいる。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "corridor_03",
+      "type": "text",
+      "len": 39,
+      "text": "通路の先から、不気味な呻き声が聞こえる。封印の魔力に引き寄せられた亡者たちだ。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "rune_success_02",
+      "type": "text",
+      "len": 39,
+      "text": "扉の向こうから、より濃厚な魔力の気配が漂ってくる。覚悟を決めて足を踏み入れた。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "rune_fail_02",
+      "type": "text",
+      "len": 39,
+      "text": "体を引きずりながら第二層に入る。ダメージは痛いが、立ち止まるわけにはいかない。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "sanctum_02",
+      "type": "text",
+      "len": 39,
+      "text": "天井から黒い霧が垂れ下がり、床の亀裂からは赤い光が漏れている。封印の最終層だ。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "awaken_03",
+      "type": "text",
+      "len": 39,
+      "text": "「さあ、見せてみろ。千年の間に人間がどれほど進歩したか——あるいは退化したか」"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "slay_01",
+      "type": "text",
+      "len": 39,
+      "text": "剣を振り下ろした。バフォメットの体が黒い灰となって崩れ、聖堂が激しく振動する。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "nest_06",
+      "type": "text",
+      "len": 39,
+      "text": "財宝の山の向こうに、巨大な影が横たわっている。規則的な呼吸が洞窟全体を揺らす。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "roar_03",
+      "type": "text",
+      "len": 39,
+      "text": "「交易路を塞いでいるのはお前の巣だ。人が暮らせなくなっている」——言葉を返す。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "forest_01",
+      "type": "text",
+      "len": 39,
+      "text": "山道を登ると、かつての薬草園が見えた。人の手入れが途絶え、野生に還りつつある。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 39,
+      "text": "「海軍が軍船を一隻貸してくれた。だが船員は志願者だけだ。皆、死を覚悟している」"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "deep_02",
+      "type": "text",
+      "len": 39,
+      "text": "第二層は天井が高い。巨大な何かが通れるように設計されている——牛頭王の通路だ。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "throne_02",
+      "type": "text",
+      "len": 39,
+      "text": "玉座の間には骨と武具が散乱している。挑戦者たちの末路がここに積み重なっている。"
+    },
+    {
+      "file": "7005_qst_gen_bear.csv",
+      "node": "encounter_02",
+      "type": "text",
+      "len": 39,
+      "text": "体中に古傷が走り、片目は白く濁っている。\\n口元に赤いものがこびりついていた。"
+    },
+    {
+      "file": "7005_qst_gen_bear.csv",
+      "node": "return_02",
+      "type": "text",
+      "len": 39,
+      "text": "「ヨルンの遺品は見つかったか？」\\n外套の切れ端を差し出すと黙って受け取った。"
+    },
+    {
+      "file": "7007_qst_gen_rat.csv",
+      "node": "text_02",
+      "type": "text",
+      "len": 39,
+      "text": "「先月、下水道の修繕工が噛まれて熱を出した。\\n　犬ほどの大きさがあるらしい」"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "meet_04",
+      "type": "text",
+      "len": 39,
+      "text": "「ですが、薬草が底をついてしまって」\\n声は落ち着いているが指先が震えていた。"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "knight_thanks",
+      "type": "text",
+      "len": 39,
+      "text": "「見事だ。この石は……異端の呪具か。\\n　背後関係はこちらで洗おう。助かった」"
+    },
+    {
+      "file": "7014_qst_rol_tithe.csv",
+      "node": "mercy_1",
+      "type": "text",
+      "len": 39,
+      "text": "老夫婦の家を後にした。背中に「ありがとうございます」という声が小さく聞こえた。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "reward_scene",
+      "type": "text",
+      "len": 39,
+      "text": "「全頭無事！ 荷も完品！ さすがだな、冒険者。\\n　約束の報酬だ。また頼むぞ」"
+    },
+    {
+      "file": "7021_qst_mar_scorpion.csv",
+      "node": "deliver_1",
+      "type": "text",
+      "len": 39,
+      "text": "革袋を差し出す。闇商人は中身を確認し、\\n一本ずつ光に透かして品質を確かめた。"
+    },
+    {
+      "file": "7024_qst_mar_auction.csv",
+      "node": "intruder_2_talk",
+      "type": "text",
+      "len": 39,
+      "text": "「邪魔をするな。我々の標的は元締めだけだ。\\n　道を空けるなら命は助けてやる」"
+    },
+    {
+      "file": "7025_qst_mar_bribe.csv",
+      "node": "sneak_route",
+      "type": "text",
+      "len": 39,
+      "text": "岩場の獣道を這うように進む。\\n砂利を踏まないよう、一歩一歩慎重に足を運んだ。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "patrol_04",
+      "type": "text",
+      "len": 39,
+      "text": "足元に白い霧が立ち込め、提灯の炎が青白く変色した。懐の護符が微かに熱を帯びる。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "clear_02",
+      "type": "text",
+      "len": 39,
+      "text": "主を失ったことで、古道を覆っていた分厚い瘴気が、嘘のようにみるみる晴れていく。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "clear_04",
+      "type": "text",
+      "len": 39,
+      "text": "冷たく澄んだ夜風が通り抜け、途絶えていた秋虫の音が、再び山間に響き渡り始める。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 39,
+      "text": "顔を黒布で覆った使者は、感情の読めない冷たい瞳でこちらを見据え、言葉を続けた。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "prep_01",
+      "type": "text",
+      "len": 39,
+      "text": "使者は足音一つ立てずに闇へ溶けた。警告は冗談ではないだろう。命がけの裏稼業だ。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "after_01",
+      "type": "text",
+      "len": 39,
+      "text": "凄惨な殺し合いの末、護衛の一人が喉を押さえて崩れ落ちた。もはや動く気配はない。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "after_05",
+      "type": "text",
+      "len": 39,
+      "text": "布を切り裂くと、厳重に蠟封された黒い巻物が転がり落ちてきた。これが例の密書だ。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "after_battle_01",
+      "type": "text",
+      "len": 39,
+      "text": "妖怪たちを斬り伏せると、奴らは霧となって四散した。油断はできない、先を急ごう。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "search_06",
+      "type": "text",
+      "len": 39,
+      "text": "やがて、山頂の開けた場所に出た。そこには、無残に破壊された古い石の祠があった。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "leader_fight_2",
+      "type": "text",
+      "len": 39,
+      "text": "歴戦の殺気を放ちながら、頭目が自ら太刀を青眼に構えた。空気がビリビリと震える。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "scatter",
+      "type": "text",
+      "len": 39,
+      "text": "深追いはしない。これでこの賭場は終わりだ。血振りをして、静かに刀を鞘に収めた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "after_fight_02",
+      "type": "text",
+      "len": 39,
+      "text": "嫌な冷気が晴れ、本来の山の空気が戻ってくる。厄介な障害だったが、これで進める。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "arrive_01",
+      "type": "text",
+      "len": 39,
+      "text": "鬱蒼とした木々の先に、朽ちかけた門が見えた。門扉は半開きで、夕暮れの風に軋む。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "inner_04",
+      "type": "text",
+      "len": 39,
+      "text": "名前の下には「無念」「恨」「偽」と血で書かれた文字。彼らは冤罪だったのか……？"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "clue_01",
+      "type": "text",
+      "len": 39,
+      "text": "地下室の最奥に祭壇がある。祭壇の上に古びた巻物と、一振りの短刀が置かれていた。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "purify_02",
+      "type": "text",
+      "len": 39,
+      "text": "屋敷から出ると、空は既に白み始めていた。もうここに怪光が灯ることはないだろう。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "talisman_01",
+      "type": "text",
+      "len": 39,
+      "text": "護符と壺を懐に収め、霊山の登り口に到着した。空を覆う雲が太陽の光を遮っている。"
+    },
+    {
+      "file": "7040_qst_har_jiangshi.csv",
+      "node": "talisman_02",
+      "type": "text",
+      "len": 39,
+      "text": "山全体から、生き物を寄せ付けない淀んだ空気が流れ出しているのが肌で感じられた。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "leader_02",
+      "type": "text",
+      "len": 39,
+      "text": "「これ以上、何を奪うって言うんだ！ 殺すなら、俺を殺してからにしろォォッ！！」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "night_04",
+      "type": "text",
+      "len": 39,
+      "text": "池の底から、竹の筒を使って息を潜めていた影が、水飛沫と共に次々と跳び上がった！"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "inspect_03",
+      "type": "text",
+      "len": 39,
+      "text": "部屋の隅で護衛として控える。薛の額には、隠しきれないほどの冷や汗が浮いていた。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "evening_02",
+      "type": "text",
+      "len": 39,
+      "text": "だが、急激に胸騒ぎがする。風の音が止み、鳥たちが一斉に屋敷の森から飛び去った。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "evening_04",
+      "type": "text",
+      "len": 39,
+      "text": "「来たか……！」\\n障子を突き破り、上級の暗殺者たちが一斉になだれ込んできた！"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "over_01",
+      "type": "text",
+      "len": 39,
+      "text": "激しい斬り合いの末、最後の刺客が崩れ落ちた。屋敷は血と破壊の痕にまみれている。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "intel_03",
+      "type": "text",
+      "len": 39,
+      "text": "頭目は「黒鰐（くろわに）」と呼ばれる大男で、元帝国海軍の将校だったという噂だ。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "ship_03",
+      "type": "text",
+      "len": 39,
+      "text": "「たかが冒険者一人で俺の船に乗り込むとは、いい度胸だ。海の藻屑にしてやる！！」"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "grove_03",
+      "type": "text",
+      "len": 39,
+      "text": "小狐たちの列の先に、輝くような白い衣の女性が立っていた。花嫁衣裳を纏っている。"
+    },
+    {
+      "file": "8012_qst_boss_cardinal.csv",
+      "node": "1",
+      "type": "text",
+      "len": 39,
+      "text": "光の届かぬ場所で手を汚してきたお前たちにしか頼めない仕事だ。枢機卿の首を獲れ。"
+    },
+    {
+      "file": "5101_qst_rep_graverobber.csv",
+      "node": "victory_01",
+      "type": "text",
+      "len": 38,
+      "text": "頭目が地面に倒れ伏した。残りの手下たちは蜘蛛の子を散らすように逃げていった。"
+    },
+    {
+      "file": "5101_qst_rep_graverobber.csv",
+      "node": "end_success_evil",
+      "type": "end",
+      "len": 38,
+      "text": "依頼達成。死者の遺品で私腹を肥やした。罪悪感は……まあ、いつか薄れるだろう。"
+    },
+    {
+      "file": "5101_qst_rep_graverobber.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 38,
+      "text": "暗い納骨堂の中で意識を失った。目が覚めた時、遺品も金も何もかもが消えていた。"
+    },
+    {
+      "file": "5103_qst_rep_toll_bandit.csv",
+      "node": "fate_evil_01",
+      "type": "text",
+      "len": 38,
+      "text": "山賊の頭は這いつくばりながら山の奥へ逃げていった。残された金袋を懐に入れる。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "search_success",
+      "type": "text",
+      "len": 38,
+      "text": "汚泥の中から魔法陣の解除キーを発見した。無傷で鉄格子を開けることに成功した。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "lab_02",
+      "type": "text",
+      "len": 38,
+      "text": "しかし、扉の前には巨大な肉塊のような化け物が鎮座している。失敗作のキメラだ。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 38,
+      "text": "「相手は『砂漠の盗賊王バシム』。砂嵐を利用して神出鬼没に略奪を繰り返す男だ」"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "desert_02",
+      "type": "text",
+      "len": 38,
+      "text": "盗賊たちはこの砂嵐を利用して移動するらしいが、まともに巻き込まれれば危険だ。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "merge_shrine",
+      "type": "text",
+      "len": 38,
+      "text": "町外れの廃神社に到着した。鳥居の向こうから、むせ返るような妖気が漂ってくる。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "boss_intro_02",
+      "type": "text",
+      "len": 38,
+      "text": "剣士の目は虚ろで、手にした紫色の妖刀から伸びる魔力の糸に操られているようだ。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "fate_chaos_01",
+      "type": "text",
+      "len": 38,
+      "text": "布で刀身を厳重に包み、背中に背負った。使い方次第で、これは強力な武器になる。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 38,
+      "text": "不死の薬などあるはずがない。人々の弱みにつけ込む外道を討つため、山へ向かう。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "mountain_02",
+      "type": "text",
+      "len": 38,
+      "text": "どうやって進む？ ギルドで買った霊符を使えば霧を払えるが、術者に気付かれる。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "talk_success_01",
+      "type": "text",
+      "len": 38,
+      "text": "村人の一人がハッと我に返った。連鎖的に他の者も動きを止め、その隙に奥へ進む。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "black_03",
+      "type": "text",
+      "len": 38,
+      "text": "刺客を尋問し、砂の王の内部事情を聞き出した。部下の不満が溜まっているらしい。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "nest_03",
+      "type": "text",
+      "len": 38,
+      "text": "大蛇がゆっくりと頭をもたげた。翡翠色の瞳がこちらを見つめている。臨戦態勢だ。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "lure_03",
+      "type": "text",
+      "len": 38,
+      "text": "太守には「蛇は排除した」と報告した。嘘はついていない——場所を移しただけだ。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 38,
+      "text": "「教会は面子があって動けない。元宮廷の人間だからな。だからギルドに話が来た」"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "crypt_02",
+      "type": "text",
+      "len": 38,
+      "text": "通路の先に魔法の罠が仕掛けられている。解除する技術があれば安全に通れるが——"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "victory_01",
+      "type": "text",
+      "len": 38,
+      "text": "メルヴィンの杖が折れ、死霊の光が消えた。老賢者は座り込んで肩を震わせている。"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "forge_01",
+      "type": "text",
+      "len": 38,
+      "text": "集落の鍛冶師を訪ねる。砂漠の民は古来、魔物の鱗で武器を打つ技術を持っている。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "border_02",
+      "type": "text",
+      "len": 38,
+      "text": "北ルートは妖怪が多いが道は明瞭。南ルートは険しいが妖怪は少ない——と聞いた。"
+    },
+    {
+      "file": "6002_main_ep02.csv",
+      "node": "reply_02",
+      "type": "text",
+      "len": 38,
+      "text": "「だがな。もし逆だったらどうする。あの武器を持たせたのが俺たちの側だったら」"
+    },
+    {
+      "file": "6006_main_ep06.csv",
+      "node": "flash_02",
+      "type": "text",
+      "len": 38,
+      "text": "「生き延びて、世界の果てを見届けろ」その言葉だけが折れそうな膝を支えていた。"
+    },
+    {
+      "file": "6007_main_ep07.csv",
+      "node": "doc_02",
+      "type": "text",
+      "len": 38,
+      "text": "「これを……然るべき者へ……」王国の機密書。使い方次第で門を開ける鍵になる。"
+    },
+    {
+      "file": "6007_main_ep07.csv",
+      "node": "tengu_01",
+      "type": "text",
+      "len": 38,
+      "text": "「裏山の竹林に天狗が巣食っている。追い払って証拠を持ってくれば通してやろう」"
+    },
+    {
+      "file": "6007_main_ep07.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 38,
+      "text": "重い音を立てて関所の門が開いた。異国の風。知らない土地。だが——生きている。"
+    },
+    {
+      "file": "6010_main_ep10.csv",
+      "node": "vision_03",
+      "type": "text",
+      "len": 38,
+      "text": "夜刀の竹林で鎌を握ったまま倒れた農民。全てが記録映像のように再生されていた。"
+    },
+    {
+      "file": "6012_main_ep12.csv",
+      "node": "volg_fury_01",
+      "type": "text",
+      "len": 38,
+      "text": "ヴォルグが大剣を抜いた。「間に合わなかったか。だがまだ全部は焼けちゃいねェ」"
+    },
+    {
+      "file": "6013_main_ep13.csv",
+      "node": "awaken_02",
+      "type": "text",
+      "len": 38,
+      "text": "眠りに落ちていた人々が一人また一人と目を覚ましていく。龍京が息を吹き返した。"
+    },
+    {
+      "file": "6015_main_ep15.csv",
+      "node": "retreat_02",
+      "type": "text",
+      "len": 38,
+      "text": "『人間ガ天軍ノ長ヲ……。覚エテオクガイイ。命令ヲ下シタ者ハマダ天ノ上ニイル』"
+    },
+    {
+      "file": "6016_main_ep16.csv",
+      "node": "border_01",
+      "type": "text",
+      "len": 38,
+      "text": "足は自然と国境の町に向かっていた。町外れの丘に登った時、不思議な光が見えた。"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "ruins_01",
+      "type": "text",
+      "len": 38,
+      "text": "祭壇の周囲に古代の彫刻。剣を振るう戦士と鎧の神の姿。戦の神を祀る聖域だった。"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "memory_02",
+      "type": "text",
+      "len": 38,
+      "text": "背後から重い足音が迫る。木の陰に隠れ息を殺した。だが足音が目の前で止まった。"
+    },
+    {
+      "file": "6019_main_ep19.csv",
+      "node": "armor_02",
+      "type": "text",
+      "len": 38,
+      "text": "驚くほど軽いが確かな守りの力。女神の鎧。英霊がアルテミスから勝ち取った遺産。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "end_seal_02",
+      "type": "text",
+      "len": 38,
+      "text": "アルヴィンが目を閉じた。\\n「……お前のような奴がいてくれて\\n　よかった」"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "gate_02",
+      "type": "text",
+      "len": 38,
+      "text": "門をくぐった瞬間、青白い炎が宙を舞い\\n唐傘が不気味に跳ねながら迫ってきた。"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "shuten_pre7",
+      "type": "text",
+      "len": 38,
+      "text": "「……これが、最後の試練。\\n　お願いします、どうか\\n　私をあの門まで！」"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "end_sacrifice",
+      "type": "end",
+      "len": 38,
+      "text": "瞬時に扉が閉まり\\n赤黒い月が嘘のように晴れていく。\\n冥の門は封じられた。"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "end_break",
+      "type": "end",
+      "len": 38,
+      "text": "報酬として『砂王の断罪刃』を受け取った。\\n三千年分の怒りが鋼に宿っている。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "trap_spike_02",
+      "type": "text",
+      "len": 38,
+      "text": "傷は浅いが、針には弱い呪毒が塗られていた。体の芯が少し重くなる。先を急ごう。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "after_battle_01",
+      "type": "text",
+      "len": 38,
+      "text": "怨霊を退け、第二層への扉に辿り着いた。扉には古代のルーン文字が刻まれている。"
+    },
+    {
+      "file": "6105_qst_legend_baphomet.csv",
+      "node": "after_battle_02",
+      "type": "text",
+      "len": 38,
+      "text": "ルーン文字を読み解かなければ扉は開かない。古文書の知識を頼りに解読を試みる。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "throne_05",
+      "type": "text",
+      "len": 38,
+      "text": "護衛の天使が翼を広げた。光の粒子が舞い散り、目を開けていられないほどの輝き。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 38,
+      "text": "「殺すか、それとも封じるか。竜は、負けた者に従う」\\n竜は静かに首を下げた。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "climb_02",
+      "type": "text",
+      "len": 38,
+      "text": "結界に触れると、穏やかだが確かな拒絶の力を感じる。通り抜けるには覚悟がいる。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 38,
+      "text": "麒麟の浄化の光が体を焼き尽くした。山は静けさを取り戻し——人の痕跡は消えた。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 38,
+      "text": "「報酬は破格だ。だが正直に言う——海の化け物を陸の戦士が倒せるかは分からん」"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "deep_05",
+      "type": "text",
+      "len": 38,
+      "text": "海溝の底に辿り着いた。岩と珊瑚の間に、巨大な洞窟がぽっかりと口を開けている。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "slay_01",
+      "type": "text",
+      "len": 38,
+      "text": "弱った心臓部に最後の一撃を叩き込んだ。クラーケンの体が痙攣し、動きを止めた。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "slay_02",
+      "type": "text",
+      "len": 38,
+      "text": "海面に浮上した。空は晴れ、海は凪いでいる。千年の海魔は、海底の墓場に還った。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "slay_02",
+      "type": "text",
+      "len": 38,
+      "text": "迷宮から脱出した。地割れが少しずつ閉じ始めている。主を失った迷宮は崩壊する。"
+    },
+    {
+      "file": "7003_qst_gen_scavenge.csv",
+      "node": "dark_01",
+      "type": "text",
+      "len": 38,
+      "text": "闇市の裏路地に金庫を持ち込んだ。\\n目利きの男が中身を検め、にやりと笑った。"
+    },
+    {
+      "file": "7006_qst_gen_smuggle.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 38,
+      "text": "密輸完了。金は多いが後味は悪い。\\n何を運んだかは知らないままのほうがいい。"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 38,
+      "text": "薬草の納品完了。報酬は銅貨10枚。\\nだがテントの奥で呻き声が小さくなった。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "spotted",
+      "type": "text",
+      "len": 38,
+      "text": "「誰だ！？ 騎士団の犬か！」\\n見張りの一人が声を上げ、クロスボウを構えた。"
+    },
+    {
+      "file": "7015_qst_rol_relic.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 38,
+      "text": "盗賊団の連携は見事だった。\\n多勢に無勢。剣を弾かれ、意識が闇に沈んでいく。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 38,
+      "text": "砂漠の容赦ない牙の前に、膝をついた。\\n荷は奪われ、商隊は散り散りになった。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "capture",
+      "type": "text",
+      "len": 38,
+      "text": "精鋭を倒した。逃亡者は抵抗をやめ、うなだれた。\\n「……負けだ。好きにしろ」"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 38,
+      "text": "「他国の間者が、我が国の軍事機密を記した密書を携え、北の関所へ向かっておる」"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "locate_04",
+      "type": "text",
+      "len": 38,
+      "text": "一般の行商人には見えない隙のない陣形。間違いない、奴らが標的の間者と護衛だ。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "ambush_01",
+      "type": "text",
+      "len": 38,
+      "text": "息を殺し、刀の柄に手をかける。間者がちょうど真下を通り過ぎようとした瞬間――"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 38,
+      "text": "「どうか、散逸した三つの破片を集め、再び祠に奉納してくだされ。頼みましたぞ」"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "scatter_02",
+      "type": "text",
+      "len": 38,
+      "text": "頭目が血を吐いて動かなくなると、残っていた浪人たちの顔に絶望の色が浮かんだ。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "report_03",
+      "type": "text",
+      "len": 38,
+      "text": "「よくやってくれた。これで少しは町も静かになるだろう。また頼むかもしれんぞ」"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "travel_04",
+      "type": "text",
+      "len": 38,
+      "text": "木々の擦れる音しか聞こえない。時折、視界の端を妙な影が横切るような気がする。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "confronted_01",
+      "type": "text",
+      "len": 38,
+      "text": "風の音に混じって、どこからか「……かえれ……」という低いうめき声が聞こえた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "battle_02",
+      "type": "text",
+      "len": 38,
+      "text": "その瞬間、霊の顔が怒りに歪み、この世のものとは思えない悲痛な叫び声を上げた！"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "reveal_01",
+      "type": "text",
+      "len": 38,
+      "text": "影守の怨霊が膝をつく。怒りが消え、悲しみだけが残った顔で自分を見上げている。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "leave_02",
+      "type": "text",
+      "len": 38,
+      "text": "地図によれば、霊草の自生地である西方霊山までは、急ぎ足でも片道三日はかかる。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "climb_02",
+      "type": "text",
+      "len": 38,
+      "text": "山頂に近づくにつれ、湿った濃霧が立ち込め、岩肌が結露で滑りやすくなってきた。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "guard_02",
+      "type": "text",
+      "len": 38,
+      "text": "姿を現したのは、額に一本の鋭い角を持ち、全身を硬い鱗で覆われた巨大な猛獣だ。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 38,
+      "text": "「辺境の農村で、税の取り立てに反発した農民どもが竹槍を持って暴れ回っておる」"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "tour_01",
+      "type": "text",
+      "len": 38,
+      "text": "案内された屋敷の庭園は、華龍の一般市民が一生働いても作れないほど広大だった。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "night_01",
+      "type": "text",
+      "len": 38,
+      "text": "初日の夜。豪華な寝所で震える薛の部屋の前に立ち、屋敷の巡回と警護を開始する。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "clear_02",
+      "type": "text",
+      "len": 38,
+      "text": "静まり返った甲板に、真下の船倉から地鳴りのような重い足音と怒号が響いてきた。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "deal_01",
+      "type": "text",
+      "len": 38,
+      "text": "刃を下ろし、黒鰐を見逃す代わりに「長との裏取引の証拠」を渡すよう持ちかけた。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "grove_01",
+      "type": "text",
+      "len": 38,
+      "text": "橋を渡ると、景色が一変した。月明かりの下、桃の花が満開に咲き誇る幻想的な林。"
+    },
+    {
+      "file": "5102_qst_rep_scorpion_hunt.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 37,
+      "text": "毒尾が体を貫いた。猛毒が血管を焼き、砂漠の灼熱と共に意識が消えていく……。"
+    },
+    {
+      "file": "5104_qst_rep_river_god.csv",
+      "node": "fate_evil_02",
+      "type": "text",
+      "len": 37,
+      "text": "「河伯を退治しました」と報告した。村人は安堵したが、河の汚れは変わらない。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 37,
+      "text": "聖都の地下へと続く隠し通路は、貧民街の奥にあった。ひどい悪臭が漂っている。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "start",
+      "type": "text",
+      "len": 37,
+      "text": "「商人ギルドからの依頼だ。キャラバンを襲う盗賊団のアジトを特定したらしい」"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 37,
+      "text": "「兵士の目につかない岩陰に要塞を築いているという。腕利きの冒険者の出番だ」"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "storm_push_01",
+      "type": "text",
+      "len": 37,
+      "text": "砂嵐の中に飛び込む！ 視界が完全に奪われ、強風で飛んできた岩が体に当たる。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "info_buy_01",
+      "type": "text",
+      "len": 37,
+      "text": "裏路地の情報屋に銀貨を握らせた。「……奴なら、町外れの廃神社に向かったぜ」"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "victory_01",
+      "type": "text",
+      "len": 37,
+      "text": "剣士が膝から崩れ落ちる。同時に、手から離れた妖刀の禍々しい光が消え失せた。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "fate_order_02",
+      "type": "text",
+      "len": 37,
+      "text": "町奉行に事件の顛末を報告した。「見事な差配だ。これで町に平穏が戻るだろう」"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "talk_fail_01",
+      "type": "text",
+      "len": 37,
+      "text": "言葉は届かない！ 洗脳は思いのほか深く、彼らは狂乱状態で襲いかかってきた！"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "fate_justice_01",
+      "type": "text",
+      "len": 37,
+      "text": "厳しい真実を告げる。村人たちは絶望し泣き崩れたが、やがて現実を受け入れた。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "front_01",
+      "type": "text",
+      "len": 37,
+      "text": "正門に向かって歩を進める。見張りが気づき、角笛を吹いた。敵が集まってくる。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "victory_03",
+      "type": "text",
+      "len": 37,
+      "text": "蛮骨が片膝をつき、静かに目を閉じた。その表情には怒りではなく、疲れがある。"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "end_failure",
+      "type": "end",
+      "len": 37,
+      "text": "蛮骨の拳が全てを薙ぎ払った。百年の怨念の前に、自分の力はまだ足りなかった。"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 37,
+      "text": "翡翠鉱脈は霊山の中腹にある。大蛇の巣に辿り着くには山道を越えねばならない。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "start",
+      "type": "text",
+      "len": 37,
+      "text": "「地下墓地で異常なアンデッドの発生が報告されている。原因は一人の大賢者だ」"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "trap_route_01",
+      "type": "text",
+      "len": 37,
+      "text": "魔法陣の構造を分析する。メルヴィンの仕掛けは精巧だが、理論的な弱点がある。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "lab_03",
+      "type": "text",
+      "len": 37,
+      "text": "研究室の奥に鉄の扉がある。その前に、石のゴーレムが番人のように立っている。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "deal_03",
+      "type": "text",
+      "len": 37,
+      "text": "ギルドには「研究所を破壊し、賢者は逃走した」と報告。真実を知る者はいない。"
+    },
+    {
+      "file": "5206_qst_rep_war_djinn.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 37,
+      "text": "魔神相手だ。事前準備が生死を分ける。遺跡に入る前に、何を用意するか考える。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "south_02",
+      "type": "text",
+      "len": 37,
+      "text": "崖際の細い道を慎重に進む。一歩踏み外せば谷底だ。そのとき——足場が崩れた！"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "illusion_01",
+      "type": "text",
+      "len": 37,
+      "text": "花畑の中に、美しい女性が立っている。「お疲れでしょう。休んでいきませんか」"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "shrine_02",
+      "type": "text",
+      "len": 37,
+      "text": "「……千年ぶりの客だ。自分の幻術を抜けてここまで来るとは——見込みがある」"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "slay_02",
+      "type": "text",
+      "len": 37,
+      "text": "山の空気が澄んでいく。地脈の乱れが収まり、大地が穏やかな表情を取り戻した。"
+    },
+    {
+      "file": "6001_main_ep01.csv",
+      "node": "board_02",
+      "type": "text",
+      "len": 37,
+      "text": "「傭兵募集——王国軍輸送部隊の護衛。報酬は銀貨十五枚。死亡時の補償はなし」"
+    },
+    {
+      "file": "6002_main_ep02.csv",
+      "node": "suspicion_01",
+      "type": "text",
+      "len": 37,
+      "text": "「最近、武装集団が頻繁に出没している。ただの野盗にしては統率が取れすぎだ」"
+    },
+    {
+      "file": "6004_main_ep04.csv",
+      "node": "omen_02",
+      "type": "text",
+      "len": 37,
+      "text": "「賞金稼ぎで邪魔者を消す。工作員で世論を操る。そして次は——正規軍が来る」"
+    },
+    {
+      "file": "6006_main_ep06.csv",
+      "node": "hard_04",
+      "type": "text",
+      "len": 37,
+      "text": "最後の崖を登りきった時、膝が折れた。だが密林の向こうに木造の建物が見えた。"
+    },
+    {
+      "file": "6008_main_ep08.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 37,
+      "text": "誰が刺客を差し向けたのか。知るにはもっと深くこの国の闇に踏み込むしかない。"
+    },
+    {
+      "file": "6010_main_ep10.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 37,
+      "text": "神の遊戯は終わっていない。答えを求めて西へ、華龍神朝を目指す。（第2部完）"
+    },
+    {
+      "file": "6011_main_ep11.csv",
+      "node": "volg_04",
+      "type": "text",
+      "len": 37,
+      "text": "「よくここまで生き延びたな、若僧。だがお前の眼はもう限界だと叫んでいるぜ」"
+    },
+    {
+      "file": "6013_main_ep13.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 37,
+      "text": "ラファエルの「慈悲」は生きる意志を奪うものだった。次は出雲。あの街を守る。"
+    },
+    {
+      "file": "6014_main_ep14.csv",
+      "node": "shrine_01",
+      "type": "text",
+      "len": 37,
+      "text": "街の中心の大社に向かった。参道の石灯籠が倒され注連縄が引きちぎられている。"
+    },
+    {
+      "file": "6015_main_ep15.csv",
+      "node": "farewell_01",
+      "type": "text",
+      "len": 37,
+      "text": "「四体倒したが……あの野郎が言っていたな。命令を下した者はまだ天にいると」"
+    },
+    {
+      "file": "6015_main_ep15.csv",
+      "node": "farewell_03",
+      "type": "text",
+      "len": 37,
+      "text": "「人間は人間らしく生き抜くべきだ。そうだろう？」にやりと笑い去っていった。"
+    },
+    {
+      "file": "6016_main_ep16.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 37,
+      "text": "英霊の継承者として旅に出る。石碑の光が静かに瞬いていた。（第3部後半開始）"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "end_node",
+      "type": "end_success",
+      "len": 37,
+      "text": "軍神アレスの試練を越え剣を得た。「次は逃げずに来いよ」その言葉を胸に刻む。"
+    },
+    {
+      "file": "6019_main_ep19.csv",
+      "node": "memory_02",
+      "type": "text",
+      "len": 37,
+      "text": "音もなく気配もなく急所を狙って射抜いてくる。狩りの女神に標的にされていた。"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "zeus_challenge_02",
+      "type": "text",
+      "len": 37,
+      "text": "「英霊を超える力があるか——この場で証明せよ！」稲妻の槍が天に掲げられた。"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "join_02",
+      "type": "text",
+      "len": 37,
+      "text": "遠くから祭太鼓の音が低く響いている。\\n白い装束の少女が静かに待っていた。"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "after_b1_03",
+      "type": "text",
+      "len": 37,
+      "text": "「大丈夫です……進みましょう」\\nその声には隠しきれない恐れが滲んでいた。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "dialogue_03",
+      "type": "text",
+      "len": 37,
+      "text": "「よくぞここまで来た。だが理解しているか？ 自分は世界を正しているだけだ」"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "persuade_02",
+      "type": "text",
+      "len": 37,
+      "text": "「お前が言っただろう。人は不完全だと。不完全だから、敵にも手を差し伸べる」"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 37,
+      "text": "竜殺し。物語の中でしか聞かない言葉だ。だが今、それが自分に求められている。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "caravan_01",
+      "type": "text",
+      "len": 37,
+      "text": "マルカンドの港町から砂漠へ出発した。護衛を申し出た交易商が同行してくれる。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "approach_01",
+      "type": "text",
+      "len": 37,
+      "text": "砂丘を越えると、巨大なクレーターが現れた。直径は城壁の一辺ほど。竜の巣だ。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 37,
+      "text": "「麒麟——古来、仁徳の象徴とされる幻の聖獣だ。だが今は人間を拒絶している」"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "summit_01",
+      "type": "text",
+      "len": 37,
+      "text": "精霊を退け、山頂への最後の登りに差しかかった。空気が薄いが、霊気は濃密だ。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "summit_02",
+      "type": "text",
+      "len": 37,
+      "text": "山頂の台地に出た。一面の雲海。その中央に、白銀の光を纏う存在が佇んでいる。"
+    },
+    {
+      "file": "6108_qst_legend_kirin.csv",
+      "node": "confront_05",
+      "type": "text",
+      "len": 37,
+      "text": "麒麟の言葉に嘘はない。だが山麓の民は飢えている。どちらの正義を選ぶべきか。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 37,
+      "text": "古代文明の最終兵器。対処法すら分からない。だが止めなければ、都市が消える。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "intercept_01",
+      "type": "text",
+      "len": 37,
+      "text": "亡者を退け、ゴーレムの進路に先回りした。都市まであと半日の場所で迎撃する。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "preserve_03",
+      "type": "text",
+      "len": 37,
+      "text": "ゴーレムの残骸は動かない。コアを外せば、ただの鉄くずだ。もう脅威ではない。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "banish_02",
+      "type": "text",
+      "len": 37,
+      "text": "海溝の入口を古代の封印術で塞ぐ。クラーケンが暴れるが、封印は持ちこたえた。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "maze_01",
+      "type": "text",
+      "len": 37,
+      "text": "第一層。石壁の通路が無数に分岐している。古代の設計者の悪意が透けて見える。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "yokai_area",
+      "type": "text",
+      "len": 37,
+      "text": "広い部屋に出た。迷宮に棲みついた妖怪たちが、薄闇の中でこちらを睨んでいる。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "victory_01",
+      "type": "text",
+      "len": 37,
+      "text": "大斧を弾き飛ばし、牛頭王を組み伏せた。地面に叩きつけられた巨体が痙攣する。"
+    },
+    {
+      "file": "7002_qst_gen_escort.csv",
+      "node": "meet_02",
+      "type": "text",
+      "len": 37,
+      "text": "「あんたが護衛かい？ ありがてえ！\\n　マルコだ。腕っぷしはからきしでね」"
+    },
+    {
+      "file": "7004_qst_gen_riot.csv",
+      "node": "text_03",
+      "type": "text",
+      "len": 37,
+      "text": "「先月の凶作で食い詰めた農民だ。\\n　自治会の倉庫を襲う計画を立てている」"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "encounter_wave2",
+      "type": "text",
+      "len": 37,
+      "text": "「仲間をやったな……！\\n　次はこの俺たちが相手だ。ただじゃおかねえぞ！」"
+    },
+    {
+      "file": "7013_qst_rol_undead.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 37,
+      "text": "報酬を受け取った。\\n地下の腐臭は、まだ鼻の奥にこびりついている気がした。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "fugitive_thanks",
+      "type": "text",
+      "len": 37,
+      "text": "「……ありがとう。俺はここで、やり直す。\\n　あんたのことは一生忘れない」"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "start",
+      "type": "text",
+      "len": 37,
+      "text": "「ここ数日、夜の古道を越えようとした旅人が、立て続けに神隠しに遭っている」"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "patrol_01",
+      "type": "text",
+      "len": 37,
+      "text": "太陽が山の端に隠れると同時に、夜刀神国の外れを通る古道は深い闇に包まれた。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "after_05",
+      "type": "text",
+      "len": 37,
+      "text": "引き返すなら今だ。だが、元凶を絶たねば、また次の旅人が神隠しに遭うだろう。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "deeper_03",
+      "type": "text",
+      "len": 37,
+      "text": "光の先に浮かび上がったのは、そびえ立つ巨大な赤い肉の壁。いや、鬼の巨躯だ。"
+    },
+    {
+      "file": "7031_qst_yat_ninja.csv",
+      "node": "ambush_02",
+      "type": "text",
+      "len": 37,
+      "text": "木の上から音もなく飛び降り、前衛の護衛の背後へと回り込んで刃を突き立てた。"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "yokai_02",
+      "type": "text",
+      "len": 37,
+      "text": "青白い鬼火が舞い、その奥から奇妙な妖怪たちが姿を現す。結界が破れた影響か！"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "return_shrine",
+      "type": "text",
+      "len": 37,
+      "text": "神主に三つの破片を手渡す。老人は震える手で石を受け取り、祭壇へと向かった。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "scatter_01",
+      "type": "text",
+      "len": 37,
+      "text": "激しい鍔迫り合いの末、頭目の刀が宙を舞い、その巨体がどうと床に倒れ伏した。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 37,
+      "text": "道場の師範から、重厚な巻紙を手渡された。朱墨で禍々しい血判が押されている。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "start_05",
+      "type": "text",
+      "len": 37,
+      "text": "「峠には何かが出るという噂だが……お前なら問題なかろう。無事に届けてくれ」"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "confronted_02",
+      "type": "text",
+      "len": 37,
+      "text": "立ち止まって前方を睨むと、狭い山道を塞ぐように、ひとつの人影が立っていた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "deliver_peace_02",
+      "type": "text",
+      "len": 37,
+      "text": "呼び出しに応じた師範に、果たし状を手渡す。師範は血判を確認し、深く頷いた。"
+    },
+    {
+      "file": "7034_qst_yat_shogun.csv",
+      "node": "deliver_normal_01",
+      "type": "text",
+      "len": 37,
+      "text": "太陽が高く昇る頃、隣町の道場へ到着し、師範を呼び出して果たし状を手渡した。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "explore_02",
+      "type": "text",
+      "len": 37,
+      "text": "足跡は素足だ。しかも、指は五本あるが爪痕が異様に深い。人間のものではない。"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "clue_03",
+      "type": "text",
+      "len": 37,
+      "text": "巻物を手に取ろうとした瞬間、祭壇の炎が噴き上がり、影守の怨霊が姿を現した！"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "tour_02",
+      "type": "text",
+      "len": 37,
+      "text": "金魚が優雅に泳ぐ池と、宝石を散りばめたような灯籠。まさに汚職の象徴である。"
+    },
+    {
+      "file": "7043_qst_har_official.csv",
+      "node": "inspect_02",
+      "type": "text",
+      "len": 37,
+      "text": "巡検使は挨拶もそこそこに、薛の帳簿を開き、一行ずつ厳しい目で確認を始めた。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "intel_02",
+      "type": "text",
+      "len": 37,
+      "text": "酔客の話によると、水賊は中型のガレオン船を三隻所有する大規模な集団らしい。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "road_01",
+      "type": "text",
+      "len": 37,
+      "text": "山道に入ると、すぐに霧が濃くなった。足元に散る花弁は桃の花——季節外れだ。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "rescue_02",
+      "type": "text",
+      "len": 37,
+      "text": "青年を連れて山を下りた。阿明は何度も振り返ったが、もう狐火は見えなかった。"
+    },
+    {
+      "file": "8022_qst_boss_angel.csv",
+      "node": "1",
+      "type": "text",
+      "len": 37,
+      "text": "美しき光で人々の理性を奪い、生きたまま天界の苗床に変えようとしているのだ。"
+    },
+    {
+      "file": "5101_qst_rep_graverobber.csv",
+      "node": "start",
+      "type": "text",
+      "len": 36,
+      "text": "「冒険者よ、聖堂騎士団からの指名依頼だ。聖墓地が盗掘団に荒らされている」"
+    },
+    {
+      "file": "5102_qst_rep_scorpion_hunt.csv",
+      "node": "fate_chaos_01",
+      "type": "text",
+      "len": 36,
+      "text": "闇市の毒薬商に蠍の毒素を売りつけた。「これは……素晴らしい。高く買おう」"
+    },
+    {
+      "file": "5103_qst_rep_toll_bandit.csv",
+      "node": "travel_02",
+      "type": "text",
+      "len": 36,
+      "text": "山道を登っていくと、前方に粗末な柵と見張り台が見えてきた。あれが関所か。"
+    },
+    {
+      "file": "5104_qst_rep_river_god.csv",
+      "node": "fate_justice_02",
+      "type": "text",
+      "len": 36,
+      "text": "「河が澄み始めた！ 妖怪と人が共に生きる道を見つけてくださったのですね」"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "start",
+      "type": "text",
+      "len": 36,
+      "text": "「今回は聖騎士団からの直接指名依頼です。地下水道に潜む狂人の捕縛ですね」"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 36,
+      "text": "中堅冒険者としての実力が試される任務だ。気を引き締めて地下水道へ向かう。"
+    },
+    {
+      "file": "5111_qst_rep_mutant.csv",
+      "node": "merge_lab",
+      "type": "text",
+      "len": 36,
+      "text": "鉄格子を抜け、実験区画の入り口に到達した。鼻を突く薬品の臭いが強くなる。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "travel_01",
+      "type": "text",
+      "len": 36,
+      "text": "強烈な日差しが降り注ぐマルカンド大砂漠。水筒の水を大事に飲みながら進む。"
+    },
+    {
+      "file": "5112_qst_rep_bandit_king.csv",
+      "node": "hideout_02",
+      "type": "text",
+      "len": 36,
+      "text": "ちょうど、略奪を終えて帰還してきたらしい商人の服を着た盗賊の一団がいる。"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "start_03",
+      "type": "text",
+      "len": 36,
+      "text": "「被害者はすでに十数人。これ以上犠牲が出る前に、妖刀ごと奴を斬ってくれ」"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "search_fail_01",
+      "type": "text",
+      "len": 36,
+      "text": "お札を探している最中、結界に引き寄せられた妖怪たちに見つかってしまった！"
+    },
+    {
+      "file": "5113_qst_rep_cursed_blade.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 36,
+      "text": "剣士はすでに息絶えていた。残された妖刀からは、未だに微かな魔力を感じる。"
+    },
+    {
+      "file": "5114_qst_rep_false_sage.csv",
+      "node": "end_success_chaos",
+      "type": "end_success",
+      "len": 36,
+      "text": "依頼達成。嘘で安寧を与えた。時には混沌とした対応が人々を救うこともある。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "sneak_01",
+      "type": "text",
+      "len": 36,
+      "text": "崩れた城壁の隙間を慎重に進む。瓦礫が不安定で、一歩間違えれば崩れ落ちる。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "sneak_03",
+      "type": "text",
+      "len": 36,
+      "text": "傷は浅い。城の内部へ忍び込むことに成功した。見張りには気づかれていない。"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "inner_02",
+      "type": "text",
+      "len": 36,
+      "text": "「ここから先は通さん。団長の邪魔をする者は——たとえ何者であろうとな！」"
+    },
+    {
+      "file": "5201_qst_rep_crusader.csv",
+      "node": "suppress_02",
+      "type": "text",
+      "len": 36,
+      "text": "王国軍にガレスを引き渡した。叛逆者として裁かれるだろう。秩序は保たれた。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "black_02",
+      "type": "text",
+      "len": 36,
+      "text": "「内通者？ いるにはいるが——代償が必要だ」商人が笑う。罠かもしれない。"
+    },
+    {
+      "file": "5202_qst_rep_sand_king.csv",
+      "node": "throne_01",
+      "type": "text",
+      "len": 36,
+      "text": "「ほう……商会の犬が来たか。自分の砦に単身で乗り込むとは、大したものだ」"
+    },
+    {
+      "file": "5203_qst_rep_oni_general.csv",
+      "node": "altar_03",
+      "type": "text",
+      "len": 36,
+      "text": "「自分の怨念は深い。この戦場で死んだ兵たちの無念と共に——お前を葬る！」"
+    },
+    {
+      "file": "5204_qst_rep_jade_serpent.csv",
+      "node": "ridge_02",
+      "type": "text",
+      "len": 36,
+      "text": "傷を押さえながら尾根を越えた。上から巣の位置は把握できた。洞窟に向かう。"
+    },
+    {
+      "file": "5205_qst_rep_heretic_sage.csv",
+      "node": "sage_01",
+      "type": "text",
+      "len": 36,
+      "text": "ゴーレムを破壊し、鉄の扉を開けた。奥にはさらに広大な空間が広がっている。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "south_03",
+      "type": "text",
+      "len": 36,
+      "text": "傷を押さえながら登り続ける。やがて山の中腹に出た。ここからは共通の道だ。"
+    },
+    {
+      "file": "5207_qst_rep_nine_tails.csv",
+      "node": "slay_03",
+      "type": "text",
+      "len": 36,
+      "text": "両国のギルドに報告した。千年の脅威が去った安堵が、国境を越えて広がった。"
+    },
+    {
+      "file": "6001_main_ep01.csv",
+      "node": "name_02",
+      "type": "text",
+      "len": 36,
+      "text": "ガウェインは地平線を見た。疲労と、それでも消えない何かが目に残っていた。"
+    },
+    {
+      "file": "6001_main_ep01.csv",
+      "node": "scout_01",
+      "type": "text",
+      "len": 36,
+      "text": "斥候が丘の上から転がり落ちてきた。「武装集団が二十ほど接近！野盗です！」"
+    },
+    {
+      "file": "6001_main_ep01.csv",
+      "node": "taunt_01",
+      "type": "text",
+      "len": 36,
+      "text": "野盗の頭目が丘の上から叫んだ。「おう、王国の犬ども！荷を置いて消えな！」"
+    },
+    {
+      "file": "6001_main_ep01.csv",
+      "node": "dying_02",
+      "type": "text",
+      "len": 36,
+      "text": "「……やるじゃねえか。だがな——俺たちを雇ったのはお前らの国の連中だぜ」"
+    },
+    {
+      "file": "6002_main_ep02.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 36,
+      "text": "配属先はローランドとマルカンドの国境地帯。赤茶けた荒野が地平線まで続く。"
+    },
+    {
+      "file": "6002_main_ep02.csv",
+      "node": "suspicion_03",
+      "type": "text",
+      "len": 36,
+      "text": "「あの野盗が使っていた武器の質。紋章は削ってあったが、正規軍の官給品だ」"
+    },
+    {
+      "file": "6007_main_ep07.csv",
+      "node": "betray_02",
+      "type": "text",
+      "len": 36,
+      "text": "「裏切りの代償か。良かろう、通れ。だが裏切りで得た安全は長くは持たんぞ」"
+    },
+    {
+      "file": "6008_main_ep08.csv",
+      "node": "silence_02",
+      "type": "text",
+      "len": 36,
+      "text": "落ちる寸前に一言。「これで終わりではない。我らの主は貴様を放っておかぬ」"
+    },
+    {
+      "file": "6009_main_ep09.csv",
+      "node": "mob_01",
+      "type": "text",
+      "len": 36,
+      "text": "土埃の向こうからボロボロの着物を纏い農具で武装した集団が押し寄せてきた。"
+    },
+    {
+      "file": "6009_main_ep09.csv",
+      "node": "rage_02",
+      "type": "text",
+      "len": 36,
+      "text": "兵士たちが農民に向かって駆け出す。自分もその一人だ。金を受け取った傭兵。"
+    },
+    {
+      "file": "6009_main_ep09.csv",
+      "node": "tools_01",
+      "type": "text",
+      "len": 36,
+      "text": "農民たちの手には折れた鍬や鎌。錆びた刃。藁で補修された柄。武器ではない。"
+    },
+    {
+      "file": "6011_main_ep11.csv",
+      "node": "stand_01",
+      "type": "text",
+      "len": 36,
+      "text": "足が震えている。勝てるわけがない。あの一体が精鋭部隊を単独で壊滅させる。"
+    },
+    {
+      "file": "6012_main_ep12.csv",
+      "node": "volg_next_01",
+      "type": "text",
+      "len": 36,
+      "text": "「他の都を裁いている——つまりここだけじゃねえ。次は華龍の首都、龍京だ」"
+    },
+    {
+      "file": "6013_main_ep13.csv",
+      "node": "throne_02",
+      "type": "text",
+      "len": 36,
+      "text": "六枚の翼。柔らかな光。見つめると安らかな気持ちになる。その安らぎが罠だ。"
+    },
+    {
+      "file": "6013_main_ep13.csv",
+      "node": "volg_rage_01",
+      "type": "text",
+      "len": 36,
+      "text": "ヴォルグが自分の腕に大剣の刃を押し当てた。血が流れる。痛みで意識を繋ぐ。"
+    },
+    {
+      "file": "6014_main_ep14.csv",
+      "node": "whisper_03",
+      "type": "text",
+      "len": 36,
+      "text": "ヴォルグを見た。ヴォルグもこちらを見ていた。一瞬、手が武器に伸びかけた。"
+    },
+    {
+      "file": "6015_main_ep15.csv",
+      "node": "elite_01",
+      "type": "text",
+      "len": 36,
+      "text": "ミカエルの周囲に精鋭使徒が展開。通常より一回り大きく光の剣を握っている。"
+    },
+    {
+      "file": "6017_main_ep17.csv",
+      "node": "pyramid_01",
+      "type": "text",
+      "len": 36,
+      "text": "マルカンド建国よりも遥か昔に築かれた巨大な石の墓所。内部は大半が未踏査。"
+    },
+    {
+      "file": "6018_main_ep18.csv",
+      "node": "island_02",
+      "type": "text",
+      "len": 36,
+      "text": "密林の中に古い石段が見えた。登ると石造りの祭壇。中央に石碑が立っていた。"
+    },
+    {
+      "file": "6019_main_ep19.csv",
+      "node": "armor_01",
+      "type": "text",
+      "len": 36,
+      "text": "意識が戻った。石碑の足元に銀色の鎧が置かれていた。月光を編み込んだ意匠。"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "relics_glow",
+      "type": "text",
+      "len": 36,
+      "text": "冥王の護符が闇の光を放った。軍神の剣が赤く光った。女神の鎧が銀色に輝く。"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "relics_02",
+      "type": "text",
+      "len": 36,
+      "text": "三つの遺産が共鳴し全身を包む光の鎧となった。ゼウスの雷を受け止められる。"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "dawn_02",
+      "type": "text",
+      "len": 36,
+      "text": "光が凝縮し一振りの剣となった。蒼く輝く刃。夜明けの空のように煌めく紋様。"
+    },
+    {
+      "file": "6020_main_ep20.csv",
+      "node": "end_failure",
+      "type": "end_failure",
+      "len": 36,
+      "text": "ゼウスの雷に打たれ地に伏した。「まだ足りぬか、人間よ」意識が消えていく。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "shirasu_02",
+      "type": "text",
+      "len": 36,
+      "text": "奥に全身傷痕だらけの男が立っていた。\\n巨大な盾を地面に突き立てている。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "end_kill_02",
+      "type": "text",
+      "len": 36,
+      "text": "アルヴィンは最後に一言だけ残した。\\n「……歴史は、また繰り返すのだな」"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "end_kill",
+      "type": "end",
+      "len": 36,
+      "text": "報酬として『神の法衣』を授かった。\\n口止め料としては、少々露骨だった。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "end_seal_04",
+      "type": "text",
+      "len": 36,
+      "text": "シラスは敬礼し、リラは手を振った。\\nアルヴィンが振り返り小さく呟いた。"
+    },
+    {
+      "file": "6101_qst_spot_roland.csv",
+      "node": "end_failure_02",
+      "type": "text",
+      "len": 36,
+      "text": "英霊の声が聞こえた気がした。\\n「……すまない。お前にはまだ早かったか」"
+    },
+    {
+      "file": "6102_qst_spot_yato.csv",
+      "node": "end_sacrifice_02",
+      "type": "text",
+      "len": 36,
+      "text": "「……私の短い命に\\n　意味を与えてくれて\\n　ありがとうございました」"
+    },
+    {
+      "file": "6103_qst_spot_karyu.csv",
+      "node": "sz_pre3",
+      "type": "text",
+      "len": 36,
+      "text": "「千年も火を灯し続けた。\\n　消えることが許されぬ炎は\\n　辛いものよ」"
+    },
+    {
+      "file": "6104_qst_spot_markand.csv",
+      "node": "text_king_3",
+      "type": "text",
+      "len": 36,
+      "text": "広間の中央に黄金の玉座がある。\\nそこに座っているのは——ミイラだった。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "ascend_02",
+      "type": "text",
+      "len": 36,
+      "text": "天使は聖都の大聖堂の尖塔の上に浮かんでいる。あそこまで辿り着かなければ。"
+    },
+    {
+      "file": "6106_qst_legend_angel.csv",
+      "node": "throne_02",
+      "type": "text",
+      "len": 36,
+      "text": "玉座の間の中央に、天使の護衛が控えている。大天使の名を持つ強大な存在だ。"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "caravan_02",
+      "type": "text",
+      "len": 36,
+      "text": "「竜が出たのはこの先の大砂丘地帯だ。最後に目撃したキャラバンは全滅した」"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "desert_03",
+      "type": "text",
+      "len": 36,
+      "text": "突然、風が止んだ。空気が灼けるように熱い。次の瞬間——砂嵐が襲ってきた！"
+    },
+    {
+      "file": "6107_qst_legend_dragon.csv",
+      "node": "nest_07",
+      "type": "text",
+      "len": 36,
+      "text": "デザートドラゴン。全長は城の塔ほど。黄金色の鱗、燃え上がるような紅い瞳。"
+    },
+    {
+      "file": "6109_qst_legend_golem.csv",
+      "node": "march_02",
+      "type": "text",
+      "len": 36,
+      "text": "足跡の周囲の樹木は根こそぎ倒れ、岩は粉砕されている。圧倒的な質量の暴力。"
+    },
+    {
+      "file": "6110_qst_legend_kraken.csv",
+      "node": "sail_02",
+      "type": "text",
+      "len": 36,
+      "text": "出航。港の灯りが遠ざかり、海だけが広がる。風は穏やかだが、誰も笑わない。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 36,
+      "text": "「迷宮の主は『牛頭王』と呼ばれる化け物だ。入った者は誰一人戻っていない」"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 36,
+      "text": "迷宮攻略。最も危険で、最も栄誉ある冒険だ。装備を整え、夜刀神国へ向かう。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "deep_05",
+      "type": "text",
+      "len": 36,
+      "text": "角を曲がると、天狗の一団が陣を張っていた。迷宮に棲みついた強力な妖怪だ。"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "victory_02",
+      "type": "text",
+      "len": 36,
+      "text": "「……千年、この迷宮を守ってきた。だが自分を超える者がようやく現れたか」"
+    },
+    {
+      "file": "6111_qst_legend_minotaur.csv",
+      "node": "slay_01",
+      "type": "text",
+      "len": 36,
+      "text": "剣を突き立てた。牛頭王の咆哮が迷宮全体を震わせ——やがて、静寂が訪れた。"
+    },
+    {
+      "file": "7002_qst_gen_escort.csv",
+      "node": "arrive_02",
+      "type": "text",
+      "len": 36,
+      "text": "取引を終えたマルコが上機嫌で戻ってきた。\\n報酬の入った革袋を差し出す。"
+    },
+    {
+      "file": "7003_qst_gen_scavenge.csv",
+      "node": "moral_01",
+      "type": "text",
+      "len": 36,
+      "text": "ずっしりと重い。中身は何だろう。\\n闇市に持ち込めば高く売れるだろうが。"
+    },
+    {
+      "file": "7004_qst_gen_riot.csv",
+      "node": "square_02",
+      "type": "text",
+      "len": 36,
+      "text": "子供を抱えた女、杖にすがる老人。\\nそして鎌や棒切れを握った若い男たち。"
+    },
+    {
+      "file": "7008_qst_gen_mercy.csv",
+      "node": "meet_03",
+      "type": "text",
+      "len": 36,
+      "text": "「私はシスター・エレナ。\\n　難民の野営地で怪我人の手当てをしています」"
+    },
+    {
+      "file": "7010_qst_rol_heretic.csv",
+      "node": "end_success",
+      "type": "end",
+      "len": 36,
+      "text": "報酬を受け取った。\\n手の中の金貨の重さが、命の重さのように感じられた。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "travel_start",
+      "type": "text",
+      "len": 36,
+      "text": "木箱を荷車に載せ、王都の門を出発した。\\n前線までは片道二日の道のりだ。"
+    },
+    {
+      "file": "7011_qst_rol_holywater.csv",
+      "node": "deliver",
+      "type": "text",
+      "len": 36,
+      "text": "守備隊長に木箱を引き渡す。\\n彼は丁寧に木箱を受け取り、深く頭を下げた。"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "albert_walk",
+      "type": "text",
+      "len": 36,
+      "text": "「おお……神の試練が私の足元に。\\n　この苦難こそが、信仰の証なのです」"
+    },
+    {
+      "file": "7012_qst_rol_pilgrim.csv",
+      "node": "arrive_shrine",
+      "type": "text",
+      "len": 36,
+      "text": "ついに目的の聖地の祠に到着した。\\n風化して苔生した小さな石造りの祠だ。"
+    },
+    {
+      "file": "7020_qst_mar_caravan.csv",
+      "node": "desert_day1",
+      "type": "text",
+      "len": 36,
+      "text": "出発から二日目。\\n砂と空の境界線が溶け合い、前も後ろも同じ景色が続く。"
+    },
+    {
+      "file": "7022_qst_mar_debt.csv",
+      "node": "start",
+      "type": "text",
+      "len": 36,
+      "text": "マルカンドの闇市場の裏手。\\n太った男が金歯を光らせながら近づいてきた。"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "wait_2",
+      "type": "text",
+      "len": 36,
+      "text": "地面全体が波打っている。\\n砂丘が崩れ、地平線が歪んで見える。来る——！"
+    },
+    {
+      "file": "7023_qst_mar_sandworm.csv",
+      "node": "tremor_2",
+      "type": "text",
+      "len": 36,
+      "text": "砂が爆発的に噴き上がった。\\n二つの巨大な口が、空に向かって同時に開く。"
+    },
+    {
+      "file": "7030_qst_yat_yokai.csv",
+      "node": "enc_03",
+      "type": "text",
+      "len": 36,
+      "text": "ケケケッ、と人間を舐め切ったような下卑た笑い声が山霊に響き渡る。来るぞ！"
+    },
+    {
+      "file": "7032_qst_yat_shrine.csv",
+      "node": "start_02",
+      "type": "text",
+      "len": 36,
+      "text": "老いた神主は、顔を真っ青にしながら、背後にそびえる霊山の山頂を指さした。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "start_04",
+      "type": "text",
+      "len": 36,
+      "text": "代官所の役人が表立って動けば、彼らはクモの子を散らすように逃げてしまう。"
+    },
+    {
+      "file": "7033_qst_yat_ronin.csv",
+      "node": "leader_fight",
+      "type": "text",
+      "len": 36,
+      "text": "「少しは骨があるようだが、所詮は素人よ。この俺の太刀筋、とくと味わえ！」"
+    },
+    {
+      "file": "7035_qst_yat_mansion.csv",
+      "node": "inner_02",
+      "type": "text",
+      "len": 36,
+      "text": "地下は予想外に広かった。壁に松明の跡が残っているが、今は闇に沈んでいる。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "leave_03",
+      "type": "text",
+      "len": 36,
+      "text": "道中の食料と登山用の命綱をしっかりと確認し、長い旅路へと足を踏み出した。"
+    },
+    {
+      "file": "7041_qst_har_herb.csv",
+      "node": "descent_03",
+      "type": "text",
+      "len": 36,
+      "text": "三日後。夜陰に乗じて宮殿の裏門へと戻り、待ち構えていた宦官の元へと赴く。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "travel_03",
+      "type": "text",
+      "len": 36,
+      "text": "すれ違ったぼろ布を纏う老婆が、こちらの武装を見てひどく怯えた目を向けた。"
+    },
+    {
+      "file": "7042_qst_har_rebel.csv",
+      "node": "charge_03",
+      "type": "text",
+      "len": 36,
+      "text": "「逃げるな！ 退いたら村中の女子供が殺されるぞ！ 全員でかかれェッ！！」"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "night_03",
+      "type": "text",
+      "len": 36,
+      "text": "波の音だけが響く中、遠くの暗闇にポツンと浮かぶ入り江の松明が見えてきた。"
+    },
+    {
+      "file": "7044_qst_har_pirate.csv",
+      "node": "clear_01",
+      "type": "text",
+      "len": 36,
+      "text": "血塗られた甲板。雑兵どもを海へと蹴り落とし、船の上層部の制圧を完了した。"
+    },
+    {
+      "file": "7045_qst_har_foxwed.csv",
+      "node": "bridge_01",
+      "type": "text",
+      "len": 36,
+      "text": "朱塗りの太鼓橋。欄干には狐の彫刻が施されている。橋を渡れば妖狐の領域だ。"
+    },
+    {
+      "file": "8013_qst_boss_ronin.csv",
+      "node": "1",
+      "type": "text",
+      "len": 36,
+      "text": "あいつのおかげで我々の「仕事」がしづらくてかなわん。腕の立つ奴はいるか？"
+    }
+  ]
+}

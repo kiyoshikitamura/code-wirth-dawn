@@ -2,16 +2,14 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
-// Helper to get authenticated user ID
+// Helper to get authenticated user ID (JWT only - x-user-id fallback removed v27)
 async function getUserId(req: Request): Promise<string> {
     const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
+    if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (!error && user) return user.id;
     }
-    const xUserId = req.headers.get('x-user-id');
-    if (xUserId) return xUserId;
     throw new Error('Authentication required');
 }
 
@@ -111,11 +109,17 @@ export async function POST(req: Request) {
             if (existing.item_id === invItem.item_id) {
                 return NextResponse.json({ success: true, message: 'Already equipped' });
             }
-            // 既存装備を解除
+            // 既存装備を解除 + inventory.is_equippedもfalseに同期
             await supabaseService
                 .from('equipped_items')
                 .delete()
                 .eq('id', existing.id);
+            // 旧装備の inventory を解除状態に
+            await supabaseService
+                .from('inventory')
+                .update({ is_equipped: false })
+                .eq('user_id', userId)
+                .eq('item_id', existing.item_id);
         }
 
         // 3. 新しい装備を装着
@@ -129,6 +133,13 @@ export async function POST(req: Request) {
             });
 
         if (equipError) throw equipError;
+
+        // 4. inventory.is_equipped も true に同期 (v27: 一元化)
+        await supabaseService
+            .from('inventory')
+            .update({ is_equipped: true })
+            .eq('id', inventory_id)
+            .eq('user_id', userId);
 
         return NextResponse.json({ success: true, item_name: item.name, slot });
     } catch (e: any) {
@@ -147,6 +158,14 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'slot query parameter is required' }, { status: 400 });
         }
 
+        // 外す前に item_id を記録（inventory.is_equipped 同期用）
+        const { data: existing } = await supabaseService
+            .from('equipped_items')
+            .select('item_id')
+            .eq('user_id', userId)
+            .eq('slot', slot)
+            .maybeSingle();
+
         const { error } = await supabaseService
             .from('equipped_items')
             .delete()
@@ -154,6 +173,15 @@ export async function DELETE(req: Request) {
             .eq('slot', slot);
 
         if (error) throw error;
+
+        // v27: inventory.is_equipped も false に同期（一元化）
+        if (existing?.item_id) {
+            await supabaseService
+                .from('inventory')
+                .update({ is_equipped: false })
+                .eq('user_id', userId)
+                .eq('item_id', existing.item_id);
+        }
 
         // 装備解除後: 残りの装備ボーナスを再計算してHPをクランプ
         const { data: remainingEquipped } = await supabaseService

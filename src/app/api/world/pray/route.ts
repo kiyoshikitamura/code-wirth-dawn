@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabase-admin';
 import { ECONOMY_RULES } from '@/constants/game_rules';
+import { processAging } from '@/services/questService';
 
 export async function POST(req: Request) {
     try {
@@ -24,10 +25,14 @@ export async function POST(req: Request) {
             default: return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
         }
 
+        // 経過日数: Tier1=0日, Tier2=1日, Tier3=3日
+        const PRAY_DAYS: Record<number, number> = { 1: 0, 2: 1, 3: 3 };
+        const daysPassed = PRAY_DAYS[amount_tier] || 0;
+
         // 2. Validate User Gold
         const { data: userData, error: userError } = await supabase
             .from('user_profiles')
-            .select('gold, prayer_count, blessing_data')
+            .select('gold, prayer_count, blessing_data, age, accumulated_days, max_vitality, vitality, atk, def')
             .eq('id', user_id)
             .single();
 
@@ -51,20 +56,54 @@ export async function POST(req: Request) {
         }
 
         // 4. Blessing バフ付与 (spec_v16 §4: 個人バフ)
+        // 既にBlessingが有効な場合は重複付与を防止
+        if (userData.blessing_data) {
+            return NextResponse.json({
+                error: '既に祈りの加護が有効です。次の戦闘で消費された後に再度祈りを捧げてください。'
+            }, { status: 400 });
+        }
+
         const blessingData = {
             hp_pct: ECONOMY_RULES.PRAYER_BUFF_HP_PCT,
             ap_bonus: ECONOMY_RULES.PRAYER_BUFF_AP,
             expires_after_battle: true
         };
 
-        // 5. Deduct Gold & Update Blessing
+        // 5. Deduct Gold & Update Blessing & Apply Aging
+        const updatePayload: Record<string, any> = {
+            gold: userData.gold - cost,
+            prayer_count: (userData.prayer_count || 0) + 1,
+            blessing_data: blessingData
+        };
+
+        // 経過日数がある場合のみ加齢処理
+        let newAge = userData.age || 20;
+        let agingDecay: any = undefined;
+        if (daysPassed > 0) {
+            const aging = processAging(
+                userData.age || 20,
+                userData.accumulated_days || 0,
+                daysPassed
+            );
+            newAge = aging.newAge;
+            updatePayload.accumulated_days = aging.newAgeDays;
+            updatePayload.age = aging.newAge;
+
+            if (aging.decay.vit > 0 || aging.decay.atk > 0 || aging.decay.def > 0) {
+                if (aging.decay.vit > 0) {
+                    updatePayload.max_vitality = Math.max(0, (userData.max_vitality || 100) - aging.decay.vit);
+                    updatePayload.vitality = Math.min(userData.vitality ?? 100, updatePayload.max_vitality);
+                }
+                if (aging.decay.atk > 0) updatePayload.atk = Math.max(1, (userData.atk || 1) - aging.decay.atk);
+                if (aging.decay.def > 0) updatePayload.def = Math.max(1, (userData.def || 1) - aging.decay.def);
+                agingDecay = aging.decay;
+                console.log(`[Pray] Aging decay: age=${newAge}, VIT-${aging.decay.vit}, ATK-${aging.decay.atk}, DEF-${aging.decay.def}`);
+            }
+        }
+
         const { error: updateError } = await supabase
             .from('user_profiles')
-            .update({
-                gold: userData.gold - cost,
-                prayer_count: (userData.prayer_count || 0) + 1,
-                blessing_data: blessingData
-            })
+            .update(updatePayload)
             .eq('id', user_id);
 
         if (updateError) throw updateError;
@@ -111,6 +150,9 @@ export async function POST(req: Request) {
             is_capital_bonus: isCapital,
             blessing_granted: true,
             blessing_data: blessingData,
+            days_passed: daysPassed,
+            new_age: newAge,
+            aging_decay: agingDecay,
             visual_cue: visuals[attribute] || 'effect_default',
             message: messages[attribute] || '祈りが届きました。'
         });

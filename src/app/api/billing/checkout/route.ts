@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,12 @@ export const dynamic = 'force-dynamic';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
     apiVersion: '2026-02-25.clover',
 });
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
+    { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 const PRICE_IDS: Record<string, string> = {
     basic: process.env.STRIPE_PRICE_ID_BASIC!,
@@ -29,21 +36,28 @@ const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number }> = {
  * POST /api/billing/checkout
  * Stripe Checkout Session を発行してURLを返す。
  * 仕様: spec_v13_monetization_subscription.md §5.1
- *
- * Body:
- * {
- *   userId: string,
- *   mode: 'subscription' | 'payment',
- *   tier?: 'basic' | 'premium',      // mode='subscription' のとき
- *   packageKey?: 'gold_10k' | 'gold_50k', // mode='payment' (ゴールド購入) のとき
- * }
+ * v27.0: JWT認証を追加。トークンからuser_idを検証。
  */
 export async function POST(req: Request) {
     try {
-        const { userId, mode, tier, packageKey } = await req.json();
+        // v27.0: JWT認証
+        const authHeader = req.headers.get('Authorization');
+        const token = authHeader?.replace('Bearer ', '');
 
-        if (!userId || !mode) {
-            return NextResponse.json({ error: 'userId と mode は必須です。' }, { status: 400 });
+        if (!token) {
+            return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+        }
+
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+        if (authError || !user) {
+            return NextResponse.json({ error: '認証セッションが無効です' }, { status: 401 });
+        }
+
+        const userId = user.id;
+        const { mode, tier, packageKey } = await req.json();
+
+        if (!mode) {
+            return NextResponse.json({ error: 'mode は必須です。' }, { status: 400 });
         }
 
         const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';

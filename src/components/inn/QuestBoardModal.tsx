@@ -260,6 +260,12 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                             {/* Meta Info */}
                             <div className="bg-[#f5deb3]/40 p-3 rounded text-xs text-[#5d4037] space-y-1">
                                 <div><span className="font-bold">依頼主:</span> {detailQuest.client_name || 'ギルド'}</div>
+                                <div>
+                                    <span className="font-bold">所要日数:</span>{' '}
+                                    <span className="text-[#3e2723]">
+                                        成功 {(detailQuest as any).days_success ?? 1}日 / 失敗 {(detailQuest as any).days_failure ?? 1}日
+                                    </span>
+                                </div>
                                 {(detailQuest as any).impacts && (
                                     <div className="flex gap-2">
                                         <span className="font-bold">影響:</span>

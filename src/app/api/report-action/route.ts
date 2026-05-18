@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { WORLD_ID } from '@/utils/constants';
 import { calculateTitle } from '@/lib/character';
+import { checkAndFireTrigger, buildShareData, isTierUpgrade, getTitleTier } from '@/lib/shareUtils';
+import { getFlavor } from '@/lib/shareTextLoader';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +115,7 @@ export async function POST(req: Request) {
 
         // --- 3. Update User Profile & Title ---
         // For now, fetch the first profile (Demo Mode)
+        let shareDataList: any[] = [];
         const { data: userProfiles } = await supabase.from('user_profiles').select('*').limit(1);
         if (userProfiles && userProfiles.length > 0) {
             const profile = userProfiles[0];
@@ -148,6 +151,19 @@ export async function POST(req: Request) {
                 .eq('id', profile.id);
 
             console.log(`[API/Report] Profile Updated: ${newTitle} (O:${newOrderPts} C:${newChaosPts} J:${newJusticePts} E:${newEvilPts})`);
+
+                // #8 称号Tier昇格チェック (世代1回)
+                if (newTitle !== (profile.title_name || '名もなき旅人')) {
+                    if (isTierUpgrade(profile.title_name || '名もなき旅人', newTitle)) {
+                        const newTier = getTitleTier(newTitle);
+                        const fired = await checkAndFireTrigger(supabase, profile.id, 'title_tier_up', newTier);
+                        if (fired) {
+                            const flavor = getFlavor('title_tier', newTier);
+                            const sd = buildShareData('title_tier_up', { title: newTitle, flavor });
+                            if (sd) shareDataList.push(sd);
+                        }
+                    }
+                }
         }
         // --------------------------------------
 
@@ -164,7 +180,11 @@ export async function POST(req: Request) {
             console.error("Trigger update failed", e);
         }
 
-        return NextResponse.json({ success: true, message: 'World influence updated' });
+        return NextResponse.json({
+            success: true,
+            message: 'World influence updated',
+            share_data_list: shareDataList,
+        });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

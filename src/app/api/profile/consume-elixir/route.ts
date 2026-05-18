@@ -6,15 +6,13 @@ export async function POST(req: Request) {
     try {
         let userId: string | null = null;
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
 
-        // Auth extraction
+        // [Security] JWT認証のみ — x-user-id フォールバック廃止 (v27.2)
         if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
             const token = authHeader.replace('Bearer ', '');
             const { data: { user }, error } = await supabase.auth.getUser(token);
             if (!error && user) userId = user.id;
         }
-        if (!userId && xUserId) userId = xUserId;
         if (!userId) return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
 
         // Get user profile to check current vitality

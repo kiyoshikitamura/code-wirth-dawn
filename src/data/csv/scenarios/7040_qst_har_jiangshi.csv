@@ -1,7 +1,39 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"墓荒らしのせいで死者が蘇った。呪符を額に貼り付け、永遠の眠りにつかせよ。嚙まれるなよ、お前も骨になるぞ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_karyu_jiangshi"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"「ほう、お主が今回引き受けてくれるのか。では、これを」\n老道士から、墨の匂いがきつい黄色い護符の束を受け取った。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""speaker_name"":""道士"",""type"":""text""}",start_02
+NODE,start_02,"「霊山をうろつくキョンシーどもは、額にこの護符を貼れば止まる」","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""speaker_name"":""道士"",""type"":""text""}",start_03
+NODE,start_03,"「爪を剥き出しにして迫る亡者の額に、直接札を貼る度胸があればの話だがな。クックッ」","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""speaker_name"":""道士"",""type"":""text""}",start_04
+NODE,start_04,"「それから、鎮めた死者から漂う『死気』を、この壺に集めてきてほしい」","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""speaker_name"":""道士"",""type"":""text""}",start_05
+NODE,start_05,"渡された壺は禍々しい朱色の紋様で覆われており、触れると氷のように冷たかった。\n道士の不気味な笑みに一抹の不安を覚えつつ、霊山へと向かう。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",talisman_01
+NODE,talisman_01,"護符と壺を懐に収め、霊山の登り口に到着した。空を覆う雲が太陽の光を遮っている。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",talisman_02
+NODE,talisman_02,"山全体から、生き物を寄せ付けない淀んだ空気が流れ出しているのが肌で感じられた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",path_01
+NODE,path_01,"苔むした長い石段を登る。道の両脇には、風化して文字も読めなくなった墓標が並んでいる。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",path_02
+NODE,path_02,"ふと、不自然な気配を感じて足を止めた。前方にある大樹の影に、人の形をしたものが立っている。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",path_03
+NODE,path_03,"青白い肌。生気のない瞳。朽ちた官服を着た屍が、両腕を真っ直ぐ前へ突き出している。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",path_04
+NODE,path_04,"——動いた。屍は膝を曲げることなく、不気味な跳躍で一直線にこちらへと迫ってくる！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",graveyard_01
+NODE,graveyard_01,"さらに墓地の奥へ進むと、土が不自然に盛り上がり、次々と新たな屍が這い出してきた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",graveyard_02
+NODE,graveyard_02,"その中には、ひときわ古い衣装を纏った、長年の死気を溜め込んだ強力な個体も混じっている。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_01
+NODE,battle_01,"キョンシーの群れが飛びかかってきた！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":440,""type"":""battle""}",
+CHOICE,,win,,deeper_01
+CHOICE,,lose,,end_failure
+NODE,deeper_01,"亡者たちの額に護符を叩きつけ、動きを封じた。崩れ落ちた死体から黒いモヤが立ち昇る。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",deeper_02
+NODE,deeper_02,"懐の壺を取り出すと、モヤは吸い込まれるように壺の中へ消えていった。壺が微かに振動している。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",deeper_03
+NODE,deeper_03,"「死気」の収集は順調だ。さらに霧が濃くなる中、山の奥、頂上付近の霊廟へと足を進める。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_field"",""type"":""text""}",tomb_01
+NODE,tomb_01,"鬱蒼とした森を抜けると、巨大で豪奢な石造りの古墓が現れた。入口の石碑にはこう刻まれている。\n「華龍六代太守　薛氏一門之墓」","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",tomb_02
+NODE,tomb_02,"墓室の暗がりから、ひどい腐臭と共に三つの青白い眼光が浮かび上がった。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",tomb_03
+NODE,tomb_03,"太守とその近衛兵だろうか。並のキョンシーとは比べ物にならない、濃厚な死気と殺意を纏っている。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_02
+NODE,battle_02,"古の太守とその近衛、強力なキョンシーたちが襲いかかる！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":441,""type"":""battle""}",
+CHOICE,,win,,purify_01
+CHOICE,,lose,,end_failure
+NODE,purify_01,"激戦の末、太守の額に最後の一枚を貼り付けた。巨体が硬直して後方に倒れ、地面が大きく揺れる。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",purify_02
+NODE,purify_02,"太守の体からあふれ出た膨大な死気を壺が吸い尽くすと、周囲の瘴気が嘘のように薄れていった。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",purify_03
+NODE,purify_03,"壺は満杯になり、不吉な紫色の光を放ちながら熱を帯びている。\n……この禍々しい力を、あの怪しげな道士に渡してしまって本当に良いのだろうか？","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",choice_qi
+NODE,choice_qi,"壺の中の膨大な死気をどうする？","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""type"":""choice""}",
+CHOICE,,依頼通り、道士に渡す,,report_01
+CHOICE,,壺を割り、死気を解放して浄化する,,refuse_01
+NODE,report_01,"山を下り、待ち構えていた道士に約束通り壺を手渡した。\n「ヒッヒッヒ……これほどの純粋な死気……なんと素晴らしい」","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""speaker_name"":""道士"",""type"":""text""}",report_02
+NODE,report_02,"道士は恍惚とした表情で壺を愛でている。その顔は、先程討伐した亡者よりも恐ろしいものに見えた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_calm"",""speaker_name"":""道士"",""type"":""text""}",end_success
+NODE,end_success,"任務は完了した。約束の報酬を受け取り、不気味な道士のもとを去る。\nあの壺の中身が禁術に使われるのかどうか、自分には関係のない話だ。","{""bg"":""bg_guild"",""rewards"":{""gold"":350,""exp"":100,""alignment_shift"":{""chaos"":5}},""type"":""end"",""result"":""success""}",
+NODE,refuse_01,"こんな悪しき力を利用させてはならない。道士の目の前で、壺を地面の岩に力強く叩きつけた！","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",refuse_02
+NODE,refuse_02,"パリンという音と共に壺が砕け、死気は陽光に触れて浄化されていく。\n「な、何をする！ 貴様、どれほどの価値があるか分かって……愚かな！ 報酬は減額だ！！」","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""speaker_name"":""道士"",""type"":""text""}",end_success_justice
+NODE,end_success_justice,"怒り狂う道士から半ば強引に最低限の報酬を奪い取り、山を後にした。\n報酬は減ったが、あの世の秩序を守ったという事実は、確かな誇りとして胸に残った。","{""bg"":""bg_guild"",""rewards"":{""gold"":250,""exp"":100,""alignment_shift"":{""justice"":5}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"キョンシーたちの異常な跳躍力と怪力に圧倒され、冷たい掌に突き飛ばされた。\n地面に倒れ伏す中、最後の一枚の護符が手からこぼれ落ち、絶望の闇が視界を覆った……。","{""bg"":""bg_karyu_mountain"",""type"":""end"",""result"":""failure""}",

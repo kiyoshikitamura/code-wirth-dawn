@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
-import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star } from 'lucide-react';
+import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { supabase } from '@/lib/supabase';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
@@ -24,7 +24,7 @@ interface MyHeroic {
 }
 
 export default function TavernModal({ isOpen, onClose, userProfile, locationId, reputationScore = 0, locationSlug }: TavernModalProps) {
-    const [activeTab, setActiveTab] = useState<'hire' | 'register'>('hire');
+    const [activeTab, setActiveTab] = useState<'hire' | 'register' | 'heroic'>('hire');
     const [shadows, setShadows] = useState<ShadowSummary[]>([]);
     const [currentParty, setCurrentParty] = useState<PartyMember[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,6 +37,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [myHeroics, setMyHeroics] = useState<MyHeroic[]>([]);
     const [heroicLoading, setHeroicLoading] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+    const [heroicHallList, setHeroicHallList] = useState<ShadowSummary[]>([]);
+    const [heroicHallLoading, setHeroicHallLoading] = useState(false);
+    const [dismissing, setDismissing] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -48,6 +51,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     useEffect(() => {
         if (isOpen && activeTab === 'register') {
             fetchMyHeroics();
+        }
+        if (isOpen && activeTab === 'heroic') {
+            fetchHeroicHall();
         }
     }, [isOpen, activeTab]);
 
@@ -144,6 +150,20 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         }
     };
 
+    // v4.1: 英霊の間リスト取得
+    const fetchHeroicHall = async () => {
+        setHeroicHallLoading(true);
+        try {
+            const res = await fetch(`/api/tavern/heroic-list?location_id=${locationId}&user_id=${userProfile.id}`);
+            const data = await res.json();
+            if (data.heroics) setHeroicHallList(data.heroics);
+        } catch (e) {
+            console.error("Failed to fetch heroic hall", e);
+        } finally {
+            setHeroicHallLoading(false);
+        }
+    };
+
     const isAlreadyHired = (shadow: ShadowSummary): boolean => {
         return currentParty.some(member =>
             member.name === shadow.name ||
@@ -195,6 +215,36 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         }
     };
 
+    const handleDismiss = async (memberId: string, memberName: string) => {
+        if (!window.confirm(`${memberName} との契約を解除しますか？\nパーティから除外されます。`)) return;
+        setDismissing(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const res = await fetch(`/api/party/member?id=${memberId}`, {
+                method: 'DELETE',
+                headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            });
+            if (res.ok) {
+                setHireResultMsg(`${memberName} との契約を解除した。`);
+                setHirePhase('done');
+                await fetchPartyData();
+                setTimeout(() => setHirePhase('idle'), 2000);
+            } else {
+                const err = await res.json().catch(() => ({ error: 'Unknown' }));
+                setHireResultMsg(`解雇に失敗: ${err.error}`);
+                setHirePhase('done');
+                setTimeout(() => setHirePhase('idle'), 2500);
+            }
+        } catch {
+            setHireResultMsg('通信エラーが発生しました');
+            setHirePhase('done');
+            setTimeout(() => setHirePhase('idle'), 2500);
+        } finally {
+            setDismissing(false);
+        }
+    };
+
     const handleReport = async () => {
         if (!reportTarget || !reportReason) return;
         setReportStatus('sending');
@@ -203,10 +253,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             const token = session?.access_token;
             const res = await fetch('/api/report', {
                 method: 'POST',
+                // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    'x-user-id': userProfile.id,
                 },
                 body: JSON.stringify({
                     reported_user_id: reportTarget.profile_id,
@@ -220,23 +270,47 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     const closeReportModal = () => { setReportTarget(null); setReportReason(''); setReportStatus('idle'); };
 
-    // origin_type に応じたバッジ
+    // origin_type に応じたバッジ + Tier装飾 (v13.2)
+    const TierBadge = ({ tier }: { tier: string }) => {
+        if (tier === 'premium') return (
+            <span className="flex items-center gap-0.5 bg-gradient-to-r from-yellow-500 to-amber-400 text-[8px] font-bold text-slate-950 px-1 py-0.5 rounded">
+                <Crown size={7} />P
+            </span>
+        );
+        if (tier === 'basic') return (
+            <span className="flex items-center gap-0.5 bg-gradient-to-r from-blue-500 to-blue-400 text-[8px] font-bold text-white px-1 py-0.5 rounded">
+                ⚡B
+            </span>
+        );
+        return null;
+    };
+
     const OriginBadge = ({ shadow }: { shadow: ShadowSummary }) => {
+        const tierBadge = shadow.subscription_tier && shadow.subscription_tier !== 'free'
+            ? <TierBadge tier={shadow.subscription_tier} />
+            : null;
+
         if (shadow.origin_type === 'shadow_heroic') {
             return (
-                <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-600 to-yellow-400 text-[9px] font-bold text-slate-950 px-1.5 py-0.5 rounded">
-                    <Star size={8} />英霊
+                <span className="flex items-center gap-0.5">
+                    <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-600 to-yellow-400 text-[9px] font-bold text-slate-950 px-1.5 py-0.5 rounded">
+                        <Star size={8} />英霊
+                    </span>
+                    {tierBadge}
                 </span>
             );
         }
         if (shadow.origin_type === 'shadow_active') {
             return (
-                <span className="flex items-center gap-0.5 bg-blue-600 text-[9px] font-bold text-white px-1.5 py-0.5 rounded">
-                    <Ghost size={8} />残影
+                <span className="flex items-center gap-0.5">
+                    <span className="flex items-center gap-0.5 bg-blue-600 text-[9px] font-bold text-white px-1.5 py-0.5 rounded">
+                        <Ghost size={8} />残影
+                    </span>
+                    {tierBadge}
                 </span>
             );
         }
-        return null; // system_mercenary はバッジなし
+        return tierBadge; // system_mercenary はTierバッジのみ（あれば）
     };
 
     const isEmbargoed = reputationScore < 0;
@@ -331,6 +405,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             </button>
                             <button onClick={() => setActiveTab('register')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'register' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
                                 影の記録
+                            </button>
+                            <button onClick={() => setActiveTab('heroic')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors flex items-center justify-center gap-1 ${activeTab === 'heroic' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
+                                <Crown size={12} />英霊の間
                             </button>
                             {activeTab === 'hire' && (
                                 <button
@@ -512,6 +589,87 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                         );
                                     })}
                                 </div>
+                            ) : activeTab === 'heroic' ? (
+                                /* ===== 英霊の間タブ (v4.1) ===== */
+                                <div className="space-y-2">
+                                    <div className="bg-amber-50/60 border border-amber-400/40 rounded-lg p-3 mb-2">
+                                        <h3 className="text-sm font-bold text-[#3e2723] font-serif mb-1 flex items-center gap-1.5">
+                                            <Crown size={14} className="text-amber-600" />英霊の間
+                                        </h3>
+                                        <p className="text-[11px] text-[#5d4037] leading-relaxed">
+                                            かつてこの世界を旅した冒険者たちの魂。英霊はより強力なAIで行動し、レベルに応じた特殊効果を発揮します。
+                                        </p>
+                                    </div>
+
+                                    {heroicHallLoading ? (
+                                        <div className="text-center text-[#8b5a2b] text-xs py-8 animate-pulse font-serif">
+                                            英霊の記録を紐解いています...
+                                        </div>
+                                    ) : heroicHallList.length === 0 ? (
+                                        <div className="text-center text-[#8b6f4e] text-xs py-10 font-serif italic">
+                                            <p>この地に英霊の記録はまだありません。</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {currentParty.length >= 4 && (
+                                                <div className="bg-red-50/80 border border-red-300 text-red-700 p-2 text-center text-xs rounded">
+                                                    パーティメンバーが上限（4人）に達しています。
+                                                </div>
+                                            )}
+                                            {heroicHallList.map((shadow, idx) => {
+                                                const hired = isAlreadyHired(shadow);
+                                                const imgSrc = shadow.npc_image_url || shadow.icon_url || shadow.image_url;
+                                                const displayName = shadow.epithet ? `${shadow.epithet} ${shadow.name}` : shadow.name;
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className={`p-2.5 border rounded-md transition-all cursor-pointer active:scale-[0.99] ${
+                                                            hired ? 'border-[#6b8cae]/40 bg-[#eef3f7] opacity-80'
+                                                            : 'ring-1 ring-amber-500 bg-gradient-to-r from-amber-50/60 to-[#fdfbf7] hover:ring-amber-400'
+                                                        }`}
+                                                        onClick={() => setSelectedShadow(shadow)}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-9 h-9 rounded-full bg-amber-100 overflow-hidden border border-amber-400/60 flex shrink-0 items-center justify-center">
+                                                                {imgSrc
+                                                                    ? <img src={imgSrc} alt={shadow.name} className="w-full h-full object-cover" />
+                                                                    : <Star size={14} className="text-amber-600" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-1 flex-wrap">
+                                                                    <span className="text-xs font-bold text-[#3e2723] truncate max-w-[140px]">{displayName}</span>
+                                                                    {hired
+                                                                        ? <span className="bg-[#4a7da8] text-white text-[9px] px-1.5 py-0.5 font-bold rounded">雇用中</span>
+                                                                        : <OriginBadge shadow={shadow} />
+                                                                    }
+                                                                </div>
+                                                                <div className="text-[10px] text-[#8b6f4e]">
+                                                                    Lv.{shadow.level} {toJpJobClass(shadow.job_class)}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                                                                {!hired && (
+                                                                    <div className="text-amber-700 font-mono font-bold text-xs">{shadow.contract_fee.toLocaleString()} G</div>
+                                                                )}
+                                                                <span className="text-[10px] text-[#8b5a2b] font-bold">詳細 →</span>
+                                                            </div>
+                                                        </div>
+                                                        {shadow.signature_deck_preview.length > 0 && (
+                                                            <div className="flex gap-1 flex-wrap mt-1.5 ml-11">
+                                                                {shadow.signature_deck_preview.slice(0, 4).map((card, i) => (
+                                                                    <span key={i} className="px-1.5 py-0.5 bg-amber-100 text-[#5d4037] text-[9px] rounded border border-amber-300">{card}</span>
+                                                                ))}
+                                                                {shadow.signature_deck_preview.length > 4 && (
+                                                                    <span className="text-[9px] text-[#8b6f4e]">+{shadow.signature_deck_preview.length - 4}</span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                </div>
                             ) : (
                                 /* ===== 影の記録タブ ===== */
                                 <div className="space-y-4">
@@ -659,8 +817,18 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 閉じる
                             </button>
                             {hired ? (
-                                <button disabled className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-[#d0dde8] text-[#6b8cae] border border-[#6b8cae]/30 cursor-not-allowed">
-                                    雇用中
+                                <button
+                                    onClick={() => {
+                                        const member = currentParty.find(m => m.name === selectedShadow.name || (selectedShadow.profile_id && (m as any).source_user_id === selectedShadow.profile_id));
+                                        if (member) {
+                                            setSelectedShadow(null);
+                                            handleDismiss(member.id, member.name);
+                                        }
+                                    }}
+                                    disabled={dismissing}
+                                    className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 transition-all active:scale-95"
+                                >
+                                    契約解除
                                 </button>
                             ) : (
                                 <button

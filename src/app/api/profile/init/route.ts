@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { supabaseServer } from '@/lib/supabase-admin';
 import { LifeCycleService } from '@/services/lifeCycleService';
+import { buildShareData } from '@/lib/shareUtils';
 
 export async function POST(req: Request) {
     try {
@@ -116,7 +117,25 @@ export async function POST(req: Request) {
                 .eq('id', profileId);
 
             if (error) throw error;
-            return NextResponse.json({ success: true, id: profileId });
+
+            // #13 世代継承シェア (繰返)
+            const { count: retiredCount } = await client
+                .from('retired_characters')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profileId);
+            const generation = (retiredCount || 0) + 1;
+            let shareDataList: any[] = [];
+            if (generation >= 2) {
+                const sd = buildShareData('generation_change', { generation });
+                if (sd) shareDataList.push(sd);
+            }
+
+            return NextResponse.json({
+                success: true,
+                id: profileId,
+                share_data_list: shareDataList,
+                share_text: shareDataList.length > 0 ? shareDataList[0].text : null,
+            });
         }
 
     } catch (err: any) {

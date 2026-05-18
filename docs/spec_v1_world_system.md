@@ -297,7 +297,7 @@ export interface Reputation {
     - 同国内・遠距離: 5日 (250G)
     - 国境越え: 5〜8日 (250〜400G)
   - **v26.1 ルート削除**: 国境の町 ⇔ 最果ての村 の直結ルートを廃止（谷間の集落経由を強制）。
-  - **移動中エンカウント (v16)**: 移動実行時、一定確率でランダムエンカウントが発生、または名声が低い場合（賞金首）は確定で賞金稼ぎの襲撃が発生する。詳細は [spec_v16](spec_v16_economy_reputation.md) 参照。
+  - **移動中エンカウント (v20)**: 移動実行時、移動日数に連動した確率でランダムエンカウントが発生、または名声が低い場合（賞金首）は確定で賞金稼ぎの襲撃が発生する。詳細は [spec_v20](spec_v20_encounter_improvement.md) 参照。
   - **地域別エンカウント**: `location_encounters` テーブルで拠点ごとに出現する敵グループと確率を管理する。
   - **ルート詳細**: [world_map_routes.md](world_map_routes.md) を参照。
 
@@ -312,3 +312,39 @@ export interface Reputation {
 
 ### 9.2 祈りの強化
 - 首都での祈り（`POST /api/world/pray`）は、世界属性への干渉力が通常拠点の **2.0倍** となる。
+
+---
+
+## 10. v27.0 改訂: 覇権モーダル改善 (2026-05-18)
+
+### 10.1 覇権データソースの修正
+
+`GET /api/world/hegemony` のデータソースを変更:
+
+| 項目 | 旧 | 新 |
+|:---|:---|:---|
+| テーブル | `locations` | `world_states` |
+| カラム | `ruling_nation_id` | `controlling_nation` |
+
+**理由**: `ruling_nation_id` は拠点の初期設定値（建国領土）であり、`world-simulation.ts` の6hバッチでは `world_states.controlling_nation` のみが更新される。旧APIでは覇権バーが初期値から動かなかった。
+
+### 10.2 国家定数の一元化
+
+新規ファイル `src/constants/nations.ts` を追加。以下を一元管理:
+- `NATIONS`: 4大国家の設定マスター（ID、短縮名、正式名、カラー、属性キー）
+- `NATION_NAME_MAP`: NationId → 正式日本語名
+- `DEFAULT_HEGEMONY`: フォールバック用デフォルトデータ
+
+### 10.3 覇権データのキャッシュ化
+
+`profileSlice.ts` の `fetchWorldState()` 内で、覇権データを **10分間キャッシュ**。
+ストアに `_hegemonyCache: { data, fetchedAt }` を保持し、TTL内はAPIコールをスキップ。
+
+### 10.4 `ruling_nation_id` と `controlling_nation` の関係
+
+| カラム | テーブル | 意味 | 更新タイミング |
+|:---|:---|:---|:---|
+| `ruling_nation_id` | `locations` | 拠点の建国時の所属（初期値、不変） | 手動更新のみ |
+| `controlling_nation` | `world_states` | 現在の支配国（動的） | 6hバッチ (`world-simulation.ts`) |
+
+覇権関連の表示・計算には常に `controlling_nation` を使用すること。

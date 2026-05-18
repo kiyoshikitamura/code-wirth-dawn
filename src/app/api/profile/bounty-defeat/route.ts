@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { headers } from 'next/headers';
+import { supabase } from '@/lib/supabase';
 export async function POST(request: Request) {
     try {
         if (!supabaseAdmin) {
             return NextResponse.json({ error: 'Database unconfigured' }, { status: 500 });
         }
-        const h = await headers();
-        const userId = h.get('x-user-id');
+        // [Security] JWT認証のみ — x-user-id フォールバック廃止 (v27.2)
+        const authHeader = request.headers.get('authorization');
+        let userId: string | null = null;
+        if (authHeader) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user } } = await supabase.auth.getUser(token);
+            if (user) userId = user.id;
+        }
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

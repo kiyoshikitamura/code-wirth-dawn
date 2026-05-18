@@ -62,7 +62,17 @@ Body: { item_id: number, user_id: string }
 処理:
 1. ゴールド残高チェック。
 2. `inventory` テーブルに**新規行を挿入**（同一アイテムの複数行が生じる）。
-3. `user_profiles.gold` を減算。
+3. `increment_gold` RPC でゴールドを原子的に減算。
+4. 失敗時は RPC で返金（ロールバック）。
+
+### 3.4 購入個数制限 (v27)
+
+| アイテム種別 | 同一アイテム上限 | 備考 |
+|---|---|---|
+| 消耗品 (`consumable`) | 10個 | v25で追加 |
+| 装備品 (`equipment`) | 3個 | v27で追加 |
+| スキルカード (`skill`) | 1個 | 重複習得不可 |
+| 通行許可証 (`key_item`) | 1個 | 重複購入不可 |
 
 ---
 
@@ -82,7 +92,7 @@ Body: { inventory_id: string }
 3. **装備チェック**: `is_equipped === true` の場合 → **売却拒否** (400エラー)。
 4. **価格計算**: `sell_price = Math.floor(base_price / 2)`（固定50%換金）。
 5. **在庫削除**: `inventory` テーブルから該当行を削除。
-6. **ゴールド加算**: `user_profiles.gold` に `sell_price` を加算。
+6. **ゴールド加算**: `increment_gold` RPC で原子的に加算（v27でレースコンディション修正）。
 
 > **Note (spec v14 実装済み)**: `.limit(1)` は購入により同一アイテムが複数行存在する問題への対処。崩壊拠点（Prosperity=1）での**闇市売却ボーナス（base_price × 1.5）実装済み**。
 
@@ -98,18 +108,33 @@ Body: { inventory_id: string }
 ---
 
 ## 5. 装備システム
-<!-- v11.0: inventory PATCH APIの実装を反映 -->
+<!-- v27.0: equipment API一元化、JWT認証統一 -->
 
-### 5.1 装備トグル
+### 5.1 スキル装備トグル
 ```
 PATCH /api/inventory
-Headers: { 'x-user-id': string, 'Content-Type': 'application/json' }
-Body: { item_id: string, is_equipped: boolean }
+Headers: { 'Authorization': 'Bearer <jwt>', 'Content-Type': 'application/json' }
+Body: { inventory_id: string, is_equipped: boolean }
 ```
 
 - `is_skill: true` のアイテムのみ装備可能（デッキに組み込まれる）。
 - 装備中アイテムは売却不可。
-- **重要**: `x-user-id` ヘッダーが必須（認証済ユーザーのデータのみ更新するため）。
+
+### 5.2 装備品（武器/防具/アクセサリー）着脱
+```
+# 装備する
+POST /api/equipment
+Headers: { 'Authorization': 'Bearer <jwt>', 'Content-Type': 'application/json' }
+Body: { inventory_id: string, slot: 'weapon' | 'armor' | 'accessory' }
+
+# 外す
+DELETE /api/equipment?slot=weapon
+Headers: { 'Authorization': 'Bearer <jwt>' }
+```
+
+**v27 変更**: equipment API が `equipped_items` テーブル操作と同時に `inventory.is_equipped` も更新する（一元化）。フロント側は1回のAPI呼び出しのみ。
+
+> **Note (v27)**: `x-user-id` ヘッダーによる認証は**全て廃止**。equipment API、inventory API 共に JWT認証（`Authorization: Bearer <jwt>`）のみをサポート。
 
 ---
 
@@ -198,3 +223,23 @@ Body: { item_id: string, is_equipped: boolean }
 *   **条件**: 悪名が -100以下のロケーションから「移動」を試みた場合。
 *   **効果**: 移動処理が中断され、「賞金稼ぎ」エリートNPCとの戦闘が強制的に発生（`require_battle: 'bounty_hunter_ambush'`）。
     *   敗北時: 所持ゴールドの半分（50%）を没収される。
+
+---
+
+## 7. 認証・共通モジュール (v27)
+
+### 7.1 shopAuth.ts
+ショップ系 API（`shop/route.ts`, `shop/sell/route.ts`, `shop/launder/route.ts`）で重複していた認証・プロフィール取得・出禁チェック・インフレ計算を `src/lib/shopAuth.ts` に一元化。
+
+| 関数 | 説明 |
+|---|---|
+| `getAuthenticatedProfile(req)` | JWT認証 + user_profiles取得 |
+| `checkEmbargo(profile)` | 名声<0の出禁チェック |
+| `getInflationMultiplier(locationId)` | 繁栄度→価格乗数 |
+| `AuthError` | ステータスコード付きエラークラス |
+
+### 7.2 認証ルール
+- **JWT認証のみ**: `x-user-id` ヘッダーや `body.user_id` のフォールバックは全て廃止済み。
+- 全ショップAPIは `Authorization: Bearer <jwt>` ヘッダーからユーザーIDを取得する。
+
+> **教訓 (v27)**: ゴールドの増減は**必ず `increment_gold` RPC を使用**すること。`gold: profile.gold + x` の直接UPDATEはレースコンディションでゴールドが消失するリスクがある。

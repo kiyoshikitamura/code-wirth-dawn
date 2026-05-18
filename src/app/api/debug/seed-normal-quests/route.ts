@@ -578,13 +578,572 @@ export async function GET(request: Request) {
         else successCount++;
     }
 
+    // ─────────────────────────────────────────────
+    // 8. マルカンド地方クエスト 7020-7025 のメタデータ更新
+    // ─────────────────────────────────────────────
+    const marcundQuests: NormalQuestSeed[] = [
+        {
+            id: 7020, slug: 'qst_mar_caravan', rec_level: 5, difficulty: 3,
+            time_cost: 8, days_success: 8, days_failure: 4,
+            rewards: { gold: 500, exp: 150, reputation: 5, alignment_shift: { chaos: 10 } },
+        },
+        {
+            id: 7021, slug: 'qst_mar_scorpion', rec_level: 5, difficulty: 2,
+            time_cost: 2, days_success: 2, days_failure: 1,
+            rewards: { gold: 300, exp: 100, alignment_shift: { evil: 5, chaos: 5 } },
+        },
+        {
+            id: 7022, slug: 'qst_mar_debt', rec_level: 5, difficulty: 3,
+            time_cost: 3, days_success: 3, days_failure: 2,
+            rewards: { gold: 450, exp: 100, reputation: -5, alignment_shift: { evil: 10, chaos: 5 } },
+            requirements: { max_reputation: -50 },
+        },
+        {
+            id: 7023, slug: 'qst_mar_sandworm', rec_level: 5, difficulty: 4,
+            time_cost: 4, days_success: 4, days_failure: 2,
+            rewards: { gold: 600, exp: 200, reputation: 10, alignment_shift: { chaos: 10 } },
+        },
+        {
+            id: 7024, slug: 'qst_mar_auction', rec_level: 5, difficulty: 3,
+            time_cost: 1, days_success: 1, days_failure: 1,
+            rewards: { gold: 500, exp: 120, reputation: -5, alignment_shift: { chaos: 10, evil: 5 } },
+            requirements: { max_reputation: -50 },
+        },
+        {
+            id: 7025, slug: 'qst_mar_bribe', rec_level: 5, difficulty: 2,
+            time_cost: 6, days_success: 6, days_failure: 3,
+            rewards: { gold: 350, exp: 100, reputation: -5, alignment_shift: { chaos: 10 } },
+        },
+    ];
+
+    for (const quest of marcundQuests) {
+        const updatePayload: Record<string, any> = {
+            rec_level: quest.rec_level,
+            difficulty: quest.difficulty,
+            time_cost: quest.time_cost,
+            days_success: quest.days_success,
+            days_failure: quest.days_failure,
+            rewards: quest.rewards,
+        };
+        if (quest.requirements) {
+            updatePayload.requirements = quest.requirements;
+        }
+
+        if (dryRun) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'dry_run',
+                payload: updatePayload,
+            });
+            successCount++;
+            continue;
+        }
+
+        const { data, error } = await supabase
+            .from('scenarios')
+            .update(updatePayload)
+            .eq('id', quest.id)
+            .select('id');
+
+        if (error) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'error',
+                error: error.message,
+            });
+            errorCount++;
+        } else if (!data || data.length === 0) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'not_found_skipped',
+            });
+        } else {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'updated',
+            });
+            successCount++;
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 9. マルカンド地方 enemy_groups (420-429)
+    // ─────────────────────────────────────────────
+    const marcundEnemyGroups = [
+        { id: 420, slug: 'grp_desert_bandit', name: '砂漠の盗賊', members: ['enemy_bandit_thug', 'enemy_bandit_thug', 'enemy_bandit_archer', 'enemy_bandit_archer'], formation: 'front_row' },
+        { id: 421, slug: 'grp_desert_beast', name: '砂漠の魔獣', members: ['enemy_markand_sand_worm', 'enemy_markand_scorpion', 'enemy_markand_scorpion'], formation: 'front_row' },
+        { id: 422, slug: 'grp_scorpion_nest', name: '幻覚サソリの巣', members: ['enemy_markand_scorpion', 'enemy_markand_scorpion', 'enemy_markand_scorpion'], formation: 'front_row' },
+        { id: 423, slug: 'grp_fugitive_guard', name: '逃亡奴隷の護衛', members: ['enemy_assassin_trainee', 'enemy_assassin_trainee', 'enemy_bandit_thug', 'enemy_bandit_thug'], formation: 'front_row' },
+        { id: 424, slug: 'grp_fugitive_elite', name: '精鋭追手部隊', members: ['enemy_assassin_trainee', 'enemy_assassin_trainee', 'enemy_assassin_trainee', 'enemy_assassin_master'], formation: 'front_row' },
+        { id: 425, slug: 'grp_sandworm_scout', name: '砂漠の先遣隊', members: ['enemy_markand_scorpion', 'enemy_markand_scorpion', 'enemy_markand_sand_worm'], formation: 'front_row' },
+        { id: 426, slug: 'grp_sandworm_boss', name: '大砂虫', members: ['enemy_markand_sand_worm', 'enemy_markand_sand_worm'], formation: 'front_row' },
+        { id: 427, slug: 'grp_auction_raider_1', name: '闇市の乱入者 第1波', members: ['enemy_bandit_thug', 'enemy_bandit_thug', 'enemy_bandit_thug', 'enemy_bandit_archer'], formation: 'front_row' },
+        { id: 428, slug: 'grp_auction_raider_2', name: '闇市の乱入者 第2波', members: ['enemy_assassin_trainee', 'enemy_assassin_trainee', 'enemy_assassin_master'], formation: 'front_row' },
+        { id: 429, slug: 'grp_militia_patrol', name: '自警団の巡回', members: ['enemy_bandit_guard', 'enemy_bandit_guard', 'enemy_bandit_archer', 'enemy_bandit_archer'], formation: 'front_row' },
+    ];
+
+    for (const group of marcundEnemyGroups) {
+        if (dryRun) {
+            results.push({ target: 'enemy_groups', id: group.id, slug: group.slug, status: 'dry_run', payload: group });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('enemy_groups')
+            .upsert(group, { onConflict: 'id' });
+
+        results.push({
+            target: 'enemy_groups',
+            id: group.id,
+            slug: group.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // ─────────────────────────────────────────────
+    // 10. マルカンド地方 新規アイテム
+    // ─────────────────────────────────────────────
+    const marcundItems = [
+        {
+            id: 3005, slug: 'item_scorpion_needle', name: 'サソリの毒針', type: 'material',
+            base_price: 0, nation_tags: null, min_prosperity: 1, is_black_market: false,
+            effect_data: { description: '幻覚サソリから採取した新鮮な毒針。暗殺薬の原料として闇市場で高値で取引される。' },
+        },
+        {
+            id: 3010, slug: 'item_explosive', name: '爆薬', type: 'consumable',
+            base_price: 0, nation_tags: null, min_prosperity: 1, is_black_market: false,
+            effect_data: { aoe_damage: 100, use_timing: 'battle', description: '商会の錬金術師が調合した特製爆薬。敵全体に100ダメージを与える。サンドワーム戦の切り札。' },
+        },
+        {
+            id: 3020, slug: 'item_secret_document', name: '封をされた密書', type: 'material',
+            base_price: 0, nation_tags: null, min_prosperity: 1, is_black_market: false,
+            effect_data: { description: '決して中を見てはならないと念を押された黒い巻物。忍び衆への納品用。' },
+        },
+    ];
+
+    for (const item of marcundItems) {
+        if (dryRun) {
+            results.push({ target: 'items', id: item.id, slug: item.slug, status: 'dry_run', payload: item });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('items')
+            .upsert(item, { onConflict: 'id' });
+
+        results.push({
+            target: 'items',
+            id: item.id,
+            slug: item.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // ─────────────────────────────────────────────
+    // 11. 夜刀地方 新規エネミー (1241-1245)
+    // ─────────────────────────────────────────────
+    const yatoEnemies = [
+        { id: 1241, slug: 'enemy_yato_ninja', name: '抜け忍', level: 12, hp: 100, atk: 45, def: 5, exp: 50, gold: 80, drop_item_id: null, spawn_type: 'quest_only' },
+        { id: 1242, slug: 'enemy_yato_spy', name: '間者', level: 10, hp: 120, atk: 30, def: 10, exp: 80, gold: 150, drop_item_id: null, spawn_type: 'quest_only' },
+        { id: 1243, slug: 'enemy_yato_ronin', name: '浪人', level: 10, hp: 80, atk: 38, def: 5, exp: 30, gold: 50, drop_item_id: null, spawn_type: 'quest_only' },
+        { id: 1244, slug: 'enemy_yato_ronin_leader', name: '浪人の頭目', level: 15, hp: 250, atk: 55, def: 10, exp: 120, gold: 200, drop_item_id: null, spawn_type: 'quest_only' },
+        { id: 1245, slug: 'enemy_yato_onryo', name: '怨霊', level: 12, hp: 150, atk: 45, def: 15, exp: 80, gold: 100, drop_item_id: null, spawn_type: 'quest_only' },
+    ];
+
+    for (const enemy of yatoEnemies) {
+        if (dryRun) {
+            results.push({ target: 'enemies', id: enemy.id, slug: enemy.slug, status: 'dry_run', payload: enemy });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('enemies')
+            .upsert(enemy, { onConflict: 'id' });
+
+        results.push({
+            target: 'enemies',
+            id: enemy.id,
+            slug: enemy.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // ─────────────────────────────────────────────
+    // 12. 夜刀地方 enemy_groups (430-435)
+    // ─────────────────────────────────────────────
+    const yatoEnemyGroups = [
+        { id: 430, slug: 'grp_yato_yokai_01', name: '妖怪の群れ', members: ['enemy_yato_onibi', 'enemy_yato_onibi', 'enemy_yato_karakasa'], formation: 'front_row' },
+        { id: 431, slug: 'grp_yato_yokai_02', name: '赤鬼', members: ['enemy_yato_akaoni'], formation: 'front_row' },
+        { id: 432, slug: 'grp_yato_ninja', name: '他国の間者', members: ['enemy_yato_ninja', 'enemy_yato_ninja', 'enemy_yato_spy'], formation: 'front_row' },
+        { id: 433, slug: 'grp_yato_ronin_wave', name: '食い詰め浪人 x3', members: ['enemy_yato_ronin', 'enemy_yato_ronin', 'enemy_yato_ronin'], formation: 'front_row' },
+        { id: 434, slug: 'grp_yato_ronin_boss', name: '浪人の頭目', members: ['enemy_yato_ronin_leader'], formation: 'front_row' },
+        { id: 435, slug: 'grp_yato_spirit', name: '峠の怨霊', members: ['enemy_yato_onryo'], formation: 'front_row' },
+    ];
+
+    for (const group of yatoEnemyGroups) {
+        if (dryRun) {
+            results.push({ target: 'enemy_groups', id: group.id, slug: group.slug, status: 'dry_run', payload: group });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('enemy_groups')
+            .upsert(group, { onConflict: 'id' });
+
+        results.push({
+            target: 'enemy_groups',
+            id: group.id,
+            slug: group.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // ─────────────────────────────────────────────
+    // 13. 夜刀地方クエスト 7030-7034 のメタデータ更新
+    // ─────────────────────────────────────────────
+    const yatoQuests: NormalQuestSeed[] = [
+        {
+            id: 7030, slug: 'qst_yat_yokai', rec_level: 6, difficulty: 2,
+            time_cost: 3, days_success: 3, days_failure: 1,
+            rewards: { gold: 300, exp: 100, alignment_shift: { justice: 5 } },
+        },
+        {
+            id: 7031, slug: 'qst_yat_ninja', rec_level: 6, difficulty: 2,
+            time_cost: 4, days_success: 4, days_failure: 2,
+            rewards: { gold: 550, exp: 120, alignment_shift: { justice: 10 } },
+        },
+        {
+            id: 7032, slug: 'qst_yat_shrine', rec_level: 6, difficulty: 2,
+            time_cost: 5, days_success: 5, days_failure: 3,
+            rewards: { gold: 400, exp: 120, alignment_shift: { justice: 10 } },
+        },
+        {
+            id: 7033, slug: 'qst_yat_ronin', rec_level: 6, difficulty: 2,
+            time_cost: 2, days_success: 2, days_failure: 1,
+            rewards: { gold: 350, exp: 100, alignment_shift: { justice: 10 } },
+        },
+        {
+            id: 7034, slug: 'qst_yat_shogun', rec_level: 6, difficulty: 2,
+            time_cost: 1, days_success: 1, days_failure: 1,
+            rewards: { gold: 400, exp: 120 },
+        },
+    ];
+
+    for (const quest of yatoQuests) {
+        const updatePayload: Record<string, any> = {
+            rec_level: quest.rec_level,
+            difficulty: quest.difficulty,
+            time_cost: quest.time_cost,
+            days_success: quest.days_success,
+            days_failure: quest.days_failure,
+            rewards: quest.rewards,
+        };
+
+        if (dryRun) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'dry_run',
+                payload: updatePayload,
+            });
+            successCount++;
+            continue;
+        }
+
+        const { data, error } = await supabase
+            .from('scenarios')
+            .update(updatePayload)
+            .eq('id', quest.id)
+            .select('id');
+
+        if (error) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'error',
+                error: error.message,
+            });
+            errorCount++;
+        } else if (!data || data.length === 0) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'not_found_skipped',
+            });
+        } else {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'updated',
+            });
+            successCount++;
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 14. 華龍地方クエスト 7040-7044 のメタデータ更新
+    // ─────────────────────────────────────────────
+    const karyuQuests: NormalQuestSeed[] = [
+        {
+            id: 7040, slug: 'qst_har_jiangshi', rec_level: 7, difficulty: 2,
+            time_cost: 5, days_success: 5, days_failure: 2,
+            rewards: { gold: 350, exp: 100, alignment_shift: { chaos: 5 } },
+        },
+        {
+            id: 7041, slug: 'qst_har_herb', rec_level: 7, difficulty: 2,
+            time_cost: 6, days_success: 6, days_failure: 3,
+            rewards: { gold: 300, exp: 100, alignment_shift: { evil: 5 } },
+        },
+        {
+            id: 7042, slug: 'qst_har_rebel', rec_level: 7, difficulty: 2,
+            time_cost: 4, days_success: 4, days_failure: 2,
+            rewards: { gold: 450, exp: 100, alignment_shift: { evil: 10 } },
+            requirements: { max_reputation: -50 },
+        },
+        {
+            id: 7043, slug: 'qst_har_official', rec_level: 7, difficulty: 2,
+            time_cost: 6, days_success: 6, days_failure: 4,
+            rewards: { gold: 500, exp: 120, alignment_shift: { chaos: 10, evil: 5 } },
+        },
+        {
+            id: 7044, slug: 'qst_har_pirate', rec_level: 7, difficulty: 2,
+            time_cost: 5, days_success: 5, days_failure: 3,
+            rewards: { gold: 400, exp: 120, alignment_shift: { chaos: 5 } },
+        },
+    ];
+
+    for (const quest of karyuQuests) {
+        const updatePayload: Record<string, any> = {
+            rec_level: quest.rec_level,
+            difficulty: quest.difficulty,
+            time_cost: quest.time_cost,
+            days_success: quest.days_success,
+            days_failure: quest.days_failure,
+            rewards: quest.rewards,
+        };
+        if (quest.requirements) {
+            updatePayload.requirements = quest.requirements;
+        }
+
+        if (dryRun) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'dry_run',
+                payload: updatePayload,
+            });
+            successCount++;
+            continue;
+        }
+
+        const { data, error } = await supabase
+            .from('scenarios')
+            .update(updatePayload)
+            .eq('id', quest.id)
+            .select('id');
+
+        if (error) {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'error',
+                error: error.message,
+            });
+            errorCount++;
+        } else if (!data || data.length === 0) {
+            // レコードが存在しない場合は insert
+            const insertPayload = {
+                id: quest.id,
+                slug: quest.slug,
+                type: 'normal',
+                title: getKaryuQuestTitle(quest.slug),
+                ...updatePayload,
+            };
+            const { error: insertError } = await supabase
+                .from('scenarios')
+                .insert(insertPayload);
+
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: insertError ? 'insert_error' : 'inserted',
+                error: insertError?.message,
+            });
+            if (insertError) errorCount++;
+            else successCount++;
+        } else {
+            results.push({
+                target: 'scenarios',
+                id: quest.id,
+                slug: quest.slug,
+                status: 'updated',
+            });
+            successCount++;
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // 15. 華龍地方 NPC: 悪徳官僚・薛
+    // ─────────────────────────────────────────────
+    const karyuNpcs = [
+        {
+            id: '00000000-0000-4000-a000-000000004060',
+            slug: 'npc_corrupt_official',
+            name: '悪徳官僚・薛',
+            gender: 'Male',
+            job_class: 'Official',
+            level: 1,
+            max_hp: 40,
+            attack: 0,
+            defense: 1,
+            speed: 2,
+            mp: 0,
+            max_mp: 0,
+            origin: 'system_guest',
+            epithet: '悪徳官僚',
+            introduction: '「文官ですから。戦いは任せます」',
+            is_hireable: false,
+            hire_cost: 0,
+            default_cards: [],
+            inject_cards: [],
+        },
+    ];
+
+    for (const npc of karyuNpcs) {
+        if (dryRun) {
+            results.push({ target: 'npcs', id: npc.id, slug: npc.slug, status: 'dry_run', payload: npc });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('npcs')
+            .upsert(npc, { onConflict: 'id' });
+
+        results.push({
+            target: 'npcs',
+            id: npc.id,
+            slug: npc.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // party_members にも登録
+    const karyuPartyMembers = karyuNpcs.map((npc) => ({
+        id: 900010,
+        slug: npc.slug,
+        name: npc.name,
+        job_class: npc.job_class,
+        durability: npc.max_hp,
+        max_durability: npc.max_hp,
+        owner_id: null,
+        loyalty: 100,
+        cover_rate: 10,
+        is_active: true,
+        inject_cards: [],
+    }));
+
+    for (const pm of karyuPartyMembers) {
+        if (dryRun) {
+            results.push({ target: 'party_members', id: pm.id, slug: pm.slug, status: 'dry_run', payload: pm });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('party_members')
+            .upsert(pm, { onConflict: 'id' });
+
+        results.push({
+            target: 'party_members',
+            id: pm.id,
+            slug: pm.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
+    // ─────────────────────────────────────────────
+    // 16. 華龍地方 新規アイテム: 霊草
+    // ─────────────────────────────────────────────
+    const karyuItems = [
+        {
+            id: 3030, slug: 'item_spirit_herb', name: '霊草', type: 'material',
+            base_price: 0, nation_tags: null, min_prosperity: 1, is_black_market: false,
+            effect_data: { description: '霊山の奥深くに自生する希少な薬草。万病に効くと言われ、権力者が高値で求める。' },
+        },
+        {
+            id: 3045, slug: 'item_foxfire_charm', name: '狐火の護符', type: 'equipment',
+            base_price: 0, nation_tags: null, min_prosperity: 1, is_black_market: false,
+            effect_data: { atk_bonus: 5, def_bonus: 3, hp_bonus: 5, description: '九尾の妖狐の子孫が感謝の印として授けた護符。温かい狐火の光が宿り、持ち主を守る。' },
+        },
+    ];
+
+    for (const item of karyuItems) {
+        if (dryRun) {
+            results.push({ target: 'items', id: item.id, slug: item.slug, status: 'dry_run', payload: item });
+            successCount++;
+            continue;
+        }
+
+        const { error } = await supabase
+            .from('items')
+            .upsert(item, { onConflict: 'id' });
+
+        results.push({
+            target: 'items',
+            id: item.id,
+            slug: item.slug,
+            status: error ? 'error' : 'upserted',
+            error: error?.message,
+        });
+        if (error) errorCount++;
+        else successCount++;
+    }
+
     return NextResponse.json({
         summary: {
             total: results.length,
             success: successCount,
             errors: errorCount,
             dry_run: dryRun,
-            description: '汎用クエスト7001-7008 + ローランド地方7010-7015 マスタデータシード',
+            description: '汎用クエスト7001-7008 + ローランド7010-7015 + マルカンド7020-7025 + 夜刀7030-7034 + 華龍7040-7044 マスタデータシード',
         },
         results,
     });
@@ -600,6 +1159,17 @@ function getQuestTitle(slug: string): string {
         'qst_gen_smuggle': '禁制品の闇ルート輸送',
         'qst_gen_rat': '地下水路の害獣駆除',
         'qst_gen_mercy': '難民野営地への薬草救援',
+    };
+    return titles[slug] || slug;
+}
+
+function getKaryuQuestTitle(slug: string): string {
+    const titles: Record<string, string> = {
+        'qst_har_jiangshi': '霊山のキョンシー退治',
+        'qst_har_herb': '仙丹の材料となる霊草採集',
+        'qst_har_rebel': '辺境農民の反乱鎮圧',
+        'qst_har_official': '巡検使の護衛と汚職隠蔽',
+        'qst_har_pirate': '沿岸を荒らす海賊の討伐',
     };
     return titles[slug] || slug;
 }

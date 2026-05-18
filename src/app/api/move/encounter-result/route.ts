@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { supabase } from '@/lib/supabase';
 import { ECONOMY_RULES } from '@/constants/game_rules';
+import { buildShareData } from '@/lib/shareUtils';
+import { processAging } from '@/services/questService';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,38 +21,28 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { encounter_type, result, target_location_id, origin_location_id } = body;
+        const { encounter_type, result, target_location_id, origin_location_id, travel_days } = body;
 
         if (!encounter_type || !result || !target_location_id) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // ユーザー認証
-        let userId: string | null = null;
+        // ユーザー認証 (JWT認証のみ - v27.0)
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
-
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (error || !user) {
-                userId = xUserId;
-            } else {
-                userId = user.id;
-                if (xUserId && xUserId !== userId) userId = xUserId;
-            }
-        } else {
-            userId = xUserId;
-        }
-
-        if (!userId) {
+        if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader === 'Bearer ') {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+        }
+        const userId = user.id;
 
         // プロフィール取得
         const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('id, gold, vitality, accumulated_days, age, max_hp')
+            .select('id, gold, vitality, accumulated_days, age, max_hp, max_vitality, atk, def')
             .eq('id', userId)
             .single();
 
@@ -86,7 +78,28 @@ export async function POST(req: Request) {
             updatePayload.hp = profile.max_hp || 100;
         }
 
-        // DBを更新（移動完了 + ペナルティ）
+        // Blessing消費: 戦闘後にblessing_dataをクリア（spec_v16 §4: 次バトルで消費）
+        updatePayload.blessing_data = null;
+
+        // v27.0: 移動日数消費 + 加齢処理（勝利時のみ移動完了のため日数を消費）
+        const daysToTravel = travel_days || 1;
+        const { newAge, newAgeDays, decay } = processAging(
+            profile.age || 20,
+            profile.accumulated_days || 0,
+            daysToTravel
+        );
+        updatePayload.accumulated_days = newAgeDays;
+        updatePayload.age = newAge;
+        if (decay.vit > 0) {
+            const maxVit = updatePayload.max_vitality ?? (profile.max_vitality || 100);
+            updatePayload.max_vitality = Math.max(0, maxVit - decay.vit);
+            const curVit = updatePayload.vitality ?? (profile.vitality ?? 100);
+            updatePayload.vitality = Math.min(curVit, updatePayload.max_vitality);
+        }
+        if (decay.atk > 0) updatePayload.atk = Math.max(1, (profile.atk || 1) - decay.atk);
+        if (decay.def > 0) updatePayload.def = Math.max(1, (profile.def || 1) - decay.def);
+
+        // DBを更新（移動完了 + ペナルティ + Blessing消費）
         const { error: updateError } = await supabaseService
             .from('user_profiles')
             .update(updatePayload)
@@ -104,10 +117,12 @@ export async function POST(req: Request) {
             ? '戦いに勝利し、目的地へと到達した。'
             : penaltyMessage;
 
-        // 賞金稼ぎ勝利時のシェアテキスト (spec_v15.1 §3.3)
+        // #6 賞金稼ぎ勝利時のシェア (繰返、CSV駆動)
         let share_text: string | null = null;
+        let share_data: any = null;
         if (!isLose && encounter_type === 'bounty_hunter_ambush') {
-            share_text = `名声が地に落ち賞金首として狙われたが、刺客を返り討ちにしてやった。 #Wirth_Dawn #悪名辟く`;
+            share_data = buildShareData('bounty_hunter_win', {});
+            share_text = share_data?.text || null;
         }
 
         return NextResponse.json({
@@ -116,9 +131,10 @@ export async function POST(req: Request) {
             encounter_type,
             new_location_id: isLose ? (origin_location_id || target_location_id) : target_location_id,
             penalty_applied: isLose,
-            redirect_to_map: isLose, // spec_v16: 敗北時はワールドマップへ強制送還
+            redirect_to_map: isLose,
             origin_location_id: isLose ? origin_location_id : undefined,
             share_text,
+            share_data_list: share_data ? [share_data] : [],
             message: successMessage,
             updates: {
                 gold: updatePayload.gold,

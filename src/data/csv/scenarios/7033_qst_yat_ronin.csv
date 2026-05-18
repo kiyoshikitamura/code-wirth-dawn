@@ -1,7 +1,37 @@
-row_type,node_id,text_label,next_node,params
-NODE,start,"主君を失い、武士の誇りすら捨てた野良犬どもが、町で乱暴を働いている。あ奴らに死という名の教訓を与えてやれ。",node_1,"type:text"
-NODE,node_1,"交戦！ 敵が現れた。",,"type:battle, enemy:enemy_bandit_boss"
-CHOICE,,"win",end_success,
-CHOICE,,"lose",end_failure,
-NODE,end_success,"依頼は完了した。報酬を受け取ろう。",,"type:end, result:success"
-NODE,end_failure,"依頼は失敗に終わった…",,"type:end, result:failure"
+row_type,node_id,text_label,params,next_node
+NODE,start,"代官所から、封が切られたままの依頼書を受け取った。非公式の裏仕事だ。","{""bg"":""bg_yato_city"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_02
+NODE,start_02,"依頼の内容は、繁華街の裏にある賭場に巣食う浪人集団の「掃除」だった。","{""bg"":""bg_yato_city"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_03
+NODE,start_03,"彼らは主君を失って食い詰め、今では善良な町人からみかじめ料を脅し取っているらしい。","{""bg"":""bg_yato_city"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_04
+NODE,start_04,"代官所の役人が表立って動けば、彼らはクモの子を散らすように逃げてしまう。","{""bg"":""bg_yato_city"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_05
+NODE,start_05,"ゆえに、しがらみのない冒険者が単身で乗り込み、一網打尽にする必要があるというわけだ。","{""bg"":""bg_yato_city"",""bgm"":""bgm_quest_tense"",""type"":""text""}",alley_01
+NODE,alley_01,"夜の繁華街は、提灯の明かりと人々の喧騒で溢れかえっている。","{""bg"":""bg_yato_city"",""bgm"":""bgm_field_night"",""type"":""text""}",alley_02
+NODE,alley_02,"しかし、大通りから一本外れた路地裏に入ると、途端にむせ返るような生ごみの臭いが漂ってきた。","{""bg"":""bg_yato_city"",""bgm"":""bgm_field_night"",""type"":""text""}",alley_03
+NODE,alley_03,"泥酔して道端に転がる男たちを跨ぎながら、目的の長屋へと向かう。","{""bg"":""bg_yato_city"",""bgm"":""bgm_field_night"",""type"":""text""}",alley_04
+NODE,alley_04,"障子越しに、サイコロの転がる音と、下品な罵声が聞こえてくる。ここが目的の賭場だ。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",enter_gambling_den
+NODE,enter_gambling_den,"遠慮はいらない。勢いよく蹴破るようにして、賭場の引き戸を開け放った。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",confront_01
+NODE,confront_01,"ピタリ、と場内の動きが止まる。酒と汗の臭いが充満する部屋に、数十人の浪人がひしめいていた。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",confront_02
+NODE,confront_02,"「……なんだテメェ。ここは堅気が来る場所じゃねぇ。命が惜しくば失せな」","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""speaker_name"":""浪人"",""type"":""text""}",confront_leader
+NODE,confront_leader,"奥の座敷で杯を傾けていた大柄な浪人が、ゆっくりと立ち上がった。\n「代官所の犬か。血の匂いがプンプンしやがる」","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""speaker_name"":""浪人の頭目"",""type"":""text""}",confront_leader_2
+NODE,confront_leader_2,"「野郎ども、やっちまえ！ こいつの首を手土産に逃げるぞ！」\n頭目の合図と共に、殺気立った浪人たちが一斉に刀を抜き放った。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_ronin_wave_01
+NODE,battle_ronin_wave_01,"食い詰め浪人たちが群がってきた！","{""bg"":""bg_yato_den"",""bgm"":""bgm_battle"",""enemy_group_id"":433,""type"":""battle""}",
+CHOICE,,win,,leader_fight_01
+CHOICE,,lose,,end_failure
+NODE,leader_fight_01,"血飛沫が舞い、障子が破れる。数人の浪人を切り伏せると、残りの者は恐れをなして後退した。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",leader_fight_02
+NODE,leader_fight_02,"床には折れた刀と、呻き声を上げる浪人たちが転がっている。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",leader_fight_03
+NODE,leader_fight_03,"「チッ、使えねぇ雑兵どもめ。……だが、俺を只のならず者と思うなよ」","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""speaker_name"":""浪人の頭目"",""type"":""text""}",leader_fight_04
+NODE,leader_fight_04,"頭目が懐から取り出したのは、夜刀神国の正規軍が使う名刀だった。奪ったものだろう。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",leader_fight
+NODE,leader_fight,"「少しは骨があるようだが、所詮は素人よ。この俺の太刀筋、とくと味わえ！」","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""speaker_name"":""浪人の頭目"",""type"":""text""}",leader_fight_2
+NODE,leader_fight_2,"歴戦の殺気を放ちながら、頭目が自ら太刀を青眼に構えた。空気がビリビリと震える。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_ronin_leader
+NODE,battle_ronin_leader,"浪人の頭目との決戦！","{""bg"":""bg_yato_den"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":434,""type"":""battle""}",
+CHOICE,,win,,scatter_01
+CHOICE,,lose,,end_failure
+NODE,scatter_01,"激しい鍔迫り合いの末、頭目の刀が宙を舞い、その巨体がどうと床に倒れ伏した。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_calm"",""type"":""text""}",scatter_02
+NODE,scatter_02,"頭目が血を吐いて動かなくなると、残っていた浪人たちの顔に絶望の色が浮かんだ。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_calm"",""type"":""text""}",scatter_03
+NODE,scatter_03,"「ひ、ひぃぃっ！ 命だけは！ 命だけはお助けを！」","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_calm"",""speaker_name"":""浪人"",""type"":""text""}",scatter_04
+NODE,scatter_04,"武器を放り出し、彼らは我先にと裏口から逃げ出していく。完全に戦意を喪失している。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_calm"",""type"":""text""}",scatter
+NODE,scatter,"深追いはしない。これでこの賭場は終わりだ。血振りをして、静かに刀を鞘に収めた。","{""bg"":""bg_yato_den"",""bgm"":""bgm_quest_calm"",""type"":""text""}",report_01
+NODE,report_01,"翌朝、代官所の裏門から入り、役人に事の顛末を報告する。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",report_02
+NODE,report_02,"役人は満足げに頷き、重みのある金袋を机の上に滑らせた。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",report_03
+NODE,report_03,"「よくやってくれた。これで少しは町も静かになるだろう。また頼むかもしれんぞ」","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""speaker_name"":""代官所の役人"",""type"":""text""}",end_success
+NODE,end_success,"金袋を受け取り、代官所を後にする。\n裏社会の掃除は気が滅入るが、日銭を稼ぐには悪くない仕事だった。","{""bg"":""bg_guild"",""rewards"":{""gold"":350,""exp"":100,""alignment_shift"":{""justice"":10}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"多勢に無勢。浪人たちの容赦ない凶刃が、身体のあちこちを切り裂く。\n血の海に倒れ伏す中、頭目の見下すような冷たい視線を感じた……。","{""bg"":""bg_yato_den"",""type"":""end"",""result"":""failure""}",

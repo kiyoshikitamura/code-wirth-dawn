@@ -377,6 +377,7 @@ export interface LocationDB {
 export interface HegemonyData {
   name: string;
   power: number;
+  locations?: number;  // v27.0: 支配拠点数
   color: string;
 }
 

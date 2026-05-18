@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseAdmin } from '@/lib/supabase-admin';
 import { ShadowService } from '@/services/shadowService';
+import { buildShareData } from '@/lib/shareUtils';
 
 export async function POST(req: Request) {
     try {
@@ -54,7 +55,15 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: result.error }, { status: 400 });
         }
 
-        return NextResponse.json({ success: true });
+        // #19 英霊雇用シェア (繰返)
+        const heroName = shadow.name || '名もなき英霊';
+        const shareData = buildShareData('heroic_hire', { name: heroName });
+
+        return NextResponse.json({
+            success: true,
+            share_text: shareData?.text || null,
+            share_data_list: shareData ? [shareData] : [],
+        });
 
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

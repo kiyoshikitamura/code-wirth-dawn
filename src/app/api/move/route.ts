@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { ECONOMY_RULES } from '@/constants/game_rules';
+import { checkAndFireTrigger, buildShareData } from '@/lib/shareUtils';
+import { processAging } from '@/services/questService';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,32 +15,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Target location is required' }, { status: 400 });
         }
 
-        // 1. Get User Profile (Secure)
-        let targetUserId: string | null = null;
-
+        // 1. Get User Profile (JWT認証のみ - v27.0)
         const authHeader = req.headers.get('authorization');
-        const xUserId = req.headers.get('x-user-id');
-
-        if (authHeader && authHeader.trim() !== '' && authHeader !== 'Bearer' && authHeader !== 'Bearer ') {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (error || !user) {
-                if (xUserId) {
-                    targetUserId = xUserId;
-                } else {
-                    return NextResponse.json({ error: "Authentication failed: " + (error?.message || "User not found") }, { status: 401 });
-                }
-            } else {
-                targetUserId = user.id;
-                if (xUserId && xUserId !== targetUserId) {
-                    targetUserId = xUserId;
-                }
-            }
-        } else if (xUserId) {
-            targetUserId = xUserId;
-        } else {
+        if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader === 'Bearer ') {
             return NextResponse.json({ error: "Login required for travel" }, { status: 401 });
         }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            return NextResponse.json({ error: "Authentication failed: " + (authError?.message || "User not found") }, { status: 401 });
+        }
+        const targetUserId = user.id;
 
         const { data: profile } = await supabase
             .from('user_profiles')
@@ -122,66 +109,7 @@ export async function POST(req: Request) {
             console.log(`[Move] Valid pass for capital ${targetData.name}, expires at day ${passExpiry}`);
         }
 
-        // 2.5 エンカウント判定 (spec_v16 §1)
-        // ※首都チェック通過後、かつ通常フィールド移動時のみ実施（クエスト内移動はスキップ）
-        if (currentLocation && !is_quest_travel) {
-            const { data: repData } = await supabase
-                .from('reputations')
-                .select('score')
-                .eq('user_id', profile.id)
-                .eq('location_name', currentLocation.name)
-                .maybeSingle();
-            const repScore = repData?.score || 0;
-
-            // §1.2 賞金稼ぎ確定エンカウント（優先判定）
-            if (repScore <= ECONOMY_RULES.BOUNTY_HUNTER_THRESHOLD) {
-                // 賞金稼ぎ用エネミーを取得
-                const encounterEnemySlug = await pickEncounterEnemy(profile.current_location_id, 'bounty_hunter');
-                console.log(`[Move] Bounty hunter ambush! Rep: ${repScore}`);
-                return NextResponse.json({
-                    success: false,
-                    require_battle: 'bounty_hunter_ambush',
-                    encounter_enemy_group_slug: encounterEnemySlug,
-                    target_location_id: targetData.id,
-                    origin_location_id: currentLocation.id,
-                    message: '賞金稼ぎの襲撃！ 悪名が響き渡り、移動前に賞金首として狙われました！'
-                });
-            }
-
-            // §1.1 通常ランダムエンカウント
-            // v5.2: パッシブ効果「詳細な地図」によるエンカウント回避率を考慮
-            let adjustedEncounterRate = ECONOMY_RULES.RANDOM_ENCOUNTER_RATE;
-            try {
-                const { data: equippedSkills } = await supabase
-                    .from('user_skills')
-                    .select('card_id')
-                    .eq('user_id', profile.id);
-                if (equippedSkills && equippedSkills.length > 0) {
-                    const { getTravelPassives } = await import('@/lib/passiveEffects');
-                    const travelMods = getTravelPassives(equippedSkills.map(s => String(s.card_id)));
-                    if (travelMods.eventAvoidPct > 0) {
-                        adjustedEncounterRate *= (1 - travelMods.eventAvoidPct / 100);
-                        console.log(`[Move] パッシブ効果: エンカウント率 ${ECONOMY_RULES.RANDOM_ENCOUNTER_RATE} → ${adjustedEncounterRate.toFixed(3)}`);
-                    }
-                }
-            } catch (e) {
-                console.warn('[Move] パッシブ効果取得失敗（続行）', e);
-            }
-            if (Math.random() < adjustedEncounterRate) {
-                const encounterEnemySlug = await pickEncounterEnemy(profile.current_location_id, 'random');
-                console.log(`[Move] Random encounter triggered!`);
-                return NextResponse.json({
-                    success: false,
-                    require_battle: 'random_encounter',
-                    encounter_enemy_group_slug: encounterEnemySlug,
-                    target_location_id: targetData.id,
-                    origin_location_id: currentLocation.id,
-                    message: '行く手を野盗に阻まれた！'
-                });
-            }
-        }
-
-        // 3. Calculate Days and Gold Cost using neighbors
+        // 2.5 Calculate Days and Gold Cost using neighbors (moved before encounter check for v19 distance-based rate)
         let daysToTravel = 1;
         let goldCost = 0;
         if (currentLocation) {
@@ -209,6 +137,102 @@ export async function POST(req: Request) {
             }
         }
 
+        // 3. エンカウント判定 (spec_v16 §1, v19改善: 日数連動+レベルフィルタ)
+        // ※首都チェック通過後、かつ通常フィールド移動時のみ実施（クエスト内移動はスキップ）
+        if (currentLocation && !is_quest_travel) {
+            const playerLevel = profile.level || 1;
+            const { data: repData } = await supabase
+                .from('reputations')
+                .select('score')
+                .eq('user_id', profile.id)
+                .eq('location_name', currentLocation.name)
+                .maybeSingle();
+            const repScore = repData?.score || 0;
+
+            // §1.2 賞金稼ぎ確定エンカウント（優先判定）
+            if (repScore <= ECONOMY_RULES.BOUNTY_HUNTER_THRESHOLD) {
+                const encounterEnemySlug = await pickEncounterEnemy(profile.current_location_id, 'bounty_hunter', playerLevel);
+                console.log(`[Move] Bounty hunter ambush! Rep: ${repScore}, PlayerLv: ${playerLevel}`);
+                return NextResponse.json({
+                    success: false,
+                    require_battle: 'bounty_hunter_ambush',
+                    encounter_enemy_group_slug: encounterEnemySlug,
+                    target_location_id: targetData.id,
+                    origin_location_id: currentLocation.id,
+                    travel_days: daysToTravel,
+                    message: '賞金稼ぎの襲撃！ 悪名が響き渡り、移動前に賞金首として狙われました！'
+                });
+            }
+
+            // §1.1 通常ランダムエンカウント (v19改善: 日数連動確率)
+            // 基礎率 = 1 - (1 - ENCOUNTER_BASE_RATE_PER_DAY) ^ daysToTravel
+            let adjustedEncounterRate = 1 - Math.pow(1 - ECONOMY_RULES.ENCOUNTER_BASE_RATE_PER_DAY, daysToTravel);
+
+            // v5.2: パッシブ効果「詳細な地図」によるエンカウント回避率を考慮
+            try {
+                const { data: equippedSkills } = await supabase
+                    .from('user_skills')
+                    .select('card_id')
+                    .eq('user_id', profile.id);
+                if (equippedSkills && equippedSkills.length > 0) {
+                    const { getTravelPassives } = await import('@/lib/passiveEffects');
+                    const travelMods = getTravelPassives(equippedSkills.map(s => String(s.card_id)));
+                    if (travelMods.eventAvoidPct > 0) {
+                        adjustedEncounterRate *= (1 - travelMods.eventAvoidPct / 100);
+                    }
+                }
+            } catch (e) {
+                console.warn('[Move] パッシブ効果取得失敗（続行）', e);
+            }
+
+            // v25: インベントリ内パッシブアイテム「詳細な世界地図」のエンカウント回避率
+            try {
+                const { data: passiveItems } = await supabase
+                    .from('inventory')
+                    .select('item_id, items:item_id(effect_data)')
+                    .eq('user_id', profile.id)
+                    .gt('quantity', 0);
+
+                if (passiveItems) {
+                    for (const inv of passiveItems) {
+                        const ed = (inv.items as any)?.effect_data;
+                        if (ed?.encounter_avoid_pct) {
+                            adjustedEncounterRate *= (1 - ed.encounter_avoid_pct / 100);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[Move] インベントリパッシブ取得失敗（続行）', e);
+            }
+
+            // v25: ワンショットバフ（松明 / 宝の地図）: next_encounter_rate_mod
+            const nextMod = profile.next_encounter_rate_mod ?? 0;
+            if (nextMod !== 0) {
+                adjustedEncounterRate *= (1 + nextMod); // -0.5 → ×0.5, +0.5 → ×1.5
+                adjustedEncounterRate = Math.max(0, Math.min(1, adjustedEncounterRate));
+                // バフ消費: 使用後リセット
+                await supabaseService.from('user_profiles')
+                    .update({ next_encounter_rate_mod: 0 })
+                    .eq('id', profile.id);
+                console.log(`[Move] Encounter mod applied: ${nextMod > 0 ? '+' : ''}${(nextMod * 100).toFixed(0)}%`);
+            }
+
+            console.log(`[Move] Encounter rate: ${(adjustedEncounterRate * 100).toFixed(1)}% (${daysToTravel} days, Lv${playerLevel})`);
+            if (Math.random() < adjustedEncounterRate) {
+                const encounterEnemySlug = await pickEncounterEnemy(profile.current_location_id, 'random', playerLevel);
+                console.log(`[Move] Random encounter triggered! Enemy: ${encounterEnemySlug}`);
+                return NextResponse.json({
+                    success: false,
+                    require_battle: 'random_encounter',
+                    encounter_enemy_group_slug: encounterEnemySlug,
+                    target_location_id: targetData.id,
+                    origin_location_id: currentLocation.id,
+                    travel_days: daysToTravel,
+                    message: '行く手を野盗に阻まれた！'
+                });
+            }
+        }
+
         // 3.5 Gold Cost Validation
         if (goldCost > 0) {
             const currentGold = profile.gold ?? 0;
@@ -223,24 +247,31 @@ export async function POST(req: Request) {
             }
         }
 
-        // 4. Update Time & Age
-        let newTotalDays = (profile.accumulated_days || 0) + daysToTravel;
-        let newAge = profile.age || 20;
-
-        if (newTotalDays >= 365) {
-            const yearsPassed = Math.floor(newTotalDays / 365);
-            newAge += yearsPassed;
-            newTotalDays = newTotalDays % 365;
-        }
+        // 4. Update Time & Age (統一加齢ロジック: VIT/ATK/DEF減少を含む)
+        const { newAge, newAgeDays, decay } = processAging(
+            profile.age || 20,
+            profile.accumulated_days || 0,
+            daysToTravel
+        );
 
         // 5. Update DB
         const updatePayload: Record<string, any> = {
             current_location_id: targetData.id,
-            accumulated_days: newTotalDays,
+            accumulated_days: newAgeDays,
             age: newAge
         };
         if (goldCost > 0) {
             updatePayload.gold = (profile.gold ?? 0) - goldCost;
+        }
+        // 加齢によるステータス減少を適用
+        if (decay.vit > 0 || decay.atk > 0 || decay.def > 0) {
+            if (decay.vit > 0) {
+                updatePayload.max_vitality = Math.max(0, (profile.max_vitality || 100) - decay.vit);
+                updatePayload.vitality = Math.min(profile.vitality ?? 100, updatePayload.max_vitality);
+            }
+            if (decay.atk > 0) updatePayload.atk = Math.max(1, (profile.atk || 1) - decay.atk);
+            if (decay.def > 0) updatePayload.def = Math.max(1, (profile.def || 1) - decay.def);
+            console.log(`[Move] Aging decay: age=${newAge}, VIT-${decay.vit}, ATK-${decay.atk}, DEF-${decay.def}`);
         }
         const { error: updateProfileError } = await supabaseService
             .from('user_profiles')
@@ -254,30 +285,58 @@ export async function POST(req: Request) {
             .from('user_hub_states')
             .upsert({ user_id: profile.id, is_in_hub: false });
 
-        // B. Update World State (Global Time synchronization)
-        const { data: globalState } = await supabase
-            .from('world_states')
-            .select('total_days_passed')
-            .order('total_days_passed', { ascending: false })
-            .limit(1);
+        // B. Update World State (Global Time synchronization - v27.0: アトミック更新)
+        // 拠点ごとの total_days_passed を直接更新（RPC未定義時はread+writeフォールバック）
+        try {
+            const { error: rpcError } = await supabaseService.rpc('increment_world_days', {
+                p_location_name: targetData.name,
+                p_days: daysToTravel
+            });
+            if (rpcError) throw rpcError;
+        } catch {
+            // フォールバック: read-then-write（競合リスクあり、RPC推奨）
+            const { data: globalState } = await supabase
+                .from('world_states')
+                .select('total_days_passed')
+                .eq('location_name', targetData.name)
+                .maybeSingle();
+            const currentGlobalDays = globalState?.total_days_passed || 0;
+            await supabaseService.from('world_states')
+                .upsert({
+                    location_name: targetData.name,
+                    total_days_passed: currentGlobalDays + daysToTravel
+                }, { onConflict: 'location_name' });
+        }
 
-        const currentGlobalDays = globalState?.[0]?.total_days_passed || 0;
-        const newGlobalDays = currentGlobalDays + daysToTravel;
-
+        // #11 全拠点制覇 (世代1回)
+        // 訪問記録をUPSERT
+        let shareDataList: any[] = [];
         await supabaseService
-            .from('world_states')
-            .upsert({
-                location_name: targetData.name,
-                total_days_passed: newGlobalDays
-            }, { onConflict: 'location_name' });
+            .from('user_visited_locations')
+            .upsert({ user_id: profile.id, location_id: targetData.id }, { onConflict: 'user_id,location_id' });
+
+        const { count: visitedCount } = await supabaseService
+            .from('user_visited_locations')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.id);
+
+        if (visitedCount && visitedCount >= 20) {
+            const fired = await checkAndFireTrigger(supabaseService, profile.id, 'all_locations', '');
+            if (fired) {
+                const sd = buildShareData('all_locations', {});
+                if (sd) shareDataList.push(sd);
+            }
+        }
 
         return NextResponse.json({
             success: true,
             travel_days: daysToTravel,
             new_age: newAge,
+            aging_decay: (decay.vit > 0 || decay.atk > 0 || decay.def > 0) ? decay : undefined,
+            share_data_list: shareDataList,
             current_date: {
-                total_days: newGlobalDays,
-                display: `World Year ${100 + Math.floor(newGlobalDays / 365)}`
+                total_days: newAgeDays,
+                display: `World Year ${742 + Math.floor(newAgeDays / 365)}`
             }
         });
 
@@ -290,14 +349,17 @@ export async function POST(req: Request) {
 /**
  * 指定拠点に紐づくエンカウント用エネミーグループスラッグを抽選する。
  * location_encounters テーブルの weight に基づいた重み付き抽選。
+ * v19改善: プレイヤーレベルによるフィルタを適用。
  * データがなければデフォルトとして 'bandit_group' を返す。
  */
-async function pickEncounterEnemy(locationId: string, encounterType: 'random' | 'bounty_hunter'): Promise<string> {
+async function pickEncounterEnemy(locationId: string, encounterType: 'random' | 'bounty_hunter', playerLevel: number): Promise<string> {
     const { data: rows } = await supabase
         .from('location_encounters')
         .select('enemy_group_slug, weight')
         .eq('location_id', locationId)
-        .eq('encounter_type', encounterType);
+        .eq('encounter_type', encounterType)
+        .lte('min_player_level', playerLevel)
+        .gte('max_player_level', playerLevel);
 
     if (!rows || rows.length === 0) return 'bandit_group';
 
