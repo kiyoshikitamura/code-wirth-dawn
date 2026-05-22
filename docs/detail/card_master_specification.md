@@ -254,7 +254,7 @@
 cards.csv のマスタデータをDBに反映するseed API:
 
 ```
-GET https://code-wirth-dawn.vercel.app/api/debug/seed-cards?secret=admin_user
+GET https://code-wirth-dawn.com/api/debug/seed-cards?secret=admin_user
 ```
 
 | パラメータ | 説明 |

@@ -14,7 +14,7 @@
  *   all             Run enemies → groups → scenarios
  * 
  * Options:
- *   --base-url URL  Override API base URL (default: https://code-wirth-dawn.vercel.app)
+ *   --base-url URL  Override API base URL (default: https://code-wirth-dawn.com)
  *   --secret KEY    Override admin secret (default: admin_user)
  *   --id N          Scenario ID to sync (for scenarios command only)
  *   --dry-run       Show what would be called without calling
@@ -28,7 +28,7 @@
 const args = process.argv.slice(2);
 const command = args[0] || 'all';
 
-let baseUrl = 'https://code-wirth-dawn.vercel.app';
+let baseUrl = 'https://code-wirth-dawn.com';
 let secret = 'admin_user';
 let scenarioId = null;
 let dryRun = false;

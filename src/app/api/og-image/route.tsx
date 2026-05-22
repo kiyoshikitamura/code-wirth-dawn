@@ -135,7 +135,7 @@ export async function GET(req: Request) {
                         世界観測局 発行
                     </div>
                     <div style={{ opacity: 0.5, fontSize: 14 }}>
-                        code-wirth-dawn.vercel.app
+                        code-wirth-dawn.com
                     </div>
                 </div>
             </div>
