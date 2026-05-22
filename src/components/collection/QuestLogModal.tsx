@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ClipboardList, Swords, Crown, ScrollText, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { getAuthToken } from '@/lib/authToken';
+import { getSessionCache, setSessionCache } from '@/lib/sessionCache';
 import QuestDetailPopup from './QuestDetailPopup';
 
 type TabKey = 'main' | 'special' | 'normal';
@@ -41,6 +42,8 @@ interface Props {
     onClose: () => void;
 }
 
+const CACHE_KEY = 'quest_log_data';
+
 export default function QuestLogModal({ onClose }: Props) {
     const [data, setData] = useState<QuestLogData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -52,9 +55,16 @@ export default function QuestLogModal({ onClose }: Props) {
     }, []);
 
     const fetchQuestLog = async () => {
+        // C3: セッションキャッシュから取得を試みる
+        const cached = getSessionCache<QuestLogData>(CACHE_KEY);
+        if (cached) {
+            setData(cached);
+            setLoading(false);
+            return;
+        }
+
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = await getAuthToken();
             if (!token) return;
 
             const res = await fetch('/api/quest-log', {
@@ -63,6 +73,7 @@ export default function QuestLogModal({ onClose }: Props) {
             if (res.ok) {
                 const json = await res.json();
                 setData(json);
+                setSessionCache(CACHE_KEY, json); // C3: キャッシュに保存
             }
         } catch (e) {
             console.error('[QuestLog] Fetch failed:', e);

@@ -55,6 +55,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: result.error }, { status: 400 });
         }
 
+        // Collection: Record NPC encounter (system_mercenary only)
+        if (shadow.slug && shadow.origin_type === 'system_mercenary') {
+            try {
+                await supabaseAdmin
+                    .from('user_npc_encounters')
+                    .upsert({ user_id, npc_slug: shadow.slug }, { onConflict: 'user_id,npc_slug', ignoreDuplicates: true });
+            } catch (e) {
+                console.warn('[Hire] NPC encounter recording failed (non-critical):', e);
+            }
+        }
+
         // #19 英霊雇用シェア (繰返)
         const heroName = shadow.name || '名もなき英霊';
         const shareData = buildShareData('heroic_hire', { name: heroName });

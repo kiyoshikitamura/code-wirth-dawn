@@ -43,6 +43,31 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3065,grimoire_fire,魔導書:火球,65,3500,3,any,3,false,/images/items/grimoire_fire.png,魔法攻撃+炎上付与。
 3066,grimoire_ice,魔導書:氷槍,66,3500,3,any,3,false,/images/items/grimoire_ice.png,魔法攻撃+拘束付与。
 3067,grimoire_thunder,魔導書:雷撃,67,4500,3,any,4,false,/images/items/grimoire_thunder.png,魔法攻撃+スタン付与。
+3041,scroll_kings_wall,巻物:王の城壁,31,12000,4,loc_holy_empire,5,false,,ローラン首都: 全体鉄壁防御。
+3042,scroll_dragon_dive,奥義書:ドラゴンダイブ,32,15000,5,loc_haryu,5,false,,華龍首都: 全体DEF無視攻撃。
+3043,scroll_miracle,聖典:奇跡,33,20000,5,loc_holy_empire,5,false,,ローラン首都: 全体HP全回復。
+3044,scroll_emp_shield,巻物:皇帝の盾,34,10000,3,loc_holy_empire,5,false,,ローラン首都: 確定タウント。
+3045,scroll_absolute_def,奥義書:絶対防御,35,12000,4,any,5,false,,全国首都: 自身完全防御。
+3046,scroll_hundred_fists,奥義書:百裂拳,36,14000,4,loc_haryu,5,false,,華龍首都: 高威力連撃。
+3047,grimoire_meteor,魔導書:メテオストライク,37,18000,5,any,5,false,/images/items/grimoire_fire.png,全国首都: 全体魔法+炎上。
+3048,scroll_great_heal,聖典:完全治癒,38,16000,4,loc_holy_empire,5,false,,ローラン首都: 単体HP全回復。
+3049,grimoire_holy_nova,魔導書:ホーリーノヴァ,39,14000,4,loc_holy_empire,5,false,,ローラン首都: 全体魔法+目潰し。
+3050,scroll_assassinate,奥義書:暗殺,40,12000,3,loc_yatoshin,5,false,/images/items/manual_assassination.png,夜刀首都: 致死毒攻撃。
+3051,grimoire_demonic,魔導書:魔刃,41,14000,4,any,5,false,,全国首都: 単体大ダメージ。
+3052,grimoire_blood_rage,禁書:血の怒り,42,20000,2,any,1,true,/images/items/skill_berserk.png,闇市: ATK UP(致命)。
+3053,scroll_lion_heart,巻物:獅子の心,43,16000,3,any,5,false,,全国首都: 全体ATK UP。
+3054,grimoire_swift_wind,魔導書:疾風術,44,10000,2,any,4,false,,上位ショップ: 全体回避UP。
+3055,scroll_earth_shatter,奥義書:岩砕き,45,14000,4,loc_haryu,5,false,,華龍首都: 全体攻撃+スタン。
+3068,grimoire_soul_rend,魔導書:魂裂き,46,12000,4,any,4,false,,上位ショップ: MP吸収魔法。
+3069,scroll_phantom,奥義書:幻影撃,47,10000,3,loc_yatoshin,5,false,,夜刀首都: ランダム攻撃+目潰し。
+3070,scroll_heaven_slash,奥義書:天翔斬,48,20000,5,loc_yatoshin,5,false,,夜刀首都: 最高威力単体攻撃。
+3075,grimoire_dark_sphere,禁書:黒曜球,49,25000,4,any,1,true,,闇市: 全体攻撃+呪い。
+3076,scroll_royal_guard,巻物:近衛の盾,50,10000,3,loc_holy_empire,4,false,,ローラン: 仲間庇い防御。
+3077,scroll_dragon_scale,巻物:竜の鱗,51,12000,4,loc_haryu,4,false,,華龍: カウンター防御。
+3078,scroll_void_strike,奥義書:虚空撃,52,16000,4,loc_marcund,5,false,,マルカンド首都: DEF貫通攻撃。
+3079,scroll_blessing,聖典:女神の祝福,53,18000,4,loc_holy_empire,5,false,/images/items/skill_meditation.png,ローラン首都: 全体回復+リジェネ。
+3080,scroll_death_dance,奥義書:死の舞踊,54,16000,4,loc_yatoshin,5,false,,夜刀首都: 全体攻撃+出血。
+3088,grimoire_time_stop,禁書:時止めの法,55,30000,5,any,1,true,,闇市: 全体スタン(2T)。
 3081,legend_baphomet_flame,戦利品:獄炎の刻印,81,0,4,,1,false,,伝説報酬: 全体炎上攻撃。
 3082,legend_angel_grace,戦利品:天使の恩寵,82,0,4,,1,false,,伝説報酬: 全体回復+リジェネ。
 3083,legend_dragon_inferno,戦利品:竜炎のブレス,83,0,5,,1,false,,伝説報酬: 全体攻撃+DEF DOWN。

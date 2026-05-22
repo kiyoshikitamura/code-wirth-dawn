@@ -13,10 +13,17 @@ async function getAuthUserId(req: Request): Promise<string | null> {
     return null;
 }
 
-// GET: Fetch Inventory
+// [Security v27.3] ストーリー・スポット報酬など、ドロップ以外で直接付与してはいけないアイテムのプレフィックス
+const RESTRICTED_SLUG_PREFIXES = ['story_', 'spot_', 'item_pass_'];
+// クエスト専用アイテム（grant API経由でのみ付与可能）
+const QUEST_ONLY_SLUGS = new Set([
+    'item_debris_clear', 'item_royal_decree', 'item_launder_scroll',
+]);
+
+// POST: Add Item to Inventory (ドロップ / バトル報酬用)
 export async function POST(req: Request) {
     try {
-        const { item_slug, quantity = 1 } = await req.json();
+        const { item_slug, quantity = 1, source } = await req.json();
         
         const userId = await getAuthUserId(req);
 
@@ -24,15 +31,41 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
+        // [Security v27.3] ソースコンテキスト検証
+        if (!source || !['battle_drop', 'quest_reward', 'system'].includes(source)) {
+            console.warn(`[Inventory POST] Rejected: missing/invalid source='${source}' for slug='${item_slug}' user=${userId}`);
+            return NextResponse.json({ error: 'Invalid source context' }, { status: 400 });
+        }
+
+        // [Security v27.3] 制限付きアイテムのドロップ経由での追加を防止
+        if (source === 'battle_drop') {
+            if (RESTRICTED_SLUG_PREFIXES.some(prefix => item_slug?.startsWith(prefix))) {
+                console.warn(`[Inventory POST] Blocked restricted item via drop: slug='${item_slug}' user=${userId}`);
+                return NextResponse.json({ error: 'This item cannot be obtained via drops' }, { status: 403 });
+            }
+            if (QUEST_ONLY_SLUGS.has(item_slug)) {
+                console.warn(`[Inventory POST] Blocked quest-only item via drop: slug='${item_slug}' user=${userId}`);
+                return NextResponse.json({ error: 'This item cannot be obtained via drops' }, { status: 403 });
+            }
+        }
+
+        // [Security v27.3] 数量上限（1回のリクエストで最大5個まで）
+        const safeQuantity = Math.max(1, Math.min(5, Math.floor(quantity)));
+
         // 1. Get Item ID
         const { data: item, error: itemError } = await supabase
             .from('items')
-            .select('id, name')
+            .select('id, name, type')
             .eq('slug', item_slug)
             .single();
 
         if (itemError || !item) {
             return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+        }
+
+        // [Security v27.3] type='skill' のアイテムはこのパスで追加不可（user_skills経由で管理）
+        if (item.type === 'skill') {
+            return NextResponse.json({ error: 'Skill items must be acquired via shop or quest reward' }, { status: 400 });
         }
 
         // 2. Check if already exists in inventory (stackable?)
@@ -41,25 +74,21 @@ export async function POST(req: Request) {
             .select('id, quantity')
             .eq('user_id', userId)
             .eq('item_id', item.id)
-            .maybeSingle(); // Changed single() to maybeSingle() to avoid error
+            .maybeSingle();
 
         if (existing) {
             const { error } = await supabase
                 .from('inventory')
-                .update({ quantity: existing.quantity + quantity })
+                .update({ quantity: existing.quantity + safeQuantity })
                 .eq('id', existing.id);
             if (error) throw error;
         } else {
-            // Insert new item
-            // slot_index was removed from schema as confirmed by debug script.
-            // Just insert directly.
-
             const { error } = await supabase
                 .from('inventory')
                 .insert({
                     user_id: userId,
                     item_id: item.id,
-                    quantity: quantity,
+                    quantity: safeQuantity,
                     is_equipped: false,
                     is_skill: false,
                     acquired_at: new Date().toISOString()
@@ -241,7 +270,8 @@ export async function GET(req: Request) {
                     card_id: skill.card_id,
                     name: skill.name,
                     slug: skill.slug || null,
-                    description: skill.description || skill.name,
+                    // [SK6 v27.3] cards.description を最優先（効果テキストが詳細）
+                    description: card?.description || skill.description || skill.name,
                     item_type: 'skill_card',
                     power_value: card?.effect_val || 0,
                     base_price: skill.base_price || 0,
@@ -322,6 +352,69 @@ export async function PATCH(req: Request) {
                         );
                     }
                 }
+            }
+        }
+
+        // [SK1 v27.3] デッキコスト上限のサーバーサイド検証（スキル装備時のみ）
+        if (is_equipped && is_skill && userId) {
+            const { data: profile } = await supabaseServer
+                .from('user_profiles')
+                .select('max_deck_cost')
+                .eq('id', userId)
+                .single();
+
+            const maxDeckCost = profile?.max_deck_cost || 10;
+
+            // 現在装備中のスキルのdeck_costを合算
+            const [{ data: equippedUserSkills }, { data: equippedLegacySkills }] = await Promise.all([
+                supabaseServer
+                    .from('user_skills')
+                    .select('id, skills!inner(deck_cost)')
+                    .eq('user_id', userId)
+                    .eq('is_equipped', true),
+                supabaseServer
+                    .from('inventory')
+                    .select('id, items!inner(type, effect_data)')
+                    .eq('user_id', userId)
+                    .eq('is_equipped', true)
+                    .eq('is_skill', true),
+            ]);
+
+            let currentDeckCost = 0;
+            for (const s of (equippedUserSkills || [])) {
+                if (String(s.id) === String(inventory_id)) continue; // 自身は除外
+                currentDeckCost += (s as any).skills?.deck_cost || 0;
+            }
+            for (const s of (equippedLegacySkills || [])) {
+                if (String(s.id) === String(inventory_id)) continue;
+                const ed = (s as any).items?.effect_data;
+                currentDeckCost += ed?.deck_cost || ed?.cost || 0;
+            }
+
+            // 新たに装備するスキルのdeck_costを取得
+            let newSkillCost = 0;
+            if (useUserSkillsTable) {
+                const { data: skillData } = await supabaseServer
+                    .from('user_skills')
+                    .select('skills!inner(deck_cost)')
+                    .eq('id', inventory_id)
+                    .single();
+                newSkillCost = (skillData as any)?.skills?.deck_cost || 0;
+            } else {
+                const { data: invData } = await supabaseServer
+                    .from('inventory')
+                    .select('items!inner(effect_data)')
+                    .eq('id', inventory_id)
+                    .single();
+                const ed = (invData as any)?.items?.effect_data;
+                newSkillCost = ed?.deck_cost || ed?.cost || 0;
+            }
+
+            if (currentDeckCost + newSkillCost > maxDeckCost) {
+                return NextResponse.json(
+                    { error: `デッキコスト上限を超えています。(${currentDeckCost + newSkillCost}/${maxDeckCost})` },
+                    { status: 400 }
+                );
             }
         }
 

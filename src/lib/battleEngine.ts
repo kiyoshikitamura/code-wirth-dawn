@@ -243,14 +243,13 @@ export function routeDamage(
 
 /**
  * C. Resource Cost Logic
- * Checks if user can afford the card (MP vs Vitality).
+ * [SK5 v27.3] V9以降、MPコストは廃止。Vitalityコストのみチェックするよう簡素化。
  */
 export function canAffordCard(
     card: Card & { cost_vitality?: number },
-    currentMp: number,
+    _currentMp: number,
     currentVitality: number
 ): boolean {
-    // MP cost is removed from V9 specs
     if (card.cost_vitality && currentVitality < card.cost_vitality) return false;
     return true;
 }

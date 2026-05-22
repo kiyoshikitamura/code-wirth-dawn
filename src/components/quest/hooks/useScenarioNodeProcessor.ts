@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
 import { supabase } from '@/lib/supabase';
+import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
 
 interface NodeProcessorOptions {
@@ -197,11 +198,10 @@ export function useScenarioNodeProcessor({
                 if (hasItem) {
                     if (removeOnSuccess) {
                         try {
-                            const { data: { session } } = await supabase.auth.getSession();
-                            const token = session?.access_token;
+                            const authHeaders = await getAuthHeaders();
                             const res = await fetch('/api/inventory/consume', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                                headers: { 'Content-Type': 'application/json', ...authHeaders },
                                 body: JSON.stringify({ item_id: requiredItemId, quantity: reqQty })
                             });
                             if (res.ok) {
@@ -244,11 +244,10 @@ export function useScenarioNodeProcessor({
 
                 if (targetSlug) {
                     try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const token = session?.access_token;
+                        const authHeaders = await getAuthHeaders();
                         const res = await fetch('/api/travel/cost', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                            headers: { 'Content-Type': 'application/json', ...authHeaders },
                             body: JSON.stringify({ target_location_slug: targetSlug })
                         });
                         if (res.ok) {
@@ -269,10 +268,9 @@ export function useScenarioNodeProcessor({
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
                 if (guestId) {
                     try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const token = session?.access_token;
+                        const authHeaders = await getAuthHeaders();
                         const res = await fetch(`/api/party/member?id=${guestId}&context=guest`, {
-                            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+                            headers: authHeaders
                         });
                         if (res.ok) {
                             const guestData = await res.json();
@@ -350,11 +348,10 @@ export function useScenarioNodeProcessor({
                 const locName = currentNode.params?.location_name;
                 if (amount !== 0) {
                     try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const token = session?.access_token;
+                        const authHeaders = await getAuthHeaders();
                         const res = await fetch('/api/reputation/update', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                            headers: { 'Content-Type': 'application/json', ...authHeaders },
                             body: JSON.stringify({ amount, locationName: locName })
                         });
                         if (res.ok) {
@@ -403,12 +400,11 @@ export function useScenarioNodeProcessor({
                 }
                 console.log('[reward] normalized rewardItems:', JSON.stringify(rewardItems));
                 try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const token = session?.access_token;
-                    console.log('[reward] Calling grant API, token present:', !!token);
+                    const authHeaders = await getAuthHeaders();
+                    console.log('[reward] Calling grant API, auth present:', Object.keys(authHeaders).length > 0);
                     const res = await fetch('/api/inventory/grant', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                        headers: { 'Content-Type': 'application/json', ...authHeaders },
                         body: JSON.stringify({ items: rewardItems, gold: rewardGold })
                     });
                     console.log('[reward] Grant API status:', res.status);

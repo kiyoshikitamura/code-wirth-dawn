@@ -4,11 +4,20 @@ import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
+// [Security v27.3] 付与上限定数
+const MAX_GOLD_PER_GRANT = 50000;
+const MAX_ITEMS_PER_GRANT = 10;
+const MAX_ITEM_QUANTITY = 5;
+
 /**
  * POST /api/inventory/grant
  * クエスト中間報酬としてアイテムやゴールドをプレイヤーに直接付与するAPI。
  * Body: { items?: { item_id: number, quantity: number }[], gold?: number }
  * Authorization: Bearer <jwt> (必須)
+ * 
+ * [Security v27.3] サーバーサイド検証:
+ * - ゴールド上限: 1リクエストあたり最大 50,000G
+ * - アイテム上限: 1リクエストあたり最大 10種類、各最大5個
  */
 export async function POST(req: Request) {
     try {
@@ -29,7 +38,10 @@ export async function POST(req: Request) {
 
         // アイテム付与
         if (items && Array.isArray(items)) {
-            for (const grant of items) {
+            // [Security v27.3] アイテム種類数上限
+            const safeItems = items.slice(0, MAX_ITEMS_PER_GRANT);
+
+            for (const grant of safeItems) {
                 // 正規化: "601" (string/number) → {item_id: 601, quantity: 1}
                 let item_id: number;
                 let quantity: number = 1;
@@ -41,6 +53,9 @@ export async function POST(req: Request) {
                 }
                 console.log('[Grant] Processing item_id:', item_id, 'quantity:', quantity, 'raw:', JSON.stringify(grant));
                 if (!item_id || isNaN(item_id) || quantity <= 0) continue;
+
+                // [Security v27.3] 個別数量上限
+                quantity = Math.min(quantity, MAX_ITEM_QUANTITY);
 
                 // アイテム名を取得
                 const { data: itemData } = await supabaseService
@@ -87,6 +102,9 @@ export async function POST(req: Request) {
         // ゴールド付与
         let goldGranted = 0;
         if (gold && gold > 0) {
+            // [Security v27.3] ゴールド上限
+            const safeGold = Math.min(gold, MAX_GOLD_PER_GRANT);
+
             const { data: profile } = await supabaseService
                 .from('user_profiles')
                 .select('gold')
@@ -94,12 +112,12 @@ export async function POST(req: Request) {
                 .single();
 
             if (profile) {
-                const newGold = (profile.gold || 0) + gold;
+                const newGold = (profile.gold || 0) + safeGold;
                 await supabaseService
                     .from('user_profiles')
                     .update({ gold: newGold })
                     .eq('id', user.id);
-                goldGranted = gold;
+                goldGranted = safeGold;
             }
         }
 

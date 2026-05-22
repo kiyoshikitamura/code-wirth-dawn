@@ -141,6 +141,7 @@ export async function POST(req: Request) {
         // 17. コレクション（図鑑）データ
         await safeDelete('user_bestiary', 'user_id');
         await safeDelete('user_item_history', 'user_id');
+        await safeDelete('user_npc_encounters', 'user_id');
 
         // 18. ランキングキャッシュ・ベースライン (spec_v19 §5)
         await safeDelete('ranking_reputation_cache', 'user_id');

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { Location } from '@/types/game';
 import { supabase } from '@/lib/supabase';
+import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { Map as MapIcon, Compass, Anchor, Castle, Mountain, Tent } from 'lucide-react';
 import { getNationNodeColor } from '@/utils/nationColors';
 import { HUB_LOCATION_NAME, LEGACY_ZERO_UUID } from '@/utils/constants';
@@ -37,7 +38,7 @@ export default function WorldMapPage() {
         async function init() {
             setLoading(true);
 
-            // 背景画像のプリロード（データ取得と並行して実行）
+            // C2最適化: 背景プリロード・ロケーションデータ・プロフィールを全て並列実行
             const bgPreload = new Promise<void>((resolve) => {
                 const img = new window.Image();
                 img.onload = () => resolve();
@@ -45,13 +46,19 @@ export default function WorldMapPage() {
                 img.src = '/backgrounds/worldmap.png';
             });
 
-            // ロケーションデータと国家情報を取得
-            const { data } = await supabase
-                .from('locations')
-                .select('*, world_states(controlling_nation)');
+            const [locResult] = await Promise.all([
+                // ロケーションデータと国家情報を取得
+                supabase
+                    .from('locations')
+                    .select('*, world_states(controlling_nation)'),
+                // プロフィール（＋装備ボーナス）を並列取得
+                fetchUserProfile(),
+                // 背景画像プリロード
+                bgPreload,
+            ]);
 
-            if (data) {
-                const mapped = data.map((l: any) => ({
+            if (locResult.data) {
+                const mapped = locResult.data.map((l: any) => ({
                     ...l,
                     x: l.x !== null ? l.x : null,
                     y: l.y !== null ? l.y : null
@@ -59,12 +66,12 @@ export default function WorldMapPage() {
                 setLocations(mapped as Location[]);
             }
 
-            await fetchUserProfile();
-            await fetchHubState();
-            await fetchWorldState();
+            // hubState と worldState はプロフィール取得後に並列実行
+            await Promise.all([
+                fetchHubState(),
+                fetchWorldState(),
+            ]);
 
-            // 背景画像の読み込み完了を待機してからローディング解除
-            await bgPreload;
             setLoading(false);
         }
         init();
@@ -105,9 +112,7 @@ export default function WorldMapPage() {
         hasDescendedRef.current = true;
 
         try {
-            // Get Session Token to pass to API (Optional)
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = await getAuthToken();
 
             // Use API to ensure robust state transition
             // JWT認証でuser_idを自動取得 (v27.0)
@@ -179,13 +184,12 @@ export default function WorldMapPage() {
         setTravelLog([`衛兵に賄賂を渡しています...`]);
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/move/bribe', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...authHeaders
                 },
                 body: JSON.stringify({ target_location_id: targetId })
             });
@@ -222,15 +226,14 @@ export default function WorldMapPage() {
 
         try {
             // Get Token
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
 
             // Call API
             const res = await fetch('/api/move', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...authHeaders
                 },
                 body: JSON.stringify({ target_location_slug: target.slug })
             });

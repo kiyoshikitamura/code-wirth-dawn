@@ -336,14 +336,8 @@ async function handleSkillPurchase(profile: UserProfileDB, skillId: number) {
 
     if (skillError || !skillData) return NextResponse.json({ error: 'Skill not found' }, { status: 404 });
 
-    // 2. Calculate Price
-    let prosperityLevel = 3;
-    if (profile.current_location_id) {
-        const { data: loc } = await supabaseService.from('locations').select('prosperity_level').eq('id', profile.current_location_id).maybeSingle();
-        if (loc) prosperityLevel = loc.prosperity_level || 3;
-    }
-    const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
-    const priceMultiplier = inflationMap[prosperityLevel] || 1.0;
+    // 2. Calculate Price (L1 v27.3: 共通関数を使用)
+    const { multiplier: priceMultiplier } = await getInflationMultiplier(profile.current_location_id);
     let finalPrice = Math.floor(skillData.base_price * priceMultiplier);
 
     // 3. Check Gold
@@ -394,14 +388,8 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
     if (itemError || !itemData) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     const item = itemData as ItemDB;
 
-    // 2. Calculate Price
-    let prosperityLevel = 3;
-    if (profile.current_location_id) {
-        const { data: loc } = await supabaseService.from('locations').select('prosperity_level').eq('id', profile.current_location_id).maybeSingle();
-        if (loc) prosperityLevel = loc.prosperity_level || 3;
-    }
-    const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
-    const priceMultiplier = inflationMap[prosperityLevel] || 1.0;
+    // 2. Calculate Price (L1 v27.3: 共通関数を使用)
+    const { multiplier: priceMultiplier, prosperityLevel } = await getInflationMultiplier(profile.current_location_id);
     let finalPrice = Math.floor(item.base_price * priceMultiplier);
 
     // 2b. 通行許可証の重複購入チェック

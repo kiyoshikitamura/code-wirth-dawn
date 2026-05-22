@@ -8,10 +8,10 @@ import { formatEffectData, getItemTypeLabel, getItemTypeBorderColor, getItemImag
 interface ItemData {
     id: number;
     slug: string;
-    name: string;
+    name: string | null;
     type: string;
-    sub_type?: string;
-    base_price?: number;
+    sub_type?: string | null;
+    base_price?: number | null;
     effect_data?: any;
     deck_cost?: number;
     image_url?: string;
@@ -43,7 +43,7 @@ export default function ItemDetailPopup({ item, onClose }: Props) {
                 <div className="bg-gradient-to-r from-[#1a2d5a] to-[#0d1a2e] p-4 flex items-center gap-4 border-b border-[#2a4080]/50">
                     <div className="w-16 h-16 rounded-xl bg-[#122042] border border-[#2a4080]/50 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {imgSrc ? (
-                            <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
+                            <img src={imgSrc} alt={item.name || ''} className="w-full h-full object-cover" />
                         ) : (
                             <span className="text-3xl">{isSkill ? '⚡' : item.type === 'consumable' ? '✨' : '⚔️'}</span>
                         )}

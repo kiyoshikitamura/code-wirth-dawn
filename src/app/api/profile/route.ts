@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 import { calculateTitle } from '@/lib/character';
 import { UI_RULES } from '@/constants/game_rules';
 import { checkAndFireTrigger, buildShareData, isTierUpgrade, getTitleTier } from '@/lib/shareUtils';
@@ -27,11 +28,20 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: '認証が必要です。ログインしてから再度アクセスしてください。' }, { status: 401 });
         }
 
-        let { data: profile, error } = await client
-            .from('user_profiles')
-            .select('*, locations:locations!fk_current_location(*), reputations(*)')
-            .eq('id', targetId)
-            .maybeSingle();
+        // C2最適化: プロフィール取得と装備ボーナス取得を並列化
+        const [profileResult, equipResult] = await Promise.all([
+            client
+                .from('user_profiles')
+                .select('*, locations:locations!fk_current_location(*), reputations(*)')
+                .eq('id', targetId)
+                .maybeSingle(),
+            supabaseServer
+                .from('equipped_items')
+                .select('item_id, items!inner(effect_data)')
+                .eq('user_id', targetId),
+        ]);
+
+        let { data: profile } = profileResult;
 
         if (!profile) {
             // プロファイルが存在しない場合、404を返す。
@@ -39,6 +49,22 @@ export async function GET(req: Request) {
             console.warn(`[GET /api/profile] プロファイルが見つかりません: ${targetId}`);
             return NextResponse.json({ error: 'プロファイルが見つかりません。キャラクター作成から始めてください。' }, { status: 404 });
         }
+
+        // --- 装備ボーナス計算（C2: /api/equipment への追加リクエスト不要化） ---
+        const equipBonus = { atk: 0, def: 0, hp: 0 };
+        const equippedItems: any[] = [];
+        if (equipResult.data) {
+            for (const eq of equipResult.data) {
+                const effectData = (eq as any).items?.effect_data;
+                if (effectData) {
+                    equipBonus.atk += effectData.atk_bonus || 0;
+                    equipBonus.def += effectData.def_bonus || 0;
+                    equipBonus.hp += effectData.hp_bonus || 0;
+                }
+                equippedItems.push(eq);
+            }
+        }
+        (profile as any).equipment_bonus = equipBonus;
 
         // --- ロジック: タイトル更新（加齢はmove/inn/pray/quest完了時に処理済み。GETでは副作用なし） ---
         if (profile) {

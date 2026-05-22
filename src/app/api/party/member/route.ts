@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseServer as supabaseAdmin } from '@/lib/supabase-admin';
 import { createAuthClient } from '@/lib/supabase-auth';
 
 export async function GET(req: Request) {
@@ -81,6 +82,25 @@ export async function GET(req: Request) {
         }
 
         if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+        // Collection: Record NPC encounter for guest NPCs
+        if (context === 'guest' && data.slug) {
+            try {
+                const authHeader = req.headers.get('authorization');
+                if (authHeader && authHeader.startsWith('Bearer ')) {
+                    const token = authHeader.replace('Bearer ', '');
+                    const { data: { user } } = await supabase.auth.getUser(token);
+                    if (user) {
+                        await supabaseAdmin
+                            .from('user_npc_encounters')
+                            .upsert({ user_id: user.id, npc_slug: data.slug }, { onConflict: 'user_id,npc_slug', ignoreDuplicates: true });
+                    }
+                }
+            } catch (e) {
+                console.warn('[Party Member] NPC encounter recording failed (non-critical):', e);
+            }
+        }
+
         return NextResponse.json(data);
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

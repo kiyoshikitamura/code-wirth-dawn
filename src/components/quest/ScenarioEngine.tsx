@@ -9,7 +9,7 @@ import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
 import { useRouter } from 'next/navigation';
 import StatusModal from '@/components/inn/StatusModal';
-import { supabase } from '@/lib/supabase';
+import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
 import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 
@@ -198,13 +198,12 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
             return;
         }
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/shop/purchase', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...authHeaders
                 },
                 body: JSON.stringify({ item_id: itemId, price })
             });
@@ -663,13 +662,12 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 setShowingTravel({ ...showingTravel, status: 'animating' });
                                 setTimeout(async () => {
                                     try {
-                                        const { data: { session } } = await supabase.auth.getSession();
-                                        const token = session?.access_token;
+                                        const authHeaders = await getAuthHeaders();
                                         const res = await fetch('/api/move', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
-                                                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                                                ...authHeaders
                                             },
                                             body: JSON.stringify({
                                                 target_location_name: showingTravel.dest,

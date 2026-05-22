@@ -87,16 +87,72 @@ export const ENEMY_SKILL_MAP: Record<string, EnemySkillMaster> = {
   skill_mino_charge: { id: 4020, slug: 'skill_mino_charge', name: '突進', effect_type: 'damage_stun', value: 3, description: '大ダメ+スタン(1T)' },
   skill_mino_bellow: { id: 4021, slug: 'skill_mino_bellow', name: '迷宮の呪い', effect_type: 'debuff_atk_down', value: 0, description: 'ATK DOWN(3T)' },
 
-  // ─── enemy_actions.csv にあるがスキル定義CSVにない（フォールバック用） ─
+  // ─── [EN1 v27.4] ネズミ系エネミー固有スキル ─
+  skill_poison_sting: { id: 2041, slug: 'skill_poison_sting', name: '毒針', effect_type: 'damage_poison', value: 1, description: '毒の針でダメージと毒(3T)を付与する' },
+  skill_multi_attack: { id: 2042, slug: 'skill_multi_attack', name: '連続噛みつき', effect_type: 'damage', value: 0.6, description: '2-3回の連続攻撃' },
+
+  // ─── フォールバック用 ─
   skill_attack: { id: 9001, slug: 'skill_attack', name: '通常攻撃', effect_type: 'damage', value: 1, description: '基本的な物理攻撃' },
   skill_heavy_attack: { id: 9002, slug: 'skill_heavy_attack', name: '強攻撃', effect_type: 'damage', value: 1.5, description: '力を込めた攻撃' },
-  skill_poision_attack: { id: 2006, slug: 'skill_poison_attack', name: '毒針', effect_type: 'damage_poison', value: 1, description: '毒を帯びた攻撃' },
 };
+
+// [EN3 v27.4] DB動的取得キャッシュ
+// バトル初期化時にDBから最新データを取得し、静的マップに上書きマージする。
+// DB取得失敗時は静的マップがフォールバックとして機能する。
+let _dbLoaded = false;
+let _dbLoadPromise: Promise<void> | null = null;
+const _mergedMap: Record<string, EnemySkillMaster> = { ...ENEMY_SKILL_MAP };
+
+/**
+ * DBからenemy_skillsを取得し、キャッシュマップに上書きマージする。
+ * バトル開始時に1度だけ呼ぶ想定。2回目以降は即時解決する。
+ * @param supabaseClient - Supabase クライアントインスタンス
+ */
+export async function loadEnemySkillsFromDB(supabaseClient: any): Promise<void> {
+    if (_dbLoaded) return;
+    if (_dbLoadPromise) return _dbLoadPromise;
+
+    _dbLoadPromise = (async () => {
+        try {
+            const { data, error } = await supabaseClient
+                .from('enemy_skills')
+                .select('id, slug, name, effect_type, value, description')
+                .order('id');
+
+            if (error) {
+                console.warn('[enemySkills] DB load failed, using static fallback:', error.message);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                for (const row of data) {
+                    _mergedMap[row.slug] = {
+                        id: row.id,
+                        slug: row.slug,
+                        name: row.name,
+                        effect_type: row.effect_type,
+                        value: row.value,
+                        description: row.description || '',
+                    };
+                }
+                console.log(`[enemySkills] Loaded ${data.length} skills from DB, merged total: ${Object.keys(_mergedMap).length}`);
+            }
+        } catch (e) {
+            console.warn('[enemySkills] DB load exception, using static fallback:', e);
+        } finally {
+            _dbLoaded = true;
+            _dbLoadPromise = null;
+        }
+    })();
+
+    return _dbLoadPromise;
+}
 
 /**
  * スキルslugからスキル定義を取得するヘルパー
- * 存在しないslugの場合はフォールバック（通常攻撃）を返す
+ * DB動的ロード済みなら最新データ、未ロードなら静的マップを使用。
+ * 存在しないslugの場合はフォールバック（通常攻撃）を返す。
  */
 export function getEnemySkill(slug: string): EnemySkillMaster {
-  return ENEMY_SKILL_MAP[slug] || ENEMY_SKILL_MAP['skill_attack'];
+    return _mergedMap[slug] || _mergedMap['skill_attack'] || ENEMY_SKILL_MAP['skill_attack'];
 }

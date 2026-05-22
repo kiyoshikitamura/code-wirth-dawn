@@ -1,41 +1,57 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, Swords, Package, Sparkles, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { BookOpen, Swords, Package, Sparkles, Users, X } from 'lucide-react';
+import { getAuthToken } from '@/lib/authToken';
+import { getSessionCache, setSessionCache } from '@/lib/sessionCache';
 import EnemyDetailPopup from './EnemyDetailPopup';
 import ItemDetailPopup from './ItemDetailPopup';
+import SkillDetailPopup from './SkillDetailPopup';
+import NpcDetailPopup from './NpcDetailPopup';
 import XShareButton from '../shared/XShareButton';
+import type {
+    CollectionData,
+    CollectionEnemyEntry,
+    CollectionItemEntry,
+    CollectionSkillEntry,
+    CollectionNpcEntry,
+    ShareDataItem,
+} from '@/types/collection';
 
-type TabKey = 'enemies' | 'items' | 'skills';
-
-interface CollectionData {
-    enemies: { total: number; unlocked: number; list: any[] };
-    items: { total: number; unlocked: number; list: any[] };
-    skills: { total: number; unlocked: number; list: any[] };
-}
+type TabKey = 'enemies' | 'items' | 'skills' | 'npcs';
 
 interface Props {
     onClose: () => void;
 }
 
+const CACHE_KEY = 'collection_data';
+
 export default function CollectionModal({ onClose }: Props) {
     const [data, setData] = useState<CollectionData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabKey>('enemies');
-    const [selectedEnemy, setSelectedEnemy] = useState<any>(null);
-    const [selectedItem, setSelectedItem] = useState<any>(null);
-    const [shareDataList, setShareDataList] = useState<any[]>([]);
+    const [selectedEnemy, setSelectedEnemy] = useState<CollectionEnemyEntry | null>(null);
+    const [selectedItem, setSelectedItem] = useState<CollectionItemEntry | null>(null);
+    const [selectedSkill, setSelectedSkill] = useState<CollectionSkillEntry | null>(null);
+    const [selectedNpc, setSelectedNpc] = useState<CollectionNpcEntry | null>(null);
+    const [shareDataList, setShareDataList] = useState<ShareDataItem[]>([]);
 
     useEffect(() => {
         fetchCollection();
     }, []);
 
     const fetchCollection = async () => {
+        // C3: セッションキャッシュから取得を試みる
+        const cached = getSessionCache<CollectionData>(CACHE_KEY);
+        if (cached) {
+            setData(cached);
+            setLoading(false);
+            return;
+        }
+
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = await getAuthToken();
             if (!token) return;
 
             const res = await fetch('/api/collection', {
@@ -44,6 +60,7 @@ export default function CollectionModal({ onClose }: Props) {
             if (res.ok) {
                 const json = await res.json();
                 setData(json);
+                setSessionCache(CACHE_KEY, json); // C3: キャッシュに保存
                 if (json.share_data_list && json.share_data_list.length > 0) {
                     setShareDataList(json.share_data_list);
                 }
@@ -59,12 +76,31 @@ export default function CollectionModal({ onClose }: Props) {
         { key: 'enemies', label: 'エネミー', icon: Swords },
         { key: 'items', label: 'アイテム', icon: Package },
         { key: 'skills', label: 'スキル', icon: Sparkles },
+        { key: 'npcs', label: 'NPC', icon: Users },
     ];
 
     const currentSection = data?.[activeTab];
     const progressPct = currentSection
         ? Math.round((currentSection.unlocked / Math.max(currentSection.total, 1)) * 100)
         : 0;
+
+    const handleEntryClick = (entry: any) => {
+        if (!entry.unlocked) return;
+        switch (activeTab) {
+            case 'enemies':
+                setSelectedEnemy(entry as CollectionEnemyEntry);
+                break;
+            case 'items':
+                setSelectedItem(entry as CollectionItemEntry);
+                break;
+            case 'skills':
+                setSelectedSkill(entry as CollectionSkillEntry);
+                break;
+            case 'npcs':
+                setSelectedNpc(entry as CollectionNpcEntry);
+                break;
+        }
+    };
 
     const content = createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-2">
@@ -159,12 +195,8 @@ export default function CollectionModal({ onClose }: Props) {
                         <div className="divide-y divide-[#2a4080]/20">
                             {currentSection?.list.map((entry: any) => (
                                 <button
-                                    key={entry.id}
-                                    onClick={() => {
-                                        if (!entry.unlocked) return;
-                                        if (activeTab === 'enemies') setSelectedEnemy(entry);
-                                        else setSelectedItem(entry);
-                                    }}
+                                    key={entry.id ?? entry.slug}
+                                    onClick={() => handleEntryClick(entry)}
                                     disabled={!entry.unlocked}
                                     className={`w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors ${
                                         entry.unlocked
@@ -202,7 +234,7 @@ export default function CollectionModal({ onClose }: Props) {
                 <div className="p-2 border-t border-[#2a4080]/30 bg-[#0a1226]">
                     {shareDataList.length > 0 && (
                         <div className="mb-2 space-y-1.5">
-                            {shareDataList.map((sd: any, idx: number) => {
+                            {shareDataList.map((sd: ShareDataItem, idx: number) => {
                                 const shareUrl = typeof window !== 'undefined'
                                     ? `${window.location.origin}/share?t=${sd.slug}&${new URLSearchParams(sd.vars).toString()}`
                                     : undefined;
@@ -219,7 +251,7 @@ export default function CollectionModal({ onClose }: Props) {
                         </div>
                     )}
                     <p className="text-[9px] text-gray-600 font-serif italic text-center">
-                        ※ エネミーは遭遇時、アイテムは入手時に記録されます
+                        ※ エネミーは遭遇時、アイテムは入手時、NPCは雇用時に記録されます
                     </p>
                 </div>
             </div>
@@ -240,6 +272,18 @@ export default function CollectionModal({ onClose }: Props) {
                 <ItemDetailPopup
                     item={selectedItem}
                     onClose={() => setSelectedItem(null)}
+                />
+            )}
+            {selectedSkill && (
+                <SkillDetailPopup
+                    skill={selectedSkill}
+                    onClose={() => setSelectedSkill(null)}
+                />
+            )}
+            {selectedNpc && (
+                <NpcDetailPopup
+                    npc={selectedNpc}
+                    onClose={() => setSelectedNpc(null)}
                 />
             )}
         </>

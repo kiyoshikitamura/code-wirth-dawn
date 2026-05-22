@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
 import { DEFAULT_HEGEMONY } from '@/constants/nations';
 
@@ -63,10 +64,7 @@ export const createProfileSlice = (
     fetchEquipment: async () => {
         const { userProfile } = get();
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            const headers: Record<string, string> = {};
-            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const headers = await getAuthHeaders();
             const res = await fetch('/api/equipment', { headers });
             if (res.ok) {
                 const data = await res.json();
@@ -86,21 +84,16 @@ export const createProfileSlice = (
                 ? `/api/profile?profileId=${selectedProfileId}`
                 : '/api/profile';
 
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
+            const headers: HeadersInit = { ...authHeaders };
 
-            const headers: HeadersInit = { 'Cache-Control': 'no-store' };
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-
-            const res = await fetch(url, { cache: 'no-store', headers });
+            const res = await fetch(url, { headers });
             if (res.ok) {
                 const profile = await res.json();
-                set({ userProfile: profile, gold: profile.gold });
-
-                // v13.1: 装備ボーナスをプロフィール取得後に自動初期化
-                get().fetchEquipment().catch(e =>
-                    console.warn('[fetchUserProfile] fetchEquipment 自動呼び出し失敗（無害）', e)
-                );
+                // C2最適化: Profile APIが equipment_bonus を含めて返すため、
+                // 別途 fetchEquipment() を呼ぶ必要がなくなった
+                const equipBonus = profile.equipment_bonus || get().equipBonus;
+                set({ userProfile: profile, gold: profile.gold, equipBonus: equipBonus });
             }
         } catch (e) {
             console.error('Failed to fetch profile', e);
@@ -137,6 +130,7 @@ export const createProfileSlice = (
 
     fetchWorldState: async () => {
         try {
+            // C2最適化: hubState取得を先に開始（world_statesクエリのlocation名に必要）
             await get().fetchHubState();
             const { userProfile, hubState } = get();
 
@@ -162,27 +156,35 @@ export const createProfileSlice = (
 
             console.log('Fetching World State for:', targetLocationName);
 
-            const { data, error } = await supabase
-                .from('world_states')
-                .select('*')
-                .eq('location_name', targetLocationName)
-                .maybeSingle();
-
-            // v27.0: hegemony キャッシュ（10分有効）
-            let hegemonyData: any[] = [];
+            // C2最適化: world_states と hegemony を並列取得
             const now = Date.now();
             const cached = (get() as any)._hegemonyCache;
-            if (cached && (now - cached.fetchedAt) < 10 * 60 * 1000) {
-                hegemonyData = cached.data;
-            } else {
-                try {
-                    const hegemonyRes = await fetch('/api/world/hegemony', { cache: 'no-store' });
-                    if (hegemonyRes.ok) {
-                        const hData = await hegemonyRes.json();
-                        hegemonyData = hData.hegemony || [];
-                        set({ _hegemonyCache: { data: hegemonyData, fetchedAt: now } } as any);
-                    }
-                } catch (e) { console.error('Hegemony fetch error', e); }
+            const hegemonyIsCached = cached && (now - cached.fetchedAt) < 10 * 60 * 1000;
+
+            const [worldResult, hegemonyResult] = await Promise.all([
+                supabase
+                    .from('world_states')
+                    .select('*')
+                    .eq('location_name', targetLocationName)
+                    .maybeSingle(),
+                hegemonyIsCached
+                    ? Promise.resolve({ data: cached.data, fromCache: true })
+                    : fetch('/api/world/hegemony')
+                        .then(async (res) => {
+                            if (res.ok) {
+                                const hData = await res.json();
+                                return { data: hData.hegemony || [], fromCache: false };
+                            }
+                            return { data: [], fromCache: false };
+                        })
+                        .catch(() => ({ data: [], fromCache: false }))
+            ]);
+
+            const { data, error } = worldResult;
+
+            let hegemonyData: any[] = hegemonyResult.data;
+            if (!(hegemonyResult as any).fromCache && hegemonyData.length > 0) {
+                set({ _hegemonyCache: { data: hegemonyData, fetchedAt: now } } as any);
             }
             if (hegemonyData.length === 0) hegemonyData = DEFAULT_HEGEMONY;
 
@@ -195,7 +197,6 @@ export const createProfileSlice = (
                         method: 'POST',
                         headers: { 'Cache-Control': 'no-cache' },
                         body: JSON.stringify({ location_name: targetLocationName }),
-                        cache: 'no-store'
                     });
                     if (initRes.ok) {
                         const { data: newData } = await supabase

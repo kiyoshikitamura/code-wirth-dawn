@@ -59,19 +59,32 @@ export async function POST(req: Request) {
         const totalSellValue = sellPrice * quantity;
         console.log(`[Sell] Item: ${item?.name}, base_price: ${item?.base_price}, prosperity: ${prosperityLevel}, isRuined: ${isRuined}, sellPrice: ${sellPrice}, qty: ${quantity}, total: ${totalSellValue}`);
 
-        // 4. 裏切りチェック
+        // 4. 裏切りチェック (L3 v27.3: JSON.stringify全文検索→フィールド直接チェックに改善)
         let isBetrayal = false;
         if ((item?.type === 'key_item' || item?.type === 'trade_good' || item?.type === 'consumable') && (profile as any).current_quest_id) {
             const { data: quest } = await supabaseService
                 .from('scenarios')
-                .select('*')
+                .select('requirements, script_data')
                 .eq('id', (profile as any).current_quest_id)
                 .single();
 
             if (quest) {
-                const qStr = JSON.stringify(quest);
-                if (qStr.includes(`"item_id":${item_id}`) || qStr.includes(`"item_id":"${item_id}"`) || quest.requirements?.has_item == item_id) {
+                // requirements.has_item チェック
+                if (quest.requirements?.has_item == item_id) {
                     isBetrayal = true;
+                }
+                // script_data 内のノードで item_id を参照しているか効率的にチェック
+                if (!isBetrayal && quest.script_data) {
+                    const nodes = Array.isArray(quest.script_data) ? quest.script_data : Object.values(quest.script_data);
+                    for (const node of nodes) {
+                        const params = typeof node === 'object' ? (node as any).params || node : node;
+                        if (params && (params.item_id == item_id || params.require_item_id == item_id)) {
+                            isBetrayal = true;
+                            break;
+                        }
+                    }
+                }
+                if (isBetrayal) {
                     console.log(`[Sell] Betrayal detected for item ${item_id} in quest ${(profile as any).current_quest_id}`);
                 }
             }

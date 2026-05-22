@@ -243,3 +243,36 @@ Headers: { 'Authorization': 'Bearer <jwt>' }
 - 全ショップAPIは `Authorization: Bearer <jwt>` ヘッダーからユーザーIDを取得する。
 
 > **教訓 (v27)**: ゴールドの増減は**必ず `increment_gold` RPC を使用**すること。`gold: profile.gold + x` の直接UPDATEはレースコンディションでゴールドが消失するリスクがある。
+
+---
+
+## 8. アイテム付与APIのセキュリティ (v27.3)
+
+### 8.1 POST /api/inventory (ドロップ・バトル報酬)
+**制限事項**:
+- `source` パラメータ必須（`battle_drop` / `quest_reward` / `system`）
+- `battle_drop` 経由では `story_` / `spot_` / `item_pass_` プレフィックスのアイテムを追加不可
+- `items.type = 'skill'` のアイテムはこのパスで追加不可（`user_skills` 経由で管理）
+- 1リクエストあたり最大5個まで
+
+### 8.2 POST /api/inventory/grant (クエスト報酬)
+**制限事項**:
+- ゴールド上限: 1リクエストあたり最大 **50,000G**
+- アイテム種類上限: 1リクエストあたり最大 **10種類**
+- 個別アイテム数量上限: 各最大 **5個**
+
+### 8.3 POST /api/shop/sell (売却・裏切り検知)
+**改善 (v27.3)**:
+- 裏切り判定を `JSON.stringify` 全文検索から、`requirements.has_item` + `script_data` ノード直接チェックに改善
+- DBクエリを `select('*')` から `select('requirements, script_data')` に絞り込み
+
+### 8.4 POST /api/item/use (アイテム使用)
+**改善 (v27.3)**:
+- レスポンスに `updated_profile` フィールドを追加（DB更新後の HP/VIT 値を返却）
+- クライアント側でのHP表示不整合を解消
+
+### 8.5 変更履歴
+
+| バージョン | 日付 | 主な変更内容 |
+|---|---|---|
+| v27.3 | 2026-05-18 | inventory POST ソース検証・制限付きスラッグ拒否・数量上限追加。grant API ゴールド/アイテム上限追加。sell API 裏切り判定パフォーマンス改善。item/use HP同期改善。shop GET/POST インフレ計算を shopAuth.ts に共通化。 |

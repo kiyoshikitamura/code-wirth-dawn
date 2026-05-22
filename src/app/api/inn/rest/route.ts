@@ -98,32 +98,13 @@ export async function POST(req: Request) {
                 .eq('owner_id', id);
 
             if (partyMembers && partyMembers.length > 0) {
-                // Fetch npcs to get accurate max_hp
-                const memberSlugs = partyMembers.map(m => m.slug).filter(Boolean);
-                const memberNames = partyMembers.filter(m => !m.slug).map(m => m.name).filter(Boolean);
-                
-                const npcMap = new Map<string, any>();
-                if (memberSlugs.length > 0) {
-                    const { data: npcsBySlug } = await supabaseService.from('npcs').select('slug, max_hp').in('slug', memberSlugs);
-                    if (npcsBySlug) npcsBySlug.forEach(n => npcMap.set(`slug:${n.slug}`, n));
-                }
-                if (memberNames.length > 0) {
-                    const { data: npcsByName } = await supabaseService.from('npcs').select('name, max_hp').in('name', memberNames);
-                    if (npcsByName) npcsByName.forEach(n => npcMap.set(`name:${n.name}`, n));
-                }
-
                 for (const member of partyMembers) {
-                    const npc = member.slug ? npcMap.get(`slug:${member.slug}`) : npcMap.get(`name:${member.name}`);
-                    const rawMaxDur = member.max_durability;
-                    const npcHp = npc?.max_hp ?? null;
-                    const resolvedMaxHp = (rawMaxDur && rawMaxDur !== 100) ? rawMaxDur : (npcHp ?? rawMaxDur ?? 100);
-                    
-                    const updates: any = { durability: resolvedMaxHp, max_durability: resolvedMaxHp, is_active: true };
-                    
-                    if (member.durability !== resolvedMaxHp || !member.is_active || member.max_durability !== resolvedMaxHp) {
+                    // 戦闘不能（is_active = false）になっている場合のみ、戦闘可能（is_active = true）に復帰させる
+                    // ※寿命である durability (VIT) は宿屋では回復しない
+                    if (!member.is_active) {
                         await supabaseService
                             .from('party_members')
-                            .update(updates)
+                            .update({ is_active: true })
                             .eq('id', member.id);
                         partyHealed++;
                     }

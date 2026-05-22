@@ -8,7 +8,7 @@ import { setGameStarted, clearGameStarted } from '@/hooks/useAuthGuard';
 
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
-import { Sword, Map as MapIcon, Hourglass, Compass, LogIn, PlayCircle } from 'lucide-react';
+import { Sword, Map as MapIcon, Hourglass, Compass, LogIn, PlayCircle, BookOpen } from 'lucide-react';
 import { useBgm } from '@/hooks/useBgm';
 import DeleteConfirmModal from '@/components/title/DeleteConfirmModal';
 
@@ -528,6 +528,15 @@ export default function TitlePage() {
                             </div>
                             <span className="text-[10px] text-slate-400/80 tracking-wide">アカウント連携なし・7日間限定・データ引き継ぎ不可</span>
                         </button>
+
+                        {/* Play Guide / プレイガイド */}
+                        <Link
+                            href="/play-guide"
+                            className="w-full bg-slate-900/30 border border-slate-800 text-slate-400 font-serif py-3 rounded hover:bg-amber-950/10 hover:text-amber-400 hover:border-amber-500/40 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
+                        >
+                            <BookOpen className="w-4 h-4 text-slate-500 group-hover:text-amber-500 transition-colors" />
+                            <span className="font-bold">プレイガイド</span>
+                        </Link>
 
                         {/* フッター: コピーライト + 法的リンク */}
                         <div className="mt-8 pt-4 border-t border-slate-800/50 space-y-2 text-center">

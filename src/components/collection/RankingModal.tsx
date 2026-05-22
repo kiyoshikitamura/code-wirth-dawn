@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Trophy, Star, Flame, X, ArrowUpDown, Clock, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { getAuthToken } from '@/lib/authToken';
 import XShareButton from '../shared/XShareButton';
 
 type TabKey = 'reputation' | 'alignment';
@@ -71,8 +71,7 @@ export default function RankingModal({ onClose }: Props) {
 
     const fetchRanking = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = await getAuthToken();
             if (!token) return;
             const res = await fetch('/api/ranking', {
                 headers: { 'Authorization': `Bearer ${token}` },

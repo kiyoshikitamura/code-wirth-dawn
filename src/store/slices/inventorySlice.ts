@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
 
 export type InventorySliceActions = Pick<
@@ -14,12 +15,10 @@ export const createInventorySlice = (
     fetchInventory: async () => {
         try {
             const { userProfile } = get();
-            const { data: { session } } = await supabase.auth.getSession();
-            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
-            const headers: HeadersInit = {};
-            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const authHeaders = await getAuthHeaders();
+            const headers: HeadersInit = { ...authHeaders };
 
-            const res = await fetch('/api/inventory', { headers, cache: 'no-store' });
+            const res = await fetch('/api/inventory', { headers });
             if (res.ok) {
                 const { inventory } = await res.json();
                 set({ inventory });
@@ -39,10 +38,8 @@ export const createInventorySlice = (
             set({ inventory: newInventory });
 
             const { userProfile } = get();
-            const { data: { session } } = await supabase.auth.getSession();
-            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
-            const headers: HeadersInit = { 'Content-Type': 'application/json' };
-            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const authHeaders = await getAuthHeaders();
+            const headers: HeadersInit = { 'Content-Type': 'application/json', ...authHeaders };
 
             const isSkill = targetItem?.is_skill || targetItem?.item_type === 'skill_card';
 
@@ -55,7 +52,6 @@ export const createInventorySlice = (
                     bypass_lock: bypassLock,
                     is_skill: isSkill,
                 }),
-                cache: 'no-store'
             });
         } catch (e) {
             console.error('Failed to toggle equip', e);

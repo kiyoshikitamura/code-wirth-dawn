@@ -1,25 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { supabaseServer } from '@/lib/supabase-admin';
+import { JOB_CLASS_JP } from '@/lib/jobClass';
 
 export const dynamic = 'force-dynamic';
-
-// 英語職種 → 日本語マッピング
-const JOB_CLASS_JP: Record<string, string> = {
-    Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
-    Ranger: '狩人', Scout: '斥候', Archer: '弓使い', Thief: '盗賊', Rogue: '遊撃士',
-    Mage: '魔法使い', Wizard: '魔術師', Sorcerer: '術師', Warlock: '呪術師',
-    Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
-    Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
-    Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
-    Mercenary: '傭兵', Porter: '荷運び', Animal: '動物', Guard: '衛兵',
-    Hunter: '狩人', Samurai: '侍', Miko: '巫女', Ninja: '忍者',
-    Dancer: '踊り子', Lancer: '槍術士', Undead: '不死者', Chef: '料理人',
-    Taoist: '道士', Ghost: '幽霊', Armor: '鎧', Bandit: '山賊',
-    Villager: '村人', Machine: '機械', Monster: '魔獣', Object: '物体',
-    Tactician: '軍師', Gambler: '賭博師', Soldier: '兵士', Slave: '奴隷',
-    Caster: '術師', Summoner: '召喚士', 'Heroic Spirit': '英霊',
-};
 
 export async function GET(req: Request) {
     try {

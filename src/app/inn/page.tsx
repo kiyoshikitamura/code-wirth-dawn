@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
-import { supabase } from '@/lib/supabase';
+import { getAuthHeaders } from '@/lib/authToken';
 import { useInnPageState } from '@/hooks/useInnPageState';
 import InnHeader from '@/components/inn/InnHeader';
 import TavernModal from '@/components/inn/TavernModal';
@@ -297,13 +297,12 @@ function VitalityDeathModal({ userProfile, onClose }: { userProfile: any; onClos
     const handleRetire = async () => {
         setRetiring(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/character/retire', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...authHeaders,
                 },
                 body: JSON.stringify({ cause: 'vitality_death', user_id: userProfile.id })
             });

@@ -13,10 +13,11 @@ export const JOB_CLASS_JP: Record<string, string> = {
     Mercenary: '傭兵', Porter: '荷運び', Animal: '動物', Guard: '衛兵',
     Hunter: '狩人', Samurai: '侍', Miko: '巫女', Ninja: '忍者',
     Dancer: '踊り子', Lancer: '槍術士', Undead: '不死者', Chef: '料理人',
-    Taoist: '道士', Ghost: '幽霊', Armor: '鎧', Bandit: '山賊',
-    Villager: '村人', Machine: '機械', Monster: '魔獣', Object: '物体',
-    Tactician: '軍師', Gambler: '賭博師', Soldier: '兵士', Slave: '奴隷',
+    Taoist: '道士', Ghost: '幽霊', Armor: '呪いの鎧', Bandit: '山賊',
+    Villager: '村人', Machine: '自律人形', Monster: '幻獣', Object: '石像',
+    Tactician: '軍師', Gambler: 'イカサマ師', Soldier: '兵士', Slave: '奴隷',
     Caster: '術師', Summoner: '召喚士', 'Heroic Spirit': '英霊',
+    Official: '官僚',
 };
 
 /**

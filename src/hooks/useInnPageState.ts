@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
+import { getAuthHeaders } from '@/lib/authToken';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
@@ -118,13 +119,12 @@ export function useInnPageState() {
 
         const resolveEncounterResult = async () => {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
+                const authHeaders = await getAuthHeaders();
                 const res = await fetch('/api/move/encounter-result', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                        ...authHeaders,
                     },
                     body: JSON.stringify({
                         result: battleResult === 'win' ? 'win' : 'lose',
@@ -345,24 +345,32 @@ export function useInnPageState() {
         const cost = getInnCost();
         const effectiveMaxHp = (userProfile?.max_hp || 100) + (equipBonus?.hp || 0);
 
+        // C6: Optimistic UI — 即座にHP全快 & ゴールド減少を反映
+        useGameStore.setState(state => ({
+            userProfile: state.userProfile ? {
+                ...state.userProfile,
+                hp: effectiveMaxHp,
+            } : null,
+            gold: Math.max(0, (state.gold || 0) - cost),
+            battleState: {
+                ...state.battleState,
+                party: [],
+                enemy: null,
+                enemies: [],
+                isVictory: false,
+                isDefeat: false,
+            }
+        }));
+        showToast('✨ HPが全快しました');
+
         setRestLoading(true);
         try {
             const res = await fetch('/api/inn/rest', { method: 'POST', body: JSON.stringify({ id: userProfile?.id, effectiveMaxHp }) });
             if (res.ok) {
                 const data = await res.json();
-                spendGold(cost);
+                // API結果で正確な値に同期
                 await useGameStore.getState().fetchUserProfile();
-                useGameStore.setState(state => ({
-                    battleState: {
-                        ...state.battleState,
-                        party: [],
-                        enemy: null,
-                        enemies: [],
-                        isVictory: false,
-                        isDefeat: false,
-                    }
-                }));
-                let toastMsg = `✨ HPが全快しました（宿泊費: ${cost} G / ${data.days_passed || 1}日経過）`;
+                let toastMsg = `✨ 休息完了（宿泊費: ${cost} G / ${data.days_passed || 1}日経過）`;
                 if (data.aging_decay && (data.aging_decay.vit > 0 || data.aging_decay.atk > 0 || data.aging_decay.def > 0)) {
                     const parts: string[] = [];
                     if (data.aging_decay.vit > 0) parts.push(`VIT-${data.aging_decay.vit}`);
@@ -373,10 +381,13 @@ export function useInnPageState() {
                 showToast(toastMsg);
             } else {
                 const err = await res.json();
+                // 失敗時: 楽観的更新をロールバック
+                await useGameStore.getState().fetchUserProfile();
                 showToast(`宿泊できませんでした: ${err.error || '不明なエラー'}`, 'error');
             }
         } catch (e) {
             console.error(e);
+            await useGameStore.getState().fetchUserProfile();
             showToast('通信エラーが発生しました。', 'error');
         } finally {
             setRestLoading(false);

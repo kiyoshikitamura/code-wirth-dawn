@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2, Coins, Pencil, User, Hash, Settings, Link, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2, Coins, Pencil, User, Hash, Settings, Link, ChevronDown, ChevronUp, ExternalLink, BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { useGameStore } from '@/store/gameStore';
 import { clearGameStarted } from '@/hooks/useAuthGuard';
 import { UI_RULES } from '@/constants/game_rules';
@@ -33,6 +35,7 @@ const TIER_COLORS: Record<SubscriptionTier, string> = {
 
 export default function AccountSettingsModal({ onClose }: Props) {
     const { userProfile, fetchUserProfile } = useGameStore();
+    const router = useRouter();
 
     // UI States
     const [error, setError] = useState('');
@@ -75,8 +78,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
         setNameError('');
         setNameSuccess('');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = await getAuthToken();
             if (!token) throw new Error('認証セッションがありません');
 
             const res = await fetch('/api/character/name', {
@@ -110,8 +112,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
     // ── 共通billing呼び出し（JWT認証付き） v27.0 ──
     const callBillingCheckout = async (body: Record<string, any>) => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        const token = await getAuthToken();
         if (!token) throw new Error('認証セッションがありません');
         const res = await fetch('/api/billing/checkout', {
             method: 'POST',
@@ -164,8 +165,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
     const handleOpenPortal = async () => {
         setPortalLoading(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = await getAuthToken();
             if (!token) throw new Error('認証セッションがありません');
             const res = await fetch('/api/billing/portal', {
                 method: 'POST',
@@ -256,14 +256,13 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 .getPublicUrl(filePath);
 
             const avatarUrl = `${publicUrl}?t=${Date.now()}`;
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
 
             const res = await fetch('/api/character/avatar', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...authHeaders,
                 },
                 body: JSON.stringify({
                     avatar_url: avatarUrl,
@@ -513,6 +512,26 @@ export default function AccountSettingsModal({ onClose }: Props) {
                         サウンド設定
                     </h3>
                     <SoundSettingsPanel />
+                </div>
+
+                {/* ══════════════════════════════════════════════
+                    §5.8  プレイガイド
+                   ══════════════════════════════════════════════ */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        ゲームの遊び方
+                    </h3>
+                    <button
+                        onClick={() => {
+                            onClose();
+                            router.push('/play-guide');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-amber-950/20 border border-[#a38b6b]/40 text-amber-200 text-sm font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all cursor-pointer"
+                    >
+                        <BookOpen className="w-4 h-4" />
+                        プレイガイドを開く
+                    </button>
                 </div>
 
                 {/* ══════════════════════════════════════════════

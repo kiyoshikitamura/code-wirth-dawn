@@ -71,6 +71,8 @@ export async function POST(req: Request) {
 
         // ■ フィールドアイテムの効果適用（サーバー側）
         const appliedEffects: string[] = [];
+        // [D3 v27.3] DB更新後のHP/VIT値をレスポンスに含める
+        let updatedProfile: { hp?: number; max_hp?: number; vitality?: number; max_vitality?: number } | null = null;
         const itemName = (invItem.items as any)?.name || 'アイテム';
 
         if (use_context === 'field' && supabaseServer) {
@@ -134,9 +136,16 @@ export async function POST(req: Request) {
 
                     if (updateError) {
                         console.error('[POST /api/item/use] Effect apply error:', updateError);
-                        // 効果適用失敗してもアイテム消費は取り消さない（ログに記録）
                     }
                 }
+
+                // [D3 v27.3] DB更新後のプロフィールを再取得（レスポンス用）
+                const { data: refreshedProfile } = await supabaseServer
+                    .from('user_profiles')
+                    .select('hp, max_hp, vitality, max_vitality')
+                    .eq('id', user.id)
+                    .single();
+                if (refreshedProfile) updatedProfile = refreshedProfile;
             }
 
             // ■ reputation_reset（帳簿の改竄: 全国の名声をリセット）
@@ -220,7 +229,9 @@ export async function POST(req: Request) {
             effects: appliedEffects.length > 0 ? appliedEffects : undefined,
             message: appliedEffects.length > 0
                 ? `${itemName}を使用。${appliedEffects.join('、')}`
-                : undefined
+                : undefined,
+            // [D3 v27.3] 更新後のHP/VIT値をクライアントに返却（状態同期用）
+            updated_profile: updatedProfile || undefined,
         });
 
     } catch (err: any) {

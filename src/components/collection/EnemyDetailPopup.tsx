@@ -1,28 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Skull, Heart, Swords, Shield, Star, Coins } from 'lucide-react';
-
-interface EnemyData {
-    id: number;
-    slug: string;
-    name: string;
-    level?: number;
-    hp?: number;
-    atk?: number;
-    def?: number;
-    exp_reward?: number;
-    gold_reward?: number;
-    drop_item_name?: string;
-}
+import type { CollectionEnemyEntry } from '@/types/collection';
 
 interface Props {
-    enemy: EnemyData;
+    enemy: CollectionEnemyEntry;
     onClose: () => void;
 }
 
 export default function EnemyDetailPopup({ enemy, onClose }: Props) {
+    const [imgError, setImgError] = useState(false);
     const imgSrc = `/images/enemies/${enemy.slug}.png`;
 
     const stats = [
@@ -47,28 +36,21 @@ export default function EnemyDetailPopup({ enemy, onClose }: Props) {
                     {/* Background glow */}
                     <div className="absolute inset-0 bg-gradient-to-b from-red-900/10 to-transparent" />
 
-                    <img
-                        src={imgSrc}
-                        alt={enemy.name}
-                        className="relative z-10 max-h-40 object-contain drop-shadow-[0_4px_24px_rgba(200,0,0,0.3)]"
-                        onError={(e) => {
-                            // Text fallback for missing images
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                                const fallback = document.createElement('div');
-                                fallback.className = 'relative z-10 flex flex-col items-center justify-center gap-2';
-                                fallback.innerHTML = `
-                                    <div class="w-20 h-20 rounded-full bg-red-950/50 border-2 border-red-900/50 flex items-center justify-center">
-                                        <span class="text-3xl">👹</span>
-                                    </div>
-                                    <span class="text-xs text-gray-500 italic">画像未登録</span>
-                                `;
-                                parent.appendChild(fallback);
-                            }
-                        }}
-                    />
+                    {!imgError ? (
+                        <img
+                            src={imgSrc}
+                            alt={enemy.name || ''}
+                            className="relative z-10 max-h-40 object-contain drop-shadow-[0_4px_24px_rgba(200,0,0,0.3)]"
+                            onError={() => setImgError(true)}
+                        />
+                    ) : (
+                        <div className="relative z-10 flex flex-col items-center justify-center gap-2">
+                            <div className="w-20 h-20 rounded-full bg-red-950/50 border-2 border-red-900/50 flex items-center justify-center">
+                                <span className="text-3xl">👹</span>
+                            </div>
+                            <span className="text-xs text-gray-500 italic">画像未登録</span>
+                        </div>
+                    )}
 
                     {/* Close button */}
                     <button

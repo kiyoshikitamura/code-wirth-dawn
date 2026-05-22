@@ -6,6 +6,7 @@ import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
 import { formatEffectData, getEffectList, getItemImageUrl, getSlotLabel, getEquipmentBonus } from '@/lib/itemUtils';
 import { supabase } from '@/lib/supabase';
+import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { toJpJobClass } from '@/lib/jobClass';
 
 
@@ -94,13 +95,12 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
 
         // 汎用フィールド使用 API
         if (!confirm(`「${item.name}」を使用しますか？`)) return;
-        const { supabase } = await import('@/lib/supabase');
-        const session = await supabase.auth.getSession();
+        const authHeaders = await getAuthHeaders();
         const res = await fetch('/api/item/use', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.data.session?.access_token || ''}`
+                ...authHeaders
             },
             body: JSON.stringify({ inventory_id: item.id, use_context: 'field' })
         });
@@ -124,14 +124,13 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
         }
         setEquipLoadingSlot(slot);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            if (!token) { alert('認証エラー'); return; }
+            const authHeaders = await getAuthHeaders();
+            if (!Object.keys(authHeaders).length) { alert('認証エラー'); return; }
             const res = await fetch('/api/equipment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...authHeaders
                 },
                 body: JSON.stringify({ inventory_id: invItem.id, slot })
             });
@@ -153,14 +152,11 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
         }
         setEquipLoadingSlot(slot);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            if (!token) { alert('認証エラー'); return; }
+            const authHeaders = await getAuthHeaders();
+            if (!Object.keys(authHeaders).length) { alert('認証エラー'); return; }
             const res = await fetch(`/api/equipment?slot=${slot}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: authHeaders
             });
             if (res.ok) {
                 // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
@@ -769,10 +765,8 @@ function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; 
     const handleDismiss = React.useCallback(async (memberId: string, name: string) => {
         try {
             // auth tokenを取得してDELETEリクエストに付与
-            const { supabase } = await import('@/lib/supabase');
-            const { data: { session } } = await supabase.auth.getSession();
-            const headers: HeadersInit = { 'Content-Type': 'application/json' };
-            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const { getAuthHeaders } = await import('@/lib/authToken');
+            const headers: HeadersInit = { 'Content-Type': 'application/json', ...(await getAuthHeaders()) };
 
             const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE', headers });
             if (res.ok) { setParty(prev => prev.filter(p => p.id !== memberId)); }
@@ -789,10 +783,8 @@ function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; 
 
     React.useEffect(() => {
         if (!userProfile?.id) return;
-        import('@/lib/supabase').then(async ({ supabase }) => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const headers: HeadersInit = {};
-            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+        import('@/lib/authToken').then(async ({ getAuthHeaders }) => {
+            const headers = await getAuthHeaders();
             return fetch(`/api/party/list?owner_id=${userProfile.id}`, { headers });
         })
             .then(res => res.json())

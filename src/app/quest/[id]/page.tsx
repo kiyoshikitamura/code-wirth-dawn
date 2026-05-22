@@ -7,6 +7,7 @@ import { useQuestState } from '@/store/useQuestState';
 import ScenarioEngine from '@/components/quest/ScenarioEngine';
 import { Scenario, Enemy } from '@/types/game';
 import { supabase } from '@/lib/supabase';
+import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { ArrowLeft, Skull } from 'lucide-react';
 import { getAssetUrl } from '@/config/assets';
 import QuestResultModal from '@/components/quest/QuestResultModal';
@@ -106,8 +107,7 @@ export default function QuestPage() {
                 // [Logic-Expert] Quest Not Found 修正:
                 // scenarios API は認証必須。トークンなしでは 401 → scenarios:[] になるため、
                 // Supabase セッションから JWT を取得してリクエストヘッダーに付与する。
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
+                const token = await getAuthToken();
 
                 const headers: HeadersInit = { 'Cache-Control': 'no-store' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -163,14 +163,13 @@ export default function QuestPage() {
         }
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
 
             const res = await fetch('/api/quest/complete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    ...authHeaders
                 },
                 body: JSON.stringify({
                     quest_id: scenario?.id,
@@ -379,8 +378,7 @@ export default function QuestPage() {
             const battleParty = storeState.battleState?.party || [];
 
             // 1. プレイヤーHP/VITをDBに永続化（Service Role APIで確実に書き込み）
-            const { data: { session: sess } } = await supabase.auth.getSession();
-            const authToken = sess?.access_token;
+            const authToken = await getAuthToken();
             if (battleHp != null && userProfile?.id) {
                 try {
                     const updateBody: any = { hp: Math.max(0, battleHp) };
@@ -486,8 +484,7 @@ export default function QuestPage() {
                 }
 
                 try {
-                    const { data: { session: sess } } = await supabase.auth.getSession();
-                    const authToken = sess?.access_token;
+                    const authToken = await getAuthToken();
 
                     const bs = useGameStore.getState().battleState;
                     const defeatedMemberIds = (bs?.party || [])
@@ -701,8 +698,7 @@ export default function QuestPage() {
                                     }
 
                                     try {
-                                        const { data: { session: sess } } = await supabase.auth.getSession();
-                                        const authToken = sess?.access_token;
+                                        const authToken = await getAuthToken();
 
                                         // バトルでHP0になったパーティメンバーIDを収集
                                         const bs = useGameStore.getState().battleState;

@@ -68,15 +68,13 @@ export const useGameStore = create<GameState>()(
         {
             name: 'game-storage',
             partialize: (state) => ({
+                // C5最適化: 永続化データを最小限に。
+                // battleState/inventory/deck等はAPI取得されるため不要。
+                // バトル復帰機能は不要（ユーザー確認済み）。
                 gold: state.gold,
-                inventory: state.inventory,
-                battleState: state.battleState,
-                deck: state.deck,
-                hand: state.hand,
-                discardPile: state.discardPile,
-                selectedScenario: state.selectedScenario,
                 userProfile: state.userProfile,
                 equipBonus: state.equipBonus,
+                selectedScenario: state.selectedScenario,
             }),
             storage: createJSONStorage(() =>
                 typeof window !== 'undefined' ? window.localStorage : {

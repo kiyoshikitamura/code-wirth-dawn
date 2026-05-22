@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
 import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
-import { supabase } from '@/lib/supabase';
+import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
+import { toJpJobClass } from '@/lib/jobClass';
 
 interface TavernModalProps {
     isOpen: boolean;
@@ -57,29 +58,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         }
     }, [isOpen, activeTab]);
 
-    const JOB_CLASS_JP: Record<string, string> = {
-        Warrior: '戦士', Fighter: '格闘家', Knight: '騎士', Paladin: '聖騎士',
-        Ranger: '狩人', Scout: '斥候', Archer: '弓使い', Thief: '盗賊', Rogue: '遊撃士',
-        Mage: '魔法使い', Wizard: '魔術師', Sorcerer: '術師', Warlock: '呪術師',
-        Cleric: '僧侶', Priest: '神官', Druid: 'ドルイド', Shaman: '呪術師',
-        Bard: '吟遊詩人', Merchant: '商人', Alchemist: '錬金術師', Scholar: '学者',
-        Adventurer: '冒険者', Assassin: '暗殺者', Monk: '修道士', Necromancer: '死霊術師',
-        Guard: '衛兵', Porter: '荷運び', Animal: '動物', Hunter: '狩人',
-        Samurai: '侍', Miko: '巫女', Ninja: '忍者', Dancer: '踊り子',
-        Lancer: '槍術士', Mercenary: '傭兵', Soldier: '兵士', Villager: '村人',
-        Tactician: '軍師', Summoner: '召喚士', Caster: '術師', Chef: '料理人',
-        'Heroic Spirit': '英霊', Taoist: '道士', Bandit: '山賊', Slave: '奴隷',
-        Gamurai: 'ギャンブラー', Gambler: 'イカサマ師', Machine: '自律人形',
-        Ghost: '幽霊', Armor: '呪いの鎧', Monster: '幻獣', Object: '石像', Undead: '不死',
-    };
-    const toJpJobClass = (jc: string) => JOB_CLASS_JP[jc] || jc;
-
     const fetchPartyData = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
             const res = await fetch(`/api/party/list?owner_id=${userProfile.id}`, {
-                headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                headers: authHeaders,
             });
             const data = await res.json();
             if (data.party) setCurrentParty(data.party);
@@ -178,12 +161,12 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
         setHirePhase('loading');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/tavern/hire', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+                    ...authHeaders
                 },
                 body: JSON.stringify({ user_id: userProfile.id, shadow })
             });
@@ -219,11 +202,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         if (!window.confirm(`${memberName} との契約を解除しますか？\nパーティから除外されます。`)) return;
         setDismissing(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
             const res = await fetch(`/api/party/member?id=${memberId}`, {
                 method: 'DELETE',
-                headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                headers: authHeaders,
             });
             if (res.ok) {
                 setHireResultMsg(`${memberName} との契約を解除した。`);
@@ -249,14 +231,13 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         if (!reportTarget || !reportReason) return;
         setReportStatus('sending');
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/report', {
                 method: 'POST',
                 // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...authHeaders,
                 },
                 body: JSON.stringify({
                     reported_user_id: reportTarget.profile_id,

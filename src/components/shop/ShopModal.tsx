@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ShoppingBag, Coins, Lock, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
-import { supabase } from '@/lib/supabase';
+import { getAuthToken } from '@/lib/authToken';
 import { formatEffectData, getItemTypeLabel, getItemTypeBorderColor, getItemImageUrl, getEffectList } from '@/lib/itemUtils';
 
 
@@ -72,11 +72,8 @@ export default function ShopModal({ onClose }: Props) {
     // formatEffectData, getItemTypeLabel etc. は @/lib/itemUtils から import 済み
 
 
-    // Helper to get token
-    const getToken = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        return session?.access_token;
-    }
+    // Helper to get token — cached via authToken.ts
+    const getToken = getAuthToken;
 
     const fetchShop = async () => {
         try {

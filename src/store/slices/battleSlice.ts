@@ -7,7 +7,7 @@ import { StatusEffect, applyEffect, tickEffects, getBleedDamage, isStunned, Stat
 import { validateCardUse, getDefaultTarget } from '@/lib/targeting';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getPassiveLabel } from '@/lib/passiveEffects';
-import { getEnemySkill } from '@/lib/enemySkills';
+import { getEnemySkill, loadEnemySkillsFromDB } from '@/lib/enemySkills';
 import { useQuestState } from '../useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
 import { soundManager } from '@/lib/soundManager';
@@ -77,6 +77,9 @@ export const createBattleSlice = (
 
         console.log('[GameStore] startBattle called with:', enemies.length, 'enemies');
 
+        // [EN3 v27.4] エネミースキルマスタをDBからプリロード（パーティ取得と並列実行）
+        const enemySkillLoadPromise = loadEnemySkillsFromDB(supabase);
+
         let partyMembers: PartyMember[] = [];
         const { userProfile } = get();
         try {
@@ -88,6 +91,9 @@ export const createBattleSlice = (
                 }
             }
         } catch (e) { console.error('Party fetch failed', e); }
+
+        // エネミースキルDB読み込み完了を待機（失敗しても静的マップで続行）
+        await enemySkillLoadPromise;
 
         const questState = useQuestState.getState();
         const guest = questState.guest;
@@ -1340,7 +1346,7 @@ export const createBattleSlice = (
                 supabase.auth.getSession().then(({ data: { session } }) => {
                     const headers: HeadersInit = { 'Content-Type': 'application/json' };
                     if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
-                    fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1 }) })
+                    fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1, source: 'battle_drop' }) })
                         .catch(err => console.error('Drop add failed', err));
                 });
             }

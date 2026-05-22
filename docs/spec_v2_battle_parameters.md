@@ -686,3 +686,65 @@ QUEST_FAIL_REP_PENALTY_MAX: -10,
 - クエスト仕様書で明示的に異なるペナルティが定義されている場合
 - ボス戦で特別なペナルティが設定されている場合
 - イベント戦闘（勝敗問わず進行するタイプ）
+
+---
+
+## 16. スキル装備のサーバーサイド検証 (v27.3)
+
+### 16.1 デッキコスト上限検証
+
+`PATCH /api/inventory` で `is_skill: true` かつ `is_equipped: true` の場合、サーバーサイドでデッキコスト上限を検証する。
+
+```
+currentDeckCost = sum(equipped user_skills.deck_cost) + sum(equipped legacy_skills.cost)
+newSkillCost = 装備対象スキルのdeck_cost
+
+if (currentDeckCost + newSkillCost > user_profiles.max_deck_cost)
+  → 400: "デッキコスト上限を超えています"
+```
+
+**実装箇所**: `src/app/api/inventory/route.ts` PATCH メソッド内
+**検証テーブル**: `user_skills` + `inventory` (レガシースキル) の両方を並列クエリ
+
+### 16.2 スキルマスタ拡張 (v27.3)
+
+| バージョン | skills件数 | cards件数 | 未参照カード |
+|------------|-----------|-----------|-------------|
+| v27.2 | 51 | 77 | 26件 |
+| **v27.3** | **76** | 77 | **1件** (card_citizen_support: システム内部) |
+
+新規追加25件は `min_prosperity: 5` (首都限定) または `is_black_market: true` で出現を制限。
+
+## 17. エネミースキル動的ロード (v27.4)
+
+### 17.1 アーキテクチャ
+
+```
+バトル開始 (startBattle)
+  ├─ loadEnemySkillsFromDB(supabase) [並列]
+  └─ fetch /api/party/list [並列]
+  
+  → DB取得成功: _mergedMap に上書きマージ
+  → DB取得失敗: 静的 ENEMY_SKILL_MAP がフォールバック
+  
+processEnemyTurn
+  → getEnemySkill(slug) → _mergedMap[slug] || skill_attack
+```
+
+**実装箇所**: `src/lib/enemySkills.ts` (`loadEnemySkillsFromDB`, `getEnemySkill`)
+**呼び出し元**: `src/store/slices/battleSlice.ts` (`startBattle`)
+**キャッシュ**: インメモリ、セッション内1回ロード
+
+### 17.2 seed-enemy-skills API
+
+`GET /api/debug/seed-enemy-skills?secret={key}` で `enemy_skills.csv` → DB 同期。
+- `cleanup=true` パラメータでCSV未定義のレガシーレコードを自動削除。
+
+### 16.3 変更履歴
+
+| バージョン | 日付 | 主な変更内容 |
+|---|---|---|
+| v27.3 | 2026-05-18 | デッキコスト上限のサーバーサイド検証を追加。skills CSV を51→76件に拡張（首都限定上位スキル25件追加）。canAffordCardのMPコストデッドコード除去。スキルdescription優先順位をcards.description最優先に変更。seed-cardsのレガシーマッピングをCSV駆動に変更。 |
+| v27.4 | 2026-05-18 | ネズミ系エネミースキル(poison_sting/multi_attack)未定義バグ修正。seed-enemy-skills API新設。エネミースキルDB動的ロード+キャッシュ化。enemySkills.tsタイポ修正。DBレガシーデータ削除。 |
+| v27.5 | 2026-05-20 | seed-npcs API新設（npcs+party_membersテンプレート二重同期）。NPC全57件のcover_rate/level/atk/def/max_hp をDB同期。JOB_CLASS_JPをlib/jobClass.tsに統一。npcs_db_dump.csv削除。 |
+| v27.6 | 2026-05-21 | コレクション機能改善: NPC図鑑タブ追加(user_npc_encounters新設)、SkillDetailPopup新設(cards join)、EnemyDetailPopup React化、types/collection.ts型定義導入。ensure-npc-encounters マイグレーションAPI追加。 |
