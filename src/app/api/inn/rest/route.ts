@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { ECONOMY_RULES } from '@/constants/game_rules';
 import { processAging } from '@/services/questService';
+import { HUB_LOCATION_NAME } from '@/utils/constants';
 
 export async function POST(req: Request) {
     try {
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
         if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
         let finalCost: number = ECONOMY_RULES.INN_REST_COST_BASE;
+        let isHub = false;
 
         // Check Embargo & Calculate Cost
         if (profile.current_location_id) {
@@ -29,22 +31,30 @@ export async function POST(req: Request) {
                 .maybeSingle();
 
             if (locData?.name) {
-                const { data: repData } = await supabase
-                    .from('reputations')
-                    .select('score')
-                    .eq('user_id', id)
-                    .eq('location_name', locData.name)
-                    .maybeSingle();
+                // ハブ拠点判定
+                isHub = locData.name === HUB_LOCATION_NAME;
 
-                if (repData) {
-                    const repScore = repData.score || 0;
-                    if (repScore < 0) {
-                        return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。' }, { status: 403 });
+                if (!isHub) {
+                    const { data: repData } = await supabase
+                        .from('reputations')
+                        .select('score')
+                        .eq('user_id', id)
+                        .eq('location_name', locData.name)
+                        .maybeSingle();
+
+                    if (repData) {
+                        const repScore = repData.score || 0;
+                        if (repScore < 0) {
+                            return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。' }, { status: 403 });
+                        }
                     }
                 }
             }
 
-            if (locData) {
+            if (isHub) {
+                // ハブ拠点: 固定100G
+                finalCost = 100;
+            } else if (locData) {
                 const prosp = locData.prosperity_level || 3;
                 if (prosp >= 4) finalCost = ECONOMY_RULES.INN_REST_COST_CHEAP;
                 else if (prosp <= 2) finalCost = ECONOMY_RULES.INN_REST_COST_EXPENSIVE;
@@ -56,8 +66,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: `ゴールドが足りません。（必要な額: ${finalCost}G）` }, { status: 400 });
         }
 
-        // 加齢処理: 宿屋休息は1日経過
-        const REST_DAYS = 1;
+        // 加齢処理: ハブ拠点では3日経過、通常拠点では1日経過
+        const REST_DAYS = isHub ? 3 : 1;
         const { newAge, newAgeDays, decay } = processAging(
             profile.age || 20,
             profile.accumulated_days || 0,
