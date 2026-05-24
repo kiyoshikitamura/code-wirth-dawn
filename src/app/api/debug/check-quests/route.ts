@@ -3,6 +3,13 @@ import { supabaseServer as supabase } from '@/lib/supabase-admin';
 
 // Diagnostic endpoint to check quest data directly
 export async function GET() {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         // 1. Check total scenarios count
         const { data: allScenarios, error: e1 } = await supabase

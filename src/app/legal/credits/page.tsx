@@ -57,7 +57,7 @@ export default function CreditsPage() {
             <section className="space-y-3">
                 <h2 className="text-lg font-serif text-amber-500/80">BGM / 効果音</h2>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                    [BGM・SE素材の出典を記載]
+                    本ゲームで使用されている音響素材は、フリー素材提供サイト（甘茶の音楽工房、OtoLogic、効果音ラボ等）のライセンス、またはオリジナル制作に基づき使用されています。
                 </p>
             </section>
 

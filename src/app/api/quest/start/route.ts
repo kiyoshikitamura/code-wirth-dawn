@@ -60,6 +60,18 @@ export async function POST(req: Request) {
         // Set quest lock (Spec v3.3 §4.2: Deck Locking)
         await setQuestLock(user_id, String(quest_id));
 
+        // Record quest activity log (Spec Dashboard Extensions)
+        const { error: logErr } = await supabase
+            .from('quest_activity_logs')
+            .insert({
+                user_id,
+                scenario_id: quest_id,
+                action: 'start'
+            });
+        if (logErr) {
+            console.error('[Quest Start] Failed to write quest_activity_logs:', logErr);
+        }
+
         return NextResponse.json({
             success: true,
             quest_id: quest.id,

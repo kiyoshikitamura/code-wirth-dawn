@@ -91,6 +91,20 @@ export async function POST(req: Request) {
                     if (error) throw error;
                     console.log(`[webhooks/stripe] subscription_tier → ${newTier} for user ${userId}`);
 
+                    // Record payment log (Spec Dashboard Extensions)
+                    const { error: payLogErr } = await supabaseAdmin
+                        .from('payment_logs')
+                        .insert({
+                            id: session.id,
+                            user_id: userId,
+                            amount: session.amount_total ?? 0,
+                            gold_amount: 0,
+                            type: 'subscription'
+                        });
+                    if (payLogErr) {
+                        console.error('[webhooks/stripe] Failed to write payment_logs for subscription:', payLogErr);
+                    }
+
                 } else if (session.mode === 'payment') {
                     // ─── ゴールド都度購入 ───
                     const goldAmount = Number(session.metadata?.gold_amount ?? 0);
@@ -109,6 +123,20 @@ export async function POST(req: Request) {
 
                         if (goldErr) throw goldErr;
                         console.log(`[webhooks/stripe] +${goldAmount}G for user ${userId}`);
+
+                        // Record payment log (Spec Dashboard Extensions)
+                        const { error: payLogErr } = await supabaseAdmin
+                            .from('payment_logs')
+                            .insert({
+                                id: session.id,
+                                user_id: userId,
+                                amount: session.amount_total ?? 0,
+                                gold_amount: goldAmount,
+                                type: 'gold_purchase'
+                            });
+                        if (payLogErr) {
+                            console.error('[webhooks/stripe] Failed to write payment_logs for gold_purchase:', payLogErr);
+                        }
                     }
                 }
                 break;

@@ -8,6 +8,13 @@ export const dynamic = 'force-dynamic';
  * デバッグ用: 全クエスト一覧を条件なしで返す
  */
 export async function GET() {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         const { data: quests, error } = await supabaseServer
             .from('scenarios')

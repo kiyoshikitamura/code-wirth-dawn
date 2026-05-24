@@ -294,6 +294,18 @@ export async function POST(req: Request) {
             if (historyError) console.error("Failed to save quest completion history:", historyError);
         }
 
+        // Record quest activity log (Spec Dashboard Extensions)
+        const { error: logErr } = await supabase
+            .from('quest_activity_logs')
+            .insert({
+                user_id,
+                scenario_id: quest_id,
+                action: result === 'success' ? 'complete' : 'abandon'
+            });
+        if (logErr) {
+            console.error('[Quest Complete] Failed to write quest_activity_logs:', logErr);
+        }
+
         // ═══════════════════════════════════════
         // §14. レスポンス構築
         // ═══════════════════════════════════════

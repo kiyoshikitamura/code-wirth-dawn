@@ -12,7 +12,7 @@ export default function PrivacyPage() {
                 プライバシーポリシー
             </h1>
 
-            <p className="text-xs text-slate-500">最終更新日: 2026年5月18日</p>
+            <p className="text-xs text-slate-500">最終更新日: 2026年5月28日</p>
 
             <section className="space-y-3">
                 <h2 className="text-lg font-serif text-amber-500/80">1. 収集する情報</h2>
@@ -81,15 +81,9 @@ export default function PrivacyPage() {
                 <h2 className="text-lg font-serif text-amber-500/80">7. お問い合わせ</h2>
                 <p className="text-sm text-slate-400 leading-relaxed">
                     プライバシーに関するお問い合わせは、以下までご連絡ください。<br />
-                    メール: [メールアドレス]
+                    メール: code.writh.dawn@gmail.com
                 </p>
             </section>
-
-            <div className="border-t border-slate-800 pt-4 mt-8">
-                <p className="text-xs text-slate-600 text-center">
-                    ※ 本ポリシーはテンプレートです。正式運用前に法的レビューを受けてください。
-                </p>
-            </div>
         </article>
     );
 }

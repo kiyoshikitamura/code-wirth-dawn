@@ -23,6 +23,13 @@ function getValidIds(filename: string): Set<number> {
 }
 
 export async function POST(req: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     if (!hasServiceKey || !supabaseAdmin) {
         return NextResponse.json({ error: 'Service Role Key is missing.' }, { status: 500 });
     }

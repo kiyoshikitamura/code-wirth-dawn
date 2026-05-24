@@ -12,12 +12,12 @@ export default function TermsPage() {
                 利用規約
             </h1>
 
-            <p className="text-xs text-slate-500">最終更新日: 2026年5月18日</p>
+            <p className="text-xs text-slate-500">最終更新日: 2026年5月28日</p>
 
             <section className="space-y-3">
                 <h2 className="text-lg font-serif text-amber-500/80">第1条（適用）</h2>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                    本規約は、[サービス運営者名]（以下「運営者」）が提供するブラウザゲーム「Code: Wirth-Dawn」（以下「本サービス」）の利用に関する条件を定めるものです。ユーザーは本規約に同意の上、本サービスを利用するものとします。
+                    本規約は、code:Wirth-Dawn 運営事務局（以下「運営者」）が提供するブラウザゲーム「Code: Wirth-Dawn」（以下「本サービス」）の利用に関する条件を定めるものです。ユーザーは本規約に同意の上、本サービスを利用するものとします。
                 </p>
             </section>
 
@@ -82,15 +82,9 @@ export default function TermsPage() {
             <section className="space-y-3">
                 <h2 className="text-lg font-serif text-amber-500/80">第9条（準拠法・管轄裁判所）</h2>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                    本規約は日本法に準拠し、本サービスに関する紛争については、[管轄裁判所名]を第一審の専属的合意管轄裁判所とします。
+                    本規約は日本法に準拠し、本サービスに関する紛争については、東京地方裁判所を第一審の専属的合意管轄裁判所とします。
                 </p>
             </section>
-
-            <div className="border-t border-slate-800 pt-4 mt-8">
-                <p className="text-xs text-slate-600 text-center">
-                    ※ 本規約はテンプレートです。正式運用前に法的レビューを受けてください。
-                </p>
-            </div>
         </article>
     );
 }

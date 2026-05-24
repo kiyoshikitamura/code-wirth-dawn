@@ -381,3 +381,25 @@
 * **施設マスタ**: [facility_masters_specification.md](file:///d:/dev/code-wirth-dawn/docs/detail/facility_masters_specification.md) — 各拠点の宿屋、ショップ（品揃え）、寺院、酒場の出現条件と繁栄度設定。
 * **ロケーション背景マップ**: [location_backgrounds_specification.md](file:///d:/dev/code-wirth-dawn/docs/detail/location_backgrounds_specification.md) — ワールドマップ上の各拠点ビジュアルアセットと背景画像マッピング。
 
+### 13.7 管理画面仕様書
+* **管理者用ダッシュボード仕様書**: [spec_v22_admin_dashboard.md](file:///d:/dev/code-wirth-dawn/docs/spec_v22_admin_dashboard.md) — 管理者用ダッシュボードの表示指標、動的スケーリンググラフ、CSV出力、リセットAPI等の設計書。
+
+---
+
+## 14. 管理者用ダッシュボード（管理画面）システム
+
+* **関連仕様書**: [spec_v22_admin_dashboard.md](file:///d:/dev/code-wirth-dawn/docs/spec_v22_admin_dashboard.md)
+
+### 14.1 概要
+* **仕様**: 運営チームがリアルタイムでKPI、ユーザー動向、売上状況、クエスト状況を監視するための管理ツール。`/admin/dashboard` にて提供。
+
+### 14.2 主要監視メトリクス
+* **基本KPI**: 累計登録者、アクティブユーザー（DAU/MAU）、課金ユニーク（DPU/MPU）、総戦闘回数、ゴールド流通総量。
+* **課金・売上分析**: Stripeと連携したサブスクリプションおよび追加ゴールド都度課金の売上、件数の内訳および時系列推移。
+* **クエスト別詳細分析**: 全シナリオ（UGC、サブクエスト含む）の実行回数、クリア回数、放棄回数、クリア率（％）をテーブル一覧化。
+
+### 14.3 集計・描画・出力に関する重要ナレッジ（KI）
+* **月間アクティブ (MAU/MPU) の30日ウィンドウ**: 任意の基準日について、過去30日間の一意の活動ユーザーIDを集計するスライディングウィンドウ方式をサーバー側で実装。
+* **SVGグラフの動的リサイズ＆ホバー最適化**: 30日〜365日の期間選択時にグラフが重なったりホバーが機能しなくなるのを防ぐため、カラム幅 `colWidth = (svgWidth - padding * 2) / dailyKPI.length` および棒幅 `barWidth = Math.max(1, colWidth - Math.max(1, colWidth * 0.2))` を動的算出する。
+* **Excelの日本語文字化け防止**: 日別KPI履歴およびクエスト統計のCSV出力時、先頭にBOMコード（`0xEF, 0xBB, 0xBF`）を挿入することで、日本語Windows環境 of ExcelでのMojibakeを完全に回避する。
+* **外部キー制約の安全な初期化順序**: 管理者初期化時、`quest_activity_logs` および `payment_logs` をはじめとする子テーブルから順に物理削除を行うことで、リレーション制約違反を回避して安全にリセットを実行する。

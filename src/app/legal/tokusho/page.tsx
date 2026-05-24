@@ -12,17 +12,17 @@ export default function TokushoPage() {
                 特定商取引法に基づく表記
             </h1>
 
-            <p className="text-xs text-slate-500">最終更新日: 2026年5月18日</p>
+            <p className="text-xs text-slate-500">最終更新日: 2026年5月28日</p>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                     <tbody>
                         {[
-                            ['販売事業者', '[事業者名]'],
-                            ['代表者', '[代表者名]'],
-                            ['所在地', '[所在地]'],
-                            ['連絡先', 'メール: [メールアドレス]'],
-                            ['電話番号', '[電話番号] ※お問い合わせはメールにてお願いします'],
+                            ['販売事業者', 'code:Wirth-Dawn 運営事務局'],
+                            ['代表者', '非開示（請求時に遅滞なく開示いたします）'],
+                            ['所在地', '東京都（詳細な住所については請求時に遅滞なく開示いたします）'],
+                            ['連絡先', 'メール: code.writh.dawn@gmail.com'],
+                            ['電話番号', '非開示（請求時に遅滞なく開示いたします） ※お問い合わせはメールにてお願いします'],
                             ['販売価格', '各サービスページに表示された価格（税込）'],
                             ['追加料金', '通信料等はユーザー負担となります'],
                             ['支払方法', 'クレジットカード（Stripe経由）'],
@@ -45,11 +45,6 @@ export default function TokushoPage() {
                 </table>
             </div>
 
-            <div className="border-t border-slate-800 pt-4 mt-8">
-                <p className="text-xs text-slate-600 text-center">
-                    ※ 本表記はテンプレートです。[ ] 内の情報は事業者の正式情報に置き換えてください。
-                </p>
-            </div>
         </article>
     );
 }

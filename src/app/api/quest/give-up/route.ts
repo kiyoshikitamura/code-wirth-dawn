@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         // ユーザープロフィール取得（VIT減少用）
         const { data: currentProfile } = await supabaseServer
             .from('user_profiles')
-            .select('abandon_count, vitality, current_location_id')
+            .select('abandon_count, vitality, current_location_id, current_quest_id')
             .eq('id', userId)
             .single();
 
@@ -37,6 +37,20 @@ export async function POST(req: Request) {
             .eq('id', userId);
 
         if (error) throw error;
+
+        // Record quest activity log (Spec Dashboard Extensions)
+        if (currentProfile?.current_quest_id) {
+            const { error: logErr } = await supabaseServer
+                .from('quest_activity_logs')
+                .insert({
+                    user_id: userId,
+                    scenario_id: currentProfile.current_quest_id,
+                    action: 'abandon'
+                });
+            if (logErr) {
+                console.error('[Quest Give Up] Failed to write quest_activity_logs:', logErr);
+            }
+        }
 
         // 2. 名声ペナルティ: ランダム -5〜-10（クエスト失敗と同等）
         let repPenalty = 0;

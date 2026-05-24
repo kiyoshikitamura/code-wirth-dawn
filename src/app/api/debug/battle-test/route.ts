@@ -12,6 +12,13 @@ export const dynamic = 'force-dynamic';
  *   3. enemies テーブルから直接ランダム取得（フォールバック）
  */
 export async function GET(req: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         const { searchParams } = new URL(req.url);
         const slug = searchParams.get('slug');

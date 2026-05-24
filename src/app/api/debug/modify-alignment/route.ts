@@ -6,6 +6,13 @@ export const dynamic = 'force-dynamic';
 // 属性値（秩序/混沌/正義/悪意）を変更するデバッグ用API
 // world_states テーブルの対応カラムを直接更新する
 export async function POST(req: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         const { userId, type, amount = 10 } = await req.json();
 
