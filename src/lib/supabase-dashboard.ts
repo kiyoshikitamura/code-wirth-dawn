@@ -9,23 +9,40 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const dashboardUrl = process.env.DASHBOARD_SUPABASE_URL
-    || process.env.NEXT_PUBLIC_SUPABASE_URL
-    || '';
+let _client: SupabaseClient | null = null;
 
-const dashboardKey = process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY
-    || process.env.SUPABASE_SERVICE_ROLE_KEY
-    || '';
+/**
+ * ダッシュボード用 Supabase クライアントを取得（遅延初期化）
+ * リクエスト時に環境変数を読み取るため、モジュールキャッシュの問題を回避
+ */
+export function getDashboardSupabase(): SupabaseClient | null {
+    if (_client) return _client;
 
-export const supabaseDashboard: SupabaseClient | null =
-    (dashboardUrl && dashboardKey)
-        ? createClient(dashboardUrl, dashboardKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
-        })
-        : null;
+    const url = process.env.DASHBOARD_SUPABASE_URL
+        || process.env.NEXT_PUBLIC_SUPABASE_URL
+        || '';
+
+    const key = process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY
+        || process.env.SUPABASE_SERVICE_ROLE_KEY
+        || '';
+
+    console.log('[Dashboard] Initializing Supabase client:', {
+        url: url ? url.substring(0, 30) + '...' : '(empty)',
+        keyPrefix: key ? key.substring(0, 20) + '...' : '(empty)',
+        isDedicatedKey: !!process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY,
+    });
+
+    if (!url || !key) return null;
+
+    _client = createClient(url, key, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
+
+    return _client;
+}
 
 /**
  * ダッシュボードが本番DBに接続しているかどうかを返す

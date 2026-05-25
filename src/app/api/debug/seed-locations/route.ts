@@ -17,6 +17,13 @@ export const dynamic = 'force-dynamic';
  *   - slug=loc_regalia: 特定slugのみ同期
  */
 export async function GET(request: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     const url = new URL(request.url);
     const secret = url.searchParams.get('secret');
     const dryRun = url.searchParams.get('dry_run') === 'true';

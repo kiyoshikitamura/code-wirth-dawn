@@ -7,6 +7,13 @@ import { parse } from 'csv-parse/sync';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     const url = new URL(request.url);
     const secret = url.searchParams.get('secret');
 

@@ -44,6 +44,13 @@ function parseCsvRows(csvText: string): string[][] {
 }
 
 export async function GET(request: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,

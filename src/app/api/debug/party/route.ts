@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 export async function GET() {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         const { data, error } = await supabaseService.from('npcs').select('id, slug, name, job_class').order('id', { ascending: true });
         if (error) throw error;
@@ -12,6 +19,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         const { userId, npcId } = await req.json();
         if (!userId || !npcId) return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });

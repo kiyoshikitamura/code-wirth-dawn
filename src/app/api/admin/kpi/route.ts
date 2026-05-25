@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseDashboard, isDashboardProduction } from '@/lib/supabase-dashboard';
+import { getDashboardSupabase } from '@/lib/supabase-dashboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,11 +11,10 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (!supabaseDashboard) {
-            return NextResponse.json({ error: 'Dashboard Supabase client not initialized' }, { status: 500 });
+        const supabaseServer = getDashboardSupabase();
+        if (!supabaseServer) {
+            return NextResponse.json({ error: 'Dashboard Supabase client not initialized. Check DASHBOARD_SUPABASE_URL and DASHBOARD_SUPABASE_SERVICE_ROLE_KEY.' }, { status: 500 });
         }
-
-        const supabaseServer = supabaseDashboard;
 
         // 2. 各データのフェッチ
         // ユーザープロフィール

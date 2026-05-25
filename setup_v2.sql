@@ -255,5 +255,6 @@ INSERT INTO scenarios (title, description, client_name, type, rewards, condition
   '闇商人',
   'Delivery',
   '{"gold": 300, "alignment_shift": {"chaos": 10, "evil": 10}, "reputation": -20}'::jsonb,
-  '{}'::jsonb
+  '{}'::jsonb,
+  '[]'::jsonb
 );

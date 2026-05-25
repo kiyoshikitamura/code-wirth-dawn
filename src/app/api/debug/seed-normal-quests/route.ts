@@ -24,6 +24,13 @@ export const dynamic = 'force-dynamic';
  *   - 2026-04-26: 初版作成（7001-7008 汎用クエスト改修）
  */
 export async function GET(request: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     const url = new URL(request.url);
     const secret = url.searchParams.get('secret');
     const dryRun = url.searchParams.get('dry_run') === 'true';

@@ -187,15 +187,15 @@ function InnPageInner() {
                     <HistoryArchiveModal userId={userProfile.id} onClose={() => setActiveModal(null)} />
                 )}
 
-                {/* v27.0: デバッグツール（開発環境のみ） */}
-                {process.env.NODE_ENV === 'development' && (
-                    <DebugPanel
-                        userProfile={userProfile}
-                        worldState={worldState}
-                        router={router}
-                        fetchRep={fetchRep}
-                    />
-                )}
+                {/* v27.0: デバッグツール
+                    - 本番: デバッグユーザー（adminKey所持）のみ表示
+                    - 開発/ローカル: 常に全ユーザーに表示 */}
+                <DebugPanelGate
+                    userProfile={userProfile}
+                    worldState={worldState}
+                    router={router}
+                    fetchRep={fetchRep}
+                />
             </div>
 
             {/* TavernModal - outside game container */}
@@ -217,7 +217,30 @@ function InnPageInner() {
     );
 }
 
-// ── デバッグパネル（開発環境のみ） ──
+// ── デバッグパネル表示ゲート ──
+// 本番: adminKey を localStorage に持つデバッグユーザーのみ表示
+// 開発/ローカル: 常に全ユーザーに表示
+function DebugPanelGate({ userProfile, worldState, router, fetchRep }: { userProfile: any; worldState: any; router: any; fetchRep: () => Promise<void> }) {
+    const isProduction = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+
+    const [hasAdminKey, setHasAdminKey] = useState(false);
+    React.useEffect(() => {
+        if (!isProduction) return;
+        const key = localStorage.getItem('adminKey');
+        setHasAdminKey(!!key && key.length >= 16);
+    }, [isProduction]);
+
+    // 開発/ローカル → 常に表示
+    if (!isProduction) {
+        return <DebugPanel userProfile={userProfile} worldState={worldState} router={router} fetchRep={fetchRep} />;
+    }
+
+    // 本番 → adminKey が無ければ非表示
+    if (!hasAdminKey) return null;
+    return <DebugPanel userProfile={userProfile} worldState={worldState} router={router} fetchRep={fetchRep} />;
+}
+
+// ── デバッグパネル（UI本体） ──
 function DebugPanel({ userProfile, worldState, router, fetchRep }: { userProfile: any; worldState: any; router: any; fetchRep: () => Promise<void> }) {
     return (
         <div className="flex flex-col items-center gap-4 py-8">

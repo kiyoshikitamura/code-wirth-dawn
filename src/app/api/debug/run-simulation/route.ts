@@ -4,6 +4,13 @@ import { updateWorldSimulation } from '@/lib/world-simulation';
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         console.log('[デバッグ] 世界変換シミュレーションを手動実行中...');
         const result = await updateWorldSimulation();

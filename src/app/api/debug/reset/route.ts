@@ -7,6 +7,13 @@ import { UI_RULES } from '@/constants/game_rules';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         // Use Admin client if available
         let client = hasServiceKey && supabaseAdmin ? supabaseAdmin : supabase;

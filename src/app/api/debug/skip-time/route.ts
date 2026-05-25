@@ -3,6 +3,13 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
+    if (process.env.VERCEL_ENV === 'production') {
+        return NextResponse.json(
+            { error: 'Debug routes are not available in production' },
+            { status: 403 }
+        );
+    }
+
     try {
         // 1. Get current user (mock session for now, or just get from request body if passed)
         // But debug tools usually rely on client context. Here we assume single player or simple auth.
