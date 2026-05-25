@@ -70,3 +70,42 @@ Project Skill: Wirth-Dawn Architect Team
 3. シナリオドラマティストがキャラクターの対話を肉付け。
 4. シナリオメカニックがゲームとしての遊び（スキルや戦闘）を統合。
 5. 最後に全エージェントで矛盾がないかクロスチェックを行う。
+
+# 5. 環境分離構成 (Environment Separation)
+
+## 環境一覧
+
+| 環境 | ブランチ | Vercel | Supabase | Stripe |
+|------|---------|--------|----------|--------|
+| 本番 (Production) | `main` | Production Deploy | `zvoroixjuypnintkpmux` | Live Mode (`sk_live_`) |
+| 開発 (Preview) | `develop`, `feature/*` | Preview Deploy | `drbqnpzxgcbicpritcpi` | Test Mode (`sk_test_`) |
+
+## Git ブランチ戦略
+
+- `main`: 本番コード。リリース準備完了のコードのみ
+- `develop`: 日常の開発ブランチ。Preview Deploy で動作確認
+- `feature/*`: 大きな機能開発時に `develop` から分岐（任意）
+- `hotfix/*`: 本番の緊急修正。`main` に直接マージ → `develop` にも反映
+
+## 開発→リリースフロー
+
+```
+develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → main にマージ → Production Deploy
+```
+
+## 環境別制限
+
+- `/api/debug/*` 全28ルート: `VERCEL_ENV === 'production'` で 403 を返す（本番で無効化）
+- `/api/admin/kpi`: 本番環境のみ（開発環境で 403）— ダッシュボードは本番データのみ集計
+- `/api/admin/reset`: 本番環境のみ（開発環境で 403）
+- Google Analytics: 開発環境では `NEXT_PUBLIC_GA_ID` を空にして無効化
+
+## Supabase CLI 操作時の注意
+
+- `supabase link` で接続先プロジェクトを切り替える。**作業後は必ず本番にリンクを戻す**
+- マイグレーション適用フローは `docs/migration-guide.md` を参照
+- Supabase CLI は `npx supabase` で実行（グローバルインストールではなく npx 経由）
+
+## CI/CD
+
+- GitHub Actions (`.github/workflows/ci.yml`): `develop`/`main` への push・PR で lint + build を自動実行
