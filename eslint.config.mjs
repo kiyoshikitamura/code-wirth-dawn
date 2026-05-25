@@ -9,11 +9,14 @@ const eslintConfig = defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
-      "react/react-in-jsx-scope": "off",
-      "jsx-a11y/alt-text": "warn",
-      "react/display-name": "warn",
-      "prefer-const": "warn",
       "@typescript-eslint/no-require-imports": "warn",
+      "react/react-in-jsx-scope": "off",
+      "react/display-name": "warn",
+      "react/no-unescaped-entities": "warn",
+      "react-hooks/rules-of-hooks": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "jsx-a11y/alt-text": "warn",
+      "prefer-const": "warn",
     },
   },
   // Override default ignores of eslint-config-next.
