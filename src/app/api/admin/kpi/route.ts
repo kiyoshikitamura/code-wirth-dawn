@@ -1,28 +1,21 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-admin';
+import { supabaseDashboard, isDashboardProduction } from '@/lib/supabase-dashboard';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        // 0. 環境チェック — 開発環境ではダッシュボードデータを返さない
-        const vercelEnv = process.env.VERCEL_ENV || 'development';
-        if (vercelEnv !== 'production') {
-            return NextResponse.json(
-                { error: 'ダッシュボードは本番環境でのみ利用可能です', environment: vercelEnv },
-                { status: 403 }
-            );
-        }
-
         // 1. 認証チェック
         const adminKey = req.headers.get('x-admin-key');
         if (!adminKey || adminKey !== process.env.ADMIN_SECRET_KEY) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (!supabaseServer) {
-            return NextResponse.json({ error: 'Supabase admin client not initialized' }, { status: 500 });
+        if (!supabaseDashboard) {
+            return NextResponse.json({ error: 'Dashboard Supabase client not initialized' }, { status: 500 });
         }
+
+        const supabaseServer = supabaseDashboard;
 
         // 2. 各データのフェッチ
         // ユーザープロフィール

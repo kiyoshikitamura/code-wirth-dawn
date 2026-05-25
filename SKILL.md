@@ -96,9 +96,10 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 ## 環境別制限
 
 - `/api/debug/*` 全28ルート: `VERCEL_ENV === 'production'` で 403 を返す（本番で無効化）
-- `/api/admin/kpi`: 本番環境のみ（開発環境で 403）— ダッシュボードは本番データのみ集計
+- `/api/admin/kpi`: `DASHBOARD_SUPABASE_URL` 経由で常に本番DBのデータを集計（環境問わず利用可能）
 - `/api/admin/reset`: 本番環境のみ（開発環境で 403）
 - Google Analytics: 開発環境では `NEXT_PUBLIC_GA_ID` を空にして無効化
+- ダッシュボード専用 Supabase クライアント: `src/lib/supabase-dashboard.ts` — `DASHBOARD_SUPABASE_URL` 設定時は本番DB、未設定時はデフォルトDBに接続
 
 ## Supabase CLI 操作時の注意
 
