@@ -99,13 +99,34 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - `/api/admin/kpi`: `DASHBOARD_SUPABASE_URL` 経由で常に本番DBのデータを集計（環境問わず利用可能）
 - `/api/admin/reset`: 本番環境のみ（開発環境で 403）
 - Google Analytics: 開発環境では `NEXT_PUBLIC_GA_ID` を空にして無効化
-- ダッシュボード専用 Supabase クライアント: `src/lib/supabase-dashboard.ts` — `DASHBOARD_SUPABASE_URL` 設定時は本番DB、未設定時はデフォルトDBに接続
+- ダッシュボード専用 Supabase クライアント: `src/lib/supabase-dashboard.ts` — 遅延初期化（`getDashboardSupabase()`）で環境変数をリクエスト時に読み取る
+
+## デバッグメニュー表示ルール
+
+- `src/app/inn/page.tsx` の `DebugPanelGate` コンポーネントで制御
+- **本番** (`NEXT_PUBLIC_VERCEL_ENV === 'production'`): `localStorage` に `adminKey`（16文字以上）を持つデバッグユーザーのみ表示
+- **開発/ローカル**: 全ユーザーに常時表示
+
+## 管理ダッシュボード (`/admin/dashboard`)
+
+- オンラインアクセス: `https://www.code-wirth-dawn.com/admin/login` から `ADMIN_SECRET_KEY` で認証
+- 本番 Deploy: デフォルト Supabase が本番を指すため `DASHBOARD_*` 変数は不要
+- Preview Deploy: `DASHBOARD_SUPABASE_URL` + `DASHBOARD_SUPABASE_SERVICE_ROLE_KEY` で本番データを参照
 
 ## Supabase CLI 操作時の注意
 
 - `supabase link` で接続先プロジェクトを切り替える。**作業後は必ず本番にリンクを戻す**
+- ⚠️ **`supabase link` 中に `DROP SCHEMA` 等の破壊的操作を絶対に行わない** — 誤って本番DBのスキーマを消失するリスクがある
 - マイグレーション適用フローは `docs/migration-guide.md` を参照
 - Supabase CLI は `npx supabase` で実行（グローバルインストールではなく npx 経由）
+
+## DB スキーマ管理の教訓
+
+- **PostgREST スキーマキャッシュ**: テーブル作成/変更後は `NOTIFY pgrst, 'reload schema';` を実行する。キャッシュが古いと API が 404 を返す
+- **GRANT の必須性**: テーブル作成後は `GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;` を実行。GRANT が無いと PostgREST がテーブルを認識しない
+- **`setup_v2.sql` はベーステーブルのみ**: 全カラムを含んでいない。マイグレーションで追加されるカラムが多数あるため、新規DBには `本番スキーマダンプ → 適用` のアプローチが確実
+- **本番DBのテーブル数**: 45テーブル（コードが参照する全テーブルを含む）
+- **RPC 関数**: `increment_gold` のみ（`src/app/api/` から呼び出し）
 
 ## CI/CD
 
