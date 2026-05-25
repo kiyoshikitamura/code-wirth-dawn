@@ -9,6 +9,11 @@ const eslintConfig = defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
+      "react/react-in-jsx-scope": "off",
+      "jsx-a11y/alt-text": "warn",
+      "react/display-name": "warn",
+      "prefer-const": "warn",
+      "@typescript-eslint/no-require-imports": "warn",
     },
   },
   // Override default ignores of eslint-config-next.
