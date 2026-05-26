@@ -140,3 +140,26 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **`eslint-config-next` 内部のプラグインルール**（`react-compiler/react-compiler`, `react-hooks/rules-of-hooks`）は外部の rules オブジェクトからオーバーライドできない。プラグインと同じ config オブジェクト内でしか上書きが効かない
 - **既存コードに `any` が多数ある場合**: `@typescript-eslint/no-explicit-any` を `"warn"` にして段階的に修正する
 - **CI では `continue-on-error: true`** を設定し、ビルド成功を最終判定とする（lint 警告は開発時に対応）
+
+## DB 接続の教訓
+
+- **直接DB接続 (`db.*.supabase.co:5432`) はIPv6のみ**: このネットワーク環境では `getaddrinfo ENOTFOUND` エラーが出る。Node.js の `dns.setDefaultResultOrder('ipv4first')` や `--dns-result-order=verbatim` でも解決しない（IPv4 Aレコード自体が存在しない）
+- **Supabase Pooler (`aws-0-ap-northeast-1.pooler.supabase.com`) も利用不可**: `(ENOTFOUND) tenant/user not found` エラー。開発プロジェクトではPoolerが有効化されていない可能性
+- **マイグレーション実行手順**: ネットワーク制約により、`Supabase Dashboard → SQL Editor` での手動実行が最も確実。ファイルをクリップボードにコピーして貼り付ける方式を採用
+- **DB URL 情報**: 
+  - 本番: `postgresql://postgres:[PASS]@db.zvoroixjuypnintkpmux.supabase.co:5432/postgres`
+  - 開発: `postgresql://postgres:[PASS]@db.drbqnpzxgcbicpritcpi.supabase.co:5432/postgres`
+
+## Supabase SQL Editor の教訓
+
+- **Partial Index (`WHERE` 句付き `CREATE INDEX`) がパースエラーになる場合がある**: `WHERE status = 'published'` のような構文で `syntax error at or near "published"` が発生。原因は SQL Editor のパーサーのクォート処理の互換性問題
+- **回避策**: Partial Index を使わず、複合インデックス `(status, column)` に変更する。例: `CREATE INDEX idx ON tbl(status, published_at DESC)` — パフォーマンスは若干劣るが互換性が高い
+- **クリップボードコピー時**: `[System.IO.File]::ReadAllText(path, [System.Text.Encoding]::UTF8) | Set-Clipboard` でUTF-8を明示してコピーする。PowerShell の `Get-Content | Set-Clipboard` ではエンコーディングが変わる場合がある
+
+## UGC v2 アーキテクチャの教訓
+
+- **完全テーブル分離**: `ugc_scenarios`, `ugc_enemies`, `ugc_items`, `ugc_cards`, `ugc_npcs`, `ugc_rate_limits` の6テーブル。公式テーブル (`scenarios`, `enemies` 等) とは JOIN しない設計
+- **UGCクエスト識別**: クエスト開始/完了APIで公式 `scenarios` → UGC `ugc_scenarios` の順にフォールバック検索。`is_ugc_v2` フラグで識別
+- **UGCエネミー解決**: `ScenarioEngine` の battle ノードで `enemyData` (インライン定義) を JSON 文字列化 → `QuestPage` の `startBattle` で JSON パースして `Enemy` オブジェクトを直接構築（DB参照なし）
+- **RPC関数**: `increment_ugc_play_count`, `increment_ugc_clear_count` — `SECURITY DEFINER` でRLSをバイパスし、APIサーバーからService Role Keyで呼び出す
+- **コレクション機能への影響**: UGCテーブルは完全分離のため、既存のコレクション機能は改修不要
