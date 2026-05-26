@@ -15,6 +15,7 @@ import {
     processReputationChange,
     persistLootPool,
 } from '@/services/questCompleteHelpers';
+import { UGC_REWARD_LIMITS } from '@/lib/ugc/ugcConfig';
 
 // Initialize Supabase Client safely (Service Role)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
@@ -59,12 +60,26 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §1. データ取得 + バリデーション
         // ═══════════════════════════════════════
-        const { data: quest, error: qError } = await supabase
-            .from('scenarios').select('*').eq('id', quest_id).single();
+        // UGC v2: ugc_scenariosから先に検索し、見つからなければ公式scenariosから取得
+        let quest: any = null;
+        let isUgcV2 = false;
 
-        console.log(`[QuestComplete] ID: ${quest_id}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
+        const { data: ugcQuest } = await supabase
+            .from('ugc_scenarios').select('*').eq('id', quest_id).single();
 
-        if (qError || !quest) return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+        if (ugcQuest) {
+            quest = ugcQuest;
+            isUgcV2 = true;
+            // UGCクエストのplay_count/clear_countインクリメント
+            await supabase.rpc('increment_ugc_play_count', { p_scenario_id: quest_id });
+        } else {
+            const { data: officialQuest, error: qError } = await supabase
+                .from('scenarios').select('*').eq('id', quest_id).single();
+            if (qError || !officialQuest) return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+            quest = officialQuest;
+        }
+
+        console.log(`[QuestComplete] ID: ${quest_id}, UGCv2: ${isUgcV2}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
 
         const { data: user, error: uError } = await supabase
             .from('user_profiles').select('*').eq('id', user_id).single();
@@ -188,10 +203,19 @@ export async function POST(req: Request) {
         // §7. Gold + アイテム/スキル付与
         // ═══════════════════════════════════════
         const effectiveRewards = (result === 'success' && node_rewards) ? node_rewards : quest.rewards;
-        if (result === 'success' && effectiveRewards?.gold) {
+
+        // UGC v2: 固定報酬上書き
+        if (isUgcV2 && result === 'success') {
+            const ugcGold = UGC_REWARD_LIMITS.fixed_gold;
+            const { error: goldError } = await supabase
+                .rpc('increment_gold', { p_user_id: user_id, p_amount: ugcGold });
+            if (goldError) console.error('Failed to increment UGC gold:', goldError);
+            // clear_countインクリメント
+            await supabase.rpc('increment_ugc_clear_count', { p_scenario_id: quest_id });
+        } else if (result === 'success' && effectiveRewards?.gold) {
             const { error: goldError } = await supabase
                 .rpc('increment_gold', { p_user_id: user_id, p_amount: effectiveRewards.gold });
-            if (goldError) console.error("Failed to increment gold via RPC:", goldError);
+            if (goldError) console.error('Failed to increment gold via RPC:', goldError);
         }
 
         if (result === 'success') {
@@ -316,7 +340,7 @@ export async function POST(req: Request) {
         }
 
         const changes = {
-            gold_gained: (effectiveRewards?.gold || 0),
+            gold_gained: isUgcV2 ? UGC_REWARD_LIMITS.fixed_gold : (effectiveRewards?.gold || 0),
             old_age: user.age,
             new_age: updates.age,
             aged_up: (newAge - (user.age || 18)) > 0,

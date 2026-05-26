@@ -76,6 +76,7 @@ export interface Enemy {
   level: number;
   hp: number;
   maxHp: number;
+  atk?: number; // v21: UGC enemy attack power
   def?: number; // Added v2.2
   image?: string;
   slug?: string; // v2.1

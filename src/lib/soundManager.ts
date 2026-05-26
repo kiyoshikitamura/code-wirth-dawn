@@ -196,7 +196,9 @@ class SoundManager {
         }
 
         const src = BGM_FILES[key];
-        if (!src) {
+        // UGC v2: ugc:// プロトコルや絶対URLは直接使用
+        const resolvedSrc = src || (key.startsWith('http') ? key : null);
+        if (!resolvedSrc) {
             console.warn(`[SoundManager] Unknown BGM key: ${key}`);
             return;
         }
@@ -225,7 +227,7 @@ class SoundManager {
         }
 
         const audio = this.bgmAudio;
-        audio.src = src;
+        audio.src = resolvedSrc;
         audio.volume = this.BGM_VOLUME; // 即時フルボリューム（フェードインの競合を回避）
 
         try {
@@ -309,7 +311,8 @@ class SoundManager {
         if (!this.pendingBgmKey) return;
         const key = this.pendingBgmKey;
         const src = BGM_FILES[key];
-        if (!src) return;
+        const resolvedSrc = src || (key.startsWith('http') ? key : null);
+        if (!resolvedSrc) return;
 
         this.pendingBgmKey = null;
         this.currentBgmKey = key;
@@ -322,7 +325,7 @@ class SoundManager {
         }
 
         const audio = this.bgmAudio;
-        audio.src = src;
+        audio.src = resolvedSrc;
         audio.volume = this.BGM_VOLUME;
 
         // iOS Safari: play()は同期コールスタック内で呼ぶ（awaitしない）
@@ -341,7 +344,9 @@ class SoundManager {
         await this.resume();
 
         const src = SE_FILES[key];
-        if (!src) {
+        // UGC v2: 絶対URLは直接使用
+        const resolvedSrc = src || (key.startsWith('http') ? key : null);
+        if (!resolvedSrc) {
             console.warn(`[SoundManager] Unknown SE key: ${key}`);
             return;
         }
@@ -349,9 +354,9 @@ class SoundManager {
         try {
             let buffer = this.seBufferCache.get(key);
             if (!buffer) {
-                const response = await fetch(src);
+                const response = await fetch(resolvedSrc);
                 if (!response.ok) {
-                    console.warn(`[SoundManager] Failed to fetch SE: ${src}`);
+                    console.warn(`[SoundManager] Failed to fetch SE: ${resolvedSrc}`);
                     return;
                 }
                 const arrayBuffer = await response.arrayBuffer();

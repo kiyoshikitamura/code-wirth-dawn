@@ -1,0 +1,147 @@
+{
+  "meta": {
+    "format_version": "2.0",
+    "template_type": "quest",
+    "title": "【テンプレート】討伐クエスト（上級）",
+    "author": "公式テンプレート",
+    "description": "複数の戦闘とNPCパラメータを含む上級テンプレート。カスタムエネミーやBGMの使い方も解説しています。",
+    "difficulty": 3,
+    "rec_level": 10,
+    "scenario_type": "Subjugation",
+    "tp_budget": 60,
+    "np_budget": 30,
+    "pb_budget": 100
+  },
+  "scenario": {
+    "title": "魔獣の森 討伐令",
+    "short_description": "森に巣食う魔獣を倒し、街の平和を取り戻せ。",
+    "client_name": "ギルドマスター",
+    "difficulty": 3,
+    "rec_level": 10,
+    "scenario_type": "Subjugation",
+    "time_cost": 3,
+    "days_success": 3,
+    "days_failure": 2,
+    "rewards": {
+      "gold": 50,
+      "exp": 30,
+      "reputation": 5
+    },
+    "flow_nodes": [
+      {
+        "id": "start",
+        "type": "text",
+        "text": "「冒険者よ、頼みがある。\n最近、森に凶暴な魔獣が出没しているのだ。\n住民は恐れて外に出られない状況だ。どうか、退治してくれないか？」",
+        "bg_key": "bg_guild",
+        "bgm_key": "bgm_quest_calm",
+        "speaker_name": "ギルドマスター",
+        "speaker_image_url": "/images/npcs/guildmaster.png",
+        "choices": [
+          { "label": "任せてくれ", "next": "travel_forest" },
+          { "label": "準備が必要だ（断る）", "next": "end_failure" }
+        ]
+      },
+      {
+        "id": "travel_forest",
+        "type": "text",
+        "text": "森への道を進む。木々が深くなるにつれ、不穏な気配が漂い始めた。\n遠くから唸り声が聞こえる…",
+        "bg_key": "bg_forest_day",
+        "bgm_key": "bgm_quest_tense",
+        "choices": [
+          { "label": "慎重に進む", "next": "battle_wolf" },
+          { "label": "迂回路を探す", "next": "scene_detour" }
+        ]
+      },
+      {
+        "id": "scene_detour",
+        "type": "text",
+        "text": "迂回路を通ったが、結局森の奥で魔獣と遭遇してしまった。\n逃げ場はない！",
+        "bg_key": "bg_forest_night",
+        "choices": [
+          { "label": "戦う！", "next": "battle_wolf" }
+        ]
+      },
+      {
+        "id": "battle_wolf",
+        "type": "battle",
+        "text": "森の魔獣が襲いかかってきた！",
+        "enemy_group_id": "wolf_pack",
+        "bg_key": "bg_forest_day",
+        "bgm_key": "bgm_battle",
+        "battle_success_next": "scene_deep_forest",
+        "choices": [
+          { "label": "戦う", "next": "scene_deep_forest" }
+        ]
+      },
+      {
+        "id": "scene_deep_forest",
+        "type": "text",
+        "text": "魔獣を倒し、さらに森の奥へ進む。\nそこには巨大な巣穴があった。中からボスの気配がする…",
+        "bg_key": "bg_cave",
+        "bgm_key": "bgm_quest_crisis",
+        "choices": [
+          { "label": "巣穴に突入する", "next": "battle_boss" },
+          { "label": "ここで撤退する", "next": "end_retreat" }
+        ]
+      },
+      {
+        "id": "battle_boss",
+        "type": "battle",
+        "text": "巣穴の主が現れた！ 凶暴な魔獣の親玉だ！",
+        "enemy_group_id": "forest_boss",
+        "bg_key": "bg_boss_altar",
+        "bgm_key": "bgm_battle_boss",
+        "battle_success_next": "end_success",
+        "choices": [
+          { "label": "決戦！", "next": "end_success" }
+        ]
+      },
+      {
+        "id": "end_retreat",
+        "type": "end",
+        "result": "failure",
+        "text": "撤退を選んだ。森の魔獣の脅威は去らなかった…\n次はもっと準備をして挑もう。"
+      },
+      {
+        "id": "end_success",
+        "type": "end",
+        "result": "success",
+        "text": "見事、森の魔獣を討伐した！\nギルドマスターは満足げに報酬を差し出した。\n「さすがだ、冒険者よ。街の人々も喜ぶだろう！」"
+      },
+      {
+        "id": "end_failure",
+        "type": "end",
+        "result": "failure",
+        "text": "依頼を断った。\nまたの機会にギルドを訪れよう。"
+      }
+    ]
+  },
+  "enemies": [
+    {
+      "slug": "forest_wolf",
+      "name": "森の狼",
+      "hp": 120,
+      "atk": 15,
+      "def": 5,
+      "level": 8,
+      "action_pattern": [
+        { "skill": "attack", "prob": 0.7 },
+        { "skill": "aoe_attack", "prob": 0.3, "condition": "hp_below_50" }
+      ]
+    },
+    {
+      "slug": "forest_boss",
+      "name": "森の魔獣キング",
+      "hp": 300,
+      "atk": 25,
+      "def": 12,
+      "level": 12,
+      "vit_damage": 1,
+      "action_pattern": [
+        { "skill": "attack", "prob": 0.5 },
+        { "skill": "aoe_attack", "prob": 0.3 },
+        { "skill": "buff_self", "prob": 0.2, "condition": "hp_below_30" }
+      ]
+    }
+  ]
+}

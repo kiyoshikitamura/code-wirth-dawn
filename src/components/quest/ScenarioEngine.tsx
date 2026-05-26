@@ -458,7 +458,10 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                             || currentNode.choices?.[0]?.next
                                             || currentNode.next
                                             || 'end_success';
-                                        const enemyId = currentNode.enemy_group_id || 'slime';
+                                        // UGC v2: インラインenemyData → JSON文字列化してQuestPageに渡す
+                                        const enemyId = currentNode.enemyData
+                                            ? JSON.stringify(currentNode.enemyData)
+                                            : (currentNode.enemy_group_id || 'slime');
                                         onBattleStart(enemyId, successId, currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key, currentNode.bgm_key || currentNode.bgm || currentNode.params?.bgm);
                                     }
                                 }}

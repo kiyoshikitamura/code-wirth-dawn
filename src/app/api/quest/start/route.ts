@@ -46,15 +46,29 @@ export async function POST(req: Request) {
             }, { status: 409 });
         }
 
-        // Verify quest exists
-        const { data: quest, error: qError } = await supabase
+        // Verify quest exists (公式 → UGC v2 フォールバック)
+        let quest: any = null;
+        const { data: officialQuest, error: qError } = await supabase
             .from('scenarios')
             .select('id, title, slug, quest_type')
             .eq('id', quest_id)
             .single();
 
-        if (qError || !quest) {
-            return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+        if (officialQuest) {
+            quest = officialQuest;
+        } else {
+            // UGC v2: ugc_scenarios から検索
+            const { data: ugcQuest, error: ugcErr } = await supabase
+                .from('ugc_scenarios')
+                .select('id, title, slug, scenario_type')
+                .eq('id', quest_id)
+                .eq('status', 'published')
+                .single();
+
+            if (ugcErr || !ugcQuest) {
+                return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+            }
+            quest = { ...ugcQuest, quest_type: 'ugc' };
         }
 
         // Set quest lock (Spec v3.3 §4.2: Deck Locking)

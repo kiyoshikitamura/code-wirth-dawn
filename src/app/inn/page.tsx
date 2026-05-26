@@ -18,6 +18,7 @@ import GossipModal from '@/components/world/GossipModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import WorkshopModal from '@/components/inn/WorkshopModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
+import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
 import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 import CollectionModal from '@/components/collection/CollectionModal';
@@ -160,6 +161,15 @@ function InnPageInner() {
                         quests={allQuests}
                         loading={loadingQuests}
                         onSelect={(s) => router.push(`/quest/${s.id}`)}
+                    />
+                )}
+
+                {activeModal === 'ugcGuild' && userProfile && (
+                    <UgcQuestBoardPanel
+                        isOpen={true}
+                        onClose={() => setActiveModal(null)}
+                        userLevel={userProfile.level || 1}
+                        onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
                     />
                 )}
 

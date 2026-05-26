@@ -105,5 +105,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
 };
 
 export function getAssetUrl(key: string): string {
+    // UGC v2: 絶対URLはそのまま返す（ugc:// は事前にresolveUgcUrlで解決済み）
+    if (key.startsWith('http')) return key;
     return SCENARIO_ASSETS[key] || SCENARIO_ASSETS['default'];
 }

@@ -124,8 +124,30 @@ export default function QuestPage() {
                     if (data.scenarios && data.scenarios.length > 0) {
                         setScenario(data.scenarios[0]);
                     } else {
-                        console.error("Scenario not found for id:", id, "Response:", data);
-                        // Fallback or error UI
+                        // UGC v2: 公式シナリオに見つからない場合、ugc_scenarios を検索
+                        console.log('[QuestPage] Scenario not found in official DB, trying UGC v2...');
+                        const { data: ugcData, error: ugcErr } = await supabase
+                            .from('ugc_scenarios')
+                            .select('*')
+                            .eq('id', id)
+                            .single();
+
+                        if (ugcData && !ugcErr) {
+                            // UGCシナリオをScenario型に変換
+                            const ugcScenario = {
+                                ...ugcData,
+                                description: ugcData.short_description || '',
+                                is_ugc: true,
+                                is_ugc_v2: true,
+                                // flow_nodes が文字列の場合パース
+                                flow_nodes: typeof ugcData.flow_nodes === 'string'
+                                    ? JSON.parse(ugcData.flow_nodes)
+                                    : ugcData.flow_nodes || [],
+                            };
+                            setScenario(ugcScenario as any);
+                        } else {
+                            console.error("Scenario not found for id:", id);
+                        }
                     }
                 } else {
                     const errData = await res.json().catch(() => ({}));
@@ -260,7 +282,35 @@ export default function QuestPage() {
         try {
         let enemies: Enemy[] = [{ id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 }];
 
-        if (enemyId && enemyId !== 'slime') {
+        // UGC v2: enemyId が JSON オブジェクト（インラインenemyData）の場合
+        let inlineEnemyData: any = null;
+        try {
+            if (enemyId.startsWith('{')) {
+                inlineEnemyData = JSON.parse(enemyId);
+            }
+        } catch { /* not JSON, continue with normal flow */ }
+
+        if (inlineEnemyData) {
+            // UGCインラインエネミー: DB参照なしで直接構築
+            const resolveImg = (url?: string) => {
+                if (!url) return '/images/enemies/custom_enemy.png';
+                if (url.startsWith('http')) return url;
+                return '/images/enemies/custom_enemy.png';
+            };
+            enemies = [{
+                id: `ugc_enemy_${Date.now()}`,
+                name: inlineEnemyData.name || 'カスタムモンスター',
+                hp: inlineEnemyData.hp || 50,
+                maxHp: inlineEnemyData.hp || 50,
+                atk: inlineEnemyData.atk || 0,
+                def: inlineEnemyData.def || 0,
+                level: inlineEnemyData.level || 1,
+                image_url: resolveImg(inlineEnemyData.image_url),
+                status_effects: [],
+                action_pattern: inlineEnemyData.action_pattern || [],
+                vit_damage: inlineEnemyData.vit_damage,
+            }];
+        } else if (enemyId && enemyId !== 'slime') {
             try {
                 // Determine if enemyId is numeric (ID) or string (Slug)
                 const isNumeric = /^\d+$/.test(String(enemyId));
