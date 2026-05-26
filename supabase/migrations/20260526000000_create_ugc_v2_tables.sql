@@ -43,10 +43,8 @@ COMMENT ON TABLE ugc_scenarios IS 'UGC クエストシナリオ（公式 scenari
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_ugc_scenarios_creator ON ugc_scenarios(creator_id);
 CREATE INDEX IF NOT EXISTS idx_ugc_scenarios_status ON ugc_scenarios(status);
-CREATE INDEX IF NOT EXISTS idx_ugc_scenarios_published ON ugc_scenarios(published_at DESC)
-  WHERE status = 'published';
-CREATE INDEX IF NOT EXISTS idx_ugc_scenarios_search ON ugc_scenarios(title)
-  WHERE status = 'published';
+CREATE INDEX IF NOT EXISTS idx_ugc_scenarios_published ON ugc_scenarios(status, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ugc_scenarios_search ON ugc_scenarios(status, title);
 
 -- ─── 2. ugc_enemies ─────────────────────────────────────────────────────────
 
