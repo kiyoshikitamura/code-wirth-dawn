@@ -5,7 +5,6 @@
 'use client';
 
 import React from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
 import { useSoundStore } from '@/store/soundStore';
 
 export default function SoundSettingsPanel() {
@@ -15,8 +14,7 @@ export default function SoundSettingsPanel() {
         <div className="space-y-3">
             {/* BGM Toggle */}
             <div className="flex items-center justify-between">
-                <label className="text-[#a38b6b] text-sm font-bold flex items-center gap-2">
-                    {bgmEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-gray-500" />}
+                <label className="text-[#a38b6b] text-sm font-bold">
                     BGM
                 </label>
                 <button
@@ -36,8 +34,7 @@ export default function SoundSettingsPanel() {
 
             {/* SE Toggle */}
             <div className="flex items-center justify-between">
-                <label className="text-[#a38b6b] text-sm font-bold flex items-center gap-2">
-                    {seEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-gray-500" />}
+                <label className="text-[#a38b6b] text-sm font-bold">
                     SE（効果音）
                 </label>
                 <button

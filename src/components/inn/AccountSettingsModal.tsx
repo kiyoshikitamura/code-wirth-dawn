@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { AlertCircle, CheckCircle2, Camera, Upload, Crown, Zap, LogOut, Volume2, Coins, Pencil, User, Hash, Settings, Link, ChevronDown, ChevronUp, ExternalLink, BookOpen } from 'lucide-react';
+import { Camera, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
@@ -56,6 +56,10 @@ export default function AccountSettingsModal({ onClose }: Props) {
     const [portalLoading, setPortalLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // 内部IDポップアップステート
+    const [showIdPopup, setShowIdPopup] = useState(false);
+    const [idCopied, setIdCopied] = useState(false);
+
     // ユーザー名編集
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState(userProfile?.name || '');
@@ -108,6 +112,13 @@ export default function AccountSettingsModal({ onClose }: Props) {
         setEditName(userProfile?.name || '');
         setIsEditingName(false);
         setNameError('');
+    };
+
+    const handleCopyId = () => {
+        if (!userProfile?.id) return;
+        navigator.clipboard.writeText(userProfile.id);
+        setIdCopied(true);
+        setTimeout(() => setIdCopied(false), 2000);
     };
 
     // ── 共通billing呼び出し（JWT認証付き） v27.0 ──
@@ -298,99 +309,37 @@ export default function AccountSettingsModal({ onClose }: Props) {
                     ✕
                 </button>
 
-                <h2 className="text-2xl font-serif font-bold text-[#e3d5b8] mb-6 flex items-center gap-2 border-b border-[#a38b6b]/40 pb-2">
-                    <Settings className="w-6 h-6" />
+                <h2 className="text-2xl font-serif font-bold text-[#e3d5b8] mb-6 border-b border-[#a38b6b]/40 pb-2">
                     設定
                 </h2>
 
                 {/* ── エラー表示 ── */}
                 {error && (
-                    <div className="bg-red-900/40 border border-red-500 text-red-200 p-3 rounded mb-4 text-sm flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div className="bg-red-900/40 border border-red-500 text-red-200 p-3 rounded mb-4 text-sm">
                         <p>{error}</p>
                     </div>
                 )}
 
-                {/* ══════════════════════════════════════════════
-                    §1  ユーザー名（編集可能）
-                   ══════════════════════════════════════════════ */}
+                {/* ── カテゴリ1：プロフィール ── */}
                 <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        ユーザー名
-                    </h3>
-                    {isEditingName ? (
-                        <div className="space-y-2">
-                            <input
-                                type="text"
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                maxLength={16}
-                                className="w-full bg-[#0d0906] border border-[#a38b6b]/50 text-[#e3d5b8] px-3 py-2 rounded text-sm font-serif focus:border-amber-500 outline-none transition-colors"
-                                placeholder="1〜16文字"
-                                autoFocus
-                            />
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleNameSave}
-                                    disabled={nameLoading || editName.trim().length === 0}
-                                    className="flex-1 py-1.5 text-xs font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors disabled:opacity-40"
-                                >
-                                    {nameLoading ? '保存中...' : '保存'}
-                                </button>
-                                <button
-                                    onClick={handleNameCancel}
-                                    disabled={nameLoading}
-                                    className="flex-1 py-1.5 text-xs font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors"
-                                >
-                                    キャンセル
-                                </button>
-                            </div>
-                            <p className="text-[10px] text-gray-600">※ 名前の変更は週1回まで</p>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-between">
-                            <span className="text-[#e3d5b8] text-lg font-serif italic">
-                                {userProfile?.name || '名もなき旅人'}
-                            </span>
-                            <button
-                                onClick={() => { setEditName(userProfile?.name || ''); setIsEditingName(true); setNameError(''); setNameSuccess(''); }}
-                                className="p-1.5 text-[#a38b6b] hover:text-amber-400 transition-colors"
-                                title="名前を変更"
-                            >
-                                <Pencil className="w-4 h-4" />
-                            </button>
-                        </div>
-                    )}
-                    {nameError && (
-                        <div className="mt-2 text-red-400 text-xs flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" /> {nameError}
-                        </div>
-                    )}
-                    {nameSuccess && (
-                        <div className="mt-2 text-green-400 text-xs flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> {nameSuccess}
-                        </div>
-                    )}
-                </div>
-
-                {/* ══════════════════════════════════════════════
-                    §2  プロフィールアイコン変更
-                   ══════════════════════════════════════════════ */}
-                <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <Camera className="w-4 h-4" />
-                        プロフィールアイコン
-                    </h3>
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#a38b6b]/50 bg-gray-800 flex-shrink-0">
-                            <img
-                                src={userProfile?.avatar_url || UI_RULES.DEFAULT_AVATAR}
-                                alt="Avatar"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="flex-1">
+                        {/* アバター画像＋重ね合わせカメラバッジ */}
+                        <div className="relative w-16 h-16 flex-shrink-0">
+                            <div className="w-full h-full rounded-full overflow-hidden border-2 border-[#a38b6b]/50 bg-gray-800">
+                                <img
+                                    src={userProfile?.avatar_url || UI_RULES.DEFAULT_AVATAR}
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            <label
+                                htmlFor="avatar-upload"
+                                className={`absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#1a120b] border border-[#a38b6b] flex items-center justify-center cursor-pointer transition-all hover:bg-[#a38b6b]/20
+                                    ${avatarUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                title="アバター画像を変更 (JPEG/PNG/WebP・10MB以下)"
+                            >
+                                <Camera className="w-3.5 h-3.5 text-[#a38b6b]" />
+                            </label>
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -398,264 +347,298 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                 className="hidden"
                                 onChange={handleAvatarChange}
                                 id="avatar-upload"
+                                disabled={avatarUploading}
                             />
-                            <label
-                                htmlFor="avatar-upload"
-                                className={`flex items-center justify-center gap-2 w-full py-2 px-4 border text-sm font-bold transition-all cursor-pointer
-                                    ${avatarUploading
-                                        ? 'border-gray-700 text-gray-500 cursor-not-allowed'
-                                        : 'border-[#a38b6b] text-[#a38b6b] hover:bg-[#a38b6b]/10'
-                                    }`}
-                            >
-                                <Upload className="w-4 h-4" />
-                                {avatarUploading ? 'アップロード中...' : '画像を変更'}
-                            </label>
-                            <p className="text-xs text-gray-600 mt-1">JPEG / PNG / WebP・10MB以下</p>
+                        </div>
+
+                        {/* ユーザー名＆ID表示ボタン */}
+                        <div className="flex-1 min-w-0">
+                            {isEditingName ? (
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        maxLength={16}
+                                        className="w-full bg-[#0d0906] border border-[#a38b6b]/50 text-[#e3d5b8] px-2 py-1 rounded text-sm font-serif focus:border-amber-500 outline-none transition-colors"
+                                        placeholder="ユーザー名を入力"
+                                        autoFocus
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleNameSave}
+                                            disabled={nameLoading || editName.trim().length === 0}
+                                            className="flex-1 py-1 text-xs font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors disabled:opacity-40"
+                                        >
+                                            {nameLoading ? '保存中...' : '保存'}
+                                        </button>
+                                        <button
+                                            onClick={handleNameCancel}
+                                            disabled={nameLoading}
+                                            className="flex-1 py-1 text-xs font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                                        >
+                                            キャンセル
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-600">名前の変更は週1回まで可能です</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[#e3d5b8] text-lg font-serif italic truncate max-w-[140px]">
+                                            {userProfile?.name || '名もなき旅人'}
+                                        </span>
+                                        <button
+                                            onClick={() => { setEditName(userProfile?.name || ''); setIsEditingName(true); setNameError(''); setNameSuccess(''); }}
+                                            className="p-1 text-[#a38b6b] hover:text-amber-400 transition-colors"
+                                            title="名前を変更"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                    <div className="mt-1">
+                                        <button
+                                            onClick={() => setShowIdPopup(true)}
+                                            className="text-[10px] text-[#a38b6b] hover:text-amber-400 transition-colors border border-[#a38b6b]/30 px-2 py-0.5 rounded bg-black/20"
+                                        >
+                                            内部IDを表示
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
+
                     {avatarError && (
-                        <div className="mt-2 text-red-400 text-xs flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" /> {avatarError}
+                        <div className="mt-2 text-red-400 text-xs">
+                            {avatarError}
                         </div>
                     )}
                     {avatarSuccess && (
-                        <div className="mt-2 text-green-400 text-xs flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> {avatarSuccess}
+                        <div className="mt-2 text-green-400 text-xs">
+                            {avatarSuccess}
+                        </div>
+                    )}
+                    {nameError && (
+                        <div className="mt-2 text-red-400 text-xs">
+                            {nameError}
+                        </div>
+                    )}
+                    {nameSuccess && (
+                        <div className="mt-2 text-green-400 text-xs">
+                            {nameSuccess}
                         </div>
                     )}
                 </div>
 
-                {/* ══════════════════════════════════════════════
-                    §3  登録プラン表示 (v27.0: 詳細展開 + ポータルリンク)
-                   ══════════════════════════════════════════════ */}
+                {/* ── カテゴリ2：プレイガイド ── */}
                 <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <Crown className="w-4 h-4" />
-                        プラン
-                    </h3>
-                    <div className="flex items-center justify-between">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 border rounded text-sm font-bold ${TIER_COLORS[currentTier]}`}>
-                            {currentTier === 'premium' && <Crown className="w-3.5 h-3.5" />}
-                            {currentTier === 'basic' && <Zap className="w-3.5 h-3.5" />}
-                            {TIER_LABELS[currentTier]}
-                        </div>
-                        <button
-                            onClick={() => setShowPlanDetails(!showPlanDetails)}
-                            className="text-[10px] text-[#a38b6b] hover:text-amber-400 transition-colors flex items-center gap-1"
-                        >
-                            {showPlanDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                            {showPlanDetails ? '閉じる' : '詳細を見る'}
-                        </button>
-                    </div>
-
-                    {showPlanDetails && (
-                        <div className="mt-3 bg-black/30 border border-slate-800 rounded p-3 text-xs space-y-1.5 animate-in slide-in-from-top-2 duration-150">
-                            {currentTier === 'free' && (
-                                <>
-                                    <p className="text-slate-400">キャラクタースロット: <span className="text-slate-200">1枠</span></p>
-                                    <p className="text-slate-400">英霊登録: <span className="text-red-400">不可</span></p>
-                                    <p className="text-slate-400">Weeklyボーナス: <span className="text-red-400">なし</span></p>
-                                </>
-                            )}
-                            {currentTier === 'basic' && (
-                                <>
-                                    <p className="text-slate-400">月額: <span className="text-slate-200">880円（税込）</span></p>
-                                    <p className="text-slate-400">キャラクタースロット: <span className="text-slate-200">3枠</span></p>
-                                    <p className="text-slate-400">英霊登録: <span className="text-slate-200">最大3体 (ロイヤリティ 25%)</span></p>
-                                    <p className="text-slate-400">Weeklyボーナス: <span className="text-blue-300">2,000G/週</span></p>
-                                </>
-                            )}
-                            {currentTier === 'premium' && (
-                                <>
-                                    <p className="text-slate-400">月額: <span className="text-slate-200">2,200円（税込）</span></p>
-                                    <p className="text-slate-400">キャラクタースロット: <span className="text-slate-200">5枠</span></p>
-                                    <p className="text-slate-400">英霊登録: <span className="text-slate-200">最大10体 (ロイヤリティ 35%)</span></p>
-                                    <p className="text-slate-400">Weeklyボーナス: <span className="text-yellow-300">5,000G/週</span></p>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Stripeカスタマーポータル (有料プランのみ) */}
-                    {currentTier !== 'free' && (
-                        <button
-                            onClick={handleOpenPortal}
-                            disabled={portalLoading}
-                            className="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-bold text-slate-400 border border-slate-700 rounded hover:text-amber-400 hover:border-[#a38b6b] transition-colors disabled:opacity-40"
-                        >
-                            <ExternalLink className="w-3 h-3" />
-                            {portalLoading ? '読み込み中...' : 'プラン管理・解約（Stripe）'}
-                        </button>
-                    )}
-                </div>
-
-                {/* ══════════════════════════════════════════════
-                    §4  内部ID（お問い合わせ用）
-                   ══════════════════════════════════════════════ */}
-                <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <Hash className="w-4 h-4" />
-                        内部ID
-                    </h3>
-                    <span className="text-xs text-gray-500 font-mono break-all bg-black/50 p-2 rounded block">
-                        {userProfile?.id || 'Unknown'}
-                    </span>
-                    <p className="text-[10px] text-gray-600 mt-1">※ お問い合わせ時にこのIDをお伝えください</p>
-                </div>
-
-                {/* ══════════════════════════════════════════════
-                    §5  BGM / SE 音量変更
-                   ══════════════════════════════════════════════ */}
-                <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <Volume2 className="w-4 h-4" />
-                        サウンド設定
-                    </h3>
-                    <SoundSettingsPanel />
-                </div>
-
-                {/* ══════════════════════════════════════════════
-                    §5.8  プレイガイド
-                   ══════════════════════════════════════════════ */}
-                <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" />
-                        ゲームの遊び方
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3">
+                        プレイガイド
                     </h3>
                     <button
                         onClick={() => {
                             onClose();
                             router.push('/play-guide');
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-amber-950/20 border border-[#a38b6b]/40 text-amber-200 text-sm font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all cursor-pointer"
+                        className="w-full flex items-center justify-center py-2.5 px-4 bg-amber-950/20 border border-[#a38b6b]/40 text-amber-200 text-sm font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all cursor-pointer"
                     >
-                        <BookOpen className="w-4 h-4" />
                         プレイガイドを開く
                     </button>
                 </div>
 
-                {/* ══════════════════════════════════════════════
-                    §5.5  Google連携（テストプレイユーザーのみ表示）
-                   ══════════════════════════════════════════════ */}
-                {isAnonymous && (
-                    <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                {/* ── カテゴリ3：サウンド設定 ── */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723]">
+                    <h3 className="text-[#a38b6b] text-sm font-bold mb-3">
+                        サウンド設定
+                    </h3>
+                    <SoundSettingsPanel />
+                </div>
+
+                {/* ── カテゴリ4：プラン・アカウント設定 ── */}
+                <div className="mb-5 pb-5 border-b border-[#3e2723] space-y-4">
+                    <div>
+                        <h3 className="text-[#a38b6b] text-sm font-bold mb-3">
+                            プラン・アカウント設定
+                        </h3>
+                        <div className="flex items-center justify-between">
+                            <div className={`inline-flex items-center px-3 py-1 border rounded text-sm font-bold ${TIER_COLORS[currentTier]}`}>
+                                {TIER_LABELS[currentTier]}
+                            </div>
+                            <button
+                                onClick={() => setShowPlanDetails(!showPlanDetails)}
+                                className="text-[10px] text-[#a38b6b] hover:text-amber-400 transition-colors"
+                            >
+                                {showPlanDetails ? '詳細を閉じる' : '詳細を見る'}
+                            </button>
+                        </div>
+
+                        {showPlanDetails && (
+                            <div className="mt-3 bg-black/30 border border-slate-800 rounded p-3 text-xs space-y-1.5 animate-in slide-in-from-top-2 duration-150">
+                                {currentTier === 'free' && (
+                                    <>
+                                        <p className="text-slate-400">キャラクタースロット: <span className="text-slate-200">1枠</span></p>
+                                        <p className="text-slate-400">英霊登録: <span className="text-slate-200">不可</span></p>
+                                        <p className="text-slate-400">Weeklyボーナス: <span className="text-slate-200">なし</span></p>
+                                    </>
+                                )}
+                                {currentTier === 'basic' && (
+                                    <>
+                                        <p className="text-slate-400">月額: <span className="text-slate-200">880円（税込）</span></p>
+                                        <p className="text-slate-400">キャラクタースロット: <span className="text-slate-200">3枠</span></p>
+                                        <p className="text-slate-400">英霊登録: <span className="text-slate-200">最大3体 (ロイヤリティ 25%)</span></p>
+                                        <p className="text-slate-400">Weeklyボーナス: <span className="text-slate-200">2,000G/週</span></p>
+                                    </>
+                                )}
+                                {currentTier === 'premium' && (
+                                    <>
+                                        <p className="text-slate-400">月額: <span className="text-slate-200">2,200円（税込）</span></p>
+                                        <p className="text-slate-400">キャラクタースロット: <span className="text-slate-200">5枠</span></p>
+                                        <p className="text-slate-400">英霊登録: <span className="text-slate-200">最大10体 (ロイヤリティ 35%)</span></p>
+                                        <p className="text-slate-400">Weeklyボーナス: <span className="text-slate-200">5,000G/週</span></p>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Stripeカスタマーポータル */}
+                        {currentTier !== 'free' && (
+                            <button
+                                onClick={handleOpenPortal}
+                                disabled={portalLoading}
+                                className="mt-3 w-full flex items-center justify-center py-1.5 text-[11px] font-bold text-slate-400 border border-slate-700 rounded hover:text-amber-400 hover:border-[#a38b6b] transition-colors disabled:opacity-40"
+                            >
+                                {portalLoading ? '読み込み中...' : 'プラン管理・解約'}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Google連携（ゲストユーザーのみ表示） */}
+                    {isAnonymous && (
                         <div className="bg-amber-950/40 border border-amber-700/50 rounded-lg p-4">
-                            <h3 className="text-amber-400 text-sm font-bold mb-2 flex items-center gap-2">
-                                <Link className="w-4 h-4" />
+                            <h4 className="text-amber-400 text-xs font-bold mb-2">
                                 アカウント連携
-                            </h3>
-                            <p className="text-amber-300/70 text-xs leading-relaxed mb-3">
+                            </h4>
+                            <p className="text-amber-300/70 text-[11px] leading-relaxed mb-3">
                                 テストプレイのデータを保護するには、Googleアカウントとの連携が必要です。
-                                連携後も<strong className="text-amber-300">全てのデータが引き継がれ</strong>、
-                                サブスクリプションやゴールド購入も利用可能になります。
+                                連携後もすべてのデータが引き継がれ、サブスクリプションやゴールド購入も利用可能になります。
                             </p>
                             <button
                                 onClick={handleLinkGoogle}
                                 disabled={linkLoading}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white/10 border border-amber-500/60 text-amber-200 text-sm font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="w-full flex items-center justify-center py-2 px-4 bg-white/10 border border-amber-500/60 text-amber-200 text-xs font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                                </svg>
-                                {linkLoading ? '連携中...' : 'Google アカウントと連携する'}
+                                Google アカウントと連携する
                             </button>
                             <p className="text-[10px] text-amber-600/60 text-center mt-2">
-                                ※ 7日間の保存期限が解除され、データが永続化されます
+                                7日間の保存期限が解除され、データが永続化されます
                             </p>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* ══════════════════════════════════════════════
-                    §6-7  課金セクション（テストプレイユーザーには非表示）
-                   ══════════════════════════════════════════════ */}
-                {!isAnonymous && (
-                    <>
-                        {/* ── プランアップグレード ── */}
-                        {currentTier !== 'premium' && (
-                            <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                                <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                                    <Zap className="w-4 h-4" />
-                                    プランアップグレード
-                                </h3>
+                    {/* プラン変更 / ゴールド購入 */}
+                    {!isAnonymous && (
+                        <div className="space-y-4">
+                            {currentTier !== 'premium' && (
                                 <div className="space-y-2">
-                                    {currentTier === 'free' && (
+                                    <h4 className="text-[#a38b6b] text-xs font-bold">
+                                        プラン変更
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {currentTier === 'free' && (
+                                            <button
+                                                onClick={() => requestUpgradeTier('basic')}
+                                                disabled={!!billingLoading}
+                                                className="w-full flex items-center justify-center py-2.5 px-4 border border-blue-600 text-blue-300 text-sm font-bold rounded hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                Basic にアップグレード
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => requestUpgradeTier('basic')}
+                                            onClick={() => requestUpgradeTier('premium')}
                                             disabled={!!billingLoading}
-                                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-blue-600 text-blue-300 text-sm font-bold rounded hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            className="w-full flex items-center justify-center py-2.5 px-4 border border-yellow-500 text-yellow-300 text-sm font-bold rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
-                                            <Zap className="w-4 h-4" />
-                                            Basic にアップグレード
+                                            Premium にアップグレード
                                         </button>
-                                    )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <h4 className="text-[#a38b6b] text-xs font-bold">
+                                    ゴールド購入
+                                </h4>
+                                <div className="space-y-2">
                                     <button
-                                        onClick={() => requestUpgradeTier('premium')}
+                                        onClick={() => requestBuyGold('gold_10k')}
                                         disabled={!!billingLoading}
-                                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-yellow-500 text-yellow-300 text-sm font-bold rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
-                                        <Crown className="w-4 h-4" />
-                                        Premium にアップグレード
+                                        <span className="flex items-center gap-2">
+                                            <span className="text-yellow-400 font-bold">10,000 G</span>
+                                            <span className="text-gray-400 text-xs">スターターパック</span>
+                                        </span>
+                                        <span className="font-bold text-yellow-300">330円（税込）</span>
+                                    </button>
+                                    <button
+                                        onClick={() => requestBuyGold('gold_50k')}
+                                        disabled={!!billingLoading}
+                                        className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <span className="text-yellow-400 font-bold">50,000 G</span>
+                                            <span className="text-gray-400 text-xs">アドベンチャーパック</span>
+                                            <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded font-bold">おすすめ</span>
+                                        </span>
+                                        <span className="font-bold text-yellow-300">1,430円（税込）</span>
                                     </button>
                                 </div>
                             </div>
-                        )}
-
-                        {/* ── ゴールド購入 ── */}
-                        <div className="mb-5 pb-5 border-b border-[#3e2723]">
-                            <h3 className="text-[#a38b6b] text-sm font-bold mb-3 flex items-center gap-2">
-                                <Coins className="w-4 h-4" />
-                                ゴールド購入
-                            </h3>
-                            <div className="space-y-2">
-                                <button
-                                    onClick={() => requestBuyGold('gold_10k')}
-                                    disabled={!!billingLoading}
-                                    className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <span className="text-yellow-400 font-bold">🪙 10,000 G</span>
-                                        <span className="text-gray-400 text-xs">スターターパック</span>
-                                    </span>
-                                    <span className="font-bold text-yellow-300">330円（税込）</span>
-                                </button>
-                                <button
-                                    onClick={() => requestBuyGold('gold_50k')}
-                                    disabled={!!billingLoading}
-                                    className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <span className="text-yellow-400 font-bold">🪙 50,000 G</span>
-                                        <span className="text-gray-400 text-xs">アドベンチャーパック</span>
-                                        <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded font-bold">おすすめ</span>
-                                    </span>
-                                    <span className="font-bold text-yellow-300">1,430円（税込）</span>
-                                </button>
-                            </div>
                         </div>
-                    </>
-                )}
+                    )}
+                </div>
 
-                {/* ══════════════════════════════════════════════
-                    §8  タイトルに戻る (v27.0: ConfirmDialog使用)
-                   ══════════════════════════════════════════════ */}
+                {/* ── 最下部：タイトルに戻る ── */}
                 <div className="pt-2">
                     <button
                         onClick={requestReturnToTitle}
-                        className="w-full bg-red-900/20 border border-red-800 text-red-400 hover:bg-red-900/40 font-bold py-3 px-4 rounded transition-colors shadow flex items-center justify-center gap-2"
+                        className="w-full bg-red-900/20 border border-red-800 text-red-400 hover:bg-red-900/40 font-bold py-3 px-4 rounded transition-colors shadow flex items-center justify-center"
                     >
-                        <LogOut className="w-5 h-5" />
                         タイトルに戻る
                     </button>
                     {isAnonymous && (
                         <p className="text-[10px] text-red-400/60 text-center mt-2">
-                            ⚠ テストプレイのデータは保存されません
+                            テストプレイのデータは保存されません
                         </p>
                     )}
                 </div>
+
+                {/* 内部IDポップアップダイアログ */}
+                {showIdPopup && (
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[110] animate-in fade-in duration-150">
+                        <div className="bg-[#1a120b] border-2 border-[#a38b6b] p-5 max-w-xs w-full text-center space-y-4 shadow-2xl">
+                            <h4 className="text-[#e3d5b8] text-sm font-bold border-b border-[#a38b6b]/30 pb-2">内部ID (お問い合わせ用)</h4>
+                            <div className="bg-black/50 p-2 rounded text-xs font-mono text-gray-400 break-all select-all">
+                                {userProfile?.id || 'Unknown'}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleCopyId}
+                                    className="flex-1 py-2 text-xs font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors"
+                                >
+                                    {idCopied ? 'コピー完了' : 'コピーする'}
+                                </button>
+                                <button
+                                    onClick={() => setShowIdPopup(false)}
+                                    className="flex-1 py-2 text-xs font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                                >
+                                    閉じる
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
 
