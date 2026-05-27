@@ -68,6 +68,40 @@ async function seedTable(tableName: string, filePath: string, transformer: (reco
 }
 
 async function main() {
+    // 0. Locations
+    await seedTable('locations', path.join(CSV_DIR, 'locations.csv'), (r: any) => {
+        let connections = [];
+        try {
+            if (r.connections) connections = JSON.parse(r.connections);
+        } catch (e) {
+            console.warn("Invalid JSON in connections for loc " + r.slug, r.connections);
+        }
+
+        let neighbors = {};
+        try {
+            if (r.neighbors) neighbors = JSON.parse(r.neighbors);
+        } catch (e) {
+            console.warn("Invalid JSON in neighbors for loc " + r.slug, r.neighbors);
+        }
+
+        return {
+            id: r.id,
+            slug: r.slug,
+            name: r.name,
+            type: r.type || 'Town',
+            ruling_nation_id: r.ruling_nation_id || 'Neutral',
+            prosperity_level: Number(r.prosperity_level) || 3,
+            x: Number(r.x) || 50,
+            y: Number(r.y) || 50,
+            description: r.description || '',
+            connections: connections,
+            neighbors: neighbors,
+            nation_id: r.nation_id || 'Neutral',
+            map_x: r.map_x ? Number(r.map_x) : null,
+            map_y: r.map_y ? Number(r.map_y) : null,
+        };
+    }, 'id');
+
     // 1. Cards
     await seedTable('cards', path.join(CSV_DIR, 'cards.csv'), (r: any) => ({
         id: r.id,
@@ -150,7 +184,7 @@ async function main() {
         slug: r.slug,
         name: r.name,
         effect_type: r.effect_type,
-        value: r.value,
+        value: r.value === '' ? null : Number(r.value),
         inject_card_id: r.inject_card_id,
         description: r.description
     }));
@@ -250,8 +284,14 @@ async function main() {
                 continue;
             }
 
-            const rawContent = fs.readFileSync(path.join(SCENARIO_DIR, file), 'utf-8');
-            const rows: any[] = parse(rawContent, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true });
+            let rows: any[] = [];
+            try {
+                const rawContent = fs.readFileSync(path.join(SCENARIO_DIR, file), 'utf-8');
+                rows = parse(rawContent, { columns: true, skip_empty_lines: true, trim: true, bom: true, relax_column_count: true });
+            } catch (e: any) {
+                console.error(`Error parsing scenario file: ${file}`);
+                throw e;
+            }
 
             const script: any = { nodes: {} };
             let currentNode: any = null;
