@@ -41,6 +41,7 @@ export function useInnPageState() {
     const [showShop, setShowShop] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
     const [restLoading, setRestLoading] = useState(false);
+    const [traveling, setTraveling] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
     // Quest Data State (ギルド用)
@@ -394,6 +395,30 @@ export function useInnPageState() {
         }
     };
 
+    const returnToHub = async () => {
+        if (!userProfile) return;
+        setTraveling(true);
+        try {
+            soundManager?.playSE('se_travel');
+            await new Promise(r => setTimeout(r, 1000));
+
+            const { error } = await supabase
+                .from('user_hub_states')
+                .upsert({ user_id: userProfile.id, is_in_hub: true });
+
+            if (error) throw error;
+
+            await useGameStore.getState().fetchUserProfile();
+            await useGameStore.getState().fetchHubState();
+            showToast('名もなき旅人の拠所へ帰還しました');
+        } catch (e) {
+            console.error("Failed to return to hub", e);
+            showToast('帰還に失敗しました。', 'error');
+        } finally {
+            setTraveling(false);
+        }
+    };
+
     const openHistoryHall = () => {
         setShowHistoryBadge(false);
         setActiveModal('history');
@@ -414,6 +439,7 @@ export function useInnPageState() {
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
         restLoading,
+        traveling,
         toast,
         allQuests, loadingQuests,
         reputation,
@@ -432,5 +458,6 @@ export function useInnPageState() {
         openHistoryHall,
         executeRest,
         fetchRep,
+        returnToHub,
     };
 }

@@ -53,6 +53,7 @@ function InnPageInner() {
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
         restLoading,
+        traveling,
         toast,
         allQuests, loadingQuests,
         reputation,
@@ -67,6 +68,7 @@ function InnPageInner() {
         openHistoryHall,
         executeRest,
         fetchRep,
+        returnToHub,
     } = state;
 
     if (loading || !userProfile || !worldState) {
@@ -101,6 +103,14 @@ function InnPageInner() {
                 <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
                     <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
                     <p className="text-amber-300 text-sm font-serif tracking-widest animate-pulse">休息中...</p>
+                </div>
+            )}
+
+            {/* 帰還中オーバーレイ */}
+            {traveling && (
+                <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+                    <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-amber-300 text-sm font-serif tracking-widest animate-pulse">帰還中...</p>
                 </div>
             )}
 
@@ -178,6 +188,7 @@ function InnPageInner() {
                     worldState={worldState}
                     locationSlug={userProfile?.locations?.slug}
                     onOpenHistory={openHistoryHall}
+                    onReturnHub={returnToHub}
                     onOpenMap={() => router.push('/world-map')}
                     showHistoryBadge={showHistoryBadge}
                     isHub={isHub}

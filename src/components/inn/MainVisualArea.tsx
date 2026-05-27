@@ -1,17 +1,18 @@
 import React from 'react';
-import { BookOpen, MapPin, Compass } from 'lucide-react';
+import { BookOpen, MapPin, Compass, Home } from 'lucide-react';
 import { WorldState } from '@/types/game';
 
 interface MainVisualAreaProps {
     worldState: WorldState | null;
     locationSlug?: string;
     onOpenHistory: () => void;
+    onReturnHub?: () => void;
     onOpenMap?: () => void;
     showHistoryBadge?: boolean;
     isHub?: boolean; // v27.0: ハブ判定（繁栄度バッジ非表示、フレーバー固定）
 }
 
-export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onOpenMap, showHistoryBadge, isHub = false }: MainVisualAreaProps) {
+export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onReturnHub, onOpenMap, showHistoryBadge, isHub = false }: MainVisualAreaProps) {
     const prosperity = worldState?.prosperity_level || 3;
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
@@ -121,6 +122,15 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                         </span>
                     )}
                 </button>
+                {onReturnHub && !isHub && (
+                    <button
+                        onClick={onReturnHub}
+                        className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-blue-600/40 shadow-lg flex items-center justify-center text-blue-400 hover:bg-blue-900/60 hover:text-blue-200 transition-colors active:scale-95 focus:outline-none"
+                        title="名もなき旅人の拠所へ"
+                    >
+                        <Home size={18} />
+                    </button>
+                )}
                 {onOpenMap && (
                     <button
                         onClick={onOpenMap}
