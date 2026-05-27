@@ -143,7 +143,7 @@ export default function CollectionModal({ onClose }: Props) {
                                 <tab.icon size={16} />
                                 <span className="text-[10px] font-bold tracking-wider">{tab.label}</span>
                                 {section && (
-                                    <span className={`text-[9px] font-mono ${isActive ? 'text-amber-400/70' : 'text-gray-600'}`}>
+                                    <span className={`text-[9px] font-mono ${isActive ? 'text-amber-400/70' : 'text-slate-400'}`}>
                                         {section.unlocked}/{section.total}
                                     </span>
                                 )}
@@ -205,7 +205,7 @@ export default function CollectionModal({ onClose }: Props) {
                                     }`}
                                 >
                                     {/* ID */}
-                                    <span className="text-[10px] font-mono text-gray-600 w-12 flex-shrink-0">
+                                    <span className="text-[10px] font-mono text-slate-400 w-12 flex-shrink-0">
                                         No.{String(entry.id).padStart(4, '0')}
                                     </span>
 
@@ -215,7 +215,7 @@ export default function CollectionModal({ onClose }: Props) {
                                             {entry.name}
                                         </span>
                                     ) : (
-                                        <span className="text-sm text-gray-700 flex-1 tracking-widest">
+                                        <span className="text-sm text-slate-500 flex-1 tracking-widest">
                                             ─────
                                         </span>
                                     )}
@@ -250,7 +250,7 @@ export default function CollectionModal({ onClose }: Props) {
                             })}
                         </div>
                     )}
-                    <p className="text-[9px] text-gray-600 font-serif italic text-center">
+                    <p className="text-[9px] text-slate-400 font-serif italic text-center">
                         ※ エネミーは遭遇時、アイテムは入手時、NPCは雇用時に記録されます
                     </p>
                 </div>
