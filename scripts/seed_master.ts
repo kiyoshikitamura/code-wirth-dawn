@@ -108,18 +108,29 @@ async function main() {
     }, 'id');
 
     // 0.5 World States
-    await seedTable('world_states', path.join(CSV_DIR, 'locations.csv'), (r: any) => ({
-        location_name: r.name,
-        controlling_nation: r.nation_id || r.ruling_nation_id || 'Neutral',
-        status: 'Prosperous',
-        attribute_name: '至高の平穏',
-        order_score: 10,
-        chaos_score: 10,
-        justice_score: 10,
-        evil_score: 10,
-        background_url: '/backgrounds/default.jpg',
-        total_days_passed: 0
-    }), 'location_name');
+    await seedTable('world_states', path.join(CSV_DIR, 'locations.csv'), (r: any) => {
+        const level = Number(r.prosperity_level) || 3;
+        const statusMap: Record<number, string> = {
+            5: 'Zenith',
+            4: 'Prosperous',
+            3: 'Stagnant',
+            2: 'Declining',
+            1: 'Ruined'
+        };
+        return {
+            location_name: r.name,
+            controlling_nation: r.nation_id || r.ruling_nation_id || 'Neutral',
+            status: statusMap[level] || 'Stagnant',
+            prosperity_level: level,
+            attribute_name: '至高の平穏',
+            order_score: 10,
+            chaos_score: 10,
+            justice_score: 10,
+            evil_score: 10,
+            background_url: '/backgrounds/default.jpg',
+            total_days_passed: 0
+        };
+    }, 'location_name');
 
     // 1. Cards
     await seedTable('cards', path.join(CSV_DIR, 'cards.csv'), (r: any) => ({

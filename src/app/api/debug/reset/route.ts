@@ -45,7 +45,8 @@ export async function POST(req: Request) {
             chaos_score: 10,
             justice_score: 10,
             evil_score: 10,
-            status: '繁栄',
+            status: 'Stagnant',
+            prosperity_level: 3,
             attribute_name: '至高の平穏',
             flavor_text: '秩序と正義が保たれ、人々は安らかに暮らしている。',
             background_url: '/backgrounds/peace.jpg'

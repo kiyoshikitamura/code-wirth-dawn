@@ -66,11 +66,24 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
         };
         const jpNation = getNationName(controllingNation);
 
-        let score = 0;
-        if (controllingNation === 'Roland') score = worldState.order_score || 0;
-        else if (controllingNation === 'Markand') score = worldState.chaos_score || 0;
-        else if (controllingNation === 'Yato') score = worldState.justice_score || 0;
-        else if (controllingNation === 'Karyu') score = worldState.evil_score || 0;
+        let score = 50;
+        if (controllingNation === 'Roland') {
+            const order = Number(worldState.order_score) || 0;
+            const chaos = Number(worldState.chaos_score) || 0;
+            score = (order + chaos) > 0 ? (order / (order + chaos)) * 100 : 50;
+        } else if (controllingNation === 'Markand') {
+            const order = Number(worldState.order_score) || 0;
+            const chaos = Number(worldState.chaos_score) || 0;
+            score = (order + chaos) > 0 ? (chaos / (order + chaos)) * 100 : 50;
+        } else if (controllingNation === 'Yato') {
+            const justice = Number(worldState.justice_score) || 0;
+            const evil = Number(worldState.evil_score) || 0;
+            score = (justice + evil) > 0 ? (justice / (justice + evil)) * 100 : 50;
+        } else if (controllingNation === 'Karyu') {
+            const justice = Number(worldState.justice_score) || 0;
+            const evil = Number(worldState.evil_score) || 0;
+            score = (justice + evil) > 0 ? (evil / (justice + evil)) * 100 : 50;
+        }
 
         if (score >= 60) return `住民は${jpNation}の統治を歓迎している。活気がある。`;
         if (score <= 40) return `住民は${jpNation}の支配に怯えている…`;
