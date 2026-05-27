@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, MapPin, Compass, Home } from 'lucide-react';
+import { BookOpen, MapPin, Compass, Home, ArrowLeft } from 'lucide-react';
 import { WorldState } from '@/types/game';
 
 interface MainVisualAreaProps {
@@ -7,12 +7,13 @@ interface MainVisualAreaProps {
     locationSlug?: string;
     onOpenHistory: () => void;
     onReturnHub?: () => void;
+    onLeaveHub?: () => void;
     onOpenMap?: () => void;
     showHistoryBadge?: boolean;
     isHub?: boolean; // v27.0: ハブ判定（繁栄度バッジ非表示、フレーバー固定）
 }
 
-export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onReturnHub, onOpenMap, showHistoryBadge, isHub = false }: MainVisualAreaProps) {
+export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onReturnHub, onLeaveHub, onOpenMap, showHistoryBadge, isHub = false }: MainVisualAreaProps) {
     const prosperity = worldState?.prosperity_level || 3;
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
@@ -129,6 +130,15 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                         title="名もなき旅人の拠所へ"
                     >
                         <Home size={18} />
+                    </button>
+                )}
+                {onLeaveHub && isHub && (
+                    <button
+                        onClick={onLeaveHub}
+                        className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-blue-600/40 shadow-lg flex items-center justify-center text-blue-400 hover:bg-blue-900/60 hover:text-blue-200 transition-colors active:scale-95 focus:outline-none"
+                        title="直前の拠点へ戻る"
+                    >
+                        <ArrowLeft size={18} />
                     </button>
                 )}
                 {onOpenMap && (

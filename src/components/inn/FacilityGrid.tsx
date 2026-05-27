@@ -52,9 +52,9 @@ export default function FacilityGrid({ onSelectFacility, isHub = false }: Facili
                             <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-[#122042]">!</span>
                         )}
                     </div>
-                    <div>
-                        <p className="text-[9px] text-blue-200/50 font-bold uppercase tracking-widest">{item.sub}</p>
-                        <p className="text-sm font-bold text-slate-100 group-hover:text-white transition-colors">{item.label}</p>
+                    <div className="min-w-0">
+                        <p className="text-[9px] text-blue-200/50 font-bold uppercase tracking-widest truncate">{item.sub}</p>
+                        <p className="text-sm font-bold text-slate-100 group-hover:text-white transition-colors whitespace-nowrap">{item.label}</p>
                     </div>
                 </button>
             ))}

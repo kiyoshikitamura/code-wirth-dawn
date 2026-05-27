@@ -69,6 +69,7 @@ function InnPageInner() {
         executeRest,
         fetchRep,
         returnToHub,
+        leaveHub,
     } = state;
 
     if (loading || !userProfile || !worldState) {
@@ -110,7 +111,7 @@ function InnPageInner() {
             {traveling && (
                 <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
                     <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-amber-300 text-sm font-serif tracking-widest animate-pulse">帰還中...</p>
+                    <p className="text-amber-300 text-sm font-serif tracking-widest animate-pulse">移動中...</p>
                 </div>
             )}
 
@@ -186,9 +187,10 @@ function InnPageInner() {
                 {/* Main Visual */}
                 <MainVisualArea
                     worldState={worldState}
-                    locationSlug={userProfile?.locations?.slug}
+                    locationSlug={isHub ? 'loc_hub' : userProfile?.locations?.slug}
                     onOpenHistory={openHistoryHall}
                     onReturnHub={returnToHub}
+                    onLeaveHub={leaveHub}
                     onOpenMap={() => router.push('/world-map')}
                     showHistoryBadge={showHistoryBadge}
                     isHub={isHub}

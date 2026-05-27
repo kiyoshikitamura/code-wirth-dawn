@@ -410,10 +410,36 @@ export function useInnPageState() {
 
             await useGameStore.getState().fetchUserProfile();
             await useGameStore.getState().fetchHubState();
+            await useGameStore.getState().fetchWorldState();
             showToast('名もなき旅人の拠所へ帰還しました');
         } catch (e) {
             console.error("Failed to return to hub", e);
             showToast('帰還に失敗しました。', 'error');
+        } finally {
+            setTraveling(false);
+        }
+    };
+
+    const leaveHub = async () => {
+        if (!userProfile) return;
+        setTraveling(true);
+        try {
+            soundManager?.playSE('se_enter_location');
+            await new Promise(r => setTimeout(r, 1000));
+
+            const { error } = await supabase
+                .from('user_hub_states')
+                .upsert({ user_id: userProfile.id, is_in_hub: false });
+
+            if (error) throw error;
+
+            await useGameStore.getState().fetchUserProfile();
+            await useGameStore.getState().fetchHubState();
+            await useGameStore.getState().fetchWorldState();
+            showToast('直前の拠点へ戻りました');
+        } catch (e) {
+            console.error("Failed to leave hub", e);
+            showToast('移動に失敗しました。', 'error');
         } finally {
             setTraveling(false);
         }
@@ -459,5 +485,6 @@ export function useInnPageState() {
         executeRest,
         fetchRep,
         returnToHub,
+        leaveHub,
     };
 }
