@@ -16,7 +16,6 @@ import FacilityGrid, { FacilityType } from '@/components/inn/FacilityGrid';
 import NpcDialogModal from '@/components/inn/NpcDialogModal';
 import GossipModal from '@/components/world/GossipModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
-import WorkshopModal from '@/components/inn/WorkshopModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
 import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
 import ChronicleModal from '@/components/world/ChronicleModal';
@@ -159,7 +158,7 @@ function InnPageInner() {
                 {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
                 {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
 
-                {activeModal === 'workshop' && <WorkshopModal onClose={() => setActiveModal(null)} />}
+
                 {activeModal === 'collection' && <CollectionModal onClose={() => setActiveModal(null)} />}
                 {activeModal === 'questLog' && <QuestLogModal onClose={() => setActiveModal(null)} />}
                 {activeModal === 'ranking' && <RankingModal onClose={() => setActiveModal(null)} />}
@@ -201,7 +200,7 @@ function InnPageInner() {
                     <FacilityGrid onSelectFacility={handleSelectFacility} isHub={isHub} />
                     <CreatorsWorkshopBanner
                         isHub={isHub}
-                        onOpenWorkshop={() => setActiveModal('workshop')}
+                        onOpenWorkshop={() => router.push('/workshop')}
                     />
                 </div>
 

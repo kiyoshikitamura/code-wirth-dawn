@@ -16,19 +16,14 @@ export default function CreatorsWorkshopBanner({ onOpenWorkshop, isHub }: Creato
         <div className="px-4 pb-12 w-full max-w-lg mx-auto">
             <button
                 onClick={onOpenWorkshop}
-                className="w-full relative p-3 md:p-4 bg-gradient-to-r from-gray-900/40 to-slate-900 border border-[#2a4080]/50 rounded-2xl shadow-2xl overflow-hidden group text-left cursor-pointer hover:bg-slate-900/80 hover:border-amber-500/30 transition-all active:scale-95 flex items-center justify-center focus:outline-none"
+                className="w-full flex items-center gap-3 p-3 md:p-4 bg-[#122042]/80 border border-[#2a4080]/50 rounded-xl hover:bg-[#1a2d5a] hover:border-amber-500/30 transition-all active:scale-95 text-left group shadow-lg shadow-[#0a1628]/50 focus:outline-none focus:ring-1 focus:ring-amber-400/50"
             >
-                <div className="absolute inset-0 opacity-10 bg-[url('/textures/paper.png')] mix-blend-overlay" />
-                <div className="relative z-10 flex items-center justify-center">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-[#122042]/60 rounded-full flex items-center justify-center border border-[#2a4080]/30 shadow-inner text-amber-400 group-hover:text-amber-300 group-hover:bg-amber-500/10 transition-colors">
-                            <PenTool size={20} />
-                        </div>
-                        <div className="text-left">
-                            <h3 className="text-[9px] font-black text-blue-200/50 uppercase tracking-[0.2em] mb-0.5">Workshop</h3>
-                            <p className="text-sm md:text-base font-bold text-slate-100 group-hover:text-white transition-colors">クリエイターズ工房</p>
-                        </div>
-                    </div>
+                <div className="relative p-2 bg-amber-500/10 rounded-lg text-amber-400 group-hover:text-amber-300 group-hover:bg-amber-500/20 transition-colors">
+                    <PenTool size={20} />
+                </div>
+                <div className="min-w-0">
+                    <p className="text-[9px] text-blue-200/50 font-bold uppercase tracking-widest truncate">Workshop</p>
+                    <p className="text-sm font-bold text-slate-100 group-hover:text-white transition-colors whitespace-nowrap">クリエイターズ工房</p>
                 </div>
             </button>
         </div>
