@@ -363,8 +363,7 @@ async function handleSkillPurchase(profile: UserProfileDB, skillId: number) {
         .insert({
             user_id: profile.id,
             skill_id: skillId,
-            is_equipped: false,
-            acquired_at: new Date().toISOString()
+            is_equipped: false
         });
 
     if (skillInsertError) {

@@ -58,7 +58,7 @@
 5. **鉄の鉱山村**
    - **Base Prompt**: `(Mining village, built into a rocky mountainous area, giant wooden cranes and minecart tracks creeping up the slopes, forging smoke rising from chimneys, rugged unyielding environment)`
 
-### 🏜️ マーカンド（中東・砂漠圏）
+### 🏜️ 砂塵の王国マルカンド（中東・砂漠圏）
 広大な砂漠、オアシス、アラビアンナイト風の建築、熱砂とバザールの国。
 
 6. **黄金都市イスハーク**

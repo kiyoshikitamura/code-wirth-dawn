@@ -134,12 +134,18 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                 },
                 body: JSON.stringify({ inventory_id: invItem.id, slot })
             });
-            if (res.ok) {
+            const resData = await res.json();
+                if (res.ok) {
                 // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
                 await Promise.all([fetchEquipment(), fetchInventory(), fetchUserProfile()]);
+                // v28: APIが返す最新HP値でストアを即時上書き（race condition回避）
+                if (resData.updated_hp !== undefined && userProfile) {
+                    useGameStore.setState({
+                        userProfile: { ...useGameStore.getState().userProfile!, hp: resData.updated_hp }
+                    });
+                }
             } else {
-                const data = await res.json();
-                alert(data.error || '装備に失敗しました。');
+                alert(resData.error || '装備に失敗しました。');
             }
         } catch (e) { console.error(e); alert('通信エラー'); }
         finally { setEquipLoadingSlot(null); }
@@ -159,8 +165,15 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                 headers: authHeaders
             });
             if (res.ok) {
+                const resData = await res.json();
                 // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
                 await Promise.all([fetchEquipment(), fetchInventory(), fetchUserProfile()]);
+                // v28: APIが返す最新HP値でストアを即時上書き（race condition回避）
+                if (resData.updated_hp !== undefined && userProfile) {
+                    useGameStore.setState({
+                        userProfile: { ...useGameStore.getState().userProfile!, hp: resData.updated_hp }
+                    });
+                }
             }
         } catch (e) { console.error(e); }
         finally { setEquipLoadingSlot(null); }
@@ -229,7 +242,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                 <div className="text-xs text-green-400 font-bold flex items-center justify-center gap-1">
                                     <Heart className="w-3 h-3" />
                                     {userProfile?.hp ?? 0}/{(userProfile?.max_hp ?? 100) + equipBonus.hp}
-                                    {equipBonus.hp > 0 && <span className="text-[8px] text-emerald-500">+{equipBonus.hp}</span>}
+                                    {equipBonus.hp > 0 && <span className="text-[10px] ml-0.5 text-emerald-500 font-medium">+{equipBonus.hp}</span>}
                                 </div>
                             </div>
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
@@ -237,7 +250,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                 <div className="text-xs text-red-400 font-bold flex items-center justify-center gap-1">
                                     <Sword className="w-3 h-3" />
                                     {(userProfile?.atk ?? 10) + equipBonus.atk}
-                                    {equipBonus.atk > 0 && <span className="text-[8px] text-orange-400">+{equipBonus.atk}</span>}
+                                    {equipBonus.atk > 0 && <span className="text-[10px] ml-0.5 text-orange-400 font-medium">+{equipBonus.atk}</span>}
                                 </div>
                             </div>
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
@@ -245,7 +258,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                                 <div className="text-xs text-slate-400 font-bold flex items-center justify-center gap-1">
                                     <Shield className="w-3 h-3" />
                                     {(userProfile?.def ?? 0) + equipBonus.def}
-                                    {equipBonus.def > 0 && <span className="text-[8px] text-cyan-400">+{equipBonus.def}</span>}
+                                    {equipBonus.def > 0 && <span className="text-[10px] ml-0.5 text-cyan-400 font-medium">+{equipBonus.def}</span>}
                                 </div>
                             </div>
                         </div>

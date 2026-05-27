@@ -25,7 +25,7 @@ export async function GET(req: Request) {
             .from('party_members')
             .select('*')
             .is('owner_id', null)
-            .eq('origin', 'system'); // Only system generated ones
+            .eq('origin_type', 'system'); // Only system generated ones
 
         if (poolError) throw poolError;
 

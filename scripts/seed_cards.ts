@@ -415,6 +415,56 @@ async function main() {
 
     // 4.2 Special Quests
     await seedTable('scenarios', path.join(CSV_DIR, 'quests_special.csv'), (r) => processQuestRow(r, 'special'));
+
+    // 5. Skills (Added)
+    await seedTable('skills', path.join(CSV_DIR, 'skills.csv'), (r: any) => {
+        let nationTags = r.nation_tags && typeof r.nation_tags === 'string' ? r.nation_tags.split('|').map((t: string) => t.trim()).filter(Boolean) : [];
+        nationTags = nationTags.map((t: string) => t === 'any' ? 'loc_all' : t);
+
+        const cardId = r.card_id ? Number(r.card_id) : null;
+
+        return {
+            id: Number(r.id),
+            slug: r.slug,
+            name: r.name,
+            card_id: cardId,
+            base_price: Number(r.base_price) || 0,
+            deck_cost: Number(r.deck_cost) || 2,
+            nation_tags: nationTags,
+            min_prosperity: Number(r.min_prosperity) || 1,
+            is_black_market: r.is_black_market === 'true' || r.is_black_market === '1' || r.is_black_market === true,
+            image_url: r.image_url || null,
+            description: r._comment || null
+        };
+    }, 'id');
+
+    // 6. NPCs (Added)
+    await seedTable('npcs', path.join(CSV_DIR, 'npcs.csv'), (r: any) => {
+        let cardIds: number[] = [];
+        const rawInject = r.inject_card_ids || r.inject_cards;
+        if (rawInject && typeof rawInject === 'string') {
+            cardIds = rawInject.split('|').map((id: string) => Number(id.trim())).filter((n: number) => !isNaN(n));
+        }
+
+        const hireCost = Number(r.hire_cost) || 0;
+        return {
+            slug: r.slug,
+            name: r.name,
+            epithet: r.epithet || '',
+            job_class: r.job || r.job_class || 'Civilian',
+            level: Number(r.level) || 1,
+            max_hp: Number(r.max_hp) || (Number(r.durability) * 2 || 100),
+            attack: Number(r.atk) || 0,
+            defense: Number(r.def) || 0,
+            cover_rate: Number(r.cover_rate) || 0,
+            hire_cost: hireCost,
+            inject_cards: cardIds,
+            default_cards: cardIds,
+            introduction: r.flavor_text || '',
+            is_hireable: hireCost > 0 || r.slug.startsWith('npc_free_'),
+            origin: 'system_mercenary'
+        };
+    }, 'slug');
 }
 
 main();

@@ -22,10 +22,10 @@ export interface NationConfig {
  * 4大国家の設定マスター
  */
 export const NATIONS: readonly NationConfig[] = [
-    { id: 'Roland',  nameShort: 'ローランド', nameFull: '蒼なるローランド聖王国', color: 'bg-blue-600',    attributeKey: 'order_score' },
-    { id: 'Markand', nameShort: 'マーカンド', nameFull: '翠なるマーカンド連邦',   color: 'bg-emerald-600', attributeKey: 'chaos_score' },
-    { id: 'Karyu',   nameShort: '華龍神朝',   nameFull: '紅なる華龍神朝',         color: 'bg-red-600',     attributeKey: 'evil_score' },
-    { id: 'Yato',    nameShort: '夜刀神国',   nameFull: '宵なる夜刀神国',         color: 'bg-purple-700',  attributeKey: 'justice_score' },
+    { id: 'Roland',  nameShort: 'ローランド', nameFull: 'ローランド聖王国', color: 'bg-blue-600',    attributeKey: 'order_score' },
+    { id: 'Markand', nameShort: 'マルカンド', nameFull: '砂塵の王国マルカンド', color: 'bg-emerald-600', attributeKey: 'chaos_score' },
+    { id: 'Karyu',   nameShort: '華龍神朝',   nameFull: '華龍神朝',         color: 'bg-red-600',     attributeKey: 'evil_score' },
+    { id: 'Yato',    nameShort: '夜刀神国',   nameFull: '夜刀神国',         color: 'bg-purple-700',  attributeKey: 'justice_score' },
 ] as const;
 
 /**

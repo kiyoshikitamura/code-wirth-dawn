@@ -99,7 +99,13 @@ export async function POST(req: Request) {
         // 2. 既存の装備を外す (UPSERT)
         const { data: existing } = await supabaseService
             .from('equipped_items')
-            .select('id, item_id')
+            .select(`
+                id,
+                item_id,
+                items (
+                    effect_data
+                )
+            `)
             .eq('user_id', userId)
             .eq('slot', slot)
             .maybeSingle();
@@ -141,7 +147,51 @@ export async function POST(req: Request) {
             .eq('id', inventory_id)
             .eq('user_id', userId);
 
-        return NextResponse.json({ success: true, item_name: item.name, slot });
+        // 5. HP Adjustment (Sync current HP with new HP bonus)
+        const { data: allEquipped } = await supabaseService
+            .from('equipped_items')
+            .select('items!inner(effect_data)')
+            .eq('user_id', userId);
+
+        let totalHpBonus = 0;
+        if (allEquipped) {
+            for (const eq of allEquipped) {
+                const eff = (eq as any).items?.effect_data;
+                if (eff?.hp_bonus) totalHpBonus += eff.hp_bonus;
+            }
+        }
+
+        const newHpBonus = item.effect_data?.hp_bonus || 0;
+        const oldHpBonus = (existing as any)?.items?.effect_data?.hp_bonus || 0;
+        const netHpChange = newHpBonus - oldHpBonus;
+
+        // プロファイルを取得（HP更新 + レスポンス用）
+        const { data: profile } = await supabaseService
+            .from('user_profiles')
+            .select('hp, max_hp')
+            .eq('id', userId)
+            .single();
+
+        let finalHp = profile?.hp || 0;
+        const baseMaxHp = profile?.max_hp || 100;
+        const effectiveMaxHp = baseMaxHp + totalHpBonus;
+
+        if (netHpChange !== 0 && profile) {
+            finalHp = Math.min(effectiveMaxHp, Math.max(1, finalHp + netHpChange));
+            await supabaseService
+                .from('user_profiles')
+                .update({ hp: finalHp })
+                .eq('id', userId);
+        }
+
+        return NextResponse.json({
+            success: true,
+            item_name: item.name,
+            slot,
+            updated_hp: finalHp,
+            effective_max_hp: effectiveMaxHp,
+            equip_bonus: { hp: totalHpBonus }
+        });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
@@ -204,17 +254,24 @@ export async function DELETE(req: Request) {
             .eq('id', userId)
             .single();
 
-        if (profile) {
-            const effectiveMaxHp = (profile.max_hp || 100) + newHpBonus;
-            if ((profile.hp || 0) > effectiveMaxHp) {
-                await supabaseService
-                    .from('user_profiles')
-                    .update({ hp: effectiveMaxHp })
-                    .eq('id', userId);
-            }
+        let finalHp = profile?.hp || 0;
+        const baseMaxHp = profile?.max_hp || 100;
+        const effectiveMaxHp = baseMaxHp + newHpBonus;
+
+        if (profile && finalHp > effectiveMaxHp) {
+            finalHp = effectiveMaxHp;
+            await supabaseService
+                .from('user_profiles')
+                .update({ hp: finalHp })
+                .eq('id', userId);
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({
+            success: true,
+            updated_hp: finalHp,
+            effective_max_hp: effectiveMaxHp,
+            equip_bonus: { hp: newHpBonus }
+        });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }

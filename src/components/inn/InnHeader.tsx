@@ -50,7 +50,7 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                 if (locSlug === 'Roland') name = 'ローランド';
                 if (locSlug === 'Karyu') name = '華龍神朝';
                 if (locSlug === 'Yato') name = '夜刀神国';
-                if (locSlug === 'Markand') name = 'マーカンド';
+                if (locSlug === 'Markand') name = 'マルカンド';
                 expiring.push(name);
             }
         }

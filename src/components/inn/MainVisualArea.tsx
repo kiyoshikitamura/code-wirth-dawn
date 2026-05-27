@@ -59,7 +59,7 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                 case 'Roland': return 'ローランド聖王国';
                 case 'Karyu': return '華龍神朝';
                 case 'Yato': return '夜刀神国';
-                case 'Markand': return '商業都市マーカンド';
+                case 'Markand': return '砂塵の王国マルカンド';
                 case 'Neutral': return '中立地帯';
                 default: return nation;
             }
