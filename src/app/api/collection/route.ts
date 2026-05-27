@@ -41,7 +41,7 @@ export async function GET(req: Request) {
             userSkillsRes,
             npcEncountersRes,
         ] = await Promise.all([
-            supabaseService.from('enemies').select('id, slug, name, level, hp, atk, def, exp_reward, gold_reward, drop_item_id, drop_item_name'),
+            supabaseService.from('enemies').select('id, slug, name, level, hp, atk, def, reward_exp, reward_gold, drop_item_id, drop_item_slug'),
             supabaseService.from('items').select('id, slug, name, type, sub_type, base_price, effect_data'),
             supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, image_url, cards(name, type, ap_cost, effect_val, description)'),
             supabaseService.from('npcs').select('slug, name, epithet, job_class, level, max_hp, attack, defense, cover_rate, hire_cost, introduction'),
@@ -63,6 +63,8 @@ export async function GET(req: Request) {
         const unlockedNpcs = new Set((npcEncountersRes.data || []).map((r: any) => r.npc_slug));
 
         // Build response lists
+        const itemSlugToName = new Map((itemsRes.data || []).map((i: any) => [i.slug, i.name]));
+
         const enemies: CollectionEnemyEntry[] = (enemiesRes.data || []).map((e: any) => ({
             id: e.id,
             slug: e.slug,
@@ -72,9 +74,9 @@ export async function GET(req: Request) {
             hp: unlockedEnemies.has(e.id) ? e.hp : null,
             atk: unlockedEnemies.has(e.id) ? e.atk : null,
             def: unlockedEnemies.has(e.id) ? e.def : null,
-            exp_reward: unlockedEnemies.has(e.id) ? e.exp_reward : null,
-            gold_reward: unlockedEnemies.has(e.id) ? e.gold_reward : null,
-            drop_item_name: unlockedEnemies.has(e.id) ? e.drop_item_name : null,
+            exp_reward: unlockedEnemies.has(e.id) ? e.reward_exp : null,
+            gold_reward: unlockedEnemies.has(e.id) ? e.reward_gold : null,
+            drop_item_name: unlockedEnemies.has(e.id) ? (itemSlugToName.get(e.drop_item_slug) || null) : null,
         })).sort((a, b) => a.id - b.id);
 
         const items: CollectionItemEntry[] = (itemsRes.data || []).filter((i: any) => i.id != null).map((i: any) => ({

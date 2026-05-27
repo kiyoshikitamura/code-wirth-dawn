@@ -205,7 +205,7 @@ export default function QuestLogModal({ onClose }: Props) {
                                     }`}
                                 >
                                     {/* ID */}
-                                    <span className="text-[10px] font-mono text-gray-600 w-12 flex-shrink-0">
+                                    <span className="text-[10px] font-mono text-slate-400 w-12 flex-shrink-0">
                                         No.{String(quest.id).padStart(4, '0')}
                                     </span>
 
@@ -222,14 +222,14 @@ export default function QuestLogModal({ onClose }: Props) {
                                             )}
                                         </div>
                                     ) : (
-                                        <span className="text-sm text-gray-700 flex-1 tracking-widest">
+                                        <span className="text-sm text-slate-500 flex-1 tracking-widest">
                                             ─────
                                         </span>
                                     )}
 
                                     {/* Level + Status */}
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        <span className="text-[9px] font-mono text-gray-600">
+                                        <span className="text-[9px] font-mono text-slate-400">
                                             Lv.{quest.rec_level}
                                         </span>
                                         {quest.completed && (
