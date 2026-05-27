@@ -47,18 +47,26 @@ export default function TermsOfServiceModal({
                     <div className="flex justify-around items-center pt-1">
                         <Link
                             href="/legal/terms"
-                            target="_blank"
+                            onClick={() => {
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem('cwd_show_tos', '1');
+                                }
+                            }}
                             className="text-amber-400 hover:text-amber-300 transition-colors text-xs font-serif underline decoration-amber-500/50 hover:decoration-amber-400 font-bold"
                         >
-                            利用規約 ↗
+                            利用規約
                         </Link>
                         <div className="w-px h-3 bg-amber-900/40"></div>
                         <Link
                             href="/legal/privacy"
-                            target="_blank"
+                            onClick={() => {
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem('cwd_show_tos', '1');
+                                }
+                            }}
                             className="text-amber-400 hover:text-amber-300 transition-colors text-xs font-serif underline decoration-amber-500/50 hover:decoration-amber-400 font-bold"
                         >
-                            プライバシーポリシー ↗
+                            プライバシーポリシー
                         </Link>
                     </div>
                 </div>

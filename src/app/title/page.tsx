@@ -209,6 +209,18 @@ export default function TitlePage() {
         return () => subscription.unsubscribe();
     }, [checkUserStatus, setMode]);
 
+    // 利用規約ページなどからの戻り時に、利用規約モーダル表示状態を復元する
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const showTos = sessionStorage.getItem('cwd_show_tos');
+            if (showTos === '1') {
+                sessionStorage.removeItem('cwd_show_tos');
+                setMode('MENU');
+                setShowTermsModal(true);
+            }
+        }
+    }, [setMode]);
+
     // ─── ハンドラー ───────────────────────────────────────────────────────
 
     const handleTapToStart = () => setMode('MENU');

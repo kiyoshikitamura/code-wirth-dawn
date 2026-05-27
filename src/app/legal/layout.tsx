@@ -2,16 +2,32 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+
+    const handleBack = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+        } else {
+            router.push('/title');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 text-gray-300 font-sans">
             <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
                 <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-                    <Link href="/title" className="text-amber-500 hover:text-amber-400 transition-colors">
+                    <button
+                        onClick={handleBack}
+                        className="text-amber-500 hover:text-amber-400 transition-colors flex items-center justify-center cursor-pointer"
+                        aria-label="戻る"
+                    >
                         <ArrowLeft className="w-5 h-5" />
-                    </Link>
+                    </button>
                     <h1 className="text-sm font-serif text-amber-500/80 tracking-widest">Code: Wirth-Dawn</h1>
                 </div>
             </header>
