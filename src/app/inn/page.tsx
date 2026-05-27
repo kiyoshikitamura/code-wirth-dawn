@@ -231,7 +231,10 @@ function InnPageInner() {
 // 本番: adminKey を localStorage に持つデバッグユーザーのみ表示
 // 開発/ローカル: 常に全ユーザーに表示
 function DebugPanelGate({ userProfile, worldState, router, fetchRep }: { userProfile: any; worldState: any; router: any; fetchRep: () => Promise<void> }) {
-    const isProduction = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+    // Vercelビルド時はNODE_ENVが常にproductionになるため、NEXT_PUBLIC_VERCEL_ENVを優先評価する
+    const isProduction = process.env.NEXT_PUBLIC_VERCEL_ENV
+        ? process.env.NEXT_PUBLIC_VERCEL_ENV === 'production'
+        : process.env.NODE_ENV === 'production';
 
     const [hasAdminKey, setHasAdminKey] = useState(false);
     React.useEffect(() => {
