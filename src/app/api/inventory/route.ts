@@ -150,7 +150,7 @@ export async function GET(req: Request) {
                     id,
                     skill_id,
                     is_equipped,
-                    acquired_at,
+                    created_at,
                     skills!inner (
                         id,
                         slug,
@@ -184,6 +184,11 @@ export async function GET(req: Request) {
         if (error) {
             console.error("Inventory GET Supabase Error:", JSON.stringify(error, null, 2));
             return NextResponse.json({ error: error.message, details: error }, { status: 500 });
+        }
+
+        // user_skills のエラーログ（サイレント失敗防止）
+        if (userSkillsResult.error) {
+            console.error("user_skills GET Error:", JSON.stringify(userSkillsResult.error, null, 2));
         }
 
         // --- Items (non-skill) ---
@@ -276,7 +281,7 @@ export async function GET(req: Request) {
                     power_value: card?.effect_val || 0,
                     base_price: skill.base_price || 0,
                     is_equipped: entry.is_equipped,
-                    acquired_at: entry.acquired_at,
+                    acquired_at: entry.created_at,
                     quantity: 1,
                     is_skill: true,
                     cost: skill.deck_cost || 0,
