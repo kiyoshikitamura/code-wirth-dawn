@@ -12,20 +12,15 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing location_id or user_id' }, { status: 400 });
         }
 
-        console.log(`[tavern/list] location_id=${location_id}, user_id=${user_id}`);
-        console.log(`[tavern/list] SUPABASE_URL=${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
-        console.log(`[tavern/list] SERVICE_KEY exists=${!!process.env.SUPABASE_SERVICE_ROLE_KEY}`);
-
         // v2.9.3e: service role client に変更（RLS問題の回避）
         const shadowService = new ShadowService(supabaseServer);
         const shadows = await shadowService.findShadowsAtLocation(location_id, user_id);
 
-        console.log(`[tavern/list] shadows returned: ${shadows.length}`);
-
         return NextResponse.json({ shadows });
 
     } catch (e: any) {
-        console.error(`[tavern/list] UNCAUGHT ERROR:`, e.message, e.stack);
+        console.error(`[tavern/list] Error:`, e.message);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
+
