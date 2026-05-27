@@ -383,20 +383,20 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                     <p className="text-[10px] text-gray-600">名前の変更は週1回まで可能です</p>
                                 </div>
                             ) : (
-                                <div>
-                                    <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between w-full gap-2">
+                                    <div className="flex items-center gap-2 min-w-0">
                                         <span className="text-[#e3d5b8] text-lg font-serif italic truncate max-w-[140px]">
                                             {userProfile?.name || '名もなき旅人'}
                                         </span>
                                         <button
                                             onClick={() => { setEditName(userProfile?.name || ''); setIsEditingName(true); setNameError(''); setNameSuccess(''); }}
-                                            className="p-1 text-[#a38b6b] hover:text-amber-400 transition-colors"
+                                            className="p-1 text-[#a38b6b] hover:text-amber-400 transition-colors flex-shrink-0"
                                             title="名前を変更"
                                         >
                                             <Pencil className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
-                                    <div className="mt-1">
+                                    <div className="flex-shrink-0">
                                         <button
                                             onClick={() => setShowIdPopup(true)}
                                             className="text-[10px] text-[#a38b6b] hover:text-amber-400 transition-colors border border-[#a38b6b]/30 px-2 py-0.5 rounded bg-black/20"
