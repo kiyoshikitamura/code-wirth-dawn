@@ -288,13 +288,14 @@ class SoundManager {
 
     setBgmEnabled(enabled: boolean): void {
         this.bgmEnabled = enabled;
-        if (this.bgmAudio) {
-            if (!enabled) {
+        if (!enabled) {
+            if (this.bgmAudio) {
                 this.bgmAudio.pause();
-            } else if (this.currentBgmKey) {
-                this.bgmAudio.volume = this.BGM_VOLUME;
-                this.bgmAudio.play().catch(() => {});
             }
+        } else if (this.currentBgmKey) {
+            const key = this.currentBgmKey;
+            this.currentBgmKey = null;
+            this.playBgm(key).catch(() => {});
         }
     }
 

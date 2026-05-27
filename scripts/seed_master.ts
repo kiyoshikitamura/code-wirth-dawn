@@ -47,7 +47,12 @@ async function seedTable(tableName: string, filePath: string, transformer: (reco
     });
 
     // Filter out invalid rows (e.g. footers, comments)
-    const validRecords = records.filter((r: any) => typeof r.id === 'number' && !isNaN(r.id));
+    const validRecords = records.filter((r: any) => {
+        if (r.id === null || r.id === undefined || r.id === '') return false;
+        if (typeof r.id === 'number' && !isNaN(r.id)) return true;
+        if (typeof r.id === 'string' && r.id.trim() !== '') return true;
+        return false;
+    });
 
     if (validRecords.length < records.length) {
         console.log(`Skipped ${records.length - validRecords.length} invalid/footer rows in ${tableName}.`);
@@ -101,6 +106,20 @@ async function main() {
             map_y: r.map_y ? Number(r.map_y) : null,
         };
     }, 'id');
+
+    // 0.5 World States
+    await seedTable('world_states', path.join(CSV_DIR, 'locations.csv'), (r: any) => ({
+        location_name: r.name,
+        controlling_nation: r.nation_id || r.ruling_nation_id || 'Neutral',
+        status: 'Prosperous',
+        attribute_name: '至高の平穏',
+        order_score: 10,
+        chaos_score: 10,
+        justice_score: 10,
+        evil_score: 10,
+        background_url: '/backgrounds/default.jpg',
+        total_days_passed: 0
+    }), 'location_name');
 
     // 1. Cards
     await seedTable('cards', path.join(CSV_DIR, 'cards.csv'), (r: any) => ({
