@@ -163,3 +163,21 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **UGCエネミー解決**: `ScenarioEngine` の battle ノードで `enemyData` (インライン定義) を JSON 文字列化 → `QuestPage` の `startBattle` で JSON パースして `Enemy` オブジェクトを直接構築（DB参照なし）
 - **RPC関数**: `increment_ugc_play_count`, `increment_ugc_clear_count` — `SECURITY DEFINER` でRLSをバイパスし、APIサーバーからService Role Keyで呼び出す
 - **コレクション機能への影響**: UGCテーブルは完全分離のため、既存のコレクション機能は改修不要
+
+## Supabase PostgREST JOIN の教訓
+
+- **FK が存在しない JOIN は PGRST200 エラーになる**: `user_skills → cards!inner(name)` のように、テーブル間に直接的な Foreign Key が存在しない JOIN を指定すると `PGRST200: Could not find a relationship between 'X' and 'Y' in the schema cache` エラーが返る。正しい FK 経路を経由する必要がある（例: `user_skills → skills!inner(cards!inner(name))`）
+- **Vercel サーバーレス環境ではエラーの伝播が異なる場合がある**: ローカルでは `{ data: null, error: {...} }` として静かに返るエラーが、Vercel ランタイムでは例外として throw され、`try/catch` の想定範囲を超えて上位の処理全体をクラッシュさせることがある。結果として、エラーと無関係に見える機能（例: NPC表示）が巻き添えで動作しなくなる
+- **サイレントエラーの防止**: `Promise.all` で並列取得した結果の `.error` プロパティを必ずチェックし、ログに出力する。片方のクエリ失敗がもう片方の正常データも巻き込んで消失させるパターンに注意
+
+## テーブルスキーマとクエリの整合性の教訓
+
+- **`acquired_at` vs `created_at` のカラム名不一致**: マイグレーションで定義したカラム名（`created_at`）と、APIクエリで参照するカラム名（`acquired_at`）が一致しないと、Supabase は `42703: column does not exist` エラーを返す。このエラーは `{ data: null }` として静かに処理され、関連データが丸ごと消失する
+- **マイグレーション作成時のルール**: テーブル作成・再作成のマイグレーションを書いた後は、そのテーブルを SELECT するすべての API ルートを grep で洗い出し、カラム名の整合性を必ず確認する。特に `INSERT` 側で修正したカラム名が `SELECT` 側に反映漏れするケースが多い
+- **国名表記の統一**: 「マーカンド連邦」は誤り。常に「砂塵の王国マルカンド」で統一すること
+
+## NPC シード運用の教訓
+
+- **シードデータの投入方法**: Vercel プレビュー環境は認証保護されているため、`/api/debug/seed-npcs` を外部から `curl` / `Invoke-WebRequest` で呼べない。代替として Supabase クライアントで直接DBに upsert するスクリプト（`scratch/` 配下）を使用する
+- **シードスクリプトの upsert キー**: `npcs` テーブルは `slug` を `onConflict` キーとして upsert する。`id` は UUID のため CSV の連番とは一致しない
+- **本番 / プレビュー DB の両方にシード必要**: 環境分離により DB が異なるため、シードは各環境ごとに個別実行する。実行後は一時スクリプトと `.env.production.local` を必ず削除する
