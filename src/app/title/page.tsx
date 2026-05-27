@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { Sword, Map as MapIcon, Hourglass, Compass, LogIn, PlayCircle, BookOpen } from 'lucide-react';
 import { useBgm } from '@/hooks/useBgm';
 import DeleteConfirmModal from '@/components/title/DeleteConfirmModal';
+import TermsOfServiceModal from '@/components/title/TermsOfServiceModal';
 
 export default function TitlePage() {
     const router = useRouter();
@@ -63,6 +64,8 @@ export default function TitlePage() {
     // New Game で既存キャラが見つかった場合の上書き確認
     const [showNewGameOverwrite, setShowNewGameOverwrite] = useState(false);
     const [pendingSessionToken, setPendingSessionToken] = useState<string | null>(null);
+    // 利用規約モーダル表示
+    const [showTermsModal, setShowTermsModal] = useState(false);
 
     // Dynamic Flavor Text
     const getFlavorText = (currentAge: number) => {
@@ -489,50 +492,40 @@ export default function TitlePage() {
                             </div>
                         )}
 
-                        {/* New Game — Google OAuth 必須 */}
+                        {/* New Game — Google OAuth 必須 (利用規約同意後に実行) */}
                         <button
-                            onClick={handleNewGame}
-                            className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-4 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg flex flex-col justify-center items-center gap-1 group"
+                            onClick={() => setShowTermsModal(true)}
+                            className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-3.5 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg flex justify-center items-center gap-2 group"
                         >
-                            <div className="flex items-center gap-2">
-                                <Sword className="w-5 h-5 group-hover:text-amber-300 transition-colors" />
-                                <span className="group-hover:text-amber-200 tracking-widest text-base">New Game</span>
-                            </div>
-                            <span className="text-[11px] text-amber-500/80 tracking-wide">Google連携が必要</span>
+                            <Sword className="w-4 h-4 group-hover:text-amber-300 transition-colors" />
+                            <span className="group-hover:text-amber-200 tracking-widest text-base">New Game</span>
                         </button>
 
                         {/* Continue — Google OAuth */}
                         <button
                             onClick={() => setMode('CONTINUE_MENU')}
-                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-4 rounded hover:bg-slate-800 hover:border-slate-400 transition-all tracking-widest flex justify-center items-center gap-2 group"
+                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-3.5 rounded hover:bg-slate-800 hover:border-slate-400 transition-all tracking-widest flex justify-center items-center gap-2 group"
                         >
                             <LogIn className="w-4 h-4 group-hover:text-slate-200 transition-colors" />
                             <span className="group-hover:text-white">Continue / Transfer</span>
                         </button>
 
-                        {/* Divider */}
-                        <div className="flex items-center gap-3 py-1">
-                            <div className="flex-1 h-px bg-slate-800" />
-                            <span className="text-[10px] text-slate-600 font-serif tracking-widest">または</span>
-                            <div className="flex-1 h-px bg-slate-800" />
-                        </div>
-
                         {/* Test Play — 匿名（7日間のみ） */}
                         <button
                             onClick={handleTestPlay}
-                            className="w-full bg-slate-900/40 border border-slate-500/70 text-slate-300 font-serif py-3 rounded hover:bg-slate-800/60 hover:text-slate-200 hover:border-slate-400 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
+                            className="w-full bg-slate-900/40 border border-slate-500/70 text-slate-300 font-serif py-3.5 rounded hover:bg-slate-800/60 hover:text-slate-200 hover:border-slate-400 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
                         >
                             <div className="flex items-center gap-2">
                                 <PlayCircle className="w-4 h-4 text-slate-400" />
                                 <span className="font-bold">Test Play</span>
                             </div>
-                            <span className="text-[10px] text-slate-400/80 tracking-wide">アカウント連携なし・7日間限定・データ引き継ぎ不可</span>
+                            <span className="text-[10px] text-slate-400/80 tracking-wide">アカウント連携なし・7日間限定</span>
                         </button>
 
                         {/* Play Guide / プレイガイド */}
                         <Link
                             href="/play-guide"
-                            className="w-full bg-slate-900/30 border border-slate-800 text-slate-400 font-serif py-3 rounded hover:bg-amber-950/10 hover:text-amber-400 hover:border-amber-500/40 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
+                            className="w-full bg-slate-900/30 border border-slate-800 text-slate-400 font-serif py-3.5 rounded hover:bg-amber-950/10 hover:text-amber-400 hover:border-amber-500/40 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
                         >
                             <BookOpen className="w-4 h-4 text-slate-500 group-hover:text-amber-500 transition-colors" />
                             <span className="font-bold">プレイガイド</span>
@@ -550,6 +543,17 @@ export default function TitlePage() {
                         </div>
 
                     </div>
+                )}
+
+                {/* ─── 利用規約同意モーダル ─── */}
+                {showTermsModal && (
+                    <TermsOfServiceModal
+                        onAgree={() => {
+                            setShowTermsModal(false);
+                            handleNewGame();
+                        }}
+                        onCancel={() => setShowTermsModal(false)}
+                    />
                 )}
 
                 {/* ─── New Game 上書き確認モーダル ─── */}
@@ -626,7 +630,7 @@ export default function TitlePage() {
 
                         <button
                             onClick={handleContinue}
-                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-4 rounded hover:bg-slate-800 hover:border-amber-500/50 hover:text-amber-200 transition-all flex flex-col items-center gap-1 group"
+                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-3.5 rounded hover:bg-slate-800 hover:border-amber-500/50 hover:text-amber-200 transition-all flex flex-col items-center gap-1 group"
                         >
                             <div className="flex items-center gap-2">
                                 <LogIn className="w-4 h-4 group-hover:text-amber-400 transition-colors" />
@@ -635,15 +639,9 @@ export default function TitlePage() {
                             <span className="text-[10px] text-slate-400/80 tracking-wide">Googleアカウントでログインして続きから始める</span>
                         </button>
 
-                        <div className="flex items-center gap-3 py-1">
-                            <div className="flex-1 h-px bg-slate-800" />
-                            <span className="text-[10px] text-slate-600 font-serif tracking-widest">または</span>
-                            <div className="flex-1 h-px bg-slate-800" />
-                        </div>
-
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
-                            className="w-full bg-red-950/20 border border-red-900/40 text-red-400/80 font-serif py-3 rounded hover:bg-red-950/40 hover:border-red-700 hover:text-red-300 transition-all flex flex-col items-center gap-1 text-sm"
+                            className="w-full bg-red-950/20 border border-red-900/40 text-red-400/80 font-serif py-3.5 rounded hover:bg-red-950/40 hover:border-red-700 hover:text-red-300 transition-all flex flex-col items-center gap-1 text-sm"
                         >
                             <span className="tracking-widest font-bold">キャラクター削除（リセット）</span>
                             <span className="text-[10px] tracking-wide opacity-70">全データを消去して最初からやり直す</span>
