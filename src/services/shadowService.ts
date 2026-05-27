@@ -61,11 +61,15 @@ export class ShadowService {
         const results: ShadowSummary[] = [];
 
         // 0. 現在のパーティメンバーを取得（重複除外用）
-        const { data: myParty } = await this.supabase
+        const { data: myParty, error: partyError } = await this.supabase
             .from('party_members')
             .select('source_user_id, name, origin_type')
             .eq('owner_id', currentUserId)
             .eq('is_active', true);
+
+        if (partyError) {
+            console.error('[ShadowService] party_members query failed:', partyError.message);
+        }
 
         const hiredSourceIds = new Set(myParty?.map(p => p.source_user_id).filter(Boolean));
         const hiredNames = new Set(myParty?.map(p => p.name));
@@ -173,10 +177,15 @@ export class ShadowService {
             const isCapital = loc?.prosperity_level && loc.prosperity_level >= 4;
 
             // v2.9.3e: originフィルタを撤廃（カラム未存在の環境対応）
-            const { data: npcs } = await this.supabase
+            const { data: npcs, error: npcQueryErr } = await this.supabase
                 .from('npcs')
                 .select('*')
                 .eq('is_hireable', true);
+
+            if (npcQueryErr) {
+                console.error('[ShadowService] npcs query error:', npcQueryErr.message);
+            }
+            console.log(`[ShadowService] npcs hireable: ${npcs?.length || 0}, rulingNation: ${rulingNation}`);
 
             if (npcs) {
                 // 1. 支配国のネイティブNPCをフィルタ
