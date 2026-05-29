@@ -594,8 +594,8 @@ export default function QuestPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-[100dvh] bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
-            <div className="relative w-full h-[100dvh] lg:max-w-[430px] lg:h-[844px] lg:border-[6px] lg:border-slate-800 lg:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
+        <div className="flex items-center justify-center h-screen w-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
+            <div className="relative w-full h-[100dvh] md:max-w-[430px] md:h-[min(844px,92vh)] md:border-[6px] md:border-slate-800 md:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
 
                 {isSettingsOpen && (
                     <QuestSettingsModal

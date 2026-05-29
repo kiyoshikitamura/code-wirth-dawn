@@ -73,8 +73,8 @@ function InnPageInner() {
 
     if (loading || !userProfile || !worldState) {
         return (
-            <div className="min-h-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
-                <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl flex flex-col items-center justify-center gap-4">
+            <div className="h-screen w-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
+                <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl flex flex-col items-center justify-center gap-4">
                     <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm text-amber-400/70 font-serif tracking-widest animate-pulse">拠点情報を取得中...</p>
                 </div>
@@ -83,7 +83,7 @@ function InnPageInner() {
     }
 
     return (
-        <div className="min-h-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
+        <div className="h-screen w-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
 
             {/* Toast通知（画面中央） */}
             {toast && (
@@ -115,7 +115,7 @@ function InnPageInner() {
             )}
 
             {/* Mobile View Container */}
-            <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[844px] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
+            <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
                 <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} onOpenShop={() => setShowShop(true)} equipBonus={equipBonus} />
