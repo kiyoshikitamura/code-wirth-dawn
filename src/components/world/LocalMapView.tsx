@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Location } from '@/types/game';
-import { User as UserIcon, Map as MapIcon } from 'lucide-react';
+import { User as UserIcon, Map as MapIcon, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 
 export interface MappedLocation extends Location {
@@ -24,6 +24,25 @@ export default function LocalMapView({ visibleLocations, onSelectLocation }: Pro
     const { userProfile } = useGameStore();
     const containerRef = React.useRef<HTMLDivElement>(null);
     const canvasRef = React.useRef<HTMLDivElement>(null);
+
+    const handleScroll = (direction: 'up' | 'down' | 'left' | 'right') => {
+        if (!containerRef.current) return;
+        const isPc = typeof window !== 'undefined' && window.innerWidth >= 768;
+        const amount = isPc ? 150 : 250;
+
+        let left = 0;
+        let top = 0;
+        if (direction === 'left') left = -amount;
+        if (direction === 'right') left = amount;
+        if (direction === 'up') top = -amount;
+        if (direction === 'down') top = amount;
+
+        containerRef.current.scrollBy({
+            left,
+            top,
+            behavior: 'smooth'
+        });
+    };
 
     React.useEffect(() => {
         // Automatically scroll to the current location on mount or when visibleLocations change
@@ -131,6 +150,35 @@ export default function LocalMapView({ visibleLocations, onSelectLocation }: Pro
                 })}
             </div>
 
+            {/* スクロール移動支援矢印ボタン */}
+            <button
+                onClick={() => handleScroll('up')}
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-40 w-8 h-8 md:w-9 md:h-9 bg-slate-950/70 border border-amber-600/30 text-amber-500 rounded-full flex items-center justify-center shadow-lg hover:bg-amber-950/80 hover:text-amber-400 hover:scale-105 active:scale-95 transition-all animate-pulse"
+                aria-label="Scroll Up"
+            >
+                <ChevronUp className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <button
+                onClick={() => handleScroll('down')}
+                className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40 w-8 h-8 md:w-9 md:h-9 bg-slate-950/70 border border-amber-600/30 text-amber-500 rounded-full flex items-center justify-center shadow-lg hover:bg-amber-950/80 hover:text-amber-400 hover:scale-105 active:scale-95 transition-all animate-pulse"
+                aria-label="Scroll Down"
+            >
+                <ChevronDown className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <button
+                onClick={() => handleScroll('left')}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-40 w-8 h-8 md:w-9 md:h-9 bg-slate-950/70 border border-amber-600/30 text-amber-500 rounded-full flex items-center justify-center shadow-lg hover:bg-amber-950/80 hover:text-amber-400 hover:scale-105 active:scale-95 transition-all animate-pulse"
+                aria-label="Scroll Left"
+            >
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            <button
+                onClick={() => handleScroll('right')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-40 w-8 h-8 md:w-9 md:h-9 bg-slate-950/70 border border-amber-600/30 text-amber-500 rounded-full flex items-center justify-center shadow-lg hover:bg-amber-950/80 hover:text-amber-400 hover:scale-105 active:scale-95 transition-all animate-pulse"
+                aria-label="Scroll Right"
+            >
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
         </div>
     );
 }
