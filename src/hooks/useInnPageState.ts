@@ -74,17 +74,75 @@ export function useInnPageState() {
         setTimeout(() => setToast(null), 2500);
     };
 
-    // Initial load
+    // Initial load — init-page APIで一括取得
     useEffect(() => {
-        Promise.all([
-            fetchWorldState(),
-            useGameStore.getState().fetchUserProfile()
-        ]).then(() => {
-            if (!useGameStore.getState().userProfile) {
-                router.push('/title');
+        const loadInitData = async () => {
+            try {
+                const token = await (await import('@/lib/authToken')).getAuthToken();
+                const headers: HeadersInit = {};
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch('/api/init-page', { headers, cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Profile + gold + equipBonus をストアに反映
+                    if (data.profile) {
+                        useGameStore.setState({
+                            userProfile: data.profile,
+                            gold: data.profile.gold || 0,
+                            equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
+                        });
+                    }
+
+                    // Hub State
+                    if (data.hub_state) {
+                        useGameStore.setState({ hubState: data.hub_state });
+                    }
+
+                    // World State（hegemony 含む）
+                    if (data.world_state) {
+                        useGameStore.setState({ worldState: data.world_state });
+                    }
+
+                    // Reputation
+                    if (data.reputation !== undefined) {
+                        setReputation(data.reputation || { rank: 'Stranger', score: 0 });
+                    }
+
+                    // Gougai（号外）
+                    if (data.gougai && data.gougai.length > 0) {
+                        setGougaiEvents(data.gougai);
+                    }
+
+                    if (!data.profile) {
+                        router.push('/title');
+                    }
+                } else {
+                    // Fallback: 従来の個別フェッチ
+                    await Promise.all([
+                        fetchWorldState(),
+                        useGameStore.getState().fetchUserProfile()
+                    ]);
+                    if (!useGameStore.getState().userProfile) {
+                        router.push('/title');
+                    }
+                }
+            } catch (e) {
+                console.error('[useInnPageState] init-page fetch failed, falling back:', e);
+                await Promise.all([
+                    fetchWorldState(),
+                    useGameStore.getState().fetchUserProfile()
+                ]);
+                if (!useGameStore.getState().userProfile) {
+                    router.push('/title');
+                }
+            } finally {
+                setLoading(false);
             }
-        }).finally(() => setLoading(false));
-    }, [router, fetchWorldState]);
+        };
+        loadInitData();
+    }, [router]);
 
     // linkIdentity コールバック処理
     useEffect(() => {
@@ -172,7 +230,8 @@ export function useInnPageState() {
         setReputation(data || { rank: 'Stranger', score: 0 });
     }, [userProfile?.id, worldState?.location_name, isHub]);
 
-    useEffect(() => { fetchRep(); }, [fetchRep]);
+    // init-page APIで既に取得済みの場合はスキップ
+    useEffect(() => { if (reputation !== null) return; fetchRep(); }, [fetchRep, reputation]);
 
     // Gougai Detection
     useEffect(() => {

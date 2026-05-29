@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-
-// Helper to get user profile
-async function getUserProfile() {
-    // In a real app we'd get the auth user. Here we fetch the demo/first profile or by ID.
-    // For simplicity in this demo environment, we assume single user or handle session manually.
-    const { data: profiles } = await supabase.from('user_profiles').select('*').limit(1);
-    return profiles?.[0];
-}
+import { createAuthClient } from '@/lib/supabase-auth';
 
 // GET: List Party Members in Pool (owner_id is NULL) + User's Party
 export async function GET(req: Request) {
     try {
-        const profile = await getUserProfile();
+        const supabaseAuth = createAuthClient(req);
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        if (!user || authError) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const { data: profile } = await supabaseAuth.from('user_profiles').select('id, gold').eq('id', user.id).single();
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
         // 1. Fetch Pool (Recruitable)
@@ -36,7 +34,7 @@ export async function GET(req: Request) {
 
 
         // 2. Fetch User's Party
-        const { data: userParty, error: partyError } = await supabase
+        const { data: userParty, error: partyError } = await supabaseAuth
             .from('party_members')
             .select('*')
             .eq('owner_id', profile.id);
@@ -56,13 +54,18 @@ export async function GET(req: Request) {
 // POST: Hire or Dismiss
 export async function POST(req: Request) {
     try {
+        const supabaseAuth = createAuthClient(req);
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        if (!user || authError) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
         const { action, member_id } = await req.json(); // member_id (was npc_id)
-        const profile = await getUserProfile();
+        const { data: profile } = await supabaseAuth.from('user_profiles').select('id, gold').eq('id', user.id).single();
         if (!profile) return NextResponse.json({ error: 'User not found' }, { status: 401 });
 
         if (action === 'hire') {
             // Check Party Size
-            const { count } = await supabase
+            const { count } = await supabaseAuth
                 .from('party_members')
                 .select('*', { count: 'exact', head: true })
                 .eq('owner_id', profile.id);

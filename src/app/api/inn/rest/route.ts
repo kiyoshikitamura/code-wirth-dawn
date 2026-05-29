@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { ECONOMY_RULES } from '@/constants/game_rules';
 import { processAging } from '@/services/questService';
 import { HUB_LOCATION_NAME } from '@/utils/constants';
 
 export async function POST(req: Request) {
     try {
-        const { id, effectiveMaxHp } = await req.json(); // User ID
-        if (!id) return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+        const supabaseAuth = createAuthClient(req);
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        if (!user || authError) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { effectiveMaxHp } = await req.json();
+        const id = user.id;
 
         // Fetch Max Stats and Gold
         const { data: profile } = await supabase

@@ -1,17 +1,24 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabase-admin';
+import { createAuthClient } from '@/lib/supabase-auth';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/gossip
  * 「街の噂話」モーダル向けデータを一括返却。
- * Query: user_id, location_id, tab (optional: 'news'|'lore'|'secret'|'tavern')
+ * Query: location_id, tab (optional: 'news'|'lore'|'secret'|'tavern')
  */
 export async function GET(req: Request) {
     try {
+        const supabaseAuth = createAuthClient(req);
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        if (!user || authError) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = user.id;
+
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('user_id') || '';
         const locationId = searchParams.get('location_id') || '';
         const tab = searchParams.get('tab') || 'all'; // 個別タブ更新にも対応
 

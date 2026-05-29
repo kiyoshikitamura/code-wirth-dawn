@@ -1,33 +1,38 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useInnPageState } from '@/hooks/useInnPageState';
 import InnHeader from '@/components/inn/InnHeader';
-import TavernModal from '@/components/inn/TavernModal';
-import ShopModal from '@/components/shop/ShopModal';
-import PrayerModal from '@/components/world/PrayerModal';
-import StatusModal from '@/components/inn/StatusModal';
-import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
 import MainVisualArea from '@/components/inn/MainVisualArea';
 import FacilityGrid, { FacilityType } from '@/components/inn/FacilityGrid';
 import NpcDialogModal from '@/components/inn/NpcDialogModal';
-import GossipModal from '@/components/world/GossipModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
-import QuestBoardModal from '@/components/inn/QuestBoardModal';
-import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
-import ChronicleModal from '@/components/world/ChronicleModal';
-import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
-import CollectionModal from '@/components/collection/CollectionModal';
-import QuestLogModal from '@/components/collection/QuestLogModal';
-import RankingModal from '@/components/collection/RankingModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import XShareButton from '@/components/shared/XShareButton';
-import QuestTestPanel from '@/components/debug/QuestTestPanel';
-import DebugInventoryPanel from '@/components/debug/DebugInventoryPanel';
-import DebugPartyPanel from '@/components/debug/DebugPartyPanel';
+
+// モーダル群: ユーザー操作時のみロード (パフォーマンス最適化)
+const TavernModal = dynamic(() => import('@/components/inn/TavernModal'), { ssr: false });
+const ShopModal = dynamic(() => import('@/components/shop/ShopModal'), { ssr: false });
+const PrayerModal = dynamic(() => import('@/components/world/PrayerModal'), { ssr: false });
+const StatusModal = dynamic(() => import('@/components/inn/StatusModal'), { ssr: false });
+const AccountSettingsModal = dynamic(() => import('@/components/inn/AccountSettingsModal'), { ssr: false });
+const GossipModal = dynamic(() => import('@/components/world/GossipModal'), { ssr: false });
+const QuestBoardModal = dynamic(() => import('@/components/inn/QuestBoardModal'), { ssr: false });
+const UgcQuestBoardPanel = dynamic(() => import('@/components/ugc/UgcQuestBoardPanel'), { ssr: false });
+const ChronicleModal = dynamic(() => import('@/components/world/ChronicleModal'), { ssr: false });
+const HistoryArchiveModal = dynamic(() => import('@/components/inn/HistoryArchiveModal'), { ssr: false });
+const CollectionModal = dynamic(() => import('@/components/collection/CollectionModal'), { ssr: false });
+const QuestLogModal = dynamic(() => import('@/components/collection/QuestLogModal'), { ssr: false });
+const RankingModal = dynamic(() => import('@/components/collection/RankingModal'), { ssr: false });
+
+// デバッグ系: 開発環境のみロード
+const QuestTestPanel = dynamic(() => import('@/components/debug/QuestTestPanel'), { ssr: false });
+const DebugInventoryPanel = dynamic(() => import('@/components/debug/DebugInventoryPanel'), { ssr: false });
+const DebugPartyPanel = dynamic(() => import('@/components/debug/DebugPartyPanel'), { ssr: false });
 
 export default function InnPage() {
     return (

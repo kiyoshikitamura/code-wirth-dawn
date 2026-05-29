@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { WORLD_ID } from '@/utils/constants';
 import { calculateTitle } from '@/lib/character';
 import { checkAndFireTrigger, buildShareData, isTierUpgrade, getTitleTier } from '@/lib/shareUtils';
@@ -9,6 +10,12 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
+        const supabaseAuth = createAuthClient(req);
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        if (!user || authError) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { action, impacts, scenario_id } = await req.json();
 
         console.log(`Action reported: ${action} `, impacts);
@@ -26,10 +33,10 @@ export async function POST(req: Request) {
 
         // 2. Update Influence & Alignment (World)
         // プレイヤーの現在地をDBから動的に取得
-        const { data: locProfiles } = await supabase.from('user_profiles').select('current_location_id').limit(1);
+        const { data: locProfile } = await supabase.from('user_profiles').select('current_location_id').eq('id', user.id).single();
         let playerLocationName = '名もなき旅人の拠所'; // フォールバック
-        if (locProfiles?.[0]?.current_location_id) {
-            const { data: locData } = await supabase.from('locations').select('name').eq('id', locProfiles[0].current_location_id).single();
+        if (locProfile?.current_location_id) {
+            const { data: locData } = await supabase.from('locations').select('name').eq('id', locProfile.current_location_id).single();
             if (locData?.name) playerLocationName = locData.name;
         }
 
@@ -116,9 +123,8 @@ export async function POST(req: Request) {
         // --- 3. Update User Profile & Title ---
         // For now, fetch the first profile (Demo Mode)
         let shareDataList: any[] = [];
-        const { data: userProfiles } = await supabase.from('user_profiles').select('*').limit(1);
-        if (userProfiles && userProfiles.length > 0) {
-            const profile = userProfiles[0];
+        const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+        if (profile) {
 
             const newOrderPts = (profile.order_pts || 0) + incOrder;
             const newChaosPts = (profile.chaos_pts || 0) + incChaos;
@@ -172,7 +178,8 @@ export async function POST(req: Request) {
         // Trigger admin update to refresh status/attributes
         try {
             // Await to ensure we get proper result before returning to client
-            await fetch('http://localhost:3000/api/admin/update-world', {
+            const origin = req.headers.get('origin') || req.headers.get('host') ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('host')}` : 'http://localhost:3000';
+            await fetch(`${origin}/api/admin/update-world`, {
                 method: 'POST',
                 body: JSON.stringify({ id: WORLD_ID, location_name: playerLocationName })
             });
