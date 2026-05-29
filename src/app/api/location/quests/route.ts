@@ -34,10 +34,10 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Authentication required', debug }, { status: 401 });
         }
 
-        // 1. Fetch User Profile
+        // 1. Fetch User Profile (must be first — other queries depend on userId)
         const { data: user, error: uError } = await supabaseServer
             .from('user_profiles')
-            .select('*')
+            .select('id, level, gold, vitality, order_pts, chaos_pts, justice_pts, evil_pts, current_location_id')
             .eq('id', userId)
             .single();
 
@@ -47,20 +47,38 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'User not found', debug, uError: uError?.message }, { status: 404 });
         }
 
-        // 2. Fetch World State (single for prosperity)
-        const { data: worldState } = await supabaseServer
-            .from('world_states')
-            .select('*')
-            .maybeSingle();
+        // 2. All remaining data fetches in parallel
+        const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult] = await Promise.all([
+            supabaseServer.from('world_states').select('id, prosperity_level, location_name').maybeSingle(),
+            supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
+            supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
+            supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
+            supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
+            locationId
+                ? supabaseServer.from('locations').select('ruling_nation_id').eq('id', locationId).maybeSingle()
+                : Promise.resolve({ data: null }),
+            supabaseServer.from('scenarios')
+                .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
+                .in('quest_type', ['normal', 'special'])
+                .not('slug', 'like', 'ugc_%')
+                .limit(200),
+        ]);
+
+        // Extract results
+        const worldState = worldStateResult.data;
+        const inventory = inventoryResult.data;
+        const reputations = reputationsResult.data;
+        const completedQuests = completedQuestsResult.data;
+        const currentNationSlug = locationResult.data?.ruling_nation_id || null;
+        const quests = scenariosResult.data;
+        const qError = scenariosResult.error;
 
         // prosperity_level は DB上で1-5のスケール
         const currentProsperity = worldState?.prosperity_level || 3;
         debug.push(`prosperity = ${currentProsperity} (scale: 1-5) `);
 
-        // 2.5 Fetch all world_states for alignment percentage calculation (spot quest conditions)
-        let allWorldStates = (await supabaseServer
-            .from('world_states')
-            .select('id, order_score, chaos_score, justice_score, evil_score, updated_at')).data || [];
+        // 2.5 Alignment reset fallback + world states for alignment percentage calculation
+        let allWorldStates = allWorldStatesResult.data || [];
 
         // 6時間リセット: Cronで定期実行に移行（/api/cron/world-reset）
         // フォールバック: Cron未実行時のために、read時にもリセットを実行
@@ -90,51 +108,17 @@ export async function GET(req: Request) {
         }
         debug.push(`world_align: Or=${worldAlignPcts.order_ratio}% Ch=${worldAlignPcts.chaos_ratio}% Ju=${worldAlignPcts.justice_ratio}% Ev=${worldAlignPcts.evil_ratio}%`);
 
-        // 3. Fetch User Inventory (for has_item checks)
-        const { data: inventory } = await supabaseServer
-            .from('inventory')
-            .select('item_id, quantity')
-            .eq('user_id', userId);
-
+        // 3. Process inventory for has_item checks
         const ownedItemIds = new Set((inventory || []).map((i: any) => String(i.item_id)));
 
-        // 4. Fetch User Reputations (for min_reputation checks)
-        const { data: reputations } = await supabaseServer
-            .from('reputations')
-            .select('location_name, score')
-            .eq('user_id', userId);
-
+        // 4. Build reputation map
         const repMap: Record<string, number> = {};
         for (const rep of (reputations || [])) {
             repMap[rep.location_name] = rep.score || 0;
         }
 
-        // 4.5 Fetch User Completed Quests (for prerequisites)
-        const { data: completedQuests } = await supabaseServer
-            .from('user_completed_quests')
-            .select('scenario_id')
-            .eq('user_id', userId);
-
+        // 4.5 Build completed quests set
         const completedQuestIds = new Set((completedQuests || []).map((q: any) => String(q.scenario_id)));
-
-        // 4.6 Fetch current location's ruling_nation_id for P2 location filtering
-        let currentNationSlug: string | null = null;
-        if (locationId) {
-            const { data: locData } = await supabaseServer
-                .from('locations')
-                .select('ruling_nation_id')
-                .eq('id', locationId)
-                .maybeSingle();
-            currentNationSlug = locData?.ruling_nation_id || null;
-        }
-
-        // 5. Fetch Quests
-        const { data: quests, error: qError } = await supabaseServer
-            .from('scenarios')
-            .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
-            .in('quest_type', ['normal', 'special'])
-            .not('slug', 'like', 'ugc_%') // v21: UGCクエスト（slug が ugc_ 始まり）を除外
-            .limit(200);
 
         // 5.1 Build slug→id map for completed_quest prerequisite resolution
         const slugToIdMap: Record<string, string> = {};

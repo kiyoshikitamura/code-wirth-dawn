@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
         let { data: currentWorld } = await supabase
             .from('world_states')
-            .select('*')
+            .select('id, order_score, chaos_score, justice_score, evil_score, location_name')
             .eq('location_name', playerLocationName)
             .single();
 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
             console.log(`World state missing for ${playerLocationName}, using fallback hub state...`);
             const { data: fallbackWorld } = await supabase
                 .from('world_states')
-                .select('*')
+                .select('id, order_score, chaos_score, justice_score, evil_score, location_name')
                 .eq('location_name', '名もなき旅人の拠所')
                 .single();
             currentWorld = fallbackWorld;
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         // 2. Otherwise fall back to provided impacts (or maybe Reject? For now, fallback for debug).
 
         if (scenario_id) {
-            const { data: scen, error: sErr } = await supabase.from('scenarios').select('*').eq('id', scenario_id).single();
+            const { data: scen, error: sErr } = await supabase.from('scenarios').select('order_impact, chaos_impact, justice_impact, evil_impact').eq('id', scenario_id).single();
             if (scen) {
                 finalImpacts = {
                     order: scen.order_impact || 0,
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         // --- 3. Update User Profile & Title ---
         // For now, fetch the first profile (Demo Mode)
         let shareDataList: any[] = [];
-        const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('user_profiles').select('id, order_pts, chaos_pts, justice_pts, evil_pts, title_name, gold, updated_at').eq('id', user.id).single();
         if (profile) {
 
             const newOrderPts = (profile.order_pts || 0) + incOrder;

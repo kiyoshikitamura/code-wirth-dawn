@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         // Let's assume Global Pool for now.
         const { data: poolMembers, error: poolError } = await supabase
             .from('party_members')
-            .select('*')
+            .select('id, name, slug, job_class, level, durability, max_durability, is_active, origin_type, stats, cover_rate, avatar_url, signature_deck_preview, flavor_text, contract_fee')
             .is('owner_id', null)
             .eq('origin_type', 'system'); // Only system generated ones
 
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
         // 2. Fetch User's Party
         const { data: userParty, error: partyError } = await supabaseAuth
             .from('party_members')
-            .select('*')
+            .select('id, name, slug, job_class, level, durability, max_durability, is_active, origin_type, stats, cover_rate, avatar_url, signature_deck_preview, flavor_text, contract_fee')
             .eq('owner_id', profile.id);
 
         if (partyError) throw partyError;

@@ -64,25 +64,27 @@ export async function POST(req: Request) {
         let quest: any = null;
         let isUgcV2 = false;
 
-        const { data: ugcQuest } = await supabase
-            .from('ugc_scenarios').select('*').eq('id', quest_id).single();
+        const questColumns = 'id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, days_success, days_failure, is_ugc, share_text, script_data';
+        const [ugcResult, officialResult] = await Promise.all([
+            supabase.from('ugc_scenarios').select(questColumns).eq('id', quest_id).single(),
+            supabase.from('scenarios').select(questColumns).eq('id', quest_id).single()
+        ]);
 
-        if (ugcQuest) {
-            quest = ugcQuest;
+        if (ugcResult.data) {
+            quest = ugcResult.data;
             isUgcV2 = true;
-            // UGCクエストのplay_count/clear_countインクリメント
-            await supabase.rpc('increment_ugc_play_count', { p_scenario_id: quest_id });
+            // UGCクエストのplay_countインクリメント（fire-and-forget）
+            void supabase.rpc('increment_ugc_play_count', { p_scenario_id: quest_id }).then(({ error }) => { if (error) console.warn('UGC play count increment failed:', error); });
+        } else if (officialResult.data) {
+            quest = officialResult.data;
         } else {
-            const { data: officialQuest, error: qError } = await supabase
-                .from('scenarios').select('*').eq('id', quest_id).single();
-            if (qError || !officialQuest) return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
-            quest = officialQuest;
+            return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
         }
 
         console.log(`[QuestComplete] ID: ${quest_id}, UGCv2: ${isUgcV2}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
 
         const { data: user, error: uError } = await supabase
-            .from('user_profiles').select('*').eq('id', user_id).single();
+            .from('user_profiles').select('id, gold, level, exp, age, age_days, accumulated_days, max_hp, hp, atk, def, attack, max_vitality, vitality, max_deck_cost, order_pts, chaos_pts, justice_pts, evil_pts, title_name, current_location_id, blessing_data, current_quest_id').eq('id', user_id).single();
 
         if (uError || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -200,49 +202,45 @@ export async function POST(req: Request) {
         if (updateError) throw updateError;
 
         // ═══════════════════════════════════════
-        // §7. Gold + アイテム/スキル付与
+        // §7. Gold + アイテム/スキル付与 (parallelized)
         // ═══════════════════════════════════════
         const effectiveRewards = (result === 'success' && node_rewards) ? node_rewards : quest.rewards;
 
-        // UGC v2: 固定報酬上書き
-        if (isUgcV2 && result === 'success') {
-            const ugcGold = UGC_REWARD_LIMITS.fixed_gold;
-            const { error: goldError } = await supabase
-                .rpc('increment_gold', { p_user_id: user_id, p_amount: ugcGold });
-            if (goldError) console.error('Failed to increment UGC gold:', goldError);
-            // clear_countインクリメント
-            await supabase.rpc('increment_ugc_clear_count', { p_scenario_id: quest_id });
-        } else if (result === 'success' && effectiveRewards?.gold) {
-            const { error: goldError } = await supabase
-                .rpc('increment_gold', { p_user_id: user_id, p_amount: effectiveRewards.gold });
-            if (goldError) console.error('Failed to increment gold via RPC:', goldError);
-        }
-
         if (result === 'success') {
-            await grantRewardItems(supabase, user_id, effectiveRewards, lootSaved);
+            const rewardPromises: PromiseLike<any>[] = [];
+
+            // Gold
+            if (isUgcV2) {
+                rewardPromises.push(
+                    supabase.rpc('increment_gold', { p_user_id: user_id, p_amount: UGC_REWARD_LIMITS.fixed_gold })
+                        .then(({ error }: any) => { if (error) console.error('Failed to increment UGC gold:', error); }),
+                    supabase.rpc('increment_ugc_clear_count', { p_scenario_id: quest_id })
+                        .then(({ error }: any) => { if (error) console.warn('UGC clear count failed:', error); })
+                );
+            } else if (effectiveRewards?.gold) {
+                rewardPromises.push(
+                    supabase.rpc('increment_gold', { p_user_id: user_id, p_amount: effectiveRewards.gold })
+                        .then(({ error }: any) => { if (error) console.error('Failed to increment gold via RPC:', error); })
+                );
+            }
+
+            // Items + Loot
+            rewardPromises.push(grantRewardItems(supabase, user_id, effectiveRewards, lootSaved));
+            rewardPromises.push(persistLootPool(supabase, user_id, loot_pool));
+
+            await Promise.all(rewardPromises);
         }
 
         // ═══════════════════════════════════════
-        // §8. ゲストNPC正規雇用
-        // ═══════════════════════════════════════
-        const guestConversion = result === 'success'
-            ? await convertGuestToPartyMember(supabase, user_id, body)
-            : null;
-
-        // ═══════════════════════════════════════
-        // §9. パーティVIT摩耗 + メメント
+        // §8-§9. ゲストNPC正規雇用 + パーティVIT摩耗 (parallelized)
         // ═══════════════════════════════════════
         const defeatedIds: string[] = Array.isArray(body.defeated_member_ids)
             ? body.defeated_member_ids.map((id: any) => String(id))
             : [];
-        const partyChanges = await processPartyWearCycle(supabase, user_id, result, defeatedIds);
-
-        // ═══════════════════════════════════════
-        // §10. 戦利品保存
-        // ═══════════════════════════════════════
-        if (result === 'success') {
-            await persistLootPool(supabase, user_id, loot_pool);
-        }
+        const [guestConversion, partyChanges] = await Promise.all([
+            result === 'success' ? convertGuestToPartyMember(supabase, user_id, body) : Promise.resolve(null),
+            processPartyWearCycle(supabase, user_id, result, defeatedIds)
+        ]);
 
         // ═══════════════════════════════════════
         // §11. 号外シェアシステム
@@ -255,7 +253,7 @@ export async function POST(req: Request) {
             // UGC First Blood
             if (quest.is_ugc) {
                 const { count: priorClears } = await supabase
-                    .from('user_completed_quests').select('*', { count: 'exact', head: true })
+                    .from('user_completed_quests').select('id', { count: 'exact', head: true })
                     .eq('scenario_id', quest_id);
                 if (priorClears === 0) {
                     const sd = buildShareData('ugc_first_blood', { quest_name: quest.title || '' });
@@ -308,27 +306,27 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §13. クエスト完了履歴
         // ═══════════════════════════════════════
-        if (result === 'success') {
-            const { error: historyError } = await supabase
-                .from('user_completed_quests')
-                .upsert({
-                    user_id, scenario_id: quest_id,
-                    accumulated_days_at_completion: user.accumulated_days ?? 0
-                }, { onConflict: 'user_id,scenario_id' });
-            if (historyError) console.error("Failed to save quest completion history:", historyError);
-        }
-
-        // Record quest activity log (Spec Dashboard Extensions)
-        const { error: logErr } = await supabase
-            .from('quest_activity_logs')
-            .insert({
+        // Quest history + activity log (parallelized)
+        const historyPromises: PromiseLike<any>[] = [
+            supabase.from('quest_activity_logs').insert({
                 user_id,
                 scenario_id: quest_id,
                 action: result === 'success' ? 'complete' : 'abandon'
-            });
-        if (logErr) {
-            console.error('[Quest Complete] Failed to write quest_activity_logs:', logErr);
+            }).then(({ error }: any) => {
+                if (error) console.error('[Quest Complete] Failed to write quest_activity_logs:', error);
+            })
+        ];
+        if (result === 'success') {
+            historyPromises.push(
+                supabase.from('user_completed_quests').upsert({
+                    user_id, scenario_id: quest_id,
+                    accumulated_days_at_completion: user.accumulated_days ?? 0
+                }, { onConflict: 'user_id,scenario_id' }).then(({ error }: any) => {
+                    if (error) console.error('Failed to save quest completion history:', error);
+                })
+            );
         }
+        await Promise.all(historyPromises);
 
         // ═══════════════════════════════════════
         // §14. レスポンス構築

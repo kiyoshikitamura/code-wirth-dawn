@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('*')
+            .select('id, current_location_id, gold, level, age, accumulated_days, max_vitality, vitality, atk, def, next_encounter_rate_mod, pass_expires_at')
             .eq('id', targetUserId)
             .single();
 
@@ -43,12 +43,24 @@ export async function POST(req: Request) {
         // Explicitly fetch Current Location
         let currentLocation: any = null;
         if (profile.current_location_id) {
-            const { data: loc } = await supabase.from('locations').select('*').eq('id', profile.current_location_id).single();
+            const { data: loc } = await supabase.from('locations').select('id, name, slug, type, neighbors, nation_id, ruling_nation_id, prosperity_level').eq('id', profile.current_location_id).single();
             currentLocation = loc;
         }
 
+        // Fetch reputation for current location once (used by both capital check and encounter check)
+        let currentLocationRepScore = 0;
+        if (currentLocation) {
+            const { data: repData } = await supabase
+                .from('reputations')
+                .select('score')
+                .eq('user_id', profile.id)
+                .eq('location_name', currentLocation.name)
+                .maybeSingle();
+            currentLocationRepScore = repData?.score || 0;
+        }
+
         // 2. Get Target Location
-        let query = supabase.from('locations').select('*');
+        let query = supabase.from('locations').select('id, name, slug, type, neighbors, nation_id, ruling_nation_id, prosperity_level');
         if (target_location_slug) {
             query = query.eq('slug', target_location_slug); // v11.1修正: slugカラムで正しく検索
         } else {
@@ -72,17 +84,8 @@ export async function POST(req: Request) {
 
             if (passExpiry <= currentAccumulatedDays) {
                 // 許可証なし or 期限切れ
-                // 出発地の名声を確認
-                let originRepScore = 0;
-                if (currentLocation) {
-                    const { data: repData } = await supabase
-                        .from('reputations')
-                        .select('score')
-                        .eq('user_id', profile.id)
-                        .eq('location_name', currentLocation.name)
-                        .maybeSingle();
-                    originRepScore = repData?.score || 0;
-                }
+                // 出発地の名声を確認（事前取得済み）
+                const originRepScore = currentLocationRepScore;
 
                 if (originRepScore < 0) {
                     // 悪党: 賄賂オプションあり
@@ -141,13 +144,7 @@ export async function POST(req: Request) {
         // ※首都チェック通過後、かつ通常フィールド移動時のみ実施（クエスト内移動はスキップ）
         if (currentLocation && !is_quest_travel) {
             const playerLevel = profile.level || 1;
-            const { data: repData } = await supabase
-                .from('reputations')
-                .select('score')
-                .eq('user_id', profile.id)
-                .eq('location_name', currentLocation.name)
-                .maybeSingle();
-            const repScore = repData?.score || 0;
+            const repScore = currentLocationRepScore;
 
             // §1.2 賞金稼ぎ確定エンカウント（優先判定）
             if (repScore <= ECONOMY_RULES.BOUNTY_HUNTER_THRESHOLD) {
@@ -168,33 +165,25 @@ export async function POST(req: Request) {
             // 基礎率 = 1 - (1 - ENCOUNTER_BASE_RATE_PER_DAY) ^ daysToTravel
             let adjustedEncounterRate = 1 - Math.pow(1 - ECONOMY_RULES.ENCOUNTER_BASE_RATE_PER_DAY, daysToTravel);
 
-            // v5.2: パッシブ効果「詳細な地図」によるエンカウント回避率を考慮
+            // v5.2 & v25: パッシブ効果とインベントリパッシブを並列取得
             try {
-                const { data: equippedSkills } = await supabase
-                    .from('user_skills')
-                    .select('card_id')
-                    .eq('user_id', profile.id);
-                if (equippedSkills && equippedSkills.length > 0) {
+                const [skillsResult, inventoryResult] = await Promise.all([
+                    supabase.from('user_skills').select('card_id').eq('user_id', profile.id),
+                    supabase.from('inventory').select('item_id, items:item_id(effect_data)').eq('user_id', profile.id).gt('quantity', 0)
+                ]);
+
+                // Skills passive
+                if (skillsResult.data && skillsResult.data.length > 0) {
                     const { getTravelPassives } = await import('@/lib/passiveEffects');
-                    const travelMods = getTravelPassives(equippedSkills.map(s => String(s.card_id)));
+                    const travelMods = getTravelPassives(skillsResult.data.map(s => String(s.card_id)));
                     if (travelMods.eventAvoidPct > 0) {
                         adjustedEncounterRate *= (1 - travelMods.eventAvoidPct / 100);
                     }
                 }
-            } catch (e) {
-                console.warn('[Move] パッシブ効果取得失敗（続行）', e);
-            }
 
-            // v25: インベントリ内パッシブアイテム「詳細な世界地図」のエンカウント回避率
-            try {
-                const { data: passiveItems } = await supabase
-                    .from('inventory')
-                    .select('item_id, items:item_id(effect_data)')
-                    .eq('user_id', profile.id)
-                    .gt('quantity', 0);
-
-                if (passiveItems) {
-                    for (const inv of passiveItems) {
+                // Inventory passive
+                if (inventoryResult.data) {
+                    for (const inv of inventoryResult.data) {
                         const ed = (inv.items as any)?.effect_data;
                         if (ed?.encounter_avoid_pct) {
                             adjustedEncounterRate *= (1 - ed.encounter_avoid_pct / 100);
@@ -202,7 +191,7 @@ export async function POST(req: Request) {
                     }
                 }
             } catch (e) {
-                console.warn('[Move] インベントリパッシブ取得失敗（続行）', e);
+                console.warn('[Move] パッシブ効果取得失敗（続行）', e);
             }
 
             // v25: ワンショットバフ（松明 / 宝の地図）: next_encounter_rate_mod

@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
         // まずlocationを取得してnameを確定
         if (profile.current_location_id) {
-            const { data: locData } = await supabaseService.from('locations').select('*').eq('id', profile.current_location_id).single();
+            const { data: locData } = await supabaseService.from('locations').select('id, name, slug, prosperity_level, ruling_nation_id').eq('id', profile.current_location_id).single();
             if (locData) {
                 prosperityLevel = locData.prosperity_level || 3;
                 rulingNation = locData.ruling_nation_id || 'Neutral';
@@ -36,11 +36,11 @@ export async function GET(req: Request) {
             locationName !== 'Unknown'
                 ? supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locationName).maybeSingle()
                 : Promise.resolve({ data: null, error: null }),
-            supabaseService.from('items').select('*').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v2.9.3d: スキル・キーアイテム・素材を除外（装備品は枠数制限付きで表示）
+            supabaseService.from('items').select('id, slug, name, type, sub_type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market, quest_req_id').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v2.9.3d: スキル・キーアイテム・素材を除外（装備品は枠数制限付きで表示）
             supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, nation_tags, min_prosperity, is_black_market, image_url'),
             supabaseService.from('cards').select('id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description'),
             // 通行許可証は全道具屋で表示するため別途取得
-            supabaseService.from('items').select('*').in('slug', PASS_SLUGS),
+            supabaseService.from('items').select('id, slug, name, type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market').in('slug', PASS_SLUGS),
             // ユーザーが既に所持している通行許可証を確認
             supabaseService.from('inventory').select('item_id, items!inner(slug)').eq('user_id', profile.id).in('items.slug', PASS_SLUGS)
         ]);
@@ -330,7 +330,7 @@ async function handleSkillPurchase(profile: UserProfileDB, skillId: number) {
     // 1. Fetch Skill
     const { data: skillData, error: skillError } = await supabaseService
         .from('skills')
-        .select('*')
+        .select('id, slug, name, base_price, deck_cost, card_id, nation_tags, min_prosperity, is_black_market')
         .eq('id', skillId)
         .single();
 
@@ -380,7 +380,7 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
     // 1. Fetch Item
     const { data: itemData, error: itemError } = await supabaseService
         .from('items')
-        .select('*')
+        .select('id, slug, name, type, sub_type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market, quest_req_id')
         .eq('id', itemId)
         .single();
 

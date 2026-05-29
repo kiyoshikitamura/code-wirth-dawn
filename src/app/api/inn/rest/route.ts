@@ -111,25 +111,21 @@ export async function POST(req: Request) {
         try {
             const { data: partyMembers } = await supabaseService
                 .from('party_members')
-                .select('id, durability, max_durability, is_active, slug, name')
+                .select('id, is_active')
                 .eq('owner_id', id);
 
             if (partyMembers && partyMembers.length > 0) {
-                for (const member of partyMembers) {
-                    // 戦闘不能（is_active = false）になっている場合のみ、戦闘可能（is_active = true）に復帰させる
-                    // ※寿命である durability (VIT) は宿屋では回復しない
-                    if (!member.is_active) {
-                        await supabaseService
-                            .from('party_members')
-                            .update({ is_active: true })
-                            .eq('id', member.id);
-                        partyHealed++;
-                    }
+                const inactiveIds = partyMembers.filter(m => !m.is_active).map(m => m.id);
+                if (inactiveIds.length > 0) {
+                    await supabaseService
+                        .from('party_members')
+                        .update({ is_active: true })
+                        .in('id', inactiveIds);
+                    partyHealed = inactiveIds.length;
                 }
             }
         } catch (partyErr) {
             console.warn('[Inn Rest] Failed to heal party members:', partyErr);
-            // パーティ回復失敗は致命的でないので続行
         }
 
         return NextResponse.json({
