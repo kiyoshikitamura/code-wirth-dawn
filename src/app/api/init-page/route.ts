@@ -32,9 +32,10 @@ export async function GET(req: Request) {
                 .eq('id', user.id)
                 .single(),
             supabaseServer
-                .from('equipped_items')
+                .from('inventory')
                 .select('item:items(effect_data)')
-                .eq('user_id', user.id),
+                .eq('user_id', user.id)
+                .eq('is_equipped', true),
             supabaseAuth
                 .from('user_hub_states')
                 .select('*')

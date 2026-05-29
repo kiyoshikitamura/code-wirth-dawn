@@ -36,9 +36,10 @@ export async function GET(req: Request) {
                 .eq('id', targetId)
                 .maybeSingle(),
             supabaseServer
-                .from('equipped_items')
+                .from('inventory')
                 .select('item_id, items!inner(effect_data)')
-                .eq('user_id', targetId),
+                .eq('user_id', targetId)
+                .eq('is_equipped', true),
         ]);
 
         let { data: profile } = profileResult;

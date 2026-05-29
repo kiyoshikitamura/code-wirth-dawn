@@ -227,4 +227,9 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   同じ2つのテーブル間に複数の外部キー（リレーション）が存在する場合（例：`user_profiles` から `locations` への `current_location_id` と `previous_location_id` の2つのFK関係）、Supabase (PostgREST) を用いて `select('..., locations(...)')` のように単純に結合を指定すると、どの外部キーを使用すればよいか曖昧なため、エラー `PGRST201: Could not embed because more than one relationship was found` が発生する。
   この曖昧さを回避するためには、クエリで `select('..., locations:locations!fk_current_location(columns)')` のように、使用する外部キー名（例：`!fk_current_location`）を明示的に指定してリレーションを指定すること。
   また、`.single()` などの単一クエリ結果を取得する際、例外が直接スローされず `{ data: null, error: {...} }` の形でエラーが返ってくるため、API側で例外キャッチ（`try-catch`）されずに `200 OK` で `{ profile: null }` が返り、結果としてクライアント側が意図しないリダイレクト（一瞬表示されてタイトルに戻る）などの原因となるため注意が必要である。
+- **外部キー制立の不備による JOIN エラーと環境依存の例外スロー (PGRST200)**:
+  テーブル間に適切な外部キー制約が定義されていない（または型不整合などにより制約の作成に失敗している）場合、PostgREST を介した結合クエリ（例：`equipped_items` から `items` への結合）は `PGRST200` エラーになる。
+  ローカル環境では単に空データが返されるだけのサイレントエラーとなるが、**Vercelサーバーレス環境（本番やプレビュー環境）ではこの PostgREST エラーが例外（Exception）として直接スローされ、API全体が500エラーでクラッシュする**という重大な環境依存挙動がある。
+  スキーマキャッシュで解決できない結合エラーを避けるため、必要な結合は外部キーが正しく定義されているテーブル（例：`inventory`）に代替し、クエリ側で `is_equipped = true` のフィルターをかけるなど、スキーマの安全性と堅牢性を重視した設計とすること。
+
 
