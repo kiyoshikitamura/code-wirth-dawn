@@ -234,6 +234,10 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **世界情勢履歴における複数外部キー関係下でのPostgREST JOIN解決 (PGRST201)**:
   `world_states_history` から `locations` への結合を行う際、外部キーが `world_states_history_location_id_fkey` と `world_states_history_location_name_fkey` の2つ存在するため、曖昧さを回避するためには `locations!world_states_history_location_id_fkey` のように外部キー名を明示的に指定して JOIN を行う必要がある.
   これを怠ると、ローカル環境では問題なくとも Vercel 環境では API 500 クラッシュを誘発するため、スキーマ変更後はすべてのリレーション結合に細心の注意を払うこと.
+- **OAuth後のセッション遅延を考慮したデータフェッチ側のリトライ**:
+  Google OAuthから戻った直後のSPA遷移時、セッション確立タイムラグにより `getAuthToken()` が一時的に `null` を返す過渡期がある.
+  画面ガード（`useAuthGuard`）だけではなく、データをロードする側（`loadInitData` 等）においても、初回トークン取得が `null` の場合は即座に API を叩いて 401（未認証）で自爆するのを防ぐため、1000ms 程度の待機時間を設けてトークンを再取得（リトライ）する設計を徹底すること.
+
 
 
 

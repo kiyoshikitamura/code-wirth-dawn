@@ -78,7 +78,12 @@ export function useInnPageState() {
     useEffect(() => {
         const loadInitData = async () => {
             try {
-                const token = await (await import('@/lib/authToken')).getAuthToken();
+                let token = await (await import('@/lib/authToken')).getAuthToken();
+                if (!token) {
+                    // Google OAuth 直後の書き込みタイムラグ対策として1000ms待ってリトライ
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    token = await (await import('@/lib/authToken')).getAuthToken();
+                }
                 const headers: HeadersInit = {};
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
