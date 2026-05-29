@@ -28,7 +28,7 @@ export async function GET(req: Request) {
         const [profileResult, equipResult, hubResult] = await Promise.all([
             supabaseAuth
                 .from('user_profiles')
-                .select('*, locations(name, slug, region, type, ruling_nation_id)')
+                .select('*, locations:locations!fk_current_location(name, slug, region, type, ruling_nation_id)')
                 .eq('id', user.id)
                 .single(),
             supabaseServer

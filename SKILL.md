@@ -223,6 +223,8 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **生History操作と popstate の競合対策**: Next.js App Router環境において、生の `window.history.replaceState` 等でURL表示を書き換えた直後に `router.push` 等のSPA遷移を行うと、ルーターの内部同期の副作用により `popstate` イベントが意図せず自動誤発火される問題がある。`popstate` リスナー側では、単にイベント発火を検知するだけでなく、現在のブラウザ of パス（`window.location.pathname`）を必ず確認し、ゲーム内ページに留まっている場合は処理をスキップする等の防御コードを入れること。
 - **サーバーサイドでの明示的トークン検証**: サーバーサイドAPI（`/api/init-page` 等）で `createAuthClient` を用いる際、 `supabase.auth.getUser(token)` のようにAuthorizationヘッダーから取得したトークンを明示的に引数に渡して呼び出すこと。引数なしで呼び出すと、サーバーレス環境 of メモリ内にセッションが存在しないため、認証を誤判定することがある。
 - **認証エラー判定の緩和**: 認証確立の過渡期に発生する、動作に影響のない警告エラーなどでAPIを遮断してタイトルに戻してしまわないよう、認証可否の最終判断は `!user`（ユーザーの存在有無）のみを基準とすること。
-
-
+- **複数外部キー（FK）関係があるテーブルの JOIN クエリの注意点 (PGRST201)**:
+  同じ2つのテーブル間に複数の外部キー（リレーション）が存在する場合（例：`user_profiles` から `locations` への `current_location_id` と `previous_location_id` の2つのFK関係）、Supabase (PostgREST) を用いて `select('..., locations(...)')` のように単純に結合を指定すると、どの外部キーを使用すればよいか曖昧なため、エラー `PGRST201: Could not embed because more than one relationship was found` が発生する。
+  この曖昧さを回避するためには、クエリで `select('..., locations:locations!fk_current_location(columns)')` のように、使用する外部キー名（例：`!fk_current_location`）を明示的に指定してリレーションを指定すること。
+  また、`.single()` などの単一クエリ結果を取得する際、例外が直接スローされず `{ data: null, error: {...} }` の形でエラーが返ってくるため、API側で例外キャッチ（`try-catch`）されずに `200 OK` で `{ profile: null }` が返り、結果としてクライアント側が意図しないリダイレクト（一瞬表示されてタイトルに戻る）などの原因となるため注意が必要である。
 

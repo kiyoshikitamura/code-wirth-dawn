@@ -290,6 +290,7 @@
 * **仕様**: Google OAuth認証直後の非同期セッション確立（`localStorage`等へのトークン書き込み）にかかるタイムラグとクライアント・サーバー間のセッション競合を防ぐため、 `useAuthGuard` はAuthサーバーへの通信や生の `getSession()` を直接呼ぶのを避け、API呼び出しと一元化されたメモリキャッシュ **`getAuthToken()`** を用いてセッション（JWTトークン）の有無を同期的に検証する。一時的な未確立に対応するため、リトライ待機時間は `1000ms` とする。
 * **履歴同期に伴う popstate 誤発火の回避**: OAuthURLのクリーンアップ（`replaceState`）直後のSPA遷移において、Next.jsルーターの内部状態同期により `popstate` イベントが意図せず自動誤発火される競合を防ぐため、 `popstate` 検知時のハンドラ内に現在のブラウザのパス（`window.location.pathname`）の検証を追加する。現在のパスがゲーム画面内（`/title` または `/` 以外）に留まっている場合はリダイレクト処理をスキップする。
 * **サーバー認証の堅牢化**: サーバーサイドAPI（例: `/api/init-page`）での認証時、ヘッダーから抽出したJWTトークンを `getUser(token)` に明示的に渡して確実に検証を行い、認証の可否判定は `!user` （ユーザーの存在有無）のみを基準とすることで、過渡期の一時的な警告エラーによる誤ブロックを排除する。
+* **複数外部キー関係下でのPostgREST JOIN解決**: 同じ2つのテーブル（例: `user_profiles` と `locations`）の間に複数の外部キー（`fk_current_location`, `fk_prev_location`）が存在する場合、統合API（`/api/init-page`）におけるJOINクエリにおいてリレーションを単に `locations(...)` と指定すると PostgREST 側で曖昧なリレーションエラー（`PGRST201`）が発生し、データが取得できず `null` になる。これを防ぐため、クエリ内で `locations:locations!fk_current_location(...)` のように、使用する外部キー名を明示的に解決する設計とする。
 
 ---
 
