@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { getAuthToken, clearAuthTokenCache } from '@/lib/authToken';
 
 /** sessionStorage キー */
 const GAME_STARTED_KEY = 'cwd_game_started';
@@ -68,19 +69,20 @@ export function useAuthGuard(): void {
         // 1回目の失敗時はリトライしてから判定する。
         const verifySession = async () => {
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (session && !error) return; // セッション有効
+                const token = await getAuthToken();
+                if (token) return; // セッション有効 (メモリキャッシュまたはgetSessionでトークンが存在する)
 
                 // セッションが無効の場合、リフレッシュを試みる
                 // (ネットワーク瞬断でトークンリフレッシュが失敗した可能性がある)
-                if (!session) {
+                if (!token) {
                     // 1000ms待ってリトライ (Google OAuth直後の書き込みタイムラグ対策)
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    const retry = await supabase.auth.getSession();
-                    if (retry.data.session && !retry.error) return; // リトライで復帰
+                    const retryToken = await getAuthToken();
+                    if (retryToken) return; // リトライで復帰
 
                     // それでもセッションがない場合はタイトルへ
                     clearGameStarted();
+                    clearAuthTokenCache();
                     router.replace('/title');
                 }
             } catch (e) {
