@@ -68,16 +68,16 @@ export function useAuthGuard(): void {
         // 1回目の失敗時はリトライしてから判定する。
         const verifySession = async () => {
             try {
-                const { data: { user }, error } = await supabase.auth.getUser();
-                if (user && !error) return; // セッション有効
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (session && !error) return; // セッション有効
 
                 // セッションが無効の場合、リフレッシュを試みる
                 // (ネットワーク瞬断でトークンリフレッシュが失敗した可能性がある)
-                if (!user) {
-                    // 1500ms待ってリトライ (Google OAuth直後の書き込みタイムラグ対策)
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    const retry = await supabase.auth.getUser();
-                    if (retry.data.user && !retry.error) return; // リトライで復帰
+                if (!session) {
+                    // 1000ms待ってリトライ (Google OAuth直後の書き込みタイムラグ対策)
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const retry = await supabase.auth.getSession();
+                    if (retry.data.session && !retry.error) return; // リトライで復帰
 
                     // それでもセッションがない場合はタイトルへ
                     clearGameStarted();
