@@ -1,29 +1,24 @@
 'use client';
-export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGameStore } from '@/store/gameStore';
+import { supabase } from '@/lib/supabase';
 import { Hourglass } from 'lucide-react';
 
 export default function RootPage() {
   const router = useRouter();
-  const { fetchUserProfile } = useGameStore();
 
   useEffect(() => {
-    async function checkStatus() {
-      await fetchUserProfile();
-      const profile = useGameStore.getState().userProfile;
-
-      // v27: profile.id の存在のみで判定（名前やgenderの値に依存しない）
-      if (profile?.id) {
-        router.push('/inn');
+    // Middleware がリダイレクトを処理するため、ここはフォールバック
+    // fetchUserProfile を呼ばずに軽量なセッションチェックのみ
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace('/inn');
       } else {
-        router.push('/title');
+        router.replace('/title');
       }
-    }
-    checkStatus();
-  }, []);
+    });
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center text-gray-500 font-serif">
