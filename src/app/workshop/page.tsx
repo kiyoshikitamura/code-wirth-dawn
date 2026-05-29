@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FolderKanban, Upload, Download, Calculator, Sparkles } from 'lucide-react';
+import { ArrowLeft, FolderKanban, Upload, Download, Calculator, Sparkles, BookOpen } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import MyWorksPanel from '@/components/ugc/MyWorksPanel';
 import TemplateImportPanel from '@/components/ugc/TemplateImportPanel';
@@ -41,6 +41,13 @@ export default function CreatorsWorkshopPage() {
             <p className="text-[10px] text-[#6d4c3d] font-serif italic">― Creator's Workshop ―</p>
           </div>
         </div>
+        <button
+          onClick={() => router.push('/play-guide/ugc')}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#4e2f1d] hover:bg-[#613d28] border border-[#a38b6b]/40 rounded-lg text-xs font-bold text-amber-300 hover:text-amber-200 transition-colors focus:outline-none"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>UGCガイド</span>
+        </button>
       </div>
 
       {/* Tab Navigation */}
