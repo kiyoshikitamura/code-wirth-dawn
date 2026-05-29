@@ -74,8 +74,8 @@ export function useAuthGuard(): void {
                 // セッションが無効の場合、リフレッシュを試みる
                 // (ネットワーク瞬断でトークンリフレッシュが失敗した可能性がある)
                 if (!user) {
-                    // 500ms待ってリトライ
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // 1500ms待ってリトライ (Google OAuth直後の書き込みタイムラグ対策)
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                     const retry = await supabase.auth.getUser();
                     if (retry.data.user && !retry.error) return; // リトライで復帰
 

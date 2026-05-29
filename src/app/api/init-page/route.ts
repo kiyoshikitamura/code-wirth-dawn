@@ -16,8 +16,11 @@ export async function GET(req: Request) {
         const supabaseAuth = createAuthClient(req);
 
         // ── 認証チェック ──
-        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
-        if (authError || !user) {
+        const authHeader = req.headers.get('authorization');
+        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+        const { data: { user } } = await supabaseAuth.auth.getUser(token || undefined);
+
+        if (!user) {
             return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
         }
 
