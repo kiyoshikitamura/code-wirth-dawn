@@ -94,6 +94,13 @@ export function useAuthGuard(): void {
 
         // ③ ブラウザバック検知 → /title にリダイレクト（全保護ページ共通）
         const handlePopState = () => {
+            // URLがゲーム画面（/title 以外）のままであれば、History同期に伴う誤発火のためリダイレクトをスキップ
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/title' && currentPath !== '/') {
+                console.log('[useAuthGuard] popstate triggered by routing sync, skipping redirect. Path:', currentPath);
+                return;
+            }
+
             clearGameStarted();
             // タイトル画面で自動リダイレクトされないようにフラグを立てる
             sessionStorage.setItem('cwd_return_to_title', '1');

@@ -218,9 +218,10 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   - ループ内での個別DB更新（`for (const item of items) { await db.update(...).eq('id', item.id); }`）は、`.in('id', ids)` を用いたバッチ更新に置き換えること。
 
 ## Google認証後のセッション確立遅延とAPI認証の教訓 (v27.3)
-- **非同期セッション確立のタイムラグとクライアントガードの設計**: Google OAuth認証直後、SDKが認可コード（`code`）をセッションに交換し `localStorage` へ永続化するまでには微小な遅延がある。この過渡期にクライアント側ガード（`useAuthGuard`）で `supabase.auth.getUser()` (Authサーバーへの通信検証) を実行すると、競合により一時的に検証に失敗し、タイトル画面へ誤リダイレクトされる原因となる。
+- **非同期セッション確立のタイムラグとクライアントガードの設計**: Google OAuth認証直後、SDK G認可コード（`code`）をセッションに交換し `localStorage` へ永続化するまでには微小な遅延がある。この過渡期にクライアント側ガード（`useAuthGuard`）で `supabase.auth.getUser()` (Authサーバーへの通信検証) を実行すると、競合により一時的に検証に失敗し、タイトル画面へ誤リダイレクトされる原因となる。
 - **クライアント側ガードには getAuthToken を使用**: `useAuthGuard` のようなフロントエンド用の遷移ガードは、生の `supabase.auth.getSession()` を直接呼ぶと、App Router移行期等のハイドレーション時に `localStorage` 同期が間に合わず一時的に `null` を返す競合が起きる。APIコールと完全に一元化された **`getAuthToken()`** を呼び出すことで、メモリ内の有効なセッション（JWTキャッシュ）を直接参照して競合を防ぐ設計にすること。
-- **サーバーサイドでの明示的トークン検証**: サーバーサイドAPI（`/api/init-page` 等）で `createAuthClient` を用いる際、 `supabase.auth.getUser(token)` のようにAuthorizationヘッダーから取得したトークンを明示的に引数に渡して呼び出すこと。引数なしで呼び出すと、サーバーレス環境のメモリ内にセッションが存在しないため、認証を誤判定することがある。
+- **生History操作と popstate の競合対策**: Next.js App Router環境において、生の `window.history.replaceState` 等でURL表示を書き換えた直後に `router.push` 等のSPA遷移を行うと、ルーターの内部同期の副作用により `popstate` イベントが意図せず自動誤発火される問題がある。`popstate` リスナー側では、単にイベント発火を検知するだけでなく、現在のブラウザ of パス（`window.location.pathname`）を必ず確認し、ゲーム内ページに留まっている場合は処理をスキップする等の防御コードを入れること。
+- **サーバーサイドでの明示的トークン検証**: サーバーサイドAPI（`/api/init-page` 等）で `createAuthClient` を用いる際、 `supabase.auth.getUser(token)` のようにAuthorizationヘッダーから取得したトークンを明示的に引数に渡して呼び出すこと。引数なしで呼び出すと、サーバーレス環境 of メモリ内にセッションが存在しないため、認証を誤判定することがある。
 - **認証エラー判定の緩和**: 認証確立の過渡期に発生する、動作に影響のない警告エラーなどでAPIを遮断してタイトルに戻してしまわないよう、認証可否の最終判断は `!user`（ユーザーの存在有無）のみを基準とすること。
 
 
