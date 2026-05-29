@@ -11,6 +11,7 @@ import XShareButton from '../shared/XShareButton';
 import { Enemy } from '@/types/game';
 import StatusEffectBadges from './StatusEffectBadges';
 import { getCardEffectInfo } from '@/lib/cardEffects';
+import { getAuthToken } from '@/lib/authToken';
 
 interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
@@ -326,10 +327,43 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
 
     // Victory/Defeat action handler
-    const handleResultAction = (resultType: 'win' | 'lose' | 'escape') => {
+    const handleResultAction = async (resultType: 'win' | 'lose' | 'escape') => {
         const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
         const returnUrl = urlParams.get('return_url');
         const bType = urlParams.get('type');
+        const target = urlParams.get('target');
+        const origin = urlParams.get('origin');
+        const days = urlParams.get('days');
+
+        // 移動中エンカウント時の結果反映処理 (v27.4 追加)
+        if ((bType === 'bandit_ambush' || bType === 'bounty_hunter_ambush' || bType === 'random_encounter') && target && origin) {
+            try {
+                const token = await getAuthToken();
+                const res = await fetch('/api/move/encounter-result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    },
+                    body: JSON.stringify({
+                        encounter_type: bType === 'bounty_hunter_ambush' ? 'bounty_hunter_ambush' : 'random_encounter',
+                        result: resultType === 'win' ? 'win' : 'lose',
+                        target_location_id: target,
+                        origin_location_id: origin,
+                        travel_days: Number(days || 1)
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(data.message || (resultType === 'win' ? "勝利しました！" : "敗北しました..."));
+                } else {
+                    console.error("Failed to post encounter result to API");
+                }
+            } catch (err) {
+                console.error("Encounter result API error:", err);
+            }
+        }
 
         // v20: Bounty敗北ペナルティはgameStore.processEnemyTurn内で処理済み
 
