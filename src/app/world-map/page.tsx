@@ -371,39 +371,7 @@ export default function WorldMapPage() {
         }
     };
 
-    const returnToHub = async () => {
-        if (!userProfile) return;
-        setTraveling(true);
-        isTravelingRef.current = true;
-        setTravelLog(['拠所への帰還を開始します...']);
 
-        try {
-            await new Promise(r => setTimeout(r, 1500));
-
-            // Set Hub State = TRUE
-            const { error } = await supabase
-                .from('user_hub_states')
-                .upsert({ user_id: userProfile.id, is_in_hub: true });
-
-            if (error) throw error;
-
-            setTravelLog(prev => [...prev, '次元の狭間へ移動中...']);
-            await new Promise(r => setTimeout(r, 800));
-
-            router.push('/inn');
-        } catch (e) {
-            console.error("Failed to return to hub", e);
-            alert("移動に失敗しました。");
-        } finally {
-            setTraveling(false);
-            isTravelingRef.current = false;
-        }
-    };
-
-    // Filter Logic for Render
-    const visibleLocations = locations.filter(l =>
-        l.name !== HUB_LOCATION_NAME
-    );
 
     if (loading || isInitializingHub) {
         return (
@@ -470,108 +438,109 @@ export default function WorldMapPage() {
     // ---
 
     return (
-        <div className="h-[100dvh] bg-[#050b14] text-gray-200 font-sans relative overflow-hidden flex flex-col items-center">
+        <div className="flex items-center justify-center h-screen w-screen bg-[#050b14] font-sans select-none overflow-hidden text-slate-200">
+            <div className="relative w-full h-[100dvh] md:max-w-[430px] md:h-[min(844px,92vh)] md:border-[6px] md:border-slate-800 md:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-[#050b14] text-gray-200 font-sans">
 
-            <GlobalStatusBar
-                currentLocationName={currentLocationName}
-                onEnterLocation={returnToInn}
-                onReturnHome={returnToHub}
-            />
+                <GlobalStatusBar
+                    currentLocationName={currentLocationName}
+                    onEnterLocation={returnToInn}
+                    onOpenWorldMap={() => setShowFullMap(true)}
+                />
 
-            <LocalMapView
-                visibleLocations={localMapLocations}
-                onSelectLocation={(loc) => setSelectedLocation(loc)}
-                onOpenWorldMap={() => setShowFullMap(true)}
-            />
+                <LocalMapView
+                    visibleLocations={localMapLocations}
+                    onSelectLocation={(loc) => setSelectedLocation(loc)}
+                />
 
-            <LocationDetailSheet
-                selectedLocation={selectedLocation}
-                onClose={() => setSelectedLocation(null)}
-                onTravel={(loc) => executeTravel(loc)}
-            />
+                <LocationDetailSheet
+                    selectedLocation={selectedLocation}
+                    onClose={() => setSelectedLocation(null)}
+                    onTravel={(loc) => executeTravel(loc)}
+                />
 
-            <WorldAtlasOverlay
-                show={showFullMap}
-                allLocations={validMappedLocations}
-                onClose={() => setShowFullMap(false)}
-            />
+                <WorldAtlasOverlay
+                    show={showFullMap}
+                    allLocations={validMappedLocations}
+                    onClose={() => setShowFullMap(false)}
+                />
 
 
-            {/* Confirmation Modal */}
-            {showEntryModal && (
-                <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in">
-                    <div className="bg-[#1a202c] border-2 border-[#a38b6b] p-6 max-w-2xl w-full shadow-2xl relative text-center">
-                        <h3 className="text-2xl font-serif text-[#e3d5b8] mb-6 border-b border-[#a38b6b]/30 pb-4">
-                            大地への降下
-                        </h3>
-                        <p className="text-gray-400 mb-8">
-                            次元の狭間から、どの地へ降り立ちますか？
-                        </p>
+                {/* Confirmation Modal */}
+                {showEntryModal && (
+                    <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in">
+                        <div className="bg-[#1a202c] border-2 border-[#a38b6b] p-6 max-w-2xl w-full shadow-2xl relative text-center">
+                            <h3 className="text-2xl font-serif text-[#e3d5b8] mb-6 border-b border-[#a38b6b]/30 pb-4">
+                                大地への降下
+                            </h3>
+                            <p className="text-gray-400 mb-8">
+                                次元の狭間から、どの地へ降り立ちますか？
+                            </p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {locations.filter(l => l.type === 'Capital').map(cap => (
-                                <button
-                                    key={cap.id}
-                                    onClick={() => handleEntrySelect(cap)}
-                                    className={`p-4 border border-gray-700 bg-gray-900/50 hover:bg-[#a38b6b]/20 hover:border-[#a38b6b] transition-all group text-left relative overflow-hidden`}
-                                >
-                                    <div className="font-bold text-lg text-[#e3d5b8] group-hover:text-white mb-1">
-                                        {cap.name}
-                                    </div>
-                                    <div className="text-xs text-gray-500 group-hover:text-gray-300">
-                                        {cap.nation_id || 'Neutral'} 首都
-                                    </div>
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Compass className="w-6 h-6 text-[#a38b6b]" />
-                                    </div>
-                                </button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {locations.filter(l => l.type === 'Capital').map(cap => (
+                                    <button
+                                        key={cap.id}
+                                        onClick={() => handleEntrySelect(cap)}
+                                        className={`p-4 border border-gray-700 bg-gray-900/50 hover:bg-[#a38b6b]/20 hover:border-[#a38b6b] transition-all group text-left relative overflow-hidden`}
+                                    >
+                                        <div className="font-bold text-lg text-[#e3d5b8] group-hover:text-white mb-1">
+                                            {cap.name}
+                                        </div>
+                                        <div className="text-xs text-gray-500 group-hover:text-gray-300">
+                                            {cap.nation_id || 'Neutral'} 首都
+                                        </div>
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Compass className="w-6 h-6 text-[#a38b6b]" />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+
+
+                {/* Travel Overlay */}
+                {traveling && (
+                    <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col items-center justify-center p-8">
+                        <Compass className="w-16 h-16 text-[#a38b6b] animate-spin-slow mb-6 opacity-80" />
+                        <h2 className="text-2xl font-serif text-[#e3d5b8] mb-4">ただいま移動中...</h2>
+                        <div className="space-y-2 text-center text-gray-400 font-mono text-sm h-32 overflow-hidden">
+                            {travelLog.map((log, i) => (
+                                <div key={i} className="animate-fade-in-up">{log}</div>
                             ))}
                         </div>
                     </div>
-                </div>
-            )}
-
-
-
-            {/* Travel Overlay */}
-            {traveling && (
-                <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col items-center justify-center p-8">
-                    <Compass className="w-16 h-16 text-[#a38b6b] animate-spin-slow mb-6 opacity-80" />
-                    <h2 className="text-2xl font-serif text-[#e3d5b8] mb-4">ただいま移動中...</h2>
-                    <div className="space-y-2 text-center text-gray-400 font-mono text-sm h-32 overflow-hidden">
-                        {travelLog.map((log, i) => (
-                            <div key={i} className="animate-fade-in-up">{log}</div>
-                        ))}
-                    </div>
-                </div>
-            )}
-            {/* Bribe Modal */}
-            {bribeModal && (
-                <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div className="bg-[#1a202c] border-2 border-red-900 rounded p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95">
-                        <h3 className="text-xl font-bold text-red-500 mb-4 font-serif flex items-center gap-2">
-                            <span>🛑</span> 通行制限
-                        </h3>
-                        <p className="text-gray-300 mb-6 text-sm leading-relaxed whitespace-pre-wrap">{bribeModal.message}</p>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => setBribeModal(null)}
-                                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded transition whitespace-nowrap"
-                            >
-                                出直す
-                            </button>
-                            <button
-                                onClick={handleBribe}
-                                className="flex-1 py-2 bg-red-900/40 hover:bg-red-800/60 text-red-200 border border-red-700 rounded transition flex flex-col items-center justify-center gap-0.5"
-                            >
-                                <span className="font-bold">賄賂を渡す</span>
-                                <span className="text-[10px] text-red-400 font-mono">({bribeModal.cost.toLocaleString()}G)</span>
-                            </button>
+                )}
+                {/* Bribe Modal */}
+                {bribeModal && (
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <div className="bg-[#1a202c] border-2 border-red-900 rounded p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95">
+                            <h3 className="text-xl font-bold text-red-500 mb-4 font-serif flex items-center gap-2">
+                                <span>🛑</span> 通行制限
+                            </h3>
+                            <p className="text-gray-300 mb-6 text-sm leading-relaxed whitespace-pre-wrap">{bribeModal.message}</p>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setBribeModal(null)}
+                                    className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded transition whitespace-nowrap"
+                                >
+                                    出直す
+                                </button>
+                                <button
+                                    onClick={handleBribe}
+                                    className="flex-1 py-2 bg-red-900/40 hover:bg-red-800/60 text-red-200 border border-red-700 rounded transition flex flex-col items-center justify-center gap-0.5"
+                                >
+                                    <span className="font-bold">賄賂を渡す</span>
+                                    <span className="text-[10px] text-red-400 font-mono">({bribeModal.cost.toLocaleString()}G)</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
+            </div>
         </div>
     );
 }

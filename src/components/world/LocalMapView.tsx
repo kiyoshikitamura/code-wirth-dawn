@@ -18,10 +18,9 @@ export interface MappedLocation extends Location {
 interface Props {
     visibleLocations: MappedLocation[];
     onSelectLocation: (loc: MappedLocation) => void;
-    onOpenWorldMap: () => void;
 }
 
-export default function LocalMapView({ visibleLocations, onSelectLocation, onOpenWorldMap }: Props) {
+export default function LocalMapView({ visibleLocations, onSelectLocation }: Props) {
     const { userProfile } = useGameStore();
     const containerRef = React.useRef<HTMLDivElement>(null);
     const canvasRef = React.useRef<HTMLDivElement>(null);
@@ -57,7 +56,7 @@ export default function LocalMapView({ visibleLocations, onSelectLocation, onOpe
     return (
         <div ref={containerRef} className="relative w-full flex-1 bg-[#050b14] overflow-auto scrollbar-hide">
             {/* Background Texture Container */}
-            <div ref={canvasRef} className="relative min-w-[1200px] min-h-[1200px] w-full h-full bg-slate-900 overflow-hidden">
+            <div ref={canvasRef} className="relative min-w-[1200px] min-h-[1200px] md:min-w-[750px] md:min-h-[750px] w-full h-full bg-slate-900 overflow-hidden">
                 <div
                     className="absolute inset-0 bg-no-repeat bg-cover bg-center opacity-80 mix-blend-screen"
                     style={{ backgroundImage: 'url("/backgrounds/worldmap.png")' }}
@@ -132,18 +131,6 @@ export default function LocalMapView({ visibleLocations, onSelectLocation, onOpe
                 })}
             </div>
 
-            {/* 世界地図アイコン - Fixed to viewport bottom right, outside the scrollable map area */}
-            <div className="fixed bottom-24 right-6 z-40 transform translate-x-0 sm:-translate-x-[calc(50vw-224px)] md:-translate-x-[calc(50vw-224px)] lg:-translate-x-[calc(50vw-224px)]">
-                <button
-                    onClick={onOpenWorldMap}
-                    className="flex flex-col items-center gap-1 group"
-                >
-                    <div className="w-14 h-14 bg-slate-900 border-2 border-amber-600 rounded-2xl flex items-center justify-center shadow-2xl text-amber-500 group-hover:bg-amber-950 transition-colors active:scale-95">
-                        <MapIcon size={28} />
-                    </div>
-                    <span className="text-[10px] font-bold text-amber-500 bg-black/80 px-2 py-1 rounded shadow-lg border border-amber-900/50 whitespace-nowrap">地図を広げる</span>
-                </button>
-            </div>
         </div>
     );
 }

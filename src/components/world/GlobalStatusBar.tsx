@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Home, User as UserIcon, Shield } from 'lucide-react';
+import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Map as MapIcon, User as UserIcon, Shield } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { DEFAULT_HEGEMONY } from '@/constants/nations';
 
@@ -12,10 +12,10 @@ import StatusModal from '../inn/StatusModal';
 interface Props {
     currentLocationName: string;
     onEnterLocation: () => void;
-    onReturnHome: () => void;
+    onOpenWorldMap: () => void;
 }
 
-export default function GlobalStatusBar({ currentLocationName, onEnterLocation, onReturnHome }: Props) {
+export default function GlobalStatusBar({ currentLocationName, onEnterLocation, onOpenWorldMap }: Props) {
     const { userProfile, worldState, gold, showStatus, setShowStatus, equipBonus } = useGameStore();
     const [showHegemony, setShowHegemony] = React.useState(false);
     const [showSettings, setShowSettings] = React.useState(false);
@@ -113,11 +113,11 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
                     <span className="text-[10px] font-bold text-amber-100">{currentLocationName} に入る</span>
                 </button>
                 <button
-                    onClick={onReturnHome}
+                    onClick={onOpenWorldMap}
                     className="flex-1 h-9 bg-slate-800/40 border border-slate-600/50 rounded flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:bg-slate-700/50"
                 >
-                    <Home size={14} className="text-slate-400" />
-                    <span className="text-[10px] font-bold text-slate-300">名もなき旅人の拠所へ</span>
+                    <MapIcon size={14} className="text-amber-500" />
+                    <span className="text-[10px] font-bold text-slate-300">地図を広げる</span>
                 </button>
             </div>
         </header>
