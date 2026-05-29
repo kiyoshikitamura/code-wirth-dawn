@@ -110,7 +110,7 @@ export async function GET(req: Request) {
             // 号外: 最新の世界履歴
             supabaseAuth
                 .from('world_states_history')
-                .select('*, location:locations(name)')
+                .select('*, location:locations!world_states_history_location_id_fkey(name)')
                 .order('created_at', { ascending: false })
                 .limit(10),
         ]);

@@ -292,6 +292,8 @@
 * **サーバー認証の堅牢化**: サーバーサイドAPI（例: `/api/init-page`）での認証時、ヘッダーから抽出したJWTトークンを `getUser(token)` に明示的に渡して確実に検証を行い、認証の可否判定は `!user` （ユーザーの存在有無）のみを基準とすることで、過渡期の一時的な警告エラーによる誤ブロックを排除する。
 * **複数外部キー関係下でのPostgREST JOIN解決**: 同じ2つのテーブル（例: `user_profiles` と `locations`）の間に複数の外部キー（`fk_current_location`, `fk_prev_location`）が存在する場合、統合API（`/api/init-page`）におけるJOINクエリにおいてリレーションを単に `locations(...)` と指定すると PostgREST 側で曖昧なリレーションエラー（`PGRST201`）が発生し、データが取得できず `null` になる。これを防ぐため、クエリ内で `locations:locations!fk_current_location(...)` のように、使用する外部キー名を明示的に解決する設計とする。
 * **スキーマ不整合によるPostgREST JOINエラーの回避**: データベース上で正しい外部キー制約が認識されていない、または不適合があるテーブル結合（例：`equipped_items` から `items` への結合）を PostgREST で結合すると、PGRST200（関係性未定義）エラーが発生する。このエラーはローカル環境ではデータが `null` で返るだけだが、Vercel サーバーレス環境では例外として伝播しAPIを500エラーでクラッシュさせる。この競合とクラッシュを防ぐため、装備品の取得には確実に外部キー関係が成立している `inventory` テーブル（`is_equipped = true`）をクエリする設計に変更し、安定性を担保する。
+* **世界情勢履歴における複数外部キー関係下でのPostgREST JOIN解決**: 世界情勢履歴（`world_states_history`）と `locations` の間に複数の外部キー（ID参照および名前に基づく参照）が定義されている状況において、統合API（`/api/init-page`）でロケーション名をJOINする際、単に `locations(...)` と指定すると曖昧リレーションエラー（PGRST201）になりAPIが500エラーでクラッシュする。これを解消するため、 `locations!world_states_history_location_id_fkey(name)` のように使用する外部キー名を明示的に結合指定することで、例外の発生を防止し安定稼働を図る。
+
 
 
 ---
