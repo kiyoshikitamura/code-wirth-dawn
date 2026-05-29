@@ -73,7 +73,8 @@ export default function LocalMapView({ visibleLocations, onSelectLocation }: Pro
     }, [visibleLocations]);
 
     return (
-        <div ref={containerRef} className="relative w-full flex-1 bg-[#050b14] overflow-auto scrollbar-hide">
+        <div className="relative w-full flex-1 bg-[#050b14] overflow-hidden">
+            <div ref={containerRef} className="w-full h-full overflow-auto scrollbar-hide">
             {/* Background Texture Container */}
             <div ref={canvasRef} className="relative min-w-[1200px] min-h-[1200px] md:min-w-[750px] md:min-h-[750px] w-full h-full bg-slate-900 overflow-hidden">
                 <div
@@ -148,6 +149,7 @@ export default function LocalMapView({ visibleLocations, onSelectLocation }: Pro
                         </div>
                     );
                 })}
+            </div>
             </div>
 
             {/* スクロール移動支援矢印ボタン */}
