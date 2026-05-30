@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   Save,
@@ -20,10 +20,13 @@ import type {
   BuilderNode,
   BuilderEdge,
   BuilderNodeType,
+  BuilderNodeData,
   CanvasState,
 } from '@/types/builder';
 import FlowCanvas from './builder/FlowCanvas';
 import FlowMinimap from './builder/FlowMinimap';
+import NodeEditSheet from './builder/NodeEditSheet';
+import BasicInfoPanel from './builder/BasicInfoPanel';
 
 // ── Default State Factories ──
 
@@ -249,6 +252,32 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
     }));
   }, []);
 
+  // ── Node data update handler (Phase 3) ──
+
+  const handleNodeDataUpdate = useCallback(
+    (nodeId: string, data: BuilderNodeData) => {
+      setQuest(prev => ({
+        ...prev,
+        canvas: {
+          ...prev.canvas,
+          nodes: prev.canvas.nodes.map(n =>
+            n.id === nodeId ? { ...n, data } : n,
+          ),
+        },
+      }));
+    },
+    [],
+  );
+
+  // ── Quest metadata update handler (Phase 3) ──
+
+  const handleQuestUpdate = useCallback(
+    (updates: Partial<BuilderQuest>) => {
+      setQuest(prev => ({ ...prev, ...updates }));
+    },
+    [],
+  );
+
   // ── Viewport change handler ──
 
   const handleViewportChange = useCallback(
@@ -319,6 +348,12 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
   // ── Node count summary ──
   const nodeCount = quest.canvas.nodes.length;
 
+  // ── Selected node for NodeEditSheet ──
+  const selectedNode = useMemo(
+    () => quest.canvas.nodes.find(n => n.id === quest.canvas.selectedNodeId) ?? null,
+    [quest.canvas.nodes, quest.canvas.selectedNodeId],
+  );
+
   return (
     <div className="min-h-screen bg-[#0d0907] text-[#e3d5b8] flex flex-col">
       {/* ── Header Bar ── */}
@@ -388,120 +423,13 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
         </div>
       </div>
 
-      {/* ── Info Panel (collapsible) ── */}
+      {/* ── BasicInfoPanel (side overlay, Phase 3) ── */}
       {showInfoPanel && (
-        <div className="bg-[#1a120e] border-b border-[#5c3c2a] px-4 py-3 space-y-3 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-amber-400 tracking-wider">基本情報</h2>
-            <button
-              onClick={() => setShowInfoPanel(false)}
-              className="p-1 text-[#6d4c3d] hover:text-[#a38b6b] transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">タイトル</label>
-            <input
-              type="text"
-              value={quest.title}
-              onChange={e => setQuest(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="クエスト名を入力..."
-              className="w-full px-3 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] placeholder-[#6d4c3d] focus:border-amber-400 focus:outline-none transition-colors"
-            />
-          </div>
-
-          {/* Short description */}
-          <div>
-            <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">概要</label>
-            <input
-              type="text"
-              value={quest.short_description}
-              onChange={e => setQuest(prev => ({ ...prev, short_description: e.target.value }))}
-              placeholder="クエストの簡単な説明..."
-              className="w-full px-3 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] placeholder-[#6d4c3d] focus:border-amber-400 focus:outline-none transition-colors"
-            />
-          </div>
-
-          {/* Client + Type row */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">依頼人</label>
-              <input
-                type="text"
-                value={quest.client_name}
-                onChange={e => setQuest(prev => ({ ...prev, client_name: e.target.value }))}
-                placeholder="依頼人名..."
-                className="w-full px-3 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] placeholder-[#6d4c3d] focus:border-amber-400 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">種別</label>
-              <select
-                value={quest.scenario_type}
-                onChange={e => setQuest(prev => ({ ...prev, scenario_type: e.target.value as BuilderQuest['scenario_type'] }))}
-                className="w-full px-3 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] focus:border-amber-400 focus:outline-none transition-colors"
-              >
-                <option value="Subjugation">討伐</option>
-                <option value="Delivery">納品</option>
-                <option value="Politics">政治</option>
-                <option value="Dungeon">探索</option>
-                <option value="Other">その他</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Difficulty + Level + Days row */}
-          <div className="grid grid-cols-4 gap-2">
-            <div>
-              <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">難度</label>
-              <select
-                value={quest.difficulty}
-                onChange={e => setQuest(prev => ({ ...prev, difficulty: Number(e.target.value) }))}
-                className="w-full px-2 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] focus:border-amber-400 focus:outline-none transition-colors"
-              >
-                {[1, 2, 3, 4, 5].map(n => (
-                  <option key={n} value={n}>{'★'.repeat(n)}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">推奨Lv</label>
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={quest.rec_level}
-                onChange={e => setQuest(prev => ({ ...prev, rec_level: Math.min(30, Math.max(1, Number(e.target.value))) }))}
-                className="w-full px-2 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] focus:border-amber-400 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">成功日</label>
-              <input
-                type="number"
-                min={1}
-                max={14}
-                value={quest.days_success}
-                onChange={e => setQuest(prev => ({ ...prev, days_success: Math.min(14, Math.max(1, Number(e.target.value))) }))}
-                className="w-full px-2 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] focus:border-amber-400 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-[#8b5a2b] font-bold mb-1">失敗日</label>
-              <input
-                type="number"
-                min={1}
-                max={14}
-                value={quest.days_failure}
-                onChange={e => setQuest(prev => ({ ...prev, days_failure: Math.min(14, Math.max(1, Number(e.target.value))) }))}
-                className="w-full px-2 py-2 bg-[#0d0907] border border-[#5c3c2a] rounded-lg text-sm text-[#e3d5b8] focus:border-amber-400 focus:outline-none transition-colors"
-              />
-            </div>
-          </div>
-        </div>
+        <BasicInfoPanel
+          quest={quest}
+          onUpdate={handleQuestUpdate}
+          onClose={() => setShowInfoPanel(false)}
+        />
       )}
 
       {/* ── Canvas Area ── */}
@@ -585,6 +513,15 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
           onClick={() => setShowSaveMenu(false)}
         />
       )}
+
+      {/* ── NodeEditSheet (Phase 3) ── */}
+      <NodeEditSheet
+        node={selectedNode}
+        onClose={() => handleNodeSelect(null)}
+        onUpdate={handleNodeDataUpdate}
+        edges={quest.canvas.edges}
+        nodes={quest.canvas.nodes}
+      />
     </div>
   );
 }
