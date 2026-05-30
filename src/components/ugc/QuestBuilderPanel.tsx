@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ArrowLeft,
   Save,
@@ -18,9 +18,12 @@ import {
 import type {
   BuilderQuest,
   BuilderNode,
+  BuilderEdge,
   BuilderNodeType,
   CanvasState,
 } from '@/types/builder';
+import FlowCanvas from './builder/FlowCanvas';
+import FlowMinimap from './builder/FlowMinimap';
 
 // ── Default State Factories ──
 
@@ -70,10 +73,18 @@ const NODE_TYPE_CONFIG: {
 
 // ── Helpers ──
 
+const MAX_NODES = 20;
+
 let nodeCounter = 0;
 function generateNodeId(): string {
   nodeCounter += 1;
   return `node_${Date.now()}_${nodeCounter}`;
+}
+
+let edgeCounter = 0;
+function generateEdgeId(): string {
+  edgeCounter += 1;
+  return `edge_${Date.now()}_${edgeCounter}`;
 }
 
 function getDefaultNodeData(type: BuilderNodeType): BuilderNode['data'] {
@@ -108,18 +119,43 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
   const [showSaveMenu, setShowSaveMenu] = useState(false);
   const [saving, setSaving] = useState(false);
   const saveMenuRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 390, height: 500 });
+
+  // Track canvas container size for minimap
+  useEffect(() => {
+    const el = canvasContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCanvasSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // ── Canvas node management ──
 
   const addNode = useCallback((type: BuilderNodeType) => {
     const existingNodes = quest.canvas.nodes;
-    // Place new nodes in a grid-like pattern
+    if (existingNodes.length >= MAX_NODES) {
+      alert(`ノード数上限（${MAX_NODES}個）に達しました`);
+      return;
+    }
+    // Place new nodes in a grid-like pattern, accounting for viewport
+    const vp = quest.canvas.viewport;
     const col = existingNodes.length % 3;
     const row = Math.floor(existingNodes.length / 3);
+    const baseX = (-vp.x / vp.zoom) + 60;
+    const baseY = (-vp.y / vp.zoom) + 60;
     const newNode: BuilderNode = {
       id: generateNodeId(),
       type,
-      position: { x: 60 + col * 160, y: 60 + row * 140 },
+      position: {
+        x: Math.round((baseX + col * 160) / 20) * 20,
+        y: Math.round((baseY + row * 140) / 20) * 20,
+      },
       data: getDefaultNodeData(type),
     };
     setQuest(prev => ({
@@ -130,7 +166,7 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
         selectedNodeId: newNode.id,
       },
     }));
-  }, [quest.canvas.nodes]);
+  }, [quest.canvas.nodes, quest.canvas.viewport]);
 
   const removeNode = useCallback((nodeId: string) => {
     setQuest(prev => ({
@@ -143,6 +179,110 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
       },
     }));
   }, []);
+
+  // ── Edge management ──
+
+  const handleEdgeCreate = useCallback(
+    (source: string, target: string, handleIndex?: number) => {
+      // Prevent duplicate edges from same source+handle
+      setQuest(prev => {
+        const exists = prev.canvas.edges.some(
+          (e) => e.source === source && e.target === target && e.handleIndex === (handleIndex ?? 0),
+        );
+        if (exists) return prev;
+        // Prevent self-loops
+        if (source === target) return prev;
+        const newEdge: BuilderEdge = {
+          id: generateEdgeId(),
+          source,
+          target,
+          handleIndex: handleIndex ?? 0,
+        };
+        return {
+          ...prev,
+          canvas: {
+            ...prev.canvas,
+            edges: [...prev.canvas.edges, newEdge],
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const handleEdgeRemove = useCallback((edgeId: string) => {
+    setQuest(prev => ({
+      ...prev,
+      canvas: {
+        ...prev.canvas,
+        edges: prev.canvas.edges.filter(e => e.id !== edgeId),
+      },
+    }));
+  }, []);
+
+  // ── Node move handler ──
+
+  const handleNodeMove = useCallback(
+    (nodeId: string, position: { x: number; y: number }) => {
+      setQuest(prev => ({
+        ...prev,
+        canvas: {
+          ...prev.canvas,
+          nodes: prev.canvas.nodes.map(n =>
+            n.id === nodeId ? { ...n, position } : n,
+          ),
+        },
+      }));
+    },
+    [],
+  );
+
+  // ── Node select handler ──
+
+  const handleNodeSelect = useCallback((nodeId: string | null) => {
+    setQuest(prev => ({
+      ...prev,
+      canvas: {
+        ...prev.canvas,
+        selectedNodeId: nodeId,
+      },
+    }));
+  }, []);
+
+  // ── Viewport change handler ──
+
+  const handleViewportChange = useCallback(
+    (vp: { x: number; y: number; zoom: number }) => {
+      setQuest(prev => ({
+        ...prev,
+        canvas: {
+          ...prev.canvas,
+          viewport: vp,
+        },
+      }));
+    },
+    [],
+  );
+
+  // ── Minimap viewport jump ──
+
+  const handleMinimapJump = useCallback(
+    (worldX: number, worldY: number) => {
+      const zoom = quest.canvas.viewport.zoom;
+      setQuest(prev => ({
+        ...prev,
+        canvas: {
+          ...prev.canvas,
+          viewport: {
+            ...prev.canvas.viewport,
+            x: -worldX * zoom + canvasSize.width / 2,
+            y: -worldY * zoom + canvasSize.height / 2,
+          },
+        },
+      }));
+    },
+    [quest.canvas.viewport.zoom, canvasSize],
+  );
 
   // ── Save placeholder ──
 
@@ -364,80 +504,53 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
         </div>
       )}
 
-      {/* ── Canvas Area (placeholder) ── */}
-      <div className="flex-1 relative overflow-hidden">
-        {/* Canvas background with grid */}
-        <div className="absolute inset-0 bg-[#0d0907]" style={{
-          backgroundImage: 'radial-gradient(circle, #5c3c2a20 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}>
-          {quest.canvas.nodes.length === 0 ? (
-            // Empty state
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-8">
-              <div className="text-4xl opacity-30">🗺️</div>
-              <p className="text-sm text-[#8b5a2b] font-serif">
-                フローエディタを読み込み中...
-              </p>
-              <p className="text-[11px] text-[#6d4c3d] leading-relaxed">
-                下のツールバーからノードを追加して<br />
-                クエストのフローを組み立てましょう
-              </p>
-            </div>
-          ) : (
-            // Render nodes as simple cards (Phase 1 placeholder)
-            <div className="absolute inset-0 overflow-auto p-4">
-              <div className="flex flex-wrap gap-3">
-                {quest.canvas.nodes.map(node => {
-                  const config = NODE_TYPE_CONFIG.find(c => c.type === node.type);
-                  if (!config) return null;
-                  return (
-                    <div
-                      key={node.id}
-                      className={`relative ${config.color} border ${config.borderColor} rounded-lg p-3 w-[140px] cursor-pointer transition-all hover:brightness-110 active:scale-95 ${
-                        quest.canvas.selectedNodeId === node.id
-                          ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-400/20'
-                          : ''
-                      }`}
-                      onClick={() => setQuest(prev => ({
-                        ...prev,
-                        canvas: { ...prev.canvas, selectedNodeId: node.id },
-                      }))}
-                    >
-                      {/* Delete button */}
-                      <button
-                        onClick={e => { e.stopPropagation(); removeNode(node.id); }}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-900 border border-red-600 rounded-full flex items-center justify-center text-red-300 hover:bg-red-800 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+      {/* ── Canvas Area ── */}
+      <div ref={canvasContainerRef} className="flex-1 relative overflow-hidden">
+        {quest.canvas.nodes.length === 0 ? (
+          // Empty state
+          <div className="absolute inset-0 bg-[#0d0907] flex flex-col items-center justify-center gap-3 text-center px-8 z-10" style={{
+            backgroundImage: 'radial-gradient(circle, #5c3c2a20 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}>
+            <div className="text-4xl opacity-30">🗺️</div>
+            <p className="text-sm text-[#8b5a2b] font-serif">
+              フローエディタ
+            </p>
+            <p className="text-[11px] text-[#6d4c3d] leading-relaxed">
+              下のツールバーからノードを追加して<br />
+              クエストのフローを組み立てましょう
+            </p>
+          </div>
+        ) : (
+          <>
+            <FlowCanvas
+              nodes={quest.canvas.nodes}
+              edges={quest.canvas.edges}
+              viewport={quest.canvas.viewport}
+              selectedNodeId={quest.canvas.selectedNodeId}
+              onNodeMove={handleNodeMove}
+              onNodeSelect={handleNodeSelect}
+              onNodeDelete={removeNode}
+              onEdgeCreate={handleEdgeCreate}
+              onEdgeDelete={handleEdgeRemove}
+              onViewportChange={handleViewportChange}
+            />
 
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="text-base">{config.icon}</span>
-                        <span className="text-[10px] font-bold text-[#a38b6b] uppercase tracking-wider">
-                          {config.label}
-                        </span>
-                      </div>
-
-                      <div className="text-[11px] text-[#e3d5b8]/70 line-clamp-2">
-                        {node.type === 'text' && (node.data.text || '（テキスト未入力）')}
-                        {node.type === 'battle' && (node.data.preset_enemy_id || '（敵未選択）')}
-                        {node.type === 'delivery' && (node.data.delivery_item_slug || '（アイテム未選択）')}
-                        {node.type === 'trap' && `ダメージ ${node.data.damage_pct || 0}%`}
-                        {node.type === 'success' && 'クエスト成功'}
-                        {node.type === 'failure' && 'クエスト失敗'}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+            {/* Minimap overlay */}
+            <FlowMinimap
+              nodes={quest.canvas.nodes}
+              edges={quest.canvas.edges}
+              viewport={quest.canvas.viewport}
+              canvasSize={canvasSize}
+              onViewportJump={handleMinimapJump}
+            />
+          </>
+        )}
 
         {/* Node count badge */}
         {nodeCount > 0 && (
-          <div className="absolute top-3 right-3 px-2 py-1 bg-[#1a120e]/90 border border-[#5c3c2a] rounded-md text-[10px] text-[#a38b6b] font-bold">
-            {nodeCount} ノード
+          <div className="absolute top-3 right-3 px-2 py-1 bg-[#1a120e]/90 border border-[#5c3c2a] rounded-md text-[10px] text-[#a38b6b] font-bold z-20">
+            {nodeCount}/{MAX_NODES} ノード
           </div>
         )}
       </div>
