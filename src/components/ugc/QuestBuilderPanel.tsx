@@ -133,7 +133,7 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
   );
 
   return (
-    <div className="min-h-screen bg-[#0d0907] text-[#e3d5b8] flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden bg-[#0d0907] text-[#e3d5b8]">
       {/* ── Header Bar ── */}
       <div className="bg-[#1a120e] border-b border-[#5c3c2a] px-3 py-2.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
