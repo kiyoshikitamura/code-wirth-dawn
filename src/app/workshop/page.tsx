@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FolderKanban, Upload, Download, Calculator, Sparkles, BookOpen } from 'lucide-react';
+import { ArrowLeft, FolderKanban, Upload, Download, Calculator, Sparkles, BookOpen, Wand2 } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import MyWorksPanel from '@/components/ugc/MyWorksPanel';
 import TemplateImportPanel from '@/components/ugc/TemplateImportPanel';
 import TemplateDownloadPanel from '@/components/ugc/TemplateDownloadPanel';
 import BalanceCalculatorPanel from '@/components/ugc/BalanceCalculatorPanel';
 
-type Tab = 'works' | 'template' | 'import' | 'calculator';
+const QuestBuilderPanel = dynamic(() => import('@/components/ugc/QuestBuilderPanel'), { ssr: false });
+
+type Tab = 'works' | 'builder' | 'template' | 'import' | 'calculator';
 
 export default function CreatorsWorkshopPage() {
   const router = useRouter();
@@ -20,6 +23,7 @@ export default function CreatorsWorkshopPage() {
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'works', label: 'マイ作品', icon: <FolderKanban className="w-4 h-4" /> },
+    { key: 'builder', label: '簡易作成', icon: <Wand2 className="w-4 h-4" /> },
     { key: 'template', label: 'テンプレート', icon: <Download className="w-4 h-4" /> },
     { key: 'import', label: 'インポート', icon: <Upload className="w-4 h-4" /> },
     { key: 'calculator', label: 'バランス計算', icon: <Calculator className="w-4 h-4" /> },
@@ -70,12 +74,19 @@ export default function CreatorsWorkshopPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto p-4 md:p-6">
-        {activeTab === 'works' && <MyWorksPanel key={refreshKey} />}
-        {activeTab === 'template' && <TemplateDownloadPanel />}
-        {activeTab === 'import' && <TemplateImportPanel onImportSuccess={() => { setActiveTab('works'); setRefreshKey(k => k + 1); }} />}
-        {activeTab === 'calculator' && <BalanceCalculatorPanel />}
-      </div>
+      {activeTab === 'builder' ? (
+        <QuestBuilderPanel
+          onSaveSuccess={() => { setActiveTab('works'); setRefreshKey(k => k + 1); }}
+          onBack={() => setActiveTab('works')}
+        />
+      ) : (
+        <div className="max-w-4xl mx-auto p-4 md:p-6">
+          {activeTab === 'works' && <MyWorksPanel key={refreshKey} />}
+          {activeTab === 'template' && <TemplateDownloadPanel />}
+          {activeTab === 'import' && <TemplateImportPanel onImportSuccess={() => { setActiveTab('works'); setRefreshKey(k => k + 1); }} />}
+          {activeTab === 'calculator' && <BalanceCalculatorPanel />}
+        </div>
+      )}
     </div>
   );
 }
