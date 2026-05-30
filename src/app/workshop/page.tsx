@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, FolderKanban, Upload, Download, Calculator, Sparkles, BookOpen, Wand2 } from 'lucide-react';
+import { ArrowLeft, FolderKanban, Upload, Download, Calculator, Sparkles, BookOpen, Wand2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import MyWorksPanel from '@/components/ugc/MyWorksPanel';
 import TemplateImportPanel from '@/components/ugc/TemplateImportPanel';
@@ -20,6 +20,14 @@ export default function CreatorsWorkshopPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>('works');
   const [refreshKey, setRefreshKey] = useState(0);
+  const tabContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -120 : 120;
+      tabContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'works', label: 'マイ作品', icon: <FolderKanban className="w-4 h-4" /> },
@@ -66,13 +74,26 @@ export default function CreatorsWorkshopPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="bg-[#1a120e] border-b border-[#3e2723] px-2 shrink-0">
-              <div className="flex gap-1 overflow-x-auto no-scrollbar justify-around">
+            <div className="bg-[#1a120e] border-b border-[#3e2723] px-1 shrink-0 flex items-center justify-between">
+              {/* Left scroll button */}
+              <button
+                onClick={() => scrollTabs('left')}
+                className="p-1.5 text-[#8b5a2b] hover:text-amber-400 active:scale-95 transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                aria-label="左にスクロール"
+              >
+                <ChevronLeft className="w-4.5 h-4.5" />
+              </button>
+
+              {/* Scrollable Tabs Wrapper */}
+              <div
+                ref={tabContainerRef}
+                className="flex-1 flex gap-1 overflow-x-auto no-scrollbar scroll-smooth justify-start"
+              >
                 {tabs.map(t => (
                   <button
                     key={t.key}
                     onClick={() => setActiveTab(t.key)}
-                    className={`flex items-center gap-1 px-2.5 py-3 text-[11px] font-bold transition-colors border-b-2 whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 px-3 py-3 text-[11px] font-bold transition-colors border-b-2 whitespace-nowrap shrink-0 ${
                       activeTab === t.key
                         ? 'border-amber-400 text-amber-400'
                         : 'border-transparent text-[#8b5a2b] hover:text-[#a38b6b]'
@@ -82,6 +103,15 @@ export default function CreatorsWorkshopPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Right scroll button */}
+              <button
+                onClick={() => scrollTabs('right')}
+                className="p-1.5 text-[#8b5a2b] hover:text-amber-400 active:scale-95 transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                aria-label="右にスクロール"
+              >
+                <ChevronRight className="w-4.5 h-4.5" />
+              </button>
             </div>
 
             {/* Scrollable Content Container */}
