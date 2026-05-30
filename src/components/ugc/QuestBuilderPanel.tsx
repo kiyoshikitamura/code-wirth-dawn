@@ -14,6 +14,8 @@ import {
   ChevronDown,
   Loader2,
   X,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import type {
   BuilderQuest,
@@ -27,6 +29,9 @@ import FlowCanvas from './builder/FlowCanvas';
 import FlowMinimap from './builder/FlowMinimap';
 import NodeEditSheet from './builder/NodeEditSheet';
 import BasicInfoPanel from './builder/BasicInfoPanel';
+import { validateBuilderQuest, type ValidationResult, type ValidationError, type ValidationWarning } from '@/lib/ugc/builderValidation';
+import { convertBuilderToTemplate } from '@/lib/ugc/builderConverter';
+import { getAuthHeaders } from '@/lib/authToken';
 
 // ── Default State Factories ──
 
@@ -109,6 +114,74 @@ function getDefaultNodeData(type: BuilderNodeType): BuilderNode['data'] {
   }
 }
 
+// ── Validation Result Display ──
+
+function ValidationResultDisplay({
+  result,
+  onClose,
+}: {
+  result: ValidationResult;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute top-3 left-3 right-14 z-30 max-h-[60%] overflow-y-auto rounded-lg border shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
+      style={{
+        backgroundColor: result.valid ? 'rgba(6, 78, 59, 0.9)' : 'rgba(127, 29, 29, 0.9)',
+        borderColor: result.valid ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)',
+      }}
+    >
+      <div className="p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {result.valid
+              ? <CheckCircle className="w-4 h-4 text-emerald-400" />
+              : <AlertCircle className="w-4 h-4 text-red-400" />
+            }
+            <span className="text-xs font-bold text-[#e3d5b8]">
+              {result.valid ? '検証OK' : `エラー: ${result.errors.length}件`}
+              {result.warnings.length > 0 && ` / 警告: ${result.warnings.length}件`}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-[#a38b6b] hover:text-white transition-colors active:scale-95"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {result.errors.length > 0 && (
+          <div className="space-y-1 mb-2">
+            {result.errors.map((err, i) => (
+              <div key={i} className="text-[11px] text-red-300 flex items-start gap-1.5">
+                <span className="text-red-500 mt-0.5 shrink-0">•</span>
+                <div>
+                  {err.nodeId && <span className="text-red-400/70 font-mono text-[10px]">[{err.nodeId.substring(0, 12)}] </span>}
+                  {err.message}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {result.warnings.length > 0 && (
+          <div className="space-y-1">
+            {result.warnings.map((warn, i) => (
+              <div key={i} className="text-[11px] text-amber-300 flex items-start gap-1.5">
+                <span className="text-amber-500 mt-0.5 shrink-0">⚠</span>
+                <div>
+                  {warn.nodeId && <span className="text-amber-400/70 font-mono text-[10px]">[{warn.nodeId.substring(0, 12)}] </span>}
+                  {warn.message}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ──
 
 interface QuestBuilderPanelProps {
@@ -121,6 +194,7 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [showSaveMenu, setShowSaveMenu] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const saveMenuRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 390, height: 500 });
@@ -313,36 +387,69 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
     [quest.canvas.viewport.zoom, canvasSize],
   );
 
-  // ── Save placeholder ──
+  // ── Save & Validate ──
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     setShowSaveMenu(false);
+    setValidationResult(null);
+
     try {
-      // TODO: Phase 2 - Convert BuilderQuest to ScenarioDB format and POST to /api/ugc/v2/import
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 1. バリデーション
+      const result = validateBuilderQuest(quest);
+      if (!result.valid) {
+        setValidationResult(result);
+        return;
+      }
+
+      // 警告がある場合は確認
+      if (result.warnings.length > 0) {
+        const msgs = result.warnings.map(w => `⚠ ${w.message}`).join('\n');
+        const proceed = confirm(`警告があります:\n${msgs}\n\n保存を続けますか？`);
+        if (!proceed) return;
+      }
+
+      // 2. BuilderQuest → UgcQuestTemplate 変換
+      const converted = convertBuilderToTemplate(quest);
+
+      // 3. API 送信
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/ugc/v2/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: JSON.stringify({
+          content: JSON.stringify(converted),
+          format: 'json',
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        const errorMsg = json.error
+          || json.errors?.map((e: { message: string }) => e.message).join('\n')
+          || '保存に失敗しました。';
+        alert(`保存エラー:\n${errorMsg}`);
+        return;
+      }
+
+      // 4. 成功
       onSaveSuccess?.();
     } catch (e) {
       console.error('[QuestBuilder] Save error:', e);
+      alert('通信エラーが発生しました。ネットワーク接続を確認してください。');
     } finally {
       setSaving(false);
     }
-  }, [onSaveSuccess]);
+  }, [quest, onSaveSuccess]);
 
   const handleValidate = useCallback(() => {
     setShowSaveMenu(false);
-    // TODO: Phase 2 - Validate quest structure
-    const errors: string[] = [];
-    if (!quest.title.trim()) errors.push('タイトルが未入力です');
-    if (quest.canvas.nodes.length === 0) errors.push('ノードが1つもありません');
-    const hasEnd = quest.canvas.nodes.some(n => n.type === 'success' || n.type === 'failure');
-    if (!hasEnd) errors.push('終了ノード（成功/失敗）がありません');
-
-    if (errors.length > 0) {
-      alert('検証エラー:\n' + errors.join('\n'));
-    } else {
-      alert('✅ 検証OK: 基本構造に問題はありません');
-    }
+    const result = validateBuilderQuest(quest);
+    setValidationResult(result);
   }, [quest]);
 
   // ── Node count summary ──
@@ -480,6 +587,14 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
           <div className="absolute top-3 right-3 px-2 py-1 bg-[#1a120e]/90 border border-[#5c3c2a] rounded-md text-[10px] text-[#a38b6b] font-bold z-20">
             {nodeCount}/{MAX_NODES} ノード
           </div>
+        )}
+
+        {/* Validation Result Overlay */}
+        {validationResult && (
+          <ValidationResultDisplay
+            result={validationResult}
+            onClose={() => setValidationResult(null)}
+          />
         )}
       </div>
 
