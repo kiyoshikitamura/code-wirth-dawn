@@ -11,6 +11,7 @@
 > - 英霊: `heroic-list` APIが `is_active=true` でフィルタしていたが、英霊テンプレートは `is_active=false` で作成されるため表示されなかった問題を修正。
 > - 英霊デッキ: `inject_cards` を `Number` 型で統一（`String` で保存されていた型不整合を修正）。
 > - デッキ同期: スキル装備/解除時に `user_profiles.signature_deck` に装備中カードIDを自動同期するロジックを追加。
+> - TOCTOU: `increment_gold` RPCに原子的負数ガード（`UPDATE ... RETURNING` + `RAISE EXCEPTION`）を追加。`user_profiles` に `CHECK (gold >= 0)` 制約を追加。連打・並行リクエストによる二重消費エクスプロイトを防止。
 
 ---
 
@@ -75,7 +76,7 @@
 * **崩壊拠点と闇市**: 世界情勢が「崩壊」した拠点では通常のショップが「闇市」に変化。売却価格が1.5倍に高騰し、闇市限定の強力なスキルや禁忌アイテムが並ぶ。
 * **動的国家フィルタリング (v4.2)**: ショップの国家限定アイテム品揃えは、`world_states.controlling_nation`（動的支配国）を優先参照し、`locations.ruling_nation_id`（初期国家）をフォールバックとする。これにより、ワールドリセットによる支配国変更がショップの品揃えに即座に反映される。
 * **国家タグマッピング (v4.2.1)**: DB国家名とCSV `nation_tags` の対応は以下の通り: `Roland` → `loc_holy_empire`, `Markand` → `loc_marcund`, `Yato` → `loc_yatoshin`, `Karyu` → `loc_haryu`。空タグまたは `any` は全国共通、`loc_all` は全拠点表示。このマッピングは `shop/route.ts` と `location/quests/route.ts` の両方で `nationSlugToLocationTag` として定義される。
-* **ゴールド排他制御**: レースコンディション（同時購入・売却による所持金消失）を防止するため、更新はすべてPostgreSQLのアトミックな `increment_gold` RPCを経由。
+* **ゴールド排他制御 (v4.2.1)**: レースコンディション（同時購入・売却による所持金消失）を防止するため、更新はすべてPostgreSQLのアトミックな `increment_gold` RPCを経由。RPC内で `UPDATE ... RETURNING gold INTO v_new_gold` + `IF v_new_gold < 0 THEN RAISE EXCEPTION` による原子的負数ガードを実装。さらに `CHECK (gold >= 0)` テーブル制約で二重防御。対象API: `shop/route.ts`, `shop/launder/route.ts`, `tavern/hire`, `ugc/publish`, `character/retire`。
 
 ### 3.3 寺院
 * **仕様**: ゴールドを寄付して「祈る」ことで、プレイヤーの思想ステータス（秩序度、善悪度などのアライメントポイント）を調整できる。
