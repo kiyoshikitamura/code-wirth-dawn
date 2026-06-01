@@ -58,6 +58,42 @@ export async function GET(req: Request) {
         const matchedNpcs = npcs?.filter(n => n.slug?.toLowerCase().includes(resolvedNation)) || [];
         const freeNpcs = npcs?.filter(n => n.slug?.toLowerCase().includes('free')) || [];
 
+        // 6. ショップアイテムフィルタの診断
+        const nationTag = `loc_${resolvedNation}`;
+        const matchesNation = (tags: string[] | null) => {
+            if (!tags || tags.length === 0) return true;
+            if (tags.includes('any')) return true;
+            if (resolvedNation === 'neutral') return tags.includes('loc_all');
+            return tags.includes('loc_all') || tags.includes(nationTag);
+        };
+
+        const { data: allItems } = await supabaseServer
+            .from('items')
+            .select('id, slug, name, type, base_price, nation_tags, min_prosperity, is_black_market')
+            .neq('type', 'skill').neq('type', 'key_item').neq('type', 'material');
+
+        const { data: allSkills } = await supabaseServer
+            .from('skills')
+            .select('id, slug, name, base_price, nation_tags, min_prosperity, is_black_market');
+
+        const shopItems = (allItems || []).filter(item => {
+            if ((item.base_price || 0) <= 0 && item.type === 'equipment') return false;
+            const tags = Array.isArray(item.nation_tags) ? item.nation_tags : [];
+            return matchesNation(tags);
+        });
+
+        const shopSkills = (allSkills || []).filter(skill => {
+            if ((skill.base_price || 0) <= 0) return false;
+            const tags = Array.isArray(skill.nation_tags) ? skill.nation_tags : [];
+            return matchesNation(tags);
+        });
+
+        // nation_tagsでフィルタされたアイテムも表示
+        const rejectedItems = (allItems || []).filter(item => {
+            const tags = Array.isArray(item.nation_tags) ? item.nation_tags : [];
+            return tags.length > 0 && !matchesNation(tags);
+        });
+
         return NextResponse.json({
             location: loc,
             location_error: locError?.message || null,
@@ -70,9 +106,19 @@ export async function GET(req: Request) {
                 dynamic_nation: dynamicNation,
                 ruling_nation_id: loc?.ruling_nation_id,
                 final_nation: resolvedNation,
+                nation_tag: nationTag,
                 matched_npc_count: matchedNpcs.length,
                 matched_npcs: matchedNpcs.map(n => `${n.slug} (${n.name})`),
                 free_npc_count: freeNpcs.length,
+            },
+            shop_diagnostics: {
+                total_items_in_db: allItems?.length || 0,
+                items_passing_nation_filter: shopItems.length,
+                items_list: shopItems.map(i => `${i.slug} (${i.name}) [${Array.isArray(i.nation_tags) ? i.nation_tags.join(',') : 'none'}] ¥${i.base_price}`),
+                items_rejected_by_nation: rejectedItems.map(i => `${i.slug} (${i.name}) [${Array.isArray(i.nation_tags) ? i.nation_tags.join(',') : ''}]`),
+                total_skills_in_db: allSkills?.length || 0,
+                skills_passing_nation_filter: shopSkills.length,
+                skills_list: shopSkills.map(s => `${s.slug} (${s.name}) [${Array.isArray(s.nation_tags) ? s.nation_tags.join(',') : 'none'}] ¥${s.base_price}`),
             }
         });
 
