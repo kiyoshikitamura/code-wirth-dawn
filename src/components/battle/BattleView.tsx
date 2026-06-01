@@ -633,7 +633,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* Party Member Detail Popup */}
             {selectedPartyMember && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedPartyMember(null)}>
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedPartyMember(null)}>
                     <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-[280px] shadow-2xl drop-shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -687,7 +687,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* v2.9.3i: ヒール対象選択オーバーレイ */}
             {healTargetMode && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setHealTargetMode(null)}>
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setHealTargetMode(null)}>
                     <div className="bg-black/70 backdrop-blur-xl border border-emerald-500/30 rounded-xl p-4 w-[300px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -750,7 +750,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* Global Anim for Buffs */}
             {activeEffect === 'BUFF' && (
-                <div className="fixed inset-0 z-[55] pointer-events-none flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 z-[55] pointer-events-none flex items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 bg-sky-200/20 animate-in fade-in duration-300" />
                     <div className="w-full h-full border-[10px] border-sky-400/30 rounded-lg animate-in zoom-in fade-in duration-500 scale-110 blur-sm" />
                     <div className="absolute bottom-1/4 w-32 h-64 bg-gradient-to-t from-sky-300/40 to-transparent blur-xl animate-in slide-in-from-bottom-32 fade-in duration-500" />
@@ -759,7 +759,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* User Status Detail Popup */}
             {showUserDetail && userProfile && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserDetail(false)}>
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserDetail(false)}>
                     <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-[280px] shadow-2xl drop-shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -1067,7 +1067,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             {/* v25: バトルアイテムパネル */}
             {showItemPanel && (
                 <div
-                    className="fixed inset-0 z-[60] flex items-end justify-center"
+                    className="absolute inset-0 z-[60] flex items-end justify-center"
                     onClick={() => setShowItemPanel(false)}
                 >
                     <div
@@ -1132,7 +1132,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* BATTLE RESULT OVERLAY */}
             {shouldShowOverlay && (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-1000">
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-1000">
                     <div className="text-center space-y-4 p-6 border-y-2 border-double w-full bg-black/40">
 
                         {battleState.isVictory && (
@@ -1220,7 +1220,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
             {/* Log Review Mode */}
             {isResultActive && isReviewingLogs && (
-                <div className="fixed bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none">
+                <div className="absolute bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none">
                     <button
                         onClick={() => setIsReviewingLogs(false)}
                         className="pointer-events-auto bg-black/80 text-white border border-gray-500 px-5 py-1.5 rounded-full shadow-lg hover:bg-gray-800 text-sm"
