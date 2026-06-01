@@ -59,7 +59,14 @@ export async function GET(req: Request) {
         const freeNpcs = npcs?.filter(n => n.slug?.toLowerCase().includes('free')) || [];
 
         // 6. ショップアイテムフィルタの診断
-        const nationTag = `loc_${resolvedNation}`;
+        // DB国家名 → CSVタグ名のマッピング
+        const nationSlugToLocationTag: Record<string, string> = {
+            'Roland': 'loc_holy_empire',
+            'Markand': 'loc_marcund',
+            'Yato': 'loc_yatoshin',
+            'Karyu': 'loc_haryu',
+        };
+        const nationTag = nationSlugToLocationTag[resolvedNation] || nationSlugToLocationTag[dynamicNation || ''] || `loc_${resolvedNation}`;
         const matchesNation = (tags: string[] | null) => {
             if (!tags || tags.length === 0) return true;
             if (tags.includes('any')) return true;

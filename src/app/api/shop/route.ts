@@ -77,7 +77,14 @@ export async function GET(req: Request) {
 
 
         // 3. Helper: nation_tags フィルタ共通ロジック
-        const nationTag = `loc_${rulingNation.toLowerCase()}`;
+        // DB国家名 → CSVタグ名のマッピング（クエストAPI location/quests/route.ts と同一）
+        const nationSlugToLocationTag: Record<string, string> = {
+            'Roland': 'loc_holy_empire',
+            'Markand': 'loc_marcund',
+            'Yato': 'loc_yatoshin',
+            'Karyu': 'loc_haryu',
+        };
+        const nationTag = nationSlugToLocationTag[rulingNation] || `loc_${rulingNation.toLowerCase()}`;
         const matchesNation = (tags: string[] | null) => {
             if (!tags || tags.length === 0) return true;
             // 文字列 'any' をタグとして含む場合は常にマッチ
