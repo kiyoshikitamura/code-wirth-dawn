@@ -166,12 +166,23 @@ export class ShadowService {
             // v4.2: world_states.controlling_nation（動的支配国）を優先参照。ruling_nation_idは初期国家（静的）のためフォールバック用。
             const { data: loc } = await this.supabase
                 .from('locations')
-                .select('ruling_nation_id, prosperity_level, world_states(controlling_nation)')
+                .select('name, ruling_nation_id, prosperity_level')
                 .eq('id', locationId)
                 .single();
 
+            // world_states は location_name (TEXT FK) でリレーションされるため、別クエリで取得
+            let dynamicNation: string | null = null;
+            if (loc?.name) {
+                const { data: ws } = await this.supabase
+                    .from('world_states')
+                    .select('controlling_nation')
+                    .eq('location_name', loc.name)
+                    .maybeSingle();
+                dynamicNation = ws?.controlling_nation || null;
+            }
+
             const rulingNation = (
-                (loc?.world_states as any)?.[0]?.controlling_nation
+                dynamicNation
                 || loc?.ruling_nation_id
                 || 'unknown'
             ).toLowerCase();
