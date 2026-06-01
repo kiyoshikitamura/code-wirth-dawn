@@ -22,7 +22,7 @@ Code: Wirth-Dawn Specification v16.0 (Battle System v4.1)
 |---|---|---|
 | `enemies` | slug, hp, atk, def, action_pattern, image_url | 敵データ定義 |
 | `enemy_skills` | slug, name, value, effect_type, inject_card_id | 敵スキル定義 |
-| `cards` | id, name, type, cost_val, effect_val, description, image_url, ap_cost, target_type, effect_id | カードデータ（v3.3: image_url/descriptionカラム追加済み） |
+| `cards` | id, name, type, effect_val, description, image_url, ap_cost, target_type, effect_id | カードデータ（v28: cost_type/cost_valは廃止済。APコストのみ有効） |
 | `skills` | id, slug, name, card_id, image_url, description, base_price, deck_cost | スキルアイテム定義 |
 | `user_skills` | id, user_id, skill_id, is_equipped | ユーザー装備スキル |
 | `items` | id, slug, name, type, base_price, effect_data, image_url | アイテム/スキル定義 |
@@ -53,7 +53,7 @@ export interface Card {
   target_type?: TargetType;
   discard_cost?: number;      // Noise廃棄コスト (AP)
   isInjected?: boolean;       // 環境カード (Cost 0扱い)
-  cost_type?: 'mp' | 'vitality';
+  cost_type?: 'item' | 'gold' | 'none'; // v28: VIT/MPコスト廃止。item=1バトル1回制限のみ有効
   image_url?: string;         // v3.3: バトルUIカード画像
 }
 
@@ -283,7 +283,7 @@ FinalDamage = max(1, BasicDamage - Enemy.DEF)
 
 - Shadow（英霊）登録時、`inject_cards` に保存できるのは **`type === 'skill'` のアイテムのみ**（✅ 実装済み）。
 - `type: 'consumable'`（消費アイテム）は登録を厳密に禁止。
-- `cost_type: 'vitality'`（寿命コストカード）は `type` チェックの段階で自動除外される。
+- `cost_type: 'item'`（消費アイテム由来カード）は `type` チェックの段階で自動除外される。（v28: 旧cost_type: 'vitality'は廃止済）
 - Free Tier ユーザーは英霊登録自体がスキップされる（`subscription_tier: 'free'` で制御）。
 
 ---
@@ -748,3 +748,4 @@ processEnemyTurn
 | v27.4 | 2026-05-18 | ネズミ系エネミースキル(poison_sting/multi_attack)未定義バグ修正。seed-enemy-skills API新設。エネミースキルDB動的ロード+キャッシュ化。enemySkills.tsタイポ修正。DBレガシーデータ削除。 |
 | v27.5 | 2026-05-20 | seed-npcs API新設（npcs+party_membersテンプレート二重同期）。NPC全57件のcover_rate/level/atk/def/max_hp をDB同期。JOB_CLASS_JPをlib/jobClass.tsに統一。npcs_db_dump.csv削除。 |
 | v27.6 | 2026-05-21 | コレクション機能改善: NPC図鑑タブ追加(user_npc_encounters新設)、SkillDetailPopup新設(cards join)、EnemyDetailPopup React化、types/collection.ts型定義導入。ensure-npc-encounters マイグレーションAPI追加。 |
+| **v28** | **2026-06-01** | **旧VIT/MPコストシステム廃止。cards.csvのcost_type→`none`/cost_val→`0`に統一。Card型から`mp`/`vitality`除去。`canAffordCard()`削除。バトルカードのコストはAPのみ有効。cost_type=`item`（1バトル1回制限）は維持。DBシード済。** |

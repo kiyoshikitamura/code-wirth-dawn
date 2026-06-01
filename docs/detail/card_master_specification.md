@@ -12,15 +12,15 @@
 スキルの実装にあたり、バトル処理用データ（`cards`）と、経済処理用データ（`items`）を分割して管理します。
 
 ### `cards` テーブル（バトルロジック用）
-バトル中のダメージ計算、アクションポイント（AP）などを制御します。強力なカードほど、APおよびVitality/MPコストを高く設定します。
+バトル中のダメージ計算、アクションポイント（AP）などを制御します。強力なカードほど、APコストを高く設定します。
 | カラム名 | 型 | 説明 |
 |---|---|---|
 | `slug` | string | 一意の識別子（例: `card_power_slash`） |
 | `name` | string | スキル名称（UI表示用） |
 | `type` | string | `Skill` (物理), `Magic` (魔法), `Defense` (防御), `Heal` (回復), `Support` (支援) |
 | `ap_cost` | number | バトル中の消費AP（1〜5）。手札上限6枚の中で、強力なスキルはAPが重い設計。 |
-| `cost_type` | string | `vitality` / `mp` |
-| `cost_val` | number | 使用時の消費リソース量。 |
+| `cost_type` | string | `item` / `gold` / `none`（v28: VIT/MPコスト廃止。`item`=1バトル1回制限） |
+| `cost_val` | number | 旧リソース消費量。v28以降は `0` 固定（APコストのみ有効）。 |
 | `effect_val` | number | 基礎攻撃力または回復量。def_up系スキルではDEF加算値を表す。 |
 | `target_type` | string | `single_enemy`, `all_enemies`, `self`, `single_ally`, `all_allies`, `random_enemy` |
 | `effect_id` | string | 状態異常ID（`StatusEffectId`型定義に準拠） |
@@ -191,7 +191,7 @@
 | 60 | `card_soul_sac` | 魂の生贄 | Magic | 5 | all_enemies | 150 | recoil | 40,000 | 全体150大ダメ（DEF無視）＋MaxHP10%自傷 |
 ### 🟠 カテゴリ5: 魔導書スキル（3種）（v4.0追加）
 **販売条件**: 各拠点のショップで中層の価格（1,200〜1,500G）で販売。
-**特徴**: MP消費の魔法攻撃＋状態異常付与。
+**特徴**: AP消費の魔法攻撃＋状態異常付与。（v28: MPコスト廃止、APのみ）
 
 | No | slug | name | type | AP | target_type | effect_val | effect_id | base_price | 実装効果 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -274,3 +274,4 @@ GET https://code-wirth-dawn.com/api/debug/seed-cards?secret=admin_user
 | v3.0 | 2026-04-11 | バトルエンジンv3.0対応：def_up固定値化、9種StatusEffectId追加 |
 | v4.0 | 2026-04-28 | 魔導書3種(65-67)追加、即死攻撃フォールバック修正、吸血drain実装、王の城壁DEF+50、五星の加護攻撃+バフ化、英霊カード(71-74)MAP追加、デバフ成功率テーブル、ダメージ計算v4.0、seed-cards API追加 |
 | **v4.1** | **2026-05-01** | **バフ効果の重複加算仕様（atk_up, def_up, evasion_up 等）実装、裁きのダメージ50調整、NPCのダメージ計算デバフ反映** |
+| **v28** | **2026-06-01** | **旧VIT/MPコストシステム廃止。cost_type→`none`/cost_val→`0`に統一。`canAffordCard()`削除。APコストのみ有効。cost_type=`item`（1バトル1回制限）は維持。** |

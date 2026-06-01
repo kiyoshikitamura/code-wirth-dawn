@@ -447,7 +447,7 @@ CREATE TABLE ugc_cards (
   type TEXT DEFAULT 'Skill',
   power INT DEFAULT 5,
   ap_cost INT DEFAULT 1,
-  cost_val INT DEFAULT 1,
+  cost_val INT DEFAULT 1, -- v28: 旧VIT/MPコスト値は廃止。UGCではデッキバランスの重み付けとして使用。
   target_type TEXT DEFAULT 'single_enemy',
   effect_id TEXT,
   effect_duration INT DEFAULT 0,
