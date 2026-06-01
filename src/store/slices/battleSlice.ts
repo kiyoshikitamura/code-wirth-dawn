@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Card, Enemy, PartyMember, InventoryItem } from '@/types/game';
-import { buildBattleDeck, routeDamage, canAffordCard, calculateDamage, calculateDamageV4, rollMiss } from '@/lib/battleEngine';
+import { buildBattleDeck, routeDamage, calculateDamage, calculateDamageV4, rollMiss } from '@/lib/battleEngine';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 import { resolveNpcTurn, determineRole, determineGrade, BattleContext } from '@/lib/npcAI';
 import { StatusEffect, applyEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId } from '@/lib/statusEffects';
@@ -161,7 +161,7 @@ export const createBattleSlice = (
                 name: c.name,
                 type: c.type,
                 description: c.description || '',
-                cost: c.cost_val || c.cost || 0,
+                cost: 0, // v28: 旧cost_val(VIT/MP)は廃止。APコストのみ有効。
                 power: c.effect_val || c.power || 0,
                 ap_cost: c.ap_cost ?? 1,
                 cost_type: c.cost_type || undefined,
@@ -1446,7 +1446,7 @@ export const createBattleSlice = (
                         .filter(Boolean)
                         .map(c => ({
                             id: String(c!.id), slug: c!.slug, name: c!.name, type: c!.type,
-                            description: c!.description || '', cost: c!.cost_val ?? c!.cost ?? 0,
+                            description: c!.description || '', cost: 0, // v28: 旧cost_val廃止
                             power: c!.effect_val ?? c!.power ?? 0, ap_cost: c!.ap_cost ?? 1,
                             effect_id: c!.effect_id ?? undefined, effect_duration: c!.effect_duration ?? undefined,
                             image_url: c!.image_url ?? undefined,

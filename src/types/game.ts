@@ -65,7 +65,7 @@ export interface Card {
   target_type?: TargetType; // v2.7: ターゲットタイプ
   discard_cost?: number; // v2.11: Noise廃棄コスト (AP)
   isInjected?: boolean; // v4.1: 環境カード (Cost 0扱い)
-  cost_type?: 'mp' | 'vitality' | 'item' | 'gold' | 'none'; // v5.1: コストタイプ（item=1バトル1回制限）
+  cost_type?: 'item' | 'gold' | 'none'; // v5.1: コストタイプ（item=1バトル1回制限）※v28: mp/vitality廃止
   image_url?: string; // v12.0: UGC対応画像
   animation_type?: string; // v14.0: バトルカード演出効果(SLASH, WIND等)
 }
@@ -502,7 +502,7 @@ export interface CardDB {
   slug: string;
   name: string;
   type: string;
-  cost_type: 'vitality' | 'mp' | 'gold' | 'item' | 'none';
+  cost_type: 'gold' | 'item' | 'none'; // v28: vitality/mp廃止
   cost_val: number;
   effect_val: number;
   image_url?: string; // v12.0

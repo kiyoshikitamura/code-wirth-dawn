@@ -256,9 +256,9 @@ export async function GET(req: Request) {
                 if (!skill) return null;
                 const card = skill.cards;
                 const effectData = card ? {
-                    cost_val: card.cost_val,
+                    cost_val: card.cost_val, // v28: DB伝搬のみ。バトルでのVIT/MP消費には不使用。
                     effect_val: card.effect_val,
-                    cost_type: card.cost_type,
+                    cost_type: card.cost_type, // v28: 'item'のみ有効（1バトル1回制限）。vitality/mpは廃止。
                     card_type: card.type,
                     ap_cost: card.ap_cost ?? 1,
                     target_type: card.target_type,

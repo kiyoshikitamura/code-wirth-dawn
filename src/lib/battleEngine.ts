@@ -241,15 +241,5 @@ export function routeDamage(
     };
 }
 
-/**
- * C. Resource Cost Logic
- * [SK5 v27.3] V9以降、MPコストは廃止。Vitalityコストのみチェックするよう簡素化。
- */
-export function canAffordCard(
-    card: Card & { cost_vitality?: number },
-    _currentMp: number,
-    currentVitality: number
-): boolean {
-    if (card.cost_vitality && currentVitality < card.cost_vitality) return false;
-    return true;
-}
+// [v28 cleanup] canAffordCard() 関数を削除。旧VIT/MPコストシステムのデッドコード。
+// バトルカードのコスト検証は validateCardUse() (targeting.ts) の APチェックのみが有効。
