@@ -3,6 +3,11 @@
 本レポートは、`code-wirth-dawn` プロジェクトにおける現状のシステム機能および詳細な仕様をソースコードおよびナレッジベース（KI）から調査・整理したものです。
 
 > **v4.2 改定内容 (2026-06-01)**: 未使用アイテム・スキルのゲーム内統合。酒場NPC・ショップ品揃え・クエスト出現判定の国家フィルタリングを、静的な `locations.ruling_nation_id` から動的な `world_states.controlling_nation` を優先参照するように修正。
+>
+> **v4.2.1 改定内容 (2026-06-01)**: NPC・ショップ・クエストの出現条件に関する3件の致命的バグを修正。
+> - 酒場NPC: `sessionStorage` キャッシュキーが `locationId` 非依存で、拠点移動後も旧拠点のNPCが表示されていた問題を修正。
+> - ショップ: DB国家名（`Yato`等）とCSVタグ名（`loc_yatoshin`等）のマッピングが欠落しており、全拠点で国家限定アイテムが非表示だった問題を修正。
+> - 共通: Supabase ネストJOIN（`world_states(controlling_nation)`）が TEXT FK で不安定だったため、`world_states` を `location_name` で個別クエリする方式に変更。
 
 ---
 
@@ -64,7 +69,7 @@
 * **繁栄度影響とインフレ**: 拠点の繁栄レベル（`prosperity_level`）に応じて販売ラインナップが変化。支配国家や繁栄度に基づくインフレ倍率（価格変動）がリアルタイムに適用される。
 * **崩壊拠点と闇市**: 世界情勢が「崩壊」した拠点では通常のショップが「闇市」に変化。売却価格が1.5倍に高騰し、闇市限定の強力なスキルや禁忌アイテムが並ぶ。
 * **動的国家フィルタリング (v4.2)**: ショップの国家限定アイテム品揃えは、`world_states.controlling_nation`（動的支配国）を優先参照し、`locations.ruling_nation_id`（初期国家）をフォールバックとする。これにより、ワールドリセットによる支配国変更がショップの品揃えに即座に反映される。
-* **国家タグマッピング**: DB国家名とCSV `nation_tags` の対応は以下の通り: `Roland` → `loc_holy_empire`, `Markand` → `loc_marcund`, `Yato` → `loc_yatoshin`, `Karyu` → `loc_haryu`。空タグまたは `any` は全国共通、`loc_all` は全拠点表示。
+* **国家タグマッピング (v4.2.1)**: DB国家名とCSV `nation_tags` の対応は以下の通り: `Roland` → `loc_holy_empire`, `Markand` → `loc_marcund`, `Yato` → `loc_yatoshin`, `Karyu` → `loc_haryu`。空タグまたは `any` は全国共通、`loc_all` は全拠点表示。このマッピングは `shop/route.ts` と `location/quests/route.ts` の両方で `nationSlugToLocationTag` として定義される。
 * **ゴールド排他制御**: レースコンディション（同時購入・売却による所持金消失）を防止するため、更新はすべてPostgreSQLのアトミックな `increment_gold` RPCを経由。
 
 ### 3.3 寺院
@@ -72,7 +77,9 @@
 
 ### 3.4 酒場
 * **仕様**: 常駐するシステム傭兵、他プレイヤーが作成したキャラクターデータ、または自身が過去に作成した「英霊」をゴールドで雇用し、パーティに編成（最大同行人数制限あり）。
-* **動的国家NPCフィルタリング (v4.2)**: 酒場に出現するシステム傭兵NPCは、`world_states.controlling_nation`（動的支配国）を優先参照し、`locations.ruling_nation_id`（初期国家）をフォールバックとする。これにより、拠点の支配国が変更された際に対応する国家のNPCが即座に酒場に出現する。
+* **動的国家NPCフィルタリング (v4.2)**: 酒場に出現するシステム傭兵NPCは、`world_states.controlling_nation`（動的支配国）を優先参照し、`locations.ruling_nation_id`（初期国家）をフォールバックとする。これにより、拠点の支配国が変更された際に対応する国家のNPCが即座に酒場に出現する。NPCフィルタリングは `npc.slug` に国家名（小文字）が含まれるかで判定する（例: `npc_yato_*` → 夜刀国NPC）。
+* **NPCキャッシュ (v4.2.1)**: TavernModal と GossipModal 間の `sessionStorage` キャッシュは `tavern_shadows_cache_{locationId}` のキーで拠点ごとに分離管理される。拠点移動時に旧データが残らないようにするための設計。
+* **world_states 取得方式 (v4.2.1)**: `world_states` テーブルは `location_name TEXT REFERENCES locations(name)` でリレーションされるため、Supabase のネストJOIN（`world_states(controlling_nation)`）ではなく、`locations.name` を取得後に `world_states` を `location_name` で個別クエリする2ステップ方式を採用。対象API: `shadowService.ts`（酒場）、`shop/route.ts`（ショップ）、`location/quests/route.ts`（クエスト）。
 
 ### 3.5 街の噂話
 * **噂話**: 世界情勢の変化履歴（`world_states_history`）の最新10件からランダムに3件を抽出して表示。新イベント発生時の未読件数を検知・表示。
