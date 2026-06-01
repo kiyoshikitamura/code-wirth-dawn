@@ -1199,6 +1199,10 @@ export const createBattleSlice = (
                         const atkUpEffects = applyEffect(get().battleState.player_effects as StatusEffect[], 'atk_up' as StatusEffectId, effectInfo.effectDuration || 3);
                         set(state => ({ battleState: { ...state.battleState, player_effects: atkUpEffects } }));
                         logMsg = `⚠ ${card.name}を服用！ ATK×2.0 だがDEF半減（${effectInfo.effectDuration || 3}T）`;
+                    } else if (effectInfo.effectId === 'ap_recover' as any) {
+                        const newAp = Math.min(15, battleState.current_ap + 3);
+                        set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
+                        logMsg = `✨ ${card.name}を使用！ APが3回復した（現在: ${newAp}）`;
                     } else if (effectInfo.effectId) {
                         const newEffects = applyEffect(get().battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
                         set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));

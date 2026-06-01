@@ -37,6 +37,7 @@ export type StatusEffectId =
     | 'freeze'       // 凍結: stunの上位互換（行動不能）
     | 'curse'        // 呪い: ATK DOWN相当
     | 'ap_max'      // AP全回復（card_dark_pact用）
+    | 'ap_recover'  // AP回復（瞑想用）
     | 'barrier'     // バリア: def_upの全体版（聖壁等）
     | 'berserk';    // v4.1: 狂戦士 ATK×2.0 + DEF半減
 
@@ -102,6 +103,7 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     freeze:       '凍結',
     curse:        '呪い',
     ap_max:       'AP全回復',
+    ap_recover:   'AP回復',
     barrier:      'バリア',
     berserk:      '狂戦士',
 };

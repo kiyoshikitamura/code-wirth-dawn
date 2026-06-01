@@ -163,13 +163,18 @@ export class ShadowService {
         const results: ShadowSummary[] = [];
         try {
             // ロケーションコンテキストを取得（支配国、繁栄度）
+            // v4.2: world_states.controlling_nation（動的支配国）を優先参照。ruling_nation_idは初期国家（静的）のためフォールバック用。
             const { data: loc } = await this.supabase
                 .from('locations')
-                .select('ruling_nation_id, prosperity_level')
+                .select('ruling_nation_id, prosperity_level, world_states(controlling_nation)')
                 .eq('id', locationId)
                 .single();
 
-            const rulingNation = loc?.ruling_nation_id?.toLowerCase() || 'unknown';
+            const rulingNation = (
+                (loc?.world_states as any)?.[0]?.controlling_nation
+                || loc?.ruling_nation_id
+                || 'unknown'
+            ).toLowerCase();
             const isCapital = loc?.prosperity_level && loc.prosperity_level >= 4;
 
             // v2.9.3e: originフィルタを撤廃（カラム未存在の環境対応）

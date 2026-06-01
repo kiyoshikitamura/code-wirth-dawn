@@ -76,3 +76,4 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 85,card_golem_core,ゴーレムコア,Support,3,none,0,0,self,atk_up,,古代の動力源を起動する。5ターンの間、ATK×1.5＋DEF+20を付与する。
 86,card_kraken_tide,海神の怒涛,Magic,5,none,0,90,all_enemies,bind,,海魔の触腕を召喚する。全体に90の魔法ダメージ＋1ターンの拘束を付与する。
 87,card_mino_axe,覇王の大斧,Skill,5,none,0,130,single_enemy,stun,,牛頭王の大斧を振り下ろす。130の超大ダメージ＋1ターンのスタンを付与する。
+64,card_meditation,瞑想,Support,0,none,0,3,self,ap_recover,,心を落ち着かせて瞑想し、APを回復させる。APを3回復する。

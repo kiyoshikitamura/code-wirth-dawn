@@ -54,8 +54,9 @@ export async function GET(req: Request) {
             supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
             supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
             supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
+            // v4.2: world_states.controlling_nation（動的支配国）を優先参照
             locationId
-                ? supabaseServer.from('locations').select('ruling_nation_id').eq('id', locationId).maybeSingle()
+                ? supabaseServer.from('locations').select('ruling_nation_id, world_states(controlling_nation)').eq('id', locationId).maybeSingle()
                 : Promise.resolve({ data: null }),
             supabaseServer.from('scenarios')
                 .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
@@ -69,7 +70,8 @@ export async function GET(req: Request) {
         const inventory = inventoryResult.data;
         const reputations = reputationsResult.data;
         const completedQuests = completedQuestsResult.data;
-        const currentNationSlug = locationResult.data?.ruling_nation_id || null;
+        const currentNationSlug = (locationResult.data as any)?.world_states?.[0]?.controlling_nation
+            || locationResult.data?.ruling_nation_id || null;
         const quests = scenariosResult.data;
         const qError = scenariosResult.error;
 

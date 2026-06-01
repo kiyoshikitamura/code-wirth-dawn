@@ -42,7 +42,7 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 212,item_forbidden_scroll,禁術:血の契約書,skill,,10000,loc_haryu,1,false,"{""description"":""命を代償に戦闘能力を極限まで引き上げる禁術。12Tの間ATK UPとDEF UPを同時付与。VIT1消費。""}"
 214,gear_adventurer_boots,冒険者の靴,equipment,accessory,400,,2,false,"{""def_bonus"":2,""description"":""軽量で丈夫な冒険者用のブーツ。DEF+2。""}"
 217,skill_provoke,教本:挑発,skill,,400,,2,false,"{""description"":""敵の注意を引きつけるタンク用スキル。""}"
-218,skill_meditation,教本:瞑想,skill,,600,,3,false,"{""description"":""瞑想してMPを回復する。""}"
+218,skill_meditation,教本:瞑想,skill,,600,any,3,false,"{""description"":""瞑想してAPを回復する。""}"
 219,gear_heavy_armor,重装鎧,equipment,armor,1500,,4,false,"{""hp_bonus"":10,""def_bonus"":12,""description"":""全身を鋼鉄で覆い隠す防御力重視の鎧。""}"
 221,skill_berserk,教本:狂戦士,skill,,1200,loc_haryu,2,false,"{""description"":""防御を捨てて攻撃力を倍化する狂戦士の技。""}"
 222,item_lucky_coin,幸運のコイン,equipment,accessory,3000,loc_marcund,5,false,"{""atk_bonus"":4,""hp_bonus"":5,""description"":""不思議な力が宿る硬貨。ATK+4、最大HP+5。""}"

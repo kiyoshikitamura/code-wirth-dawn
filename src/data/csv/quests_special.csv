@@ -19,7 +19,7 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 6018,main_ep18,第18話「四国会戦」,20,5,2,"{""completed_quest"":""main_ep17"",""nation_id"":""loc_holy_empire""}",true,,"Gold:5000|Rep:10",冒険者ギルド,メインシナリオ第18話
 6019,main_ep19,第19話「システム・オーバーライド」,22,6,2,"{""completed_quest"":""main_ep18"",""nation_id"":""loc_holy_empire""}",true,,"Gold:5500|Rep:10",冒険者ギルド,メインシナリオ第19話
 6020,main_ep20,第20話「蒼き暁」,25,6,2,"{""completed_quest"":""main_ep19"",""nation_id"":""loc_holy_empire""}",true,,"Gold:6000|Rep:10",冒険者ギルド,メインシナリオ第20話
-6101,qst_spot_roland,忘却の五英霊,20,5,7,"{""completed_quest"":""main_ep08"",""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,,,王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。
+6101,qst_spot_roland,忘却の五英霊,20,5,7,"{""completed_quest"":""main_ep08"",""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。
 6102,qst_spot_yato,冥食の残滓,20,5,7,"{""completed_quest"":""main_ep09"",""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,,忍び衆,夜刀スポット: 冥食の夜。生贄の少女を護衛し冥の門の四大妖怪を退けよ。
 6103,qst_spot_karyu,天を衝く塔,20,5,7,"{""completed_quest"":""main_ep12"",""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,,地方太守,華龍スポット: 霊山に虚無の塔が出現。四神を退け頂の神に挑め。
 6104,qst_spot_markand,黄金の沈黙,20,5,7,"{""completed_quest"":""main_ep10"",""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,,交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。

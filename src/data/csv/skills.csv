@@ -75,3 +75,4 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3085,legend_golem_core,戦利品:ゴーレムコア,85,0,4,,1,false,,伝説報酬: ATK+DEF自己強化。
 3086,legend_kraken_tide,戦利品:海神の怒涛,86,0,5,,1,false,,伝説報酬: 全体攻撃+拘束。
 3087,legend_mino_axe,戦利品:覇王の大斧,87,0,5,,1,false,,伝説報酬: 超大ダメ+スタン。
+3063,book_meditation,教本:瞑想,64,600,2,any,3,false,,汎用: 瞑想してAPを回復する。

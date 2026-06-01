@@ -123,6 +123,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '71': { effectType: 'attack', effectId: 'atk_up', effectDuration: 3 },                  // 五星の加護（35dmg+ATK UP 3T）
     '73': { effectType: 'recoil_attack' },                                                   // 神殺しの光芒（50dmg+自傷）
     '74': { effectType: 'aoe_attack', effectId: 'def_down', effectDuration: 2 },             // 砂塵の支配（全体20dmg+DEF DOWN）
+    '64': { effectType: 'support_activate', effectId: 'ap_recover' as any, skipDamage: true },                               // 瞑想（AP3回復）
 
     // ─── マルカンド 追加 (62) ─────────────────────────────────────
     '62': { effectType: 'attack', effectId: 'poison', effectDuration: 3 },                    // v4.1: 調毒（15dmg+毒3T）

@@ -19,11 +19,13 @@ export async function GET(req: Request) {
         let isEmbargoed = false;
 
         // まずlocationを取得してnameを確定
+        // v4.2: world_states.controlling_nation（動的支配国）を優先参照。ruling_nation_idは初期国家（静的）のためフォールバック用。
         if (profile.current_location_id) {
-            const { data: locData } = await supabaseService.from('locations').select('id, name, slug, prosperity_level, ruling_nation_id').eq('id', profile.current_location_id).single();
+            const { data: locData } = await supabaseService.from('locations').select('id, name, slug, prosperity_level, ruling_nation_id, world_states(controlling_nation)').eq('id', profile.current_location_id).single();
             if (locData) {
                 prosperityLevel = locData.prosperity_level || 3;
-                rulingNation = locData.ruling_nation_id || 'Neutral';
+                rulingNation = (locData as any)?.world_states?.[0]?.controlling_nation
+                    || locData.ruling_nation_id || 'Neutral';
                 locationName = locData.name;
             }
         }
