@@ -455,6 +455,30 @@ export async function PATCH(req: Request) {
                 console.log(`[PATCH] Legacy skill equip updated successfully: inventory_id=${inventory_id}, is_equipped=${is_equipped}`);
             }
         }
+        // v4.2.1: signature_deck 同期 — スキル装備/解除後に user_profiles.signature_deck を更新
+        // 英霊作成時（死亡/引退）にこのフィールドが参照されるため、常に最新のデッキ状態を反映する
+        if (is_skill && userId) {
+            try {
+                const { data: equippedAfter } = await supabaseServer
+                    .from('user_skills')
+                    .select('skills!inner(card_id)')
+                    .eq('user_id', userId)
+                    .eq('is_equipped', true)
+                    .limit(6);
+
+                const cardIds = (equippedAfter || [])
+                    .map((e: any) => e.skills?.card_id)
+                    .filter(Boolean)
+                    .map(Number);
+
+                await supabaseServer
+                    .from('user_profiles')
+                    .update({ signature_deck: cardIds })
+                    .eq('id', userId);
+            } catch (syncErr) {
+                console.warn('[PATCH] signature_deck sync failed (non-fatal):', syncErr);
+            }
+        }
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

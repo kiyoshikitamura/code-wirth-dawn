@@ -22,7 +22,7 @@ export async function GET(req: Request) {
             .from('party_members')
             .select('id, name, epithet, level, job_class, atk, def, max_durability, durability, image_url, inject_cards, source_user_id, owner_id, created_at, last_hired_at')
             .eq('origin_type', 'shadow_heroic')
-            .eq('is_active', true)
+            .eq('is_active', false)
             .order('level', { ascending: false })
             .limit(10);
 

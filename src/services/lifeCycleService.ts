@@ -132,12 +132,12 @@ export class LifeCycleService {
                     }
                 }
                 // v18: デッキバリデーション — user_skills から装備中スキルを取得
-                let heroicDeck: string[] = [];
+                let heroicDeck: number[] = [];
                 const signatureDeck = profile.signature_deck;
 
                 if (signatureDeck && Array.isArray(signatureDeck) && signatureDeck.length > 0) {
                     // signature_deck がある場合はそのまま使用（cards.id の配列）
-                    heroicDeck = signatureDeck.map((id: any) => String(id));
+                    heroicDeck = signatureDeck.map((id: any) => Number(id)).filter((n: number) => !isNaN(n));
                 } else {
                     // Fallback: user_skills から装備中スキルを取得
                     const { data: equippedSkills } = await this.supabase
@@ -150,13 +150,14 @@ export class LifeCycleService {
                     if (equippedSkills) {
                         heroicDeck = equippedSkills
                             .filter((e: any) => e.skills?.card_id)
-                            .map((e: any) => String(e.skills.card_id));
+                            .map((e: any) => Number(e.skills.card_id))
+                            .filter((n: number) => !isNaN(n));
                     }
                 }
 
                 // 有効カードが0枚の場合は基本アタックをフォールバック
                 if (heroicDeck.length === 0) {
-                    heroicDeck = ['1001']; // 錆びた剣 (Basic Attack)
+                    heroicDeck = [1001]; // 錆びた剣 (Basic Attack)
                 }
 
                 // FIFO または空き枠がある場合は新規登録
