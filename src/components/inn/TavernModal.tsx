@@ -74,7 +74,8 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     // v2.9.3f: sessionStorageキャッシュがあればそれを使い、なければAPIから取得
     const fetchShadowsWithCache = async () => {
         try {
-            const cached = sessionStorage.getItem('tavern_shadows_cache');
+            const cacheKey = `tavern_shadows_cache_${locationId}`;
+            const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed) && parsed.length > 0) {
@@ -112,7 +113,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 setShadows(data.shadows);
                 // 取得結果をキャッシュに保存（次回gossip↔tavern間で共有）
                 try {
-                    sessionStorage.setItem('tavern_shadows_cache', JSON.stringify(data.shadows));
+                    sessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(data.shadows));
                 } catch { /* ignore */ }
             }
         } catch (e) {
@@ -394,7 +395,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 <button
                                     onClick={async () => {
                                         setLoading(true);
-                                        try { sessionStorage.removeItem('tavern_shadows_cache'); } catch {}
+                                        try { sessionStorage.removeItem(`tavern_shadows_cache_${locationId}`); } catch {}
                                         await fetchShadows();
                                         setLoading(false);
                                     }}

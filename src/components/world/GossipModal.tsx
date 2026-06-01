@@ -241,7 +241,7 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
             // v2.9.3f: 酒場データをsessionStorageにキャッシュ（TavernModalとの一致用）
             if (tab === 'tavern' && json.tavern_shadows) {
                 try {
-                    sessionStorage.setItem('tavern_shadows_cache', JSON.stringify(json.tavern_shadows));
+                    sessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(json.tavern_shadows));
                 } catch { /* sessionStorage unavailable */ }
             }
         } catch (e) {
