@@ -142,6 +142,50 @@ npx supabase db push
 
 ## トラブルシューティング
 
+### `npx vercel` でデプロイしてもブランチ連動URLに反映されない
+
+Vercelには **2種類のデプロイ方式** があり、それぞれ独立しています。
+
+| 方式 | URL形式 | トリガー | 更新方法 |
+|------|---------|---------|---------|
+| **Git連動** | `code-wirth-dawn-git-develop-*.vercel.app` | `git push` | リモートにpush |
+| **CLI手動** | `code-wirth-dawn-XXXXX-*.vercel.app` | `npx vercel` | CLI再実行 |
+
+**`npx vercel` でデプロイしてもブランチ連動URL（`git-develop-...`）には反映されません。** ブランチ連動URLを更新するには `git push` が必要です。
+
+```bash
+# ✅ 正しい手順: コミット → push → 自動デプロイ
+git add .
+git commit -m "feat: 変更内容"
+git push origin develop
+# → Vercelがdevelopブランチの変更を検知して自動ビルド・デプロイ
+
+# ⚠️ CLIデプロイは即時確認用（ブランチURLには反映されない）
+npx vercel          # Preview（個別URL生成）
+npx vercel --prod   # Production（本番URLに反映）
+```
+
+### Vercel ビルドキャッシュで旧コードが使われる
+
+Vercelはビルド高速化のためにキャッシュを使用します。ローカルで編集したファイルが反映されない場合、キャッシュが原因の可能性があります。
+
+```bash
+# キャッシュを無視してデプロイ
+npx vercel --force
+npx vercel --prod --force
+```
+
+**発生しやすいケース**: 前回のデプロイ以降にファイルの内容が変わったが、ファイル名やパスが同じ場合。
+
+### Preview Deploy に Deployment Protection（401エラー）がかかる
+
+Vercelの **Deployment Protection** が有効な場合、Preview DeployへのAPIリクエストが `401 Unauthorized` を返します。ブラウザではVercel SSOでログイン済みならページは見えますが、`fetch()` によるAPIリクエストは認証ページのHTMLが返され、JSONパースに失敗します。
+
+**対処法**:
+1. Vercel Dashboard > Settings > Deployment Protection で `Vercel Authentication` を **Disabled** に変更
+2. 設定変更後に**新しいデプロイ**が必要（既存デプロイには遡及適用されない）
+3. または Production にデプロイ（本番はProtection対象外）
+
 ### Preview Deploy が開発 DB に接続しない
 
 Vercel Dashboard > Settings > Environment Variables で、Preview 環境に開発用の Supabase キーが設定されているか確認してください。
