@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, ShieldAlert } from 'lucide-react';
+import { parseTemplate, type ParseResult } from '@/lib/ugc/ugcTemplateParser';
 
 interface ImportResult {
   success: boolean;
@@ -41,8 +42,29 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
   const [result, setResult] = useState<ImportResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDryRun, setIsDryRun] = useState(false);
+  const [preValidation, setPreValidation] = useState<ParseResult | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const detectedFormat = content.trim() ? detectFormat(content) : null;
+
+  // テキスト貼り付け時のリアルタイムバリデーション（500msデバウンス）
+  useEffect(() => {
+    if (!content.trim() || content.length < 20) {
+      setPreValidation(null);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      try {
+        const format = detectFormat(content);
+        const parsed = parseTemplate(content, format);
+        setPreValidation(parsed);
+      } catch {
+        setPreValidation(null);
+      }
+    }, 500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [content]);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -57,6 +79,7 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
     setContent('');
     setFileName('');
     setResult(null);
+    setPreValidation(null);
   };
 
   const handleImport = async (dryRun: boolean) => {
@@ -187,6 +210,48 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
             {content.length > 3000 && '\n...（省略）'}
           </pre>
         </details>
+      )}
+
+      {/* Pre-validation (real-time, client-side) */}
+      {preValidation && !result && (
+        <div className={`rounded p-3 border text-[10px] ${
+          preValidation.success
+            ? 'bg-emerald-900/20 border-emerald-700/40'
+            : 'bg-amber-900/15 border-amber-700/40'
+        }`}>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            {preValidation.success
+              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+              : <ShieldAlert className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+            }
+            <span className={`font-bold ${preValidation.success ? 'text-emerald-300' : 'text-amber-300'}`}>
+              {preValidation.success ? 'バリデーション OK — インポート可能です' : '修正が必要な項目があります'}
+            </span>
+          </div>
+          {preValidation.errors.length > 0 && (
+            <div className="space-y-0.5 mt-1">
+              {preValidation.errors.map((err, i) => (
+                <div key={i} className="text-amber-200/80 flex items-start gap-1">
+                  <span className="text-amber-500 mt-px">•</span>
+                  <div>
+                    {err.field && <span className="text-amber-400/60 font-mono">[{err.field}] </span>}
+                    {err.message}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {preValidation.warnings.length > 0 && (
+            <div className="space-y-0.5 mt-1">
+              {preValidation.warnings.map((warn, i) => (
+                <div key={i} className="text-[#8b6f4e] flex items-start gap-1">
+                  <span className="text-[#6d4c3d] mt-px">⚠</span>
+                  <span>{warn.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Action Buttons */}
