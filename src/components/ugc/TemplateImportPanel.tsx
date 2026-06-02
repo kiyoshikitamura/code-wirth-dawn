@@ -126,28 +126,31 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
               value={content}
               onChange={(e) => { setContent(e.target.value); setResult(null); }}
               placeholder={"AIが生成したJSON/MDテンプレートをここに貼り付けてください。\n\n例:\n---\nversion: \"1.0\"\ntype: enemy\n---\n\n## エネミー定義\n\n名前: フォレストウルフ\nレベル: 8\n..."}
-              className="w-full h-48 bg-[#1a120e] border border-[#5c3c2a] rounded-lg px-3 py-2.5 text-xs text-[#e3d5b8] font-mono placeholder:text-[#4a3528] focus:border-amber-600 focus:outline-none resize-y"
+              className="w-full h-48 bg-[#1a120e] border border-[#5c3c2a] rounded-lg px-3 py-2.5 text-[9px] leading-relaxed text-[#e3d5b8] font-mono placeholder:text-[#4a3528] focus:border-amber-600 focus:outline-none resize-y"
               spellCheck={false}
             />
+          </div>
+          {/* Clear & format indicator */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {detectedFormat && (
+                <>
+                  <span className="px-1.5 py-0.5 rounded bg-[#2c1e1a] text-amber-400 font-bold text-[10px]">
+                    {detectedFormat.toUpperCase()}
+                  </span>
+                  <span className="text-[10px] text-[#6d4c3d]">形式として自動検出</span>
+                </>
+              )}
+            </div>
             {content && (
               <button
                 onClick={handleClear}
-                className="absolute top-2 right-2 p-1 rounded bg-[#3e2723]/80 text-[#6d4c3d] hover:text-amber-400 transition-colors"
-                title="クリア"
+                className="flex items-center gap-1 px-2 py-1 rounded bg-[#3e2723] text-[#a38b6b] hover:text-amber-400 text-[10px] font-bold transition-colors"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" /> クリア
               </button>
             )}
           </div>
-          {/* Format indicator */}
-          {detectedFormat && (
-            <div className="flex items-center gap-2 text-[10px] text-[#6d4c3d]">
-              <span className="px-1.5 py-0.5 rounded bg-[#2c1e1a] text-amber-400 font-bold">
-                {detectedFormat.toUpperCase()}
-              </span>
-              <span>形式として自動検出されました</span>
-            </div>
-          )}
         </div>
       )}
 
