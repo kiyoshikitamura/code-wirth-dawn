@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // CSS の最適化（未使用CSS削除）
     optimizeCss: true,
+    turbopackUseSystemTlsCerts: true,
   },
 };
 

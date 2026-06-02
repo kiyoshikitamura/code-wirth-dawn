@@ -25,6 +25,8 @@ const QuestBoardModal = dynamic(() => import('@/components/inn/QuestBoardModal')
 const UgcQuestBoardPanel = dynamic(() => import('@/components/ugc/UgcQuestBoardPanel'), { ssr: false });
 const ChronicleModal = dynamic(() => import('@/components/world/ChronicleModal'), { ssr: false });
 const HistoryArchiveModal = dynamic(() => import('@/components/inn/HistoryArchiveModal'), { ssr: false });
+const TutorialModal = dynamic(() => import('@/components/inn/TutorialModal'), { ssr: false });
+const WorldChangedModal = dynamic(() => import('@/components/inn/WorldChangedModal'), { ssr: false });
 const CollectionModal = dynamic(() => import('@/components/collection/CollectionModal'), { ssr: false });
 const QuestLogModal = dynamic(() => import('@/components/collection/QuestLogModal'), { ssr: false });
 const RankingModal = dynamic(() => import('@/components/collection/RankingModal'), { ssr: false });
@@ -62,6 +64,8 @@ function InnPageInner() {
         allQuests, loadingQuests,
         reputation,
         gougaiEvents, handleCloseGougai,
+        showTutorial, handleCompleteTutorial,
+        showWorldChanged, handleCloseWorldChanged, handleOpenGougaiFromNotify,
         showHistoryBadge,
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
@@ -133,8 +137,21 @@ function InnPageInner() {
                     />
                 )}
 
+                {/* Tutorial Modal */}
+                {showTutorial && (
+                    <TutorialModal onComplete={handleCompleteTutorial} />
+                )}
+
+                {/* World Changed Notification Popup */}
+                {showWorldChanged && (
+                    <WorldChangedModal 
+                        onOpenGougai={handleOpenGougaiFromNotify} 
+                        onClose={handleCloseWorldChanged} 
+                    />
+                )}
+
                 {/* Gougai Modal */}
-                {gougaiEvents.length > 0 && (
+                {gougaiEvents.length > 0 && !showWorldChanged && (
                     <ChronicleModal events={gougaiEvents} onClose={handleCloseGougai} />
                 )}
 

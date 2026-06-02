@@ -42,8 +42,8 @@ export default function ChronicleModal({ events, onClose }: ChronicleModalProps)
                 {/* Newspaper Header */}
                 <div className="bg-[#2c1810] p-4 text-[#f4e4bc] text-center border-b-4 border-double border-[#f4e4bc]/30">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                        <Newspaper className="w-5 h-5" />
-                        <span className="font-serif font-black text-2xl tracking-[0.3em] uppercase">Gougai</span>
+                        <Newspaper className="w-5 h-5 text-amber-500" />
+                        <span className="font-serif font-black text-2xl tracking-[0.3em] text-amber-100">号外</span>
                     </div>
                     <div className="text-[10px] opacity-70 font-mono">WORLD EXTRA EDITION - {new Date().toLocaleDateString()}</div>
                 </div>

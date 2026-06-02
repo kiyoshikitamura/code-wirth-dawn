@@ -166,6 +166,7 @@ export interface UserProfile {
   pass_expires_at?: Record<string, number>; // { loc_slug: expiry_day }
   is_anonymous?: boolean; // v16.0: テストプレイフラグ
   last_name_change?: string; // v16.2: 最終名前変更日時（ISO 8601）
+  is_tutorial_completed?: boolean;
 }
 
 // ...

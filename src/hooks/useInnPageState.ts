@@ -53,6 +53,62 @@ export function useInnPageState() {
 
     // News & History Logic
     const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
+    const [showWorldChanged, setShowWorldChanged] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
+
+    // gougaiEvents がセットされたら、情勢変化ポップアップを表示
+    useEffect(() => {
+        if (gougaiEvents.length > 0) {
+            setShowWorldChanged(true);
+        }
+    }, [gougaiEvents]);
+
+    // Profile 読み込み時にチュートリアル未完了なら表示
+    useEffect(() => {
+        if (userProfile && userProfile.is_tutorial_completed === false) {
+            setShowTutorial(true);
+        }
+    }, [userProfile?.is_tutorial_completed]);
+
+    const handleCompleteTutorial = async () => {
+        if (!userProfile) return;
+        try {
+            let token = await (await import('@/lib/authToken')).getAuthToken();
+            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const res = await fetch('/api/profile/complete-tutorial', {
+                method: 'POST',
+                headers,
+            });
+
+            if (res.ok) {
+                // ローカルの Profile 状態を更新
+                useGameStore.setState(state => ({
+                    userProfile: state.userProfile ? {
+                        ...state.userProfile,
+                        is_tutorial_completed: true,
+                    } : null
+                }));
+                setShowTutorial(false);
+            } else {
+                console.error('Failed to complete tutorial on server');
+                setShowTutorial(false);
+            }
+        } catch (e) {
+            console.error('Failed to complete tutorial', e);
+            setShowTutorial(false);
+        }
+    };
+
+    const handleCloseWorldChanged = async () => {
+        setShowWorldChanged(false);
+        await handleCloseGougai();
+    };
+
+    const handleOpenGougaiFromNotify = () => {
+        setShowWorldChanged(false);
+    };
 
     // Badge states (赤！バッジ)
     const [showHistoryBadge, setShowHistoryBadge] = useState(true);
@@ -534,6 +590,8 @@ export function useInnPageState() {
         allQuests, loadingQuests,
         reputation,
         gougaiEvents, handleCloseGougai,
+        showTutorial, handleCompleteTutorial,
+        showWorldChanged, handleCloseWorldChanged, handleOpenGougaiFromNotify,
         showHistoryBadge,
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
