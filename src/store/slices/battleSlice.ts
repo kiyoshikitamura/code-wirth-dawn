@@ -12,6 +12,7 @@ import { useQuestState } from '../useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
 import { soundManager } from '@/lib/soundManager';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveMaxHp } from './profileSlice';
+import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
 
 // ─── ノイズカードのフォールバック ────────────────────────────────────────────
@@ -336,9 +337,13 @@ export const createBattleSlice = (
         // ここでの再生は省略し、useBgm フックに任せる。
         // soundManager?.playBgm('bgm_battle');
 
+        const authHeaders = await getAuthHeaders();
         fetch('/api/battle/start', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...authHeaders
+            },
             body: JSON.stringify({
                 enemies,
                 party: partyMembers,

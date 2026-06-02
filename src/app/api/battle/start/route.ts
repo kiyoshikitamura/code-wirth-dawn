@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 /**
  * POST /api/battle/start
@@ -59,9 +60,10 @@ export async function POST(req: Request) {
                     user_id: userId,
                     enemy_id: eid,
                 }));
-                await client
+                const { error: upsertError } = await supabaseServer
                     .from('user_bestiary')
                     .upsert(bestiaryRows, { onConflict: 'user_id,enemy_id', ignoreDuplicates: true });
+                if (upsertError) throw upsertError;
             }
         } catch (bestiaryErr) {
             // Non-critical: log but don't fail the battle start

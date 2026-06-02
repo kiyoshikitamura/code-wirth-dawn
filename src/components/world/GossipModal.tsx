@@ -5,6 +5,7 @@ import { X, RefreshCw, Newspaper, Sparkles, KeyRound, Beer, Users, ChevronDown }
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
+import { getAuthHeaders } from '@/lib/authToken';
 
 // ─── 型定義 ───────────────────────────────────────────────────
 interface WorldNewsItem {
@@ -239,7 +240,10 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
         setLoading(prev => ({ ...prev, [tab]: true }));
         try {
             soundManager?.playSE('se_click');
-            const res = await fetch(`/api/gossip?user_id=${userId}&location_id=${locationId}&tab=${tab}`);
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/gossip?user_id=${userId}&location_id=${locationId}&tab=${tab}`, {
+                headers: { ...authHeaders }
+            });
             if (!res.ok) throw new Error(await res.text());
             const json = await res.json();
             setData(prev => ({ ...prev, ...json }));

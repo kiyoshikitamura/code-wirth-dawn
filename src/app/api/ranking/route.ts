@@ -122,12 +122,77 @@ export async function GET(req: Request) {
             total: r.total_gained,
         }));
 
+        // Inject current user's real-time values into reputation list (topDesc / topAsc)
+        const injectRealtimeRep = (list: any[], order: 'desc' | 'asc') => {
+            let newList = [...list];
+            let me = newList.find((r: any) => r.userId === userId);
+            if (me) {
+                me.value = myRepTotal;
+                me.name = myProfile?.name || '名もなき旅人';
+            } else {
+                const lastVal = newList.length > 0 ? newList[newList.length - 1].value : (order === 'desc' ? -Infinity : Infinity);
+                const qualifies = order === 'desc' ? (myRepTotal >= lastVal) : (myRepTotal <= lastVal);
+                if (qualifies || newList.length < RANKING_LIMIT) {
+                    newList.push({
+                        rank: 999,
+                        userId: userId,
+                        name: myProfile?.name || '名もなき旅人',
+                        value: myRepTotal
+                    });
+                }
+            }
+            if (order === 'desc') {
+                newList.sort((a, b) => b.value - a.value);
+            } else {
+                newList.sort((a, b) => a.value - b.value);
+            }
+            newList = newList.slice(0, RANKING_LIMIT);
+            newList.forEach((entry: any, index: number) => {
+                entry.rank = index + 1;
+            });
+            return newList;
+        };
+
+        const finalTopDesc = injectRealtimeRep(topDesc, 'desc');
+        const finalTopAsc = injectRealtimeRep(topAsc, 'asc');
+
+        // Inject current user's real-time values into alignment list (alignTop)
+        let finalAlignTop = [...alignTop];
+        let meAlign = finalAlignTop.find((r: any) => r.userId === userId);
+        if (meAlign) {
+            meAlign.order = myAlignValues.order;
+            meAlign.chaos = myAlignValues.chaos;
+            meAlign.justice = myAlignValues.justice;
+            meAlign.evil = myAlignValues.evil;
+            meAlign.total = myAlignValues.total;
+            meAlign.name = myProfile?.name || '名もなき旅人';
+        } else {
+            const lastVal = finalAlignTop.length > 0 ? finalAlignTop[finalAlignTop.length - 1].total : -Infinity;
+            if (myAlignValues.total >= lastVal || finalAlignTop.length < RANKING_LIMIT) {
+                finalAlignTop.push({
+                    rank: 999,
+                    userId: userId,
+                    name: myProfile?.name || '名もなき旅人',
+                    order: myAlignValues.order,
+                    chaos: myAlignValues.chaos,
+                    justice: myAlignValues.justice,
+                    evil: myAlignValues.evil,
+                    total: myAlignValues.total
+                });
+            }
+        }
+        finalAlignTop.sort((a, b) => b.total - a.total);
+        finalAlignTop = finalAlignTop.slice(0, RANKING_LIMIT);
+        finalAlignTop.forEach((entry: any, index: number) => {
+            entry.rank = index + 1;
+        });
+
         return NextResponse.json({
             reputation: {
                 status: repStatus,
                 aggregated_at: repAggregatedAt,
-                top_desc: topDesc,
-                top_asc: topAsc,
+                top_desc: finalTopDesc,
+                top_asc: finalTopAsc,
                 my_value: myRepTotal,
             },
             alignment: {
@@ -135,7 +200,7 @@ export async function GET(req: Request) {
                 aggregated_at: alignAggregatedAt,
                 cycle_started_at: cycleStartedAt,
                 cycle_ends_at: cycleEndsAt,
-                top: alignTop,
+                top: finalAlignTop,
                 my_values: myAlignValues,
             },
         });
