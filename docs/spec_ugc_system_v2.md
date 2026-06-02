@@ -695,6 +695,7 @@ ugc://images/enemies/guardian.webp
 ### 5.3 `POST /api/ugc/import`
 
 テンプレート文字列を受け取り、パース・バリデーション後にdraftとして保存する。
+テキスト貼り付け（コピペ）とファイルアップロードの両方に対応。
 
 **Request**:
 ```json
@@ -703,6 +704,14 @@ ugc://images/enemies/guardian.webp
   "format": "md"  // "md" | "json" (省略時は自動判別)
 }
 ```
+
+**format 自動判定ルール**（クライアント側で実行）:
+
+| テキスト先頭 | 判定結果 | 理由 |
+|------------|---------|------|
+| `---` | `md` | YAML frontmatter |
+| `{` または `[` | `json` | JSON構造 |
+| それ以外 | `md` | キー:値形式のMD |
 
 **Response（成功）**:
 ```json

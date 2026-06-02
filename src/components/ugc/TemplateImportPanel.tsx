@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X } from 'lucide-react';
 
 interface ImportResult {
   success: boolean;
@@ -20,12 +20,29 @@ const getAuthHeaders = async () => {
   };
 };
 
+/**
+ * テキスト内容からフォーマット（json / md）を自動判定する。
+ * - `---` で始まる → MD（YAML frontmatter）
+ * - `{` で始まる → JSON
+ * - それ以外 → MD（キー:値形式もMDとして扱う）
+ */
+function detectFormat(text: string): 'json' | 'md' {
+  const trimmed = text.trimStart();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
+  return 'md';
+}
+
+type InputMode = 'file' | 'paste';
+
 export default function TemplateImportPanel({ onImportSuccess }: { onImportSuccess?: () => void }) {
+  const [inputMode, setInputMode] = useState<InputMode>('paste');
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('');
   const [result, setResult] = useState<ImportResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDryRun, setIsDryRun] = useState(false);
+
+  const detectedFormat = content.trim() ? detectFormat(content) : null;
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,6 +53,12 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
     setResult(null);
   }, []);
 
+  const handleClear = () => {
+    setContent('');
+    setFileName('');
+    setResult(null);
+  };
+
   const handleImport = async (dryRun: boolean) => {
     if (!content.trim()) return;
     setLoading(true);
@@ -45,7 +68,11 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
     try {
       const headers = await getAuthHeaders();
       const endpoint = dryRun ? '/api/ugc/v2/validate' : '/api/ugc/v2/import';
-      const format = fileName.endsWith('.md') ? 'md' : 'json';
+
+      // ファイル選択時は拡張子優先、テキスト貼り付け時は内容から自動判定
+      const format = inputMode === 'file' && fileName
+        ? (fileName.endsWith('.md') ? 'md' : 'json')
+        : detectFormat(content);
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -67,23 +94,87 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
 
   return (
     <div className="space-y-4">
-      {/* File Drop Zone */}
-      <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#5c3c2a] rounded-lg cursor-pointer hover:border-amber-600 transition-colors bg-[#1a120e]/50">
-        <Upload className="w-8 h-8 text-[#8b5a2b] mb-2" />
-        <span className="text-sm text-[#a38b6b] font-bold">テンプレートファイルを選択</span>
-        <span className="text-[10px] text-[#6d4c3d] mt-1">JSON / MD 対応</span>
-        <input type="file" accept=".json,.md,.txt" onChange={handleFileSelect} className="hidden" />
-      </label>
+      {/* Input Mode Tabs */}
+      <div className="flex rounded-lg overflow-hidden border border-[#5c3c2a]">
+        <button
+          onClick={() => { setInputMode('paste'); handleClear(); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold transition-colors ${
+            inputMode === 'paste'
+              ? 'bg-[#8b5a2b] text-amber-100'
+              : 'bg-[#1a120e] text-[#6d4c3d] hover:text-[#a38b6b]'
+          }`}
+        >
+          <ClipboardPaste className="w-3.5 h-3.5" /> テキスト貼り付け
+        </button>
+        <button
+          onClick={() => { setInputMode('file'); handleClear(); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold transition-colors ${
+            inputMode === 'file'
+              ? 'bg-[#8b5a2b] text-amber-100'
+              : 'bg-[#1a120e] text-[#6d4c3d] hover:text-[#a38b6b]'
+          }`}
+        >
+          <Upload className="w-3.5 h-3.5" /> ファイル選択
+        </button>
+      </div>
 
-      {fileName && (
-        <div className="flex items-center gap-2 text-sm text-[#e3d5b8] bg-[#2c1e1a] px-3 py-2 rounded">
-          <FileText className="w-4 h-4 text-amber-400" />
-          <span className="truncate">{fileName}</span>
+      {/* Paste Mode */}
+      {inputMode === 'paste' && (
+        <div className="space-y-2">
+          <div className="relative">
+            <textarea
+              value={content}
+              onChange={(e) => { setContent(e.target.value); setResult(null); }}
+              placeholder={"AIが生成したJSON/MDテンプレートをここに貼り付けてください。\n\n例:\n---\nversion: \"1.0\"\ntype: enemy\n---\n\n## エネミー定義\n\n名前: フォレストウルフ\nレベル: 8\n..."}
+              className="w-full h-48 bg-[#1a120e] border border-[#5c3c2a] rounded-lg px-3 py-2.5 text-xs text-[#e3d5b8] font-mono placeholder:text-[#4a3528] focus:border-amber-600 focus:outline-none resize-y"
+              spellCheck={false}
+            />
+            {content && (
+              <button
+                onClick={handleClear}
+                className="absolute top-2 right-2 p-1 rounded bg-[#3e2723]/80 text-[#6d4c3d] hover:text-amber-400 transition-colors"
+                title="クリア"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {/* Format indicator */}
+          {detectedFormat && (
+            <div className="flex items-center gap-2 text-[10px] text-[#6d4c3d]">
+              <span className="px-1.5 py-0.5 rounded bg-[#2c1e1a] text-amber-400 font-bold">
+                {detectedFormat.toUpperCase()}
+              </span>
+              <span>形式として自動検出されました</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Content Preview (collapsible) */}
-      {content && (
+      {/* File Mode */}
+      {inputMode === 'file' && (
+        <>
+          <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#5c3c2a] rounded-lg cursor-pointer hover:border-amber-600 transition-colors bg-[#1a120e]/50">
+            <Upload className="w-8 h-8 text-[#8b5a2b] mb-2" />
+            <span className="text-sm text-[#a38b6b] font-bold">テンプレートファイルを選択</span>
+            <span className="text-[10px] text-[#6d4c3d] mt-1">JSON / MD 対応</span>
+            <input type="file" accept=".json,.md,.txt" onChange={handleFileSelect} className="hidden" />
+          </label>
+
+          {fileName && (
+            <div className="flex items-center gap-2 text-sm text-[#e3d5b8] bg-[#2c1e1a] px-3 py-2 rounded">
+              <FileText className="w-4 h-4 text-amber-400" />
+              <span className="truncate flex-1">{fileName}</span>
+              <button onClick={handleClear} className="text-[#6d4c3d] hover:text-amber-400">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Content Preview (collapsible) — only for file mode since paste mode already shows content */}
+      {inputMode === 'file' && content && (
         <details className="bg-[#1a120e] rounded border border-[#5c3c2a]">
           <summary className="px-3 py-2 text-xs text-[#a38b6b] cursor-pointer hover:text-amber-400">
             テンプレート内容をプレビュー ({content.length.toLocaleString()} 文字)
