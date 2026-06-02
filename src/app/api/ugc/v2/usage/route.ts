@@ -36,24 +36,25 @@ export async function GET(request: Request) {
         const extraPublished = profile.ugc_extra_published || 0;
         const extraDailyImport = profile.ugc_extra_daily_import || 0;
 
-        // Count drafts (draft + pending_review + rejected all consume draft slots)
-        const { count: draftCount } = await client
-            .from('ugc_scenarios')
-            .select('*', { count: 'exact', head: true })
-            .eq('creator_id', userId)
-            .in('status', ['draft', 'pending_review', 'rejected']);
+        // Promise.all を用いた非同期クエリの並列実行による高速化
+        const [draftRes, publishedRes, importRL, publishRL, saveRL] = await Promise.all([
+            client
+                .from('ugc_scenarios')
+                .select('*', { count: 'exact', head: true })
+                .eq('creator_id', userId)
+                .in('status', ['draft', 'pending_review', 'rejected']),
+            client
+                .from('ugc_scenarios')
+                .select('*', { count: 'exact', head: true })
+                .eq('creator_id', userId)
+                .eq('status', 'published'),
+            checkRateLimit(client, userId, 'import', tier, true),
+            checkRateLimit(client, userId, 'publish', tier, true),
+            checkRateLimit(client, userId, 'save', tier, true),
+        ]);
 
-        // Count published
-        const { count: publishedCount } = await client
-            .from('ugc_scenarios')
-            .select('*', { count: 'exact', head: true })
-            .eq('creator_id', userId)
-            .eq('status', 'published');
-
-        // Rate limit checks (dry run — don't record)
-        const importRL = await checkRateLimit(client, userId, 'import', tier, true);
-        const publishRL = await checkRateLimit(client, userId, 'publish', tier, true);
-        const saveRL = await checkRateLimit(client, userId, 'save', tier, true);
+        const draftCount = draftRes.count;
+        const publishedCount = publishedRes.count;
 
         // Max extra slots = tier base limit × 2
         const maxExtraDrafts = limits.drafts * 2;
