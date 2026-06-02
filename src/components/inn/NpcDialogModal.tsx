@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, X, Ban } from 'lucide-react';
 
 export interface NpcDialogData {
@@ -26,26 +26,29 @@ interface NpcDialogModalProps {
 
 // Typewriter hook
 function useTypewriter(text: string, speed: number = 30) {
+    const [prevText, setPrevText] = useState(text);
     const [displayed, setDisplayed] = useState('');
     const [done, setDone] = useState(false);
-    const indexRef = useRef(0);
+
+    if (text !== prevText) {
+        setPrevText(text);
+        setDisplayed('');
+        setDone(text ? false : true);
+    }
 
     useEffect(() => {
-        setDisplayed('');
-        setDone(false);
-        indexRef.current = 0;
-
-        if (!text) { setDone(true); return; }
+        if (!text) return;
 
         const timer = setInterval(() => {
-            indexRef.current++;
-            if (indexRef.current >= text.length) {
-                setDisplayed(text);
-                setDone(true);
-                clearInterval(timer);
-            } else {
-                setDisplayed(text.slice(0, indexRef.current));
-            }
+            setDisplayed(prev => {
+                const nextLen = prev.length + 1;
+                if (nextLen >= text.length) {
+                    setDone(true);
+                    clearInterval(timer);
+                    return text;
+                }
+                return text.slice(0, nextLen);
+            });
         }, speed);
 
         return () => clearInterval(timer);

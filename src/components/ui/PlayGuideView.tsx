@@ -232,10 +232,14 @@ export default function PlayGuideView({ introduction, sections }: PlayGuideViewP
             if (filteredSections.length > 0) {
                 const hasActive = filteredSections.some(s => s.id === activeSectionId);
                 if (!hasActive && activeSectionId !== 'intro') {
-                    setActiveSectionId(filteredSections[0].id);
+                    setTimeout(() => {
+                        setActiveSectionId(filteredSections[0].id);
+                    }, 0);
                 }
             } else if (activeSectionId !== 'intro') {
-                setActiveSectionId('intro');
+                setTimeout(() => {
+                    setActiveSectionId('intro');
+                }, 0);
             }
         }
     }, [filteredSections, searchQuery, activeSectionId]);

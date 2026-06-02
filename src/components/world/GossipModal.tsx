@@ -176,7 +176,11 @@ function SequentialCards<T>({
     tabKey: number;
 }) {
     const [visibleCount, setVisibleCount] = useState(1);
-    useEffect(() => { setVisibleCount(1); }, [tabKey]);
+    useEffect(() => { 
+        setTimeout(() => {
+            setVisibleCount(1); 
+        }, 0);
+    }, [tabKey]);
 
     const allDone = visibleCount >= items.length;
 

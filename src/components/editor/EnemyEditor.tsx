@@ -25,25 +25,16 @@ const SKILL_CATALOG = [
 ];
 
 export default function EnemyEditor({ value, onChange }: EnemyEditorProps) {
-    const [tp, setTp] = useState(0);
-    const [maxTp, setMaxTp] = useState(0);
-
-    useEffect(() => {
-        const calculatedMaxTp = value.level * 50 + 100;
-        setMaxTp(calculatedMaxTp);
-    }, [value.level]);
-
-    useEffect(() => {
-        let used = 0;
-        used += value.hp * 1;
-        used += value.atk * 10;
-        used += value.def * 10;
-        value.skills.forEach(skillId => {
-            const skill = SKILL_CATALOG.find(s => s.id === skillId);
-            if (skill) used += skill.cost;
-        });
-        setTp(maxTp - used);
-    }, [value, maxTp]);
+    const maxTp = value.level * 50 + 100;
+    let used = 0;
+    used += value.hp * 1;
+    used += value.atk * 10;
+    used += value.def * 10;
+    value.skills.forEach(skillId => {
+        const skill = SKILL_CATALOG.find(s => s.id === skillId);
+        if (skill) used += skill.cost;
+    });
+    const tp = maxTp - used;
 
     const handleUpdate = (field: keyof CustomEnemy, val: any) => {
         onChange({ ...value, [field]: val });

@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         // 2. Validate User Gold
         const { data: userData, error: userError } = await supabase
             .from('user_profiles')
-            .select('gold, prayer_count, blessing_data, age, accumulated_days, max_vitality, vitality, atk, def')
+            .select('gold, prayer_count, blessing_data, age, accumulated_days, max_vitality, vitality, atk, def, order_pts, chaos_pts, justice_pts, evil_pts')
             .eq('id', user_id)
             .single();
 
@@ -70,10 +70,13 @@ export async function POST(req: Request) {
         };
 
         // 5. Deduct Gold & Update Blessing & Apply Aging
+        const attrCol = `${attribute.toLowerCase()}_pts`;
+        const gainPts = Math.round(impact * 10);
         const updatePayload: Record<string, any> = {
             gold: userData.gold - cost,
             prayer_count: (userData.prayer_count || 0) + 1,
-            blessing_data: blessingData
+            blessing_data: blessingData,
+            [attrCol]: ((userData as any)[attrCol] || 0) + gainPts
         };
 
         // 経過日数がある場合のみ加齢処理
@@ -118,7 +121,6 @@ export async function POST(req: Request) {
         });
 
         // 7. Update World State Pool
-        const attrCol = `${attribute.toLowerCase()}_score`;
         const dailyPoolCol = `daily_${attribute.toLowerCase()}_pool`;
 
         const { data: wsData } = await supabase.from('world_states').select(dailyPoolCol).eq('location_name', locData.name).single();

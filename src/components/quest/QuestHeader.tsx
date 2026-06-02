@@ -39,7 +39,7 @@ export default function QuestHeader({
     const [mountKey] = useState(() => Date.now());
     useEffect(() => {
         if (!userProfile?.id) return;
-        setIsPartyLoading(true);
+        setTimeout(() => setIsPartyLoading(true), 0);
         fetch(`/api/party/list?owner_id=${userProfile.id}`)
             .then(r => r.json())
             .then(data => {

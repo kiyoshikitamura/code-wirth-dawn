@@ -81,10 +81,10 @@ export async function GET(req: Request) {
         ]);
 
         const topDesc = (repDescRes.data || []).map((r: any) => ({
-            rank: r.rank_desc, name: r.user_name || '名もなき旅人', value: r.total_reputation,
+            rank: r.rank_desc, userId: r.user_id, name: r.user_name || '名もなき旅人', value: r.total_reputation,
         }));
         const topAsc = (repAscRes.data || []).map((r: any) => ({
-            rank: r.rank_asc, name: r.user_name || '名もなき旅人', value: r.total_reputation,
+            rank: r.rank_asc, userId: r.user_id, name: r.user_name || '名もなき旅人', value: r.total_reputation,
         }));
 
         // --- Alignment Ranking ---
@@ -113,6 +113,7 @@ export async function GET(req: Request) {
 
         const alignTop = (alignTopRes.data || []).map((r: any) => ({
             rank: r.rank,
+            userId: r.user_id,
             name: r.user_name || '名もなき旅人',
             order: r.order_gained,
             chaos: r.chaos_gained,
@@ -225,7 +226,8 @@ async function aggregateAlignmentRanking(cycleStartedAt: string) {
 
     // Check if baselines need reset (new cycle)
     const anyBaseline = allBaselines?.[0];
-    const needsBaselineReset = !anyBaseline || anyBaseline.cycle_started_at !== cycleStartedAt;
+    const needsBaselineReset = !anyBaseline || 
+        new Date(anyBaseline.cycle_started_at).getTime() !== new Date(cycleStartedAt).getTime();
 
     if (needsBaselineReset) {
         // New cycle: snapshot current values as baseline

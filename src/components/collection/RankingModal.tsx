@@ -5,12 +5,14 @@ import { createPortal } from 'react-dom';
 import { Trophy, Star, Flame, X, ArrowUpDown, Clock, Loader2 } from 'lucide-react';
 import { getAuthToken } from '@/lib/authToken';
 import XShareButton from '../shared/XShareButton';
+import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 type TabKey = 'reputation' | 'alignment';
 type RepSort = 'desc' | 'asc';
 
 interface RankEntry {
     rank: number;
+    userId?: string;
     name: string;
     value?: number;
     order?: number;
@@ -48,6 +50,34 @@ export default function RankingModal({ onClose }: Props) {
     const [activeTab, setActiveTab] = useState<TabKey>('reputation');
     const [repSort, setRepSort] = useState<RepSort>('desc');
     const [countdown, setCountdown] = useState('');
+    const [selectedUser, setSelectedUser] = useState<{
+        name: string;
+        avatarUrl?: string;
+        epithet?: string;
+        introduction?: string;
+    } | null>(null);
+
+    const handleUserClick = async (userId?: string) => {
+        if (!userId) return;
+        try {
+            const token = await getAuthToken();
+            if (!token) return;
+            const res = await fetch(`/api/profile?profileId=${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (res.ok) {
+                const profileData = await res.json();
+                setSelectedUser({
+                    name: profileData.name || '名もなき旅人',
+                    avatarUrl: profileData.avatar_url,
+                    epithet: profileData.title_name,
+                    introduction: profileData.introduction || '',
+                });
+            }
+        } catch (e) {
+            console.error('[Ranking] Failed to fetch clicked user profile:', e);
+        }
+    };
 
     useEffect(() => {
         fetchRanking();
@@ -196,7 +226,12 @@ export default function RankingModal({ onClose }: Props) {
                                         }`}>
                                             {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
                                         </span>
-                                        <span className="flex-1 text-sm text-slate-200 truncate">{entry.name}</span>
+                                        <span 
+                                            onClick={() => handleUserClick(entry.userId)}
+                                            className="flex-1 text-sm text-slate-200 truncate hover:text-amber-400 cursor-pointer transition-colors"
+                                        >
+                                            {entry.name}
+                                        </span>
                                         <span className={`text-sm font-mono font-bold ${
                                             (entry.value ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
                                         }`}>
@@ -210,12 +245,12 @@ export default function RankingModal({ onClose }: Props) {
                         /* ===== Alignment Tab ===== */
                         <div>
                             {/* Countdown */}
-                            <div className="mx-4 mt-3 mb-2 p-3 rounded-lg bg-[#122042]/80 border border-[#2a4080]/40 text-center">
-                                <div className="text-[9px] text-gray-500 mb-1 tracking-widest uppercase">世界の変換まで</div>
-                                <div className="text-2xl font-mono font-bold text-amber-400 tracking-widest flex items-center justify-center gap-1">
-                                    <Clock size={16} className="text-amber-500/50" />
+                            <div className="px-4 py-1.5 flex items-center justify-between border-b border-[#2a4080]/20 bg-[#122042]/40">
+                                <span className="text-[10px] text-gray-400">世界の変換まで:</span>
+                                <span className="text-xs font-mono font-bold text-amber-400 flex items-center gap-1">
+                                    <Clock size={12} className="text-amber-500/50" />
                                     {countdown || '--:--:--'}
-                                </div>
+                                </span>
                             </div>
 
                             {/* Status */}
@@ -273,7 +308,12 @@ export default function RankingModal({ onClose }: Props) {
                                         }`}>
                                             {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
                                         </span>
-                                        <span className="flex-1 text-[11px] text-slate-200 truncate">{entry.name}</span>
+                                        <span 
+                                            onClick={() => handleUserClick(entry.userId)}
+                                            className="flex-1 text-[11px] text-slate-200 truncate hover:text-amber-400 cursor-pointer transition-colors"
+                                        >
+                                            {entry.name}
+                                        </span>
                                         <span className="w-8 text-center text-[10px] font-mono text-blue-400">{entry.order}</span>
                                         <span className="w-8 text-center text-[10px] font-mono text-purple-400">{entry.chaos}</span>
                                         <span className="w-8 text-center text-[10px] font-mono text-amber-400">{entry.justice}</span>
@@ -326,6 +366,18 @@ export default function RankingModal({ onClose }: Props) {
                     </p>
                 </div>
             </div>
+
+            {/* Simple User Profile Popup */}
+            {selectedUser && (
+                <SimpleUserProfilePopup
+                    isOpen={!!selectedUser}
+                    onClose={() => setSelectedUser(null)}
+                    avatarUrl={selectedUser.avatarUrl}
+                    name={selectedUser.name}
+                    epithet={selectedUser.epithet}
+                    introduction={selectedUser.introduction}
+                />
+            )}
         </div>,
         document.body
     );

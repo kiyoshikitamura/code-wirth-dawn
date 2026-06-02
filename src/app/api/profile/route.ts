@@ -18,8 +18,8 @@ export async function GET(req: Request) {
         // JWT Bearer だからユーザーを特定する
         const { data: { user } } = await client.auth.getUser();
 
-        // 優先度: 1. JWT認証のUID、2. 明示的な profileId クエリパラメータ
-        const targetId = user?.id || queryId;
+        // 優先度: 1. 明示的な profileId クエリパラメータ、2. JWT認証のUID
+        const targetId = queryId || user?.id;
 
         if (!targetId) {
             // [Clean-Expert] 旧仕様の「最新プロファイルフォールバック」を廃止。
@@ -27,6 +27,8 @@ export async function GET(req: Request) {
             console.warn('[GET /api/profile] 認証不可・ profileId 不存在: 401 を返却');
             return NextResponse.json({ error: '認証が必要です。ログインしてから再度アクセスしてください。' }, { status: 401 });
         }
+
+        const isSelf = !queryId || queryId === user?.id;
 
         // C2最適化: プロフィール取得と装備ボーナス取得を並列化
         const [profileResult, equipResult] = await Promise.all([
@@ -68,7 +70,7 @@ export async function GET(req: Request) {
         (profile as any).equipment_bonus = equipBonus;
 
         // --- ロジック: タイトル更新（加齢はmove/inn/pray/quest完了時に処理済み。GETでは副作用なし） ---
-        if (profile) {
+        if (profile && isSelf) {
             let needsUpdate = false;
             const updates: any = {};
 

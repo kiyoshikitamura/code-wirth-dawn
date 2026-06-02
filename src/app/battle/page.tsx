@@ -63,7 +63,9 @@ function BattlePageInner() {
             });
         }
 
-        setBattleReady(true);
+        setTimeout(() => {
+            setBattleReady(true);
+        }, 0);
     }, []);
 
     const handleBattleEnd = (result: 'win' | 'lose' | 'escape') => {
