@@ -218,8 +218,9 @@ function parseYamlValue(val: string): unknown {
 
 // ── シナリオ本文パース ──────────────────────────────────────────────────────
 
-/** ノードタイプ判定マップ */
+/** ノードタイプ判定マップ（日本語名＋英語名対応） */
 const NODE_TYPE_MAP: Record<string, UgcNodeType> = {
+  // 日本語
   'テキスト': 'text',
   'バトル': 'battle',
   'NPC加入': 'npc_join',
@@ -229,33 +230,179 @@ const NODE_TYPE_MAP: Record<string, UgcNodeType> = {
   '罠': 'trap',
   '成功': 'success',
   '失敗': 'failure',
+  // 英語（AI生成テンプレート対応）
+  'text': 'text',
+  'battle': 'battle',
+  'npc_join': 'npc_join',
+  'npc_leave': 'npc_leave',
+  'delivery': 'delivery',
+  'random_branch': 'random_branch',
+  'trap': 'trap',
+  'success': 'success',
+  'failure': 'failure',
 };
 
 /**
- * シナリオ本文をフローノード配列にパースする
+ * シナリオ本文をフローノード配列にパースする。
+ * 以下の2形式に対応:
+ *   - 公式形式: `## ノード N: タイトル（タイプ）`
+ *   - AI生成形式: `### node_id [type]`  (## も可)
  */
 export function parseScenarioBody(body: string): UgcFlowNode[] {
+  // ── 報酬セクションを先に抽出 ──
+  const rewardsData = parseRewardsSection(body);
+  // 報酬セクションを除去してノード解析に回す
+  const bodyWithoutRewards = body.replace(/^## 報酬[\s\S]*?(?=^#{2,3}\s+(?!アイテム|スキルカード)|$)/m, '').trim();
+
   const nodes: UgcFlowNode[] = [];
 
-  // ## ノード N: タイトル（タイプ） で分割
-  const nodeRegex = /^## ノード\s+(\d+):\s*(.+?)(?:\uff08|（)(.+?)(?:\uff09|）)/gm;
-  const sections = body.split(/(?=^## ノード\s+\d+:)/m).filter(s => s.trim());
+  // 公式形式: ## ノード N: タイトル（タイプ）
+  const officialPattern = /^## ノード\s+(\d+):\s*(.+?)(?:\uff08|（)(.+?)(?:\uff09|）)/;
+  // AI生成形式: ### node_id [type]  (##でも###でも可)
+  const aiPattern = /^#{2,3}\s+(\S+)\s+\[([^\]]+)\]/;
+
+  // 両形式のヘッダーで分割
+  const sectionSplitter = /(?=^#{2,3}\s+(?:ノード\s+\d+:|\S+\s+\[))/m;
+  const sections = bodyWithoutRewards.split(sectionSplitter).filter(s => s.trim());
+
+  let fullDescription = '';
 
   for (const section of sections) {
-    const headerMatch = section.match(/^## ノード\s+(\d+):\s*(.+?)(?:\uff08|（)(.+?)(?:\uff09|）)/);
-    if (!headerMatch) continue;
+    // 公式形式を試行
+    const officialMatch = section.match(officialPattern);
+    if (officialMatch) {
+      const nodeNum = officialMatch[1];
+      const nodeId = nodeNum === '1' ? 'start' : `node_${nodeNum}`;
+      const typeName = officialMatch[3].trim();
+      const nodeType = NODE_TYPE_MAP[typeName] || 'text';
+      const content = section.slice(officialMatch[0].length).trim();
+      const node = parseNodeContent(nodeId, nodeType, content);
+      nodes.push(node);
+      continue;
+    }
 
-    const nodeNum = headerMatch[1];
-    const nodeId = nodeNum === '1' ? 'start' : `node_${nodeNum}`;
-    const typeName = headerMatch[3].trim();
-    const nodeType = NODE_TYPE_MAP[typeName] || 'text';
+    // AI生成形式を試行
+    const aiMatch = section.match(aiPattern);
+    if (aiMatch) {
+      const nodeId = aiMatch[1].trim();
+      const typeName = aiMatch[2].trim();
+      const nodeType = NODE_TYPE_MAP[typeName] || 'text';
+      const content = section.slice(aiMatch[0].length).trim();
+      const node = parseNodeContent(nodeId, nodeType, content);
+      nodes.push(node);
+      continue;
+    }
 
-    const content = section.slice(headerMatch[0].length).trim();
-    const node = parseNodeContent(nodeId, nodeType, content);
-    nodes.push(node);
+    // ヘッダーにマッチしないセクション → full_description として扱う
+    const trimmed = section.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      fullDescription += (fullDescription ? '\n\n' : '') + trimmed;
+    }
+  }
+
+  // full_description を最初のノードに付与（後でfrontmatterにマージされる）
+  // rewardsData があれば _rewards メタデータを付与
+  if (nodes.length > 0) {
+    (nodes as any).__fullDescription = fullDescription;
+    (nodes as any).__rewards = rewardsData;
   }
 
   return nodes;
+}
+
+/**
+ * ## 報酬 セクションをパースする（AI生成テンプレート対応）
+ *
+ * 期待する形式:
+ * ## 報酬
+ * ### アイテム
+ * - アイテム名 (type)
+ * - アイテム名 (type, rarity, heal_hp=30)
+ * ### スキルカード
+ * - カード名 (power=12, effect=attack, ap_cost=3)
+ */
+function parseRewardsSection(body: string): { items?: any[]; skill_card?: any } | null {
+  const rewardsMatch = body.match(/^## 報酬([\s\S]*?)(?=^#{2}\s+(?!アイテム|スキルカード)|$(?!\n))/m);
+  if (!rewardsMatch) return null;
+
+  const rewardsBody = rewardsMatch[1];
+  const result: { items?: any[]; skill_card?: any } = {};
+
+  // ### アイテム セクション
+  const itemsMatch = rewardsBody.match(/###\s*アイテム([\s\S]*?)(?=###|$)/);
+  if (itemsMatch) {
+    const items: any[] = [];
+    const itemLines = itemsMatch[1].split('\n').filter(l => l.trim().startsWith('-'));
+    for (const line of itemLines) {
+      const item = parseRewardItemLine(line.trim().replace(/^-\s*/, ''));
+      if (item) items.push(item);
+    }
+    if (items.length > 0) result.items = items;
+  }
+
+  // ### スキルカード セクション
+  const cardMatch = rewardsBody.match(/###\s*スキルカード([\s\S]*?)(?=###|$)/);
+  if (cardMatch) {
+    const cardLines = cardMatch[1].split('\n').filter(l => l.trim().startsWith('-'));
+    if (cardLines.length > 0) {
+      const card = parseRewardCardLine(cardLines[0].trim().replace(/^-\s*/, ''));
+      if (card) result.skill_card = card;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+/** 報酬アイテム行をパース: "アイテム名 (type, rarity, heal_hp=30)" */
+function parseRewardItemLine(text: string): any | null {
+  const match = text.match(/^(.+?)\s*\(([^)]+)\)/);
+  if (!match) return { name: text.trim(), type: 'trade_good', rarity: 'common' };
+
+  const name = match[1].trim();
+  const params = match[2].split(',').map(s => s.trim());
+
+  const item: any = { name, type: 'trade_good', rarity: 'common' };
+  for (const p of params) {
+    const kvMatch = p.match(/^(\w+)=(.+)$/);
+    if (kvMatch) {
+      const key = kvMatch[1];
+      const val = kvMatch[2];
+      if (key === 'heal_hp') {
+        item.effect_data = { ...(item.effect_data || {}), heal_hp: parseInt(val, 10) };
+      }
+    } else if (['consumable', 'trade_good'].includes(p)) {
+      item.type = p;
+    } else if (['common', 'uncommon', 'rare'].includes(p)) {
+      item.rarity = p;
+    }
+  }
+  return item;
+}
+
+/** 報酬スキルカード行をパース: "カード名 (power=12, effect=attack, ap_cost=3)" */
+function parseRewardCardLine(text: string): any | null {
+  const match = text.match(/^(.+?)\s*\(([^)]+)\)/);
+  if (!match) return null;
+
+  const name = match[1].trim();
+  const params = match[2].split(',').map(s => s.trim());
+
+  const card: any = { name, power: 10, ap_cost: 2, target_type: 'single_enemy', effect_id: 'attack', effect_duration: 0, description: '' };
+  for (const p of params) {
+    const kvMatch = p.match(/^(\w+)=(.+)$/);
+    if (kvMatch) {
+      const key = kvMatch[1];
+      const val = kvMatch[2];
+      switch (key) {
+        case 'power': card.power = parseInt(val, 10); break;
+        case 'ap_cost': card.ap_cost = parseInt(val, 10); break;
+        case 'effect': card.effect_id = val; break;
+        case 'target': card.target_type = val; break;
+        case 'duration': card.effect_duration = parseInt(val, 10); break;
+      }
+    }
+  }
+  return card;
 }
 
 /**
@@ -275,7 +422,7 @@ function parseNodeContent(id: string, type: UgcNodeType, content: string): UgcFl
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // メタデータ行
+    // メタデータ行: **キー**: 値
     const metaMatch = trimmed.match(/^\*\*(.+?)\*\*:\s*(.+)$/);
     if (metaMatch) {
       const key = metaMatch[1];
@@ -307,7 +454,30 @@ function parseNodeContent(id: string, type: UgcNodeType, content: string): UgcFl
       continue;
     }
 
-    // 選択肢ブロック
+    // インラインエネミー定義: **enemy:** 名前 (Lv40, HP450, ATK120, DEF80, skills: pierce_attack)
+    const inlineEnemyMatch = trimmed.match(/^\*\*enemy:\*\*\s*(.+)$/);
+    if (inlineEnemyMatch) {
+      const enemyData = parseInlineEnemy(inlineEnemyMatch[1]);
+      if (enemyData) node.enemyData = enemyData;
+      continue;
+    }
+
+    // インラインNPC定義: **npc:** 名前 (Lv40, HP300, skills: buff_party, heal)
+    const inlineNpcMatch = trimmed.match(/^\*\*npc:\*\*\s*(.+)$/);
+    if (inlineNpcMatch) {
+      const npcData = parseInlineNpc(inlineNpcMatch[1]);
+      if (npcData) node.npcData = npcData;
+      continue;
+    }
+
+    // trap_damage_pct: 20（キー:値形式、AI生成対応）
+    const trapDmgMatch = trimmed.match(/^trap_damage_pct:\s*(\d+)/);
+    if (trapDmgMatch) {
+      node.trap_damage_pct = parseInt(trapDmgMatch[1], 10);
+      continue;
+    }
+
+    // 選択肢ブロック（公式形式）
     if (trimmed === '**選択肢**:') continue;
     const choiceMatch = trimmed.match(/^-\s*\[(.+?)\]\s*→\s*ノード\s*(\d+)$/);
     if (choiceMatch) {
@@ -318,21 +488,28 @@ function parseNodeContent(id: string, type: UgcNodeType, content: string): UgcFl
       continue;
     }
 
-    // 自動進行
+    // 自動進行（公式形式）: → ノード N
     const nextMatch = trimmed.match(/^→\s*ノード\s*(\d+)$/);
     if (nextMatch) {
       node.next = `node_${nextMatch[1]}`;
       continue;
     }
 
-    // エネミーブロック
+    // 自動進行（AI生成形式）: → next: node_id
+    const nextAiMatch = trimmed.match(/^→\s*next:\s*(\S+)/);
+    if (nextAiMatch) {
+      node.next = nextAiMatch[1];
+      continue;
+    }
+
+    // エネミーブロック（公式形式）
     if (trimmed === '**エネミー**:') {
       const enemyData = parseEnemyBlock(lines, lines.indexOf(line));
       if (enemyData) node.enemyData = enemyData;
       continue;
     }
 
-    // NPCブロック
+    // NPCブロック（公式形式）
     if (trimmed === '**NPC**:') {
       const npcData = parseNpcBlock(lines, lines.indexOf(line));
       if (npcData) node.npcData = npcData;
@@ -347,6 +524,76 @@ function parseNodeContent(id: string, type: UgcNodeType, content: string): UgcFl
 
   node.text = textLines.join('\n');
   return node;
+}
+
+/**
+ * インラインエネミー定義をパース:
+ * 名前 (LvN, HPN, ATKN, DEFN, skills: skill1, skill2)
+ */
+function parseInlineEnemy(text: string): UgcFlowNode['enemyData'] {
+  const match = text.match(/^(.+?)\s*\(([^)]+)\)/);
+  if (!match) return { name: text.trim(), level: 1, hp: 50, atk: 5, def: 5, skills: [], image_url: '', flavor_text: '', asset_type: 'enemy' as const };
+
+  const name = match[1].trim();
+  const params = match[2];
+
+  let level = 1, hp = 50, atk = 5, def = 5;
+  const skills: string[] = [];
+
+  // Lv, HP, ATK, DEF をパース
+  const lvMatch = params.match(/Lv\s*(\d+)/i);
+  if (lvMatch) level = parseInt(lvMatch[1], 10);
+  const hpMatch = params.match(/HP\s*(\d+)/i);
+  if (hpMatch) hp = parseInt(hpMatch[1], 10);
+  const atkMatch = params.match(/ATK\s*(\d+)/i);
+  if (atkMatch) atk = parseInt(atkMatch[1], 10);
+  const defMatch = params.match(/DEF\s*(\d+)/i);
+  if (defMatch) def = parseInt(defMatch[1], 10);
+
+  // skills: skill1, skill2
+  const skillsMatch = params.match(/skills?:\s*(.+?)(?:\)|$)/);
+  if (skillsMatch) {
+    skills.push(...skillsMatch[1].split(',').map(s => s.trim()).filter(Boolean));
+  }
+
+  return { name, level, hp, atk, def, skills, image_url: '', flavor_text: '', asset_type: 'enemy' as const };
+}
+
+/**
+ * インラインNPC定義をパース:
+ * 名前 (LvN, HPN, skills: skill1, skill2)
+ */
+function parseInlineNpc(text: string): UgcFlowNode['npcData'] {
+  const match = text.match(/^(.+?)\s*\(([^)]+)\)/);
+  if (!match) return { name: text.trim(), level: 1, atk: 5, def: 5, durability: 100, cover_rate: 10, ai_role: 'striker' as const, ai_grade: 'random' as const, signature_skills: [], image_url: '', flavor_text: '', is_escort: false };
+
+  const name = match[1].trim();
+  const params = match[2];
+
+  let level = 1, atk = 5, def = 5, durability = 100, cover_rate = 10;
+  const skills: string[] = [];
+  let ai_role: 'striker' | 'guardian' | 'medic' = 'striker';
+
+  const lvMatch = params.match(/Lv\s*(\d+)/i);
+  if (lvMatch) level = parseInt(lvMatch[1], 10);
+  const hpMatch = params.match(/HP\s*(\d+)/i);
+  if (hpMatch) durability = parseInt(hpMatch[1], 10);
+  const atkMatch = params.match(/ATK\s*(\d+)/i);
+  if (atkMatch) atk = parseInt(atkMatch[1], 10);
+  const defMatch = params.match(/DEF\s*(\d+)/i);
+  if (defMatch) def = parseInt(defMatch[1], 10);
+
+  // skills: skill1, skill2
+  const skillsMatch = params.match(/skills?:\s*(.+?)(?:\)|$)/);
+  if (skillsMatch) {
+    skills.push(...skillsMatch[1].split(',').map(s => s.trim()).filter(Boolean));
+  }
+
+  // ai_role detection from skills
+  if (skills.some(s => s.includes('heal'))) ai_role = 'medic';
+  else if (skills.some(s => s.includes('guard') || s.includes('buff'))) ai_role = 'guardian';
+
+  return { name, level, atk, def, durability, cover_rate, ai_role, ai_grade: 'random' as const, signature_skills: skills, image_url: '', flavor_text: '', is_escort: false };
 }
 
 /**

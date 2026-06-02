@@ -189,12 +189,27 @@ function parseMdTemplate(content: string): Record<string, unknown> {
   const { frontmatter, body } = extractFrontmatter(content);
 
   switch (frontmatter.type) {
-    case 'quest':
+    case 'quest': {
       // quest型の場合、nodesをフラット化
-      return {
+      const nodes = parseScenarioBody(body);
+      const result: Record<string, unknown> = {
         ...frontmatter,
-        nodes: parseScenarioBody(body),
+        nodes,
       };
+      // AI生成テンプレートの報酬セクションをマージ
+      const rewards = (nodes as any).__rewards;
+      if (rewards) {
+        result.rewards = { ...(result.rewards as any || {}), ...rewards };
+        delete (nodes as any).__rewards;
+      }
+      // full_descriptionをマージ
+      const fullDesc = (nodes as any).__fullDescription;
+      if (fullDesc && !result.full_description) {
+        result.full_description = fullDesc;
+        delete (nodes as any).__fullDescription;
+      }
+      return result;
+    }
     case 'enemy':
       return {
         ...frontmatter,
