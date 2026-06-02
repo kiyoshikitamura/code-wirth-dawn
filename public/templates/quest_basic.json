@@ -1,85 +1,93 @@
 {
-  "meta": {
-    "format_version": "2.0",
-    "template_type": "quest",
-    "title": "【テンプレート】はじめてのクエスト",
-    "author": "公式テンプレート",
-    "description": "UGCクエスト作成の基本テンプレートです。このファイルを編集して、あなただけのクエストを作りましょう。",
-    "difficulty": 1,
-    "rec_level": 1,
-    "scenario_type": "Other",
-    "tp_budget": 15,
-    "pb_budget": 30
-  },
-  "scenario": {
-    "title": "はじめてのクエスト",
-    "short_description": "テンプレートクエストです。内容を自由に編集してください。",
-    "client_name": "依頼主の名前",
-    "difficulty": 1,
-    "rec_level": 1,
-    "scenario_type": "Other",
-    "time_cost": 1,
-    "days_success": 1,
-    "days_failure": 1,
-    "rewards": {
-      "gold": 50,
-      "exp": 30
-    },
-    "flow_nodes": [
+  "$template": "wirth-dawn-ugc",
+  "version": "1.0",
+  "type": "quest",
+  "title": "はじめてのクエスト",
+  "short_description": "テンプレートクエストです。内容を自由に編集してください。",
+  "full_description": "冒険者ギルドで受けられる基本的なクエストのテンプレートです。テキスト・戦闘・分岐を含むシンプルな構成です。",
+  "client_name": "依頼主の名前",
+  "scenario_type": "Other",
+  "difficulty": 1,
+  "rec_level": 5,
+  "days_success": 1,
+  "days_failure": 1,
+  "conditions": {},
+  "rewards": {
+    "items": [
       {
-        "id": "start",
-        "type": "text",
-        "text": "ここにクエスト開始時のテキストを書きます。\n背景やBGMも指定できます。",
-        "bg_key": "bg_guild",
-        "bgm_key": "bgm_quest_calm",
-        "choices": [
-          { "label": "依頼を受ける", "next": "scene_1" },
-          { "label": "断る", "next": "end_failure" }
-        ]
-      },
-      {
-        "id": "scene_1",
-        "type": "text",
-        "text": "冒険が始まりました！\nここで選択肢を出して、プレイヤーに道を選ばせることができます。",
-        "bg_key": "bg_road_day",
-        "choices": [
-          { "label": "戦って進む", "next": "battle_1" },
-          { "label": "迂回する", "next": "scene_2" }
-        ]
-      },
-      {
-        "id": "battle_1",
-        "type": "battle",
-        "text": "敵が現れた！",
-        "enemy_group_id": "slime",
-        "bg_key": "bg_forest_day",
-        "bgm_key": "bgm_battle",
-        "battle_success_next": "scene_2",
-        "choices": [
-          { "label": "戦う", "next": "scene_2" }
-        ]
-      },
-      {
-        "id": "scene_2",
-        "type": "text",
-        "text": "無事に目的地に到着しました。\n依頼を達成できそうです。",
-        "bg_key": "bg_tavern_day",
-        "choices": [
-          { "label": "依頼を完了する", "next": "end_success" }
-        ]
-      },
-      {
-        "id": "end_success",
-        "type": "end",
-        "result": "success",
-        "text": "依頼を見事に達成した！\n報酬を受け取り、次の冒険に備えよう。"
-      },
-      {
-        "id": "end_failure",
-        "type": "end",
-        "result": "failure",
-        "text": "残念ながら依頼は失敗に終わった…\nまた次の機会に挑戦しよう。"
+        "name": "回復薬",
+        "type": "consumable",
+        "description": "HPを少量回復する薬",
+        "base_price": 1,
+        "effect_data": { "heal_hp": 30 },
+        "rarity": "common",
+        "use_timing": "battle"
       }
     ]
-  }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "text",
+      "text": "ここにクエスト開始時のテキストを書きます。\n背景やBGMも指定できます。",
+      "speaker_name": "依頼主の名前",
+      "bg_key": "bg_guild_day",
+      "bgm_key": "bgm_quest_calm",
+      "choices": [
+        { "label": "依頼を受ける", "next": "node_2" },
+        { "label": "断る", "next": "node_6" }
+      ]
+    },
+    {
+      "id": "node_2",
+      "type": "text",
+      "text": "冒険が始まりました！\nここで選択肢を出して、プレイヤーに道を選ばせることができます。",
+      "bg_key": "bg_road_day",
+      "choices": [
+        { "label": "戦って進む", "next": "node_3" },
+        { "label": "迂回する", "next": "node_4" }
+      ]
+    },
+    {
+      "id": "node_3",
+      "type": "battle",
+      "text": "敵が現れた！",
+      "bg_key": "bg_forest_day",
+      "bgm_key": "bgm_battle",
+      "enemyData": {
+        "name": "スライム",
+        "level": 3,
+        "hp": 25,
+        "atk": 4,
+        "def": 2,
+        "skills": [],
+        "image_url": "",
+        "flavor_text": "森に生息するごく普通のスライム。"
+      },
+      "choices": [
+        { "label": "win", "next": "node_4" }
+      ]
+    },
+    {
+      "id": "node_4",
+      "type": "text",
+      "text": "無事に目的地に到着しました。\n依頼を達成できそうです。",
+      "bg_key": "bg_tavern_day",
+      "choices": [
+        { "label": "依頼を完了する", "next": "node_5" }
+      ]
+    },
+    {
+      "id": "node_5",
+      "type": "success",
+      "text": "依頼を見事に達成した！\n報酬を受け取り、次の冒険に備えよう。",
+      "choices": []
+    },
+    {
+      "id": "node_6",
+      "type": "failure",
+      "text": "残念ながら依頼は失敗に終わった…\nまた次の機会に挑戦しよう。",
+      "choices": []
+    }
+  ]
 }

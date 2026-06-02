@@ -20,10 +20,10 @@
 | テンプレート種別 | 対応形式 | 概要 |
 |----------------|---------|------|
 | クエスト | MD / JSON | シナリオフロー全体 |
-| エネミー | JSON | カスタム敵キャラクター |
-| アイテム | JSON | カスタム消耗品・換金素材 |
-| スキルカード | JSON | カスタム戦闘スキル |
-| NPC | JSON | カスタム同行NPC（傭兵） |
+| エネミー | MD / JSON | カスタム敵キャラクター |
+| アイテム | MD / JSON | カスタム消耗品・換金素材 |
+| スキルカード | MD / JSON | カスタム戦闘スキル |
+| NPC | MD / JSON | カスタム同行NPC（傭兵） |
 
 ### 1.3 旧仕様との差分
 
@@ -339,6 +339,102 @@ TPバリデーション（§8.2）がサーバーサイドで適用される。
 
 NPバリデーション（§8.7）がサーバーサイドで適用される。
 
+### 2.7 エネミーMDテンプレート
+
+```markdown
+---
+version: "1.0"
+type: enemy
+---
+
+## エネミー定義
+
+名前: フォレストウルフ
+レベル: 8
+HP: 120
+ATK: 8
+DEF: 4
+スキル: [heavy_blow, tackle]
+行動パターン:
+  - skill: heavy_blow
+    prob: 50
+  - skill: tackle
+    prob: 50
+画像: ugc://images/enemies/forest_wolf.webp
+フレーバーテキスト: 森の奥深くに棲む大型の狼。
+```
+
+フロントマターに `version` と `type: enemy` を記述し、本文は `## エネミー定義` セクション内にキー/値形式でフィールドを記述する。
+
+### 2.8 アイテムMDテンプレート
+
+```markdown
+---
+version: "1.0"
+type: item
+---
+
+## アイテム定義
+
+名前: 回復薬
+種別: consumable
+説明: HPを30回復する薬品。
+レアリティ: common
+使用タイミング: battle
+効果:
+  HP回復: 30
+画像: ""
+```
+
+`効果:` ブロックの `HP回復` は `effect_data.heal_hp` に対応する。
+
+### 2.9 スキルカードMDテンプレート
+
+```markdown
+---
+version: "1.0"
+type: skill_card
+---
+
+## スキルカード定義
+
+名前: 炎の剣
+威力: 15
+AP消費: 2
+対象: single_enemy
+効果: attack
+効果持続: 0
+説明: 炎を纏った剣で斬りつける。
+画像: ""
+```
+
+`対象` は `single_enemy` / `all_enemies` / `self` / `single_ally` のいずれか。`効果` は `effect_id` に対応する。
+
+### 2.10 NPC MDテンプレート
+
+```markdown
+---
+version: "1.0"
+type: npc
+---
+
+## NPC定義
+
+名前: 剣士リーナ
+レベル: 10
+ATK: 8
+DEF: 6
+耐久度: 100
+カバー率: 15
+AI: striker
+スキル: [slash, double_slash]
+画像: ""
+フレーバーテキスト: 旅の剣士。正義感が強い。
+護衛対象: false
+```
+
+`AI` は `ai_role` に対応し、`striker` / `guardian` / `medic` のいずれか。`護衛対象: true` の場合、NPCの耐久度が0になるとクエスト失敗となる。
+
 ---
 
 ## 3. データベース設計
@@ -585,7 +681,7 @@ ugc://images/enemies/guardian.webp
 |---------|------|------|------|
 | `POST` | `/api/ugc/import` | JWT | テンプレートインポート（パース → draft保存） |
 | `POST` | `/api/ugc/validate` | JWT | テンプレートバリデーション（ドライラン） |
-| `GET` | `/api/ugc/template` | なし | テンプレートファイルのダウンロード |
+| `GET` | `/api/ugc/v2/template?type=&format=` | なし | テンプレートファイルのダウンロード（JSON/MD）。UGC_ENABLEDフラグに依存しない |
 | `GET` | `/api/ugc/export` | JWT | 既存UGCのテンプレートエクスポート |
 | `POST` | `/api/ugc/save` | JWT | 下書き保存（簡易エディタからの部分更新） |
 | `POST` | `/api/ugc/publish` | JWT | 公開申請（draft → pending_review） |
