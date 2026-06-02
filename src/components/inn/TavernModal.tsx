@@ -5,6 +5,7 @@ import { ShadowSummary } from '@/services/shadowService';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
 import { toJpJobClass } from '@/lib/jobClass';
+import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 interface TavernModalProps {
     isOpen: boolean;
@@ -35,6 +36,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [reportReason, setReportReason] = useState('');
     const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
     const [selectedShadow, setSelectedShadow] = useState<ShadowSummary | null>(null);
+    const [simpleProfileUser, setSimpleProfileUser] = useState<ShadowSummary | null>(null);
     const [myHeroics, setMyHeroics] = useState<MyHeroic[]>([]);
     const [heroicLoading, setHeroicLoading] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
@@ -453,7 +455,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                         className="flex items-center gap-2 p-2.5 border border-[#6b8cae]/50 bg-[#eef3f7] rounded-md cursor-pointer hover:border-[#4a7da8]/60 active:scale-[0.99] transition-all"
                                                         onClick={() => setSelectedShadow(asShadow)}
                                                     >
-                                                        <div className="w-9 h-9 rounded-full bg-[#d0dde8] overflow-hidden border border-[#6b8cae]/40 flex shrink-0 items-center justify-center">
+                                                        <div 
+                                                            onClick={(e) => { e.stopPropagation(); setSimpleProfileUser(asShadow); }}
+                                                            className="w-9 h-9 rounded-full bg-[#d0dde8] overflow-hidden border border-[#6b8cae]/40 flex shrink-0 items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                                                        >
                                                             {memberImgSrc
                                                                 ? <img src={memberImgSrc} alt={member.name} className="w-full h-full object-cover" />
                                                                 : <span className="text-[#4a7da8] font-bold text-sm">{member.name[0]}</span>}
@@ -523,7 +528,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             >
                                                 {/* Row 1: アイコン + 名前 + バッジ + 金額 */}
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-9 h-9 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center">
+                                                    <div 
+                                                        onClick={(e) => { e.stopPropagation(); setSimpleProfileUser(shadow); }}
+                                                        className="w-9 h-9 rounded-full bg-[#e3d5b8] overflow-hidden border border-[#a38b6b] flex shrink-0 items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+                                                    >
                                                         {imgSrc
                                                             ? <img src={imgSrc} alt={shadow.name} className="w-full h-full object-cover" />
                                                             : <span className="text-[#8b5a2b] font-bold text-sm">{shadow.name?.[0] || '?'}</span>}
@@ -830,6 +838,18 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             </div>
             );
         })()}
+
+        {/* ===== Simple User Profile Popup ===== */}
+        {simpleProfileUser && (
+            <SimpleUserProfilePopup
+                isOpen={!!simpleProfileUser}
+                onClose={() => setSimpleProfileUser(null)}
+                avatarUrl={simpleProfileUser.npc_image_url || simpleProfileUser.icon_url || simpleProfileUser.image_url}
+                name={simpleProfileUser.name}
+                epithet={simpleProfileUser.epithet}
+                introduction={simpleProfileUser.introduction}
+            />
+        )}
 
         {/* ===== Enlarged Image Popup ===== */}
         {enlargedImage && (

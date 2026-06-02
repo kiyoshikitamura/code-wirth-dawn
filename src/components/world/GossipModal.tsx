@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, RefreshCw, Newspaper, Sparkles, KeyRound, Beer, Users, ChevronDown } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
+import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 // ─── 型定義 ───────────────────────────────────────────────────
 interface WorldNewsItem {
@@ -217,6 +218,7 @@ interface Props {
 export default function GossipModal({ onClose, onOpenTavern }: Props) {
     const { userProfile } = useGameStore();
     const [activeTab, setActiveTab] = useState<TabKey>('news');
+    const [simpleProfileUser, setSimpleProfileUser] = useState<any | null>(null);
     const [data, setData] = useState<GossipData>({});
     const [loading, setLoading] = useState<Record<TabKey, boolean>>({
         news: false, lore: false, secret: false, tavern: false,
@@ -534,6 +536,17 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                     </button>
                 </div>
             </div>
+            {/* ===== Simple User Profile Popup ===== */}
+            {simpleProfileUser && (
+                <SimpleUserProfilePopup
+                    isOpen={!!simpleProfileUser}
+                    onClose={() => setSimpleProfileUser(null)}
+                    avatarUrl={simpleProfileUser.avatar_url}
+                    name={simpleProfileUser.name}
+                    epithet={simpleProfileUser.epithet}
+                    introduction={simpleProfileUser.introduction}
+                />
+            )}
         </div>
     );
 }

@@ -85,6 +85,7 @@ Code: Wirth-Dawn Specification v16.2 (Character Creation)
 | 名前 (Name) | TEXT | 1〜16文字 |
 | 性別 (Gender) | ENUM | 'Male' / 'Female' / 'Unknown' |
 | 開始年齢 (Age) | INT | 15〜40 歳 |
+| 自己紹介 (Introduction) | TEXT | 最大30文字 (設定画面から編集可能) |
 
 ### 2.3 初期ステータス（基底値）
 
@@ -178,6 +179,7 @@ export interface UserProfile {
   vitality?: number;      // 現在Vitality
   max_vitality?: number;  // 加齢で減少するVitality上限
   gender?: 'Male' | 'Female' | 'Unknown';
+  introduction?: string;  // 自己紹介文 (最大30文字)
   title_name?: string;    // アライメント割合ベースで動的算出される称号（§4.2参照）
   is_anonymous?: boolean; // v16.0: テストプレイフラグ
   expires_at?: string;    // v16.0: 匿名プロフィール失効日時 (ISO 8601)
@@ -377,6 +379,7 @@ export interface UserProfile {
 | **v16.2** | **2026-04-16** | **キャラクター削除フロー仕様追加（§2.1, §6.4）。sessionStorage Intent フラグ優先順位の規定（§5.3）。アカウント連携（linkIdentity）を正式仕様化（§6.3）。プロファイルリセット API の対象テーブル18個を網羅（§6.4）。** |
 | **v26.1** | **2026-05-14** | **称号50種に拡張（§4.2）。全称号を複合条件・一意優先度(P50-P1)に変更。`getAvatarByTitle()` 廃止。** |
 | **v27.0** | **2026-05-18** | **法的ページ4種追加（§7）。avatarアップロードJWT認証統一。DeleteConfirmModal共通化。タイトルフッター追加。外部テクスチャURLローカル化。rootリダイレクト判定修正。** |
+| **v27.1** | **2026-06-02** | **自己紹介設定 (introduction, 最大30文字) の追加、および他プレイヤー簡易プロフィールポップアップ表示機能の仕様追加。** |
 
 ---
 

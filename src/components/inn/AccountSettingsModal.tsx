@@ -67,6 +67,50 @@ export default function AccountSettingsModal({ onClose }: Props) {
     const [nameError, setNameError] = useState('');
     const [nameSuccess, setNameSuccess] = useState('');
 
+    // 自己紹介編集
+    const [editIntro, setEditIntro] = useState(userProfile?.introduction || '');
+    const [introLoading, setIntroLoading] = useState(false);
+    const [introError, setIntroError] = useState('');
+    const [introSuccess, setIntroSuccess] = useState('');
+
+    // プロフィールデータ同期
+    React.useEffect(() => {
+        if (userProfile?.introduction !== undefined) {
+            setEditIntro(userProfile.introduction || '');
+        }
+    }, [userProfile?.introduction]);
+
+    // ── 自己紹介変更 ──
+    const handleIntroSave = async () => {
+        setIntroLoading(true);
+        setIntroError('');
+        setIntroSuccess('');
+        try {
+            const token = await getAuthToken();
+            if (!token) throw new Error('認証セッションがありません');
+
+            const res = await fetch('/api/character/introduction', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ introduction: editIntro }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || '自己紹介の変更に失敗しました');
+
+            await fetchUserProfile();
+            setIntroSuccess('自己紹介を保存しました');
+            setTimeout(() => setIntroSuccess(''), 3000);
+        } catch (e: any) {
+            setIntroError(e.message);
+        } finally {
+            setIntroLoading(false);
+        }
+    };
+
     const isAnonymous = userProfile?.is_anonymous === true;
     const currentTier: SubscriptionTier = (userProfile as any)?.subscription_tier ?? 'free';
 
@@ -429,6 +473,34 @@ export default function AccountSettingsModal({ onClose }: Props) {
                             {nameSuccess}
                         </div>
                     )}
+
+                    {/* 自己紹介設定 */}
+                    <div className="mt-4 pt-4 border-t border-[#3e2723]/30">
+                        <label className="block text-xs font-bold text-[#a38b6b] mb-1.5">自己紹介 (最大30文字)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={editIntro}
+                                onChange={(e) => {
+                                    setEditIntro(e.target.value);
+                                    setIntroError('');
+                                    setIntroSuccess('');
+                                }}
+                                maxLength={30}
+                                placeholder="自己紹介を入力してください"
+                                className="flex-1 bg-[#0d0906] border border-[#a38b6b]/50 text-[#e3d5b8] px-3 py-1.5 rounded text-xs font-serif focus:border-amber-500 outline-none transition-colors"
+                            />
+                            <button
+                                onClick={handleIntroSave}
+                                disabled={introLoading || editIntro === (userProfile?.introduction || '')}
+                                className="px-4 py-1.5 text-xs font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {introLoading ? '保存中...' : '保存'}
+                            </button>
+                        </div>
+                        {introError && <p className="mt-1 text-red-400 text-[10px]">{introError}</p>}
+                        {introSuccess && <p className="mt-1 text-green-400 text-[10px]">{introSuccess}</p>}
+                    </div>
                 </div>
 
                 {/* ── カテゴリ2：プレイガイド ── */}

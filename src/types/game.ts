@@ -116,6 +116,7 @@ export interface UserProfile {
   name?: string; // Actual User Name
   title_name: string; // Title/Rank
   avatar_url?: string;
+  introduction?: string; // User self-introduction (max 30 chars)
   order_pts: number;
   chaos_pts: number;
   justice_pts: number;
@@ -222,6 +223,7 @@ export interface UserProfileDB {
     evil: number;
   };
   gold: number;
+  introduction?: string;
   pass_expires_at?: Record<string, number>;
   current_location_id?: string;
   current_quest_state?: any; // v3.4 Resume Persistence

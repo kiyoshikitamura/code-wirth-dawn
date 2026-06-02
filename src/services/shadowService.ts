@@ -18,6 +18,7 @@ export interface ShadowSummary {
     image_url?: string;
     flavor_text?: string;   // NPCのフレーバーテキスト（台詞）
     npc_image_url?: string; // NPC専用イメージURL
+    introduction?: string;  // 自己紹介
 }
 
 // タスク1: 英霊（shadow_heroic）の契約金算出式
@@ -122,6 +123,7 @@ export class ShadowService {
                         signature_deck_preview: skillsByUser[u.id] || [],
                         subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium',
                         icon_url: u.avatar_url || undefined,
+                        introduction: u.introduction || undefined,
                     });
                 }
             }
@@ -302,6 +304,7 @@ export class ShadowService {
                         signature_deck_preview: deckNames,
                         subscription_tier: 'free' as const,
                         flavor_text: npc.introduction || npc.flavor_text || undefined,
+                        introduction: npc.introduction || npc.flavor_text || undefined,
                         // slugからイメージパスを自動生成
                         npc_image_url: npc.slug ? `/images/npcs/${npc.slug}.png` : undefined,
                     });

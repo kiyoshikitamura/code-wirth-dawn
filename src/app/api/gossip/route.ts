@@ -176,6 +176,7 @@ export async function GET(req: Request) {
                 origin_type: s.origin_type,
                 level: s.level,
                 flavor_text: s.flavor_text || undefined,
+                introduction: s.introduction || undefined,
                 // v2.9.3f: TavernModal用に完全データを保持
                 stats: s.stats || { atk: 0, def: 0, hp: 100 },
                 signature_deck_preview: s.signature_deck_preview || [],
