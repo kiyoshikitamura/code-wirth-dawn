@@ -19,6 +19,7 @@ export interface ShadowSummary {
     flavor_text?: string;   // NPCのフレーバーテキスト（台詞）
     npc_image_url?: string; // NPC専用イメージURL
     introduction?: string;  // 自己紹介
+    slug?: string;          // NPC識別用スラグ (v4.4)
 }
 
 // タスク1: 英霊（shadow_heroic）の契約金算出式
@@ -307,6 +308,7 @@ export class ShadowService {
                         introduction: npc.introduction || npc.flavor_text || undefined,
                         // slugからイメージパスを自動生成
                         npc_image_url: npc.slug ? `/images/npcs/${npc.slug}.png` : undefined,
+                        slug: npc.slug || undefined, // npc_slug をアンロック用に追加 (v4.4)
                     });
                 }
             }

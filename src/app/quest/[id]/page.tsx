@@ -358,6 +358,7 @@ export default function QuestPage() {
                         if (!e) return null;
                         return {
                             id: `${e.slug}_${index}_${Date.now()}`, // Unique ID for battle instance
+                            enemy_id: e.id, // DBの数値IDを保持 (v4.4)
                             slug: e.slug, // 元のslugを保持（target_slug照合用）
                             name: e.name,
                             hp: e.hp,

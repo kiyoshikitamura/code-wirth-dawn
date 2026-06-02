@@ -261,6 +261,7 @@ export default function WorldMapPage() {
                                     if (!e) return null;
                                     return {
                                         id: crypto.randomUUID(), // Multi-spawn needs unique ID
+                                        enemy_id: e.id, // DBの数値IDを保持 (v4.4)
                                         slug: e.slug,
                                         name: e.name,
                                         hp: e.hp,

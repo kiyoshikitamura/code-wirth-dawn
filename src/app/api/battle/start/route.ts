@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         try {
             const enemyList = Array.isArray(enemies) ? enemies : [];
             const enemyIds = enemyList
-                .map((e: any) => e.id || e.enemy_id)
+                .map((e: any) => e.enemy_id || e.id)
                 .filter((id: any) => id != null && !isNaN(Number(id)))
                 .map(Number);
             

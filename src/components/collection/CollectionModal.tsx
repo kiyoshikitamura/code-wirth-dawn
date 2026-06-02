@@ -42,14 +42,6 @@ export default function CollectionModal({ onClose }: Props) {
     }, []);
 
     const fetchCollection = async () => {
-        // C3: セッションキャッシュから取得を試みる
-        const cached = getSessionCache<CollectionData>(CACHE_KEY);
-        if (cached) {
-            setData(cached);
-            setLoading(false);
-            return;
-        }
-
         try {
             const token = await getAuthToken();
             if (!token) return;
@@ -60,7 +52,6 @@ export default function CollectionModal({ onClose }: Props) {
             if (res.ok) {
                 const json = await res.json();
                 setData(json);
-                setSessionCache(CACHE_KEY, json); // C3: キャッシュに保存
                 if (json.share_data_list && json.share_data_list.length > 0) {
                     setShareDataList(json.share_data_list);
                 }
