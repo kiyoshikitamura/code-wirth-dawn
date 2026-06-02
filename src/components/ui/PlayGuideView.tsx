@@ -413,8 +413,8 @@ export default function PlayGuideView({ introduction, sections }: PlayGuideViewP
                 </aside>
  
                 {/* 右詳細コンテンツ (デスクトップ向け) */}
-                <article className="hidden lg:flex bg-slate-900/30 backdrop-blur-sm border border-slate-800/80 rounded-xl p-6 md:p-8 min-h-[calc(100vh-140px)] flex-col justify-between">
-                    <div>
+                <article className="hidden lg:flex bg-slate-900/30 backdrop-blur-sm border border-slate-800/80 rounded-xl p-6 md:p-8 min-h-[calc(100vh-140px)] lg:max-h-[calc(100vh-140px)] lg:sticky lg:top-24 flex-col justify-between">
+                    <div className="flex-1 lg:overflow-y-auto lg:pr-4 min-h-0 mb-6">
                         {/* セクション見出し */}
                         <div className="border-b border-slate-800 pb-4 mb-6">
                             <h2 className="text-2xl font-bold tracking-wide text-slate-100">
@@ -430,7 +430,7 @@ export default function PlayGuideView({ introduction, sections }: PlayGuideViewP
                     </div>
  
                     {/* 下部ナビゲーションボタン */}
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-6 mt-12 gap-4">
+                    <div className="flex items-center justify-between border-t border-slate-800 pt-6 gap-4 shrink-0">
                         <button
                             onClick={handlePrev}
                             disabled={!hasPrev}
