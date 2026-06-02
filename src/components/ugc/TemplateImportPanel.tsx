@@ -103,6 +103,13 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
         body: JSON.stringify({ content, format }),
       });
       const json = await res.json();
+
+      // サーバーが { error: string } で返した場合（認証エラー等）を errors 配列に変換
+      if (!res.ok && !json.errors && json.error) {
+        json.success = false;
+        json.errors = [{ message: json.error, code: `HTTP_${res.status}` }];
+      }
+
       setResult(json);
 
       if (!dryRun && json.success && onImportSuccess) {
