@@ -469,7 +469,7 @@ export default function QuestResultModal({
                         onClick={onClose}
                         className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-6 rounded transition-colors shadow-lg hover:shadow-amber-500/20"
                     >
-                        {isTestPlay ? '拠点に戻る' : '冒険を続ける'}
+                        {isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける'}
                     </button>
                 </footer>
             </div>

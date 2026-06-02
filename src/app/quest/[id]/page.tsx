@@ -676,22 +676,20 @@ export default function QuestPage() {
                                             data: {
                                                 quest_title: scenario.title,
                                                 rewards: rewards,
-                                                days_passed: scenario.time_cost || 0,
-                                                earned_exp: isSuccess ? (rewards?.exp || 0) : 0,
+                                                days_passed: 0, // テストプレイ: 日数経過なし
+                                                earned_exp: 0, // テストプレイ: 経験値なし
                                                 share_text: null, // テストプレイではXシェアを非表示
                                                 changes: {
-                                                    gold_gained: isSuccess ? (rewards?.gold || 0) : 0,
+                                                    gold_gained: 0,
                                                     old_age: 0,
                                                     new_age: 0,
                                                     aged_up: false,
                                                     vit_penalty: 0,
                                                     atk_decay: 0,
                                                     def_decay: 0,
-                                                    alignment_shift: isSuccess ? (rewards?.alignment_shift || null) : null,
+                                                    alignment_shift: null, // テストプレイ: 属性変化なし
                                                 },
-                                                rep_change: isSuccess && rewards?.reputation
-                                                    ? { amount: rewards.reputation, location: '現在地' }
-                                                    : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
+                                                rep_change: null, // テストプレイ: 名声変化なし
                                                 party_changes: null,
                                                 loot_saved: dummyLoot,
                                                 guest_conversion: null,
@@ -853,7 +851,7 @@ export default function QuestPage() {
                             lootSaved={resultOverlay.data?.loot_saved}
                             guestConversion={resultOverlay.data?.guest_conversion}
                             isTestPlay={isTestPlay}
-                            onClose={() => router.push('/inn')}
+                            onClose={() => router.push(isTestPlay ? '/workshop' : '/inn')}
                         />
                     </div>
                 )}
