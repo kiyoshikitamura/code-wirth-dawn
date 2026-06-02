@@ -451,3 +451,253 @@ function parseNpcBlock(lines: string[], startIdx: number): UgcFlowNode['npcData'
     is_escort: (data.is_escort as boolean) || false,
   };
 }
+
+// ── 個別アセットMD本文パーサー ──────────────────────────────────────────────
+
+/**
+ * キー/値ペアのブロックを汎用的にパースするヘルパー
+ */
+function parseKeyValueBlock(body: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const lines = body.split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // セクションヘッダー・空行・コメントをスキップ
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('---')) continue;
+
+    const match = trimmed.match(/^(.+?):\s*(.*)$/);
+    if (match) {
+      let val = match[2].trim();
+      // クォーテーションを除去（YAML互換）
+      const strMatch = val.match(/^"(.*)"$/) || val.match(/^'(.*)'$/);
+      if (strMatch) val = strMatch[1];
+      result[match[1].trim()] = val;
+    }
+  }
+
+  return result;
+}
+
+
+/**
+ * インラインリスト文字列をパース: "[a, b, c]" → ["a", "b", "c"], "[]" → []
+ */
+function parseInlineList(val: string): string[] {
+  if (!val || val === '[]') return [];
+  const listMatch = val.match(/^\[(.+)\]$/);
+  if (listMatch) {
+    return listMatch[1].split(',').map(s => s.trim());
+  }
+  return val ? [val] : [];
+}
+
+/**
+ * エネミーMD本文をパースする（個別アセットテンプレート用）
+ */
+export function parseEnemyMdBody(body: string): Record<string, unknown> {
+  const kv = parseKeyValueBlock(body);
+
+  const enemy: Record<string, unknown> = {
+    name: kv['名前'] || '',
+    level: parseInt(kv['レベル'], 10) || 5,
+    hp: parseInt(kv['HP'], 10) || 50,
+    atk: parseInt(kv['ATK'], 10) || 5,
+    def: parseInt(kv['DEF'], 10) || 3,
+    skills: parseInlineList(kv['スキル'] || ''),
+    image_url: kv['画像'] || '',
+    flavor_text: kv['フレーバーテキスト'] || kv['フレーバー'] || '',
+    asset_type: 'enemy',
+  };
+
+  // 行動パターンのパース（複数行ブロック）
+  const actionPattern = parseActionPatternBlock(body);
+  if (actionPattern.length > 0) {
+    enemy.action_pattern = actionPattern;
+  }
+
+  return enemy;
+}
+
+/**
+ * 行動パターンブロックのパース
+ * 形式:
+ *   - skill: attack
+ *     prob: 100
+ *   - skill: fireball
+ *     prob: 50
+ *     condition: hp_under_50
+ */
+function parseActionPatternBlock(body: string): Array<{ skill: string; prob: number; condition?: string }> {
+  const patterns: Array<{ skill: string; prob: number; condition?: string }> = [];
+  const lines = body.split(/\r?\n/);
+  let inBlock = false;
+  let current: Record<string, string> = {};
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed === '行動パターン:' || trimmed === '行動パターン：') {
+      inBlock = true;
+      continue;
+    }
+
+    if (!inBlock) continue;
+
+    // ブロック終了判定
+    if (trimmed && !trimmed.startsWith('-') && !trimmed.startsWith('skill') &&
+        !trimmed.startsWith('prob') && !trimmed.startsWith('condition') &&
+        !/^\s/.test(line)) {
+      // 新しいトップレベルキーに当たったら終了
+      if (Object.keys(current).length > 0) {
+        if (current.skill) {
+          patterns.push({
+            skill: current.skill,
+            prob: parseInt(current.prob, 10) || 100,
+            ...(current.condition ? { condition: current.condition } : {}),
+          });
+        }
+        current = {}; // 最終フラッシュでの重複を防止
+      }
+      break;
+    }
+
+    // 新しいアイテム
+    if (trimmed.startsWith('- ')) {
+      if (Object.keys(current).length > 0 && current.skill) {
+        patterns.push({
+          skill: current.skill,
+          prob: parseInt(current.prob, 10) || 100,
+          ...(current.condition ? { condition: current.condition } : {}),
+        });
+      }
+      current = {};
+      const kvMatch = trimmed.slice(2).match(/^(\w+):\s*(.+)$/);
+      if (kvMatch) {
+        current[kvMatch[1]] = kvMatch[2].trim();
+      }
+      continue;
+    }
+
+    // 子プロパティ
+    const kvMatch = trimmed.match(/^(\w+):\s*(.+)$/);
+    if (kvMatch && inBlock) {
+      current[kvMatch[1]] = kvMatch[2].trim();
+    }
+  }
+
+  // 最終フラッシュ
+  if (Object.keys(current).length > 0 && current.skill) {
+    patterns.push({
+      skill: current.skill,
+      prob: parseInt(current.prob, 10) || 100,
+      ...(current.condition ? { condition: current.condition } : {}),
+    });
+  }
+
+  return patterns;
+}
+
+/**
+ * アイテムMD本文をパースする（個別アセットテンプレート用）
+ */
+export function parseItemMdBody(body: string): Record<string, unknown> {
+  const kv = parseKeyValueBlock(body);
+
+  const item: Record<string, unknown> = {
+    name: kv['名前'] || '',
+    type: kv['種別'] || 'consumable',
+    description: kv['説明'] || '',
+    base_price: 1,
+    rarity: kv['レアリティ'] || 'common',
+    image_url: kv['画像'] || '',
+  };
+
+  if (kv['使用タイミング']) {
+    item.use_timing = kv['使用タイミング'];
+  }
+
+  // 効果データのパース
+  const effectData: Record<string, unknown> = {};
+  const healHp = kv['HP回復'] || kv['回復量'];
+  if (healHp) {
+    effectData.heal_hp = parseInt(healHp, 10);
+  }
+  const cureStatus = kv['状態回復'];
+  if (cureStatus === 'true') {
+    effectData.cure_status = true;
+  }
+
+  // 効果ブロック（ネスト形式）のパース
+  const lines = body.split(/\r?\n/);
+  let inEffect = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === '効果:' || trimmed === '効果：') {
+      inEffect = true;
+      continue;
+    }
+    if (inEffect) {
+      if (trimmed === '' || (!trimmed.startsWith(' ') && !line.startsWith('\t') && !trimmed.startsWith('HP') && !trimmed.startsWith('状態'))) {
+        // 別のキーが開始 → エフェクトブロック終了
+        if (trimmed.match(/^[^\s]/) && !trimmed.startsWith('HP') && !trimmed.startsWith('状態')) {
+          inEffect = false;
+          continue;
+        }
+      }
+      const effectMatch = trimmed.match(/^(.+?):\s*(.+)$/);
+      if (effectMatch) {
+        const ek = effectMatch[1].trim();
+        const ev = effectMatch[2].trim();
+        if (ek === 'HP回復') effectData.heal_hp = parseInt(ev, 10);
+        if (ek === '状態回復') effectData.cure_status = ev === 'true';
+      }
+    }
+  }
+
+  if (Object.keys(effectData).length > 0) {
+    item.effect_data = effectData;
+  }
+
+  return item;
+}
+
+/**
+ * スキルカードMD本文をパースする（個別アセットテンプレート用）
+ */
+export function parseSkillCardMdBody(body: string): Record<string, unknown> {
+  const kv = parseKeyValueBlock(body);
+
+  return {
+    name: kv['名前'] || '',
+    power: parseInt(kv['威力'], 10) || 10,
+    ap_cost: parseInt(kv['AP消費'], 10) || 2,
+    target_type: kv['対象'] || 'single_enemy',
+    effect_id: kv['効果'] || 'attack',
+    effect_duration: parseInt(kv['効果持続'], 10) || 0,
+    description: kv['説明'] || '',
+    image_url: kv['画像'] || '',
+  };
+}
+
+/**
+ * NPC MD本文をパースする（個別アセットテンプレート用）
+ */
+export function parseNpcMdBody(body: string): Record<string, unknown> {
+  const kv = parseKeyValueBlock(body);
+
+  return {
+    name: kv['名前'] || '',
+    level: parseInt(kv['レベル'], 10) || 5,
+    atk: parseInt(kv['ATK'], 10) || 5,
+    def: parseInt(kv['DEF'], 10) || 5,
+    durability: parseInt(kv['耐久度'], 10) || 100,
+    cover_rate: parseInt(kv['カバー率'], 10) || 10,
+    ai_role: kv['AI'] || 'striker',
+    ai_grade: 'random',
+    signature_skills: parseInlineList(kv['スキル'] || ''),
+    image_url: kv['画像'] || '',
+    flavor_text: kv['フレーバーテキスト'] || kv['フレーバー'] || '',
+    is_escort: kv['護衛対象'] === 'true',
+  };
+}

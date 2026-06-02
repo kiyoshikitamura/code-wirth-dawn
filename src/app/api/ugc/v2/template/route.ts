@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createAuthClient } from '@/lib/supabase-auth';
-import { UGC_ENABLED } from '@/lib/ugc/ugcConfig';
 
 /**
- * GET /api/ugc/v2/template?type=quest
+ * GET /api/ugc/v2/template?type=quest&format=json
  *
  * テンプレートダウンロードAPI。
  * 空のテンプレート（JSON/MD）を返す。
- * 仕様: spec_v12_ugc_system_v2.md §5.2
+ * 認証不要（仕様: spec_ugc_system_v2.md §5.2）。
+ * ※ テンプレート配布はUGC_ENABLEDフラグに依存しない（常時利用可能）。
  */
 export async function GET(request: Request) {
   try {
-    if (!UGC_ENABLED) {
-      return NextResponse.json({ error: 'UGC機能は現在無効です。' }, { status: 403 });
-    }
+
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'quest';
@@ -142,13 +139,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: `不明なテンプレートタイプ: ${type}` }, { status: 400 });
     }
 
-    if (format === 'md' && type === 'quest') {
+    if (format === 'md') {
       // MD形式でのダウンロード
-      const md = generateQuestMdTemplate();
+      const mdGenerators: Record<string, () => string> = {
+        quest: generateQuestMdTemplate,
+        enemy: generateEnemyMdTemplate,
+        item: generateItemMdTemplate,
+        skill_card: generateSkillCardMdTemplate,
+        npc: generateNpcMdTemplate,
+      };
+
+      const generator = mdGenerators[type];
+      if (!generator) {
+        return NextResponse.json({ error: `MD形式は ${type} タイプに対応していません。` }, { status: 400 });
+      }
+
+      const md = generator();
       return new NextResponse(md, {
         headers: {
           'Content-Type': 'text/markdown; charset=utf-8',
-          'Content-Disposition': 'attachment; filename="quest_template.md"',
+          'Content-Disposition': `attachment; filename="${type}_template.md"`,
         },
       });
     }
@@ -212,3 +222,86 @@ DEF: 3
 クエストを達成した！
 `;
 }
+
+function generateEnemyMdTemplate(): string {
+  return `---
+version: "1.0"
+type: enemy
+---
+
+## エネミー定義
+
+名前: ""
+レベル: 5
+HP: 50
+ATK: 5
+DEF: 3
+スキル: []
+行動パターン:
+  - skill: attack
+    prob: 100
+画像: ""
+フレーバーテキスト: ""
+`;
+}
+
+function generateItemMdTemplate(): string {
+  return `---
+version: "1.0"
+type: item
+---
+
+## アイテム定義
+
+名前: ""
+種別: consumable
+説明: ""
+レアリティ: common
+使用タイミング: battle
+効果:
+  HP回復: 50
+画像: ""
+`;
+}
+
+function generateSkillCardMdTemplate(): string {
+  return `---
+version: "1.0"
+type: skill_card
+---
+
+## スキルカード定義
+
+名前: ""
+威力: 10
+AP消費: 2
+対象: single_enemy
+効果: attack
+効果持続: 0
+説明: ""
+画像: ""
+`;
+}
+
+function generateNpcMdTemplate(): string {
+  return `---
+version: "1.0"
+type: npc
+---
+
+## NPC定義
+
+名前: ""
+レベル: 5
+ATK: 5
+DEF: 5
+耐久度: 100
+カバー率: 10
+AI: striker
+スキル: []
+画像: ""
+フレーバーテキスト: ""
+護衛対象: false
+`;
+}
+

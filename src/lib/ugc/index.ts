@@ -9,3 +9,4 @@ export * from './ugcMdParser';
 export * from './ugcTemplateParser';
 export * from './ugcRateLimit';
 export * from './ugcResolver';
+export * from './ugcPromptGuide';

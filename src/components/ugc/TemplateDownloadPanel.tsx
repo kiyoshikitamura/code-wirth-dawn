@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, FileJson, FileText } from 'lucide-react';
+import { Download, FileJson, FileText, Sparkles } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const PromptGuideModal = dynamic(() => import('./PromptGuideModal'), { ssr: false });
 
 const getAuthHeaders = async () => {
   const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
@@ -23,6 +26,7 @@ const TEMPLATE_TYPES: { key: TemplateType; label: string; desc: string }[] = [
 
 export default function TemplateDownloadPanel() {
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [promptGuideType, setPromptGuideType] = useState<TemplateType | null>(null);
 
   const handleDownload = async (type: TemplateType, format: 'json' | 'md') => {
     setDownloading(`${type}_${format}`);
@@ -32,7 +36,9 @@ export default function TemplateDownloadPanel() {
       const res = await fetch(`/api/ugc/v2/template?${params}`, { headers });
 
       if (!res.ok) {
-        alert('ダウンロードに失敗しました。');
+        const errorData = await res.json().catch(() => null);
+        const message = errorData?.error || `ダウンロードに失敗しました (${res.status})`;
+        alert(message);
         return;
       }
 
@@ -60,12 +66,12 @@ export default function TemplateDownloadPanel() {
 
       {TEMPLATE_TYPES.map(t => (
         <div key={t.key} className="bg-[#fdfbf7] border border-[#c2b280] rounded-lg p-3 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-2">
+            <div className="min-w-0">
               <h4 className="font-bold text-sm text-[#3e2723] font-serif">{t.label}テンプレート</h4>
               <p className="text-[10px] text-[#8b6f4e] mt-0.5">{t.desc}</p>
             </div>
-            <div className="flex gap-1.5 flex-shrink-0 ml-3">
+            <div className="flex gap-1.5 flex-wrap">
               <button
                 onClick={() => handleDownload(t.key, 'json')}
                 disabled={downloading === `${t.key}_json`}
@@ -73,15 +79,19 @@ export default function TemplateDownloadPanel() {
               >
                 <FileJson className="w-3 h-3" /> JSON
               </button>
-              {t.key === 'quest' && (
-                <button
-                  onClick={() => handleDownload(t.key, 'md')}
-                  disabled={downloading === `${t.key}_md`}
-                  className="flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] disabled:opacity-30 font-bold transition-colors"
-                >
-                  <FileText className="w-3 h-3" /> MD
-                </button>
-              )}
+              <button
+                onClick={() => handleDownload(t.key, 'md')}
+                disabled={downloading === `${t.key}_md`}
+                className="flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] disabled:opacity-30 font-bold transition-colors"
+              >
+                <FileText className="w-3 h-3" /> MD
+              </button>
+              <button
+                onClick={() => setPromptGuideType(t.key)}
+                className="flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded bg-gradient-to-r from-[#8b5a2b] to-[#6b4522] text-amber-100 hover:from-[#a06830] hover:to-[#7d5328] font-bold transition-all shadow-sm"
+              >
+                <Sparkles className="w-3 h-3" /> AIで作成
+              </button>
             </div>
           </div>
         </div>
@@ -94,8 +104,18 @@ export default function TemplateDownloadPanel() {
           <li>• MDファイルは Markdown エディタ（Typora等）で視覚的に編集できます</li>
           <li>• 画像は「ugc://images/enemies/xxx.webp」形式で参照します</li>
           <li>• バランス計算タブで TP/NP/PB を事前確認できます</li>
+          <li>• <span className="text-amber-300 font-bold">「AIで作成」</span>ボタンで対話型AI用プロンプトをコピーできます</li>
         </ul>
       </div>
+
+      {/* AI Prompt Guide Modal */}
+      {promptGuideType && (
+        <PromptGuideModal
+          isOpen={true}
+          onClose={() => setPromptGuideType(null)}
+          templateType={promptGuideType}
+        />
+      )}
     </div>
   );
 }

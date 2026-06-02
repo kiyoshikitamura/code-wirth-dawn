@@ -13,7 +13,7 @@ import {
   type UgcQuestTemplate,
   type UgcFlowNode,
 } from './ugcTemplateSchema';
-import { extractFrontmatter, parseScenarioBody } from './ugcMdParser';
+import { extractFrontmatter, parseScenarioBody, parseEnemyMdBody, parseItemMdBody, parseSkillCardMdBody, parseNpcMdBody } from './ugcMdParser';
 import { validateUgcUrls, type AssetUrlValidationError } from './ugcAssetUrl';
 import { calcEnemyTp, calcNpcNp, calcQuestPb, type BalanceResult } from './ugcBalanceCalc';
 import { UGC_TEMPLATE_MAX_SIZE } from './ugcConfig';
@@ -187,19 +187,40 @@ export function parseTemplate(
 
 function parseMdTemplate(content: string): Record<string, unknown> {
   const { frontmatter, body } = extractFrontmatter(content);
-  const nodes = parseScenarioBody(body);
 
-  // quest型の場合、nodesをフラット化
-  if (frontmatter.type === 'quest') {
-    return {
-      ...frontmatter,
-      nodes,
-    };
+  switch (frontmatter.type) {
+    case 'quest':
+      // quest型の場合、nodesをフラット化
+      return {
+        ...frontmatter,
+        nodes: parseScenarioBody(body),
+      };
+    case 'enemy':
+      return {
+        ...frontmatter,
+        enemy: parseEnemyMdBody(body),
+      };
+    case 'item':
+      return {
+        ...frontmatter,
+        item: parseItemMdBody(body),
+      };
+    case 'skill_card':
+      return {
+        ...frontmatter,
+        card: parseSkillCardMdBody(body),
+      };
+    case 'npc':
+      return {
+        ...frontmatter,
+        npc: parseNpcMdBody(body),
+      };
+    default:
+      // 個別アセットテンプレートの場合はfrontmatterをそのまま返す
+      return frontmatter;
   }
-
-  // 個別アセットテンプレートの場合はfrontmatterをそのまま返す
-  return frontmatter;
 }
+
 
 // ── クエスト固有バリデーション ────────────────────────────────────────────────
 
