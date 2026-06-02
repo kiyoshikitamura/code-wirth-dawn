@@ -27,6 +27,9 @@ export default function TutorialModal({ onComplete }: TutorialModalProps) {
                     <p>
                         ワールドマップを介して各地を移動できますが、旅路には数々の強敵や予期せぬイベントが待ち受けています。十分な準備をしてから出発しましょう。
                     </p>
+                    <p className="text-xs text-amber-800/80 border-t border-amber-900/10 pt-2 font-bold italic">
+                        ※拠点のビジュアル右上にある地図アイコンから、いつでもワールドマップに遷移できます。
+                    </p>
                 </div>
             )
         },
@@ -60,6 +63,9 @@ export default function TutorialModal({ onComplete }: TutorialModalProps) {
                     </p>
                     <p>
                         また、他のユーザーが作成したオリジナルの依頼（ユーザー投稿クエスト）を受託して遊ぶこともできます。あなた自身が新たな歴史を紡ぎ、他者に挑むことも可能です。
+                    </p>
+                    <p className="text-xs text-amber-800/80 border-t border-amber-900/10 pt-2 font-bold italic">
+                        ※拠点のビジュアル右上にあるホームアイコンから、いつでも名もなき旅人の拠所に帰還できます。
                     </p>
                 </div>
             )
