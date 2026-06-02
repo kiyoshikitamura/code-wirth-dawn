@@ -632,22 +632,20 @@ export default function QuestPage() {
                                     }
 
                                     if (isTestPlay) {
-                                        if (result === 'success') {
-                                            localStorage.setItem(`ugc_tested_${scenario.id}`, 'true');
-                                            // DB に tested_at を記録（申請ボタン有効化のため）
-                                            try {
-                                                const authToken = await getAuthToken();
-                                                await fetch('/api/ugc/v2/test-complete', {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                                                    },
-                                                    body: JSON.stringify({ scenario_id: scenario.id })
-                                                });
-                                            } catch (e) {
-                                                console.warn('[QuestPage] Failed to record tested_at:', e);
-                                            }
+                                        // テストプレイ完了: 成功・敗北を問わずクエスト動作確認済みとして記録
+                                        localStorage.setItem(`ugc_tested_${scenario.id}`, 'true');
+                                        try {
+                                            const authToken = await getAuthToken();
+                                            await fetch('/api/ugc/v2/test-complete', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                                                },
+                                                body: JSON.stringify({ scenario_id: scenario.id })
+                                            });
+                                        } catch (e) {
+                                            console.warn('[QuestPage] Failed to record tested_at:', e);
                                         }
                                         // テストプレイ: DBを変更せずシナリオ定義から結果を構築
                                         const rewards = nodeRewards || scenario.rewards || {};
