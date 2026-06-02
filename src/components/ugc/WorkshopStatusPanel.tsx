@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Crown, Zap, Package, Upload, Send, Plus, Coins, RefreshCw, Loader2 } from 'lucide-react';
 import GoldSlotPurchaseModal from './GoldSlotPurchaseModal';
 import { getAuthToken } from '@/lib/authToken';
@@ -56,7 +56,7 @@ function UsageBar({
     const textColor = pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-amber-400' : 'text-gray-400';
 
     return (
-        <div className="flex-1 min-w-[120px]">
+        <div className="flex-1 min-w-[80px]">
             <div className="flex items-center gap-1 mb-0.5">
                 <Icon className="w-3 h-3 text-gray-500" />
                 <span className="text-[9px] text-gray-500 uppercase tracking-wider">{label}</span>
@@ -102,23 +102,9 @@ function TierBadge({ tier }: { tier: string }) {
 /* ── Loading Skeleton ─────────────────────────────────────────────────────── */
 function Skeleton() {
     return (
-        <div className="flex items-center gap-4 px-4 py-3 bg-[#1a120e] border border-[#3e2723] rounded-lg animate-pulse">
-            <div className="w-16 h-5 bg-[#3e2723] rounded" />
-            <div className="flex-1 flex gap-4">
-                <div className="flex-1 space-y-1">
-                    <div className="w-20 h-2 bg-[#3e2723] rounded" />
-                    <div className="w-full h-1 bg-[#3e2723] rounded-full" />
-                </div>
-                <div className="flex-1 space-y-1">
-                    <div className="w-20 h-2 bg-[#3e2723] rounded" />
-                    <div className="w-full h-1 bg-[#3e2723] rounded-full" />
-                </div>
-                <div className="flex-1 space-y-1">
-                    <div className="w-20 h-2 bg-[#3e2723] rounded" />
-                    <div className="w-full h-1 bg-[#3e2723] rounded-full" />
-                </div>
-            </div>
-            <div className="w-24 h-5 bg-[#3e2723] rounded" />
+        <div className="flex items-center gap-3 px-3 py-2.5 bg-[#1a120e] border-b border-[#3e2723]">
+            <Loader2 className="w-4 h-4 text-amber-400/60 animate-spin shrink-0" />
+            <span className="text-[10px] text-[#6d4c3d]">ステータスを読み込み中...</span>
         </div>
     );
 }
@@ -130,6 +116,7 @@ export default function WorkshopStatusPanel() {
     const [refreshing, setRefreshing] = useState(false);
     const [showPurchase, setShowPurchase] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const hasFetched = useRef(false);
 
     const fetchUsage = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
@@ -157,7 +144,10 @@ export default function WorkshopStatusPanel() {
     }, []);
 
     useEffect(() => {
-        fetchUsage();
+        if (!hasFetched.current) {
+            hasFetched.current = true;
+            fetchUsage();
+        }
     }, [fetchUsage]);
 
     const handlePurchased = useCallback(() => {
@@ -184,14 +174,12 @@ export default function WorkshopStatusPanel() {
 
     return (
         <>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 px-4 py-3 bg-[#1a120e] border border-[#3e2723] rounded-lg">
+            <div className="flex flex-row items-center gap-2 px-3 py-2 bg-[#1a120e] border-b border-[#3e2723] shrink-0">
                 {/* Left: Tier Badge */}
-                <div className="flex items-center gap-2 shrink-0">
-                    <TierBadge tier={data.tier} />
-                </div>
+                <TierBadge tier={data.tier} />
 
                 {/* Center: Usage Bars */}
-                <div className="flex-1 w-full flex flex-wrap gap-3 sm:gap-4">
+                <div className="flex-1 flex gap-2 min-w-0">
                     <UsageBar
                         label="下書き"
                         icon={Package}
@@ -207,7 +195,7 @@ export default function WorkshopStatusPanel() {
                         extra={data.published.extra > 0 ? data.published.extra : undefined}
                     />
                     <UsageBar
-                        label="インポート"
+                        label="Import"
                         icon={Upload}
                         used={data.daily_import.used}
                         limit={data.daily_import.limit}
@@ -216,17 +204,17 @@ export default function WorkshopStatusPanel() {
                 </div>
 
                 {/* Right: Gold + Purchase Button */}
-                <div className="flex items-center gap-2 shrink-0">
-                    <span className="flex items-center gap-1 text-amber-400 text-xs font-bold font-mono">
-                        <Coins className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold font-mono">
+                        <Coins className="w-3 h-3" />
                         {data.gold.toLocaleString()}
                     </span>
 
                     <button
                         onClick={() => setShowPurchase(true)}
-                        className="flex items-center gap-1 px-2 py-1 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] text-[10px] font-bold transition-colors border border-[#5c3c2a]"
+                        className="flex items-center gap-0.5 px-1.5 py-1 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] text-[9px] font-bold transition-colors border border-[#5c3c2a]"
                     >
-                        <Plus className="w-3 h-3" /> 枠追加
+                        <Plus className="w-2.5 h-2.5" /> 枠追加
                     </button>
 
                     <button
@@ -236,8 +224,8 @@ export default function WorkshopStatusPanel() {
                         title="更新"
                     >
                         {refreshing
-                            ? <Loader2 className="w-3.5 h-3.5 text-[#a38b6b] animate-spin" />
-                            : <RefreshCw className="w-3.5 h-3.5 text-[#6d4c3d]" />
+                            ? <Loader2 className="w-3 h-3 text-[#a38b6b] animate-spin" />
+                            : <RefreshCw className="w-3 h-3 text-[#6d4c3d]" />
                         }
                     </button>
                 </div>

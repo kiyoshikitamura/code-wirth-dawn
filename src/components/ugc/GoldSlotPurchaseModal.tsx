@@ -281,9 +281,17 @@ export default function GoldSlotPurchaseModal({
                 {gold < Math.min(costs.extra_draft_slot, costs.extra_published_slot, costs.extra_daily_import) && (
                     <div className="mx-4 mb-3 flex items-start gap-2 p-2.5 rounded bg-amber-900/15 border border-amber-700/30">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                        <span className="text-[10px] text-amber-300">
-                            ゴールドが不足しています。クエストクリアや宿屋のアカウント設定からゴールドを入手できます。
-                        </span>
+                        <div className="flex-1">
+                            <span className="text-[10px] text-amber-300 block">
+                                ゴールドが不足しています。
+                            </span>
+                            <button
+                                onClick={() => { onClose(); window.location.href = '/settings?tab=purchase'; }}
+                                className="text-[10px] text-amber-400 underline hover:text-amber-300 mt-0.5"
+                            >
+                                設定 → ゴールド購入 へ移動
+                            </button>
+                        </div>
                     </div>
                 )}
 

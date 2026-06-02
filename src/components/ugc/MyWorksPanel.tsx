@@ -155,8 +155,8 @@ export default function MyWorksPanel() {
             )}
 
             {/* Meta + Actions */}
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] text-[#a38b6b] space-x-3 flex items-center">
+            <div className="flex flex-col gap-1.5">
+              <div className="text-[10px] text-[#a38b6b] flex items-center gap-2 flex-wrap">
                 {work.status === 'draft' && (
                   work.tested_at
                     ? <span className="flex items-center gap-0.5 text-emerald-600 font-bold"><ShieldCheck className="w-3 h-3" /> テスト済み</span>
@@ -165,28 +165,28 @@ export default function MyWorksPanel() {
                 {work.play_count > 0 && <span>プレイ {work.play_count}回</span>}
                 <span>{new Date(work.updated_at).toLocaleDateString('ja-JP')}</span>
               </div>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1 flex-wrap">
                 {work.status === 'draft' && (
                   <>
                     <button
                       onClick={() => { window.location.href = `/quest/${work.id}?test_play=true`; }}
                       disabled={isActioning}
-                      className="text-[10px] px-2 py-1 rounded bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-30 flex items-center gap-0.5"
+                      className="text-[10px] px-2 py-1 rounded bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-30 flex items-center gap-0.5 whitespace-nowrap"
                     >
-                      <Play className="w-3 h-3" /> テストプレイ
+                      <Play className="w-3 h-3" /> テスト
                     </button>
                     <button
                       onClick={() => handlePublish(work.id)}
                       disabled={isActioning || !work.tested_at}
                       title={!work.tested_at ? 'テストプレイ完了後に申請可能' : '審査申請'}
-                      className="text-[10px] px-2 py-1 rounded bg-[#8b5a2b] text-white hover:bg-[#6b4522] disabled:opacity-30 flex items-center gap-0.5"
+                      className="text-[10px] px-2 py-1 rounded bg-[#8b5a2b] text-white hover:bg-[#6b4522] disabled:opacity-30 flex items-center gap-0.5 whitespace-nowrap"
                     >
                       {isActioning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />} 申請
                     </button>
                     <button
                       onClick={() => handleDelete(work.id)}
                       disabled={isActioning}
-                      className="text-[10px] px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 disabled:opacity-30 flex items-center gap-0.5"
+                      className="text-[10px] px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 disabled:opacity-30 flex items-center gap-0.5 whitespace-nowrap"
                     >
                       <Trash2 className="w-3 h-3" /> 削除
                     </button>
@@ -196,7 +196,7 @@ export default function MyWorksPanel() {
                   <button
                     onClick={() => handleArchive(work.id)}
                     disabled={isActioning}
-                    className="text-[10px] px-2 py-1 rounded bg-[#3e2723] text-[#a38b6b] hover:bg-[#4e342e] disabled:opacity-30 flex items-center gap-0.5"
+                    className="text-[10px] px-2 py-1 rounded bg-[#3e2723] text-[#a38b6b] hover:bg-[#4e342e] disabled:opacity-30 flex items-center gap-0.5 whitespace-nowrap"
                   >
                     <ArchiveRestore className="w-3 h-3" /> 取り下げ
                   </button>
@@ -205,7 +205,7 @@ export default function MyWorksPanel() {
                   <button
                     onClick={() => handleDelete(work.id)}
                     disabled={isActioning}
-                    className="text-[10px] px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 disabled:opacity-30 flex items-center gap-0.5"
+                    className="text-[10px] px-2 py-1 rounded bg-red-700 text-white hover:bg-red-800 disabled:opacity-30 flex items-center gap-0.5 whitespace-nowrap"
                   >
                     <Trash2 className="w-3 h-3" /> 削除
                   </button>
