@@ -178,8 +178,8 @@ export default function WorkshopStatusPanel() {
                 {/* Left: Tier Badge */}
                 <TierBadge tier={data.tier} />
 
-                {/* Center: Usage Bars */}
-                <div className="flex-1 flex gap-2 min-w-0">
+                {/* Center: Usage Bars (vertical stack) */}
+                <div className="flex-1 flex flex-col gap-1 min-w-0">
                     <UsageBar
                         label="下書き"
                         icon={Package}
@@ -204,7 +204,7 @@ export default function WorkshopStatusPanel() {
                 </div>
 
                 {/* Right: Gold + Purchase Button */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex flex-col items-end gap-1 shrink-0">
                     <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold font-mono">
                         <Coins className="w-3 h-3" />
                         {data.gold.toLocaleString()}

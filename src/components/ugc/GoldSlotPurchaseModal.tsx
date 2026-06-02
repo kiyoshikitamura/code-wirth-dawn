@@ -286,10 +286,10 @@ export default function GoldSlotPurchaseModal({
                                 ゴールドが不足しています。
                             </span>
                             <button
-                                onClick={() => { onClose(); window.location.href = '/settings?tab=purchase'; }}
+                                onClick={() => { onClose(); window.location.href = '/inn'; }}
                                 className="text-[10px] text-amber-400 underline hover:text-amber-300 mt-0.5"
                             >
-                                設定 → ゴールド購入 へ移動
+                                宿屋 → アカウント設定 へ移動
                             </button>
                         </div>
                     </div>

@@ -32,10 +32,10 @@ export default function CreatorsWorkshopPage() {
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'works', label: 'マイ作品', icon: <FolderKanban className="w-4 h-4" /> },
-    { key: 'builder', label: '簡易作成', icon: <Wand2 className="w-4 h-4" /> },
-    { key: 'template', label: 'テンプレート', icon: <Download className="w-4 h-4" /> },
     { key: 'import', label: 'インポート', icon: <Upload className="w-4 h-4" /> },
+    { key: 'template', label: 'テンプレート', icon: <Download className="w-4 h-4" /> },
     { key: 'calculator', label: 'バランス計算', icon: <Calculator className="w-4 h-4" /> },
+    { key: 'builder', label: '簡易作成', icon: <Wand2 className="w-4 h-4" /> },
   ];
 
   return (
