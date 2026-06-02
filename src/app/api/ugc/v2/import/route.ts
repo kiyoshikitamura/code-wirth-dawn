@@ -34,18 +34,24 @@ export async function POST(request: Request) {
     // ── Tier取得
     const { data: profile } = await client
       .from('user_profiles')
-      .select('subscription_tier')
+      .select('subscription_tier, ugc_extra_drafts, ugc_extra_daily_import')
       .eq('id', user.id)
       .single();
     const tier: SubscriptionTier = (profile?.subscription_tier as SubscriptionTier) ?? 'free';
+    const extraDailyImport = profile?.ugc_extra_daily_import || 0;
 
-    // ── レートリミット
-    const rl = await checkRateLimit(client, user.id, 'import', tier);
-    if (!rl.allowed) {
+    // ── レートリミット（extra daily importを加算）
+    const rl = await checkRateLimit(client, user.id, 'import', tier, true); // dryRun
+    const effectiveImportLimit = rl.limit + extraDailyImport;
+    if (rl.limit !== -1 && rl.current >= effectiveImportLimit) {
       return NextResponse.json({
-        error: `インポートの1日あたりの上限（${rl.limit}回）に達しています。`,
-        rate_limit: rl,
+        error: `インポートの1日あたりの上限（${effectiveImportLimit}回）に達しています。`,
+        rate_limit: { ...rl, limit: effectiveImportLimit },
       }, { status: 429 });
+    }
+    // レートリミット記録（dryRunだったので手動挿入）
+    if (rl.limit !== -1) {
+      await checkRateLimit(client, user.id, 'import', tier, false);
     }
 
     // ── パース＋バリデーション
@@ -64,9 +70,11 @@ export async function POST(request: Request) {
     if (result.type === 'quest' && result.data?.type === 'quest') {
       const quest = result.data;
 
-      // ドラフト枠チェック
-      const draftLimit = UGC_ASSET_LIMITS[tier].drafts;
-      if (draftLimit !== -1) {
+      // ドラフト枠チェック（extra枠を加算）
+      const baseDraftLimit = UGC_ASSET_LIMITS[tier].drafts;
+      const extraDrafts = profile?.ugc_extra_drafts || 0;
+      const draftLimit = baseDraftLimit + extraDrafts;
+      if (baseDraftLimit !== -1) {
         const { count } = await client
           .from('ugc_scenarios')
           .select('*', { count: 'exact', head: true })

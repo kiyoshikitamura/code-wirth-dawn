@@ -35,9 +35,9 @@ export const UGC_RATE_LIMITS: Record<SubscriptionTier, {
   save: number;
   import: number;
 }> = {
-  free:    { publish: 1,  save: 5,   import: 10 },
-  basic:   { publish: 3,  save: 15,  import: 30 },
-  premium: { publish: 10, save: -1,  import: -1 }, // -1 = 無制限
+  free:    { publish: 1,  save: 5,   import: 10  },
+  basic:   { publish: 3,  save: 15,  import: 30  },
+  premium: { publish: 10, save: 50,  import: 100 },
 };
 
 // ── アセット枠 ──────────────────────────────────────────────────────────────
@@ -49,10 +49,17 @@ export const UGC_ASSET_LIMITS: Record<SubscriptionTier, {
   cards: number;
   npcs: number;
 }> = {
-  free:    { published: 2,  drafts: 5,   enemies: 5,  items: 5,  cards: 5,  npcs: 5  },
-  basic:   { published: 10, drafts: 20,  enemies: 20, items: 20, cards: 20, npcs: 20 },
-  premium: { published: 50, drafts: 100, enemies: -1, items: -1, cards: -1, npcs: -1 },
+  free:    { published: 1,  drafts: 5,   enemies: 5,  items: 5,  cards: 5,  npcs: 5  },
+  basic:   { published: 5,  drafts: 10,  enemies: 20, items: 20, cards: 20, npcs: 20 },
+  premium: { published: 30, drafts: 50,  enemies: -1, items: -1, cards: -1, npcs: -1 },
 };
+
+// ── ゴールドによる枠追加コスト ───────────────────────────────────────────────
+export const UGC_GOLD_COSTS = {
+  extra_draft_slot: 2000,      // 下書き枠 +1: 2,000G
+  extra_published_slot: 10000, // 公開枠 +1: 10,000G
+  extra_daily_import: 2000,    // 1日のインポート回数 +5: 2,000G（当日限り）
+} as const;
 
 // ── オーディオ枠 ─────────────────────────────────────────────────────────────
 export const UGC_AUDIO_LIMITS = {

@@ -80,7 +80,21 @@ export async function POST(req: Request) {
             weeklyBonusLog = `exception: ${bonusErr.message}`;
         }
 
-        return NextResponse.json({ success: true, logs: result.logs, hegemony: result.hegemony, cleanup: cleanupLog, weekly_bonus: weeklyBonusLog });
+        // UGC: ゴールド購入による日次インポート追加枠をリセット
+        let ugcDailyResetLog = 'skipped';
+        try {
+            const { count, error: resetErr } = await supabaseServer
+                .from('user_profiles')
+                .update({ ugc_extra_daily_import: 0 }, { count: 'exact' })
+                .gt('ugc_extra_daily_import', 0);
+            ugcDailyResetLog = resetErr
+                ? `error: ${resetErr.message}`
+                : `reset ${count ?? 0} users`;
+        } catch (resetErr: any) {
+            ugcDailyResetLog = `exception: ${resetErr.message}`;
+        }
+
+        return NextResponse.json({ success: true, logs: result.logs, hegemony: result.hegemony, cleanup: cleanupLog, weekly_bonus: weeklyBonusLog, ugc_daily_reset: ugcDailyResetLog });
     } catch (e: any) {
         return NextResponse.json({ success: false, error: e.message }, { status: 500 });
     }

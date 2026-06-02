@@ -9,6 +9,7 @@ import MyWorksPanel from '@/components/ugc/MyWorksPanel';
 import TemplateImportPanel from '@/components/ugc/TemplateImportPanel';
 import TemplateDownloadPanel from '@/components/ugc/TemplateDownloadPanel';
 import BalanceCalculatorPanel from '@/components/ugc/BalanceCalculatorPanel';
+import WorkshopStatusPanel from '@/components/ugc/WorkshopStatusPanel';
 
 const QuestBuilderPanel = dynamic(() => import('@/components/ugc/QuestBuilderPanel'), { ssr: false });
 
@@ -113,6 +114,9 @@ export default function CreatorsWorkshopPage() {
                 <ChevronRight className="w-4.5 h-4.5" />
               </button>
             </div>
+
+            {/* Tier Status Panel */}
+            <WorkshopStatusPanel />
 
             {/* Scrollable Content Container */}
             <div className="flex-1 overflow-y-auto no-scrollbar bg-[#0d0907] p-4 space-y-4 min-h-0">

@@ -57,14 +57,16 @@ export async function POST(request: Request) {
     // Tier取得
     const { data: profile } = await client
       .from('user_profiles')
-      .select('subscription_tier')
+      .select('subscription_tier, ugc_extra_published')
       .eq('id', user.id)
       .single();
     const tier: SubscriptionTier = (profile?.subscription_tier as SubscriptionTier) ?? 'free';
 
-    // 公開枠チェック
-    const publishLimit = UGC_ASSET_LIMITS[tier].published;
-    if (publishLimit !== -1) {
+    // 公開枠チェック（extra枠を加算）
+    const basePublishLimit = UGC_ASSET_LIMITS[tier].published;
+    const extraPublished = profile?.ugc_extra_published || 0;
+    const publishLimit = basePublishLimit + extraPublished;
+    if (basePublishLimit !== -1) {
       const { count } = await client
         .from('ugc_scenarios')
         .select('*', { count: 'exact', head: true })
