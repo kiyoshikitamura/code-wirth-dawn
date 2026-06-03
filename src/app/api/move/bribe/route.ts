@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         // プロフィールと現在地取得
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('id, gold, current_location_id, age, accumulated_days, max_vitality, vitality, atk, def')
+            .select('id, gold, current_location_id, age, age_days, accumulated_days, max_vitality, vitality, atk, def')
             .eq('id', userId)
             .single();
 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
         const daysToTravel = 1;
         const { newAge, newAgeDays, decay } = processAging(
             profile.age || 20,
-            profile.accumulated_days || 0,
+            profile.age_days || 0,
             daysToTravel
         );
 
@@ -90,7 +90,8 @@ export async function POST(req: Request) {
         const updatePayload: Record<string, any> = {
             gold: currentGold - ECONOMY_RULES.BRIBE_COST,
             current_location_id: target_location_id,
-            accumulated_days: newAgeDays,
+            accumulated_days: (profile.accumulated_days || 0) + daysToTravel,
+            age_days: newAgeDays,
             age: newAge,
         };
         if (decay.vit > 0) {

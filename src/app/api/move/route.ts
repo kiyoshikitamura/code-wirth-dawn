@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('id, current_location_id, gold, level, age, accumulated_days, max_vitality, vitality, atk, def, next_encounter_rate_mod, pass_expires_at')
+            .select('id, current_location_id, gold, level, age, age_days, accumulated_days, max_vitality, vitality, atk, def, next_encounter_rate_mod, pass_expires_at')
             .eq('id', targetUserId)
             .single();
 
@@ -239,14 +239,15 @@ export async function POST(req: Request) {
         // 4. Update Time & Age (統一加齢ロジック: VIT/ATK/DEF減少を含む)
         const { newAge, newAgeDays, decay } = processAging(
             profile.age || 20,
-            profile.accumulated_days || 0,
+            profile.age_days || 0,
             daysToTravel
         );
 
         // 5. Update DB
         const updatePayload: Record<string, any> = {
             current_location_id: targetData.id,
-            accumulated_days: newAgeDays,
+            accumulated_days: (profile.accumulated_days || 0) + daysToTravel,
+            age_days: newAgeDays,
             age: newAge
         };
         if (goldCost > 0) {

@@ -3,6 +3,7 @@ import {
     BookOpen, X, Scroll, Globe, Skull, Calendar, MapPin, 
     Award, Heart, Zap, Shield, Share2, Plus, Minus, ArrowUp, Compass
 } from 'lucide-react';
+import { getAuthToken } from '@/lib/authToken';
 
 interface HistoryArchiveModalProps {
     userId: string;
@@ -21,7 +22,12 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
         const fetchData = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/user/history-archive?user_id=${userId}`);
+                const token = await getAuthToken();
+                const headers: Record<string, string> = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                const res = await fetch(`/api/user/history-archive?user_id=${userId}`, { headers });
                 if (res.ok) {
                     const json = await res.json();
                     setTimelineData(json.timeline || []);

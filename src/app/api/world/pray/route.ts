@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         // 2. Validate User Gold
         const { data: userData, error: userError } = await supabase
             .from('user_profiles')
-            .select('gold, prayer_count, blessing_data, age, accumulated_days, max_vitality, vitality, atk, def, order_pts, chaos_pts, justice_pts, evil_pts')
+            .select('gold, prayer_count, blessing_data, age, age_days, accumulated_days, max_vitality, vitality, atk, def, order_pts, chaos_pts, justice_pts, evil_pts')
             .eq('id', user_id)
             .single();
 
@@ -85,11 +85,12 @@ export async function POST(req: Request) {
         if (daysPassed > 0) {
             const aging = processAging(
                 userData.age || 20,
-                userData.accumulated_days || 0,
+                userData.age_days || 0,
                 daysPassed
             );
             newAge = aging.newAge;
-            updatePayload.accumulated_days = aging.newAgeDays;
+            updatePayload.accumulated_days = (userData.accumulated_days || 0) + daysPassed;
+            updatePayload.age_days = aging.newAgeDays;
             updatePayload.age = aging.newAge;
 
             if (aging.decay.vit > 0 || aging.decay.atk > 0 || aging.decay.def > 0) {

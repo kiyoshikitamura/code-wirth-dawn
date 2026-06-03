@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         // Fetch Max Stats and Gold
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('max_hp, current_location_id, gold, age, accumulated_days, max_vitality, vitality, atk, def')
+            .select('max_hp, current_location_id, gold, age, age_days, accumulated_days, max_vitality, vitality, atk, def')
             .eq('id', id)
             .single();
 
@@ -77,14 +77,15 @@ export async function POST(req: Request) {
         const REST_DAYS = isHub ? 3 : 1;
         const { newAge, newAgeDays, decay } = processAging(
             profile.age || 20,
-            profile.accumulated_days || 0,
+            profile.age_days || 0,
             REST_DAYS
         );
 
         const updatePayload: Record<string, any> = {
             hp: effectiveMaxHp || profile.max_hp || 100,
             gold: profile.gold - finalCost,
-            accumulated_days: newAgeDays,
+            accumulated_days: (profile.accumulated_days || 0) + REST_DAYS,
+            age_days: newAgeDays,
             age: newAge
         };
 

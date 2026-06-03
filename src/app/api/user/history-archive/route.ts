@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
     try {
+        // Auth
+        const authHeader = req.headers.get('authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader.length <= 7) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+        if (authErr || !user) {
+            return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+        }
+
         const { searchParams } = new URL(req.url);
         const userId = searchParams.get('user_id');
 
@@ -10,8 +22,13 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
         }
 
+        // Security check
+        if (userId !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         // 1. Fetch Personal Chronicle Logs
-        const { data: quests, error: qError } = await supabase
+        const { data: quests, error: qError } = await supabaseService
             .from('user_chronicles')
             .select(`
                 *,
@@ -23,7 +40,7 @@ export async function GET(req: Request) {
         if (qError) throw qError;
 
         // 2. Fetch World History (Global)
-        const { data: worldHistory, error: wError } = await supabase
+        const { data: worldHistory, error: wError } = await supabaseService
             .from('world_states_history')
             .select(`
                 *,
@@ -35,7 +52,7 @@ export async function GET(req: Request) {
         if (wError) throw wError;
 
         // 3. Fetch Lineage of Heroes (Graveyard)
-        const { data: lineage, error: lError } = await supabase
+        const { data: lineage, error: lError } = await supabaseService
             .from('retired_characters')
             .select(`
                 *,
@@ -47,7 +64,7 @@ export async function GET(req: Request) {
         if (lError) throw lError;
 
         // 4. 出禁拠点リスト (reputations.score < 0)
-        const { data: bannedReps, error: brError } = await supabase
+        const { data: bannedReps, error: brError } = await supabaseService
             .from('reputations')
             .select('score, location_name')
             .eq('user_id', userId)

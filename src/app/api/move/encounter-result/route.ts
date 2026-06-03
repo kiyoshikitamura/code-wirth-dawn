@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         // プロフィール取得
         const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('id, gold, vitality, accumulated_days, age, max_hp, max_vitality, atk, def')
+            .select('id, gold, vitality, age_days, accumulated_days, age, max_hp, max_vitality, atk, def')
             .eq('id', userId)
             .single();
 
@@ -85,10 +85,11 @@ export async function POST(req: Request) {
         const daysToTravel = travel_days || 1;
         const { newAge, newAgeDays, decay } = processAging(
             profile.age || 20,
-            profile.accumulated_days || 0,
+            profile.age_days || 0,
             daysToTravel
         );
-        updatePayload.accumulated_days = newAgeDays;
+        updatePayload.accumulated_days = (profile.accumulated_days || 0) + daysToTravel;
+        updatePayload.age_days = newAgeDays;
         updatePayload.age = newAge;
         if (decay.vit > 0) {
             const maxVit = updatePayload.max_vitality ?? (profile.max_vitality || 100);
