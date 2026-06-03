@@ -182,6 +182,7 @@ export default function QuestPage() {
                 }
             });
             useQuestState.getState().resetQuest();
+            useGameStore.setState({ lastInitPageFetchTime: 0 });
             setIsPrefetching(false);
             return;
         }
@@ -239,6 +240,7 @@ export default function QuestPage() {
                 }
             });
             useQuestState.getState().resetQuest();
+            useGameStore.setState({ lastInitPageFetchTime: 0 });
             setIsPrefetching(false);
             return;
         }
@@ -285,6 +287,7 @@ export default function QuestPage() {
             } else {
                 const data = await res.json();
                 useQuestState.getState().resetQuest();
+                useGameStore.setState({ lastInitPageFetchTime: 0 });
                 await fetchUserProfile();
 
                 setPrefetchedResult({
@@ -296,6 +299,7 @@ export default function QuestPage() {
             console.error(e);
             alert(`通信エラーが発生しました: ${e.message}\n結果の保存に失敗した可能性があります。`);
             useQuestState.getState().resetQuest();
+            useGameStore.setState({ lastInitPageFetchTime: 0 });
             setPrefetchedResult({
                 result,
                 data: {
