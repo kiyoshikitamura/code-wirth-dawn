@@ -563,6 +563,9 @@ export function useInnPageState() {
 
             if (error) throw error;
 
+            // ハブ情報を先行一括ロードしてキャッシュを更新
+            await useGameStore.getState().prefetchTownData();
+
             await useGameStore.getState().fetchUserProfile();
             await useGameStore.getState().fetchHubState();
             await useGameStore.getState().fetchWorldState();
@@ -587,6 +590,9 @@ export function useInnPageState() {
                 .upsert({ user_id: userProfile.id, is_in_hub: false });
 
             if (error) throw error;
+
+            // 遷移先の拠点情報を先行一括ロードしてキャッシュを更新
+            await useGameStore.getState().prefetchTownData();
 
             await useGameStore.getState().fetchUserProfile();
             await useGameStore.getState().fetchHubState();

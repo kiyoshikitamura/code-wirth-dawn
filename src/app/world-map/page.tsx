@@ -306,6 +306,26 @@ export default function WorldMapPage() {
                 // 馬（馬車）の移動SE を再生してからアニメーション開始 (spec_v14.1 §5.3)
                 soundManager?.playSE('se_travel_horse');
 
+                // 目的地情報とハブ脱出状態をZustandストアに即時反映してクライアント側を同期
+                useGameStore.setState(state => ({
+                    userProfile: state.userProfile ? ({
+                        ...state.userProfile,
+                        current_location_id: target.id,
+                        locations: {
+                            ...(state.userProfile.locations || {}),
+                            id: target.id,
+                            name: target.name,
+                            slug: target.slug,
+                            type: target.type,
+                            ruling_nation_id: target.ruling_nation_id
+                        }
+                    } as any) : null,
+                    hubState: state.hubState ? {
+                        ...state.hubState,
+                        is_in_hub: false
+                    } : null
+                }));
+
                 // バックグラウンドで次の拠点のデータをプリフェッチ (先行ロード)
                 getAuthToken().then(token => {
                     useGameStore.getState().prefetchTownData(token || undefined);

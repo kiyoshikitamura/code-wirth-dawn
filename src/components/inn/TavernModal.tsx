@@ -69,7 +69,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 Promise.all([fetchPartyData(), fetchShadowsWithCache()]).finally(() => setLoading(false));
             }
         }
-    }, [isOpen, locationId]);
+    }, [isOpen, locationId, tavernShadows.length]);
 
     useEffect(() => {
         if (isOpen && activeTab === 'register') {

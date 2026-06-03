@@ -282,7 +282,7 @@ export const createProfileSlice = (
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            const res = await fetch('/api/init-page', { headers });
+            const res = await fetch('/api/init-page', { headers, cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 
