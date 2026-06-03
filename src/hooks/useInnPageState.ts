@@ -38,7 +38,8 @@ export function useInnPageState() {
     const [loading, setLoading] = useState(() => {
         // Zustand ストアに先行ロードされたデータがあるなら初期ローディングをスキップ
         const state = useGameStore.getState();
-        return !(state.userProfile && state.locationQuests);
+        const skipLoading = !!(state.userProfile && state.worldState);
+        return !skipLoading;
     });
     const [showAccount, setShowAccount] = useState(false);
     const [showTavern, setShowTavern] = useState(false);

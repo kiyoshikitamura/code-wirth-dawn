@@ -128,8 +128,12 @@ export default function WorldMapPage() {
             });
 
             if (res.ok) {
-                await fetchUserProfile();
-                await fetchHubState(); // Sync store immediately
+                // ハブ状態を即座に同期
+                useGameStore.setState(state => ({
+                    hubState: state.hubState ? { ...state.hubState, is_in_hub: false } : { user_id: userProfile.id, is_in_hub: false } as any
+                }));
+                // 降下先の拠点情報を一括ロード
+                await useGameStore.getState().prefetchTownData();
             } else {
                 console.error("Descent API failed");
                 const err = await res.json();
@@ -343,9 +347,8 @@ export default function WorldMapPage() {
                 setTravelLog(prev => [...prev, `目的地に到着しました。`]);
                 await new Promise(r => setTimeout(r, 1000));
 
-                // Refresh & Redirect
-                await fetchUserProfile();
-                await fetchWorldState();
+                // 目的地データ（プロフィール、ワールド状態、施設キャッシュなど）を一括同期
+                await useGameStore.getState().prefetchTownData();
                 setTimeout(() => {
                     setTraveling(false);
                     isTravelingRef.current = false;
