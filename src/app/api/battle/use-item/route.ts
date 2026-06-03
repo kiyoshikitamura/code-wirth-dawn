@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createAuthClient } from '@/lib/supabase-auth';
 
 export async function POST(req: Request) {
     try {
         const { inventory_id } = await req.json();
+        const client = createAuthClient(req);
 
         // 1. Fetch current info
-        const { data: item, error: fetchError } = await supabase
+        const { data: item, error: fetchError } = await client
             .from('inventory')
             .select('id, quantity, is_skill')
             .eq('id', inventory_id)
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
         let remaining = (item.quantity || 1) - 1;
 
         if (remaining <= 0) {
-            const { error: delError } = await supabase
+            const { error: delError } = await client
                 .from('inventory')
                 .delete()
                 .eq('id', inventory_id);
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
             if (delError) throw delError;
             return NextResponse.json({ success: true, remaining: 0, deleted: true });
         } else {
-            const { error: updateError } = await supabase
+            const { error: updateError } = await client
                 .from('inventory')
                 .update({ quantity: remaining })
                 .eq('id', inventory_id);

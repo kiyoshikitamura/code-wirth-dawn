@@ -364,6 +364,14 @@
 
 * **サーバーサイドAPIにおける RLS 回避のための特権クライアント（supabaseService）の統一**: サーバーサイド API（例：`/api/user/history-archive` や `/api/inn/rest`）において、ユーザー認証（JWTの検証等）を完了した後は、RLS（Row Level Security）ポリシーの適用漏れや適用差異による静かなクエリ失敗を防止するため、データの取得・更新クエリには一貫してサービスロールキーを使用する `supabaseService`（特権クライアント）を使用する設計とすること。
 * **フロントエンドとサーバーサイド間での Bearer 認証ヘッダーの引き継ぎ**: 認証済みのユーザー情報（JWT）に依存するサーバーサイド API（例：宿屋の宿泊、ヒストリーアーカイブなど）をフロントエンドから fetch する際は、漏れなく `Authorization: Bearer <token>` を headers に付与する設計とする。引き継ぎ漏れがあると API サーバー側で 401 Unauthorized エラーとなり処理が中断する。
+* **Eager Load およびプリフェッチのキャッシュ制御による高速化と重複排除**:
+  * Eager Load（一括ロード）API である `/api/init-page` の最終完了時刻 `lastInitPageFetchTime`（Zustand状態）を導入し、直近10秒以内にプリフェッチ済みの新鮮なキャッシュがあれば、宿屋マウント時や各施設モーダル（酒場・ギルド）を開いた際の重複フェッチおよびバックグラウンドフェッチをスキップして、APIリクエストを完全に抑制する。
+  * ワールドマップ移動完了の瞬間に API を同期的に待機する `await prefetchTownData()` を完全に排除し、移動開始時の非同期バックグラウンドフェッチに依存させることで、移動完了から拠点描画までの 0ms 遷移を実現する。
+  * `/api/init-page` のフェッチ中（およびハイドレーション中）は、`reputations` や `gougai` などの個別 API が並行して無駄に走らないように、初期ロード完了フラグによるガードを設定し、サーバー側の多重クエリ負荷を解消する。
+* **バトルアクション同期とエンカウント結果処理の堅牢化**:
+  * 戦闘勝利時の `/api/report-action` および `/api/battle/use-item` の実行時、Authorization ヘッダーを正しく付与し、かつ `/api/battle/use-item` エンドポイントでは `createAuthClient(req)` から取得したクライアントを使用して Supabase RLS を正しく機能させる。
+  * `/api/battle/action` 同期処理を `await` で待機させ、戦闘終了判定とアクション同期の順序の不整合（Battle is already over）を完全に防ぐ。
+  * バトル終了後のエンカウント結果処理（`/api/move/encounter-result`）および宿屋マウント時の結果反映処理において、URL クエリパラメータの `target` や `origin` の存在・妥当性（`"undefined"` や `"null"` でないこと）のチェックを徹底し、無効な場合は `userProfile?.current_location_id` からフォールバックさせることで、二重呼び出しと 400 Bad Request を完全に防ぐ。
 
 
 

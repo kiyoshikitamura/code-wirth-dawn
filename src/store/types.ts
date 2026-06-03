@@ -84,5 +84,6 @@ export interface GameState {
 
     // 先行ロード用アクション
     prefetchTownData: (token?: string) => Promise<void>;
+    lastInitPageFetchTime?: number;
 }
 

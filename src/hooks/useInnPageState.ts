@@ -54,6 +54,7 @@ export function useInnPageState() {
     const [restLoading, setRestLoading] = useState(false);
     const [traveling, setTraveling] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
     // Quest Data State (ギルド用)
     const [allQuests, setAllQuests] = useState<any[]>([]);
@@ -144,6 +145,18 @@ export function useInnPageState() {
     // Initial load — init-page APIで一括取得
     useEffect(() => {
         const loadInitData = async () => {
+            // キャッシュチェック（直近10秒以内ならスキップ）
+            const store = useGameStore.getState();
+            const lastFetch = store.lastInitPageFetchTime || 0;
+            const hasData = store.userProfile && store.worldState;
+            
+            if (hasData && Date.now() - lastFetch < 10000) {
+                console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
+                setLoading(false);
+                setInitialLoadComplete(true);
+                return;
+            }
+
             try {
                 let token = await (await import('@/lib/authToken')).getAuthToken();
                 const isOauthCallback = typeof window !== 'undefined' && window.location.search.includes('code=');
@@ -183,7 +196,8 @@ export function useInnPageState() {
                         tavernShadows: data.tavern_shadows || [],
                         partyMembers: data.party_members || [],
                         locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
-                        gossipData: data.gossip_data
+                        gossipData: data.gossip_data,
+                        lastInitPageFetchTime: Date.now(), // 更新
                     });
 
                     if (typeof window !== 'undefined' && data.profile?.current_location_id) {
@@ -217,6 +231,7 @@ export function useInnPageState() {
                         fetchWorldState(),
                         useGameStore.getState().fetchUserProfile()
                     ]);
+                    useGameStore.setState({ lastInitPageFetchTime: Date.now() });
                     if (!useGameStore.getState().userProfile) {
                         router.push('/title');
                     }
@@ -227,11 +242,13 @@ export function useInnPageState() {
                     fetchWorldState(),
                     useGameStore.getState().fetchUserProfile()
                 ]);
+                useGameStore.setState({ lastInitPageFetchTime: Date.now() });
                 if (!useGameStore.getState().userProfile) {
                     router.push('/title');
                 }
             } finally {
                 setLoading(false);
+                setInitialLoadComplete(true);
             }
         };
         loadInitData();
@@ -267,7 +284,12 @@ export function useInnPageState() {
         const targetLocId = searchParams.get('target');
         const originLocId = searchParams.get('origin');
         const isEncounterType = bType === 'bounty_hunter_ambush' || bType === 'random_encounter';
-        if (!battleResult || !isEncounterType || !userProfile?.id) return;
+        
+        // パラメータが正常に含まれている場合のみAPI処理を呼び出し（二重呼び出し抑止）
+        const hasValidParams = targetLocId && targetLocId !== 'undefined' && targetLocId !== 'null' &&
+                              originLocId && originLocId !== 'undefined' && originLocId !== 'null';
+
+        if (!battleResult || !isEncounterType || !userProfile?.id || !hasValidParams) return;
 
         const resolveEncounterResult = async () => {
             try {
@@ -324,10 +346,15 @@ export function useInnPageState() {
     }, [userProfile?.id, worldState?.location_name, isHub]);
 
     // init-page APIで既に取得済みの場合はスキップ
-    useEffect(() => { if (reputation !== null) return; fetchRep(); }, [fetchRep, reputation]);
+    useEffect(() => {
+        if (!initialLoadComplete) return;
+        if (reputation !== null) return;
+        fetchRep();
+    }, [fetchRep, reputation, initialLoadComplete]);
 
     // Gougai Detection
     useEffect(() => {
+        if (!initialLoadComplete) return;
         if (!userProfile?.id || gougaiEvents.length > 0) return;
         const checkGougai = async () => {
             try {
@@ -343,7 +370,7 @@ export function useInnPageState() {
             }
         };
         checkGougai();
-    }, [userProfile]);
+    }, [userProfile, initialLoadComplete, gougaiEvents.length]);
 
     const handleCloseGougai = async () => {
         if (gougaiEvents.length > 0 && userProfile?.id) {
@@ -465,9 +492,18 @@ export function useInnPageState() {
 
         const locationId = userProfile.current_location_id || '';
         const cacheKey = `location_quests_cache_${locationId}`;
+        const store = useGameStore.getState();
+        const lastFetch = store.lastInitPageFetchTime || 0;
+        const hasQuests = store.locationQuests;
+
+        // 直近10秒以内の新鮮なデータがあれば、API通信を一切行わない
+        if (hasQuests && Date.now() - lastFetch < 10000) {
+            setAllQuests(hasQuests.quests || []);
+            return;
+        }
 
         // すでにキャッシュがある場合はそれを使用し、バックグラウンドでのみフェッチする
-        let cachedQuests = useGameStore.getState().locationQuests;
+        let cachedQuests = hasQuests;
         if (!cachedQuests && typeof window !== 'undefined') {
             try {
                 const cached = sessionStorage.getItem(cacheKey);
@@ -487,7 +523,10 @@ export function useInnPageState() {
         }
 
         try {
-            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${locationId}`);
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${locationId}`, {
+                headers: authHeaders
+            });
             if (res.ok) {
                 const data = await res.json();
                 const questData = {

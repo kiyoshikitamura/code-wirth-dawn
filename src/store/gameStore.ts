@@ -58,6 +58,7 @@ export const useGameStore = create<GameState>()(
             partyMembers: [],
             locationQuests: null,
             gossipData: null,
+            lastInitPageFetchTime: 0,
             equipBonus: { atk: 0, def: 0, hp: 0 },
             equippedItems: [],
             showStatus: false,

@@ -868,10 +868,13 @@ export const createBattleSlice = (
 
         // [Security] JWT認証付きでサーバーにアクション同期 (v27.2)
         if (card && battleState.battle_session_id) {
-            supabase.auth.getSession().then(({ data: { session: authSession } }) => {
-                const headers: HeadersInit = { 'Content-Type': 'application/json' };
-                if (authSession?.access_token) headers['Authorization'] = `Bearer ${authSession.access_token}`;
-                fetch('/api/battle/action', {
+            try {
+                const authHeaders = await getAuthHeaders();
+                const headers: HeadersInit = {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                };
+                const res = await fetch('/api/battle/action', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
@@ -881,10 +884,12 @@ export const createBattleSlice = (
                         target_id: targetEnemyId,
                         log_message: `Used ${card?.name}`
                     })
-                }).then(res => res.json()).then(data => {
-                    if (data.error) console.warn('Server validation failed:', data.error);
                 });
-            });
+                const data = await res.json();
+                if (data.error) console.warn('Server validation failed:', data.error);
+            } catch (err) {
+                console.error('Action sync failed:', err);
+            }
         }
 
         let nextHand = [...hand];
@@ -1364,12 +1369,18 @@ export const createBattleSlice = (
         if (allDead) {
             newMessages.push('全ての敵を倒した！ 勝利！');
             try {
-                fetch('/api/report-action', { method: 'POST', body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id }) });
-                // [Security] v27.2: サーバーサイドバトル結果検証
-                if (battleState.battle_session_id) {
-                    supabase.auth.getSession().then(({ data: { session: authSession } }) => {
-                        const headers: HeadersInit = { 'Content-Type': 'application/json' };
-                        if (authSession?.access_token) headers['Authorization'] = `Bearer ${authSession.access_token}`;
+                getAuthHeaders().then(authHeaders => {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        ...authHeaders
+                    };
+                    fetch('/api/report-action', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
+                    });
+                    // [Security] v27.2: サーバーサイドバトル結果検証
+                    if (battleState.battle_session_id) {
                         fetch('/api/battle/validate-result', {
                             method: 'POST',
                             headers,
@@ -1384,8 +1395,8 @@ export const createBattleSlice = (
                                 }));
                             }
                         }).catch(console.error);
-                    });
-                }
+                    }
+                });
                 // バトル後HPをDB保存してからプロフィール更新
                 const preservedHp = get().userProfile?.hp;
                 const preservedVit = get().userProfile?.vitality;
@@ -1413,7 +1424,26 @@ export const createBattleSlice = (
                 const gold = selectedScenario?.reward_gold || 50;
                 get().addGold(Math.floor(gold / partyCount));
                 const consumed = get().battleState.consumedItems || [];
-                consumed.forEach(cid => fetch('/api/battle/use-item', { method: 'POST', body: JSON.stringify({ inventory_id: cid }) }));
+                if (consumed.length > 0) {
+                    getAuthHeaders().then(authHeaders => {
+                        const headers = {
+                            'Content-Type': 'application/json',
+                            ...authHeaders
+                        };
+                        Promise.all(consumed.map(async (cid) => {
+                            try {
+                                const res = await fetch('/api/battle/use-item', {
+                                    method: 'POST',
+                                    headers,
+                                    body: JSON.stringify({ inventory_id: cid })
+                                });
+                                if (!res.ok) console.error('Failed to use item API:', cid, await res.text());
+                            } catch (err) {
+                                console.error('Failed to call use-item API:', cid, err);
+                            }
+                        }));
+                    });
+                }
             } catch (e) { console.error(e); }
         }
 
@@ -1602,20 +1632,26 @@ export const createBattleSlice = (
             const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！'];
             const isQuestBattle = useQuestState.getState().isInQuest;
             try {
+                const authHeaders = await getAuthHeaders();
+                const headers: HeadersInit = {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                };
                 // クエスト外バトル（パブバトル等）のみ世界への影響を報告
                 if (!isQuestBattle) {
-                    await fetch('/api/report-action', { method: 'POST', body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id }) });
+                    await fetch('/api/report-action', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
+                    });
                 }
                 // [Security] v27.2: サーバーサイドバトル結果検証
                 const bsid = get().battleState.battle_session_id;
                 if (bsid) {
                     try {
-                        const { data: { session: authSession } } = await supabase.auth.getSession();
-                        const vHeaders: HeadersInit = { 'Content-Type': 'application/json' };
-                        if (authSession?.access_token) vHeaders['Authorization'] = `Bearer ${authSession.access_token}`;
                         const vRes = await fetch('/api/battle/validate-result', {
                             method: 'POST',
-                            headers: vHeaders,
+                            headers,
                             body: JSON.stringify({ battle_session_id: bsid, claimed_result: 'victory' })
                         });
                         const vData = await vRes.json();
@@ -1624,7 +1660,9 @@ export const createBattleSlice = (
                                 battleState: { ...state.battleState, battle_completion_token: vData.battle_completion_token }
                             }));
                         }
-                    } catch (e) { console.error('[Battle Validate] processPartyTurn:', e); }
+                    } catch (err) {
+                        console.error('Validation failed:', err);
+                    }
                 }
                 // バトル後のHP/VITをDB保存（Service Role API使用でRLSバイパス）
                 const battleHp = get().userProfile?.hp;

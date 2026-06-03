@@ -61,14 +61,24 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     useEffect(() => {
         if (isOpen) {
-            // 1. すでに Zustand にデータがあれば、ローディング不要でバックグラウンド更新
-            if (tavernShadows.length > 0) {
+            const store = useGameStore.getState();
+            const lastFetch = store.lastInitPageFetchTime || 0;
+            const hasShadows = tavernShadows.length > 0;
+
+            // 1. 直近10秒以内の新鮮なデータがあれば、API通信を一切行わない
+            if (hasShadows && Date.now() - lastFetch < 10000) {
+                setLoading(false);
+                return;
+            }
+
+            // 2. すでに Zustand にデータがあれば、ローディング不要でバックグラウンド更新
+            if (hasShadows) {
                 setLoading(false);
                 Promise.all([fetchPartyData(), fetchShadows()]);
                 return;
             }
 
-            // 2. Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
+            // 3. Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
             let hasCache = false;
             try {
                 const cacheKey = `tavern_shadows_cache_${locationId}`;
@@ -101,7 +111,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 console.warn(e);
             }
 
-            // 3. キャッシュがあればバックグラウンド更新、なければローディングを表示して通信
+            // 4. キャッシュがあればバックグラウンド更新、なければローディングを表示して通信
             if (hasCache) {
                 Promise.all([fetchPartyData(), fetchShadows()]);
             } else {
@@ -167,7 +177,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     const fetchShadows = async () => {
         try {
-            const res = await fetch(`/api/tavern/list?location_id=${locationId}&user_id=${userProfile.id}`);
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/tavern/list?location_id=${locationId}&user_id=${userProfile.id}`, {
+                headers: authHeaders
+            });
             const data = await res.json();
             if (data.shadows) {
                 setTavernShadows(data.shadows);
@@ -183,7 +196,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const fetchMyHeroics = async () => {
         setHeroicLoading(true);
         try {
-            const res = await fetch(`/api/tavern/my-heroic?user_id=${userProfile.id}`);
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/tavern/my-heroic?user_id=${userProfile.id}`, {
+                headers: authHeaders
+            });
             const data = await res.json();
             if (data.heroics) setMyHeroics(data.heroics);
         } catch (e) {
@@ -197,7 +213,10 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const fetchHeroicHall = async () => {
         setHeroicHallLoading(true);
         try {
-            const res = await fetch(`/api/tavern/heroic-list?location_id=${locationId}&user_id=${userProfile.id}`);
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/tavern/heroic-list?location_id=${locationId}&user_id=${userProfile.id}`, {
+                headers: authHeaders
+            });
             const data = await res.json();
             if (data.heroics) setHeroicHallList(data.heroics);
         } catch (e) {

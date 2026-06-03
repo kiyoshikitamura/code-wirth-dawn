@@ -347,8 +347,7 @@ export default function WorldMapPage() {
                 setTravelLog(prev => [...prev, `目的地に到着しました。`]);
                 await new Promise(r => setTimeout(r, 1000));
 
-                // 目的地データ（プロフィール、ワールド状態、施設キャッシュなど）を一括同期
-                await useGameStore.getState().prefetchTownData();
+                // 目的地データ（プロフィール、ワールド状態、施設キャッシュなど）を一括同期（移動開始時にバックグラウンドで開始済み）
                 setTimeout(() => {
                     setTraveling(false);
                     isTravelingRef.current = false;

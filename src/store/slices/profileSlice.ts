@@ -277,6 +277,12 @@ export const createProfileSlice = (
     setGossipData: (data) => set({ gossipData: data }),
 
     prefetchTownData: async (token?: string) => {
+        // キャッシュチェック（直近10秒以内ならスキップ）
+        const lastFetch = get().lastInitPageFetchTime || 0;
+        if (Date.now() - lastFetch < 10000) {
+            console.log('[prefetchTownData] Skipped. Cached recently.');
+            return;
+        }
         try {
             const headers = await getAuthHeaders();
             if (token) {
@@ -298,6 +304,7 @@ export const createProfileSlice = (
                     partyMembers: data.party_members || [],
                     locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
                     gossipData: data.gossip_data,
+                    lastInitPageFetchTime: Date.now(),
                 });
 
                 if (typeof window !== 'undefined' && data.profile?.current_location_id) {

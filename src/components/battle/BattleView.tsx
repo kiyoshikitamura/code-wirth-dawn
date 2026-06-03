@@ -335,8 +335,15 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         const origin = urlParams.get('origin');
         const days = urlParams.get('days');
 
+        const isEncounterType = bType === 'bandit_ambush' || bType === 'bounty_hunter_ambush' || bType === 'random_encounter';
+
+        // 厳密なパラメータチェックと Zustand ストアからのフォールバック適用
+        const fallbackLocation = userProfile?.current_location_id || '1001';
+        const finalTarget = (target && target !== 'undefined' && target !== 'null') ? target : fallbackLocation;
+        const finalOrigin = (origin && origin !== 'undefined' && origin !== 'null') ? origin : fallbackLocation;
+
         // 移動中エンカウント時の結果反映処理 (v27.4 追加)
-        if ((bType === 'bandit_ambush' || bType === 'bounty_hunter_ambush' || bType === 'random_encounter') && target && origin) {
+        if (isEncounterType) {
             try {
                 const token = await getAuthToken();
                 const res = await fetch('/api/move/encounter-result', {
@@ -348,8 +355,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     body: JSON.stringify({
                         encounter_type: bType === 'bounty_hunter_ambush' ? 'bounty_hunter_ambush' : 'random_encounter',
                         result: resultType === 'win' ? 'win' : 'lose',
-                        target_location_id: target,
-                        origin_location_id: origin,
+                        target_location_id: finalTarget,
+                        origin_location_id: finalOrigin,
                         travel_days: Number(days || 1)
                     })
                 });

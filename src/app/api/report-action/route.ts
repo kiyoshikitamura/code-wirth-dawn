@@ -10,8 +10,10 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
+        const authHeader = req.headers.get('authorization');
+        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
         const supabaseAuth = createAuthClient(req);
-        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token || undefined);
         if (!user || authError) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
