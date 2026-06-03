@@ -144,16 +144,22 @@ export function useInnPageState() {
 
     // Initial load — init-page APIで一括取得
     useEffect(() => {
+        if (!_hasHydrated) return; // ハイドレーション完了まで待機
+
         const loadInitData = async () => {
-            // キャッシュチェック（直近10秒以内ならスキップ）
             const store = useGameStore.getState();
             const lastFetch = store.lastInitPageFetchTime || 0;
             const hasData = store.userProfile && store.worldState;
             
-            if (hasData && Date.now() - lastFetch < 10000) {
-                console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
+            // SWRパターン: メモリ上にデータがあれば即表示し、ローディング状態を解除
+            if (hasData) {
                 setLoading(false);
                 setInitialLoadComplete(true);
+            }
+
+            // キャッシュチェック（直近60秒以内ならAPI取得自体をスキップ）
+            if (hasData && Date.now() - lastFetch < 60000) {
+                console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
                 return;
             }
 
@@ -252,7 +258,7 @@ export function useInnPageState() {
             }
         };
         loadInitData();
-    }, [router]);
+    }, [router, _hasHydrated]);
 
     // linkIdentity コールバック処理
     useEffect(() => {
@@ -496,9 +502,14 @@ export function useInnPageState() {
         const lastFetch = store.lastInitPageFetchTime || 0;
         const hasQuests = store.locationQuests;
 
-        // 直近10秒以内の新鮮なデータがあれば、API通信を一切行わない
-        if (hasQuests && Date.now() - lastFetch < 10000) {
+        // SWR: すでにメモリ上にデータがあれば即表示し、ローディング状態を排除
+        if (hasQuests) {
             setAllQuests(hasQuests.quests || []);
+            setLoadingQuests(false);
+        }
+
+        // キャッシュチェック（直近60秒以内ならスキップ）
+        if (hasQuests && Date.now() - lastFetch < 60000) {
             return;
         }
 
@@ -511,14 +522,15 @@ export function useInnPageState() {
                     cachedQuests = JSON.parse(cached);
                     if (cachedQuests) {
                         useGameStore.setState({ locationQuests: cachedQuests });
+                        setAllQuests(cachedQuests.quests || []);
+                        setLoadingQuests(false);
                     }
                 }
             } catch {}
         }
 
-        if (cachedQuests) {
-            setAllQuests(cachedQuests.quests || []);
-        } else {
+        // キャッシュが全く存在しない場合のみ、フォアグラウンドローディングを表示
+        if (!cachedQuests) {
             setLoadingQuests(true);
         }
 

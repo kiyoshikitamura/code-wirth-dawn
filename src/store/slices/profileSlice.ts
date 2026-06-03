@@ -277,9 +277,9 @@ export const createProfileSlice = (
     setGossipData: (data) => set({ gossipData: data }),
 
     prefetchTownData: async (token?: string) => {
-        // キャッシュチェック（直近10秒以内ならスキップ）
+        // キャッシュチェック（直近60秒以内ならスキップ）
         const lastFetch = get().lastInitPageFetchTime || 0;
-        if (Date.now() - lastFetch < 10000) {
+        if (Date.now() - lastFetch < 60000) {
             console.log('[prefetchTownData] Skipped. Cached recently.');
             return;
         }

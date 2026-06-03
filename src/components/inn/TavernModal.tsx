@@ -65,20 +65,23 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             const lastFetch = store.lastInitPageFetchTime || 0;
             const hasShadows = tavernShadows.length > 0;
 
-            // 1. 直近10秒以内の新鮮なデータがあれば、API通信を一切行わない
-            if (hasShadows && Date.now() - lastFetch < 10000) {
+            // SWR: すでにメモリ上にデータがあれば即表示し、ローディング状態を排除
+            if (hasShadows) {
                 setLoading(false);
+            }
+
+            // 直近60秒以内の新鮮なデータがあれば、API通信を一切行わない
+            if (hasShadows && Date.now() - lastFetch < 60000) {
                 return;
             }
 
-            // 2. すでに Zustand にデータがあれば、ローディング不要でバックグラウンド更新
+            // すでに Zustand にデータがある場合は、バックグラウンド更新のみ行い、ローディングは表示しない
             if (hasShadows) {
-                setLoading(false);
                 Promise.all([fetchPartyData(), fetchShadows()]);
                 return;
             }
 
-            // 3. Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
+            // Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
             let hasCache = false;
             try {
                 const cacheKey = `tavern_shadows_cache_${locationId}`;
@@ -111,7 +114,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 console.warn(e);
             }
 
-            // 4. キャッシュがあればバックグラウンド更新、なければローディングを表示して通信
+            // キャッシュがあればバックグラウンド更新、なければローディングを表示して通信
             if (hasCache) {
                 Promise.all([fetchPartyData(), fetchShadows()]);
             } else {
