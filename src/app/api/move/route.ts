@@ -302,7 +302,7 @@ export async function POST(req: Request) {
         let shareDataList: any[] = [];
         await supabaseService
             .from('user_visited_locations')
-            .upsert({ user_id: profile.id, location_id: targetData.id }, { onConflict: 'user_id,location_id' });
+            .insert({ user_id: profile.id, location_id: targetData.id });
 
         const { count: visitedCount } = await supabaseService
             .from('user_visited_locations')

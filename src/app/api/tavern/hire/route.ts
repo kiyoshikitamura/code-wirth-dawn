@@ -60,7 +60,7 @@ export async function POST(req: Request) {
             try {
                 await supabaseAdmin
                     .from('user_npc_encounters')
-                    .upsert({ user_id, npc_slug: shadow.slug }, { onConflict: 'user_id,npc_slug', ignoreDuplicates: true });
+                    .insert({ user_id, npc_slug: shadow.slug });
             } catch (e) {
                 console.warn('[Hire] NPC encounter recording failed (non-critical):', e);
             }

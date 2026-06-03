@@ -497,7 +497,7 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
     try {
         await supabaseService
             .from('user_item_history')
-            .upsert({ user_id: profile.id, item_id: item.id }, { onConflict: 'user_id,item_id', ignoreDuplicates: true });
+            .insert({ user_id: profile.id, item_id: item.id });
     } catch (histErr) {
         console.warn('[Shop] Item history recording failed:', histErr);
     }

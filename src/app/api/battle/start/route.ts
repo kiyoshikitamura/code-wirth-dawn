@@ -62,10 +62,10 @@ export async function POST(req: Request) {
                     user_id: userId,
                     enemy_id: eid,
                 }));
-                const { error: upsertError } = await supabaseServer
+                 const { error: insertError } = await supabaseServer
                     .from('user_bestiary')
-                    .upsert(bestiaryRows, { onConflict: 'user_id,enemy_id', ignoreDuplicates: true });
-                if (upsertError) throw upsertError;
+                    .insert(bestiaryRows);
+                if (insertError) throw insertError;
             }
         } catch (bestiaryErr) {
             // Non-critical: log but don't fail the battle start

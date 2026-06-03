@@ -93,7 +93,7 @@ export async function GET(req: Request) {
                     if (user) {
                         await supabaseAdmin
                             .from('user_npc_encounters')
-                            .upsert({ user_id: user.id, npc_slug: data.slug }, { onConflict: 'user_id,npc_slug', ignoreDuplicates: true });
+                            .insert({ user_id: user.id, npc_slug: data.slug });
                     }
                 }
             } catch (e) {

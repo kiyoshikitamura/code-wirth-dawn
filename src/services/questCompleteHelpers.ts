@@ -160,7 +160,7 @@ export async function grantRewardItems(
 
             try {
                 await supabase.from('user_item_history')
-                    .upsert({ user_id, item_id: itemId }, { onConflict: 'user_id,item_id', ignoreDuplicates: true });
+                    .insert({ user_id, item_id: itemId });
             } catch (histErr) {
                 console.warn('[QuestComplete] Item history recording failed:', histErr);
             }
@@ -409,7 +409,7 @@ export async function persistLootPool(
 
         try {
             await supabase.from('user_item_history')
-                .upsert({ user_id, item_id: loot.itemId }, { onConflict: 'user_id,item_id', ignoreDuplicates: true });
+                .insert({ user_id, item_id: loot.itemId });
         } catch (histErr) {
             console.warn('[QuestComplete] Loot item history recording failed:', histErr);
         }
