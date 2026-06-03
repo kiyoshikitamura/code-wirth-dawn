@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         };
 
         // Create Battle Session
-        const { data: session, error } = await client
+        const { data: session, error } = await supabaseServer
             .from('battle_sessions')
             .insert({
                 user_id: userId,

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 /**
  * POST /api/battle/action
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         const status = allDead ? 'victory' : 'active';
 
         // Persist the state
-        const { error: updateError } = await client
+        const { error: updateError } = await supabaseServer
             .from('battle_sessions')
             .update({
                 player_state: playerState,

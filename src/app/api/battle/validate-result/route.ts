@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { createHmac, randomBytes } from 'crypto';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 const HMAC_SECRET = process.env.ADMIN_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'fallback-battle-secret';
 
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
 
         // 5. セッションのstatusを確定状態に更新
         if (validatedResult !== 'active') {
-            await client
+            await supabaseServer
                 .from('battle_sessions')
                 .update({ 
                     status: validatedResult,
