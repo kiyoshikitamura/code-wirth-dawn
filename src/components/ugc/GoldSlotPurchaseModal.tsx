@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Coins, Package, Upload, Send, X, ShoppingCart, AlertTriangle, Loader2, Check } from 'lucide-react';
 import { getAuthToken } from '@/lib/authToken';
 
@@ -44,6 +45,7 @@ export default function GoldSlotPurchaseModal({
     usageData,
     onPurchased,
 }: Props) {
+    const router = useRouter();
     const [purchasing, setPurchasing] = useState<SlotType | null>(null);
     const [successType, setSuccessType] = useState<SlotType | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -286,7 +288,7 @@ export default function GoldSlotPurchaseModal({
                                 ゴールドが不足しています。
                             </span>
                             <button
-                                onClick={() => { onClose(); window.location.href = '/inn'; }}
+                                onClick={() => { onClose(); router.push('/inn'); }}
                                 className="text-[10px] text-amber-400 underline hover:text-amber-300 mt-0.5"
                             >
                                 宿屋 → アカウント設定 へ移動

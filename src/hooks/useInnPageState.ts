@@ -23,7 +23,13 @@ type ModalType = FacilityType | 'workshop' | 'history' | 'questBoard' | 'gossip'
 export function useInnPageState() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated } = useGameStore();
+
+    useEffect(() => {
+        if (_hasHydrated && userProfile && worldState) {
+            setLoading(false);
+        }
+    }, [_hasHydrated, userProfile, worldState]);
 
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
     const bgmKey = getBgmKey(
@@ -140,7 +146,8 @@ export function useInnPageState() {
         const loadInitData = async () => {
             try {
                 let token = await (await import('@/lib/authToken')).getAuthToken();
-                if (!token) {
+                const isOauthCallback = typeof window !== 'undefined' && window.location.search.includes('code=');
+                if (!token && isOauthCallback) {
                     // Google OAuth 直後の書き込みタイムラグ対策として1000ms待ってリトライ
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     token = await (await import('@/lib/authToken')).getAuthToken();
@@ -178,6 +185,18 @@ export function useInnPageState() {
                         locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
                         gossipData: data.gossip_data
                     });
+
+                    if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                        const locId = data.profile.current_location_id;
+                        try {
+                            if (data.tavern_shadows) {
+                                sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                            }
+                            if (data.location_quests) {
+                                sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                            }
+                        } catch {}
+                    }
 
                     // Reputation
                     if (data.reputation !== undefined) {
@@ -444,8 +463,23 @@ export function useInnPageState() {
     const fetchQuestsForBoard = async () => {
         if (!userProfile?.id || !worldState?.location_name) return;
 
+        const locationId = userProfile.current_location_id || '';
+        const cacheKey = `location_quests_cache_${locationId}`;
+
         // すでにキャッシュがある場合はそれを使用し、バックグラウンドでのみフェッチする
-        const cachedQuests = useGameStore.getState().locationQuests;
+        let cachedQuests = useGameStore.getState().locationQuests;
+        if (!cachedQuests && typeof window !== 'undefined') {
+            try {
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached) {
+                    cachedQuests = JSON.parse(cached);
+                    if (cachedQuests) {
+                        useGameStore.setState({ locationQuests: cachedQuests });
+                    }
+                }
+            } catch {}
+        }
+
         if (cachedQuests) {
             setAllQuests(cachedQuests.quests || []);
         } else {
@@ -453,18 +487,22 @@ export function useInnPageState() {
         }
 
         try {
-            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${userProfile.current_location_id || ''}`);
+            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${locationId}`);
             if (res.ok) {
                 const data = await res.json();
+                const questData = {
+                    quests: data.quests || [],
+                    special_quests: data.special_quests || [],
+                    normal_quests: data.normal_quests || []
+                };
                 setAllQuests(data.quests || []);
                 // キャッシュの更新
-                useGameStore.setState({
-                    locationQuests: {
-                        quests: data.quests || [],
-                        special_quests: data.special_quests || [],
-                        normal_quests: data.normal_quests || []
-                    }
-                });
+                useGameStore.setState({ locationQuests: questData });
+                if (typeof window !== 'undefined') {
+                    try {
+                        sessionStorage.setItem(cacheKey, JSON.stringify(questData));
+                    } catch {}
+                }
             }
         } catch (e) {
             console.error("クエスト読み込み失敗", e);
@@ -566,10 +604,6 @@ export function useInnPageState() {
 
             // ハブ情報を先行一括ロードしてキャッシュを更新
             await useGameStore.getState().prefetchTownData();
-
-            await useGameStore.getState().fetchUserProfile();
-            await useGameStore.getState().fetchHubState();
-            await useGameStore.getState().fetchWorldState();
             showToast('名もなき旅人の拠所へ帰還しました');
         } catch (e) {
             console.error("Failed to return to hub", e);
@@ -594,10 +628,6 @@ export function useInnPageState() {
 
             // 遷移先の拠点情報を先行一括ロードしてキャッシュを更新
             await useGameStore.getState().prefetchTownData();
-
-            await useGameStore.getState().fetchUserProfile();
-            await useGameStore.getState().fetchHubState();
-            await useGameStore.getState().fetchWorldState();
             showToast('直前の拠点へ戻りました');
         } catch (e) {
             console.error("Failed to leave hub", e);

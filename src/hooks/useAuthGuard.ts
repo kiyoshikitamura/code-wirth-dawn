@@ -75,12 +75,6 @@ export function useAuthGuard(): void {
                 // セッションが無効の場合、リフレッシュを試みる
                 // (ネットワーク瞬断でトークンリフレッシュが失敗した可能性がある)
                 if (!token) {
-                    // 1000ms待ってリトライ (Google OAuth直後の書き込みタイムラグ対策)
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    const retryToken = await getAuthToken();
-                    if (retryToken) return; // リトライで復帰
-
-                    // それでもセッションがない場合はタイトルへ
                     clearGameStarted();
                     clearAuthTokenCache();
                     router.replace('/title');

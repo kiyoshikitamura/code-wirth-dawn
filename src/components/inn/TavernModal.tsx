@@ -61,12 +61,52 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     useEffect(() => {
         if (isOpen) {
+            // 1. すでに Zustand にデータがあれば、ローディング不要でバックグラウンド更新
             if (tavernShadows.length > 0) {
                 setLoading(false);
                 Promise.all([fetchPartyData(), fetchShadows()]);
+                return;
+            }
+
+            // 2. Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
+            let hasCache = false;
+            try {
+                const cacheKey = `tavern_shadows_cache_${locationId}`;
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        const asApiFormat = parsed.map((s: any) => ({
+                            profile_id: s.id || s.profile_id,
+                            name: s.name,
+                            epithet: s.epithet || '',
+                            level: s.level || 1,
+                            job_class: s.job_class || 'Mercenary',
+                            origin_type: s.origin_type || 'system_mercenary',
+                            contract_fee: s.contract_fee || ((s.level || 1) * 50),
+                            stats: s.stats || { atk: 0, def: 0, hp: s.durability || 100 },
+                            signature_deck_preview: s.signature_deck_preview || [],
+                            subscription_tier: s.subscription_tier || 'free',
+                            icon_url: s.icon_url || s.avatar_url,
+                            npc_image_url: s.npc_image_url || s.avatar_url,
+                            flavor_text: s.flavor_text,
+                            slug: s.slug || undefined,
+                        }));
+                        setTavernShadows(asApiFormat);
+                        setLoading(false);
+                        hasCache = true;
+                    }
+                }
+            } catch (e) {
+                console.warn(e);
+            }
+
+            // 3. キャッシュがあればバックグラウンド更新、なければローディングを表示して通信
+            if (hasCache) {
+                Promise.all([fetchPartyData(), fetchShadows()]);
             } else {
                 setLoading(true);
-                Promise.all([fetchPartyData(), fetchShadowsWithCache()]).finally(() => setLoading(false));
+                Promise.all([fetchPartyData(), fetchShadows()]).finally(() => setLoading(false));
             }
         }
     }, [isOpen, locationId, tavernShadows.length]);

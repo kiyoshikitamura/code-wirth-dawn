@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { ShoppingBag, Coins, Lock, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthToken } from '@/lib/authToken';
@@ -53,6 +54,7 @@ interface Props {
 }
 
 export default function ShopModal({ onClose }: Props) {
+    const router = useRouter();
     const { gold, fetchInventory, userProfile, inventory } = useGameStore();
     const [items, setItems] = useState<ShopItem[]>([]);
     const [rumoredItems, setRumoredItems] = useState<ShopItem[]>([]);
@@ -227,7 +229,7 @@ export default function ShopModal({ onClose }: Props) {
                     await useGameStore.getState().fetchUserProfile();
                     await fetchInventory();
                     onClose();
-                    window.location.href = '/inn?betrayal=true';
+                    router.push('/inn?betrayal=true');
                 } else {
                     setPurchaseResultMsg(`売却しました！ (+${data.sold_price} G)`);
                     setPurchaseIsError(false);
