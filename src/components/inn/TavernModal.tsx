@@ -6,6 +6,7 @@ import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
 import { toJpJobClass } from '@/lib/jobClass';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
+import { useGameStore } from '@/store/gameStore';
 
 interface TavernModalProps {
     isOpen: boolean;
@@ -26,10 +27,24 @@ interface MyHeroic {
 }
 
 export default function TavernModal({ isOpen, onClose, userProfile, locationId, reputationScore = 0, locationSlug }: TavernModalProps) {
+    const { 
+        tavernShadows, 
+        partyMembers, 
+        setTavernShadows, 
+        setPartyMembers,
+        gold,
+        userProfile: storeUserProfile
+    } = useGameStore();
+
+    const activeGold = storeUserProfile?.gold ?? userProfile.gold;
+
     const [activeTab, setActiveTab] = useState<'hire' | 'register' | 'heroic'>('hire');
-    const [shadows, setShadows] = useState<ShadowSummary[]>([]);
-    const [currentParty, setCurrentParty] = useState<PartyMember[]>([]);
-    const [loading, setLoading] = useState(true);
+    const shadows = tavernShadows;
+    const currentParty = partyMembers;
+
+    const [loading, setLoading] = useState(() => {
+        return tavernShadows.length === 0;
+    });
     const [hirePhase, setHirePhase] = useState<'idle' | 'loading' | 'done'>('idle');
     const [hireResultMsg, setHireResultMsg] = useState<string>('');
     const [reportTarget, setReportTarget] = useState<ShadowSummary | null>(null);
@@ -46,8 +61,13 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     useEffect(() => {
         if (isOpen) {
-            setLoading(true);
-            Promise.all([fetchPartyData(), fetchShadowsWithCache()]).finally(() => setLoading(false));
+            if (tavernShadows.length > 0) {
+                setLoading(false);
+                Promise.all([fetchPartyData(), fetchShadows()]);
+            } else {
+                setLoading(true);
+                Promise.all([fetchPartyData(), fetchShadowsWithCache()]).finally(() => setLoading(false));
+            }
         }
     }, [isOpen, locationId]);
 
@@ -67,7 +87,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 headers: authHeaders,
             });
             const data = await res.json();
-            if (data.party) setCurrentParty(data.party);
+            if (data.party) setPartyMembers(data.party);
         } catch (e) {
             console.error("Failed to fetch party data", e);
         }
@@ -81,8 +101,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    // gossipのShadowSummary形式をTavernModalのShadowSummary形式に変換
-                    // gossipはprofile_idをidとして返すがTavernModalはprofile_idを期待
                     const asApiFormat = parsed.map((s: any) => ({
                         profile_id: s.id || s.profile_id,
                         name: s.name,
@@ -99,12 +117,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         flavor_text: s.flavor_text,
                         slug: s.slug || undefined,
                     }));
-                    setShadows(asApiFormat);
+                    setTavernShadows(asApiFormat);
                     return;
                 }
             }
         } catch { /* sessionStorage unavailable */ }
-        // キャッシュなし → API取得
         await fetchShadows();
     };
 
@@ -113,8 +130,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             const res = await fetch(`/api/tavern/list?location_id=${locationId}&user_id=${userProfile.id}`);
             const data = await res.json();
             if (data.shadows) {
-                setShadows(data.shadows);
-                // 取得結果をキャッシュに保存（次回gossip↔tavern間で共有）
+                setTavernShadows(data.shadows);
                 try {
                     sessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(data.shadows));
                 } catch { /* ignore */ }
@@ -161,9 +177,41 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const handleHire = async (shadow: ShadowSummary) => {
         if (isAlreadyHired(shadow)) { setHireResultMsg('この冒険者は既に契約済みです。'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
         if (currentParty.length >= 4) { setHireResultMsg('パーティが満員です。'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
-        if (userProfile.gold < shadow.contract_fee) { setHireResultMsg('ゴールドが足りません！'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
+        if (activeGold < shadow.contract_fee) { setHireResultMsg('ゴールドが足りません！'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
 
         setHirePhase('loading');
+
+        // スナップショット（バックアップ）
+        const previousParty = [...partyMembers];
+        const previousGold = gold;
+        const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
+
+        // 楽観的UI用の新規メンバーオブジェクト
+        const optimisticMember: PartyMember = {
+            ...shadow,
+            id: shadow.profile_id || `temp-${Date.now()}`,
+            owner_id: userProfile.id,
+            durability: shadow.stats?.hp || 100,
+            max_durability: shadow.stats?.hp || 100,
+            hp: shadow.stats?.hp || 100,
+            max_hp: shadow.stats?.hp || 100,
+            atk: shadow.stats?.atk || 0,
+            def: shadow.stats?.def || 0,
+            is_active: true,
+            source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
+        } as any;
+
+        // Zustandの楽観的更新
+        const newGold = Math.max(0, gold - shadow.contract_fee);
+        useGameStore.setState({
+            gold: newGold,
+            partyMembers: [...partyMembers, optimisticMember],
+            userProfile: storeUserProfile ? {
+                ...storeUserProfile,
+                gold: newGold
+            } : null
+        });
+
         try {
             const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/tavern/hire', {
@@ -176,27 +224,28 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-                setHireResultMsg(`雇用に失敗しました: ${errData.error || '不明なエラー'}`);
-                setHirePhase('done');
-                setTimeout(() => setHirePhase('idle'), 2500);
-                return;
+                throw new Error(errData.error || '不明なエラー');
             }
             const data = await res.json();
             if (data.success) {
                 setHireResultMsg('パーティに加入した！ ✨');
                 setHirePhase('done');
-                Promise.all([fetchPartyData(), fetchShadows()]);
-                // ゴールド消費をUI即時反映
-                const { useGameStore } = await import('@/store/gameStore');
-                await useGameStore.getState().fetchUserProfile();
+                // バックグラウンドで同期
+                fetchPartyData();
+                fetchShadows();
+                useGameStore.getState().fetchUserProfile();
                 setTimeout(() => setHirePhase('idle'), 2200);
             } else {
-                setHireResultMsg(`エラー: ${data.error || '不明なエラー'}`);
-                setHirePhase('done');
-                setTimeout(() => setHirePhase('idle'), 2500);
+                throw new Error(data.error || '不明なエラー');
             }
-        } catch (e) {
-            setHireResultMsg('通信エラーが発生しました');
+        } catch (e: any) {
+            // ロールバック
+            useGameStore.setState({
+                gold: previousGold,
+                partyMembers: previousParty,
+                userProfile: previousProfile
+            });
+            setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
             setHirePhase('done');
             setTimeout(() => setHirePhase('idle'), 2500);
         }
@@ -205,6 +254,15 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const handleDismiss = async (memberId: string, memberName: string) => {
         if (!window.confirm(`${memberName} との契約を解除しますか？\nパーティから除外されます。`)) return;
         setDismissing(true);
+
+        // スナップショット
+        const previousParty = [...partyMembers];
+
+        // 楽観的除外
+        useGameStore.setState({
+            partyMembers: partyMembers.filter(m => m.id !== memberId)
+        });
+
         try {
             const authHeaders = await getAuthHeaders();
             const res = await fetch(`/api/party/member?id=${memberId}`, {
@@ -214,16 +272,18 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             if (res.ok) {
                 setHireResultMsg(`${memberName} との契約を解除した。`);
                 setHirePhase('done');
-                await fetchPartyData();
+                fetchPartyData();
                 setTimeout(() => setHirePhase('idle'), 2000);
             } else {
                 const err = await res.json().catch(() => ({ error: 'Unknown' }));
-                setHireResultMsg(`解雇に失敗: ${err.error}`);
-                setHirePhase('done');
-                setTimeout(() => setHirePhase('idle'), 2500);
+                throw new Error(err.error || '不明なエラー');
             }
-        } catch {
-            setHireResultMsg('通信エラーが発生しました');
+        } catch (e: any) {
+            // ロールバック
+            useGameStore.setState({
+                partyMembers: previousParty
+            });
+            setHireResultMsg(`解雇に失敗: ${e.message}`);
             setHirePhase('done');
             setTimeout(() => setHirePhase('idle'), 2500);
         } finally {
@@ -568,7 +628,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                 {/* Row 2: スキルタグ */}
                                                 {shadow.signature_deck_preview.length > 0 && (
                                                     <div className="flex gap-1 flex-wrap mt-1.5 ml-11">
-                                                        {shadow.signature_deck_preview.slice(0, 4).map((card, i) => (
+                                                        {shadow.signature_deck_preview.slice(0, 4).map((card: string, i: number) => (
                                                             <span key={i} className="px-1.5 py-0.5 bg-[#e3d5b8] text-[#5d4037] text-[9px] rounded border border-[#a38b6b]">{card}</span>
                                                         ))}
                                                         {shadow.signature_deck_preview.length > 4 && (
@@ -647,7 +707,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                         </div>
                                                         {shadow.signature_deck_preview.length > 0 && (
                                                             <div className="flex gap-1 flex-wrap mt-1.5 ml-11">
-                                                                {shadow.signature_deck_preview.slice(0, 4).map((card, i) => (
+                                                                {shadow.signature_deck_preview.slice(0, 4).map((card: string, i: number) => (
                                                                     <span key={i} className="px-1.5 py-0.5 bg-amber-100 text-[#5d4037] text-[9px] rounded border border-amber-300">{card}</span>
                                                                 ))}
                                                                 {shadow.signature_deck_preview.length > 4 && (

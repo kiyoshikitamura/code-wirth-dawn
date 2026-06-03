@@ -306,6 +306,13 @@ export default function WorldMapPage() {
                 // 馬（馬車）の移動SE を再生してからアニメーション開始 (spec_v14.1 §5.3)
                 soundManager?.playSE('se_travel_horse');
 
+                // バックグラウンドで次の拠点のデータをプリフェッチ (先行ロード)
+                getAuthToken().then(token => {
+                    useGameStore.getState().prefetchTownData(token || undefined);
+                }).catch(err => {
+                    console.error('Failed to prefetch town data during travel:', err);
+                });
+
                 // Animation Simulation
                 const steps = Math.min(5, data.travel_days);
                 for (let i = 1; i <= steps; i++) {

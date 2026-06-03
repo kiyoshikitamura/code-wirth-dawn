@@ -38,6 +38,11 @@ export type ProfileSliceActions = Pick<
     | 'setHasHydrated'
     | 'setShowStatus'
     | 'clearStorage'
+    | 'setTavernShadows'
+    | 'setPartyMembers'
+    | 'setLocationQuests'
+    | 'setGossipData'
+    | 'prefetchTownData'
 >;
 
 export const createProfileSlice = (
@@ -264,5 +269,42 @@ export const createProfileSlice = (
             return true;
         }
         return false;
+    },
+
+    setTavernShadows: (shadows) => set({ tavernShadows: shadows }),
+    setPartyMembers: (members) => set({ partyMembers: members }),
+    setLocationQuests: (quests) => set({ locationQuests: quests }),
+    setGossipData: (data) => set({ gossipData: data }),
+
+    prefetchTownData: async (token?: string) => {
+        try {
+            const headers = await getAuthHeaders();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const res = await fetch('/api/init-page', { headers });
+            if (res.ok) {
+                const data = await res.json();
+                
+                const equipBonus = data.profile?.equipment_bonus || get().equipBonus;
+                
+                set({
+                    userProfile: data.profile,
+                    gold: data.profile?.gold ?? get().gold,
+                    equipBonus: equipBonus,
+                    hubState: data.hub_state,
+                    worldState: data.world_state,
+                    tavernShadows: data.tavern_shadows || [],
+                    partyMembers: data.party_members || [],
+                    locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
+                    gossipData: data.gossip_data,
+                });
+                console.log('[prefetchTownData] Prefetch completed successfully & store cached.');
+            } else {
+                console.warn('[prefetchTownData] Prefetch API returned non-ok status:', res.status);
+            }
+        } catch (e) {
+            console.error('[prefetchTownData] Error during prefetch:', e);
+        }
     },
 });

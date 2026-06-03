@@ -69,4 +69,20 @@ export interface GameState {
 
     _hasHydrated: boolean;
     setHasHydrated: (state: boolean) => void;
+
+    // 拠点データキャッシュ
+    tavernShadows: any[];
+    partyMembers: any[];
+    locationQuests: { quests: any[]; special_quests: any[]; normal_quests: any[] } | null;
+    gossipData: any;
+    
+    // 拠点キャッシュ更新アクション
+    setTavernShadows: (shadows: any[]) => void;
+    setPartyMembers: (members: any[]) => void;
+    setLocationQuests: (quests: any) => void;
+    setGossipData: (data: any) => void;
+
+    // 先行ロード用アクション
+    prefetchTownData: (token?: string) => Promise<void>;
 }
+

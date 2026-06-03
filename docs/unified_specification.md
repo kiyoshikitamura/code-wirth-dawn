@@ -350,6 +350,13 @@
 * **データ初期化処理（loadInitData）でのトークンリトライ**: Google OAuth完了直後のセッション確立タイムラグに対応するため、画面ガード（`useAuthGuard`）側だけでなく、 `/inn` 画面マウント時の初期データ取得処理（`loadInitData`）においても、トークン取得失敗時に 1000ms 待機して再取得するリトライ機構を実装。過渡期における 401（認証エラー）による誤ったタイトルリダイレクトを防止し、初期読込の堅牢性を向上。
 * **存在しないカラム（region）の結合フェッチの除外による500クラッシュ防止**: 統合API（`/api/init-page`）にて、`locations` テーブルから存在しない `region` カラムを select 指定したことで発生する PostgreSQL 42703 エラー (500クラッシュ) を防止するため、`locations` の結合取得項目から `region` を除外。不必要なカラム参照と SQL エラーによる API の異常終了を排除し、初期データ読み込みの安定性を向上。
 * **宿泊・移動・祈り・戦闘結果APIにおける加齢/総経過日数のデータ型およびカラム指定不整合の防止**: 加齢計算 `processAging` の引数に誤って `accumulated_days` (総経過日数) を渡し、戻り値の端数日数 `newAgeDays` を `accumulated_days` カラムに上書き更新すると、キャラクターの総経過日数が破損し、急激な加齢ステータス減少や宿泊の失敗を引き起こす。経過日数と加齢用端数日数の役割を正しく整理し、更新時は `accumulated_days: accumulated_days + days` と `age_days: newAgeDays` に正しく分離して保存し、SELECT時にも `age_days` を漏れなく含めること。
+
+### 11.6 一括ロード（Eager Load）と先行バックグラウンドプリフェッチ
+* **仕様**: 拠点遷移時や各施設（酒場・ギルド・噂話）での個別ローディングを解消するため、`/api/init-page` で各施設データ（`tavern_shadows`, `party_members`, `location_quests`, `gossip_data`）をサーバーサイドで並列一括取得（Eager Load）する。
+* **先行バックグラウンドプリフェッチ**: ワールドマップ移動中（移動アニメーション中）に裏側で次の拠点の `/api/init-page` を先行非同期フェッチ（`prefetchTownData`）し、Zustand キャッシュに格納。これにより、街到着後の「拠点情報を取得中...」などのローディング画面を完全にスキップ（0ms描画）する。
+* **酒場での楽観的UI更新（Optimistic Updates）**: 傭兵雇用（`handleHire`）や契約解除（`handleDismiss`）の実行時、Zustand 内の所持金（ゴールド）およびパーティメンバー配列を即座に更新してUIに反映する。API 通信成功時はバックグラウンドで同期し、失敗時は直ちに以前のスナップショットへと自動ロールバックを実行する。
+* **ギルドのキャッシュフェッチ**: クエスト掲示板（`QuestBoardModal`）起動時は、Zustand にキャッシュされている `locationQuests` を即座に表示して待機時間を排除。バックグラウンドで最新データをフェッチしてキャッシュを同期する（SWRパターン）。
+
 * **サーバーサイドAPIにおける RLS 回避のための特権クライアント（supabaseService）の統一**: サーバーサイド API（例：`/api/user/history-archive` や `/api/inn/rest`）において、ユーザー認証（JWTの検証等）を完了した後は、RLS（Row Level Security）ポリシーの適用漏れや適用差異による静かなクエリ失敗を防止するため、データの取得・更新クエリには一貫してサービスロールキーを使用する `supabaseService`（特権クライアント）を使用する設計とすること。
 * **フロントエンドとサーバーサイド間での Bearer 認証ヘッダーの引き継ぎ**: 認証済みのユーザー情報（JWT）に依存するサーバーサイド API（例：宿屋の宿泊、ヒストリーアーカイブなど）をフロントエンドから fetch する際は、漏れなく `Authorization: Bearer <token>` を headers に付与する設計とする。引き継ぎ漏れがあると API サーバー側で 401 Unauthorized エラーとなり処理が中断する。
 

@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { UserProfile, ScenarioReward, LocationDB } from '@/types/game';
 import { GROWTH_RULES } from '@/constants/game_rules';
+import { supabaseServer } from '@/lib/supabase-admin';
+import { calcAlignmentPcts, getUserAlignmentPcts } from '@/lib/alignment';
 
 // v15.0: game_rules.ts に一元化（ATK/DEF 上限廃止・ランダム成長対応）
 const BASE_HP = GROWTH_RULES.BASE_HP_FALLBACK;
@@ -342,4 +344,271 @@ export class QuestService {
 
         return { valid: true };
     }
+
+    static async getQuestsForLocation(userId: string, locationId: string | null): Promise<{ quests: any[]; special_quests: any[]; normal_quests: any[] }> {
+        const { data: user, error: uError } = await supabaseServer
+            .from('user_profiles')
+            .select('id, level, gold, vitality, order_pts, chaos_pts, justice_pts, evil_pts, current_location_id')
+            .eq('id', userId)
+            .single();
+
+        if (uError || !user) {
+            throw new Error(uError?.message || 'User not found');
+        }
+
+        const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult] = await Promise.all([
+            supabaseServer.from('world_states').select('id, prosperity_level, location_name').maybeSingle(),
+            supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
+            supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
+            supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
+            supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
+            locationId
+                ? supabaseServer.from('locations').select('name, ruling_nation_id').eq('id', locationId).maybeSingle()
+                : Promise.resolve({ data: null }),
+            supabaseServer.from('scenarios')
+                .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
+                .in('quest_type', ['normal', 'special'])
+                .not('slug', 'like', 'ugc_%')
+                .limit(200),
+        ]);
+
+        const worldState = worldStateResult.data;
+        const inventory = inventoryResult.data;
+        const reputations = reputationsResult.data;
+        const completedQuests = completedQuestsResult.data;
+
+        let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
+        if (locationResult.data?.name) {
+            const { data: ws } = await supabaseServer.from('world_states')
+                .select('controlling_nation')
+                .eq('location_name', locationResult.data.name)
+                .maybeSingle();
+            if (ws?.controlling_nation) {
+                currentNationSlug = ws.controlling_nation;
+            }
+        }
+        const quests = scenariosResult.data || [];
+        const currentProsperity = worldState?.prosperity_level || 3;
+
+        let allWorldStates = allWorldStatesResult.data || [];
+
+        const { resetStaleAlignmentScores } = await import('@/services/worldStateReset');
+        const { resetCount } = await resetStaleAlignmentScores();
+        if (resetCount > 0) {
+            const { data: refreshed } = await supabaseServer
+                .from('world_states')
+                .select('id, order_score, chaos_score, justice_score, evil_score, updated_at');
+            if (refreshed) allWorldStates = refreshed;
+        }
+
+        let worldAlignPcts = { order_ratio: 50, justice_ratio: 50, chaos_ratio: 50, evil_ratio: 50 };
+        if (allWorldStates && allWorldStates.length > 0) {
+            let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
+            for (const ws of allWorldStates) {
+                totalOrder += (ws as any).order_score || 0;
+                totalChaos += (ws as any).chaos_score || 0;
+                totalJustice += (ws as any).justice_score || 0;
+                totalEvil += (ws as any).evil_score || 0;
+            }
+            worldAlignPcts = calcAlignmentPcts(totalOrder, totalChaos, totalJustice, totalEvil);
+        }
+
+        const ownedItemIds = new Set((inventory || []).map((i: any) => String(i.item_id)));
+
+        const repMap: Record<string, number> = {};
+        for (const rep of (reputations || [])) {
+            repMap[rep.location_name] = rep.score || 0;
+        }
+
+        const completedQuestIds = new Set((completedQuests || []).map((q: any) => String(q.scenario_id)));
+
+        const slugToIdMap: Record<string, string> = {};
+        for (const q of quests) {
+            if (q.slug) slugToIdMap[q.slug] = String(q.id);
+        }
+
+        const nationSlugToLocationTag: Record<string, string> = {
+            'Roland': 'loc_holy_empire',
+            'Markand': 'loc_marcund',
+            'Yato': 'loc_yatoshin',
+            'Karyu': 'loc_haryu',
+        };
+        const currentLocationTag = currentNationSlug ? nationSlugToLocationTag[currentNationSlug] || null : null;
+
+        const hasCompletedPrereq = (reqValue: string | number): boolean => {
+            const reqStr = String(reqValue);
+            if (completedQuestIds.has(reqStr)) return true;
+            const resolvedId = slugToIdMap[reqStr];
+            if (resolvedId && completedQuestIds.has(resolvedId)) return true;
+            return false;
+        };
+
+        const specialQuests = quests.filter((q: any) => {
+            if (q.quest_type !== 'special') return false;
+            if (completedQuestIds.has(String(q.id))) return false;
+
+            const reqs = q.requirements || {};
+            const isMainScenario = q.slug && q.slug.startsWith('main_ep');
+            if (!isMainScenario && reqs.nation_id && locationId && reqs.nation_id !== locationId) return false;
+            if (reqs.event_trigger) return false;
+            if (reqs.require_item_id && !ownedItemIds.has(String(reqs.require_item_id))) return false;
+            if (reqs.has_item && !ownedItemIds.has(String(reqs.has_item))) return false;
+
+            if (reqs.completed_quest) {
+                if (!hasCompletedPrereq(reqs.completed_quest)) return false;
+            }
+
+            const userAlignPcts = getUserAlignmentPcts(user as any);
+            if (reqs.align_evil && userAlignPcts.evil_ratio <= 50) return false;
+            if (reqs.min_align_chaos_pct && userAlignPcts.chaos_ratio < reqs.min_align_chaos_pct) return false;
+            if (reqs.min_align_order_pct && userAlignPcts.order_ratio < reqs.min_align_order_pct) return false;
+            if (reqs.min_align_evil_pct && userAlignPcts.evil_ratio < reqs.min_align_evil_pct) return false;
+            if (reqs.min_align_justice_pct && userAlignPcts.justice_ratio < reqs.min_align_justice_pct) return false;
+            if (reqs.min_align_chaos && !reqs.min_align_chaos_pct && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
+            if (reqs.min_align_order && !reqs.min_align_order_pct && (user.order_pts || 0) < reqs.min_align_order) return false;
+
+            const worldAlignReq = reqs.min_world_alignment || reqs.min_alignment_pct;
+            if (worldAlignReq) {
+                const axis = worldAlignReq.axis || worldAlignReq.alignment;
+                const minPct = worldAlignReq.min_pct || 50;
+                const currentPct = (worldAlignPcts as any)[axis + '_ratio'] || 50;
+                if (currentPct < minPct) return false;
+            }
+
+            if (reqs.alignment_and && Array.isArray(reqs.alignment_and)) {
+                for (const cond of reqs.alignment_and) {
+                    const source = cond.scope === 'world' ? worldAlignPcts : userAlignPcts;
+                    const ratioKey = cond.axis + '_ratio';
+                    const currentVal = (source as any)[ratioKey] || 50;
+                    if (currentVal < (cond.min_pct || 0)) return false;
+                }
+            }
+
+            if (reqs.max_prosperity && currentProsperity > reqs.max_prosperity) return false;
+            if (reqs.min_prosperity && currentProsperity < reqs.min_prosperity) return false;
+            if (reqs.min_vitality && (user.vitality || 0) < reqs.min_vitality) return false;
+            if (reqs.min_level && user.level < reqs.min_level) return false;
+
+            if (reqs.min_reputation) {
+                const repRequired = typeof reqs.min_reputation === 'number'
+                    ? reqs.min_reputation
+                    : (reqs.min_reputation[locationId || q.location_id] || 0);
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual < repRequired) return false;
+            }
+
+            if (q.max_reputation !== null && q.max_reputation !== undefined) {
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual > q.max_reputation) return false;
+            }
+
+            return true;
+        });
+
+        const normalQuests = quests.filter((q: any) => {
+            if (q.quest_type !== 'normal') return false;
+
+            const conds = q.conditions || {};
+            const reqs = q.requirements || {};
+
+            if (conds.min_prosperity && currentProsperity < conds.min_prosperity) return false;
+            if (conds.max_prosperity && currentProsperity > conds.max_prosperity) return false;
+
+            if (conds.location_tags) {
+                const tags = Array.isArray(conds.location_tags)
+                    ? conds.location_tags
+                    : String(conds.location_tags).split(',').map((t: string) => t.trim());
+                if (!tags.includes('all')) {
+                    if (!currentLocationTag || !tags.includes(currentLocationTag)) return false;
+                }
+            }
+
+            if (conds.completed_quest) {
+                if (!hasCompletedPrereq(conds.completed_quest)) return false;
+            }
+
+            const minRep = conds.min_reputation || reqs.min_reputation;
+            if (minRep) {
+                const repRequired = typeof minRep === 'number'
+                    ? minRep
+                    : (minRep[locationId || q.location_id] || 0);
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual < repRequired) return false;
+            }
+
+            const maxRep = conds.max_reputation ?? q.max_reputation;
+            if (maxRep !== null && maxRep !== undefined) {
+                const repActual = repMap[locationId || q.location_id] || 0;
+                if (repActual > maxRep) return false;
+            }
+
+            return true;
+        });
+
+        const getDifficultyTier = (recLevel: number): 'easy' | 'normal' | 'hard' => {
+            if (recLevel <= 3) return 'easy';
+            if (recLevel <= 7) return 'normal';
+            return 'hard';
+        };
+
+        const mapQuest = (q: any) => {
+            const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            const rewards = q.rewards || {};
+            return {
+                ...q,
+                reward_gold: rewards.gold || 0,
+                reward_exp: rewards.exp || 0,
+                reward_reputation: rewards.reputation || 0,
+                reward_items: rewards.items || [],
+                reward_alignment: rewards.alignment_shift || null,
+                reward_vitality: rewards.vitality_cost || 0,
+                reward_npc: rewards.npc_reward || null,
+                impacts: q.impact,
+                difficulty_tier: getDifficultyTier(recLevel),
+                short_flavor: q.script_data?.short_description || q.description || '',
+                long_flavor: q.script_data?.nodes?.start?.text || q.description || '',
+                is_ugc: q.slug?.startsWith('ugc_') || false,
+                days_success: q.days_success ?? 1,
+                days_failure: q.days_failure ?? 1,
+            };
+        };
+
+        const shuffled = [...normalQuests].sort(() => Math.random() - 0.5);
+        const tierLimits: Record<string, number> = { easy: 0, normal: 0, hard: 0 };
+        const TIER_MAX: Record<string, number> = { easy: 5, normal: 3, hard: 1 };
+        const limitedNormalQuests = shuffled.filter((q: any) => {
+            const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            const tier = getDifficultyTier(recLevel);
+            if (tierLimits[tier] >= TIER_MAX[tier]) return false;
+            tierLimits[tier]++;
+            return true;
+        });
+
+        const SPECIAL_TIER_MAX: Record<string, number> = { easy: 3, normal: 2, hard: 2 };
+        const specialTierLimits: Record<string, number> = { easy: 0, normal: 0, hard: 0 };
+        const shuffledSpecial = [...specialQuests].sort(() => Math.random() - 0.5);
+        const limitedSpecialQuests = shuffledSpecial.filter((q: any) => {
+            const isMainScenario = q.slug && q.slug.startsWith('main_ep');
+            if (isMainScenario) return true;
+            const recLevel = q.rec_level || q.requirements?.min_level || 1;
+            const tier = getDifficultyTier(recLevel);
+            if (specialTierLimits[tier] >= SPECIAL_TIER_MAX[tier]) return false;
+            specialTierLimits[tier]++;
+            return true;
+        });
+
+        const allQuests = [...limitedSpecialQuests, ...limitedNormalQuests]
+            .sort((a: any, b: any) => {
+                if (a.is_urgent !== b.is_urgent) return (b.is_urgent ? 1 : 0) - (a.is_urgent ? 1 : 0);
+                return (a.rec_level || 1) - (b.rec_level || 1);
+            })
+            .map(mapQuest);
+
+        return {
+            quests: allQuests,
+            special_quests: allQuests.filter((q: any) => q.quest_type === 'special'),
+            normal_quests: allQuests.filter((q: any) => q.quest_type === 'normal')
+        };
+    }
 }
+

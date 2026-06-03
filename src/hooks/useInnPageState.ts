@@ -35,7 +35,11 @@ export function useInnPageState() {
 
     // UI States
     const [activeModal, setActiveModal] = useState<ModalType>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => {
+        // Zustand ストアに先行ロードされたデータがあるなら初期ローディングをスキップ
+        const state = useGameStore.getState();
+        return !(state.userProfile && state.locationQuests);
+    });
     const [showAccount, setShowAccount] = useState(false);
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
@@ -165,6 +169,14 @@ export function useInnPageState() {
                     if (data.world_state) {
                         useGameStore.setState({ worldState: data.world_state });
                     }
+
+                    // キャッシュのセット
+                    useGameStore.setState({
+                        tavernShadows: data.tavern_shadows || [],
+                        partyMembers: data.party_members || [],
+                        locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
+                        gossipData: data.gossip_data
+                    });
 
                     // Reputation
                     if (data.reputation !== undefined) {
@@ -430,12 +442,28 @@ export function useInnPageState() {
 
     const fetchQuestsForBoard = async () => {
         if (!userProfile?.id || !worldState?.location_name) return;
-        setLoadingQuests(true);
+
+        // すでにキャッシュがある場合はそれを使用し、バックグラウンドでのみフェッチする
+        const cachedQuests = useGameStore.getState().locationQuests;
+        if (cachedQuests) {
+            setAllQuests(cachedQuests.quests || []);
+        } else {
+            setLoadingQuests(true);
+        }
+
         try {
             const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${userProfile.current_location_id || ''}`);
             if (res.ok) {
                 const data = await res.json();
                 setAllQuests(data.quests || []);
+                // キャッシュの更新
+                useGameStore.setState({
+                    locationQuests: {
+                        quests: data.quests || [],
+                        special_quests: data.special_quests || [],
+                        normal_quests: data.normal_quests || []
+                    }
+                });
             }
         } catch (e) {
             console.error("クエスト読み込み失敗", e);
