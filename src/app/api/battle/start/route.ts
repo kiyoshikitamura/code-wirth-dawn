@@ -10,10 +10,12 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { enemies, party, initial_ap, resonance_active, player_stats } = body;
+        const authHeader = req.headers.get('authorization');
+        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
         const client = createAuthClient(req);
 
         // Fetch User Identity to enforce RLS correctly
-        const { data: { user }, error: authError } = await client.auth.getUser();
+        const { data: { user }, error: authError } = await client.auth.getUser(token || undefined);
         
         // [Security] JWT認証のみ — x-user-id フォールバック廃止 (v27.2)
         const userId = user?.id;

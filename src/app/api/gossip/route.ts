@@ -11,8 +11,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: Request) {
     try {
+        const authHeader = req.headers.get('authorization');
+        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
         const supabaseAuth = createAuthClient(req);
-        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token || undefined);
         if (!user || authError) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -123,12 +125,12 @@ export async function GET(req: Request) {
         // タブ③「路地裏」: 全拠点の出現中 special quest（最大6件）
         // ─────────────────────────────────────────────
         if (tab === 'all' || tab === 'secret') {
-            // special系シナリオを全拠点から取得 (is_urgent = true かつ requirements 付き)
+            // special系シナリオを全拠点から取得 (is_urgent = false かつ requirements 付き)
             const { data: specialQuests } = await supabase
                 .from('scenarios')
                 .select('id, slug, title, quest_type, requirements, difficulty, location_id, location:locations(name, ruling_nation_id)')
                 .eq('quest_type', 'special')
-                .eq('is_urgent', true)
+                .eq('is_urgent', false)
                 .not('slug', 'like', 'main_%');
 
             const shuffledQuests = (specialQuests || []).sort(() => Math.random() - 0.5).slice(0, 3);

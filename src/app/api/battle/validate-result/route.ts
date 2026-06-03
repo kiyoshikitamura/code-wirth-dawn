@@ -23,10 +23,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'battle_session_id is required' }, { status: 400 });
         }
 
+        const authHeader = req.headers.get('authorization');
+        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
         const client = createAuthClient(req);
 
         // 1. JWT認証で本人のセッションか検証
-        const { data: { user }, error: authError } = await client.auth.getUser();
+        const { data: { user }, error: authError } = await client.auth.getUser(token || undefined);
         if (authError || !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
