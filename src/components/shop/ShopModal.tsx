@@ -60,6 +60,7 @@ export default function ShopModal({ onClose }: Props) {
     const [rumoredItems, setRumoredItems] = useState<ShopItem[]>([]);
     const [meta, setMeta] = useState<ShopMeta | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
     const [purchasing, setPurchasing] = useState<string | null>(null); // itemId being bought/sold
     const [purchasePhase, setPurchasePhase] = useState<'idle' | 'loading' | 'done'>('idle');
     const [purchaseResultMsg, setPurchaseResultMsg] = useState<string>('');
@@ -68,6 +69,7 @@ export default function ShopModal({ onClose }: Props) {
     const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null); // 詳細ポップアップ用
 
     useEffect(() => {
+        setMounted(true);
         fetchShop();
     }, []);
 
@@ -335,6 +337,8 @@ export default function ShopModal({ onClose }: Props) {
             document.body
         );
     };
+
+    if (!mounted) return null;
 
     const mainContent = createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
