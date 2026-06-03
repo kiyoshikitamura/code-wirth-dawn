@@ -102,6 +102,29 @@ export class LifeCycleService {
             if (retiredError) {
                 console.warn('Failed to save to retired_characters graveyard:', retiredError.message);
                 // Non-fatal, keep going
+            } else {
+                // ─── 新設: 英霊化（死亡・引退）の歴史ログを user_chronicles に記録 ───
+                const isRetirement = cause.toLowerCase().includes('retire') || cause.includes('引退');
+                await this.supabase.from('user_chronicles').insert({
+                    user_id: userId,
+                    event_type: isRetirement ? 'hero_retire' : 'hero_death',
+                    accumulated_days: profile.accumulated_days || 0,
+                    location_id: profile.current_location_id,
+                    location_name: null,
+                    title: isRetirement ? `英霊化: ${profile.name || '旅人'}の引退` : `英霊化: ${profile.name || '旅人'}の最期`,
+                    description: isRetirement 
+                        ? `冒険者『${profile.name || '旅人'}』は無事に旅路を終え、英霊の系譜にその名を刻んだ。（引退理由: ${cause}）`
+                        : `冒険者『${profile.name || '旅人'}』は力尽き、英霊となって次の世代に希望を託した。（死因: ${cause}）`,
+                    param_changes: {
+                        final_level: profile.level,
+                        final_gold: profile.gold,
+                        cause: cause,
+                        age_days: profile.accumulated_days
+                    },
+                    is_major_event: true
+                }).then(({ error }: any) => {
+                    if (error) console.error('[Death Handler] Failed to write hero lifecycle to user_chronicles:', error);
+                });
             }
 
             // 6. 英霊登録（仕様: spec_v13 §4, spec_v10 §3.2）

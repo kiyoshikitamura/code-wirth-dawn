@@ -97,6 +97,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         icon_url: s.icon_url || s.avatar_url,
                         npc_image_url: s.npc_image_url || s.avatar_url,
                         flavor_text: s.flavor_text,
+                        slug: s.slug || undefined,
                     }));
                     setShadows(asApiFormat);
                     return;

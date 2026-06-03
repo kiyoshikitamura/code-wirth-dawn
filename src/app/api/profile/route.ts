@@ -84,6 +84,24 @@ export async function GET(req: Request) {
                 profile.title_name = newTitle;
                 needsUpdate = true;
 
+                // 称号更新の履歴を user_chronicles に記録
+                const currentLocName = profile.locations?.name || null;
+                await client.from('user_chronicles').insert({
+                    user_id: profile.id,
+                    event_type: 'title_gained',
+                    accumulated_days: profile.accumulated_days || 0,
+                    location_id: profile.current_location_id,
+                    location_name: currentLocName,
+                    title: `称号獲得: ${newTitle}`,
+                    description: `己の生き様が認められ、新たな称号『${newTitle}』を冠した。（旧称号: ${oldTitle}）`,
+                    param_changes: {
+                        title_from: oldTitle,
+                        title_to: newTitle
+                    }
+                }).then(({ error }: any) => {
+                    if (error) console.error('[Profile API] Failed to write title_gained to user_chronicles:', error);
+                });
+
                 // #8 称号Tier昇格チェック (世代1回)
                 if (isTierUpgrade(oldTitle, newTitle)) {
                     const newTier = getTitleTier(newTitle);

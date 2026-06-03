@@ -123,15 +123,13 @@ export async function POST(req: Request) {
         // --- 3. Update User Profile & Title ---
         // For now, fetch the first profile (Demo Mode)
         let shareDataList: any[] = [];
-        const { data: profile } = await supabase.from('user_profiles').select('id, order_pts, chaos_pts, justice_pts, evil_pts, title_name, gold, updated_at').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('user_profiles').select('id, order_pts, chaos_pts, justice_pts, evil_pts, title_name, gold, updated_at, accumulated_days, current_location_id').eq('id', user.id).single();
         if (profile) {
 
             const newOrderPts = (profile.order_pts || 0) + incOrder;
             const newChaosPts = (profile.chaos_pts || 0) + incChaos;
             const newJusticePts = (profile.justice_pts || 0) + incJustice;
             const newEvilPts = (profile.evil_pts || 0) + incEvil;
-
-            // ... (in function)
 
             // Title Logic (割合ベースの称号判定)
             const profileForTitle = {
@@ -158,18 +156,59 @@ export async function POST(req: Request) {
 
             console.log(`[API/Report] Profile Updated: ${newTitle} (O:${newOrderPts} C:${newChaosPts} J:${newJusticePts} E:${newEvilPts})`);
 
-                // #8 称号Tier昇格チェック (世代1回)
-                if (newTitle !== (profile.title_name || '名もなき旅人')) {
-                    if (isTierUpgrade(profile.title_name || '名もなき旅人', newTitle)) {
-                        const newTier = getTitleTier(newTitle);
-                        const fired = await checkAndFireTrigger(supabase, profile.id, 'title_tier_up', newTier);
-                        if (fired) {
-                            const flavor = getFlavor('title_tier', newTier);
-                            const sd = buildShareData('title_tier_up', { title: newTitle, flavor });
-                            if (sd) shareDataList.push(sd);
+            // ─── 新設: アライメント変動ログのインサート ───
+            if (incOrder !== 0 || incChaos !== 0 || incJustice !== 0 || incEvil !== 0) {
+                await supabase.from('user_chronicles').insert({
+                    user_id: profile.id,
+                    event_type: 'alignment_shift',
+                    accumulated_days: profile.accumulated_days || 0,
+                    location_id: profile.current_location_id,
+                    location_name: playerLocationName,
+                    title: '属性（アライメント）の揺らぎ',
+                    description: `己の行動により、心のアライメントが変動した。`,
+                    param_changes: {
+                        alignment: {
+                            order: incOrder,
+                            chaos: incChaos,
+                            justice: incJustice,
+                            evil: incEvil
                         }
                     }
+                }).then(({ error }: any) => {
+                    if (error) console.error('[Report API] Failed to write alignment_shift to user_chronicles:', error);
+                });
+            }
+
+            // ─── 称号変更ログのインサート ───
+            const oldTitle = profile.title_name || '名もなき旅人';
+            if (newTitle !== oldTitle) {
+                await supabase.from('user_chronicles').insert({
+                    user_id: profile.id,
+                    event_type: 'title_gained',
+                    accumulated_days: profile.accumulated_days || 0,
+                    location_id: profile.current_location_id,
+                    location_name: playerLocationName,
+                    title: `称号獲得: ${newTitle}`,
+                    description: `己の生き様が認められ、新たな称号『${newTitle}』を冠した。（旧称号: ${oldTitle}）`,
+                    param_changes: {
+                        title_from: oldTitle,
+                        title_to: newTitle
+                    }
+                }).then(({ error }: any) => {
+                    if (error) console.error('[Report API] Failed to write title_gained to user_chronicles:', error);
+                });
+
+                // #8 称号Tier昇格チェック (世代1回)
+                if (isTierUpgrade(oldTitle, newTitle)) {
+                    const newTier = getTitleTier(newTitle);
+                    const fired = await checkAndFireTrigger(supabase, profile.id, 'title_tier_up', newTier);
+                    if (fired) {
+                        const flavor = getFlavor('title_tier', newTier);
+                        const sd = buildShareData('title_tier_up', { title: newTitle, flavor });
+                        if (sd) shareDataList.push(sd);
+                    }
                 }
+            }
         }
         // --------------------------------------
 

@@ -127,6 +127,7 @@ export async function POST(req: Request) {
         // §3. EXP + レベルアップ
         // ═══════════════════════════════════════
         let levelUpInfo: any = null;
+        let earnedExp = 0;
         if (result === 'success') {
             const currentLevel = user.level || 1;
             const currentExp = Number(user.exp || 0);
@@ -135,7 +136,7 @@ export async function POST(req: Request) {
             const questExp = (quest.rewards?.exp) || expFallback;
             const battleCount = Array.isArray(history) ? history.filter((h: any) => h.nodeType === 'battle').length : 0;
             const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100);
-            const earnedExp = questExp + battleBonus;
+            earnedExp = questExp + battleBonus;
 
             const growthResult = calculateGrowth(
                 currentLevel, currentExp, earnedExp,
@@ -254,7 +255,7 @@ export async function POST(req: Request) {
             if (quest.is_ugc) {
                 const { count: priorClears } = await supabase
                     .from('user_completed_quests').select('id', { count: 'exact', head: true })
-                    .eq('scenario_id', quest_id);
+                    .eq('ugc_scenario_id', quest_id);
                 if (priorClears === 0) {
                     const sd = buildShareData('ugc_first_blood', { quest_name: quest.title || '' });
                     if (sd) shareDataList.push(sd);
@@ -297,40 +298,12 @@ export async function POST(req: Request) {
         }
 
         const finalShareText = shareDataList.length > 0 ? shareDataList[0].text : null;
-
         // ═══════════════════════════════════════
         // §12. 名声変動
         // ═══════════════════════════════════════
         const repChange = await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
 
-        // ═══════════════════════════════════════
-        // §13. クエスト完了履歴
-        // ═══════════════════════════════════════
-        // Quest history + activity log (parallelized)
-        const historyPromises: PromiseLike<any>[] = [
-            supabase.from('quest_activity_logs').insert({
-                user_id,
-                scenario_id: quest_id,
-                action: result === 'success' ? 'complete' : 'abandon'
-            }).then(({ error }: any) => {
-                if (error) console.error('[Quest Complete] Failed to write quest_activity_logs:', error);
-            })
-        ];
-        if (result === 'success') {
-            historyPromises.push(
-                supabase.from('user_completed_quests').upsert({
-                    user_id, scenario_id: quest_id,
-                    accumulated_days_at_completion: user.accumulated_days ?? 0
-                }, { onConflict: 'user_id,scenario_id' }).then(({ error }: any) => {
-                    if (error) console.error('Failed to save quest completion history:', error);
-                })
-            );
-        }
-        await Promise.all(historyPromises);
-
-        // ═══════════════════════════════════════
-        // §14. レスポンス構築
-        // ═══════════════════════════════════════
+        // ─── 先行宣言: 新しい拠点名とステータス変化 ───
         let newLocationName: string | null = null;
         if (updates.current_location_id) {
             const { data: locData } = await supabase.from('locations').select('name').eq('id', updates.current_location_id).maybeSingle();
@@ -350,6 +323,100 @@ export async function POST(req: Request) {
             battle_defeat_vit_penalty: battleDefeatVitPenalty,
             alignment_shift: alignmentShift,
         };
+
+        // ═══════════════════════════════════════
+        // §13. クエスト完了履歴（user_chroniclesへの直接書き込み）
+        // ═══════════════════════════════════════
+        const historyPromises: PromiseLike<any>[] = [];
+
+        // 13a. クエスト結果ログ（成功: quest_success / 失敗・放棄: quest_failure）
+        const paramChanges: any = {
+            gold: changes.gold_gained || 0,
+            exp: earnedExp || 0,
+            aged_days: daysPassed,
+        };
+
+        if (repChange) {
+            paramChanges.reputation = {
+                location_name: repChange.location,
+                delta: repChange.amount
+            };
+        }
+
+        if (alignmentShift) {
+            paramChanges.alignment = alignmentShift;
+        }
+
+        const isMajor = (quest.rec_level && quest.rec_level >= 5) || (quest.slug && quest.slug.startsWith('main_ep'));
+
+        historyPromises.push(
+            supabase.from('user_chronicles').insert({
+                user_id,
+                event_type: result === 'success' ? 'quest_success' : 'quest_failure',
+                accumulated_days: updates.accumulated_days,
+                location_id: quest.location_id || updates.current_location_id || user.current_location_id,
+                location_name: newLocationName || (repChange ? repChange.location : null),
+                scenario_id: isUgcV2 ? null : quest_id,
+                ugc_scenario_id: isUgcV2 ? quest_id : null,
+                title: result === 'success' ? `クエストクリア: ${quest.title}` : `クエスト失敗/放棄: ${quest.title}`,
+                description: result === 'success' 
+                    ? `クエスト『${quest.title}』を達成し、多くの報酬を得た。`
+                    : `クエスト『${quest.title}』の遂行中に撤退、または失敗した。`,
+                param_changes: paramChanges,
+                is_major_event: isMajor,
+                share_text: finalShareText
+            }).then(({ error }: any) => {
+                if (error) console.error('[Quest Complete] Failed to write quest result to user_chronicles:', error);
+            })
+        );
+
+        // 13b. 加齢イベント（年齢値が上がった場合のみ）
+        if (changes.aged_up) {
+            historyPromises.push(
+                supabase.from('user_chronicles').insert({
+                    user_id,
+                    event_type: 'age_up',
+                    accumulated_days: updates.accumulated_days,
+                    location_id: updates.current_location_id || user.current_location_id,
+                    location_name: newLocationName,
+                    title: `加齢: ${updates.age}歳`,
+                    description: `旅の中で時間が流れ、${user.age || 18}歳から${updates.age}歳へと年齢を重ねた。`,
+                    param_changes: {
+                        age_from: user.age,
+                        age_to: updates.age
+                    }
+                }).then(({ error }: any) => {
+                    if (error) console.error('[Quest Complete] Failed to write age_up to user_chronicles:', error);
+                })
+            );
+        }
+
+        // 13c. レベルアップイベント
+        if (levelUpInfo) {
+            historyPromises.push(
+                supabase.from('user_chronicles').insert({
+                    user_id,
+                    event_type: 'level_up',
+                    accumulated_days: updates.accumulated_days,
+                    location_id: updates.current_location_id || user.current_location_id,
+                    location_name: newLocationName,
+                    title: `レベルアップ: Lv.${levelUpInfo.new_level}`,
+                    description: `試練を乗り越え、実力が向上した。（Lv.${levelUpInfo.old_level} → Lv.${levelUpInfo.new_level}）`,
+                    param_changes: {
+                        level_from: levelUpInfo.old_level,
+                        level_to: levelUpInfo.new_level,
+                        atk_increase: levelUpInfo.atk_increase,
+                        def_increase: levelUpInfo.def_increase,
+                    }
+                }).then(({ error }: any) => {
+                    if (error) console.error('[Quest Complete] Failed to write level_up to user_chronicles:', error);
+                })
+            );
+        }
+
+        await Promise.all(historyPromises);
+
+        // ─── 旧 §14 の位置（宣言を前に移動したためプレースホルダーのみ） ───
 
         // 所持金マイルストーン
         if (result === 'success') {

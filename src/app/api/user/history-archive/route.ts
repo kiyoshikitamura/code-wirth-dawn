@@ -10,22 +10,15 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
         }
 
-        // 1. Fetch Personal Quest History
+        // 1. Fetch Personal Chronicle Logs
         const { data: quests, error: qError } = await supabase
-            .from('user_completed_quests')
+            .from('user_chronicles')
             .select(`
-                id,
-                completed_at,
-                accumulated_days_at_completion,
-                scenarios (
-                    id,
-                    title,
-                    location_id,
-                    locations (name)
-                )
+                *,
+                locations (name)
             `)
             .eq('user_id', userId)
-            .order('completed_at', { ascending: false });
+            .order('created_at', { ascending: false });
 
         if (qError) throw qError;
 
@@ -34,7 +27,7 @@ export async function GET(req: Request) {
             .from('world_states_history')
             .select(`
                 *,
-                location:locations(name)
+                location:locations!world_states_history_location_id_fkey(name)
             `)
             .order('created_at', { ascending: false })
             .limit(50);
@@ -53,8 +46,7 @@ export async function GET(req: Request) {
 
         if (lError) throw lError;
 
-        // 4. 出禁拠点リスト (spec_v15.1 §4 Tab1 フレーバー統計)
-        // reputations.score < 0 の拠点を集計
+        // 4. 出禁拠点リスト (reputations.score < 0)
         const { data: bannedReps, error: brError } = await supabase
             .from('reputations')
             .select('score, location_name')
@@ -64,11 +56,90 @@ export async function GET(req: Request) {
 
         if (brError) console.warn('[HistoryArchive] banned reps fetch failed:', brError.message);
 
+        // 5. 統合タイムラインの作成（Chronicle Timeline）
+        const timeline: any[] = [];
+
+        // 5a. 個人ログの追加 (user_chronicles)
+        if (quests) {
+            quests.forEach((c: any) => {
+                timeline.push({
+                    id: c.id,
+                    type: 'chronicle',
+                    event_type: c.event_type,
+                    title: c.title,
+                    description: c.description,
+                    accumulated_days: c.accumulated_days,
+                    location_name: c.location_name || c.locations?.name || '旅の途中',
+                    param_changes: c.param_changes || {},
+                    is_major_event: c.is_major_event || false,
+                    share_text: c.share_text,
+                    created_at: c.created_at
+                });
+            });
+        }
+
+        // 5b. 世界の出来事の追加 (world_states_history)
+        if (worldHistory) {
+            worldHistory.forEach((w: any) => {
+                timeline.push({
+                    id: w.id,
+                    type: 'world',
+                    event_type: 'world_event',
+                    title: w.event_type === 'alignment_change' ? '覇権シフト' : '世界情勢の変化',
+                    description: w.message,
+                    accumulated_days: null,
+                    location_name: w.location?.name || '世界のどこか',
+                    param_changes: {
+                        old_value: w.old_value,
+                        new_value: w.new_value,
+                        event_type: w.event_type
+                    },
+                    is_major_event: true,
+                    share_text: `【世界の記録】${w.message} #Wirth_Dawn`,
+                    created_at: w.created_at
+                });
+            });
+        }
+
+        // 5c. 英霊の追加 (retired_characters)
+        if (lineage) {
+            lineage.forEach((l: any) => {
+                const cause = l.cause_of_death || '';
+                const isRetirement = cause.toLowerCase().includes('retire') || cause.includes('引退');
+                timeline.push({
+                    id: l.id,
+                    type: 'hero',
+                    event_type: isRetirement ? 'hero_retire' : 'hero_death',
+                    title: isRetirement ? `英霊昇華: ${l.name}の引退` : `英霊昇華: ${l.name}の最期`,
+                    description: isRetirement
+                        ? `『${l.name}』。Lv.${l.snapshot?.final_level || 1}。無事に引退し、英霊の系譜に名を残した。（理由: ${cause}）`
+                        : `『${l.name}』。Lv.${l.snapshot?.final_level || 1}。${l.age_days}日間の旅を経て英霊となった。（死因: ${cause}）`,
+                    accumulated_days: l.age_days,
+                    location_name: l.location?.name || '不明な地',
+                    param_changes: {
+                        final_level: l.snapshot?.final_level || 1,
+                        final_gold: l.snapshot?.final_gold || 0,
+                        cause: cause,
+                        quests_count: l.completed_quests_count || 0
+                    },
+                    is_major_event: true,
+                    share_text: isRetirement 
+                        ? `【英霊の系譜】我が名は『${l.name}』。この度、無事に引退し英霊となった！誰か私の残影を雇ってくれ。 #Wirth_Dawn #英雄の引退`
+                        : `【英霊の系譜】我が名は『${l.name}』。${l.age_days}日間の壮絶な旅を終え、英霊として名を刻む。 #Wirth_Dawn #英雄の最期`,
+                    created_at: l.death_date
+                });
+            });
+        }
+
+        // リアル時間 (created_at) の降順でソート
+        timeline.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
         return NextResponse.json({
-            chronicle: quests,
-            world_history: worldHistory,
-            lineage: lineage,
-            banned_locations: bannedReps || []
+            chronicle: quests || [],
+            world_history: worldHistory || [],
+            lineage: lineage || [],
+            banned_locations: bannedReps || [],
+            timeline
         });
     } catch (err: any) {
         console.error('History Archive API Error:', err);
