@@ -482,7 +482,6 @@ export function useInnPageState() {
                 isDefeat: false,
             }
         }));
-        showToast('✨ HPが全快しました');
 
         setRestLoading(true);
         try {
@@ -499,7 +498,7 @@ export function useInnPageState() {
                 const data = await res.json();
                 // API結果で正確な値に同期
                 await useGameStore.getState().fetchUserProfile();
-                let toastMsg = `✨ 休息完了（宿泊費: ${cost} G / ${data.days_passed || 1}日経過）`;
+                let toastMsg = `✨ 休息完了：HPが全快しました（宿泊費: ${cost} G / ${data.days_passed || 1}日経過）`;
                 if (data.aging_decay && (data.aging_decay.vit > 0 || data.aging_decay.atk > 0 || data.aging_decay.def > 0)) {
                     const parts: string[] = [];
                     if (data.aging_decay.vit > 0) parts.push(`VIT-${data.aging_decay.vit}`);

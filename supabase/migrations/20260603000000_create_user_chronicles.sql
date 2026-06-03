@@ -81,18 +81,21 @@ CREATE INDEX IF NOT EXISTS idx_user_chronicles_event_type ON public.user_chronic
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_completed_quests') THEN
-        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, title, description, created_at)
+        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at)
         SELECT 
             uq.user_id, 
             'quest_success', 
             COALESCE(uq.accumulated_days_at_completion, p.accumulated_days, 0), 
             uq.scenario_id, 
             uq.ugc_scenario_id, 
+            COALESCE(s.location_id, p.current_location_id),
+            COALESCE(l.name, (SELECT name FROM public.locations WHERE id = p.current_location_id)),
             COALESCE(s.title, 'クエスト完了'), 
             'クエストを成功させ、歴史にその名を刻んだ。',
             COALESCE(uq.completed_at, NOW())
         FROM public.user_completed_quests uq
         LEFT JOIN public.scenarios s ON s.id = uq.scenario_id
+        LEFT JOIN public.locations l ON l.id = s.location_id
         LEFT JOIN public.user_profiles p ON p.id = uq.user_id
         ON CONFLICT (user_id, scenario_id) WHERE event_type = 'quest_success' AND scenario_id IS NOT NULL DO NOTHING;
     END IF;
@@ -102,7 +105,7 @@ END $$;
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'quest_activity_logs') THEN
-        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, scenario_id, title, description, created_at)
+        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, scenario_id, location_id, location_name, title, description, created_at)
         SELECT 
             uq.user_id, 
             CASE 
@@ -111,6 +114,8 @@ BEGIN
             END, 
             COALESCE(p.accumulated_days, 0), 
             uq.scenario_id, 
+            COALESCE(s.location_id, p.current_location_id),
+            COALESCE(l.name, (SELECT name FROM public.locations WHERE id = p.current_location_id)),
             CASE 
                 WHEN uq.action = 'start' THEN 'クエスト受注: ' || COALESCE(s.title, 'クエスト')
                 ELSE 'クエスト放棄: ' || COALESCE(s.title, 'クエスト')
@@ -122,6 +127,7 @@ BEGIN
             uq.created_at
         FROM public.quest_activity_logs uq
         LEFT JOIN public.scenarios s ON s.id = uq.scenario_id
+        LEFT JOIN public.locations l ON l.id = s.location_id
         LEFT JOIN public.user_profiles p ON p.id = uq.user_id
         WHERE uq.action IN ('start', 'abandon');
     END IF;
@@ -157,7 +163,7 @@ BEGIN
             'item_collected', 
             COALESCE(p.accumulated_days, 0), 
             ui.item_id, 
-            '図鑑登録: ' || COALESCE(i.name, '未知のアイテム'), 
+            'コレクション: ' || COALESCE(i.name, '未知のアイテム'), 
             'アイテムを発見し、図鑑に記録した。',
             COALESCE(ui.first_acquired_at, NOW())
         FROM public.user_item_history ui
@@ -177,7 +183,7 @@ BEGIN
             'monster_defeated', 
             COALESCE(p.accumulated_days, 0), 
             ub.enemy_id, 
-            '魔物図鑑登録: ' || COALESCE(e.name, '未知の魔物'), 
+            'コレクション: ' || COALESCE(e.name, '未知の魔物'), 
             '魔物と交戦し、図鑑に記録した。',
             COALESCE(ub.first_encountered_at, NOW())
         FROM public.user_bestiary ub
@@ -307,6 +313,8 @@ DECLARE
     v_scenario_id BIGINT;
     v_ugc_scenario_id UUID;
     v_quest_title TEXT;
+    v_loc_id UUID;
+    v_loc_name TEXT;
 BEGIN
     v_event_type := CASE 
         WHEN NEW.action = 'start' THEN 'quest_start'
@@ -337,14 +345,31 @@ BEGIN
         ELSE 'クエストの遂行を諦めた。'
     END;
 
+    -- Fetch location information from user profiles and locations tables
+    SELECT p.current_location_id, l.name 
+    INTO v_loc_id, v_loc_name
+    FROM public.user_profiles p
+    LEFT JOIN public.locations l ON l.id = p.current_location_id
+    WHERE p.id = NEW.user_id;
+
+    -- Fallback to scenario's location if user's current location is null
+    IF v_loc_id IS NULL AND v_scenario_id IS NOT NULL THEN
+        SELECT location_id, (SELECT name FROM public.locations WHERE id = s.location_id)
+        INTO v_loc_id, v_loc_name
+        FROM public.scenarios s
+        WHERE s.id = v_scenario_id;
+    END IF;
+
     INSERT INTO public.user_chronicles (
-        user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, title, description, created_at
+        user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at
     ) VALUES (
         NEW.user_id, 
         v_event_type, 
         COALESCE((SELECT accumulated_days FROM public.user_profiles WHERE id = NEW.user_id), 0), 
         v_scenario_id, 
         v_ugc_scenario_id,
+        v_loc_id,
+        v_loc_name,
         v_title,
         v_desc,
         COALESCE(NEW.created_at, NOW())
@@ -384,10 +409,28 @@ FOR EACH ROW EXECUTE FUNCTION public.insert_user_visited_locations_trigger();
 -- 6c. user_completed_quests インサートトリガー
 CREATE OR REPLACE FUNCTION public.insert_completed_quests_trigger()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_loc_id UUID;
+    v_loc_name TEXT;
 BEGIN
+    -- Fetch location information from user profiles and locations tables
+    SELECT p.current_location_id, l.name 
+    INTO v_loc_id, v_loc_name
+    FROM public.user_profiles p
+    LEFT JOIN public.locations l ON l.id = p.current_location_id
+    WHERE p.id = NEW.user_id;
+
+    -- Fallback to scenario's location if user's current location is null
+    IF v_loc_id IS NULL AND NEW.scenario_id IS NOT NULL THEN
+        SELECT location_id, (SELECT name FROM public.locations WHERE id = s.location_id)
+        INTO v_loc_id, v_loc_name
+        FROM public.scenarios s
+        WHERE s.id = NEW.scenario_id;
+    END IF;
+
     IF NEW.ugc_scenario_id IS NOT NULL THEN
         INSERT INTO public.user_chronicles (
-            user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, title, description, created_at
+            user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at
         ) VALUES (
             NEW.user_id, 
             'quest_success', 
@@ -396,12 +439,14 @@ BEGIN
             NEW.ugc_scenario_id,
             COALESCE((SELECT title FROM public.ugc_scenarios WHERE id = NEW.ugc_scenario_id), 'クエスト完了'),
             'クエストを成功させた。',
+            v_loc_id,
+            v_loc_name,
             COALESCE(NEW.completed_at, NOW())
         )
         ON CONFLICT (user_id, ugc_scenario_id) WHERE event_type = 'quest_success' AND ugc_scenario_id IS NOT NULL DO NOTHING;
     ELSE
         INSERT INTO public.user_chronicles (
-            user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, title, description, created_at
+            user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at
         ) VALUES (
             NEW.user_id, 
             'quest_success', 
@@ -410,6 +455,8 @@ BEGIN
             NULL,
             COALESCE((SELECT title FROM public.scenarios WHERE id = NEW.scenario_id), 'クエスト完了'),
             'クエストを成功させた。',
+            v_loc_id,
+            v_loc_name,
             COALESCE(NEW.completed_at, NOW())
         )
         ON CONFLICT (user_id, scenario_id) WHERE event_type = 'quest_success' AND scenario_id IS NOT NULL DO NOTHING;
@@ -433,7 +480,7 @@ BEGIN
         'item_collected', 
         COALESCE((SELECT accumulated_days FROM public.user_profiles WHERE id = NEW.user_id), 0), 
         NEW.item_id,
-        '図鑑登録: ' || COALESCE((SELECT name FROM public.items WHERE id = NEW.item_id), 'アイテム'),
+        'コレクション: ' || COALESCE((SELECT name FROM public.items WHERE id = NEW.item_id), 'アイテム'),
         'アイテムを発見し、図鑑に記録した。',
         COALESCE(NEW.created_at, NOW())
     )
@@ -457,7 +504,7 @@ BEGIN
         'monster_defeated', 
         COALESCE((SELECT accumulated_days FROM public.user_profiles WHERE id = NEW.user_id), 0), 
         NEW.enemy_id,
-        '魔物図鑑登録: ' || COALESCE((SELECT name FROM public.enemies WHERE id = NEW.enemy_id), '魔物'),
+        'コレクション: ' || COALESCE((SELECT name FROM public.enemies WHERE id = NEW.enemy_id), '魔物'),
         '魔物と交戦し、図鑑に記録した。',
         COALESCE(NEW.created_at, NOW())
     )

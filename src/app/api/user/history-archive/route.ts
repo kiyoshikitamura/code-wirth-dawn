@@ -79,6 +79,7 @@ export async function GET(req: Request) {
         // 5a. 個人ログの追加 (user_chronicles)
         if (quests) {
             quests.forEach((c: any) => {
+                const isQuestEvent = c.event_type.startsWith('quest_');
                 timeline.push({
                     id: c.id,
                     type: 'chronicle',
@@ -86,7 +87,7 @@ export async function GET(req: Request) {
                     title: c.title,
                     description: c.description,
                     accumulated_days: c.accumulated_days,
-                    location_name: c.location_name || c.locations?.name || '旅の途中',
+                    location_name: isQuestEvent ? (c.location_name || c.locations?.name || '旅の途中') : '旅の途中',
                     param_changes: c.param_changes || {},
                     is_major_event: c.is_major_event || false,
                     share_text: c.share_text,

@@ -208,7 +208,9 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
                                                         <h4 className={`font-serif font-bold text-sm tracking-wide 
                                                             ${item.is_major_event ? 'text-amber-100 text-base' : 'text-gray-200'}`}
                                                         >
-                                                            {item.title}
+                                                            {item.title
+                                                                .replace(/^図鑑登録[:：]\s*/g, 'コレクション: ')
+                                                                .replace(/^魔物図鑑登録[:：]\s*/g, 'コレクション: ')}
                                                         </h4>
                                                         <button
                                                             onClick={() => handleShare(item)}
