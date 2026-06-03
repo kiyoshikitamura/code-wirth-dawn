@@ -486,7 +486,15 @@ export function useInnPageState() {
 
         setRestLoading(true);
         try {
-            const res = await fetch('/api/inn/rest', { method: 'POST', body: JSON.stringify({ id: userProfile?.id, effectiveMaxHp }) });
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/inn/rest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders,
+                },
+                body: JSON.stringify({ id: userProfile?.id, effectiveMaxHp })
+            });
             if (res.ok) {
                 const data = await res.json();
                 // API結果で正確な値に同期

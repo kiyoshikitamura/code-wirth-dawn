@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         const id = user.id;
 
         // Fetch Max Stats and Gold
-        const { data: profile } = await supabase
+        const { data: profile } = await supabaseService
             .from('user_profiles')
             .select('max_hp, current_location_id, gold, age, age_days, accumulated_days, max_vitality, vitality, atk, def')
             .eq('id', id)
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
         // Check Embargo & Calculate Cost
         if (profile.current_location_id) {
-            const { data: locData } = await supabase
+            const { data: locData } = await supabaseService
                 .from('locations')
                 .select('name, prosperity_level')
                 .eq('id', profile.current_location_id)
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
                 isHub = locData.name === HUB_LOCATION_NAME;
 
                 if (!isHub) {
-                    const { data: repData } = await supabase
+                    const { data: repData } = await supabaseService
                         .from('reputations')
                         .select('score')
                         .eq('user_id', id)
