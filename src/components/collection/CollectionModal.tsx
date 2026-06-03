@@ -173,7 +173,7 @@ export default function CollectionModal({ onClose }: Props) {
                 )}
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="flex-1 overflow-y-auto no-scrollbar md:custom-scrollbar">
                     {loading ? (
                         <div className="flex items-center justify-center h-40">
                             <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
