@@ -14,22 +14,22 @@ import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import XShareButton from '@/components/shared/XShareButton';
 
-// モーダル群: ユーザー操作時のみロード (パフォーマンス最適化)
-const TavernModal = dynamic(() => import('@/components/inn/TavernModal'), { ssr: false });
-const ShopModal = dynamic(() => import('@/components/shop/ShopModal'), { ssr: false });
-const PrayerModal = dynamic(() => import('@/components/world/PrayerModal'), { ssr: false });
-const StatusModal = dynamic(() => import('@/components/inn/StatusModal'), { ssr: false });
-const AccountSettingsModal = dynamic(() => import('@/components/inn/AccountSettingsModal'), { ssr: false });
-const GossipModal = dynamic(() => import('@/components/world/GossipModal'), { ssr: false });
-const QuestBoardModal = dynamic(() => import('@/components/inn/QuestBoardModal'), { ssr: false });
-const UgcQuestBoardPanel = dynamic(() => import('@/components/ugc/UgcQuestBoardPanel'), { ssr: false });
-const ChronicleModal = dynamic(() => import('@/components/world/ChronicleModal'), { ssr: false });
-const HistoryArchiveModal = dynamic(() => import('@/components/inn/HistoryArchiveModal'), { ssr: false });
-const TutorialModal = dynamic(() => import('@/components/inn/TutorialModal'), { ssr: false });
-const WorldChangedModal = dynamic(() => import('@/components/inn/WorldChangedModal'), { ssr: false });
-const CollectionModal = dynamic(() => import('@/components/collection/CollectionModal'), { ssr: false });
-const QuestLogModal = dynamic(() => import('@/components/collection/QuestLogModal'), { ssr: false });
-const RankingModal = dynamic(() => import('@/components/collection/RankingModal'), { ssr: false });
+// モーダル群: ロード時間とチラつきを完全になくすため静的インポート (spec_v27)
+import TavernModal from '@/components/inn/TavernModal';
+import ShopModal from '@/components/shop/ShopModal';
+import PrayerModal from '@/components/world/PrayerModal';
+import StatusModal from '@/components/inn/StatusModal';
+import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
+import GossipModal from '@/components/world/GossipModal';
+import QuestBoardModal from '@/components/inn/QuestBoardModal';
+import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
+import ChronicleModal from '@/components/world/ChronicleModal';
+import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
+import TutorialModal from '@/components/inn/TutorialModal';
+import WorldChangedModal from '@/components/inn/WorldChangedModal';
+import CollectionModal from '@/components/collection/CollectionModal';
+import QuestLogModal from '@/components/collection/QuestLogModal';
+import RankingModal from '@/components/collection/RankingModal';
 
 // デバッグ系: 開発環境のみロード
 const QuestTestPanel = dynamic(() => import('@/components/debug/QuestTestPanel'), { ssr: false });

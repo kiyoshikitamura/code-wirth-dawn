@@ -383,7 +383,7 @@ export default function ShopModal({ onClose }: Props) {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 content-start bg-[url('/textures/paper.png')] bg-repeat">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 content-start bg-[url('/textures/aged-paper.png')] bg-repeat">
                     {mode === 'buy' ? (
                         <>
                             {meta?.prosperity === 1 ? (

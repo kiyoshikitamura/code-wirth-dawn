@@ -28,7 +28,7 @@ export default function QuestResultOverlay({ result, rewards, changes, onClose }
                 ${isSuccess ? 'border-yellow-600 shadow-yellow-900/50' : 'border-red-900 shadow-red-900/50'}
             `}>
                 {/* Inner Border & Content */}
-                <div className="border border-[#e3d5b8]/20 p-8 flex flex-col items-center gap-6 bg-[url('/textures/paper.png')] bg-cover bg-blend-overlay">
+                <div className="border border-[#e3d5b8]/20 p-8 flex flex-col items-center gap-6 bg-[url('/textures/aged-paper.png')] bg-cover bg-blend-overlay">
 
                     {/* Header */}
                     <div className="text-center space-y-2">

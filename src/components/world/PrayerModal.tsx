@@ -176,7 +176,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto bg-[url('/textures/paper.png')] bg-repeat">
+                <div className="p-6 overflow-y-auto bg-[url('/textures/aged-paper.png')] bg-repeat">
                     
                     {/* 拠点ステータス・属性バランス領域 */}
                     <div className="mb-6 border-2 border-[#8b5a2b]/40 rounded-lg bg-[#fdfbf7]/80 p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">

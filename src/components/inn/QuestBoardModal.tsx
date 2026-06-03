@@ -93,7 +93,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-3 md:p-4 bg-[url('/textures/paper.png')] bg-repeat">
+                <div className="flex-1 overflow-y-auto p-3 md:p-4 bg-[url('/textures/aged-paper.png')] bg-repeat">
                     {loading ? (
                         <div className="h-full flex items-center justify-center text-[#5c4033] font-serif animate-pulse">
                             依頼を読み込み中...

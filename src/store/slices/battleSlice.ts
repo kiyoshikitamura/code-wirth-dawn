@@ -1423,7 +1423,8 @@ export const createBattleSlice = (
                 const partyCount = (get().battleState.party?.length || 0) + 1;
                 const gold = selectedScenario?.reward_gold || 50;
                 get().addGold(Math.floor(gold / partyCount));
-                const consumed = get().battleState.consumedItems || [];
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                const consumed = (get().battleState.consumedItems || []).filter(cid => uuidRegex.test(cid));
                 if (consumed.length > 0) {
                     getAuthHeaders().then(authHeaders => {
                         const headers = {
