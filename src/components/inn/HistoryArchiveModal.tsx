@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     BookOpen, X, Scroll, Globe, Skull, Calendar, MapPin, 
-    Award, Heart, Zap, Shield, Share2, Plus, Minus, ArrowUp, Compass
+    Award, Heart, Zap, Shield, Plus, Minus, ArrowUp, Compass
 } from 'lucide-react';
 import { getAuthToken } from '@/lib/authToken';
 
@@ -214,10 +214,13 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
                                                         </h4>
                                                         <button
                                                             onClick={() => handleShare(item)}
-                                                            className="p-1.5 bg-white/5 hover:bg-amber-600/20 text-gray-500 hover:text-amber-400 rounded-md border border-white/5 hover:border-amber-500/20 transition-all"
+                                                            className="p-1.5 bg-white/5 hover:bg-amber-600/20 text-gray-500 hover:text-amber-400 rounded-md border border-white/5 hover:border-amber-500/20 transition-all flex items-center justify-center"
                                                             title="Xへシェア"
                                                         >
-                                                            <Share2 className="w-3.5 h-3.5" />
+                                                            {/* X (formerly Twitter) Icon SVG */}
+                                                            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                                            </svg>
                                                         </button>
                                                     </div>
 
@@ -313,9 +316,9 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
                 </main>
 
                 {/* フッター装飾 */}
-                <footer className="p-4 border-t border-amber-950/20 text-center bg-black/50">
-                    <p className="text-[9px] text-amber-800/80 tracking-widest font-serif">
-                        「紡がれし言葉はやがて真実の歩みとなり、年代記に旅人の魂が眠る。」
+                <footer className="p-3 border-t border-amber-950/20 text-center bg-black/50">
+                    <p className="text-[9px] text-amber-900/40 tracking-widest font-mono uppercase">
+                        Chronicle Archive
                     </p>
                 </footer>
             </div>
