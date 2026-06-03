@@ -347,15 +347,20 @@
 * **複数外部キー関係下でのPostgREST JOIN解決**: 同じ2つのテーブル（例: `user_profiles` と `locations`）の間に複数の外部キー（`fk_current_location`, `fk_prev_location`）が存在する場合、統合API（`/api/init-page`）におけるJOINクエリにおいてリレーションを単に `locations(...)` と指定すると PostgREST 側で曖昧なリレーションエラー（`PGRST201`）が発生し、データが取得できず `null` になる。これを防ぐため、クエリ内で `locations:locations!fk_current_location(...)` のように、使用する外部キー名を明示的に解決する設計とする。
 * **スキーマ不整合によるPostgREST JOINエラーの回避**: データベース上で正しい外部キー制約が認識されていない、または不適合があるテーブル結合（例：`equipped_items` から `items` への結合）を PostgREST で結合すると、PGRST200（関係性未定義）エラーが発生する。このエラーはローカル環境ではデータが `null` で返るだけだが、Vercel サーバーレス環境では例外として伝播しAPIを500エラーでクラッシュさせる。この競合とクラッシュを防ぐため、装備品の取得には確実に外部キー関係が成立している `inventory` テーブル（`is_equipped = true`）をクエリする設計に変更し、安定性を担保する。
 * **世界情勢履歴における複数外部キー関係下でのPostgREST JOIN解決**: 世界情勢履歴（`world_states_history`）と `locations` の間に複数の外部キー（ID参照および名前に基づく参照）が定義されている状況において、統合API（`/api/init-page`）でロケーション名をJOINする際、単に `locations(...)` と指定すると曖昧リレーションエラー（PGRST201）になりAPIが500エラーでクラッシュする。これを解消するため、 `locations!world_states_history_location_id_fkey(name)` のように使用する外部キー名を明示的に結合指定することで、例外の発生を防止し安定稼働を図る。
-* **データ初期化処理（loadInitData）でのトークンリトライ**: Google OAuth完了直後のセッション確立タイムラグに対応するため、画面ガード（`useAuthGuard`）側だけでなく、 `/inn` 画面マウント時の初期データ取得処理（`loadInitData`）においても、トークン取得失敗時に 1000ms 待機して再取得するリトライ機構を実装。過渡期における 401（認証エラー）による誤ったタイトルリダイレクトを防止し、初期読込の堅牢性を向上。
+* **データ初期化処理（loadInitData）でのトークンリトライの最適化**: Google OAuth完了直後のセッション確立タイムラグに対応するため、 `/inn` 画面マウント時の初期データ取得処理（`loadInitData`）におけるトークン取得失敗時の 1000ms 待機リトライ処理は、Google OAuthリダイレクトバック時（URLに `code=` が含まれる場合）のみに限定して実行する。通常時の無用な 1000ms の遅延を完全にカットし、初期読込の高速化と堅牢性を両立する。また、`useAuthGuard` 内の不要な 1000ms リトライ待機は削除する。
 * **存在しないカラム（region）の結合フェッチの除外による500クラッシュ防止**: 統合API（`/api/init-page`）にて、`locations` テーブルから存在しない `region` カラムを select 指定したことで発生する PostgreSQL 42703 エラー (500クラッシュ) を防止するため、`locations` の結合取得項目から `region` を除外。不必要なカラム参照と SQL エラーによる API の異常終了を排除し、初期データ読み込みの安定性を向上。
-* **宿泊・移動・祈り・戦闘結果APIにおける加齢/総経過日数のデータ型およびカラム指定不整合の防止**: 加齢計算 `processAging` の引数に誤って `accumulated_days` (総経過日数) を渡し、戻り値の端数日数 `newAgeDays` を `accumulated_days` カラムに上書き更新すると、キャラクターの総経過日数が破損し、急激な加齢ステータス減少や宿泊の失敗を引き起こす。経過日数と加齢用端数日数の役割を正しく整理し、更新時は `accumulated_days: accumulated_days + days` と `age_days: newAgeDays` に正しく分離して保存し、SELECT時にも `age_days` を漏れなく含めること。
+* **宿泊・移動・祈り・戦闘結果APIにおける加齢/総経過日数のデータ型およびカラム指定不整合の防止**: 加齢計算 `processAging` の引数に誤って `accumulated_days` (総経過日数) を渡し、戻り値の端数日数 `newAgeDays` を `accumulated_days` カラムに上書き更新すると、キャラクター of 総経過日数が破損し、急激な加齢ステータス減少や宿泊の失敗を引き起こす。経過日数と加齢用端数日数の役割を正しく整理し、更新時は `accumulated_days: accumulated_days + days` と `age_days: newAgeDays` に正しく分離して保存し、SELECT時にも `age_days` を漏れなく含めること。
 
 ### 11.6 一括ロード（Eager Load）と先行バックグラウンドプリフェッチ
+
 * **仕様**: 拠点遷移時や各施設（酒場・ギルド・噂話）での個別ローディングを解消するため、`/api/init-page` で各施設データ（`tavern_shadows`, `party_members`, `location_quests`, `gossip_data`）をサーバーサイドで並列一括取得（Eager Load）する。
 * **先行バックグラウンドプリフェッチ**: ワールドマップ移動中（移動アニメーション中）に裏側で次の拠点の `/api/init-page` を先行非同期フェッチ（`prefetchTownData`）し、Zustand キャッシュに格納。これにより、街到着後の「拠点情報を取得中...」などのローディング画面を完全にスキップ（0ms描画）する。
-* **酒場での楽観的UI更新（Optimistic Updates）**: 傭兵雇用（`handleHire`）や契約解除（`handleDismiss`）の実行時、Zustand 内の所持金（ゴールド）およびパーティメンバー配列を即座に更新してUIに反映する。API 通信成功時はバックグラウンドで同期し、失敗時は直ちに以前のスナップショットへと自動ロールバックを実行する。
-* **ギルドのキャッシュフェッチ**: クエスト掲示板（`QuestBoardModal`）起動時は、Zustand にキャッシュされている `locationQuests` を即座に表示して待機時間を排除。バックグラウンドで最新データをフェッチしてキャッシュを同期する（SWRパターン）。
+* **Zustand ハイドレーション完了のリアクティブ検知**: 拠点画面（`/inn`）初期レンダリング時、Zustand の localStorage からのハイドレーション（`_hasHydrated`）完了を監視し、ハブ状態や拠点状態キャッシュが揃っている場合は、APIデータの再取得完了を待たずに即座に `loading = false` に切り替えて拠点画面を描画し、ローディング画面の瞬きを排除する。
+* **クライアントサイドルーティングの徹底によるキャッシュ保持**: 各施設（例: 道具屋 `ShopModal` やゴールドスロット購入 `GoldSlotPurchaseModal`）からのリダイレクトや遷移において、 `window.location.href = '/inn'` によるページフルリロードを廃止し、Next.js の `router.push('/inn')` に統一。これにより、Zustand のインメモリキャッシュが破棄されるのを防ぎ、遷移後の高速再描画を維持する。
+* **酒場での同期キャッシュ復元と楽観的UI更新（Optimistic Updates）**: 
+  * `TavernModal` は、起動時に Zustand の影キャッシュが無い場合でも、`sessionStorage` のキャッシュ（`tavern_shadows_cache_{locationId}`）から同期的にデータを読み込んで即座に `setLoading(false)`（0ms表示）を実行し、その後にバックグラウンドでパーティ・影データの最新フェッチと同期を行う。
+  * 傭兵雇用（`handleHire`）や契約解除（`handleDismiss`）の実行時、Zustand 内の所持金（ゴールド）およびパーティメンバー配列を即座に更新してUIに反映する。API 通信成功時はバックグラウンドで同期し、失敗時は直ちに以前のスナップショットへと自動ロールバックを実行する。
+* **ギルドの同期キャッシュフェッチ**: クエスト掲示板（`QuestBoardModal`）起動時は、Zustand にキャッシュされている `locationQuests` または `sessionStorage` のキャッシュ（`location_quests_cache_{locationId}`）を即座に同期復元して待機時間を完全に排除（0ms表示）。バックグラウンドで最新データをフェッチしてキャッシュを同期する（SWRパターン）。
 
 * **サーバーサイドAPIにおける RLS 回避のための特権クライアント（supabaseService）の統一**: サーバーサイド API（例：`/api/user/history-archive` や `/api/inn/rest`）において、ユーザー認証（JWTの検証等）を完了した後は、RLS（Row Level Security）ポリシーの適用漏れや適用差異による静かなクエリ失敗を防止するため、データの取得・更新クエリには一貫してサービスロールキーを使用する `supabaseService`（特権クライアント）を使用する設計とすること。
 * **フロントエンドとサーバーサイド間での Bearer 認証ヘッダーの引き継ぎ**: 認証済みのユーザー情報（JWT）に依存するサーバーサイド API（例：宿屋の宿泊、ヒストリーアーカイブなど）をフロントエンドから fetch する際は、漏れなく `Authorization: Bearer <token>` を headers に付与する設計とする。引き継ぎ漏れがあると API サーバー側で 401 Unauthorized エラーとなり処理が中断する。
