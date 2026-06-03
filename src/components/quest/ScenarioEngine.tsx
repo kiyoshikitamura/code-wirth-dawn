@@ -16,11 +16,22 @@ import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 interface Props {
     scenario: ScenarioDB;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[], nodeRewards?: any) => void;
+    onPrepareResult?: (result: 'success' | 'failure', history: string[], nodeRewards?: any) => void;
+    isResultReady?: boolean;
+    isPreparingResult?: boolean;
     onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
     initialNodeId?: string;
 }
 
-export default function ScenarioEngine({ scenario, onComplete, onBattleStart, initialNodeId }: Props) {
+export default function ScenarioEngine({
+    scenario,
+    onComplete,
+    onPrepareResult,
+    isResultReady = true,
+    isPreparingResult = false,
+    onBattleStart,
+    initialNodeId
+}: Props) {
     const defaultNodeId = 'start';
     const [currentNodeId, setCurrentNodeId] = useState(initialNodeId || defaultNodeId);
     const [history, setHistory] = useState<string[]>([]);
@@ -378,6 +389,13 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
         img.src = bgUrl;
     }, [bgUrl]);
 
+    // クエスト結果の先行読み込み（プレフェッチ）トリガー
+    useEffect(() => {
+        if (endReady && endReady.result !== 'abort' && onPrepareResult) {
+            onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
+        }
+    }, [endReady, history, onPrepareResult]);
+
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
 
@@ -518,24 +536,29 @@ export default function ScenarioEngine({ scenario, onComplete, onBattleStart, in
                                 {/* Phase 2: ユーザーボタン操作による遷移 */}
                                 <button
                                     onClick={() => {
-                                        if (endReady && !isProcessingResult) {
+                                        if (endReady && isResultReady && !isProcessingResult) {
                                             setIsProcessingResult(true);
                                             onComplete(endReady.result, history, endReady.nodeRewards);
                                         }
                                     }}
-                                    disabled={!endReady || isProcessingResult}
+                                    disabled={!endReady || !isResultReady || isProcessingResult}
                                     className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
                                         currentNode.result === 'success' || currentNode.type === 'end_success'
                                             ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
                                             : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
-                                    } ${(!endReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
+                                    } ${(!endReady || !isResultReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
                                 >
                                     {isProcessingResult ? (
                                         <span className="flex items-center justify-center gap-2">
                                             <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            結果を処理中...
+                                            画面を切り替え中...
                                         </span>
-                                    ) : endReady ? '結果を確認する' : '判定中...'}
+                                    ) : !isResultReady ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            判定中...
+                                        </span>
+                                    ) : '結果を確認する'}
                                 </button>
                             </div>
                         ) : (

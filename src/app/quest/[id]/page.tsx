@@ -32,6 +32,20 @@ export default function QuestPage() {
 
     useAuthGuard(); // タイトル画面経由チェック
 
+    const [prefetchedResult, setPrefetchedResult] = useState<{
+        result: 'success' | 'failure';
+        data: any;
+    } | null>(null);
+    const [isPrefetching, setIsPrefetching] = useState(false);
+    const prefetchStartedRef = useRef(false);
+
+    // シナリオやクエストIDが変わったタイミングでプレフェッチ状態をリセット
+    useEffect(() => {
+        setPrefetchedResult(null);
+        setIsPrefetching(false);
+        prefetchStartedRef.current = false;
+    }, [id]);
+
     const resultOverlayState = useState<{ // Renamed variable to avoid conflict
         result: 'success' | 'failure';
         data?: any;
@@ -95,6 +109,224 @@ export default function QuestPage() {
             }
         }
     }, [id]);
+
+    const handlePrepareResult = async (result: 'success' | 'failure', history: string[], nodeRewards?: any) => {
+        if (prefetchStartedRef.current) return;
+        prefetchStartedRef.current = true;
+        setIsPrefetching(true);
+
+        const isSuccess = result === 'success';
+
+        if (isTestPlay) {
+            // テストプレイ完了: 成功・敗北を問わずクエスト動作確認済みとして記録
+            localStorage.setItem(`ugc_tested_${scenario?.id}`, 'true');
+            try {
+                const authToken = await getAuthToken();
+                await fetch('/api/ugc/v2/test-complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                    },
+                    body: JSON.stringify({ scenario_id: scenario?.id })
+                });
+            } catch (e) {
+                console.warn('[QuestPage] Failed to record tested_at:', e);
+            }
+            // テストプレイ: DBを変更せずシナリオ定義から結果を構築
+            const rewards = nodeRewards || scenario?.rewards || {};
+            const dummyLoot: any[] = [];
+            if (isSuccess && rewards.items) {
+                const itemsArr = Array.isArray(rewards.items) ? rewards.items : [rewards.items];
+                for (const id of itemsArr) {
+                    const itemId = parseInt(String(id), 10);
+                    if (isNaN(itemId)) continue;
+                    const { data: itemDef } = await supabase.from('items').select('name, type').eq('id', itemId).maybeSingle();
+                    const lootType = itemDef?.type === 'skill' ? 'skill' : 'item';
+                    dummyLoot.push({ itemId: itemId, name: itemDef?.name || `アイテム #${itemId}`, quantity: 1, type: lootType });
+                }
+            }
+            if (isSuccess && rewards.skills) {
+                const skillsArr = Array.isArray(rewards.skills) ? rewards.skills : [rewards.skills];
+                for (const id of skillsArr) {
+                    const skillId = parseInt(String(id), 10);
+                    if (isNaN(skillId)) continue;
+                    const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
+                    dummyLoot.push({ itemId: skillId, name: skillDef?.name || `スキル #${skillId}`, quantity: 1, type: 'skill' });
+                }
+            }
+
+            setPrefetchedResult({
+                result,
+                data: {
+                    quest_title: scenario?.title,
+                    rewards: rewards,
+                    days_passed: 0, // テストプレイ: 日数経過なし
+                    earned_exp: 0, // テストプレイ: 経験値なし
+                    share_text: null, // テストプレイではXシェアを非表示
+                    changes: {
+                        gold_gained: 0,
+                        old_age: userProfile?.age,
+                        new_age: userProfile?.age,
+                        aged_up: false,
+                        vit_penalty: 0,
+                        atk_decay: 0,
+                        def_decay: 0,
+                        alignment_shift: null, // テストプレイ: 属性変化なし
+                    },
+                    rep_change: null, // テストプレイ: 名声変化なし
+                    party_changes: null,
+                    loot_saved: dummyLoot,
+                    guest_conversion: null,
+                    new_location_name: null,
+                }
+            });
+            useQuestState.getState().resetQuest();
+            setIsPrefetching(false);
+            return;
+        }
+
+        // デバッグモード（チートツール）: DB変更せず結果を表示
+        const isDebugMode = searchParams.get('debug_bypass') === 'true';
+        if (isDebugMode) {
+            const rewards = nodeRewards || scenario?.rewards || {};
+            const dummyLoot: any[] = [];
+            if (isSuccess && rewards.items) {
+                const itemsArr = Array.isArray(rewards.items) ? rewards.items : [rewards.items];
+                for (const id of itemsArr) {
+                    const itemId = parseInt(String(id), 10);
+                    if (isNaN(itemId)) continue;
+                    const { data: itemDef } = await supabase.from('items').select('name, type').eq('id', itemId).maybeSingle();
+                    const lootType = itemDef?.type === 'skill' ? 'skill' : 'item';
+                    dummyLoot.push({ itemId: itemId, name: itemDef?.name || `アイテム #${itemId}`, quantity: 1, type: lootType });
+                }
+            }
+            if (isSuccess && rewards.skills) {
+                const skillsArr = Array.isArray(rewards.skills) ? rewards.skills : [rewards.skills];
+                for (const id of skillsArr) {
+                    const skillId = parseInt(String(id), 10);
+                    if (isNaN(skillId)) continue;
+                    const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
+                    dummyLoot.push({ itemId: skillId, name: skillDef?.name || `スキル #${skillId}`, quantity: 1, type: 'skill' });
+                }
+            }
+
+            setPrefetchedResult({
+                result,
+                data: {
+                    quest_title: scenario?.title,
+                    rewards: rewards,
+                    days_passed: scenario?.time_cost || 0,
+                    earned_exp: isSuccess ? (rewards?.exp || 0) : 0,
+                    share_text: null, // Xシェア非表示
+                    changes: {
+                        gold_gained: isSuccess ? (rewards?.gold || 0) : 0,
+                        old_age: userProfile?.age,
+                        new_age: userProfile?.age,
+                        aged_up: false,
+                        vit_penalty: 0,
+                        atk_decay: 0,
+                        def_decay: 0,
+                        alignment_shift: isSuccess ? (rewards?.alignment_shift || null) : null,
+                    },
+                    rep_change: isSuccess && rewards?.reputation
+                        ? { amount: rewards.reputation, location: '現在地' }
+                        : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
+                    party_changes: null,
+                    loot_saved: dummyLoot,
+                    guest_conversion: null,
+                    new_location_name: null,
+                }
+            });
+            useQuestState.getState().resetQuest();
+            setIsPrefetching(false);
+            return;
+        }
+
+        try {
+            const authToken = await getAuthToken();
+
+            // バトルでHP0になったパーティメンバーIDを収集
+            const bs = useGameStore.getState().battleState;
+            const defeatedMemberIds = (bs?.party || [])
+                .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
+                .map((m: any) => String(m.id));
+
+            // クエスト終了時にゲストが残っている場合、通常雇用変換のためにAPIへ送信
+            const remainingGuest = useQuestState.getState().guest;
+
+            const res = await fetch('/api/quest/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                },
+                body: JSON.stringify({
+                    quest_id: scenario?.id,
+                    result: isSuccess ? 'success' : 'failure',
+                    history: history || [],
+                    loot_pool: [],
+                    consumed_items: [],
+                    defeated_member_ids: defeatedMemberIds,
+                    node_rewards: nodeRewards || null,
+                    remaining_guest: remainingGuest ? {
+                        slug: (remainingGuest as any).slug,
+                        name: remainingGuest.name,
+                        npc_id: remainingGuest.id,
+                    } : null
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                console.error('Complete Error:', err);
+                alert(`結果の保存に失敗しました: ${err.error || res.statusText}`);
+                prefetchStartedRef.current = false; // 再試行できるようにする
+            } else {
+                const data = await res.json();
+                useQuestState.getState().resetQuest();
+                await fetchUserProfile();
+
+                setPrefetchedResult({
+                    result,
+                    data: data
+                });
+            }
+        } catch (e: any) {
+            console.error(e);
+            alert(`通信エラーが発生しました: ${e.message}\n結果の保存に失敗した可能性があります。`);
+            useQuestState.getState().resetQuest();
+            setPrefetchedResult({
+                result,
+                data: {
+                    quest_title: scenario?.title,
+                    rewards: isSuccess ? (scenario?.rewards || {}) : {},
+                    days_passed: scenario?.time_cost || 0,
+                    earned_exp: 0,
+                    changes: { gold_gained: 0, old_age: userProfile?.age, new_age: userProfile?.age, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
+                    rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
+                }
+            });
+        } finally {
+            setIsPrefetching(false);
+        }
+    };
+
+    const handleComplete = (result: 'success' | 'failure' | 'abort') => {
+        if (result === 'abort') {
+            router.push('/inn');
+            return;
+        }
+
+        if (prefetchedResult) {
+            setResultOverlay({
+                result: prefetchedResult.result,
+                data: prefetchedResult.data
+            });
+        } else {
+            alert("結果の処理がまだ完了していません。しばらくお待ちください。");
+        }
+    };
 
     useEffect(() => {
         if (!id) {
@@ -626,205 +858,10 @@ export default function QuestPage() {
                                 scenario={scenario}
                                 initialNodeId={initialNodeId}
                                 onBattleStart={startBattle}
-                                onComplete={async (result, history, nodeRewards) => {
-                                    if (result === 'abort') {
-                                        router.push('/inn');
-                                        return;
-                                    }
-
-                                    if (isTestPlay) {
-                                        // テストプレイ完了: 成功・敗北を問わずクエスト動作確認済みとして記録
-                                        localStorage.setItem(`ugc_tested_${scenario.id}`, 'true');
-                                        try {
-                                            const authToken = await getAuthToken();
-                                            await fetch('/api/ugc/v2/test-complete', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                                                },
-                                                body: JSON.stringify({ scenario_id: scenario.id })
-                                            });
-                                        } catch (e) {
-                                            console.warn('[QuestPage] Failed to record tested_at:', e);
-                                        }
-                                        // テストプレイ: DBを変更せずシナリオ定義から結果を構築
-                                        const rewards = nodeRewards || scenario.rewards || {};
-                                        const isSuccess = result === 'success';
-                                        const dummyLoot: any[] = [];
-                                        if (isSuccess && rewards.items) {
-                                            const itemsArr = Array.isArray(rewards.items) ? rewards.items : [rewards.items];
-                                            for (const id of itemsArr) {
-                                                const itemId = parseInt(String(id), 10);
-                                                if (isNaN(itemId)) continue;
-                                                const { data: itemDef } = await supabase.from('items').select('name, type').eq('id', itemId).maybeSingle();
-                                                const lootType = itemDef?.type === 'skill' ? 'skill' : 'item';
-                                                dummyLoot.push({ itemId: itemId, name: itemDef?.name || `アイテム #${itemId}`, quantity: 1, type: lootType });
-                                            }
-                                        }
-                                        if (isSuccess && rewards.skills) {
-                                            const skillsArr = Array.isArray(rewards.skills) ? rewards.skills : [rewards.skills];
-                                            for (const id of skillsArr) {
-                                                const skillId = parseInt(String(id), 10);
-                                                if (isNaN(skillId)) continue;
-                                                const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
-                                                dummyLoot.push({ itemId: skillId, name: skillDef?.name || `スキル #${skillId}`, quantity: 1, type: 'skill' });
-                                            }
-                                        }
-
-                                        setResultOverlay({
-                                            result: isSuccess ? 'success' : 'failure',
-                                            data: {
-                                                quest_title: scenario.title,
-                                                rewards: rewards,
-                                                days_passed: 0, // テストプレイ: 日数経過なし
-                                                earned_exp: 0, // テストプレイ: 経験値なし
-                                                share_text: null, // テストプレイではXシェアを非表示
-                                                changes: {
-                                                    gold_gained: 0,
-                                                    old_age: 0,
-                                                    new_age: 0,
-                                                    aged_up: false,
-                                                    vit_penalty: 0,
-                                                    atk_decay: 0,
-                                                    def_decay: 0,
-                                                    alignment_shift: null, // テストプレイ: 属性変化なし
-                                                },
-                                                rep_change: null, // テストプレイ: 名声変化なし
-                                                party_changes: null,
-                                                loot_saved: dummyLoot,
-                                                guest_conversion: null,
-                                                new_location_name: null,
-                                            }
-                                        });
-                                        useQuestState.getState().resetQuest();
-                                        return;
-                                    }
-
-                                    // デバッグモード（チートツール）: DB変更せず結果を表示
-                                    const isDebugMode = searchParams.get('debug_bypass') === 'true';
-                                    if (isDebugMode) {
-                                        const rewards = nodeRewards || scenario.rewards || {};
-                                        const isSuccess = result === 'success';
-                                        const dummyLoot: any[] = [];
-                                        if (isSuccess && rewards.items) {
-                                            const itemsArr = Array.isArray(rewards.items) ? rewards.items : [rewards.items];
-                                            for (const id of itemsArr) {
-                                                const itemId = parseInt(String(id), 10);
-                                                if (isNaN(itemId)) continue;
-                                                const { data: itemDef } = await supabase.from('items').select('name, type').eq('id', itemId).maybeSingle();
-                                                const lootType = itemDef?.type === 'skill' ? 'skill' : 'item';
-                                                dummyLoot.push({ itemId: itemId, name: itemDef?.name || `アイテム #${itemId}`, quantity: 1, type: lootType });
-                                            }
-                                        }
-                                        if (isSuccess && rewards.skills) {
-                                            const skillsArr = Array.isArray(rewards.skills) ? rewards.skills : [rewards.skills];
-                                            for (const id of skillsArr) {
-                                                const skillId = parseInt(String(id), 10);
-                                                if (isNaN(skillId)) continue;
-                                                const { data: skillDef } = await supabase.from('skills').select('name').eq('id', skillId).maybeSingle();
-                                                dummyLoot.push({ itemId: skillId, name: skillDef?.name || `スキル #${skillId}`, quantity: 1, type: 'skill' });
-                                            }
-                                        }
-
-                                        setResultOverlay({
-                                            result: isSuccess ? 'success' : 'failure',
-                                            data: {
-                                                quest_title: scenario.title,
-                                                rewards: rewards,
-                                                days_passed: scenario.time_cost || 0,
-                                                earned_exp: isSuccess ? (rewards?.exp || 0) : 0,
-                                                share_text: null, // Xシェア非表示
-                                                changes: {
-                                                    gold_gained: isSuccess ? (rewards?.gold || 0) : 0,
-                                                    old_age: 0,
-                                                    new_age: 0,
-                                                    aged_up: false,
-                                                    vit_penalty: 0,
-                                                    atk_decay: 0,
-                                                    def_decay: 0,
-                                                    alignment_shift: isSuccess ? (rewards?.alignment_shift || null) : null,
-                                                },
-                                                rep_change: isSuccess && rewards?.reputation
-                                                    ? { amount: rewards.reputation, location: '現在地' }
-                                                    : (!isSuccess ? { amount: -(Math.floor(Math.random() * 8) + 3), location: '現在地' } : null),
-                                                party_changes: null,
-                                                loot_saved: dummyLoot,
-                                                guest_conversion: null,
-                                                new_location_name: null,
-                                            }
-                                        });
-                                        useQuestState.getState().resetQuest();
-                                        return;
-                                    }
-
-                                    try {
-                                        const authToken = await getAuthToken();
-
-                                        // バトルでHP0になったパーティメンバーIDを収集
-                                        const bs = useGameStore.getState().battleState;
-                                        const defeatedMemberIds = (bs?.party || [])
-                                            .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
-                                            .map((m: any) => String(m.id));
-
-                                        // クエスト終了時にゲストが残っている場合、通常雇用変換のためにAPIへ送信
-                                        const remainingGuest = useQuestState.getState().guest;
-
-                                        const res = await fetch('/api/quest/complete', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                                            },
-                                            body: JSON.stringify({
-                                                quest_id: scenario.id,
-                                                result: result === 'success' ? 'success' : 'failure',
-                                                history: history || [],
-                                                loot_pool: [],
-                                                consumed_items: [],
-                                                defeated_member_ids: defeatedMemberIds,
-                                                node_rewards: nodeRewards || null,
-                                                remaining_guest: remainingGuest ? {
-                                                    slug: (remainingGuest as any).slug,
-                                                    name: remainingGuest.name,
-                                                    npc_id: remainingGuest.id,
-                                                } : null
-                                            })
-                                        });
-
-                                        if (!res.ok) {
-                                            const err = await res.json();
-                                            console.error('Complete Error:', err);
-                                            alert(`結果の保存に失敗しました: ${err.error || res.statusText}`);
-                                        } else {
-                                            const data = await res.json();
-                                            useQuestState.getState().resetQuest();
-                                            await fetchUserProfile();
-
-                                            setResultOverlay({
-                                                result: result === 'success' ? 'success' : 'failure',
-                                                data: data
-                                            });
-                                        }
-                                    } catch (e: any) {
-                                        console.error(e);
-                                        // 通信エラー時: /inn に飛ばすとAuthGuardで更にタイトルに飛ばされるため、
-                                        // フォールバックとして結果モーダルを表示する
-                                        alert(`通信エラーが発生しました: ${e.message}\n結果の保存に失敗した可能性があります。`);
-                                        useQuestState.getState().resetQuest();
-                                        setResultOverlay({
-                                            result: result === 'success' ? 'success' : 'failure',
-                                            data: {
-                                                quest_title: scenario.title,
-                                                rewards: result === 'success' ? (scenario.rewards || {}) : {},
-                                                days_passed: scenario.time_cost || 0,
-                                                earned_exp: 0,
-                                                changes: { gold_gained: 0, old_age: 0, new_age: 0, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
-                                                rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
-                                            }
-                                        });
-                                    }
-                                }}
+                                onPrepareResult={handlePrepareResult}
+                                isResultReady={!!prefetchedResult}
+                                isPreparingResult={isPrefetching}
+                                onComplete={handleComplete}
                             />
                         </div>
                     ) : (
