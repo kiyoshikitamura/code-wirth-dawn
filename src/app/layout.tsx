@@ -29,6 +29,27 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                var msg = e.message || '';
+                if (msg.indexOf('ChunkLoadError') !== -1 || msg.indexOf('Loading chunk') !== -1 || msg.indexOf('Failed to load chunk') !== -1) {
+                  console.warn('ChunkLoadError detected, reloading page...', e);
+                  window.location.reload();
+                }
+              }, true);
+              window.addEventListener('unhandledrejection', function(e) {
+                var reason = e.reason || {};
+                var msg = reason.message || '';
+                if (reason.name === 'ChunkLoadError' || msg.indexOf('ChunkLoadError') !== -1 || msg.indexOf('Loading chunk') !== -1 || msg.indexOf('Failed to load chunk') !== -1) {
+                  console.warn('ChunkLoadError detected in promise, reloading page...', e);
+                  window.location.reload();
+                }
+              });
+            `
+          }}
+        />
         <SoundProvider />
         {children}
         {process.env.NEXT_PUBLIC_GA_ID && (

@@ -4,19 +4,19 @@
 
 export const SCENARIO_ASSETS: Record<string, string> = {
     // Dungeons
-    'dungeon_sewer': '/backgrounds/dungeon/sewer.jpg',
-    'dungeon_cave': '/backgrounds/dungeon/cave.jpg',
-    'dungeon_ruins': '/backgrounds/dungeon/ruins.jpg',
+    'dungeon_sewer': '/images/quests/bg_catacombs.png',
+    'dungeon_cave': '/images/quests/bg_cave.png',
+    'dungeon_ruins': '/images/quests/bg_ruins_field.png',
 
     // Cities
-    'city_slums': '/backgrounds/city/slums.jpg',
+    'city_slums': '/images/quests/bg_slum.png',
     'city_market': '/backgrounds/city/market.jpg',
     'city_castle': '/backgrounds/city/castle.jpg',
-    'city_tavern': '/backgrounds/city/tavern.jpg',
+    'city_tavern': '/images/quests/bg_tavern_day.png',
 
     // Nature
-    'nature_forest': '/backgrounds/nature/forest.jpg',
-    'nature_mountain': '/backgrounds/nature/mountain.jpg',
+    'nature_forest': '/images/quests/bg_forest_day.png',
+    'nature_mountain': '/images/quests/bg_mountain.png',
 
     // Default Fallbacks
     'default': '/backgrounds/default.jpg',

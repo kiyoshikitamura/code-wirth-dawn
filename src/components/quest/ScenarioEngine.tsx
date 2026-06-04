@@ -291,7 +291,7 @@ export default function ScenarioEngine({
 
         return (
             <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-6">
-                <div className="absolute inset-0 bg-[url('/backgrounds/camp.jpg')] opacity-20 pointer-events-none bg-cover bg-center" />
+                <div className="absolute inset-0 bg-[url('/images/quests/bg_camp.png')] opacity-20 pointer-events-none bg-cover bg-center" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
 
                 <div className="z-10 w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
