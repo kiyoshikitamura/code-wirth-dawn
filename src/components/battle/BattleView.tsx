@@ -916,6 +916,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 </div>
             </div>
 
+            {/* Spacer to push cards and buttons to the bottom on long screens */}
+            <div className="flex-grow" />
+
             {/* BOTTOM: CARDS + ACTION BUTTONS — フロー配置 */}
             <div className="w-full relative z-30 px-3 pb-2 flex-shrink-0">
                 {/* AP Display (Moved from player status panel) */}
@@ -925,9 +928,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 </div>
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
-                <div className="relative w-full h-40 flex items-end">
+                <div className="relative w-full h-48 flex items-end">
                     <div 
-                        className="w-full h-full overflow-x-auto no-scrollbar snap-x snap-mandatory flex items-end px-[10%] pb-3 pt-8 gap-0"
+                        className="w-full h-full overflow-x-auto no-scrollbar snap-x snap-mandatory flex items-end px-[10%] pb-3 pt-12 gap-0"
                         style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}
                     >
                         {hand.map((card, idx) => {
