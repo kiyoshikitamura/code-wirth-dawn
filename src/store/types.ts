@@ -83,7 +83,7 @@ export interface GameState {
     setGossipData: (data: any) => void;
 
     // 先行ロード用アクション
-    prefetchTownData: (token?: string) => Promise<void>;
+    prefetchTownData: (token?: string, force?: boolean) => Promise<void>;
     lastInitPageFetchTime?: number;
 }
 

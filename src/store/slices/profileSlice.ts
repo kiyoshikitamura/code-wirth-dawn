@@ -276,10 +276,10 @@ export const createProfileSlice = (
     setLocationQuests: (quests) => set({ locationQuests: quests }),
     setGossipData: (data) => set({ gossipData: data }),
 
-    prefetchTownData: async (token?: string) => {
-        // キャッシュチェック（直近60秒以内ならスキップ）
+    prefetchTownData: async (token?: string, force?: boolean) => {
+        // キャッシュチェック（直近60秒以内ならスキップ。ただしforce=true時は強制取得）
         const lastFetch = get().lastInitPageFetchTime || 0;
-        if (Date.now() - lastFetch < 60000) {
+        if (!force && Date.now() - lastFetch < 60000) {
             console.log('[prefetchTownData] Skipped. Cached recently.');
             return;
         }

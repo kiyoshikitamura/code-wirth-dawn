@@ -653,8 +653,8 @@ export function useInnPageState() {
 
             if (error) throw error;
 
-            // ハブ情報を先行一括ロードしてキャッシュを更新
-            await useGameStore.getState().prefetchTownData();
+            // ハブ情報を先行一括ロードしてキャッシュを更新 (force=trueでキャッシュスキップ)
+            await useGameStore.getState().prefetchTownData(undefined, true);
             showToast('名もなき旅人の拠所へ帰還しました');
         } catch (e) {
             console.error("Failed to return to hub", e);
@@ -677,8 +677,8 @@ export function useInnPageState() {
 
             if (error) throw error;
 
-            // 遷移先の拠点情報を先行一括ロードしてキャッシュを更新
-            await useGameStore.getState().prefetchTownData();
+            // 遷移先の拠点情報を先行一括ロードしてキャッシュを更新 (force=trueでキャッシュスキップ)
+            await useGameStore.getState().prefetchTownData(undefined, true);
             showToast('直前の拠点へ戻りました');
         } catch (e) {
             console.error("Failed to leave hub", e);
