@@ -363,6 +363,30 @@ export const createBattleSlice = (
         const { battleState, userProfile } = get();
         if (battleState.isVictory || battleState.isDefeat) return;
 
+        // [Security] Sync turn end and AP recovery to server (v28.0)
+        if (battleState.battle_session_id) {
+            try {
+                const authHeaders = await getAuthHeaders();
+                const headers: HeadersInit = {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                };
+                fetch('/api/battle/action', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        battle_session_id: battleState.battle_session_id,
+                        action_type: 'end_turn',
+                        log_message: 'Player turn ended'
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (data.error) console.warn('Server end_turn validation failed:', data.error);
+                }).catch(err => console.error('End turn sync failed:', err));
+            } catch (err) {
+                console.error('End turn sync auth headers failed:', err);
+            }
+        }
+
         const nextTurn = battleState.turn + 1;
 
         if (nextTurn > 30) {

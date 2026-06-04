@@ -45,6 +45,12 @@ export async function POST(req: Request) {
             // Deduct AP
             playerState.current_ap -= apCost;
 
+            // Process AP recovery card effects (e.g. Meditation)
+            const resolvedEffectId = card.effect_id || (card.effect_data && card.effect_data.effect_id);
+            if (resolvedEffectId === 'ap_recover') {
+                playerState.current_ap = Math.min(15, playerState.current_ap + 3);
+            }
+
             // Simple Damage Route
             const damage = card.power ?? 0;
             if (damage > 0) {

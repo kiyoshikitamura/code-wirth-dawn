@@ -308,5 +308,12 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **sessionStorage を用いた同期的なキャッシュ復元の徹底**:
   モーダル（酒場 `TavernModal` やギルド `QuestBoardModal`）を開く際、Zustand 上にキャッシュが無い場合でも、`sessionStorage` のキャッシュから同期的にデータを復元して即座に `setLoading(false)`（0ms描画）を実行し、その後にバックグラウンドで非同期通信と最新化を行うこと。非同期の `Promise.all` などの API 完了（ネットワークRTT）を待ってから `setLoading(false)` を行うと、数秒の待機ラグがユーザーに表示されてしまうため、同期的キャッシュ復元と非同期バックグラウンド更新（SWRパターン）を切り離して実装すること。
 
+## バトル中の AP 同期不整合バグ（400 Bad Request）の解消（追加改修・v28.0）
+
+- **ターン終了時の AP 同期**:
+  クライアント側でターンが終了した際（`runNpcPhase` が呼ばれた際）、サーバーのバトルセッションに対しても `action_type: 'end_turn'` のアクションを `POST /api/battle/action` 経由で送信して同期する。これにより、サーバー側の `player_state.current_ap` が自然回復（+5）され、ターン経過によって AP が不整合を起こし、次のターンでのカード使用時に `400 Bad Request`（AP不足）エラーが発生する問題を解消する。
+- **AP 回復スキル（瞑想等）のサーバー側処理**:
+  瞑想スキル（`effect_id: 'ap_recover'`）など、使用時に AP を回復させる特殊なカード効果について、サーバー側のアクションハンドラ（`/api/battle/action/route.ts`）内でも同等の AP 回復処理（+3、上限15）を実行する。これにより、カード使用の度にサーバーとクライアントの AP を常に完全に同期させる。
+
 
 
