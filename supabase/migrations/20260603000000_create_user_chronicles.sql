@@ -232,19 +232,50 @@ END $$;
 -- ============================================================
 -- 4. 旧テーブルのドロップ
 -- ============================================================
-DROP VIEW IF EXISTS public.quest_activity_logs CASCADE;
-DROP VIEW IF EXISTS public.user_visited_locations CASCADE;
-DROP VIEW IF EXISTS public.user_completed_quests CASCADE;
-DROP VIEW IF EXISTS public.user_item_history CASCADE;
-DROP VIEW IF EXISTS public.user_bestiary CASCADE;
-DROP VIEW IF EXISTS public.user_npc_encounters CASCADE;
+DO $$
+BEGIN
+    -- quest_activity_logs
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'quest_activity_logs') THEN
+        DROP VIEW public.quest_activity_logs CASCADE;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'quest_activity_logs') THEN
+        DROP TABLE public.quest_activity_logs CASCADE;
+    END IF;
 
-DROP TABLE IF EXISTS public.quest_activity_logs CASCADE;
-DROP TABLE IF EXISTS public.user_visited_locations CASCADE;
-DROP TABLE IF EXISTS public.user_completed_quests CASCADE;
-DROP TABLE IF EXISTS public.user_item_history CASCADE;
-DROP TABLE IF EXISTS public.user_bestiary CASCADE;
-DROP TABLE IF EXISTS public.user_npc_encounters CASCADE;
+    -- user_visited_locations
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'user_visited_locations') THEN
+        DROP VIEW public.user_visited_locations CASCADE;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_visited_locations') THEN
+        DROP TABLE public.user_visited_locations CASCADE;
+    END IF;
+
+    -- user_completed_quests
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'user_completed_quests') THEN
+        DROP VIEW public.user_completed_quests CASCADE;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_completed_quests') THEN
+        DROP TABLE public.user_completed_quests CASCADE;
+    END IF;
+
+    -- user_item_history
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'user_item_history') THEN
+        DROP VIEW public.user_item_history CASCADE;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_item_history') THEN
+        DROP TABLE public.user_item_history CASCADE;
+    END IF;
+
+    -- user_bestiary
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'user_bestiary') THEN
+        DROP VIEW public.user_bestiary CASCADE;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_bestiary') THEN
+        DROP TABLE public.user_bestiary CASCADE;
+    END IF;
+
+    -- user_npc_encounters
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'user_npc_encounters') THEN
+        DROP VIEW public.user_npc_encounters CASCADE;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_npc_encounters') THEN
+        DROP TABLE public.user_npc_encounters CASCADE;
+    END IF;
+END $$;
 
 -- ============================================================
 -- 5. ビューの作成
