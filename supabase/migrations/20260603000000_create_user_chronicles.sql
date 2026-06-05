@@ -113,8 +113,8 @@ BEGIN
                 ELSE 'quest_abandon'
             END, 
             COALESCE(p.accumulated_days, 0), 
-            CASE WHEN uq.scenario_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN NULL ELSE uq.scenario_id::bigint END,
-            CASE WHEN uq.scenario_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN uq.scenario_id::uuid ELSE NULL END,
+            CASE WHEN uq.scenario_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN NULL ELSE uq.scenario_id::bigint END,
+            CASE WHEN uq.scenario_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN uq.scenario_id::uuid ELSE NULL END,
             COALESCE(s.location_id, p.current_location_id),
             COALESCE(l.name, (SELECT name FROM public.locations WHERE id = p.current_location_id)),
             CASE 
@@ -127,8 +127,8 @@ BEGIN
             END,
             uq.created_at
         FROM public.quest_activity_logs uq
-        LEFT JOIN public.scenarios s ON s.id::text = uq.scenario_id
-        LEFT JOIN public.ugc_scenarios u ON u.id::text = uq.scenario_id
+        LEFT JOIN public.scenarios s ON s.id::text = uq.scenario_id::text
+        LEFT JOIN public.ugc_scenarios u ON u.id::text = uq.scenario_id::text
         LEFT JOIN public.locations l ON l.id = s.location_id
         LEFT JOIN public.user_profiles p ON p.id = uq.user_id
         WHERE uq.action IN ('start', 'abandon');
