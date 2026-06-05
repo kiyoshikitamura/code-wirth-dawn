@@ -128,6 +128,13 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **本番DBのテーブル数**: 45テーブル（コードが参照する全テーブルを含む）
 - **RPC 関数**: `increment_gold` のみ（`src/app/api/` から呼び出し）
 
+## ゴールドおよび経済セキュリティの教訓
+
+- **クエスト進行状況の検証**: 不正なクエスト完了APIコールによるゴールド報酬の不正取得を防ぐため、サーバー側で `user_profiles.current_quest_id` と完了要求された `quest_id` の完全一致を常に検証すること。
+- **アイテム売却個数のバリデーション**: `api/shop/sell` などの個数指定売買において、要求数量 `quantity` が「正の整数」であることをチェックし、かつインベントリ所持数（`invItem.quantity`）以上を売りさばけないように厳格なガードを挟むこと。負の売却数量はアイテム増殖に繋がるため拒否する。
+- **バトル検証トークンの義務化**: バトルが発生するクエストにおいては、`/api/battle/validate-result` が発行した HMAC 署名トークン `battle_completion_token` をクエスト完了時に検証し、勝利が偽装されていないことを確認すること。
+- **Cron認証バイパスの防止**: シークレットキー（`CRON_SECRET`）を用いる検証では、環境変数未定義によるスキップを避けるため、空値の場合もデフォルトでアクセスを拒否するフェイルセーフ設計にすること。
+
 ## CI/CD
 
 - GitHub Actions (`.github/workflows/ci.yml`): `develop`/`main` への push・PR で lint + build を自動実行

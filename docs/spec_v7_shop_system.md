@@ -79,20 +79,21 @@ Body: { item_id: number, user_id: string }
 ## 4. 売却ロジック
 
 ### 4.1 API: POST /api/shop/sell
-<!-- v11.0: 実装のsell APIを反映（bug fix後の正式仕様） -->
+<!-- v27.4: 実装のsell APIを反映（数量検証・セキュリティ修正後の正式仕様） -->
 ```
 POST /api/shop/sell
 Headers: { Authorization: Bearer <jwt> }
-Body: { inventory_id: string }
+Body: { item_id: number, quantity?: number }
 ```
 
 ### 4.2 売却処理フロー
 1. **認証**: JWT から `user_id` を取得。Service Role Client で RLS をバイパス。
-2. **在庫確認**: `inventory` テーブルから `id = inventory_id` かつ `user_id = userId` の行を `.limit(1)` で取得。
-3. **装備チェック**: `is_equipped === true` の場合 → **売却拒否** (400エラー)。
-4. **価格計算**: `sell_price = Math.floor(base_price / 2)`（固定50%換金）。
-5. **在庫削除**: `inventory` テーブルから該当行を削除。
-6. **ゴールド加算**: `increment_gold` RPC で原子的に加算（v27でレースコンディション修正）。
+2. **数量バリデーション**: `quantity` が正の整数であること（負の数や小数、文字列を拒否）を検証。
+3. **在庫・所持数確認**: `inventory` テーブルから `item_id = item_id` かつ `user_id = userId` の行を `.limit(1)` で取得し、所持数量 `ownedQty` が要求された `quantity` 以上であることを検証。
+4. **装備チェック**: `is_equipped === true` の場合、またはスキルアイテムの場合は **売却拒否** (400エラー)。
+5. **価格計算**: `sell_price`（通常は `base_price / 2`）を計算し、総額 `sell_price * quantity` を算出。
+6. **インベントリ更新**: 所持数が売却数より多い場合は減算して更新し、所持数と売却数が等しい場合は該当行を削除。
+7. **ゴールド加算**: `increment_gold` RPC で原子的に加算。
 
 > **Note (spec v14 実装済み)**: `.limit(1)` は購入により同一アイテムが複数行存在する問題への対処。崩壊拠点（Prosperity=1）での**闇市売却ボーナス（base_price × 1.5）実装済み**。
 
