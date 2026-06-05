@@ -105,7 +105,7 @@ END $$;
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'quest_activity_logs') THEN
-        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, scenario_id, location_id, location_name, title, description, created_at)
+        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at)
         SELECT 
             uq.user_id, 
             CASE 
@@ -113,12 +113,13 @@ BEGIN
                 ELSE 'quest_abandon'
             END, 
             COALESCE(p.accumulated_days, 0), 
-            uq.scenario_id, 
+            CASE WHEN uq.scenario_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN NULL ELSE uq.scenario_id::bigint END,
+            CASE WHEN uq.scenario_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN uq.scenario_id::uuid ELSE NULL END,
             COALESCE(s.location_id, p.current_location_id),
             COALESCE(l.name, (SELECT name FROM public.locations WHERE id = p.current_location_id)),
             CASE 
-                WHEN uq.action = 'start' THEN 'クエスト受注: ' || COALESCE(s.title, 'クエスト')
-                ELSE 'クエスト放棄: ' || COALESCE(s.title, 'クエスト')
+                WHEN uq.action = 'start' THEN 'クエスト受注: ' || COALESCE(s.title, u.title, 'クエスト')
+                ELSE 'クエスト放棄: ' || COALESCE(s.title, u.title, 'クエスト')
             END,
             CASE 
                 WHEN uq.action = 'start' THEN 'クエストを受注した。'
@@ -126,7 +127,8 @@ BEGIN
             END,
             uq.created_at
         FROM public.quest_activity_logs uq
-        LEFT JOIN public.scenarios s ON s.id = uq.scenario_id
+        LEFT JOIN public.scenarios s ON s.id::text = uq.scenario_id
+        LEFT JOIN public.ugc_scenarios u ON u.id::text = uq.scenario_id
         LEFT JOIN public.locations l ON l.id = s.location_id
         LEFT JOIN public.user_profiles p ON p.id = uq.user_id
         WHERE uq.action IN ('start', 'abandon');
@@ -155,41 +157,55 @@ END $$;
 
 -- 3d. アイテム歴史の移行
 DO $$
+DECLARE
+    v_col TEXT;
+    v_sql TEXT;
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_item_history') THEN
-        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, item_id, title, description, created_at)
-        SELECT 
-            ui.user_id, 
-            'item_collected', 
-            COALESCE(p.accumulated_days, 0), 
-            ui.item_id, 
-            'コレクション: ' || COALESCE(i.name, '未知のアイテム'), 
-            'アイテムを発見し、図鑑に記録した。',
-            COALESCE(ui.first_acquired_at, NOW())
-        FROM public.user_item_history ui
-        LEFT JOIN public.user_profiles p ON p.id = ui.user_id
-        LEFT JOIN public.items i ON i.id = ui.item_id
-        ON CONFLICT (user_id, item_id) WHERE event_type = 'item_collected' AND item_id IS NOT NULL DO NOTHING;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_item_history' AND column_name = 'first_acquired_at') THEN
+            v_col := 'first_acquired_at';
+        ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_item_history' AND column_name = 'first_obtained_at') THEN
+            v_col := 'first_obtained_at';
+        ELSE
+            v_col := 'created_at';
+        END IF;
+
+        v_sql := 'INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, item_id, title, description, created_at) ' ||
+                 'SELECT ui.user_id, ''item_collected'', COALESCE(p.accumulated_days, 0), ui.item_id, ' ||
+                 '''コレクション: '' || COALESCE(i.name, ''未知のアイテム''), ''アイテムを発見し、図鑑に記録した。'', ' ||
+                 'COALESCE(ui.' || v_col || ', NOW()) ' ||
+                 'FROM public.user_item_history ui ' ||
+                 'LEFT JOIN public.user_profiles p ON p.id = ui.user_id ' ||
+                 'LEFT JOIN public.items i ON i.id = ui.item_id ' ||
+                 'ON CONFLICT (user_id, item_id) WHERE event_type = ''item_collected'' AND item_id IS NOT NULL DO NOTHING';
+
+        EXECUTE v_sql;
     END IF;
 END $$;
 
 -- 3e. エネミー遭遇履歴の移行
 DO $$
+DECLARE
+    v_col TEXT;
+    v_sql TEXT;
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_bestiary') THEN
-        INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, enemy_id, title, description, created_at)
-        SELECT 
-            ub.user_id, 
-            'monster_defeated', 
-            COALESCE(p.accumulated_days, 0), 
-            ub.enemy_id, 
-            'コレクション: ' || COALESCE(e.name, '未知の魔物'), 
-            '魔物と交戦し、図鑑に記録した。',
-            COALESCE(ub.first_encountered_at, NOW())
-        FROM public.user_bestiary ub
-        LEFT JOIN public.user_profiles p ON p.id = ub.user_id
-        LEFT JOIN public.enemies e ON e.id = ub.enemy_id
-        ON CONFLICT (user_id, enemy_id) WHERE event_type = 'monster_defeated' AND enemy_id IS NOT NULL DO NOTHING;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_bestiary' AND column_name = 'first_encountered_at') THEN
+            v_col := 'first_encountered_at';
+        ELSE
+            v_col := 'created_at';
+        END IF;
+
+        v_sql := 'INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, enemy_id, title, description, created_at) ' ||
+                 'SELECT ub.user_id, ''monster_defeated'', COALESCE(p.accumulated_days, 0), ub.enemy_id, ' ||
+                 '''コレクション: '' || COALESCE(e.name, ''未知の魔物''), ''魔物と交戦し、図鑑に記録した。'', ' ||
+                 'COALESCE(ub.' || v_col || ', NOW()) ' ||
+                 'FROM public.user_bestiary ub ' ||
+                 'LEFT JOIN public.user_profiles p ON p.id = ub.user_id ' ||
+                 'LEFT JOIN public.enemies e ON e.id = ub.enemy_id ' ||
+                 'ON CONFLICT (user_id, enemy_id) WHERE event_type = ''monster_defeated'' AND enemy_id IS NOT NULL DO NOTHING';
+
+        EXECUTE v_sql;
     END IF;
 END $$;
 
@@ -216,6 +232,13 @@ END $$;
 -- ============================================================
 -- 4. 旧テーブルのドロップ
 -- ============================================================
+DROP VIEW IF EXISTS public.quest_activity_logs CASCADE;
+DROP VIEW IF EXISTS public.user_visited_locations CASCADE;
+DROP VIEW IF EXISTS public.user_completed_quests CASCADE;
+DROP VIEW IF EXISTS public.user_item_history CASCADE;
+DROP VIEW IF EXISTS public.user_bestiary CASCADE;
+DROP VIEW IF EXISTS public.user_npc_encounters CASCADE;
+
 DROP TABLE IF EXISTS public.quest_activity_logs CASCADE;
 DROP TABLE IF EXISTS public.user_visited_locations CASCADE;
 DROP TABLE IF EXISTS public.user_completed_quests CASCADE;
@@ -579,14 +602,18 @@ FOR EACH ROW EXECUTE FUNCTION public.delete_chronicle_row_trigger();
 -- ============================================================
 ALTER TABLE public.user_chronicles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "user_chronicles_select" ON public.user_chronicles;
 CREATE POLICY "user_chronicles_select" ON public.user_chronicles
     FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "user_chronicles_insert" ON public.user_chronicles;
 CREATE POLICY "user_chronicles_insert" ON public.user_chronicles
     FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "user_chronicles_update" ON public.user_chronicles;
 CREATE POLICY "user_chronicles_update" ON public.user_chronicles
     FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "user_chronicles_delete" ON public.user_chronicles;
 CREATE POLICY "user_chronicles_delete" ON public.user_chronicles
     FOR DELETE TO authenticated USING (auth.uid() = user_id);

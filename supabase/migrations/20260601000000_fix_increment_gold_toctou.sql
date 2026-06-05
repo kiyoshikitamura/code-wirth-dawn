@@ -31,6 +31,9 @@ $$;
 -- 2. Add CHECK constraint as defense-in-depth (catches any direct UPDATE bypassing RPC)
 -- Use NOT VALID to avoid scanning existing rows (in case any are already negative)
 ALTER TABLE user_profiles
+  DROP CONSTRAINT IF EXISTS gold_non_negative;
+
+ALTER TABLE user_profiles
   ADD CONSTRAINT gold_non_negative CHECK (gold >= 0) NOT VALID;
 
 -- Then validate to enforce for future operations
