@@ -33,6 +33,12 @@ const TIER_COLORS: Record<SubscriptionTier, string> = {
     premium: 'text-yellow-300 border-yellow-500 bg-yellow-900/20',
 };
 
+const AVATAR_BORDER_COLORS: Record<SubscriptionTier, string> = {
+    free: 'border-[#a38b6b]/50',
+    basic: 'border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]',
+    premium: 'border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]',
+};
+
 export default function AccountSettingsModal({ onClose }: Props) {
     const { userProfile, fetchUserProfile } = useGameStore();
     const router = useRouter();
@@ -369,7 +375,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                     <div className="flex items-center gap-4">
                         {/* アバター画像＋重ね合わせカメラバッジ */}
                         <div className="relative w-16 h-16 flex-shrink-0">
-                            <div className="w-full h-full rounded-full overflow-hidden border-2 border-[#a38b6b]/50 bg-gray-800">
+                            <div className={`w-full h-full rounded-full overflow-hidden border-2 bg-gray-800 ${AVATAR_BORDER_COLORS[currentTier]}`}>
                                 <img
                                     src={userProfile?.avatar_url || UI_RULES.DEFAULT_AVATAR}
                                     alt="Avatar"
@@ -428,10 +434,16 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-between w-full gap-2">
-                                    <div className="flex items-center gap-2 min-w-0">
+                                    <div className="flex items-center gap-1.5 min-w-0">
                                         <span className="text-[#e3d5b8] text-lg font-serif italic truncate max-w-[140px]">
                                             {userProfile?.name || '名もなき旅人'}
                                         </span>
+                                        {currentTier === 'basic' && (
+                                            <span className="text-blue-400 text-sm flex-shrink-0 select-none font-sans" title="Basic">⚡</span>
+                                        )}
+                                        {currentTier === 'premium' && (
+                                            <span className="text-yellow-400 text-sm flex-shrink-0 select-none font-sans" title="Premium">👑</span>
+                                        )}
                                         <button
                                             onClick={() => { setEditName(userProfile?.name || ''); setIsEditingName(true); setNameError(''); setNameSuccess(''); }}
                                             className="p-1 text-[#a38b6b] hover:text-amber-400 transition-colors flex-shrink-0"
@@ -661,7 +673,6 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                         <span className="flex items-center gap-2">
                                             <span className="text-yellow-400 font-bold">50,000 G</span>
                                             <span className="text-gray-400 text-xs">アドベンチャーパック</span>
-                                            <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded font-bold">おすすめ</span>
                                         </span>
                                         <span className="font-bold text-yellow-300">1,430円（税込）</span>
                                     </button>
