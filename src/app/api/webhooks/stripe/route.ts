@@ -4,22 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-// Provide a fallback for build time. At runtime, real calls will fail if missing, but build will pass.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
-    apiVersion: '2026-02-25.clover',
-});
-
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
     process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
     { auth: { autoRefreshToken: false, persistSession: false } }
 );
-
-// Stripe Price ID → subscription_tier マッピング
-const PRICE_TO_TIER: Record<string, 'basic' | 'premium'> = {
-    [process.env.STRIPE_PRICE_ID_BASIC ?? '']: 'basic',
-    [process.env.STRIPE_PRICE_ID_PREMIUM ?? '']: 'premium',
-};
 
 /**
  * POST /api/webhooks/stripe
@@ -32,6 +21,14 @@ const PRICE_TO_TIER: Record<string, 'basic' | 'premium'> = {
  * - customer.subscription.deleted:             subscription_tier を 'free' にダウングレード
  */
 export async function POST(req: Request) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+        apiVersion: '2026-02-25.clover',
+    });
+
+    const PRICE_TO_TIER: Record<string, 'basic' | 'premium'> = {
+        [process.env.STRIPE_PRICE_ID_BASIC ?? '']: 'basic',
+        [process.env.STRIPE_PRICE_ID_PREMIUM ?? '']: 'premium',
+    };
     const body = await req.text();
     const sig = req.headers.get('stripe-signature');
 

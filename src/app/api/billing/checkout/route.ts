@@ -4,33 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-// Provide a fallback for build time. At runtime, real calls will fail if missing, but build will pass.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
-    apiVersion: '2026-02-25.clover',
-});
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
     process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
     { auth: { autoRefreshToken: false, persistSession: false } }
 );
-
-const PRICE_IDS: Record<string, string> = {
-    basic: process.env.STRIPE_PRICE_ID_BASIC!,
-    premium: process.env.STRIPE_PRICE_ID_PREMIUM!,
-};
-
-// ゴールドパッケージ定義（packageKey → { priceId, goldAmount } のマッピング）
-const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number }> = {
-    gold_10k: {
-        priceId: process.env.STRIPE_PRICE_ID_GOLD_10K!,
-        goldAmount: 10000,
-    },
-    gold_50k: {
-        priceId: process.env.STRIPE_PRICE_ID_GOLD_50K!,
-        goldAmount: 50000,
-    },
-};
 
 /**
  * POST /api/billing/checkout
@@ -40,6 +19,29 @@ const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number }> = {
  */
 export async function POST(req: Request) {
     try {
+        // Stripe などの初期化をリクエスト時に動的評価（Vercel環境変数のキャッシュ・ビルド時評価バグ対策）
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+            apiVersion: '2026-02-25.clover',
+        });
+
+        const PRICE_IDS: Record<string, string> = {
+            basic: process.env.STRIPE_PRICE_ID_BASIC || '',
+            premium: process.env.STRIPE_PRICE_ID_PREMIUM || '',
+        };
+
+        const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number }> = {
+            gold_10k: {
+                priceId: process.env.STRIPE_PRICE_ID_GOLD_10K || '',
+                goldAmount: 10000,
+            },
+            gold_50k: {
+                priceId: process.env.STRIPE_PRICE_ID_GOLD_50K || '',
+                goldAmount: 50000,
+            },
+        };
+
+        console.log('[billing/checkout] Triggered. PRICE_IDS:', PRICE_IDS);
+
         // v27.0: JWT認証
         const authHeader = req.headers.get('Authorization');
         const token = authHeader?.replace('Bearer ', '');
