@@ -67,6 +67,17 @@ export async function POST(req: Request) {
                     console.error('[webhooks/stripe] user_id が取得できません。', session.id);
                     break;
                 }
+                if (session.customer) {
+                    try {
+                        await stripe.customers.update(session.customer as string, {
+                            metadata: { user_id: userId }
+                        });
+                        console.log(`[webhooks/stripe] Updated Stripe customer ${session.customer} with metadata.user_id = ${userId}`);
+                    } catch (custErr) {
+                        console.error('[webhooks/stripe] Failed to update Stripe customer metadata:', custErr);
+                        // 決済成功自体の処理をブロックしないよう、エラーをスローしない
+                    }
+                }
 
                 if (session.mode === 'subscription') {
                     // ─── サブスクリプション加入・更新 ───

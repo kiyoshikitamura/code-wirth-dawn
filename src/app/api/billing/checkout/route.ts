@@ -77,6 +77,7 @@ export async function POST(req: Request) {
                 mode: 'subscription',
                 line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
                 client_reference_id: userId,           // Webhook で user_id を特定するため必須
+                customer_email: user.email || undefined, // Stripe Customer のメールアドレスを統一
                 metadata: { user_id: userId, tier },
                 subscription_data: {
                     trial_period_days: 7,               // 最初の1週間無料トライアル
@@ -102,6 +103,7 @@ export async function POST(req: Request) {
                 mode: 'payment',
                 line_items: [{ price: pkg.priceId, quantity: 1 }],
                 client_reference_id: userId,
+                customer_email: user.email || undefined, // Stripe Customer のメールアドレスを統一
                 metadata: { user_id: userId, gold_amount: String(pkg.goldAmount) },
                 success_url: `${origin}/inn?billing=gold_success&amount=${pkg.goldAmount}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
