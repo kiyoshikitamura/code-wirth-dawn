@@ -113,8 +113,8 @@ BEGIN
                 ELSE 'quest_abandon'
             END, 
             COALESCE(p.accumulated_days, 0), 
-            CASE WHEN uq.scenario_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN NULL ELSE uq.scenario_id::bigint END,
-            CASE WHEN uq.scenario_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN uq.scenario_id::uuid ELSE NULL END,
+            CASE WHEN uq.scenario_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN NULL ELSE uq.scenario_id::text::bigint END,
+            CASE WHEN uq.scenario_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN uq.scenario_id::text::uuid ELSE NULL END,
             COALESCE(s.location_id, p.current_location_id),
             COALESCE(l.name, (SELECT name FROM public.locations WHERE id = p.current_location_id)),
             CASE 
