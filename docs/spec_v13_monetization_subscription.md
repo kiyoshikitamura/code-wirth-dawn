@@ -207,36 +207,14 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 
 整合性チェック（2026-04-07）で発見された問題点を記録する。実装時は優先度順に対応すること。
 
-### 🔴 Bug-1: 解約時に `user_id` が取得できずダウングレード処理が失敗する
+### 🟢 Bug-1: 解約時に `user_id` が取得できずダウングレード処理が失敗する [修正済み]
 
 **影響度**: 高（サブスクを解約しても課金状態がDBに反映されない）
 
-**原因**:
-`customer.subscription.deleted` Webhook イベントを受信する際、実装では Stripe Customer の `metadata.user_id` からユーザーを特定しようとしている（`webhooks/stripe/route.ts` L124-125）。
-しかし、`billing/checkout/route.ts` でチェックアウトセッションを作成する際に、Stripe **Customer** の `metadata` への `user_id` 書き込みが行われていない。
-その結果、解約イベント受信時に `userId` が `undefined` となり、ダウングレード処理がサイレントに失敗する。
-
-**修正方針**:
-`billing/checkout/route.ts` のサブスクリプション決済セッション作成時に、`customer_metadata: { user_id: userId }` を追加する（またはサブスクPriceに紐づくCustomerを作成・upsertする）。
-あるいは `customer.subscription.deleted` の受信側で、Subscriptionオブジェクトに含まれる `metadata` から `user_id` を取得するよう変更する（チェックアウト時の `metadata` はSubscriptionに引き継がれる）。
-
-```typescript
-// billing/checkout/route.ts の修正案（subscriptionセッション作成時）
-const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
-    client_reference_id: userId,
-    metadata: { user_id: userId, tier },        // ← Subscription に引き継がれる
-    subscription_data: {
-        metadata: { user_id: userId },           // ← Subscription 直接のmetadata
-    },
-    // ...
-});
-```
-
-**対応ファイル**:
-- `src/app/api/billing/checkout/route.ts`
-- `src/app/api/webhooks/stripe/route.ts`
+**対応状況 (2026-06-05 修正完了)**:
+- `billing/checkout/route.ts` でセッション作成時に `customer_email: user.email` を指定し、Stripe 顧客のメールアドレスを Google 連携メールアドレスと統一。
+- `webhooks/stripe/route.ts` の `checkout.session.completed` 受信時に、動的に `stripe.customers.update` を実行して顧客オブジェクトの `metadata.user_id` に `userId` を設定するように修正。
+- これにより、カスタマーポータル（`/api/billing/portal`）呼び出し時に、メールアドレスによる検索、およびメタデータ `user_id` による検索の両方のルートで確実に顧客情報が特定できるようになり、解約・変更処理が完全に動作することを確認。
 
 ---
 
