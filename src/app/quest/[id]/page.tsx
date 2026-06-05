@@ -275,7 +275,9 @@ export default function QuestPage() {
                         slug: (remainingGuest as any).slug,
                         name: remainingGuest.name,
                         npc_id: remainingGuest.id,
-                    } : null
+                    } : null,
+                    battle_completion_token: bs?.battle_completion_token || null,
+                    battle_session_id: bs?.battle_session_id || null
                 })
             });
 

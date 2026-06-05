@@ -11,6 +11,12 @@ export async function POST(req: Request) {
         // 1. 認証（共通モジュール）
         const profile = await getAuthenticatedProfile(req);
 
+        // [Security] 売却個数のバリデーション（正の整数か）
+        if (typeof quantity !== 'number' || quantity <= 0 || !Number.isInteger(quantity)) {
+            console.warn(`[Security] User ${profile?.id} attempted to sell invalid quantity: ${quantity}`);
+            return NextResponse.json({ error: '売却個数が無効です。' }, { status: 400 });
+        }
+
         // 1.5 出禁チェック + 繁栄度取得（闇市売却ボーナス用）
         await checkEmbargo(profile);
 
@@ -42,6 +48,13 @@ export async function POST(req: Request) {
                 error: '指定のアイテムを所持していません。',
                 debug: { item_id, item_id_type: typeof item_id, user_id: profile.id, dbError: invError?.message }
             }, { status: 404 });
+        }
+
+        // [Security] 所持数チェック
+        const ownedQty = invItem.quantity ?? 1;
+        if (ownedQty < quantity) {
+            console.warn(`[Security] User ${profile.id} attempted to sell ${quantity} items but only owns ${ownedQty} (item_id: ${item_id})`);
+            return NextResponse.json({ error: '所持数が不足しています。' }, { status: 400 });
         }
 
         // 2.5 スキルアイテムの売却防止

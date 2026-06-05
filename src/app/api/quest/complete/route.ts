@@ -16,6 +16,7 @@ import {
     persistLootPool,
 } from '@/services/questCompleteHelpers';
 import { UGC_REWARD_LIMITS } from '@/lib/ugc/ugcConfig';
+import { verifyBattleCompletionToken } from '@/app/api/battle/validate-result/route';
 
 // Initialize Supabase Client safely (Service Role)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
@@ -87,6 +88,33 @@ export async function POST(req: Request) {
             .from('user_profiles').select('id, gold, level, exp, age, age_days, accumulated_days, max_hp, hp, atk, def, attack, max_vitality, vitality, max_deck_cost, order_pts, chaos_pts, justice_pts, evil_pts, title_name, current_location_id, blessing_data, current_quest_id').eq('id', user_id).single();
 
         if (uError || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+        // [Security] アクティブクエスト検証：進行中でないクエストの完了をブロック
+        if (!user.current_quest_id || user.current_quest_id !== quest_id) {
+            console.warn(`[Security] API rejected quest completion. User ${user_id} attempted to complete ${quest_id} but active quest is ${user.current_quest_id}`);
+            return NextResponse.json({ error: 'You are not currently in this quest.' }, { status: 403 });
+        }
+
+        // [Security] バトル検証トークンの必須化と検証
+        const hasBattles = Array.isArray(history) && history.some((h: any) => h.nodeType === 'battle' || h.type === 'battle');
+        if (result === 'success' && hasBattles) {
+            const { battle_completion_token } = body;
+            if (!battle_completion_token) {
+                console.warn(`[Security] API rejected quest completion. User ${user_id} won quest ${quest_id} but omitted battle_completion_token.`);
+                return NextResponse.json({ error: 'Battle completion token is required for this quest.' }, { status: 403 });
+            }
+
+            const { valid, payload } = verifyBattleCompletionToken(battle_completion_token);
+            if (!valid) {
+                console.warn(`[Security] API rejected quest completion. Invalid battle completion token from user ${user_id} for quest ${quest_id}.`);
+                return NextResponse.json({ error: 'Invalid or expired battle completion token.' }, { status: 403 });
+            }
+
+            if (payload.user_id !== user_id || payload.result !== 'victory') {
+                console.warn(`[Security] API rejected quest completion. Token user mismatch or result not victory (token user: ${payload.user_id}, result: ${payload.result}) for user ${user_id}.`);
+                return NextResponse.json({ error: 'Battle completion token user mismatch or result is not victory.' }, { status: 403 });
+            }
+        }
 
         const validation = await QuestService.validateRequirements(supabase, user_id, quest.requirements);
         if (!validation.valid) {

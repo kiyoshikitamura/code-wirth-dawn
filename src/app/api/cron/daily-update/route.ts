@@ -10,11 +10,10 @@ export async function POST(req: Request) {
     // CRON_SECRET によるアクセス制限
     // Vercel Cron は Authorization: Bearer <CRON_SECRET> ヘッダーを付与する
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader !== `Bearer ${cronSecret}`) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    const authHeader = req.headers.get('authorization');
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+        console.warn(`[Security] Cron job unauthorized call. CRON_SECRET set: ${!!cronSecret}`);
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {

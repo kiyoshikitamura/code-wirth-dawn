@@ -533,6 +533,7 @@ export interface BattleState {
   battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee' | 'escape'; // 戦闘結果
   resonanceActive?: boolean; // spec_v5 §6.2: 共鳳ボーナス (ATK/DEF +10%)
   battle_session_id?: string; // v17 Server-Authoritative Battle
+  battle_completion_token?: string; // v27.2 HMAC Validation Token
   activeSupportBuffs: string[]; // v19: 使用済みSupportカードのcard_idリスト（バトル内永続効果）
   equipBonus?: { atk: number; def: number; hp: number }; // v24: 装備品ボーナス（バトル中永続）
   equipCountBonusHand?: number; // v4.1: 装備枚数ボーナスによる初期手札追加
