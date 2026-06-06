@@ -185,17 +185,19 @@ export default function WorkshopStatusPanel() {
 
     return (
         <>
-            <div className="flex flex-row items-center gap-3 px-3 py-2 bg-[#1a120e] border-b border-[#3e2723] shrink-0">
-                {/* Left: Tier Badge, Gold, Purchase & Refresh */}
-                <div className="flex flex-col items-start gap-1 shrink-0">
+            <div className="flex flex-col gap-2 px-3 py-2.5 bg-[#1a120e] border-b border-[#3e2723] shrink-0">
+                {/* Row 1: Premium Icon (Left) & Gold, Purchase, Refresh Buttons (Right) */}
+                <div className="flex items-center justify-between w-full">
+                    {/* Left: Tier Badge */}
                     <TierBadge tier={data.tier} />
 
-                    <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold font-mono">
-                        <Coins className="w-3 h-3" />
-                        {data.gold.toLocaleString()}
-                    </span>
+                    {/* Right: Gold + Purchase + Refresh */}
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold font-mono">
+                            <Coins className="w-3 h-3" />
+                            {data.gold.toLocaleString()}
+                        </span>
 
-                    <div className="flex items-center gap-1">
                         <button
                             onClick={() => setShowPurchase(true)}
                             className="flex items-center gap-0.5 px-1.5 py-1 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] text-[9px] font-bold transition-colors border border-[#5c3c2a] whitespace-nowrap"
@@ -217,8 +219,8 @@ export default function WorkshopStatusPanel() {
                     </div>
                 </div>
 
-                {/* Right: Usage Bars (vertical stack / 2x2 grid) */}
-                <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                {/* Row 2: Usage Bars (vertical stack / 2x2 grid) */}
+                <div className="flex flex-col gap-1.5 w-full">
                     <div className="flex gap-2">
                         <UsageBar
                             label="下書き"
