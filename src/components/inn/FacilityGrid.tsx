@@ -39,7 +39,7 @@ export default function FacilityGrid({ onSelectFacility, isHub = false }: Facili
     };
 
     return (
-        <div className="px-4 py-6 grid grid-cols-2 gap-3 max-w-lg mx-auto w-full">
+        <div className="px-4 pt-6 pb-2 grid grid-cols-2 gap-3 max-w-lg mx-auto w-full">
             {facilities.map((item) => (
                 <button
                     key={item.id}

@@ -150,6 +150,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     }, []);
 
+    const [isActioning, setIsActioning] = useState(false);
+
     // v25: バトル開始時（party が存在し始めた時）のみ livePartyDurability を初期化
     // battleState.party 全体を監視すると毎ターンのメンバー更新で不要なレンダリングが発生するため
     // length のみ監視し、0 → N の変化（= 新しいバトル開始）時のみ実行する
@@ -182,7 +184,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const battlePhase = battleState.battlePhase ?? 'player';
     // Bug fix: ターン1のボーナスログ再生中はカード操作をロック（ログ乱れ防止）
     const isInitialLogPlaying = battleState.turn === 1 && !isTypingDone && displayedLogs.length < battleState.messages.length;
-    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat && !isInitialLogPlaying;
+    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat && !isInitialLogPlaying && !isActioning;
     // NEXT ボタンの押下可否: ログ再生中（isTypingDone=false）かつプレイヤーフェーズ外は不可
     // プレイヤーフェーズ中はログ再生中でも NEXT 可能（早送り）
     const canPressNext = !battleState.isVictory && !battleState.isDefeat &&
@@ -238,7 +240,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 setActiveEffect('BUFF');
                 setTimeout(() => setActiveEffect(null), 700);
             }
-            await attackEnemy(card);
+            try {
+                setIsActioning(true);
+                await attackEnemy(card);
+            } finally {
+                setIsActioning(false);
+            }
         } else {
             // 1段階目: 選択
             setSelectedCardIndex(index);
@@ -252,7 +259,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setHealTargetMode(null);
         setActiveEffect('BUFF');
         setTimeout(() => setActiveEffect(null), 700);
-        await attackEnemy(card, targetMemberId);
+        try {
+            setIsActioning(true);
+            await attackEnemy(card, targetMemberId);
+        } finally {
+            setIsActioning(false);
+        }
     };
 
     const handleFlee = () => {
@@ -1016,11 +1028,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 <button
                     onClick={handleNext}
                     disabled={!canPressNext}
-                    className={`backdrop-blur-md rounded-lg px-4 py-1.5 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-[11px] font-bold border ${
-                        battlePhase === 'player'
-                            ? 'bg-sky-900/60 border-sky-400/60 text-sky-200 hover:bg-sky-800/70'
-                            : (isTypingDone
-                                ? 'bg-orange-900/60 border-orange-400/60 text-orange-200 hover:bg-orange-800/70 animate-pulse'
+                    className={`backdrop-blur-md rounded-lg px-5 py-2 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-[12px] font-bold border ${
+                        canPressNext
+                            ? 'bg-amber-600/90 border-amber-400 text-white hover:bg-amber-500 scale-105 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+                            : (battlePhase === 'player'
+                                ? 'bg-sky-900/40 border-sky-400/30 text-sky-200/60'
                                 : 'bg-black/40 border-white/20 text-white/50')
                     } disabled:opacity-40 disabled:pointer-events-none`}
                 >
@@ -1155,7 +1167,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                 {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('type') === 'bounty_hunter' && (
                                     <div className="max-w-xs mx-auto mt-2">
                                         <XShareButton
-                                            text={`「賞金首として狙われたが、襲撃してきた賞金稼ぎを返り討ちにしてやったぞ。私の首は貴様らには重すぎるようだ。」 #Wirth_Dawn #賞金首の意地`}
+                                            text={`「賞金首として狙われたが、襲撃してきた賞金稼ぎを返り討ちにしてやったぞ。私の首は貴様らには重すぎるようだ。」 #WirthDawn #CWD #賞金首の意地`}
                                             shareUrl={`${window.location.origin}/share?t=bounty_hunter_win`}
                                             variant="large"
                                         />

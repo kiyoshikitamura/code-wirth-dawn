@@ -78,11 +78,16 @@ neighbors: Record<string, { days: number; gold_cost: number }>;  // { "target_sl
 
 > **Note (v12.0)**: `gold_cost` には繁栄度に基づくインフレ係数を適用しない。常にマスターデータの固定値を使用する。
 
-> **Note (v26.1 リバランス)**:
+> **Note (v26.1 リバランス & v27.5 アップデート)**:
 > - **基準レート**: `gold_cost = days × 50`（固定比率）
 > - **日数レンジ**: 3〜8日（旧: 2〜6日）
 > - 同国内・隣接: 3〜4日 / 国境越え: 5〜8日
-> - **削除ルート**: `loc_border_town ⇔ loc_frontier_village`（谷間の集落経由を強制）
+> - **追加ルート**:
+>   - `loc_border_town ⇔ loc_white_fort` (3日 / 150 G)
+>   - `loc_iron_mine ⇔ loc_temple_town` (4日 / 200 G)
+> - **削除ルート**:
+>   - `loc_border_town ⇔ loc_frontier_village`（谷間の集落経由を強制）
+>   - `loc_iron_mine ⇔ loc_monitor_post`
 > - 全ルートの詳細は [world_map_routes.md](world_map_routes.md) を参照
 
 ### 4.2 移動コスト API

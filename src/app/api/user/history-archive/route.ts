@@ -113,7 +113,7 @@ export async function GET(req: Request) {
                         event_type: w.event_type
                     },
                     is_major_event: true,
-                    share_text: `【世界の記録】${w.message} #Wirth_Dawn`,
+                    share_text: `【世界の記録】${w.message} #WirthDawn #CWD`,
                     created_at: w.created_at
                 });
             });
@@ -142,8 +142,8 @@ export async function GET(req: Request) {
                     },
                     is_major_event: true,
                     share_text: isRetirement 
-                        ? `【英霊の系譜】我が名は『${l.name}』。この度、無事に引退し英霊となった！誰か私の残影を雇ってくれ。 #Wirth_Dawn #英雄の引退`
-                        : `【英霊の系譜】我が名は『${l.name}』。${l.age_days}日間の壮絶な旅を終え、英霊として名を刻む。 #Wirth_Dawn #英雄の最期`,
+                        ? `【英霊の系譜】我が名は『${l.name}』。この度、無事に引退し英霊となった！誰か私の残影を雇ってくれ。 #WirthDawn #CWD #英雄の引退`
+                        : `【英霊の系譜】我が名は『${l.name}』。${l.age_days}日間の壮絶な旅を終え、英霊として名を刻む。 #WirthDawn #CWD #英雄の最期`,
                     created_at: l.death_date
                 });
             });

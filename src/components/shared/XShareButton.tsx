@@ -12,8 +12,9 @@ export default function XShareButton({ text, shareUrl, className = '', variant =
     const handleShare = () => {
         const tweetUrl = new URL('https://twitter.com/intent/tweet');
         tweetUrl.searchParams.append('text', text);
-        if (shareUrl) {
-            tweetUrl.searchParams.append('url', shareUrl);
+        const targetUrl = shareUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+        if (targetUrl) {
+            tweetUrl.searchParams.append('url', targetUrl);
         }
         window.open(tweetUrl.toString(), '_blank', 'noopener,noreferrer');
     };

@@ -25,8 +25,8 @@ export default function ChronicleModal({ events, onClose }: ChronicleModalProps)
     // Generate aggregate share text
     const locationName = latestEvent.location?.name || '各地';
     const shareText = events.length === 1
-        ? latestEvent.message + " #Wirth_Dawn #歴史の証人"
-        : `「世界が動き始めた。${locationName}での変革を含む${events.length}件の情勢変化を確認した。歴史は、止まらない。」 #Wirth_Dawn #歴史の証人`;
+        ? latestEvent.message + " #WirthDawn #CWD #歴史の証人"
+        : `「世界が動き始めた。${locationName}での変革を含む${events.length}件の情勢変化を確認した。歴史は、止まらない。」 #WirthDawn #CWD #歴史の証人`;
 
     // OGPシェアURL構築
     const isCollapse = events.some(e => e.new_value === 'Ruined');

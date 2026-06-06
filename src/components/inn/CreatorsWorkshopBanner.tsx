@@ -13,7 +13,7 @@ export default function CreatorsWorkshopBanner({ onOpenWorkshop, isHub }: Creato
     }
 
     return (
-        <div className="px-4 pb-12 w-full max-w-lg mx-auto">
+        <div className="px-4 pt-2 pb-6 w-full max-w-lg mx-auto">
             <button
                 onClick={onOpenWorkshop}
                 className="w-full flex items-center gap-3 p-3 md:p-4 bg-[#122042]/80 border border-[#2a4080]/50 rounded-xl hover:bg-[#1a2d5a] hover:border-amber-500/30 transition-all active:scale-95 text-left group shadow-lg shadow-[#0a1628]/50 focus:outline-none focus:ring-1 focus:ring-amber-400/50"

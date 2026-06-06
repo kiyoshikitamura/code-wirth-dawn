@@ -1,5 +1,5 @@
 id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rewards_summary,client_name,_comment
-6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""nation_id"":""loc_holy_empire"",""min_level"":1}",true,,"Gold:100|Rep:10",王国軍,メインシナリオ第1話
+6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""location_id"":""loc_border_town"",""min_level"":1}",true,,"Gold:100|Rep:10",王国軍,メインシナリオ第1話
 6002,main_ep02,第2話「砂礫の国境線」,2,1,2,"{""completed_quest"":""main_ep01"",""nation_id"":""loc_holy_empire""}",true,,"Gold:200|Rep:10",王国軍,メインシナリオ第2話
 6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,"{""completed_quest"":""main_ep02"",""nation_id"":""loc_marcund""}",true,,"Gold:300|Rep:10",交易商会,メインシナリオ第3話
 6004,main_ep04,第4話「砂塵の激突」,4,1,2,"{""completed_quest"":""main_ep03"",""nation_id"":""loc_marcund""}",true,,"Gold:400|Rep:10",交易商会,メインシナリオ第4話

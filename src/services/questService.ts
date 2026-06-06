@@ -235,6 +235,22 @@ export class QuestService {
             }
         }
 
+        // 13. location_id: 特定のロケーションチェック
+        if (requirements.location_id) {
+            if (user.current_location_id) {
+                const { data: loc } = await supabase
+                    .from('locations')
+                    .select('slug')
+                    .eq('id', user.current_location_id)
+                    .maybeSingle();
+                if (loc?.slug !== requirements.location_id) {
+                    return { valid: false, reason: `Must be in location ${requirements.location_id} (Current: ${loc?.slug || 'unknown'})` };
+                }
+            } else {
+                return { valid: false, reason: 'User location not set' };
+            }
+        }
+
         // 5. min_reputation / max_reputation: 名声スコアチェック
         if (requirements.min_reputation !== undefined || requirements.max_reputation !== undefined) {
             // 現在地の名声を取得
@@ -363,7 +379,7 @@ export class QuestService {
             supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
             supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
             locationId
-                ? supabaseServer.from('locations').select('name, ruling_nation_id').eq('id', locationId).maybeSingle()
+                ? supabaseServer.from('locations').select('name, ruling_nation_id, slug').eq('id', locationId).maybeSingle()
                 : Promise.resolve({ data: null }),
             supabaseServer.from('scenarios')
                 .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
@@ -377,7 +393,8 @@ export class QuestService {
         const reputations = reputationsResult.data;
         const completedQuests = completedQuestsResult.data;
 
-        let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
+         let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
+        let currentLocationSlug: string | null = locationResult.data?.slug || null;
         if (locationResult.data?.name) {
             const { data: ws } = await supabaseServer.from('world_states')
                 .select('controlling_nation')
@@ -448,8 +465,18 @@ export class QuestService {
             if (completedQuestIds.has(String(q.id))) return false;
 
             const reqs = q.requirements || {};
-            const isMainScenario = q.slug && q.slug.startsWith('main_ep');
-            if (!isMainScenario && reqs.nation_id && locationId && reqs.nation_id !== locationId) return false;
+            
+            // ユーザーの現在地が指定の国家 (nation_id) に属しているかチェック
+            if (reqs.nation_id && currentLocationTag) {
+                const isNationMatch = reqs.nation_id === currentLocationTag ||
+                                     (reqs.nation_id === 'loc_roland' && currentLocationTag === 'loc_holy_empire');
+                if (!isNationMatch) return false;
+            }
+
+            // location_id チェック
+            if (reqs.location_id && currentLocationSlug && reqs.location_id !== currentLocationSlug) {
+                return false;
+            }
             if (reqs.event_trigger) return false;
             if (reqs.require_item_id && !ownedItemIds.has(String(reqs.require_item_id))) return false;
             if (reqs.has_item && !ownedItemIds.has(String(reqs.has_item))) return false;

@@ -362,7 +362,7 @@ function VitalityDeathModal({ userProfile, onClose }: { userProfile: any; onClos
     const [shareDataList, setShareDataList] = useState<any[]>([]);
 
     const ageAtDeath = (userProfile.age || 18) + Math.floor((userProfile.accumulated_days || 0) / 365);
-    const deathShareText = `我が名は${userProfile.name || '旅人'}。${ageAtDeath}歳の若さでこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。 #Wirth_Dawn #英雄の最期`;
+    const deathShareText = `我が名は${userProfile.name || '旅人'}。${ageAtDeath}歳の若さでこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。 #WirthDawn #CWD #英雄の最期`;
 
     const handleRetire = async () => {
         setRetiring(true);

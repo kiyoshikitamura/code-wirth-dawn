@@ -618,20 +618,14 @@ CREATE POLICY "published_read" ON ugc_scenarios FOR SELECT USING (status = 'publ
 
 ### 4.1 Supabase Storage
 
-**バケット名**: `ugc-assets`（public read）
+**バケット名**: `ugc-images`（画像用・public read）, `ugc-audio`（音声用・public read）
 
 ```
-ugc-assets/
-└── {userId}/
-    ├── images/
-    │   ├── enemies/{id}.webp
-    │   ├── items/{id}.webp
-    │   ├── cards/{id}.webp
-    │   ├── npcs/{id}.webp
-    │   └── scenarios/{id}_{用途}.webp
-    └── audio/
-        ├── bgm/{filename}.mp3
-        └── se/{filename}.mp3
+ugc-images/
+└── {userId}_{timestamp}.{ext}  (または公式形式)
+
+ugc-audio/
+└── {userId}_{timestamp}.{ext}
 ```
 
 ### 4.2 アセット制限
@@ -654,8 +648,9 @@ ugc-assets/
 
 **変換規則**:
 ```
-ugc://images/enemies/guardian.webp
-→ {SUPABASE_URL}/storage/v1/object/public/ugc-assets/{creatorId}/images/enemies/guardian.webp
+ugc://images/enemies/guardian.webp または アップロードした公開URL
+→ {SUPABASE_URL}/storage/v1/object/public/ugc-images/{userId}_{timestamp}.webp (画像)
+→ {SUPABASE_URL}/storage/v1/object/public/ugc-audio/{userId}_{timestamp}.mp3 (音声)
 ```
 
 **禁止事項**:

@@ -1,21 +1,21 @@
 trigger_id,trigger_slug,template,hashtags
-1,world_change,「私が滞在する『{location}』に{description}。」,#Wirth_Dawn #歴史の証人
-2,world_collapse,「ついに『{location}』が崩壊の時を迎えた。黒煙が街を覆っている…。」,#Wirth_Dawn
-3,main_quest_clear,「メインストーリー第{chapter}章『{quest_name}』を踏破した。この物語の先に何が待つのか。」,#Wirth_Dawn #年代記
-4,quest_first_clear,「依頼『{quest_name}』を達成した。この世界に足跡を残す。」,#Wirth_Dawn #冒険録
-5,ugc_first_blood,「名も無き旅人の依頼『{quest_name}』を世界で初めて踏破した。」,#Wirth_Dawn #未知への到達
-6,bounty_hunter_win,「名声が地に落ち賞金首として狙われたが、刺客を返り討ちにしてやった。」,#Wirth_Dawn #悪名轟く
-7,level_milestone,「レベル{level}に到達。{flavor}」,#Wirth_Dawn #成長の証
-8,title_tier_up,「称号『{title}』を得た。{flavor}」,#Wirth_Dawn #称号昇格
-9,collection_complete,「全ての{category}を記録した。この世界に、もはや未知はない。」,#Wirth_Dawn #図鑑完成
-10,collection_half,「{category}図鑑、半数を埋めた。まだ見ぬ存在が私を待っている。」,#Wirth_Dawn #博物学者
-11,all_locations,「この世界の全ての地を踏破した。20の街と村を巡り終えた旅人がここにいる。」,#Wirth_Dawn #世界踏破
-12,heroic_death,「我が名は{name}。{age}歳でこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。」,#Wirth_Dawn #英雄の最期
-13,generation_change,「先代の意志を継ぎ、第{generation}世代の旅人が旅路に就いた。」,#Wirth_Dawn #世代交代
-14,fame_hero,「『{location}』で英雄として讃えられている。この街の人々にとって私は伝説だ。」,#Wirth_Dawn #英雄伝
-15,fame_villain,「『{location}』の住民は私の名を聞くだけで震え上がる。」,#Wirth_Dawn #闇の支配者
-16,location_banned,「『{location}』から追放された。この街の門は、もう開かれない。」,#Wirth_Dawn #追放者
-17,ranking_fame_1st,「名声ランキング第1位。この世界で最も名の知れた旅人となった。」,#Wirth_Dawn #頂点
-18,ranking_alignment_1st,「{axis}ランキング第1位。この世界で最も{flavor}存在。」,#Wirth_Dawn #覇者
-19,heroic_hire,「酒場で出会った英霊『{name}』を仲間に迎えた。」,#Wirth_Dawn #運命の邂逅
-20,gold_milestone,「金貨{amount}枚。この世界で、金は信用と同義だ。」,#Wirth_Dawn #大富豪
+1,world_change,「私が滞在する『{location}』に{description}。」,#WirthDawn #CWD #歴史の証人
+2,world_collapse,「ついに『{location}』が崩壊の時を迎えた。黒煙が街を覆っている…。」,#WirthDawn #CWD
+3,main_quest_clear,「メインストーリー第{chapter}章『{quest_name}』を踏破した。この物語の先に何が待つのか。」,#WirthDawn #CWD #年代記
+4,quest_first_clear,「依頼『{quest_name}』を達成した。この世界に足跡を残す。」,#WirthDawn #CWD #冒険録
+5,ugc_first_blood,「名も無き旅人の依頼『{quest_name}』を世界で初めて踏破した。」,#WirthDawn #CWD #未知への到達
+6,bounty_hunter_win,「名声が地に落ち賞金首として狙われたが、刺客を返り討ちにしてやった。」,#WirthDawn #CWD #悪名轟く
+7,level_milestone,「レベル{level}に到達。{flavor}」,#WirthDawn #CWD #成長の証
+8,title_tier_up,「称号『{title}』を得た。{flavor}」,#WirthDawn #CWD #称号昇格
+9,collection_complete,「全ての{category}を記録した。この世界に、もはや未知はない。」,#WirthDawn #CWD #図鑑完成
+10,collection_half,「{category}図鑑、半数を埋めた。まだ見ぬ存在が私を待っている。」,#WirthDawn #CWD #博物学者
+11,all_locations,「この世界の全ての地を踏破した。20の街と村を巡り終えた旅人がここにいる。」,#WirthDawn #CWD #世界踏破
+12,heroic_death,「我が名は{name}。{age}歳でこの世を去り、英霊として酒場に名を残す。誰か、私の残影を雇ってくれ。」,#WirthDawn #CWD #英雄の最期
+13,generation_change,「先代の意志を継ぎ、第{generation}世代の旅人が旅路に就いた。」,#WirthDawn #CWD #世代交代
+14,fame_hero,「『{location}』で英雄として讃えられている。この街の人々にとって私は伝説だ。」,#WirthDawn #CWD #英雄伝
+15,fame_villain,「『{location}』の住民は私の名を聞くだけで震え上がる。」,#WirthDawn #CWD #闇の支配者
+16,location_banned,「『{location}』から追放された。この街の門は、もう開かれない。」,#WirthDawn #CWD #追放者
+17,ranking_fame_1st,「名声ランキング第1位。この世界で最も名の知れた旅人となった。」,#WirthDawn #CWD #頂点
+18,ranking_alignment_1st,「{axis}ランキング第1位。この世界で最も{flavor}存在。」,#WirthDawn #CWD #覇者
+19,heroic_hire,「酒場で出会った英霊『{name}』を仲間に迎えた。」,#WirthDawn #CWD #運命の邂逅
+20,gold_milestone,「金貨{amount}枚。この世界で、金は信用と同義だ。」,#WirthDawn #CWD #大富豪

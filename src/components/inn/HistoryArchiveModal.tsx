@@ -93,10 +93,18 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
             const dateStr = item.accumulated_days != null 
                 ? `世界暦${742 + Math.floor(item.accumulated_days / 365)}年 `
                 : '';
-            text = `【Wirth Dawn - 私の歩み】${dateStr}${item.title}。${item.description} #Wirth_Dawn #旅の年代記`;
+            text = `【Wirth Dawn - 私の歩み】${dateStr}${item.title}。${item.description} #WirthDawn #CWD #旅の年代記`;
         }
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank', 'width=600,height=400');
+        const shareUrl = item.share_text
+            ? `${window.location.origin}/share?t=${item.event_type || 'chronicle'}&${new URLSearchParams({ title: item.title })}`
+            : window.location.origin;
+
+        const tweetUrl = new URL('https://twitter.com/intent/tweet');
+        tweetUrl.searchParams.append('text', text);
+        if (shareUrl) {
+            tweetUrl.searchParams.append('url', shareUrl);
+        }
+        window.open(tweetUrl.toString(), '_blank', 'width=600,height=400');
     };
 
     // フィルタボタンコンポーネント

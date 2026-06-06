@@ -335,7 +335,7 @@ export default function RankingModal({ onClose }: Props) {
                         const isAlignRank1 = data.alignment.top.length > 0 && data.alignment.top[0].total === data.alignment.my_values.total && data.alignment.my_values.total > 0;
 
                         if (activeTab === 'reputation' && isRepRank1) {
-                            const shareText = `名声ランキング第1位。この世界で最も名の知れた旅人となった。 #Wirth_Dawn #頂点`;
+                            const shareText = `名声ランキング第1位。この世界で最も名の知れた旅人となった。 #WirthDawn #CWD #頂点`;
                             const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/share?t=ranking_fame_1st` : undefined;
                             return (
                                 <div className="mb-2">
@@ -351,7 +351,7 @@ export default function RankingModal({ onClose }: Props) {
                                 { key: '正義', val: vals.justice }, { key: '悪', val: vals.evil },
                             ];
                             const top = axes.sort((a, b) => b.val - a.val)[0];
-                            const shareText = `${top.key}ランキング第1位。この世界で最も${top.key}を司る存在。 #Wirth_Dawn #覇者`;
+                            const shareText = `${top.key}ランキング第1位。この世界で最も${top.key}を司る存在。 #WirthDawn #CWD #覇者`;
                             const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/share?t=ranking_alignment_1st&axis=${encodeURIComponent(top.key)}` : undefined;
                             return (
                                 <div className="mb-2">

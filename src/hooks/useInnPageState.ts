@@ -31,6 +31,36 @@ export function useInnPageState() {
         }
     }, [_hasHydrated, userProfile, worldState]);
 
+    // Stripe billing success conversion tracking
+    useEffect(() => {
+        const billing = searchParams.get('billing');
+        if (billing === 'success' || billing === 'gold_success') {
+            const purchaseId = process.env.NEXT_PUBLIC_X_CONVERSION_PURCHASE_ID;
+            if (purchaseId) {
+                import('@/utils/xads').then(({ trackXEvent }) => {
+                    const tier = searchParams.get('tier');
+                    const amount = Number(searchParams.get('amount') || 0);
+                    // 金額算出（サブスクの場合は想定金額等）
+                    const value = billing === 'success' 
+                        ? (tier === 'premium' ? 1000 : 500) // プラン別仮金額
+                        : amount;
+
+                    trackXEvent(purchaseId, {
+                        value: String(value),
+                        currency: 'JPY'
+                    });
+                });
+            }
+
+            // 二重送信防止のためクエリパラメーターを除去してURLをクリーンアップ
+            const url = new URL(window.location.href);
+            url.searchParams.delete('billing');
+            url.searchParams.delete('tier');
+            url.searchParams.delete('amount');
+            window.history.replaceState({}, '', url.pathname + url.search);
+        }
+    }, [searchParams]);
+
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
     const bgmKey = getBgmKey(
         worldState?.location_name,

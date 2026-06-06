@@ -397,6 +397,14 @@ export default function TitlePage() {
             await new Promise(r => setTimeout(r, 2000));
             await fetchUserProfile();
             setGameStarted();
+
+            // X Ads Conversion Tracking: Sign Up
+            const signupId = process.env.NEXT_PUBLIC_X_CONVERSION_SIGNUP_ID;
+            if (signupId) {
+                const { trackXEvent } = await import('@/utils/xads');
+                trackXEvent(signupId);
+            }
+
             router.push('/inn');
         } catch (err: any) {
             console.error(err);

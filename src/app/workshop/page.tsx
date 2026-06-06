@@ -10,10 +10,11 @@ import TemplateImportPanel from '@/components/ugc/TemplateImportPanel';
 import TemplateDownloadPanel from '@/components/ugc/TemplateDownloadPanel';
 import BalanceCalculatorPanel from '@/components/ugc/BalanceCalculatorPanel';
 import WorkshopStatusPanel from '@/components/ugc/WorkshopStatusPanel';
+import AssetUploaderPanel from '@/components/ugc/AssetUploaderPanel';
 
 const QuestBuilderPanel = dynamic(() => import('@/components/ugc/QuestBuilderPanel'), { ssr: false });
 
-type Tab = 'works' | 'builder' | 'template' | 'import' | 'calculator';
+type Tab = 'works' | 'builder' | 'template' | 'import' | 'calculator' | 'uploader';
 
 export default function CreatorsWorkshopPage() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function CreatorsWorkshopPage() {
     { key: 'template', label: 'テンプレート', icon: <Download className="w-4 h-4" /> },
     { key: 'calculator', label: 'バランス計算', icon: <Calculator className="w-4 h-4" /> },
     { key: 'builder', label: '簡易作成', icon: <Wand2 className="w-4 h-4" /> },
+    { key: 'uploader', label: '素材アップロード', icon: <Upload className="w-4 h-4" /> },
   ];
 
   return (
@@ -124,6 +126,7 @@ export default function CreatorsWorkshopPage() {
               {activeTab === 'template' && <TemplateDownloadPanel />}
               {activeTab === 'import' && <TemplateImportPanel onImportSuccess={() => { setActiveTab('works'); setRefreshKey(k => k + 1); }} />}
               {activeTab === 'calculator' && <BalanceCalculatorPanel />}
+              {activeTab === 'uploader' && <AssetUploaderPanel />}
             </div>
           </>
         )}
