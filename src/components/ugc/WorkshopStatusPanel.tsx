@@ -175,11 +175,39 @@ export default function WorkshopStatusPanel() {
 
     return (
         <>
-            <div className="flex flex-row items-center gap-2 px-3 py-2 bg-[#1a120e] border-b border-[#3e2723] shrink-0">
-                {/* Left: Tier Badge */}
-                <TierBadge tier={data.tier} />
+            <div className="flex flex-row items-center gap-3 px-3 py-2 bg-[#1a120e] border-b border-[#3e2723] shrink-0">
+                {/* Left: Tier Badge, Gold, Purchase & Refresh */}
+                <div className="flex flex-col items-start gap-1 shrink-0">
+                    <TierBadge tier={data.tier} />
 
-                {/* Center: Usage Bars (vertical stack / 2x2 grid) */}
+                    <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold font-mono">
+                        <Coins className="w-3 h-3" />
+                        {data.gold.toLocaleString()}
+                    </span>
+
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setShowPurchase(true)}
+                            className="flex items-center gap-0.5 px-1.5 py-1 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] text-[9px] font-bold transition-colors border border-[#5c3c2a] whitespace-nowrap"
+                        >
+                            <Plus className="w-2.5 h-2.5" /> 枠追加
+                        </button>
+
+                        <button
+                            onClick={() => fetchUsage(true)}
+                            disabled={refreshing}
+                            className="p-1 rounded hover:bg-[#3e2723] transition-colors disabled:opacity-30"
+                            title="更新"
+                        >
+                            {refreshing
+                                ? <Loader2 className="w-3 h-3 text-[#a38b6b] animate-spin" />
+                                : <RefreshCw className="w-3 h-3 text-[#6d4c3d]" />
+                            }
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right: Usage Bars (vertical stack / 2x2 grid) */}
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                     <div className="flex gap-2">
                         <UsageBar
@@ -215,33 +243,6 @@ export default function WorkshopStatusPanel() {
                             />
                         )}
                     </div>
-                </div>
-
-                {/* Right: Gold + Purchase Button */}
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="flex items-center gap-0.5 text-amber-400 text-[10px] font-bold font-mono">
-                        <Coins className="w-3 h-3" />
-                        {data.gold.toLocaleString()}
-                    </span>
-
-                    <button
-                        onClick={() => setShowPurchase(true)}
-                        className="flex items-center gap-0.5 px-1.5 py-1 rounded bg-[#3e2723] text-[#e3d5b8] hover:bg-[#4e342e] text-[9px] font-bold transition-colors border border-[#5c3c2a]"
-                    >
-                        <Plus className="w-2.5 h-2.5" /> 枠追加
-                    </button>
-
-                    <button
-                        onClick={() => fetchUsage(true)}
-                        disabled={refreshing}
-                        className="p-1 rounded hover:bg-[#3e2723] transition-colors disabled:opacity-30"
-                        title="更新"
-                    >
-                        {refreshing
-                            ? <Loader2 className="w-3 h-3 text-[#a38b6b] animate-spin" />
-                            : <RefreshCw className="w-3 h-3 text-[#6d4c3d]" />
-                        }
-                    </button>
                 </div>
             </div>
 
