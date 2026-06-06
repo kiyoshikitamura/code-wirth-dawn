@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Crown, Zap, Package, Upload, Send, Plus, Coins, RefreshCw, Loader2 } from 'lucide-react';
+import { Crown, Zap, Package, Upload, Send, Plus, Coins, RefreshCw, Loader2, Database } from 'lucide-react';
 import GoldSlotPurchaseModal from './GoldSlotPurchaseModal';
 import { getAuthToken } from '@/lib/authToken';
 
@@ -25,6 +25,10 @@ interface RateUsage {
 interface UsageData {
     tier: string;
     gold: number;
+    storage: {
+        used: number;
+        limit: number;
+    };
     drafts: SlotUsage;
     published: SlotUsage;
     daily_import: RateUsage;
@@ -44,16 +48,20 @@ function UsageBar({
     used,
     limit,
     extra,
+    format,
 }: {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     used: number;
     limit: number;
     extra?: number;
+    format?: (val: number) => string;
 }) {
     const pct = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
     const color = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
     const textColor = pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-amber-400' : 'text-gray-400';
+
+    const formatVal = format ? format : (val: number) => String(val);
 
     return (
         <div className="flex-1 min-w-[80px]">
@@ -61,7 +69,7 @@ function UsageBar({
                 <Icon className="w-3 h-3 text-gray-500" />
                 <span className="text-[9px] text-gray-500 uppercase tracking-wider">{label}</span>
                 <span className={`text-[10px] font-mono ml-auto ${textColor}`}>
-                    {used}/{limit}
+                    {formatVal(used)}/{formatVal(limit)}
                     {extra ? <span className="text-amber-600"> (+{extra})</span> : null}
                 </span>
             </div>
@@ -178,29 +186,42 @@ export default function WorkshopStatusPanel() {
                 {/* Left: Tier Badge */}
                 <TierBadge tier={data.tier} />
 
-                {/* Center: Usage Bars (vertical stack) */}
-                <div className="flex-1 flex flex-col gap-1 min-w-0">
-                    <UsageBar
-                        label="下書き"
-                        icon={Package}
-                        used={data.drafts.used}
-                        limit={data.drafts.limit}
-                        extra={data.drafts.extra > 0 ? data.drafts.extra : undefined}
-                    />
-                    <UsageBar
-                        label="公開"
-                        icon={Send}
-                        used={data.published.used}
-                        limit={data.published.limit}
-                        extra={data.published.extra > 0 ? data.published.extra : undefined}
-                    />
-                    <UsageBar
-                        label="Import"
-                        icon={Upload}
-                        used={data.daily_import.used}
-                        limit={data.daily_import.limit}
-                        extra={data.daily_import.extra && data.daily_import.extra > 0 ? data.daily_import.extra : undefined}
-                    />
+                {/* Center: Usage Bars (vertical stack / 2x2 grid) */}
+                <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                    <div className="flex gap-2">
+                        <UsageBar
+                            label="下書き"
+                            icon={Package}
+                            used={data.drafts.used}
+                            limit={data.drafts.limit}
+                            extra={data.drafts.extra > 0 ? data.drafts.extra : undefined}
+                        />
+                        <UsageBar
+                            label="公開"
+                            icon={Send}
+                            used={data.published.used}
+                            limit={data.published.limit}
+                            extra={data.published.extra > 0 ? data.published.extra : undefined}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <UsageBar
+                            label="Import"
+                            icon={Upload}
+                            used={data.daily_import.used}
+                            limit={data.daily_import.limit}
+                            extra={data.daily_import.extra && data.daily_import.extra > 0 ? data.daily_import.extra : undefined}
+                        />
+                        {data.storage && (
+                            <UsageBar
+                                label="素材容量"
+                                icon={Database}
+                                used={data.storage.used}
+                                limit={data.storage.limit}
+                                format={(val) => `${(val / 1024 / 1024).toFixed(1)}MB`}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 {/* Right: Gold + Purchase Button */}

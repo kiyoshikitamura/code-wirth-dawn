@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
-import { UGC_ASSET_LIMITS, UGC_RATE_LIMITS, UGC_GOLD_COSTS, type SubscriptionTier } from '@/lib/ugc/ugcConfig';
+import { supabaseServer } from '@/lib/supabase-admin';
+import { UGC_ASSET_LIMITS, UGC_RATE_LIMITS, UGC_GOLD_COSTS, UGC_STORAGE_LIMITS, type SubscriptionTier } from '@/lib/ugc/ugcConfig';
 import { checkRateLimit } from '@/lib/ugc/ugcRateLimit';
 
 /**
@@ -60,9 +61,41 @@ export async function GET(request: Request) {
         const maxExtraDrafts = limits.drafts * 2;
         const maxExtraPublished = limits.published * 2;
 
+        // Calculate storage usage
+        let usedStorage = 0;
+        try {
+            const [imgFiles, audioFiles] = await Promise.all([
+                supabaseServer.storage.from('ugc-images').list('', { search: userId, limit: 200 }),
+                supabaseServer.storage.from('ugc-audio').list('', { search: userId, limit: 200 })
+            ]);
+
+            if (imgFiles.data) {
+                for (const f of imgFiles.data) {
+                    if (f.name.startsWith(`${userId}_`)) {
+                        usedStorage += f.metadata?.size || 0;
+                    }
+                }
+            }
+            if (audioFiles.data) {
+                for (const f of audioFiles.data) {
+                    if (f.name.startsWith(`${userId}_`)) {
+                        usedStorage += f.metadata?.size || 0;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[UGC Usage API] Failed to calculate storage size:', e);
+        }
+
+        const limitStorage = UGC_STORAGE_LIMITS[tier] || UGC_STORAGE_LIMITS.free;
+
         return NextResponse.json({
             tier,
             gold: profile.gold || 0,
+            storage: {
+                used: usedStorage,
+                limit: limitStorage
+            },
             drafts: {
                 used: draftCount || 0,
                 base_limit: limits.drafts,

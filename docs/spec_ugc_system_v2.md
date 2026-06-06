@@ -814,31 +814,51 @@ ugc://images/enemies/guardian.webp または アップロードした公開URL
 - `approve`: `status = 'published'`, `published_at = now()`
 - `reject`: `status = 'rejected'`, `rejected_reason = reason`, `tested_at = NULL`（再テスト必須にする）
 
-### 5.7 `POST /api/ugc/asset/upload`
+### 5.7 `/api/ugc/upload` (アセットアップロード・削除 API)
 
+#### POST (アセットのアップロード)
 **Request**: `multipart/form-data`
 
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
 | `file` | File | アップロードファイル |
-| `asset_type` | string | `image_enemy` / `image_item` / `image_card` / `image_npc` / `image_scenario` / `bgm` / `se` |
 
 **処理**:
 1. JWT認証
-2. ファイルバリデーション（サイズ・形式・解像度）
-3. ストレージ使用量チェック（Tier別上限）
-4. 画像の場合はWebP変換（品質80）
-5. Supabase Storage にアップロード
-6. `ugc://` 形式のパスを返却
+2. ファイルバリデーション（サイズ・形式）
+3. 画像の場合は `ugc-images`、音声の場合は `ugc-audio` バケットを自動解決
+4. Supabase Storage に `${userId}_${timestamp}.${ext}` の形式でアップロード
+5. 公開URLおよびアセット情報を返却
 
 **Response**:
 ```json
 {
   "success": true,
-  "ugc_path": "ugc://images/enemies/abc123.webp",
-  "file_size": 45032,
-  "storage_used": 2340000,
-  "storage_limit": 10485760
+  "url": "https://...",
+  "fileName": "example.png",
+  "type": "image"
+}
+```
+
+#### DELETE (アセットの削除)
+**Request**: `application/json`
+```json
+{
+  "url": "https://..."
+}
+```
+
+**処理**:
+1. JWT認証
+2. リクエストされたアセットURLからバケット名（`ugc-images` / `ugc-audio`）およびファイル名を抽出
+3. ファイル名が自身の `${userId}_` で開始しているかを確認（他人のアセット削除を防止する所有権チェック）
+4. Supabase Storage から対象アセットを削除
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "ファイルを削除しました"
 }
 ```
 
@@ -1174,7 +1194,7 @@ TP/NP/PBの計算はクリエイターズ工房の「バランス計算」タブ
 
 Workshop UIが使用状況を一括取得するためのAPIエンドポイント。
 
-レスポンス: Tier名、所持ゴールド、各枠の使用数/上限/追加枠数、レートリミット状況、ゴールドコスト定数
+レスポンス: Tier名、所持ゴールド、素材容量の使用状況 (`storage: { used: number, limit: number }`)、各枠の使用数/上限/追加枠数、レートリミット状況、ゴールドコスト定数
 
 **パフォーマンス設計**:
 - APIレスポンス速度を最大化し、UIでの待機時間を最小にするため、ユーザー認証およびプロファイル情報の解決後、5つの独立したクエリ（下書き件数の取得、公開件数の取得、および3種のアクション制限チェック）はすべて **`Promise.all` による並列実行**を行うこと（直列の `await` 順次待機を排除する）。

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Copy, Check, FileCode, Music, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Copy, Check, FileCode, Music, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react';
 import { getAuthHeaders } from '@/lib/authToken';
 
 export default function AssetUploaderPanel() {
@@ -9,6 +9,7 @@ export default function AssetUploaderPanel() {
     const [assetType, setAssetType] = useState<'image' | 'audio' | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +67,42 @@ export default function AssetUploaderPanel() {
         navigator.clipboard.writeText(uploadedUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleDelete = async () => {
+        if (!uploadedUrl) return;
+        if (!confirm("本当にこのアセットを削除しますか？\n※テンプレートで使用している場合は表示できなくなります。")) return;
+
+        setDeleting(true);
+        setError(null);
+
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/ugc/upload', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                },
+                body: JSON.stringify({ url: uploadedUrl })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setUploadedUrl(null);
+                setAssetType(null);
+                setFile(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            } else {
+                setError(data.error || '削除中にエラーが発生しました');
+            }
+        } catch (err: any) {
+            setError(err.message || '通信エラーが発生しました');
+        } finally {
+            setDeleting(false);
+        }
     };
 
     return (
@@ -155,7 +192,7 @@ export default function AssetUploaderPanel() {
                         )}
 
                         <div className="flex gap-2">
-                            <div className="flex-1 bg-black/50 border border-[#3e2723] rounded px-2.5 py-2 font-mono text-[9px] text-slate-300 select-all overflow-x-auto whitespace-nowrap scrollbar-hide">
+                            <div className="flex-1 bg-black/50 border border-[#3e2723] rounded px-2.5 py-2 font-mono text-[9px] text-slate-300 select-all overflow-x-auto whitespace-nowrap scrollbar-hide flex items-center">
                                 {uploadedUrl}
                             </div>
                             <button
@@ -168,6 +205,14 @@ export default function AssetUploaderPanel() {
                                 title="URLをコピー"
                             >
                                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="px-3 flex items-center justify-center rounded border border-red-900/50 hover:border-red-500 bg-red-950/20 hover:bg-red-900/40 text-red-400 transition-colors shrink-0 disabled:opacity-50"
+                                title="アセットを削除"
+                            >
+                                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                             </button>
                         </div>
                         <p className="text-[8px] text-[#8c7a6b] leading-normal leading-relaxed">

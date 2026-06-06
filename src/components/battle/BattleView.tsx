@@ -1012,7 +1012,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             </div>
 
             {/* Action Buttons — v15.0 NEXT button */}
-            <div className="flex justify-end gap-1.5 px-3 py-1.5 flex-shrink-0 z-30 drop-shadow-md">
+            <div className="flex justify-center gap-1.5 px-3 py-1.5 flex-shrink-0 z-30 drop-shadow-md">
                 {/* アイテムボタン */}
                 {(battleState.battleItems || []).length > 0 && (
                     <button

@@ -331,6 +331,15 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **バトル中のスキルカード連打（重複発動）防止**:
   APIリクエストの多重送信を防ぐため、カード発動処理（API送信中）はローカル状態 `isActioning` 等のフラグを用いて追加のカード選択や「NEXT」ボタン押下を即座にブロックし、処理完了後にロックを解除する防御的設計を徹底すること。
 
+## クエスト中ブラウザバック抑止とUGCアセット削除・容量取得の教訓 (追加改修・v29.0)
+
+- **ブラウザバック抑止と安全な離脱（放棄）の両立**:
+  Next.js App Router 環境下でのクエスト進行中において、単純な `beforeunload` では SPA 遷移によるブラウザバックを検知できない。マウント時に `window.history.pushState(null, '', window.location.href)` でダミースタックをプッシュし、`popstate` イベントリスナーでそれを捕捉する。ブラウザバックを検知した際はダイアログを表示し、ユーザーが承認した場合は `handleGiveUp(true)` を非同期で実行し安全に離脱（放棄）させ、キャンセルした場合は再度 `pushState` を積んでクエストを維持する。結果画面の表示中など、すでにクエストが完了している場合はブラウザバックをブロックしないよう `resultOverlay` の表示状態を `useRef` を介してリアクティブに判定・スキップする。
+- **UGCアセット削除APIにおける所有権の厳格な検証**:
+  `/api/ugc/upload` に `DELETE` ハンドラを追加する際、要求されたアセットのURLからバケット名（`ugc-images` / `ugc-audio`）とファイル名を抽出する。不正なアセット削除を防ぐため、ファイル名が自身の `userId_` で開始しているかを厳格に検証（プレフィックスチェック）した上で、Supabase Storage から削除を実行する。
+- **UGCストレージ使用量（容量上限）の動的集計とUI表示**:
+  `/api/ugc/v2/usage` のレスポンスに `storage: { used: number, limit: number }` を追加する。`supabaseServer` (adminClient) を用いて `ugc-images` および `ugc-audio` バケット内から本人のファイルをスキャンし、ファイルサイズを合算して使用容量（`used`）を算出する。上限値（`limit`）は `UGC_STORAGE_LIMITS` 定数に基づいて Tier 別に自動決定する。UI側（`WorkshopStatusPanel`）では、バイト単位の数値をMB単位に適切に換算（`.toFixed(1) + 'MB'`）して `UsageBar` で表示する。
+
 
 
 

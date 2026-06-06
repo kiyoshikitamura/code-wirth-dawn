@@ -152,3 +152,11 @@ Response: { success: true, travel_days: number, new_age: number, ... }
 - 現在地: 特別なマーカーで強調。
 - インタラクション: ノードクリックで移動 / 情報表示。
 - **null座標の処理**: `x` または `y` が null の場合、拠点は描画から除外（v11.0 修正）。
+
+### 6.2 バトル背景画像の自動解決 (v28.0)
+ワールドマップ移動中（ランダムエンカウント等）のバトル発生時に、戦闘画面（`BattleView`）の背景画像（`bgImageUrl`）を `locations` の `nation_id` または `ruling_nation_id` から自動で判別して設定する。
+- **Roland** (ローラン): `bg_road_day`
+- **Markand** (マルカンド): `bg_desert`
+- **Yato** (夜刀): `bg_yato_road`
+- **Karyu** (華龍): `bg_karyu_mountain`
+- **フォールバック**: 上記に該当しない場合は `bg_wasteland` を使用する。

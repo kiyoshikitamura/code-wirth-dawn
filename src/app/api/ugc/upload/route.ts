@@ -93,3 +93,67 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'アップロードに失敗しました: ' + (e.message || JSON.stringify(e)) }, { status: 500 });
     }
 }
+
+export async function DELETE(request: Request) {
+    try {
+        // JWT認証からユーザーIDを取得
+        let userId: string | null = null;
+        const authHeader = request.headers.get('authorization');
+        
+        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
+            const token = authHeader.replace('Bearer ', '');
+            const { data: { user }, error } = await anonSupabase.auth.getUser(token);
+            if (!error && user) userId = user.id;
+        }
+
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized: 有効な認証トークンが必要です' }, { status: 401 });
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const url = body.url as string | undefined;
+
+        if (!url) {
+            return NextResponse.json({ error: '削除対象のアセットURLが指定されていません' }, { status: 400 });
+        }
+
+        let bucketName = '';
+        if (url.includes('/ugc-images/')) {
+            bucketName = 'ugc-images';
+        } else if (url.includes('/ugc-audio/')) {
+            bucketName = 'ugc-audio';
+        } else {
+            return NextResponse.json({ error: '無効なバケット種別です' }, { status: 400 });
+        }
+
+        const parts = url.split(`/${bucketName}/`);
+        if (parts.length < 2) {
+            return NextResponse.json({ error: 'URLからファイル名を取得できませんでした' }, { status: 400 });
+        }
+        const fileName = parts[1];
+
+        // 不正削除防止（プレフィックスチェック）
+        if (!fileName.startsWith(`${userId}_`)) {
+            return NextResponse.json({ error: '自身がアップロードしたファイルのみ削除可能です' }, { status: 403 });
+        }
+
+        // Supabase Storage から削除
+        const { error: removeError } = await supabaseServer.storage
+            .from(bucketName)
+            .remove([fileName]);
+
+        if (removeError) {
+            console.error('File removal failed:', removeError);
+            throw removeError;
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: 'ファイルを削除しました'
+        });
+
+    } catch (e: any) {
+        console.error("Asset Delete API Error:", e);
+        return NextResponse.json({ error: '削除に失敗しました: ' + (e.message || JSON.stringify(e)) }, { status: 500 });
+    }
+}

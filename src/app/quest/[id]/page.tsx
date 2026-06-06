@@ -400,8 +400,10 @@ export default function QuestPage() {
         loadScenario();
     }, [id]);
 
-    const handleGiveUp = async () => {
-        if (!confirm("クエストを放棄して撤退しますか？\n※ 進行状況は失われ、安全な場所まで戻ります。")) return;
+    const handleGiveUp = async (skipConfirm = false) => {
+        if (!skipConfirm) {
+            if (!confirm("クエストを放棄して撤退しますか？\n※ 進行状況は失われ、安全な場所まで戻ります。")) return;
+        }
 
         useQuestState.getState().resetQuest();
         setIsSettingsOpen(false);
@@ -457,6 +459,38 @@ export default function QuestPage() {
             router.push('/inn');
         }
     };
+
+    const resultOverlayRef = useRef(resultOverlay);
+    useEffect(() => {
+        resultOverlayRef.current = resultOverlay;
+    }, [resultOverlay]);
+
+    const handleGiveUpRef = useRef(handleGiveUp);
+    useEffect(() => {
+        handleGiveUpRef.current = handleGiveUp;
+    }, [handleGiveUp]);
+
+    useEffect(() => {
+        window.history.pushState(null, '', window.location.href);
+
+        const handlePopState = (event: PopStateEvent) => {
+            if (resultOverlayRef.current) {
+                return;
+            }
+
+            window.history.pushState(null, '', window.location.href);
+
+            const confirmed = window.confirm("クエストを放棄して撤退しますか？\n※ 進行状況は失われ、安全な場所まで戻ります。");
+            if (confirmed) {
+                handleGiveUpRef.current(true);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
 
     if (loading) {
         return (
