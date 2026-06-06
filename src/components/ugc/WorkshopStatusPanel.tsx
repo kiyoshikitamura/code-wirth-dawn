@@ -58,27 +58,20 @@ function UsageBar({
     format?: (val: number) => string;
 }) {
     const pct = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
-    const color = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
     const textColor = pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-amber-400' : 'text-gray-400';
 
     const formatVal = format ? format : (val: number) => String(val);
 
     return (
-        <div className="flex-1 min-w-[80px]">
-            <div className="flex items-center gap-1 mb-0.5">
-                <Icon className="w-3 h-3 text-gray-500" />
-                <span className="text-[9px] text-gray-500 uppercase tracking-wider">{label}</span>
-                <span className={`text-[10px] font-mono ml-auto ${textColor}`}>
-                    {formatVal(used)}/{formatVal(limit)}
-                    {extra ? <span className="text-amber-600"> (+{extra})</span> : null}
-                </span>
+        <div className="flex-1 min-w-[80px] flex items-center justify-between bg-slate-950/40 border border-slate-800/40 px-2 py-0.5 rounded">
+            <div className="flex items-center gap-1">
+                <Icon className="w-3 h-3 text-gray-500 shrink-0" />
+                <span className="text-[9px] text-gray-500 uppercase tracking-wider whitespace-nowrap">{label}</span>
             </div>
-            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                    className={`h-full ${color} rounded-full transition-all`}
-                    style={{ width: `${pct}%` }}
-                />
-            </div>
+            <span className={`text-[10px] font-mono font-bold ml-1.5 shrink-0 ${textColor}`}>
+                {formatVal(used)}/{formatVal(limit)}
+                {extra ? <span className="text-amber-600"> (+{extra})</span> : null}
+            </span>
         </div>
     );
 }

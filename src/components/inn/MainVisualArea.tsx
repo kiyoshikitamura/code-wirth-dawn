@@ -141,7 +141,7 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                         <ArrowLeft size={18} />
                     </button>
                 )}
-                {onOpenMap && (
+                {onOpenMap && !isHub && (
                     <button
                         onClick={onOpenMap}
                         className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-emerald-600/40 shadow-lg flex items-center justify-center text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200 transition-colors active:scale-95 focus:outline-none"

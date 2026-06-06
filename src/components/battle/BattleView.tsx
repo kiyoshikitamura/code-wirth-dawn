@@ -1012,44 +1012,50 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             </div>
 
             {/* Action Buttons — v15.0 NEXT button */}
-            <div className="flex justify-center gap-1.5 px-3 py-1.5 flex-shrink-0 z-30 drop-shadow-md">
-                {/* アイテムボタン */}
-                {(battleState.battleItems || []).length > 0 && (
+            <div className="grid grid-cols-3 items-center gap-1 px-3 py-1.5 flex-shrink-0 z-30 drop-shadow-md">
+                {/* 左カラム: アイテムボタン */}
+                <div className="flex justify-start">
+                    {(battleState.battleItems || []).length > 0 && (
+                        <button
+                            onClick={() => setShowItemPanel(true)}
+                            disabled={!canInteract}
+                            className="bg-black/40 backdrop-blur-md border border-amber-600/50 text-amber-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-amber-900/30 disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap"
+                        >
+                            🎒
+                            <span>アイテム</span>
+                        </button>
+                    )}
+                </div>
+                {/* 中央カラム: NEXT ボタン */}
+                <div className="flex justify-center">
                     <button
-                        onClick={() => setShowItemPanel(true)}
-                        disabled={!canInteract}
-                        className="bg-black/40 backdrop-blur-md border border-amber-600/50 text-amber-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-amber-900/30 disabled:opacity-40 disabled:pointer-events-none"
+                        onClick={handleNext}
+                        disabled={!canPressNext}
+                        className={`backdrop-blur-md rounded-lg px-5 py-2 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-[12px] font-bold border whitespace-nowrap ${
+                            canPressNext
+                                ? 'bg-amber-600/90 border-amber-400 text-white hover:bg-amber-500 scale-105 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+                                : (battlePhase === 'player'
+                                    ? 'bg-sky-900/40 border-sky-400/30 text-sky-200/60'
+                                    : 'bg-black/40 border-white/20 text-white/50')
+                        } disabled:opacity-40 disabled:pointer-events-none`}
                     >
-                        🎒
-                        <span>アイテム</span>
+                        <Clock size={12} />
+                        NEXT
                     </button>
-                )}
-                {/* v15.0: NEXT ボタン */}
-                <button
-                    onClick={handleNext}
-                    disabled={!canPressNext}
-                    className={`backdrop-blur-md rounded-lg px-5 py-2 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all text-[12px] font-bold border ${
-                        canPressNext
-                            ? 'bg-amber-600/90 border-amber-400 text-white hover:bg-amber-500 scale-105 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.6)]'
-                            : (battlePhase === 'player'
-                                ? 'bg-sky-900/40 border-sky-400/30 text-sky-200/60'
-                                : 'bg-black/40 border-white/20 text-white/50')
-                    } disabled:opacity-40 disabled:pointer-events-none`}
-                >
-                    <Clock size={12} />
-                    NEXT
-                </button>
-                {/* 撤退: プレイヤーフェーズのみ */}
-                {battlePhase === 'player' && (
-                    <button
-                        onClick={handleFlee}
-                        disabled={!canInteract}
-                        className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50 disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                        <LogOut size={12} />
-                        撤退
-                    </button>
-                )}
+                </div>
+                {/* 右カラム: 撤退 */}
+                <div className="flex justify-end">
+                    {battlePhase === 'player' && (
+                        <button
+                            onClick={handleFlee}
+                            disabled={!canInteract}
+                            className="bg-black/40 backdrop-blur-md border border-red-500/50 text-red-300 rounded-lg px-3 py-1.5 flex items-center gap-1 shadow-lg active:scale-95 transition-all text-[10px] font-bold hover:bg-red-950/50 disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap"
+                        >
+                            <LogOut size={12} />
+                            撤退
+                        </button>
+                    )}
+                </div>
                 {/* デバッグ/テストプレイモード: 即時勝利ボタン (ADMIN_SECRET_KEY必須) */}
                 {(() => {
                     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();

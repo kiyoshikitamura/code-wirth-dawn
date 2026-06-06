@@ -6,6 +6,7 @@ export default function AssetUploaderPanel() {
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [assetType, setAssetType] = useState<'image' | 'audio' | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
@@ -15,6 +16,7 @@ export default function AssetUploaderPanel() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setError(null);
         setUploadedUrl(null);
+        setPreviewUrl(null);
         setAssetType(null);
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
@@ -49,7 +51,8 @@ export default function AssetUploaderPanel() {
 
             const data = await res.json();
             if (res.ok && data.success) {
-                setUploadedUrl(data.url);
+                setUploadedUrl(data.ugcUrl || data.url);
+                setPreviewUrl(data.url);
                 setAssetType(data.type);
                 setFile(null);
             } else {
@@ -90,6 +93,7 @@ export default function AssetUploaderPanel() {
             const data = await res.json();
             if (res.ok && data.success) {
                 setUploadedUrl(null);
+                setPreviewUrl(null);
                 setAssetType(null);
                 setFile(null);
                 if (fileInputRef.current) {
@@ -179,15 +183,15 @@ export default function AssetUploaderPanel() {
                         </div>
 
                         {/* プレビュー表示 */}
-                        {assetType === 'image' && (
+                        {assetType === 'image' && previewUrl && (
                             <div className="w-full max-h-36 rounded border border-[#5c3c2a] overflow-hidden flex items-center justify-center bg-black/40">
-                                <img src={uploadedUrl} alt="Preview" className="object-contain max-h-36 max-w-full" />
+                                <img src={previewUrl} alt="Preview" className="object-contain max-h-36 max-w-full" />
                             </div>
                         )}
-                        {assetType === 'audio' && (
+                        {assetType === 'audio' && previewUrl && (
                             <div className="w-full p-2 bg-black/30 rounded border border-[#5c3c2a] flex flex-col items-center justify-center gap-2">
                                 <Music className="w-6 h-6 text-cyan-400 animate-bounce" />
-                                <audio src={uploadedUrl} controls className="w-full h-8" />
+                                <audio src={previewUrl} controls className="w-full h-8" />
                             </div>
                         )}
 

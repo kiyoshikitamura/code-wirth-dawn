@@ -81,9 +81,17 @@ export async function POST(request: Request) {
             .from(bucketName)
             .getPublicUrl(fileName);
 
+        let ugcUrl = '';
+        if (bucketName === 'ugc-images') {
+            ugcUrl = `ugc://images/scenarios/${fileName}`;
+        } else if (bucketName === 'ugc-audio') {
+            ugcUrl = `ugc://audio/bgm/${fileName}`;
+        }
+
         return NextResponse.json({
             success: true,
             url: publicUrl,
+            ugcUrl: ugcUrl,
             fileName: file.name,
             type: bucketName === 'ugc-images' ? 'image' : 'audio'
         });
@@ -118,19 +126,24 @@ export async function DELETE(request: Request) {
         }
 
         let bucketName = '';
-        if (url.includes('/ugc-images/')) {
+        if (url.includes('/ugc-images/') || url.includes('images/')) {
             bucketName = 'ugc-images';
-        } else if (url.includes('/ugc-audio/')) {
+        } else if (url.includes('/ugc-audio/') || url.includes('audio/')) {
             bucketName = 'ugc-audio';
         } else {
             return NextResponse.json({ error: '無効なバケット種別です' }, { status: 400 });
         }
 
-        const parts = url.split(`/${bucketName}/`);
-        if (parts.length < 2) {
+        let fileName = '';
+        if (url.includes(`/${bucketName}/`)) {
+            const parts = url.split(`/${bucketName}/`);
+            fileName = parts[parts.length - 1];
+        } else if (url.startsWith('ugc://')) {
+            const parts = url.split('/');
+            fileName = parts[parts.length - 1];
+        } else {
             return NextResponse.json({ error: 'URLからファイル名を取得できませんでした' }, { status: 400 });
         }
-        const fileName = parts[1];
 
         // 不正削除防止（プレフィックスチェック）
         if (!fileName.startsWith(`${userId}_`)) {
