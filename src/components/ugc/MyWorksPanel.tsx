@@ -71,6 +71,7 @@ export default function MyWorksPanel() {
         alert(json.error || '公開申請に失敗しました。');
       } else {
         await fetchWorks();
+        window.dispatchEvent(new CustomEvent('ugc-status-updated'));
       }
     } finally {
       setActionLoading(null);
@@ -87,6 +88,7 @@ export default function MyWorksPanel() {
         body: JSON.stringify({ scenario_id: id }),
       });
       await fetchWorks();
+      window.dispatchEvent(new CustomEvent('ugc-status-updated'));
     } finally {
       setActionLoading(null);
     }
@@ -102,6 +104,7 @@ export default function MyWorksPanel() {
         body: JSON.stringify({ scenario_id: id }),
       });
       await fetchWorks();
+      window.dispatchEvent(new CustomEvent('ugc-status-updated'));
     } finally {
       setActionLoading(null);
     }

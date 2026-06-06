@@ -151,6 +151,16 @@ export default function WorkshopStatusPanel() {
         }
     }, [fetchUsage]);
 
+    useEffect(() => {
+        const handleStatusUpdate = () => {
+            fetchUsage(true);
+        };
+        window.addEventListener('ugc-status-updated', handleStatusUpdate);
+        return () => {
+            window.removeEventListener('ugc-status-updated', handleStatusUpdate);
+        };
+    }, [fetchUsage]);
+
     const handlePurchased = useCallback(() => {
         fetchUsage(true);
     }, [fetchUsage]);

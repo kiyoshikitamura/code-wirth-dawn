@@ -55,6 +55,7 @@ export default function AssetUploaderPanel() {
                 setPreviewUrl(data.url);
                 setAssetType(data.type);
                 setFile(null);
+                window.dispatchEvent(new CustomEvent('ugc-status-updated'));
             } else {
                 setError(data.error || 'アップロード中にエラーが発生しました');
             }
@@ -99,6 +100,7 @@ export default function AssetUploaderPanel() {
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
+                window.dispatchEvent(new CustomEvent('ugc-status-updated'));
             } else {
                 setError(data.error || '削除中にエラーが発生しました');
             }

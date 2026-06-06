@@ -116,6 +116,7 @@ export default function QuestBuilderPanel({ onSaveSuccess, onBack }: QuestBuilde
       }
 
       // 4. 成功
+      window.dispatchEvent(new CustomEvent('ugc-status-updated'));
       onSaveSuccess?.();
     } catch (e) {
       console.error('[QuestBuilder] Save error:', e);

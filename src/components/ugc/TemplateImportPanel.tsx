@@ -112,8 +112,11 @@ export default function TemplateImportPanel({ onImportSuccess }: { onImportSucce
 
       setResult(json);
 
-      if (!dryRun && json.success && onImportSuccess) {
-        onImportSuccess();
+      if (!dryRun && json.success) {
+        window.dispatchEvent(new CustomEvent('ugc-status-updated'));
+        if (onImportSuccess) {
+          onImportSuccess();
+        }
       }
     } catch (e) {
       setResult({ success: false, errors: [{ message: '通信エラーが発生しました。', code: 'NETWORK_ERROR' }] });
