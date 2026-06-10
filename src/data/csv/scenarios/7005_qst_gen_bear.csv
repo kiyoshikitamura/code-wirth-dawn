@@ -1,24 +1,33 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"開拓村の長が待つ集会所に入った。\n初老の男が地図を広げている。","{""type"":""text"",""bg"":""bg_guild"",""bgm"":""bgm_quest_calm""}",text_01
-NODE,text_01,"「村の東の森に、\n　凶暴な大熊が棲みついた」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""開拓村の長""}",text_02
-NODE,text_02,"「畑を荒らし、家畜を襲う。\n　先週、猟師のヨルンが行方不明になった」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""開拓村の長""}",text_03
-NODE,text_03,"「三日経っても戻らん。\n　森の中に血痕が点々と続いていたそうだ」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""開拓村の長""}",text_04
-NODE,text_04,"「あの熊は普通じゃない。傷跡だらけで、\n　片目が潰れている」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""開拓村の長""}",forest_01
-NODE,forest_01,"森に入った。木々は密に茂り、\n日光がほとんど届かない。","{""type"":""text"",""bg"":""bg_forest_day"",""bgm"":""bgm_quest_tense""}",forest_02
-NODE,forest_02,"地面に大きな獣の足跡がある。\n爪の跡が異常に深い。","{""type"":""text"",""bg"":""bg_forest_day""}",trail_01
-NODE,trail_01,"足跡を追った先に引き裂かれた罠。\n猟師ヨルンのものだろう。","{""type"":""text"",""bg"":""bg_forest_day""}",trail_02
-NODE,trail_02,"近くの木の幹に深い爪痕。\nさらに奥へ進むと獣の匂いが濃くなった。","{""type"":""text"",""bg"":""bg_forest_day""}",trail_03
-NODE,trail_03,"低い唸り声が\n藪の向こうから聞こえる。","{""type"":""text"",""bg"":""bg_forest_day""}",encounter_01
-NODE,encounter_01,"茂みを掻き分けると、\n巨大な熊が立ち上がった。","{""type"":""text"",""bg"":""bg_forest_day""}",encounter_02
-NODE,encounter_02,"体中に古傷が走り、片目は白く濁っている。\n口元に赤いものがこびりついていた。","{""type"":""text"",""bg"":""bg_forest_day""}",encounter_03
-NODE,encounter_03,"こちらを認めると、\n大地を揺らすような咆哮を上げた。","{""type"":""text"",""bg"":""bg_forest_day""}",battle
-NODE,battle,"ジャイアントベアが襲いかかってきた！","{""type"":""battle"",""bg"":""bg_forest_day"",""bgm"":""bgm_battle"",""enemy_group_id"":405}",
+NODE,start_prep,"暖炉に薪が爆ぜる音が響く、開拓村の荒れ果てた集会所。","{""bg"":""bg_guild"",""type"":""text""}",start
+NODE,start,"暖かなスープをすすりながら、長の話に耳を傾ける。","{""bg"":""bg_guild"",""type"":""text""}",text_01
+NODE,text_01,"「村の東の森に、恐ろしく凶暴な大熊が棲みついてしまってな…」","{""bg"":""bg_guild"",""speaker_name"":""開拓村の長"",""type"":""text""}",text_02
+NODE,text_02,"「畑を荒らすだけならまだしも、調査に向かった猟師のヨルンが行方不明になっておる」","{""bg"":""bg_guild"",""speaker_name"":""開拓村の長"",""type"":""text""}",text_03
+NODE,text_03,"「もう三日も戻らん。加えて、森の入り口には、奴の血痕が点々と残されていたというわけだ」","{""bg"":""bg_guild"",""speaker_name"":""開拓村の長"",""type"":""text""}",text_04
+NODE,text_04,"「あの獣は体中に傷があり、片目が潰れている。わしの経験上、手負いの獣ほど厄介なものはない」","{""bg"":""bg_guild"",""speaker_name"":""開拓村の長"",""type"":""text""}",text_04_think
+NODE,text_04_think,"「片目が潰れた熊」。かつて手負いにされ、凶暴化した獣か。","{""bg"":""bg_guild"",""type"":""text""}",forest_01
+NODE,forest_01,"鬱蒼と生い茂る森へ足を踏み入れる。密な枝葉が日光を遮り、冷たい湿気が立ち込めていた。","{""bg"":""bg_forest_day"",""type"":""text""}",forest_scenery
+NODE,forest_scenery,"足元の枯れたシダを踏みしめるたび、乾いた音が周囲へやけに大きく響いた。","{""bg"":""bg_forest_day"",""type"":""text""}",forest_02
+NODE,forest_02,"地面に巨大な足跡。五本の爪跡が泥の中に深く刻まれていた。","{""bg"":""bg_forest_day"",""type"":""text""}",forest_deep
+NODE,forest_deep,"森の奥へ進むほど、空気から生命の気配が薄れていく。","{""bg"":""bg_forest_day"",""type"":""text""}",trail_01
+NODE,trail_01,"足跡の先に引き裂かれた鉄製の罠。猟師ヨルンの物だろう。","{""bg"":""bg_forest_day"",""type"":""text""}",trail_01_body
+NODE,trail_01_body,"罠の周りに飛び散った血痕は、すでに黒く変色している。","{""bg"":""bg_forest_day"",""type"":""text""}",trail_02
+NODE,trail_02,"巨木の幹に荒々しい爪痕。皮が剥がれ、獣の強烈な臭いが漂う。","{""bg"":""bg_forest_day"",""type"":""text""}",trail_02_scenery
+NODE,trail_02_scenery,"静寂が森を支配している。微かな風の音さえも消えた。","{""bg"":""bg_forest_day"",""type"":""text""}",trail_03
+NODE,trail_03,"突如、目前の藪の奥から、低く地鳴りのような唸り声が響き渡る。","{""bg"":""bg_forest_day"",""type"":""text""}",encounter_01
+NODE,encounter_01,"茂みを掻き分けると、見上げるほどの巨躯が立ち上がった。","{""bg"":""bg_forest_day"",""type"":""text""}",encounter_look
+NODE,encounter_look,"岩のような筋肉に覆われた体躯。剥き出しの牙が光る。","{""bg"":""bg_forest_day"",""type"":""text""}",encounter_02
+NODE,encounter_02,"全身は無数の古傷に覆われ、白く濁った片目の奥には底知れぬ狂気が宿っていた。","{""bg"":""bg_forest_day"",""type"":""text""}",encounter_03
+NODE,encounter_03,"こちらを睨みつけると、森全体を激しく震わせる咆哮を上げた！","{""bg"":""bg_forest_day"",""type"":""text""}",battle
+NODE,battle,"大熊が襲いかかってきた！","{""bg"":""bg_forest_day"",""bgm"":""bgm_battle"",""enemy_group_id"":405,""enemy_name"":""ジャイアントベア"",""type"":""battle""}",
 CHOICE,,win,,after_01
 CHOICE,,lose,,end_failure
-NODE,after_01,"大熊が崩れ落ちた。\n残った片目には怒りではなく疲労が宿っていた。","{""type"":""text"",""bg"":""bg_forest_day"",""bgm"":""bgm_quest_calm""}",after_02
-NODE,after_02,"分厚い毛皮を剥いだ。\n近くに猟師の外套の切れ端が見つかった。","{""type"":""text"",""bg"":""bg_forest_day""}",return_01
-NODE,return_01,"村に戻り、毛皮を見せると\n村長が深く頷いた。","{""type"":""text"",""bg"":""bg_guild""}",return_02
-NODE,return_02,"「ヨルンの遺品は見つかったか？」\n外套の切れ端を差し出すと黙って受け取った。","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""開拓村の長""}",return_03
-NODE,return_03,"「ありがとう。\n　これで村の連中も安心できる」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""開拓村の長""}",end_success
-NODE,end_success,"凶熊狩り完了。報酬と獣の毛皮を受け取った。","{""type"":""end"",""result"":""success"",""bg"":""bg_guild"",""rewards"":{""items"":[""700""]}}",
-NODE,end_failure,"大熊の猛攻に倒れた。\n獣の咆哮が遠ざかっていく……。","{""type"":""end"",""result"":""failure"",""bg"":""bg_forest_day""}",
+NODE,after_01,"大熊が崩れ落ちた。濁った片目の奥には、深い疲労があった。","{""bg"":""bg_forest_day"",""type"":""text""}",after_02
+NODE,after_02,"無残に引き裂かれた猟師の外套の切れ端を見つけ、懐に収める。","{""bg"":""bg_forest_day"",""type"":""text""}",after_02_silent
+NODE,after_02_silent,"静まり返った森で、大熊の骸から流れる血の匂いが漂う。","{""bg"":""bg_forest_day"",""type"":""text""}",return_01
+NODE,return_01,"剥ぎ取った大熊の毛皮を担いで村へと戻る。それを示すと、長は深く安堵の息を吐き出した。","{""bg"":""bg_guild"",""type"":""text""}",return_02
+NODE,return_02,"「……ヨルンはどうなった？ 遺品だけでも、何か見つからなかったか？」","{""bg"":""bg_guild"",""speaker_name"":""開拓村の長"",""type"":""text""}",return_03
+NODE,return_03,"「あいつの外套か……。ありがとう。これで村の連中も安心できる」","{""bg"":""bg_guild"",""speaker_name"":""開拓村の長"",""type"":""text""}",return_03_rest
+NODE,return_03_rest,"長はヨルンの外套を抱きしめ、静かに目を閉じた。","{""bg"":""bg_guild"",""type"":""text""}",end_success
+NODE,end_success,"凶熊狩り完了。手にした報酬の重みと、残された哀愁を感じる。","{""bg"":""bg_guild"",""rewards"":{""gold"":200,""reputation"":5},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"大熊の爪が胸を裂く。冷たい落ち葉の上で意識が消え去った。","{""bg"":""bg_forest_day"",""type"":""end"",""result"":""failure""}",

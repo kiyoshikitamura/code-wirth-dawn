@@ -6,45 +6,48 @@
 |-----|-----|
 | **Quest ID** | 5102 |
 | **Slug** | `qst_rep_scorpion_hunt` |
-| **クエスト種別** | 名声連動（Reputation Tier 1） |
-| **推奨レベル** | 6 |
+| **クエスト種別** | 特殊クエスト（Special） |
+| **推奨レベル** | 6（Normal） |
 | **難度** | 2 |
 | **依頼主** | オアシス村長 |
-| **出現条件** | EP1（`main_ep01`）クリア済み, Rep≥10, nation_id: `loc_marcund` |
-| **リピート** | 1世代1回 |
-| **難易度Tier** | Tier 1 |
-| **経過日数 (time_cost)** | 3（成功: 3日 / 失敗: 2日） |
-| **ノード数** | 30ノード |
+| **出現条件** | 第1話「始まりの轍」（6001）クリア / 滞在拠点: マルカンド拠点 / 名声 10 以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **経過日数 (time_cost)** | 3 |
+| **ノード数** | 50ノード |
+| **ゲストNPC** | なし |
+| **難易度Tier** | Normal（rec_level: 6） |
 | **サムネイル画像** | `/images/quests/bg_desert.png` |
-
 ---
 
 ## 1. クエスト概要
 
 ### 短文説明
 ```
-[討伐依頼] オアシス近郊に巣を作った巨大毒蠍を駆除せよ。村人の安全を確保する。
+[討伐] オアシス近郊に巣を作った巨大毒蠍を駆除せよ。
 ```
 
 ### 長文説明
 ```
-マルカンドのオアシス村近郊の砂漠に、巨大な毒蠍が巣を作り、
-家畜を襲い、旅人を毒牙にかけている。
-すでに被害者が何人も出ており、交易路も危険で通れなくなっている。
-オアシス村長は腕の立つ冒険者に巨大蠍の討伐を依頼した。
+マルカンドの砂漠地帯にあるオアシス近郊に、巨大な毒蠍が巣を作り、
+家畜や旅人が襲われる被害が出ている。
+交易路の安全を確保するため、村長の要請に応じて巨大毒蠍の巣穴へ向かい、
+その脅威を取り除け。強烈な毒に注意せよ。
 ```
 
 ---
 
 ## 2. 報酬定義
 
-**CSV記載形式:** `Gold:600|Exp:90|Rep:3`
+**CSV記載形式（デフォルトルート）:**
+```
+Gold:600|Exp:90|Rep:3|Justice:3
+```
 
 **ルート別報酬差異:**
-| ルート | Gold | Exp | Rep | アライメント |
-|--------|------|-----|:---:|-------------|
-| 毒素を薬師に渡す（正義ルート） | 600 | 90 | +3 | Justice:3 |
-| 毒素を闇市に売る（混沌ルート） | 900 | 90 | ±0 | Chaos:3 |
+| ルート | Gold | Exp | Rep | アライメント | 追加 |
+|--------|------|-----|:---:|-------------|------|
+| 毒素を村の薬師に提供（デフォルト） | 600 | 90 | +3 | Justice:3 | — |
+| 毒素を闇市の商人に密売 | 900 | 90 | -20 | Chaos:3 | — |
 
 ---
 
@@ -61,66 +64,101 @@
 
 ```text
 start
- └─ start_02
-     └─ start_03
-         └─ start_04
-             └─ travel_01
-                 └─ travel_02
-                     └─ desert_01
-                         └─ desert_02
-                             └─ choice_hunt (第1の選択：狩りの方法)
-                                  ├─ 火で追い出す → fire_01
-                                  │                 └─ fire_02
-                                  │                      └─ fire_random (random_branch 50%)
-                                  │                           ├─ 成功（追い出し） → fire_success
-                                  │                           │                      └─ merge_boss
-                                  │                           └─ 失敗（逆襲） → fire_fail
-                                  │                                                └─ fire_trap (hp_damage 15%)
-                                  │                                                     └─ merge_boss
-                                  └─ 巣穴に入る → cave_01
-                                                  └─ cave_02
-                                                       └─ battle_guard
-                                                            ├─ win → merge_boss
-                                                            └─ lose → end_failure
-                                                                 └─ merge_boss (図示用)
-                                                                      └─ boss_intro_01
-                                                                           └─ boss_intro_02
-                                                                                └─ boss_intro_03
-                                                                                     └─ battle_boss
-                                                                                          ├─ win → victory_01
-                                                                                          │        └─ victory_02
-                                                                                          │             └─ choice_fate
-                                                                                          │                  ├─ 薬師に渡す → fate_just_01
-                                                                                          │                  │                └─ fate_just_02
-                                                                                          │                  │                     └─ end_success_justice
-                                                                                          │                  └─ 闇市に売る → fate_chaos_01
-                                                                                          │                                  └─ fate_chaos_02
-                                                                                          │                                       └─ end_success_chaos
-                                                                                          └─ lose → end_failure
+ └─ start_01_02
+     └─ start_02
+         └─ start_02_02
+             └─ start_03
+                 └─ start_03_02
+                     └─ start_04
+                         └─ travel_01
+                             └─ travel_01_02
+                                 └─ travel_02
+                                     └─ travel_02_02
+                                         └─ desert_01
+                                             └─ desert_02
+                                                 └─ choice_hunt
+                                                     ├─ 火で追い出す → fire_01
+                                                     │                └─ fire_01_02
+                                                     │                    └─ fire_02
+                                                     │                        └─ fire_random (random_branch 50%/50%)
+                                                     │                             ├─ success → fire_success
+                                                     │                             │              └─ fire_success_02
+                                                     │                             │                   └─ merge_boss
+                                                     │                             └─ failure → fire_fail
+                                                     │                                            └─ fire_trap (hp_damage 15%)
+                                                     │                                                 └─ fire_trap_02
+                                                     │                                                      └─ merge_boss
+                                                     └─ 巣穴に入る → cave_01
+                                                                    └─ cave_01_02
+                                                                        └─ cave_02
+                                                                            └─ battle_guard
+                                                                                 ├─ win → merge_boss
+                                                                                 └─ lose → end_failure_01
+                                                                                      └─ merge_boss
+                                                                                           └─ merge_boss_02
+                                                                                                └─ boss_intro_01
+                                                                                                     └─ boss_intro_02
+                                                                                                          └─ boss_intro_03
+                                                                                                               └─ battle_boss
+                                                                                                                    ├─ win → victory_01
+                                                                                                                    │        └─ victory_01_02
+                                                                                                                    │             └─ victory_02
+                                                                                                                    │                  └─ victory_02_02
+                                                                                                                    │                       └─ choice_fate
+                                                                                                                    │                            ├─ 薬師 → fate_just_01
+                                                                                                                    │                            │         └─ fate_just_01_02
+                                                                                                                    │                            │              └─ fate_just_02
+                                                                                                                    │                            │                   └─ fate_just_02_02
+                                                                                                                    │                            │                        └─ end_success_justice
+                                                                                                                    │                            └─ 闇市 → fate_chaos_01
+                                                                                                                    │                                      └─ fate_chaos_01_02
+                                                                                                                    │                                           └─ fate_chaos_02
+                                                                                                                    │                                                └─ fate_chaos_02_02
+                                                                                                                    │                                                     └─ end_success_chaos
+                                                                                                                    └─ lose → end_failure_01
+                                                                                                                              └─ end_failure
 ```
 
 ### ノード詳細
 
 #### `start`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: オアシス村長
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: オアシス村長
 ```text
 「冒険者殿、村の近くに巨大な毒蠍が巣を作っておってな」
 ```
 
+#### `start_01_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
+```text
+砂漠の強い風が、開け放たれた窓から熱い砂を室内に運んでくる。
+```
+
 #### `start_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: オアシス村長
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: オアシス村長
 ```text
 「家畜を何頭も喰われた。旅人が毒で倒れたという報告もある」
 ```
 
+#### `start_02_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
+```text
+（砂漠の毒蠍か。その毒は一滴でラクダを即死させると聞くが……）
+```
+
 #### `start_03`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: オアシス村長
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: オアシス村長
 ```text
 「このままでは交易路も使えん。どうか蠍を退治してくだされ」
 ```
 
+#### `start_03_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: オアシス村長
+```text
+「退治してくれれば、村の貯蓄から十分な報酬を支払おう」
+```
+
 #### `start_04`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
 ```text
 巨大蠍の討伐か。砂漠の危険な相手だが、受けよう。
 ```
@@ -131,10 +169,22 @@ start
 灼熱の砂漠を進む。足跡と思しき溝が砂に刻まれている。蠍の痕跡だ。
 ```
 
+#### `travel_01_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_field
+```text
+照りつける太陽が、砂の一粒一粒を黄金色に焼き尽くしていく。
+```
+
 #### `travel_02`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 ```text
 砂丘の向こうに、巨大な穴が見えてきた。蠍の巣穴に違いない。
+```
+
+#### `travel_02_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+（周囲の熱気が、あの穴の近くだけさらに濃くなっているようだ）
 ```
 
 #### `desert_01`（text）
@@ -153,13 +203,19 @@ start
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 | 選択肢 | next_node |
 |---------|-----------|
-| 「枯れ草を集めて煙で巣穴から追い出す」 | fire_01 |
-| 「巣穴に直接侵入して仕留める」 | cave_01 |
+| 「枯れ草を集めて煙で巣穴から追い出す」 | `fire_01` |
+| 「巣穴に直接侵入して仕留める」 | `cave_01` |
 
 #### `fire_01`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 ```text
 巣穴の入口に枯れ草を山と積み、火を放つ。煙が穴の中に充満していく。
+```
+
+#### `fire_01_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+黒い煙が、熱風に乗って巣穴の奥深くへと吸い込まれていく。
 ```
 
 #### `fire_02`（text）
@@ -173,9 +229,15 @@ start
 
 #### `fire_success`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_mystery
-**次ノード:** merge_boss
 ```text
 煙に耐えきれず、子蠍たちが四方八方に逃げ出した。親蠍だけが残っている。好機だ。
+```
+
+#### `fire_success_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_mystery
+**次ノード:** `merge_boss`
+```text
+（雑魚は逃げたか。あとはあの巨大な親を仕留めるだけだな）
 ```
 
 #### `fire_fail`（text）
@@ -187,15 +249,27 @@ start
 #### `fire_trap`（hp_damage）
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 **パラメータ:** percent: 15
-**次ノード:** merge_boss
 ```text
 毒尾の一撃をかわしきれず、腕をかすめた。毒が微かに体を蝕む。
+```
+
+#### `fire_trap_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+**次ノード:** `merge_boss`
+```text
+（くっ、素早いな。だがまだ致命傷ではない。立て直そう）
 ```
 
 #### `cave_01`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_mystery
 ```text
 砂にまみれながら巣穴の中に潜り込む。暗く、じっとりと湿った空気が漂う。
+```
+
+#### `cave_01_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_mystery
+```text
+（暗くて視界が効かないな。音と空気の揺れを頼りに進むか）
 ```
 
 #### `cave_02`（text）
@@ -206,16 +280,21 @@ start
 
 #### `battle_guard`（battle）
 **演出:** bg: bg_desert, bgm: bgm_battle
-**パラメータ:** enemy_group_id: 422
-```text
-蠍の群れとの戦闘！
-```
-*(注: 422はgrp_scorpion_nest — デザートスコーピオン×3)*
+**パラメータ:** enemy_group_id: 422, next: `merge_boss`, fail: `end_failure_01`
+| 敵グループ | 構成 |
+|----------|------|
+| `grp_scorpion_nest` | デザートスコーピオン ×3 |
 
 #### `merge_boss`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 ```text
 子蠍を蹴散らした先に、ひときわ巨大な影が蠢いている。親蠍だ。
+```
+
+#### `merge_boss_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+巣穴の奥の暗闇から、カチカチと不気味な音が響き渡る。
 ```
 
 #### `boss_intro_01`（text）
@@ -238,15 +317,21 @@ start
 
 #### `battle_boss`（battle）
 **演出:** bg: bg_desert, bgm: bgm_battle_boss
-**パラメータ:** enemy_group_id: 9102
-```text
-巨大毒蠍との決戦！
-```
+**パラメータ:** enemy_group_id: 9102, next: `victory_01`, fail: `end_failure_01`
+| 敵グループ | 構成 |
+|----------|------|
+| `grp_boss_scorpion` | 巨大毒蠍 |
 
 #### `victory_01`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_calm
 ```text
 巨大蠍の甲殻を貫き、ついに仕留めた。砂漠に静けさが戻る。
+```
+
+#### `victory_01_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_calm
+```text
+巨大な蠍の巨体が崩れ落ち、砂塵がゆっくりと舞い降りた。
 ```
 
 #### `victory_02`（text）
@@ -255,12 +340,18 @@ start
 蠍の毒腺から希少な毒素を採取できた。薬にも毒にもなる代物だ。
 ```
 
+#### `victory_02_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_calm
+```text
+（これを村に届けるか、あるいは闇市で売るか……悩ましいな）
+```
+
 #### `choice_fate`（choice）
 **演出:** bg: bg_desert, bgm: bgm_quest_calm
 | 選択肢 | next_node |
 |---------|-----------|
-| 「村の薬師に渡す。解毒薬の材料になるはずだ」 | fate_just_01 |
-| 「闇市に売る。希少な毒素は高値がつくだろう」 | fate_chaos_01 |
+| 「村の薬師に渡す。解毒薬の材料になるはずだ」 | `fate_just_01` |
+| 「闇市に売る。希少な毒素は高値がつくだろう」 | `fate_chaos_01` |
 
 #### `fate_just_01`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_calm
@@ -268,14 +359,26 @@ start
 蠍の毒素を村の薬師に手渡した。これで被害者の解毒薬が作れる。
 ```
 
+#### `fate_just_01_02`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_calm
+```text
+薬師は震える手で瓶を受け取り、深く感謝の頭を下げた。
+```
+
 #### `fate_just_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: オアシス村長
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: オアシス村長
 ```text
 「蠍を退治し、毒素まで薬師に！ 恩人だ、本当にありがとう」
 ```
 
+#### `fate_just_02_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
+```text
+村長は自分の手を両手で握りしめ、涙ながらに感謝した。
+```
+
 #### `end_success_justice`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_marcund
 ```text
 依頼達成。毒蠍を討ち、村に安全を取り戻した。正しき行いが人々を救った。
 ```
@@ -284,27 +387,46 @@ start
 #### `fate_chaos_01`（text）
 **演出:** bg: bg_slums, bgm: bgm_quest_mystery
 ```text
-闇市の毒薬商に蠍の毒素を売りつけた。「これは……素晴らしい。高く買おう」
+闇市の毒薬商に蠍の毒素を持ち込み、取引を持ちかけた。
+```
+
+#### `fate_chaos_01_02`（text）
+**演出:** bg: bg_slums, bgm: bgm_quest_mystery, speaker: 毒薬商
+```text
+「これは極上の毒素だな……。よし、言い値で買い取ろう」
 ```
 
 #### `fate_chaos_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_mystery
+**演出:** bg: bg_marcund, bgm: bgm_quest_mystery
 ```text
 村長には「蠍は退治したが毒腺は破壊された」と報告した。
 ```
 
-#### `end_success_chaos`（end_success）
-**演出:** bg: bg_guild
+#### `fate_chaos_02_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_mystery
 ```text
-依頼達成。蠍は倒したが、毒素で私腹を肥やした。村人の苦しみは……まあ、いずれ忘れる。
+村長は少し残念そうにしたが、蠍が消えたことに満足した。
 ```
-**rewards:** Gold:900, Exp:90, Rep:0, Chaos:3
+
+#### `end_success_chaos`（end_success）
+**演出:** bg: bg_slums
+```text
+依頼達成。毒素を密売して私腹を肥やした。罪悪感など砂漠の風に消える。
+```
+**rewards:** Gold:900, Exp:90, Rep:-20, Chaos:3
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_desert, bgm: bgm_quest_tense
+```text
+鋭い毒尾が胸を貫く。灼熱の毒が全身を巡り、力なく崩れ落ちた。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_desert
 ```text
-毒尾が体を貫いた。猛毒が血管を焼き、砂漠の灼熱と共に意識が消えていく……。
+砂漠の熱い砂の上で、意識は暗闇の底へと溶けて消えていった。
 ```
+**rewards:** Gold:0
 
 ---
 
@@ -340,5 +462,5 @@ start
 - [ ] 火ルートのランダム判定（50%）とhp_damageの動作
 - [ ] 巣穴ルートの道中戦闘（battle_guard）の勝敗遷移が正しいこと
 - [ ] 最終選択肢（薬師に渡す vs 闇市に売る）のアライメントおよび報酬差異
-- [ ] 全30ノードの遷移が正しいこと
+- [ ] 全50ノードの遷移が正しいこと
 - [ ] quests_special.csv への登録

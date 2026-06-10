@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 5204 |
 | **Slug** | `qst_rep_jade_serpent` |
-| **クエスト種別** | 名声連動ボス（Reputation） |
-| **推奨レベル** | 17 |
+| **クエスト種別** | 特殊クエスト（Special） |
+| **推奨レベル** | 17（Hard） |
 | **難度** | 4 |
 | **依頼主** | 地方太守 |
-| **出現条件** | EP5（`main_ep05`）クリア済み, Rep≥70 |
-| **リピート** | 1世代1回 |
-| **難易度Tier** | Tier 4（名声連動） |
-| **経過日数 (time_cost)** | 6（成功: 6日 / 失敗: 3日） |
-| **ノード数** | 38ノード |
+| **出現条件** | 第5話「大義という名の虚妄」（6005）クリア / 滞在拠点: 華龍国拠点 / 名声 70 以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **経過日数 (time_cost)** | 6 |
+| **ノード数** | 52ノード |
+| **ゲストNPC** | なし |
+| **難易度Tier** | Hard（rec_level: 17） |
 | **サムネイル画像** | `/images/quests/bg_mountain.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -104,27 +104,45 @@ start
 ### ノード詳細
 
 #### `start`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: 太守の使者
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 太守の使者
 ```text
 「太守閣下から直々の依頼だ。翡翠鉱脈に大蛇が巣を作った」
 ```
 
 #### `start_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: 太守の使者
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 太守の使者
 ```text
 「鉱脈は国の財源だ。採掘が止まれば民の暮らしに響く」
 ```
 
+#### `start_02_02`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
+```text
+（翡翠は華龍国の特産品だ。経済が停滞すれば太守の立場も危ういな）
+```
+
 #### `start_03`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
 ```text
 翡翠鉱脈は霊山の中腹にある。大蛇の巣に辿り着くには山道を越えねばならない。
+```
+
+#### `start_03_02`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
+```text
+（使者は焦るように指示書を押しつけ、都の宮殿の方へと立ち去った）
 ```
 
 #### `travel_01`（text）
 **演出:** bg: bg_road_day, bgm: bgm_field
 ```text
 霊山の麓に着いた。山の空気が澄んでいるが、どこか不穏な気配がある。
+```
+
+#### `travel_01_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_field
+```text
+（見上げれば霊峰の峰々に厚い雲が立ち込め、鳥の鳴き声すら聞こえない）
 ```
 
 #### `travel_02`（text）
@@ -143,8 +161,8 @@ start
 **演出:** bg: bg_mountain, bgm: bgm_quest_tense
 | 選択肢 | next_node |
 |---------|-----------|
-| 「渓流沿いの道を行く——水場なら蛇の痕跡を追える」 | creek_01 |
-| 「尾根道を行く——高所から巣の位置を見下ろせるはず」 | ridge_01 |
+| 「渓流沿いの道を行く——水場なら蛇の痕跡を追える」 | `creek_01` |
+| 「尾根道を行く——高所から巣の位置を見下ろせるはず」 | `ridge_01` |
 
 #### `creek_01`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_calm
@@ -152,15 +170,21 @@ start
 渓流沿いを進む。清水が岩を洗い、心地よい音を立てている。
 ```
 
+#### `creek_01_02`（text）
+**演出:** bg: bg_mountain, bgm: bgm_quest_calm
+```text
+（水辺の湿った砂の上に、這った跡がはっきりと残されている）
+```
+
 #### `creek_02`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_calm
 ```text
-水辺に巨大な蛇の足跡を発見。この方向で間違いない。
+水辺に巨大な蛇 of 足跡を発見。この方向で間違いない。
 ```
 
 #### `creek_03`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_calm
-**次ノード:** merge_cave
+**次ノード:** `merge_cave`
 ```text
 渓流を遡ると、岩壁に大きな洞窟の入口が見えた。蛇の巣はあの中だ。
 ```
@@ -169,6 +193,12 @@ start
 **演出:** bg: bg_mountain, bgm: bgm_quest_tense
 ```text
 尾根道を登る。見晴らしは良いが、足場が悪い。突風が吹き——！
+```
+
+#### `ridge_01_02`（text）
+**演出:** bg: bg_mountain, bgm: bgm_quest_tense
+```text
+（突風に足元をすくわれ、小石が音を立てて谷底へと落ちていく）
 ```
 
 #### `ridge_trap`（hp_damage）
@@ -180,7 +210,7 @@ start
 
 #### `ridge_02`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_tense
-**次ノード:** merge_cave
+**次ノード:** `merge_cave`
 ```text
 傷を押さえながら尾根を越えた。上から巣の位置は把握できた。洞窟に向かう。
 ```
@@ -195,6 +225,12 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
 奥に進むと、生温い空気が漂う。蛇の巣は近い。
+```
+
+#### `cave_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（壁面を覆う翡翠の緑光が、暗闇を冷たく照らし出している）
 ```
 
 #### `cave_02`（text）
@@ -213,8 +249,8 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 | 選択肢 | next_node |
 |---------|-----------|
-| 「邪魔だ。排除する」 | attack_01 |
-| 「刺激せず迂回する」 | avoid_01 |
+| 「邪魔だ。排除する」 | `attack_01` |
+| 「刺激せず迂回する」 | `avoid_01` |
 
 #### `attack_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
@@ -222,17 +258,26 @@ start
 子蛇たちを攻撃する。小さいが毒牙は鋭い——油断はできない！
 ```
 
+#### `attack_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（大剣を抜き払い、襲いかかってくる子蛇たちを牽制する！）
+```
+
 #### `battle_guard`（battle）
 **演出:** bg: bg_crypt, bgm: bgm_battle
-**パラメータ:** enemy_group_id: 120
-```text
-翡翠蛇の幼体が襲いかかる！
-```
+**パラメータ:** enemy_group_id: 120, next: `nest_01`, fail: `end_failure_01`
 
 #### `avoid_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_mystery
 ```text
 子蛇を刺激しないよう、壁際を慎重に進む。息を殺し、足音を消す。
+```
+
+#### `avoid_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_mystery
+```text
+（静かに重心を移しながら、岩の影を縫うように歩を進めていく）
 ```
 
 #### `avoid_02`（text）
@@ -245,6 +290,12 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
 洞窟の最奥、翡翠が密集する広大な空間に出た。ここが巣の本体だ。
+```
+
+#### `nest_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（中央には大量の卵が産み落とされ、翡翠の輝きを受けて淡く光っている）
 ```
 
 #### `nest_02`（text）
@@ -261,15 +312,18 @@ start
 
 #### `battle_boss`（battle）
 **演出:** bg: bg_crypt, bgm: bgm_battle_boss
-**パラメータ:** enemy_group_id: 9064
-```text
-翡翠大蛇との戦い——！
-```
+**パラメータ:** enemy_group_id: 9064, next: `victory_01`, fail: `end_failure_01`
 
 #### `victory_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_calm
 ```text
 翡翠大蛇が力なく横たわった。まだ息はあるが、抵抗する力は残っていない。
+```
+
+#### `victory_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_calm
+```text
+（巨躯がズシンと地面を揺らして倒れ込み、洞窟内の毒気が霧散していく）
 ```
 
 #### `victory_02`（text）
@@ -282,13 +336,19 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_calm
 | 選択肢 | next_node |
 |---------|-----------|
-| 「巣ごと壊滅させる。鉱脈の安全が最優先だ」 | destroy_01 |
-| 「蛇を別の山に誘導する。霊山の精霊を殺すべきではない」 | lure_01 |
+| 「巣ごと壊滅させる。鉱脈の安全が最優先だ」 | `destroy_01` |
+| 「蛇を別の山に誘導する。霊山の精霊を殺すべきではない」 | `lure_01` |
 
 #### `destroy_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
 大蛇と卵を全て処分した。鉱脈は完全に安全になった。だが、翡翠の輝きが少し鈍くなった気がする。
+```
+
+#### `destroy_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（精霊の死によって、鉱脈を照らしていた光が弱まっていくのを感じた）
 ```
 
 #### `destroy_02`（text）
@@ -298,7 +358,7 @@ start
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_har_city
 ```text
 「翡翠鉱脈の脅威を排除した功績、高く評価する」
 採掘が再開し、華龍国の経済は息を吹き返した。
@@ -311,10 +371,22 @@ start
 薬草を焚き、大蛇を別の山へ誘導する。蛇は静かに従った。精霊の知恵があるのかもしれない。
 ```
 
+#### `lure_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_calm
+```text
+（大蛇は感謝するかのように一度首を傾げ、闇の奥へ消え去っていった）
+```
+
 #### `lure_02`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_calm
 ```text
 大蛇は隣の霊山に新しい巣を作った。翡翠鉱脈は無事だが、完全な解決とは言いづらい。
+```
+
+#### `lure_02_02`（text）
+**演出:** bg: bg_mountain, bgm: bgm_quest_calm
+```text
+（それでも、霊山の豊かな自然は壊されずに保たれた。これでいいはずだ）
 ```
 
 #### `lure_03`（text）
@@ -324,52 +396,23 @@ start
 ```
 
 #### `end_success_peace`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_karyu_village
 ```text
-「鉱脈は無事か。ご苦労だった」太守は満足げだ。だが報酬は控えめだった。
-山の老人が一人、深々と頭を下げてくれた。「精霊を守ってくれてありがとう」
+「鉱脈は無事か。ご苦労」太守は満足げだ。だが報酬は控えめだった。
+山の老人が静かに頭を下げた。「精霊を守ってくれて感謝する」
 ```
 **rewards:** Gold:2500, Exp:350, Rep:20, Justice:8
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+**次ノード:** `end_failure`
+```text
+大蛇の強烈な尾の一撃が体に叩きつけられる。岩壁に叩きつけられ意識を失った。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_crypt
 ```text
 翡翠大蛇の毒牙が閃いた。全身に毒が回り、意識が遠のいていく。
 ```
-
----
-
-## 4. 新規エネミー・アイテム定義参照
-
-**使用エネミー（新規）:**
-| ID | Slug | name | level | hp | atk | def |
-|-----|-----|-----|-----|-----|-----|-----|
-| 6034 | `boss_jade_serpent` | 翡翠大蛇 | 26 | 1100 | 70 | 20 |
-
-**使用エネミーグループ:**
-| ID | Slug | 構成エネミー | 用途 |
-|-----|-----|-----|-----|
-| 120 | （既存） | 蛇系モンスター | 子蛇戦 |
-| 9064 | `enemy_grp_boss_jade` | `boss_jade_serpent` | ボス: 翡翠大蛇 |
-
----
-
-## 5. CSVエントリ
-
-`quests_special.csv`
-```csv
-5204,qst_rep_jade_serpent,翡翠蛇の毒牙,17,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":70}",false,,,地方太守,[討伐令] 翡翠鉱脈に巣を作った巨大毒蛇を排除せよ。
-```
-
----
-
-## 6. 実装チェックリスト
-
-- [ ] ボスパラメータ `boss_jade_serpent` をenemies.csvに登録
-- [ ] エネミーグループ 9064 をenemy_groups.csvに登録
-- [ ] choice_path（山道選択: 渓流/尾根）が正常に動作
-- [ ] choice_snake（子蛇対応: 攻撃/回避）が正常に動作
-- [ ] hp_damage（尾根ルート 10%）が正常に動作
-- [ ] 壊滅ルート: Gold:3500, Exp:400, Rep:10, Evil:5
-- [ ] 誘導ルート: Gold:2500, Exp:350, Rep:20, Justice:8
-- [ ] time_cost: 6（成功6日 / 失敗3日）
+**rewards:** Gold:0

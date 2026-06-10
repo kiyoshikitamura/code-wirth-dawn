@@ -438,7 +438,7 @@ async function main() {
         }
 
         // BUILD SCRIPT DATA FROM CSV
-        const scriptData = buildScriptData(r.id);
+        const scriptData = buildScriptData(String(r.id));
 
         return {
             id: r.id,

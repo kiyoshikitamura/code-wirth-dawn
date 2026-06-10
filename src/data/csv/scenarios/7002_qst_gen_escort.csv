@@ -1,28 +1,40 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"旅商人組合の窓口で依頼書を受け取った。","{""type"":""text"",""bg"":""bg_guild"",""bgm"":""bgm_quest_calm""}",text_01
-NODE,text_01,"「護衛対象は行商人のマルコ。\n　隣街まで往復八日の旅だ」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付""}",text_02
-NODE,text_02,"「積み荷は雑貨と薬品。\n　狙われやすい品ばかりだな」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付""}",text_03
-NODE,text_03,"「先月、同じ路線で護衛二名が殺された。\n　気を抜くなよ」","{""type"":""text"",""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付""}",meet_01
-NODE,meet_01,"酒場の片隅で、小柄な中年男が\n荷物に囲まれて待っていた。","{""type"":""text"",""bg"":""bg_tavern_day""}",meet_02
-NODE,meet_02,"「あんたが護衛かい？ ありがてえ！\n　マルコだ。腕っぷしはからきしでね」","{""type"":""text"",""bg"":""bg_tavern_day"",""speaker_name"":""マルコ""}",meet_03
-NODE,meet_03,"人懐こいが、どこか落ち着きがない。\n何か気にかかることがあるようだ。","{""type"":""text"",""bg"":""bg_tavern_day""}",join
-NODE,join,"マルコがパーティに加わった。\n大きな背負い箱を担ぎ、歩き出す。","{""type"":""guest_join"",""bg"":""bg_tavern_day"",""guest_id"":""npc_gen_merchant""}",travel_01
-NODE,travel_01,"街を出て、隣街へ続く街道を歩く。\nマルコの歩調は遅い。荷が重いのだ。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",travel_02
-NODE,travel_02,"日が傾き始めた頃、\nマルコが荷物越しに話しかけてきた。","{""type"":""text"",""bg"":""bg_road_day""}",travel_03
-NODE,travel_03,"「正直に言うと、荷の中に少しだけ\n　""特別な品""がある」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""マルコ""}",travel_04
-NODE,travel_04,"「追い剥ぎに荷を見られたら\n　面倒なことになるかもしれねえ」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""マルコ""}",travel_05
-NODE,travel_05,"何を運んでいるかは、\n深く聞かないことにした。","{""type"":""text"",""bg"":""bg_road_day""}",midway
-NODE,midway,"街道の曲がり角。\n林の向こうに煙が見える。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense""}",encounter_01
-NODE,encounter_01,"「止まれ！ 荷を置いていけ！」\n木の陰から数人の男が飛び出してきた。","{""type"":""text"",""bg"":""bg_road_day""}",encounter_02
-NODE,encounter_02,"「旦那ッ！ 頼むッ！\n　荷だけは守ってくれ！」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""マルコ""}",battle
-NODE,battle,"夜盗が襲いかかってきた！","{""type"":""battle"",""bg"":""bg_road_day"",""bgm"":""bgm_battle"",""enemy_group_id"":400}",
+NODE,start_prep,"旅商人組合の窓口。香辛料と生革の匂いが狭い部屋に満ちている。","{""bg"":""bg_guild"",""type"":""text""}",start
+NODE,start,"埃っぽい木製のカウンター越しに、羊皮紙の依頼書を受け取った。","{""bg"":""bg_guild"",""type"":""text""}",text_01
+NODE,text_01,"「護衛対象は行商人のマルコ。隣街まで往復八日の旅だ」","{""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付"",""type"":""text""}",text_02
+NODE,text_02,"「積み荷は雑貨と薬品。狙われやすい品ばかりだな」","{""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付"",""type"":""text""}",text_03
+NODE,text_03,"「先月、同じ路線で護衛二名が殺された。気を抜くなよ」","{""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付"",""type"":""text""}",text_03_warning
+NODE,text_03_warning,"「依頼料が他より跳ね上がっているのはそういうわけだ。せいぜい生きて戻ることだけを考えろよ」","{""bg"":""bg_guild"",""speaker_name"":""旅商人組合の受付"",""type"":""text""}",meet_01
+NODE,meet_01,"酒場の片隅。山積みの麻袋と木箱の影に、小柄な中年男がいた。","{""bg"":""bg_tavern_day"",""type"":""text""}",meet_look
+NODE,meet_look,"男は擦り切れた外套を羽織り、絶えず周囲を気にしている。","{""bg"":""bg_tavern_day"",""type"":""text""}",meet_02
+NODE,meet_02,"「あんたが今回の護衛かい？ ありがてえ、よろしく頼むよ……マルコだ」","{""bg"":""bg_tavern_day"",""speaker_name"":""マルコ"",""type"":""text""}",meet_03
+NODE,meet_03,"握った手は冷たく汗ばんでいた。どこか落ち着きがない。","{""bg"":""bg_tavern_day"",""type"":""text""}",meet_chk
+NODE,meet_chk,"挨拶もそこそこに、荷車の車輪を点検する。油は差されているが、軋む重い音が響いた。","{""bg"":""bg_tavern_day"",""type"":""text""}",join
+NODE,join,"マルコがパーティに加わった。","{""bg"":""bg_tavern_day"",""guest_id"":""is_escort_target"",""type"":""guest_join""}",travel_01
+NODE,travel_01,"重い石門をくぐり、荒涼とした街道へ足を踏み入れる。だが、マルコの足取りは酷く遅い。","{""bg"":""bg_road_day"",""type"":""text""}",travel_01_road
+NODE,travel_01_road,"周囲を見渡すと遮るもののない平原が広がり、乾燥した風が錆びた車輪を鳴らしていた。","{""bg"":""bg_road_day"",""type"":""text""}",travel_02
+NODE,travel_02,"やがて陽が傾き、空が鈍い血の色に染まる頃、彼が囁いた。","{""bg"":""bg_road_day"",""type"":""text""}",travel_03
+NODE,travel_03,"「実はな……荷の中に、少しだけ""特別な品""が混ざっているんだ」","{""bg"":""bg_road_day"",""speaker_name"":""マルコ"",""type"":""text""}",travel_04
+NODE,travel_04,"「もし追い剥ぎに目をつけられたら、面倒なことになるかもしれねえ」","{""bg"":""bg_road_day"",""speaker_name"":""マルコ"",""type"":""text""}",travel_05
+NODE,travel_05,"男の怯えた目が、固く縛られた木箱の隙間に向けられている。","{""bg"":""bg_road_day"",""type"":""text""}",travel_05_think
+NODE,travel_05_think,"中身は詮索しない。それが冒険者としての護身の知恵だ。","{""bg"":""bg_road_day"",""type"":""text""}",midway
+NODE,midway,"街道が崖の影に折れ曲がる場所で、林の向こうから黒い煙が立ち上るのが見えた。","{""bg"":""bg_road_day"",""type"":""text""}",encounter_alert
+NODE,encounter_alert,"鳥の羽ばたきが唐突に途絶える。マルコは短く息を呑み、荷車の影へと身を隠した。","{""bg"":""bg_road_day"",""type"":""text""}",encounter_01
+NODE,encounter_01,"『動くな！ 荷を置いていけ！』茂みの奥から、ギラついた目の男たちが立ち塞がる！","{""bg"":""bg_road_day"",""type"":""text""}",encounter_02
+NODE,encounter_02,"「ひっ、旦那ッ！ 荷物だけは、荷物だけは何としても守ってくれ！」","{""bg"":""bg_road_day"",""speaker_name"":""マルコ"",""type"":""text""}",battle
+NODE,battle,"夜盗が襲いかかってきた！","{""bg"":""bg_road_day"",""bgm"":""bgm_battle"",""enemy_group_id"":400,""enemy_name"":""追い剥ぎ一味"",""type"":""battle""}",
 CHOICE,,win,,after_01
 CHOICE,,lose,,end_failure
-NODE,after_01,"夜盗を蹴散らした。\nマルコがおそるおそる荷物から顔を出す。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",after_02
-NODE,after_02,"「……全部ある。\n　あんた、本物だ」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""マルコ""}",arrive_01
-NODE,arrive_01,"残りの道のりは平穏だった。\n隣街に到着し、マルコは荷を降ろし始めた。","{""type"":""text"",""bg"":""bg_tavern_day""}",arrive_02
-NODE,arrive_02,"取引を終えたマルコが上機嫌で戻ってきた。\n報酬の入った革袋を差し出す。","{""type"":""text"",""bg"":""bg_tavern_day""}",arrive_03
-NODE,arrive_03,"「""特別な品""のこと、\n　口外しないでくれよ？ ははっ」","{""type"":""text"",""bg"":""bg_tavern_day"",""speaker_name"":""マルコ""}",leave
-NODE,leave,"マルコがパーティから離れた。\n「次も頼むよ、旦那！」","{""type"":""leave"",""bg"":""bg_tavern_day"",""guest_id"":""npc_gen_merchant""}",end_success
-NODE,end_success,"護衛任務完了。組合に帰還し報酬を受け取った。\n""特別な品""の正体は考えないことにした。","{""type"":""end"",""result"":""success"",""bg"":""bg_guild""}",
-NODE,end_failure,"マルコが倒れた。荷物は夜盗に奪われた。\n「護衛失敗。報酬はなし」","{""type"":""end"",""result"":""failure"",""bg"":""bg_guild""}",
+NODE,after_01,"激しい剣戟の末、夜盗どもを蹴散らした。地面には赤黒い血だまりが広がっていく。","{""bg"":""bg_road_day"",""type"":""text""}",after_01_look
+NODE,after_01_look,"マルコは荷車の陰から怯えながら這い出し、荷を結ぶロープの無事を確認した。","{""bg"":""bg_road_day"",""type"":""text""}",after_02
+NODE,after_02,"「……全部無事だ。あんた、本当に腕の立つ冒険者なんだな…」","{""bg"":""bg_road_day"",""speaker_name"":""マルコ"",""type"":""text""}",after_02_rest
+NODE,after_02_rest,"息を整える。血の匂いに誘われて魔物が来る前に、先を急ごう。","{""bg"":""bg_road_day"",""type"":""text""}",arrive_01
+NODE,arrive_01,"隣街の煤けた酒場に到着。マルコは手早く荷物を降ろし始めた。","{""bg"":""bg_tavern_day"",""type"":""text""}",arrive_inn_look
+NODE,arrive_inn_look,"奥の部屋から現れたガタイのいい男たちに、木箱が手渡される。","{""bg"":""bg_tavern_day"",""type"":""text""}",arrive_02
+NODE,arrive_02,"引き渡しを終えたマルコが、安堵の表情で銀貨の袋を差し出す。","{""bg"":""bg_tavern_day"",""type"":""text""}",arrive_03
+NODE,arrive_03,"「約束通り、あの""特別な品""については他所で口外しないでくれよ？」","{""bg"":""bg_tavern_day"",""speaker_name"":""マルコ"",""type"":""text""}",leave
+NODE,leave,"マルコがパーティから離れた。","{""bg"":""bg_tavern_day"",""guest_id"":"""",""type"":""leave""}",return_scenery
+NODE,return_scenery,"帰路は一人。重荷を降ろした街道は、往路より広く感じられた。","{""bg"":""bg_road_day"",""type"":""text""}",return_scenery_2
+NODE,return_scenery_2,"夕闇が荒野を飲み込んでいく。急ぎ足で自分の街へと向かった。","{""bg"":""bg_road_day"",""type"":""text""}",end_success
+NODE,end_success,"護衛任務完了。""特別な品""とマルコの安堵の表情を思い出したが、詳しく考えないようにした。","{""bg"":""bg_guild"",""rewards"":{""gold"":350,""reputation"":3},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"マルコが倒れた。荷物は夜盗に奪われ、全てを失った。","{""bg"":""bg_guild"",""guest_id"":""npc_gen_merchant"",""type"":""end"",""result"":""failure""}",

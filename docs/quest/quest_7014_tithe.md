@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7014 |
 | **Slug** | `qst_rol_tithe` |
-| **クエスト種別** | 聖王国クエスト（Roland） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 4（Normal） |
 | **難度** | 2 |
 | **依頼主** | 教会 |
-| **出現条件** | max_reputation: -50 / 出現拠点: loc_holy_empire |
+| **出現条件** | 出現国: ローランド聖王国 / 名声 -50 以下 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 1 |
+| **ノード数** | 48ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 4） |
-| **経過日数 (time_cost)** | 1（成功: 1日 / 失敗: 1日） |
-| **ノード数** | 25ノード |
 | **サムネイル画像** | `/images/quests/bg_slums.png` |
-
 ## 1. クエスト概要
 
 ### 短文説明
@@ -54,74 +54,91 @@
 ### 全体フロー
 
 ```text
-start → intro_1 → intro_2 → arrive_slum
+start → start_desc → intro_1 → intro_1_detail → intro_2 → intro_2_detail → arrive_slum
   → house_1 → plea_1 → choice_1
-     ├─ [見逃す] → mercy_1 → house_2_intro
-     └─ [取り立てる] → battle_1 → extort_1 → house_2_intro
+     ├─ 見逃す → mercy_1 → house_2_intro
+     └─ 強制的に取り立てる → battle_1 → add_1 → extort_1 → house_2_intro
   → house_2 → plea_2 → choice_2
-     ├─ [見逃す] → mercy_2 → house_3_intro
-     └─ [取り立てる] → battle_2 → extort_2 → house_3_intro
+     ├─ 見逃す → mercy_2 → house_3_intro
+     └─ 強制的に取り立てる → battle_2 → add_2 → extort_2 → house_3_intro
   → house_3 → plea_3 → choice_3
-     ├─ [見逃す] → mercy_3 → house_4_intro
-     └─ [取り立てる] → battle_3 → extort_3 → house_4_intro
+     ├─ 見逃す → mercy_3 → house_4_intro
+     └─ 強制的に取り立てる → battle_3 → add_3 → extort_3 → house_4_intro
   → house_4 → plea_4 → choice_4
-     ├─ [見逃す] → mercy_4 → report
-     └─ [取り立てる] → battle_4 → extort_4 → report
-  → report → end_success（バトル回数で台詞と報酬が変動）
+     ├─ 見逃す → mercy_4 → report_check
+     └─ 強制的に取り立てる → battle_4 → add_4 → extort_4 → report_check
+  → report_check
+     ├─ success (0回) → report_0 → end_success_0
+     └─ failure → report_check_4
+           ├─ success (4回) → report_4 → end_success_4
+           └─ failure → report_mid_check
+                 ├─ success (1回) → report_mid_1 → end_success_1
+                 └─ failure → report_mid_check_2
+                       ├─ success (2回) → report_mid_2 → end_success_2
+                       └─ failure (3回) → report_mid_3 → end_success_3
 各バトル敗北 → end_failure
 ```
 
-### ノード詳細
+### ノード詳細（48ノード）
 
 #### `start`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_tavern_night, bgm: bgm_quest_calm
 ```text
-酒場の裏口で、教会の使いと名乗る男から小袋を渡された。
-中には旧市街の住民のリストが入っている。
+酒場の裏口。教会の使いと名乗る男から、旧市街の住民リストが入った小袋を渡された。
 ```
 
+#### `start_desc`（text）
+**演出:** bg: bg_tavern_night
+```text
+小袋の中には、教区の印章が押された古い羊皮紙が入っていた。そこには４つの名前が記されている。
+```
+ 
 #### `intro_1`（text）
-**演出:** bg: bg_guild, speaker: 教会の使い
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
 ```text
-「税を払わぬゴミ共は、聖帝国の恩恵を受ける資格がありません。
-　リストの家から、十分の一税を回収してください」
+「神聖なる税を払わぬゴミどもなど、聖王国の恩恵を受ける資格などありません」
 ```
-
-#### `intro_2`（text）
-**演出:** bg: bg_guild, speaker: 教会の使い
+ 
+#### `intro_1_detail`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
 ```text
-「金がなければ、家財を売ってでも。抵抗するなら、力ずくで。
-　もちろん、見逃しても構いません。そのぶん報酬は減りますがね」
+「リストにある４軒の家から、十分の一税を回収してください」
+```
+ 
+#### `intro_2`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
+```text
+「払えぬのなら家財を売り払わせ、抵抗する愚か者からは力ずくで奪えばいいのです」
+```
+ 
+#### `intro_2_detail`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
+```text
+「温情で見逃すのも自由ですが、その場合、あなたの報酬は減るだけですからね」
 ```
 
 #### `arrive_slum`（text）
 **演出:** bg: bg_slums, bgm: bgm_quest_tense
 ```text
-リストを手に、旧市街の貧民窟へ足を踏み入れる。
-すれ違う人々の目が、警戒と敵意に満ちているのが分かった。
+リストを手に貧民窟へ足を踏み入れる。すれ違う人々の目が警戒と敵意に満ちていた。
 ```
 
----
-
-#### `house_1`（text）【第1軒目】
+#### `house_1`（text）
 **演出:** bg: bg_slums
 ```text
-最初の対象の家。半壊した長屋の扉を叩く。
-中から、怯えた様子の老夫婦が出てきた。
+まず向かったのは、リストの最初にある家。半壊した長屋の木扉を叩くと、中から怯えた老夫婦が出てきた。
 ```
 
 #### `plea_1`（text）
 **演出:** bg: bg_slums, speaker: 貧民窟の老人
 ```text
-「税の徴収……？ 勘弁してくだされ。
-　昨日のパンを買う金すら、もう残っとらんのです」
+「税の徴収……？ 昨日のパンを買う金すら、もう残っていないのです」
 ```
 
 #### `choice_1`（choice）
 **演出:** bg: bg_slums
 ```text
-老人の服は継ぎ接ぎだらけで、部屋の中には本当に何もない。
-どうする？
+老人の服は継ぎ接ぎだらけ。部屋には売れるような物は何もない。どうする？
 ```
 | 選択肢 | 次ノード |
 |--------|---------|
@@ -131,58 +148,54 @@ start → intro_1 → intro_2 → arrive_slum
 #### `mercy_1`（text）
 **演出:** bg: bg_slums
 ```text
-老夫婦の家を後にした。背中に「ありがとうございます」という声が小さく聞こえた。
+老夫婦の家を後にした。背中から、小さな感謝の囁きが聞こえた気がした。
 ```
+**次ノード:** `house_2_intro`
 
 #### `battle_1`（battle）
 **演出:** bg: bg_slums, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
 | 敵グループID | `404` |
-| 敵グループSlug | `grp_mob_riot` |
-| 構成 | 飢えた市民(1131) x5 |
 | 敵表示名 | 怒れる住民 |
 
 ```text
-老人を脅すと、近所の住民たちが農具を手に集まってきた！
+老人を脅すと、周囲の住民たちが農具を手にして一斉に集まってきた！
 ```
+
+#### `add_1`（modify_flag）
+**パラメータ:** key: `extort_count`, delta: 1
+**次ノード:** `extort_1`
 
 #### `extort_1`（text）
 **演出:** bg: bg_slums
 ```text
-抵抗を力でねじ伏せ、なけなしの銅貨を搾り取った。
-老人がすすり泣く声が、耳の奥に残る。
+抵抗を力でねじ伏せ、銅貨を搾り取った。老人のすすり泣きが耳に残る。
 ```
-
----
+**次ノード:** `house_2_intro`
 
 #### `house_2_intro`（text）
 **演出:** bg: bg_slums
 ```text
-二軒目の家へ向かう。
-噂が広まったのか、路地の住民たちがこちらを遠巻きに窺っている。
+二軒目の家へ向かう。路地の住民たちが、こちらを遠巻きに睨みつけている。
 ```
 
-#### `house_2`（text）【第2軒目】
+#### `house_2`（text）
 **演出:** bg: bg_slums
 ```text
-次の対象は、幼い子供を二人抱えた若い母親だった。
-痩せ細った顔に、深い隈が刻まれている。
+次の対象は、幼い子供を抱えた若い母親。痩せ細った顔に深い隈が刻まれていた。
 ```
 
 #### `plea_2`（text）
 **演出:** bg: bg_slums, speaker: 若い母親
 ```text
-「お願いです、この子たちだけは……。
-　夫は戦争で死にました。もう何も残っていないのです」
+「お願いです、子供たちだけは……。もう奪うものは何もないのです」
 ```
 
 #### `choice_2`（choice）
 **演出:** bg: bg_slums
 ```text
-子供たちがおびえた目でこちらを見上げている。
-どうする？
+子供たちが怯えた目でこちらを見上げている。どうする？
 ```
 | 選択肢 | 次ノード |
 |--------|---------|
@@ -194,52 +207,52 @@ start → intro_1 → intro_2 → arrive_slum
 ```text
 母親の家を後にした。子供の一人が、小さな手を振っているのが見えた。
 ```
+**次ノード:** `house_3_intro`
 
 #### `battle_2`（battle）
 **演出:** bg: bg_slums, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
 | 敵グループID | `404` |
-| 構成 | 飢えた市民(1131) x5 |
+| 敵表示名 | 怒れる住民 |
+
 ```text
-母親をかばおうと、隣人たちが武器を手に立ちはだかった！
+母親を庇おうと、隣人たちが武器を手に怒りの叫びを上げて立ちはだかった！
 ```
+
+#### `add_2`（modify_flag）
+**パラメータ:** key: `extort_count`, delta: 1
+**次ノード:** `extort_2`
 
 #### `extort_2`（text）
 **演出:** bg: bg_slums
 ```text
-泣き叫ぶ子供たちの前で、母親の最後の家財を袋に詰めた。
+泣き叫ぶ子供たちの前で、母親が隠していた最後の家財を力ずくで奪い取った。
 ```
-
----
+**次ノード:** `house_3_intro`
 
 #### `house_3_intro`（text）
 **演出:** bg: bg_slums
 ```text
-三軒目へ。住民たちの視線が、明確な敵意に変わっている。
-石を投げられた。当たりはしなかったが。
+三軒目の家へ。住民たちの視線は明確な敵意へと変わり、足元に小石が投げつけられる。
 ```
 
-#### `house_3`（text）【第3軒目】
+#### `house_3`（text）
 **演出:** bg: bg_slums
 ```text
-三軒目は、片足の老兵士だった。
-壁に立てかけた松葉杖の横に、錆びた剣が一本置いてある。
+対象は片足の老兵士。壁の松葉杖の横に、錆びついた古い剣が置かれていた。
 ```
 
 #### `plea_3`（text）
 **演出:** bg: bg_slums, speaker: 片足の老兵士
 ```text
-「教会のために片足を失ったのに、まだ搾り取るか。
-　……もう好きにしろ。これ以上奪うものがあるなら、な」
+「国のために片足を失ったのに、まだ奪うか。好きにするがいい」
 ```
 
 #### `choice_3`（choice）
 **演出:** bg: bg_slums
 ```text
-老兵士は諦めた目でこちらを見ている。
-どうする？
+老兵士は諦めたような暗い瞳で、こちらの出方を静かに待っている。どうする？
 ```
 | 選択肢 | 次ノード |
 |--------|---------|
@@ -249,56 +262,54 @@ start → intro_1 → intro_2 → arrive_slum
 #### `mercy_3`（text）
 **演出:** bg: bg_slums
 ```text
-老兵士の家を後にした。
-彼は何も言わず、ただ遠くを見つめていた。
+老兵士の家を後にした。彼は何も言わず、ただ虚空を見つめ続けていた。
 ```
+**次ノード:** `house_4_intro`
 
 #### `battle_3`（battle）
 **演出:** bg: bg_slums, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
 | 敵グループID | `404` |
-| 構成 | 飢えた市民(1131) x5 |
+| 敵表示名 | 怒れる住民 |
+
 ```text
-老兵士の元戦友たちが駆けつけてきた！
+老兵士を脅そうとした瞬間、彼の元戦友たちが武器を手に駆けつけてきた！
 ```
+
+#### `add_3`（modify_flag）
+**パラメータ:** key: `extort_count`, delta: 1
+**次ノード:** `extort_3`
 
 #### `extort_3`（text）
 **演出:** bg: bg_slums
 ```text
-聖帝国のために戦った男の、最後の誇りを踏みにじった。
-錆びた剣だけは残してやった。せめてもの情けだ。
+かつて国のために戦った男の誇りを踏みにじり、なけなしの金を奪い取った。
 ```
-
----
+**次ノード:** `house_4_intro`
 
 #### `house_4_intro`（text）
 **演出:** bg: bg_slums
 ```text
-最後の一軒。もう、誰もこちらを見ようともしない。
-貧民窟全体が、冷たい沈黙に包まれている。
+最後の一軒。もう誰もこちらを見ようとせず、貧民窟は冷たい沈黙に包まれる。
 ```
 
-#### `house_4`（text）【第4軒目】
+#### `house_4`（text）
 **演出:** bg: bg_slums
 ```text
-最後の対象は、病に臥せる少女を看病する老婆だった。
-部屋には薬草の匂いが充満しているが、効いている様子はない。
+最後の対象は、病床の少女を看病する老婆。室内には不快な薬草の臭いが漂う。
 ```
 
 #### `plea_4`（text）
 **演出:** bg: bg_slums, speaker: 看病する老婆
 ```text
-「この子の薬代にも足りないのに……。
-　税を払えば、この子は死にます。それでも持っていくのですか」
+「この子の薬代すら足りないのです。税を払えば、この子は死にます」
 ```
 
 #### `choice_4`（choice）
 **演出:** bg: bg_slums
 ```text
-少女が苦しそうに咳き込んでいる。
-どうする？
+少女は荒い呼吸で苦しそうに眠っている。どうする？
 ```
 | 選択肢 | 次ノード |
 |--------|---------|
@@ -308,108 +319,135 @@ start → intro_1 → intro_2 → arrive_slum
 #### `mercy_4`（text）
 **演出:** bg: bg_slums
 ```text
-老婆の家を後にした。
-振り返ると、老婆が両手を合わせてこちらに祈りを捧げていた。
+老婆の家を後にした。老婆は両手を合わせ、深々とこちらに頭を下げていた。
 ```
+**次ノード:** `report_check`
 
 #### `battle_4`（battle）
 **演出:** bg: bg_slums, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
 | 敵グループID | `404` |
-| 構成 | 飢えた市民(1131) x5 |
+| 敵表示名 | 怒れる住民 |
+
 ```text
-「もう許さねえ！」絶望した住民たちが最後の抵抗を見せた！
+絶望した住民たちが、最後の怒りを爆発させて一斉に襲いかかってきた！
 ```
+
+#### `add_4`（modify_flag）
+**パラメータ:** key: `extort_count`, delta: 1
+**次ノード:** `extort_4`
 
 #### `extort_4`（text）
 **演出:** bg: bg_slums
 ```text
-薬代すらも奪い取った。
-少女の咳き込む声が、路地の奥まで響いていた。
+少女の薬代すらも無慈悲に奪い取った。背後で激しい咳き込みが響く。
+```
+**次ノード:** `report_check`
+
+#### `report_check`（check_flags）
+**パラメータ:** key: `extort_count`, value: 0, operator: `==`
+| 選択肢 | 次ノード |
+|--------|---------|
+| success | `report_0` |
+| failure | `report_check_4` |
+
+#### `report_check_4`（check_flags）
+**パラメータ:** key: `extort_count`, value: 4, operator: `==`
+| 選択肢 | 次ノード |
+|--------|---------|
+| success | `report_4` |
+| failure | `report_mid_check` |
+
+#### `report_mid_check`（check_flags）
+**パラメータ:** key: `extort_count`, value: 1, operator: `==`
+| 選択肢 | 次ノード |
+|--------|---------|
+| success | `report_mid_1` |
+| failure | `report_mid_check_2` |
+
+#### `report_mid_check_2`（check_flags）
+**パラメータ:** key: `extort_count`, value: 2, operator: `==`
+| 選択肢 | 次ノード |
+|--------|---------|
+| success | `report_mid_2` |
+| failure | `report_mid_3` |
+
+#### `report_0`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
+```text
+「回収できた金は一枚もないと？ フン、お優しい冒険者様だ。それでは分け前もありません、当然です。」
 ```
 
----
-
-#### `report`（text）
-**演出:** bg: bg_guild
+#### `end_success_0`（end_success）
+**演出:** bg: bg_tavern_night
 ```text
-夜更けの路地裏で、教会の使いに回収した袋を渡す。
-```
-
-#### `end_success`（end_success）
-**演出:** bg: bg_guild
-
-**バトル回数0回（全員見逃し）:**
-```text
-「……一銭も回収できなかった？ まあ、仕方ないでしょう。
-　あなたの良心は立派ですが、報酬は出せませんよ」
-教会の使いは肩をすくめて去っていった。
-金貨は1枚も手に入らなかったが、心はいくらか軽い。
+金は手に入らなかったが、貧民窟の人々は守られた。これが私の選んだ道だ。
 ```
 **rewards:** Gold:0, Rep:30
 
-**バトル回数1回:**
+#### `report_mid_1`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
 ```text
-「少ないですね。もう少し頑張っていただきたかった」
-報酬は僅かだが、全てを奪い尽くすよりはましだ。
+「ふむ、回収できたのは一軒だけですか。温情ですか？ まあ、最低限の脅しにはなったでしょう」
+```
+
+#### `end_success_1`（end_success）
+**演出:** bg: bg_tavern_night
+```text
+受け取ったわずかな分け前を懐に仕舞う。心には、言い知れぬ暗い澱みが残っていた。
 ```
 **rewards:** Gold:50, Rep:10, Order:5, Evil:3
 
-**バトル回数2回:**
+#### `report_mid_2`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
 ```text
-「まあまあの成果でしょう。あなたも心が痛むようで」
-中途半端な仕事。中途半端な報酬。中途半端な良心の呵責。
+「回収できたのは二軒ですか。ふむ、悪くはありませんが……次はもっと冷徹に仕事をしていただきたい」
+```
+
+#### `end_success_2`（end_success）
+**演出:** bg: bg_tavern_night
+```text
+金袋の半分は軽いままだ。貧民窟の親子の泣き顔と、握りしめた硬貨の冷たさが脳裏をよぎる。
 ```
 **rewards:** Gold:100, Rep:-5, Order:10, Evil:5
 
-**バトル回数3回:**
+#### `report_mid_3`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
 ```text
-「なかなかやりますね。あと一軒でしたが、及第点です」
-金袋の重さと引き換えに、何かを失った気がした。
+「三軒から回収ですか。上出来です。これでゴミどもも、教会の権威を思い知ったことでしょう」
+```
+
+#### `end_success_3`（end_success）
+**演出:** bg: bg_tavern_night
+```text
+ほぼ満額の分け前。だが手にした金貨には、老兵士や看病する老婆の血と汗が染み付いている。
 ```
 **rewards:** Gold:150, Rep:-10, Order:15, Evil:8
 
-**バトル回数4回（全員取り立て）:**
+#### `report_4`（text）
+**演出:** bg: bg_tavern_night, speaker: 教会の使い
 ```text
-「完璧です。全軒回収とは恐れ入りました。
-　あなたには才能がある。また声をかけましょう」
-教会の使いは満足げに笑った。手の中の金は、酷く汚いものに思えた。
+「素晴らしい！ 四軒すべてから回収するとは。これこそ法と秩序の勝利、見事な働きです！」
+```
+
+#### `end_success_4`（end_success）
+**演出:** bg: bg_tavern_night
+```text
+満額の金貨を受け取った。貧民窟の絶望の叫びなど、重い金袋の響きの前には無意味だった。
 ```
 **rewards:** Gold:200, Rep:-10, Order:20, Evil:10
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_slums
 ```text
-飢えと絶望に駆られた暴徒の力は凄まじかった。
-農具で殴り倒され、貧民窟の泥の中に沈んだ。
+絶望した暴徒たちの暴力の前に倒れ伏す。泥水の中で意識は闇に消えた。
 ```
 
 ---
 
-## 4. CSVエントリ（quests_normal.csv）
+## 4. 敵定義参照
 
-```csv
-7014,qst_rol_tithe,貧民窟からの税徴収,4,2,1,loc_holy_empire,,,,-50,Gold:200|Evil:10,教会,[徴収] 貧民窟の住民たちから十分の一税を取り立てる。見逃すか取り立てるかはあなた次第。
-```
-
-> **注意:** 闇ルートと同様、報酬はバトル回数に応じてシナリオエンジン側で分岐処理。CSV上は最大報酬を記載。
-
----
-
-## 5. 実装チェックリスト
-
-- [ ] 出現拠点 `loc_holy_empire` のみ
-- [ ] 受注条件 `max_reputation: -50` が機能する
-- [ ] `grp_mob_riot`（404）がenemy_groups.csvに登録済み
-- [ ] 4回の選択分岐が正しく動作する
-- [ ] バトル回数に応じた報酬・台詞の可変処理が機能する
-- [ ] time_cost: 1（成功）/ 1（失敗）が正しく経過する
-
----
-
-## 6. 拡張メモ
-
-- バトル回数ごとの報酬テーブルは、シナリオCSVの `end_success` ノードに複数のend分岐（`end_success_0`, `end_success_1`, ...）として実装する。
-- 現在の実装では可変報酬の実装方式について要確認（7003の正規/闇ルート方式を参考に、分岐先を変えることで対応可能）。
+| enemy_group_id | グループ名 |
+|----------------|-----------|
+| 404 | 怒れる住民 |

@@ -1,4 +1,4 @@
-﻿# クエスト仕様書：7010 — 異端者の粛清
+# クエスト仕様書：7010 — 異端者の粛清
 
 ## 0. ファイル概要
 
@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7010 |
 | **Slug** | `qst_rol_heretic` |
-| **クエスト種別** | 聖王国クエスト（Roland） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 4（Normal） |
 | **難度** | 3 |
 | **依頼主** | 聖騎士団 |
-| **出現条件** | min_reputation: 80 / 出現拠点: loc_holy_empire |
+| **出現条件** | 出現国: ローランド聖王国 / 名声 80 以上 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 2 |
+| **ノード数** | 30ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 4） |
-| **経過日数 (time_cost)** | 2（成功: 2日 / 失敗: 1日） |
-| **ノード数** | 18ノード |
 | **サムネイル画像** | `/images/quests/bg_church.png` |
-
 ## 1. クエスト概要
 
 ### 短文説明
@@ -26,12 +26,15 @@
 
 ### 長文説明
 ```
-聖騎士団からの非公式な依頼。王都の旧市街、光の届かない廃教会で「星の導き」を騙る異端者たちが集会を開いているという。彼らの教義は聖王国の秩序を乱す危険思想と認定された。騎士団が直接手を下せば民衆の反感を買うため、影の処理役が必要とされている。彼らを「浄化」し、街の秩序を保て。
+聖騎士団からの非公式な依頼。王都の旧市街、光の届かない廃教会で、
+「星の導き」を騙る異端者たちが集会を開いているという。
+彼らの教義は聖王国の秩序を乱す危険思想と認定された。
+騎士団が直接手を下せば民衆の反感を買うため、影の処理役が必要とされている。
+彼らを「浄化」し、街の秩序を保て。
 ```
 
 ## 2. 報酬定義
 
-**CSV記載形式:**
 ```
 Gold:600|Order:20|Exp:100|Rep:5
 ```
@@ -49,177 +52,207 @@ Gold:600|Order:20|Exp:100|Rep:5
 ### 全体フロー
 
 ```text
-start → intro_1 → intro_2 → arrive_slum → slum_desc
-  → church_out → church_in → ritual_scene → ritual_dialogue
-    → confront → cultist_shout → battle_cultists
-       ├─ [勝利] → after_battle_1 → after_battle_2
-       │    → report_knights → knight_reply → end_success
-       └─ [敗北] → end_failure
+start → start_desc → intro_1 → intro_1_detail → intro_2 → intro_2_warn → accept_think
+  → arrive_slum → slums_desc → slums_think → church_out → church_outside → church_in → church_deep
+    → ritual_scene → ritual_priest → ritual_priest_02 → confront → confront_cultists → cultist_shout
+      → battle_cultists
+         ├─ win → after_battle_1 → after_battle_desc → after_battle_2 → church_exit
+         │    → report_knights → knight_reply → knight_reply_02 → end_success
+         └─ lose → end_failure
 ```
 
-### ノード詳細
+### ノード詳細（30ノード）
 
 #### `start`（text）
 **演出:** bg: bg_guild, bgm: bgm_quest_calm
 ```text
-聖騎士団の詰め所に呼ばれた。
-薄暗い執務室で、副隊長が分厚い羊皮紙を机に放り投げる。
+聖騎士団の詰め所に呼び出された。冷たい石造りの部屋に、重苦しい空気が漂っている。
+```
+
+#### `start_desc`（text）
+**演出:** bg: bg_guild
+```text
+薄暗い執務室の奥。副隊長が、羊皮紙の依頼書を無造作に机の上に放り投げた。
 ```
 
 #### `intro_1`（text）
 **演出:** bg: bg_guild, speaker: 副隊長
 ```text
-「旧市街の廃教会で、異端者どもが夜な夜な集会を開いている。
-　『偽りの神を捨て、真の星の導きに従え』などと妄言を吐く連中だ」
+「旧市街の廃教会で、聖堂の秩序を乱す異端者どもが夜な夜な怪しげな集会を開いているそうだ」
+```
+
+#### `intro_1_detail`（text）
+**演出:** bg: bg_guild, speaker: 副隊長
+```text
+「『偽りの神を捨て、真の星の導きに従え』などと妄言を吐く連中だ」
 ```
 
 #### `intro_2`（text）
 **演出:** bg: bg_guild, speaker: 副隊長
 ```text
-「我々が直接動けば、無用な騒ぎになる。
-　冒険者よ、お前に『浄化』を頼みたい。手荒な真似になっても構わん」
+「表沙汰になれば余計な騒ぎになる。そこで、お前に奴らの『排除』を委ねたい」
+```
+
+#### `intro_2_warn`（text）
+**演出:** bg: bg_guild, speaker: 副隊長
+```text
+「教会の名誉を守るためだ。多少の手荒な真似は黙認する。奴らを生かして帰すなよ」
+```
+
+#### `accept_think`（text）
+**演出:** bg: bg_guild
+```text
+暗黙の了解。血生臭い汚れ仕事だ。だが、断れば次の仕事はない。依頼書を懐に収めた。
 ```
 
 #### `arrive_slum`（text）
 **演出:** bg: bg_slums, bgm: bgm_quest_tense
 ```text
-王都の華やかな表通りから外れ、旧市街へと足を踏み入れる。
-日差しが遮られ、じめじめとした空気が肌を撫でた。
+それから間もなく、私たちは王都のきらびやかな大通りを離れ、影に覆われた旧市街の路地裏へと足を踏み入れた。
 ```
 
-#### `slum_desc`（text）
+#### `slums_desc`（text）
 **演出:** bg: bg_slums
 ```text
-やせ細った野良犬が路地裏へ逃げ込む。
-この辺りの住民たちは、異端の教えに救いを求めるほど追い詰められているのだろうか。
+じめじめとした悪臭が漂う。やせ細った野良犬が、こちらを警戒するように通り過ぎた。
+```
+
+#### `slums_think`（text）
+**演出:** bg: bg_slums
+```text
+こんな日陰の街だからこそ、人々はすがるように異端の救いを求めるのだろうか。
 ```
 
 #### `church_out`（text）
 **演出:** bg: bg_ruined_church
 ```text
-目的の廃教会に到着した。
-ステンドグラスは割れ、女神の彫像は顔が削り取られている。
+目的の廃教会に辿り着いた。ステンドグラスは砕け散り、不気味な静寂を湛えている。
+```
+
+#### `church_outside`（text）
+**演出:** bg: bg_ruined_church
+```text
+教会の入り口に立つ女神の石像は、何者かの手によって顔が削り取られていた。
 ```
 
 #### `church_in`（text）
 **演出:** bg: bg_ruined_church
 ```text
-きしむ木の扉を押し開け、地下への階段を下りる。
-カビの匂いに混じって、甘ったるい香の匂いが漂ってきた。
+歪んだ木扉を押し開け、地下へと続く階段を降りる。埃の臭いの中に、香の甘い香りが混じる。
+```
+
+#### `church_deep`（text）
+**演出:** bg: bg_ruined_church
+```text
+壁を伝う湿気と、わずかに聞こえる祈りの唱句。私たちは足音を殺し、さらに奥の礼拝堂へと歩みを進めた。
 ```
 
 #### `ritual_scene`（text）
 **演出:** bg: bg_ruined_church
 ```text
-地下の礼拝堂。
-黒いローブを着た十数人の男女が、奇妙な文様を描いた祭壇を囲んでいる。
+そこに広がっていたのは、広い地下礼拝堂。黒いローブの集団が、怪しげな文様を描いた祭壇を取り囲んでいた。
 ```
 
-#### `ritual_dialogue`（text）
+#### `ritual_priest`（text）
 **演出:** bg: bg_ruined_church, speaker: 異端の司祭
 ```text
-「光は我らを救わない！ 真の救済は、星の海から訪れる！
-　今こそ偽りの偶像を打ち砕き——」
+「光は我らを救わない！ 真の救済は、深き星の海から訪れるのだ！」
+```
+
+#### `ritual_priest_02`（text）
+**演出:** bg: bg_ruined_church, speaker: 異端の司祭
+```text
+「今こそ聖王国の偽りの偶像を打ち砕き、我らが祈りを星へ……」
 ```
 
 #### `confront`（text）
 **演出:** bg: bg_ruined_church
 ```text
-松明の光がこちらを照らし出した。
-信徒たちが一斉にこちらを振り返る。その目には異常な熱が宿っていた。
+足元の瓦礫を踏みしめ、姿を現す。松明の赤暗い光が、侵入者である私たちを照らし出す。
+```
+
+#### `confront_cultists`（text）
+**演出:** bg: bg_ruined_church
+```text
+祈りが突如として止まった。十数人の信徒たちが一斉にこちらを振り返る。その目の奥には、狂信の光が爛々と宿っていた！
 ```
 
 #### `cultist_shout`（text）
 **演出:** bg: bg_ruined_church, speaker: 異端の司祭
 ```text
-「騎士団の犬め！
-　星の導きを邪魔する者は、我らが手で排除する！」
+「騎士団の飼い犬め！ 聖なる星の儀式を邪魔する者は、ここで生贄とする！」
 ```
 
 #### `battle_cultists`（battle）
 **演出:** bg: bg_ruined_church, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
-| 敵グループID | `410`（新規作成） |
-| 敵グループSlug | `grp_cult_heretic` |
-| 構成 | 狂信者(1111) x3 / 邪教の司祭(1112) x2 |
+| 敵グループID | `410` |
 | 敵表示名 | 異端の信徒たち |
 
 ```text
-異端者たちが隠し持っていた短剣を抜き、襲いかかってきた！
+狂信者たちが隠し持っていた短剣を抜き、狂気に満ちた叫び声を上げて襲いかかってきた！
 ```
 
 #### `after_battle_1`（text）
 **演出:** bg: bg_ruined_church, bgm: bgm_quest_calm
 ```text
-狂信者たちは床に伏し、動かなくなった。
-祭壇の火が消え、地下室に再び冷たい静寂が戻る。
+狂信者たちは床に伏し、動かなくなった。祭壇の火が消え、地下室は再び闇に包まれる。
+```
+
+#### `after_battle_desc`（text）
+**演出:** bg: bg_ruined_church
+```text
+辺りには鉄の匂いと、倒れた者たちの最期の吐息だけが残されていた。
 ```
 
 #### `after_battle_2`（text）
 **演出:** bg: bg_ruined_church
 ```text
-彼らが本当に国を脅かす存在だったのかは分からない。
-だが、これが依頼だ。証拠となる異端の教典を回収し、教会を後にした。
+彼らが本当に邪悪だったのかは分からない。だが、これが依頼だ。異端の教典を回収する。
+```
+
+#### `church_exit`（text）
+**演出:** bg: bg_ruined_church
+```text
+本をしっかりと抱えて冷たい地下室を後にし、夜風が吹き抜ける地上へと戻る。見上げる街の灯りは、妙に遠く見えた。
 ```
 
 #### `report_knights`（text）
 **演出:** bg: bg_guild
 ```text
-騎士団の詰め所に戻り、教典を机の上に置く。
+騎士団の詰め所に戻り、証拠となる黒い装丁の教典を副隊長の机の上に置いた。
 ```
 
 #### `knight_reply`（text）
 **演出:** bg: bg_guild, speaker: 副隊長
 ```text
-「見事な働きだ。これで王都の秩序は守られた。
-　お前のことは、口の堅い使える者として記憶しておこう」
+「見事な仕事だ。これでこの街の秩序は、一時的にせよ守られたというわけだな」
+```
+
+#### `knight_reply_02`（text）
+**演出:** bg: bg_guild, speaker: 副隊長
+```text
+「お前の腕と、何より口の堅さは高く評価しよう。また裏の仕事があれば声をかける」
 ```
 
 #### `end_success`（end_success）
 **演出:** bg: bg_guild
 ```text
-報酬を受け取った。
-手の中の金貨の重さが、命の重さのように感じられた。
+冷淡な笑みと共に報酬を受け取る。金貨の重みだけが、この手の汚れを忘れさせてくれた。
 ```
 **rewards:** Gold:600, Order:20, Exp:100, Rep:5
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_ruined_church
 ```text
-狂信者たちの数の暴力に押し潰された。
-意識が遠のく中、彼らの祈りの声が不気味に響いていた。
+狂信者たちの圧倒的な数の前に、力尽き倒れ伏す。冷たい石の床で、意識は闇に消えた。
 ```
 
 ---
 
-## 4. 敵定義参照（新規エネミーグループ）
+## 4. 敵定義参照
 
-### エネミーグループ: `grp_cult_heretic` (ID: 410)
-
-| Slug | 名前 | Lv | HP | ATK | DEF |
-|------|------|----|----|-----|-----|
-| enemy_cultist | 狂信者 | 5 | 60 | 30 | 2 |
-| enemy_cultist | 狂信者 | 5 | 60 | 30 | 2 |
-| enemy_cultist | 狂信者 | 5 | 60 | 30 | 2 |
-| enemy_cult_priest | 邪教の司祭 | 9 | 100 | 48 | 3 |
-| enemy_cult_priest | 邪教の司祭 | 9 | 100 | 48 | 3 |
-
----
-
-## 5. CSVエントリ（quests_normal.csv）
-
-```csv
-7010,qst_rol_heretic,異端者の粛清,4,3,2,loc_holy_empire,,,80,,Gold:600|Order:20|Exp:100|Rep:5,聖騎士団,[討伐] 教会に背く異端の信徒たちを、騎士団に代わって旧市街の廃教会で処理する。
-```
-
----
-
-## 6. 実装チェックリスト
-
-- [ ] 出現拠点が `loc_holy_empire` のみに制限されている
-- [ ] 受注条件 `min_reputation: 80` が正しく機能する
-- [ ] エネミーグループ `grp_cult_heretic`（410）がenemy_groups.csvに登録済み
-- [ ] Order +20 アライメント変動が適用される
-- [ ] time_cost: 2（成功）/ 1（失敗）が正しく経過する
+| enemy_group_id | グループ名 |
+|----------------|-----------|
+| 410 | 異端の信徒たち |

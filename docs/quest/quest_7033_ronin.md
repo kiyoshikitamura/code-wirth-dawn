@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7033 |
 | **Slug** | `qst_yat_ronin` |
-| **クエスト種別** | 夜刀クエスト（Yato） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 6（Normal） |
 | **難度** | 2 |
 | **依頼主** | 代官所 |
-| **出現条件** | 制限なし / 出現拠点: loc_yatoshin |
+| **出現条件** | 出現国: 夜刀神国 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 2 |
+| **ノード数** | 44ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 6） |
-| **経過日数 (time_cost)** | 2（成功: 2日 / 失敗: 1日） |
-| **ノード数** | 35ノード |
 | **サムネイル画像** | `/images/quests/bg_yato_den.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -54,26 +54,36 @@ start
          └─ start_04
              └─ start_05
                  └─ alley_01
-                     └─ alley_02
-                         └─ alley_03
-                             └─ alley_04
-                                 └─ enter_gambling_den
-                                     └─ confront_01
-                                         └─ confront_02
-                                             └─ confront_leader
-                                                 └─ confront_leader_2
-                                                     └─ battle_ronin_wave_01
-                                                          ├─ win → leader_fight_01
-                                                          └─ lose → end_failure
+                     └─ alley_01_02
+                         └─ alley_01_03
+                             └─ alley_02
+                                 └─ alley_03
+                                     └─ alley_04
+                                         └─ enter_gambling_den
+                                             └─ enter_gambling_den_02
+                                                 └─ enter_gambling_den_03
+                                                     └─ confront_01
+                                                         └─ confront_02
+                                                             └─ confront_leader_01
+                                                                 └─ confront_leader
+                                                                     └─ confront_leader_2
+                                                                         └─ confront_leader_3
+                                                                             └─ battle_ronin_wave_01
+                                                                                  ├─ win → leader_fight_01
+                                                                                  └─ lose → end_failure_01
 leader_fight_01
- └─ leader_fight_02
-     └─ leader_fight_03
-         └─ leader_fight_04
-             └─ leader_fight
-                 └─ leader_fight_2
-                     └─ battle_ronin_leader
-                          ├─ win → scatter_01
-                          └─ lose → end_failure
+ └─ leader_fight_01_02
+     └─ leader_fight_01_03
+         └─ leader_fight_02
+             └─ leader_fight_03
+                 └─ leader_fight_04
+                     └─ leader_fight
+                         └─ leader_fight_2
+                             └─ leader_fight_2_02
+                                 └─ leader_fight_2_03
+                                     └─ battle_ronin_leader
+                                          ├─ win → scatter_01
+                                          └─ lose → end_failure_01
 scatter_01
  └─ scatter_02
      └─ scatter_03
@@ -81,8 +91,9 @@ scatter_01
              └─ scatter
                  └─ report_01
                      └─ report_02
-                         └─ report_03
-                             └─ end_success
+                         └─ report_02_02
+                             └─ report_03
+                                 └─ end_success
 ```
 
 ### ノード詳細
@@ -123,6 +134,18 @@ scatter_01
 夜の繁華街は、提灯の明かりと人々の喧騒で溢れかえっている。
 ```
 
+#### `alley_01_02`（text）
+**演出:** bg: bg_yato_city, bgm: bgm_field_night
+```text
+夜刀神国の繁栄の裏で、行き場を失った浪人が増え続けている。これも時代の歪みだ。
+```
+
+#### `alley_01_03`（text）
+**演出:** bg: bg_yato_city, bgm: bgm_field_night
+```text
+懐に入れた代官所の書状が微かに重い。汚い仕事だが、背に腹は代えられない。
+```
+
 #### `alley_02`（text）
 **演出:** bg: bg_yato_city, bgm: bgm_field_night
 ```text
@@ -147,6 +170,18 @@ scatter_01
 遠慮はいらない。勢いよく蹴破るようにして、賭場の引き戸を開け放った。
 ```
 
+#### `enter_gambling_den_02`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+充満する安酒と煙草の煙。卓を囲む者たちの血走った目が、一斉にこちらを向く。
+```
+
+#### `enter_gambling_den_03`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+誰もが懐の刀に手をかけている。一瞬の静寂の後、誰かが唾を吐く音が響いた。
+```
+
 #### `confront_01`（text）
 **演出:** bg: bg_yato_den, bgm: bgm_quest_tense
 ```text
@@ -159,18 +194,28 @@ scatter_01
 「……なんだテメェ。ここは堅気が来る場所じゃねぇ。命が惜しくば失せな」
 ```
 
+#### `confront_leader_01`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+奥の座敷で杯を傾けていた大柄な浪人が、忌々しげにゆっくりと立ち上がった。
+```
+
 #### `confront_leader`（text）
 **演出:** bg: bg_yato_den, bgm: bgm_quest_tense, speaker: 浪人の頭目
 ```text
-奥の座敷で杯を傾けていた大柄な浪人が、ゆっくりと立ち上がった。
 「代官所の犬か。血の匂いがプンプンしやがる」
 ```
 
 #### `confront_leader_2`（text）
-**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense, speaker: 浪人の頭目
 ```text
 「野郎ども、やっちまえ！ こいつの首を手土産に逃げるぞ！」
-頭目の合図と共に、殺気立った浪人たちが一斉に刀を抜き放った。
+```
+
+#### `confront_leader_3`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+頭目の合図と共に、殺気立った浪人たちが一斉に抜刀し、こちらへ襲いかかる！
 ```
 
 #### `battle_ronin_wave_01`（battle）
@@ -178,12 +223,24 @@ scatter_01
 ```text
 食い詰め浪人たちが群がってきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 433, next: leader_fight_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 433, next: leader_fight_01, fail: end_failure_01
 
 #### `leader_fight_01`（text）
 **演出:** bg: bg_yato_den, bgm: bgm_quest_tense
 ```text
 血飛沫が舞い、障子が破れる。数人の浪人を切り伏せると、残りの者は恐れをなして後退した。
+```
+
+#### `leader_fight_01_02`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+息を荒くしながらも、刀の刃こぼれがないかを確認する。敵の数はこちらが圧倒的に不利だ。
+```
+
+#### `leader_fight_01_03`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+だが、烏合の衆。統率の取れていない動きは隙だらけで、斬るのに苦労はしない。
 ```
 
 #### `leader_fight_02`（text）
@@ -216,12 +273,24 @@ scatter_01
 歴戦の殺気を放ちながら、頭目が自ら太刀を青眼に構えた。空気がビリビリと震える。
 ```
 
+#### `leader_fight_2_02`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+頭目の構えに隙はない。かつては名の知れた剣術の道場に身を置いていたのだろう。
+```
+
+#### `leader_fight_2_03`（text）
+**演出:** bg: bg_yato_den, bgm: bgm_quest_tense
+```text
+無駄な動きを削ぎ落とした静かな佇まい。これまでの有象無象とは明らかに違う。
+```
+
 #### `battle_ronin_leader`（battle）
 **演出:** bg: bg_yato_den, bgm: bgm_battle_boss
 ```text
-浪人の頭目との決戦！
+浪人の頭目との戦い！
 ```
-**パラメータ:** type: battle, enemy_group_id: 434, next: scatter_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 434, next: scatter_01, fail: end_failure_01
 
 #### `scatter_01`（text）
 **演出:** bg: bg_yato_den, bgm: bgm_quest_calm
@@ -254,36 +323,47 @@ scatter_01
 ```
 
 #### `report_01`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
 ```text
 翌朝、代官所の裏門から入り、役人に事の顛末を報告する。
 ```
 
 #### `report_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
 ```text
 役人は満足げに頷き、重みのある金袋を机の上に滑らせた。
 ```
 
+#### `report_02_02`（text）
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 代官所の役人
+```text
+「中身は確かだ。余計な口さえ叩かなければ、お前には今後も仕事を回してやろう」
+```
+
 #### `report_03`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: 代官所の役人
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 代官所の役人
 ```text
 「よくやってくれた。これで少しは町も静かになるだろう。また頼むかもしれんぞ」
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_yato_city
 ```text
 金袋を受け取り、代官所を後にする。
 裏社会の掃除は気が滅入るが、日銭を稼ぐには悪くない仕事だった。
 ```
 **rewards:** Gold:350, Exp:100, Justice:10
 
+#### `end_failure_01`（text）
+**演出:** bg: bg_yato_den
+```text
+多勢に無勢。浪人たちの容赦ない凶刃が、次々とあなたの身体を深く切り裂く。
+```
+
 #### `end_failure`（end_failure）
 **演出:** bg: bg_yato_den
 ```text
-多勢に無勢。浪人たちの容赦ない凶刃が、身体のあちこちを切り裂く。
-血の海に倒れ伏す中、頭目の見下すような冷たい視線を感じた……。
+血の海に倒れ伏す中、頭目の見下すような冷たい視線が、意識の暗闇へと消えていった。
 ```
 
 ---

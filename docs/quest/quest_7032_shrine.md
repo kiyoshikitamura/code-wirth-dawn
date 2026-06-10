@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7032 |
 | **Slug** | `qst_yat_shrine` |
-| **クエスト種別** | 夜刀クエスト（Yato） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 6（Normal） |
 | **難度** | 2 |
 | **依頼主** | 神社 |
-| **出現条件** | 制限なし / 出現拠点: loc_yatoshin |
+| **出現条件** | 出現国: 夜刀神国 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 5 |
+| **ノード数** | 43ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 6） |
-| **経過日数 (time_cost)** | 5（成功: 5日 / 失敗: 3日） |
-| **ノード数** | 35ノード |
 | **サムネイル画像** | `/images/quests/bg_yato_shrine.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -54,37 +54,45 @@ start
          └─ start_04
              └─ start_05
                  └─ mountain_01
-                     └─ mountain_02
-                         └─ mountain_03
-                             └─ mountain_04
-                                 └─ collect_shard_01 (random_branch: prob 50)
-                                      ├─ next (遭遇) → yokai_01
-                                      │   └─ yokai_02
-                                      │       └─ battle_yokai_01
-                                      │            ├─ win → after_battle_01 ━━╮
-                                      │            └─ lose → end_failure      │
-                                      └─ fallback (非遭遇) → search_02 ━━━━━━━╯ (合流)
+                     └─ mountain_01_02
+                         └─ mountain_01_03
+                             └─ mountain_02
+                                 └─ mountain_03
+                                     └─ mountain_04
+                                         └─ collect_shard_01 (random_branch: prob 50)
+                                              ├─ next (遭遇) → yokai_01
+                                              │   └─ yokai_02
+                                              │       └─ battle_yokai_01
+                                              │            ├─ win → after_battle_01 ━━╮
+                                              │            └─ lose → end_failure_01   │
+                                              └─ fallback (非遭遇) → search_02 ━━━━━━━╯ (合流)
 search_02 (after_battle_01 からも遷移)
- └─ search_03
-     └─ search_04
-         └─ collect_shard_02 (random_branch: prob 50)
-              ├─ next (遭遇) → boss_01
-              │   └─ boss_02
-              │       └─ battle_yokai_02
-              │            ├─ win → after_battle_02 ━━╮
-              │            └─ lose → end_failure      │
-              └─ fallback (非遭遇) → search_05 ━━━━━━━╯ (合流)
+ └─ search_02_02
+     └─ search_02_03
+         └─ search_03
+             └─ search_04
+                 └─ collect_shard_02 (random_branch: prob 50)
+                      ├─ next (遭遇) → boss_01
+                      │   └─ boss_02
+                      │       └─ battle_yokai_02
+                      │            ├─ win → after_battle_02 ━━╮
+                      │            └─ lose → end_failure_01   │
+                      └─ fallback (非遭遇) → search_05 ━━━━━━━╯ (合流)
 search_05 (after_battle_02 からも遷移)
  └─ search_06
-     └─ search_07
-         └─ collect_shard_03
-             └─ shrine_01
-                 └─ shrine_02
-                     └─ shrine_03
-                         └─ return_shrine
-                             └─ enshrine_01
-                                 └─ enshrine_02
-                                     └─ end_success
+     └─ search_06_02
+         └─ search_06_03
+             └─ search_07
+                 └─ collect_shard_03
+                     └─ shrine_01
+                         └─ shrine_02
+                             └─ shrine_03
+                                 └─ return_shrine
+                                     └─ enshrine_01
+                                         └─ enshrine_02
+                                             └─ enshrine_02_02
+                                                 └─ end_success_01
+                                                     └─ end_success
 ```
 
 ### ノード詳細
@@ -110,7 +118,7 @@ search_05 (after_battle_02 からも遷移)
 #### `start_04`（text）
 **演出:** bg: bg_yato_shrine, bgm: bgm_quest_calm, speaker: 神主
 ```text
-「石の破片は山中に散らばっているはず。あれがないと、この町に妖が雪崩れ込んでくる……！」
+「破片は山中にあるはず。あれがないと、この町に妖が雪崩れ込んでしまう……！」
 ```
 
 #### `start_05`（text）
@@ -123,6 +131,18 @@ search_05 (after_battle_02 からも遷移)
 **演出:** bg: bg_yato_mountain, bgm: bgm_field
 ```text
 依頼を受け、鬱蒼とした霊山へと足を踏み入れた。昼間だというのに、薄暗い霧が立ち込めている。
+```
+
+#### `mountain_01_02`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+かつては清浄だった参道も、今は邪気によって枯れ葉が腐臭を放っている。
+```
+
+#### `mountain_01_03`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+木々の隙間から、絶えず奇妙な視線を感じる。しかし振り返っても霧があるだけだ。
 ```
 
 #### `mountain_02`（text）
@@ -167,7 +187,7 @@ search_05 (after_battle_02 からも遷移)
 ```text
 山に巣食う妖怪の群れが襲いかかってきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 430, next: after_battle_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 430, next: after_battle_01, fail: end_failure_01
 
 #### `after_battle_01`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
@@ -179,6 +199,18 @@ search_05 (after_battle_02 からも遷移)
 **演出:** bg: bg_yato_mountain, bgm: bgm_field
 ```text
 さらに険しい山道を登っていく。霧が次第に濃くなり、視界が数歩先までしか効かなくなってきた。
+```
+
+#### `search_02_02`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+急斜面を登るにつれ、足元が崩れやすくなってきた。這うようにして崖をよじ登る。
+```
+
+#### `search_02_03`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+胸を圧迫するような重苦しい気が満ちていく。結界の破綻が山を狂わせているのだ。
 ```
 
 #### `search_03`（text）
@@ -209,7 +241,7 @@ search_05 (after_battle_02 からも遷移)
 #### `boss_02`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_tense, speaker: 赤鬼
 ```text
-「石を集めてどうする気だァ……？ まさか、この俺を封じようってんじゃねぇだろうなァ！」
+「石を集めて何をする……？ まさか、俺を封じようってんじゃねぇだろうなァ！」
 ```
 
 #### `battle_yokai_02`（battle）
@@ -217,7 +249,7 @@ search_05 (after_battle_02 からも遷移)
 ```text
 霧の中から巨大な赤鬼が立ち塞がった！
 ```
-**パラメータ:** type: battle, enemy_group_id: 431, next: after_battle_02, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 431, next: after_battle_02, fail: end_failure_01
 
 #### `after_battle_02`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
@@ -235,6 +267,18 @@ search_05 (after_battle_02 からも遷移)
 **演出:** bg: bg_yato_mountain, bgm: bgm_field
 ```text
 やがて、山頂の開けた場所に出た。そこには、無残に破壊された古い石の祠があった。
+```
+
+#### `search_06_02`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+祠の周囲には、獣のものとも違う、黒い爪痕のような傷が深く刻まれていた。
+```
+
+#### `search_06_03`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+破壊された石塔の破片が散らばり、かつての神聖な面影は無残に失われている。
 ```
 
 #### `search_07`（text）
@@ -285,19 +329,35 @@ search_05 (after_battle_02 からも遷移)
 完全な球体に戻った結界石が台座に鎮座すると、町を覆っていた重い空気が、ふっと軽くなった。
 ```
 
+#### `enshrine_02_02`（text）
+**演出:** bg: bg_yato_shrine, bgm: bgm_quest_calm
+```text
+神主は深く息を吐き、祭壇に向かって静かに頭を下げた。山のざわめきが静まっていく。
+```
+
+#### `end_success_01`（text）
+**演出:** bg: bg_yato_shrine
+```text
+感謝の言葉と報酬を受け取り、神社を後にした。だが、結界が破られた原因は謎のままだ。
+```
+
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_yato_shrine, speaker: 神主
 ```text
 「これで、しばらくは神隠しも収まるでしょう。本当に、ありがとうございました」
-感謝の言葉と報酬を受け取り、神社を後にした。結界が破られた原因は、いずれ探る必要がある。
 ```
 **rewards:** Gold:400, Exp:120, Justice:10
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_yato_mountain
+```text
+山の怪異たちの圧倒的な力の前に、傷つき、ついに力尽きて倒れた。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_yato_mountain
 ```text
-山の怪異たちの圧倒的な力の前に、ついに力尽きた。
-冷たい土の上に倒れ伏す中、誰かが結界石の破片を拾い上げ、嘲笑う声が聞こえた気がした……。
+意識が薄れる中、誰かが石の破片を拾い上げ、嘲笑う声が聞こえた気がした……。
 ```
 
 ---

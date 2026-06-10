@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7040 |
 | **Slug** | `qst_har_jiangshi` |
-| **クエスト種別** | 華龍クエスト（Karyu） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 7（Normal） |
 | **難度** | 2 |
 | **依頼主** | 道士 |
-| **出現条件** | 制限なし / 出現拠点: loc_haryu |
+| **出現条件** | 出現国: 華龍国 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 5 |
+| **ノード数** | 46ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 7） |
-| **経過日数 (time_cost)** | 5（成功: 5日 / 失敗: 3日） |
-| **ノード数** | 35ノード |
 | **サムネイル画像** | `/images/quests/bg_karyu_mountain.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -63,71 +63,97 @@ Gold:350|Exp:100|Chaos:5
 
 ```text
 start
- └─ start_02
-     └─ start_03
-         └─ start_04
-             └─ start_05
-                 └─ talisman_01
-                     └─ talisman_02
-                         └─ path_01
-                             └─ path_02
-                                 └─ path_03
-                                     └─ path_04
-                                         └─ graveyard_01
-                                             └─ graveyard_02
-                                                 └─ battle_01
-                                                      ├─ win → deeper_01
-                                                      │        └─ deeper_02
-                                                      │             └─ deeper_03
-                                                      │                  └─ tomb_01
-                                                      │                       └─ tomb_02
-                                                      │                            └─ tomb_03
-                                                      │                                 └─ battle_02
-                                                      │                                      ├─ win → purify_01
-                                                      │                                      │        └─ purify_02
-                                                      │                                      │             └─ purify_03
-                                                      │                                      │                  └─ choice_qi
-                                                      │                                      │                       ├─ 渡す → report_01
-                                                      │                                      │                       │          └─ report_02
-                                                      │                                      │                       │               └─ end_success
-                                                      │                                      │                       └─ 割る → refuse_01
-                                                      │                                      │                                  └─ refuse_02
-                                                      │                                      │                                       └─ end_success_justice
-                                                      │                                      └─ lose → end_failure
-                                                      └─ lose → end_failure
+ └─ start_01_02
+     └─ start_02
+         └─ start_03
+             └─ start_04
+                 └─ start_05_01
+                     └─ start_05
+                         └─ talisman_01
+                             └─ talisman_02
+                                 └─ path_01
+                                     └─ path_01_02
+                                         └─ path_01_03
+                                             └─ path_02
+                                                 └─ path_03
+                                                     └─ path_04
+                                                         └─ graveyard_01
+                                                             └─ graveyard_01_02
+                                                                 └─ graveyard_01_03
+                                                                     └─ graveyard_02
+                                                                         └─ battle_01
+                                                                              ├─ win → deeper_01
+                                                                              │        └─ deeper_02
+                                                                              │             └─ deeper_03
+                                                                              │                  └─ tomb_01_01
+                                                                              │                       └─ tomb_01
+                                                                              │                            └─ tomb_02
+                                                                              │                                 └─ tomb_02_02
+                                                                              │                                      └─ tomb_02_03
+                                                                              │                                           └─ tomb_03
+                                                                              │                                                └─ battle_02
+                                                                              │                                                     ├─ win → purify_01
+                                                                              │                                                     │        └─ purify_02
+                                                                              │                                                     │             └─ purify_02_02
+                                                                              │                                                     │                  └─ purify_02_03
+                                                                              │                                                     │                       └─ purify_03
+                                                                              │                                                     │                            └─ purify_03_02
+                                                                              │                                                     │                                 └─ choice_qi
+                                                                              │                                                     │                                      ├─ 渡す → report_01_01
+                                                                              │                                                     │                                      │          └─ report_01
+                                                                              │                                                     │                                      │               └─ report_02
+                                                                              │                                                     │                                      │                    └─ end_success_01
+                                                                              │                                                     │                                      │                         └─ end_success
+                                                                              │                                                     │                                      └─ 割る → refuse_01
+                                                                              │                                                     │                                                 └─ refuse_02_01
+                                                                              │                                                     │                                                      └─ refuse_02
+                                                                              │                                                     │                                                           └─ end_success_justice_01
+                                                                              │                                                     │                                                                └─ end_success_justice
+                                                                              │                                                     └─ lose → end_failure_01
+                                                                              └─ lose → end_failure_01
 ```
 
 ### ノード詳細
 
 #### `start`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm, speaker: 道士
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 道士
 ```text
 「ほう、お主が今回引き受けてくれるのか。では、これを」
+```
+
+#### `start_01_02`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
+```text
 老道士から、墨の匂いがきつい黄色い護符の束を受け取った。
 ```
 
 #### `start_02`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm, speaker: 道士
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 道士
 ```text
 「霊山をうろつくキョンシーどもは、額にこの護符を貼れば止まる」
 ```
 
 #### `start_03`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm, speaker: 道士
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 道士
 ```text
-「爪を剥き出しにして迫る亡者の額に、直接札を貼る度胸があればの話だがな。クックッ」
+「爪を剥き出しにして迫る亡者の額に、直接貼る度胸があればの話だがな」
 ```
 
 #### `start_04`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm, speaker: 道士
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 道士
 ```text
 「それから、鎮めた死者から漂う『死気』を、この壺に集めてきてほしい」
 ```
 
-#### `start_05`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm
+#### `start_05_01`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
 ```text
-渡された壺は禍々しい朱色の紋様で覆われており、触れると氷のように冷たかった。
+渡された壺は禍々しい朱色の紋様で覆われ、触れると氷のように冷たかった。
+```
+
+#### `start_05`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
+```text
 道士の不気味な笑みに一抹の不安を覚えつつ、霊山へと向かう。
 ```
 
@@ -147,6 +173,18 @@ start
 **演出:** bg: bg_karyu_mountain, bgm: bgm_field
 ```text
 苔むした長い石段を登る。道の両脇には、風化して文字も読めなくなった墓標が並んでいる。
+```
+
+#### `path_01_02`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_field
+```text
+冷たい風が竹林を揺らし、カサカサと不気味な音を立てている。何かが潜んでいる気配だ。
+```
+
+#### `path_01_03`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_field
+```text
+石段のあちこちに、爪で掻きむしったような跡がある。キョンシーたちの仕業だろう。
 ```
 
 #### `path_02`（text）
@@ -173,6 +211,18 @@ start
 さらに墓地の奥へ進むと、土が不自然に盛り上がり、次々と新たな屍が這い出してきた。
 ```
 
+#### `graveyard_01_02`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
+```text
+荒れ果てた墓地にたどり着いた。倒れた墓石の隙間から、青白い霊気が立ち上っている。
+```
+
+#### `graveyard_01_03`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
+```text
+土がモゾモゾと動き、冷たい月明かりの下で屍の手が地中から突き出てくる。
+```
+
 #### `graveyard_02`（text）
 **演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
 ```text
@@ -184,7 +234,7 @@ start
 ```text
 キョンシーの群れが飛びかかってきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 440, next: deeper_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 440, next: deeper_01, fail: end_failure_01
 
 #### `deeper_01`（text）
 **演出:** bg: bg_karyu_mountain, bgm: bgm_field
@@ -204,17 +254,34 @@ start
 「死気」の収集は順調だ。さらに霧が濃くなる中、山の奥、頂上付近の霊廟へと足を進める。
 ```
 
+#### `tomb_01_01`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
+```text
+鬱蒼とした森を抜けると、巨大で豪奢な石造りの古墓が現れた。
+```
+
 #### `tomb_01`（text）
 **演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
 ```text
-鬱蒼とした森を抜けると、巨大で豪奢な石造りの古墓が現れた。入口の石碑にはこう刻まれている。
-「華龍六代太守　薛氏一門之墓」
+古墓の入口にある石碑には、「華龍六代太守　薛氏一門之墓」と刻まれている。
 ```
 
 #### `tomb_02`（text）
 **演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
 ```text
 墓室の暗がりから、ひどい腐臭と共に三つの青白い眼光が浮かび上がった。
+```
+
+#### `tomb_02_02`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
+```text
+霊廟の奥には金銀で飾られた太守の棺があった。しかし蓋は完全に破壊されている。
+```
+
+#### `tomb_02_03`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
+```text
+太守の遺体は棺にない。代わりに壁には、恨みを書き殴ったような血文字が残されていた。
 ```
 
 #### `tomb_03`（text）
@@ -228,7 +295,7 @@ start
 ```text
 古の太守とその近衛、強力なキョンシーたちが襲いかかる！
 ```
-**パラメータ:** type: battle, enemy_group_id: 441, next: purify_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 441, next: purify_01, fail: end_failure_01
 
 #### `purify_01`（text）
 **演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm
@@ -242,11 +309,28 @@ start
 太守の体からあふれ出た膨大な死気を壺が吸い尽くすと、周囲の瘴気が嘘のように薄れていった。
 ```
 
+#### `purify_02_02`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm
+```text
+浄化された霊魂は、青い光の粒子となって天井へ昇り、闇の中に消えていった。
+```
+
+#### `purify_02_03`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm
+```text
+あれほどの執念と怨嗟に満ちていた空間が、今はただの静かな石室に戻っている。
+```
+
 #### `purify_03`（text）
 **演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm
 ```text
 壺は満杯になり、不吉な紫色の光を放ちながら熱を帯びている。
-……この禍々しい力を、あの怪しげな道士に渡してしまって本当に良いのだろうか？
+```
+
+#### `purify_03_02`（text）
+**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm
+```text
+この禍々しい力を、あの不気味な道士に渡してしまって良いのだろうか？
 ```
 
 #### `choice_qi`（choice）
@@ -254,56 +338,81 @@ start
 ```text
 壺の中の膨大な死気をどうする？
 ```
-- 選択肢: 「依頼通り、道士に渡す」→ `report_01`
+- 選択肢: 「依頼通り、道士に渡す」→ `report_01_01`
 - 選択肢: 「壺を割り、死気を解放して浄化する」→ `refuse_01`
 
-#### `report_01`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm, speaker: 道士
+#### `report_01_01`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
 ```text
 山を下り、待ち構えていた道士に約束通り壺を手渡した。
+```
+
+#### `report_01`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm, speaker: 道士
+```text
 「ヒッヒッヒ……これほどの純粋な死気……なんと素晴らしい」
 ```
 
 #### `report_02`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_calm, speaker: 道士
+**演出:** bg: bg_har_city, bgm: bgm_quest_calm
 ```text
-道士は恍惚とした表情で壺を愛でている。その顔は、先程討伐した亡者よりも恐ろしいものに見えた。
+道士は恍惚とした表情で壺を愛でている。その顔は亡者よりも恐ろしく見えた。
+```
+
+#### `end_success_01`（text）
+**演出:** bg: bg_guild
+```text
+任務完了。約束の報酬を受け取り、不気味な道士のもとを去る。
 ```
 
 #### `end_success`（end_success）
 **演出:** bg: bg_guild
 ```text
-任務は完了した。約束の報酬を受け取り、不気味な道士のもとを去る。
-あの壺の中身が禁術に使われるのかどうか、自分には関係のない話だ。
+あの壺の死気が禁術に使われるのかどうか、自分には関係のない話だ。
 ```
 **rewards:** Gold:350, Exp:100, Chaos:5
 
 #### `refuse_01`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense
+**演出:** bg: bg_har_city, bgm: bgm_quest_tense
 ```text
 こんな悪しき力を利用させてはならない。道士の目の前で、壺を地面の岩に力強く叩きつけた！
 ```
 
-#### `refuse_02`（text）
-**演出:** bg: bg_karyu_mountain, bgm: bgm_quest_tense, speaker: 道士
+#### `refuse_02_01`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_tense
 ```text
 パリンという音と共に壺が砕け、死気は陽光に触れて浄化されていく。
-「な、何をする！ 貴様、どれほどの価値があるか分かって……愚かな！ 報酬は減額だ！！」
+```
+
+#### `refuse_02`（text）
+**演出:** bg: bg_har_city, bgm: bgm_quest_tense, speaker: 道士
+```text
+「な、何をする！ 貴様、何ということを……！ 報酬は減額だ！！」
+```
+
+#### `end_success_justice_01`（text）
+**演出:** bg: bg_guild
+```text
+怒り狂う道士から半ば強引に最低限の報酬を奪い取り、山を後にした。
 ```
 
 #### `end_success_justice`（end_success）
 **演出:** bg: bg_guild
 ```text
-怒り狂う道士から半ば強引に最低限の報酬を奪い取り、山を後にした。
-報酬は減ったが、あの世の秩序を守ったという事実は、確かな誇りとして胸に残った。
+報酬は減ったが、あの世の秩序を守った事実は確かな誇りとして胸に残った。
 ```
 **rewards:** Gold:250, Exp:100, Justice:5
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_karyu_mountain
+```text
+キョンシーたちの異常な怪力に圧倒され、冷たい掌に突き飛ばされた。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_karyu_mountain
 ```text
-キョンシーたちの異常な跳躍力と怪力に圧倒され、冷たい掌に突き飛ばされた。
-地面に倒れ伏す中、最後の一枚の護符が手からこぼれ落ち、絶望の闇が視界を覆った……。
+倒れる中、最後の一枚の護符が手から落ち、絶望の闇が視界を覆った……。
 ```
 
 ---
@@ -340,10 +449,3 @@ start
 - [x] 選択肢「渡す」→ Chaos:5 / 「壺を割る」→ Justice:5 が正しく分岐
 - [x] time_cost: 5（成功5日 / 失敗3日）
 - [x] 報酬が正しく付与される
-
----
-
-## 7. 拡張メモ
-
-- 護符カードによる弱点攻撃システム（将来実装）
-- 道士の禁術研究に関わる後続クエスト

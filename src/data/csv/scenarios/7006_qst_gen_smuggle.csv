@@ -1,21 +1,33 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"路地裏で闇商人が待っていた。\nフードの奥から鋭い目が光る。","{""type"":""text"",""bg"":""bg_slum"",""bgm"":""bgm_quest_calm""}",text_01
-NODE,text_01,"「中身は聞くな。この箱を隣街の\n　『赤猫亭』の主人に届けろ」","{""type"":""text"",""bg"":""bg_slum"",""speaker_name"":""闇商人""}",text_02
-NODE,text_02,"「街道は使うな。検問がある。\n　旧道を通れ」","{""type"":""text"",""bg"":""bg_slum"",""speaker_name"":""闇商人""}",text_03
-NODE,text_03,"「追手がかかるかもしれんが、\n　そのときはお前の腕で何とかしろ」","{""type"":""text"",""bg"":""bg_slum"",""speaker_name"":""闇商人""}",text_04
-NODE,text_04,"闇商人は木箱を押しつけ、闇に消えた。\n箱はずっしりと重い。","{""type"":""text"",""bg"":""bg_slum""}",depart
-NODE,depart,"旧道に入った。舗装されていない獣道。\n月明かりだけが頼りだ。","{""type"":""text"",""bg"":""bg_road_night"",""bgm"":""bgm_quest_tense""}",night_01
-NODE,night_01,"箱を背負い、足音を殺して進む。\n虫の声だけが響く。","{""type"":""text"",""bg"":""bg_road_night""}",night_02
-NODE,night_02,"道の途中で、背後に気配を感じた。\n振り返ると闇の中に人影が二つ。","{""type"":""text"",""bg"":""bg_road_night""}",night_03
-NODE,night_03,"こちらを追ってきている。\n検問の兵か、別の組織の追手か。","{""type"":""text"",""bg"":""bg_road_night""}",encounter_01
-NODE,encounter_01,"「止まれ！\n　その荷を置いていけ！」","{""type"":""text"",""bg"":""bg_road_night"",""speaker_name"":""追手""}",encounter_02
-NODE,encounter_02,"追手が武器を構えた。\n逃げるか戦うか——答えは決まっている。","{""type"":""text"",""bg"":""bg_road_night""}",battle
-NODE,battle,"追手が襲いかかってきた！","{""type"":""battle"",""bg"":""bg_road_night"",""bgm"":""bgm_battle"",""enemy_group_id"":406}",
+NODE,start_prep,"スラムの腐ったゴミとドブの臭いが漂う、暗い路地裏。","{""bg"":""bg_slum"",""type"":""text""}",start
+NODE,start,"黒い外套をまとった闇商人が立っていた。鋭い目が光る。","{""bg"":""bg_slum"",""type"":""text""}",text_01
+NODE,text_01,"「中身を詮索するなよ。この箱を無事に隣街の赤猫亭まで届けてもらいたい」","{""bg"":""bg_slum"",""speaker_name"":""闇商人"",""type"":""text""}",text_02
+NODE,text_02,"「衛兵の検問を避けるため、街道ではなく旧道の山道を通るんだ」","{""bg"":""bg_slum"",""speaker_name"":""闇商人"",""type"":""text""}",text_03
+NODE,text_03,"「厄介な追手がつくかもしれないが、そこはあんたの腕で片付けろ」","{""bg"":""bg_slum"",""speaker_name"":""闇商人"",""type"":""text""}",text_03_warning
+NODE,text_03_warning,"「言っておくが、へまをすればお前も私も消される。……わかるな？」","{""bg"":""bg_slum"",""speaker_name"":""闇商人"",""type"":""text""}",text_04
+NODE,text_04,"商人は黒い木箱を押しつけ、影のように闇へ消え去った。","{""bg"":""bg_slum"",""type"":""text""}",text_04_think
+NODE,text_04_think,"ずっしりと重い。隙間から、何かの薬品の臭いが漂う。","{""bg"":""bg_slum"",""type"":""text""}",depart
+NODE,depart,"人目を避けるように街の裏門を抜け、荒れた旧道へと入る。舗装などされていない獣道を静かに歩んだ。","{""bg"":""bg_road_night"",""type"":""text""}",depart_scenery
+NODE,depart_scenery,"月明かりだけが頼りだ。夜の静寂が五感を研ぎ澄ます。","{""bg"":""bg_road_night"",""type"":""text""}",night_01
+NODE,night_01,"箱を背負い、足音を殺して進む。草むらの虫の声だけ。","{""bg"":""bg_road_night"",""type"":""text""}",night_01_sound
+NODE,night_01_sound,"風が木々を揺らし、木化けのような影が道を覆う。","{""bg"":""bg_road_night"",""type"":""text""}",night_02
+NODE,night_02,"道の途中で背後に気配を感じた。闇の中に二つの人影。","{""bg"":""bg_road_night"",""type"":""text""}",night_03
+NODE,night_03,"こちらの速度に合わせて追ってくる。手慣れた追跡者だ。","{""bg"":""bg_road_night"",""type"":""text""}",night_03_rush
+NODE,night_03_rush,"走って逃げ切ることは難しい。敵を迎撃する覚悟を決める。","{""bg"":""bg_road_night"",""type"":""text""}",encounter_01
+NODE,encounter_01,"「止まれ！ その大事そうに抱えている荷物を置いていけ！」","{""bg"":""bg_road_night"",""speaker_name"":""追手"",""type"":""text""}",encounter_02
+NODE,encounter_02,"闇の中から、抜き放たれた刃を構えた追手たちが静かに進み出る。もはや逃げ場はない！","{""bg"":""bg_road_night"",""type"":""text""}",battle
+NODE,battle,"追手が襲いかかってきた！","{""bg"":""bg_road_night"",""bgm"":""bgm_battle"",""enemy_group_id"":406,""enemy_name"":""追手部隊"",""type"":""battle""}",
 CHOICE,,win,,after_01
 CHOICE,,lose,,end_failure
-NODE,after_01,"追手を退けた。\n荷を確認する。無事だ。","{""type"":""text"",""bg"":""bg_road_night"",""bgm"":""bgm_quest_calm""}",after_02
-NODE,after_02,"これ以上長居は危険だ。\n走れ。","{""type"":""text"",""bg"":""bg_road_night""}",arrive
-NODE,arrive,"夜明け前に隣街に辿り着いた。\n「赤猫亭」の裏口を叩く。","{""type"":""text"",""bg"":""bg_tavern_night""}",arrive_02
-NODE,arrive_02,"無言の男が現れ、箱を受け取った。\n代わりに重い革袋を押しつけられた。","{""type"":""text"",""bg"":""bg_tavern_night""}",end_success
-NODE,end_success,"密輸完了。金は多いが後味は悪い。\n何を運んだかは知らないままのほうがいい。","{""type"":""end"",""result"":""success"",""bg"":""bg_tavern_night""}",
-NODE,end_failure,"追手に捕まり、荷を没収された。\n闇商人への報告が怖い。","{""type"":""end"",""result"":""failure"",""bg"":""bg_road_night""}",
+NODE,after_01,"追手を退けた。倒れた敵の息の根を止め、息を整える。","{""bg"":""bg_road_night"",""type"":""text""}",after_bloodshed
+NODE,after_bloodshed,"荷を確認する。封印は無事だ。中身は漏れ出していない。","{""bg"":""bg_road_night"",""type"":""text""}",after_02
+NODE,after_02,"これ以上、この場に留まるのは自殺行為だ。先へ進もう。","{""bg"":""bg_road_night"",""type"":""text""}",after_02_rush
+NODE,after_02_rush,"夜霧が立ち込める中、残りの夜道を急ぎ足で駆け抜けた。","{""bg"":""bg_road_night"",""type"":""text""}",arrive
+NODE,arrive,"夜明け前の冷気が包む頃、ようやく目的の隣街に到着した。裏路地へ回り、赤猫亭の戸を固く叩く。","{""bg"":""bg_tavern_night"",""type"":""text""}",arrive_inn_scenery
+NODE,arrive_inn_scenery,"きしむ扉の隙間から、鋭い目つきの男が顔を覗かせた。","{""bg"":""bg_tavern_night"",""type"":""text""}",arrive_02
+NODE,arrive_02,"無言の男が木箱を受け取り、代わりに重い革袋を渡す。","{""bg"":""bg_tavern_night"",""type"":""text""}",arrive_02_accept
+NODE,arrive_02_accept,"袋の中で、ぎっしりと詰まった金貨が鈍い音を立てた。","{""bg"":""bg_tavern_night"",""type"":""text""}",return_road
+NODE,return_road,"街の朝靄の中、引き返す。背負い袋の軽さがひどく虚しい。","{""bg"":""bg_road_night"",""type"":""text""}",return_scenery
+NODE,return_scenery,"汚れた手を見て、自分がまた一歩踏み外したことを知る。","{""bg"":""bg_road_night"",""type"":""text""}",end_success
+NODE,end_success,"密輸完了。報酬は多いが、良心の痛みは消えそうにない。","{""bg"":""bg_tavern_night"",""rewards"":{""gold"":800,""reputation"":-5,""alignment_shift"":{""evil"":5,""chaos"":5}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"追手に捕まり、荷物を没収された。このまま生きて帰れるかは自分の運次第だと腹をくくった。","{""bg"":""bg_road_night"",""type"":""end"",""result"":""failure""}",

@@ -7,11 +7,16 @@
 | **Quest ID** | 6002 |
 | **Slug** | `main_ep02` |
 | **クエスト種別** | メインエピソード（Main） |
-| **推奨レベル** | 2 |
+| **推奨レベル** | 2（Easy） |
+| **難度** | 1 |
 | **依頼主** | 王国軍 |
+| **出現条件** | 第1話「始まりの轍」（6001）クリア / 滞在拠点: 国境の町 |
+| **リピート** | アカウント通じて1回のみ（継承後も非表示） |
+| **経過日数 (time_cost)** | 2 |
+| **ノード数** | 37ノード |
 | **ゲストNPC** | ガウェイン（guest_join → leave） |
+| **難易度Tier** | Easy（rec_level: 2） |
 | **サムネイル画像** | `/images/quests/bg_road_day.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -21,86 +26,278 @@
 国境警備任務。正体不明の武装集団との遭遇。
 ```
 
+### 長文説明
+```
+ローランドとマルカンドの国境地帯。
+赤茶けた荒野が地平線まで続く過酷な地で、ガウェインと共に不穏な影を追う。
+```
+
 ---
 
 ## 2. 報酬定義
+
 ```
 Exp:100|Gold:200|Rep:5|Order:5
 ```
 
 ---
 
-## 3. シナリオノード構成（37ノード）
+## 3. シナリオノードフロー
 
-### 全体フロー
 ```text
-start → start_02 → gawain_join → patrol_01 → patrol_02
-  → suspicion_01 → suspicion_02 → suspicion_03 → hunch_01
-  → choice1
-    ├─「隣国マルカンドの兵士では？」→ reply_01
-    └─「誰であろうと、斬るだけです」→ reply_01
-  → reply_01 → reply_02 → reply_03
-  → approach_01 → approach_02 → formation_01 → formation_02
-  → enemy_01 → enemy_02 → battle → choice2「迎撃する」→ post_01
-  → post_02 → dying_01 → dying_02 → corpse_01 → corpse_02
-  → silent_01 → silent_02 → report_01 → farewell_01
-  → gawain_leave → end_01 → end_node
+start
+ └─ start_02
+     └─ gawain_join (guest_join)
+         └─ patrol_01
+             └─ patrol_02
+                 └─ suspicion_01
+                     └─ suspicion_02
+                         └─ suspicion_03
+                             └─ hunch_01
+                                 └─ choice1
+                                      ├─ 「隣国マルカンドの兵士では？」 → reply_01
+                                      └─ 「誰であろうと、斬るだけです」 → reply_01
+                                           └─ reply_01
+                                               └─ reply_02
+                                                   └─ reply_03
+                                                       └─ approach_01
+                                                           └─ approach_02
+                                                               └─ formation_01
+                                                                   └─ formation_02
+                                                                       └─ enemy_01
+                                                                           └─ enemy_02
+                                                                               └─ battle
+                                                                                    ├─ win → choice2
+                                                                                    │          └─ 「迎撃する」 → post_01
+                                                                                    │                              └─ post_01
+                                                                                    │                                  └─ post_02
+                                                                                    │                                      └─ dying_01
+                                                                                    │                                          └─ dying_02
+                                                                                    │                                              └─ corpse_01
+                                                                                    │                                                  └─ corpse_02
+                                                                                    │                                                      └─ silent_01
+                                                                                    │                                                          └─ silent_02
+                                                                                    │                                                              └─ report_01
+                                                                                    │                                                                  └─ farewell_01
+                                                                                    │                                                                      └─ gawain_leave (leave)
+                                                                                    │                                                                          └─ end_01
+                                                                                    │                                                                              └─ end_node
+                                                                                    └─ lose → end_failure_01
+                                                                                                 └─ end_failure
 ```
 
 ### ノード詳細
 
-#### `start`（type: text）— BGM: `bgm_quest_calm` / 背景: `bg_road_day`
-「野盗撃退の働きが認められ、ガウェインの推薦で国境警備任務に配属された。」
+#### `start`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_calm
+```text
+野盗撃退の働きが認められ、ガウェインの推薦で国境警備任務に配属された。
+```
 
-#### `start_02`（type: text）— 背景: `bg_road_day`
-「配属先はローランドとマルカンドの国境地帯。赤茶けた荒野が地平線まで続く。」
+#### `start_02`（text）
+**演出:** bg: bg_road_day
+```text
+配属先はローランドとマルカンドの国境地帯。赤茶けた荒野が地平線まで続く。
+```
 
-#### `gawain_join`（type: guest_join）— guest_id: `npc_guest_gawain`
+#### `gawain_join`（guest_join）
+**演出:** bg: bg_road_day
+**パラメータ:** guest_id: `npc_guest_gawain`
 
-#### `patrol_01`〜`patrol_02`（type: text）— 背景: `bg_road_day`
-国境の荒野を並んで歩く。兵士たちの間に緊張感が漂う。
+#### `patrol_01`（text）
+**演出:** bg: bg_road_day
+```text
+吹き荒れる砂風を避けながら、ガウェインと共に国境沿いの岩場を進む。
+```
 
-#### `suspicion_01`〜`suspicion_03`（type: text）— speaker: `ガウェイン`
-武装集団の統率と正規軍官給品の武器について語る。
+#### `patrol_02`（text）
+**演出:** bg: bg_road_day
+```text
+周囲を歩く警備兵たちの間に、かつてないほど重苦しい緊張が漂っていた。
+```
 
-#### `hunch_01`（type: text）— speaker: `ガウェイン`
-「嫌な予感がする。二十年の勘がな」
+#### `suspicion_01`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「最近、国境を荒らす野盗どもはただのゴロツキにしちゃ統率が取れすぎている」
+```
 
-#### `choice1`（選択肢）→ いずれも `reply_01` へ
+#### `suspicion_02`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「まるで訓練された軍人のような身のこなしだ。武器も妙に上等な物を使っている」
+```
 
-#### `reply_01`〜`reply_03`（type: text）— speaker: `ガウェイン`
-マルカンド側の警戒、あるいは自国側の関与への疑念。
+#### `suspicion_03`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「さらに、捕らえた奴らの懐から、どこかで見たような軍の携行食が出てきた」
+```
 
-#### `approach_01`〜`approach_02`（type: text）— BGM: `bgm_quest_tense`
-黒い布で顔を覆った武装集団が半包囲陣形で接近。
+#### `hunch_01`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「嫌な予感がするな。戦場で二十年生き延びてきた俺の直感が、そう言っている」
+```
 
-#### `formation_01`〜`formation_02`（type: text）— speaker: `ガウェイン`
-陣形を崩すなと指示。
+#### `choice1`（choice）
+**演出:** bg: bg_road_day
+| 選択肢 | next_node |
+|---------|-----------|
+| 「隣国マルカンドの兵士では？」 | `reply_01` |
+| 「誰であろうと、斬るだけです」 | `reply_01` |
 
-#### `enemy_01`〜`enemy_02`（type: text）
-黒布の男が「全員殺せ」と命令。
+#### `reply_01`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「隣国マルカンドの正規兵か、あるいは……。どちらにせよ、キナ臭い話だ」
+```
 
-#### `battle`（type: battle）— enemy_group_id: `202` / BGM: `bgm_battle`
+#### `reply_02`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「もしこれが国家間の密命だとしたら、俺たちは巨大な陰謀の渦中にいることになる」
+```
 
-#### `post_01`〜`post_02`（type: text）— BGM: `bgm_quest_tense`
-攻撃を辛くも凌ぐ。黒布の下の顔は若い。
+#### `reply_03`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「まあいい、目の前の境界を守るのが俺たちの役目だ。警戒を怠るなよ」
+```
 
-#### `dying_01`〜`dying_02`（type: text）
-「命令に従わなければ家族が殺される。選択肢がなかった」
+#### `approach_01`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense
+```text
+その時、遠方の陽炎の向こうから、黒い布で顔を覆った集団が現れた。
+```
 
-#### `corpse_01`〜`corpse_02`（type: text）
-死体の武器に削り潰された正規軍紋章の痕跡。
+#### `approach_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense
+```text
+彼らは馬を巧みに操り、我々を半包囲するような陣形で急速に接近してくる！
+```
 
-#### `silent_01`〜`silent_02`（type: text）
-ガウェインが紋章の跡をなぞり、武器を投げ捨てた。
+#### `formation_01`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense, speaker: ガウェイン
+```text
+「敵襲だ！ 陣形を崩すな！ 荷馬車を囲んで盾を作れ！」
+```
 
-#### `report_01`（type: text）— speaker: `ガウェイン`
-「泥沼の戦乱を予感させる不穏な空気だ。俺は本隊に報告する」
+#### `formation_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense, speaker: ガウェイン
+```text
+「新入り、俺の左翼を任せる。抜けさせるなよ！」
+```
 
-#### `farewell_01`（type: text）— speaker: `ガウェイン`
-「また別の任務で会うだろう。死ぬなよ」
+#### `enemy_01`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense
+```text
+黒布の男たちから鋭い口笛が響く。先頭の男が冷徹に手を下ろした。
+```
 
-#### `gawain_leave`（type: leave）— guest_id: `npc_guest_gawain`
+#### `enemy_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense, speaker: 黒装束の指揮官
+```text
+「全員殺せ。証拠は一切残すな。ローランドの兵にこの地を渡すな！」
+```
 
-#### `end_01`〜`end_node`（type: end_success）— 背景: `bg_road_day`
-「家族が殺される」——この戦いは誰のためのものなのか。
+#### `battle`（battle）
+**演出:** bg: bg_road_day, bgm: bgm_battle
+**パラメータ:** enemy_group_id: 202, next: `choice2`, fail: `end_failure_01`
+
+#### `choice2`（choice）
+**演出:** bg: bg_road_day, bgm: bgm_battle
+| 選択肢 | next_node |
+|---------|-----------|
+| 「迎撃する」 | `post_01` |
+
+#### `post_01`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_calm
+```text
+辛くも敵を撃退した。だが、敵の遺体から見つかったのは野盗の所持品ではない。
+```
+
+#### `post_02`（text）
+**演出:** bg: bg_road_day
+```text
+黒い布を引き剥がすと、現れたのはまだ若い兵士の顔だった。軍の制服だ。
+```
+
+#### `dying_01`（text）
+**演出:** bg: bg_road_day, speaker: 瀕死の襲撃兵
+```text
+「無駄だ……もう止まらない……」
+```
+
+#### `dying_02`（text）
+**演出:** bg: bg_road_day, speaker: 瀕死の襲撃兵
+```text
+「我々は……上からの命令に従っただけだ……逆らえば、家族が消される……」
+```
+
+#### `corpse_01`（text）
+**演出:** bg: bg_road_day
+```text
+男は事切れた。ガウェインがその死体が持っていた剣を拾い上げ、凝視する。
+```
+
+#### `corpse_02`（text）
+**演出:** bg: bg_road_day
+```text
+剣の根元。鋭利な刃で削り潰されているが、ローランド正規軍の紋章の跡が見える。
+```
+
+#### `silent_01`（text）
+**演出:** bg: bg_road_day
+```text
+ガウェインは無言でその紋章をなぞった。彼の大きな手が震えている。
+```
+
+#### `silent_02`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「……削り跡の下は、我が国の聖印だ。こいつらは……いや、よそう」
+```
+
+#### `report_01`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「このままでは大変なことになる。俺は至急、本隊へ戻って報告を入れる」
+```
+
+#### `farewell_01`（text）
+**演出:** bg: bg_road_day, speaker: ガウェイン
+```text
+「新入り、お前も巻き込まれるなよ。次の警備地でまた合流しよう」
+```
+
+#### `gawain_leave`（leave）
+**演出:** bg: bg_road_day
+**パラメータ:** guest_id: `npc_guest_gawain`
+
+#### `end_01`（text）
+**演出:** bg: bg_road_day
+```text
+宿場町への道を急ぐ。風に舞う砂塵が、行く先を煙らせていた。
+```
+
+#### `end_node`（end_success）
+**演出:** bg: bg_road_day
+```text
+「家族が殺される」——死にゆく敵の言葉が、砂漠の風に溶けて消えた。
+```
+**rewards:** Exp:100, Gold:200, Rep:5, Order:5
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_road_day, bgm: bgm_quest_tense
+**次ノード:** `end_failure`
+```text
+統率された包囲網に切り刻まれ、膝をつく。意識が砂塵の底へ沈んでいく……
+```
+
+#### `end_failure`（end_failure）
+**演出:** bg: bg_road_day
+```text
+国境の荒野に骸が晒された。陰謀の真実が暴かれることはなかった。
+```
+**rewards:** Gold:0

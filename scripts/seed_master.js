@@ -413,7 +413,7 @@ async function main() {
             // ... (Same logic if implicit logic needed, currently impact col missing in new CSVs but kept validation)
         }
         // BUILD SCRIPT DATA FROM CSV
-        const scriptData = buildScriptData(r.id);
+        const scriptData = buildScriptData(String(r.id));
         return {
             id: r.id,
             slug: r.slug,

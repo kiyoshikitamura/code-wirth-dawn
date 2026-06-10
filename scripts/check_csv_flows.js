@@ -35,6 +35,26 @@ const quests = [
   { id: '7043', prefix: 'qst_har', slug: 'official' },
   { id: '7044', prefix: 'qst_har', slug: 'pirate' },
   { id: '7045', prefix: 'qst_har', slug: 'foxwed' },
+  // メインエピソード (Phase 7 & 8)
+  { id: '6001', prefix: 'qst_main', slug: 'ep01' },
+  { id: '6002', prefix: 'qst_main', slug: 'ep02' },
+  { id: '6003', prefix: 'qst_main', slug: 'ep03' },
+  { id: '6004', prefix: 'qst_main', slug: 'ep04' },
+  { id: '6005', prefix: 'qst_main', slug: 'ep05' },
+  { id: '6006', prefix: 'qst_main', slug: 'ep06' },
+  { id: '6007', prefix: 'qst_main', slug: 'ep07' },
+  { id: '6008', prefix: 'qst_main', slug: 'ep08' },
+  { id: '6009', prefix: 'qst_main', slug: 'ep09' },
+  { id: '6010', prefix: 'qst_main', slug: 'ep10' },
+  { id: '6011', prefix: 'qst_main', slug: 'ep11' },
+  { id: '6012', prefix: 'qst_main', slug: 'ep12' },
+  { id: '6014', prefix: 'qst_main', slug: 'ep14' },
+  { id: '6015', prefix: 'qst_main', slug: 'ep15' },
+  { id: '6016', prefix: 'qst_main', slug: 'ep16' },
+  { id: '6017', prefix: 'qst_main', slug: 'ep17' },
+  { id: '6018', prefix: 'qst_main', slug: 'ep18' },
+  { id: '6019', prefix: 'qst_main', slug: 'ep19' },
+  { id: '6020', prefix: 'qst_main', slug: 'ep20' },
 ];
 
 // ─── 既知のノードタイプ定義（エンジン対応済み） ─────────────────
@@ -243,6 +263,12 @@ for (const q of quests) {
         errors.push('  \u274c [' + n.nodeId + '] \u81ea\u52d5\u9077\u79fb\u30ce\u30fc\u30c9(' + n.type + ')\u306b\u904e\u79fb\u5148(next/CHOICE)\u304c\u306a\u3044 \u2192 \u9032\u884c\u4e0d\u80fd\u306e\u539f\u56e0');
       }
     }
+  }
+
+  // Check: Node volume limits
+  const actualNodeCount = nodes.filter(n => !n.nodeId.startsWith('  CHOICE:')).length;
+  if (actualNodeCount <= 40) {
+    warnings.push('  \u26a0 ボリューム注意: 現在 ' + actualNodeCount + ' ノード（40ノード以下のため、ボリューム増量を推奨します）');
   }
 
   // Check: end ノードの存在確認（result判定含む）

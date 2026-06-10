@@ -146,3 +146,5 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 6052,boss_giant_scorpion,巨大毒蠍,8,200,28,12,70,250,,quest_only
 6053,boss_toll_bandit,山賊の頭,7,190,27,5,60,200,,quest_only
 6054,boss_river_god,河伯,8,210,26,8,70,250,,quest_only
+6038,boss_war_djinn_holy,戦魔ジン(鎮火),28,1200,70,18,450,1500,,quest_only
+6039,boss_war_djinn_forge,戦魔ジン(防弱),28,1200,85,8,450,1500,,quest_only

@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7042 |
 | **Slug** | `qst_har_rebel` |
-| **クエスト種別** | 華龍クエスト（Karyu） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 7（Normal） |
 | **難度** | 2 |
 | **依頼主** | 地方太守 |
-| **出現条件** | max_reputation: -50 / 出現拠点: loc_haryu |
+| **出現条件** | 出現国: 華龍国 / 名声 -50 以下 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 4 |
+| **ノード数** | 46ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 7） |
-| **経過日数 (time_cost)** | 4（成功: 4日 / 失敗: 2日） |
-| **ノード数** | 35ノード（うち選択肢1件） |
 | **サムネイル画像** | `/images/quests/bg_karyu_village.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -29,7 +29,7 @@
 ### 長文説明
 ```
 華龍国の辺境で農民が竹槍を手に蜂起した。
-太守は冒険者を雇い制圧を命じる。
+地方太守は冒険者を雇い制圧を命じる。
 刃を向ける相手が飢えた農民であることを忘れてはならない。
 ```
 
@@ -63,40 +63,55 @@ Gold:450|Exp:100|Evil:10
 
 ```text
 start
- └─ start_02
-     └─ start_03
-         └─ start_04
-             └─ start_05
-                 └─ travel_01
-                     └─ travel_02
-                         └─ travel_03
-                             └─ travel_04
-                                 └─ arrive_01
-                                     └─ arrive_02
-                                         └─ arrive_03
-                                             └─ arrive_04
-                                                 └─ arrive_05
-                                                     └─ face_mob (choice)
-                                                          ├─ 制圧 → charge_01
-                                                          │          └─ charge_02
-                                                          │               └─ charge_03
-                                                          │                    └─ battle_01
-                                                          │                         ├─ win → after_01
-                                                          │                         │        └─ after_02
-                                                          │                         │             └─ leader_01
-                                                          │                         │                  └─ leader_02
-                                                          │                         │                       └─ leader_03
-                                                          │                         │                            └─ battle_02
-                                                          │                         │                                 ├─ win → clear_01
-                                                          │                         │                                 │        └─ clear_02
-                                                          │                         │                                 │             └─ end_success
-                                                          │                         │                                 └─ lose → end_failure
-                                                          │                         └─ lose → end_failure
-                                                          └─ 引き下がる → withdraw_01
-                                                                            └─ withdraw_02
-                                                                                 └─ withdraw_03
-                                                                                      └─ withdraw_04
-                                                                                           └─ end_success_withdraw
+ └─ start_01_02
+     └─ start_01_03
+         └─ start_01_04
+             └─ start_02
+                 └─ start_03
+                     └─ start_04
+                         └─ start_05_01
+                             └─ start_05
+                                 └─ travel_01
+                                     └─ travel_02
+                                         └─ travel_03
+                                             └─ travel_03_02
+                                                 └─ travel_03_03
+                                                     └─ travel_04
+                                                         └─ arrive_01
+                                                             └─ arrive_02
+                                                                 └─ arrive_03
+                                                                     └─ arrive_04_01
+                                                                         └─ arrive_04
+                                                                             └─ arrive_05
+                                                                                 └─ face_mob (choice)
+                                                                                      ├─ 制圧 → charge_01
+                                                                                      │          └─ charge_02_01
+                                                                                      │               └─ charge_02
+                                                                                      │                    └─ charge_03
+                                                                                      │                         └─ battle_01
+                                                                                      │                              ├─ win → after_01
+                                                                                      │                              │        └─ after_02
+                                                                                      │                              │             └─ leader_01
+                                                                                      │                              │                  └─ leader_02
+                                                                                      │                              │                       └─ leader_03
+                                                                                      │                              │                            └─ battle_02
+                                                                                      │                              │                                 ├─ win → clear_01
+                                                                                      │                              │                                 │        └─ clear_02
+                                                                                      │                              │                                 │             └─ end_success_01
+                                                                                      │                              │                                 │                  └─ end_success
+                                                                                      │                              │                                 └─ lose → end_failure_01
+                                                                                      │                                                                             └─ end_failure
+                                                                                      │                              └─ lose → end_failure_01
+                                                                                      │                                           └─ end_failure
+                                                                                      └─ 引き下がる → withdraw_01
+                                                                                                        └─ withdraw_02_01
+                                                                                                             └─ withdraw_02
+                                                                                                                  └─ withdraw_03
+                                                                                                                       └─ withdraw_03_02
+                                                                                                                            └─ withdraw_03_03
+                                                                                                                                 └─ withdraw_04
+                                                                                                                                      └─ end_success_withdraw_01
+                                                                                                                                           └─ end_success_withdraw
 ```
 
 ### ノード詳細
@@ -105,7 +120,24 @@ start
 **演出:** bg: bg_karyu_palace, bgm: bgm_quest_tense, speaker: 地方太守
 ```text
 「よく来てくれた、裏稼業の者よ。内密に頼みたい汚れ仕事があるのだ」
-きらびやかな装飾が施された太守の館で、肥え太った役人が冷酷な笑みを浮かべていた。
+```
+
+#### `start_01_02`（text）
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_tense
+```text
+館の中は肥沃な香が焚かれ、贅を尽くした料理が並ぶ。飢餓に喘ぐ辺境とは正反対の世界だ。
+```
+
+#### `start_01_03`（text）
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_tense
+```text
+太守の脂ぎった顔が、目の前の山積みの金貨を指し示す。欲望と冷酷さが透けて見えた。
+```
+
+#### `start_01_04`（text）
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_tense
+```text
+きらびやかな装飾の太守の館で、肥え太った役人が冷酷な笑みを浮かべていた。
 ```
 
 #### `start_02`（text）
@@ -117,20 +149,25 @@ start
 #### `start_03`（text）
 **演出:** bg: bg_karyu_palace, bgm: bgm_quest_tense, speaker: 地方太守
 ```text
-「正規兵を動かせば上に知れる。お主らのような荒くれ者に、奴らを『物理的に』黙らせてほしいのだ」
+「正規兵を動かせば上に知れる。荒くれ者のお前たちに、奴らを黙らせてほしい」
 ```
 
 #### `start_04`（text）
 **演出:** bg: bg_karyu_palace, bgm: bgm_quest_tense, speaker: 地方太守
 ```text
-「奴らは完全に徒党を組み、暴徒と化している。情けは無用だ、一人残らず根絶やしにせよ」
+「奴らは暴徒と化している。情けは無用だ、一人残らず根絶やしにせよ」
+```
+
+#### `start_05_01`（text）
+**演出:** bg: bg_karyu_palace, bgm: bgm_field
+```text
+太守は面倒くさそうに手を振り、大量の金貨が入った袋を机の上に投げ出した。
 ```
 
 #### `start_05`（text）
 **演出:** bg: bg_karyu_palace, bgm: bgm_field
 ```text
-太守は面倒くさそうに手を振り、大量の金貨が入った袋を見せつけた。
-辺境の村まで、ここから東に二日ほどの距離だ。
+目的地である辺境の農村まで、ここから東に二日ほどの旅路だ。
 ```
 
 #### `travel_01`（text）
@@ -142,7 +179,7 @@ start
 #### `travel_02`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_field
 ```text
-田畑の土は完全に乾ききり、作物を育てる用水路もとうの昔に枯れ果てている。これでは税など払えるはずもない。
+田畑は完全に乾ききり、用水路も枯れている。これでは税など払えるはずもない。
 ```
 
 #### `travel_03`（text）
@@ -151,17 +188,28 @@ start
 すれ違ったぼろ布を纏う老婆が、こちらの武装を見てひどく怯えた目を向けた。
 ```
 
+#### `travel_03_02`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_field
+```text
+すれ違う村人たちの目は、どれも生気を失い、この世の終わりのような絶望に満ちていた。
+```
+
+#### `travel_03_03`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_field
+```text
+重税という名の暴力が、この美しい辺境をゆっくりと、確実に死に追いやっているのだ。
+```
+
 #### `travel_04`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_field, speaker: 村の老婆
 ```text
 「……アンタ、まさか……太守様が送ってきた手先かい？ ヒィィッ！」
-老婆は地べたに這いつくばりながら、逃げるように去っていった。
 ```
 
 #### `arrive_01`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_tense
 ```text
-目的の村の入り口に到着した。広場には、農具や竹槍を手にした数十人の農民たちがバリケードを築いている。
+村の入り口に到着した。広場には農具や竹槍を手にした農民がバリケードを築いている。
 ```
 
 #### `arrive_02`（text）
@@ -176,17 +224,22 @@ start
 こちらの接近に気づいた農民たちが、怯えと憎悪の入り混じった顔で一斉に竹槍を向けてきた。
 ```
 
+#### `arrive_04_01`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_quest_tense
+```text
+バリケードの先頭に立つ初老の男が、血を吐くような凄まじい声で叫んだ。
+```
+
 #### `arrive_04`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_tense, speaker: 農民の首謀者
 ```text
-先頭に立つ初老の男が、血を吐くような声で叫んだ。
 「太守の犬め！ もう俺たちからは何も奪えないぞ！」
 ```
 
 #### `arrive_05`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_tense, speaker: 農民の首謀者
 ```text
-「頼む、見逃してくれ！ 俺たちはただ、家族にひもじい思いをさせたくないだけなんだ！」
+「頼む、見逃してくれ！ 家族にひもじい思いをさせたくないだけなんだ！」
 ```
 
 #### `face_mob`（choice）
@@ -203,10 +256,15 @@ start
 感情を殺し、無言のまま武器を構える。それが裏社会を生きる者のルールだ。
 ```
 
+#### `charge_02_01`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_quest_tense
+```text
+武器を構えたあなたを見て、男たちの表情が絶望から狂気的な殺意へと変わる。
+```
+
 #### `charge_02`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_tense, speaker: 農民の首謀者
 ```text
-男たちの表情が絶望から殺意へと変わる。
 「……話し合いは通じないってわけか！ やるしかねぇ！」
 ```
 
@@ -221,7 +279,7 @@ start
 ```text
 飢えた農民たちが捨て身の覚悟で突進してきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 443, next: after_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 443, next: after_01, fail: end_failure_01
 
 #### `after_01`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_tense
@@ -258,25 +316,30 @@ start
 ```text
 首謀者が死に物狂いで襲いかかってきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 444, next: clear_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 444, next: clear_01, fail: end_failure_01
 
 #### `clear_01`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_calm
 ```text
-首謀者が力尽き、仰向けに倒れ伏す。それを見た残りの農民たちは、完全に戦意を喪失して散り散りに逃げ去った。
+首謀者が倒れ伏す。それを見た農民たちは、戦意を喪失して散り散りに逃げ去った。
 ```
 
 #### `clear_02`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_calm
 ```text
-血と泥にまみれた広場には、死体にすがりついて泣き崩れる女や子供たちだけが残された。反乱は完全に鎮圧された。
+広場には死体にすがりつく女や子供だけが残された。反乱は完全に制圧された。
+```
+
+#### `end_success_01`（text）
+**演出:** bg: bg_karyu_palace
+```text
+血塗られた手で太守の館へと戻り、任務完了の報告と共に多額の報酬を受け取る。
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_karyu_palace
 ```text
-血塗られた手で太守の館へと戻り、任務完了の報告と共に多額の報酬を受け取る。
-背中の奥で、村人たちの呪詛の泣き声がいつまでも響いているような気がした……。
+背中の奥で、村人たちの呪詛の泣き声がいつまでも響いているような気がした。
 ```
 **rewards:** Gold:450, Exp:100, Evil:10
 
@@ -286,10 +349,15 @@ start
 静かに武器を下ろし、背を向けた。いくら金のためとはいえ、飢えた者たちを狩る真似はできない。
 ```
 
-#### `withdraw_02`（text）
+#### `withdraw_02_01`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_calm
 ```text
-踵を返して歩き出した背中に、首謀者の震える声が聞こえてきた。
+踵を返して歩き出した背中に、首謀者の震えるような感謝の声が聞こえてきた。
+```
+
+#### `withdraw_02`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_quest_calm, speaker: 農民の首謀者
+```text
 「……ありがとう……ありがとう、見逃してくれて……」
 ```
 
@@ -299,26 +367,49 @@ start
 来た道を引き返す。太守には「手強くて制圧に失敗した」とでも言えばいい。
 ```
 
+#### `withdraw_03_02`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_quest_calm
+```text
+自分の選択が正しいのかは分からない。しかし、良心の呵責に怯えるよりは遥かにマシだ。
+```
+
+#### `withdraw_03_03`（text）
+**演出:** bg: bg_karyu_village, bgm: bgm_quest_calm
+```text
+空はどんよりと曇り、冷たい雨が降り始めた。それはまるで、辺境の運命を嘆く涙のようであった。
+```
+
 #### `withdraw_04`（text）
 **演出:** bg: bg_karyu_village, bgm: bgm_quest_calm
 ```text
 村人がその後どうなるかは分からない。だが、少なくとも自分の手で彼らの命を奪わずに済んだ。
 ```
 
-#### `end_success_withdraw`（end_success）
-**演出:** bg: bg_guild
+#### `end_success_withdraw_01`（text）
+**演出:** bg: bg_karyu_palace, speaker: 地方太守
 ```text
-「役立たずのクズめ！ とっとと失せろ！」
-太守から激しく罵倒され、当然ながら報酬は一切支払われなかった。だが、胸の奥には確かな誇りが残っている。
+「役立たずのクズめ！ 報酬など一銭も払わん！ とっとと失せろ！」
 ```
-**rewards:** Exp:0, Justice:5, Rep:-10
+
+#### `end_success_withdraw`（end_success）
+**演出:** bg: bg_karyu_palace
+```text
+太守から激しく罵倒された。だが、胸の奥には確かな誇りが残っている。
+```
+**rewards:** Exp:50, Justice:5, Rep:-10
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_karyu_village
+```text
+武具の力は勝っていたが、彼らの「生きるための覚悟」がそれを上回った。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_karyu_village
 ```text
-武具の力は勝っていたが、彼らの「生きるための覚悟」がそれを上回った。
-無数の竹槍に身体を貫かれ、冷たい泥の中に倒れ伏す。因果応報、仕方のない結末かもしれない……。
+無数の竹槍に貫かれ、冷たい泥に倒れる。因果応報、仕方のない結末だろう。
 ```
+**rewards:** Gold:0
 
 ---
 

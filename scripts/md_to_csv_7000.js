@@ -2,6 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 const QUESTS = [
+    { md: 'quest_7001_deliver.md', csv: '7001_qst_gen_deliver.csv' },
+    { md: 'quest_7002_escort.md', csv: '7002_qst_gen_escort.csv' },
+    { md: 'quest_7003_scavenge.md', csv: '7003_qst_gen_scavenge.csv' },
+    { md: 'quest_7004_riot.md', csv: '7004_qst_gen_riot.csv' },
+    { md: 'quest_7005_bear.md', csv: '7005_qst_gen_bear.csv' },
+    { md: 'quest_7006_smuggle.md', csv: '7006_qst_gen_smuggle.csv' },
+    { md: 'quest_7007_rat.md', csv: '7007_qst_gen_rat.csv' },
+    { md: 'quest_7008_mercy.md', csv: '7008_qst_gen_mercy.csv' },
     { md: 'quest_7010_heretic.md', csv: '7010_qst_rol_heretic.csv' },
     { md: 'quest_7011_holywater.md', csv: '7011_qst_rol_holywater.csv' },
     { md: 'quest_7012_pilgrim.md', csv: '7012_qst_rol_pilgrim.csv' },
@@ -50,6 +58,32 @@ const QUESTS = [
     { md: 'quest_5205_heretic_sage.md', csv: '5205_qst_rep_heretic_sage.csv' },
     { md: 'quest_5206_war_djinn.md', csv: '5206_qst_rep_war_djinn.csv' },
     { md: 'quest_5207_nine_tails.md', csv: '5207_qst_rep_nine_tails.csv' },
+    // メインエピソード (Phase 7)
+    { md: 'quest_6101_spot_roland.md', csv: '6101_qst_spot_roland.csv' },
+    { md: 'quest_6102_spot_yato.md', csv: '6102_qst_spot_yato.csv' },
+    { md: 'quest_6103_spot_karyu.md', csv: '6103_qst_spot_karyu.csv' },
+    { md: 'quest_6104_spot_markand.md', csv: '6104_qst_spot_markand.csv' },
+    { md: 'quest_6001_main_ep01.md', csv: '6001_qst_main_ep01.csv' },
+    { md: 'quest_6002_main_ep02.md', csv: '6002_qst_main_ep02.csv' },
+    { md: 'quest_6003_main_ep03.md', csv: '6003_qst_main_ep03.csv' },
+    { md: 'quest_6004_main_ep04.md', csv: '6004_qst_main_ep04.csv' },
+    { md: 'quest_6005_main_ep05.md', csv: '6005_qst_main_ep05.csv' },
+    { md: 'quest_6006_main_ep06.md', csv: '6006_qst_main_ep06.csv' },
+    { md: 'quest_6007_main_ep07.md', csv: '6007_qst_main_ep07.csv' },
+    // メインエピソード (Phase 8)
+    { md: 'quest_6008_main_ep08.md', csv: '6008_qst_main_ep08.csv' },
+    { md: 'quest_6009_main_ep09.md', csv: '6009_qst_main_ep09.csv' },
+    { md: 'quest_6010_main_ep10.md', csv: '6010_qst_main_ep10.csv' },
+    { md: 'quest_6011_main_ep11.md', csv: '6011_qst_main_ep11.csv' },
+    { md: 'quest_6012_main_ep12.md', csv: '6012_qst_main_ep12.csv' },
+    { md: 'quest_6013_main_ep13.md', csv: '6013_qst_main_ep13.csv' },
+    { md: 'quest_6014_main_ep14.md', csv: '6014_qst_main_ep14.csv' },
+    { md: 'quest_6015_main_ep15.md', csv: '6015_qst_main_ep15.csv' },
+    { md: 'quest_6016_main_ep16.md', csv: '6016_qst_main_ep16.csv' },
+    { md: 'quest_6017_main_ep17.md', csv: '6017_qst_main_ep17.csv' },
+    { md: 'quest_6018_main_ep18.md', csv: '6018_qst_main_ep18.csv' },
+    { md: 'quest_6019_main_ep19.md', csv: '6019_qst_main_ep19.csv' },
+    { md: 'quest_6020_main_ep20.md', csv: '6020_qst_main_ep20.csv' },
 ];
 
 function processQuest(mdFile, csvFile) {
@@ -72,7 +106,7 @@ function processQuest(mdFile, csvFile) {
     // Phase 1: MDファイルからノードをパース
     // ============================================================
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+        const line = lines[i].replace('\r', '');
 
         // ノードヘッダの検出: #### `node_id`（type）
         const nodeMatch = line.match(/^#### `([^`]+)`（([^）]+)）/);
@@ -161,6 +195,10 @@ function processQuest(mdFile, csvFile) {
                     if (!currentNode.parsedParams) currentNode.parsedParams = {};
                     currentNode.parsedParams.is_escort_target = v === 'true';
                 }
+                else if (k === 'amount') {
+                    if (!currentNode.parsedParams) currentNode.parsedParams = {};
+                    currentNode.parsedParams.amount = parseInt(v, 10);
+                }
             }
         }
 
@@ -201,7 +239,7 @@ function processQuest(mdFile, csvFile) {
         }
 
         // choice ノードの選択肢テーブル
-        if (currentNode.type === 'choice' && line.match(/^\|[^|]+\|[^|]+\|$/)) {
+        if ((currentNode.type === 'choice' || currentNode.type === 'check_flags') && line.match(/^\|[^|]+\|[^|]+\|$/)) {
             if (line.includes('選択肢') || line.includes('---')) continue;
             const parts = line.split('|').map(p => p.trim()).filter(p => p);
             if (parts.length >= 2) {
@@ -212,7 +250,7 @@ function processQuest(mdFile, csvFile) {
         }
 
         // choice ノードの選択肢リスト形式: - 選択肢: 「テキスト」→ `next_node`
-        if (currentNode.type === 'choice') {
+        if (currentNode.type === 'choice' || currentNode.type === 'check_flags') {
             const listChoiceMatch = line.match(/^-\s*選択肢:\s*[「『]([^」』]+)[」』]\s*→\s*`([^`]+)`/);
             if (listChoiceMatch) {
                 currentNode.choices.push({ text: listChoiceMatch[1], next: listChoiceMatch[2] });
@@ -295,6 +333,8 @@ function processQuest(mdFile, csvFile) {
             }
         } else if (headerType === 'modify_flag') {
             node.parsedParams.type = 'modify_flag';
+        } else if (headerType === 'modify_reputation') {
+            node.parsedParams.type = 'modify_reputation';
         } else if (headerType === 'check_flags') {
             node.parsedParams.type = 'check_flags';
         } else {
@@ -339,10 +379,16 @@ function processQuest(mdFile, csvFile) {
         const node = nodes[i];
         if (node.type !== 'choice' || node.choices.length < 2) continue;
         
-        const branchStartIndices = node.choices
-            .map(c => ({ text: c.text, next: c.next, idx: nodeIndex[c.next] }))
-            .filter(c => c.idx !== undefined)
-            .sort((a, b) => a.idx - b.idx);
+        const seenIdx = new Set();
+        const branchStartIndices = [];
+        for (const c of node.choices) {
+            const idx = nodeIndex[c.next];
+            if (idx !== undefined && !seenIdx.has(idx)) {
+                seenIdx.add(idx);
+                branchStartIndices.push({ text: c.text, next: c.next, idx });
+            }
+        }
+        branchStartIndices.sort((a, b) => a.idx - b.idx);
         
         if (branchStartIndices.length < 2) continue;
         

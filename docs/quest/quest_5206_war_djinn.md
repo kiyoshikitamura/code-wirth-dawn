@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 5206 |
 | **Slug** | `qst_rep_war_djinn` |
-| **クエスト種別** | 名声連動ボス（Reputation） |
-| **推奨レベル** | 18 |
+| **クエスト種別** | 特殊クエスト（Special） |
+| **推奨レベル** | 18（Hard） |
 | **難度** | 5 |
 | **依頼主** | 冒険者ギルド |
-| **出現条件** | EP10（`main_ep10`）クリア済み, Rep≥90 |
-| **リピート** | 1世代1回 |
-| **難易度Tier** | Tier 4（名声連動） |
-| **経過日数 (time_cost)** | 6（成功: 6日 / 失敗: 3日） |
-| **ノード数** | 38ノード |
+| **出現条件** | 第10話「世界の底が抜ける日」（6010）クリア / 滞在拠点: マルカンド拠点 / 名声 90 以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **経過日数 (time_cost)** | 6 |
+| **ノード数** | 54ノード |
+| **ゲストNPC** | なし |
+| **難易度Tier** | Hard（rec_level: 18） |
 | **サムネイル画像** | `/images/quests/bg_pyramid_chamber.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -28,7 +28,7 @@
 
 ### 長文説明
 ```
-マルカンド南方の古代遺跡で封印が崩壊し、戦の魔神ジンが目覚めた。
+砂塵の王国マルカンドの南方の古代遺跡で封印が崩壊し、戦の魔神ジンが目覚めた。
 闘争本能のままに近隣を荒らし、キャラバンや集落に甚大な被害が出ている。
 ギルドは名声ある冒険者に討伐または再封印を依頼する。
 ```
@@ -61,62 +61,82 @@
 ```text
 start
  └─ start_02
-     └─ start_03
-         └─ travel_01
-             └─ travel_02
-                 └─ ruin_01
-                     └─ ruin_02
-                         └─ choice_prep (事前準備)
-                              ├─ 聖水を入手 → holywater_01
-                              │                └─ holywater_02
-                              │                     └─ holywater_03
-                              │                          └─ merge_enter
-                              └─ 武器を強化 → forge_01
-                                               └─ forge_02
-                                                    └─ forge_03
-                                                         └─ merge_enter
-                                                              └─ enter_01
-                                                                   └─ enter_02
-                                                                        └─ battle_guard (門番戦)
-                                                                             ├─ win → deep_01
-                                                                             │        └─ deep_02
-                                                                             │             └─ deep_03
-                                                                             │                  └─ chamber_01
-                                                                             │                       └─ chamber_02
-                                                                             │                            └─ chamber_03
-                                                                             │                                 └─ battle_boss
-                                                                             │                                      ├─ win → victory_01
-                                                                             │                                      │        └─ victory_02
-                                                                             │                                      │             └─ choice_fate
-                                                                             │                                      │                  ├─ 討伐 → slay_01
-                                                                             │                                      │                  │          └─ slay_02
-                                                                             │                                      │                  │               └─ end_success
-                                                                             │                                      │                  └─ 再封印 → seal_01
-                                                                             │                                      │                              └─ seal_02
-                                                                             │                                      │                                   └─ seal_03
-                                                                             │                                      │                                        └─ end_success_seal
-                                                                             │                                      └─ lose → end_failure
-                                                                             └─ lose → end_failure
+     └─ start_02_02
+         └─ start_03
+             └─ start_03_02
+                 └─ travel_01
+                     └─ travel_01_02
+                         └─ travel_02
+                             └─ travel_02_02
+                                 └─ ruin_01
+                                     └─ ruin_01_02
+                                         └─ ruin_02
+                                             └─ choice_prep (事前準備)
+                                                  ├─ 聖水を入手 → holywater_01
+                                                  │                └─ holywater_01_02
+                                                  │                     └─ holywater_02
+                                                  │                          └─ holywater_03
+                                                  │                               └─ set_holywater (modify_flag)
+                                                  │                                    └─ merge_enter
+                                                  └─ 武器を強化 → forge_01
+                                                                   └─ forge_01_02
+                                                                        └─ forge_02
+                                                                             └─ forge_03
+                                                                                  └─ set_forge (modify_flag)
+                                                                                       └─ merge_enter
+                                                                                            └─ enter_01
+                                                                                                 └─ enter_01_02
+                                                                                                      └─ enter_02
+                                                                                                           └─ battle_guard
+                                                                                                                ├─ win → deep_01
+                                                                                                                │        └─ deep_01_02
+                                                                                                                │             └─ deep_02
+                                                                                                                │                  └─ deep_03
+                                                                                                                │                       └─ chamber_01
+                                                                                                                │                            └─ chamber_01_02
+                                                                                                                │                                 └─ chamber_02
+                                                                                                                │                                      └─ chamber_03
+                                                                                                                │                                           └─ check_prep (check_flags)
+                                                                                                                │                                                ├─ success → battle_boss_holy
+                                                                                                                │                                                │              ├─ win → victory_01
+                                                                                                                │                                                │              └─ lose → end_failure_01
+                                                                                                                │                                                └─ failure → battle_boss_forge
+                                                                                                                │                                                               ├─ win → victory_01
+                                                                                                                │                                                               └─ lose → end_failure_01
+                                                                                                                └─ lose → end_failure_01
+                                                                                                                             └─ end_failure
 ```
 
 ### ノード詳細
 
 #### `start`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: ギルドマスター
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: ギルドマスター
 ```text
-「南方の遺跡から魔神が目覚めた。キャラバンが壊滅し、集落が三つ消えた」
+「砂塵の王国マルカンドの南方遺跡から魔神が目覚めた。集落が三つ消えた」
 ```
 
 #### `start_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: ギルドマスター
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm, speaker: ギルドマスター
 ```text
 「戦の魔神ジン。古代に封じられた闘争の化身だ。封印の劣化で復活した」
 ```
 
+#### `start_02_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
+```text
+（かつて砂漠全体を恐怖に陥れたという伝説の魔神。ここで食い止めねば）
+```
+
 #### `start_03`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
 ```text
 魔神相手だ。事前準備が生死を分ける。遺跡に入る前に、何を用意するか考える。
+```
+
+#### `start_03_02`（text）
+**演出:** bg: bg_marcund, bgm: bgm_quest_calm
+```text
+ギルドマスターは警告の書かれた羊皮紙を差し出し、厳粛な面持ちで見つめた。
 ```
 
 #### `travel_01`（text）
@@ -125,16 +145,34 @@ start
 砂漠を南下する。途中、破壊されたキャラバンの残骸を見た。凄まじい暴力の痕跡だ。
 ```
 
+#### `travel_01_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_field
+```text
+（熱風が砂を巻き上げる中、赤黒い熱気が南の地平線から立ち上るのが見える）
+```
+
 #### `travel_02`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
 ```text
 古代遺跡が見えてきた。上空に赤い光が渦巻いている。魔神の力だ。
 ```
 
+#### `travel_02_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
+```text
+（遺跡の周囲は異様な高熱に包まれ、陽炎がゆらゆらと周囲の景色を歪めている）
+```
+
 #### `ruin_01`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
 ```text
 遺跡の入口手前で足を止める。このまま入るのは無謀だ。何か対策を——
+```
+
+#### `ruin_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
+```text
+（幸いにも、近くの集落にはかつて魔神を封じた者たちの末裔がいるという）
 ```
 
 #### `ruin_02`（text）
@@ -147,13 +185,19 @@ start
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
 | 選択肢 | next_node |
 |---------|-----------|
-| 「集落の祠で聖水を入手する」 | holywater_01 |
-| 「鍛冶師に武器を強化してもらう」 | forge_01 |
+| 「集落の祠で聖水を入手する」 | `holywater_01` |
+| 「鍛冶師に武器を強化してもらう」 | `forge_01` |
 
 #### `holywater_01`（text）
 **演出:** bg: bg_memory_oasis, bgm: bgm_quest_calm
 ```text
 集落の祠を訪ねる。老巫女が古い聖水を分けてくれた。
+```
+
+#### `holywater_01_02`（text）
+**演出:** bg: bg_memory_oasis, bgm: bgm_quest_calm
+```text
+（冷たく澄んだ聖水から、清浄な魔力の波長が伝わる。これなら猛火に勝てる）
 ```
 
 #### `holywater_02`（text）
@@ -164,15 +208,25 @@ start
 
 #### `holywater_03`（text）
 **演出:** bg: bg_memory_oasis, bgm: bgm_quest_calm
-**次ノード:** merge_enter
+**次ノード:** `set_holywater`
 ```text
 聖水を受け取った。魔神の炎を鎮め、戦いやすくなるはずだ。
 ```
+
+#### `set_holywater`（modify_flag）
+**パラメータ:** key: `prep_holywater`, value: 1
+**次ノード:** `merge_enter`
 
 #### `forge_01`（text）
 **演出:** bg: bg_shop, bgm: bgm_quest_calm
 ```text
 集落の鍛冶師を訪ねる。砂漠の民は古来、魔物の鱗で武器を打つ技術を持っている。
+```
+
+#### `forge_01_02`（text）
+**演出:** bg: bg_shop, bgm: bgm_quest_calm
+```text
+（赤く焼けた鉄が叩かれるたび、火花が散り、力強い金属音が響き渡る）
 ```
 
 #### `forge_02`（text）
@@ -183,10 +237,14 @@ start
 
 #### `forge_03`（text）
 **演出:** bg: bg_shop, bgm: bgm_quest_calm
-**次ノード:** merge_enter
+**次ノード:** `set_forge`
 ```text
 武器を強化してもらった。刃に砂漠の古い文様が刻まれている。これなら魔神の皮も斬れるだろう。
 ```
+
+#### `set_forge`（modify_flag）
+**パラメータ:** key: `prep_forge`, value: 1
+**次ノード:** `merge_enter`
 
 #### `merge_enter`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
@@ -200,6 +258,12 @@ start
 遺跡の内部は赤い光に満ちていた。壁の彫刻が熱で歪んでいる。
 ```
 
+#### `enter_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
+```text
+（崩れかけた石壁の間から、マグマのように赤い熱風が吹き抜け、全身を焦がす！）
+```
+
 #### `enter_02`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
 ```text
@@ -208,15 +272,18 @@ start
 
 #### `battle_guard`（battle）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_battle
-**パラメータ:** enemy_group_id: 421
-```text
-戦魔ジンの眷属が襲いかかる！
-```
+**パラメータ:** enemy_group_id: 421, next: `deep_01`, fail: `end_failure_01`
 
 #### `deep_01`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_mystery
 ```text
 眷属を倒し、遺跡の深部へ進む。壁画には古代の戦争が描かれている。
+```
+
+#### `deep_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_mystery
+```text
+（かつてこの地を支配した魔神と、それを封じた古代戦士たちの記録だ）
 ```
 
 #### `deep_02`（text）
@@ -237,6 +304,12 @@ start
 最奥の大広間に出た。砕けた封印石の破片が散乱している。
 ```
 
+#### `chamber_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
+```text
+（大部屋の中央に立つ巨影が、こちらに向けてゆっくりと振り返った！）
+```
+
 #### `chamber_02`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_battle_boss, speaker: 戦魔ジン
 ```text
@@ -245,21 +318,42 @@ start
 
 #### `chamber_03`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_battle_boss, speaker: 戦魔ジン
+**次ノード:** `check_prep`
 ```text
 「自分は戦いを求める。強き者との死闘を渇望する。——さあ、来い！」
 ```
 
-#### `battle_boss`（battle）
+#### `check_prep`（check_flags）
+**パラメータ:** key: `prep_holywater`, value: 1, operator: `==`
+| 選択肢 | 次ノード |
+|--------|---------|
+| success | `battle_boss_holy` |
+| failure | `battle_boss_forge` |
+
+#### `battle_boss_holy`（battle）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_battle_boss
-**パラメータ:** enemy_group_id: 9066
+**パラメータ:** enemy_group_id: 9068, next: `victory_01`, fail: `end_failure_01`
 ```text
-戦魔ジンとの激突——！
+聖水を振りかけ、炎が弱まった戦魔ジンとの激突——！
+```
+
+#### `battle_boss_forge`（battle）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_battle_boss
+**パラメータ:** enemy_group_id: 9069, next: `victory_01`, fail: `end_failure_01`
+```text
+強化された武器を構え、装甲を貫く戦魔ジンとの激突——！
 ```
 
 #### `victory_01`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_calm
 ```text
 ジンが膝をついた。四本の腕が力なく垂れ下がる。
+```
+
+#### `victory_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_calm
+```text
+（巨躯から吹き出していた炎が徐々に収まり、周囲の熱気が引いていく）
 ```
 
 #### `victory_02`（text）
@@ -272,13 +366,19 @@ start
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_calm
 | 選択肢 | next_node |
 |---------|-----------|
-| 「二度と暴れさせない。ここで終わらせる」 | slay_01 |
-| 「碑文の通りに再封印する。いつか闘争に飽きて眠ることを願う」 | seal_01 |
+| 「二度と暴れさせない。ここで終わらせる」 | `slay_01` |
+| 「碑文の通りに再封印する。いつか闘争に飽きて眠ることを願う」 | `seal_01` |
 
 #### `slay_01`（text）
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
 ```text
 ジンの核を砕いた。魔神の体が灰となり、遺跡の赤い光が消えた。
+```
+
+#### `slay_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
+```text
+（魔神の呪縛から解き放たれた遺跡は、ゆっくりと崩壊を始めた。急ぎ脱出せねば）
 ```
 
 #### `slay_02`（text）
@@ -288,7 +388,7 @@ start
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_marcund, speaker: ギルドマスター
 ```text
 「戦の魔神を完全に討伐したか。凄まじい力だ」
 砂漠の民は安堵した。キャラバンも再び動き出すだろう。
@@ -299,6 +399,12 @@ start
 **演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_calm
 ```text
 碑文の封印術を唱える。ジンの体が光に包まれ、封印石が再構成されていく。
+```
+
+#### `seal_01_02`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_calm
+```text
+（光が収まると、そこには再び堅牢な封印が施された石版が静かに佇んでいた）
 ```
 
 #### `seal_02`（text）
@@ -314,12 +420,19 @@ start
 ```
 
 #### `end_success_seal`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_marcund, speaker: ギルドマスター
 ```text
-「再封印を完了した。報酬は控えめだが、後世に禍根を残さない選択だ」
+「再封印を完了したな。報酬は控えめだが、禍根を残さない選択だ」
 殺さずに済んだ——それが正しかったかは、わからない。
 ```
 **rewards:** Gold:3000, Exp:400, Rep:25, Order:10
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_pyramid_chamber, bgm: bgm_quest_tense
+**次ノード:** `end_failure`
+```text
+魔神の圧倒的な力に押し潰され、体が動かない。意識が遠のいていく……
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_pyramid_chamber
@@ -327,6 +440,7 @@ start
 ジンの拳が全てを砕いた。「弱い。次の獲物を探すとしよう」
 砂漠に魔神の哄笑が響いた。
 ```
+**rewards:** Gold:0
 
 ---
 

@@ -1,35 +1,12 @@
-
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Env Vars");
-    process.exit(1);
+const fs = require('fs');
+const { parse } = require('csv-parse/sync');
+const csv = fs.readFileSync('src/data/csv/quests_special.csv', 'utf8');
+try {
+  const records = parse(csv, { columns: true, skip_empty_lines: true, relax_column_count: true });
+  console.log('Total parsed records:', records.length);
+  for (let i = 0; i < records.length; i++) {
+    console.log(i + ': ' + records[i].id + ' - ' + records[i].slug + ' - ' + records[i].title);
+  }
+} catch (e) {
+  console.error(e);
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-async function checkColumn() {
-    console.log("Checking for previous_location_id column...");
-    try {
-        const { data, error } = await supabase
-            .from('user_profiles')
-            .select('previous_location_id')
-            .limit(1);
-
-        if (error) {
-            console.error("Error selecting previous_location_id:", error.message);
-            // If column missing, PostgREST often returns error code PGRST204 or specific message
-        } else {
-            console.log("Column EXISTS.");
-            console.log("Data sample:", data);
-        }
-    } catch (e) {
-        console.error("Exception:", e);
-    }
-}
-
-checkColumn();

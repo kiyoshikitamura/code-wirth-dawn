@@ -1,4 +1,4 @@
-﻿# クエスト仕様書：7012 — 聖地巡礼者の護衛
+# クエスト仕様書：7012 — 聖地巡礼者の護衛
 
 ## 0. ファイル概要
 
@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7012 |
 | **Slug** | `qst_rol_pilgrim` |
-| **クエスト種別** | 聖王国クエスト（Roland） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 4（Normal） |
 | **難度** | 3 |
 | **依頼主** | 教会 |
-| **出現条件** | 制限なし / 出現拠点: loc_holy_empire |
+| **出現条件** | 出現国: ローランド聖王国 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 10 |
+| **ノード数** | 30ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 4） |
-| **経過日数 (time_cost)** | 10（成功: 10日 / 失敗: 5日） |
-| **ノード数** | 23ノード |
 | **サムネイル画像** | `/images/quests/bg_road_day.png` |
-
 ## 1. クエスト概要
 
 ### 短文説明
@@ -26,12 +26,14 @@
 
 ### 長文説明
 ```
-教会からの依頼。西の山脈にある古い聖地の祠まで、熱心な巡礼者「アルバート」を護衛する任務。道中は山賊や魔物が出没する危険地帯だが、アルバートは「神の御加護」を盲信しており、一切の危険を省みずに歩き続けるという厄介な人物だ。彼を死なせずに聖地へ届け、無事に祈りを捧げさせることができれば高額な報酬が約束されている。
+教会からの依頼。西の山脈にある古い聖地の祠まで、熱心な巡礼者「アルバート」を護衛する任務。
+道中は山賊や魔物が出没する危険地帯だが、アルバートは「神の御加護」を盲信しており、
+一切の危険を省みずに歩き続けるという厄介な人物だ。
+彼を死なせずに聖地へ届け、無事に祈りを捧げさせることができれば高額な報酬が約束されている。
 ```
 
 ## 2. 報酬定義
 
-**CSV記載形式:**
 ```
 Gold:700|Chaos:10|Exp:150|Rep:-10
 ```
@@ -51,289 +53,228 @@ Gold:700|Chaos:10|Exp:150|Rep:-10
 ### 全体フロー
 
 ```text
-start → intro_1 → intro_2 → join_albert（ゲストNPC加入）
-  → mountain_road → albert_walk → warning → ambush
+start → start_desc → intro_1 → intro_2 → join_albert
+  → travel_scenery → travel_think → mountain_road → albert_walk → warning → ambush → ambush_desc
     → bandit_threat → albert_ignore → albert_ignore_2
-      → battle_wave1 (チンピラ x2 / 野盗の射手 x2)
-         ├─ [勝利] → after_battle_1 → deeper_mountain
-         │    → encounter_wave2 → battle_wave2 (野盗の射手 x2 / 野盗の用心棒 x2)
-         │       ├─ [勝利] → after_battle_2 → albert_praise → sigh
+      → battle_wave1
+         ├─ win → after_battle_1 → deeper_mountain → deeper_mountain_think → encounter_wave2
+         │    → battle_wave2
+         │       ├─ win → after_battle_2 → albert_praise → sigh
          │       │    → arrive_shrine → albert_pray → albert_thanks
-         │       │      → leave_albert（ゲストNPC離脱）→ end_success
-         │       └─ [敗北] → end_failure
-         └─ [敗北] → end_failure
-※ アルバートHP=0 → 即 end_failure
+         │       │      → leave_albert → end_success
+         │       └─ lose → end_failure
+         └─ lose → end_failure
 ```
 
-### ノード詳細
+### ノード詳細（30ノード）
 
 #### `start`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_church, bgm: bgm_quest_calm
 ```text
-教会の入り口で、依頼主である巡礼者と対面した。
-質素なローブを纏い、首から大きな十字架を下げた男だ。
+大聖堂の門前。粗末な法衣を纏い、首から巨大な木製十字架を下げた男が立っていた。
+```
+
+#### `start_desc`（text）
+**演出:** bg: bg_church
+```text
+彼の目は不自然にギラつき、行き交う人々は彼を狂人を見るかのように避けていく。
 ```
 
 #### `intro_1`（text）
-**演出:** bg: bg_guild, speaker: 巡礼者アルバート
+**演出:** bg: bg_church, speaker: 巡礼者アルバート
 ```text
-「あなたが護衛の方ですね。
-　主神の声が聞こえるのです。あの危険な谷の奥底へ行かねばなりません」
+「あなたが今回の護衛ですか。主神の啓示がありました。西の危険な谷の祠へ行かねばならんのです」
 ```
 
 #### `intro_2`（text）
-**演出:** bg: bg_guild, speaker: 巡礼者アルバート
+**演出:** bg: bg_church, speaker: 巡礼者アルバート
 ```text
-「あなたが私の盾となるのは、神の思し召しです。
-　さあ、参りましょう。神の御導きのままに」
+「あなたが私の肉の盾となるのも、すべては神の尊き御意志。さあ、直ちに出発しましょう」
 ```
 
 #### `join_albert`（guest_join）
 **演出:** bg: bg_road_day
-
-| 設定 | 値 |
-|-----|-----|
-| guest_id | `npc_pilgrim_albert` |
-| is_escort_target | true |
-
+**パラメータ:** guest_id: `npc_pilgrim_albert`, is_escort_target: true
 ```text
-まったく話が通じない相手だ。
-ともかく、彼が死ねば報酬はない。聖地への長い旅が始まった。
+こちらの返事も待たず、彼は歩き出す。彼が死ねば報酬はゼロ。厄介な旅の始まりだ。
+```
+
+#### `travel_scenery`（text）
+**演出:** bg: bg_road_day, bgm: bgm_field
+```text
+それから数日間の道中、彼は食事や休息の勧めに一切耳を貸そうとせず、ただ前だけを見つめて歩き続けた。
+```
+
+#### `travel_think`（text）
+**演出:** bg: bg_road_day
+```text
+ただでさえ危険な旅路だ。護衛というより、嵐の跡を追いかけているような気分になる。
 ```
 
 #### `mountain_road`（text）
-**演出:** bg: bg_mountain, bgm: bgm_field
+**演出:** bg: bg_mountain
 ```text
-数日後、険しい山道に差し掛かった。
-岩肌が露出し、道幅は馬車一台がやっと通れる程度しかない。
+やがて、切り立った崖が続く峻険な山道に入った。道幅は人一人が通れる程度に狭い。
 ```
 
 #### `albert_walk`（text）
 **演出:** bg: bg_mountain, speaker: 巡礼者アルバート
 ```text
-「おお……神の試練が私の足元に。
-　この苦難こそが、信仰の証なのです」
+「おお……これぞ主が与えし苦難の道。私の足の痛みが、深き信仰の証となるのです」
 ```
 
 #### `warning`（text）
 **演出:** bg: bg_mountain
 ```text
-アルバートは足元の悪さも気にせず、祈りを呟きながら歩き続ける。
-周囲の岩陰から、殺気を感じた。
+彼は足元の千尋の谷も見ず、祈りを口ずさみ進む。だが、頭上の岩陰に人影が見えた。
 ```
 
 #### `ambush`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_tense
 ```text
 「そこまでだ、巡礼者さんよ」
-前方の岩の上から、弓を番えた男が顔を出した。背後からも足音がする。
+```
+
+#### `ambush_desc`（text）
+**演出:** bg: bg_mountain
+```text
+頭上の岩場から、弓を構えた汚い身なりの男たちが顔を出した。退路は塞がれている。
 ```
 
 #### `bandit_threat`（text）
 **演出:** bg: bg_mountain, speaker: 山賊の頭
 ```text
-「教会からたっぷり旅の資金を持たされてるんだろ？
-　置いていきな。命までは取らねえよ」
+「命が惜しければ、教会から支給された旅費をすべて置いていってもらおうか」
 ```
 
 #### `albert_ignore`（text）
 **演出:** bg: bg_mountain, speaker: 巡礼者アルバート
 ```text
-「……（ぶつぶつと祈りの言葉を唱え続けている）」
+「……（虚ろな目で宙を見つめ、ひたすらぶつぶつと祈りの言葉を唱えている）」
 ```
 
 #### `albert_ignore_2`（text）
 **演出:** bg: bg_mountain
 ```text
-アルバートは全く動じず、山賊の脅しを完全に無視して歩き出そうとする。
-山賊たちが怒りの形相で得物を構えた！
+アルバートは足を止めることなく、山賊の警告を完全に無視して歩みを進める。その態度に、山賊たちは激昂し、殺気立つ！
 ```
 
-#### `battle_wave1`（battle）【第1戦】
+#### `battle_wave1`（battle）
 **演出:** bg: bg_mountain, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
-| 敵グループID | `414`（新規作成） |
-| 敵グループSlug | `grp_bandit_ambush_1` |
-| 構成 | チンピラ(1101) x2 / 野盗の射手(1102) x2 |
+| 敵グループID | `414` |
 | 敵表示名 | 山賊の先遣隊 |
 
 ```text
-山賊の群れが襲いかかってきた！アルバートを守り抜け！
+激怒した山賊の先遣隊が襲いかかってきた！ 頑固な巡礼者を死守しなければならない！
 ```
 
 #### `after_battle_1`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_calm
 ```text
-山賊の先遣隊を撃退した。
-だが、奥の岩場から怒号が響く。まだ増援がいるようだ。
+先遣隊を片付けた。しかし、谷の奥から更なる野盗の怒号と靴音が近づいてくる。
 ```
 
 #### `deeper_mountain`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_tense
 ```text
-アルバートは戦闘の最中も足を止めず、どんどん先へ進んでしまう。
-慌てて追いかけると、前方の峠道に武装した男たちが立ちはだかっていた。
+アルバートは戦闘など最初から眼中にないかのように、無傷のままで山奥へとどんどん進んでいく。
+```
+
+#### `deeper_mountain_think`（text）
+**演出:** bg: bg_mountain
+```text
+慌てて彼を追いかけたが、行く手の峠道に、重武装の用心棒たちが立ち塞がった。
 ```
 
 #### `encounter_wave2`（text）
 **演出:** bg: bg_mountain, speaker: 山賊の用心棒
 ```text
-「仲間をやったな……！
-　次はこの俺たちが相手だ。ただじゃおかねえぞ！」
+「先ほどの連中をやったな……！ ここを通る奴は、一人残らず命を置いていけ！」
 ```
 
-#### `battle_wave2`（battle）【第2戦】
+#### `battle_wave2`（battle）
 **演出:** bg: bg_mountain, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
-| 敵グループID | `415`（新規作成） |
-| 敵グループSlug | `grp_bandit_ambush_2` |
-| 構成 | 野盗の射手(1102) x2 / 野盗の用心棒(1103) x2 |
+| 敵グループID | `415` |
 | 敵表示名 | 山賊の精鋭 |
 
 ```text
-山賊の精鋭部隊が立ちはだかる！今度は手強い！
+山賊の精鋭が襲いかかる！ 頑固な巡礼者が牙にかかる前に、敵を殲滅せよ！
 ```
 
 #### `after_battle_2`（text）
 **演出:** bg: bg_mountain, bgm: bgm_quest_calm
 ```text
-山賊の精鋭を撃退した。もうこの辺りには敵影はない。
-アルバートを見ると、彼はかすり傷一つ負わず、ただ祈り続けていた。
+残党を倒した。アルバートを確認する。彼は煤にまみれつつも、やはり無傷だった。
 ```
 
 #### `albert_praise`（text）
 **演出:** bg: bg_mountain, speaker: 巡礼者アルバート
 ```text
-「神の御加護が、悪漢どもを退けたのですね。
-　主よ、感謝いたします」
+「神の御加護が、またしても悪しき者を滅ぼした。主よ、感謝いたします」
 ```
 
 #### `sigh`（text）
 **演出:** bg: bg_mountain
 ```text
-戦ったのはこちらなのだが。
-ため息をつきつつ、先を急ぐことにする。
+戦いたのはこちらだが、狂人に理屈は通じない。深いため息をつき、彼の背を追った。
 ```
 
 #### `arrive_shrine`（text）
 **演出:** bg: bg_shrine
 ```text
-ついに目的の聖地の祠に到着した。
-風化して苔生した小さな石造りの祠だ。
+険しい山道を乗り越え、ついに目的の祠へと辿り着いた。風雨に晒され苔むした、小さな古い石造りの祠だ。
 ```
 
 #### `albert_pray`（text）
 **演出:** bg: bg_shrine
 ```text
-アルバートは祠の前に跪き、地面に額をつけて長い祈りを始めた。
-日が暮れるまで、彼はそこから動かなかった。
+アルバートは祠の前に跪き、額を土につけて長い祈りを始めた。夜が近づいていく。
 ```
 
 #### `albert_thanks`（text）
 **演出:** bg: bg_shrine, speaker: 巡礼者アルバート
 ```text
-「……お前がいてくれてよかったかもしれぬ。
-　神の意志を実現する手足として、よく働いてくれました」
+「よくぞ私をここまで運んだ。神の意思を実現する手足として、見事な働きです」
 ```
 
 #### `leave_albert`（leave）
 **演出:** bg: bg_shrine
-
-| 設定 | 値 |
-|-----|-----|
-| guest_id | `npc_pilgrim_albert` |
-
+**パラメータ:** guest_id: `npc_pilgrim_albert`
 ```text
-珍しく素直な言葉だった。
-アルバートをその場に残し、帰途につく。
+少しは感謝されたのだろうか。祈り続ける彼を祠に残し、私は帰路に就いた。
 ```
 
 #### `end_success`（end_success）
 **演出:** bg: bg_guild
 ```text
-教会に戻り、護衛完了を報告して報酬を受け取った。
-あの男は今も、あの山奥で祈り続けているのだろうか。
+教会に戻り、報酬を受け取った。あの哀れな男は、今も山奥で祈り続けているのだろうか。
 ```
 **rewards:** Gold:700, Chaos:10, Exp:150, Rep:-10
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_mountain
 ```text
-山賊の凶刃がアルバートを貫いた。
-神の加護は、彼を護ってはくれなかった。護衛失敗だ。
+守りきれず、山賊の刃がアルバートを貫いた。神の加護は、彼に届かなかったのだ。
 ```
 
 ---
 
-## 4. NPC定義：アルバート（新規作成）
+## 4. NPC定義：アルバート
 
-### npcs.csvエントリ
-
-```csv
-4105,npc_pilgrim_albert,狂信の,アルバート,Miko,10,100,5,5,10,0,4|14,「……お役目、果たします。主神の声が聞こえるのです。」,専用: アルバート同行
-```
-
-| 項目 | 値 |
-|-----|-----|
 | ID | 4105 |
+|-----|-----|
 | Slug | `npc_pilgrim_albert` |
 | 名前 | アルバート |
-| Job | Miko |
-| Level | 10 |
-| HP | 100 |
-| ATK | 5 |
-| DEF | 5 |
-| cover_rate | 10 |
-| hire_cost | 0 |
-| inject_card_ids | 4\|14 |
-| 護衛対象 | is_escort_target: true（HP=0で即失敗） |
-
-> ステータスは撫子(npc_nadeshiko)と同一。
 
 ---
 
-## 5. 敵定義参照（新規エネミーグループ 2件）
+## 5. 敵定義参照
 
-### エネミーグループ: `grp_bandit_ambush_1` (ID: 414)
-
-| Slug | 名前 | Lv | HP | ATK | DEF |
-|------|------|----|----|-----|-----|
-| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
-| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
-| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
-| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
-
-### エネミーグループ: `grp_bandit_ambush_2` (ID: 415)
-
-| Slug | 名前 | Lv | HP | ATK | DEF |
-|------|------|----|----|-----|-----|
-| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
-| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
-| enemy_bandit_guard | 野盗の用心棒 | 6 | 80 | 36 | 5 |
-| enemy_bandit_guard | 野盗の用心棒 | 6 | 80 | 36 | 5 |
-
----
-
-## 6. CSVエントリ（quests_normal.csv）
-
-```csv
-7012,qst_rol_pilgrim,聖地巡礼者の護衛,4,3,10,loc_holy_empire,,,,,Gold:700|Chaos:10|Exp:150|Rep:-10,教会,[護衛] 狂信的な巡礼者を護送する。彼が死ねば報酬はない。
-```
-
----
-
-## 7. 実装チェックリスト
-
-- [ ] 出現拠点が `loc_holy_empire` のみ
-- [ ] `npcs` テーブルに `npc_pilgrim_albert` が登録済み
-- [ ] エネミーグループ `grp_bandit_ambush_1`（414）がenemy_groups.csvに登録済み
-- [ ] エネミーグループ `grp_bandit_ambush_2`（415）がenemy_groups.csvに登録済み
-- [ ] guest_join / leave / is_escort_target が正しく機能する
-- [ ] アルバートHP=0で即 end_failure に遷移する
-- [ ] 2連戦フローが正しく遷移する
-- [ ] Chaos +10, Rep:-10 が適用される
-- [ ] time_cost: 10（成功）/ 5（失敗）が正しく経過する
+| enemy_group_id | グループ名 |
+|----------------|-----------|
+| 414 | 山賊の先遣隊 |
+| 415 | 山賊の精鋭 |

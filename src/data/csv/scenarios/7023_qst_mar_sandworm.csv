@@ -1,31 +1,35 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"交易商会の本部に呼ばれた。\n幹部たちが深刻な顔で地図を囲んでいる。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_1
-NODE,intro_1,"「主要交易路に大砂虫が棲みついた。\n　商隊が2つ飲み込まれ、もう誰もあのルートを通れない」","{""bg"":""bg_guild"",""speaker_name"":""商会の幹部"",""type"":""text""}",intro_2
-NODE,intro_2,"「囮の荷車を用意した。振動に反応して地上に出てくるはずだ。\n　出てきたところを仕留めてくれ。報酬は弾む」","{""bg"":""bg_guild"",""speaker_name"":""商会の幹部"",""type"":""text""}",prepare
-NODE,prepare,"「それと——これを持っていけ。商会の錬金術師が用意した爆薬だ。\n　砂虫の体に叩き込めば、体内で爆発して大ダメージを与えられる」","{""bg"":""bg_guild"",""speaker_name"":""商会の幹部"",""type"":""text""}",receive_explosive
-NODE,receive_explosive,"爆薬を受け取った。ずしりと重い。\n取り扱いには細心の注意が必要だ——間違っても自分に使うなよ。","{""bg"":""bg_guild"",""type"":""reward"",""item_id"":""item_explosive""}",travel_to_site
-NODE,travel_to_site,"砂漠の出没地点へ向かう。二日の道のり。\n途中、砂に半分埋もれた商隊の残骸を見た。荷もラクダも——跡形もない。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",site_desc
-NODE,site_desc,"出没地点に到着した。\n地面のあちこちに、巨大な円形の陥没跡がある。砂虫の通り道だ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",set_bait
-NODE,set_bait,"荷車を砂の上に据え、中に香辛料の袋を積み上げる。\n振動を伝えるため、荷台を太鼓のように打ち鳴らした。","{""bg"":""bg_desert"",""type"":""text""}",bait_desc
-NODE,bait_desc,"砂漠に響く鈍い振動。それが地中深くまで伝わっていく。\n後は待つだけだ。剣を握り直し、砂の揺れに神経を集中させる。","{""bg"":""bg_desert"",""type"":""text""}",wait_1
-NODE,wait_1,"しばらく何も起きなかった。風の音だけが砂丘を撫でていく。\nだが——足元の砂が、微かに波打ち始めた。","{""bg"":""bg_desert"",""type"":""text""}",tremor_1
-NODE,tremor_1,"地鳴りが強まる。荷車がガタガタと揺れ始めた。\n前方の砂丘に亀裂が走り、サソリが砂の中から這い出てくる。前衛だ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",scouts_appear
-NODE,scouts_appear,"サソリの群れに混じって、地中から小型のサンドワームも姿を現した。\n本命はまだ来ていない——だが、まずこいつらを片付けなければ。","{""bg"":""bg_desert"",""type"":""text""}",battle_wave1
-NODE,battle_wave1,"砂虫とサソリの群れが荷車に群がってきた！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":425,""enemy_name"":""砂漠の先遣隊"",""type"":""battle""}",
+NODE,start,"交易商会の本部。砂嵐に削られた古い石壁に囲まれた部屋で、幹部たちが深刻な顔をしていた。","{""bg"":""bg_tavern_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_desc
+NODE,start_desc,"机の上に広げられた巨大な砂漠の地図には、赤いインクで通行不能の印がつけられている。","{""bg"":""bg_tavern_day"",""type"":""text""}",intro_1
+NODE,intro_1,"「主要交易路に大砂虫サンドワームが棲みつき、商隊が２つ丸ごと飲み込まれた」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",intro_1_detail
+NODE,intro_1_detail,"「このままでは商売は破滅だ。あのルートを再び開通させねばならん」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",intro_2
+NODE,intro_2,"「囮の荷車の振動で奴を引きずり出し、息の根を止めてほしい。報酬は弾む」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",prepare
+NODE,prepare,"「それと……これを持っていけ。錬金術師が作った、対砂虫用の特製爆薬だ」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",prepare_detail
+NODE,prepare_detail,"「奴の口内へ叩き込めば、いかなる巨大な外殻だろうと内部から爆破できる」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",receive_explosive
+NODE,receive_explosive,"黒い金属筒に入った爆薬を受け取る。独特のツンとした火薬の臭いと、ずっしりとした重みがあった。","{""bg"":""bg_tavern_day"",""type"":""reward"",""item_id"":""item_explosive""}",travel_to_site
+NODE,travel_to_site,"砂漠の出没地へ向かう。途中で見かけた商隊の残骸は、押し潰され砂に半ば埋もれていた。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",site_desc
+NODE,site_desc,"現場に到着した。周囲の砂丘は漏斗状に崩れ、巨大な陥没穴が幾つも口を開けている。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",set_bait
+NODE,set_bait,"砂地の上に囮の荷車を据え置く。荷台の隙間に、香辛料の袋をぎっしりと積み上げた。","{""bg"":""bg_desert"",""type"":""text""}",bait_desc
+NODE,bait_desc,"仕掛けを作動させ、荷車から規則的な振動を発生させる。地面の砂が微かに躍り始めた。","{""bg"":""bg_desert"",""type"":""text""}",wait_1
+NODE,wait_1,"静寂の中、抜剣して待つ。熱い砂を吹き抜ける風の音だけが、耳元で虚しく響いていた。","{""bg"":""bg_desert"",""type"":""text""}",tremor_1
+NODE,tremor_1,"突如、足元から激しい衝撃。砂の中から、大サソリと小型の砂虫が飛び出してくる。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",scouts_appear
+NODE,scouts_appear,"本命の呼び水に引かれた先遣の群れだ。まずはこいつらを素早く排除せよ！","{""bg"":""bg_desert"",""type"":""text""}",battle_wave1
+NODE,battle_wave1,"大砂虫の出現に備えつつ、襲いかかるサソリと砂虫を切り伏せろ！","{""bg"":""bg_desert"",""bgm"":""bgm_battle"",""enemy_group_id"":425,""enemy_name"":""砂漠の先遣隊"",""type"":""battle""}",
 CHOICE,,win,,after_wave1
 CHOICE,,lose,,end_failure
-NODE,after_wave1,"前衛を退けた。だが、荷車の振動はまだ続いている。\n地面の揺れが——さっきとは比べ物にならないほど大きくなっていく。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",reset_bait
-NODE,reset_bait,"散乱した荷を急いで積み直し、再び荷台を打ち鳴らす。\n今度こそ本命を引きずり出す。","{""bg"":""bg_desert"",""type"":""text""}",wait_2
-NODE,wait_2,"地面全体が波打っている。\n砂丘が崩れ、地平線が歪んで見える。来る——！","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",tremor_2
-NODE,tremor_2,"砂が爆発的に噴き上がった。\n二つの巨大な口が、空に向かって同時に開く。","{""bg"":""bg_desert"",""type"":""text""}",boss_emerge
-NODE,boss_emerge,"二匹——！\n白い牙を剥いた顎が、荷車を丸ごと飲み込もうとしている。","{""bg"":""bg_desert"",""type"":""text""}",boss_desc
-NODE,boss_desc,"全長は優に船を超える。鱗のような外殻が砂にまみれ、\n無数の小さな足が地面を掻きながら、こちらに向き直った。","{""bg"":""bg_desert"",""type"":""text""}",trap_collapse
-NODE,trap_collapse,"大砂虫が地面ごと砂を崩壊させた！\n足場が崩れ、砂の奔流に巻き込まれる——体中を打ちつけながら必死に這い上がった。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":50,""hp_percent"":50}",battle_wave2
-NODE,battle_wave2,"砂漠の覇者——大砂虫との死闘！ 爆薬を使え！","{""bg"":""bg_desert"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":426,""enemy_name"":""大砂虫"",""type"":""battle""}",
+NODE,after_wave1,"先遣隊を撃破した。しかし、本命の接近を示すように地響きは数十倍に膨れ上がる。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",reset_bait
+NODE,reset_bait,"倒壊しかけた荷車の震動装置を叩き、最大出力で大砂虫をさらにおびき出す。","{""bg"":""bg_desert"",""type"":""text""}",wait_2
+NODE,wait_2,"地表の砂が流砂のように流れ始める。足場が急速に崩れ、逃げ場が失われていく。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",tremor_2
+NODE,tremor_2,"砂の海が爆発した。天を突く二つの巨大な影が、激しい砂煙と共に急上昇する。","{""bg"":""bg_desert"",""type"":""text""}",boss_emerge
+NODE,boss_emerge,"現れたのは二匹の大砂虫。獲物を探すように、粘液に塗れた蛇腹の肉体を捩らせた。","{""bg"":""bg_desert"",""type"":""text""}",boss_desc
+NODE,boss_desc,"船ほどもある巨体。中心に並ぶ同心円状の白い牙が、鋭い摩擦音を立てている。","{""bg"":""bg_desert"",""type"":""text""}",trap_collapse
+NODE,trap_collapse,"砂虫の尾の一撃が地盤を砕いた！ 崩落に巻き込まれ、全身を強打しながら這い上がる。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""hp_damage"",""percent"":50,""hp_percent"":50}",battle_wave2
+NODE,battle_wave2,"砂漠の覇者との戦い！ 隙を見て、商会から預かった爆薬を叩き込め！","{""bg"":""bg_desert"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":426,""enemy_name"":""大砂虫"",""type"":""battle""}",
 CHOICE,,win,,after_wave2
 CHOICE,,lose,,end_failure
-NODE,after_wave2,"最後のサンドワームが砂の中に沈んでいった。もう動かない。\n砂漠に静寂が戻る。風だけが、戦いの跡を少しずつ消していく。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",carcass
-NODE,carcass,"巨大な死骸の脇を通り過ぎる。\nこいつらの体内からは、高価な素材が取れるはずだが——今は依頼の完了が先だ。","{""bg"":""bg_desert"",""type"":""text""}",return_report
-NODE,return_report,"「交易路が復活した……！ お前は商会の恩人だ。\n　約束通り、最上級の報酬を用意した。受け取ってくれ」","{""bg"":""bg_guild"",""speaker_name"":""商会の幹部"",""type"":""text""}",end_success
-NODE,end_success,"重い金袋を手にした。\n砂漠の交易路に、再びラクダの列が戻るだろう。","{""bg"":""bg_guild"",""rewards"":{""gold"":600,""alignment_shift"":{""chaos"":10},""exp"":200,""reputation"":10},""type"":""end"",""result"":""success""}",
-NODE,end_failure,"大砂虫の圧倒的な質量の前に、為す術がなかった。\n砂の中に引きずり込まれていく意識の中で、砂漠の静寂だけが残った。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",
+NODE,after_wave2,"爆煙が消え、巨虫たちは砂の底へ沈んだ。崩れた砂丘には、静寂だけが残される。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",carcass
+NODE,carcass,"熱い血の悪臭が漂う。砂漠の脅威は去った。これで再び商隊が往来できるはずだ。","{""bg"":""bg_desert"",""type"":""text""}",return_report
+NODE,return_report,"王都に戻り、商会本部に討伐成功を報告した。張り詰めていた幹部たちの顔が和らぐ。","{""bg"":""bg_tavern_day"",""type"":""text""}",knight_reply
+NODE,knight_reply,"「見事だ！ これでお前は我が商会の最高の恩人。約束の報酬を受け取ってくれ」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",end_success
+NODE,end_success,"重い金袋を懐に収める。砂漠に再びラクダの鈴の音が戻るだろう。","{""bg"":""bg_tavern_day"",""rewards"":{""gold"":600,""alignment_shift"":{""chaos"":10},""exp"":200,""reputation"":10},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"大砂虫の圧倒的な体躯の前に崩れ落ちた。砂の中に引きずり込まれ、意識が閉じる。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",

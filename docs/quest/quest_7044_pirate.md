@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7044 |
 | **Slug** | `qst_har_pirate` |
-| **クエスト種別** | 華龍クエスト（Karyu） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 7（Normal） |
 | **難度** | 2 |
 | **依頼主** | 港町の長 |
-| **出現条件** | 制限なし / 出現拠点: loc_haryu |
+| **出現条件** | 出現国: 華龍国 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 5 |
+| **ノード数** | 47ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 7） |
-| **経過日数 (time_cost)** | 5（成功: 5日 / 失敗: 3日） |
-| **ノード数** | 35ノード（うち選択肢1件） |
 | **サムネイル画像** | `/images/quests/bg_karyu_port.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -65,48 +65,63 @@ Gold:400|Exp:120|Chaos:5
 start
  └─ start_02
      └─ start_03
-         └─ intel_01
-             └─ intel_02
-                 └─ intel_03
-                     └─ intel_04
-                         └─ night_01
-                             └─ night_02
-                                 └─ night_03
-                                     └─ cove_01
-                                         └─ cove_02
-                                             └─ climb_01
-                                                 └─ climb_02
-                                                     └─ surprise_01
-                                                         └─ surprise_02
-                                                             └─ surprise_03
-                                                                 └─ battle_deck
-                                                                      ├─ win → clear_01
-                                                                      │        └─ clear_02
-                                                                      │             └─ ship_01
-                                                                      │                  └─ ship_02
-                                                                      │                       └─ ship_03
-                                                                      │                            └─ battle_captain
-                                                                      │                                 ├─ win → captain_01
-                                                                      │                                 │        └─ captain_02
-                                                                      │                                 │             └─ captain_03
-                                                                      │                                 │                  └─ choice_captain
-                                                                      │                                 │                       ├─ 止め → cargo_01
-                                                                      │                                 │                       │          └─ cargo_02
-                                                                      │                                 │                       │               └─ end_success
-                                                                      │                                 │                       └─ 見逃す → deal_01
-                                                                      │                                 │                                    └─ deal_02
-                                                                      │                                 │                                         └─ end_success_deal
-                                                                      │                                 └─ lose → end_failure
-                                                                      └─ lose → end_failure
+         └─ start_03_02
+             └─ intel_01
+                 └─ intel_01_02
+                     └─ intel_01_03
+                         └─ intel_02
+                             └─ intel_03
+                                 └─ intel_04
+                                     └─ intel_04_02
+                                         └─ night_01
+                                             └─ night_02
+                                                 └─ night_03
+                                                     └─ cove_01
+                                                         └─ cove_02
+                                                             └─ climb_01
+                                                                 └─ climb_01_02
+                                                                     └─ climb_01_03
+                                                                         └─ climb_02
+                                                                             └─ surprise_01
+                                                                                 └─ surprise_02
+                                                                                     └─ surprise_03
+                                                                                         └─ surprise_03_02
+                                                                                             └─ battle_deck
+                                                                                                  ├─ win → clear_01
+                                                                                                  │        └─ clear_02
+                                                                                                  │             └─ ship_01
+                                                                                                  │                  └─ ship_01_02
+                                                                                                  │                       └─ ship_01_03
+                                                                                                  │                            └─ ship_02
+                                                                                                  │                                 └─ ship_03
+                                                                                                  │                                      └─ battle_captain
+                                                                                                  │                                           ├─ win → captain_01
+                                                                                                  │                                           │        └─ captain_02
+                                                                                                  │                                           │             └─ captain_02_02
+                                                                                                  │                                           │                  └─ captain_03
+                                                                                                  │                                           │                       └─ captain_03_02
+                                                                                                  │                                           │                            └─ choice_captain
+                                                                                                  │                                           │                                 ├─ 止め → cargo_01
+                                                                                                  │                                           │                                 │          └─ cargo_02
+                                                                                                  │                                           │                                 │               └─ end_success_01
+                                                                                                  │                                           │                                 │                    └─ end_success
+                                                                                                  │                                           │                                 └─ 見逃す → deal_01
+                                                                                                  │                                           │                                              └─ deal_02
+                                                                                                  │                                           │                                                   └─ deal_02_02
+                                                                                                  │                                           │                                                        └─ end_success_deal_01
+                                                                                                  │                                           │                                                             └─ end_success_deal
+                                                                                                  │                                           └─ lose → end_failure_01
+                                                                                                                                                                 └─ end_failure
+                                                                                                  └─ lose → end_failure_01
+                                                                                                               └─ end_failure
 ```
 
 ### ノード詳細
 
 #### `start`（text）
-**演出:** bg: bg_karyu_port, bgm: bgm_quest_calm, speaker: 港町の長
+**演出:** bg: bg_karyu_port, bgm: bgm_quest_calm
 ```text
-華龍国の南沿岸にある港町。
-その顔役である長から、手書きの海図と討伐の依頼書を受け取った。
+華龍国の南沿岸にある港町。その顔役である長から、手書きの海図と討伐の依頼書を受け取った。
 ```
 
 #### `start_02`（text）
@@ -118,7 +133,12 @@ start
 #### `start_03`（text）
 **演出:** bg: bg_karyu_port, bgm: bgm_quest_calm, speaker: 港町の長
 ```text
-「水賊の船は岬の裏側の入り江に停泊している。奪われた荷物は一つ残らず港に返してくれ」
+「水賊の船は入り江に停泊している。奪われた荷は一つ残らず港に返してくれ」
+```
+
+#### `start_03_02`（text）
+**演出:** bg: bg_karyu_port, bgm: bgm_quest_calm
+```text
 そう言う長の目は、正義感からではなく、計算高く欲深い光を帯びていた。
 ```
 
@@ -126,6 +146,18 @@ start
 **演出:** bg: bg_karyu_port, bgm: bgm_field
 ```text
 奇襲をかける前に、港の薄汚れた酒場で水賊たちの情報を集めることにした。
+```
+
+#### `intel_01_02`（text）
+**演出:** bg: bg_karyu_port, bgm: bgm_field
+```text
+酒場には塩気と安酒の臭いが漂っている。片目の船乗りたちがこちらを値踏みするように見た。
+```
+
+#### `intel_01_03`（text）
+**演出:** bg: bg_karyu_port, bgm: bgm_field
+```text
+銅貨を数枚カウンターに滑らせると、主人は周囲を気にしながら身を乗り出してきた。
 ```
 
 #### `intel_02`（text）
@@ -141,9 +173,14 @@ start
 ```
 
 #### `intel_04`（text）
-**演出:** bg: bg_karyu_port, bgm: bgm_field
+**演出:** bg: bg_karyu_port, bgm: bgm_field, speaker: 酒場の主人
 ```text
 「単なるならず者じゃない。戦い方は一流の軍人のそれだ」
+```
+
+#### `intel_04_02`（text）
+**演出:** bg: bg_karyu_port, bgm: bgm_field
+```text
 酒場の主人が青ざめた顔でそう忠告してくれた。
 ```
 
@@ -168,7 +205,7 @@ start
 #### `cove_01`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
 ```text
-入り江の奥に接近する。情報通り、三隻の船が寄り添うように停泊していた。
+入り江の奥に接近する。情報通り、三隻 of 船が寄り添うように停泊していた。
 ```
 
 #### `cove_02`（text）
@@ -181,6 +218,18 @@ start
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
 ```text
 小舟を密かに接舷させ、濡れて滑る重い鎖を力一杯握りしめる。
+```
+
+#### `climb_01_02`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
+```text
+冷たい夜露と潮水が鎖を滑りやすくしている。一歩誤れば暗い海へ真っ逆さまだ。
+```
+
+#### `climb_01_03`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
+```text
+波が船体にぶつかる音が、こちらの登る音をかき消してくれている。運は味方している。
 ```
 
 #### `climb_02`（text）
@@ -205,6 +254,11 @@ start
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense, speaker: 水賊
 ```text
 「敵だ！ 甲板に侵入者だ！ 野郎ども起きろォッ！！」
+```
+
+#### `surprise_03_02`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
+```text
 銅鑼の音がけたたましく鳴り響き、船全体が揺れるような怒号が巻き起こった。
 ```
 
@@ -213,7 +267,7 @@ start
 ```text
 寝込みを襲われた水賊たちが、武器を手に群がってきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 447, next: clear_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 447, next: clear_01, fail: end_failure_01
 
 #### `clear_01`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
@@ -233,6 +287,18 @@ start
 階段を下り、船長室の分厚いオーク材の扉を蹴り開ける。
 ```
 
+#### `ship_01_02`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
+```text
+船室の廊下は薄暗く、ランプの光が左右に揺れている。火薬と血の臭いが濃くなってきた。
+```
+
+#### `ship_01_03`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
+```text
+突き当たりにある豪奢な扉の向こうから、荒い呼吸と戦斧を研ぐ不気味な音が響いている。
+```
+
 #### `ship_02`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_tense
 ```text
@@ -248,9 +314,9 @@ start
 #### `battle_captain`（battle）
 **演出:** bg: bg_karyu_coast, bgm: bgm_battle_boss
 ```text
-水賊の頭目「黒鰐」との決戦！
+水賊の頭目「黒鰐」との戦い！
 ```
-**パラメータ:** type: battle, enemy_group_id: 448, next: captain_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 448, next: captain_01, fail: end_failure_01
 
 #### `captain_01`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm
@@ -262,14 +328,24 @@ start
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm, speaker: 水賊の頭目「黒鰐」
 ```text
 「ガハッ……見事だ……」
-黒鰐が重い音を立てて膝をついた。血にまみれながらも、軍人としての誇り高い目は死んでいない。
+```
+
+#### `captain_02_02`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm
+```text
+黒鰐が重い音を立てて膝をついた。血まみれだが、軍人としての誇り高い目は死んでいない。
 ```
 
 #### `captain_03`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm, speaker: 水賊の頭目「黒鰐」
 ```text
-「港の長に言っておけ。俺が襲った商船の利益の二割は、あの男の懐に入っていたとな……」
-どうやら、長の目的は「上前を撥ねていた自分たちの秘密を消すこと」だったらしい。
+「長に言っておけ。俺が襲った船の利益の二割は、あの男の懐に入っていたと」
+```
+
+#### `captain_03_02`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm
+```text
+どうやら長の目的は、上前を撥ねていた自分たちの秘密を闇に葬ることだったらしい。
 ```
 
 #### `choice_captain`（choice）
@@ -283,22 +359,25 @@ start
 #### `cargo_01`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm
 ```text
-誰が裏で糸を引いていようと、自分の仕事は依頼の完遂だ。
-無言で刃を振り下ろし、黒鰐の首を刎ねた。
+誰が裏で糸を引いていようと、自分の仕事は依頼の完遂だ。無言で刃を振り下ろし、黒鰐の首を刎ねた。
 ```
 
 #### `cargo_02`（text）
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm
 ```text
-船倉には絹布、陶磁器、茶箱といった略奪品が山のように積まれていた。
-生き残った水賊に船を操縦させ、港へと帰還する。
+船倉には絹布などの略奪品が山積みにされていた。生き残った水賊に操縦させ帰還する。
+```
+
+#### `end_success_01`（text）
+**演出:** bg: bg_karyu_port
+```text
+水賊討伐完了。港町の長から、安堵の表情と共に報酬を受け取った。
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_karyu_port, speaker: 港町の長
 ```text
-水賊討伐完了。港町の長から、安堵の表情と共に報酬を受け取った。
-「これで港も静かになる。本当にありがたい」——白々しい嘘に付き合う義理はない。
+「これで港も静かになる。本当にありがたい」
 ```
 **rewards:** Gold:400, Exp:120, Chaos:5
 
@@ -312,23 +391,39 @@ start
 **演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm, speaker: 水賊の頭目「黒鰐」
 ```text
 「ククッ……欲の皮が突っ張った面白い冒険者だな。いいだろう」
+```
+
+#### `deal_02_02`（text）
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_calm
+```text
 黒鰐は血まみれの顔で笑い、隠し金庫から分厚い帳簿を取り出して渡した。
 ```
 
-#### `end_success_deal`（end_success）
-**演出:** bg: bg_guild
+#### `end_success_deal_01`（text）
+**演出:** bg: bg_karyu_port
 ```text
-長には「頭目は逃げた。だが荷は取り返した」とだけ報告し、一部の報酬を受け取る。
-悪人と悪人の間を泳ぎ回り、利益を掠め取る……。この国で生き残るには、これが一番賢いやり方だ。
+長には「頭目は逃げたが荷は奪い返した」と報告し、一部の報酬を受け取る。
+```
+
+#### `end_success_deal`（end_success）
+**演出:** bg: bg_karyu_port
+```text
+悪人の間を泳ぎ、利益を掠め取る。この国で生き残るには、これが一番賢い。
 ```
 **rewards:** Gold:250, Exp:120, Evil:5
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_karyu_coast
+```text
+黒鰐の振るう戦斧の一撃をまともに受け、身体が宙に浮き、海へと叩き落とされた。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_karyu_coast
 ```text
-黒鰐の振るう戦斧の一撃をまともに受け、身体が宙に浮いた。
-冷たい海へと叩き落とされ、塩水に肺を焼かれながら、意識は深い海の底へと沈んでいった……。
+塩水に肺を焼かれながら、意識は深い海の底へとゆっくり沈んでいった……。
 ```
+**rewards:** Gold:0
 
 ---
 

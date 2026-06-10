@@ -15,7 +15,7 @@ const path = require('path');
 
 // Parse CLI args
 const args = process.argv.slice(2);
-let threshold = 45;
+let threshold = null;
 const excludePrefixes = [];
 let jsonOutput = false;
 let verbose = false;
@@ -73,13 +73,24 @@ for (const f of files) {
     if (!textLabel) continue;
 
     let nodeType = 'text';
-    try { const p = JSON.parse(params); nodeType = p.type || 'text'; } catch(e) {}
+    let hasSpeaker = false;
+    let limit = 70; // default for narrative (was 50)
+    try {
+      const p = JSON.parse(params);
+      nodeType = p.type || 'text';
+      if (p.speaker || p.speaker_name) {
+        hasSpeaker = true;
+        limit = 60; // limit for dialogue (was 40)
+      }
+    } catch(e) {}
     if (skipTypes.has(nodeType)) continue;
+
+    const activeThreshold = threshold !== null ? threshold : limit;
 
     totalText++;
     const len = [...textLabel].length;
-    if (len > threshold) {
-      violations.push({ file: f, node: nodeId, type: nodeType, len, text: textLabel.substring(0, 80) });
+    if (len > activeThreshold) {
+      violations.push({ file: f, node: nodeId, type: nodeType, len, limit: activeThreshold, hasSpeaker, text: textLabel.substring(0, 80) });
     }
   }
 }
@@ -90,23 +101,23 @@ const over80 = violations.filter(v => v.len > 80).length;
 
 if (jsonOutput) {
   console.log(JSON.stringify({
-    config: { threshold, excludePrefixes, totalFiles: files.length, excludedFiles: allFiles.length - files.length },
+    config: { threshold: threshold !== null ? threshold : 'dynamic', excludePrefixes, totalFiles: files.length, excludedFiles: allFiles.length - files.length },
     summary: { totalText, overThreshold: violations.length, over50, over60, over80 },
     violations
   }, null, 2));
 } else {
   console.log('=== Text Length Audit ===');
-  console.log('Threshold:', threshold, 'chars');
+  console.log('Threshold:', threshold !== null ? threshold + ' chars' : 'Dynamic (With Speaker: 40, Narrative: 50) chars');
   console.log('Files scanned:', files.length, '(excluded:', allFiles.length - files.length, ')');
   console.log('Total text nodes:', totalText);
-  console.log('Over', threshold, 'chars:', violations.length, '(' + (violations.length/totalText*100).toFixed(1) + '%)');
+  console.log('Over limit:', violations.length, '(' + (violations.length/totalText*100).toFixed(1) + '%)');
   console.log('Over 50 chars:', over50);
   console.log('Over 60 chars:', over60);
   console.log('Over 80 chars:', over80);
 
   // Length distribution
   console.log('\n=== Distribution ===');
-  const ranges = [[threshold+1,50],[51,60],[61,80],[81,999]];
+  const ranges = [[41,50],[51,60],[61,80],[81,999]];
   for (const r of ranges) {
     const count = violations.filter(v => v.len >= r[0] && v.len <= r[1]).length;
     if (count > 0) console.log('  ' + r[0] + '-' + (r[1]===999?'...':r[1]) + ' chars: ' + count);
@@ -117,7 +128,7 @@ if (jsonOutput) {
   const show = verbose ? violations : violations.slice(0, 30);
   console.log('\n=== Top violations ===');
   show.forEach(v =>
-    console.log('  ' + v.len + 'c | ' + v.file.replace('.csv', '') + ' | ' + v.node + ' | ' + v.text)
+    console.log('  ' + v.len + 'c (limit ' + v.limit + ') | ' + v.file.replace('.csv', '') + ' | ' + v.node + ' | ' + v.text)
   );
 
   // Per-file

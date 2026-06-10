@@ -165,3 +165,5 @@ id,slug,members
 512,bounty_high,enemy_bounty_hunter_vet|enemy_bounty_mage_hunter
 513,bounty_elite,enemy_bounty_executioner|enemy_bounty_hunter_vet
 514,bounty_legend,enemy_bounty_royal_blade|enemy_bounty_legend|enemy_bounty_reaper
+9068,grp_boss_war_djinn_holy,boss_war_djinn_holy
+9069,grp_boss_war_djinn_forge,boss_war_djinn_forge

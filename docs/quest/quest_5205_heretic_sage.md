@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 5205 |
 | **Slug** | `qst_rep_heretic_sage` |
-| **クエスト種別** | 名声連動ボス（Reputation） |
-| **推奨レベル** | 18 |
+| **クエスト種別** | 特殊クエスト（Special） |
+| **推奨レベル** | 18（Hard） |
 | **難度** | 5 |
 | **依頼主** | 冒険者ギルド |
-| **出現条件** | EP10（`main_ep10`）クリア済み, Rep≥80 |
-| **リピート** | 1世代1回 |
-| **難易度Tier** | Tier 4（名声連動） |
-| **経過日数 (time_cost)** | 6（成功: 6日 / 失敗: 3日） |
-| **ノード数** | 40ノード |
+| **出現条件** | 第10話「世界の底が抜ける日」（6010）クリア / 滞在拠点: ローランド聖王国拠点 / 名声 80 以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **経過日数 (time_cost)** | 6 |
+| **ノード数** | 55ノード |
+| **ゲストNPC** | なし |
+| **難易度Tier** | Hard（rec_level: 18） |
 | **サムネイル画像** | `/images/quests/bg_crypt.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -43,7 +43,7 @@
 | ルート | Gold | Exp | Rep | アライメント |
 |--------|------|-----|:---:|-------------|
 | 研究所破壊（デフォルト） | 4000 | 450 | +20 | Order:8 |
-| 研究成果を没収して見逃す（選択肢） | 5000 | 350 | -15 | Chaos:10 |
+| 研究成果を没収して見逃す（選択肢） | 5500 | 350 | -20 | Chaos:10 |
 
 ---
 
@@ -119,10 +119,22 @@ start
 「死霊術の禁忌に手を出した男——元宮廷魔術師のメルヴィンだ」
 ```
 
+#### `start_02_02`（text）
+**演出:** bg: bg_guild, bgm: bgm_quest_calm
+```text
+（メルヴィン……。十年前、禁忌の研究が露見して追放されたはずだが）
+```
+
 #### `start_03`（text）
 **演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: ギルドマスター
 ```text
 「教会は面子があって動けない。元宮廷の人間だからな。だからギルドに話が来た」
+```
+
+#### `start_03_02`（text）
+**演出:** bg: bg_guild, bgm: bgm_quest_calm
+```text
+ギルドマスターは声を潜め、周囲に会話が漏れないよう注意深く周囲を見渡した。
 ```
 
 #### `start_04`（text）
@@ -137,10 +149,22 @@ start
 聖王国の南、古い墓地の入口に着いた。地面が微かに震えている——死霊術の余波だ。
 ```
 
+#### `travel_01_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_field
+```text
+（枯れ果てた樹木が立ち並ぶ墓地には、人影はなく、ただ重苦しい静寂が支配している）
+```
+
 #### `crypt_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
 地下への階段を降りる。壁面に刻まれた魔法陣が青白く光っている。
+```
+
+#### `crypt_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（魔力の波が空気を通じて伝わり、皮膚を刺すような微かな痛みを覚える）
 ```
 
 #### `crypt_02`（text）
@@ -153,13 +177,19 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 | 選択肢 | next_node |
 |---------|-----------|
-| 「魔法陣を分析して罠を解除する」 | trap_route_01 |
-| 「時間をかけず強行突破する」 | force_01 |
+| 「魔法陣を分析して罠を解除する」 | `trap_route_01` |
+| 「時間をかけず強行突破する」 | `force_01` |
 
 #### `trap_route_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_mystery
 ```text
 魔法陣の構造を分析する。メルヴィンの仕掛けは精巧だが、理論的な弱点がある。
+```
+
+#### `trap_route_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_mystery
+```text
+（複雑に絡み合う魔力回路を一つずつ丁寧に解きほぐしていく）
 ```
 
 #### `trap_route_02`（text）
@@ -170,7 +200,7 @@ start
 
 #### `trap_route_03`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_mystery
-**次ノード:** merge_deep
+**次ノード:** `merge_deep`
 ```text
 罠を全て解除し、安全に通過できた。体力を温存したまま奥へ進める。
 ```
@@ -179,6 +209,12 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
 罠を無視して突っ走る。魔法陣が反応し、電撃が走る——！
+```
+
+#### `force_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（激しい魔力の放電が通路を照らし、青白い火花が飛び散る！）
 ```
 
 #### `force_02`（text）
@@ -196,7 +232,7 @@ start
 
 #### `force_03`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
-**次ノード:** merge_deep
+**次ノード:** `merge_deep`
 ```text
 ボロボロだが通り抜けた。罠を解除する知恵があればと悔やむが、先に進むしかない。
 ```
@@ -210,26 +246,35 @@ start
 #### `deep_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
-死霊術で蘇らせられた死者たち。意思はなく、ただ動くだけの人形だ。
+死霊術で蘇らせられた死者たち。意思はなく、ただ動くだだけの人形だ。
+```
+
+#### `deep_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（カタカタと骨を鳴らし、虚ろな眼窩に怪しい光を宿した骸骨たちが迫る）
 ```
 
 #### `deep_02`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
-アンデッドの群れが道を塞いでいる。突破するしかない！
+アンデッドの群れが道を塞がいんでいる。突破するしかない！
 ```
 
 #### `battle_undead`（battle）
 **演出:** bg: bg_crypt, bgm: bgm_battle
-**パラメータ:** enemy_group_id: 416
-```text
-死霊術で蘇ったアンデッドの群れが襲いかかる！
-```
+**パラメータ:** enemy_group_id: 416, next: `lab_01`, fail: `end_failure_01`
 
 #### `lab_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_mystery
 ```text
 アンデッドを退けると、研究室らしき部屋に辿り着いた。実験器具が整然と並んでいる。
+```
+
+#### `lab_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_mystery
+```text
+（薬品のすっぱい臭いが部屋に充満し、謎の液体がフラスコで沸騰している）
 ```
 
 #### `lab_02`（text）
@@ -244,6 +289,12 @@ start
 研究室の奥に鉄の扉がある。その前に、石のゴーレムが番人のように立っている。
 ```
 
+#### `lab_03_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（ゴーレムの全身には、メルヴィンの魔力供給ラインと思われる青い光の筋が走る）
+```
+
 #### `lab_04`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
@@ -252,10 +303,7 @@ start
 
 #### `battle_golem`（battle）
 **演出:** bg: bg_crypt, bgm: bgm_battle
-**パラメータ:** enemy_group_id: 413
-```text
-研究室の守護ゴーレムが起動した！
-```
+**パラメータ:** enemy_group_id: 413, next: `sage_01`, fail: `end_failure_01`
 
 #### `sage_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_mystery
@@ -263,10 +311,22 @@ start
 ゴーレムを破壊し、鉄の扉を開けた。奥にはさらに広大な空間が広がっている。
 ```
 
+#### `sage_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_mystery
+```text
+（大空間の床には巨大な魔法陣が描かれ、死者の魂と思しき光が吸い込まれている）
+```
+
 #### `sage_02`（text）
 **演出:** bg: bg_crypt, bgm: bgm_battle_boss
 ```text
 部屋の中央に、白髪の老人が佇んでいる。周囲を死霊の光が渦巻いている。
+```
+
+#### `sage_02_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_battle_boss
+```text
+（メルヴィンはゆっくりと振り向き、深い皺の刻まれた顔に狂気の笑みを浮かべた）
 ```
 
 #### `sage_03`（text）
@@ -283,15 +343,18 @@ start
 
 #### `battle_boss`（battle）
 **演出:** bg: bg_crypt, bgm: bgm_battle_boss
-**パラメータ:** enemy_group_id: 9065
-```text
-異端の大賢者メルヴィンとの戦い——！
-```
+**パラメータ:** enemy_group_id: 9065, next: `victory_01`, fail: `end_failure_01`
 
 #### `victory_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_calm
 ```text
 メルヴィンの杖が折れ、死霊の光が消えた。老賢者は座り込んで肩を震わせている。
+```
+
+#### `victory_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_calm
+```text
+（膝をついた老人の周囲から、渦巻いていた冷たい魔力が静かに霧散していく）
 ```
 
 #### `victory_02`（text）
@@ -310,13 +373,19 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_calm
 | 選択肢 | next_node |
 |---------|-----------|
-| 「研究所ごと破壊する。禁忌の知識は封じるべきだ」 | destroy_01 |
-| 「研究成果だけ没収する。メルヴィンは……見逃してやる」 | deal_01 |
+| 「研究所ごと破壊する。禁忌の知識は封じるべきだ」 | `destroy_01` |
+| 「研究成果だけ没収する。メルヴィンは……見逃してやる」 | `deal_01` |
 
 #### `destroy_01`（text）
 **演出:** bg: bg_crypt, bgm: bgm_quest_tense
 ```text
 研究ノートを燃やし、実験器具を破壊した。メルヴィンを教会に引き渡す。
+```
+
+#### `destroy_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+```text
+（炎に包まれる魔術書を見つめ、メルヴィンは絶望の叫びを上げた）
 ```
 
 #### `destroy_02`（text）
@@ -326,10 +395,10 @@ start
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_church
 ```text
-「異端の大賢者の拘束と研究所の破壊を確認。秩序を守った功績、高く評価する」
-禁忌の知識が世に出ることはなくなった。正しい選択だったと信じる。
+「大賢者の拘束と研究所の破壊を確認。秩序を守った功績、高く評価する」
+禁忌の知識が世に出ることはなくなった。正しい選択だと信じる。
 ```
 **rewards:** Gold:4000, Exp:450, Rep:20, Order:8
 
@@ -337,6 +406,12 @@ start
 **演出:** bg: bg_crypt, bgm: bgm_quest_mystery, speaker: メルヴィン
 ```text
 「……見逃す、だと？ 何を企んでいる」
+```
+
+#### `deal_01_02`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_mystery
+```text
+（こちらの条件を聞くと、老賢者は驚きと疑心の入り混じった目でこちらを見つめた）
 ```
 
 #### `deal_02`（text）
@@ -352,12 +427,19 @@ start
 ```
 
 #### `end_success_deal`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_slums
 ```text
 研究ノートを闇市で売りさばき、莫大な金を手にした。
 だがギルドからの信頼は失墜した。「異端者を逃がした」という噂が広まっている。
 ```
-**rewards:** Gold:5000, Exp:350, Rep:-15, Chaos:10
+**rewards:** Gold:5500, Exp:350, Rep:-20, Chaos:10
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_crypt, bgm: bgm_quest_tense
+**次ノード:** `end_failure`
+```text
+メルヴィンの放った漆黒の魔力弾が胸元に直撃する。激痛に耐えかね、崩れ落ちた。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_crypt
@@ -365,41 +447,4 @@ start
 メルヴィンの死霊魔法が全身を蝕んだ。意識が遠のく中、老賢者の呟きが聞こえた。
 「やはり、死は克服できない——まだ」
 ```
-
----
-
-## 4. 新規エネミー・アイテム定義参照
-
-**使用エネミー（新規）:**
-| ID | Slug | name | level | hp | atk | def |
-|-----|-----|-----|-----|-----|-----|-----|
-| 6035 | `boss_heretic_sage` | 異端の大賢者 | 28 | 900 | 80 | 15 |
-
-**使用エネミーグループ:**
-| ID | Slug | 構成エネミー | 用途 |
-|-----|-----|-----|-----|
-| 416 | `grp_wraith_trio` | アンデッド（流用） | アンデッド戦 |
-| 413 | `grp_undead_mixed` | ゴーレム系（流用） | ゴーレム中ボス戦 |
-| 9065 | `enemy_grp_boss_sage` | `boss_heretic_sage` | ボス: メルヴィン |
-
----
-
-## 5. CSVエントリ
-
-`quests_special.csv`
-```csv
-5205,qst_rep_heretic_sage,異端の大賢者,18,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":80}",false,,,冒険者ギルド,[最重要] 禁忌の魔法を研究する大賢者が地下墓地で実験を続けている。
-```
-
----
-
-## 6. 実装チェックリスト
-
-- [ ] ボスパラメータ `boss_heretic_sage` をenemies.csvに登録
-- [ ] エネミーグループ 9065 をenemy_groups.csvに登録
-- [ ] choice_approach（罠解除/強行突破）が正常に動作
-- [ ] hp_damage（強行突破ルート 20%）が正常に動作
-- [ ] バトル3回（アンデッド → ゴーレム → ボス）のフローが正常
-- [ ] 破壊ルート: Gold:4000, Exp:450, Rep:20, Order:8
-- [ ] 見逃すルート: Gold:5000, Exp:350, Rep:-15, Chaos:10
-- [ ] time_cost: 6（成功6日 / 失敗3日）
+**rewards:** Gold:0

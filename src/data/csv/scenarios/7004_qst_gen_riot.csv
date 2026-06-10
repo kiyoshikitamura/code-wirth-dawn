@@ -1,21 +1,33 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"自治会の事務所に呼ばれた。\n窓の外から怒声が聞こえる。","{""type"":""text"",""bg"":""bg_office"",""bgm"":""bgm_quest_calm""}",text_01
-NODE,text_01,"「東区画の広場に、\n　飢えた市民が集まっている」","{""type"":""text"",""bg"":""bg_office"",""speaker_name"":""自治会事務官""}",text_02
-NODE,text_02,"「このままでは暴動になる。\n　鎮圧してくれ」","{""type"":""text"",""bg"":""bg_office"",""speaker_name"":""自治会事務官""}",text_03
-NODE,text_03,"「先月の凶作で食い詰めた農民だ。\n　自治会の倉庫を襲う計画を立てている」","{""type"":""text"",""bg"":""bg_office"",""speaker_name"":""自治会事務官""}",text_04
-NODE,text_04,"「暴動を許せば秩序が崩れる。\n　力で抑えてくれ——なるべく殺さずに」","{""type"":""text"",""bg"":""bg_office"",""speaker_name"":""自治会事務官""}",square_01
-NODE,square_01,"東区画の広場に向かった。\nぼろ切れを纏った市民たちが群がっている。","{""type"":""text"",""bg"":""bg_slum"",""bgm"":""bgm_quest_tense""}",square_02
-NODE,square_02,"子供を抱えた女、杖にすがる老人。\nそして鎌や棒切れを握った若い男たち。","{""type"":""text"",""bg"":""bg_slum""}",square_03
-NODE,square_03,"「俺たちは飢えてるんだ！\n　倉庫を開けろ！ 食わせろ！」","{""type"":""text"",""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー""}",confront_01
-NODE,confront_01,"群衆の前に立ちはだかった。\n一瞬、静寂が広がった。","{""type"":""text"",""bg"":""bg_slum""}",confront_02
-NODE,confront_02,"「自治会の犬か……\n　飢えた子供を守ってるだけだぞ！」","{""type"":""text"",""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー""}",confront_03
-NODE,confront_03,"後ろの群衆がざわめく。\n棒切れを握る手に力が入ったのが見えた。","{""type"":""text"",""bg"":""bg_slum""}",battle
-NODE,battle,"暴動が始まった！\n武装した市民たちが襲いかかってきた！","{""type"":""battle"",""bg"":""bg_slum"",""bgm"":""bgm_battle"",""enemy_group_id"":404}",
+NODE,start_prep,"石造りの重苦しい自治会事務所。暖炉の煤が天井を黒く汚している。","{""bg"":""bg_office"",""type"":""text""}",start
+NODE,start,"自治会の事務所に呼ばれた。閉め切った窓の外から怒声が響く。","{""bg"":""bg_office"",""type"":""text""}",text_01
+NODE,text_01,"「東区画の広場に、腹を空かせた市民どもが集結し始めている」","{""bg"":""bg_office"",""speaker_name"":""自治会事務官"",""type"":""text""}",text_02
+NODE,text_02,"「放っておけば確実に大規模な暴動へと発展する。ただちに鎮圧してもらいたい」","{""bg"":""bg_office"",""speaker_name"":""自治会事務官"",""type"":""text""}",text_03
+NODE,text_03,"「首謀者は先月の凶作で食い詰めた農民どもだ。備蓄倉庫を襲撃する計画を立てているらしい」","{""bg"":""bg_office"",""speaker_name"":""自治会事務官"",""type"":""text""}",text_04
+NODE,text_04,"「暴動を許せば街の秩序が崩壊する。ただし、余計な反発を避けるためにも、なるべく殺さずにね」","{""bg"":""bg_office"",""speaker_name"":""自治会事務官"",""type"":""text""}",text_04_think
+NODE,text_04_think,"「なるべく殺さずに」。冷たい官僚の言い回しに胸が痛む。","{""bg"":""bg_office"",""type"":""text""}",square_road
+NODE,square_road,"裏通りをすり抜けて進む。物乞いさえ消えたスラムは、不気味なほどに静まり返っていた。","{""bg"":""bg_slum"",""type"":""text""}",square_01
+NODE,square_01,"だが、角を曲がって東区画の広場に入った途端、ぼろ切れを纏った市民たちの怒号が耳を刺す。","{""bg"":""bg_slum"",""type"":""text""}",square_scenery
+NODE,square_scenery,"空気は澱み、熱気の中に酸っぱいゴミの臭いが混じっていた。","{""bg"":""bg_slum"",""type"":""text""}",square_02
+NODE,square_02,"子供を抱えた女、杖にすがる老人。錆びた鎌を握る若い男。","{""bg"":""bg_slum"",""type"":""text""}",square_03
+NODE,square_03,"「俺たちは飢えてるんだ！ 倉庫を開けろ！」","{""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー"",""type"":""text""}",square_mood
+NODE,square_mood,"男の叫びに応え、人々が手に持った棒切れを突き上げる。","{""bg"":""bg_slum"",""type"":""text""}",square_04_think
+NODE,square_04_think,"彼らを力で抑えることが、本当にこの街の「秩序」なのか。","{""bg"":""bg_slum"",""type"":""text""}",confront_01
+NODE,confront_01,"群衆の前にゆっくりと立ちはだかった。一瞬、静寂が訪れる。","{""bg"":""bg_slum"",""type"":""text""}",confront_look
+NODE,confront_look,"武器を抜く私を睨みつけ、人々の目に恐怖と剥き出しの憎悪が浮かんだ。","{""bg"":""bg_slum"",""type"":""text""}",confront_02
+NODE,confront_02,"「自治会の犬か……飢えた子供を守ってるだけだ」","{""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー"",""type"":""text""}",confront_03
+NODE,confront_03,"群衆が殺気立つ。錆びた農具を握る手が小刻みに震えていた。","{""bg"":""bg_slum"",""type"":""text""}",confront_shout
+NODE,confront_shout,"「邪魔するなら容赦はしねえ！ 叩き出せ！」","{""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー"",""type"":""text""}",battle
+NODE,battle,"暴動が始まった！","{""bg"":""bg_slum"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""enemy_name"":""飢えた市民たち"",""type"":""battle""}",
 CHOICE,,win,,after_01
 CHOICE,,lose,,end_failure
-NODE,after_01,"暴徒を鎮圧した。\n地面にうずくまる市民たち。","{""type"":""text"",""bg"":""bg_slum"",""bgm"":""bgm_quest_calm""}",after_02
-NODE,after_02,"リーダーの男が血を吐きながら、\nこちらを見上げた。","{""type"":""text"",""bg"":""bg_slum""}",after_03
-NODE,after_03,"「……俺たちが悪いんじゃねえ。\n　飢えさせた奴らが悪いんだ……」","{""type"":""text"",""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー""}",after_04
-NODE,after_04,"自治会の衛兵が到着し、群衆を解散させた。\n子供の泣き声が耳に残った。","{""type"":""text"",""bg"":""bg_slum""}",end_success
-NODE,end_success,"鎮圧任務完了。自治会から報酬を受け取った。\nあの男の言葉が胸に刺さったままだ。","{""type"":""end"",""result"":""success"",""bg"":""bg_office""}",
-NODE,end_failure,"暴徒に押し返された。\n鎮圧は失敗に終わった。","{""type"":""end"",""result"":""failure"",""bg"":""bg_slum""}",
+NODE,after_01,"暴徒を鎮圧した。地面に倒れ、うずくまる市民たちの呻き声。","{""bg"":""bg_slum"",""type"":""text""}",after_bloodshed
+NODE,after_bloodshed,"折れた木棒と農具が散らばる。流れた血は赤黒く土に染みる。","{""bg"":""bg_slum"",""type"":""text""}",after_02
+NODE,after_02,"リーダーの男が額から血を流しながら、こちらを見上げた。","{""bg"":""bg_slum"",""type"":""text""}",after_03
+NODE,after_03,"「…俺たちが悪いんじゃねえ…飢えさせた奴らが悪いんだっ！」","{""bg"":""bg_slum"",""speaker_name"":""暴徒のリーダー"",""type"":""text""}",after_04
+NODE,after_04,"重装備の衛兵たちが到着し、泣き叫ぶ群衆を強引に解散させた。","{""bg"":""bg_slum"",""type"":""text""}",after_silent
+NODE,after_silent,"誰もいなくなった広場に、千切れた子供の靴だけが残る。","{""bg"":""bg_slum"",""type"":""text""}",return_office
+NODE,return_office,"冷たい静寂が降り積もる東区画を後にし、私たちは自治会事務所へと足を向けた。","{""bg"":""bg_office"",""type"":""text""}",return_scenery
+NODE,return_scenery,"見上げる空は灰色に曇り、乾いた風が吹き抜けては路地の土埃を激しく巻き上げる。","{""bg"":""bg_office"",""type"":""text""}",end_success
+NODE,end_success,"任務完了。血の付いた報酬の金貨は、ひどく冷たかった。","{""bg"":""bg_office"",""rewards"":{""gold"":200,""reputation"":5,""alignment_shift"":{""order"":5,""justice"":5}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"暴徒の熱量に押し返された。地面に這いつくばり敗北を知る。","{""bg"":""bg_slum"",""type"":""end"",""result"":""failure""}",

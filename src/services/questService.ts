@@ -189,31 +189,75 @@ export class QuestService {
             }
         }
 
-        // 3. completed_quest: 前提クエスト完了チェック (ID or Slug)
+        // 3. completed_quest: 前提クエスト完了チェック (ID or Slug) - Supports multiple quests (AND with |, comma, or as array; OR with ||)
         if (requirements.completed_quest) {
-            const reqVal = String(requirements.completed_quest);
-            let targetId: string | null = null;
-            if (!isNaN(Number(reqVal))) {
-                targetId = reqVal;
-            } else {
-                const { data: targetQuest } = await supabase
-                    .from('scenarios')
-                    .select('id')
-                    .eq('slug', reqVal)
-                    .maybeSingle();
-                if (targetQuest) targetId = targetQuest.id;
-            }
+            const rawCompletedQuest = requirements.completed_quest;
+            const isOrCondition = typeof rawCompletedQuest === 'string' && rawCompletedQuest.includes('||');
 
-            if (targetId) {
-                const { data } = await supabase
-                    .from('user_completed_quests')
-                    .select('scenario_id')
-                    .eq('user_id', userId)
-                    .eq('scenario_id', targetId)
-                    .maybeSingle();
-                if (!data) return { valid: false, reason: 'Prerequisite quest not completed' };
+            if (isOrCondition) {
+                const reqVals = String(rawCompletedQuest).split('||').map(v => v.trim());
+                let anyCompleted = false;
+
+                for (const reqVal of reqVals) {
+                    let targetId: string | null = null;
+                    if (!isNaN(Number(reqVal))) {
+                        targetId = reqVal;
+                    } else {
+                        const { data: targetQuest } = await supabase
+                            .from('scenarios')
+                            .select('id')
+                            .eq('slug', reqVal)
+                            .maybeSingle();
+                        if (targetQuest) targetId = targetQuest.id;
+                    }
+
+                    if (targetId) {
+                        const { data } = await supabase
+                            .from('user_completed_quests')
+                            .select('scenario_id')
+                            .eq('user_id', userId)
+                            .eq('scenario_id', targetId)
+                            .maybeSingle();
+                        if (data) {
+                            anyCompleted = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!anyCompleted) {
+                    return { valid: false, reason: `None of the prerequisite quests (${reqVals.join(' or ')}) are completed` };
+                }
             } else {
-                return { valid: false, reason: 'Invalid prerequisite quest definition' };
+                const reqVals = Array.isArray(rawCompletedQuest)
+                    ? rawCompletedQuest
+                    : String(rawCompletedQuest).split(/[|,]/).map(v => v.trim());
+
+                for (const reqVal of reqVals) {
+                    let targetId: string | null = null;
+                    if (!isNaN(Number(reqVal))) {
+                        targetId = reqVal;
+                    } else {
+                        const { data: targetQuest } = await supabase
+                            .from('scenarios')
+                            .select('id')
+                            .eq('slug', reqVal)
+                            .maybeSingle();
+                        if (targetQuest) targetId = targetQuest.id;
+                    }
+
+                    if (targetId) {
+                        const { data } = await supabase
+                            .from('user_completed_quests')
+                            .select('scenario_id')
+                            .eq('user_id', userId)
+                            .eq('scenario_id', targetId)
+                            .maybeSingle();
+                        if (!data) return { valid: false, reason: `Prerequisite quest (${reqVal}) not completed` };
+                    } else {
+                        return { valid: false, reason: `Invalid prerequisite quest definition: ${reqVal}` };
+                    }
+                }
             }
         }
 

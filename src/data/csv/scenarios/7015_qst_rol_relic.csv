@@ -1,30 +1,37 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"教会の司教から直々の依頼を受けた。\n宝物庫から最古の聖杯が盗み出されたという。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_1
-NODE,intro_1,"「身の程知らずのネズミどもが、主の器を汚しました。\n　奴らの隠れ家は、東の森の奥にある廃城跡だと判明しています」","{""bg"":""bg_guild"",""speaker_name"":""司教"",""type"":""text""}",intro_2
-NODE,intro_2,"「闇市に流される前に、必ず取り戻してください。\n　血まみれにしてでも構いません。神罰を下すのです」","{""bg"":""bg_guild"",""speaker_name"":""司教"",""type"":""text""}",forest_approach
-NODE,forest_approach,"東の森を抜け、廃城跡に近づく。\n苔むした石壁の隙間に、見張りの男たちが立っているのが見えた。","{""bg"":""bg_forest_day"",""bgm"":""bgm_field"",""type"":""text""}",stealth_or_assault
-NODE,stealth_or_assault,"隠れて潜入するには見張りの数が多すぎる。\n正面突破が手っ取り早いだろう。武器を構え、歩み出る。","{""bg"":""bg_forest_day"",""type"":""text""}",spotted
-NODE,spotted,"「誰だ！？ 騎士団の犬か！」\n見張りの一人が声を上げ、クロスボウを構えた。","{""bg"":""bg_forest_day"",""bgm"":""bgm_quest_tense"",""type"":""text""}",assault
-NODE,assault,"矢を弾き落とし、見張りの懐へ飛び込む。\n一気にアジト内が騒がしくなり、無数の足音がこちらへ向かってきた。","{""bg"":""bg_forest_day"",""type"":""text""}",battle_wave1
-NODE,battle_wave1,"盗賊団の構成員たちが立ちはだかる！","{""bg"":""bg_forest_day"",""bgm"":""bgm_battle"",""enemy_group_id"":418,""enemy_name"":""盗賊団の構成員"",""type"":""battle""}",
+NODE,start,"大聖堂の宝物庫。重々しい扉がこじ開けられ、司教たちが怒りと困惑に顔を歪めていた。","{""bg"":""bg_church"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_desc
+NODE,start_desc,"台座の上に安置されていたはずの最古の聖杯は消え去り、塵だけが残されている。","{""bg"":""bg_church"",""type"":""text""}",intro_1
+NODE,intro_1,"「身の程知らずの盗賊どもが、教会宝物庫より主の尊き聖遺物を盗み出しました」","{""bg"":""bg_church"",""speaker_name"":""司教"",""type"":""text""}",intro_1_detail
+NODE,intro_1_detail,"「奴らのアジトは、東の森の奥にある廃城跡だと突き止めています」","{""bg"":""bg_church"",""speaker_name"":""司教"",""type"":""text""}",intro_2
+NODE,intro_2,"「闇市へと売却される前に取り戻すのです。悪党どもは全員、ただちに『浄化』しなさい」","{""bg"":""bg_church"",""speaker_name"":""司教"",""type"":""text""}",intro_2_detail
+NODE,intro_2_detail,"「聖なる品のためです、血が流れることを恐れてはなりません。神の正義を示しなさい」","{""bg"":""bg_church"",""speaker_name"":""司教"",""type"":""text""}",forest_approach
+NODE,forest_approach,"手がかりを頼りに東の森へ進む。木々の隙間から、廃城の荒れた石壁が見えた。","{""bg"":""bg_forest_day"",""bgm"":""bgm_field"",""type"":""text""}",forest_scenery
+NODE,forest_scenery,"城壁の崩れた隙間では、数人の野盗たちが武器を手に周囲を警戒していた。","{""bg"":""bg_forest_day"",""type"":""text""}",stealth_or_assault
+NODE,stealth_or_assault,"だが、身を隠して進むには地形が開けすぎている。不意打ちは諦め、正面から力ずくで突破を図る。","{""bg"":""bg_forest_day"",""type"":""text""}",spotted
+NODE,spotted,"「曲者だ！ 騎士団の回し者か！」","{""bg"":""bg_forest_day"",""bgm"":""bgm_quest_tense"",""type"":""text""}",spotted_desc
+NODE,spotted_desc,"見張りが声を上げ、即座に矢を放ってきた。私はそれを剣で弾き落とす。","{""bg"":""bg_forest_day"",""type"":""text""}",assault
+NODE,assault,"アジトの奥から、騒ぎを聞きつけた盗賊たちが怒号と共に一斉に押し寄せてきた！","{""bg"":""bg_forest_day"",""type"":""text""}",battle_wave1
+NODE,battle_wave1,"包囲される前に敵の前衛を叩き潰す！ 容赦なく武器を振るえ！","{""bg"":""bg_forest_day"",""bgm"":""bgm_battle"",""enemy_group_id"":418,""enemy_name"":""盗賊団の構成員"",""type"":""battle""}",
 CHOICE,,win,,after_wave1
 CHOICE,,lose,,end_failure
-NODE,after_wave1,"前衛の盗賊たちを斬り伏せた。\n悲鳴と怒号を聞きつけ、廃城の奥から大柄な男が姿を現す。","{""bg"":""bg_forest_day"",""bgm"":""bgm_quest_tense"",""type"":""text""}",boss_appear
-NODE,boss_appear,"「てめえ、たった一人で乗り込んできやがったのか。\n　いい度胸だが、死に場所を間違えたな」","{""bg"":""bg_forest_day"",""speaker_name"":""盗賊団の頭目"",""type"":""text""}",boss_talk
-NODE,boss_talk,"「あの金ピカの杯は俺たちのモンだ。\n　あれを売れば、一生遊んで暮らせるんだよ！」","{""bg"":""bg_forest_day"",""speaker_name"":""盗賊団の頭目"",""type"":""text""}",battle_wave2
-NODE,battle_wave2,"盗賊団の頭目と精鋭部隊との決戦！","{""bg"":""bg_forest_day"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":419,""enemy_name"":""盗賊団の頭領"",""type"":""battle""}",
+NODE,after_wave1,"前衛を斬り伏せ、廃城の内庭に侵入する。奥からずっしりとした足音が響く。","{""bg"":""bg_forest_day"",""bgm"":""bgm_quest_tense"",""type"":""text""}",boss_appear
+NODE,boss_appear,"「てめえ、たった一人で乗り込んできやがったか。いい度胸だな」","{""bg"":""bg_forest_day"",""speaker_name"":""盗賊団の頭目"",""type"":""text""}",boss_talk
+NODE,boss_talk,"「あの聖杯は俺たちのものだ。売れば一生遊んで暮らせるんだよ！」","{""bg"":""bg_forest_day"",""speaker_name"":""盗賊団の頭目"",""type"":""text""}",battle_wave2
+NODE,battle_wave2,"聖杯に目が眩んだ強欲な頭目を討ち倒し、主の器を奪還せよ！","{""bg"":""bg_forest_day"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":419,""enemy_name"":""盗賊団の頭領"",""type"":""battle""}",
 CHOICE,,win,,after_wave2
 CHOICE,,lose,,end_failure
-NODE,after_wave2,"激闘の末、頭目が崩れ落ちた。\n残った手下たちは蜘蛛の子を散らすように逃げていった。","{""bg"":""bg_forest_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",find_relic
-NODE,find_relic,"頭目のテントを漁ると、厳重に鍵の掛かった木箱が見つかった。\n錠を壊して開けると、見事な金の聖杯が鎮座している。","{""bg"":""bg_forest_day"",""type"":""text""}",check_relic
-NODE,check_relic,"傷ひとつない。無事だ。\nこれを布に包んで背負い、血に染まった廃城を後にした。\n\n……だが、ふと考えた。この聖杯を闇市に持ち込めば、\n教会に届けるよりはるかに高値で売れるだろう。","{""bg"":""bg_forest_day"",""type"":""text""}",choice_relic
-NODE,choice_relic,"聖杯を手に、岐路に立つ。","{""bg"":""bg_road_day"",""type"":""choice""}",
+NODE,after_wave2,"激闘の末、頭目は血の海に沈んだ。残された手下たちは我先にと逃げ出す。","{""bg"":""bg_forest_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",find_relic
+NODE,find_relic,"奥のテントの木箱から、見事な細工が施された金の聖杯を見つけ出した。","{""bg"":""bg_forest_day"",""type"":""text""}",check_relic
+NODE,check_relic,"美しい。だが、この聖杯を闇市に持ち込めば、莫大な金になるだろう。","{""bg"":""bg_forest_day"",""type"":""text""}",choice_relic
+NODE,choice_relic,"目の前の聖杯をどうする？ 信仰か、あるいは目の前の富か。","{""bg"":""bg_road_day"",""type"":""choice""}",
 CHOICE,,教会に届ける,,report
 CHOICE,,闇市で売却する,,sell_market
-NODE,report,"王都に戻り、司教に聖杯を献上する。\n彼は聖杯を受け取ると、震える手でそれを高く掲げた。","{""bg"":""bg_guild"",""type"":""text""}",bishop_thanks
-NODE,bishop_thanks,"「おお……主よ。あなたの器が戻りました。\n　冒険者よ、大儀であった。これは教会からの感謝の印だ」","{""bg"":""bg_guild"",""speaker_name"":""司教"",""type"":""text""}",end_success
-NODE,end_success,"報酬を受け取った。正義を果たし、教会の信頼を得た。\n盗賊たちの命の代償としては、十分すぎる額だった。","{""bg"":""bg_guild"",""rewards"":{""gold"":500,""alignment_shift"":{""order"":10},""exp"":200,""reputation"":10},""type"":""end"",""result"":""success""}",
-NODE,sell_market,"裏路地の闇市に聖杯を持ち込んだ。\n胡散臭い商人が金布を剥がし、聖杯の表面を指で撫でた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",sell_deal
-NODE,sell_deal,"「教会の国宝か……これは高く売れる。\n　倍額で買おう。出所は聞かん。ここではそういう決まりだ」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",end_dark
-NODE,end_dark,"重い金袋を受け取った。教会への報酬の倍以上。\n司教には「盗賊団が既に売り払っていた」と報告しておいた。\n嘘がバレなければいいが。","{""bg"":""bg_slums"",""rewards"":{""gold"":1000,""alignment_shift"":{""evil"":20},""reputation"":-30},""type"":""end"",""result"":""success""}",
-NODE,end_failure,"盗賊団の連携は見事だった。\n多勢に無勢。剣を弾かれ、意識が闇に沈んでいく。","{""bg"":""bg_forest_day"",""type"":""end"",""result"":""failure""}",
+NODE,report,"聖杯を慎重に包んで王都へと戻り、大聖堂の司教へ献上した。彼は一瞬で歓喜の声を上げる。","{""bg"":""bg_guild"",""type"":""text""}",bishop_thanks
+NODE,bishop_thanks,"「おお、主の器が戻った！ 感謝します。これは約束の報酬です」","{""bg"":""bg_guild"",""speaker_name"":""司教"",""type"":""text""}",bishop_thanks_02
+NODE,bishop_thanks_02,"「あなたのような頼もしい冒険者には、また主の導きがあることでしょう」","{""bg"":""bg_guild"",""speaker_name"":""司教"",""type"":""text""}",end_success
+NODE,end_success,"報酬の金貨を手にする。教会の信力を高める手伝いをした満足感を得た。","{""bg"":""bg_guild"",""rewards"":{""gold"":500,""alignment_shift"":{""order"":10},""exp"":200,""reputation"":10},""type"":""end"",""result"":""success""}",
+NODE,sell_market,"聖杯を布に包み、王都の裏路地に潜む闇市へと足を運んだ。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",sell_market_desc
+NODE,sell_market_desc,"怪しげな骨董屋の主人が聖杯の刻印を眺め、いやらしい笑みを浮かべる。","{""bg"":""bg_slums"",""type"":""text""}",sell_deal
+NODE,sell_deal,"「これは教会の逸品だな。出所は問わん、倍の額で買い取ろう」","{""bg"":""bg_slums"",""speaker_name"":""闇商人"",""type"":""text""}",end_dark
+NODE,end_dark,"重い金袋を懐に収める。司教には『聖杯は既に売却されていた』と報告した。","{""bg"":""bg_slums"",""rewards"":{""gold"":1000,""alignment_shift"":{""evil"":20},""reputation"":-30},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"盗賊たちの数の前に力尽き、倒れ伏す。聖杯は彼らの手の内に残された。","{""bg"":""bg_forest_day"",""type"":""end"",""result"":""failure""}",

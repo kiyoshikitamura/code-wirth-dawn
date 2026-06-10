@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 5203 |
 | **Slug** | `qst_rep_oni_general` |
-| **クエスト種別** | 名声連動ボス（Reputation） |
-| **推奨レベル** | 16 |
+| **クエスト種別** | 特殊クエスト（Special） |
+| **推奨レベル** | 16（Hard） |
 | **難度** | 4 |
 | **依頼主** | 代官所 |
-| **出現条件** | EP5（`main_ep05`）クリア済み, Rep≥60 |
-| **リピート** | 1世代1回 |
-| **難易度Tier** | Tier 4（名声連動） |
-| **経過日数 (time_cost)** | 6（成功: 6日 / 失敗: 3日） |
-| **ノード数** | 36ノード |
+| **出現条件** | 第5話「大義という名の虚妄」（6005）クリア / 滞在拠点: 夜刀神国拠点 / 名声 60 以上 |
+| **リピート** | 現世代で1回（継承後は再出現） |
+| **経過日数 (time_cost)** | 6 |
+| **ノード数** | 50ノード |
+| **ゲストNPC** | なし |
+| **難易度Tier** | Hard（rec_level: 16） |
 | **サムネイル画像** | `/images/quests/bg_forest_night.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -100,27 +100,45 @@ start
 ### ノード詳細
 
 #### `start`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: 代官
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 代官
 ```text
 「北の古戦場から、異様な報告が届いている。百年前の亡霊が蘇ったと」
 ```
 
 #### `start_02`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm, speaker: 代官
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 代官
 ```text
 「鬼将・蛮骨。百年前の大合戦で討たれたはずの鬼の大将だ」
 ```
 
+#### `start_02_02`（text）
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
+```text
+（蛮骨……。夜刀神国の歴史書に必ず名が出る、伝説的な大悪鬼だな）
+```
+
 #### `start_03`（text）
-**演出:** bg: bg_guild, bgm: bgm_quest_calm
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
 ```text
 代官の顔は蒼い。蛮骨の名は今なお夜刀の民を震え上がらせる。名声ある者でなければ引き受ける者はいまい。
+```
+
+#### `start_03_02`（text）
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
+```text
+（代官は小刻みに手を震わせながら、厳重に封をされた依頼書を手渡した）
 ```
 
 #### `travel_01`（text）
 **演出:** bg: bg_road_day, bgm: bgm_field
 ```text
 古戦場へ向かう。道中、逃げてきた村人たちとすれ違った。目に恐怖が浮かんでいる。
+```
+
+#### `travel_01_02`（text）
+**演出:** bg: bg_road_day, bgm: bgm_field
+```text
+（彼らは着の身着のままで、背後の荒野を恐れるように何度も振り返っていた）
 ```
 
 #### `travel_02`（text）
@@ -135,6 +153,12 @@ start
 古戦場に入った。地面には錆びた武具が散乱し、霧が立ち込めている。
 ```
 
+#### `field_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_tense
+```text
+（百年前の血を吸った土壌から、青白い怨念の霧が絶え間なく湧き出ている）
+```
+
 #### `field_02`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
 ```text
@@ -143,7 +167,6 @@ start
 
 #### `random_fog`（random_branch）
 **パラメータ:** prob: 60, next: `safe_path`, fallback: `lost_01`
-（60%の確率で正しい道を見つける）
 
 #### `safe_path`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
@@ -153,7 +176,7 @@ start
 
 #### `safe_path_02`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
-**次ノード:** merge_battle
+**次ノード:** `merge_battle`
 ```text
 体力を温存したまま、古戦場の核心部に到達できた。
 ```
@@ -162,6 +185,12 @@ start
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
 ```text
 霧に惑わされ、足元の朽ちた武具に足を取られた——
+```
+
+#### `lost_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_tense
+```text
+（底なしの泥濘と、刃のように鋭い瓦礫が足元を襲う！）
 ```
 
 #### `lost_trap`（hp_damage）
@@ -173,9 +202,15 @@ start
 
 #### `lost_02`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
-**次ノード:** merge_battle
 ```text
 傷を手当てし、なんとか古戦場の中心部に辿り着いた。体力は削られたが、進むしかない。
+```
+
+#### `lost_02_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_tense
+**次ノード:** `merge_battle`
+```text
+（痛む足を引きずりながら、怨念の渦巻く中心地へと足を進める）
 ```
 
 #### `merge_battle`（text）
@@ -186,10 +221,7 @@ start
 
 #### `battle_ghost`（battle）
 **演出:** bg: bg_forest_night, bgm: bgm_battle
-**パラメータ:** enemy_group_id: 416
-```text
-古戦場の亡霊兵が襲いかかる！
-```
+**パラメータ:** enemy_group_id: 416, next: `deeper_01`, fail: `end_failure_01`
 
 #### `deeper_01`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_mystery
@@ -197,10 +229,22 @@ start
 亡霊兵を退けると、霧が少し晴れた。古戦場の最奥に、朽ちた陣屋が見える。
 ```
 
+#### `deeper_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_mystery
+```text
+（かつての大将軍が腰掛けたであろう、戦塵に塗れた幕舎が厳かに佇んでいる）
+```
+
 #### `deeper_02`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_mystery
 ```text
 陣屋の周囲には、百年前の武将旗が風に揺れている。蛮骨の本陣だ。
+```
+
+#### `deeper_02_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_mystery
+```text
+（破れた旗には、蛮骨の家紋が黒々とした怨念のオーラを帯びて浮かんでいる）
 ```
 
 #### `deeper_03`（text）
@@ -213,6 +257,12 @@ start
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
 ```text
 陣屋の奥に、巨大な骨が組み上げられた祭壇がある。その上に——鬼の影が立っていた。
+```
+
+#### `altar_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_tense
+```text
+（その影はゆっくりと振り向き、深紅の光を帯びた眼光でこちらを睨み据えた）
 ```
 
 #### `altar_02`（text）
@@ -229,15 +279,18 @@ start
 
 #### `battle_boss`（battle）
 **演出:** bg: bg_forest_night, bgm: bgm_battle_boss
-**パラメータ:** enemy_group_id: 9063
-```text
-鬼将・蛮骨との死闘——！
-```
+**パラメータ:** enemy_group_id: 9063, next: `victory_01`, fail: `end_failure_01`
 
 #### `victory_01`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_calm
 ```text
 蛮骨の巨体が揺らいだ。怨念の炎が弱まっている。
+```
+
+#### `victory_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_calm
+```text
+（大気を震わせていた強大な瘴気が霧散し、彼の巨躯から力が抜けていく）
 ```
 
 #### `victory_02`（text）
@@ -256,13 +309,19 @@ start
 **演出:** bg: bg_forest_night, bgm: bgm_quest_calm
 | 選択肢 | next_node |
 |---------|-----------|
-| 「怨念ごと討ち滅ぼす。二度と蘇るな」 | destroy_01 |
-| 「鎮魂の儀を行う。安らかに眠れ」 | requiem_01 |
+| 「怨念ごと討ち滅ぼす。二度と蘇るな」 | `destroy_01` |
+| 「鎮魂の儀を行う。安らかに眠れ」 | `requiem_01` |
 
 #### `destroy_01`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_tense
 ```text
 蛮骨の核を砕いた。怨念が爆発し、古戦場の霧が一気に晴れた。
+```
+
+#### `destroy_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_tense
+```text
+（天を覆っていた黒雲が裂け、差し込む月光が荒涼とした古戦場を照らし出す）
 ```
 
 #### `destroy_02`（text）
@@ -272,7 +331,7 @@ start
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_yato_city
 ```text
 「鬼将の怨念を完全に消滅させたか。力ずくだが、確実な方法だ」
 村人たちは安堵した。恐怖は去り、日常が戻る。
@@ -285,10 +344,22 @@ start
 古の鎮魂の祈りを捧げる。蛮骨の体が光に包まれていく。
 ```
 
+#### `requiem_01_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_calm
+```text
+（懐から取り出した香を焚き、静かに鎮魂の祝詞を唱え始める）
+```
+
 #### `requiem_02`（text）
 **演出:** bg: bg_forest_night, bgm: bgm_quest_calm, speaker: 蛮骨
 ```text
 「……感謝する。百年、ずっと戦い続けていた。……もう、疲れた」
+```
+
+#### `requiem_02_02`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_calm
+```text
+（蛮骨の巨躯は穏やかな光の粒子となり、夜空へとゆっくり昇っていった）
 ```
 
 #### `requiem_03`（text）
@@ -298,51 +369,23 @@ start
 ```
 
 #### `end_success_peace`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_yato_city
 ```text
 「鎮魂の儀で成仏させたか。報酬は控えめだが、村の長老たちが深く感謝している」
 秩序を乱さず、怨霊を鎮めた。古の武士道に通じる選択だった。
 ```
 **rewards:** Gold:2000, Exp:350, Rep:25, Order:8
 
+#### `end_failure_01`（text）
+**演出:** bg: bg_forest_night, bgm: bgm_quest_tense
+**次ノード:** `end_failure`
+```text
+蛮骨の放った大太刀の一撃が防具を粉砕する。激痛と衝撃に視界が暗転した。
+```
+
 #### `end_failure`（end_failure）
 **演出:** bg: bg_forest_night
 ```text
 蛮骨の拳が全てを薙ぎ払った。百年の怨念の前に、自分の力はまだ足りなかった。
 ```
-
----
-
-## 4. 新規エネミー・アイテム定義参照
-
-**使用エネミー（新規）:**
-| ID | Slug | name | level | hp | atk | def |
-|-----|-----|-----|-----|-----|-----|-----|
-| 6033 | `boss_oni_general` | 鬼将・蛮骨 | 24 | 1000 | 75 | 12 |
-
-**使用エネミーグループ:**
-| ID | Slug | 構成エネミー | 用途 |
-|-----|-----|-----|-----|
-| 416 | `grp_wraith_trio` | `enemy_wraith`×3 | 亡霊兵戦（流用） |
-| 9063 | `enemy_grp_boss_oni` | `boss_oni_general` | ボス: 蛮骨 |
-
----
-
-## 5. CSVエントリ
-
-`quests_special.csv`
-```csv
-5203,qst_rep_oni_general,鬼将軍の再臨,16,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":60}",false,,,代官所,[退魔依頼] 古戦場に百年前の鬼将の亡霊が復活。周辺の村が脅かされている。
-```
-
----
-
-## 6. 実装チェックリスト
-
-- [ ] ボスパラメータ `boss_oni_general` をenemies.csvに登録
-- [ ] エネミーグループ 9063 をenemy_groups.csvに登録
-- [ ] random_fog（霧の古戦場: 60%/40%）が正常動作
-- [ ] hp_damage トラップ（10%）が正常に動作
-- [ ] 討伐ルート: Gold:3000, Exp:400, Rep:15, Justice:5
-- [ ] 鎮魂ルート: Gold:2000, Exp:350, Rep:25, Order:8
-- [ ] time_cost: 6（成功6日 / 失敗3日）
+**rewards:** Gold:0

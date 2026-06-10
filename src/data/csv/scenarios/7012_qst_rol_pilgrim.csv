@@ -1,30 +1,35 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"教会の入り口で、依頼主である巡礼者と対面した。\n質素なローブを纏い、首から大きな十字架を下げた男だ。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_1
-NODE,intro_1,"「あなたが護衛の方ですね。\n　主神の声が聞こえるのです。あの危険な谷の奥底へ行かねばなりません」","{""bg"":""bg_guild"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",intro_2
-NODE,intro_2,"「あなたが私の盾となるのは、神の思し召しです。\n　さあ、参りましょう。神の御導きのままに」","{""bg"":""bg_guild"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",join_albert
-NODE,join_albert,"まったく話が通じない相手だ。\nともかく、彼が死ねば報酬はない。聖地への長い旅が始まった。","{""bg"":""bg_road_day"",""guest_id"":""npc_pilgrim_albert"",""is_escort_target"":true,""type"":""guest_join""}",mountain_road
-NODE,mountain_road,"数日後、険しい山道に差し掛かった。\n岩肌が露出し、道幅は馬車一台がやっと通れる程度しかない。","{""bg"":""bg_mountain"",""bgm"":""bgm_field"",""type"":""text""}",albert_walk
-NODE,albert_walk,"「おお……神の試練が私の足元に。\n　この苦難こそが、信仰の証なのです」","{""bg"":""bg_mountain"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",warning
-NODE,warning,"アルバートは足元の悪さも気にせず、祈りを呟きながら歩き続ける。\n周囲の岩陰から、殺気を感じた。","{""bg"":""bg_mountain"",""type"":""text""}",ambush
-NODE,ambush,"「そこまでだ、巡礼者さんよ」\n前方の岩の上から、弓を番えた男が顔を出した。背後からも足音がする。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",bandit_threat
-NODE,bandit_threat,"「教会からたっぷり旅の資金を持たされてるんだろ？\n　置いていきな。命までは取らねえよ」","{""bg"":""bg_mountain"",""speaker_name"":""山賊の頭"",""type"":""text""}",albert_ignore
-NODE,albert_ignore,"「……（ぶつぶつと祈りの言葉を唱え続けている）」","{""bg"":""bg_mountain"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",albert_ignore_2
-NODE,albert_ignore_2,"アルバートは全く動じず、山賊の脅しを完全に無視して歩き出そうとする。\n山賊たちが怒りの形相で得物を構えた！","{""bg"":""bg_mountain"",""type"":""text""}",battle_wave1
-NODE,battle_wave1,"山賊の群れが襲いかかってきた！アルバートを守り抜け！","{""bg"":""bg_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":414,""enemy_name"":""山賊の先遣隊"",""type"":""battle""}",
+NODE,start,"大聖堂の門前。粗末な法衣を纏い、首から巨大な木製十字架を下げた男が立っていた。","{""bg"":""bg_church"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_desc
+NODE,start_desc,"彼の目は不自然にギラつき、行き交う人々は彼を狂人を見るかのように避けていく。","{""bg"":""bg_church"",""type"":""text""}",intro_1
+NODE,intro_1,"「あなたが今回の護衛ですか。主神の啓示がありました。西の危険な谷の祠へ行かねばならんのです」","{""bg"":""bg_church"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",intro_2
+NODE,intro_2,"「あなたが私の肉の盾となるのも、すべては神の尊き御意志。さあ、直ちに出発しましょう」","{""bg"":""bg_church"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",join_albert
+NODE,join_albert,"こちらの返事も待たず、彼は歩き出す。彼が死ねば報酬はゼロ。厄介な旅の始まりだ。","{""bg"":""bg_road_day"",""guest_id"":""npc_pilgrim_albert"",""is_escort_target"":true,""type"":""guest_join""}",travel_scenery
+NODE,travel_scenery,"それから数日間の道中、彼は食事や休息の勧めに一切耳を貸そうとせず、ただ前だけを見つめて歩き続けた。","{""bg"":""bg_road_day"",""bgm"":""bgm_field"",""type"":""text""}",travel_think
+NODE,travel_think,"ただでさえ危険な旅路だ。護衛というより、嵐の跡を追いかけているような気分になる。","{""bg"":""bg_road_day"",""type"":""text""}",mountain_road
+NODE,mountain_road,"やがて、切り立った崖が続く峻険な山道に入った。道幅は人一人が通れる程度に狭い。","{""bg"":""bg_mountain"",""type"":""text""}",albert_walk
+NODE,albert_walk,"「おお……これぞ主が与えし苦難の道。私の足の痛みが、深き信仰の証となるのです」","{""bg"":""bg_mountain"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",warning
+NODE,warning,"彼は足元の千尋の谷も見ず、祈りを口ずさみ進む。だが、頭上の岩陰に人影が見えた。","{""bg"":""bg_mountain"",""type"":""text""}",ambush
+NODE,ambush,"「そこまでだ、巡礼者さんよ」","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_desc
+NODE,ambush_desc,"頭上の岩場から、弓を構えた汚い身なりの男たちが顔を出した。退路は塞がれている。","{""bg"":""bg_mountain"",""type"":""text""}",bandit_threat
+NODE,bandit_threat,"「命が惜しければ、教会から支給された旅費をすべて置いていってもらおうか」","{""bg"":""bg_mountain"",""speaker_name"":""山賊の頭"",""type"":""text""}",albert_ignore
+NODE,albert_ignore,"「……（虚ろな目で宙を見つめ、ひたすらぶつぶつと祈りの言葉を唱えている）」","{""bg"":""bg_mountain"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",albert_ignore_2
+NODE,albert_ignore_2,"アルバートは足を止めることなく、山賊の警告を完全に無視して歩みを進める。その態度に、山賊たちは激昂し、殺気立つ！","{""bg"":""bg_mountain"",""type"":""text""}",battle_wave1
+NODE,battle_wave1,"激怒した山賊の先遣隊が襲いかかってきた！ 頑固な巡礼者を死守しなければならない！","{""bg"":""bg_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":414,""enemy_name"":""山賊の先遣隊"",""type"":""battle""}",
 CHOICE,,win,,after_battle_1
 CHOICE,,lose,,end_failure
-NODE,after_battle_1,"山賊の先遣隊を撃退した。\nだが、奥の岩場から怒号が響く。まだ増援がいるようだ。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",deeper_mountain
-NODE,deeper_mountain,"アルバートは戦闘の最中も足を止めず、どんどん先へ進んでしまう。\n慌てて追いかけると、前方の峠道に武装した男たちが立ちはだかっていた。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",encounter_wave2
-NODE,encounter_wave2,"「仲間をやったな……！\n　次はこの俺たちが相手だ。ただじゃおかねえぞ！」","{""bg"":""bg_mountain"",""speaker_name"":""山賊の用心棒"",""type"":""text""}",battle_wave2
-NODE,battle_wave2,"山賊の精鋭部隊が立ちはだかる！今度は手強い！","{""bg"":""bg_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":415,""enemy_name"":""山賊の精鋭"",""type"":""battle""}",
+NODE,after_battle_1,"先遣隊を片付けた。しかし、谷の奥から更なる野盗の怒号と靴音が近づいてくる。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",deeper_mountain
+NODE,deeper_mountain,"アルバートは戦闘など最初から眼中にないかのように、無傷のままで山奥へとどんどん進んでいく。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",deeper_mountain_think
+NODE,deeper_mountain_think,"慌てて彼を追いかけたが、行く手の峠道に、重武装の用心棒たちが立ち塞がった。","{""bg"":""bg_mountain"",""type"":""text""}",encounter_wave2
+NODE,encounter_wave2,"「先ほどの連中をやったな……！ ここを通る奴は、一人残らず命を置いていけ！」","{""bg"":""bg_mountain"",""speaker_name"":""山賊の用心棒"",""type"":""text""}",battle_wave2
+NODE,battle_wave2,"山賊の精鋭が襲いかかる！ 頑固な巡礼者が牙にかかる前に、敵を殲滅せよ！","{""bg"":""bg_mountain"",""bgm"":""bgm_battle"",""enemy_group_id"":415,""enemy_name"":""山賊の精鋭"",""type"":""battle""}",
 CHOICE,,win,,after_battle_2
 CHOICE,,lose,,end_failure
-NODE,after_battle_2,"山賊の精鋭を撃退した。もうこの辺りには敵影はない。\nアルバートを見ると、彼はかすり傷一つ負わず、ただ祈り続けていた。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",albert_praise
-NODE,albert_praise,"「神の御加護が、悪漢どもを退けたのですね。\n　主よ、感謝いたします」","{""bg"":""bg_mountain"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",sigh
-NODE,sigh,"戦ったのはこちらなのだが。\nため息をつきつつ、先を急ぐことにする。","{""bg"":""bg_mountain"",""type"":""text""}",arrive_shrine
-NODE,arrive_shrine,"ついに目的の聖地の祠に到着した。\n風化して苔生した小さな石造りの祠だ。","{""bg"":""bg_shrine"",""type"":""text""}",albert_pray
-NODE,albert_pray,"アルバートは祠の前に跪き、地面に額をつけて長い祈りを始めた。\n日が暮れるまで、彼はそこから動かなかった。","{""bg"":""bg_shrine"",""type"":""text""}",albert_thanks
-NODE,albert_thanks,"「……お前がいてくれてよかったかもしれぬ。\n　神の意志を実現する手足として、よく働いてくれました」","{""bg"":""bg_shrine"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",leave_albert
-NODE,leave_albert,"珍しく素直な言葉だった。\nアルバートをその場に残し、帰途につく。","{""bg"":""bg_shrine"",""guest_id"":""npc_pilgrim_albert"",""type"":""leave""}",end_success
-NODE,end_success,"教会に戻り、護衛完了を報告して報酬を受け取った。\nあの男は今も、あの山奥で祈り続けているのだろうか。","{""bg"":""bg_guild"",""rewards"":{""gold"":700,""alignment_shift"":{""chaos"":10},""exp"":150,""reputation"":-10},""type"":""end"",""result"":""success""}",
-NODE,end_failure,"山賊の凶刃がアルバートを貫いた。\n神の加護は、彼を護ってはくれなかった。護衛失敗だ。","{""bg"":""bg_mountain"",""type"":""end"",""result"":""failure""}",
+NODE,after_battle_2,"残党を倒した。アルバートを確認する。彼は煤にまみれつつも、やはり無傷だった。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",albert_praise
+NODE,albert_praise,"「神の御加護が、またしても悪しき者を滅ぼした。主よ、感謝いたします」","{""bg"":""bg_mountain"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",sigh
+NODE,sigh,"戦いたのはこちらだが、狂人に理屈は通じない。深いため息をつき、彼の背を追った。","{""bg"":""bg_mountain"",""type"":""text""}",arrive_shrine
+NODE,arrive_shrine,"険しい山道を乗り越え、ついに目的の祠へと辿り着いた。風雨に晒され苔むした、小さな古い石造りの祠だ。","{""bg"":""bg_shrine"",""type"":""text""}",albert_pray
+NODE,albert_pray,"アルバートは祠の前に跪き、額を土につけて長い祈りを始めた。夜が近づいていく。","{""bg"":""bg_shrine"",""type"":""text""}",albert_thanks
+NODE,albert_thanks,"「よくぞ私をここまで運んだ。神の意思を実現する手足として、見事な働きです」","{""bg"":""bg_shrine"",""speaker_name"":""巡礼者アルバート"",""type"":""text""}",leave_albert
+NODE,leave_albert,"少しは感謝されたのだろうか。祈り続ける彼を祠に残し、私は帰路に就いた。","{""bg"":""bg_shrine"",""guest_id"":""npc_pilgrim_albert"",""type"":""leave""}",end_success
+NODE,end_success,"教会に戻り、報酬を受け取った。あの哀れな男は、今も山奥で祈り続けているのだろうか。","{""bg"":""bg_guild"",""rewards"":{""gold"":700,""alignment_shift"":{""chaos"":10},""exp"":150,""reputation"":-10},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"守りきれず、山賊の刃がアルバートを貫いた。神の加護は、彼に届かなかったのだ。","{""bg"":""bg_mountain"",""type"":""end"",""result"":""failure""}",

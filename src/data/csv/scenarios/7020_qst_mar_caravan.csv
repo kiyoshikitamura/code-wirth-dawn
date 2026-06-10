@@ -1,28 +1,35 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"交易商会の待合室に呼ばれた。\n壁一面に地図が貼られ、砂漠のルートに赤い線が引かれている。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_1
-NODE,intro_1,"「今回の荷は香辛料と絹だ。ラクダ20頭分。\n　片道8日の旅になる。途中で荷を一つでも失えば、お前の報酬から差し引く」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の隊長"",""type"":""text""}",intro_2
-NODE,intro_2,"「砂漠の盗賊団が最近活発でな。\n　おまけに砂の中に化け物が棲みついている。腕に自信がなければ断れ」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の隊長"",""type"":""text""}",depart
-NODE,depart,"王都の門をくぐり、砂漠へと踏み出す。\nラクダの列が砂丘の向こうまで続いている。長い旅が始まった。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",desert_day1
-NODE,desert_day1,"出発から二日目。\n砂と空の境界線が溶け合い、前も後ろも同じ景色が続く。","{""bg"":""bg_desert"",""type"":""text""}",desert_heat
-NODE,desert_heat,"陽炎が揺れる。水筒の中身は半分を切った。\nラクダの足取りも重くなり始めている。","{""bg"":""bg_desert"",""type"":""text""}",desert_night
-NODE,desert_night,"夜になり、砂漠の気温が急激に下がる。\n星空の下、商隊は円陣を組んで野営の準備をした。","{""bg"":""bg_desert_night"",""bgm"":""bgm_quest_calm"",""type"":""text""}",campfire
-NODE,campfire,"焚き火を囲む。隊商の男たちが、砂漠の怪談を囁いている。\n見張りを交代しながら、短い眠りについた。","{""bg"":""bg_camp"",""type"":""text""}",ambush_alert
-NODE,ambush_alert,"深夜。見張りの男が声を殺して起こしにきた。\n「砂丘の向こうに、松明の光が見える……来やがった」","{""bg"":""bg_camp"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_desc
-NODE,ambush_desc,"砂丘を越えて近づいてくる影。十人以上いる。\nターバンで顔を隠した砂漠の盗賊団だ。商隊の荷を狙っている。","{""bg"":""bg_desert_night"",""type"":""text""}",battle_wave1
-NODE,battle_wave1,"砂漠の盗賊団が商隊に襲いかかってきた！","{""bg"":""bg_desert_night"",""bgm"":""bgm_battle"",""enemy_group_id"":420,""enemy_name"":""砂漠の盗賊団"",""type"":""battle""}",
+NODE,start,"交易商会の詰め所。照りつける太陽から逃れた室内も、息苦しい熱気に満ちていた。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_desc
+NODE,start_desc,"壁には砂丘の連なりを示す古びた地図。机の上では、隊長が金貨を数えている。","{""bg"":""bg_guild"",""type"":""text""}",intro_1
+NODE,intro_1,"「今回の荷は香辛料と絹だ。ラクダ２０頭分。片道８日の旅になる」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の隊長"",""type"":""text""}",intro_1_detail
+NODE,intro_1_detail,"「万一、途中で荷を一つでも失えば、お前の報酬から差し引くからな」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の隊長"",""type"":""text""}",intro_2
+NODE,intro_2,"「砂漠の野盗どもに加え、最近は砂の下の化け物も狂暴化している」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の隊長"",""type"":""text""}",intro_2_warn
+NODE,intro_2_warn,"「死にたくなければ、片時も気を抜くんじゃないぞ」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の隊長"",""type"":""text""}",depart
+NODE,depart,"王都の頑丈な門を出て、果てなき熱砂の海へと足を踏み出す。長い旅の始まりだ。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",depart_scenery
+NODE,depart_scenery,"ラクダの長い列が、黄金色の砂丘の彼方までゆっくりと連なっていく。","{""bg"":""bg_desert"",""type"":""text""}",desert_day1
+NODE,desert_day1,"出発から二日目。見渡す限りの砂海と青空。前後左右、すべての景色が同じだった。","{""bg"":""bg_desert"",""type"":""text""}",desert_heat
+NODE,desert_heat,"陽炎が揺れる。革の水筒は早くも空に近い。乾いた風が容赦なく喉を焼いた。","{""bg"":""bg_desert"",""type"":""text""}",desert_night
+NODE,desert_night,"夜は極寒。気温が急降下する中、私たちはラクダで壁を作り野営の準備を整える。","{""bg"":""bg_desert_night"",""bgm"":""bgm_quest_calm"",""type"":""text""}",campfire
+NODE,campfire,"小さく爆ぜる焚き火。男たちは声を潜め、砂漠に住まう死霊の怪談を囁き合う。","{""bg"":""bg_camp"",""type"":""text""}",ambush_alert
+NODE,ambush_alert,"深夜、見張りが私の肩を揺さぶる。砂丘の影に、不気味な火が揺れていた。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_desc
+NODE,ambush_desc,"ターバンを巻いた無数の人影が、音もなく近づく。商隊を狙う砂漠の野盗団だ。","{""bg"":""bg_desert_night"",""type"":""text""}",battle_wave1
+NODE,battle_wave1,"闇に紛れて奇襲を仕掛けてきた野盗どもを迎え撃て！ 交易品を守るのだ！","{""bg"":""bg_desert_night"",""bgm"":""bgm_battle"",""enemy_group_id"":420,""enemy_name"":""砂漠の盗賊団"",""type"":""battle""}",
 CHOICE,,win,,after_wave1
 CHOICE,,lose,,end_failure
-NODE,after_wave1,"盗賊どもを蹴散らした。数人が砂丘の向こうへ逃げていく。\n荷を確認する。無事だ。ラクダも全頭健在。","{""bg"":""bg_desert_night"",""bgm"":""bgm_quest_calm"",""type"":""text""}",travel_resume
-NODE,travel_resume,"夜明けと共に出発。盗賊に襲われた疲労が残るが、\n立ち止まっていれば次はもっと大きな群れが来るかもしれない。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",sandstorm
-NODE,sandstorm,"五日目の昼過ぎ。空が突然褐色に染まった。\n砂嵐だ。視界が数メートル先まで塞がれる。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",sandstorm_pass
-NODE,sandstorm_pass,"ラクダの手綱を握りしめ、嵐が過ぎるのを待った。\n砂が収まったとき、足元の砂が不自然に盛り上がっているのに気づいた。","{""bg"":""bg_desert"",""type"":""text""}",beast_alert
-NODE,beast_alert,"地面が震えている。ラクダたちが怯えて鳴き始めた。\n砂の中から、巨大な何かが這い寄ってくる——！","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",beast_desc
-NODE,beast_desc,"砂が爆発的に噴き上がり、巨大な口が空を仰いだ。\nサンドワーム——砂漠の支配者だ。その脇には大型のサソリも這い出てくる。","{""bg"":""bg_desert"",""type"":""text""}",battle_wave2
-NODE,battle_wave2,"砂漠の魔獣が商隊を襲う！荷を守り抜け！","{""bg"":""bg_desert"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":421,""enemy_name"":""砂漠の魔獣"",""type"":""battle""}",
+NODE,after_wave1,"野盗を撃退した。逃げていく影の足跡は、風が運ぶ砂によってすぐに消え去る。","{""bg"":""bg_desert_night"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_wave1_check
+NODE,after_wave1_check,"荷を確認する。絹の包みは無事だ。ラクダも欠けることなく息を整えている。","{""bg"":""bg_desert_night"",""type"":""text""}",travel_resume
+NODE,travel_resume,"明朝、旅を再開する。体は重いが、立ち止まれば更なる追撃を招くだけだ。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",sandstorm
+NODE,sandstorm,"五日目の昼。突如、空が赤褐色に染まり、猛烈な砂嵐が全てを覆い尽くした。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",sandstorm_pass
+NODE,sandstorm_pass,"ラクダにしがみつき、嵐が去るのを耐える。周囲の砂が不自然に脈動し始めた。","{""bg"":""bg_desert"",""type"":""text""}",beast_alert
+NODE,beast_alert,"地響きと共に地表面が揺れる。獣の危険を察知し、ラクダたちが狂乱する。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",beast_desc
+NODE,beast_desc,"砂が爆発的に噴き上がり、巨大な口が姿を現した。砂漠の魔獣サンドワームだ。","{""bg"":""bg_desert"",""type"":""text""}",battle_wave2
+NODE,battle_wave2,"砂の下から襲いかかる巨大な大虫と、毒針を構える大サソリを撃破せよ！","{""bg"":""bg_desert"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":421,""enemy_name"":""砂漠の魔獣"",""type"":""battle""}",
 CHOICE,,win,,after_wave2
 CHOICE,,lose,,end_failure
-NODE,after_wave2,"サンドワームが砂の中に沈んでいった。もう動かない。\nサソリの死骸を踏み越え、商隊を急かす。もう少しだ。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",arrive
-NODE,arrive,"八日目の夕暮れ。ついに交易都市の城壁が見えた。\n門をくぐると、商会の代理人が笑顔で出迎えてくれた。","{""bg"":""bg_guild"",""type"":""text""}",reward_scene
-NODE,reward_scene,"「全頭無事！ 荷も完品！ さすがだな、冒険者。\n　約束の報酬だ。また頼むぞ」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の代理人"",""type"":""text""}",end_success
-NODE,end_success,"重い金袋を受け取った。\n8日間の砂と汗の代償。それでも、生きて帰れたことに感謝した。","{""bg"":""bg_guild"",""rewards"":{""gold"":500,""alignment_shift"":{""chaos"":10},""exp"":150,""reputation"":5},""type"":""end"",""result"":""success""}",
-NODE,end_failure,"砂漠の容赦ない牙の前に、膝をついた。\n荷は奪われ、商隊は散り散りになった。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",
+NODE,after_wave2,"魔獣は血を吹き出しながら砂の中へ沈んでいった。危険な戦闘を生き延びた。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_wave2_think
+NODE,after_wave2_think,"装備に入り込んだ砂を払い落とす。目的地である交易都市は、もう間近のはずだ。","{""bg"":""bg_desert"",""type"":""text""}",arrive
+NODE,arrive,"八日目の夕暮れ。沈む夕陽に照らされた、美しい交易都市の白い城壁が見えた。","{""bg"":""bg_desert"",""type"":""text""}",arrive_guild
+NODE,arrive_guild,"門をくぐり、商会の倉庫に到着した。泥や砂に汚れた私たちを代理人が迎える。","{""bg"":""bg_guild"",""type"":""text""}",reward_scene
+NODE,reward_scene,"「全頭無事での帰還とは恐れ入った！ 約束の報酬だ、受け取ってくれ」","{""bg"":""bg_guild"",""speaker_name"":""交易商会の代理人"",""type"":""text""}",end_success
+NODE,end_success,"ずっしりと重い金袋を受け取る。この砂と汗まみれの旅も、無駄ではなかった。","{""bg"":""bg_guild"",""rewards"":{""gold"":500,""alignment_shift"":{""chaos"":10},""exp"":150,""reputation"":5},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"過酷な熱砂と魔獣の前に力尽きる。商隊は散り散りになり、砂の海へ消えた。","{""bg"":""bg_desert"",""type"":""end"",""result"":""failure""}",

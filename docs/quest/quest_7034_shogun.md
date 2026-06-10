@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7034 |
 | **Slug** | `qst_yat_shogun` |
-| **クエスト種別** | 夜刀クエスト（Yato） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 6（Normal） |
 | **難度** | 2 |
 | **依頼主** | 剣客道場 |
-| **出現条件** | 制限なし / 出現拠点: loc_yatoshin |
+| **出現条件** | 出現国: 夜刀神国 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 1 |
+| **ノード数** | 45ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 6） |
-| **経過日数 (time_cost)** | 1（成功: 1日 / 失敗: 1日） |
-| **ノード数** | 35ノード（うち選択肢2件） |
 | **サムネイル画像** | `/images/quests/bg_yato_shrine.png` |
-
 ---
 
 ## 1. クエスト概要
@@ -46,7 +46,7 @@ Gold:400|Exp:120
 **ルート別報酬差異:**
 | ルート | Gold | Exp | アライメント | 備考 |
 |--------|------|-----|-------------|------|
-| 「落ち着いて話しかける」 | 400 | 120 | Justice:10 | 対話による平和的解決 |
+| 「落ち着いて話しかける」 | 400 | 0 | Justice:10 | 対話による平和的解決 |
 | 「構わず強行突破する」 | 400 | 120 | なし | 戦闘による強制突破 |
 | 非遭遇（fallback） | 400 | 120 | なし | 峠の霊に会わず配達完了 |
 
@@ -62,34 +62,43 @@ start
              └─ start_05
                  └─ travel_01
                      └─ travel_02
-                         └─ travel_03
-                             └─ travel_04
-                                 └─ travel_pass (random_branch: prob 60)
-                                      ├─ next (遭遇) → confronted_01
-                                      │   └─ confronted_02
-                                      │       └─ confronted_03
-                                      │           └─ choice_action
-                                      │                ├─ 話し合う → resolve_01
-                                      │                │             └─ resolve_02
-                                      │                │                  └─ resolve_03
-                                      │                │                      └─ deliver_peace_01
-                                      │                │                          └─ deliver_peace_02
-                                      │                │                              └─ deliver_peace_03
-                                      │                │                                  └─ end_success_peace
-                                      │                └─ 強行突破 → battle_01
-                                      │                               └─ battle_02
-                                      │                                   └─ battle_spirit
-                                      │                                        ├─ win → after_fight_01
-                                      │                                        │        └─ after_fight_02
-                                      │                                        │             └─ after_fight_03
-                                      │                                        │                  └─ deliver_normal_01
-                                      │                                        │                      └─ deliver_normal_02
-                                      │                                        │                          └─ deliver_normal_03
-                                      │                                        │                              └─ end_success
-                                      │                                        └─ lose → end_failure
-                                      └─ fallback (非遭遇) → safe_01
-                                                              └─ safe_02
-                                                                  └─ deliver_normal_01 ━━━ (合流)
+                         └─ travel_02_02
+                             └─ travel_02_03
+                                 └─ travel_03
+                                     └─ travel_04
+                                         └─ travel_pass (random_branch: prob 60)
+                                              ├─ next (遭遇) → confronted_01
+                                              │   └─ confronted_02
+                                              │       └─ confronted_03
+                                              │           └─ choice_action
+                                              │                ├─ 話し合う → resolve_01
+                                              │                │             └─ resolve_02_01
+                                              │                │                  └─ resolve_02
+                                              │                │                      └─ resolve_03
+                                              │                │                          └─ resolve_03_01
+                                              │                │                              └─ resolve_03_02
+                                              │                │                                  └─ resolve_03_03
+                                              │                │                                      └─ deliver_peace_01
+                                              │                │                                          └─ deliver_peace_02
+                                              │                │                                              └─ deliver_peace_02_02
+                                              │                │                                                  └─ deliver_peace_03
+                                              │                │                                                      └─ end_success_peace_01
+                                              │                │                                                          └─ end_success_peace
+                                              │                └─ 強行突破 → battle_01
+                                              │                               └─ battle_02
+                                              │                                   └─ battle_spirit
+                                              │                                        ├─ win → after_fight_01
+                                              │                                        │        └─ after_fight_02
+                                              │                                        │             └─ after_fight_03
+                                              │                                        │                  └─ deliver_normal_01
+                                              │                                        │                      └─ deliver_normal_02
+                                              │                                        │                          └─ deliver_normal_03
+                                              │                                        │                              └─ end_success_01
+                                              │                                        │                                  └─ end_success
+                                              │                                        └─ lose → end_failure_01
+                                              └─ fallback (非遭遇) → safe_01
+                                                                      └─ safe_02
+                                                                          └─ deliver_normal_01 ━━━ (合流)
 ```
 
 ### ノード詳細
@@ -109,13 +118,13 @@ start
 #### `start_03`（text）
 **演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 剣客道場の師範
 ```text
-「これは御前試合の果たし状だ。武士の面子がかかった、決して遅れの手を取れない代物だ」
+「これは果たし状だ。武士の面子がかかった、決して遅れを取れぬ代物だ」
 ```
 
 #### `start_04`（text）
 **演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 剣客道場の師範
 ```text
-「だが、情けないことに我が門下生は、途中の峠道で『何か』に怯え、引き返してきてしまった」
+「だが情けないことに我が門下生は、途中の峠道で怯え、逃げ帰ってしまった」
 ```
 
 #### `start_05`（text）
@@ -134,6 +143,18 @@ start
 **演出:** bg: bg_yato_mountain, bgm: bgm_field
 ```text
 空はどんよりと曇り、山間には薄い靄がかかっている。前の使者が二人も逃げ帰ってきた道だ。
+```
+
+#### `travel_02_02`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+かつてここで戦い死んだ者の怨念が、霧となって峠を覆っているのだろうか。
+```
+
+#### `travel_02_03`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_field
+```text
+一歩進むたびに、冷たい空気が肌を刺す。果たし状の怨念が共鳴しているようだ。
 ```
 
 #### `travel_03`（text）
@@ -165,8 +186,8 @@ start
 **演出:** bg: bg_yato_mountain, bgm: bgm_field
 ```text
 噂はただの噂だったのだろうか。それとも、単に運が良かっただけか。足早に峠を下る。
-（※以降、deliver_normal_01へ合流）
 ```
+**次ノード:** deliver_normal_01
 
 #### `confronted_01`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_tense
@@ -200,17 +221,40 @@ start
 ゆっくりと両手を上げ、敵意がないことを示す。そして静かに、手紙を届けるだけだと告げた。
 ```
 
+#### `resolve_02_01`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
+```text
+霊はピタリと動きを止め、濁った瞳でこちらの懐をじっと見つめた。
+```
+
 #### `resolve_02`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm, speaker: 峠の怨霊
 ```text
-霊はピタリと動きを止め、濁った目でこちらの懐を見つめた。「……お前は、逃げないのだな」
+「……お前は、逃げないのだな」
 ```
 
 #### `resolve_03`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm, speaker: 峠の怨霊
 ```text
-「……あの果たし状……武士の意地か……ならば、行け」
-霊はどこか寂しげな表情を浮かべると、霧のように消え去った。
+「……あの果たし状……武士の意地か……ならば、行くが良い」
+```
+
+#### `resolve_03_01`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
+```text
+霊はどこか寂しげな表情を浮かべると、霧のようにスッと消え去った。
+```
+
+#### `resolve_03_02`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
+```text
+怨霊が消え去った場所には、ただ冷たい風が吹き抜けていくだけだった。
+```
+
+#### `resolve_03_03`（text）
+**演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
+```text
+かつて果たし合いに向かい、ここで力尽きた剣士。その無念が解けたのだろうか。
 ```
 
 #### `deliver_peace_01`（text）
@@ -220,24 +264,35 @@ start
 ```
 
 #### `deliver_peace_02`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 宛先の師範
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
 ```text
-呼び出しに応じた師範に、果たし状を手渡す。師範は血判を確認し、深く頷いた。
+呼び出しに応じた師範に、果たし状を手渡す。
+```
+
+#### `deliver_peace_02_02`（text）
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
+```text
+師範は朱色の血判を確認し、深く重々しく頷いた。
 ```
 
 #### `deliver_peace_03`（text）
 **演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 宛先の師範
 ```text
-「無事に届いたか。……あの峠で何があった？ いや、聞かないでおこう。見事な胆力だ」
+「届いたか。あの峠で何があった？ いや、聞くまい。見事な胆力だ」
+```
+
+#### `end_success_peace_01`（text）
+**演出:** bg: bg_yato_city
+```text
+配達完了。道場から多額の謝礼を受け取った。
 ```
 
 #### `end_success_peace`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_yato_city
 ```text
-配達完了。道場から多額の謝礼を受け取った。
-あの霊は、かつて果たし合いに向かう途中で命を落とした剣客だったのかもしれない。
+あの霊は、果たし合いに向かう途中で命を落とした剣客だったのかもしれない。
 ```
-**rewards:** Gold:400, Exp:120, Justice:10
+**rewards:** Gold:400, Exp:0, Justice:10
 
 #### `battle_01`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_tense
@@ -256,7 +311,7 @@ start
 ```text
 無念の死を遂げた怨霊が襲いかかってきた！
 ```
-**パラメータ:** type: battle, enemy_group_id: 435, next: after_fight_01, fail: end_failure
+**パラメータ:** type: battle, enemy_group_id: 435, next: after_fight_01, fail: end_failure_01
 
 #### `after_fight_01`（text）
 **演出:** bg: bg_yato_mountain, bgm: bgm_quest_calm
@@ -283,7 +338,7 @@ start
 ```
 
 #### `deliver_normal_02`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 宛先の師範
+**演出:** bg: bg_yato_city, bgm: bgm_quest_calm
 ```text
 師範は果たし状の血判を厳しい表情で睨みつけ、ゆっくりと懐へ収めた。
 ```
@@ -291,22 +346,32 @@ start
 #### `deliver_normal_03`（text）
 **演出:** bg: bg_yato_city, bgm: bgm_quest_calm, speaker: 宛先の師範
 ```text
-「無事に届いたか。前任者たちは逃げ帰ったというのに……お前、肝が据わっているな」
+「届いたか。前任者たちは逃げ帰ったというのに……お前、肝が据わっているな」
+```
+
+#### `end_success_01`（text）
+**演出:** bg: bg_yato_city
+```text
+配達完了。道場から約束の謝礼金を受け取った。
 ```
 
 #### `end_success`（end_success）
-**演出:** bg: bg_guild
+**演出:** bg: bg_yato_city
 ```text
-配達完了。道場から謝礼の金を受け取った。
-あの峠にいた霊が何者だったのか——それは、聞かないままにしておくのが冒険者の知恵だろう。
+峠の霊が何者だったのか——それは聞かないのが冒険者の知恵だろう。
 ```
 **rewards:** Gold:400, Exp:120
+
+#### `end_failure_01`（text）
+**演出:** bg: bg_yato_mountain
+```text
+怨霊の身を凍らせる呪いと圧倒的な執念の前に、なす術なく意識を刈り取られた。
+```
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_yato_mountain
 ```text
-怨霊の身を凍らせるような呪いと、圧倒的な執念の前に、なす術もなく意識を刈り取られた。
-武士の面子を懸けた果たし状は、誰にも読まれることなく冷たい山道に転がったままだ……。
+果たし状は、誰にも読まれることなく冷たい山道に転がったままだ……。
 ```
 
 ---

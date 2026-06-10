@@ -1,0 +1,37 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"王国がガウェインを「反逆者」として公表した。我々は山に逃げ込んだ。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_tense"",""type"":""text""}",start_02
+NODE,start_02,"告発しようとした良識派の将軍は暗殺され、証拠も奪い去られたらしい。","{""bg"":""bg_camp"",""type"":""text""}",start_03
+NODE,start_03,"そして今、我々を捕縛するための王国軍鉄騎隊が、山麓に集結しつつある。","{""bg"":""bg_camp"",""type"":""text""}",gawain_join
+NODE,gawain_join,"","{""bg"":""bg_camp"",""guest_id"":""npc_guest_gawain"",""type"":""guest_join""}",ambush_01
+NODE,ambush_01,"「逃げ道を塞がれたか」森の各所から、重厚な甲冑の擦れる音が響く。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_crisis"",""type"":""text""}",ambush_02
+NODE,ambush_02,"鉄騎隊の包囲網。前方に立ちふさがったのは、王国軍精鋭部隊の将校だ。","{""bg"":""bg_camp"",""type"":""text""}",commander_01
+NODE,commander_01,"「反逆者ガウェイン。ここで処断する」","{""bg"":""bg_camp"",""speaker_name"":""王国軍将校"",""type"":""text""}",commander_02
+NODE,commander_02,"「新入りの傭兵とやらも同罪だ。捕らえる必要はない、その場で斬れ！」","{""bg"":""bg_camp"",""speaker_name"":""王国軍将校"",""type"":""text""}",resolve_01
+NODE,resolve_01,"「……どうやら本気だな。新入り、ここは俺が防ぐ。お前は東へ走れ」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",resolve_02
+NODE,resolve_02,"「この森を抜ければ夜刀の国境だ。あそこなら王国の手も容易には届かん」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",resolve_03
+NODE,resolve_03,"「嫌です」と叫ぼうとした我々を、ガウェインの眼光が力強く制した。","{""bg"":""bg_camp"",""type"":""text""}",wave_01
+NODE,wave_01,"「お前の命はここで捨てるにゃ惜しい！ 来るぞ、まずは前衛を叩く！」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",battle1
+NODE,battle1,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":203,""type"":""battle""}",
+CHOICE,,win,,choice1
+CHOICE,,lose,,end_failure_01
+NODE,choice1,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""type"":""choice""}",
+CHOICE,,「反撃する」,,clear_01
+NODE,clear_01,"前衛の兵士たちを退けた。だが、奥からさらに第二波の重装歩兵が現れる。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_crisis"",""type"":""text""}",clear_02
+NODE,clear_02,"「きりがないな……。おい新入り、俺の指示を聞け。絶対に生き延びろ」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",second_01
+NODE,second_01,"「お前が真実を世界の果てまで届けるんだ。……いくぞ、これが最後だ！」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",battle2
+NODE,battle2,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":203,""type"":""battle""}",
+CHOICE,,win,,choice2
+CHOICE,,lose,,end_failure_01
+NODE,choice2,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""type"":""choice""}",
+CHOICE,,「ガウェインと共に防ぐ」,,last_01
+NODE,last_01,"激闘の末、囲みを突破した。だがガウェインの背中には三本の矢が深く刺さっていた。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_calm"",""type"":""text""}",last_02
+NODE,last_02,"「ガウェイン！」駆け寄ろうとする我々を、彼は片手で強く押し止めた。","{""bg"":""bg_camp"",""type"":""text""}",last_03
+NODE,last_03,"「来るな！ 背中を見せて走れ！ ……お前は生き延びねばならんのだ」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",last_04
+NODE,last_04,"「世界の果てを見届けろ。……そして、自由な風になれ……！」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",gawain_leave
+NODE,gawain_leave,"","{""bg"":""bg_camp"",""guest_id"":""npc_guest_gawain"",""type"":""leave""}",run_01
+NODE,run_01,"大剣を杖代わりに立ち上がった老騎士。その背中が迫り来る兵士の前に立ちはだかる。","{""bg"":""bg_camp"",""type"":""text""}",run_02
+NODE,run_02,"涙で視界が滲む中、我々はただ東へ走った。背後から激しい金属音と叫び声が響く。","{""bg"":""bg_camp"",""type"":""text""}",run_03
+NODE,run_03,"やがて——恐ろしいほどの静寂が、深い森の奥へと満ちていった。","{""bg"":""bg_camp"",""type"":""text""}",end_node
+NODE,end_node,"生き延びて、世界の果てを見届けろ。老騎士の最期の言葉が、胸に突き刺さっている。","{""bg"":""bg_camp"",""rewards"":{""exp"":200,""gold"":500,""reputation"":15,""alignment_shift"":{""order"":5}},""type"":""end"",""result"":""success""}",
+NODE,end_failure_01,"鉄騎隊の圧倒的な重圧に押し潰され、地に伏す。老騎士を守ることもできず……","{""bg"":""bg_camp"",""bgm"":""bgm_quest_crisis"",""type"":""text""}",end_failure
+NODE,end_failure,"反逆の徒として森の露と消えた。真実は闇へ葬られ、老騎士の背中も失われた。","{""bg"":""bg_camp"",""rewards"":{""gold"":0},""type"":""end"",""result"":""failure""}",

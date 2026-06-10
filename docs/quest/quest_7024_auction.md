@@ -1,4 +1,4 @@
-﻿# クエスト仕様書：7024 — 闇市オークションの用心棒
+# クエスト仕様書：7024 — 闇市オークションの用心棒
 
 ## 0. ファイル概要
 
@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7024 |
 | **Slug** | `qst_mar_auction` |
-| **クエスト種別** | マルカンドクエスト（Markand） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 5（Normal） |
 | **難度** | 3 |
 | **依頼主** | 闇市の元締め |
-| **出現条件** | max_reputation: -50 / 出現拠点: loc_marcund |
+| **出現条件** | 出現国: マルカンド / 名声 -50 以下 |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 1 |
+| **ノード数** | 30ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 5） |
-| **経過日数 (time_cost)** | 1（成功: 1日 / 失敗: 1日） |
-| **ノード数** | 20ノード |
 | **サムネイル画像** | `/images/quests/bg_slums.png` |
-
 ## 1. クエスト概要
 
 ### 短文説明
@@ -26,7 +26,10 @@
 
 ### 長文説明
 ```
-マルカンドの地下で開かれる闇のオークション。出品されるのは盗品の国宝、禁制品の薬物、そして名もなき奴隷たち。元締めはこの一夜の売り上げを守るため、腕の立つ用心棒を雇う。会場に乱入する者があれば、音を立てずに排除しろ——それが仕事だ。良心の呵責は金で埋めろ。
+マルカンドの地下で開かれる闇のオークション。
+出品されるのは盗品の国宝、禁制品の薬物、そして名もなき奴隷たち。
+元締めはこの一夜の売り上げを守るため、腕の立つ用心棒を雇う。
+会場に乱入する者があれば、音を立てずに排除しろ——それが仕事だ。良心の呵責は金で埋めろ。
 ```
 
 ## 2. 報酬定義
@@ -48,211 +51,214 @@ Gold:500|Chaos:10|Evil:5|Exp:120|Rep:-5
 ### 全体フロー
 
 ```text
-start → intro_1 → intro_2 → wait_outside
-  → auction_start → auction_item_1 → first_alarm
-    → intruder_1 → battle_wave1 (チンピラ x3 / 野盗の射手 x1)
-       ├─ [勝利] → after_wave1 → auction_item_2 → second_alarm
-       │    → intruder_2_desc → intruder_2_talk
-       │      → battle_wave2 (見習い暗殺者 x2 / 凄腕の刺客 x1)
-       │         ├─ [勝利] → after_wave2 → auction_end → payment → end_success
-       │         └─ [敗北] → end_failure
-       └─ [敗北] → end_failure
+start → start_desc → intro_1 → intro_2 → intro_2_warn → auction_declare → wait_outside → wait_outside_think
+  → auction_start → auction_item_1 → first_alarm → intruder_1 → intruder_1_talk
+    → battle_wave1
+       ├─ win → after_wave1 → after_wave1_report → auction_item_2 → second_alarm
+       │    → intruder_2_desc → intruder_2_talk → battle_wave2
+       │       ├─ win → after_wave2 → after_wave2_think → auction_end → auction_end_desc → payment → payment_02 → exit_slums → end_success
+       │       └─ lose → end_failure
+       └─ lose → end_failure
 ```
 
-### ノード詳細
+### ノード詳細（30ノード）
 
 #### `start`（text）
 **演出:** bg: bg_slums, bgm: bgm_quest_tense
 ```text
-マルカンドの地下水路の入り口で、目隠しをされた。
-案内人に手を引かれ、長い階段を下りる。
+マルカンドの地下水路の入口。案内の男によって、有無を言わさず目隠しをされた。
+```
+
+#### `start_desc`（text）
+**演出:** bg: bg_slums
+```text
+男の手を借りて長い螺旋階段を下りていく。下から、微かに香油の匂いが漂う。
 ```
 
 #### `intro_1`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-目隠しが外された。地下の広間に、
-豪華な絨毯と燭台が並ぶ即席の競売場が設けられている。
+目隠しを外すと、地下広間に豪華な絨毯が敷かれた即席の競売場が広がっていた。
 ```
 
 #### `intro_2`（text）
-**演出:** bg: bg_slums, speaker: 闇市の元締め
+**演出:** bg: bg_mar_auction, speaker: 闇市の元締め
 ```text
-「今夜の客は品が良いが、鼻が利くハイエナも引き寄せる。
-　騒ぎを起こす輩がいれば、目立たぬように始末しろ」
+「今夜の客は身分が高いが、厄介なハイエナも引き寄せる。警備を怠るな」
+```
+
+#### `intro_2_warn`（text）
+**演出:** bg: bg_mar_auction, speaker: 闇市の元締め
+```text
+「騒ぎを起こす余所者が現れたら、音を立てずに素早く始末するのだ」
+```
+
+#### `auction_declare`（text）
+**演出:** bg: bg_mar_auction
+```text
+燭台に火が灯り、開会を告げる真鍮のベルの音が、地下室の冷たい天井に響いた。
 ```
 
 #### `wait_outside`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-指示通り、会場の入り口付近で待機する。
-壁越しに、競りの声と金貨が積み上がる音が聞こえてくる。
+会場の鉄格子の陰で待機する。壁の向こうから、競りの声と金貨の音が響く。
+```
+
+#### `wait_outside_think`（text）
+**演出:** bg: bg_mar_auction
+```text
+法も光も届かない地下。欲望と虚栄が渦巻く、この街らしい退廃の縮図だ。
 ```
 
 #### `auction_start`（text）
-**演出:** bg: bg_slums, bgm: bgm_quest_calm
+**演出:** bg: bg_mar_auction, bgm: bgm_quest_calm
 ```text
-オークションが始まった。
-最初の出品は、どこかの国の王宮から盗み出された宝冠だ。
+競売が始まった。最初の出品は、ある名家の墓から暴かれた黄金の王冠だ。
 ```
 
 #### `auction_item_1`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-「200金貨！ 300！ 500金貨！」
-競りの声が熱を帯びる。壁の向こうで、途方もない額の金が動いている。
+「金貨３００！ ５００！ ８００！」入札の声が、異常な熱気を帯びて響く。
 ```
 
 #### `first_alarm`（text）
-**演出:** bg: bg_slums, bgm: bgm_quest_tense
+**演出:** bg: bg_mar_auction, bgm: bgm_quest_tense
 ```text
-見張りの男が駆け込んできた。
-「入口に怪しい連中が来た。武装している。間違いなく狙いはここだ」
+見張りの一人が青い顔で駆け寄ってきた。水路の奥に侵入者があったという。
 ```
 
 #### `intruder_1`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-地下水路の入り口に、粗末な武装の男たちが群がっている。
-闇市の噂を聞きつけた盗賊崩れだ。中の金品を狙っている。
+地下水路の入口。噂を聞きつけた武装した野盗崩れが、扉をこじ開けていた。
 ```
 
-#### `battle_wave1`（battle）【第1戦】
-**演出:** bg: bg_slums, bgm: bgm_battle
+#### `intruder_1_talk`（text）
+**演出:** bg: bg_mar_auction
+```text
+汚い笑い声を上げながら、野盗たちが鉄の棒を振り回して会場を覗き込む。
+```
 
+#### `battle_wave1`（battle）
+**演出:** bg: bg_mar_auction, bgm: bgm_battle
 | 設定 | 値 |
 |-----|-----|
-| 敵グループID | `427`（新規作成） |
-| 敵グループSlug | `grp_auction_raider_1` |
-| 構成 | チンピラ(1101) x3 / 野盗の射手(1102) x1 |
+| 敵グループID | `427` |
 | 敵表示名 | 乱入者の先遣隊 |
 
 ```text
-闇市を嗅ぎつけた盗賊どもが乱入してきた！
+中の金品を狙う無頼漢どもを排除せよ！ 競売の邪魔をさせてはならない！
 ```
 
 #### `after_wave1`（text）
-**演出:** bg: bg_slums, bgm: bgm_quest_calm
+**演出:** bg: bg_mar_auction, bgm: bgm_quest_calm
 ```text
-盗賊崩れを排除した。死体を水路に流し、血痕を砂で隠す。
-元締めが顔を出し、「見事だ」と一言だけ言って戻っていった。
+野盗を撃退した。死体を暗い水路へ突き落とし、石畳の血痕を砂で素早く隠す。
+```
+
+#### `after_wave1_report`（text）
+**演出:** bg: bg_mar_auction
+```text
+会場の扉から元締めが顔を出し、満足げに頷いてから再び奥へ戻っていった。
 ```
 
 #### `auction_item_2`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-オークションは続いている。
-次の出品は——禁制品の毒薬。競りの声がさらに上がる。
+競売は進行中。次の商品は、王宮で禁止された美しくも恐ろしい秘薬のようだ。
 ```
 
 #### `second_alarm`（text）
-**演出:** bg: bg_slums, bgm: bgm_quest_tense
+**演出:** bg: bg_mar_auction, bgm: bgm_quest_tense
 ```text
-再び見張りが来た。今度は顔色が違う。
-「やべえ……今度のは盗賊じゃねえ。腕利きだ」
+再び見張りが駆け寄る。今度は震え声だ。「ただの泥棒じゃねえ、手練れだ」
 ```
 
 #### `intruder_2_desc`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-暗闘用の黒装束に身を包んだ男たちが、音もなく水路を進んでくる。
-動きが違う。訓練された暗殺者——誰かに雇われた連中だ。
+暗い水路の壁を這うように、黒装束の集団が音もなく急速に忍び寄ってきた。
 ```
 
 #### `intruder_2_talk`（text）
-**演出:** bg: bg_slums, speaker: 黒装束の男
+**演出:** bg: bg_mar_auction, speaker: 黒装束の男
 ```text
-「邪魔をするな。我々の標的は元締めだけだ。
-　道を空けるなら命は助けてやる」
+「邪魔をするな。我々の狙いは元締めの首だけだ。退くなら命は助けてやる」
 ```
 
-#### `battle_wave2`（battle）【第2戦】
-**演出:** bg: bg_slums, bgm: bgm_battle
-
+#### `battle_wave2`（battle）
+**演出:** bg: bg_mar_auction, bgm: bgm_battle
 | 設定 | 値 |
 |-----|-----|
-| 敵グループID | `428`（新規作成） |
-| 敵グループSlug | `grp_auction_raider_2` |
-| 構成 | 見習い暗殺者(1121) x2 / 凄腕の刺客(1122) x1 |
+| 敵グループID | `428` |
 | 敵表示名 | 暗殺者の精鋭 |
 
 ```text
-暗殺者の精鋭部隊が襲いかかってきた！
+元締めの命を狙うプロの暗殺者たちとの、一瞬の油断も許されない死闘だ！
 ```
 
 #### `after_wave2`（text）
-**演出:** bg: bg_slums, bgm: bgm_quest_calm
+**演出:** bg: bg_mar_auction, bgm: bgm_quest_calm
 ```text
-暗殺者を退けた。今度の死体は水路に流すだけでは済まない。
-元締めの手下たちが、手際よく痕跡を処理していく。
+暗殺者を片付けた。元締めの私兵たちが、素早く死体の痕跡を消していく。
+```
+
+#### `after_wave2_think`（text）
+**演出:** bg: bg_mar_auction
+```text
+死を日常の一部として処理する彼らの手際に、不気味な寒気を感じた。
 ```
 
 #### `auction_end`（text）
-**演出:** bg: bg_slums
+**演出:** bg: bg_mar_auction
 ```text
-深夜。オークションが無事に終了した。
-客たちは目隠しをされ、一人ずつ違うルートで帰っていく。
+深夜、競売が静かに幕を閉じる。買い手たちは再び目隠しをされ退出した。
+```
+
+#### `auction_end_desc`（text）
+**演出:** bg: bg_mar_auction
+```text
+身分の高そうな客たちは、何事もなかったかのように夜の闇へと消えていく。
 ```
 
 #### `payment`（text）
-**演出:** bg: bg_slums, speaker: 闇市の元締め
+**演出:** bg: bg_mar_auction, speaker: 闇市の元締め
 ```text
-「いい仕事だ。お前のおかげで今夜の売り上げは過去最高だ。
-　また声をかける。口は堅いだろうな？」
+「素晴らしい腕前だ。お前のおかげで、今夜の売り上げは最高を記録した」
+```
+
+#### `payment_02`（text）
+**演出:** bg: bg_mar_auction, speaker: 闇市の元締め
+```text
+「これは約束の取り分だ。口の堅いお前には、また大仕事を回してやろう」
+```
+
+#### `exit_slums`（text）
+**演出:** bg: bg_slums
+```text
+再び案内人に目隠しをされ、地上へ戻される。外された瞳が夜の星を仰いだ。
 ```
 
 #### `end_success`（end_success）
 **演出:** bg: bg_slums
 ```text
-厚い封筒を受け取った。
-闇の競売場は跡形もなく片付けられ、もう何もなかったかのようだ。
+ずっしりと重い金袋を受け取る。この汚れた金が、また次の悲劇を生むのだ。
 ```
 **rewards:** Gold:500, Chaos:10, Evil:5, Exp:120, Rep:-5
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_slums
 ```text
-暗殺者の刃は正確だった。
-崩れ落ちる視界の端で、オークション会場が蹂躙されていくのが見えた。
+暗殺者の正確無比な刃の前に倒れる。会場が蹂躙されていくのを眺めながら。
 ```
 
 ---
 
-## 4. 敵定義参照（新規エネミーグループ 2件）
+## 4. 敵定義参照
 
-### エネミーグループ: `grp_auction_raider_1` (ID: 427)
-
-| Slug | 名前 | Lv | HP | ATK | DEF |
-|------|------|----|----|-----|-----|
-| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
-| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
-| enemy_bandit_thug | チンピラ | 2 | 40 | 20 | 2 |
-| enemy_bandit_archer | 野盗の射手 | 4 | 35 | 24 | 1 |
-
-### エネミーグループ: `grp_auction_raider_2` (ID: 428)
-
-| Slug | 名前 | Lv | HP | ATK | DEF |
-|------|------|----|----|-----|-----|
-| enemy_assassin_trainee | 見習い暗殺者 | 8 | 70 | 42 | 2 |
-| enemy_assassin_trainee | 見習い暗殺者 | 8 | 70 | 42 | 2 |
-| enemy_assassin_master | 凄腕の刺客 | 15 | 150 | 75 | 5 |
-
----
-
-## 5. CSVエントリ（quests_normal.csv）
-
-```csv
-7024,qst_mar_auction,闇市オークションの用心棒,5,3,1,loc_marcund,,,,-50,Gold:500|Chaos:10|Evil:5|Exp:120|Rep:-5,闇市の元締め,[防衛] 違法国宝が取引される闇の競売場で、乱入者を排除する。
-```
-
----
-
-## 6. 実装チェックリスト
-
-- [ ] 出現拠点 `loc_marcund` のみ
-- [ ] 受注条件 `max_reputation: -50` が機能する
-- [ ] エネミーグループ `grp_auction_raider_1`（427）がenemy_groups.csvに登録済み
-- [ ] エネミーグループ `grp_auction_raider_2`（428）がenemy_groups.csvに登録済み
-- [ ] 2連戦フローが正しく遷移する
-- [ ] Gold:500 + Chaos:10 + Evil:5 + Exp:120 + Rep:-5 が付与される
-- [ ] time_cost: 1（成功）/ 1（失敗）が正しく経過する
+| enemy_group_id | グループ名 |
+|----------------|-----------|
+| 427 | 乱入者の先遣隊 |
+| 428 | 暗殺者の精鋭 |

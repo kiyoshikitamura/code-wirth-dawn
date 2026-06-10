@@ -102,7 +102,14 @@ function buildConditionText(q) {
   const req = q.requirements;
   if (!req) return '特になし';
 
-  if (req.completed_quest) parts.push(`前提クエストクリア: ${req.completed_quest}`);
+  if (req.completed_quest) {
+    const prereq = questMap.get(req.completed_quest) || [...questMap.values()].find(x => x.slug === req.completed_quest);
+    if (prereq) {
+      parts.push(`${prereq.title}（${prereq.id}）クリア`);
+    } else {
+      parts.push(`前提クエストクリア: ${req.completed_quest}`);
+    }
+  }
   if (req.min_level) parts.push(`プレイヤーLv ${req.min_level} 以上`);
   if (req.nation_id) {
     const nationMap = {
@@ -112,6 +119,21 @@ function buildConditionText(q) {
       'loc_haryu': '華龍国拠点',
     };
     parts.push(`滞在拠点: ${nationMap[req.nation_id] || req.nation_id}`);
+  }
+  if (req.location_id) {
+    const locMap = {
+      'loc_regalia': 'ローランド聖帝国首都 王都レガリア',
+      'loc_meridia': '砂塵の王国マルカンド首都 黄金都市イスハーク',
+      'loc_yato': '夜刀神国首都 神都「出雲」',
+      'loc_charon': '華龍神朝首都 天極城「龍京」',
+      'loc_border_town': '国境の町',
+      'loc_oasis': 'オアシスの村',
+      'loc_plains_city': '平原の都市',
+      'loc_frontier_village': '最果ての村',
+      'loc_temple_town': '門前町',
+      'loc_valley': '谷間の集落',
+    };
+    parts.push(`滞在拠点: ${locMap[req.location_id] || req.location_id}`);
   }
   if (req.min_reputation) parts.push(`名声 ${req.min_reputation} 以上`);
   if (req.max_reputation) parts.push(`名声 ${req.max_reputation} 以下`);

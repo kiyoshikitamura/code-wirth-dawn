@@ -1,51 +1,78 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"酒場の裏口で、教会の使いと名乗る男から小袋を渡された。\n中には旧市街の住民のリストが入っている。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_1
-NODE,intro_1,"「税を払わぬゴミ共は、聖帝国の恩恵を受ける資格がありません。\n　リストの家から、十分の一税を回収してください」","{""bg"":""bg_guild"",""speaker_name"":""教会の使い"",""type"":""text""}",intro_2
-NODE,intro_2,"「金がなければ、家財を売ってでも。抵抗するなら、力ずくで。\n　もちろん、見逃しても構いません。そのぶん報酬は減りますがね」","{""bg"":""bg_guild"",""speaker_name"":""教会の使い"",""type"":""text""}",arrive_slum
-NODE,arrive_slum,"リストを手に、旧市街の貧民窟へ足を踏み入れる。\nすれ違う人々の目が、警戒と敵意に満ちているのが分かった。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",house_1
-NODE,house_1,"最初の対象の家。半壊した長屋の扉を叩く。\n中から、怯えた様子の老夫婦が出てきた。","{""bg"":""bg_slums"",""type"":""text""}",plea_1
-NODE,plea_1,"「税の徴収……？ 勘弁してくだされ。\n　昨日のパンを買う金すら、もう残っとらんのです」","{""bg"":""bg_slums"",""speaker_name"":""貧民窟の老人"",""type"":""text""}",choice_1
-NODE,choice_1,"老人の服は継ぎ接ぎだらけで、部屋の中には本当に何もない。\nどうする？","{""bg"":""bg_slums"",""type"":""choice""}",
+NODE,start,"酒場の裏口。教会の使いと名乗る男から、旧市街の住民リストが入った小袋を渡された。","{""bg"":""bg_tavern_night"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_desc
+NODE,start_desc,"小袋の中には、教区の印章が押された古い羊皮紙が入っていた。そこには４つの名前が記されている。","{""bg"":""bg_tavern_night"",""type"":""text""}",intro_1
+NODE,intro_1,"「神聖なる税を払わぬゴミどもなど、聖王国の恩恵を受ける資格などありません」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",intro_1_detail
+NODE,intro_1_detail,"「リストにある４軒の家から、十分の一税を回収してください」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",intro_2
+NODE,intro_2,"「払えぬのなら家財を売り払わせ、抵抗する愚か者からは力ずくで奪えばいいのです」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",intro_2_detail
+NODE,intro_2_detail,"「温情で見逃すのも自由ですが、その場合、あなたの報酬は減るだけですからね」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",arrive_slum
+NODE,arrive_slum,"リストを手に貧民窟へ足を踏み入れる。すれ違う人々の目が警戒と敵意に満ちていた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",house_1
+NODE,house_1,"まず向かったのは、リストの最初にある家。半壊した長屋の木扉を叩くと、中から怯えた老夫婦が出てきた。","{""bg"":""bg_slums"",""type"":""text""}",plea_1
+NODE,plea_1,"「税の徴収……？ 昨日のパンを買う金すら、もう残っていないのです」","{""bg"":""bg_slums"",""speaker_name"":""貧民窟の老人"",""type"":""text""}",choice_1
+NODE,choice_1,"老人の服は継ぎ接ぎだらけ。部屋には売れるような物は何もない。どうする？","{""bg"":""bg_slums"",""type"":""choice""}",
 CHOICE,,見逃す,,mercy_1
 CHOICE,,強制的に取り立てる,,battle_1
-NODE,mercy_1,"老夫婦の家を後にした。背中に「ありがとうございます」という声が小さく聞こえた。","{""bg"":""bg_slums"",""type"":""text""}",house_2_intro
-NODE,battle_1,"老人を脅すと、近所の住民たちが農具を手に集まってきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""enemy_name"":""怒れる住民"",""type"":""battle""}",
-CHOICE,,win,,extort_1
+NODE,mercy_1,"老夫婦の家を後にした。背中から、小さな感謝の囁きが聞こえた気がした。","{""bg"":""bg_slums"",""type"":""text""}",extort_1
+NODE,battle_1,"老人を脅すと、周囲の住民たちが農具を手にして一斉に集まってきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""enemy_name"":""怒れる住民"",""type"":""battle""}",
+CHOICE,,win,,add_1
 CHOICE,,lose,,end_failure
-NODE,extort_1,"抵抗を力でねじ伏せ、なけなしの銅貨を搾り取った。\n老人がすすり泣く声が、耳の奥に残る。","{""bg"":""bg_slums"",""type"":""text""}",house_2_intro
-NODE,house_2_intro,"二軒目の家へ向かう。\n噂が広まったのか、路地の住民たちがこちらを遠巻きに窺っている。","{""bg"":""bg_slums"",""type"":""text""}",house_2
-NODE,house_2,"次の対象は、幼い子供を二人抱えた若い母親だった。\n痩せ細った顔に、深い隈が刻まれている。","{""bg"":""bg_slums"",""type"":""text""}",plea_2
-NODE,plea_2,"「お願いです、この子たちだけは……。\n　夫は戦争で死にました。もう何も残っていないのです」","{""bg"":""bg_slums"",""speaker_name"":""若い母親"",""type"":""text""}",choice_2
-NODE,choice_2,"子供たちがおびえた目でこちらを見上げている。\nどうする？","{""bg"":""bg_slums"",""type"":""choice""}",
+NODE,add_1,"","{""type"":""modify_flag"",""bg"":""bg_slums""}",extort_1
+NODE,extort_1,"抵抗を力でねじ伏せ、銅貨を搾り取った。老人のすすり泣きが耳に残る。","{""bg"":""bg_slums"",""type"":""text""}",house_2_intro
+NODE,house_2_intro,"二軒目の家へ向かう。路地の住民たちが、こちらを遠巻きに睨みつけている。","{""bg"":""bg_slums"",""type"":""text""}",house_2
+NODE,house_2,"次の対象は、幼い子供を抱えた若い母親。痩せ細った顔に深い隈が刻まれていた。","{""bg"":""bg_slums"",""type"":""text""}",plea_2
+NODE,plea_2,"「お願いです、子供たちだけは……。もう奪うものは何もないのです」","{""bg"":""bg_slums"",""speaker_name"":""若い母親"",""type"":""text""}",choice_2
+NODE,choice_2,"子供たちが怯えた目でこちらを見上げている。どうする？","{""bg"":""bg_slums"",""type"":""choice""}",
 CHOICE,,見逃す,,mercy_2
 CHOICE,,強制的に取り立てる,,battle_2
-NODE,mercy_2,"母親の家を後にした。子供の一人が、小さな手を振っているのが見えた。","{""bg"":""bg_slums"",""type"":""text""}",house_3_intro
-NODE,battle_2,"母親をかばおうと、隣人たちが武器を手に立ちはだかった！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""type"":""battle""}",
-CHOICE,,win,,extort_2
+NODE,mercy_2,"母親の家を後にした。子供の一人が、小さな手を振っているのが見えた。","{""bg"":""bg_slums"",""type"":""text""}",extort_2
+NODE,battle_2,"母親を庇おうと、隣人たちが武器を手に怒りの叫びを上げて立ちはだかった！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""enemy_name"":""怒れる住民"",""type"":""battle""}",
+CHOICE,,win,,add_2
 CHOICE,,lose,,end_failure
-NODE,extort_2,"泣き叫ぶ子供たちの前で、母親の最後の家財を袋に詰めた。","{""bg"":""bg_slums"",""type"":""text""}",house_3_intro
-NODE,house_3_intro,"三軒目へ。住民たちの視線が、明確な敵意に変わっている。\n石を投げられた。当たりはしなかったが。","{""bg"":""bg_slums"",""type"":""text""}",house_3
-NODE,house_3,"三軒目は、片足の老兵士だった。\n壁に立てかけた松葉杖の横に、錆びた剣が一本置いてある。","{""bg"":""bg_slums"",""type"":""text""}",plea_3
-NODE,plea_3,"「教会のために片足を失ったのに、まだ搾り取るか。\n　……もう好きにしろ。これ以上奪うものがあるなら、な」","{""bg"":""bg_slums"",""speaker_name"":""片足の老兵士"",""type"":""text""}",choice_3
-NODE,choice_3,"老兵士は諦めた目でこちらを見ている。\nどうする？","{""bg"":""bg_slums"",""type"":""choice""}",
+NODE,add_2,"","{""type"":""modify_flag"",""bg"":""bg_slums""}",extort_2
+NODE,extort_2,"泣き叫ぶ子供たちの前で、母親が隠していた最後の家財を力ずくで奪い取った。","{""bg"":""bg_slums"",""type"":""text""}",house_3_intro
+NODE,house_3_intro,"三軒目の家へ。住民たちの視線は明確な敵意へと変わり、足元に小石が投げつけられる。","{""bg"":""bg_slums"",""type"":""text""}",house_3
+NODE,house_3,"対象は片足の老兵士。壁の松葉杖の横に、錆びついた古い剣が置かれていた。","{""bg"":""bg_slums"",""type"":""text""}",plea_3
+NODE,plea_3,"「国のために片足を失ったのに、まだ奪うか。好きにするがいい」","{""bg"":""bg_slums"",""speaker_name"":""片足の老兵士"",""type"":""text""}",choice_3
+NODE,choice_3,"老兵士は諦めたような暗い瞳で、こちらの出方を静かに待っている。どうする？","{""bg"":""bg_slums"",""type"":""choice""}",
 CHOICE,,見逃す,,mercy_3
 CHOICE,,強制的に取り立てる,,battle_3
-NODE,mercy_3,"老兵士の家を後にした。\n彼は何も言わず、ただ遠くを見つめていた。","{""bg"":""bg_slums"",""type"":""text""}",house_4_intro
-NODE,battle_3,"老兵士の元戦友たちが駆けつけてきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""type"":""battle""}",
-CHOICE,,win,,extort_3
+NODE,mercy_3,"老兵士の家を後にした。彼は何も言わず、ただ虚空を見つめ続けていた。","{""bg"":""bg_slums"",""type"":""text""}",extort_3
+NODE,battle_3,"老兵士を脅そうとした瞬間、彼の元戦友たちが武器を手に駆けつけてきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""enemy_name"":""怒れる住民"",""type"":""battle""}",
+CHOICE,,win,,add_3
 CHOICE,,lose,,end_failure
-NODE,extort_3,"聖帝国のために戦った男の、最後の誇りを踏みにじった。\n錆びた剣だけは残してやった。せめてもの情けだ。","{""bg"":""bg_slums"",""type"":""text""}",house_4_intro
-NODE,house_4_intro,"最後の一軒。もう、誰もこちらを見ようともしない。\n貧民窟全体が、冷たい沈黙に包まれている。","{""bg"":""bg_slums"",""type"":""text""}",house_4
-NODE,house_4,"最後の対象は、病に臥せる少女を看病する老婆だった。\n部屋には薬草の匂いが充満しているが、効いている様子はない。","{""bg"":""bg_slums"",""type"":""text""}",plea_4
-NODE,plea_4,"「この子の薬代にも足りないのに……。\n　税を払えば、この子は死にます。それでも持っていくのですか」","{""bg"":""bg_slums"",""speaker_name"":""看病する老婆"",""type"":""text""}",choice_4
-NODE,choice_4,"少女が苦しそうに咳き込んでいる。\nどうする？","{""bg"":""bg_slums"",""type"":""choice""}",
+NODE,add_3,"","{""type"":""modify_flag"",""bg"":""bg_slums""}",extort_3
+NODE,extort_3,"かつて国のために戦った男の誇りを踏みにじり、なけなしの金を奪い取った。","{""bg"":""bg_slums"",""type"":""text""}",house_4_intro
+NODE,house_4_intro,"最後の一軒。もう誰もこちらを見ようとせず、貧民窟は冷たい沈黙に包まれる。","{""bg"":""bg_slums"",""type"":""text""}",house_4
+NODE,house_4,"最後の対象は、病床の少女を看病する老婆。室内には不快な薬草の臭いが漂う。","{""bg"":""bg_slums"",""type"":""text""}",plea_4
+NODE,plea_4,"「この子の薬代すら足りないのです。税を払えば、この子は死にます」","{""bg"":""bg_slums"",""speaker_name"":""看病する老婆"",""type"":""text""}",choice_4
+NODE,choice_4,"少女は荒い呼吸で苦しそうに眠っている。どうする？","{""bg"":""bg_slums"",""type"":""choice""}",
 CHOICE,,見逃す,,mercy_4
 CHOICE,,強制的に取り立てる,,battle_4
-NODE,mercy_4,"老婆の家を後にした。\n振り返ると、老婆が両手を合わせてこちらに祈りを捧げていた。","{""bg"":""bg_slums"",""type"":""text""}",report
-NODE,battle_4,"「もう許さねえ！」絶望した住民たちが最後の抵抗を見せた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""type"":""battle""}",
-CHOICE,,win,,extort_4
+NODE,mercy_4,"老婆の家を後にした。老婆は両手を合わせ、深々とこちらに頭を下げていた。","{""bg"":""bg_slums"",""type"":""text""}",extort_4
+NODE,battle_4,"絶望した住民たちが、最後の怒りを爆発させて一斉に襲いかかってきた！","{""bg"":""bg_slums"",""bgm"":""bgm_battle"",""enemy_group_id"":404,""enemy_name"":""怒れる住民"",""type"":""battle""}",
+CHOICE,,win,,add_4
 CHOICE,,lose,,end_failure
-NODE,extort_4,"薬代すらも奪い取った。\n少女の咳き込む声が、路地の奥まで響いていた。","{""bg"":""bg_slums"",""type"":""text""}",report
-NODE,report,"夜更けの路地裏で、教会の使いに回収した袋を渡す。","{""bg"":""bg_guild"",""type"":""text""}",end_success
-NODE,end_success,"「完璧です。全軒回収とは恐れ入りました。\n　あなたには才能がある。また声をかけましょう」\n教会の使いは満足げに笑った。手の中の金は、酷く汚いものに思えた。","{""bg"":""bg_guild"",""rewards"":{""gold"":200,""reputation"":-10,""alignment_shift"":{""order"":20,""evil"":10}},""type"":""end"",""result"":""success""}",
-NODE,end_failure,"飢えと絶望に駆られた暴徒の力は凄まじかった。\n農具で殴り倒され、貧民窟の泥の中に沈んだ。","{""bg"":""bg_slums"",""type"":""end"",""result"":""failure""}",
+NODE,add_4,"","{""type"":""modify_flag"",""bg"":""bg_slums""}",extort_4
+NODE,extort_4,"少女の薬代すらも無慈悲に奪い取った。背後で激しい咳き込みが響く。","{""bg"":""bg_slums"",""type"":""text""}",report_check
+NODE,report_check,"","{""type"":""check_flags"",""bg"":""bg_slums""}",
+CHOICE,,success,,report_0
+CHOICE,,failure,,report_check_4
+NODE,report_check_4,"","{""type"":""check_flags"",""bg"":""bg_slums""}",
+CHOICE,,success,,report_4
+CHOICE,,failure,,report_mid_check
+NODE,report_mid_check,"","{""type"":""check_flags"",""bg"":""bg_slums""}",
+CHOICE,,success,,report_mid_1
+CHOICE,,failure,,report_mid_check_2
+NODE,report_mid_check_2,"","{""type"":""check_flags"",""bg"":""bg_slums""}",
+CHOICE,,success,,report_mid_2
+CHOICE,,failure,,report_mid_3
+NODE,report_0,"「回収できた金は一枚もないと？ フン、お優しい冒険者様だ。それでは分け前もありません、当然です。」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",end_success_0
+NODE,end_success_0,"金は手に入らなかったが、貧民窟の人々は守られた。これが私の選んだ道だ。","{""bg"":""bg_tavern_night"",""rewards"":{""gold"":0,""reputation"":30},""type"":""end"",""result"":""success""}",
+NODE,report_mid_1,"「ふむ、回収できたのは一軒だけですか。温情ですか？ まあ、最低限の脅しにはなったでしょう」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",end_success_1
+NODE,end_success_1,"受け取ったわずかな分け前を懐に仕舞う。心には、言い知れぬ暗い澱みが残っていた。","{""bg"":""bg_tavern_night"",""rewards"":{""gold"":50,""reputation"":10,""alignment_shift"":{""order"":5,""evil"":3}},""type"":""end"",""result"":""success""}",
+NODE,report_mid_2,"「回収できたのは二軒ですか。ふむ、悪くはありませんが……次はもっと冷徹に仕事をしていただきたい」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",end_success_2
+NODE,end_success_2,"金袋の半分は軽いままだ。貧民窟の親子の泣き顔と、握りしめた硬貨の冷たさが脳裏をよぎる。","{""bg"":""bg_tavern_night"",""rewards"":{""gold"":100,""reputation"":-5,""alignment_shift"":{""order"":10,""evil"":5}},""type"":""end"",""result"":""success""}",
+NODE,report_mid_3,"「三軒から回収ですか。上出来です。これでゴミどもも、教会の権威を思い知ったことでしょう」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",end_success_3
+NODE,end_success_3,"ほぼ満額の分け前。だが手にした金貨には、老兵士や看病する老婆の血と汗が染み付いている。","{""bg"":""bg_tavern_night"",""rewards"":{""gold"":150,""reputation"":-10,""alignment_shift"":{""order"":15,""evil"":8}},""type"":""end"",""result"":""success""}",
+NODE,report_4,"「素晴らしい！ 四軒すべてから回収するとは。これこそ法と秩序の勝利、見事な働きです！」","{""bg"":""bg_tavern_night"",""speaker_name"":""教会の使い"",""type"":""text""}",end_success_4
+NODE,end_success_4,"満額の金貨を受け取った。貧民窟の絶望の叫びなど、重い金袋の響きの前には無意味だった。","{""bg"":""bg_tavern_night"",""rewards"":{""gold"":200,""reputation"":-10,""alignment_shift"":{""order"":20,""evil"":10}},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"絶望した暴徒たちの暴力の前に倒れ伏す。泥水の中で意識は闇に消えた。","{""bg"":""bg_slums"",""type"":""end"",""result"":""failure""}",

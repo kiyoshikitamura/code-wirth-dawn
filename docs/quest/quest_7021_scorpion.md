@@ -6,17 +6,17 @@
 |-----|-----|
 | **Quest ID** | 7021 |
 | **Slug** | `qst_mar_scorpion` |
-| **クエスト種別** | マルカンドクエスト（Markand） |
+| **クエスト種別** | 一般クエスト（Normal） |
 | **推奨レベル** | 5（Normal） |
 | **難度** | 2 |
 | **依頼主** | 闇商人 |
-| **出現条件** | 制限なし / 出現拠点: loc_marcund |
+| **出現条件** | 出現国: マルカンド |
 | **リピート** | リピート可能 |
+| **経過日数 (time_cost)** | 2 |
+| **ノード数** | 31ノード |
+| **ゲストNPC** | なし |
 | **難易度Tier** | Normal（rec_level: 5） |
-| **経過日数 (time_cost)** | 2（成功: 2日 / 失敗: 1日） |
-| **ノード数** | 22ノード |
 | **サムネイル画像** | `/images/quests/bg_desert.png` |
-
 ## 1. クエスト概要
 
 ### 短文説明
@@ -26,7 +26,10 @@
 
 ### 長文説明
 ```
-マルカンドの裏路地で、闇商人から密かに依頼を受けた。「幻覚サソリの毒針」——暗殺用の薬や違法な麻薬の原料となる希少な素材だ。砂漠の岩場に棲むこの危険な生き物の毒は、微量で人を幻覚に陥れ、過剰摂取で確実に殺す。正規の市場には出回らない品であり、手を出すこと自体が後ろ暗い。だが、闇商人の金払いは良い。毒針は3本必要だが、1回のバトルで確実に取れるとは限らない。
+マルカンドの裏路地で、闇商人から密かに依頼を受けた。「幻覚サソリの毒針」——暗殺用の薬や違法な麻薬の原料となる希少な素材だ。
+砂漠の岩場に棲むこの危険な生き物の毒は、微量で人を幻覚に陥れ、過剰摂取で確実に殺す。
+正規の市場には出回らない品であり、手を出すこと自体が後ろ暗い。だが、闇商人の金払いは良い。
+毒針は3本必要だが、1回のバトルで確実に取れるとは限らない。
 ```
 
 ## 2. 報酬定義
@@ -48,207 +51,218 @@ Gold:300|Evil:5|Chaos:5|Exp:100
 ### 全体フロー
 
 ```text
-start → intro_1 → intro_2 → travel_desert
-  → reach_rocks → search_1 → find_nest → nest_desc
-    → battle_scorpion (デザートスコーピオン x3)
-       ├─ [勝利] → harvest_result (random_branch: prob 50)
-       │    ├─ [成功: 毒針入手] → harvest_success (reward: item_scorpion_needle)
-       │    │    → check_needles (check_delivery: item_scorpion_needle x3)
-       │    │         ├─ [3本揃った] → travel_back → back_alley → deliver_1 → dealer_reply → end_success
-       │    │         └─ [不足] → hunt_continue → battle_scorpion（ループ）
-       │    └─ [失敗: 毒針破損] → harvest_fail
-       │         → hunt_continue → battle_scorpion（ループ）
-       └─ [敗北] → end_failure
+start → start_desc → intro_1 → intro_1_detail → intro_2 → intro_2_warn → travel_desert → travel_scenery
+  → reach_rocks → reach_rocks_desc → search_1 → search_wait → find_nest → nest_desc → nest_rush
+    → battle_scorpion
+       ├─ win → harvest_result（分岐）
+       │    ├─ success → harvest_success → check_needles（分岐）
+       │    │    ├─ success → travel_back → travel_back_scenery → back_alley → back_alley_desc → deliver_1 → dealer_reply → dealer_reply_02 → end_success
+       │    │    └─ failure → hunt_continue → battle_scorpion（ループ）
+       │    └─ failure → harvest_fail → harvest_fail_avoid → check_needles
+       └─ lose → end_failure
 ```
 
-### ノード詳細
+### ノード詳細（31ノード）
 
 #### `start`（text）
 **演出:** bg: bg_slums, bgm: bgm_quest_tense
 ```text
-マルカンドの裏路地。香辛料と汗の匂いが混じる路地の奥で、
-フードを目深に被った男が待っていた。
+マルカンドの裏路地。強い香辛料と不衛生なドブの臭いが混じり合う、狭い闇市の一角。
+```
+
+#### `start_desc`（text）
+**演出:** bg: bg_slums
+```text
+フードを目深に被った男が、外套の下から細く汚れた指を伸ばして手招きする。
 ```
 
 #### `intro_1`（text）
 **演出:** bg: bg_slums, speaker: 闇商人
 ```text
-「幻覚サソリの毒針が欲しい。新鮮なやつを3本。
-　何に使うかは聞くな。それが商売のルールだ」
+「幻覚サソリの毒針が欲しい。鮮度の良いものを３本だ」
+```
+
+#### `intro_1_detail`（text）
+**演出:** bg: bg_slums, speaker: 闇商人
+```text
+「何に使うかは詮索するな。それがここのルールだ」
 ```
 
 #### `intro_2`（text）
 **演出:** bg: bg_slums, speaker: 闇商人
 ```text
-「奴らの巣は砂漠の東にある岩場だ。
-　赤い尾を光らせているのが目印。刺されたら……まあ、気をつけろ」
+「巣は砂漠の東にある岩場だ。尾の先が紫色に光っている」
+```
+
+#### `intro_2_warn`（text）
+**演出:** bg: bg_slums, speaker: 闇商人
+```text
+「ほんの掠り傷でも、脳が狂って死ぬことになるぞ」
 ```
 
 #### `travel_desert`（text）
 **演出:** bg: bg_desert, bgm: bgm_field
 ```text
-砂漠の東へ向かう。乾いた風が砂を巻き上げ、
-視界が霞む中をひたすら歩き続けた。
+東の熱砂へ向かう。巻き上がる砂塵が視界を遮り、喉を執拗に痛めつける。
+```
+
+#### `travel_scenery`（text）
+**演出:** bg: bg_desert
+```text
+乾いた風が吹き抜け、不気味な白骨化した獣の死骸があちこちに転がっていた。
 ```
 
 #### `reach_rocks`（text）
 **演出:** bg: bg_desert
 ```text
-半日ほど歩くと、赤茶けた岩場が見えてきた。
-巨大な岩の隙間から、微かに紫色の光が漏れている。
+半日歩き、赤茶けた岩場に到着した。岩壁の隙間から、紫色の怪しい光が漏れる。
+```
+
+#### `reach_rocks_desc`（text）
+**演出:** bg: bg_desert
+```text
+岩場の周囲の草木は毒気で枯れ果て、触れるだけで崩れ去るほど脆くなっていた。
 ```
 
 #### `search_1`（text）
 **演出:** bg: bg_desert
 ```text
-岩の隙間に手を伸ばすのは自殺行為だ。
-石を投げて反応を見る。暗闇の奥で、何かがカサカサと動いた。
+岩の奥へ石を投げ込む。暗闇からカサカサと、硬い殻が擦れ合う音が響いた。
+```
+
+#### `search_wait`（text）
+**演出:** bg: bg_desert
+```text
+様子を見る。しかし、用心深い魔獣はなかなか暗い裂け目から姿を現そうとしない。
 ```
 
 #### `find_nest`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 ```text
-岩の裏側に回り込むと、地面にいくつもの穴が空いている。
-サソリの巣穴だ。穴の縁が紫色に染まっているのは、毒のせいだろう。
+岩の裏には無数の巣穴。周囲の砂が紫色に染まっているのは、蓄積した毒のせいか。
 ```
 
 #### `nest_desc`（text）
 **演出:** bg: bg_desert
 ```text
-穴の一つから、尾の先を紫色に光らせたサソリが這い出てきた。
-大人の腕ほどの大きさ。こちらを威嚇するように、鋏を打ち鳴らしている。
+穴から巨大なサソリが現れた。大人の腕ほどもあり、鋭い鋏を威嚇するように鳴らす。
+```
+
+#### `nest_rush`（text）
+**演出:** bg: bg_desert
+```text
+一匹だけではない。地中から次々と、紫色の毒針を掲げた影が這い回り始める。
 ```
 
 #### `battle_scorpion`（battle）
 **演出:** bg: bg_desert, bgm: bgm_battle
-
 | 設定 | 値 |
 |-----|-----|
-| 敵グループID | `422`（新規作成） |
-| 敵グループSlug | `grp_scorpion_nest` |
-| 構成 | デザートスコーピオン(1211) x3 |
+| 敵グループID | `422` |
 | 敵表示名 | 幻覚サソリの群れ |
 
 ```text
-巣穴から次々とサソリが這い出してくる！毒針に注意しろ！
+尾の毒針を妖しく光らせた幻覚サソリの群れが、一斉に襲いかかってきた！
 ```
 
 #### `harvest_result`（random_branch）
-**演出:** bg: bg_desert, bgm: bgm_quest_calm
-```text
-サソリを仕留めた。紫色に光る尾を慎重に切り取る。
-ナイフの先が微かに痺れた——素手で触ったら終わりだったろう。
-```
-**パラメータ:** type: random_branch, prob: 50, next: harvest_success, fallback: harvest_fail
+**パラメータ:** next: `harvest_success`, fallback: `harvest_fail`, prob: 50
 
 #### `harvest_success`（reward）
+**パラメータ:** item_id: `item_scorpion_needle`, next: `check_needles`
 **演出:** bg: bg_desert
 ```text
-上手く切り取れた。毒針の鮮度は申し分ない。
-革袋に慎重に収める。壊さぬよう、砂が入らぬよう。
+慎重に切り離した。紫色の鮮やかな針を、丁寧にガラス瓶の中へ封印する。
 ```
-**パラメータ:** type: reward, item_id: `item_scorpion_needle`, next: check_needles
 
 #### `harvest_fail`（text）
 **演出:** bg: bg_desert
 ```text
-切り取ろうとした瞬間、毒針が砕けてしまった。
-サソリの毒は繊細だ。力を入れすぎれば使い物にならなくなる。
+切り離す際に力が入り、針が砕けてしまった。有毒な紫の霧が微かに舞い散る。
 ```
 
-#### `check_needles`（check_delivery）
+#### `harvest_fail_avoid`（text）
 **演出:** bg: bg_desert
 ```text
-革袋の中身を確認する。新鮮な毒針が3本必要だ。
+慌てて息を止めて飛び退く。砕けた針は、もはや何の価値もなくなってしまった。
 ```
-**パラメータ:** type: check_delivery, item_id: `item_scorpion_needle`, quantity: 3, next: travel_back, fallback: hunt_continue
+**次ノード:** `check_needles`
+
+#### `check_needles`（check_delivery）
+**パラメータ:** item_id: `item_scorpion_needle`, quantity: 3, next: `travel_back`, fallback: `hunt_continue`
 
 #### `hunt_continue`（text）
 **演出:** bg: bg_desert, bgm: bgm_quest_tense
 ```text
-まだ足りない。巣穴の周りにはサソリがまだ潜んでいる。
-再び砂を蹴り、次の獲物をおびき出す。
+まだ３本に達していない。巣穴を刺激し、次の獲物を地表へと引きずり出す。
 ```
-**次ノード:** battle_scorpion（ループ）
+**次ノード:** `battle_scorpion`
 
 #### `travel_back`（text）
 **演出:** bg: bg_desert, bgm: bgm_field
 ```text
-毒針が3本揃った。岩場を後にし、マルカンドへの帰路を急ぐ。
-砂漠の熱で変質しないうちに、急いで届けなければ。
+毒針が３本揃った。砂漠の熱で変質する前に、急いでマルカンドへ戻らねば。
+```
+
+#### `travel_back_scenery`（text）
+**演出:** bg: bg_desert
+```text
+夕陽が砂漠を血のように赤く染めていく。背中の猛毒の危険を感じつつ歩みを急ぐ。
 ```
 
 #### `back_alley`（text）
 **演出:** bg: bg_slums, bgm: bgm_quest_tense
 ```text
-日が暮れた頃、マルカンドの裏路地に戻ってきた。
-あの闇商人は、同じ場所で待っていた。
+日没後、異様な香とドブの臭いが満ちる裏路地へ戻る。闇商人は同じ場所にいた。
+```
+
+#### `back_alley_desc`（text）
+**演出:** bg: bg_slums
+```text
+怪しげな薬売りや密売人たちの視線を避けながら、待ち合わせの路地裏の奥へと進む。
 ```
 
 #### `deliver_1`（text）
 **演出:** bg: bg_slums
 ```text
-革袋を差し出す。闇商人は中身を確認し、
-一本ずつ光に透かして品質を確かめた。
+毒針の入った瓶を手渡す。男は小窓のランプの光に透かし、一本ずつ吟味した。
 ```
 
 #### `dealer_reply`（text）
 **演出:** bg: bg_slums, speaker: 闇商人
 ```text
-「上物だ。鮮度も申し分ない。
-　金は約束通り。また入り用になったら声をかける」
+「どれも極上だ。これだけ新鮮なら、最高の幻覚剤が作れる」
+```
+
+#### `dealer_reply_02`（text）
+**演出:** bg: bg_slums, speaker: 闇商人
+```text
+「これは報酬だ。また汚い仕事が欲しくなったらここへ来い」
 ```
 
 #### `end_success`（end_success）
 **演出:** bg: bg_slums
 ```text
-金袋を受け取った。この毒針が誰かの命を奪う道具になるのだろう。
-だが、それは自分の知ったことではない——そう言い聞かせた。
+金貨を受け取る。この毒が誰かを狂わせるのだろうが、私には関係のないことだ。
 ```
 **rewards:** Gold:300, Evil:5, Chaos:5, Exp:100
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_desert
 ```text
-サソリの毒が全身に回り始めた。
-視界が歪み、砂漠が紫色に溶けていく——これが幻覚か。
+防ぎきれず、毒針が肉を引き裂いた。紫色の幻想の中、意識は永遠に失われた。
 ```
 
 ---
 
-## 4. 敵定義参照（新規エネミーグループ 1件）
+## 4. 敵定義参照
 
-### エネミーグループ: `grp_scorpion_nest` (ID: 422)
-
-| Slug | 名前 | Lv | HP | ATK | DEF |
-|------|------|----|----|-----|-----|
-| enemy_markand_scorpion | デザートスコーピオン | 8 | 90 | 30 | 15 |
-| enemy_markand_scorpion | デザートスコーピオン | 8 | 90 | 30 | 15 |
-| enemy_markand_scorpion | デザートスコーピオン | 8 | 90 | 30 | 15 |
+| enemy_group_id | グループ名 |
+|----------------|-----------|
+| 422 | 幻覚サソリの群れ |
 
 ## 4.5. 新規アイテム定義
 
 | ID | Slug | Name | Type | Value | Description |
 |-----|-----|-----|-----|-----|-----|
 | 3005 | `item_scorpion_needle` | サソリの毒針 | material | 0 | 幻覚サソリから採取した新鮮な毒針。暗殺薬の原料として闇市場で高値で取引される。 |
-
----
-
-## 5. CSVエントリ（quests_normal.csv）
-
-```csv
-7021,qst_mar_scorpion,幻覚サソリの毒針調達,5,2,2,loc_marcund,,,,,Gold:300|Evil:5|Chaos:5|Exp:100,闇商人,[納品] 砂漠の奥地に棲む幻覚サソリを狩り、闇商人に毒針を納品する。
-```
-
----
-
-## 6. 実装チェックリスト
-
-- [ ] 出現拠点 `loc_marcund` のみ
-- [ ] エネミーグループ `grp_scorpion_nest`（422）がenemy_groups.csvに登録済み
-- [ ] アイテム `item_scorpion_needle` がitems.csvに登録済み
-- [ ] バトル勝利後50%の確率で毒針を入手（random_branch）
-- [ ] 毒針3本揃うまでバトルがループする（check_delivery → hunt_continue → battle_scorpion）
-- [ ] 3本揃ったら帰路ルートへ遷移する
-- [ ] Gold:300 + Evil:5 + Chaos:5 + Exp:100 が付与される
-- [ ] time_cost: 2（成功）/ 1（失敗）が正しく経過する

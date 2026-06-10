@@ -1,34 +1,41 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"掲示板に貼られた依頼書は、\n安い紙に震える字で書かれていた。","{""type"":""text"",""bg"":""bg_guild"",""bgm"":""bgm_quest_calm""}",text_01
-NODE,text_01,"「薬草を集めて、野営地の修道女に\n　届けてください。報酬はほとんど出せません」","{""type"":""text"",""bg"":""bg_guild""}",text_02
-NODE,text_02,"金にならない仕事だ。だが掲示板に残っている。\n誰も手をつけていないということだ。","{""type"":""text"",""bg"":""bg_guild""}",meet_01
-NODE,meet_01,"依頼主に会いに行った。\n酒場の片隅で修道女が待っていた。","{""type"":""text"",""bg"":""bg_tavern_day""}",meet_02
-NODE,meet_02,"白い法衣は薄汚れ、\n目の下に深い隈がある。","{""type"":""text"",""bg"":""bg_tavern_day""}",meet_03
-NODE,meet_03,"「私はシスター・エレナ。\n　難民の野営地で怪我人の手当てをしています」","{""type"":""text"",""bg"":""bg_tavern_day"",""speaker_name"":""シスター・エレナ""}",meet_04
-NODE,meet_04,"「ですが、薬草が底をついてしまって」\n声は落ち着いているが指先が震えていた。","{""type"":""text"",""bg"":""bg_tavern_day"",""speaker_name"":""シスター・エレナ""}",camp_01
-NODE,camp_01,"エレナに案内されて野営地を訪れた。\n粗末なテントが並んでいる。","{""type"":""text"",""bg"":""bg_road_day""}",camp_02
-NODE,camp_02,"テントの奥で、熱にうなされる老人。\n布を巻いた腕から血が滲んでいる。","{""type"":""text"",""bg"":""bg_road_day""}",camp_03
-NODE,camp_03,"「矢傷が化膿しています。\n　癒やし草があれば……」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ""}",info_01
-NODE,info_01,"「沢の近く、苔の生えた岩の周りに\n　生えています。白い花が目印です」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ""}",info_02
-NODE,info_02,"「五束は必要です」\nエレナの目にはもう涙はなかった。","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ""}",gather_01
-NODE,gather_01,"森に入った。沢沿いを歩き、\n苔むした岩の陰に白い花を見つけた。","{""type"":""text"",""bg"":""bg_forest_day""}",gather_02
-NODE,gather_02,"指先で慎重に根元から摘み取る。\n一束目。まだ足りない。","{""type"":""text"",""bg"":""bg_forest_day""}",gather_03
-NODE,gather_03,"倒木の影にも群生を見つけた。\n三束目。急がねば。","{""type"":""text"",""bg"":""bg_forest_day""}",gather_04
-NODE,gather_04,"沢の上流まで足を伸ばした。\n群生があるはずだが——","{""type"":""text"",""bg"":""bg_forest_day""}",branch
-NODE,branch,"採取の成否","{""type"":""random_branch"",""prob"":70}",
-CHOICE,,hit,,gather_ok
-CHOICE,,miss,,gather_fail_01
-NODE,gather_ok,"四束目、五束目。規定の数が揃った。\n布で丁寧に包む。","{""type"":""text"",""bg"":""bg_forest_day""}",deliver
-NODE,gather_fail_01,"……だめだ。日照りの影響か、\n群生地が枯れている。三束しかない。","{""type"":""text"",""bg"":""bg_forest_day""}",gather_fail_02
-NODE,gather_fail_02,"手持ちに癒やし草があれば\n足りない分を補えるかもしれない。","{""type"":""text"",""bg"":""bg_forest_day""}",check
-NODE,check,"所持品を確認する。","{""type"":""check_possession"",""item_id"":702,""quantity"":5,""fallback"":""not_enough""}",gather_backup
-NODE,gather_backup,"手持ちの癒やし草を合わせれば\n五束分になる。急いで戻ろう。","{""type"":""text"",""bg"":""bg_forest_day""}",deliver
-NODE,not_enough,"三束では薬としては不十分だ。\nそれでも持っていくしかない。","{""type"":""text"",""bg"":""bg_forest_day""}",not_enough_02
-NODE,not_enough_02,"野営地に戻り三束だけ渡した。\nエレナは中身を確認し静かに目を伏せた。","{""type"":""text"",""bg"":""bg_road_day""}",not_enough_03
-NODE,not_enough_03,"「……ありがとうございます。\n　でもこれでは足りないのです」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ""}",end_failure
-NODE,deliver,"野営地に戻ると、\nエレナが入口で待っていた。","{""type"":""text"",""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm""}",deliver_02
-NODE,deliver_02,"癒やし草を渡すと、\n深く息をついた。","{""type"":""text"",""bg"":""bg_road_day""}",deliver_03
-NODE,deliver_03,"「これで助けられます。\n　ありがとう、本当に」","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ""}",deliver_04
-NODE,deliver_04,"「報酬は……ほとんど出せないのですが」\n小さな革袋を差し出した。中には銅貨が数枚。","{""type"":""text"",""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ""}",end_success
-NODE,end_success,"薬草の納品完了。報酬は銅貨10枚。\nだがテントの奥で呻き声が小さくなった。","{""type"":""end"",""result"":""success"",""bg"":""bg_road_day""}",
-NODE,end_failure,"薬草が足りなかった。エレナは微笑んだ。\n「きっと別の方が……」その笑顔が辛かった。","{""type"":""end"",""result"":""failure"",""bg"":""bg_road_day""}",
+NODE,start_prep,"冒険者ギルドは喧騒に満ちていた。高額な討伐任務の張り紙の陰で、一枚の薄汚れた紙を見つける。","{""bg"":""bg_guild"",""type"":""text""}",start
+NODE,start,"それは難民野営地からの救援依頼だった。震える手で書かれたような文字が、薬草の調達を必死に懇願していた。","{""bg"":""bg_guild"",""type"":""text""}",text_01
+NODE,text_01,"「癒やし草を五束、どうか届けてください」——そう綴られた依頼は、誰にも見向きもされていなかった。","{""bg"":""bg_guild"",""type"":""text""}",text_02
+NODE,text_02,"金にならない慈善事業だが、このまま見捨てるのも寝覚めが悪い。依頼書を乱暴に剥ぎ取り、懐へと押し込んだ。","{""bg"":""bg_guild"",""type"":""text""}",meet_01
+NODE,meet_01,"指定された酒場へ向かう。昼間の店内は荒れており、隅の席で若い修道女が小さく身を縮めていた。","{""bg"":""bg_tavern_day"",""type"":""text""}",meet_02
+NODE,meet_02,"彼女の白い法衣は泥に汚れ、目の下には濃い隈が刻まれている。限界はもう目前に違いない。","{""bg"":""bg_tavern_day"",""type"":""text""}",meet_03
+NODE,meet_03,"「引き受けてくださり感謝します。私はシスター・エレナ。難民の治療を行っています」","{""bg"":""bg_tavern_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",meet_04
+NODE,meet_04,"「怪我人が増え、手持ちの薬草が尽きてしまいました。どうか力を貸してください」","{""bg"":""bg_tavern_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",camp_01
+NODE,camp_01,"彼女に同行し、街外れの難民野営地を訪れた。粗末な布テントが泥濘にいくつも並んでいる。","{""bg"":""bg_road_day"",""type"":""text""}",camp_scenery
+NODE,camp_scenery,"そこら中から咳き込む声や呻き声が聞こえる。衛生的とは言えない過酷な環境だった。","{""bg"":""bg_road_day"",""type"":""text""}",camp_02
+NODE,camp_02,"テントの奥では老人が熱にうなされ、化膿した傷口からは酷い悪臭が立ち上る。","{""bg"":""bg_road_day"",""type"":""text""}",camp_03
+NODE,camp_03,"「皆、矢傷や病で苦しんでいます。傷を癒やすための薬草が、どうしても必要なのです」","{""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",info_01
+NODE,info_01,"「森の奥、沢沿いの苔むした岩場に白い花を咲かせる薬草です。どうか探してください」","{""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",info_02
+NODE,info_02,"「怪我人たちの命を救うため、最低でも五束は持ち帰っていただく必要があります」","{""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",forest_enter
+NODE,forest_enter,"日暮れまでに戻らねば、野営地の者たちは手遅れになる。私たちは急ぎ、薄暗い森へ足を踏み入れた。","{""bg"":""bg_forest_day"",""type"":""text""}",gather_01
+NODE,gather_01,"木々の隙間を抜け、冷たい水の音が響く沢に辿り着いた。苔むした岩肌に咲く白い花を見つける。","{""bg"":""bg_forest_day"",""type"":""text""}",gather_02
+NODE,gather_02,"茎を傷つけないよう慎重にナイフで刈り取る。まずは一束目だ。だが、これだけでは足りない。","{""bg"":""bg_forest_day"",""type"":""text""}",gather_03
+NODE,gather_03,"湿った腐葉土を踏みしめ、周囲を探す。倒木の陰に小さな群生を見つけ、さらに二束を確保することに成功した。","{""bg"":""bg_forest_day"",""type"":""text""}",gather_04
+NODE,gather_04,"すでに陽が傾き始めている。森の影が徐々に伸びる中、私たちは沢の上流へと捜索範囲を広げていく。","{""bg"":""bg_forest_day"",""type"":""text""}",branch
+NODE,branch,"","{""type"":""random_branch"",""prob"":70,""bg"":""bg_forest_day""}",
+CHOICE,,success,,gather_ok
+CHOICE,,failure,,gather_fail_01
+NODE,gather_ok,"運良く上流の岩陰に群生が残っていた。四束目、五束目を刈り取り、用意した布で丁寧に包む。","{""bg"":""bg_forest_day"",""type"":""text""}",gather_fail_01
+NODE,gather_fail_01,"だが、沢の上流は日照りで乾ききっており、白い花はすべて枯れ果てていた。三束しかない。","{""bg"":""bg_forest_day"",""type"":""text""}",gather_fail_02
+NODE,gather_fail_02,"手持ちの荷物の中に、以前採取した『癒やし草』が残っていれば補填できるかもしれないが……","{""bg"":""bg_forest_day"",""type"":""text""}",check
+NODE,check,"","{""type"":""check_delivery"",""item_id"":""702"",""quantity"":5,""bg"":""bg_forest_day""}",
+CHOICE,,success,,gather_backup
+CHOICE,,failure,,not_enough
+NODE,gather_backup,"荷袋から古い薬草を取り出し、合わせる。これでなんとか五束分だ。急いで野営地へ戻ろう。","{""bg"":""bg_forest_day"",""type"":""text""}",not_enough
+NODE,not_enough,"持ってきた三束だけでは、全員を救う薬としては少なすぎる。だが、持ち帰るしかない。","{""bg"":""bg_forest_day"",""type"":""text""}",not_enough_02
+NODE,not_enough_02,"野営地に戻り、薬草を差し出す。エレナは受け取ったが、その表情は陰っていた。","{""bg"":""bg_road_day"",""type"":""text""}",not_enough_03
+NODE,not_enough_03,"「ありがとうございます。ですが……これだけでは、救えない命が出てしまいます」","{""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",end_failure
+NODE,end_failure,"薬草が足りず、手当ては不完全に終わった。自分の力不足を呪いながら、野営地を去った。","{""bg"":""bg_road_day"",""type"":""end"",""result"":""failure""}",
+NODE,deliver,"夕闇が野営地を包む頃、私たちは戻った。入り口でシスター・エレナが焦燥した顔で待っていた。","{""bg"":""bg_road_day"",""type"":""text""}",deliver_02
+NODE,deliver_02,"五束の薬草を手渡すと、彼女はそれを愛おしそうに胸に抱きしめ、張り詰めていた糸が切れたように息を吐く。","{""bg"":""bg_road_day"",""type"":""text""}",deliver_03
+NODE,deliver_03,"「よかった……これで薬を作れます。本当に、本当にありがとうございました」","{""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",deliver_04
+NODE,deliver_04,"「これしかお渡しできませんが、どうかお受け取りください」","{""bg"":""bg_road_day"",""speaker_name"":""シスター・エレナ"",""type"":""text""}",deliver_pay
+NODE,deliver_pay,"彼女の細い手から、数枚の汚れた銅貨を受け取った。これが彼らの全財産なのだろう。","{""bg"":""bg_road_day"",""type"":""text""}",deliver_apply
+NODE,deliver_apply,"彼女は休む間もなく、すり鉢で薬草の調合を始めた。手際よく怪我人の手当てに当たっていく。","{""bg"":""bg_road_day"",""type"":""text""}",end_success
+NODE,end_success,"報酬は銅貨10枚。だが、野営地の呻き声は小さくなった。少しは救いがあったのだろう。","{""bg"":""bg_road_day"",""rewards"":{""gold"":10,""reputation"":10,""alignment_shift"":{""justice"":10,""order"":10}},""type"":""end"",""result"":""success""}",

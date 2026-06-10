@@ -1,21 +1,33 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,"聖騎士団の詰め所に呼ばれた。\n薄暗い執務室で、副隊長が分厚い羊皮紙を机に放り投げる。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_1
-NODE,intro_1,"「旧市街の廃教会で、異端者どもが夜な夜な集会を開いている。\n　『偽りの神を捨て、真の星の導きに従え』などと妄言を吐く連中だ」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",intro_2
-NODE,intro_2,"「我々が直接動けば、無用な騒ぎになる。\n　冒険者よ、お前に『浄化』を頼みたい。手荒な真似になっても構わん」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",arrive_slum
-NODE,arrive_slum,"王都の華やかな表通りから外れ、旧市街へと足を踏み入れる。\n日差しが遮られ、じめじめとした空気が肌を撫でた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",slum_desc
-NODE,slum_desc,"やせ細った野良犬が路地裏へ逃げ込む。\nこの辺りの住民たちは、異端の教えに救いを求めるほど追い詰められているのだろうか。","{""bg"":""bg_slums"",""type"":""text""}",church_out
-NODE,church_out,"目的の廃教会に到着した。\nステンドグラスは割れ、女神の彫像は顔が削り取られている。","{""bg"":""bg_ruined_church"",""type"":""text""}",church_in
-NODE,church_in,"きしむ木の扉を押し開け、地下への階段を下りる。\nカビの匂いに混じって、甘ったるい香の匂いが漂ってきた。","{""bg"":""bg_ruined_church"",""type"":""text""}",ritual_scene
-NODE,ritual_scene,"地下の礼拝堂。\n黒いローブを着た十数人の男女が、奇妙な文様を描いた祭壇を囲んでいる。","{""bg"":""bg_ruined_church"",""type"":""text""}",ritual_dialogue
-NODE,ritual_dialogue,"「光は我らを救わない！ 真の救済は、星の海から訪れる！\n　今こそ偽りの偶像を打ち砕き——」","{""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭"",""type"":""text""}",confront
-NODE,confront,"松明の光がこちらを照らし出した。\n信徒たちが一斉にこちらを振り返る。その目には異常な熱が宿っていた。","{""bg"":""bg_ruined_church"",""type"":""text""}",cultist_shout
-NODE,cultist_shout,"「騎士団の犬め！\n　星の導きを邪魔する者は、我らが手で排除する！」","{""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭"",""type"":""text""}",battle_cultists
-NODE,battle_cultists,"異端者たちが隠し持っていた短剣を抜き、襲いかかってきた！","{""bg"":""bg_ruined_church"",""bgm"":""bgm_battle"",""enemy_group_id"":410,""enemy_name"":""異端の信徒たち"",""type"":""battle""}",
+NODE,start,"聖騎士団の詰め所に呼び出された。冷たい石造りの部屋に、重苦しい空気が漂っている。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",start_desc
+NODE,start_desc,"薄暗い執務室の奥。副隊長が、羊皮紙の依頼書を無造作に机の上に放り投げた。","{""bg"":""bg_guild"",""type"":""text""}",intro_1
+NODE,intro_1,"「旧市街の廃教会で、聖堂の秩序を乱す異端者どもが夜な夜な怪しげな集会を開いているそうだ」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",intro_1_detail
+NODE,intro_1_detail,"「『偽りの神を捨て、真の星の導きに従え』などと妄言を吐く連中だ」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",intro_2
+NODE,intro_2,"「表沙汰になれば余計な騒ぎになる。そこで、お前に奴らの『排除』を委ねたい」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",intro_2_warn
+NODE,intro_2_warn,"「教会の名誉を守るためだ。多少の手荒な真似は黙認する。奴らを生かして帰すなよ」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",accept_think
+NODE,accept_think,"暗黙の了解。血生臭い汚れ仕事だ。だが、断れば次の仕事はない。依頼書を懐に収めた。","{""bg"":""bg_guild"",""type"":""text""}",arrive_slum
+NODE,arrive_slum,"それから間もなく、私たちは王都のきらびやかな大通りを離れ、影に覆われた旧市街の路地裏へと足を踏み入れた。","{""bg"":""bg_slums"",""bgm"":""bgm_quest_tense"",""type"":""text""}",slums_desc
+NODE,slums_desc,"じめじめとした悪臭が漂う。やせ細った野良犬が、こちらを警戒するように通り過ぎた。","{""bg"":""bg_slums"",""type"":""text""}",slums_think
+NODE,slums_think,"こんな日陰の街だからこそ、人々はすがるように異端の救いを求めるのだろうか。","{""bg"":""bg_slums"",""type"":""text""}",church_out
+NODE,church_out,"目的の廃教会に辿り着いた。ステンドグラスは砕け散り、不気味な静寂を湛えている。","{""bg"":""bg_ruined_church"",""type"":""text""}",church_outside
+NODE,church_outside,"教会の入り口に立つ女神の石像は、何者かの手によって顔が削り取られていた。","{""bg"":""bg_ruined_church"",""type"":""text""}",church_in
+NODE,church_in,"歪んだ木扉を押し開け、地下へと続く階段を降りる。埃の臭いの中に、香の甘い香りが混じる。","{""bg"":""bg_ruined_church"",""type"":""text""}",church_deep
+NODE,church_deep,"壁を伝う湿気と、わずかに聞こえる祈りの唱句。私たちは足音を殺し、さらに奥の礼拝堂へと歩みを進めた。","{""bg"":""bg_ruined_church"",""type"":""text""}",ritual_scene
+NODE,ritual_scene,"そこに広がっていたのは、広い地下礼拝堂。黒いローブの集団が、怪しげな文様を描いた祭壇を取り囲んでいた。","{""bg"":""bg_ruined_church"",""type"":""text""}",ritual_priest
+NODE,ritual_priest,"「光は我らを救わない！ 真の救済は、深き星の海から訪れるのだ！」","{""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭"",""type"":""text""}",ritual_priest_02
+NODE,ritual_priest_02,"「今こそ聖王国の偽りの偶像を打ち砕き、我らが祈りを星へ……」","{""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭"",""type"":""text""}",confront
+NODE,confront,"足元の瓦礫を踏みしめ、姿を現す。松明の赤暗い光が、侵入者である私たちを照らし出す。","{""bg"":""bg_ruined_church"",""type"":""text""}",confront_cultists
+NODE,confront_cultists,"祈りが突如として止まった。十数人の信徒たちが一斉にこちらを振り返る。その目の奥には、狂信の光が爛々と宿っていた！","{""bg"":""bg_ruined_church"",""type"":""text""}",cultist_shout
+NODE,cultist_shout,"「騎士団の飼い犬め！ 聖なる星の儀式を邪魔する者は、ここで生贄とする！」","{""bg"":""bg_ruined_church"",""speaker_name"":""異端の司祭"",""type"":""text""}",battle_cultists
+NODE,battle_cultists,"狂信者たちが隠し持っていた短剣を抜き、狂気に満ちた叫び声を上げて襲いかかってきた！","{""bg"":""bg_ruined_church"",""bgm"":""bgm_battle"",""enemy_group_id"":410,""enemy_name"":""異端の信徒たち"",""type"":""battle""}",
 CHOICE,,win,,after_battle_1
 CHOICE,,lose,,end_failure
-NODE,after_battle_1,"狂信者たちは床に伏し、動かなくなった。\n祭壇の火が消え、地下室に再び冷たい静寂が戻る。","{""bg"":""bg_ruined_church"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_battle_2
-NODE,after_battle_2,"彼らが本当に国を脅かす存在だったのかは分からない。\nだが、これが依頼だ。証拠となる異端の教典を回収し、教会を後にした。","{""bg"":""bg_ruined_church"",""type"":""text""}",report_knights
-NODE,report_knights,"騎士団の詰め所に戻り、教典を机の上に置く。","{""bg"":""bg_guild"",""type"":""text""}",knight_reply
-NODE,knight_reply,"「見事な働きだ。これで王都の秩序は守られた。\n　お前のことは、口の堅い使える者として記憶しておこう」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",end_success
-NODE,end_success,"報酬を受け取った。\n手の中の金貨の重さが、命の重さのように感じられた。","{""bg"":""bg_guild"",""rewards"":{""gold"":600,""alignment_shift"":{""order"":20},""exp"":100,""reputation"":5},""type"":""end"",""result"":""success""}",
-NODE,end_failure,"狂信者たちの数の暴力に押し潰された。\n意識が遠のく中、彼らの祈りの声が不気味に響いていた。","{""bg"":""bg_ruined_church"",""type"":""end"",""result"":""failure""}",
+NODE,after_battle_1,"狂信者たちは床に伏し、動かなくなった。祭壇の火が消え、地下室は再び闇に包まれる。","{""bg"":""bg_ruined_church"",""bgm"":""bgm_quest_calm"",""type"":""text""}",after_battle_desc
+NODE,after_battle_desc,"辺りには鉄の匂いと、倒れた者たちの最期の吐息だけが残されていた。","{""bg"":""bg_ruined_church"",""type"":""text""}",after_battle_2
+NODE,after_battle_2,"彼らが本当に邪悪だったのかは分からない。だが、これが依頼だ。異端の教典を回収する。","{""bg"":""bg_ruined_church"",""type"":""text""}",church_exit
+NODE,church_exit,"本をしっかりと抱えて冷たい地下室を後にし、夜風が吹き抜ける地上へと戻る。見上げる街の灯りは、妙に遠く見えた。","{""bg"":""bg_ruined_church"",""type"":""text""}",report_knights
+NODE,report_knights,"騎士団の詰め所に戻り、証拠となる黒い装丁の教典を副隊長の机の上に置いた。","{""bg"":""bg_guild"",""type"":""text""}",knight_reply
+NODE,knight_reply,"「見事な仕事だ。これでこの街の秩序は、一時的にせよ守られたというわけだな」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",knight_reply_02
+NODE,knight_reply_02,"「お前の腕と、何より口の堅さは高く評価しよう。また裏の仕事があれば声をかける」","{""bg"":""bg_guild"",""speaker_name"":""副隊長"",""type"":""text""}",end_success
+NODE,end_success,"冷淡な笑みと共に報酬を受け取る。金貨の重みだけが、この手の汚れを忘れさせてくれた。","{""bg"":""bg_guild"",""rewards"":{""gold"":600,""alignment_shift"":{""order"":20},""exp"":100,""reputation"":5},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"狂信者たちの圧倒的な数の前に、力尽き倒れ伏す。冷たい石の床で、意識は闇に消えた。","{""bg"":""bg_ruined_church"",""type"":""end"",""result"":""failure""}",
