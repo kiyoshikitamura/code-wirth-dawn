@@ -400,4 +400,15 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   - ランキングAPI (`/api/ranking`) 呼び出し時にキャッシュの鮮度を検証して自動集計（オンデマンド集計）を行うと、一般ユーザーのアクセスがボトルネックになり、API遅延や重複集計負荷（ロック競合）を招く。
   - 集計処理はすべて `/api/cron/daily-update` エンドポイント（6時間ごとのVercel Cron）内でRPCを順次実行し、キャッシュテーブルを書き換える方式に一元化。APIルート側はキャッシュテーブルから `select` するのみの極軽量な読み取り処理に簡素化することで、APIの応答速度と信頼性を向上させた。
 - **アライメントサイクル基準の動的解決**:
-  - `daily-update` Cron内でアライメントランキングを集計する際、アライメント増分の基準時刻（`cycle_started_at`）には、直前に `updateWorldSimulation` によって更新された `world_states.updated_at` の最新タイムスタンプを動的に取得して引き渡す。これにより、世界シミュレーションのアップデートサイクルとランキング増分サイクルが100%同期する。
+  - \`daily-update\` Cron内でアライメントランキングを集計する際、アライメント増分の基準時刻（\`cycle_started_at\`）には、直前に \`updateWorldSimulation\` によって更新された \`world_states.updated_at\` の最新タイムスタンプを動的に取得して引き渡す。これにより、世界シミュレーションのアップデートサイクルとランキング増分サイクルが100%同期する。
+
+## サブスクリプション無料トライアル判定とプラン同期の教訓（追加改修・v32.1）
+
+- **無料トライアル期間中の Weekly ボーナス不正取得（エクスプロイト）防止**:
+  - サブスク加入時（無料トライアル開始時）から \`subscription_tier\` が Basic/Premium となるため、そのまま Weekly ゴールドボーナスの判定にかかると、課金未発生であるトライアル期間中にゴールドを得てから即時解約するエクスプロイトが可能になってしまう。
+  - 解決策として、\`user_profiles\` テーブルに \`subscription_status\`（Stripeの \`status\`: \`trialing\` / \`active\`等）カラムを追加。Stripe Webhook にてこの状態を同期し、Weekly ゴールドボーナス付与処理時に \`subscription_status = 'active'\` である（トライアル中ではない）ユーザーのみに限定して付与するガードを実装する。
+- **Stripe Customer Portal 経由のプラン変更同期**:
+  - ユーザーが Stripe ポータル上でプランを変更（Basic ⇔ Premium）した際に発生する \`customer.subscription.updated\` Webhook イベントを正しくハンドリングする。
+  - 受信時に \`subscription\` オブジェクトから最新の Price ID とステータスを解決し、DB 側の \`subscription_tier\` と \`subscription_status\` を同期・更新することで、Stripeポータル操作に伴うデータ不整合を防止する。
+- **Weekly ゴールドボーナス付与のアトミック化**:
+  - 6時間おきの Cron 内での Weekly ゴールド付与について、並行リクエスト発生時における二重付与（ゴールドの二重獲得）を防ぐため、\`last_weekly_bonus_at\` の検証およびゴールド加算、付与日時の更新を一連の PostgreSQL トランザクションとして処理するアトミックな SQL 関数（\`process_weekly_gold_bonus()\`）へ移行した。

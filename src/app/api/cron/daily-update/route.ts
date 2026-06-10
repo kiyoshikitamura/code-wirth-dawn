@@ -77,11 +77,12 @@ async function performUpdate(isForceUgcReset: boolean) {
         const now = new Date();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        // 対象: Basic/Premium ユーザーで、最終ボーナスが7日以上前 or null
+        // 対象: 有効な（トライアル中ではない）Basic/Premium ユーザーで、最終ボーナスが7日以上前 or null
         const { data: eligibleUsers, error: fetchErr } = await supabaseServer
             .from('user_profiles')
             .select('id, subscription_tier, last_weekly_bonus_at')
             .in('subscription_tier', ['basic', 'premium'])
+            .eq('subscription_status', 'active')
             .eq('is_anonymous', false);
 
         if (fetchErr) throw fetchErr;
@@ -93,14 +94,13 @@ async function performUpdate(isForceUgcReset: boolean) {
 
             const amount = user.subscription_tier === 'premium' ? 5000 : 2000;
 
-            const { error: goldErr } = await supabaseServer
-                .rpc('increment_gold', { p_user_id: user.id, p_amount: amount });
+            // アトミックRPCを呼び出して二重付与を完全に防止し、同時に日付を更新する
+            const { data: isSuccess, error: goldErr } = await supabaseServer
+                .rpc('process_weekly_gold_bonus', { p_user_id: user.id, p_amount: amount });
 
-            if (!goldErr) {
-                await supabaseServer
-                    .from('user_profiles')
-                    .update({ last_weekly_bonus_at: now.toISOString() })
-                    .eq('id', user.id);
+            if (goldErr) {
+                logs.push(`[WeeklyBonus] Failed to award user ${user.id}: ${goldErr.message}`);
+            } else if (isSuccess) {
                 bonusCount++;
             }
         }

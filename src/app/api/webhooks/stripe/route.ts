@@ -91,13 +91,27 @@ export async function POST(req: Request) {
                         break;
                     }
 
+                    // StripeからSubscriptionを取得してトライアル等のステータスを確認
+                    let subStatus = 'active';
+                    if (session.subscription) {
+                        try {
+                            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+                            subStatus = subscription.status; // 'trialing', 'active' など
+                        } catch (subErr) {
+                            console.error('[webhooks/stripe] Failed to retrieve subscription:', subErr);
+                        }
+                    }
+
                     const { error } = await supabaseAdmin
                         .from('user_profiles')
-                        .update({ subscription_tier: newTier })
+                        .update({ 
+                            subscription_tier: newTier,
+                            subscription_status: subStatus
+                        })
                         .eq('id', userId);
 
                     if (error) throw error;
-                    console.log(`[webhooks/stripe] subscription_tier → ${newTier} for user ${userId}`);
+                    console.log(`[webhooks/stripe] subscription_tier → ${newTier}, status → ${subStatus} for user ${userId}`);
 
                     // Record payment log (Spec Dashboard Extensions)
                     const { error: payLogErr } = await supabaseAdmin
@@ -150,6 +164,33 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case 'customer.subscription.updated': {
+                // ─── サブスク更新（プラン変更やトライアル終了など） ───
+                const subscription = event.data.object as Stripe.Subscription;
+                const userId = subscription.metadata?.user_id;
+
+                if (!userId) {
+                    console.error('[webhooks/stripe] updatedイベントで user_id が特定できません。subscriptionId:', subscription.id);
+                    break;
+                }
+
+                const priceId = subscription.items.data[0]?.price?.id ?? '';
+                const newTier = PRICE_TO_TIER[priceId] || 'free';
+                const subStatus = subscription.status; // 'trialing', 'active', 'past_due' など
+
+                const { error } = await supabaseAdmin
+                    .from('user_profiles')
+                    .update({ 
+                        subscription_tier: newTier,
+                        subscription_status: subStatus
+                    })
+                    .eq('id', userId);
+
+                if (error) throw error;
+                console.log(`[webhooks/stripe] subscription.updated: tier → ${newTier}, status → ${subStatus} for user ${userId}`);
+                break;
+            }
+
             case 'customer.subscription.deleted': {
                 // ─── サブスク解約・ダウングレード ───
                 const subscription = event.data.object as Stripe.Subscription;
@@ -165,7 +206,10 @@ export async function POST(req: Request) {
 
                 const { error } = await supabaseAdmin
                     .from('user_profiles')
-                    .update({ subscription_tier: 'free' })
+                    .update({ 
+                        subscription_tier: 'free',
+                        subscription_status: 'inactive'
+                    })
                     .eq('id', userId);
 
                 if (error) throw error;
