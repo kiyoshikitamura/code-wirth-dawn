@@ -372,7 +372,18 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   - **下段（Row 2）**: ステータスバッジの 2x2 グリッド（`w-full`）をそのまま下に改行して配置し、各バッジの横幅を大きく確保。
   - これにより、限られた幅（モバイル等）でも視認性が最大限向上し、UI要素同士が重なったり配置が煩雑に見えたりする問題を根本から解決した。
 
+## システムメンテナンス機能の実装仕様と運用手順（追加改修・v31.0）
 
-
-
-
+- **ミドルウェアによる一元遮断設計**:
+  - `src/middleware.ts` において、静的アセットや `/maintenance` 画面自体を除くすべてのリクエストを捕捉し、データベース（`system_settings` テーブルの `maintenance` キー）の定義に基づいてメンテナンス判定を実施する。
+  - ページ要求（HTML要求）はお知らせ画面 `/maintenance` へリダイレクトし、API要求（`/api/*`）は `503 Service Unavailable` (JSON形式) を返却する。
+- **強制フラグと予約日時のハイブリッド判定**:
+  - メンテナンス状態は、`force_maintenance = true` または、現在時刻が `start_at` から `end_at` の日時範囲内にある場合にアクティブとなる（事前予約・自動インが可能）。
+- **開発者用管理者バイパス（Cookie & クエリ）**:
+  - メンテナンス中であっても、`admin_bypass_key` に一致する Cookie (`maintenance_bypass`) または URL パラメータ（`?bypass=SECRET`）を持つリクエストは制限を免除し、デバッグ・検証を可能にする。
+  - クエリパラメータ `?bypass=SECRET` で一度アクセスすると、ミドルウェアが自動で Cookie をセットしてリダイレクトする設計とし、デバッグ操作性を向上。
+- **手動イン・解除および予約の手順**:
+  - **即時メンテナンスの開始**: 管理API（`POST /api/admin/maintenance`）へヘッダー `Authorization: Bearer <ADMIN_SECRET_KEY>` を付与し、ボディに `{ "force_maintenance": true }` を送信してDBの値を更新する。
+  - **即時メンテナンスの解除**: 同管理APIへ `{ "force_maintenance": false, "start_at": null, "end_at": null }` を送信する。
+  - **メンテナンス予約**: 同管理APIへ開始/終了日時を含めて `{ "force_maintenance": false, "start_at": "2026-06-10T16:00:00.000Z", "end_at": "2026-06-10T18:00:00.000Z" }` を送信する。
+  - **本番検証**: メンテナンス中に開発者が動作確認を行う際は、ブラウザで `https://www.code-wirth-dawn.com/?bypass=<admin_bypass_key>` にアクセスしてバイパスセッションを確立する。
