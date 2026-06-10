@@ -28,6 +28,31 @@ async function performUpdate(isForceUgcReset: boolean) {
         logs.push(`[WorldReset] error: ${e.message}`);
     }
 
+    // 2.5. 名声とアライメントランキングのデータベース集計
+    try {
+        const { data: worldStateRes } = await supabaseServer
+            .from('world_states')
+            .select('updated_at')
+            .limit(1)
+            .maybeSingle();
+
+        const cycleStartedAt = worldStateRes?.updated_at
+            ? new Date(worldStateRes.updated_at).toISOString()
+            : new Date().toISOString();
+
+        const { error: repErr } = await supabaseServer.rpc('aggregate_reputation_ranking');
+        if (repErr) throw repErr;
+
+        const { error: alignErr } = await supabaseServer.rpc('aggregate_alignment_ranking', {
+            p_cycle_started_at: cycleStartedAt
+        });
+        if (alignErr) throw alignErr;
+
+        logs.push(`[RankingAggregation] Reputation and Alignment rankings aggregated via RPC`);
+    } catch (rankErr: any) {
+        logs.push(`[RankingAggregation] error: ${rankErr.message}`);
+    }
+
     // 3. 失効した匿名（テストプレイ）プロファイルを削除 (daily)
     // 安全のため失敗しても全体は継続する
     let cleanupLog = 'skipped';

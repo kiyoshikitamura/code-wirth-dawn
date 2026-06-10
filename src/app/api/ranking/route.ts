@@ -56,23 +56,9 @@ export async function GET(req: Request) {
         };
         myAlignValues.total = myAlignValues.order + myAlignValues.chaos + myAlignValues.justice + myAlignValues.evil;
 
-        // --- Reputation Ranking ---
-        const lastRepAggregation = repCacheRes.data?.[0]?.aggregated_at;
-        const repStale = !lastRepAggregation || (now - new Date(lastRepAggregation).getTime() > SIX_HOURS_MS);
-
-        let repStatus: 'ready' | 'aggregating' = 'ready';
-        let repAggregatedAt = lastRepAggregation || null;
-
-        if (repStale) {
-            repStatus = 'aggregating';
-            try {
-                await aggregateReputationRanking();
-                repStatus = 'ready';
-                repAggregatedAt = new Date().toISOString();
-            } catch (e) {
-                console.error('[Ranking] Reputation aggregation failed:', e);
-            }
-        }
+        // --- Reputation Ranking (Fetches from cache, aggregation moved to Cron) ---
+        const repAggregatedAt = repCacheRes.data?.[0]?.aggregated_at || null;
+        const repStatus = 'ready';
 
         // Fetch ranked data
         const [repDescRes, repAscRes] = await Promise.all([
@@ -87,23 +73,9 @@ export async function GET(req: Request) {
             rank: r.rank_asc, userId: r.user_id, name: r.user_name || '名もなき旅人', value: r.total_reputation,
         }));
 
-        // --- Alignment Ranking ---
-        const lastAlignAggregation = alignCacheRes.data?.[0]?.aggregated_at;
-        const alignStale = !lastAlignAggregation || (now - new Date(lastAlignAggregation).getTime() > FIFTEEN_MIN_MS);
-
-        let alignStatus: 'ready' | 'aggregating' = 'ready';
-        let alignAggregatedAt = lastAlignAggregation || null;
-
-        if (alignStale) {
-            alignStatus = 'aggregating';
-            try {
-                await aggregateAlignmentRanking(cycleStartedAt);
-                alignStatus = 'ready';
-                alignAggregatedAt = new Date().toISOString();
-            } catch (e) {
-                console.error('[Ranking] Alignment aggregation failed:', e);
-            }
-        }
+        // --- Alignment Ranking (Fetches from cache, aggregation moved to Cron) ---
+        const alignAggregatedAt = alignCacheRes.data?.[0]?.aggregated_at || null;
+        const alignStatus = 'ready';
 
         const alignTopRes = await supabaseService
             .from('ranking_alignment_cache')
@@ -210,140 +182,3 @@ export async function GET(req: Request) {
     }
 }
 
-// --- Aggregation Functions ---
-
-async function aggregateReputationRanking() {
-    // Lock: set aggregated_at immediately to prevent duplicate aggregation
-    const lockTime = new Date().toISOString();
-
-    // Fetch all users' total reputation
-    const { data: allReps } = await supabaseService
-        .from('reputations')
-        .select('user_id, score');
-
-    if (!allReps || allReps.length === 0) return;
-
-    // Sum per user
-    const userTotals: Record<string, number> = {};
-    for (const r of allReps) {
-        userTotals[r.user_id] = (userTotals[r.user_id] || 0) + (r.score || 0);
-    }
-
-    // Fetch user names
-    const userIds = Object.keys(userTotals);
-    const { data: profiles } = await supabaseService
-        .from('user_profiles')
-        .select('id, name')
-        .in('id', userIds);
-
-    const nameMap: Record<string, string> = {};
-    for (const p of (profiles || [])) {
-        nameMap[p.id] = p.name || '名もなき旅人';
-    }
-
-    // Sort desc and asc
-    const entries = userIds.map(uid => ({ user_id: uid, total: userTotals[uid], name: nameMap[uid] || '名もなき旅人' }));
-    const sortedDesc = [...entries].sort((a, b) => b.total - a.total);
-    const sortedAsc = [...entries].sort((a, b) => a.total - b.total);
-
-    // Build rank maps
-    const rankDescMap: Record<string, number> = {};
-    const rankAscMap: Record<string, number> = {};
-    sortedDesc.forEach((e, i) => { rankDescMap[e.user_id] = i + 1; });
-    sortedAsc.forEach((e, i) => { rankAscMap[e.user_id] = i + 1; });
-
-    // Upsert cache
-    const cacheRows = entries.map(e => ({
-        user_id: e.user_id,
-        user_name: e.name,
-        total_reputation: e.total,
-        rank_desc: rankDescMap[e.user_id],
-        rank_asc: rankAscMap[e.user_id],
-        aggregated_at: lockTime,
-    }));
-
-    // Clear and insert
-    await supabaseService.from('ranking_reputation_cache').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (cacheRows.length > 0) {
-        await supabaseService.from('ranking_reputation_cache').insert(cacheRows);
-    }
-}
-
-async function aggregateAlignmentRanking(cycleStartedAt: string) {
-    const lockTime = new Date().toISOString();
-
-    // Fetch all user profiles
-    const { data: allProfiles } = await supabaseService
-        .from('user_profiles')
-        .select('id, name, order_pts, chaos_pts, justice_pts, evil_pts');
-
-    if (!allProfiles || allProfiles.length === 0) return;
-
-    // Fetch all baselines
-    const { data: allBaselines } = await supabaseService
-        .from('alignment_baseline')
-        .select('*');
-
-    const baselineMap: Record<string, any> = {};
-    for (const b of (allBaselines || [])) {
-        baselineMap[b.user_id] = b;
-    }
-
-    // Check if baselines need reset (new cycle)
-    const anyBaseline = allBaselines?.[0];
-    const needsBaselineReset = !anyBaseline || 
-        new Date(anyBaseline.cycle_started_at).getTime() !== new Date(cycleStartedAt).getTime();
-
-    if (needsBaselineReset) {
-        // New cycle: snapshot current values as baseline
-        const baselineRows = allProfiles.map((p: any) => ({
-            user_id: p.id,
-            order_pts: p.order_pts || 0,
-            chaos_pts: p.chaos_pts || 0,
-            justice_pts: p.justice_pts || 0,
-            evil_pts: p.evil_pts || 0,
-            cycle_started_at: cycleStartedAt,
-        }));
-
-        // Upsert baselines
-        for (const row of baselineRows) {
-            await supabaseService.from('alignment_baseline').upsert(row, { onConflict: 'user_id' });
-            baselineMap[row.user_id] = row;
-        }
-    }
-
-    // Calculate gains
-    const entries = allProfiles.map((p: any) => {
-        const base = baselineMap[p.id] || { order_pts: 0, chaos_pts: 0, justice_pts: 0, evil_pts: 0 };
-        const order = Math.max(0, (p.order_pts || 0) - (base.order_pts || 0));
-        const chaos = Math.max(0, (p.chaos_pts || 0) - (base.chaos_pts || 0));
-        const justice = Math.max(0, (p.justice_pts || 0) - (base.justice_pts || 0));
-        const evil = Math.max(0, (p.evil_pts || 0) - (base.evil_pts || 0));
-        return {
-            user_id: p.id,
-            user_name: p.name || '名もなき旅人',
-            order_gained: order,
-            chaos_gained: chaos,
-            justice_gained: justice,
-            evil_gained: evil,
-            total_gained: order + chaos + justice + evil,
-        };
-    });
-
-    // Sort by total desc
-    entries.sort((a, b) => b.total_gained - a.total_gained);
-
-    // Build cache
-    const cacheRows = entries.map((e, i) => ({
-        ...e,
-        rank: i + 1,
-        aggregated_at: lockTime,
-        cycle_started_at: cycleStartedAt,
-    }));
-
-    // Clear and insert
-    await supabaseService.from('ranking_alignment_cache').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (cacheRows.length > 0) {
-        await supabaseService.from('ranking_alignment_cache').insert(cacheRows);
-    }
-}

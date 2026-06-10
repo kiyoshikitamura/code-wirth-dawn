@@ -387,3 +387,17 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   - **即時メンテナンスの解除**: 同管理APIへ `{ "force_maintenance": false, "start_at": null, "end_at": null }` を送信する。
   - **メンテナンス予約**: 同管理APIへ開始/終了日時を含めて `{ "force_maintenance": false, "start_at": "2026-06-10T16:00:00.000Z", "end_at": "2026-06-10T18:00:00.000Z" }` を送信する。
   - **本番検証**: メンテナンス中に開発者が動作確認を行う際は、ブラウザで `https://www.code-wirth-dawn.com/?bypass=<admin_bypass_key>` にアクセスしてバイパスセッションを確立する。
+
+## 影のロイヤリティ支払アトミック化とDB側ランキング集計の教訓（追加改修・v32.0）
+
+- **ロイヤリティ支払いの二重支払い防止（TOCTOU対策）**:
+  - プレイヤー同士の同時雇用や連打によるロイヤリティ日額制限（CAP）のすり抜けを防ぐため、Node.js側での複数DBクエリによる「SELECT → 計算 → UPDATE / UPSERT」のフローを完全に廃止。
+  - Postgresのトランザクションおよび行レベルロック（`ON CONFLICT` を用いたダミー更新による排他ロック）を適用した `process_royalty_payout` RPCを一元呼出する設計に変更。これにより、連打・同時リクエストが発生してもトランザクションが直列化され、日額CAPを超える不正還元ゴールドは1Gたりとも発生しない。
+- **Node.jsインメモリ集計の排除とDB窓関数（ROW_NUMBER）への移行**:
+  - 全ユーザーの名声やアライメントポイント差分を Node.js メモリ上に展開して `Array.prototype.sort()` でソートする方式は、レコード数増加時に PostgREST のデフォルト取得制限（1,000行）に衝突し、かつメモリオーバーヘッド・タイムアウトを招く。
+  - `aggregate_reputation_ranking()` および `aggregate_alignment_ranking(p_cycle_started_at)` RPCをデータベース側（plpgsql）に定義し、`ROW_NUMBER() OVER (...)` 窓関数を使用して集計からキャッシュテーブル（`ranking_reputation_cache`, `ranking_alignment_cache`）の更新までをミリ秒単位で処理する。
+- **オンデマンド集計の廃止とCron移行**:
+  - ランキングAPI (`/api/ranking`) 呼び出し時にキャッシュの鮮度を検証して自動集計（オンデマンド集計）を行うと、一般ユーザーのアクセスがボトルネックになり、API遅延や重複集計負荷（ロック競合）を招く。
+  - 集計処理はすべて `/api/cron/daily-update` エンドポイント（6時間ごとのVercel Cron）内でRPCを順次実行し、キャッシュテーブルを書き換える方式に一元化。APIルート側はキャッシュテーブルから `select` するのみの極軽量な読み取り処理に簡素化することで、APIの応答速度と信頼性を向上させた。
+- **アライメントサイクル基準の動的解決**:
+  - `daily-update` Cron内でアライメントランキングを集計する際、アライメント増分の基準時刻（`cycle_started_at`）には、直前に `updateWorldSimulation` によって更新された `world_states.updated_at` の最新タイムスタンプを動的に取得して引き渡す。これにより、世界シミュレーションのアップデートサイクルとランキング増分サイクルが100%同期する。

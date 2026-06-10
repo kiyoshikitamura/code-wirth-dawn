@@ -490,132 +490,82 @@ export class ShadowService {
 
         if (goldError) return { success: false, error: goldError.message };
 
-        // 6. タスク2: ロイヤリティ分配とシステム税
-        if (shadow.origin_type === 'shadow_heroic' && heroicOwnerId) {
-            // 英霊: Tierベースのロイヤリティ率 → 元プレイヤーへ / 残り → システム税（消滅）
-            const { data: ownerProfile } = await this.supabase
-                .from('user_profiles')
-                .select('gold, level, subscription_tier')
-                .eq('id', heroicOwnerId)
-                .single();
+        // 6. タスク2: ロイヤリティ分配とシステム税（アトミックRPC process_royalty_payout への移行）
+        let effectiveRoyalty = 0;
+        let payoutTargetId: string | null = null;
 
-            const ownerTier = ownerProfile?.subscription_tier ?? 'free';
+        if (shadow.origin_type === 'shadow_heroic' && heroicOwnerId) {
+            payoutTargetId = heroicOwnerId;
+            const ownerTier = shadow.subscription_tier || 'free';
             const heroicRate = getHeroicRoyaltyRate(ownerTier);
             const royaltyAmount = Math.floor(finalContractFee * heroicRate);
-            // システム税 = finalContractFee - royaltyAmount（消滅: 誰にも渡さない）
 
-            if (royaltyAmount > 0 && heroicOwnerId !== hirerId && ownerProfile) {
-                    // 日額上限チェック (spec_v7 §5.1)
-                    const ownerLevel = ownerProfile.level || 1;
-                    const dailyCap = getDailyRoyaltyCap(ownerLevel);
-                    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            if (royaltyAmount > 0 && heroicOwnerId !== hirerId) {
+                const ownerLevel = shadow.level || 1;
+                const dailyCap = getDailyRoyaltyCap(ownerLevel);
 
-                    // 当日の累積ロイヤリティを取得 or 0
-                    const { data: logRow } = await this.supabase
-                        .from('royalty_daily_log')
-                        .select('total_gold')
-                        .eq('user_id', heroicOwnerId)
-                        .eq('log_date', today)
-                        .maybeSingle();
+                // アトミックRPCを実行して二重支払いを防ぐ
+                const { data: rpcPayout, error: rpcErr } = await this.supabase
+                    .rpc('process_royalty_payout', {
+                        p_owner_id: heroicOwnerId,
+                        p_amount: royaltyAmount,
+                        p_daily_cap: dailyCap
+                    });
 
-                    const todayTotal = logRow?.total_gold || 0;
-                    const remaining = Math.max(0, dailyCap - todayTotal);
-                    const effectiveRoyalty = Math.min(royaltyAmount, remaining);
-
-                    if (effectiveRoyalty > 0) {
-                        await this.supabase
-                            .rpc('increment_gold', { p_user_id: heroicOwnerId, p_amount: effectiveRoyalty });
-
-                        // 日額ログを upsert
-                        await this.supabase
-                            .from('royalty_daily_log')
-                            .upsert(
-                                { user_id: heroicOwnerId, log_date: today, total_gold: todayTotal + effectiveRoyalty },
-                                { onConflict: 'user_id,log_date' }
-                            );
-                    }
-
-                    const taxed = finalContractFee - effectiveRoyalty;
-                    console.log(
-                        `[英霊雇用] 契約金: ${finalContractFee}G | 日額上限: ${dailyCap}G | ロイヤリティ: ${effectiveRoyalty}G → ${heroicOwnerId} | システム税: ${taxed}G`
-                    );
-
-                    // v4.1: ソーシャル通知
-                    try {
-                        await this.supabase.from('notifications').insert({
-                            user_id: heroicOwnerId,
-                            type: 'royalty',
-                            message: `英霊「${shadow.name}」が雇われました！ ロイヤリティ ${effectiveRoyalty.toLocaleString()}G を獲得！`,
-                            read: false
-                        });
-                    } catch (notifErr) {
-                        console.warn('[Notification] 通知保存失敗:', notifErr);
-                    }
+                if (rpcErr) {
+                    console.warn('[ShadowService] process_royalty_payout RPC failed:', rpcErr.message);
+                } else {
+                    effectiveRoyalty = Number(rpcPayout || 0);
+                }
             }
         } else if (shadow.origin_type === 'shadow_active') {
-            // v13.0: shadow_active にも日額CAP を適用（spec_v6 §5A.4）
-            // 自己雇用は分配なし
             if (shadow.profile_id === hirerId) {
                 console.log(`[影雇用] 自己雇用を検出。ロイヤリティ分配なし。`);
             } else {
+                payoutTargetId = shadow.profile_id;
                 const rate = shadow.subscription_tier === 'premium' ? 0.5
                     : (shadow.subscription_tier === 'basic' ? 0.3 : 0.1);
                 const royaltyAmount = Math.floor(finalContractFee * rate);
 
                 if (royaltyAmount > 0) {
-                    const { data: ownerProfile } = await this.supabase
-                        .from('user_profiles')
-                        .select('level')
-                        .eq('id', shadow.profile_id)
-                        .single();
-
-                    const ownerLevel = ownerProfile?.level || 1;
+                    const ownerLevel = shadow.level || 1;
                     const dailyCap = getDailyRoyaltyCap(ownerLevel);
-                    const today = new Date().toISOString().slice(0, 10);
 
-                    const { data: logRow } = await this.supabase
-                        .from('royalty_daily_log')
-                        .select('total_gold')
-                        .eq('user_id', shadow.profile_id)
-                        .eq('log_date', today)
-                        .maybeSingle();
-
-                    const todayTotal = logRow?.total_gold || 0;
-                    const remaining = Math.max(0, dailyCap - todayTotal);
-                    const effectiveRoyalty = Math.min(royaltyAmount, remaining);
-
-                    if (effectiveRoyalty > 0) {
-                        await this.economy.distributeRoyalty({
-                            sourceUserId: shadow.profile_id,
-                            targetUserId: hirerId,
-                            amount: effectiveRoyalty
+                    // アトミックRPCを実行して二重支払いを防ぐ
+                    const { data: rpcPayout, error: rpcErr } = await this.supabase
+                        .rpc('process_royalty_payout', {
+                            p_owner_id: shadow.profile_id,
+                            p_amount: royaltyAmount,
+                            p_daily_cap: dailyCap
                         });
 
-                        await this.supabase
-                            .from('royalty_daily_log')
-                            .upsert(
-                                { user_id: shadow.profile_id, log_date: today, total_gold: todayTotal + effectiveRoyalty },
-                                { onConflict: 'user_id,log_date' }
-                            );
-                    }
-
-                    const taxed = finalContractFee - effectiveRoyalty;
-                    console.log(
-                        `[影雇用] 契約金: ${finalContractFee}G | 日額上限: ${dailyCap}G | ロイヤリティ: ${effectiveRoyalty}G → ${shadow.profile_id} | システム税: ${taxed}G`
-                    );
-
-                    // v4.1: ソーシャル通知
-                    try {
-                        await this.supabase.from('notifications').insert({
-                            user_id: shadow.profile_id,
-                            type: 'royalty',
-                            message: `あなたの残影「${shadow.name}」が雇われました！ ロイヤリティ ${effectiveRoyalty.toLocaleString()}G を獲得！`,
-                            read: false
-                        });
-                    } catch (notifErr) {
-                        console.warn('[Notification] 通知保存失敗:', notifErr);
+                    if (rpcErr) {
+                        console.warn('[ShadowService] process_royalty_payout RPC failed:', rpcErr.message);
+                    } else {
+                        effectiveRoyalty = Number(rpcPayout || 0);
                     }
                 }
+            }
+        }
+
+        // 共通ログ出力と通知送信
+        if (payoutTargetId && effectiveRoyalty > 0) {
+            const taxed = finalContractFee - effectiveRoyalty;
+            console.log(
+                `[影雇用] 契約金: ${finalContractFee}G | ロイヤリティ: ${effectiveRoyalty}G → ${payoutTargetId} | システム税: ${taxed}G`
+            );
+
+            try {
+                await this.supabase.from('notifications').insert({
+                    user_id: payoutTargetId,
+                    type: 'royalty',
+                    message: shadow.origin_type === 'shadow_heroic'
+                        ? `英霊「${shadow.name}」が雇われました！ ロイヤリティ ${effectiveRoyalty.toLocaleString()}G を獲得！`
+                        : `あなたの残影「${shadow.name}」が雇われました！ ロイヤリティ ${effectiveRoyalty.toLocaleString()}G を獲得！`,
+                    read: false
+                });
+            } catch (notifErr) {
+                console.warn('[Notification] 通知保存失敗:', notifErr);
             }
         }
 
