@@ -12,11 +12,11 @@ NODE,join_official_03,"だが、その背後に漂う殺気は本物だ。屋敷
 NODE,tour_01,"案内された屋敷の庭園は、華龍の一般市民が一生働いても作れないほど広大だった。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",tour_02
 NODE,tour_02,"金魚が優雅に泳ぐ池と、宝石を散りばめたような灯籠。まさに汚職の象徴である。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",tour_03
 NODE,tour_03,"すれ違った使用人が小声で教えてくれた。既に前の護衛が二名、毒針で暗殺されたのだという。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",night_01
-NODE,night_01,"初日の夜。豪華な寝所で震える薛の部屋の前に立ち、屋敷の巡回と警護を開始する。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_field_night"",""type"":""text""}",night_01_02
-NODE,night_01_02,"冷たい夜風が廊下を吹き抜け、提灯の明かりが不規則に揺れる。影が奇妙に引き伸ばされた。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_field_night"",""type"":""text""}",night_01_03
-NODE,night_01_03,"薛の寝所からは、時折小さないびきが聞こえてくる。彼は己の危機の近さを理解していない。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_field_night"",""type"":""text""}",night_02
-NODE,night_02,"月明かりが庭園の池を美しく照らしている。虫の音しか聞こえない、静寂に包まれた夜だ。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_field_night"",""type"":""text""}",night_03
-NODE,night_03,"だが、自分の勘が危険を告げた。風もないのに、水面に映る月が不自然に波打っている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_field_night"",""type"":""text""}",night_04
+NODE,night_01,"初日の夜。豪華な寝所で震える薛の部屋の前に立ち、屋敷の巡回と警護を開始する。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_01_02
+NODE,night_01_02,"冷たい夜風が廊下を吹き抜け、提灯の明かりが不規則に揺れる。影が奇妙に引き伸ばされた。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_01_03
+NODE,night_01_03,"薛の寝所からは、時折小さないびきが聞こえてくる。彼は己の危機の近さを理解していない。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_02
+NODE,night_02,"月明かりが庭園の池を美しく照らしている。虫の音しか聞こえない、静寂に包まれた夜だ。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_03
+NODE,night_03,"だが、自分の勘が危険を告げた。風もないのに、水面に映る月が不自然に波打っている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_04
 NODE,night_04,"池の底から、竹の筒を使って息を潜めていた影が、水飛沫と共に次々と跳び上がった！","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_01
 NODE,ambush_01,"黒装束に身を包んだ刺客たち。手には毒の塗られた短刀が鈍く光っている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ambush_02
 NODE,ambush_02,"一人、二人、三人……。彼らの標的は明らかに、奥の部屋にいる薛だ。行かせるわけにはいかない。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_tense"",""type"":""text""}",battle_01

@@ -129,31 +129,31 @@ scatter_01
 ```
 
 #### `alley_01`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_field_night
+**演出:** bg: bg_yato_city, bgm: bgm_quest_mystery
 ```text
 夜の繁華街は、提灯の明かりと人々の喧騒で溢れかえっている。
 ```
 
 #### `alley_01_02`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_field_night
+**演出:** bg: bg_yato_city, bgm: bgm_quest_mystery
 ```text
 夜刀神国の繁栄の裏で、行き場を失った浪人が増え続けている。これも時代の歪みだ。
 ```
 
 #### `alley_01_03`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_field_night
+**演出:** bg: bg_yato_city, bgm: bgm_quest_mystery
 ```text
 懐に入れた代官所の書状が微かに重い。汚い仕事だが、背に腹は代えられない。
 ```
 
 #### `alley_02`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_field_night
+**演出:** bg: bg_yato_city, bgm: bgm_quest_mystery
 ```text
 しかし、大通りから一本外れた路地裏に入ると、途端にむせ返るような生ごみの臭いが漂ってきた。
 ```
 
 #### `alley_03`（text）
-**演出:** bg: bg_yato_city, bgm: bgm_field_night
+**演出:** bg: bg_yato_city, bgm: bgm_quest_mystery
 ```text
 泥酔して道端に転がる男たちを跨ぎながら、目的の長屋へと向かう。
 ```

@@ -185,19 +185,19 @@ start
 ```
 
 #### `night_01`（text）
-**演出:** bg: bg_karyu_coast, bgm: bgm_field_night
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_mystery
 ```text
 夜半過ぎ。月が雲に隠れたのを見計らい、用意した小舟を静かに漕ぎ出す。
 ```
 
 #### `night_02`（text）
-**演出:** bg: bg_karyu_coast, bgm: bgm_field_night
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_mystery
 ```text
 岬を大回りして迂回する。海は墨を流したように暗く、潮の匂いが鼻をつく。
 ```
 
 #### `night_03`（text）
-**演出:** bg: bg_karyu_coast, bgm: bgm_field_night
+**演出:** bg: bg_karyu_coast, bgm: bgm_quest_mystery
 ```text
 波の音だけが響く中、遠くの暗闇にポツンと浮かぶ入り江の松明が見えてきた。
 ```

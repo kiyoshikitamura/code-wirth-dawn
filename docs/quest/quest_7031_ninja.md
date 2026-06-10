@@ -98,37 +98,37 @@ start → start_02 → start_03 → start_04 → start_05 → prep_01 → prep_0
 ```
 
 #### `prep_01`（text）
-**演出:** bg: bg_yato_forest, bgm: bgm_field_night
+**演出:** bg: bg_yato_forest, bgm: bgm_quest_mystery
 ```text
 使者は足音一つ立てずに闇へ消えた。警告は本気だろう。命がけの仕事だ。
 ```
 
 #### `prep_02`（text）
-**演出:** bg: bg_yato_forest, bgm: bgm_field_night
+**演出:** bg: bg_yato_forest, bgm: bgm_quest_mystery
 ```text
 北の関所への道は一本。先回りして伏兵となるため、獣道を急ぎ北上する。
 ```
 
 #### `locate_01`（text）
-**演出:** bg: bg_yato_forest, bgm: bgm_field_night
+**演出:** bg: bg_yato_forest, bgm: bgm_quest_mystery
 ```text
 両脇を深い林に囲まれた細い山道。太い枝の上に身を潜め、獲物を待つ。
 ```
 
 #### `locate_02`（text）
-**演出:** bg: bg_yato_forest, bgm: bgm_field_night
+**演出:** bg: bg_yato_forest, bgm: bgm_quest_mystery
 ```text
 月が雲に隠れ、足元すら見えなくなった頃、落ち葉を踏む微かな音がした。
 ```
 
 #### `locate_03`（text）
-**演出:** bg: bg_yato_forest, bgm: bgm_field_night
+**演出:** bg: bg_yato_forest, bgm: bgm_quest_mystery
 ```text
 笠を目深に被った男と、その前後を固める、歩みの異様に軽い二人の護衛。
 ```
 
 #### `locate_04`（text）
-**演出:** bg: bg_yato_forest, bgm: bgm_field_night
+**演出:** bg: bg_yato_forest, bgm: bgm_quest_mystery
 ```text
 一般の行商人には見えない隙のない陣形。間違いなく、奴らが標的だ。
 ```

@@ -108,25 +108,25 @@ start → start_desc → start_02 → start_03 → start_04 → start_05
 ```
 
 #### `patrol_01`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 薄暗い夜刀神国の外れ。古道は、一瞬にして墨を流したような深い闇に閉ざされた。
 ```
 
 #### `patrol_02`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 手提げ提灯の炎が頼りなく揺れる。先ほどまで響いていた虫の音は消え去っていた。
 ```
 
 #### `patrol_03`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 ピタリと風が止んだ。次の瞬間、背筋を凍らせるような湿った冷気が吹き抜ける。
 ```
 
 #### `patrol_04`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 足元に白い霧が湧き、提灯の火が青白く変色した。懐の護符がジリジリと熱を帯びる。
 ```
@@ -157,31 +157,31 @@ start → start_desc → start_02 → start_03 → start_04 → start_05
 ```
 
 #### `after_01`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 唐傘の怪異を両断した。足元に転がった残骸は、黒い泥のように融けて消えていく。
 ```
 
 #### `after_02`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 懐の護符が、一枚黒焦げになって崩れ落ちた。奴らの邪気を吸い取ってくれたのだ。
 ```
 
 #### `after_03`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 残る護符はまだ微光を放つ。だが、空気にまとわりつく嫌な瘴気は晴れていない。
 ```
 
 #### `after_04`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 それどころか、先ほどの戦いを合図に、周囲の闇が一層濃くなったように感じられた。
 ```
 
 #### `after_05`（text）
-**演出:** bg: bg_yato_road, bgm: bgm_field_night
+**演出:** bg: bg_yato_road, bgm: bgm_quest_mystery
 ```text
 引き返すなら今だ。だが、元凶を絶たねば、また悲劇が繰り返されるだけだろう。
 ```

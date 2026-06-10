@@ -193,31 +193,31 @@ start
 ```
 
 #### `night_01`（text）
-**演出:** bg: bg_karyu_palace, bgm: bgm_field_night
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_mystery
 ```text
 初日の夜。豪華な寝所で震える薛の部屋の前に立ち、屋敷の巡回と警護を開始する。
 ```
 
 #### `night_01_02`（text）
-**演出:** bg: bg_karyu_palace, bgm: bgm_field_night
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_mystery
 ```text
 冷たい夜風が廊下を吹き抜け、提灯の明かりが不規則に揺れる。影が奇妙に引き伸ばされた。
 ```
 
 #### `night_01_03`（text）
-**演出:** bg: bg_karyu_palace, bgm: bgm_field_night
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_mystery
 ```text
 薛の寝所からは、時折小さないびきが聞こえてくる。彼は己の危機の近さを理解していない。
 ```
 
 #### `night_02`（text）
-**演出:** bg: bg_karyu_palace, bgm: bgm_field_night
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_mystery
 ```text
 月明かりが庭園の池を美しく照らしている。虫の音しか聞こえない、静寂に包まれた夜だ。
 ```
 
 #### `night_03`（text）
-**演出:** bg: bg_karyu_palace, bgm: bgm_field_night
+**演出:** bg: bg_karyu_palace, bgm: bgm_quest_mystery
 ```text
 だが、自分の勘が危険を告げた。風もないのに、水面に映る月が不自然に波打っている。
 ```

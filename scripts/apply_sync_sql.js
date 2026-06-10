@@ -47,8 +47,8 @@ async function processFile(sqlFile) {
     console.log(`\n=== Processing: ${sqlFile} ===`);
     const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
 
-    // UPDATE文を抽出 (script_data + rewards)
-    const updateRegex = /UPDATE\s+scenarios\s+SET\s+script_data\s*=\s*'(.+?)'::jsonb\s*,\s*rewards\s*=\s*'(.+?)'::jsonb\s+WHERE\s+id\s*=\s*(\d+);/gs;
+    // UPDATE文を抽出 (script_data + オプションの rewards)
+    const updateRegex = /UPDATE\s+scenarios\s+SET\s+script_data\s*=\s*'(.+?)'::jsonb(?:\s*,\s*rewards\s*=\s*'(.+?)'::jsonb)?\s+WHERE\s+id\s*=\s*(\d+);/gs;
 
     let match;
     let success = 0;
@@ -63,7 +63,7 @@ async function processFile(sqlFile) {
 
         try {
             const scriptData = JSON.parse(scriptDataRaw);
-            const rewards = JSON.parse(rewardsRaw);
+            const rewards = rewardsRaw ? JSON.parse(rewardsRaw) : null;
             const nodeCount = Object.keys(scriptData.nodes || {}).length;
             const hasCheckItem = Object.values(scriptData.nodes || {}).some((n) => n.type === 'check_item');
 
@@ -74,9 +74,14 @@ async function processFile(sqlFile) {
                 continue;
             }
 
+            const updatePayload = { script_data: scriptData };
+            if (rewards) {
+                updatePayload.rewards = rewards;
+            }
+
             const { error } = await supabase
                 .from('scenarios')
-                .update({ script_data: scriptData, rewards })
+                .update(updatePayload)
                 .eq('id', scenarioId);
 
             if (error) {
