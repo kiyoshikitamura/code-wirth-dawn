@@ -44,3 +44,12 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# scratch and test files
+/scratch/
+*.txt
+/check_quotes.js
+/scripts/scratch_*
+/supabase/development_schema.sql
+
+
