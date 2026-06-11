@@ -41,11 +41,12 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
         prosperityBadgeClass = 'bg-red-900/40 text-red-300 border-red-500/40';
         vignette = 'from-red-950/20 via-transparent to-slate-950/90';
         topGlow = 'shadow-[inset_0_0_60px_rgba(127,29,29,0.3)]';
-    } else if (prosperity <= 2) {
-        stateSuffix = "ruined";
+    } else if (prosperity === 2) {
+        stateSuffix = "normal";
         prosperityLabel = '衰退';
         prosperityBadgeClass = 'bg-orange-900/30 text-orange-300 border-orange-500/40';
-        vignette = 'from-orange-950/10 via-transparent to-slate-950/85';
+        vignette = 'from-transparent via-transparent to-slate-950/80';
+        topGlow = '';
     }
 
     const bgImageUrl = locationSlug ? `/backgrounds/locations/${locationSlug}_${stateSuffix}.png` : null;

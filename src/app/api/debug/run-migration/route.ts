@@ -45,6 +45,11 @@ export async function GET(request: Request) {
         const client = await pool.connect();
         try {
             await client.query(`
+                -- 0. ADD SUBSCRIPTION BONUS AND TRIAL COLUMNS
+                ALTER TABLE public.user_profiles
+                  ADD COLUMN IF NOT EXISTS last_weekly_bonus_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+                  ADD COLUMN IF NOT EXISTS has_used_trial BOOLEAN NOT NULL DEFAULT false;
+
                 -- 1. DROP UNIQUE INDEXES
                 DROP INDEX IF EXISTS public.idx_chronicles_unique_quest;
                 DROP INDEX IF EXISTS public.idx_chronicles_unique_ugc_quest;

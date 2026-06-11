@@ -102,16 +102,41 @@ export async function POST(req: Request) {
                         }
                     }
 
+                    const updateData: any = { 
+                        subscription_tier: newTier,
+                        subscription_status: subStatus
+                    };
+
+                    let shouldAwardBonus = false;
+                    // If active, clear last_weekly_bonus_at to null so we can award it immediately
+                    if (subStatus === 'active') {
+                        updateData.last_weekly_bonus_at = null;
+                        shouldAwardBonus = true;
+                    }
+                    // Mark trial as consumed if active or trialing
+                    if (subStatus === 'active' || subStatus === 'trialing') {
+                        updateData.has_used_trial = true;
+                    }
+
                     const { error } = await supabaseAdmin
                         .from('user_profiles')
-                        .update({ 
-                            subscription_tier: newTier,
-                            subscription_status: subStatus
-                        })
+                        .update(updateData)
                         .eq('id', userId);
 
                     if (error) throw error;
                     console.log(`[webhooks/stripe] subscription_tier → ${newTier}, status → ${subStatus} for user ${userId}`);
+
+                    if (shouldAwardBonus) {
+                        const amount = newTier === 'premium' ? 5000 : 2000;
+                        const { data: isSuccess, error: rpcErr } = await supabaseAdmin
+                            .rpc('process_weekly_gold_bonus', { p_user_id: userId, p_amount: amount });
+                        
+                        if (rpcErr) {
+                            console.error('[webhooks/stripe] Failed to award initial weekly gold bonus:', rpcErr);
+                        } else {
+                            console.log(`[webhooks/stripe] Awarded initial weekly bonus of ${amount}G to user ${userId} (success: ${isSuccess})`);
+                        }
+                    }
 
                     // Record payment log (Spec Dashboard Extensions)
                     const { error: payLogErr } = await supabaseAdmin
@@ -178,16 +203,55 @@ export async function POST(req: Request) {
                 const newTier = PRICE_TO_TIER[priceId] || 'free';
                 const subStatus = subscription.status; // 'trialing', 'active', 'past_due' など
 
+                // Fetch current profile to get previous status
+                const { data: profile, error: profileErr } = await supabaseAdmin
+                    .from('user_profiles')
+                    .select('subscription_status, last_weekly_bonus_at')
+                    .eq('id', userId)
+                    .single();
+
+                if (profileErr) {
+                    console.error('[webhooks/stripe] Profile fetch error in subscription.updated:', profileErr);
+                }
+
+                const previousStatus = profile?.subscription_status || 'inactive';
+
+                const updateData: any = { 
+                    subscription_tier: newTier,
+                    subscription_status: subStatus
+                };
+
+                let shouldAwardBonus = false;
+                // If transitioning to active (from trial or inactive), or if last_weekly_bonus_at is null
+                if (subStatus === 'active' && (previousStatus !== 'active' || !profile?.last_weekly_bonus_at)) {
+                    updateData.last_weekly_bonus_at = null; // Clear it to ensure instant payout
+                    shouldAwardBonus = true;
+                }
+
+                // Mark trial as consumed if active or trialing
+                if (subStatus === 'active' || subStatus === 'trialing') {
+                    updateData.has_used_trial = true;
+                }
+
                 const { error } = await supabaseAdmin
                     .from('user_profiles')
-                    .update({ 
-                        subscription_tier: newTier,
-                        subscription_status: subStatus
-                    })
+                    .update(updateData)
                     .eq('id', userId);
 
                 if (error) throw error;
                 console.log(`[webhooks/stripe] subscription.updated: tier → ${newTier}, status → ${subStatus} for user ${userId}`);
+
+                if (shouldAwardBonus) {
+                    const amount = newTier === 'premium' ? 5000 : 2000;
+                    const { data: isSuccess, error: rpcErr } = await supabaseAdmin
+                        .rpc('process_weekly_gold_bonus', { p_user_id: userId, p_amount: amount });
+                    
+                    if (rpcErr) {
+                        console.error('[webhooks/stripe] Failed to award initial weekly gold bonus on update:', rpcErr);
+                    } else {
+                        console.log(`[webhooks/stripe] Awarded initial weekly bonus of ${amount}G to user ${userId} on update (success: ${isSuccess})`);
+                    }
+                }
                 break;
             }
 

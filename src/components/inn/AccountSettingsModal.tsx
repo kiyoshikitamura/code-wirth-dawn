@@ -206,10 +206,10 @@ export default function AccountSettingsModal({ onClose }: Props) {
     };
 
     // ── ゴールド購入（確認ポップアップ経由） ──
-    const requestBuyGold = (packageKey: 'gold_10k' | 'gold_50k') => {
+    const requestBuyGold = (packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k') => {
         setPurchaseConfirm({ type: 'gold', packageKey });
     };
-    const executeBuyGold = async (packageKey: 'gold_10k' | 'gold_50k') => {
+    const executeBuyGold = async (packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k') => {
         setBillingLoading(packageKey);
         try {
             const url = await callBillingCheckout({ mode: 'payment', packageKey });
@@ -664,6 +664,17 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                             <span className="text-gray-400 text-xs">スターターパック</span>
                                         </span>
                                         <span className="font-bold text-yellow-300">330円（税込）</span>
+                                    </button>
+                                    <button
+                                        onClick={() => requestBuyGold('gold_30k')}
+                                        disabled={!!billingLoading}
+                                        className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <span className="text-yellow-400 font-bold">30,000 G</span>
+                                            <span className="text-gray-400 text-xs">スタンダードパック</span>
+                                        </span>
+                                        <span className="font-bold text-yellow-300">950円（税込）</span>
                                     </button>
                                     <button
                                         onClick={() => requestBuyGold('gold_50k')}

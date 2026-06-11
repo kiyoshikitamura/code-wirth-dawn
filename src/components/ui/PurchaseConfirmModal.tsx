@@ -12,7 +12,7 @@ interface SubscriptionInfo {
 
 interface GoldInfo {
     type: 'gold';
-    packageKey: 'gold_10k' | 'gold_50k';
+    packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k';
 }
 
 type PurchaseInfo = SubscriptionInfo | GoldInfo;
@@ -62,6 +62,11 @@ const GOLD_DETAILS = {
         name: 'スターターパック',
         amount: '10,000 G',
         price: '330円（税込）',
+    },
+    gold_30k: {
+        name: 'スタンダードパック',
+        amount: '30,000 G',
+        price: '950円（税込）',
     },
     gold_50k: {
         name: 'アドベンチャーパック',

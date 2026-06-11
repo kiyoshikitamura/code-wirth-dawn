@@ -101,10 +101,14 @@ UPDATE user_profiles
 | `'payment'` | ゴールドの都度購入のための決済画面URLを発行する |
 
 #### 無料トライアル (Free Trial)
-Basic・Premium プランの初回購入時は、**最初の1週間（7日間）を無料**とする。
-決済セッション作成時に `subscription_data.trial_period_days: 7` を指定することで、Stripe側で自動的にトライアル期間が付与される。
-トライアル期間中は `subscription_tier` が有料Tierに即時アップデートされ、`subscription_status` は `trialing` となる。期間終了（本課金開始）後にステータスは `active` に移行し、初回課金が発生する。
-- **Weeklyゴールドボーナスのスキップ**: 無料トライアル（`trialing`）期間中は、毎週のゴールドボーナス（Basic: 2,000G / Premium: 5,000G）は付与対象外（スキップ）となる。本課金（`active`）に移行したタイミングから付与が開始される。
+- **1回限定の制限**:
+  - 無料トライアル（7日間）は、BasicおよびPremiumプランを通じて**1アカウントあたり生涯で1回のみ**に制限される。
+  - ユーザーが一度でもトライアル契約（`trialing`）または通常契約（`active`）を開始した時点で、DBの `user_profiles.has_used_trial` フラグが `true` に更新される。
+  - Checkout Session 作成前に `has_used_trial` を検証し、すでに消費済みの場合は `trial_period_days` オプションを指定せずに Checkout Session を作成し、即時課金を開始する。
+- **Weeklyゴールドボーナスの付与タイミング**:
+  - 無料トライアル（`trialing`）期間中は、毎週のゴールドボーナス（Basic: 2,000G / Premium: 5,000G）は付与対象外（スキップ）となる。
+  - 有料サブスクリプションの本課金（`active`）に移行した当日（加入日またはトライアル終了日）に、Stripe Webhook 経由で初回分ボーナスが即時付与され、同時に `last_weekly_bonus_at = NOW()` に初期化される。以降は daily-update 判定により、初日決済からちょうど7日後（および以降7日おき）にゴールドが自動的に付与される。
+
 
 > [!IMPORTANT]
 > Stripe側のメタデータ（`client_reference_id` 等）に必ず Supabase の `user_id` を埋め込むこと。Webhook で DB を特定するために必須。
@@ -126,13 +130,21 @@ Stripe側で決済完了・解約イベントを受信し、DBを更新する最
 Stripe Webhookでは、ネットワーク障害等による重複送信（リトライ）への対策が必須である。イベント受信直後に `stripe_webhook_events` テーブルにイベントIDを挿入（INSERT）し、DBレベルの一意制約（UNIQUE CONSTRAINT）を用いて二重処理やレースコンディションによる「ゴールドの二重付与」などを完全にブロックするアーキテクチャを採用する（セキュリティ監査対応済）。
 
 ### 5.3 ダウングレード時の猶予処理
-ダウングレードによって現在のキャラクター### 🟢 Bug-2: UGC保存枠の上限値が仕様と +1 ずれている [修正済み]
+ユーザーがサブスクリプションを解約またはダウングレードした際、直ちに機能制限を適用するのではなく、すでに作成済みのキャラクター枠や登録済みの英霊は次回死亡/引退時まで維持される猶予処理を行う。
 
-**影響度**: 中（Freeユーザーが仕様上3件のところ4件まで保存できてしまう）
+---
 
-**対応状況 (2026-06-05 修正完了)**:
-- `src/app/api/ugc/save/route.ts` にて上限値を `free: 3 / basic: 10 / premium: 50` に修正。
-- クリエイターIDカラム `creator_id` で直接フィルタする形に最適化し、スキャン効率を改善。��税込）** | `STRIPE_PRICE_ID_GOLD_50K` | まとめ買い・コスパ重視向け |
+## 6. ゴールド都度購入 (One-time Gold Purchases)
+
+### 6.1 パッケージ一覧
+
+ユーザーは必要に応じて以下のゴールドパッケージを購入できる。
+
+| パッケージ名 | 付与ゴールド | 価格（税込） | 環境変数 | 説明 |
+|---|---|---|---|---|
+| スターターパック | 10,000 G | 330円 | `STRIPE_PRICE_ID_GOLD_10K` | お手軽な初期ブースト用 |
+| スタンダードパック | 30,000 G | 950円 | `STRIPE_PRICE_ID_GOLD_30K` | 標準的なパッケージ |
+| アドベンチャーパック | 50,000 G | 1,430円 | `STRIPE_PRICE_ID_GOLD_50K` | まとめ買い・コスパ重視向け |
 
 > [!NOTE]
 > 価格はStripe管理コンソール上の Price 設定に依存する。コード側では Price ID と付与ゴールドのみを管理する。
@@ -164,7 +176,8 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 | `STRIPE_PRICE_ID_BASIC` | Basic プランの Stripe Price ID |
 | `STRIPE_PRICE_ID_PREMIUM` | Premium プランの Stripe Price ID |
 | `STRIPE_PRICE_ID_GOLD_10K` | ゴールド 10,000G パッケージの Stripe Price ID |
-| `STRIPE_PRICE_ID_GOLD_50K` | ゴールド 50,000G パッケージの Stripe Price ID |
+| `STRIPE_PRICE_ID_GOLD_30K` | ゴールド 30,000G パッケージの Stripe Price ID |
+| `STRIPE_PRICE_ID_GOLD_50K` | ゴールド 50,000G パッケージ of the Stripe Price ID |
 
 ---
 

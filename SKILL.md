@@ -411,4 +411,32 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   - ユーザーが Stripe ポータル上でプランを変更（Basic ⇔ Premium）した際に発生する \`customer.subscription.updated\` Webhook イベントを正しくハンドリングする。
   - 受信時に \`subscription\` オブジェクトから最新の Price ID とステータスを解決し、DB 側の \`subscription_tier\` と \`subscription_status\` を同期・更新することで、Stripeポータル操作に伴うデータ不整合を防止する。
 - **Weekly ゴールドボーナス付与のアトミック化**:
-  - 6時間おきの Cron 内での Weekly ゴールド付与について、並行リクエスト発生時における二重付与（ゴールドの二重獲得）を防ぐため、\`last_weekly_bonus_at\` の検証およびゴールド加算、付与日時の更新を一連の PostgreSQL トランザクションとして処理するアトミックな SQL 関数（\`process_weekly_gold_bonus()\`）へ移行した。
+  - 6時間おきの Cron 内での Weekly ゴールド付与について、並行リクエスト発生時における二重付与（ゴールドの二重獲得）を防ぐため、`last_weekly_bonus_at` の検証およびゴールド加算、付与日時の更新を一連の PostgreSQL トランザクションとして処理するアトミックな SQL 関数（`process_weekly_gold_bonus()`）へ移行した。
+
+## 世界アライメントの減衰・月次リセットおよび拠点初期値・ビジュアルの教訓（追加改修・v32.2）
+
+- **アライメントスコアの永続的累積による膠着化・バグ（Friction逆戻り）の防止**:
+  - 各拠点の `order_score`, `chaos_score` 等のアライメントスコアは永続的に蓄積される設計になっており、プレイヤーのアクションにより 100 を超えると、摩擦計算（`Math.abs(100 - currentVal)`）により摩擦が逆に跳ね上がって「目標繁栄度が常に崩壊（Lv1）に固定される」深刻なバグ（仕様の穴）が存在した。
+  - **Friction計算の100キャップ**: 摩擦計算時の属性値を `Math.min(100, currentVal)` でキャップし、100超のスコアでの摩擦の逆戻り（不一致判定）を根本から防止。
+  - **6時間ごとの20%減衰**: `updateWorldSimulation` の開始時に、全拠点一律で各アライメントスコアに `0.8` を乗算し四捨五入する（下限は初期値 `10` で保護）減衰処理を導入。アライメントを一定の平衡状態で維持させつつ、プレイヤーの継続的な活動（祈り等）がリアルタイムに反映されるようにした。
+  - **1ヶ月ごとの月次リセット**: シミュレーション更新時に前回の更新時刻と現在の時刻の「月」を比較し、月が切り替わった最初のタイミングで全アライメントスコアを `10` に自動初期化する。これにより、長期的な偏りの固定を防ぎ、シーズン的な新鮮さを提供。
+- **古い6時間放置リセットロジック of the system の廃止**:
+  - `worldStateReset.ts` で行われていた「6時間放置でスコアを 0 にクリアする」極端な古いロジック（一部拠点だけが極端になりやすかった）を廃止し、上記の20%減衰に一本化した。互換性のために元の関数は空（ダミー）にスタブ化した。
+- **拠点初期値の「停滞 (Lv3)」引き上げ**:
+  - 首都とハブを除く一般拠点の初期繁栄レベルを `3` (停滞 / Stagnant) に引き上げ、DB上の既存レコードにも一括アップデートを適用した。これにより、ゲーム開始時に世界全体が過度に崩壊した状態から始まるのを防いだ。
+- **衰退（Lv2）時のキービジュアル通常画像化**:
+  - 繁栄度が `2`（衰退）の拠点において、UIバッジ等の表示は「衰退」を据え置きつつ、背景画像（`stateSuffix = "normal"`）および Vignette 演出は通常（Lv3）と同じ表示にするよう `MainVisualArea.tsx` を修正。荒廃表示（`_ruined.png`）および不気味な赤いビネット演出を `1`（崩壊）のみに限定した。
+
+## 従量課金メニュー追加と初回トライアル制限・タイミング適正化の教訓（追加改修・v32.3）
+
+- **従量課金パッケージ（30,000G / 950 JPY）の追加**:
+  - `AccountSettingsModal.tsx`（設定画面）および `PurchaseConfirmModal.tsx`（特商法最終確認モーダル）に「スタンダードパック（30,000G / 950円税込）」の価格定義および購入ボタンを新設。
+  - バックエンド `checkout/route.ts` の `GOLD_PACKAGES` に連動する環境変数 `STRIPE_PRICE_ID_GOLD_30K` を追加し、都度払いとして Stripe Checkout Session を作成。
+- **Weeklyボーナスの即時付与とタイミング適正化（初日➔7日後）**:
+  - 新規に Basic/Premium サブスクリプションの課金（支払）が開始された時点（Stripe Webhook の `checkout.session.completed` にて `active` になった際、または `customer.subscription.updated` にて `trialing` → `active` に切り替わった際）に、データベースの `last_weekly_bonus_at` を一旦 `null` にリセットした上でアトミックな SQL 関数 `process_weekly_gold_bonus()` を即時実行。
+  - これにより、本契約（有料）開始の初日にその週のボーナスが即時でユーザーに付与され、同時に `last_weekly_bonus_at` が現在時刻（`NOW()`）に設定されます。
+  - 次回の付与は `daily-update` の判定ロジックに従い、初日決済からちょうど7日後（および以降7日おき）に実行され、「契約初日に初回ボーナス獲得 ➔ 7日後に2回目」という健全かつリアルタイムな体験を提供します。
+- **初回無料7日間トライアルの1回制限化**:
+  - `user_profiles` テーブルに `has_used_trial`（トライアル消費済み）カラムを追加。
+  - ユーザーが一度でもトライアル契約（status = `trialing`）または通常契約（status = `active`）を開始した時点で、Stripe Webhook にて `has_used_trial = true` に更新。
+  - サブスクリプション Checkout Session 発行前に `user_profiles.has_used_trial` を検証し、すでに消費済みの場合は Stripe の `trial_period_days` オプションを指定せずに Checkout Session を作成（即時課金開始）。

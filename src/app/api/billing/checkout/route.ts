@@ -34,6 +34,10 @@ export async function POST(req: Request) {
                 priceId: process.env.STRIPE_PRICE_ID_GOLD_10K || '',
                 goldAmount: 10000,
             },
+            gold_30k: {
+                priceId: process.env.STRIPE_PRICE_ID_GOLD_30K || '',
+                goldAmount: 30000,
+            },
             gold_50k: {
                 priceId: process.env.STRIPE_PRICE_ID_GOLD_50K || '',
                 goldAmount: 50000,
@@ -73,16 +77,35 @@ export async function POST(req: Request) {
                 );
             }
 
+            // Fetch has_used_trial from user_profiles
+            const { data: profile, error: profileErr } = await supabaseAdmin
+                .from('user_profiles')
+                .select('has_used_trial')
+                .eq('id', userId)
+                .single();
+
+            if (profileErr) {
+                console.error('[checkout] Profile fetch error:', profileErr);
+                return NextResponse.json({ error: 'ユーザープロファイルが見つかりません。' }, { status: 400 });
+            }
+
+            const hasUsedTrial = profile?.has_used_trial === true;
+
+            const subscriptionData: any = {
+                metadata: { user_id: userId },      // Bug-1修正: 解約Webhookでuser_idを取得できるようにSubscriptionにmetadataを設定
+            };
+
+            if (!hasUsedTrial) {
+                subscriptionData.trial_period_days = 7; // 最初の1週間無料トライアル
+            }
+
             const session = await stripe.checkout.sessions.create({
                 mode: 'subscription',
                 line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
                 client_reference_id: userId,           // Webhook で user_id を特定するため必須
                 customer_email: user.email || undefined, // Stripe Customer のメールアドレスを統一
                 metadata: { user_id: userId, tier },
-                subscription_data: {
-                    trial_period_days: 7,               // 最初の1週間無料トライアル
-                    metadata: { user_id: userId },      // Bug-1修正: 解約Webhookでuser_idを取得できるようにSubscriptionにmetadataを設定
-                },
+                subscription_data: subscriptionData,
                 success_url: `${origin}/inn?billing=success&tier=${tier}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
             });
@@ -94,7 +117,7 @@ export async function POST(req: Request) {
             const pkg = packageKey ? GOLD_PACKAGES[packageKey] : null;
             if (!pkg) {
                 return NextResponse.json(
-                    { error: `packageKey は 'gold_10k' または 'gold_50k' を指定してください。` },
+                    { error: `packageKey は 'gold_10k', 'gold_30k', または 'gold_50k' を指定してください。` },
                     { status: 400 }
                 );
             }

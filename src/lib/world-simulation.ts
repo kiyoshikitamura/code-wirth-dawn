@@ -65,6 +65,32 @@ export async function updateWorldSimulation() {
 
         if (!locations || !states) throw new Error('No data found');
 
+        // --- アライメントスコアの月次リセット＆20%減衰処理 ---
+        let isNewMonth = false;
+        if (states.length > 0 && states[0].updated_at) {
+            const lastUpdate = new Date(states[0].updated_at);
+            const now = new Date();
+            isNewMonth = lastUpdate.getUTCFullYear() !== now.getUTCFullYear() || lastUpdate.getUTCMonth() !== now.getUTCMonth();
+        }
+
+        if (isNewMonth) {
+            states.forEach(s => {
+                s.order_score = 10;
+                s.chaos_score = 10;
+                s.justice_score = 10;
+                s.evil_score = 10;
+            });
+            logs.push(`[WorldSim] New month detected. Reset all alignment scores to 10.`);
+        } else {
+            states.forEach(s => {
+                s.order_score = Math.max(10, Math.round((s.order_score || 10) * 0.8));
+                s.chaos_score = Math.max(10, Math.round((s.chaos_score || 10) * 0.8));
+                s.justice_score = Math.max(10, Math.round((s.justice_score || 10) * 0.8));
+                s.evil_score = Math.max(10, Math.round((s.evil_score || 10) * 0.8));
+            });
+            logs.push(`[WorldSim] Applied 20% decay to all alignment scores.`);
+        }
+
         // Map states by location name for easy access
         const stateMap = new Map<string, WorldState>();
         states.forEach(s => stateMap.set(s.location_name, s));
@@ -263,7 +289,8 @@ export async function updateWorldSimulation() {
             }
 
             const currentVal = (state[target.key] as number) || 0;
-            const friction = Math.abs(target.ideal - currentVal);
+            const cappedVal = Math.min(100, currentVal); // 100超のスコアで摩擦が逆戻りするのを防止
+            const friction = Math.abs(target.ideal - cappedVal);
             // Default max friction is 100 (if current is 0).
 
             // 2. Determine Trend
@@ -346,6 +373,10 @@ export async function updateWorldSimulation() {
                     status: newStatusText,
                     prosperity_level: currentLevel,   // New V4 Field
                     last_friction_score: friction,    // New V4 Field
+                    order_score: state.order_score,
+                    chaos_score: state.chaos_score,
+                    justice_score: state.justice_score,
+                    evil_score: state.evil_score,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', state.id);
