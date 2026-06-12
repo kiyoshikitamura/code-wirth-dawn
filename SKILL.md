@@ -119,6 +119,8 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - ⚠️ **`supabase link` 中に `DROP SCHEMA` 等の破壊的操作を絶対に行わない** — 誤って本番DBのスキーマを消失するリスクがある
 - マイグレーション適用フローは `docs/migration-guide.md` を参照
 - Supabase CLI は `npx supabase` で実行（グローバルインストールではなく npx 経由）
+- **シードデータの投入**: Vercel プレビュー環境や本番環境は認証保護またはデバッグ機能の無効化がなされているため、`/api/debug/seed-npcs` 等の `curl` / `Invoke-WebRequest` は使用できない。代わりに `DASHBOARD_` 環境変数を利用して本番へ直接接続するシードスクリプト（`scratch/` 配下）を作成し実行する。
+  - *注意*: `seed_master.ts` / `seed_master.js` における `cards` の `image_url` と `description` のインポート漏れにより本番の画像が `NULL` クリアされる不具合があった。マスタ更新時は常にすべてのテーブルマッピングの整合性を確認すること。
 
 ## DB スキーマ管理の教訓
 

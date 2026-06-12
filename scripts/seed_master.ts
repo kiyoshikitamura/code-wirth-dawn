@@ -144,6 +144,8 @@ async function main() {
         effect_val: r.effect_val,
         target_type: r.target_type || 'single_enemy',
         effect_id: r.effect_id || null,
+        image_url: r.image_url || null,         // v3.3: カード画像
+        description: r.description || null,      // v3.3: カード説明文
     }));
 
     // 2. Items

@@ -25,6 +25,7 @@
 | `effect_val` | number | 基礎攻撃力または回復量。def_up系スキルではDEF加算値を表す。 |
 | `target_type` | string | `single_enemy`, `all_enemies`, `self`, `single_ally`, `all_allies`, `random_enemy` |
 | `effect_id` | string | 状態異常ID（`StatusEffectId`型定義に準拠） |
+| `image_url` | string | カード画像のアセットパス（例: `/images/items/skill_vital_strike.png`） |
 | `description` | string | バトル画面・ショップでのスキル説明文（実装効果を正確に記載） |
 
 ### `items` テーブル（経済ロジック・ショップ用）
@@ -278,3 +279,4 @@ GET https://code-wirth-dawn.com/api/debug/seed-cards?secret=admin_user
 | v4.0 | 2026-04-28 | 魔導書3種(65-67)追加、即死攻撃フォールバック修正、吸血drain実装、王の城壁DEF+50、五星の加護攻撃+バフ化、英霊カード(71-74)MAP追加、デバフ成功率テーブル、ダメージ計算v4.0、seed-cards API追加 |
 | **v4.1** | **2026-05-01** | **バフ効果の重複加算仕様（atk_up, def_up, evasion_up 等）実装、裁きのダメージ50調整、NPCのダメージ計算デバフ反映** |
 | **v28** | **2026-06-01** | **旧VIT/MPコストシステム廃止。cost_type→`none`/cost_val→`0`に統一。`canAffordCard()`削除。APコストのみ有効。cost_type=`item`（1バトル1回制限）は維持。** |
+| v4.3 | 2026-06-12 | 本番カード画像非表示バグの修正。`seed_master.ts` / `seed_master.js` において `cards` テーブルの `image_url` と `description` のマッピングが漏れていた不具合を修正。 |
