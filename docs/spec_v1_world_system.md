@@ -385,3 +385,8 @@ export interface Reputation {
 - 永続的中立ハブ「名もなき旅人の拠所」が他国の領土ドラフト（territory draft）に割り当てられたり、覇権（コントロール割合）チャートの分母に含まれて割合を歪めるバグを防止するため、計算から除外した。
 - `world-simulation.ts` の領土ドラフト対象数を 21 から 20（Hub を除く）に変更し、Hub は常に controlling_nation = `'Neutral'` として固定。
 - `/api/world/hegemony` の総数計算（totalCount）から controlling_nation = `'Neutral'` である Hub を除外。これにより、覇権バーは 4 大国家の支配拠点数のみ（分母20）で正確に 100% となるように算出される。
+
+### 11.3 中立ハブ拠点の「繁栄(Prosperous / Lv4)」固定とCron更新処理からの完全除外
+- 中立ハブ拠点の状態は常に「繁栄 (Prosperous) / 繁栄度レベル4」で固定され、アライメントスコアも `50` に維持される。
+- 6時間ごとのシミュレーション更新（`updateWorldSimulation`）時に、中立ハブはアライメントスコアの20%減衰や月次リセット処理からスキップされる。
+- シミュレーションの実行時、ハブ拠点に意図しない変更（他国への帰属やレベルの変動など）が検出された場合、自動的に `controlling_nation = 'Neutral'`, `status = 'Prosperous'`, `prosperity_level = 4`, 各アライメントスコアを `50` へと強制リセット・上書きして保護するガードロジックを実装し、Cronのシミュレーション影響から完全に隔離している。

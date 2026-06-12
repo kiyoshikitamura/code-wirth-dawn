@@ -87,6 +87,7 @@ export async function updateWorldSimulation() {
 
         if (isNewMonth) {
             states.forEach(s => {
+                if (s.location_name === '名もなき旅人の拠所') return;
                 s.order_score = 50;
                 s.chaos_score = 50;
                 s.justice_score = 50;
@@ -95,6 +96,7 @@ export async function updateWorldSimulation() {
             logs.push(`[WorldSim] New month detected. Reset all alignment scores to 50.`);
         } else {
             states.forEach(s => {
+                if (s.location_name === '名もなき旅人の拠所') return;
                 s.order_score = Math.max(10, Math.round((s.order_score || 10) * 0.8));
                 s.chaos_score = Math.max(10, Math.round((s.chaos_score || 10) * 0.8));
                 s.justice_score = Math.max(10, Math.round((s.justice_score || 10) * 0.8));
@@ -258,7 +260,37 @@ export async function updateWorldSimulation() {
             if (!state) continue;
 
             const isHub = loc.nation_id === 'Neutral' || loc.name === '名もなき旅人の拠所';
-            const newOwner = isHub ? 'Neutral' : newAssignments[loc.id];
+            
+            if (isHub) {
+                // 中立ハブは常に繁栄(Prosperous / Lv4)、アライメントスコア50固定でCron影響から除外
+                if (state.controlling_nation !== 'Neutral' ||
+                    state.status !== LOC_STATUS.PROSPEROUS ||
+                    state.prosperity_level !== 4 ||
+                    state.order_score !== 50 ||
+                    state.chaos_score !== 50 ||
+                    state.justice_score !== 50 ||
+                    state.evil_score !== 50) {
+                    
+                    logs.push(`[Hub-Fix] Resetting Neutral hub state to default (Prosperous/Lv4/Align 50)`);
+                    const { error: hubError } = await supabase
+                        .from('world_states')
+                        .update({
+                            controlling_nation: 'Neutral',
+                            status: LOC_STATUS.PROSPEROUS,
+                            prosperity_level: 4,
+                            order_score: 50,
+                            chaos_score: 50,
+                            justice_score: 50,
+                            evil_score: 50,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', state.id);
+                    if (hubError) logs.push(`Error updating Hub: ${hubError.message}`);
+                }
+                continue;
+            }
+
+            const newOwner = newAssignments[loc.id];
 
             // Updated Owner logic (from previous step 4)
             const isNewCapture = state.controlling_nation !== newOwner;
