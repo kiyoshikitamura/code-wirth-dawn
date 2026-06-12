@@ -14,11 +14,13 @@ export async function GET() {
             return NextResponse.json({ hegemony: DEFAULT_HEGEMONY });
         }
 
-        const totalCount = states.length || 1;
+        // Exclude Neutral hub from total counts and distribution
+        const activeStates = states.filter(s => s.controlling_nation !== 'Neutral');
+        const totalCount = activeStates.length || 1;
         const counts: Record<string, number> = {};
         NATIONS.forEach(n => { counts[n.id] = 0; });
 
-        states.forEach(s => {
+        activeStates.forEach(s => {
             const nation = s.controlling_nation;
             if (nation && counts[nation] !== undefined) {
                 counts[nation]++;

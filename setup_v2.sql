@@ -38,10 +38,10 @@ CREATE TABLE world_states (
   prosperity_level INTEGER DEFAULT 4, -- 1: Ruined, 2: Declining, 3: Stagnant, 4: Prosperous, 5: Zenith
   last_friction_score INTEGER DEFAULT 0,
   
-  order_score INTEGER DEFAULT 10,
-  chaos_score INTEGER DEFAULT 10,
-  justice_score INTEGER DEFAULT 10,
-  evil_score INTEGER DEFAULT 10,
+  order_score INTEGER DEFAULT 50,
+  chaos_score INTEGER DEFAULT 50,
+  justice_score INTEGER DEFAULT 50,
+  evil_score INTEGER DEFAULT 50,
   total_days_passed INTEGER DEFAULT 0,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -225,11 +225,7 @@ INSERT INTO locations (name, description, x, y, type, nation_id, connections) VA
 
 -- B. World States Init
 INSERT INTO world_states (location_name, controlling_nation, status, order_score, chaos_score, justice_score, evil_score)
-SELECT name, nation_id, 'Prosperous', 
-  CASE WHEN nation_id = 'Roland' THEN 80 ELSE 20 END,
-  CASE WHEN nation_id = 'Markand' THEN 80 ELSE 20 END,
-  CASE WHEN nation_id = 'Roland' OR nation_id = 'Markand' THEN 80 ELSE 20 END,
-  CASE WHEN nation_id = 'Karyu' OR nation_id = 'Yato' THEN 80 ELSE 20 END
+SELECT name, nation_id, 'Prosperous', 50, 50, 50, 50
 FROM locations;
 
 -- C. Items

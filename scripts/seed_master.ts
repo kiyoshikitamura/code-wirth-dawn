@@ -123,10 +123,10 @@ async function main() {
             status: statusMap[level] || 'Stagnant',
             prosperity_level: level,
             attribute_name: '至高の平穏',
-            order_score: 10,
-            chaos_score: 10,
-            justice_score: 10,
-            evil_score: 10,
+            order_score: 50,
+            chaos_score: 50,
+            justice_score: 50,
+            evil_score: 50,
             background_url: '/backgrounds/default.jpg',
             total_days_passed: 0
         };

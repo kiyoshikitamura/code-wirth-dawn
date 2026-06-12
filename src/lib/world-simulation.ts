@@ -87,12 +87,12 @@ export async function updateWorldSimulation() {
 
         if (isNewMonth) {
             states.forEach(s => {
-                s.order_score = 10;
-                s.chaos_score = 10;
-                s.justice_score = 10;
-                s.evil_score = 10;
+                s.order_score = 50;
+                s.chaos_score = 50;
+                s.justice_score = 50;
+                s.evil_score = 50;
             });
-            logs.push(`[WorldSim] New month detected. Reset all alignment scores to 10.`);
+            logs.push(`[WorldSim] New month detected. Reset all alignment scores to 50.`);
         } else {
             states.forEach(s => {
                 s.order_score = Math.max(10, Math.round((s.order_score || 10) * 0.8));
@@ -107,13 +107,15 @@ export async function updateWorldSimulation() {
         const stateMap = new Map<string, WorldState>();
         states.forEach(s => stateMap.set(s.location_name, s));
 
-        // 2. Calculate Global Scores (Hegemony)
+        // 2. Calculate Global Scores (Hegemony) - Exclude Neutral hub "名もなき旅人の拠所"
         let totalOrder = 0;
         let totalChaos = 0;
         let totalJustice = 0;
         let totalEvil = 0;
 
-        states.forEach(s => {
+        const activeStates = states.filter(s => s.location_name !== '名もなき旅人の拠所');
+
+        activeStates.forEach(s => {
             totalOrder += s.order_score || 0;
             totalChaos += s.chaos_score || 0;
             totalJustice += s.justice_score || 0;
@@ -128,8 +130,9 @@ export async function updateWorldSimulation() {
 
         logs.push(`Global Scores - Order: ${totalOrder}, Chaos: ${totalChaos}, Justice: ${totalJustice}, Evil: ${totalEvil}`);
 
-        // 3. Calculate Target Quotas (Share of 20 locations)
-        const totalLocs = locations.length; // Should be 20
+        // 3. Calculate Target Quotas (Exclude Neutral hub)
+        const activeLocations = locations.filter(l => l.nation_id !== 'Neutral' && l.name !== '名もなき旅人の拠所');
+        const totalLocs = activeLocations.length; // Should be 20
 
         // Simple ratios
         const rawQuota = {
@@ -204,7 +207,7 @@ export async function updateWorldSimulation() {
 
         const claims: { nation: string, locationId: string, dist: number }[] = [];
 
-        locations.forEach(loc => {
+        activeLocations.forEach(loc => {
             Object.keys(NATIONS).forEach(nationKey => {
                 const nation = NATIONS[nationKey as keyof typeof NATIONS];
                 const cap = capitals[nation];
@@ -252,8 +255,10 @@ export async function updateWorldSimulation() {
         for (const loc of locations) {
             // Retrieve latest state to be sure
             const state = stateMap.get(loc.name);
-            const newOwner = newAssignments[loc.id];
             if (!state) continue;
+
+            const isHub = loc.nation_id === 'Neutral' || loc.name === '名もなき旅人の拠所';
+            const newOwner = isHub ? 'Neutral' : newAssignments[loc.id];
 
             // Updated Owner logic (from previous step 4)
             const isNewCapture = state.controlling_nation !== newOwner;
