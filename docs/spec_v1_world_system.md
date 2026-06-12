@@ -52,13 +52,17 @@ export type NationId = 'Roland' | 'Markand' | 'Karyu' | 'Yato' | 'Neutral';
 > - world_states_history に `resistance_collapse` イベントが記録される
 
 ### 3.3 6時間更新バッチ
-<!-- v11.1: cronスケジュールを6時間毎に変更 -->
+<!-- v32.2: JST運行に合わせてcronスケジュールを同期 -->
 - **API**: `POST /api/cron/daily-update`（名称は互換のため維持）
 - バッチ処理は Vercel Cron Job として登録。
 
-### 3.4 実行タイミング (v11.1 実装済み)
-*   **バッチスケジュール**: Vercel Cron Job を用いて **6時間毎（UTC 0:00 / 6:00 / 12:00 / 18:00）** に `POST /api/cron/daily-update` を実行。
-    - `vercel.json` の cron スケジュール: `"0 */6 * * *"`
+### 3.4 実行タイミング (v32.2 実装済み)
+*   **バッチスケジュール**: Vercel Cron Job を用いて **6時間毎、日本標準時（JST）の 6:00, 12:00, 18:00, 24:00 (0:00)** に `POST /api/cron/daily-update` を実行。
+    - UTC基準では **21:00 (前日), 3:00, 9:00, 15:00** に該当。
+    - `vercel.json` の cron スケジュール: `"0 3,9,15,21 * * *"`
+*   **初回更新の制限 (リリース前ガード)**:
+    - 初回シミュレーション実行は、ゲームリリース前であるため **2026年6月13日 12:00 JST** 以降に制限される。
+    - それ以前に Cron または API 経由で実行された場合は、自動的に処理がスキップされ、初期状態が維持される。
 *   **CRON_SECRET**: 不正実行を防ぐため Bearer Token で検証。
 *   **手動実行**: 開発エディタやシステム管理画面からの実行も可能（GETメソッド対応）。
 
