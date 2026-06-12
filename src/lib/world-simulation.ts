@@ -52,9 +52,21 @@ const RESISTANCE_THRESHOLD = 51;
  * Intended to be run every 6 hours via Cron.
  */
 export async function updateWorldSimulation() {
-    console.log('[WorldSim] Starting 6h world update...');
+    console.log('[WorldSim] Checking release date for 6h world update...');
     const logs: string[] = [];
 
+    // JST 2026-06-13 12:00:00 (UTC 2026-06-13 03:00:00)
+    const RELEASE_DATE = new Date('2026-06-13T12:00:00+09:00');
+    if (new Date() < RELEASE_DATE) {
+        console.log('[WorldSim] Before release date (2026-06-13 12:00 JST). Skipping world simulation update.');
+        return {
+            success: true,
+            logs: ['[WorldSim] Skipped: Before release date (2026-06-13 12:00 JST)'],
+            hegemony: {}
+        };
+    }
+
+    console.log('[WorldSim] Starting 6h world update...');
     try {
         // 1. Fetch Data
         const { data: locations, error: locError } = await supabase.from('locations').select('*');
