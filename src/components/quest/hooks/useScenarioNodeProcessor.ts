@@ -70,8 +70,9 @@ export function useScenarioNodeProcessor({
 
             // 終了ノードSE
             if (currentNode.type === 'end' && soundManager) {
-                if (currentNode.result === 'success') soundManager.playSE('se_quest_success');
-                else if (currentNode.result === 'failure') soundManager.playSE('se_quest_fail');
+                const nodeResult = currentNode.params?.result || currentNode.result || 'success';
+                if (nodeResult === 'success') soundManager.playSE('se_quest_success');
+                else if (nodeResult === 'failure') soundManager.playSE('se_quest_fail');
             }
 
             // ─── 自動分岐ノード群 ─────────────────────────────────────
@@ -430,8 +431,8 @@ export function useScenarioNodeProcessor({
                 const questId = questState.questId;
                 window.location.href = `/shop?quest_id=${questId}&return_to=quest`;
             }
-            else if (currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || currentNode.result) {
-                const res = currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
+            else if (currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || currentNode.params?.result || currentNode.result) {
+                const res = currentNode.params?.result || currentNode.result || (currentNode.type === 'end_failure' ? 'failure' : 'success');
                 // endノードにrewardsが埋め込まれている場合（ルート分岐報酬等）、nodeRewardsとして渡す
                 const nodeRewards = currentNode.params?.rewards || currentNode.rewards || null;
                 setEndReady({ result: res, nodeRewards });

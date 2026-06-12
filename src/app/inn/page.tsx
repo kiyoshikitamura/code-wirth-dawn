@@ -22,6 +22,7 @@ import StatusModal from '@/components/inn/StatusModal';
 import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
 import GossipModal from '@/components/world/GossipModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
+import ActiveQuestModal from '@/components/inn/ActiveQuestModal';
 import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
 import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
@@ -186,23 +187,49 @@ function InnPageInner() {
                 {activeModal === 'ranking' && <RankingModal onClose={() => setActiveModal(null)} />}
 
                 {activeModal === 'questBoard' && (
-                    <QuestBoardModal
-                        isOpen={true}
-                        onClose={() => setActiveModal(null)}
-                        userProfile={userProfile}
-                        quests={allQuests}
-                        loading={loadingQuests}
-                        onSelect={(s) => router.push(`/quest/${s.id}`)}
-                    />
+                    userProfile?.current_quest_id ? (
+                        <ActiveQuestModal
+                            isOpen={true}
+                            onClose={() => setActiveModal(null)}
+                            userProfile={userProfile}
+                            quests={allQuests}
+                            onSelect={(s) => {
+                                const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
+                                router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
+                            }}
+                        />
+                    ) : (
+                        <QuestBoardModal
+                            isOpen={true}
+                            onClose={() => setActiveModal(null)}
+                            userProfile={userProfile}
+                            quests={allQuests}
+                            loading={loadingQuests}
+                            onSelect={(s) => router.push(`/quest/${s.id}`)}
+                        />
+                    )
                 )}
 
                 {activeModal === 'ugcGuild' && userProfile && (
-                    <UgcQuestBoardPanel
-                        isOpen={true}
-                        onClose={() => setActiveModal(null)}
-                        userLevel={userProfile.level || 1}
-                        onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
-                    />
+                    userProfile.current_quest_id ? (
+                        <ActiveQuestModal
+                            isOpen={true}
+                            onClose={() => setActiveModal(null)}
+                            userProfile={userProfile}
+                            quests={allQuests}
+                            onSelect={(s) => {
+                                const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
+                                router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
+                            }}
+                        />
+                    ) : (
+                        <UgcQuestBoardPanel
+                            isOpen={true}
+                            onClose={() => setActiveModal(null)}
+                            userLevel={userProfile.level || 1}
+                            onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
+                        />
+                    )
                 )}
 
                 {/* Main Visual */}

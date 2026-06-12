@@ -322,7 +322,7 @@ async function main() {
                         enemy_group_id: params.enemy || params.enemy_group_id,
                         speaker_name: params.speaker || params.speaker_name || undefined, // v22: 話者名マッピング
                         speaker_image_url: params.speaker_image_url || undefined,
-                        result: (params.type === 'end_success' || params.type === 'end') ? 'success' : (params.type === 'end_failure' ? 'failure' : undefined),
+                        result: (params.type === 'end_success') ? 'success' : (params.type === 'end_failure' ? 'failure' : (params.type === 'end' ? (params.result || 'success') : undefined)),
                         choices: [],
                         params: params
                     };

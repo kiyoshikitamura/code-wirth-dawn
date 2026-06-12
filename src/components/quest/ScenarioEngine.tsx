@@ -329,10 +329,11 @@ export default function ScenarioEngine({
         // まず end_success / end_failure ノードを探す
         // end_success を優先する理由: ユーザーが最後まで進んでノード欠落が発生した場合、
         // 「クエスト失敗」を出すのは理不尽。end_success のほうが安全なフォールバック先。
+        const getRecoveryResult = (n: any) => n.params?.result || n.result || 'success';
         const endSuccessEntry = Object.entries(script.nodes || {}).find(([, n]: [string, any]) =>
-            n.type === 'end_success' || (n.type === 'end' && n.result === 'success'));
+            n.type === 'end_success' || (n.type === 'end' && getRecoveryResult(n) === 'success'));
         const endFailureEntry = Object.entries(script.nodes || {}).find(([, n]: [string, any]) =>
-            n.type === 'end_failure' || (n.type === 'end' && n.result === 'failure'));
+            n.type === 'end_failure' || (n.type === 'end' && getRecoveryResult(n) === 'failure'));
         const recoveryNext = endSuccessEntry ? endSuccessEntry[0] : (endFailureEntry ? endFailureEntry[0] : undefined);
         
         currentNode = {
@@ -342,6 +343,9 @@ export default function ScenarioEngine({
             choices: recoveryNext ? [{ label: '物語を続ける', next: recoveryNext }] : [],
         };
     }
+
+    const questResult = currentNode.params?.result || currentNode.result;
+    const isSuccess = questResult === 'success' || currentNode.type === 'end_success';
 
     const handleChoice = (choice: any) => {
         // 要件の検証
@@ -524,10 +528,10 @@ export default function ScenarioEngine({
                             <ArrowRight size={14} className="opacity-70" />
                         </button>
                     ) : (
-                        currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || currentNode.result ? (
+                        currentNode.type === 'end' || currentNode.type === 'end_success' || currentNode.type === 'end_failure' || questResult ? (
                             <div className="flex flex-col items-center gap-3">
                                 <div className="text-center font-bold text-xl py-2 animate-pulse tracking-widest">
-                                    {currentNode.result === 'success' || currentNode.type === 'end_success' ? (
+                                    {isSuccess ? (
                                         <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
                                     ) : (
                                         <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
@@ -543,7 +547,7 @@ export default function ScenarioEngine({
                                     }}
                                     disabled={!endReady || !isResultReady || isProcessingResult}
                                     className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
-                                        currentNode.result === 'success' || currentNode.type === 'end_success'
+                                        isSuccess
                                             ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
                                             : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
                                     } ${(!endReady || !isResultReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}

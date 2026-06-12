@@ -69,18 +69,7 @@ export default function QuestPage() {
         return () => clearInterval(interval);
     }, []);
 
-    // クエストページ離脱時にゲストNPCをクリーンアップ（ブラウザバック対策）
-    useEffect(() => {
-        return () => {
-            // アンマウント時: クエストが完了していない場合（中断）、ゲストをクリア
-            // (isInQuestに関わらず、guestが存在すればブラウザバック等による離脱とみなしてクリアする)
-            const qs = useQuestState.getState();
-            if (qs.guest) {
-                console.log('[QuestPage] Unmount: clearing guest NPC on quest exit');
-                useQuestState.getState().removeGuest();
-            }
-        };
-    }, []);
+
 
     // Battle Return Logic
     useEffect(() => {
@@ -342,25 +331,37 @@ export default function QuestPage() {
         }
         async function loadScenario() {
             try {
-                // [Logic-Expert] Quest Not Found 修正:
-                // scenarios API は認証必須。トークンなしでは 401 → scenarios:[] になるため、
-                // Supabase セッションから JWT を取得してリクエストヘッダーに付与する。
-                const token = await getAuthToken();
+                // 最新のユーザー情報を読み込む
+                let currentProfile = userProfile;
+                if (!currentProfile) {
+                    await fetchUserProfile();
+                    currentProfile = useGameStore.getState().userProfile;
+                }
 
+                // すでに別のクエストを受注している場合のフロントエンド先行ブロック (isTestPlayでない場合)
+                if (!isTestPlay && currentProfile?.current_quest_id && currentProfile.current_quest_id !== id) {
+                    alert(`既に別の依頼（${currentProfile.current_quest_id}）を受注しています。ギルドから再開するか放棄してください。`);
+                    router.push('/inn');
+                    return;
+                }
+
+                const token = await getAuthToken();
                 const headers: HeadersInit = { 'Cache-Control': 'no-store' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
-                // デバッグバイパス: URLパラメータからAPIに転送
                 const debugBypass = searchParams.get('debug_bypass') === 'true' ? '&debug_bypass=true' : '';
 
                 const res = await fetch(`/api/scenarios?id=${id}${debugBypass}`, {
                     cache: 'no-store',
                     headers
                 });
+
+                let loadedScenario: Scenario | null = null;
+
                 if (res.ok) {
                     const data = await res.json();
                     if (data.scenarios && data.scenarios.length > 0) {
-                        setScenario(data.scenarios[0]);
+                        loadedScenario = data.scenarios[0];
                     } else {
                         // UGC v2: 公式シナリオに見つからない場合、ugc_scenarios を検索
                         console.log('[QuestPage] Scenario not found in official DB, trying UGC v2...');
@@ -371,25 +372,86 @@ export default function QuestPage() {
                             .single();
 
                         if (ugcData && !ugcErr) {
-                            // UGCシナリオをScenario型に変換
-                            const ugcScenario = {
+                            loadedScenario = {
                                 ...ugcData,
                                 description: ugcData.short_description || '',
                                 is_ugc: true,
                                 is_ugc_v2: true,
-                                // flow_nodes が文字列の場合パース
                                 flow_nodes: typeof ugcData.flow_nodes === 'string'
                                     ? JSON.parse(ugcData.flow_nodes)
                                     : ugcData.flow_nodes || [],
-                            };
-                            setScenario(ugcScenario as any);
+                            } as any;
+                        }
+                    }
+                }
+
+                if (loadedScenario) {
+                    setScenario(loadedScenario);
+
+                    // startQuest 用のパラメータをビルド
+                    const questType = (loadedScenario.quest_type === 'special' ? 'special' : 'normal') as 'normal' | 'special';
+                    const playerHp = currentProfile?.hp || currentProfile?.max_hp || 100;
+                    const playerMaxHp = currentProfile?.max_hp || 100;
+                    const currentLocationId = currentProfile?.current_location_id || undefined;
+                    
+                    const store = useGameStore.getState();
+                    const partyHp: Record<string, number> = {};
+                    if (Array.isArray(store.partyMembers)) {
+                        store.partyMembers.forEach((pm: any) => {
+                            partyHp[String(pm.id)] = pm.hp || pm.max_hp || 100;
+                        });
+                    }
+
+                    const startParams = {
+                        questId: id,
+                        questType,
+                        playerHp,
+                        playerMaxHp,
+                        partyHp,
+                        currentLocationId
+                    };
+
+                    // クエスト開始APIの呼び出しとZustandストアの同期
+                    if (isTestPlay) {
+                        // デバッグ/テストプレイ時はローカル状態の初期化のみ（すでに開始済みならスキップ）
+                        const qs = useQuestState.getState();
+                        if (qs.questId !== id || !qs.isInQuest) {
+                            useQuestState.getState().startQuest(startParams);
+                        }
+                    } else {
+                        // 実プレイ時: すでに自分がこのクエストに入っていない場合は /api/quest/start を呼び出す
+                        if (currentProfile?.current_quest_id !== id) {
+                            const authHeaders = await getAuthHeaders();
+                            const startRes = await fetch('/api/quest/start', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...authHeaders
+                                },
+                                body: JSON.stringify({ quest_id: id })
+                            });
+
+                            if (startRes.ok) {
+                                useQuestState.getState().startQuest(startParams);
+                                await fetchUserProfile();
+                            } else if (startRes.status === 409) {
+                                const startData = await startRes.json().catch(() => ({}));
+                                alert(`既に別の依頼（${startData.current_quest_id || '他クエスト'}）を受注しています。ギルドから再開するか放棄してください。`);
+                                router.push('/inn');
+                                return;
+                            } else {
+                                console.error("Failed to start quest on server:", startRes.status);
+                            }
                         } else {
-                            console.error("Scenario not found for id:", id);
+                            // すでに開始済みの場合: ローカル状態のみ初期化 (再開)（すでに開始済みならスキップ）
+                            const qs = useQuestState.getState();
+                            if (qs.questId !== id || !qs.isInQuest) {
+                                useQuestState.getState().startQuest(startParams);
+                            }
                         }
                     }
                 } else {
-                    const errData = await res.json().catch(() => ({}));
-                    console.error("Scenario API error:", res.status, errData);
+                    console.error("Scenario not found for id:", id);
                 }
             } catch (e) {
                 console.error("Failed to load scenario", e);
