@@ -518,17 +518,27 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 {/* ── カテゴリ2：プレイガイド ── */}
                 <div className="mb-5 pb-5 border-b border-[#3e2723]">
                     <h3 className="text-[#a38b6b] text-sm font-bold mb-3">
-                        プレイガイド
+                        プレイガイド ＆ 公式リンク
                     </h3>
-                    <button
-                        onClick={() => {
-                            onClose();
-                            router.push('/play-guide');
-                        }}
-                        className="w-full flex items-center justify-center py-2.5 px-4 bg-amber-950/20 border border-[#a38b6b]/40 text-amber-200 text-sm font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all cursor-pointer"
-                    >
-                        プレイガイドを開く
-                    </button>
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => {
+                                onClose();
+                                router.push('/play-guide');
+                            }}
+                            className="w-full flex items-center justify-center py-2.5 px-4 bg-amber-950/20 border border-[#a38b6b]/40 text-amber-200 text-sm font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all cursor-pointer"
+                        >
+                            プレイガイドを開く
+                        </button>
+                        <a
+                            href="https://x.com/kitamu2026"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center py-2.5 px-4 bg-slate-900/40 border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 text-sm font-bold rounded transition-all text-center"
+                        >
+                            公式X (旧Twitter)
+                        </a>
+                    </div>
                 </div>
 
                 {/* ── カテゴリ3：サウンド設定 ── */}

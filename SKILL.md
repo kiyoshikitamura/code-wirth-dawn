@@ -479,4 +479,10 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **キャラクター削除（リセット）と Stripe 課金の連動**:
   - タイトル画面等のキャラクター削除（`/api/profile/reset`）実行時に、データベース（`user_profiles`）だけを削除すると、Stripe 側のサブスクリプションが解約されずユーザーへの課金が継続する。
   - キャラクター削除 API の実行時に Stripe API を呼び出し、該当する Stripe 顧客（Customer）の `status` が `active` または `trialing` のサブスクリプションを即座に解約（`cancel`）する連動処理を実装する。
-  - Stripe API 呼び出しにおける例外（Stripe サービスの一時停止や API 鍵の未設定等）でゲーム内のキャラクターデータ削除自体が中断・フリーズしないよう、Stripe 側の解約処理は `try/catch` で囲み、エラー時はログ出力のみとする堅牢なフォールバック設計を維持する。
+  - Stripe API 呼び出しにおける例外（Stripe サービスの一時停止や API 鍵の未設定等）でゲーム内のキャラクターデータ削除自体が中断・フリーズしないよう、Stripe 側の解約処理は `try/catch` で囲み、エラー時はログ出力のみとする堅牢なフォールバック設計を維持する。
+
+## 公式Xへの外部リンク追加（追加改修・v32.6）
+
+- **外部リンクとセキュリティ**:
+  - タイトル画面のフッター（`src/app/title/page.tsx`）および設定画面モーダル（`src/components/inn/AccountSettingsModal.tsx`）から外部のSNS（公式X）などへリンクする際は、`target="_blank"` および `rel="noopener noreferrer"` を設定し、セキュリティとユーザー利便性を両立する。
+  - ゲーム内設定モーダルのボタン追加時は、既存のメニュー階層に自然にフィットするよう、共通のボタンレイアウト（`py-2.5 px-4` や `rounded`）およびデザインテーマ（Slate調カラーなど）を一貫して適用する。

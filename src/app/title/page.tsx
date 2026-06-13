@@ -556,6 +556,7 @@ export default function TitlePage() {
                                 <Link href="/legal/privacy" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">プライバシー</Link>
                                 <Link href="/legal/tokusho" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">特商法表記</Link>
                                 <Link href="/legal/credits" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">権利表記</Link>
+                                <a href="https://x.com/kitamu2026" target="_blank" rel="noopener noreferrer" className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors">公式X</a>
                             </div>
                             <div className="text-[9px] text-slate-700">© 2026 Code: Wirth-Dawn</div>
                         </div>
