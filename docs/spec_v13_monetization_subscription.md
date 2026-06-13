@@ -341,3 +341,19 @@ const { count: draftCount } = await supabase
 | 汎用ConfirmDialog | ✅ **実装済み** |
 | プラン詳細表示 | ✅ **実装済み** |
 | avatar API x-user-id廃止 | ✅ **実装済み** |
+| キャラクター削除時のStripe自動解約 | ✅ **実装済み** |
+
+---
+
+## 11. v32.4 改訂: キャラクター削除時の Stripe サブスクリプション自動解約 (2026-06-13)
+
+### 11.1 キャラクター削除（リセット）時の Stripe 自動解約
+ユーザーがタイトル画面などから「キャラクター削除（リセット）」を実行した際、Stripe上にアクティブなサブスクリプション（Basic/Premiumプラン）が存在する場合は、自動的かつ即座に Stripe 側でもサブスクリプションの即時解約（`stripe.subscriptions.cancel`）を実行する。
+
+* **実装API**: `POST /api/profile/reset`
+* **解約判定ロジック**:
+  1. `STRIPE_SECRET_KEY` が定義されている場合、Stripe SDK を初期化する。
+  2. 削除対象のユーザーID（`userId`）に紐づく Stripe 顧客情報（Customer）をメールアドレスまたはメタデータから特定する。
+  3. 該当の Stripe 顧客に紐づくサブスクリプションリストを取得し、`status` が `active` または `trialing` のものを即時解約する。
+* **フォールバック設計**:
+  Stripe APIの呼び出しに失敗（ネットワーク障害やAPI Keyの不備等）した場合でも、ユーザーのゲーム体験を阻害しないよう例外をキャッチして警告ログを出力し、データベース上のキャラクターデータ削除処理自体は正常に進める。

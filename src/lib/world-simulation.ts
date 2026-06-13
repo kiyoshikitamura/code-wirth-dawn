@@ -55,13 +55,13 @@ export async function updateWorldSimulation() {
     console.log('[WorldSim] Checking release date for 6h world update...');
     const logs: string[] = [];
 
-    // JST 2026-06-13 12:00:00 (UTC 2026-06-13 03:00:00)
-    const RELEASE_DATE = new Date('2026-06-13T12:00:00+09:00');
+    // JST 2026-06-15 12:00:00 (UTC 2026-06-15 03:00:00)
+    const RELEASE_DATE = new Date('2026-06-15T12:00:00+09:00');
     if (new Date() < RELEASE_DATE) {
-        console.log('[WorldSim] Before release date (2026-06-13 12:00 JST). Skipping world simulation update.');
+        console.log('[WorldSim] Before release date (2026-06-15 12:00 JST). Skipping world simulation update.');
         return {
             success: true,
-            logs: ['[WorldSim] Skipped: Before release date (2026-06-13 12:00 JST)'],
+            logs: ['[WorldSim] Skipped: Before release date (2026-06-15 12:00 JST)'],
             hegemony: {}
         };
     }

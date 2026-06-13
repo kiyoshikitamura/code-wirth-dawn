@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
+import Stripe from 'stripe';
 
 /**
  * POST /api/profile/reset
@@ -39,6 +40,54 @@ export async function POST(req: Request) {
 
         if (!profile) {
             return NextResponse.json({ error: 'キャラクターが見つかりません' }, { status: 404 });
+        }
+
+        // --- Stripe サブスクリプション自動解約 ---
+        if (process.env.STRIPE_SECRET_KEY) {
+            try {
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                    apiVersion: '2026-02-25.clover',
+                });
+
+                // Stripe Customer を検索（email または metadata.user_id で特定）
+                const customers = await stripe.customers.list({
+                    limit: 1,
+                    email: user.email || undefined,
+                });
+
+                let customerId: string | null = customers.data[0]?.id || null;
+
+                // metadata検索のフォールバック
+                if (!customerId) {
+                    const searchResult = await stripe.customers.search({
+                        query: `metadata["user_id"]:"${userId}"`,
+                        limit: 1,
+                    });
+                    customerId = searchResult.data[0]?.id || null;
+                }
+
+                if (customerId) {
+                    // 顧客のサブスクリプションを取得して即時解約する
+                    const subscriptions = await stripe.subscriptions.list({
+                        customer: customerId,
+                        status: 'all',
+                    });
+
+                    // active または trialing のサブスクリプションを抽出
+                    const activeSubs = subscriptions.data.filter(
+                        sub => sub.status === 'active' || sub.status === 'trialing'
+                    );
+
+                    for (const sub of activeSubs) {
+                        console.log(`[profile/reset] Cancelling active subscription: ${sub.id} for customer: ${customerId}`);
+                        await stripe.subscriptions.cancel(sub.id);
+                        console.log(`[profile/reset] Successfully cancelled Stripe subscription: ${sub.id}`);
+                    }
+                }
+            } catch (stripeErr: any) {
+                // キャラクター削除自体を中断させないため、エラーはキャッチしてログ出力のみにする
+                console.error('[profile/reset] Stripe subscription cancellation failed:', stripeErr.message);
+            }
         }
 
         // --- 既知テーブルを明示的に削除 (FK 依存順) ---
