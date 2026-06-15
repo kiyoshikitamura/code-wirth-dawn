@@ -325,7 +325,7 @@ export class QuestService {
         // 6. require_item_id: 特定アイテム所持チェック
         if (requirements.require_item_id) {
             const { data: invItem } = await supabase
-                .from('user_inventory')
+                .from('inventory')
                 .select('id')
                 .eq('user_id', userId)
                 .eq('item_id', requirements.require_item_id)
@@ -380,12 +380,19 @@ export class QuestService {
         if (requirements.min_prosperity !== undefined || requirements.max_prosperity !== undefined) {
             let prosperity = 5; // デフォルト
             if (user.current_location_id) {
-                const { data: locState } = await supabase
-                    .from('location_states')
-                    .select('prosperity')
-                    .eq('location_id', user.current_location_id)
+                const { data: loc } = await supabase
+                    .from('locations')
+                    .select('name')
+                    .eq('id', user.current_location_id)
                     .maybeSingle();
-                if (locState) prosperity = locState.prosperity || 5;
+                if (loc) {
+                    const { data: ws } = await supabase
+                        .from('world_states')
+                        .select('prosperity_level')
+                        .eq('location_name', loc.name)
+                        .maybeSingle();
+                    if (ws) prosperity = ws.prosperity_level ?? 5;
+                }
             }
             if (requirements.min_prosperity !== undefined && prosperity < requirements.min_prosperity) {
                 return { valid: false, reason: `Location prosperity ${requirements.min_prosperity} required (Current: ${prosperity})` };

@@ -16,18 +16,17 @@ export async function POST(req: Request) {
         // ユーザープロフィール取得（VIT減少用）
         const { data: currentProfile } = await supabaseServer
             .from('user_profiles')
-            .select('abandon_count, vitality, current_location_id, current_quest_id')
+            .select('vitality, current_location_id, current_quest_id')
             .eq('id', userId)
             .single();
 
-        // 1. プロフィール更新: ロック解除 + abandon_count++ + VIT -1
+        // 1. プロフィール更新: ロック解除 + VIT -1
         const currentVit = currentProfile?.vitality ?? 100;
         const { error } = await supabaseServer
             .from('user_profiles')
             .update({
                 current_quest_id: null,
                 current_quest_state: null,
-                abandon_count: (currentProfile?.abandon_count ?? 0) + 1,
                 vitality: Math.max(0, currentVit - 1),
             })
             .eq('id', userId);

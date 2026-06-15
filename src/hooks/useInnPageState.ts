@@ -328,6 +328,7 @@ export function useInnPageState() {
         if (!battleResult || !isEncounterType || !userProfile?.id || !hasValidParams) return;
 
         const resolveEncounterResult = async () => {
+            setLoading(true);
             try {
                 const authHeaders = await getAuthHeaders();
                 const res = await fetch('/api/move/encounter-result', {

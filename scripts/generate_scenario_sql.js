@@ -90,12 +90,27 @@ function parseCsvToScenarioJson(csvText) {
             if (params.enemy_group_id) node.enemy_group_id = String(params.enemy_group_id);
             else if (params.enemy) node.enemy_group_id = params.enemy;
             if (params.speaker_image_url) node.speaker_image_url = params.speaker_image_url;
-            if (params.speaker_name) { node.speaker_name = params.speaker_name; node.speaker = params.speaker_name; }
+            if (params.speaker_name || params.speaker) {
+                node.speaker_name = params.speaker_name || params.speaker;
+                node.speaker = params.speaker_name || params.speaker;
+            }
             if (params.enemy_name) node.enemy_name = params.enemy_name;
             if (params.enemy_level) node.enemy_level = params.enemy_level;
-            if (params.guest_id) { node.params = node.params || {}; node.params.guest_id = params.guest_id; }
+            if (params.guest_id) {
+                node.params = node.params || {};
+                node.params.guest_id = params.guest_id;
+                if (params.is_escort_target) {
+                    node.params.is_escort_target = true;
+                }
+            }
             if (params.prob) node.prob = parseInt(String(params.prob), 10);
-            const passthrough = ['item_id','quantity','remove_on_success','target_location_slug','hp_percent','hp_flat','flag','key','delta','value','threshold','operator','amount','location_name','items','gold','success_node','fail_node','encounter_rate','fallback'];
+            if (params.cond) node.cond = params.cond;
+            if (params.next) node.condNext = params.next;
+            if (params.fallback) node.condFallback = params.fallback;
+            if (params.req_stat) node.req_stat = params.req_stat;
+            if (params.req_val) node.req_val = parseInt(String(params.req_val), 10);
+
+            const passthrough = ['item_id','quantity','remove_on_success','target_location_slug','hp_percent','hp_flat','percent','flag','key','delta','value','threshold','operator','amount','location_name','items','gold','success_node','fail_node','encounter_rate','fallback','rewards'];
             for (const k of passthrough) {
                 if (params[k] !== undefined) { node.params = node.params || {}; node.params[k] = params[k]; }
             }

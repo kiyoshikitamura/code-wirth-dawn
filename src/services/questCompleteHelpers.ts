@@ -40,16 +40,23 @@ export async function applyAlignmentShift(
     // 拠点アライメント加算
     const questLocationId = user.current_location_id;
     if (questLocationId) {
+        const { data: loc } = await supabase
+            .from('locations')
+            .select('name')
+            .eq('id', questLocationId)
+            .maybeSingle();
+        const questLocationName = loc?.name;
+
         const worldColMap: Record<string, string> = {
             order: 'order_score', chaos: 'chaos_score',
             justice: 'justice_score', evil: 'evil_score'
         };
         for (const [key, val] of Object.entries(alignmentShift)) {
             const wCol = worldColMap[key];
-            if (wCol && typeof val === 'number' && val > 0) {
+            if (wCol && typeof val === 'number' && val > 0 && questLocationName) {
                 const { data: ws } = await supabase
                     .from('world_states').select('*')
-                    .eq('location_id', questLocationId).maybeSingle();
+                    .eq('location_name', questLocationName).maybeSingle();
                 if (ws) {
                     await supabase.from('world_states')
                         .update({ [wCol]: ((ws as any)[wCol] || 0) + val })
@@ -57,7 +64,7 @@ export async function applyAlignmentShift(
                 }
             }
         }
-        console.log(`[QuestComplete] Location alignment synced to ${questLocationId}`);
+        console.log(`[QuestComplete] Location alignment synced to ${questLocationName || questLocationId}`);
     }
 
     return alignmentShift;
@@ -93,7 +100,7 @@ export async function updateHubAndWorldState(
             if (locData) {
                 const { data: existingWS } = await supabase
                     .from('world_states').select('id')
-                    .eq('location_id', updates.current_location_id).maybeSingle();
+                    .eq('location_name', locData.name).maybeSingle();
 
                 if (existingWS) {
                     await supabase.from('world_states')
@@ -101,10 +108,9 @@ export async function updateHubAndWorldState(
                         .eq('id', existingWS.id);
                 } else {
                     await supabase.from('world_states').insert({
-                        location_id: updates.current_location_id,
                         location_name: locData.name,
                         total_days_passed: updates.accumulated_days,
-                        status: '安定', prosperity_level: 50, controlling_nation: 'Neutral'
+                        status: '安定', prosperity_level: 3, controlling_nation: 'Neutral'
                     });
                 }
             }
@@ -112,13 +118,22 @@ export async function updateHubAndWorldState(
             console.error("Failed to update World State time:", wsErr);
         }
     } else if (user.current_location_id) {
-        const { data: existingWS } = await supabase
-            .from('world_states').select('id')
-            .eq('location_id', user.current_location_id).maybeSingle();
-        if (existingWS) {
-            await supabase.from('world_states')
-                .update({ total_days_passed: updates.accumulated_days })
-                .eq('id', existingWS.id);
+        try {
+            const { data: locData } = await supabase
+                .from('locations').select('name')
+                .eq('id', user.current_location_id).single();
+            if (locData) {
+                const { data: existingWS } = await supabase
+                    .from('world_states').select('id')
+                    .eq('location_name', locData.name).maybeSingle();
+                if (existingWS) {
+                    await supabase.from('world_states')
+                        .update({ total_days_passed: updates.accumulated_days })
+                        .eq('id', existingWS.id);
+                }
+            }
+        } catch (wsErr) {
+            console.error("Failed to update World State time for current location:", wsErr);
         }
     }
 }
