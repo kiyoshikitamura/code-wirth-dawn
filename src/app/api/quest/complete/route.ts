@@ -47,8 +47,8 @@ export async function POST(req: Request) {
         // §0. 認証
         // ═══════════════════════════════════════
         const client = createAuthClient(req);
-        const { data: { user } } = await client.auth.getUser();
-        const user_id = user?.id;
+        const { data: { user: authUser } } = await client.auth.getUser();
+        const user_id = authUser?.id;
 
         if (!quest_id || !user_id) {
             return NextResponse.json({ error: 'Missing parameters or authentication required' }, { status: 401 });
