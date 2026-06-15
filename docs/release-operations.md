@@ -211,3 +211,24 @@ cat supabase/.temp/project-ref
 # リモートのマイグレーション状態を確認
 npx supabase db push --dry-run
 ```
+
+## 本番リリース準備およびデータリセットに関する教訓 (Lessons Learned)
+
+本番リリース準備、データリセット、Stripe本番キー適用、およびリリース待ちフェーズの運用において得られた教訓です。
+
+### 1. 本番DBのデータ一括リセット時の順序（外部キー制約の回避）
+本番データベースのリセットやアカウント削除を行うスクリプト（例: `scratch/reset-production-db.js`）を実行する際、親テーブルである `user_profiles` や Supabaseの `auth.users` から先に削除しようとすると、外部キー（FK）制約違反（`violates foreign key constraint`）で失敗します。
+* **教訓**: 必ず依存関係の末端にある子テーブル（`prayer_logs`, `user_chronicles`, `inventory`, `reputations`, `user_share_triggers` 等）から順に `delete()` を実行し、最後に `user_profiles` および `auth.admin.deleteUser` を実行するクリーンアップパイプラインを構築すること。
+
+### 2. PostgREST / Supabase Client での無条件 DELETE 句の指定
+Supabaseの JavaScript SDK でテーブルの全レコードを一括削除したい場合、通常SQLでの `DELETE FROM table` に相当する処理に `delete().or('id.is.not.null, id.is.null')` のような条件式を指定すると、パーサーやAPIバージョンによって 400 エラーを誘発することがあります。
+* **教訓**: 確実に全削除を実行したい場合は、`.not('created_at', 'is', null)` や、UUID主キーを持つテーブルに対しては `.neq('id', '00000000-0000-0000-0000-000000000000')` などのように、実質的に全行にマッチする安定した代替フィルターを使用すること。
+
+### 3. Stripe本番移行とテストプレイアカウントの完全削除
+Stripeの決済処理を本番環境へ移行する際、Vercelの環境変数 `STRIPE_WEBHOOK_SECRET` に本番用のWebHookキー（例: `whsec_fRCphwIwLbrDjEGsOBS6FbYUJlbRDZvM`）が正確に設定されている必要があります。
+* **教訓**: 本番キーの切り替えと同時に、データベースに残っている古いテストアカウント（無料フラグが含まれるテストプレイデータ等）は完全に削除してクリーンな状態にすること。本番データにテスト用のゴミレコードを残したままリリースすると、ID衝突や不整合、不要なログのエラー検出を招きます。
+
+### 4. 正式リリース指示待ちにおけるCronジョブの一時停止（SUSPEND_CRONの導入）
+Vercelのデプロイが本番向けに完了したものの、正式なリリース開始（ユーザー流入）まで時間がある場合、バックグラウンドのCronジョブ（世界シミュレーションの進行やランキングの自動更新など）が先行して実行され、初期状態が崩れる問題が発生します。
+* **教訓**: 各Cronエンドポイント（`daily-update`, `fraud-detect`, `world-reset`）の処理冒頭に、環境変数 `SUSPEND_CRON === 'true'` の場合は実行をバイパスして即座に `NextResponse.json({ success: true, message: 'Cron is suspended' })` を返すチェックロジックを実装すること。Vercel上で `SUSPEND_CRON=true` を有効にするだけで、スケジューラー設定自体を変更することなく、本番デプロイ済みのCron実行を安全に一時停止できます。
+
