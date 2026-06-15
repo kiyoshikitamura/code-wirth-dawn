@@ -115,10 +115,10 @@ async function main() {
             status: statusMap[level] || 'Stagnant',
             prosperity_level: level,
             attribute_name: '至高の平穏',
-            order_score: 10,
-            chaos_score: 10,
-            justice_score: 10,
-            evil_score: 10,
+            order_score: 50,
+            chaos_score: 50,
+            justice_score: 50,
+            evil_score: 50,
             background_url: '/backgrounds/default.jpg',
             total_days_passed: 0
         };
@@ -135,8 +135,8 @@ async function main() {
         effect_val: r.effect_val,
         target_type: r.target_type || 'single_enemy',
         effect_id: r.effect_id || null,
-        image_url: r.image_url || null,
-        description: r.description || null,
+        image_url: r.image_url || null, // v3.3: カード画像
+        description: r.description || null, // v3.3: カード説明文
     }));
     // 2. Items
     // nation_tags is pipe separated "loc_a|loc_b" -> array
@@ -324,7 +324,7 @@ async function main() {
                         enemy_group_id: params.enemy || params.enemy_group_id,
                         speaker_name: params.speaker || params.speaker_name || undefined, // v22: 話者名マッピング
                         speaker_image_url: params.speaker_image_url || undefined,
-                        result: (params.type === 'end_success') ? 'success' : (params.type === 'end_failure' ? 'failure' : (params.type === 'end' ? (params.result || 'success') : undefined)),
+                        result: (params.type === 'end_success' || params.type === 'end') ? 'success' : (params.type === 'end_failure' ? 'failure' : undefined),
                         choices: [],
                         params: params
                     };
