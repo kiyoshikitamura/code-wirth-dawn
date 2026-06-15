@@ -14,7 +14,7 @@ interface MainVisualAreaProps {
 }
 
 export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onReturnHub, onLeaveHub, onOpenMap, showHistoryBadge, isHub = false }: MainVisualAreaProps) {
-    const prosperity = worldState?.prosperity_level || 3;
+    const prosperity = isHub ? 4 : (worldState?.prosperity_level || 3);
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
 
@@ -49,7 +49,11 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
         topGlow = '';
     }
 
-    const bgImageUrl = locationSlug ? `/backgrounds/locations/${locationSlug}_${stateSuffix}.png` : null;
+    const bgImageUrl = isHub
+        ? '/backgrounds/locations/loc_hub_normal.png'
+        : locationSlug
+            ? `/backgrounds/locations/${locationSlug}_${stateSuffix}.png`
+            : null;
 
     const flavorText = (() => {
         if (!worldState || locationName === '未知の土地') return '';

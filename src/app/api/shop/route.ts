@@ -23,14 +23,14 @@ export async function GET(req: Request) {
         if (profile.current_location_id) {
             const { data: locData } = await supabaseService.from('locations').select('id, name, slug, prosperity_level, ruling_nation_id').eq('id', profile.current_location_id).single();
             if (locData) {
-                prosperityLevel = locData.prosperity_level || 3;
                 locationName = locData.name;
 
                 // world_states は location_name (TEXT FK) でリレーションされるため、別クエリで取得
                 const { data: ws } = await supabaseService.from('world_states')
-                    .select('controlling_nation')
+                    .select('controlling_nation, prosperity_level')
                     .eq('location_name', locData.name)
                     .maybeSingle();
+                prosperityLevel = ws?.prosperity_level || locData.prosperity_level || 3;
                 rulingNation = ws?.controlling_nation || locData.ruling_nation_id || 'Neutral';
             }
         }

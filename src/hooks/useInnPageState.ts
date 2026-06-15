@@ -347,6 +347,9 @@ export function useInnPageState() {
                 const data = await res.json();
                 if (res.ok) {
                     await fetchUserProfile();
+                    // 新しい拠点データを強制更新 (force=true) でプリフェッチしてストア状態を完全同期
+                    await useGameStore.getState().prefetchTownData(undefined, true);
+                    
                     if (data.redirect_to_map) {
                         router.replace(`/world-map`);
                     }

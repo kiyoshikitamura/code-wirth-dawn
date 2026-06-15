@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { supabaseServer } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
     try {
-        // [Security] JWT認証必須化 — body.userIdを信頼しない
-        let userId: string | null = null;
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error } = await supabase.auth.getUser(token);
-            if (!error && user) userId = user.id;
-        }
+        // [Security] JWT認証必須化
+        const client = createAuthClient(req);
+        const { data: { user } } = await client.auth.getUser();
+        const userId = user?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });

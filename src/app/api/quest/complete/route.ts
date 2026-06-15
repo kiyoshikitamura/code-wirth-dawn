@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { supabase as anonSupabase } from '@/lib/supabase';
+import { createAuthClient } from '@/lib/supabase-auth';
 import { QuestService, calculateGrowth, processAging, resolveLocationId } from '@/services/questService';
 import { ECONOMY_RULES } from '@/constants/game_rules';
 import { getShareText, getFlavor } from '@/lib/shareTextLoader';
@@ -46,13 +46,9 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §0. 認証
         // ═══════════════════════════════════════
-        let user_id: string | null = null;
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
-            const token = authHeader.replace('Bearer ', '');
-            const { data: { user }, error: authErr } = await anonSupabase.auth.getUser(token);
-            if (!authErr && user) user_id = user.id;
-        }
+        const client = createAuthClient(req);
+        const { data: { user } } = await client.auth.getUser();
+        const user_id = user?.id;
 
         if (!quest_id || !user_id) {
             return NextResponse.json({ error: 'Missing parameters or authentication required' }, { status: 401 });

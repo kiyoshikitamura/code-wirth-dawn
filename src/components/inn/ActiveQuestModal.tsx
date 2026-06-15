@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { X, AlertTriangle, Scroll, LogOut, RefreshCw } from 'lucide-react';
 import { Scenario, UserProfile } from '@/types/game';
 import { useGameStore } from '@/store/gameStore';
+import { useQuestState } from '@/store/useQuestState';
 import { getAuthHeaders } from '@/lib/authToken';
 
 interface ActiveQuestModalProps {
@@ -26,7 +27,7 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
 
     const currentQuestId = userProfile.current_quest_id;
     const activeQuest = quests.find(q => String(q.id) === currentQuestId);
-    const questTitle = activeQuest?.title || '進行中のクエスト（UGC / 不明な依頼）';
+    const questTitle = activeQuest?.title || '進行中の依頼情報を取得中...';
 
     const handleGiveUp = async () => {
         if (!confirm("本当にこの依頼を放棄（ギブアップ）しますか？\n\n【放棄ペナルティ】\n・最大体力（VIT）が1減少します。\n・この拠点での名声値が低下します。\n・進行状況や一時獲得アイテムは失われます。")) {
@@ -47,6 +48,9 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
             if (res.ok) {
                 const data = await res.json();
                 
+                // クライアントのクエスト状態をリセット（ゲストNPC離脱や進行中フラグのクリア）
+                useQuestState.getState().resetQuest();
+
                 // ペナルティ結果をローカル状態に格納して表示
                 setPenaltyResult({
                     vit: data.penalty?.vit ?? -1,

@@ -111,7 +111,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
                     <div className="text-[#8b6f4e] text-sm mb-6">
                         消費: {TIERS.find(t => t.tier === selectedTier)?.cost} G<br />
-                        影響力: {result.impact_value}
+                        アライメント: +{Math.round(result.impact_value * 10)} 加算されました
                         {result.days_passed > 0 && (
                             <>
                                 <br />経過日数: {result.days_passed}日
