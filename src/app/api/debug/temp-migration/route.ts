@@ -11,8 +11,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.DASHBOARD_SUPABASE_URL || '';
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY || '';
 
     if (!supabaseUrl || !serviceKey) {
         return NextResponse.json({ error: 'Missing SUPABASE env vars' }, { status: 500 });
