@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     const refMatch = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
     if (!refMatch) {
-        return NextResponse.json({ error: 'Cannot parse SUPABASE_URL' }, { status: 500 });
+        return NextResponse.json({ error: `Cannot parse SUPABASE_URL: "${supabaseUrl}"` }, { status: 500 });
     }
     const projectRef = refMatch[1];
 
