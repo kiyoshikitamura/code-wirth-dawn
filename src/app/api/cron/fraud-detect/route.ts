@@ -92,6 +92,10 @@ async function runFraudDetect(): Promise<{ flagged: string[]; logs: string[] }> 
 }
 
 export async function POST(req: Request) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        return NextResponse.json({ success: true, message: 'Cron is suspended' });
+    }
+
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
@@ -103,6 +107,10 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        return NextResponse.json({ success: true, message: 'Cron is suspended' });
+    }
+
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {

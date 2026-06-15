@@ -142,6 +142,10 @@ async function performUpdate(isForceUgcReset: boolean) {
 }
 
 export async function POST(req: Request) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        return NextResponse.json({ success: true, message: 'Cron is suspended' });
+    }
+
     // CRON_SECRET によるアクセス制限
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');
@@ -160,6 +164,10 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        return NextResponse.json({ success: true, message: 'Cron is suspended' });
+    }
+
     // CRON_SECRET によるアクセス制限
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');

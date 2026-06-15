@@ -11,6 +11,10 @@ export const dynamic = 'force-dynamic';
  * セキュリティ: CRON_SECRET ヘッダーで保護
  */
 export async function GET(req: Request) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        return NextResponse.json({ success: true, message: 'Cron is suspended' });
+    }
+
     // Vercel Cron認証
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');
