@@ -60,33 +60,32 @@ export async function GET(request: Request) {
     if (!pool) {
         let solved = false;
         const connectionPromises: Promise<{ pool: Pool; client: any; host: string }>[] = [];
+        const passwords = ['izasama5723desu', 'postgres', 'izasama5723', 'izasama', 'code-wirth-dawn', 'kiyoshikitamura', 'kiyoshi'];
+        const host = `aws-1-ap-south-1.pooler.supabase.com`;
 
-        for (const region of regions) {
-            for (const num of [0, 1]) {
-                const host = `aws-${num}-${region}.pooler.supabase.com`;
-                const dbUrl = `postgresql://postgres.${projectRef}:${dbPassword}@${host}:5432/postgres`;
-                const tempPool = new Pool({
-                    connectionString: dbUrl,
-                    ssl: { rejectUnauthorized: false },
-                    connectionTimeoutMillis: 8000,
-                });
+        for (const pw of passwords) {
+            const dbUrl = `postgresql://postgres.${projectRef}:${pw}@${host}:5432/postgres`;
+            const tempPool = new Pool({
+                connectionString: dbUrl,
+                ssl: { rejectUnauthorized: false },
+                connectionTimeoutMillis: 6000,
+            });
 
-                connectionPromises.push(
-                    tempPool.connect().then(c => {
-                        if (solved) {
-                            c.release();
-                            tempPool.end();
-                            throw new Error("Already solved by another connection");
-                        }
-                        solved = true;
-                        return { pool: tempPool, client: c, host };
-                    }).catch(err => {
+            connectionPromises.push(
+                tempPool.connect().then(c => {
+                    if (solved) {
+                        c.release();
                         tempPool.end();
-                        err.host = host;
-                        throw err;
-                    })
-                );
-            }
+                        throw new Error("Already solved");
+                    }
+                    solved = true;
+                    return { pool: tempPool, client: c, host: `${host} (pw: ${pw})` };
+                }).catch(err => {
+                    tempPool.end();
+                    err.host = `${host} (pw: ${pw})`;
+                    throw err;
+                })
+            );
         }
 
         try {
@@ -96,7 +95,7 @@ export async function GET(request: Request) {
             console.log(`Connected successfully to host: ${result.host}`);
         } catch (err: any) {
             const errors = err.errors ? err.errors.map((e: any) => `${e.message} (on ${e.host || 'unknown'})`) : [err.message];
-            return NextResponse.json({ success: false, error: "All connection attempts failed", details: errors }, { status: 500 });
+            return NextResponse.json({ success: false, error: "All password connection attempts failed", details: errors }, { status: 500 });
         }
     }
 
