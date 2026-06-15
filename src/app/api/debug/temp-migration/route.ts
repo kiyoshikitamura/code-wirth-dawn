@@ -11,6 +11,13 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (url.searchParams.get('debug') === 'env') {
+        const envKeys = Object.keys(process.env).filter(key => 
+            key.includes('SUPABASE') || key.includes('DATABASE') || key.includes('DB') || key.includes('PORT') || key.includes('URL')
+        );
+        return NextResponse.json({ envKeys });
+    }
+
     const supabaseUrl = process.env.DASHBOARD_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const serviceKey = process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
