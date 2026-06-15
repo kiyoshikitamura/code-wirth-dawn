@@ -13,9 +13,10 @@ interface ActiveQuestModalProps {
     userProfile: UserProfile;
     quests: Scenario[];
     onSelect: (scenario: Scenario) => void;
+    isLoading?: boolean;
 }
 
-export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests, onSelect }: ActiveQuestModalProps) {
+export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests, onSelect, isLoading }: ActiveQuestModalProps) {
     const [loading, setLoading] = useState(false);
     const [penaltyResult, setPenaltyResult] = useState<{
         vit: number;
@@ -25,9 +26,23 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
 
     if (!isOpen) return null;
 
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-sm rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] p-6 flex flex-col items-center justify-center gap-4">
+                    <div className="w-8 h-8 border-2 border-[#8b5a2b] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-serif text-[#3e2723] tracking-widest animate-pulse">読み込み中…</p>
+                </div>
+            </div>
+        );
+    }
+
     const currentQuestId = userProfile.current_quest_id;
     const activeQuest = quests.find(q => String(q.id) === currentQuestId);
-    const questTitle = activeQuest?.title || '進行中の依頼情報を取得中...';
+    const isUgcId = currentQuestId && (currentQuestId.includes('-') || isNaN(Number(currentQuestId)));
+    const questTitle = activeQuest?.title || 
+        (isUgcId ? `進行中の依頼 (UGCクエスト)` : 
+        (!isLoading && currentQuestId ? '進行中の依頼があります' : '進行中の依頼情報を取得中...'));
 
     const handleGiveUp = async () => {
         if (!confirm("本当にこの依頼を放棄（ギブアップ）しますか？\n\n【放棄ペナルティ】\n・最大体力（VIT）が1減少します。\n・この拠点での名声値が低下します。\n・進行状況や一時獲得アイテムは失われます。")) {
@@ -139,7 +154,10 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
 
                             <div className="space-y-2.5 pt-4">
                                 <button
-                                    onClick={() => onSelect(activeQuest || ({ id: currentQuestId || '' } as any))}
+                                    onClick={() => {
+                                        setLoading(true);
+                                        onSelect(activeQuest || ({ id: currentQuestId || '' } as any));
+                                    }}
                                     className="w-full py-3 bg-[#8b5a2b] text-white hover:bg-[#6b4522] active:scale-95 transition-all text-xs font-bold rounded-lg shadow-md flex items-center justify-center gap-2 tracking-widest"
                                     disabled={loading}
                                 >

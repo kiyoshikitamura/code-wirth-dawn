@@ -86,7 +86,7 @@ export async function POST(req: Request) {
         if (uError || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
         // [Security] アクティブクエスト検証：進行中でないクエストの完了をブロック
-        if (!user.current_quest_id || user.current_quest_id !== quest_id) {
+        if (!user.current_quest_id || String(user.current_quest_id) !== String(quest_id)) {
             console.warn(`[Security] API rejected quest completion. User ${user_id} attempted to complete ${quest_id} but active quest is ${user.current_quest_id}`);
             return NextResponse.json({ error: 'You are not currently in this quest.' }, { status: 403 });
         }

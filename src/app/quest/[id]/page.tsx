@@ -25,6 +25,7 @@ export default function QuestPage() {
     const [scenario, setScenario] = useState<Scenario | null>(null);
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loading, setLoading] = useState(true);
+    const [isGivingUp, setIsGivingUp] = useState(false);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
     const [battleBgUrl, setBattleBgUrl] = useState<string>('/images/quests/bg_wasteland.png');
@@ -463,10 +464,12 @@ export default function QuestPage() {
     }, [id]);
 
     const handleGiveUp = async (skipConfirm = false) => {
+        if (isGivingUp) return;
         if (!skipConfirm) {
             if (!confirm("クエストを放棄して撤退しますか？\n※ 進行状況は失われ、安全な場所まで戻ります。")) return;
         }
 
+        setIsGivingUp(true);
         useQuestState.getState().resetQuest();
         setIsSettingsOpen(false);
 
@@ -483,6 +486,7 @@ export default function QuestPage() {
                     rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
                 }
             });
+            setIsGivingUp(false);
             return;
         }
 
@@ -519,6 +523,8 @@ export default function QuestPage() {
         } catch (e) {
             console.error("Give up failed", e);
             router.push('/inn');
+        } finally {
+            setIsGivingUp(false);
         }
     };
 
@@ -972,6 +978,13 @@ export default function QuestPage() {
                         </div>
                     )}
                 </main>
+                {/* ギブアップ（放棄）処理中ローディングオーバーレイ */}
+                {isGivingUp && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">読み込み中…</p>
+                    </div>
+                )}
 
                 {/* Quest Result Overlay */}
                 {resultOverlay && (

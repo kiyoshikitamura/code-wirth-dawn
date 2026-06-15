@@ -19,8 +19,21 @@ const supabaseAdmin = createClient(
  */
 export async function POST(req: Request) {
     try {
+        const secretKey = process.env.STRIPE_SECRET_KEY || '';
+
+        // Stripe APIキーの簡易フォーマットチェック
+        if (!secretKey || secretKey === 'sk_test_dummy') {
+            console.warn('[Stripe Checkout] STRIPE_SECRET_KEY is empty or using dummy fallback.');
+        } else if (secretKey.startsWith('whsec_')) {
+            console.error('[Stripe Checkout] CRITICAL ERROR: STRIPE_SECRET_KEY starts with "whsec_". It must be a Stripe Secret API Key (sk_...), not a Webhook Secret.');
+            return NextResponse.json({ error: 'Server Configuration Error: Invalid Stripe API Key structure (whsec_ detected)' }, { status: 500 });
+        } else if (!secretKey.startsWith('sk_')) {
+            console.error('[Stripe Checkout] CRITICAL ERROR: STRIPE_SECRET_KEY does not start with "sk_". Prefix:', secretKey.substring(0, 5));
+            return NextResponse.json({ error: 'Server Configuration Error: Invalid Stripe API Key structure' }, { status: 500 });
+        }
+
         // Stripe などの初期化をリクエスト時に動的評価（Vercel環境変数のキャッシュ・ビルド時評価バグ対策）
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+        const stripe = new Stripe(secretKey || 'sk_test_dummy', {
             apiVersion: '2026-02-25.clover',
         });
 

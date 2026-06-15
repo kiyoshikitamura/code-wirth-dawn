@@ -193,6 +193,7 @@ function InnPageInner() {
                             onClose={() => setActiveModal(null)}
                             userProfile={userProfile}
                             quests={allQuests}
+                            isLoading={loadingQuests}
                             onSelect={(s) => {
                                 const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
                                 router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
@@ -217,6 +218,7 @@ function InnPageInner() {
                             onClose={() => setActiveModal(null)}
                             userProfile={userProfile}
                             quests={allQuests}
+                            isLoading={loadingQuests}
                             onSelect={(s) => {
                                 const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
                                 router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);

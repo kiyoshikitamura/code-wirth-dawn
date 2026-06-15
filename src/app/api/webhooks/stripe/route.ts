@@ -21,7 +21,25 @@ const supabaseAdmin = createClient(
  * - customer.subscription.deleted:             subscription_tier を 'free' にダウングレード
  */
 export async function POST(req: Request) {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+    const secretKey = process.env.STRIPE_SECRET_KEY || '';
+
+    // Stripe APIキーの簡易フォーマットチェック
+    if (!secretKey || secretKey === 'sk_test_dummy') {
+        console.warn('[Stripe Webhook] STRIPE_SECRET_KEY is empty or using dummy fallback.');
+    } else if (secretKey.startsWith('whsec_')) {
+        console.error('[Stripe Webhook] CRITICAL ERROR: STRIPE_SECRET_KEY starts with "whsec_". It must be a Stripe Secret API Key (sk_...), not a Webhook Secret.');
+        return NextResponse.json({ error: 'Server Configuration Error: Invalid Stripe API Key structure (whsec_ detected)' }, { status: 500 });
+    } else if (!secretKey.startsWith('sk_')) {
+        console.error('[Stripe Webhook] CRITICAL ERROR: STRIPE_SECRET_KEY does not start with "sk_". Prefix:', secretKey.substring(0, 5));
+        return NextResponse.json({ error: 'Server Configuration Error: Invalid Stripe API Key structure' }, { status: 500 });
+    }
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+    if (webhookSecret && !webhookSecret.startsWith('whsec_')) {
+        console.error('[Stripe Webhook] CRITICAL ERROR: STRIPE_WEBHOOK_SECRET does not start with "whsec_". Current value prefix:', webhookSecret.substring(0, 5));
+    }
+
+    const stripe = new Stripe(secretKey || 'sk_test_dummy', {
         apiVersion: '2026-02-25.clover',
     });
 

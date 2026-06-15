@@ -34,51 +34,61 @@ export async function POST(req: Request) {
         if (error) throw error;
 
         // Record quest activity log (Spec Dashboard Extensions)
-        if (currentProfile?.current_quest_id) {
-            const { error: logErr } = await supabaseServer
-                .from('quest_activity_logs')
-                .insert({
-                    user_id: userId,
-                    scenario_id: currentProfile.current_quest_id,
-                    action: 'abandon'
-                });
-            if (logErr) {
-                console.error('[Quest Give Up] Failed to write quest_activity_logs:', logErr);
+        try {
+            if (currentProfile?.current_quest_id) {
+                const { error: logErr } = await supabaseServer
+                    .from('quest_activity_logs')
+                    .insert({
+                        user_id: userId,
+                        scenario_id: currentProfile.current_quest_id,
+                        action: 'abandon'
+                    });
+                if (logErr) {
+                    console.error('[Quest Give Up] Failed to write quest_activity_logs:', logErr);
+                }
             }
+        } catch (logErr) {
+            console.error('[Quest Give Up] Log exception:', logErr);
         }
 
         // 2. 名声ペナルティ: ランダム -5〜-10（クエスト失敗と同等）
         let repPenalty = 0;
         let repLocationName: string | null = null;
         const locationId = currentProfile?.current_location_id;
-        if (locationId) {
-            repPenalty = -(Math.floor(Math.random() * 6) + 5); // -5 〜 -10
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        
+        if (locationId && uuidRegex.test(locationId)) {
+            try {
+                repPenalty = -(Math.floor(Math.random() * 6) + 5); // -5 〜 -10
 
-            const { data: locData } = await supabaseServer
-                .from('locations')
-                .select('name')
-                .eq('id', locationId)
-                .maybeSingle();
-            repLocationName = locData?.name || null;
-
-            if (repLocationName) {
-                const { data: existingRep } = await supabaseServer
-                    .from('reputations')
-                    .select('id, score')
-                    .eq('user_id', userId)
-                    .eq('location_name', repLocationName)
+                const { data: locData } = await supabaseServer
+                    .from('locations')
+                    .select('name')
+                    .eq('id', locationId)
                     .maybeSingle();
+                repLocationName = locData?.name || null;
 
-                if (existingRep) {
-                    await supabaseServer
+                if (repLocationName) {
+                    const { data: existingRep } = await supabaseServer
                         .from('reputations')
-                        .update({ score: existingRep.score + repPenalty })
-                        .eq('id', existingRep.id);
-                } else {
-                    await supabaseServer
-                        .from('reputations')
-                        .insert({ user_id: userId, location_name: repLocationName, score: repPenalty });
+                        .select('id, score')
+                        .eq('user_id', userId)
+                        .eq('location_name', repLocationName)
+                        .maybeSingle();
+
+                    if (existingRep) {
+                        await supabaseServer
+                            .from('reputations')
+                            .update({ score: existingRep.score + repPenalty })
+                            .eq('id', existingRep.id);
+                    } else {
+                        await supabaseServer
+                            .from('reputations')
+                            .insert({ user_id: userId, location_name: repLocationName, score: repPenalty });
+                    }
                 }
+            } catch (repErr) {
+                console.error('[Quest Give Up] Reputation penalty update exception:', repErr);
             }
         }
 
