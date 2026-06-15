@@ -82,6 +82,7 @@ export async function GET(request: Request) {
                         return { pool: tempPool, client: c, host };
                     }).catch(err => {
                         tempPool.end();
+                        err.host = host;
                         throw err;
                     })
                 );
@@ -94,7 +95,8 @@ export async function GET(request: Request) {
             client = result.client;
             console.log(`Connected successfully to host: ${result.host}`);
         } catch (err: any) {
-            connectionError = new Error("All database connection attempts to all regions failed.");
+            const errors = err.errors ? err.errors.map((e: any) => `${e.message} (on ${e.host || 'unknown'})`) : [err.message];
+            return NextResponse.json({ success: false, error: "All connection attempts failed", details: errors }, { status: 500 });
         }
     }
 
