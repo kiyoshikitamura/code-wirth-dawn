@@ -11,18 +11,18 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.DASHBOARD_SUPABASE_URL || '';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY || '';
+    const supabaseUrl = process.env.DASHBOARD_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const serviceKey = process.env.DASHBOARD_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-    if (!supabaseUrl || !serviceKey) {
+    if (!supabaseUrl) {
         return NextResponse.json({ error: 'Missing SUPABASE env vars' }, { status: 500 });
     }
 
+    let projectRef = 'zvoroixjuypnintkpmux';
     const refMatch = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
-    if (!refMatch) {
-        return NextResponse.json({ error: `Cannot parse SUPABASE_URL: "${supabaseUrl}"` }, { status: 500 });
+    if (refMatch) {
+        projectRef = refMatch[1];
     }
-    const projectRef = refMatch[1];
 
     const dbUrl = process.env.DATABASE_URL
         || process.env.SUPABASE_DB_URL
