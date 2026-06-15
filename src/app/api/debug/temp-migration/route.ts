@@ -33,7 +33,11 @@ export async function GET(request: Request) {
 
     const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'izasama5723desu';
     
-    const regions = ['ap-south-1', 'ap-southeast-1', 'ap-northeast-1'];
+    const regions = [
+        'ap-south-1', 'ap-southeast-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-southeast-2',
+        'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2',
+        'eu-west-1', 'eu-west-2', 'eu-central-1', 'sa-east-1', 'ca-central-1'
+    ];
     let pool: Pool | null = null;
     let client: any = null;
     let connectionError: any = null;
@@ -54,6 +58,9 @@ export async function GET(request: Request) {
     }
 
     if (!pool) {
+        let solved = false;
+        const connectionPromises: Promise<{ pool: Pool; client: any; host: string }>[] = [];
+
         for (const region of regions) {
             for (const num of [0, 1]) {
                 const host = `aws-${num}-${region}.pooler.supabase.com`;
@@ -61,18 +68,33 @@ export async function GET(request: Request) {
                 const tempPool = new Pool({
                     connectionString: dbUrl,
                     ssl: { rejectUnauthorized: false },
-                    connectionTimeoutMillis: 5000,
+                    connectionTimeoutMillis: 8000,
                 });
-                try {
-                    client = await tempPool.connect();
-                    pool = tempPool;
-                    break;
-                } catch (e) {
-                    connectionError = e;
-                    await tempPool.end();
-                }
+
+                connectionPromises.push(
+                    tempPool.connect().then(c => {
+                        if (solved) {
+                            c.release();
+                            tempPool.end();
+                            throw new Error("Already solved by another connection");
+                        }
+                        solved = true;
+                        return { pool: tempPool, client: c, host };
+                    }).catch(err => {
+                        tempPool.end();
+                        throw err;
+                    })
+                );
             }
-            if (pool) break;
+        }
+
+        try {
+            const result = await Promise.any(connectionPromises);
+            pool = result.pool;
+            client = result.client;
+            console.log(`Connected successfully to host: ${result.host}`);
+        } catch (err: any) {
+            connectionError = new Error("All database connection attempts to all regions failed.");
         }
     }
 
