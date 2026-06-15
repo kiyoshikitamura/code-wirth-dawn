@@ -13,6 +13,7 @@ import NpcDialogModal from '@/components/inn/NpcDialogModal';
 import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import XShareButton from '@/components/shared/XShareButton';
+import QuestResultModal from '@/components/quest/QuestResultModal';
 
 // モーダル群: ロード時間とチラつきを完全になくすため静的インポート (spec_v27)
 import TavernModal from '@/components/inn/TavernModal';
@@ -59,6 +60,7 @@ function InnPageInner() {
         showShop, setShowShop,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
+        resultOverlay, setResultOverlay,
         restLoading,
         traveling,
         toast,
@@ -198,6 +200,7 @@ function InnPageInner() {
                                 const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
                                 router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
                             }}
+                            onGiveUpComplete={(data) => setResultOverlay({ result: 'failure', data })}
                         />
                     ) : (
                         <QuestBoardModal
@@ -223,6 +226,7 @@ function InnPageInner() {
                                 const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
                                 router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
                             }}
+                            onGiveUpComplete={(data) => setResultOverlay({ result: 'failure', data })}
                         />
                     ) : (
                         <UgcQuestBoardPanel
@@ -285,6 +289,43 @@ function InnPageInner() {
                     onConfirm={executeRest}
                     onCancel={() => setShowRestConfirm(false)}
                 />
+            )}
+
+            {/* Quest Result Overlay (ギルドでの放棄結果用) */}
+            {resultOverlay && (
+                <div className="fixed inset-0 z-[500]">
+                    <QuestResultModal
+                        result={resultOverlay.result}
+                        questTitle={resultOverlay.data?.quest_title || '放棄した依頼'}
+                        rewards={resultOverlay.data?.rewards || {}}
+                        changes={{
+                            gold_gained: 0,
+                            old_age: userProfile?.age || 18,
+                            new_age: userProfile?.age || 18,
+                            aged_up: false,
+                            vit_penalty: resultOverlay.data?.penalty?.vit || 1,
+                            atk_decay: 0,
+                            def_decay: 0,
+                        }}
+                        daysPassed={resultOverlay.data?.days_passed || 0}
+                        repChange={resultOverlay.data?.penalty?.reputation ? {
+                            amount: resultOverlay.data.penalty.reputation,
+                            location: resultOverlay.data.penalty.location || '現在地'
+                        } : null}
+                        onClose={async () => {
+                            // クエストボードのキャッシュクリア
+                            useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                            if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                                sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                            }
+                            // プロフィールフェッチ
+                            await useGameStore.getState().fetchUserProfile();
+                            // モーダルを閉じる
+                            setResultOverlay(null);
+                            setActiveModal(null);
+                        }}
+                    />
+                </div>
             )}
         </div>
     );

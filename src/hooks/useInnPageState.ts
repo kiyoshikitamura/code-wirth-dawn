@@ -81,6 +81,7 @@ export function useInnPageState() {
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
+    const [resultOverlay, setResultOverlay] = useState<{ result: 'success' | 'failure'; data: any } | null>(null);
     const [restLoading, setRestLoading] = useState(false);
     const [traveling, setTraveling] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -741,6 +742,7 @@ export function useInnPageState() {
         showShop, setShowShop,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
+        resultOverlay, setResultOverlay,
         restLoading,
         traveling,
         toast,
