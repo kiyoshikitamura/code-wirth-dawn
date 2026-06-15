@@ -32,18 +32,55 @@ export async function GET(request: Request) {
     }
 
     const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'izasama5723desu';
-    const dbUrl = process.env.DATABASE_URL
-        || process.env.SUPABASE_DB_URL
-        || `postgresql://postgres:${dbPassword}@db.zvoroixjuypnintkpmux.supabase.co:5432/postgres`;
+    
+    const regions = ['ap-south-1', 'ap-southeast-1', 'ap-northeast-1'];
+    let pool: Pool | null = null;
+    let client: any = null;
+    let connectionError: any = null;
 
-    const pool = new Pool({
-        connectionString: dbUrl,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 15000,
-    });
+    if (process.env.DATABASE_URL || process.env.SUPABASE_DB_URL) {
+        const dbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL || '';
+        pool = new Pool({
+            connectionString: dbUrl,
+            ssl: { rejectUnauthorized: false },
+            connectionTimeoutMillis: 10000,
+        });
+        try {
+            client = await pool.connect();
+        } catch (e) {
+            connectionError = e;
+            pool = null;
+        }
+    }
+
+    if (!pool) {
+        for (const region of regions) {
+            for (const num of [0, 1]) {
+                const host = `aws-${num}-${region}.pooler.supabase.com`;
+                const dbUrl = `postgresql://postgres.${projectRef}:${dbPassword}@${host}:5432/postgres`;
+                const tempPool = new Pool({
+                    connectionString: dbUrl,
+                    ssl: { rejectUnauthorized: false },
+                    connectionTimeoutMillis: 5000,
+                });
+                try {
+                    client = await tempPool.connect();
+                    pool = tempPool;
+                    break;
+                } catch (e) {
+                    connectionError = e;
+                    await tempPool.end();
+                }
+            }
+            if (pool) break;
+        }
+    }
+
+    if (!pool || !client) {
+        return NextResponse.json({ success: false, error: `Failed to connect to database: ${connectionError?.message || 'Unknown error'}` }, { status: 500 });
+    }
 
     try {
-        const client = await pool.connect();
         try {
             await client.query(`
 -- Fix public.aggregate_alignment_ranking to avoid safe updates DELETE error
