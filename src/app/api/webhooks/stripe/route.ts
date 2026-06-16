@@ -64,16 +64,20 @@ export async function POST(req: Request) {
 
     try {
         // ─── 冪等性（Idempotency）チェック ───
-        const { error: idempotencyErr } = await supabaseAdmin
+        const { data: existingEvent, error: checkErr } = await supabaseAdmin
             .from('stripe_webhook_events')
-            .insert({ id: event.id, type: event.type });
+            .select('id')
+            .eq('id', event.id)
+            .maybeSingle();
 
-        if (idempotencyErr) {
-            if (idempotencyErr.code === '23505') { // Postgres Unique Violation
-                console.log(`[webhooks/stripe] Event ${event.id} already processed. Skipping.`);
-                return NextResponse.json({ received: true }); // すでに処理済みの場合は成功として返す
-            }
-            throw idempotencyErr;
+        if (checkErr) {
+            console.error('[webhooks/stripe] Idempotency check error:', checkErr);
+            throw checkErr;
+        }
+
+        if (existingEvent) {
+            console.log(`[webhooks/stripe] Event ${event.id} already processed. Skipping.`);
+            return NextResponse.json({ received: true }); // すでに処理済みの場合は成功として返す
         }
 
         switch (event.type) {
@@ -302,6 +306,16 @@ export async function POST(req: Request) {
             default:
                 // 未対応イベントは無視
                 break;
+        }
+
+        // ─── 処理成功後にイベントIDを登録 ───
+        const { error: registerErr } = await supabaseAdmin
+            .from('stripe_webhook_events')
+            .insert({ id: event.id, type: event.type });
+
+        if (registerErr) {
+            console.error('[webhooks/stripe] Failed to register webhook event ID:', registerErr);
+            throw registerErr;
         }
 
         return NextResponse.json({ received: true });
