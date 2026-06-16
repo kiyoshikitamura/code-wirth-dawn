@@ -194,8 +194,21 @@ export async function POST(req: Request) {
         // §4. 報酬 + 移動 + アライメント
         // ═══════════════════════════════════════
         let alignmentShift: Record<string, number> | null = null;
+        const effectiveRewards = result === 'success'
+            ? {
+                ...(quest.rewards || {}),
+                ...(node_rewards || {}),
+                alignment_shift: (quest.rewards?.alignment_shift || node_rewards?.alignment_shift)
+                    ? {
+                        ...(quest.rewards?.alignment_shift || {}),
+                        ...(node_rewards?.alignment_shift || {})
+                      }
+                    : undefined
+            }
+            : quest.rewards;
+
         if (result === 'success') {
-            const rewards = node_rewards || quest.rewards || {};
+            const rewards = effectiveRewards;
 
             if (rewards.move_to) {
                 const newLocationId = await resolveLocationId(supabase, rewards.move_to);
@@ -226,10 +239,7 @@ export async function POST(req: Request) {
             .from('user_profiles').update(updates).eq('id', user_id);
         if (updateError) throw updateError;
 
-        // ═══════════════════════════════════════
-        // §7. Gold + アイテム/スキル付与 (parallelized)
-        // ═══════════════════════════════════════
-        const effectiveRewards = (result === 'success' && node_rewards) ? node_rewards : quest.rewards;
+
 
         if (result === 'success') {
             const rewardPromises: PromiseLike<any>[] = [];

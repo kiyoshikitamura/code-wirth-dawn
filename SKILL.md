@@ -137,6 +137,10 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 - **バトル検証トークンの義務化**: バトルが発生するクエストにおいては、`/api/battle/validate-result` が発行した HMAC 署名トークン `battle_completion_token` をクエスト完了時に検証し、勝利が偽装されていないことを確認すること。
 - **Cron認証バイパスの防止**: シークレットキー（`CRON_SECRET`）を用いる検証では、環境変数未定義によるスキップを避けるため、空値の場合もデフォルトでアクセスを拒否するフェイルセーフ設計にすること。
 
+## クエストおよび報酬処理の教訓
+
+- **ノード報酬とクエスト全体報酬のマージ**: クエスト完了API等で、特定の進行ノード固有の報酬（`node_rewards`）が存在する場合、それをクエスト全体のデフォルト報酬（`quest.rewards`）で単純に上書き（例：`node_rewards || quest.rewards`）してはならない。上書きによって、クエスト定義側にのみ存在する自動移動（`move_to`）やアイテム報酬（`items`）が消失し、プレイヤーが拠点移動できずに進行不能（スタック）になるバグが発生する。必ず両オブジェクトを適切にマージすること。
+
 ## CI/CD
 
 - GitHub Actions (`.github/workflows/ci.yml`): `develop`/`main` への push・PR で lint + build を自動実行
