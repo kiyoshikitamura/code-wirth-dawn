@@ -34,7 +34,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         }
     };
 
-    const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab);
+    const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab || q.slug?.startsWith('main_ep'));
 
     const tabCounts = useMemo(() => ({
         easy: quests.filter((q: any) => q.difficulty_tier === 'easy').length,
