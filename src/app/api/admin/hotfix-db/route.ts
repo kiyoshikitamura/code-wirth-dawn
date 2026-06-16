@@ -18,11 +18,13 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing SUPABASE env vars' }, { status: 500 });
         }
 
-        const refMatch = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
-        if (!refMatch) {
-            return NextResponse.json({ error: 'Cannot parse SUPABASE_URL' }, { status: 500 });
+        let projectRef = '';
+        try {
+            const hostname = new URL(supabaseUrl).hostname;
+            projectRef = hostname.split('.')[0];
+        } catch {
+            return NextResponse.json({ error: `Cannot parse SUPABASE_URL: ${supabaseUrl}` }, { status: 500 });
         }
-        const projectRef = refMatch[1];
 
         // 1. ALTER TABLE COLUMN TYPE
         const dbUrl = process.env.DATABASE_URL
