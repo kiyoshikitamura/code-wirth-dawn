@@ -44,6 +44,7 @@ export default function UgcQuestBoardPanel({ isOpen, onClose, userLevel, onAccep
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [selectedQuest, setSelectedQuest] = useState<UgcQuest | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
   const limit = 20;
 
   const canAccept = userLevel >= UGC_MIN_PLAY_LEVEL;
@@ -97,6 +98,14 @@ export default function UgcQuestBoardPanel({ isOpen, onClose, userLevel, onAccep
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+        {(loading || isAccepting) && (
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
+              {isAccepting ? '依頼を受注中…' : '読み込み中…'}
+            </p>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b-2 border-[#8b5a2b] bg-[#3e2723] text-[#e3d5b8]">
@@ -261,9 +270,8 @@ export default function UgcQuestBoardPanel({ isOpen, onClose, userLevel, onAccep
                       : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                   }`}
                   onClick={() => {
+                    setIsAccepting(true);
                     onAccept(selectedQuest);
-                    setSelectedQuest(null);
-                    onClose();
                   }}
                 >
                   <Swords size={16} /> この依頼を受ける

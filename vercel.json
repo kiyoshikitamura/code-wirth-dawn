@@ -7,6 +7,10 @@
         {
             "path": "/api/cron/fraud-detect",
             "schedule": "0 1 * * *"
+        },
+        {
+            "path": "/api/cron/online-count",
+            "schedule": "*/5 * * * *"
         }
     ]
 }
