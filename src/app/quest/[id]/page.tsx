@@ -25,6 +25,7 @@ export default function QuestPage() {
     const [scenario, setScenario] = useState<Scenario | null>(null);
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isGivingUp, setIsGivingUp] = useState(false);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
@@ -363,6 +364,7 @@ export default function QuestPage() {
                     const data = await res.json();
                     if (data.scenarios && data.scenarios.length > 0) {
                         loadedScenario = data.scenarios[0];
+                        setErrorMsg(null);
                     } else {
                         // UGC v2: 公式シナリオに見つからない場合、ugc_scenarios を検索
                         console.log('[QuestPage] Scenario not found in official DB, trying UGC v2...');
@@ -382,8 +384,14 @@ export default function QuestPage() {
                                     ? JSON.parse(ugcData.flow_nodes)
                                     : ugcData.flow_nodes || [],
                             } as any;
+                            setErrorMsg(null);
+                        } else {
+                            setErrorMsg("Quest Not Found");
                         }
                     }
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    setErrorMsg(errData.error || `HTTP Error ${res.status}`);
                 }
 
                 if (loadedScenario) {
@@ -570,8 +578,8 @@ export default function QuestPage() {
 
     if (!scenario) {
         return (
-            <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-4">
-                <h1 className="text-2xl font-serif text-red-500">{!id ? "Invalid Quest ID" : "Quest Not Found"}</h1>
+            <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-4 px-6 text-center">
+                <h1 className="text-2xl font-serif text-red-500">{!id ? "Invalid Quest ID" : (errorMsg || "Quest Not Found")}</h1>
                 <button
                     onClick={() => router.push('/inn')}
                     className="flex items-center gap-2 px-4 py-2 border border-slate-700 rounded hover:bg-slate-800 transition-colors"

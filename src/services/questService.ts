@@ -163,11 +163,19 @@ export class QuestService {
         // ユーザープロフィール取得（複数チェックで使い回す）
         const { data: user } = await supabase
             .from('user_profiles')
-            .select('level, current_location_id, vitality, alignment, gold')
+            .select('level, current_location_id, vitality, order_pts, chaos_pts, justice_pts, evil_pts, gold')
             .eq('id', userId)
             .single();
 
         if (!user) return { valid: false, reason: 'User profile not found' };
+
+        // Reconstruct alignment mapping for backwards compatibility with validation checks
+        user.alignment = {
+            order: user.order_pts || 0,
+            chaos: user.chaos_pts || 0,
+            justice: user.justice_pts || 0,
+            evil: user.evil_pts || 0
+        };
 
         // 1. min_level: 最低レベルチェック
         if (requirements.min_level) {
