@@ -50,7 +50,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 49,card_dark_sphere,黒曜球,Magic,4,none,0,65,all_enemies,curse,,闇の力を凝縮した黒い球体を召喚する。全体に65のダメージとともに2ターンのATK DOWNを付与する。
 50,card_royal_guard,近衛の盾,Defense,3,none,0,30,single_ally,cover,,高い防御力で指定した仲間を庇い守る。DEF+30で仲間へのダメージを肩代わりする。
 51,card_dragon_scale,竜の鱗,Defense,4,none,0,40,self,counter,,竜の鱗のごとき防御体勢をとる。2ターンの間、受けるダメージをDEF+40分だけ軽減する（自身）。
-52,card_void_strike,虚空撃,Skill,4,none,0,80,single_enemy,pierce,,防御を完全に無視する虚空の斬撃。DEFを貫通して80の大ダメージを与える。
+52,card_void_strike,虚空撃,Skill,4,none,0,80,single_enemy,pierce,/images/items/scroll_void_strike.png,防御を完全に無視する虚空の斬撃。DEFを貫通して80の大ダメージを与える。
 53,card_blessing,女神の祝福,Heal,4,none,0,100,all_allies,regen,/images/items/skill_meditation.png,女神の祝福でパーティ全体を回復・強化する。全体を100回復し、3ターンのリジェネを付与する。
 54,card_death_dance,死の舞踊,Skill,4,none,0,50,all_enemies,bleed,,死の舞踊で敵全体に出血を撒き散らす。全体に50のダメージとともに出血（2ターン、カード使用ごとに3ダメ）を付与する。
 55,card_time_stop,時止めの法,Support,5,none,0,0,all_enemies,freeze,,時の流れを止める大魔法。敵全体を2ターンの間、完全に行動不能（スタン）にする。
