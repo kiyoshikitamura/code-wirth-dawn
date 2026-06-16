@@ -393,6 +393,13 @@ export function useInnPageState() {
         fetchRep();
     }, [fetchRep, reputation, initialLoadComplete]);
 
+    // 所在地（ロケーション）が変わったタイミングで、名声を null にリセットして再取得を促す
+    useEffect(() => {
+        if (worldState?.location_name) {
+            setReputation(null);
+        }
+    }, [worldState?.location_name]);
+
     // Gougai Detection
     useEffect(() => {
         if (!initialLoadComplete) return;

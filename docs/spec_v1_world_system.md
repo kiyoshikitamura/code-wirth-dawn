@@ -286,7 +286,7 @@ export type ReputationRank = 'Hero' | 'Famous' | 'Stranger' | 'Rogue' | 'Crimina
 export interface Reputation {
   id: string;
   user_id: string;
-  location_id: string;
+  location_name: string;
   score: number;
   rank: ReputationRank;
 }
