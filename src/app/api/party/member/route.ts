@@ -70,6 +70,26 @@ export async function GET(req: Request) {
             const guestMaxHp = npcData.max_hp || npcData.hp || npcData.max_durability || npcData.durability || 50;
             // アイコン画像: DB値 → slugベースのフォールバック
             const guestIconUrl = npcData.icon_url || npcData.image_url || `/images/npcs/${npcData.slug}.png`;
+
+            // カードIDをパースして数値配列にする
+            const rawCardIds = npcData.default_cards || npcData.inject_cards || [];
+            const parsedCardIds = (Array.isArray(rawCardIds) ? rawCardIds : [])
+                .map((id: any) => parseInt(String(id), 10))
+                .filter((id: number) => !isNaN(id));
+
+            // カードIDをスキル名に解決
+            let skillNames: string[] = [];
+            if (parsedCardIds.length > 0) {
+                const { data: cards } = await supabase
+                    .from('cards')
+                    .select('id, name')
+                    .in('id', parsedCardIds);
+                if (cards) {
+                    const nameMap = new Map(cards.map((c: any) => [c.id, c.name]));
+                    skillNames = parsedCardIds.map((id: number) => nameMap.get(id) || `#${id}`);
+                }
+            }
+
             data = {
                 id: npcData.id,
                 slug: npcData.slug,
@@ -84,7 +104,8 @@ export async function GET(req: Request) {
                 image: guestIconUrl,
                 icon_url: guestIconUrl,
                 image_url: guestIconUrl,
-                inject_cards: npcData.default_cards || npcData.inject_cards || [],
+                inject_cards: parsedCardIds,
+                skill_names: skillNames,
                 is_active: true,
                 durability: guestMaxHp,
                 max_durability: guestMaxHp,
