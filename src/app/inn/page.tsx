@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useInnPageState } from '@/hooks/useInnPageState';
@@ -274,6 +275,18 @@ function InnPageInner() {
                     router={router}
                     fetchRep={fetchRep}
                 />
+
+                {/* フッター: コピーライト + 法的リンク */}
+                <div className="mt-6 mb-2 pt-4 border-t border-slate-800/40 space-y-2 text-center flex-shrink-0">
+                    <div className="flex justify-center gap-3 flex-wrap">
+                        <Link href="/legal/terms" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">利用規約</Link>
+                        <Link href="/legal/privacy" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">プライバシー</Link>
+                        <Link href="/legal/tokusho" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">特商法表記</Link>
+                        <Link href="/legal/credits" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">権利表記</Link>
+                        <a href="https://x.com/kitamu2026" target="_blank" rel="noopener noreferrer" className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">公式X</a>
+                    </div>
+                    <div className="text-[9px] text-slate-600">© 2026 Code: Wirth-Dawn</div>
+                </div>
             </div>
 
             {/* TavernModal - outside game container */}
