@@ -19,18 +19,38 @@ export async function GET(req: Request) {
             const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
             if (isUuid) {
-                const { data, error } = await supabase.from('party_members').select('*').eq('id', id).is('owner_id', null).maybeSingle();
+                // まずマスタである npcs テーブルを検索
+                const { data, error } = await supabase.from('npcs').select('*').eq('id', id).maybeSingle();
                 npcData = data;
                 npcErr = error;
+                
+                // 見つからなければ従来の party_members テンプレートレコードをフォールバック検索
+                if (!npcData && !npcErr) {
+                    const { data: pmData, error: pmErr } = await supabase.from('party_members').select('*').eq('id', id).is('owner_id', null).maybeSingle();
+                    npcData = pmData;
+                    npcErr = pmErr;
+                }
             } else {
-                // まずslugを試す
-                let { data, error } = await supabase.from('party_members').select('*').eq('slug', id).is('owner_id', null).maybeSingle();
+                // まずマスタである npcs テーブルをslugで検索
+                let { data, error } = await supabase.from('npcs').select('*').eq('slug', id).maybeSingle();
 
-                // 見つからず、IDが数値に見える場合はIDを試す
+                // 見つからず、IDが数値に見える場合はIDで検索
                 if (!data && /^\d+$/.test(id)) {
-                    const { data: dataById, error: errorById } = await supabase.from('party_members').select('*').eq('id', id).is('owner_id', null).maybeSingle();
+                    const { data: dataById, error: errorById } = await supabase.from('npcs').select('*').eq('id', parseInt(id, 10)).maybeSingle();
                     data = dataById;
                     if (errorById) error = errorById;
+                }
+
+                // それでも見つからない場合は従来の party_members テンプレートレコードをフォールバック検索
+                if (!data && !error) {
+                    let { data: pmData, error: pmErr } = await supabase.from('party_members').select('*').eq('slug', id).is('owner_id', null).maybeSingle();
+                    if (!pmData && /^\d+$/.test(id)) {
+                        const { data: pmById, error: pmByIdErr } = await supabase.from('party_members').select('*').eq('id', id).is('owner_id', null).maybeSingle();
+                        pmData = pmById;
+                        if (pmByIdErr) pmErr = pmByIdErr;
+                    }
+                    data = pmData;
+                    error = pmErr;
                 }
 
                 npcData = data;
@@ -47,7 +67,7 @@ export async function GET(req: Request) {
             }
 
             // PartyMember互換オブジェクトとして返す
-            const guestMaxHp = npcData.max_hp || npcData.hp || 50;
+            const guestMaxHp = npcData.max_hp || npcData.hp || npcData.max_durability || npcData.durability || 50;
             // アイコン画像: DB値 → slugベースのフォールバック
             const guestIconUrl = npcData.icon_url || npcData.image_url || `/images/npcs/${npcData.slug}.png`;
             data = {
@@ -64,11 +84,11 @@ export async function GET(req: Request) {
                 image: guestIconUrl,
                 icon_url: guestIconUrl,
                 image_url: guestIconUrl,
-                inject_cards: npcData.default_cards || [],
+                inject_cards: npcData.default_cards || npcData.inject_cards || [],
                 is_active: true,
                 durability: guestMaxHp,
                 max_durability: guestMaxHp,
-                introduction: npcData.introduction,
+                introduction: npcData.introduction || npcData.flavor_text || '',
                 origin_type: 'quest_guest'
             };
         } else {
