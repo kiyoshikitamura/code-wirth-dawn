@@ -102,14 +102,23 @@ export async function resolveLocationId(
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (uuidRegex.test(identifier)) return identifier;
 
-    // 2. Try as Name
-    const { data } = await supabase
+    // 2. Try as Slug
+    const { data: bySlug } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('slug', identifier)
+        .maybeSingle();
+
+    if (bySlug) return bySlug.id;
+
+    // 3. Try as Name
+    const { data: byName } = await supabase
         .from('locations')
         .select('id')
         .eq('name', identifier)
         .maybeSingle();
 
-    return data?.id || null;
+    return byName?.id || null;
 }
 
 
