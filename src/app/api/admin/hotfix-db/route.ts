@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -18,29 +17,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing SUPABASE env vars' }, { status: 500 });
         }
 
-        const projectRef = 'zvoroixjuypnintkpmux';
-
-        // 1. ALTER TABLE COLUMN TYPE
-        const dbUrl = process.env.DATABASE_URL
-            || process.env.SUPABASE_DB_URL
-            || `postgresql://postgres.${projectRef}:${process.env.SUPABASE_DB_PASSWORD || serviceKey}@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`;
-
-        const pool = new Pool({
-            connectionString: dbUrl,
-            ssl: { rejectUnauthorized: false },
-            connectionTimeoutMillis: 15000,
-        });
-
-        const client = await pool.connect();
-        try {
-            console.log('[hotfix-db] Altering payment_logs.id type to text...');
-            await client.query('ALTER TABLE public.payment_logs ALTER COLUMN id TYPE text;');
-        } finally {
-            client.release();
-            await pool.end();
-        }
-
-        // 2. INSERT MISSING PAYMENT LOGS AND AWARD GOLD
+        // INSERT MISSING PAYMENT LOGS AND AWARD GOLD
         const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
             auth: { persistSession: false, autoRefreshToken: false }
         });
@@ -132,7 +109,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             success: true,
-            message: 'Database altered and missing payments processed.',
+            message: 'Missing payments processed.',
             results: logResults
         });
 
