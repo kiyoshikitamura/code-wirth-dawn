@@ -201,8 +201,11 @@ export default function WorldMapPage() {
             if (res.ok) {
                 setTravelLog(prev => [...prev, `衛兵は無言で道を開けた。目的地へ向かいます...`]);
                 await new Promise(r => setTimeout(r, 1000));
-                await fetchUserProfile();
-                await fetchWorldState();
+                
+                // 目的地データ（プロフィール、ワールド状態、施設キャッシュなど）を一括同期 (force=trueでキャッシュ強制上書き)
+                const token = await getAuthToken();
+                await useGameStore.getState().prefetchTownData(token || undefined, true);
+                
                 setTimeout(() => {
                     setTraveling(false);
                     isTravelingRef.current = false;
@@ -330,9 +333,9 @@ export default function WorldMapPage() {
                     } : null
                 }));
 
-                // バックグラウンドで次の拠点のデータをプリフェッチ (先行ロード)
+                // バックグラウンドで次の拠点のデータをプリフェッチ (先行ロード) (force=trueでキャッシュ強制上書き)
                 getAuthToken().then(token => {
-                    useGameStore.getState().prefetchTownData(token || undefined);
+                    useGameStore.getState().prefetchTownData(token || undefined, true);
                 }).catch(err => {
                     console.error('Failed to prefetch town data during travel:', err);
                 });
