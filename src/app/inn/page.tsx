@@ -277,7 +277,16 @@ function InnPageInner() {
             </div>
 
             {/* TavernModal - outside game container */}
-            {userProfile && <TavernModal isOpen={showTavern} onClose={() => setShowTavern(false)} userProfile={userProfile} locationId={userProfile.current_location_id || ''} reputationScore={reputation?.score || 0} locationSlug={locationSlug} />}
+            {userProfile && showTavern && (
+                <TavernModal
+                    isOpen={showTavern}
+                    onClose={() => setShowTavern(false)}
+                    userProfile={userProfile}
+                    locationId={userProfile.current_location_id || ''}
+                    reputationScore={reputation?.score || 0}
+                    locationSlug={locationSlug}
+                />
+            )}
 
             {/* v27.0: HP満タン確認ダイアログ */}
             {showRestConfirm && (

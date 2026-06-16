@@ -439,7 +439,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         return tierBadge; // system_mercenary はTierバッジのみ（あれば）
     };
 
-    const isEmbargoed = reputationScore < 0;
+    const isEmbargoed = reputationScore <= -300;
     if (!isOpen) return null;
 
     return (
