@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, Coins, Sword, ShieldAlert, ArrowLeft, Trash2, CreditCard, Activity, Trophy, Compass, Landmark, Download } from 'lucide-react';
+import { Users, Coins, Sword, ArrowLeft, CreditCard, Activity, Trophy, Compass, Landmark, Download, RefreshCw } from 'lucide-react';
 
 interface KPISummary {
     totalUsers: number;
@@ -90,10 +90,7 @@ export default function AdminDashboardPage() {
     const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments'>('users');
     const [daysRange, setDaysRange] = useState<number>(30);
     
-    // リセット確認モーダルの状態
-    const [showResetModal, setShowResetModal] = useState(false);
-    const [resetConfirmText, setResetConfirmText] = useState('');
-    const [resetLoading, setResetLoading] = useState(false);
+
     
     // CSVエクスポート処理 (日別KPI)
     const exportDailyKPICsv = () => {
@@ -179,82 +176,47 @@ export default function AdminDashboardPage() {
 
     const router = useRouter();
 
-    useEffect(() => {
+    const fetchData = useCallback(async () => {
         const adminKey = localStorage.getItem('adminKey');
         if (!adminKey) {
             router.push('/admin/login');
             return;
         }
 
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const res = await fetch(`/api/admin/kpi?days=${daysRange}`, {
-                    headers: {
-                        'x-admin-key': adminKey
-                    }
-                });
-
-                if (res.status === 401) {
-                    localStorage.removeItem('adminKey');
-                    router.push('/admin/login');
-                    return;
-                }
-
-                if (!res.ok) {
-                    throw new Error('データの取得に失敗しました');
-                }
-
-                const json = await res.json();
-                setData(json);
-            } catch (err: any) {
-                setError(err.message || '接続エラーが発生しました');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [router, daysRange]);
-
-    const handleLogout = () => {
-        localStorage.removeItem('adminKey');
-        router.push('/admin/login');
-    };
-
-    // 一括データリセット処理
-    const handleResetData = async () => {
-        if (resetConfirmText !== 'RESET') {
-            alert('確認用のテキストが一致しません。');
-            return;
-        }
-
-        const adminKey = localStorage.getItem('adminKey');
-        if (!adminKey) return;
-
-        setResetLoading(true);
+        setLoading(true);
         try {
-            const res = await fetch('/api/admin/reset', {
-                method: 'POST',
+            const res = await fetch(`/api/admin/kpi?days=${daysRange}`, {
                 headers: {
                     'x-admin-key': adminKey
                 }
             });
 
-            const result = await res.json();
-            if (res.ok) {
-                alert(result.message || 'リセットに成功しました。');
-                window.location.reload();
-            } else {
-                alert(`リセットエラー: ${result.error}`);
+            if (res.status === 401) {
+                localStorage.removeItem('adminKey');
+                router.push('/admin/login');
+                return;
             }
+
+            if (!res.ok) {
+                throw new Error('データの取得に失敗しました');
+            }
+
+            const json = await res.json();
+            setData(json);
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            setError(err.message || '接続エラーが発生しました');
         } finally {
-            setResetLoading(false);
-            setShowResetModal(false);
-            setResetConfirmText('');
+            setLoading(false);
         }
+    }, [router, daysRange]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('adminKey');
+        router.push('/admin/login');
     };
 
     if (loading) {
@@ -351,11 +313,12 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
                     <button
-                        onClick={() => setShowResetModal(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-900/40 text-red-400 text-xs font-semibold rounded-lg transition-all"
+                        onClick={fetchData}
+                        disabled={loading}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-900/40 text-blue-400 text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
                     >
-                        <Trash2 size={14} />
-                        テストデータ初期化
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                        データの更新
                     </button>
                     <button
                         onClick={handleLogout}
@@ -870,56 +833,7 @@ export default function AdminDashboardPage() {
                 </div>
             </main>
 
-            {/* 一括リセット確認モーダル */}
-            {showResetModal && (
-                <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-[#0a1628] border border-red-900/60 p-6 rounded-2xl max-w-md w-full shadow-2xl space-y-6">
-                        <div>
-                            <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
-                                <ShieldAlert />
-                                データベース一括初期化の確認
-                            </h3>
-                            <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                                この操作は、テストプレイヤー、パーティメンバー、所持品、戦闘履歴、クエストクリア履歴などの**すべてのゲーム内データを完全に物理削除**します。
-                                また、登録された全てのテスト認証アカウントも削除されます。この操作は取り消せません。
-                            </p>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="block text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
-                                実行するには「RESET」と入力してください
-                            </label>
-                            <input
-                                type="text"
-                                value={resetConfirmText}
-                                onChange={(e) => setResetConfirmText(e.target.value)}
-                                placeholder="RESET"
-                                className="w-full px-4 py-2.5 bg-[#070d19] border border-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-500 text-white text-sm"
-                            />
-                        </div>
-
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => {
-                                    setShowResetModal(false);
-                                    setResetConfirmText('');
-                                }}
-                                className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-xs font-semibold rounded-xl transition-all"
-                                disabled={resetLoading}
-                            >
-                                キャンセル
-                            </button>
-                            <button
-                                onClick={handleResetData}
-                                disabled={resetConfirmText !== 'RESET' || resetLoading}
-                                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-xs font-semibold rounded-xl text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(220,38,38,0.3)]"
-                            >
-                                {resetLoading ? 'リセット中...' : '初期化を実行'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
