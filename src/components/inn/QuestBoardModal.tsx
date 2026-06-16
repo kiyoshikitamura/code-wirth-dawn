@@ -4,7 +4,7 @@ import { Scenario, UserProfile } from '@/types/game';
 
 interface QuestBoardModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose: () => void | Promise<void>;
     quests: Scenario[];
     loading: boolean;
     userProfile: UserProfile | null;
@@ -18,8 +18,20 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
     const [pendingQuest, setPendingQuest] = useState<Scenario | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
 
     if (!isOpen) return null;
+
+    const handleClose = async () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[QuestBoardModal] onClose failed:', e);
+            setIsClosing(false);
+        }
+    };
 
     const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab);
 
@@ -56,6 +68,12 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+                {isClosing && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
+                        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">読み込み中…</p>
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="flex justify-between items-center p-4 border-b-2 border-[#8b5a2b] bg-[#3e2723] text-[#e3d5b8]">
@@ -66,7 +84,11 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                         </div>
                         <p className="text-[10px] text-[#a38b6b] mt-0.5 font-serif italic">― 冒険者の手引き、腕に合った仕事を選べ ―</p>
                     </div>
-                    <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isClosing}
+                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                    >
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -117,7 +139,10 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                             ? 'bg-red-900/10 border-red-400/40 hover:border-red-500'
                                             : 'bg-[#fdfbf7] border-[#c2b280] hover:border-[#a38b6b]'
                                     }`}
-                                    onClick={() => setDetailQuest(s)}
+                                    onClick={() => {
+                                        if (isClosing) return;
+                                        setDetailQuest(s);
+                                    }}
                                 >
                                     {/* Row 1: Title + Badges + Level */}
                                     <div className="flex items-center gap-2 mb-1">

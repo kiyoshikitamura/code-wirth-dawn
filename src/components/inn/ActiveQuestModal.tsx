@@ -8,7 +8,7 @@ import { getAuthHeaders } from '@/lib/authToken';
 
 interface ActiveQuestModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose: () => void | Promise<void>;
     userProfile: UserProfile;
     quests: Scenario[];
     onSelect: (scenario: Scenario) => void;
@@ -18,8 +18,20 @@ interface ActiveQuestModalProps {
 
 export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests, onSelect, isLoading, onGiveUpComplete }: ActiveQuestModalProps) {
     const [loading, setLoading] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
 
     if (!isOpen) return null;
+
+    const handleClose = async () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[ActiveQuestModal] onClose failed:', e);
+            setIsClosing(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -77,6 +89,12 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-md rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+                {isClosing && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
+                        <div className="w-8 h-8 border-2 border-[#8b5a2b] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm text-[#3e2723] font-serif tracking-widest animate-pulse">読み込み中…</p>
+                    </div>
+                )}
                 
                 {/* Header */}
                 <div className="flex justify-between items-center p-4 border-b-2 border-[#8b5a2b] bg-[#3e2723] text-[#e3d5b8]">
@@ -84,7 +102,11 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
                         <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
                         <h2 className="text-base font-serif font-bold tracking-widest text-amber-400">進行中の依頼あり</h2>
                     </div>
-                    <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isClosing || loading}
+                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>

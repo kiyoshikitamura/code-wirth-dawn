@@ -10,7 +10,7 @@ import { useGameStore } from '@/store/gameStore';
 
 interface TavernModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose: () => void | Promise<void>;
     userProfile: UserProfile;
     locationId: string;
     reputationScore?: number;
@@ -35,6 +35,19 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         gold,
         userProfile: storeUserProfile
     } = useGameStore();
+
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = async () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[TavernModal] onClose failed:', e);
+            setIsClosing(false);
+        }
+    };
 
     const activeGold = storeUserProfile?.gold ?? userProfile.gold;
 
@@ -427,6 +440,12 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         <>
         <div className="fixed inset-0 z-[60] flex justify-center items-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
             <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-md h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+                {isClosing && (
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
+                        <div className="w-8 h-8 border-2 border-[#8b5a2b] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm text-[#3e2723] font-serif tracking-widest animate-pulse">読み込み中…</p>
+                    </div>
+                )}
 
                 {/* ===== Header ===== */}
                 <div className="bg-[#3e2723] border-b-2 border-[#8b5a2b] p-4 flex justify-between items-center flex-shrink-0">
@@ -440,7 +459,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         </div>
                         <p className="text-[10px] text-[#a38b6b] mt-0.5 font-serif italic">― 冒険者の集う喧騒の場所 ―</p>
                     </div>
-                    <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isClosing}
+                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                    >
                         <X className="w-6 h-6" />
                     </button>
                 </div>

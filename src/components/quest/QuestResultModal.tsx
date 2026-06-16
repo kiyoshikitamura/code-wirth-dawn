@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
@@ -60,7 +60,7 @@ interface ShareDataItem {
 }
 
 interface QuestResultModalProps {
-    onClose: () => void;
+    onClose: () => void | Promise<void>;
     result: 'success' | 'failure';
     questTitle?: string;
     changes?: QuestChanges;
@@ -81,6 +81,19 @@ export default function QuestResultModal({
     onClose, result, questTitle, changes, rewards, daysPassed, shareText,
     shareDataList, repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion, isTestPlay
 }: QuestResultModalProps) {
+    const [isClosing, setIsClosing] = useState(false);
+    
+    const handleClose = async () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[QuestResultModal] onClose failed:', e);
+            setIsClosing(false);
+        }
+    };
+
     const safeChanges = changes || {} as QuestChanges;
     const { level_up, gold_gained = 0, aged_up } = safeChanges;
     const isSuccess = result === 'success';
@@ -466,10 +479,15 @@ export default function QuestResultModal({
 
                 <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10">
                     <button
-                        onClick={onClose}
-                        className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-6 rounded transition-colors shadow-lg hover:shadow-amber-500/20"
+                        onClick={handleClose}
+                        disabled={isClosing}
+                        className={`w-full text-white font-bold py-3 px-6 rounded transition-colors shadow-lg ${
+                            isClosing
+                                ? 'bg-amber-800/60 border border-amber-600/40 text-amber-300/60 cursor-not-allowed'
+                                : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/20'
+                        }`}
                     >
-                        {isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける'}
+                        {isClosing ? '読み込み中…' : (isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける')}
                     </button>
                 </footer>
             </div>

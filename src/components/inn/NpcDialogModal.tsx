@@ -17,8 +17,8 @@ export interface SecondaryAction {
 
 interface NpcDialogModalProps {
     npcData: NpcDialogData;
-    onClose: () => void;
-    onAction: () => void;
+    onClose: () => void | Promise<void>;
+    onAction: () => void | Promise<void>;
     buttonText?: string;
     isDisabled?: boolean;
     secondaryActions?: SecondaryAction[];
@@ -60,10 +60,45 @@ function useTypewriter(text: string, speed: number = 30) {
 }
 
 export default function NpcDialogModal({ npcData, onClose, onAction, buttonText, isDisabled, secondaryActions }: NpcDialogModalProps) {
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    
     if (!npcData) return null;
 
     const isBanned = npcData.isBanned;
     const { displayed, done, skip } = useTypewriter(npcData.dialogue, 30);
+
+    const handleClose = async () => {
+        if (isActionLoading) return;
+        setIsActionLoading(true);
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[NpcDialogModal] onClose failed:', e);
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleAction = async () => {
+        if (isActionLoading || isDisabled || isBanned) return;
+        setIsActionLoading(true);
+        try {
+            await onAction();
+        } catch (e) {
+            console.error('[NpcDialogModal] onAction failed:', e);
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleSecondaryAction = async (onClick: () => void | Promise<void>) => {
+        if (isActionLoading) return;
+        setIsActionLoading(true);
+        try {
+            await onClick();
+        } catch (e) {
+            console.error('[NpcDialogModal] secondaryAction failed:', e);
+            setIsActionLoading(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-start pt-20 justify-center p-4 sm:p-6">
@@ -79,7 +114,11 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                         {isBanned && <Ban size={14} className="text-red-500" />}
                         <span className="text-[10px] text-slate-500 uppercase tracking-widest">{npcData.facilityName}</span>
                     </h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isActionLoading}
+                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1 disabled:opacity-50"
+                    >
                         <X size={18} />
                     </button>
                 </div>
@@ -122,24 +161,28 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                     <div className="w-full mt-5 flex flex-col gap-2.5">
                         {/* メインボタン */}
                         <button
-                            onClick={(isDisabled || isBanned) ? undefined : onAction}
-                            disabled={isDisabled || isBanned}
+                            onClick={handleAction}
+                            disabled={isDisabled || isBanned || isActionLoading}
                             className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition-all focus:outline-none focus:ring-2 
                                 ${isBanned
                                     ? 'bg-red-900/40 text-red-300 border border-red-700 cursor-not-allowed'
-                                    : isDisabled
+                                    : (isDisabled || isActionLoading)
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'bg-amber-900/40 hover:bg-amber-800/60 border border-amber-600 text-amber-100 active:scale-95 focus:ring-amber-500'}`}
                         >
-                            {isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`}
+                            {isActionLoading ? '読み込み中…' : (isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`)}
                         </button>
 
                         {/* セカンダリボタン（宿屋の「冒険者を探す」等） */}
                         {!isBanned && secondaryActions?.map((action, i) => (
                             <button
                                 key={i}
-                                onClick={action.onClick}
-                                className="w-full py-3 rounded-xl font-bold text-sm border border-amber-600 bg-amber-900/30 text-amber-100 hover:bg-amber-800/50 hover:text-white transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                onClick={() => handleSecondaryAction(action.onClick)}
+                                disabled={isActionLoading}
+                                className={`w-full py-3 rounded-xl font-bold text-sm border transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500
+                                    ${isActionLoading
+                                        ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                                        : 'border-amber-600 bg-amber-900/30 text-amber-100 hover:bg-amber-800/50 hover:text-white'}`}
                             >
                                 {action.label}
                             </button>
