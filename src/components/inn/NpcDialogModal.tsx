@@ -70,34 +70,40 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     const handleClose = async () => {
         if (isActionLoading) return;
         setIsActionLoading(true);
-        try {
-            await onClose();
-        } catch (e) {
-            console.error('[NpcDialogModal] onClose failed:', e);
-            setIsActionLoading(false);
-        }
+        setTimeout(async () => {
+            try {
+                await onClose();
+            } catch (e) {
+                console.error('[NpcDialogModal] onClose failed:', e);
+                setIsActionLoading(false);
+            }
+        }, 0);
     };
 
     const handleAction = async () => {
         if (isActionLoading || isDisabled || isBanned) return;
         setIsActionLoading(true);
-        try {
-            await onAction();
-        } catch (e) {
-            console.error('[NpcDialogModal] onAction failed:', e);
-            setIsActionLoading(false);
-        }
+        setTimeout(async () => {
+            try {
+                await onAction();
+            } catch (e) {
+                console.error('[NpcDialogModal] onAction failed:', e);
+                setIsActionLoading(false);
+            }
+        }, 0);
     };
 
     const handleSecondaryAction = async (onClick: () => void | Promise<void>) => {
         if (isActionLoading) return;
         setIsActionLoading(true);
-        try {
-            await onClick();
-        } catch (e) {
-            console.error('[NpcDialogModal] secondaryAction failed:', e);
-            setIsActionLoading(false);
-        }
+        setTimeout(async () => {
+            try {
+                await onClick();
+            } catch (e) {
+                console.error('[NpcDialogModal] secondaryAction failed:', e);
+                setIsActionLoading(false);
+            }
+        }, 0);
     };
 
     return (

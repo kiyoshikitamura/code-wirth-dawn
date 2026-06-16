@@ -41,12 +41,14 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const handleClose = async () => {
         if (isClosing) return;
         setIsClosing(true);
-        try {
-            await onClose();
-        } catch (e) {
-            console.error('[TavernModal] onClose failed:', e);
-            setIsClosing(false);
-        }
+        setTimeout(async () => {
+            try {
+                await onClose();
+            } catch (e) {
+                console.error('[TavernModal] onClose failed:', e);
+                setIsClosing(false);
+            }
+        }, 0);
     };
 
     const activeGold = storeUserProfile?.gold ?? userProfile.gold;
@@ -256,114 +258,118 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
         setHirePhase('loading');
 
-        // スナップショット（バックアップ）
-        const previousParty = [...partyMembers];
-        const previousGold = gold;
-        const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
+        setTimeout(async () => {
+            // スナップショット（バックアップ）
+            const previousParty = [...partyMembers];
+            const previousGold = gold;
+            const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
 
-        // 楽観的UI用の新規メンバーオブジェクト
-        const optimisticMember: PartyMember = {
-            ...shadow,
-            id: shadow.profile_id || `temp-${Date.now()}`,
-            owner_id: userProfile.id,
-            durability: shadow.stats?.hp || 100,
-            max_durability: shadow.stats?.hp || 100,
-            hp: shadow.stats?.hp || 100,
-            max_hp: shadow.stats?.hp || 100,
-            atk: shadow.stats?.atk || 0,
-            def: shadow.stats?.def || 0,
-            is_active: true,
-            source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
-        } as any;
+            // 楽観的UI用の新規メンバーオブジェクト
+            const optimisticMember: PartyMember = {
+                ...shadow,
+                id: shadow.profile_id || `temp-${Date.now()}`,
+                owner_id: userProfile.id,
+                durability: shadow.stats?.hp || 100,
+                max_durability: shadow.stats?.hp || 100,
+                hp: shadow.stats?.hp || 100,
+                max_hp: shadow.stats?.hp || 100,
+                atk: shadow.stats?.atk || 0,
+                def: shadow.stats?.def || 0,
+                is_active: true,
+                source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
+            } as any;
 
-        // Zustandの楽観的更新
-        const newGold = Math.max(0, gold - shadow.contract_fee);
-        useGameStore.setState({
-            gold: newGold,
-            partyMembers: [...partyMembers, optimisticMember],
-            userProfile: storeUserProfile ? {
-                ...storeUserProfile,
-                gold: newGold
-            } : null
-        });
-
-        try {
-            const authHeaders = await getAuthHeaders();
-            const res = await fetch('/api/tavern/hire', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...authHeaders
-                },
-                body: JSON.stringify({ user_id: userProfile.id, shadow })
-            });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-                throw new Error(errData.error || '不明なエラー');
-            }
-            const data = await res.json();
-            if (data.success) {
-                setHireResultMsg('パーティに加入した！ ✨');
-                setHirePhase('done');
-                // バックグラウンドで同期
-                fetchPartyData();
-                fetchShadows();
-                useGameStore.getState().fetchUserProfile();
-                setTimeout(() => setHirePhase('idle'), 2200);
-            } else {
-                throw new Error(data.error || '不明なエラー');
-            }
-        } catch (e: any) {
-            // ロールバック
+            // Zustandの楽観的更新
+            const newGold = Math.max(0, gold - shadow.contract_fee);
             useGameStore.setState({
-                gold: previousGold,
-                partyMembers: previousParty,
-                userProfile: previousProfile
+                gold: newGold,
+                partyMembers: [...partyMembers, optimisticMember],
+                userProfile: storeUserProfile ? {
+                    ...storeUserProfile,
+                    gold: newGold
+                } : null
             });
-            setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
-            setHirePhase('done');
-            setTimeout(() => setHirePhase('idle'), 2500);
-        }
+
+            try {
+                const authHeaders = await getAuthHeaders();
+                const res = await fetch('/api/tavern/hire', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders
+                    },
+                    body: JSON.stringify({ user_id: userProfile.id, shadow })
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                    throw new Error(errData.error || '不明なエラー');
+                }
+                const data = await res.json();
+                if (data.success) {
+                    setHireResultMsg('パーティに加入した！ ✨');
+                    setHirePhase('done');
+                    // バックグラウンドで同期
+                    fetchPartyData();
+                    fetchShadows();
+                    useGameStore.getState().fetchUserProfile();
+                    setTimeout(() => setHirePhase('idle'), 2200);
+                } else {
+                    throw new Error(data.error || '不明なエラー');
+                }
+            } catch (e: any) {
+                // ロールバック
+                useGameStore.setState({
+                    gold: previousGold,
+                    partyMembers: previousParty,
+                    userProfile: previousProfile
+                });
+                setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
+                setHirePhase('done');
+                setTimeout(() => setHirePhase('idle'), 2500);
+            }
+        }, 0);
     };
 
     const handleDismiss = async (memberId: string, memberName: string) => {
         if (!window.confirm(`${memberName} との契約を解除しますか？\nパーティから除外されます。`)) return;
         setDismissing(true);
 
-        // スナップショット
-        const previousParty = [...partyMembers];
+        setTimeout(async () => {
+            // スナップショット
+            const previousParty = [...partyMembers];
 
-        // 楽観的除外
-        useGameStore.setState({
-            partyMembers: partyMembers.filter(m => m.id !== memberId)
-        });
-
-        try {
-            const authHeaders = await getAuthHeaders();
-            const res = await fetch(`/api/party/member?id=${memberId}`, {
-                method: 'DELETE',
-                headers: authHeaders,
-            });
-            if (res.ok) {
-                setHireResultMsg(`${memberName} との契約を解除した。`);
-                setHirePhase('done');
-                fetchPartyData();
-                setTimeout(() => setHirePhase('idle'), 2000);
-            } else {
-                const err = await res.json().catch(() => ({ error: 'Unknown' }));
-                throw new Error(err.error || '不明なエラー');
-            }
-        } catch (e: any) {
-            // ロールバック
+            // 楽観的除外
             useGameStore.setState({
-                partyMembers: previousParty
+                partyMembers: partyMembers.filter(m => m.id !== memberId)
             });
-            setHireResultMsg(`解雇に失敗: ${e.message}`);
-            setHirePhase('done');
-            setTimeout(() => setHirePhase('idle'), 2500);
-        } finally {
-            setDismissing(false);
-        }
+
+            try {
+                const authHeaders = await getAuthHeaders();
+                const res = await fetch(`/api/party/member?id=${memberId}`, {
+                    method: 'DELETE',
+                    headers: authHeaders,
+                });
+                if (res.ok) {
+                    setHireResultMsg(`${memberName} との契約を解除した。`);
+                    setHirePhase('done');
+                    fetchPartyData();
+                    setTimeout(() => setHirePhase('idle'), 2000);
+                } else {
+                    const err = await res.json().catch(() => ({ error: 'Unknown' }));
+                    throw new Error(err.error || '不明なエラー');
+                }
+            } catch (e: any) {
+                // ロールバック
+                useGameStore.setState({
+                    partyMembers: previousParty
+                });
+                setHireResultMsg(`解雇に失敗: ${e.message}`);
+                setHirePhase('done');
+                setTimeout(() => setHirePhase('idle'), 2500);
+            } finally {
+                setDismissing(false);
+            }
+        }, 0);
     };
 
     const handleReport = async () => {
