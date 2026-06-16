@@ -21,7 +21,12 @@ export async function GET(req: Request) {
         let projectRef = '';
         try {
             const hostname = new URL(supabaseUrl).hostname;
-            projectRef = hostname.split('.')[0];
+            const parts = hostname.split('.');
+            if (parts[0] === 'auth') {
+                projectRef = parts[1];
+            } else {
+                projectRef = parts[0];
+            }
         } catch {
             return NextResponse.json({ error: `Cannot parse SUPABASE_URL: ${supabaseUrl}` }, { status: 500 });
         }
