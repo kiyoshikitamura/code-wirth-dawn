@@ -68,7 +68,7 @@ export async function GET(req: Request) {
             .from('reputations')
             .select('score, location_name')
             .eq('user_id', userId)
-            .lt('score', 0)
+            .lte('score', -300)
             .order('score', { ascending: true });
 
         if (brError) console.warn('[HistoryArchive] banned reps fetch failed:', brError.message);

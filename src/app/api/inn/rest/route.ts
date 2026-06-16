@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
                     if (repData) {
                         const repScore = repData.score || 0;
-                        if (repScore < 0) {
+                        if (repScore <= -300) {
                             return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、宿屋の利用を断られました。' }, { status: 403 });
                         }
                     }

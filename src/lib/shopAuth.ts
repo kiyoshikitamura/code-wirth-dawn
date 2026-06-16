@@ -63,7 +63,7 @@ export async function checkEmbargo(profile: UserProfileDB): Promise<void> {
         .eq('location_name', locData.name)
         .maybeSingle();
 
-    if (repData && (repData.score || 0) < 0) {
+    if (repData && (repData.score || 0) <= -300) {
         throw new AuthError('出禁状態: この拠点での名声が低すぎるため、取引を拒否されました。', 403);
     }
 }

@@ -161,6 +161,7 @@ function InnPageInner() {
                 {/* NPC Dialog */}
                 {activeNpcData && activeModal && (
                     <NpcDialogModal
+                        key={activeModal}
                         npcData={activeNpcData}
                         onClose={() => setActiveModal(null)}
                         onAction={() => handleDialogAction(activeModal as FacilityType)}

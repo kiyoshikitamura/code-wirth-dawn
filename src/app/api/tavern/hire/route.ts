@@ -39,7 +39,7 @@ export async function POST(req: Request) {
                     .eq('location_name', locData.name)
                     .maybeSingle();
 
-                if (repData && (repData.score || 0) < 0) {
+                if (repData && (repData.score || 0) <= -300) {
                     return NextResponse.json({ error: '出禁状態: この拠点での名声が低すぎるため、酒場の利用を断られました。' }, { status: 403 });
                 }
             }

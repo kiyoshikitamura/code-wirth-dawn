@@ -52,7 +52,7 @@ export async function GET(req: Request) {
             supabaseService.from('inventory').select('item_id, items!inner(slug)').eq('user_id', profile.id).in('items.slug', PASS_SLUGS)
         ]);
 
-        if (repResult.data && (repResult.data.score || 0) < 0) {
+        if (repResult.data && (repResult.data.score || 0) <= -300) {
             isEmbargoed = true;
         }
         if (itemsResult.error) throw itemsResult.error;
