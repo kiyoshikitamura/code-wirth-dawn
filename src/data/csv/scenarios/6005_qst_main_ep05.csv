@@ -12,18 +12,14 @@ NODE,resolve_02,"「この森を抜ければ夜刀の国境だ。あそこなら
 NODE,resolve_03,"「嫌です」と叫ぼうとした我々を、ガウェインの眼光が力強く制した。","{""bg"":""bg_camp"",""type"":""text""}",wave_01
 NODE,wave_01,"「お前の命はここで捨てるにゃ惜しい！ 来るぞ、まずは前衛を叩く！」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",battle1
 NODE,battle1,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":203,""type"":""battle""}",
-CHOICE,,win,,choice1
+CHOICE,,win,,clear_01
 CHOICE,,lose,,end_failure_01
-NODE,choice1,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""type"":""choice""}",
-CHOICE,,「反撃する」,,clear_01
 NODE,clear_01,"前衛の兵士たちを退けた。だが、奥からさらに第二波の重装歩兵が現れる。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_crisis"",""type"":""text""}",clear_02
 NODE,clear_02,"「きりがないな……。おい新入り、俺の指示を聞け。絶対に生き延びろ」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",second_01
 NODE,second_01,"「お前が真実を世界の果てまで届けるんだ。……いくぞ、これが最後だ！」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",battle2
 NODE,battle2,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":203,""type"":""battle""}",
-CHOICE,,win,,choice2
+CHOICE,,win,,last_01
 CHOICE,,lose,,end_failure_01
-NODE,choice2,"","{""bg"":""bg_camp"",""bgm"":""bgm_battle_strong"",""type"":""choice""}",
-CHOICE,,「ガウェインと共に防ぐ」,,last_01
 NODE,last_01,"激闘の末、囲みを突破した。だがガウェインの背中には三本の矢が深く刺さっていた。","{""bg"":""bg_camp"",""bgm"":""bgm_quest_calm"",""type"":""text""}",last_02
 NODE,last_02,"「ガウェイン！」駆け寄ろうとする我々を、彼は片手で強く押し止めた。","{""bg"":""bg_camp"",""type"":""text""}",last_03
 NODE,last_03,"「来るな！ 背中を見せて走れ！ ……お前は生き延びねばならんのだ」","{""bg"":""bg_camp"",""speaker_name"":""ガウェイン"",""type"":""text""}",last_04

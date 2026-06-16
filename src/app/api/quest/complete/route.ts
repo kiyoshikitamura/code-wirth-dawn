@@ -286,20 +286,24 @@ export async function POST(req: Request) {
                 }
             }
 
+            let isMainQuestCleared = false;
             // メインクエスト章クリア
             if (questSlug.startsWith('main_ep')) {
                 const fired = await checkAndFireTrigger(supabase, user_id, 'main_quest_clear', questSlug);
                 if (fired) {
                     const chapter = questSlug.replace('main_ep', '').replace(/^0+/, '') || '?';
                     const sd = buildShareData('main_quest_clear', { chapter, quest_name: quest.title || '' });
-                    if (sd) shareDataList.push(sd);
+                    if (sd) {
+                        shareDataList.push(sd);
+                        isMainQuestCleared = true;
+                    }
                 }
             }
 
             // 全クエスト初回クリア
             if (questSlug) {
                 const fired = await checkAndFireTrigger(supabase, user_id, 'quest_first_clear', questSlug);
-                if (fired) {
+                if (fired && !isMainQuestCleared) {
                     if (quest.share_text) {
                         shareDataList.push({ text: quest.share_text, slug: 'quest_first_clear', vars: { quest_name: quest.title || '' } });
                     } else {

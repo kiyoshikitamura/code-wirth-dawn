@@ -26,10 +26,8 @@ NODE,scout_01,"「武装集団が接近！野盗です！」","{""bg"":""bg_road
 NODE,order_01,"ガウェインが素早く大剣を引き抜く。「各自武器を取れ！荷を死守するぞ！」","{""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense"",""speaker_name"":""ガウェイン"",""type"":""text""}",taunt_01
 NODE,taunt_01,"「おい王国の犬ども、荷を置いて失せな！」","{""bg"":""bg_road_day"",""bgm"":""bgm_quest_tense"",""speaker_name"":""野盗の頭目"",""type"":""text""}",battle
 NODE,battle,"","{""bg"":""bg_road_day"",""bgm"":""bgm_battle"",""enemy_group_id"":200,""type"":""battle""}",
-CHOICE,,win,,choice2
+CHOICE,,win,,post_01
 CHOICE,,lose,,end_failure_01
-NODE,choice2,"","{""bg"":""bg_road_day"",""bgm"":""bgm_battle"",""type"":""choice""}",
-CHOICE,,「迎撃する」,,post_01
 NODE,post_01,"大剣を振り抜き、最後の野盗を沈めた。息が荒く、手が小刻みに震えている。","{""bg"":""bg_road_day"",""bgm"":""bgm_quest_calm"",""type"":""text""}",dying_01
 NODE,dying_01,"足元に倒れ伏した野盗が、息絶え絶えの状態でこちらを見上げてきた。","{""bg"":""bg_road_day"",""type"":""text""}",dying_02
 NODE,dying_02,"「やるな……だが、俺たちにこの荷を襲うよう依頼したのは……王国の官僚だ」","{""bg"":""bg_road_day"",""speaker_name"":""瀕死の野盗"",""type"":""text""}",dying_03
