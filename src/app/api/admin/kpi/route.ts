@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 
 async function fetchAll<T>(
     queryBuilder: any,
-    selectColumns: string
+    selectColumns: string,
+    orderColumn: string = 'id'
 ): Promise<T[]> {
     let allData: T[] = [];
     let from = 0;
@@ -13,6 +14,7 @@ async function fetchAll<T>(
     while (true) {
         const { data, error } = await queryBuilder
             .select(selectColumns)
+            .order(orderColumn, { ascending: true })
             .range(from, from + limit - 1);
         if (error) throw error;
         if (!data || data.length === 0) break;
@@ -50,13 +52,15 @@ export async function GET(req: Request) {
         try {
             profilesData = await fetchAll<any>(
                 supabaseServer.from('user_profiles'),
-                'created_at, updated_at, gold, level, subscription_tier'
+                'created_at, updated_at, gold, level, subscription_tier',
+                'id'
             );
         } catch (errCreated: any) {
             try {
                 profilesData = await fetchAll<any>(
                     supabaseServer.from('user_profiles'),
-                    'updated_at, gold, level, subscription_tier'
+                    'updated_at, gold, level, subscription_tier',
+                    'id'
                 );
             } catch (errUpdated: any) {
                 profileError = errUpdated;
@@ -73,7 +77,8 @@ export async function GET(req: Request) {
         try {
             battleSessions = await fetchAll<any>(
                 supabaseServer.from('battle_sessions'),
-                'created_at, status, user_id'
+                'created_at, status, user_id',
+                'id'
             );
         } catch (battleError) {
             console.warn('[Admin KPI] Battle sessions fetch error:', battleError);
@@ -84,7 +89,8 @@ export async function GET(req: Request) {
         try {
             questLogs = await fetchAll<any>(
                 supabaseServer.from('quest_activity_logs'),
-                'created_at, user_id, scenario_id, action'
+                'created_at, user_id, scenario_id, action',
+                'id'
             );
         } catch (questLogsErr) {
             console.warn('[Admin KPI] Quest activity logs fetch error:', questLogsErr);
@@ -95,7 +101,8 @@ export async function GET(req: Request) {
         try {
             paymentLogs = await fetchAll<any>(
                 supabaseServer.from('payment_logs'),
-                'created_at, user_id, amount, gold_amount, type'
+                'created_at, user_id, amount, gold_amount, type',
+                'id'
             );
         } catch (paymentsErr) {
             console.warn('[Admin KPI] Payment logs fetch error:', paymentsErr);
