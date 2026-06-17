@@ -239,6 +239,22 @@ export async function POST(req: Request) {
             .from('user_profiles').update(updates).eq('id', user_id);
         if (updateError) throw updateError;
 
+        // Record quest activity log (Spec Dashboard Extensions)
+        try {
+            const { error: logErr } = await supabase
+                .from('quest_activity_logs')
+                .insert({
+                    user_id,
+                    scenario_id: quest_id,
+                    action: result === 'success' ? 'complete' : 'abandon'
+                });
+            if (logErr) {
+                console.error('[Quest Complete] Failed to write quest_activity_logs:', logErr);
+            }
+        } catch (logException) {
+            console.error('[Quest Complete] Log exception:', logException);
+        }
+
 
 
         if (result === 'success') {
