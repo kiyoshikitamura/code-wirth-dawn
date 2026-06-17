@@ -27,9 +27,9 @@ export async function GET(req: Request) {
 
         // Parallel: fetch current caches + world state + user data
         const [repCacheRes, alignCacheRes, worldStateRes, userProfileRes, userRepsRes] = await Promise.all([
-            supabaseService.from('ranking_reputation_cache').select('*').order('rank_desc', { ascending: true }).limit(1),
-            supabaseService.from('ranking_alignment_cache').select('*').order('rank', { ascending: true }).limit(1),
-            supabaseService.from('world_states').select('updated_at').limit(1).maybeSingle(),
+            supabaseService.from('ranking_reputation_cache').select('*').order('aggregated_at', { ascending: false }).limit(1),
+            supabaseService.from('ranking_alignment_cache').select('*').order('aggregated_at', { ascending: false }).limit(1),
+            supabaseService.from('world_states').select('updated_at').order('updated_at', { ascending: true }).limit(1).maybeSingle(),
             supabaseService.from('user_profiles').select('id, name, order_pts, chaos_pts, justice_pts, evil_pts').eq('id', userId).single(),
             supabaseService.from('reputations').select('score').eq('user_id', userId),
         ]);
@@ -39,28 +39,28 @@ export async function GET(req: Request) {
         const cycleStartedAt = new Date(worldUpdatedAt).toISOString();
         const cycleEndsAt = new Date(worldUpdatedAt + SIX_HOURS_MS).toISOString();
 
-        // --- My values (always real-time) ---
-        const myRepTotal = (userRepsRes.data || []).reduce((sum: number, r: any) => sum + (r.score || 0), 0);
-        const myProfile = userProfileRes.data;
+        // --- Reputation Ranking (Fetches from cache, aggregates on-demand if stale) ---
+        let repAggregatedAt = repCacheRes.data?.[0]?.aggregated_at || null;
+        let repStatus = 'ready';
 
-        // Fetch my baseline for alignment delta
-        const { data: myBaseline } = await supabaseService
-            .from('alignment_baseline').select('*').eq('user_id', userId).maybeSingle();
+        const lastRepAggregation = repAggregatedAt ? new Date(repAggregatedAt).getTime() : 0;
+        const repStale = !repAggregatedAt || (now - lastRepAggregation > FIFTEEN_MIN_MS);
 
-        const myAlignValues = {
-            order: (myProfile?.order_pts || 0) - (myBaseline?.order_pts || 0),
-            chaos: (myProfile?.chaos_pts || 0) - (myBaseline?.chaos_pts || 0),
-            justice: (myProfile?.justice_pts || 0) - (myBaseline?.justice_pts || 0),
-            evil: (myProfile?.evil_pts || 0) - (myBaseline?.evil_pts || 0),
-            total: 0,
-        };
-        myAlignValues.total = myAlignValues.order + myAlignValues.chaos + myAlignValues.justice + myAlignValues.evil;
+        if (repStale) {
+            repStatus = 'aggregating';
+            try {
+                const { error: repErr } = await supabaseService.rpc('aggregate_reputation_ranking');
+                if (!repErr) {
+                    repStatus = 'ready';
+                    repAggregatedAt = new Date().toISOString();
+                } else {
+                    console.error('[Ranking] RPC aggregate_reputation_ranking failed:', repErr);
+                }
+            } catch (e) {
+                console.error('[Ranking] Reputation aggregation failed:', e);
+            }
+        }
 
-        // --- Reputation Ranking (Fetches from cache, aggregation moved to Cron) ---
-        const repAggregatedAt = repCacheRes.data?.[0]?.aggregated_at || null;
-        const repStatus = 'ready';
-
-        // Fetch ranked data
         const [repDescRes, repAscRes] = await Promise.all([
             supabaseService.from('ranking_reputation_cache').select('*').order('rank_desc', { ascending: true }).limit(RANKING_LIMIT),
             supabaseService.from('ranking_reputation_cache').select('*').order('rank_asc', { ascending: true }).limit(RANKING_LIMIT),
@@ -73,9 +73,38 @@ export async function GET(req: Request) {
             rank: r.rank_asc, userId: r.user_id, name: r.user_name || '名もなき旅人', value: r.total_reputation,
         }));
 
-        // --- Alignment Ranking (Fetches from cache, aggregation moved to Cron) ---
-        const alignAggregatedAt = alignCacheRes.data?.[0]?.aggregated_at || null;
-        const alignStatus = 'ready';
+
+        // --- Alignment Ranking (Fetches from cache, aggregates on-demand if stale) ---
+        let alignAggregatedAt = alignCacheRes.data?.[0]?.aggregated_at || null;
+        let alignStatus = 'ready';
+
+        const lastAlignAggregation = alignAggregatedAt ? new Date(alignAggregatedAt).getTime() : 0;
+        const alignStale = !alignAggregatedAt || (now - lastAlignAggregation > FIFTEEN_MIN_MS);
+
+        if (alignStale) {
+            alignStatus = 'aggregating';
+            try {
+                // Get stable cycle_started_at from alignment_baseline if exists, fallback to cycleStartedAt
+                const { data: baselineRow } = await supabaseService
+                    .from('alignment_baseline')
+                    .select('cycle_started_at')
+                    .limit(1)
+                    .maybeSingle();
+                const stableCycleStart = baselineRow?.cycle_started_at || cycleStartedAt;
+
+                const { error: alignErr } = await supabaseService.rpc('aggregate_alignment_ranking', {
+                    p_cycle_started_at: stableCycleStart
+                });
+                if (!alignErr) {
+                    alignStatus = 'ready';
+                    alignAggregatedAt = new Date().toISOString();
+                } else {
+                    console.error('[Ranking] RPC aggregate_alignment_ranking failed:', alignErr);
+                }
+            } catch (e) {
+                console.error('[Ranking] Alignment aggregation failed:', e);
+            }
+        }
 
         const alignTopRes = await supabaseService
             .from('ranking_alignment_cache')
@@ -93,6 +122,23 @@ export async function GET(req: Request) {
             evil: r.evil_gained,
             total: r.total_gained,
         }));
+
+        // --- My values (always real-time) ---
+        const myRepTotal = (userRepsRes.data || []).reduce((sum: number, r: any) => sum + (r.score || 0), 0);
+        const myProfile = userProfileRes.data;
+
+        // Fetch my baseline for alignment delta
+        const { data: myBaseline } = await supabaseService
+            .from('alignment_baseline').select('*').eq('user_id', userId).maybeSingle();
+
+        const myAlignValues = {
+            order: (myProfile?.order_pts || 0) - (myBaseline?.order_pts || 0),
+            chaos: (myProfile?.chaos_pts || 0) - (myBaseline?.chaos_pts || 0),
+            justice: (myProfile?.justice_pts || 0) - (myBaseline?.justice_pts || 0),
+            evil: (myProfile?.evil_pts || 0) - (myBaseline?.evil_pts || 0),
+            total: 0,
+        };
+        myAlignValues.total = myAlignValues.order + myAlignValues.chaos + myAlignValues.justice + myAlignValues.evil;
 
         // Inject current user's real-time values into reputation list (topDesc / topAsc)
         const injectRealtimeRep = (list: any[], order: 'desc' | 'asc') => {

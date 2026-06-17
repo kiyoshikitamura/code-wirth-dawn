@@ -33,6 +33,7 @@ async function performUpdate(isForceUgcReset: boolean) {
         const { data: worldStateRes } = await supabaseServer
             .from('world_states')
             .select('updated_at')
+            .order('updated_at', { ascending: true })
             .limit(1)
             .maybeSingle();
 
