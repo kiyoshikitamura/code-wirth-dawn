@@ -12,7 +12,7 @@
 | ID | slug | name | hp | atk | def | spawn_type | 行動パターン (action_pattern JSONB) |
 |---|---|---|---|---|---|---|---|
 | 2101 | `enemy_boss_ep5_squad` | 帝国精鋭部隊 | 500 | 45 | 10 | `quest_only` | `{"actions": [{"skill_id": 1001, "weight": 70}, {"skill_id": 2045, "turn_mod": 3, "weight": 100}]}`<br>※第5話用。3ターンごとに防御無視攻撃を放つ。 |
-| 2102 | `enemy_boss_ep10_dragon` | 神代の守護竜 | 3500 | 80 | 18 | `quest_only` | `{"actions": [{"skill_id": 1030, "weight": 60}, {"skill_id": 2011, "hp_under": 50, "weight": 80}]}`<br>※第10話用。HP50%以下で強力な全体ブレス（スキル）を解禁。 |
+| 2102 | `enemy_boss_ep10_dragon` | 神代の守護竜 | 1200 | 55 | 18 | `quest_only` | `{"actions": [{"skill_id": 1030, "weight": 60}, {"skill_id": 2011, "hp_under": 50, "weight": 80}]}`<br>※第10話用。HP50%以下で強力な全体ブレス（スキル）を解禁。 |
 | 2103 | `enemy_boss_ep20_god` | 主神 | 9999 | 150 | 25 | `quest_only` | `{"actions": [{"skill_id": 1099, "weight": 50}, {"skill_id": 2088, "turn_mod": 5, "weight": 100}, {"skill_id": 2099, "hp_under": 20, "weight": 100}]}`<br>※最終ボス。DEF25（軽減上限）留め。5ターンごとの大粛清攻撃と、瀕死時の発狂モード。 |
 
 ### 1-2. 同行NPC (特殊データ・代表例)

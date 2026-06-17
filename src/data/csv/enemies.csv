@@ -54,7 +54,7 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 1322,enemy_bounty_legend,伝説の傭兵,90,900,160,30,600,0,,bounty
 1323,enemy_bounty_reaper,静寂の死神,75,750,180,15,600,0,,bounty
 2101,enemy_boss_ep5_squad,帝国精鋭部隊,12,500,45,10,0,0,,quest_only
-2102,enemy_boss_ep10_dragon,神代の守護竜,25,1800,55,18,0,0,,quest_only
+2102,enemy_boss_ep10_dragon,神代の守護竜,25,1200,55,18,0,0,,quest_only
 2103,enemy_boss_ep20_god,主神,50,9999,150,25,0,0,,quest_only
 2104,enemy_boss_mercenary_king,不死の傭兵王,25,2000,75,15,0,0,,quest_only
 2105,enemy_boss_ruin_guardian,遺跡の守護者,35,3000,90,20,0,0,,quest_only
