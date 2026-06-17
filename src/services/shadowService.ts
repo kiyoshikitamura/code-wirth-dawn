@@ -347,20 +347,19 @@ export class ShadowService {
         let heroicOwnerId: string | null = null;
 
         if (shadow.origin_type === 'shadow_heroic') {
-            // historical_logs から level を取得して再計算
-            const { data: logData } = await this.supabase
-                .from('historical_logs')
-                .select('data, user_id')
-                .eq('user_id', shadow.profile_id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+            // party_members から英霊のレコードを取得して所有者およびレベルを検証
+            const { data: heroicMember } = await this.supabase
+                .from('party_members')
+                .select('owner_id, level')
+                .eq('id', shadow.profile_id)
+                .eq('origin_type', 'shadow_heroic')
+                .single();
 
-            if (!logData) return { success: false, error: '無効な英霊IDです。' };
+            if (!heroicMember) return { success: false, error: '無効な英霊IDです。' };
 
-            const level = logData.data?.final_level || shadow.level || 1;
+            const level = heroicMember.level || shadow.level || 1;
             finalContractFee = calcHeroicContractFee(level);
-            heroicOwnerId = logData.user_id;
+            heroicOwnerId = heroicMember.owner_id;
             
         } else if (shadow.origin_type === 'shadow_active') {
             // user_profiles から level/atk/def/hp/job_class を取得して再計算および所在地チェック
@@ -624,8 +623,8 @@ export class ShadowService {
                 origin_type: shadow.origin_type,
                 durability: snapshotHp,
                 max_durability: snapshotHp, // v25: 正しいmax_durabilityを保存
-                // v25: active_shadow のスナップショットステータス
-                ...(shadow.origin_type === 'shadow_active' ? {
+                // v25: active_shadow / shadow_heroic のスナップショットステータス
+                ...((shadow.origin_type === 'shadow_active' || shadow.origin_type === 'shadow_heroic') ? {
                     level: shadow.level || 1,
                     atk: shadow.stats?.atk || 0,
                     def: shadow.stats?.def || 0,

@@ -116,17 +116,17 @@ export class PartyService {
                 slug: slug || member.slug,
                 epithet: npc?.epithet || member.epithet || '',
                 job_class: jobClassJp,
-                level: member.origin_type === 'active_shadow'
+                level: (member.origin_type === 'shadow_active' || member.origin_type === 'shadow_heroic')
                     ? (member.level ?? npc?.level ?? null)
                     : (npc?.level ?? member.level ?? null),
                 hp: currentDurability,
                 max_hp: resolvedMaxHp,
                 durability: currentDurability,
                 max_durability: resolvedMaxHp,
-                atk: member.origin_type === 'active_shadow'
+                atk: (member.origin_type === 'shadow_active' || member.origin_type === 'shadow_heroic')
                     ? (member.atk ?? npc?.attack ?? npc?.atk ?? null)
                     : (npc?.attack ?? npc?.atk ?? member.atk ?? null),
-                def: member.origin_type === 'active_shadow'
+                def: (member.origin_type === 'shadow_active' || member.origin_type === 'shadow_heroic')
                     ? (member.def ?? npc?.defense ?? npc?.def ?? null)
                     : (npc?.defense ?? npc?.def ?? member.def ?? null),
                 image_url: resolvedImageUrl,
