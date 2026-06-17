@@ -198,9 +198,6 @@ export async function POST(req: Request) {
 
         // 累積日数
         let currentTotalDays = user.accumulated_days || 0;
-        if (currentTotalDays === 0 && (user.age || 18) > 18) {
-            currentTotalDays = ((user.age || 18) - 18) * 365 + (user.age_days || 0);
-        }
         updates.accumulated_days = currentTotalDays + daysPassed;
 
         // ═══════════════════════════════════════
