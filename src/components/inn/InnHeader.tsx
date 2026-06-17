@@ -135,7 +135,7 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                             {userProfile?.name || '名もなき旅人'}
                         </h1>
                         <span className="text-[10px] text-blue-200/60 font-mono italic">
-                            Age: {Math.floor((userProfile?.age || 15) + ((userProfile?.accumulated_days || 0) / 365))}
+                            Age: {Math.floor((userProfile?.age || 15) + ((userProfile?.age_days || 0) / 365))}
                         </span>
                     </div>
                 </div>
