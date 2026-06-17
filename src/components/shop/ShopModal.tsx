@@ -399,7 +399,7 @@ export default function ShopModal({ onClose }: Props) {
                                     <p className="text-red-400 font-serif italic mb-6">「...足元は見てねえよ。命が惜しけりゃ、買えるうちに買っておきな。」</p>
                                     <div className="bg-black/80 border border-red-900 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden">
                                         <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-20 mix-blend-overlay"></div>
-                                        <div className="relative z-10 text-left">
+                                        <div className="relative z-10 text-left flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-1">
                                                 <div className="w-10 h-10 rounded-lg bg-gray-900 border border-red-900 flex items-center justify-center shrink-0 overflow-hidden shadow-black shadow-inner">
                                                     <img src="/images/items/item_black_market_elixir.png" alt="禁術の秘薬" className="w-full h-full object-cover" />
@@ -419,7 +419,7 @@ export default function ShopModal({ onClose }: Props) {
 
                                     <div className="bg-black/80 border border-gray-600 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden mt-4">
                                         <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-10 mix-blend-overlay"></div>
-                                        <div className="relative z-10 text-left">
+                                        <div className="relative z-10 text-left flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-1">
                                                 <div className="w-10 h-10 rounded-lg bg-gray-900 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden shadow-black shadow-inner">
                                                     <img src="/images/items/item_launder_scroll.png" alt="帳簿の改竄" className="w-full h-full object-cover" />
