@@ -152,9 +152,9 @@ export async function POST(req: Request) {
             updates.def = Math.max(1, (user.def || 1) - decay.def);
         }
 
-        // バトル敗北ペナルティ
+        // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1）
         let battleDefeatVitPenalty = 0;
-        if (result === 'failure' && battle_defeat) {
+        if (result === 'failure') {
             battleDefeatVitPenalty = 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
