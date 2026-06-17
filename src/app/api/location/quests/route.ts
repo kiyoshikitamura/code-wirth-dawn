@@ -5,6 +5,16 @@ import { calcAlignmentPcts, getUserAlignmentPcts } from '@/lib/alignment';
 
 export const dynamic = 'force-dynamic';
 
+function normalizeNationSlug(nationId: string | null | undefined): string {
+    if (!nationId) return '';
+    const lower = nationId.toLowerCase();
+    if (lower.includes('roland') || lower.includes('empire')) return 'Roland';
+    if (lower.includes('markand') || lower.includes('marcund')) return 'Markand';
+    if (lower.includes('yato')) return 'Yato';
+    if (lower.includes('karyu') || lower.includes('haryu')) return 'Karyu';
+    return nationId;
+}
+
 /**
  * GET /api/location/quests
  * Returns quests separated by type (special / normal) with requirement evaluation.
@@ -182,7 +192,9 @@ export async function GET(req: Request) {
 
             // nation_id: 現在地が指定国でなければ非表示（メインシナリオは除外: 舞台設定であり現在地制限ではない）
             const isMainScenario = q.slug && q.slug.startsWith('main_ep');
-            if (!isMainScenario && reqs.nation_id && currentNationSlug && reqs.nation_id !== currentNationSlug) return false;
+            if (!isMainScenario && reqs.nation_id && currentNationSlug) {
+                if (normalizeNationSlug(reqs.nation_id) !== normalizeNationSlug(currentNationSlug)) return false;
+            }
 
             // location_id: 特定のロケーション(slug)チェック
             if (reqs.location_id) {
