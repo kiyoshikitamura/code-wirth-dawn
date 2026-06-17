@@ -3,6 +3,7 @@ import { getDashboardSupabase } from '@/lib/supabase-dashboard';
 
 export const dynamic = 'force-dynamic';
 
+// Helper to fetch all records in range for views (light-weight since database handles aggregation)
 async function fetchAll<T>(
     queryBuilder: any,
     selectColumns: string,
@@ -33,7 +34,7 @@ function toJstDateStr(dateInput: any): string {
 
 export async function GET(req: Request) {
     try {
-        // 1. 認証チェック
+        // 1. Authorization Check
         const adminKey = req.headers.get('x-admin-key');
         if (!adminKey || adminKey !== process.env.ADMIN_SECRET_KEY) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -41,196 +42,96 @@ export async function GET(req: Request) {
 
         const supabaseServer = getDashboardSupabase();
         if (!supabaseServer) {
-            return NextResponse.json({ error: 'Dashboard Supabase client not initialized. Check DASHBOARD_SUPABASE_URL and DASHBOARD_SUPABASE_SERVICE_ROLE_KEY.' }, { status: 500 });
+            return NextResponse.json({ error: 'Dashboard Supabase client not initialized.' }, { status: 500 });
         }
 
-        // 2. 各データのフェッチ
-        // ユーザープロフィール
-        let profilesData: any[] = [];
-        let profileError: any = null;
+        // GET params
+        const url = new URL(req.url);
+        const daysParam = url.searchParams.get('days');
+        const days = daysParam ? parseInt(daysParam, 10) : 30;
 
-        try {
-            profilesData = await fetchAll<any>(
-                supabaseServer.from('user_profiles'),
-                'created_at, updated_at, gold, level, subscription_tier',
-                'id'
-            );
-        } catch (errCreated: any) {
-            try {
-                profilesData = await fetchAll<any>(
-                    supabaseServer.from('user_profiles'),
-                    'updated_at, gold, level, subscription_tier',
-                    'id'
-                );
-            } catch (errUpdated: any) {
-                profileError = errUpdated;
-            }
-        }
-        
-        if (profileError) {
-            console.error('[Admin KPI] User profiles fetch error:', profileError);
-            return NextResponse.json({ error: 'Failed to fetch user profiles' }, { status: 500 });
-        }
+        // ═══════════════════════════════════════
+        // §1. Query database Views
+        // ═══════════════════════════════════════
 
-        // バトルセッション
-        let battleSessions: any[] = [];
-        try {
-            battleSessions = await fetchAll<any>(
-                supabaseServer.from('battle_sessions'),
-                'created_at, status, user_id',
-                'id'
-            );
-        } catch (battleError) {
-            console.warn('[Admin KPI] Battle sessions fetch error:', battleError);
-        }
+        // A. User Profiles Summary
+        const { data: profileSummary, error: profSumErr } = await supabaseServer
+            .from('user_profile_summary_view')
+            .select('*')
+            .single();
+        if (profSumErr) throw profSumErr;
 
-        // クエスト行動ログ
-        let questLogs: any[] = [];
-        try {
-            questLogs = await fetchAll<any>(
-                supabaseServer.from('quest_activity_logs'),
-                'created_at, user_id, scenario_id, action',
-                'id'
-            );
-        } catch (questLogsErr) {
-            console.warn('[Admin KPI] Quest activity logs fetch error:', questLogsErr);
-        }
+        const totalUsers = profileSummary.total_users || 0;
+        const totalGold = Number(profileSummary.total_gold || 0);
+        const avgGold = Math.round(Number(profileSummary.avg_gold || 0));
+        const maxGold = profileSummary.max_gold || 0;
+        const avgLevel = Math.round(Number(profileSummary.avg_level || 0) * 10) / 10;
 
-        // 決済ログ
-        let paymentLogs: any[] = [];
-        try {
-            paymentLogs = await fetchAll<any>(
-                supabaseServer.from('payment_logs'),
-                'created_at, user_id, amount, gold_amount, type',
-                'id'
-            );
-        } catch (paymentsErr) {
-            console.warn('[Admin KPI] Payment logs fetch error:', paymentsErr);
-        }
+        // B. Level Distribution
+        const { data: levelDist, error: lvlDistErr } = await supabaseServer
+            .from('user_level_distribution_view')
+            .select('*')
+            .single();
+        if (lvlDistErr) throw lvlDistErr;
 
-        // シナリオ一覧
-        const { data: scenarios, error: scenariosError } = await supabaseServer
-            .from('scenarios')
-            .select('id, title, quest_type');
-        if (scenariosError) {
-            console.warn('[Admin KPI] Scenarios fetch error:', scenariosError);
-        }
+        const levelDistribution = {
+            '1-5': levelDist.range_1_5 || 0,
+            '6-10': levelDist.range_6_10 || 0,
+            '11-15': levelDist.range_11_15 || 0,
+            '16+': levelDist.range_16_plus || 0
+        };
 
-        // 3. データ加工
-        const nowMs = Date.now();
-        const oneDayAgo = nowMs - 24 * 60 * 60 * 1000;
-        const thirtyDaysAgo = nowMs - 30 * 24 * 60 * 60 * 1000;
+        // C. Subscription Distribution
+        const { data: subDist, error: subDistErr } = await supabaseServer
+            .from('user_subscription_distribution_view')
+            .select('*')
+            .single();
+        if (subDistErr) throw subDistErr;
 
-        // --- ユーザープロフィール集計 ---
-        let totalGold = 0;
-        let maxGold = 0;
-        let totalLevel = 0;
-        const subscriptionDistribution = { free: 0, basic: 0, premium: 0 };
-        const levelDistribution = { '1-5': 0, '6-10': 0, '11-15': 0, '16+': 0 };
-        const userRegistrationsByDate: { [key: string]: number } = {};
+        const subscriptionDistribution = {
+            free: subDist.free_count || 0,
+            basic: subDist.basic_count || 0,
+            premium: subDist.premium_count || 0
+        };
 
-        const activeUsers24h = new Set<string>();
-        const activeUsers30d = new Set<string>();
+        // D. Quest stats (starts, completes, abandons per scenario)
+        const questStatsData = await fetchAll<any>(
+            supabaseServer.from('quest_activity_stats_view'),
+            'scenario_id, title, quest_type, start_count, complete_count, abandon_count',
+            'scenario_id'
+        );
 
-        (profilesData || []).forEach((profile: any) => {
-            const rawDate = profile.created_at || profile.updated_at;
-            const dateStr = toJstDateStr(rawDate);
-                
-            userRegistrationsByDate[dateStr] = (userRegistrationsByDate[dateStr] || 0) + 1;
+        const questStats = questStatsData.map(q => {
+            const startCount = q.start_count || 0;
+            const completeCount = q.complete_count || 0;
+            const abandonCount = q.abandon_count || 0;
+            const clearRate = startCount > 0 ? Math.round((completeCount / startCount) * 100) : 0;
+            return {
+                id: q.scenario_id,
+                title: q.title,
+                quest_type: q.quest_type,
+                startCount,
+                completeCount,
+                abandonCount,
+                clearRate
+            };
+        }).sort((a, b) => b.startCount - a.startCount);
 
-            // プロフィール更新によるアクティブ判定
-            const updatedTime = new Date(profile.updated_at || Date.now()).getTime();
-            if (updatedTime >= oneDayAgo) activeUsers24h.add(profile.id || '');
-            if (updatedTime >= thirtyDaysAgo) activeUsers30d.add(profile.id || '');
+        const totalQuests = questStats.reduce((sum, q) => sum + q.startCount, 0);
 
-            // サブスク分布
-            const tier = profile.subscription_tier || 'free';
-            if (tier === 'basic') subscriptionDistribution.basic++;
-            else if (tier === 'premium') subscriptionDistribution.premium++;
-            else subscriptionDistribution.free++;
+        // Old ranking format for compatibility
+        const questRanking = questStats.slice(0, 10).map(q => ({
+            id: q.id,
+            title: q.title,
+            count: q.completeCount
+        }));
 
-            // ゴールド集計
-            const gold = profile.gold || 0;
-            totalGold += gold;
-            if (gold > maxGold) maxGold = gold;
+        // E. Payment summary stats
+        const { data: paySummaryData, error: paySumErr } = await supabaseServer
+            .from('payment_summary_view')
+            .select('*');
+        if (paySumErr) throw paySumErr;
 
-            // レベル集計
-            const lvl = profile.level || 1;
-            totalLevel += lvl;
-            if (lvl <= 5) levelDistribution['1-5']++;
-            else if (lvl <= 10) levelDistribution['6-10']++;
-            else if (lvl <= 15) levelDistribution['11-15']++;
-            else levelDistribution['16+']++;
-        });
-
-        const avgGold = profilesData.length > 0 ? Math.round(totalGold / profilesData.length) : 0;
-        const avgLevel = profilesData.length > 0 ? Math.round((totalLevel / profilesData.length) * 10) / 10 : 0;
-
-        // --- バトル・クエストによるアクティブUU集計 ---
-        const userActivityByDate: { [key: string]: Set<string> } = {};
-        const battlesByDate: { [key: string]: { total: number; victory: number; defeat: number; fled: number } } = {};
-        let totalBattles = 0;
-        let totalVictories = 0;
-
-        (battleSessions || []).forEach((session: any) => {
-            const rawDate = session.created_at;
-            const dateStr = toJstDateStr(rawDate);
-            
-            // バトル勝敗集計
-            if (!battlesByDate[dateStr]) {
-                battlesByDate[dateStr] = { total: 0, victory: 0, defeat: 0, fled: 0 };
-            }
-            battlesByDate[dateStr].total++;
-            totalBattles++;
-
-            if (session.status === 'victory') {
-                battlesByDate[dateStr].victory++;
-                totalVictories++;
-            } else if (session.status === 'defeat') {
-                battlesByDate[dateStr].defeat++;
-            } else if (session.status === 'fled') {
-                battlesByDate[dateStr].fled++;
-            }
-
-            // アクティブUU集計
-            if (session.user_id) {
-                if (!userActivityByDate[dateStr]) {
-                    userActivityByDate[dateStr] = new Set<string>();
-                }
-                userActivityByDate[dateStr].add(session.user_id);
-
-                const createdTime = new Date(rawDate).getTime();
-                if (createdTime >= oneDayAgo) activeUsers24h.add(session.user_id);
-                if (createdTime >= thirtyDaysAgo) activeUsers30d.add(session.user_id);
-            }
-        });
-
-        // クエストログによるアクティブUU集計
-        let totalQuests = 0;
-        (questLogs || []).forEach((log: any) => {
-            const rawDate = log.created_at;
-            const dateStr = toJstDateStr(rawDate);
-
-            if (log.action === 'start') {
-                totalQuests++;
-            }
-
-            if (log.user_id) {
-                if (!userActivityByDate[dateStr]) {
-                    userActivityByDate[dateStr] = new Set<string>();
-                }
-                userActivityByDate[dateStr].add(log.user_id);
-
-                const createdTime = new Date(rawDate).getTime();
-                if (createdTime >= oneDayAgo) activeUsers24h.add(log.user_id);
-                if (createdTime >= thirtyDaysAgo) activeUsers30d.add(log.user_id);
-            }
-        });
-
-        const dau = activeUsers24h.size;
-        const mau = activeUsers30d.size;
-
-        // --- 課金決済集計 ---
         let totalRevenue = 0;
         let subscriptionRevenue = 0;
         let subscriptionCount = 0;
@@ -238,63 +139,58 @@ export async function GET(req: Request) {
         let goldPurchaseCount = 0;
         let totalGoldCharged = 0;
 
-        const payingUsers24h = new Set<string>();
-        const payingUsers30d = new Set<string>();
+        (paySummaryData || []).forEach(p => {
+            const rev = Number(p.revenue || 0);
+            const count = p.count || 0;
+            const gold = Number(p.total_gold || 0);
 
-        const payingUsersByDate: { [key: string]: Set<string> } = {};
-        const paymentsByDate: { [key: string]: number } = {};
-
-        (paymentLogs || []).forEach((log: any) => {
-            const amount = log.amount || 0;
-            totalRevenue += amount;
-
-            if (log.type === 'subscription') {
-                subscriptionRevenue += amount;
-                subscriptionCount++;
-            } else if (log.type === 'gold_purchase') {
-                goldPurchaseRevenue += amount;
-                goldPurchaseCount++;
-                totalGoldCharged += log.gold_amount || 0;
+            totalRevenue += rev;
+            if (p.type === 'subscription') {
+                subscriptionRevenue = rev;
+                subscriptionCount = count;
+            } else if (p.type === 'gold_purchase') {
+                goldPurchaseRevenue = rev;
+                goldPurchaseCount = count;
+                totalGoldCharged = gold;
             }
-
-            const rawDate = log.created_at;
-            const dateStr = toJstDateStr(rawDate);
-
-            if (log.user_id) {
-                if (!payingUsersByDate[dateStr]) {
-                    payingUsersByDate[dateStr] = new Set<string>();
-                }
-                payingUsersByDate[dateStr].add(log.user_id);
-
-                const createdTime = new Date(rawDate).getTime();
-                if (createdTime >= oneDayAgo) payingUsers24h.add(log.user_id);
-                if (createdTime >= thirtyDaysAgo) payingUsers30d.add(log.user_id);
-            }
-
-            paymentsByDate[dateStr] = (paymentsByDate[dateStr] || 0) + amount;
         });
 
-        const dpu = payingUsers24h.size;
-        const mpu = payingUsers30d.size;
+        // F. Daily time-series stats (last 366 days in JST)
+        const dailyBasicData = await fetchAll<any>(
+            supabaseServer.from('daily_basic_stats_view'),
+            'date, new_users, total_battles, victories, defeats, fleds, revenue, dpu, dau',
+            'date'
+        );
 
-        // GET params
-        const url = new URL(req.url);
-        const daysParam = url.searchParams.get('days');
-        const days = daysParam ? parseInt(daysParam, 10) : 30;
+        // G. Light-weight user IDs per day to compute sliding window MAU/MPU
+        const dailyActiveUserIds = await fetchAll<any>(
+            supabaseServer.from('daily_active_user_ids_view'),
+            'date, user_id',
+            'date'
+        );
+        const dailyPayingUserIds = await fetchAll<any>(
+            supabaseServer.from('daily_paying_user_ids_view'),
+            'date, user_id',
+            'date'
+        );
 
-        // --- 過去N日間の日別KPI集計 ---
-        const targetDaysList: string[] = [];
-        for (let i = days - 1; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            targetDaysList.push(toJstDateStr(d));
-        }
+        // Map user IDs sets per date
+        const activeUsersByDate: Record<string, Set<string>> = {};
+        const payingUsersByDate: Record<string, Set<string>> = {};
 
-        // windowDays日間の一意のアクティブユーザー数を計算するヘルパー
-        const getUniqueUsersInWindow = (activityMap: { [key: string]: Set<string> }, targetDateStr: string, windowDays: number = 30): number => {
+        dailyActiveUserIds.forEach(row => {
+            if (!activeUsersByDate[row.date]) activeUsersByDate[row.date] = new Set();
+            activeUsersByDate[row.date].add(row.user_id);
+        });
+        dailyPayingUserIds.forEach(row => {
+            if (!payingUsersByDate[row.date]) payingUsersByDate[row.date] = new Set();
+            payingUsersByDate[row.date].add(row.user_id);
+        });
+
+        // Helper to compute unique count in a window
+        const getUniqueUsersInWindow = (activityMap: Record<string, Set<string>>, targetDateStr: string, windowDays: number = 30): number => {
             const targetDate = new Date(targetDateStr);
             const uniqueUsers = new Set<string>();
-            
             for (let i = 0; i < windowDays; i++) {
                 const d = new Date(targetDate);
                 d.setDate(d.getDate() - i);
@@ -307,98 +203,75 @@ export async function GET(req: Request) {
             return uniqueUsers.size;
         };
 
+        // H. Map daily KPI array for the requested range
+        const targetDaysList: string[] = [];
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            targetDaysList.push(toJstDateStr(d));
+        }
+
+        const basicDataMap: Record<string, any> = {};
+        dailyBasicData.forEach(row => {
+            basicDataMap[row.date] = row;
+        });
+
         const dailyKPI = targetDaysList.map(date => {
-            const battles = battlesByDate[date] || { total: 0, victory: 0, defeat: 0, fled: 0 };
+            const basic = basicDataMap[date] || {
+                new_users: 0,
+                total_battles: 0,
+                victories: 0,
+                defeats: 0,
+                fleds: 0,
+                revenue: 0,
+                dpu: 0,
+                dau: 0
+            };
             return {
                 date,
-                newUsers: userRegistrationsByDate[date] || 0,
-                totalBattles: battles.total,
-                victories: battles.victory,
-                defeats: battles.defeat,
-                fleds: battles.fled,
-                winRate: battles.total > 0 ? Math.round((battles.victory / battles.total) * 100) : 0,
-                dau: userActivityByDate[date] ? userActivityByDate[date].size : 0,
-                mau: getUniqueUsersInWindow(userActivityByDate, date, 30),
-                revenue: paymentsByDate[date] || 0,
-                dpu: payingUsersByDate[date] ? payingUsersByDate[date].size : 0,
+                newUsers: basic.new_users,
+                totalBattles: basic.total_battles,
+                victories: basic.victories,
+                defeats: basic.defeats,
+                fleds: basic.fleds,
+                winRate: basic.total_battles > 0 ? Math.round((basic.victories / basic.total_battles) * 100) : 0,
+                dau: basic.dau,
+                mau: getUniqueUsersInWindow(activeUsersByDate, date, 30),
+                revenue: basic.revenue,
+                dpu: basic.dpu,
                 mpu: getUniqueUsersInWindow(payingUsersByDate, date, 30)
             };
         });
 
-        // --- 全クエスト統計の算出 ---
-        const scenarioMap: Record<number | string, { title: string; quest_type: string }> = {};
-        (scenarios || []).forEach((s: any) => {
-            scenarioMap[s.id] = { title: s.title, quest_type: s.quest_type || 'main' };
+        // Sum overall total battles and wins from all daily stats
+        let totalBattles = 0;
+        let totalVictories = 0;
+        dailyBasicData.forEach(row => {
+            totalBattles += row.total_battles || 0;
+            totalVictories += row.victories || 0;
         });
+        const winRate = totalBattles > 0 ? Math.round((totalVictories / totalBattles) * 100) : 0;
 
-        const questStatsMap: Record<number | string, { id: number | string; title: string; quest_type: string; startCount: number; completeCount: number; abandonCount: number }> = {};
-        
-        // ログが存在するシナリオをまず集計
-        (questLogs || []).forEach((log: any) => {
-            const sId = log.scenario_id;
-            if (!questStatsMap[sId]) {
-                const sInfo = scenarioMap[sId] || { title: `シナリオ ID ${sId}`, quest_type: 'unknown' };
-                questStatsMap[sId] = {
-                    id: sId,
-                    title: sInfo.title,
-                    quest_type: sInfo.quest_type,
-                    startCount: 0,
-                    completeCount: 0,
-                    abandonCount: 0
-                };
-            }
-
-            if (log.action === 'start') {
-                questStatsMap[sId].startCount++;
-            } else if (log.action === 'complete') {
-                questStatsMap[sId].completeCount++;
-            } else if (log.action === 'abandon') {
-                questStatsMap[sId].abandonCount++;
-            }
-        });
-
-        // 全シナリオ（ログがないものも含める）を網羅する
-        (scenarios || []).forEach((s: any) => {
-            if (!questStatsMap[s.id]) {
-                questStatsMap[s.id] = {
-                    id: s.id,
-                    title: s.title,
-                    quest_type: s.quest_type || 'main',
-                    startCount: 0,
-                    completeCount: 0,
-                    abandonCount: 0
-                };
-            }
-        });
-
-        const questStats = Object.values(questStatsMap).map(q => {
-            const clearRate = q.startCount > 0 ? Math.round((q.completeCount / q.startCount) * 100) : 0;
-            return {
-                ...q,
-                clearRate
-            };
-        }).sort((a, b) => b.startCount - a.startCount); // 開始回数が多い順
-
-        // 互換性のための古いランキング形式
-        const questRanking = questStats.slice(0, 10).map(q => ({
-            id: q.id,
-            title: q.title,
-            count: q.completeCount
-        }));
+        // Extract latest values for DAU/MAU/DPU/MPU summaries
+        const todayStr = toJstDateStr(new Date());
+        const dau = activeUsersByDate[todayStr] ? activeUsersByDate[todayStr].size : 0;
+        const mau = getUniqueUsersInWindow(activeUsersByDate, todayStr, 30);
+        const dpu = payingUsersByDate[todayStr] ? payingUsersByDate[todayStr].size : 0;
+        const mpu = getUniqueUsersInWindow(payingUsersByDate, todayStr, 30);
 
         return NextResponse.json({
             summary: {
-                totalUsers: profilesData.length,
+                totalUsers,
                 totalGold,
                 avgGold,
                 maxGold,
                 avgLevel,
                 totalBattles,
-                winRate: totalBattles > 0 ? Math.round((totalVictories / totalBattles) * 100) : 0,
+                winRate,
                 dau,
                 mau,
                 totalQuests,
-                pendingReports: 0, // 互換性のため
+                pendingReports: 0,
                 
                 // Payments
                 totalRevenue,
@@ -412,7 +285,7 @@ export async function GET(req: Request) {
             },
             levelDistribution,
             subscriptionDistribution,
-            questRanking, // 互換性のため
+            questRanking,
             questStats,
             dailyKPI
         });
