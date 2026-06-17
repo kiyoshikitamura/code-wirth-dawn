@@ -15,10 +15,10 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3024,book_heal,聖書:治癒,14,4000,2,loc_holy_empire,3,false,/images/items/book_heal_s.png,ローラン: 単体大回復。
 3025,scroll_holy_wall,巻物:聖壁,15,7000,3,loc_holy_empire,4,false,/images/items/skill_barrier_all.png,ローラン: 全体バリア。
 3026,book_sand_trap,教本:砂の罠,16,2000,1,loc_marcund,3,false,/images/items/book_sand_trap.png,マルカンド: 拘束付与。
-3027,book_sandstorm,教本:砂塵の目眩まし,17,4000,2,loc_marcund,3,false,/images/items/book_sandstorm.png,マルカンド: 全体暗闇。
+3027,book_sandstorm,教本:砂塵の目眩まし,17,4000,2,loc_marcund,3,false,/images/items/book_sandstorm.png,砂嵐で視界を奪う。2ターンの間、敵全体の攻撃を50%の確率でミスさせる（目潰し）。
 3028,book_poison_dagger,教本:毒刃,18,4500,2,loc_marcund,3,false,/images/items/book_poison_dagger.png,マルカンド: 毒付与攻撃。
 3029,scroll_mirage,巻物:蜃気楼,19,6500,3,loc_marcund,4,false,/images/items/scroll_mirage.png,マルカンド: 全体回避UP。
-3030,book_oasis_water,教本:オアシスの水,20,5000,2,loc_marcund,4,false,/images/items/book_oasis_water.png,マルカンド: 状態異常回復。
+3030,book_oasis_water,教本:オアシスの水,20,5000,2,loc_marcund,4,false,/images/items/book_oasis_water.png,霊泉の水で状態異常を解除する。60の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。
 3031,book_swallow_rev,奥義書:ツバメ返し,21,7000,3,loc_yatoshin,4,false,/images/items/book_swallow_rev.png,夜刀: カウンター斬撃。
 3032,book_kunai,教本:クナイ投げ,22,3000,2,loc_yatoshin,2,false,/images/items/book_kunai.png,夜刀: 出血付与。
 3033,book_shadow_stitch,教本:影縫い,23,4500,2,loc_yatoshin,3,false,/images/items/book_shadow_stitch.png,夜刀: スタン付与。

@@ -85,7 +85,7 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 425,item_karyu_charm,護法符,consumable,,1200,loc_haryu,3,false,"{""target"":""enemy"",""effect_id"":""stun"",""use_timing"":""battle"",""description"":""神朝の霊符を投げつけ、敵をスタンさせる。"",""effect_duration"":1}"
 426,item_yato_poison,毒塗りの粉,consumable,,800,loc_yatoshin,2,false,"{""power"":10,""effect"":""poison_weapon"",""target"":""enemy"",""duration"":3,""effect_id"":""poison"",""use_timing"":""battle"",""effect_duration"":3}"
 427,item_yato_smoke,忍玉,consumable,,600,loc_yatoshin,2,false,"{""escape"":true,""use_timing"":""battle"",""description"":""忍者が用いる特殊な逃走玉。確実に戦闘から離脱できる。""}"
-428,item_oasis_water,霊泉の水,consumable,,1000,loc_marcund,3,false,"{""heal"":200,""effect"":""regen"",""duration"":5,""effect_id"":""regen"",""use_timing"":""battle""}"
+428,item_oasis_water,オアシスの水,consumable,,1000,loc_marcund,3,false,"{""heal"":60,""effect_id"":""cure_status"",""use_timing"":""battle"",""description"":""霊泉の水で状態異常を解除する。60の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。""}"
 429,item_desert_spice,熱砂の香辛料,consumable,,900,loc_marcund,2,false,"{""effect"":""berserk"",""duration"":3,""effect_id"":""atk_up"",""use_timing"":""battle"",""def_penalty"":10,""effect_duration"":8,""description"":""熱砂の香辛料。ATKが8ターン上昇するが、DEFが低下する副作用あり。""}"
 430,item_trade_iron,良質な鉄鉱石,trade_good,,100,,2,false,"{""category"":""trade_good"",""description"":""山岳の鉱脈から採掘された不純物の少ない鉄鉱石。鑑定士が大喜びする品質。""}"
 431,item_trade_silk,煌びやかな絹織物,trade_good,,300,,3,false,"{""category"":""trade_good"",""description"":""東方の織師が繊細な手仕事で織り上げた絹。貴族の間で高値で取引される。""}"

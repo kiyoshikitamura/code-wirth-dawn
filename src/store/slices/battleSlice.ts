@@ -1401,10 +1401,14 @@ export const createBattleSlice = (
         {
             const resolvedEffectIdForLog = effectInfo?.effectId || (card?.effect_id as string | undefined);
             if (resolvedEffectIdForLog && isValidEffectId(resolvedEffectIdForLog) && !['atk_up', 'def_up', 'def_up_heavy', 'regen', 'stun_immune', 'evasion_up', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectIdForLog)) {
-                if (resistedDebuff === resolvedEffectIdForLog) {
-                    newMessages.push(`→ ${targetEnemy?.name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
-                } else if (damage > 0 || effectInfo?.effectType === 'debuff_enemy') {
-                    newMessages.push(`→ ${targetEnemy?.name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                if (isAoe) {
+                    newMessages.push(`→ 敵全体に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                } else {
+                    if (resistedDebuff === resolvedEffectIdForLog) {
+                        newMessages.push(`→ ${targetEnemy?.name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
+                    } else if (damage > 0 || effectInfo?.effectType === 'debuff_enemy') {
+                        newMessages.push(`→ ${targetEnemy?.name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                    }
                 }
             }
         }

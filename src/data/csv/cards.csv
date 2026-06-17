@@ -18,7 +18,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 17,card_sandstorm,砂塵の目眩まし,Support,3,none,0,0,all_enemies,blind,/images/items/book_sandstorm.png,砂嵐で視界を奪う。2ターンの間、敵全体の攻撃を50%の確率でミスさせる（目潰し）。
 18,card_poison_dagger,毒刃,Skill,2,none,0,25,single_enemy,poison,/images/items/book_poison_dagger.png,毒を塗った短刀で攻撃する。25のダメージを与え、3ターンの間、毎ターンHP5%の毒ダメージを付与する。
 19,card_mirage,蜃気楼,Support,3,none,0,0,all_allies,evasion_up,/images/items/scroll_mirage.png,蜃気楼の幻影でパーティ全体を守る。3ターンの間、パーティ全体が敵の攻撃を30%の確率で回避する。
-20,card_oasis_water,オアシスの水,Heal,2,none,0,60,single_ally,cure_status,/images/items/book_oasis_water.png,霊泉の水で状態異常を解除する。60の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。
+20,card_oasis_water,オアシスの水,Heal,2,none,0,60,self,cure_status,/images/items/book_oasis_water.png,霊泉の水で状態異常を解除する。60の体力を回復し、毒・出血・スタン等すべての状態異常を即座に解除する。
 21,card_swallow_rev,ツバメ返し,Skill,3,none,0,60,single_enemy,,/images/items/book_swallow_rev.png,神速の抜刀術で敵を切り払う高威力の一撃。防御カードを使ったかのような素早さで60の大ダメージを叩き込む。
 22,card_kunai,クナイ投げ,Skill,1,none,0,15,single_enemy,bleed,/images/items/book_kunai.png,素早くクナイを投擲する。15のダメージとともに2ターンの間、出血（カード使用ごとに3の追加ダメージ）を付与する。
 23,card_shadow_stitch,影縫い,Support,2,none,0,0,single_enemy,stun,/images/items/book_shadow_stitch.png,敵の影を縫いとめて動きを封じる。2ターンの間、敵を完全に行動不能（スタン）にする。ダメージなし。
