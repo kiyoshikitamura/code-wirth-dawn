@@ -1162,7 +1162,7 @@ export const createBattleSlice = (
                         const eName = effectInfo.effectId ? getEffectName(effectInfo.effectId) : card.name;
                         logMsg = `${targetEnemy.name}に${card.name}を使用！ ${eName}を付与！`;
                     }
-                    if (card.target_type === 'all_enemies') {
+                    if (card.target_type === 'all_enemies' || effectInfo.target_type === 'all_enemies') {
                         isAoe = true;
                         const pwr = card.power && card.power > 0 ? `(${card.power}%)` : '';
                         logMsg = `敵全体に${card.name}を使用！ ${effectInfo.effectId ? getEffectName(effectInfo.effectId) + pwr : ''}を付与！`;
@@ -1238,14 +1238,18 @@ export const createBattleSlice = (
                     }
 
                     if (effectInfo.cureType === 'status') {
-                        set(state => ({ battleState: { ...state.battleState, player_effects: [] } }));
+                        const statusAilments: StatusEffectId[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse'];
+                        const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !statusAilments.includes(e.id));
+                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
                         logMsg = `${card.name}を使用！${healMsg}状態異常を回復した！`;
                     } else if (effectInfo.cureType === 'debuff') {
                         const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !['atk_down', 'def_down'].includes(e.id));
                         set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
                         logMsg = `${card.name}を使用！${healMsg}デバフを解除した！`;
                     } else {
-                        set(state => ({ battleState: { ...state.battleState, player_effects: [] } }));
+                        const statusAilments: StatusEffectId[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'atk_down', 'def_down'];
+                        const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !statusAilments.includes(e.id));
+                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
                         logMsg = `${card.name}を使用！${healMsg}状態を正常に戻した！`;
                     }
                     break;
@@ -1341,16 +1345,23 @@ export const createBattleSlice = (
 
         // Apply Damage & Effects to Enemies
         let resistedDebuff: string | null = null; // v2.9.3k: レジスト判定結果
+        const resistedEnemies: string[] = [];
+        const affectedEnemies: string[] = [];
         let newEnemies = battleState.enemies.map(e => {
             if (isAoe && e.hp > 0) {
                 let newHp = Math.max(0, e.hp - damage);
                 let newEffects = (e.status_effects || []) as StatusEffect[];
                 if (effectInfo?.effectId) {
                     const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
-                    if (!isSelfBuff && rollDebuffSuccess(effectInfo.effectId)) {
-                        const isStunAoe = effectInfo.effectId === 'stun' || effectInfo.effectId === 'bind';
-                        const aoeDuration = isStunAoe ? (effectInfo?.effectDuration || 3) + 1 : (effectInfo?.effectDuration || 3);
-                        newEffects = applyEffect(newEffects, effectInfo.effectId, aoeDuration);
+                    if (!isSelfBuff) {
+                        if (rollDebuffSuccess(effectInfo.effectId)) {
+                            const isStunAoe = effectInfo.effectId === 'stun' || effectInfo.effectId === 'bind';
+                            const aoeDuration = isStunAoe ? (effectInfo?.effectDuration || 3) + 1 : (effectInfo?.effectDuration || 3);
+                            newEffects = applyEffect(newEffects, effectInfo.effectId, aoeDuration);
+                            affectedEnemies.push(e.name);
+                        } else {
+                            resistedEnemies.push(e.name);
+                        }
                     }
                 }
                 return { ...e, hp: newHp, status_effects: newEffects };
@@ -1402,7 +1413,12 @@ export const createBattleSlice = (
             const resolvedEffectIdForLog = effectInfo?.effectId || (card?.effect_id as string | undefined);
             if (resolvedEffectIdForLog && isValidEffectId(resolvedEffectIdForLog) && !['atk_up', 'def_up', 'def_up_heavy', 'regen', 'stun_immune', 'evasion_up', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectIdForLog)) {
                 if (isAoe) {
-                    newMessages.push(`→ 敵全体に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                    affectedEnemies.forEach(name => {
+                        newMessages.push(`→ ${name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                    });
+                    resistedEnemies.forEach(name => {
+                        newMessages.push(`→ ${name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
+                    });
                 } else {
                     if (resistedDebuff === resolvedEffectIdForLog) {
                         newMessages.push(`→ ${targetEnemy?.name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);

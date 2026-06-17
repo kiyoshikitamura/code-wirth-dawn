@@ -205,10 +205,22 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             const isHealCard = card.target_type === 'single_ally' ||
                 cardEffect.effectType === 'heal' ||
                 card.type === 'Heal' || card.name.includes('回復') || card.name.includes('治癒') || card.name.includes('応急') || card.name.includes('ヒール') || card.name.includes('癒');
-            const isAllyHeal = isHealCard && cardEffect.effectType !== 'buff_party';
-            if (isAllyHeal && (battleState.party?.length ?? 0) > 0) {
+            const isAllyHeal = isHealCard && cardEffect.effectType !== 'buff_party' && cardEffect.effectType !== 'cure_self';
+            if (isAllyHeal) {
                 setSelectedCardIndex(null);
-                setHealTargetMode({ cardIndex: index, card });
+                if ((battleState.party?.length ?? 0) > 0) {
+                    setHealTargetMode({ cardIndex: index, card });
+                } else {
+                    // ソロ時は自分自身をターゲットにして即時実行
+                    setActiveEffect('BUFF');
+                    setTimeout(() => setActiveEffect(null), 700);
+                    try {
+                        setIsActioning(true);
+                        await attackEnemy(card, 'player');
+                    } finally {
+                        setIsActioning(false);
+                    }
+                }
                 return;
             }
 

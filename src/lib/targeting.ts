@@ -76,6 +76,10 @@ export function validateCardUse(
         }
 
         case 'single_ally': {
+            // 自身を対象にする場合はチェックをスキップして通過
+            if (targetId === 'player') {
+                break;
+            }
             // 味方NPCが存在し、targetIdが味方のIDであること
             if (!battleState.party || battleState.party.length === 0) {
                 return { valid: false, error: '対象の味方がいない！' };
@@ -162,7 +166,8 @@ export function getDefaultTarget(
                 );
                 return String(sorted[0].id);
             }
-            return undefined;
+            // パーティメンバーがいない（ソロプレイ）の場合は自分自身をデフォルトとする
+            return 'player';
         }
 
         default:

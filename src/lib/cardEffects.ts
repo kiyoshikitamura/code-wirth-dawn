@@ -5,7 +5,7 @@
  * gameStore.ts の attackEnemy() から呼び出される。
  */
 
-import { Card } from '@/types/game';
+import { Card, TargetType } from '@/types/game';
 import { StatusEffectId } from '@/lib/statusEffects';
 
 // ─── 効果タイプ定義 ──────────────────────────────────────────
@@ -35,6 +35,7 @@ export interface CardEffectInfo {
     defValue?: number;            // def_up付与時のDEF加算値（提案A）
     postRegen?: boolean;          // heal後にregenを付与するか
     cureType?: 'status' | 'debuff'; // cure_self 時の解除タイプ
+    target_type?: TargetType;     // ターゲットタイプ明示 (v5.5)
 }
 
 // ─── カードID → 効果マッピング (cards.csv 全対応) ─────────────
@@ -61,7 +62,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
 
     // ─── マルカンド (16-20) ──────────────────────────────────────
     '16': { effectType: 'debuff_enemy', effectId: 'bind', effectDuration: 1, skipDamage: true },   // 砂の罠（拘束）
-    '17': { effectType: 'debuff_enemy', effectId: 'blind', effectDuration: 2, skipDamage: true },   // 砂塵（目潰し）
+    '17': { effectType: 'debuff_enemy', effectId: 'blind', effectDuration: 2, target_type: 'all_enemies', skipDamage: true },   // 砂塵（目潰し）
     '18': { effectType: 'attack', effectId: 'poison', effectDuration: 3 },                // 毒刃
     '19': { effectType: 'buff_party', effectId: 'evasion_up', effectDuration: 3, skipDamage: true },// 蜃気楼（回避UP）
     '20': { effectType: 'cure_self', cureType: 'status', skipDamage: true },              // オアシスの水（状態異常解除）
@@ -75,7 +76,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
 
     // ─── 華龍神朝 (26-30) ────────────────────────────────────────
     '26': { effectType: 'heal', effectId: 'regen', effectDuration: 3, postRegen: true, skipDamage: true }, // 氣の癒やし
-    '27': { effectType: 'debuff_enemy', effectId: 'atk_down', effectDuration: 2, skipDamage: true },        // 龍の咆哮（敵ATK DOWN）
+    '27': { effectType: 'debuff_enemy', effectId: 'atk_down', effectDuration: 2, target_type: 'all_enemies', skipDamage: true },        // 龍の咆哮（敵ATK DOWN）
     '28': { effectType: 'buff_self', effectId: 'def_up_heavy', effectDuration: 3, defValue: 30, skipDamage: true }, // 鉄布衫
     '29': { effectType: 'multi_attack' },                                                  // 連撃（2回攻撃）
     '30': { effectType: 'pierce_attack' },                                                 // 飛刀（DEF無視貫通）
@@ -105,7 +106,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '52': { effectType: 'pierce_attack' },                                                 // 虚空斬り（DEF無視）
     '53': { effectType: 'heal', effectId: 'regen', effectDuration: 3, postRegen: true, skipDamage: true }, // 加護の祈り
     '54': { effectType: 'aoe_attack', effectId: 'bleed', effectDuration: 2 },              // 死の舞踊
-    '55': { effectType: 'debuff_enemy', effectId: 'stun', effectDuration: 2, skipDamage: true }, // 時止め（スタン）
+    '55': { effectType: 'debuff_enemy', effectId: 'stun', effectDuration: 2, target_type: 'all_enemies', skipDamage: true }, // 時止め（スタン）
 
     // ─── 闇市 (56-60) ─────────────────────────────────────────────
     '56': { effectType: 'attack', effectId: 'drain' as any },                               // 吸血（ダメージの50%回復）
@@ -160,7 +161,10 @@ export function getCardEffectInfo(card: Card): CardEffectInfo {
 
     // 1. 明示的マッピング
     if (CARD_EFFECT_MAP[baseId]) {
-        return CARD_EFFECT_MAP[baseId];
+        return {
+            ...CARD_EFFECT_MAP[baseId],
+            target_type: CARD_EFFECT_MAP[baseId].target_type || card.target_type
+        };
     }
 
     // 2. card.effect_id からの推定
