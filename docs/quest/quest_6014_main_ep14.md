@@ -37,7 +37,7 @@
 
 ## 2. 報酬定義
 ```
-Exp:400|Gold:2000|Rep:20|Order:5
+Exp:400|Gold:2000|Rep:20|Order:5|Items:item_pass_roland
 ```
 
 ---
@@ -305,7 +305,7 @@ start → start_02 → volg_join → arrival_01 → arrival_02
 ```text
 聖王都レガリアを目指し、あなたの最後の旅が始まった。
 ```
-**rewards:** Exp:400, Gold:2000, Rep:20, Order:5
+**rewards:** Exp:400, Gold:2000, Rep:20, Order:5, Items:item_pass_roland
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_izumo_ruined

@@ -36,7 +36,7 @@
 
 ## 2. 報酬定義
 ```
-Exp:300|Gold:600|Rep:20|Order:5|Items:502
+Exp:300|Gold:500|Rep:15|Justice:10|Items:502,item_pass_karyu
 ```
 
 ---
@@ -262,7 +262,7 @@ start → start_02 → start_03 → interior_01 → interior_02
 ```text
 暗闇の神殿を背に、あなたは新たな一歩を踏み出した。
 ```
-**rewards:** Exp:300, Gold:600, Rep:20, Order:5, item_id: 502
+**rewards:** Exp:300, Gold:500, Rep:15, Justice:10, Items:502, item_pass_karyu
 
 #### `end_failure`（end_failure）
 **演出:** bg: bg_boss_altar

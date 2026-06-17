@@ -38,7 +38,7 @@
 ## 2. 報酬定義
 
 ```
-Exp:180|Gold:300|Rep:10|Order:5
+Exp:180|Gold:700|Rep:10|Justice:5|Items:item_pass_yato
 ```
 
 ---
@@ -315,7 +315,7 @@ start
 ```text
 試練を乗り越え、あなたは堂々と夜刀神国の地へと足を踏み入れた。
 ```
-**rewards:** Exp:180, Gold:300, Rep:10, Order:5
+**rewards:** Exp:180, Gold:700, Rep:10, Justice:5, Items:item_pass_yato
 
 #### `end_failure_01`（text）
 **演出:** bg: bg_road_night, bgm: bgm_quest_tense

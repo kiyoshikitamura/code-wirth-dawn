@@ -37,7 +37,7 @@
 ## 2. 報酬定義
 
 ```
-Exp:150|Gold:400|Rep:10|Order:5
+Exp:150|Gold:400|Rep:10|Order:5|Items:item_pass_markand
 ```
 
 ---
@@ -283,7 +283,7 @@ start
 ```text
 真実を知ってしまった以上、もうただの傭兵としては生きられない。
 ```
-**rewards:** Exp:150, Gold:400, Rep:10, Order:5
+**rewards:** Exp:150, Gold:400, Rep:10, Order:5, Items:item_pass_markand
 
 #### `end_failure_01`（text）
 **演出:** bg: bg_wasteland, bgm: bgm_quest_tense

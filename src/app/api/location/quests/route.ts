@@ -56,7 +56,7 @@ export async function GET(req: Request) {
             supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
             // v4.2: まず location の name と ruling_nation_id を取得（world_states は location_name FK のため別クエリ）
             locationId
-                ? supabaseServer.from('locations').select('name, ruling_nation_id').eq('id', locationId).maybeSingle()
+                ? supabaseServer.from('locations').select('name, slug, ruling_nation_id').eq('id', locationId).maybeSingle()
                 : Promise.resolve({ data: null }),
             supabaseServer.from('scenarios')
                 .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
@@ -182,7 +182,13 @@ export async function GET(req: Request) {
 
             // nation_id: 現在地が指定国でなければ非表示（メインシナリオは除外: 舞台設定であり現在地制限ではない）
             const isMainScenario = q.slug && q.slug.startsWith('main_ep');
-            if (!isMainScenario && reqs.nation_id && locationId && reqs.nation_id !== locationId) return false;
+            if (!isMainScenario && reqs.nation_id && currentNationSlug && reqs.nation_id !== currentNationSlug) return false;
+
+            // location_id: 特定のロケーション(slug)チェック
+            if (reqs.location_id) {
+                const currentLocSlug = locationResult.data?.slug;
+                if (!currentLocSlug || currentLocSlug !== reqs.location_id) return false;
+            }
 
             // event_trigger: イベントトリガー型は専用イベント発生時のみ表示（未実装のため常に非表示）
             if (reqs.event_trigger) return false;
