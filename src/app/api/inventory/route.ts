@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         }
 
         // 2. Check if already exists in inventory (stackable?)
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseServer
             .from('inventory')
             .select('id, quantity')
             .eq('user_id', userId)
@@ -77,18 +77,25 @@ export async function POST(req: Request) {
             .maybeSingle();
 
         if (existing) {
-            const { error } = await supabase
+            // 爆薬(ID: 3010 / item_explosive)の複数所持制限: すでに持っているなら追加をスキップ
+            if (item.id === 3010) {
+                console.log(`[Inventory POST] Skip adding item_explosive as user ${userId} already owns it.`);
+                return NextResponse.json({ success: true, item_name: item.name, skipped: true });
+            }
+            const { error } = await supabaseServer
                 .from('inventory')
                 .update({ quantity: existing.quantity + safeQuantity })
                 .eq('id', existing.id);
             if (error) throw error;
         } else {
-            const { error } = await supabase
+            // 爆薬の新規追加の場合は数量を強制的に 1 に制限
+            const finalQuantity = item.id === 3010 ? 1 : safeQuantity;
+            const { error } = await supabaseServer
                 .from('inventory')
                 .insert({
                     user_id: userId,
                     item_id: item.id,
-                    quantity: safeQuantity,
+                    quantity: finalQuantity,
                     is_equipped: false,
                     is_skill: false,
                     acquired_at: new Date().toISOString()

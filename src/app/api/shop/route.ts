@@ -114,7 +114,7 @@ export async function GET(req: Request) {
             'item_bear_pelt', 'item_supply_box', 'item_healing_herb',
             'item_tengu_fan', 'item_bandit_treasure',
             // 特殊入手のみ（ショップ販売不可）
-            'item_royal_decree',
+            'item_royal_decree', 'item_explosive',
         ]);
         const filteredItems = allItems.filter(item => {
             // 除外リストのアイテムはショップに並べない
@@ -415,6 +415,18 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
             .eq('item_id', item.id);
         if (count && count > 0) {
             return NextResponse.json({ error: 'この通行許可証は既に所持しています。' }, { status: 400 });
+        }
+    }
+
+    // 2b-2. 爆薬の重複購入チェック
+    if (item.slug === 'item_explosive') {
+        const { count } = await supabaseService
+            .from('inventory')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+            .eq('item_id', item.id);
+        if (count && count > 0) {
+            return NextResponse.json({ error: 'このアイテムは既に所持しています。' }, { status: 400 });
         }
     }
 

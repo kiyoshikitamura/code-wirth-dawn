@@ -20,14 +20,44 @@ WHERE id = 6014;
 
 -- 2. 以前補填を受けた対象ユーザーに対して、補填枚数に応じたゴールドを付与
 -- (a) b0bf1b44-df04-4bae-b445-e2b53bb949a6: 4枚補填されたため 96,000G (24,000 * 4) を付与
-UPDATE user_profiles 
-SET gold = gold + 96000 
-WHERE id = 'b0bf1b44-df04-4bae-b445-e2b53bb949a6';
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.user_chronicles 
+    WHERE user_id = 'b0bf1b44-df04-4bae-b445-e2b53bb949a6' 
+      AND event_type = 'system_refund' 
+      AND title = '通行証不具合の補填'
+  ) THEN
+    UPDATE public.user_profiles 
+    SET gold = gold + 96000, updated_at = NOW() 
+    WHERE id = 'b0bf1b44-df04-4bae-b445-e2b53bb949a6';
+
+    INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, location_id, title, description, param_changes, is_major_event, created_at)
+    SELECT id, 'system_refund', accumulated_days, current_location_id, '通行証不具合の補填', 'メインクエスト通行許可証に関する不具合の補填として、ゴールド (+96,000G) を付与しました。', '{"gold": 96000}'::jsonb, false, NOW()
+    FROM public.user_profiles
+    WHERE id = 'b0bf1b44-df04-4bae-b445-e2b53bb949a6';
+  END IF;
+END $$;
 
 -- (b) c7906aec-ba14-4e35-8102-b21c6bea529a: 1枚補填されたため 24,000G を付与
-UPDATE user_profiles 
-SET gold = gold + 24000 
-WHERE id = 'c7906aec-ba14-4e35-8102-b21c6bea529a';
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.user_chronicles 
+    WHERE user_id = 'c7906aec-ba14-4e35-8102-b21c6bea529a' 
+      AND event_type = 'system_refund' 
+      AND title = '通行証不具合の補填'
+  ) THEN
+    UPDATE public.user_profiles 
+    SET gold = gold + 24000, updated_at = NOW() 
+    WHERE id = 'c7906aec-ba14-4e35-8102-b21c6bea529a';
+
+    INSERT INTO public.user_chronicles (user_id, event_type, accumulated_days, location_id, title, description, param_changes, is_major_event, created_at)
+    SELECT id, 'system_refund', accumulated_days, current_location_id, '通行証不具合の補填', 'メインクエスト通行許可証に関する不具合の補填として、ゴールド (+24,000G) を付与しました。', '{"gold": 24000}'::jsonb, false, NOW()
+    FROM public.user_profiles
+    WHERE id = 'c7906aec-ba14-4e35-8102-b21c6bea529a';
+  END IF;
+END $$;
 
 
 -- 3. 該当クエストをクリアしたユーザー全てに対して通行許可証を付与

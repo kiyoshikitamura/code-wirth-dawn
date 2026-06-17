@@ -74,19 +74,26 @@ export async function POST(req: Request) {
                     .maybeSingle();
 
                 if (existing) {
+                    // 爆薬(ID: 3010)の複数所持制限: すでに持っているなら追加をスキップ
+                    if (item_id === 3010) {
+                        console.log(`[Inventory Grant] Skip adding item_explosive for user ${user.id} (already owned).`);
+                        continue;
+                    }
                     // 既存行の数量を加算
                     await supabaseService
                         .from('inventory')
                         .update({ quantity: existing.quantity + quantity })
                         .eq('id', existing.id);
                 } else {
+                    // 爆薬の新規追加の場合は数量を強制的に 1 に制限
+                    const finalQuantity = item_id === 3010 ? 1 : quantity;
                     // 新規行を挿入
                     await supabaseService
                         .from('inventory')
                         .insert({
                             user_id: user.id,
                             item_id,
-                            quantity,
+                            quantity: finalQuantity,
                             is_equipped: false,
                         });
                 }

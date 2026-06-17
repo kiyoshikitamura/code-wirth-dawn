@@ -163,7 +163,7 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 701,item_supply_box,物資ボックス,trade_good,,1000,,1,false,"{""category"":""trade_good"",""description"":""廃墟の金庫から回収した物資の包み。中身はギルド管理下にある。""}"
 702,item_healing_herb,癒やし草,material,,30,,1,false,"{""category"":""material"",""description"":""白い小花をつける薬草。煎じれば傷の化膿を防ぎ痛みを和らげる。""}"
 3005,item_scorpion_needle,サソリの毒針,material,,0,,1,false,"{""description"":""幻覚サソリから採取した新鮮な毒針。暗殺薬の原料として闇市場で高値で取引される。""}"
-3010,item_explosive,爆薬,consumable,,2000,,1,false,"{""aoe_damage"":100,""use_timing"":""battle"",""description"":""商会の錬金術師が調合した特製爆薬。敵全体に100ダメージを与える。サンドワーム戦の切り札。""}"
+3010,item_explosive,爆薬,consumable,,0,,1,false,"{""aoe_damage"":100,""use_timing"":""battle"",""description"":""商会の錬金術師が調合した特製爆薬。敵全体に100ダメージを与える。サンドワーム戦の切り札。""}"
 3020,item_secret_document,封をされた密書,material,,0,,1,false,"{""description"":""決して中を見てはならないと念を押された黒い巻物。忍び衆への納品用。""}"
 3030,item_spirit_herb,霊草,material,,0,loc_haryu,1,false,"{""description"":""霊山の奥深くに自生する希少な薬草。万病に効くと言われ、権力者が高値で求める。""}"
 3045,item_foxfire_charm,狐火の護符,equipment,accessory,0,loc_haryu,1,false,"{""atk_bonus"":5,""def_bonus"":3,""hp_bonus"":5,""description"":""九尾の妖狐の子孫が感謝の印として授けた護符。温かい狐火の光が宿り、持ち主を守る。""}"
