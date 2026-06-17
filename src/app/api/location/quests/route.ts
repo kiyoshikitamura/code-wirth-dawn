@@ -118,6 +118,7 @@ export async function GET(req: Request) {
 
         // Calculate global alignment percentages (対立軸ベース)
         let worldAlignPcts = { order_ratio: 50, justice_ratio: 50, chaos_ratio: 50, evil_ratio: 50 };
+        let worldAlignPts = { order: 0, chaos: 0, justice: 0, evil: 0 };
         if (allWorldStates && allWorldStates.length > 0) {
             let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
             for (const ws of allWorldStates) {
@@ -127,6 +128,7 @@ export async function GET(req: Request) {
                 totalEvil += (ws as any).evil_score || 0;
             }
             worldAlignPcts = calcAlignmentPcts(totalOrder, totalChaos, totalJustice, totalEvil);
+            worldAlignPts = { order: totalOrder, chaos: totalChaos, justice: totalJustice, evil: totalEvil };
         }
         debug.push(`world_align: Or=${worldAlignPcts.order_ratio}% Ch=${worldAlignPcts.chaos_ratio}% Ju=${worldAlignPcts.justice_ratio}% Ev=${worldAlignPcts.evil_ratio}%`);
 
@@ -216,16 +218,17 @@ export async function GET(req: Request) {
                 if (!hasCompletedPrereq(reqs.completed_quest)) return false;
             }
 
-            // 個人アライメント割合判定（対立軸ベース）
             const userAlignPcts = getUserAlignmentPcts(user as any);
-            if (reqs.align_evil && userAlignPcts.evil_ratio <= 50) return false;
-            if (reqs.min_align_chaos_pct && userAlignPcts.chaos_ratio < reqs.min_align_chaos_pct) return false;
-            if (reqs.min_align_order_pct && userAlignPcts.order_ratio < reqs.min_align_order_pct) return false;
-            if (reqs.min_align_evil_pct && userAlignPcts.evil_ratio < reqs.min_align_evil_pct) return false;
-            if (reqs.min_align_justice_pct && userAlignPcts.justice_ratio < reqs.min_align_justice_pct) return false;
-            // 旧互換: 絶対値ベースの閾値もフォールバック
-            if (reqs.min_align_chaos && !reqs.min_align_chaos_pct && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
-            if (reqs.min_align_order && !reqs.min_align_order_pct && (user.order_pts || 0) < reqs.min_align_order) return false;
+
+            // 世界アライメント割合判定（対立軸ベース）
+            if (reqs.align_evil && worldAlignPcts.evil_ratio <= 50) return false;
+            if (reqs.min_align_chaos_pct && worldAlignPcts.chaos_ratio < reqs.min_align_chaos_pct) return false;
+            if (reqs.min_align_order_pct && worldAlignPcts.order_ratio < reqs.min_align_order_pct) return false;
+            if (reqs.min_align_evil_pct && worldAlignPcts.evil_ratio < reqs.min_align_evil_pct) return false;
+            if (reqs.min_align_justice_pct && worldAlignPcts.justice_ratio < reqs.min_align_justice_pct) return false;
+            // 旧互換: 絶対値ベースの閾値も世界全体の絶対値でフォールバック
+            if (reqs.min_align_chaos && !reqs.min_align_chaos_pct && worldAlignPts.chaos < reqs.min_align_chaos) return false;
+            if (reqs.min_align_order && !reqs.min_align_order_pct && worldAlignPts.order < reqs.min_align_order) return false;
 
             // v24: 世界情勢割合条件（スポットクエスト用 — 世界全体の対立軸割合）
             // requirements.min_world_alignment: { axis: "order", min_pct: 60 }

@@ -355,34 +355,63 @@ export class QuestService {
         // 7. min_alignment_pct: アライメント割合チェック
         if (requirements.min_alignment_pct) {
             const { alignment: alignKey, min_pct } = requirements.min_alignment_pct;
-            const alignment = user.alignment || {};
-            const total = (alignment.order || 0) + (alignment.chaos || 0) + (alignment.justice || 0) + (alignment.evil || 0);
-            const alignVal = alignment[alignKey] || 0;
-            const pct = total > 0 ? (alignVal / total) * 100 : 0;
+            const { data: allWorldStates } = await supabase
+                .from('world_states')
+                .select('order_score, chaos_score, justice_score, evil_score');
+            let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
+            if (allWorldStates) {
+                for (const ws of allWorldStates) {
+                    totalOrder += (ws as any).order_score || 0;
+                    totalChaos += (ws as any).chaos_score || 0;
+                    totalJustice += (ws as any).justice_score || 0;
+                    totalEvil += (ws as any).evil_score || 0;
+                }
+            }
+            const worldAlignPcts = calcAlignmentPcts(totalOrder, totalChaos, totalJustice, totalEvil);
+            const ratioKey = alignKey + '_ratio';
+            const pct = (worldAlignPcts as any)[ratioKey] || 50;
             if (pct < min_pct) {
-                return { valid: false, reason: `Alignment ${alignKey} must be ${min_pct}%+ (Current: ${Math.floor(pct)}%)` };
+                return { valid: false, reason: `World alignment ${alignKey} must be ${min_pct}%+ (Current: ${pct}%)` };
             }
         }
 
         // 8. align_evil: 悪アライメント優勢チェック
         if (requirements.align_evil) {
-            const alignment = user.alignment || {};
-            if ((alignment.evil || 0) <= (alignment.justice || 0)) {
-                return { valid: false, reason: 'Evil alignment must exceed Justice' };
+            const { data: allWorldStates } = await supabase
+                .from('world_states')
+                .select('order_score, chaos_score, justice_score, evil_score');
+            let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
+            if (allWorldStates) {
+                for (const ws of allWorldStates) {
+                    totalOrder += (ws as any).order_score || 0;
+                    totalChaos += (ws as any).chaos_score || 0;
+                    totalJustice += (ws as any).justice_score || 0;
+                    totalEvil += (ws as any).evil_score || 0;
+                }
+            }
+            const worldAlignPcts = calcAlignmentPcts(totalOrder, totalChaos, totalJustice, totalEvil);
+            if (worldAlignPcts.evil_ratio <= 50) {
+                return { valid: false, reason: 'World Evil alignment must exceed 50%' };
             }
         }
 
         // 9. min_align_order / min_align_chaos: アライメント最小値チェック
-        if (requirements.min_align_order) {
-            const orderVal = user.alignment?.order || 0;
-            if (orderVal < requirements.min_align_order) {
-                return { valid: false, reason: `Order alignment ${requirements.min_align_order} required (Current: ${orderVal})` };
+        if (requirements.min_align_order || requirements.min_align_chaos) {
+            const { data: allWorldStates } = await supabase
+                .from('world_states')
+                .select('order_score, chaos_score');
+            let totalOrder = 0, totalChaos = 0;
+            if (allWorldStates) {
+                for (const ws of allWorldStates) {
+                    totalOrder += (ws as any).order_score || 0;
+                    totalChaos += (ws as any).chaos_score || 0;
+                }
             }
-        }
-        if (requirements.min_align_chaos) {
-            const chaosVal = user.alignment?.chaos || 0;
-            if (chaosVal < requirements.min_align_chaos) {
-                return { valid: false, reason: `Chaos alignment ${requirements.min_align_chaos} required (Current: ${chaosVal})` };
+            if (requirements.min_align_order && totalOrder < requirements.min_align_order) {
+                return { valid: false, reason: `World Order alignment ${requirements.min_align_order} required (Current: ${totalOrder})` };
+            }
+            if (requirements.min_align_chaos && totalChaos < requirements.min_align_chaos) {
+                return { valid: false, reason: `World Chaos alignment ${requirements.min_align_chaos} required (Current: ${totalChaos})` };
             }
         }
 
@@ -487,6 +516,7 @@ export class QuestService {
         }
 
         let worldAlignPcts = { order_ratio: 50, justice_ratio: 50, chaos_ratio: 50, evil_ratio: 50 };
+        let worldAlignPts = { order: 0, chaos: 0, justice: 0, evil: 0 };
         if (allWorldStates && allWorldStates.length > 0) {
             let totalOrder = 0, totalChaos = 0, totalJustice = 0, totalEvil = 0;
             for (const ws of allWorldStates) {
@@ -496,6 +526,7 @@ export class QuestService {
                 totalEvil += (ws as any).evil_score || 0;
             }
             worldAlignPcts = calcAlignmentPcts(totalOrder, totalChaos, totalJustice, totalEvil);
+            worldAlignPts = { order: totalOrder, chaos: totalChaos, justice: totalJustice, evil: totalEvil };
         }
 
         const ownedItemIds = new Set((inventory || []).map((i: any) => String(i.item_id)));
@@ -554,13 +585,15 @@ export class QuestService {
             }
 
             const userAlignPcts = getUserAlignmentPcts(user as any);
-            if (reqs.align_evil && userAlignPcts.evil_ratio <= 50) return false;
-            if (reqs.min_align_chaos_pct && userAlignPcts.chaos_ratio < reqs.min_align_chaos_pct) return false;
-            if (reqs.min_align_order_pct && userAlignPcts.order_ratio < reqs.min_align_order_pct) return false;
-            if (reqs.min_align_evil_pct && userAlignPcts.evil_ratio < reqs.min_align_evil_pct) return false;
-            if (reqs.min_align_justice_pct && userAlignPcts.justice_ratio < reqs.min_align_justice_pct) return false;
-            if (reqs.min_align_chaos && !reqs.min_align_chaos_pct && (user.chaos_pts || 0) < reqs.min_align_chaos) return false;
-            if (reqs.min_align_order && !reqs.min_align_order_pct && (user.order_pts || 0) < reqs.min_align_order) return false;
+
+            // 世界アライメント割合判定（対立軸ベース）
+            if (reqs.align_evil && worldAlignPcts.evil_ratio <= 50) return false;
+            if (reqs.min_align_chaos_pct && worldAlignPcts.chaos_ratio < reqs.min_align_chaos_pct) return false;
+            if (reqs.min_align_order_pct && worldAlignPcts.order_ratio < reqs.min_align_order_pct) return false;
+            if (reqs.min_align_evil_pct && worldAlignPcts.evil_ratio < reqs.min_align_evil_pct) return false;
+            if (reqs.min_align_justice_pct && worldAlignPcts.justice_ratio < reqs.min_align_justice_pct) return false;
+            if (reqs.min_align_chaos && !reqs.min_align_chaos_pct && worldAlignPts.chaos < reqs.min_align_chaos) return false;
+            if (reqs.min_align_order && !reqs.min_align_order_pct && worldAlignPts.order < reqs.min_align_order) return false;
 
             const worldAlignReq = reqs.min_world_alignment || reqs.min_alignment_pct;
             if (worldAlignReq) {
