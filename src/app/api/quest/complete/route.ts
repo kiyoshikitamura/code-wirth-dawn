@@ -92,7 +92,21 @@ export async function POST(req: Request) {
         }
 
         // [Security] バトル検証トークンの必須化と検証
-        const hasBattles = Array.isArray(history) && history.some((h: any) => h.nodeType === 'battle' || h.type === 'battle');
+        let battleCount = 0;
+        let hasBattles = false;
+        if (Array.isArray(history)) {
+            if (history.length > 0 && typeof history[0] === 'object') {
+                battleCount = history.filter((h: any) => h.nodeType === 'battle' || h.type === 'battle').length;
+                hasBattles = history.some((h: any) => h.nodeType === 'battle' || h.type === 'battle');
+            } else {
+                const nodes = quest?.script_data?.nodes || {};
+                battleCount = history.filter((nodeId: string) => {
+                    const node = nodes[nodeId];
+                    return node && (node.type === 'battle' || node.nodeType === 'battle');
+                }).length;
+                hasBattles = battleCount > 0;
+            }
+        }
         if (result === 'success' && hasBattles) {
             const { battle_completion_token } = body;
             if (!battle_completion_token) {
@@ -158,7 +172,6 @@ export async function POST(req: Request) {
             const difficulty = quest.difficulty || 1;
             const expFallback = difficulty * (Math.floor(Math.random() * 41) + 10);
             const questExp = (quest.rewards?.exp) || expFallback;
-            const battleCount = Array.isArray(history) ? history.filter((h: any) => h.nodeType === 'battle').length : 0;
             const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100);
             earnedExp = questExp + battleBonus;
 
@@ -194,18 +207,33 @@ export async function POST(req: Request) {
         // §4. 報酬 + 移動 + アライメント
         // ═══════════════════════════════════════
         let alignmentShift: Record<string, number> | null = null;
+        const qRewards = quest.rewards || {};
+        const nRewards = node_rewards || {};
+
+        // Merge items safely: if both have items, combine them. If one has items, use that.
+        const mergedItems = (Array.isArray(qRewards.items) && qRewards.items.length > 0)
+            ? qRewards.items
+            : (Array.isArray(nRewards.items) ? nRewards.items : undefined);
+
+        // Merge skills safely
+        const mergedSkills = (Array.isArray(qRewards.skills) && qRewards.skills.length > 0)
+            ? qRewards.skills
+            : (Array.isArray(nRewards.skills) ? nRewards.skills : undefined);
+
         const effectiveRewards = result === 'success'
             ? {
-                ...(quest.rewards || {}),
-                ...(node_rewards || {}),
-                alignment_shift: (quest.rewards?.alignment_shift || node_rewards?.alignment_shift)
+                ...qRewards,
+                ...nRewards,
+                items: mergedItems,
+                skills: mergedSkills,
+                alignment_shift: (qRewards.alignment_shift || nRewards.alignment_shift)
                     ? {
-                        ...(quest.rewards?.alignment_shift || {}),
-                        ...(node_rewards?.alignment_shift || {})
+                        ...(qRewards.alignment_shift || {}),
+                        ...(nRewards.alignment_shift || {})
                       }
                     : undefined
             }
-            : quest.rewards;
+            : qRewards;
 
         if (result === 'success') {
             const rewards = effectiveRewards;
@@ -239,21 +267,7 @@ export async function POST(req: Request) {
             .from('user_profiles').update(updates).eq('id', user_id);
         if (updateError) throw updateError;
 
-        // Record quest activity log (Spec Dashboard Extensions)
-        try {
-            const { error: logErr } = await supabase
-                .from('quest_activity_logs')
-                .insert({
-                    user_id,
-                    scenario_id: quest_id,
-                    action: result === 'success' ? 'complete' : 'abandon'
-                });
-            if (logErr) {
-                console.error('[Quest Complete] Failed to write quest_activity_logs:', logErr);
-            }
-        } catch (logException) {
-            console.error('[Quest Complete] Log exception:', logException);
-        }
+        // Record quest activity log (Spec Dashboard Extensions) - Removed redundant insert to prevent duplicate user_chronicles records
 
 
 

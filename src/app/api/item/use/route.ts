@@ -79,7 +79,7 @@ export async function POST(req: Request) {
             // プロフィール取得
             const { data: profile } = await supabaseServer
                 .from('user_profiles')
-                .select('hp, max_hp, vitality, max_vitality')
+                .select('hp, max_hp, vitality, max_vitality, accumulated_days, pass_expires_at')
                 .eq('id', user.id)
                 .single();
 
@@ -146,6 +146,64 @@ export async function POST(req: Request) {
                     .eq('id', user.id)
                     .single();
                 if (refreshedProfile) updatedProfile = refreshedProfile;
+
+                // ■ capital_pass（各首都通行許可証: 指定された首都の通行可能期限を延長）
+                if (effectData.effect === 'capital_pass' && effectData.nation) {
+                    const nationMap: Record<string, string> = {
+                        roland: 'Roland',
+                        karyu: 'Karyu',
+                        yato: 'Yato',
+                        markand: 'Markand'
+                    };
+                    const nationKey = nationMap[effectData.nation.toLowerCase()];
+                    if (nationKey) {
+                        const currentDays = profile.accumulated_days || 0;
+                        const duration = effectData.duration_days || 365;
+                        const updatedPasses = { ...(profile.pass_expires_at || {}) } as Record<string, number>;
+                        
+                        const currentExpiry = updatedPasses[nationKey] || 0;
+                        const baseDays = Math.max(currentExpiry, currentDays);
+                        updatedPasses[nationKey] = baseDays + duration;
+
+                        const { error: passUpdateError } = await supabaseServer
+                            .from('user_profiles')
+                            .update({ pass_expires_at: updatedPasses })
+                            .eq('id', user.id);
+
+                        if (passUpdateError) {
+                            console.error('[POST /api/item/use] Capital pass apply error:', passUpdateError);
+                        } else {
+                            const jpNationName = nationKey === 'Roland' ? 'ローランド聖王国' :
+                                                 nationKey === 'Karyu' ? '華龍神朝' :
+                                                 nationKey === 'Yato' ? '夜刀神国' : '砂塵の王国マルカンド';
+                            appliedEffects.push(`${jpNationName}の通行許可が ${duration} 日間有効になった（経過日数 ${updatedPasses[nationKey]}日目まで）`);
+                        }
+                    }
+                }
+
+                // ■ 旧首都通行許可証 (capital_pass) のフォールバック処理
+                if (effectData.is_pass === true) {
+                    const currentDays = profile.accumulated_days || 0;
+                    const duration = 30; // 30日
+                    const updatedPasses = { ...(profile.pass_expires_at || {}) } as Record<string, number>;
+                    const capitals = ['Roland', 'Markand', 'Karyu', 'Yato'];
+                    for (const cap of capitals) {
+                        const currentExpiry = updatedPasses[cap] || 0;
+                        const baseDays = Math.max(currentExpiry, currentDays);
+                        updatedPasses[cap] = baseDays + duration;
+                    }
+
+                    const { error: passUpdateError } = await supabaseServer
+                        .from('user_profiles')
+                        .update({ pass_expires_at: updatedPasses })
+                        .eq('id', user.id);
+
+                    if (passUpdateError) {
+                        console.error('[POST /api/item/use] Fallback capital pass apply error:', passUpdateError);
+                    } else {
+                        appliedEffects.push(`全首都共通の通行許可が ${duration} 日間有効になった（経過日数 ${currentDays + duration}日目まで）`);
+                    }
+                }
             }
 
             // ■ reputation_reset（帳簿の改竄: 全国の名声をリセット）
@@ -220,6 +278,7 @@ export async function POST(req: Request) {
                     appliedEffects.push(`次の移動時のエンカウント率が${mod * 100}%上昇する`);
                 }
             }
+
         }
 
         return NextResponse.json({

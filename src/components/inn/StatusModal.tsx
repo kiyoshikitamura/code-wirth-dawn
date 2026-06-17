@@ -285,6 +285,40 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                             {vitalityStatus === 'Prime' ? '全盛期' : vitalityStatus === 'Twilight' ? '黄昏' : '引退'}
                         </span>
                     </div>
+
+                    {/* 通行許可証の有効期限表示 */}
+                    {userProfile?.pass_expires_at && Object.keys(userProfile.pass_expires_at).length > 0 && (() => {
+                        const activePasses: { name: string; daysLeft: number }[] = [];
+                        const currentDays = userProfile.accumulated_days || 0;
+                        const nationMap: Record<string, string> = {
+                            Roland: 'ローランド',
+                            Karyu: '華龍神朝',
+                            Yato: '夜刀神国',
+                            Markand: 'マルカンド'
+                        };
+                        for (const [locSlug, expiryDay] of Object.entries(userProfile.pass_expires_at)) {
+                            const daysLeft = expiryDay - currentDays;
+                            if (daysLeft > 0) {
+                                activePasses.push({
+                                    name: nationMap[locSlug] || locSlug,
+                                    daysLeft
+                                });
+                            }
+                        }
+                        if (activePasses.length === 0) return null;
+                        return (
+                            <div className="bg-gray-950/40 p-2 rounded border border-gray-800 text-[10px] space-y-1">
+                                <div className="text-gray-500 font-bold uppercase tracking-wider">有効な通行許可:</div>
+                                <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                                    {activePasses.map((pass, i) => (
+                                        <div key={i} className="px-1.5 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-900/30 font-bold truncate text-center">
+                                            {pass.name} (残り {pass.daysLeft} 日)
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* ── タブバー ── */}

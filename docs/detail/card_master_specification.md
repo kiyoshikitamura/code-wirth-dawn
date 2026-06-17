@@ -1,7 +1,8 @@
-# カード（スキル）マスタ仕様定義書 (v4.2)
+# カード（スキル）マスタ仕様定義書 (v4.3)
 
 本仕様書は、「Code: Wirth-Dawn」のバトルロジックおよび経済システムの基盤となる、プレイヤブルおよびNPC向けのスキル（カード）マスタデータの設計ドキュメントです。
 
+> **v4.3 改定内容**: バトル開始時の `target_type` マッピング不具合の修正を反映。「オアシスの水 (ID 20)」「清め (ID 24)」の対象範囲を自己治療の実装に合わせて `self` に変更し、DBおよびプログラム実装と整合。
 > **v4.2 改定内容**: バトルエンジンv4.2対応。未使用スキル「瞑想 (`card_meditation` / ID 64)」の実装、および新規状態異常（AP回復効果） `ap_recover` の追加を反映。
 > **v4.1 改定内容**: バトルエンジンv4.1対応。即死防止のためのバフ効果（`atk_up`, `def_up`, `evasion_up` 等）重複加算仕様の実装。裁きのダメージ値を50に調整。
 > **v4.0 改定内容**: バトルエンジンv4.0対応。魔導書カード3種(火球/氷槍/雷撃)追加、即死攻撃失敗時フォールバックダメージ、吸血(drain)HP回復実装、王の城壁DEF+50修正、五星の加護攻撃+バフ化、デバフ付与成功率テーブル追加。ダメージ計算は揺らぎ(±15%)→クリティカル(×1.5)→DEF減算の順。
@@ -130,7 +131,7 @@
 | 17 | `card_sandstorm` | 砂塵の目眩まし | Support | 2 | all_enemies | 0 | blind | 4,000 | 2T全体目潰し（50%ミス） |
 | 18 | `card_poison_dagger`| 毒刃 | Skill | 2 | single_enemy | 20 | poison | 4,500 | 20ダメ＋3T毒（HP5%/T） |
 | 19 | `card_mirage` | 蜃気楼 | Support | 3 | all_allies | 0 | evasion_up | 6,500 | 3T間全体30%回避 |
-| 20 | `card_oasis_water` | オアシスの水 | Heal | 2 | single_ally | 30 | cure_status | 5,000 | HP30回復＋状態異常全解除 |
+| 20 | `card_oasis_water` | オアシスの水 | Heal | 2 | self | 30 | cure_status | 5,000 | HP30回復＋状態異常全解除 |
 
 #### 夜刀神国 (Yato)
 | No | slug | name | type | AP | target_type | effect_val | effect_id | base_price | 実装効果 |
@@ -138,7 +139,7 @@
 | 21 | `card_swallow_rev` | ツバメ返し | Skill | 3 | single_enemy | 50 | ~~counter~~ | 7,000 | **高威力の神速一撃（50固定ダメ）**。counterは未実装のため攻撃として処理。 |
 | 22 | `card_kunai` | クナイ投げ | Skill | 1 | single_enemy | 15 | bleed | 3,000 | 15ダメ＋2T出血（使用ごと+3dmg） |
 | 23 | `card_shadow_stitch`| 影縫い | Support | 2 | single_enemy | 0 | stun | 4,500 | 1Tスタン付与（ダメなし） |
-| 24 | `card_purify` | 清め | Heal | 2 | single_ally | 25 | cure_debuff | 5,500 | HP25回復＋atk_down/blind等デバフ解除 |
+| 24 | `card_purify` | 清め | Heal | 2 | self | 25 | cure_debuff | 5,500 | HP25回復＋atk_down/blind等デバフ解除 |
 | 25 | `card_iai_slash` | 居合切り | Skill | 3 | single_enemy | 60 | - | 8,000 | 60大ダメージ単体攻撃 |
 
 #### 華龍神朝 (Karyu)

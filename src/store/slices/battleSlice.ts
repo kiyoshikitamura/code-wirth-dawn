@@ -139,6 +139,7 @@ export const createBattleSlice = (
                 ap_cost: i.effect_data?.ap_cost ?? 1,
                 effect_id: i.effect_data?.effect_id || undefined,
                 effect_duration: i.effect_data?.effect_duration || undefined,
+                target_type: i.effect_data?.target_type || undefined,
                 image_url: i.effect_data?.image_url || i.image_url || undefined,
                 isEquipment: true,
             }));
@@ -168,6 +169,7 @@ export const createBattleSlice = (
                 cost_type: c.cost_type || undefined,
                 effect_id: c.effect_id || undefined,
                 effect_duration: c.effect_duration || undefined,
+                target_type: c.target_type || undefined,
                 animation_type: c.animation_type || undefined,
                 image_url: c.image_url || undefined,
             })) as Card[];
