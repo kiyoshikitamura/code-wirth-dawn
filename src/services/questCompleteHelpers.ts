@@ -156,10 +156,32 @@ export async function grantRewardItems(
     // アイテム付与
     if (effectiveRewards.items && Array.isArray(effectiveRewards.items)) {
         for (const itemIdStr of effectiveRewards.items) {
-            const itemId = parseInt(String(itemIdStr), 10);
-            if (isNaN(itemId)) continue;
+            let itemId = parseInt(String(itemIdStr), 10);
+            let itemDef: any = null;
 
-            const { data: itemDef } = await supabase.from('items').select('name').eq('id', itemId).maybeSingle();
+            if (isNaN(itemId)) {
+                // 文字列Slug（"item_bear_pelt"など）が渡された場合、DBからIDを逆引きする
+                const { data: found } = await supabase
+                    .from('items')
+                    .select('id, name')
+                    .eq('slug', itemIdStr)
+                    .maybeSingle();
+                if (found) {
+                    itemId = found.id;
+                    itemDef = found;
+                } else {
+                    console.warn(`[QuestComplete] Item slug '${itemIdStr}' not found in items table.`);
+                    continue;
+                }
+            } else {
+                const { data: found } = await supabase
+                    .from('items')
+                    .select('name')
+                    .eq('id', itemId)
+                    .maybeSingle();
+                itemDef = found;
+            }
+
             const itemName = itemDef?.name || `アイテム #${itemId}`;
 
             const { data: existing } = await supabase
@@ -171,7 +193,7 @@ export async function grantRewardItems(
             } else {
                 await supabase.from('inventory').insert({ user_id, item_id: itemId, quantity: 1 });
             }
-            console.log(`[QuestComplete] Granted item ${itemId}`);
+            console.log(`[QuestComplete] Granted item ${itemId} (${itemName})`);
 
             try {
                 await supabase.from('user_item_history')

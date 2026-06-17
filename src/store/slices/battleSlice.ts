@@ -994,11 +994,27 @@ export const createBattleSlice = (
                             const newDur = curDur + healed;
                             party[idx] = { ...member, durability: newDur };
                             logMsg = `♥ ${card.name}で ${member.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`;
+                            
+                            // 味方単体ヒール時のカード消費（手札削除＆捨て札/除外処理）
+                            const finalHand = nextHand.filter(c => c.id !== card.id);
+                            let finalDiscardPile = [...nextDiscardPile];
+                            if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
+                                set(state => ({
+                                    battleState: {
+                                        ...state.battleState,
+                                        exhaustPile: [...state.battleState.exhaustPile, { id: card.id, name: card.name, type: card.type }],
+                                        consumedItems: [...state.battleState.consumedItems, card.id],
+                                    }
+                                }));
+                            } else {
+                                finalDiscardPile = [...finalDiscardPile, card];
+                            }
+
                             // 手札管理 + メッセージ + パーティ更新を一括で確定し return
                             const healMessages = [...get().battleState.messages, logMsg, `__party_sync:${member.id}:${newDur}`];
                             set(state => ({
-                                hand: nextHand,
-                                discardPile: nextDiscardPile,
+                                hand: finalHand,
+                                discardPile: finalDiscardPile,
                                 battleState: {
                                     ...state.battleState,
                                     party,
@@ -1204,16 +1220,31 @@ export const createBattleSlice = (
                     break;
                 }
                 case 'cure_self': {
+                    const healAmount = (card as any).effect_val ?? card.power ?? 0;
+                    let healMsg = '';
+                    if (userProfile && healAmount > 0) {
+                        const maxHp = effectivePlayerMaxHp;
+                        const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
+                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                        healMsg = ` HP +${healAmount} 回復！ (${newHp}/${maxHp}) 及び`;
+                        healSyncHp = newHp;
+                        const { selectedProfileId } = get();
+                        fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                        }).catch(console.error);
+                    }
+
                     if (effectInfo.cureType === 'status') {
                         set(state => ({ battleState: { ...state.battleState, player_effects: [] } }));
-                        logMsg = `${card.name}を使用！ 状態異常を回復した！`;
+                        logMsg = `${card.name}を使用！${healMsg}状態異常を回復した！`;
                     } else if (effectInfo.cureType === 'debuff') {
                         const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !['atk_down', 'def_down'].includes(e.id));
                         set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                        logMsg = `${card.name}を使用！ デバフを解除した！`;
+                        logMsg = `${card.name}を使用！${healMsg}デバフを解除した！`;
                     } else {
                         set(state => ({ battleState: { ...state.battleState, player_effects: [] } }));
-                        logMsg = `${card.name}を使用！ 状態を正常に戻した！`;
+                        logMsg = `${card.name}を使用！${healMsg}状態を正常に戻した！`;
                     }
                     break;
                 }
