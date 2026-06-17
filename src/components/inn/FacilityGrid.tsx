@@ -6,9 +6,10 @@ export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'tem
 interface FacilityGridProps {
     onSelectFacility: (facility: FacilityType) => void;
     isHub?: boolean;
+    isQuestRecommended?: boolean;
 }
 
-export default function FacilityGrid({ onSelectFacility, isHub = false }: FacilityGridProps) {
+export default function FacilityGrid({ onSelectFacility, isHub = false, isQuestRecommended = false }: FacilityGridProps) {
     const [hasReadGossip, setHasReadGossip] = useState(false);
 
     // 通常拠点: 宿屋/酒場 → ギルド/道具屋 → 神殿 → ステータス → 街の噂話
@@ -44,12 +45,19 @@ export default function FacilityGrid({ onSelectFacility, isHub = false }: Facili
                 <button
                     key={item.id}
                     onClick={() => handleSelect(item.id)}
-                    className="flex items-center gap-3 p-3 md:p-4 bg-[#122042]/80 border border-[#2a4080]/50 rounded-xl hover:bg-[#1a2d5a] hover:border-amber-500/30 transition-all active:scale-95 text-left group shadow-lg shadow-[#0a1628]/50 focus:outline-none focus:ring-1 focus:ring-amber-400/50"
+                    className={`flex items-center gap-3 p-3 md:p-4 bg-[#122042]/80 border rounded-xl hover:bg-[#1a2d5a] transition-all active:scale-95 text-left group shadow-lg shadow-[#0a1628]/50 focus:outline-none focus:ring-1 focus:ring-amber-400/50 ${
+                        (item.id === 'guild' || item.id === 'ugcGuild') && isQuestRecommended
+                            ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] animate-pulse'
+                            : 'border-[#2a4080]/50 hover:border-amber-500/30'
+                    }`}
                 >
                     <div className="relative p-2 bg-amber-500/10 rounded-lg text-amber-400 group-hover:text-amber-300 group-hover:bg-amber-500/20 transition-colors">
                         <item.icon size={20} />
                         {item.id === 'gossip' && !hasReadGossip && (
                             <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-[#122042]">!</span>
+                        )}
+                        {(item.id === 'guild' || item.id === 'ugcGuild') && isQuestRecommended && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-amber-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-[#122042] scale-95 leading-none">推奨</span>
                         )}
                     </div>
                     <div className="min-w-0">

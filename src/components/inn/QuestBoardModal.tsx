@@ -160,6 +160,9 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                             {isDangerous && (
                                                 <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
                                             )}
+                                            {(s.id === 6001 || s.slug === 'main_ep1' || s.title?.includes('第1話')) && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold animate-pulse">推奨</span>
+                                            )}
                                             {s.quest_type === 'special' && (
                                                 <span className="text-[9px] px-1 py-0.5 rounded bg-purple-700 text-white font-bold">Special</span>
                                             )}
@@ -203,6 +206,9 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-700 text-amber-200">
                                         Lv.{detailQuest.rec_level || 1}
                                     </span>
+                                    {(detailQuest.id === 6001 || detailQuest.slug === 'main_ep1' || detailQuest.title?.includes('第1話')) && (
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold animate-pulse">推奨</span>
+                                    )}
                                     {(detailQuest as any).quest_type === 'special' && (
                                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-bold">Special</span>
                                     )}

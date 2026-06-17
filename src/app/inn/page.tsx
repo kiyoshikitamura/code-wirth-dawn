@@ -15,6 +15,7 @@ import CreatorsWorkshopBanner from '@/components/inn/CreatorsWorkshopBanner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import XShareButton from '@/components/shared/XShareButton';
 import QuestResultModal from '@/components/quest/QuestResultModal';
+import { X } from 'lucide-react';
 
 // モーダル群: ロード時間とチラつきを完全になくすため静的インポート (spec_v27)
 import TavernModal from '@/components/inn/TavernModal';
@@ -52,6 +53,7 @@ export default function InnPage() {
 }
 
 function InnPageInner() {
+    const [showGuideBanner, setShowGuideBanner] = useState(true);
     const state = useInnPageState();
     const {
         router, loading, worldState, userProfile, equipBonus, isHub,
@@ -252,9 +254,34 @@ function InnPageInner() {
                     isHub={isHub}
                 />
 
+                {/* 目的ガイダンスバナー (Onboarding Banner) */}
+                {!userProfile.current_quest_id && (userProfile.level || 1) === 1 && showGuideBanner && (
+                    <div className="mx-4 mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start justify-between gap-2 shadow-lg shadow-amber-950/20 animate-in slide-in-from-top duration-300">
+                        <div className="flex gap-2">
+                            <span className="text-amber-400 font-bold text-sm">💡</span>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-amber-300">旅の目的</p>
+                                <p className="text-[11px] text-slate-300 leading-relaxed mt-0.5">
+                                    ギルドで最初の依頼<span className="text-amber-400 font-bold">『第1話「始まりの轍」』</span>を引き受けましょう！
+                                </p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setShowGuideBanner(false)}
+                            className="text-slate-400 hover:text-slate-200 transition-colors p-0.5 flex-shrink-0"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                )}
+
                 {/* Facility Grid Navigation */}
                 <div className="flex-1 w-full bg-[#0a1628]">
-                    <FacilityGrid onSelectFacility={handleSelectFacility} isHub={isHub} />
+                    <FacilityGrid 
+                        onSelectFacility={handleSelectFacility} 
+                        isHub={isHub} 
+                        isQuestRecommended={!userProfile.current_quest_id && (userProfile.level || 1) === 1}
+                    />
                     <CreatorsWorkshopBanner
                         isHub={isHub}
                         onOpenWorkshop={() => router.push('/workshop')}

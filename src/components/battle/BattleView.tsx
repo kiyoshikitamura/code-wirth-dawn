@@ -22,6 +22,15 @@ interface BattleViewProps {
 export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: BattleViewProps) {
     const router = useRouter();
     const hasHydrated = useGameStore(state => state._hasHydrated);
+
+    // v30: Onboarding & Battle UX/Visual Enhancements
+    const [shouldShake, setShouldShake] = useState(false);
+    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean }[]>([]);
+    const [apErrorActive, setApErrorActive] = useState(false);
+
+    const prevLiveHpRef = useRef<number | null>(null);
+    const prevTargetHpRef = useRef<number | null>(null);
+
     const {
         battleState,
         hand,
@@ -63,6 +72,45 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         flushQueue,
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp);
+
+    // プレイヤーの被ダメージ検知
+    useEffect(() => {
+        if (liveHp !== null && prevLiveHpRef.current !== null) {
+            const diff = prevLiveHpRef.current - liveHp;
+            if (diff > 0) {
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 300);
+
+                const id = Date.now() + Math.random();
+                setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: true }]);
+                setTimeout(() => {
+                    setFloatingDamages(prev => prev.filter(d => d.id !== id));
+                }, 1000);
+            }
+        }
+        prevLiveHpRef.current = liveHp;
+    }, [liveHp]);
+
+    // 敵の被ダメージ検知
+    useEffect(() => {
+        const currentTarget = battleState.enemy;
+        if (currentTarget && currentTarget.hp !== null) {
+            if (prevTargetHpRef.current !== null && currentTarget.id === battleState.enemy?.id) {
+                const diff = prevTargetHpRef.current - currentTarget.hp;
+                if (diff > 0) {
+                    const id = Date.now() + Math.random();
+                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false }]);
+                    setTimeout(() => {
+                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
+                    }, 1000);
+                }
+            }
+            prevTargetHpRef.current = currentTarget.hp;
+        } else {
+            prevTargetHpRef.current = null;
+        }
+    }, [battleState.enemy?.hp, battleState.enemy?.id]);
+
     // v15.0: オーバーレイ表示管理（ターン/フェーズ）
     const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
     const [showPhaseOverlay, setShowPhaseOverlay] = useState<null | 'player' | 'enemy'>(null);
@@ -194,7 +242,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (!canInteract) return;
         const card = hand[index];
         const apCost = card.ap_cost ?? 1;
-        if (battleState.current_ap < apCost) return;
+        if (battleState.current_ap < apCost) {
+            setApErrorActive(true);
+            setTimeout(() => setApErrorActive(false), 800);
+            return;
+        }
 
         if (selectedCardIndex === index) {
             // 2段階目: 実行
@@ -413,7 +465,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     };
 
     return (
-        <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 transition-colors duration-1000 ${isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'}`}>
+        <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 transition-colors duration-1000 ${
+            isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'
+        } ${shouldShake ? 'shake-active' : ''}`}>
 
             {/* CSS for animations */}
             <style jsx>{`
@@ -424,6 +478,44 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 @keyframes cardSelectPulse {
                     0%, 100% { border-color: rgb(255 255 255); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
                     50% { border-color: rgb(255 255 255 / 0.3); box-shadow: 0 0 4px rgba(255,255,255,0.2); }
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translate(0, 0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translate(-3px, -2px); }
+                    20%, 40%, 60%, 80% { transform: translate(3px, 2px); }
+                }
+                .shake-active {
+                    animation: shake 0.3s ease-in-out;
+                }
+                @keyframes flashRed {
+                    0% { filter: brightness(2) contrast(1.2) drop-shadow(0 0 25px rgba(239,68,68,0.8)); }
+                    100% { filter: brightness(1) contrast(1) drop-shadow(0 0 20px rgba(220,38,38,0.6)); }
+                }
+                .flash-active {
+                    animation: flashRed 0.35s ease-out;
+                }
+                @keyframes floatDamage {
+                    0% { transform: translateY(0) scale(0.6); opacity: 0; }
+                    15% { transform: translateY(-25px) scale(1.2); opacity: 1; }
+                    40% { transform: translateY(-35px) scale(1.0); }
+                    100% { transform: translateY(-45px) scale(1.0); opacity: 0; }
+                }
+                .damage-pop-player {
+                    animation: floatDamage 1.0s forwards;
+                    color: #ef4444; /* red-500 */
+                    text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
+                }
+                .damage-pop-enemy {
+                    animation: floatDamage 1.0s forwards;
+                    color: #f59e0b; /* amber-500 */
+                    text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
+                }
+                @keyframes pulseRedBorder {
+                    0%, 100% { border-color: rgb(239, 68, 68); box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+                    50% { border-color: rgb(153, 27, 27); box-shadow: 0 0 2px rgba(153, 27, 27, 0.1); }
+                }
+                .ap-pulse-error {
+                    animation: pulseRedBorder 0.4s ease-in-out 2;
                 }
             `}</style>
 
@@ -488,12 +580,20 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                             {/* Huge Sprite Image */}
                             <div className={`w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] relative transition-all duration-500 flex items-center justify-center
                                 ${target.hp > 0 ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
+                                ${activeEffect && activeEffect !== 'BUFF' ? 'flash-active' : ''}
                             `}>
                                 {target.image_url ? (
                                     <img src={target.image_url} alt={target.name} className="max-w-full max-h-full object-contain drop-shadow-2xl" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-slate-500"><Skull size={64} /></div>
                                 )}
+
+                                {/* Floating Damage Numbers for Enemy */}
+                                {floatingDamages.filter(d => !d.isPlayer).map(d => (
+                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-3xl font-black tracking-wider damage-pop-enemy">
+                                        -{d.amount}
+                                    </div>
+                                ))}
 
                             {/* 大スプライト左上：状態異常バッジ */}
                                 {target.hp > 0 && (target.status_effects || []).length > 0 && (
@@ -607,6 +707,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                 onClick={() => setShowUserDetail(true)}
                                 className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform relative"
                             >
+                                {/* Floating Damage Numbers for Player */}
+                                {floatingDamages.filter(d => d.isPlayer).map(d => (
+                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-player">
+                                        -{d.amount}
+                                    </div>
+                                ))}
                                 <div className="w-10 h-10 rounded-full border-[2px] border-amber-400 bg-black/50 flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm">
                                     {userProfile?.avatar_url ? (
                                         <img src={userProfile.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -946,9 +1052,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             {/* BOTTOM: CARDS + ACTION BUTTONS — フロー配置 */}
             <div className="w-full relative z-30 px-3 pb-2 flex-shrink-0">
                 {/* AP Display (Moved from player status panel) */}
-                <div className="absolute top-0 left-3 z-40 flex flex-col justify-center items-center w-12 h-14 bg-black/60 rounded-lg border border-white/20 flex-shrink-0 shadow-lg backdrop-blur-md">
-                    <span className="text-[9px] text-slate-300 font-bold mb-0.5 drop-shadow-md">AP</span>
-                    <span className="text-xl font-bold text-amber-400 font-mono leading-none drop-shadow-md">{battleState.current_ap || 0}</span>
+                <div className={`absolute top-0 left-3 z-40 flex flex-col justify-center items-center w-12 h-14 bg-black/60 rounded-lg border flex-shrink-0 shadow-lg backdrop-blur-md transition-colors ${
+                    apErrorActive ? 'border-red-600 bg-red-950/40 ap-pulse-error' : 'border-white/20'
+                }`}>
+                    <span className={`text-[9px] font-bold mb-0.5 drop-shadow-md ${apErrorActive ? 'text-red-400' : 'text-slate-300'}`}>AP</span>
+                    <span className={`text-xl font-bold font-mono leading-none drop-shadow-md ${apErrorActive ? 'text-red-500' : 'text-amber-400'}`}>{battleState.current_ap || 0}</span>
+                    {apErrorActive && (
+                        <span className="absolute -bottom-4 text-[7px] text-red-500 font-bold bg-black/80 px-1 py-0.5 rounded border border-red-600 shadow-lg leading-none">AP不足</span>
+                    )}
                 </div>
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
@@ -972,10 +1083,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                                 <button
                                     key={idx}
                                     onClick={() => handleCardClick(idx)}
-                                    disabled={!canInteract || !isActivePlayable}
+                                    disabled={!canInteract}
                                     className={`relative group transition-all duration-300 flex-shrink-0 snap-center
                                         ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50 -translate-y-6' : 'w-[72px] sm:w-24'}
-                                        ${(!canInteract || !isActivePlayable) ? 'opacity-40 grayscale pointer-events-none' : isSelected ? '' : 'hover:-translate-y-6 hover:z-50'}
+                                        ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
+                                        ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
                                         ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
                                         ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
                                      `}
