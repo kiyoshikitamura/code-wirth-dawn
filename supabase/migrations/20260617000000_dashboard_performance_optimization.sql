@@ -2,9 +2,12 @@
 -- Create indexes for logs and setup database Views to offload heavy KPI query aggregation.
 
 -- 1. Create Indexes to optimize lookup speed and sorting
-CREATE INDEX IF NOT EXISTS idx_quest_activity_logs_user_id ON public.quest_activity_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_quest_activity_logs_scenario_id ON public.quest_activity_logs(scenario_id);
-CREATE INDEX IF NOT EXISTS idx_quest_activity_logs_created_at ON public.quest_activity_logs(created_at);
+-- Note: quest_activity_logs is a VIEW referencing public.user_chronicles. We must index the base table instead.
+CREATE INDEX IF NOT EXISTS idx_user_chronicles_user_id ON public.user_chronicles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_chronicles_event_type ON public.user_chronicles(event_type);
+CREATE INDEX IF NOT EXISTS idx_user_chronicles_scenario_id ON public.user_chronicles(scenario_id);
+CREATE INDEX IF NOT EXISTS idx_user_chronicles_ugc_scenario_id ON public.user_chronicles(ugc_scenario_id);
+CREATE INDEX IF NOT EXISTS idx_user_chronicles_created_at ON public.user_chronicles(created_at);
 
 CREATE INDEX IF NOT EXISTS idx_payment_logs_user_id ON public.payment_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_payment_logs_created_at ON public.payment_logs(created_at);
@@ -23,7 +26,7 @@ SELECT
   COALESCE(COUNT(log.id) FILTER (WHERE log.action = 'complete'), 0)::integer as complete_count,
   COALESCE(COUNT(log.id) FILTER (WHERE log.action = 'abandon'), 0)::integer as abandon_count
 FROM public.scenarios s
-LEFT JOIN public.quest_activity_logs log ON s.id = log.scenario_id
+LEFT JOIN public.quest_activity_logs log ON s.id::text = log.scenario_id
 GROUP BY s.id, s.title, s.quest_type;
 
 
