@@ -23,6 +23,12 @@ async function fetchAll<T>(
     return allData;
 }
 
+function toJstDateStr(dateInput: any): string {
+    if (!dateInput) return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const d = new Date(dateInput);
+    return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
 export async function GET(req: Request) {
     try {
         // 1. 認証チェック
@@ -121,9 +127,7 @@ export async function GET(req: Request) {
 
         (profilesData || []).forEach((profile: any) => {
             const rawDate = profile.created_at || profile.updated_at;
-            const dateStr = rawDate 
-                ? new Date(rawDate).toISOString().split('T')[0]
-                : new Date().toISOString().split('T')[0];
+            const dateStr = toJstDateStr(rawDate);
                 
             userRegistrationsByDate[dateStr] = (userRegistrationsByDate[dateStr] || 0) + 1;
 
@@ -163,9 +167,7 @@ export async function GET(req: Request) {
 
         (battleSessions || []).forEach((session: any) => {
             const rawDate = session.created_at;
-            const dateStr = rawDate
-                ? new Date(rawDate).toISOString().split('T')[0]
-                : new Date().toISOString().split('T')[0];
+            const dateStr = toJstDateStr(rawDate);
             
             // バトル勝敗集計
             if (!battlesByDate[dateStr]) {
@@ -200,9 +202,7 @@ export async function GET(req: Request) {
         let totalQuests = 0;
         (questLogs || []).forEach((log: any) => {
             const rawDate = log.created_at;
-            const dateStr = rawDate
-                ? new Date(rawDate).toISOString().split('T')[0]
-                : new Date().toISOString().split('T')[0];
+            const dateStr = toJstDateStr(rawDate);
 
             if (log.action === 'start') {
                 totalQuests++;
@@ -251,9 +251,7 @@ export async function GET(req: Request) {
             }
 
             const rawDate = log.created_at;
-            const dateStr = rawDate
-                ? new Date(rawDate).toISOString().split('T')[0]
-                : new Date().toISOString().split('T')[0];
+            const dateStr = toJstDateStr(rawDate);
 
             if (log.user_id) {
                 if (!payingUsersByDate[dateStr]) {
@@ -282,7 +280,7 @@ export async function GET(req: Request) {
         for (let i = days - 1; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            targetDaysList.push(d.toISOString().split('T')[0]);
+            targetDaysList.push(toJstDateStr(d));
         }
 
         // windowDays日間の一意のアクティブユーザー数を計算するヘルパー
@@ -293,7 +291,7 @@ export async function GET(req: Request) {
             for (let i = 0; i < windowDays; i++) {
                 const d = new Date(targetDate);
                 d.setDate(d.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
+                const dateStr = toJstDateStr(d);
                 const usersOnDay = activityMap[dateStr];
                 if (usersOnDay) {
                     usersOnDay.forEach(uid => uniqueUsers.add(uid));
