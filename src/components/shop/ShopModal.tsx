@@ -392,12 +392,12 @@ export default function ShopModal({ onClose }: Props) {
                         <>
                             {meta?.prosperity === 1 ? (
                                 // BLACK MARKET LAYOUT
-                                <div className="col-span-2 flex flex-col items-center justify-center p-8 text-center border-2 border-red-900/50 bg-red-950/20 rounded shadow-[inset_0_0_50px_rgba(100,0,0,0.5)]">
+                                <div className="col-span-2 flex flex-col items-center justify-center p-4 sm:p-8 text-center border-2 border-red-900/50 bg-red-950/20 rounded shadow-[inset_0_0_50px_rgba(100,0,0,0.5)]">
                                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900 mb-4 opacity-80">
                                         <img src="/avatars/thief.png" alt="Black Market Dealer" className="w-full h-full object-cover" />
                                     </div>
                                     <p className="text-red-400 font-serif italic mb-6">「...足元は見てねえよ。命が惜しけりゃ、買えるうちに買っておきな。」</p>
-                                    <div className="bg-black/80 border border-red-900 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden">
+                                    <div className="bg-black/80 border border-red-900 p-4 rounded-lg w-full max-w-md flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 relative overflow-hidden">
                                         <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-20 mix-blend-overlay"></div>
                                         <div className="relative z-10 text-left flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-1">
@@ -411,13 +411,13 @@ export default function ShopModal({ onClose }: Props) {
                                         <button
                                             onClick={() => handleBuy({ id: 'item_black_market_elixir', name: '禁術の秘薬', type: 'consumable', base_price: 50000, current_price: 50000, effect_data: {} })}
                                             disabled={purchasing === 'item_black_market_elixir' || gold < 50000}
-                                            className={`ml-4 px-4 py-3 rounded font-bold min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 50000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-red-900 hover:bg-red-800 text-white border border-red-500 hover:border-red-400 animate-pulse'}`}
+                                            className={`px-4 py-3 rounded font-bold w-full sm:w-auto sm:min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 50000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-red-900 hover:bg-red-800 text-white border border-red-500 hover:border-red-400 animate-pulse'}`}
                                         >
                                             {purchasing === 'item_black_market_elixir' ? '⟳' : '50,000 G'}
                                         </button>
                                     </div>
 
-                                    <div className="bg-black/80 border border-gray-600 p-4 rounded-lg w-full max-w-md flex justify-between items-center relative overflow-hidden mt-4">
+                                    <div className="bg-black/80 border border-gray-600 p-4 rounded-lg w-full max-w-md flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 relative overflow-hidden mt-4">
                                         <div className="absolute inset-0 bg-[url('/effects/dirt.png')] opacity-10 mix-blend-overlay"></div>
                                         <div className="relative z-10 text-left flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-1">
@@ -431,7 +431,7 @@ export default function ShopModal({ onClose }: Props) {
                                         <button
                                             onClick={handleLaunder}
                                             disabled={purchasing === 'launder' || gold < 100000}
-                                            className={`ml-4 px-4 py-3 rounded font-bold min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 100000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-500 hover:border-gray-400 transition-all active:scale-95'}`}
+                                            className={`px-4 py-3 rounded font-bold w-full sm:w-auto sm:min-w-[120px] shadow-lg flex items-center justify-center relative z-10 ${gold < 100000 ? 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-500 hover:border-gray-400 transition-all active:scale-95'}`}
                                         >
                                             {purchasing === 'launder' ? '⟳' : '100,000 G'}
                                         </button>
