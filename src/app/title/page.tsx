@@ -522,7 +522,7 @@ export default function TitlePage() {
                         {/* Continue — Google OAuth */}
                         <button
                             onClick={() => setMode('CONTINUE_MENU')}
-                            className="w-full bg-stone-900/60 border border-stone-700 text-stone-300 font-serif py-3.5 rounded hover:bg-stone-800/80 hover:border-amber-800/60 transition-all tracking-widest flex justify-center items-center gap-2 group"
+                            className="w-full bg-stone-950/70 backdrop-blur-sm border border-stone-600 text-stone-100 font-serif py-3.5 rounded hover:bg-stone-900/90 hover:border-amber-500/50 hover:text-amber-200 transition-all tracking-widest flex justify-center items-center gap-2 group"
                         >
                             <LogIn className="w-4 h-4 group-hover:text-amber-200 transition-colors" />
                             <span className="group-hover:text-stone-100">Continue / Transfer</span>
@@ -531,23 +531,24 @@ export default function TitlePage() {
                         {/* Test Play — 匿名（7日間のみ） */}
                         <button
                             onClick={handleTestPlay}
-                            className="w-full bg-stone-900/50 border border-stone-800 text-stone-400 font-serif py-3.5 rounded hover:bg-stone-800/60 hover:text-stone-200 hover:border-stone-600 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
+                            className="w-full bg-stone-950/60 backdrop-blur-sm border border-stone-700 text-stone-200 font-serif py-3.5 rounded hover:bg-stone-900/80 hover:text-white hover:border-stone-500 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
                         >
                             <div className="flex items-center gap-2">
-                                <PlayCircle className="w-4 h-4 text-stone-500" />
+                                <PlayCircle className="w-4 h-4 text-stone-400" />
                                 <span className="font-bold">Test Play</span>
                             </div>
-                            <span className="text-[10px] text-stone-500 tracking-wide">アカウント連携なし・7日間限定</span>
+                            <span className="text-[10px] text-stone-400 tracking-wide">アカウント連携なし・7日間限定</span>
                         </button>
 
                         {/* Play Guide / プレイガイド */}
                         <Link
                             href="/play-guide"
-                            className="w-full bg-stone-900/40 border border-stone-800 text-stone-400 font-serif py-3.5 rounded hover:bg-amber-950/20 hover:text-amber-400 hover:border-amber-800/40 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
+                            className="w-full bg-stone-950/50 backdrop-blur-sm border border-stone-700 text-stone-200 font-serif py-3.5 rounded hover:bg-amber-950/30 hover:text-amber-300 hover:border-amber-500/50 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
                         >
                             <BookOpen className="w-4 h-4 text-stone-500 group-hover:text-amber-500 transition-colors" />
                             <span className="font-bold">プレイガイド</span>
                         </Link>
+
 
                         {/* フッター: コピーライト + 法的リンク */}
                         <div className="mt-8 pt-4 border-t border-slate-800/50 space-y-2 text-center">
@@ -649,13 +650,13 @@ export default function TitlePage() {
 
                         <button
                             onClick={handleContinue}
-                            className="w-full bg-stone-900/60 border border-stone-700 text-stone-300 font-serif py-3.5 rounded hover:bg-stone-800/80 hover:border-amber-500/50 hover:text-amber-200 transition-all flex flex-col items-center gap-1 group"
+                            className="w-full bg-stone-950/70 backdrop-blur-sm border border-stone-600 text-stone-100 font-serif py-3.5 rounded hover:bg-stone-900/90 hover:border-amber-500/50 hover:text-amber-200 transition-all flex flex-col items-center gap-1 group"
                         >
                             <div className="flex items-center gap-2">
                                 <LogIn className="w-4 h-4 group-hover:text-amber-400 transition-colors" />
                                 <span className="tracking-widest text-base">前回の継続</span>
                             </div>
-                            <span className="text-[10px] text-stone-500 tracking-wide">Googleアカウントでログインして続きから始める</span>
+                            <span className="text-[10px] text-stone-400 tracking-wide">Googleアカウントでログインして続きから始める</span>
                         </button>
 
                         <button
@@ -669,7 +670,7 @@ export default function TitlePage() {
                         <button
                             type="button"
                             onClick={() => { setAuthError(null); setMode('MENU'); }}
-                            className="w-full border border-stone-800 hover:border-stone-600 text-stone-500 hover:text-stone-300 font-serif text-xs tracking-widest py-2 rounded transition-colors text-center"
+                            className="w-full bg-stone-950/40 backdrop-blur-sm border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-stone-200 font-serif text-xs tracking-widest py-2 rounded transition-colors text-center"
                         >
                             タイトルに戻る
                         </button>
