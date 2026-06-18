@@ -286,19 +286,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (selectedCardIndex === index) {
             // 2段階目: 実行
 
-            // 強スキル判定
-            const isStrong = apCost >= 3 || (card.power != null && card.power >= 25) || /極|超|真|神|絶|終焉|バースト|メガ|ギガ|テラ/g.test(card.name);
-            if (isStrong) {
-                setIsStrongActive(true);
-                setShouldShake(true);
-                setTimeout(() => setShouldShake(false), 300);
-                setTimeout(() => {
-                    setShouldShake(true);
-                    setTimeout(() => setShouldShake(false), 300);
-                }, 150);
-                setTimeout(() => setIsStrongActive(false), 1000);
-            }
-
             // v2.9.3i: ヒールカードの場合、ターゲット選択モードに移行
             // target_typeがDB未設定でもcardEffectsのheal判定でフォールバック
             const cardEffect = getCardEffectInfo(card);
@@ -306,6 +293,36 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 cardEffect.effectType === 'heal' ||
                 card.type === 'Heal' || card.name.includes('回復') || card.name.includes('治癒') || card.name.includes('応急') || card.name.includes('ヒール') || card.name.includes('癒');
             const isAllyHeal = isHealCard && cardEffect.effectType !== 'buff_party' && cardEffect.effectType !== 'cure_self';
+
+            const isBuff = card.type === 'Support' ||
+                card.type === 'Defense' ||
+                card.type === 'Heal' ||
+                (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id)) ||
+                card.name.includes('防御') ||
+                card.name.includes('鉄壁') ||
+                card.name.includes('応急') ||
+                card.name.includes('回復') ||
+                card.name.includes('ヒール') ||
+                card.name.includes('集中') ||
+                card.name.includes('挑発') ||
+                card.name.includes('クイック');
+
+            // 強スキル判定（威力25以上は除外）
+            const isStrong = apCost >= 3 || /極|超|真|神|絶|終焉|バースト|メガ|ギガ|テラ/g.test(card.name);
+            if (isStrong) {
+                setIsStrongActive(true);
+                // バフ・回復系スキルの場合は画面揺れを行わない
+                if (!isBuff) {
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 300);
+                    setTimeout(() => {
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                    }, 150);
+                }
+                setTimeout(() => setIsStrongActive(false), 1000);
+            }
+
             if (isAllyHeal) {
                 setSelectedCardIndex(null);
                 if ((battleState.party?.length ?? 0) > 0) {
@@ -325,19 +342,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             }
 
             setSelectedCardIndex(null);
-            // バフ・防御系カードはSLASHアニメーションを出さない
-            const isBuff = card.type === 'Support' ||
-                card.type === 'Defense' ||
-                card.type === 'Heal' ||
-                (card.effect_id && ['def_up', 'atk_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(card.effect_id)) ||
-                card.name.includes('防御') ||
-                card.name.includes('鉄壁') ||
-                card.name.includes('応急') ||
-                card.name.includes('回復') ||
-                card.name.includes('ヒール') ||
-                card.name.includes('集中') ||
-                card.name.includes('挑発') ||
-                card.name.includes('クイック');
             if (!isBuff) {
                 let effect = card.animation_type;
                 if (!effect) {
@@ -375,17 +379,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         const { card } = healTargetMode;
         setHealTargetMode(null);
 
-        // 強スキル判定
+        // 強スキル判定（威力25以上は除外）
         const apCost = card.ap_cost ?? 1;
-        const isStrong = apCost >= 3 || (card.power != null && card.power >= 25) || /極|超|真|神|絶|終焉|バースト|メガ|ギガ|テラ/g.test(card.name);
+        const isStrong = apCost >= 3 || /極|超|真|神|絶|終焉|バースト|メガ|ギガ|テラ/g.test(card.name);
         if (isStrong) {
             setIsStrongActive(true);
-            setShouldShake(true);
-            setTimeout(() => setShouldShake(false), 300);
-            setTimeout(() => {
-                setShouldShake(true);
-                setTimeout(() => setShouldShake(false), 300);
-            }, 150);
+            // 回復系スキルのため、画面揺れ（setShouldShake）は行わない
             setTimeout(() => setIsStrongActive(false), 1000);
         }
 
