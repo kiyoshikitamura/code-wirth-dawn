@@ -53,14 +53,14 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 1321,enemy_bounty_royal_blade,王国公認の凶刃,60,600,140,20,400,0,,bounty
 1322,enemy_bounty_legend,伝説の傭兵,90,900,160,30,600,0,,bounty
 1323,enemy_bounty_reaper,静寂の死神,75,750,180,15,600,0,,bounty
-2101,enemy_boss_ep5_squad,帝国精鋭部隊,12,500,45,10,0,0,,quest_only
+2101,enemy_boss_ep5_squad,帝国精鋭部隊,12,300,20,5,0,0,,quest_only
 2102,enemy_boss_ep10_dragon,神代の守護竜,25,1200,55,18,0,0,,quest_only
 2103,enemy_boss_ep20_god,主神,50,9999,150,25,0,0,,quest_only
 2104,enemy_boss_mercenary_king,不死の傭兵王,25,2000,75,15,0,0,,quest_only
 2105,enemy_boss_ruin_guardian,遺跡の守護者,35,3000,90,20,0,0,,quest_only
 2106,enemy_boss_gate_keeper,天門の番人,45,4000,110,22,0,0,,quest_only
 2107,enemy_angel_soldier,天使兵,40,800,80,18,0,0,,quest_only
-2108,enemy_boss_archangel,大天使,48,3500,100,20,0,0,,quest_only
+2108,enemy_boss_archangel,大天使,26,300,45,10,0,0,,quest_only
 2109,enemy_boss_system_guard,システムの守護者,55,6000,130,25,0,0,,quest_only
 2110,enemy_boss_god_dragon,神竜,58,8000,145,28,0,0,,quest_only
 2111,enemy_apostle_soldier,白磁の使徒,15,300,55,10,0,0,,quest_only
@@ -89,7 +89,7 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 6016,boss_rebel_leader,反乱軍指導者,20,500,60,12,250,800,,quest_only
 6017,boss_gold_merchant,錬金強化人間,25,700,70,15,400,1200,,quest_only
 6021,boss_demon_baphomet,バフォメット,30,900,85,18,500,1500,,quest_only
-6022,boss_fallen_angel,降臨せし天使,28,800,80,20,450,1500,,quest_only
+6022,boss_fallen_angel,降臨せし天使,30,2500,90,18,450,1500,,quest_only
 6023,boss_desert_dragon,デザートドラゴン,32,1500,100,25,600,2000,,quest_only
 6024,boss_holy_kirin,霊獣・麒麟,30,1000,90,20,500,1500,,quest_only
 6025,boss_omega_golem,オメガ・ゴーレム,28,1200,85,30,450,1500,,quest_only
