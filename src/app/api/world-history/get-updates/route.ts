@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
     try {
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
         }
 
         // 1. Get user's last seen history reference
-        const { data: viewData, error: viewError } = await supabaseAdmin
+        const { data: viewData, error: viewError } = await supabaseServer
             .from('user_world_views')
             .select('last_seen_history_id')
             .eq('user_id', userId)
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const { error } = await supabaseAdmin
+        const { error } = await supabaseServer
             .from('user_world_views')
             .upsert({
                 user_id,
