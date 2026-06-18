@@ -223,6 +223,43 @@ export async function grantRewardItems(
                 await supabase.from('user_skills').insert({ user_id, skill_id: skillId });
                 console.log(`[QuestComplete] Granted skill ${skillId}`);
                 lootSaved.push({ itemId: skillId, name: skillName, quantity: 1, type: 'skill' });
+            } else {
+                // If skill is already learned, grant a random trade good instead
+                console.log(`[QuestComplete] Skill ${skillId} (${skillName}) already owned, replacing with random trade good.`);
+                const { data: tradeGoods } = await supabase
+                    .from('items')
+                    .select('id, name')
+                    .eq('type', 'trade_good');
+                
+                if (tradeGoods && tradeGoods.length > 0) {
+                    const picked = tradeGoods[Math.floor(Math.random() * tradeGoods.length)];
+                    const tradeGoodId = picked.id;
+                    const tradeGoodName = picked.name;
+
+                    const { data: existingInv } = await supabase
+                        .from('inventory').select('id, quantity')
+                        .eq('user_id', user_id).eq('item_id', tradeGoodId).maybeSingle();
+
+                    if (existingInv) {
+                        await supabase.from('inventory').update({ quantity: existingInv.quantity + 1 }).eq('id', existingInv.id);
+                    } else {
+                        await supabase.from('inventory').insert({ user_id, item_id: tradeGoodId, quantity: 1 });
+                    }
+                    console.log(`[QuestComplete] Granted replaced trade good item ${tradeGoodId} (${tradeGoodName}) instead of skill ${skillId}`);
+
+                    try {
+                        await supabase.from('user_item_history').insert({ user_id, item_id: tradeGoodId });
+                    } catch (histErr) {
+                        console.warn('[QuestComplete] Item history recording failed:', histErr);
+                    }
+
+                    lootSaved.push({
+                        itemId: tradeGoodId,
+                        name: `${tradeGoodName} (スキル重複変換)`,
+                        quantity: 1,
+                        type: 'item'
+                    });
+                }
             }
         }
     }
