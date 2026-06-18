@@ -30,10 +30,7 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
         { id: 'ranking', label: 'ランキング', sub: 'Ranking', icon: Trophy },
     ];
 
-    const isProduction = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production';
-    const locationFacilitiesFiltered = locationFacilities.filter(f => !(f.id === 'colosseum' && isProduction));
-
-    const facilities = isHub ? hubFacilities : locationFacilitiesFiltered;
+    const facilities = isHub ? hubFacilities : locationFacilities;
 
     const handleSelect = (id: FacilityType) => {
         onSelectFacility(id);
