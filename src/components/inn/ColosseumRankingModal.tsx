@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useGameStore } from '@/store/gameStore';
 import { Trophy, Award, Flame, X, ArrowLeft, Loader2 } from 'lucide-react';
+import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 interface RankingEntry {
     rank: number;
     userId: string;
     name: string;
+    avatarUrl?: string;
     wins: number;
     maxStreak: number;
 }
@@ -34,6 +36,33 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
     const [myStats, setMyStats] = useState<UserStats | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [countdown, setCountdown] = useState<string>('');
+    const [selectedUser, setSelectedUser] = useState<{
+        name: string;
+        avatarUrl?: string;
+        epithet?: string;
+        introduction?: string;
+    } | null>(null);
+
+    const handleUserClick = async (userId?: string) => {
+        if (!userId) return;
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/profile?profileId=${userId}`, {
+                headers: authHeaders,
+            });
+            if (res.ok) {
+                const profileData = await res.json();
+                setSelectedUser({
+                    name: profileData.name || '名もなき旅人',
+                    avatarUrl: profileData.avatar_url,
+                    epithet: profileData.title_name,
+                    introduction: profileData.introduction || '',
+                });
+            }
+        } catch (e) {
+            console.error('[ColosseumRanking] Failed to fetch clicked user profile:', e);
+        }
+    };
 
     useEffect(() => {
         const updateTimer = () => {
@@ -243,8 +272,27 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${getRankBadgeColor(entry.rank)}`}>
                                             {entry.rank}
                                         </div>
+                                        {/* Player Avatar */}
+                                        <button
+                                            onClick={() => handleUserClick(entry.userId)}
+                                            className="w-7 h-7 rounded-full overflow-hidden border border-[#233f6a]/40 bg-slate-800 flex-shrink-0 cursor-pointer hover:border-amber-400/80 transition-colors"
+                                        >
+                                            <img
+                                                src={entry.avatarUrl || '/avatars/adventurer.jpg'}
+                                                alt={entry.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = '/avatars/adventurer.jpg';
+                                                }}
+                                            />
+                                        </button>
                                         {/* Player Name */}
-                                        <span className="text-xs font-black text-slate-100 truncate">{entry.name}</span>
+                                        <span
+                                            onClick={() => handleUserClick(entry.userId)}
+                                            className="text-xs font-black text-slate-100 truncate cursor-pointer hover:text-amber-400 transition-colors"
+                                        >
+                                            {entry.name}
+                                        </span>
                                     </div>
 
                                     {/* Stats */}
@@ -264,6 +312,18 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                     )}
                 </div>
             </div>
+
+            {/* Simple User Profile Popup */}
+            {selectedUser && (
+                <SimpleUserProfilePopup
+                    isOpen={!!selectedUser}
+                    onClose={() => setSelectedUser(null)}
+                    avatarUrl={selectedUser.avatarUrl}
+                    name={selectedUser.name}
+                    epithet={selectedUser.epithet}
+                    introduction={selectedUser.introduction}
+                />
+            )}
         </div>
     );
 }

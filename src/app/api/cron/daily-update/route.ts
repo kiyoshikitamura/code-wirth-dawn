@@ -173,6 +173,28 @@ async function performUpdate(isForceUgcReset: boolean) {
         } catch (colosseumRewardErr: any) {
             logs.push(`[ColosseumReward] error: ${colosseumRewardErr.message}`);
         }
+
+        // 2.7. コロシアムユーザー戦績リセット処理 (6時間ごと、JST 6/19 12:00 から開始)
+        try {
+            const now = new Date();
+            const resetStartTime = new Date('2026-06-19T12:00:00+09:00'); // JST 6/19 12:00
+            if (now >= resetStartTime) {
+                const { error: resetErr } = await supabaseServer
+                    .from('colosseum_user_stats')
+                    .delete()
+                    .neq('user_id', '00000000-0000-0000-0000-000000000000');
+
+                if (resetErr) {
+                    logs.push(`[ColosseumReset] Failed to reset user stats: ${resetErr.message}`);
+                } else {
+                    logs.push(`[ColosseumReset] Successfully reset user stats for the new 6h cycle`);
+                }
+            } else {
+                logs.push(`[ColosseumReset] Reset skipped (starts from JST 6/19 12:00)`);
+            }
+        } catch (resetExc: any) {
+            logs.push(`[ColosseumReset] exception: ${resetExc.message}`);
+        }
     } catch (rankErr: any) {
         logs.push(`[RankingAggregation] error: ${rankErr.message}`);
     }

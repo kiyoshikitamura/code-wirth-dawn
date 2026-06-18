@@ -670,7 +670,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                         className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <span className="flex items-center gap-2">
-                                            <span className="text-yellow-400 font-bold">10,000 G</span>
+                                            <span className="text-yellow-400 font-bold whitespace-nowrap">10,000 G</span>
                                             <span className="text-gray-400 text-xs">スターターパック</span>
                                         </span>
                                         <span className="font-bold text-yellow-300">330円（税込）</span>
@@ -681,7 +681,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                         className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <span className="flex items-center gap-2">
-                                            <span className="text-yellow-400 font-bold">30,000 G</span>
+                                            <span className="text-yellow-400 font-bold whitespace-nowrap">30,000 G</span>
                                             <span className="text-gray-400 text-xs">スタンダードパック</span>
                                         </span>
                                         <span className="font-bold text-yellow-300">950円（税込）</span>
@@ -692,7 +692,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                         className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
                                     >
                                         <span className="flex items-center gap-2">
-                                            <span className="text-yellow-400 font-bold">50,000 G</span>
+                                            <span className="text-yellow-400 font-bold whitespace-nowrap">50,000 G</span>
                                             <span className="text-gray-400 text-xs">アドベンチャーパック</span>
                                         </span>
                                         <span className="font-bold text-yellow-300">1,430円（税込）</span>

@@ -51,12 +51,12 @@ export async function GET(req: Request) {
         const [winsRankRes, streakRankRes] = await Promise.all([
             supabaseService
                 .from('ranking_colosseum_cache')
-                .select('user_id, user_name, wins, max_streak, rank_by_wins')
+                .select('user_id, user_name, avatar_url, wins, max_streak, rank_by_wins')
                 .order('rank_by_wins', { ascending: true })
                 .limit(RANKING_LIMIT),
             supabaseService
                 .from('ranking_colosseum_cache')
-                .select('user_id, user_name, wins, max_streak, rank_by_streak')
+                .select('user_id, user_name, avatar_url, wins, max_streak, rank_by_streak')
                 .order('rank_by_streak', { ascending: true })
                 .limit(RANKING_LIMIT)
         ]);
@@ -65,6 +65,7 @@ export async function GET(req: Request) {
             rank: r.rank_by_wins,
             userId: r.user_id,
             name: r.user_name || '名もなき旅人',
+            avatarUrl: r.avatar_url,
             wins: r.wins,
             maxStreak: r.max_streak
         }));
@@ -73,6 +74,7 @@ export async function GET(req: Request) {
             rank: r.rank_by_streak,
             userId: r.user_id,
             name: r.user_name || '名もなき旅人',
+            avatarUrl: r.avatar_url,
             wins: r.wins,
             maxStreak: r.max_streak
         }));

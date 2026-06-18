@@ -160,7 +160,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                         </section>
 
                         <section className="space-y-2">
-                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ ランキング報酬</h3>
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ ランキング報酬と戦績リセット</h3>
                             <p className="text-xs">
                                 コロシアムの「勝利数」および「最多連勝数」のランキング上位者には、6時間ごと（JST 6時/12時/18時/24時）の集計時に以下の報酬がゲーム内郵便（システム通知）を通じて送られます。
                             </p>
@@ -169,6 +169,9 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 <li>2位: <span className="text-amber-400 font-bold">5,000 G</span></li>
                                 <li>3位: <span className="text-amber-400 font-bold">1,000 G</span></li>
                             </ul>
+                            <p className="text-xs text-rose-300 font-medium mt-2">
+                                ⚠️ 集計期間（6時間）の終了時に、全プレイヤーのコロシアム戦績（勝利数・連勝数）はすべて 0 にリセットされます（リセット仕様は JST 6/19 12:00 の集計より開始されます）。
+                            </p>
                         </section>
                     </div>
 

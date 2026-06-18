@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.ranking_colosseum_cache (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL,
     user_name TEXT,
+    avatar_url TEXT, -- ユーザーアバター画像URL
     wins INTEGER NOT NULL DEFAULT 0,
     max_streak INTEGER NOT NULL DEFAULT 0,
     rank_by_wins INTEGER,
@@ -124,11 +125,15 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 - 紫色のボーダーと輝くシャドウ、および種別に応じたブックアイコン (`BookOpen`) やバッグアイコン (`ShoppingBag`) を使用したカードデザインで描画される。
 - クエストのリワードにアイテム・スキルしか存在しない場合であっても、報酬枠の表示がスキップされないようにハイドレーションガードを拡張した。
 
+### 5.2 アバター表示と自己紹介ポップアップ
+- ランキング一覧画面において、各プレイヤーの丸型アバター画像を表示する。
+- アバター画像または名前のタップ時に、非同期で該当ユーザーのプロフィール（通り名、名前、アバター、自己紹介文）をロードし、共通コンポーネント `SimpleUserProfilePopup` をオーバーレイ表示する。
+
 ---
 
-## 6. 6時間ごとのランキング報酬 (Ranking Rewards)
+## 6. 6時間ごとのランキング報酬と戦績リセット (Ranking Rewards & Reset)
 
-世界シミュレーションの更新（JST 6:00, 12:00, 18:00, 24:00）と同期して実行される Vercel Cron `/api/cron/daily-update` 内にて、コロシアムランキングの上位入賞者に対して自動で報酬を付与する。
+世界シミュレーションの更新（JST 6:00, 12:00, 18:00, 24:00）と同期して実行される Vercel Cron `/api/cron/daily-update` 内にて、コロシアムランキングの上位入賞者に対して自動で報酬を付与し、戦績をクリアする。
 
 ### 6.1 報酬体系
 - **勝利数ランキング (Wins Ranking)**:
@@ -146,10 +151,12 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 - キャッシュテーブル `ranking_colosseum_cache` は集計時に PostgreSQL の `ROW_NUMBER()` 関数によって一意な順位が割り当てられており、同点（タイ）であっても重複のない「1位、2位、3位」が厳密に決定される。
 - Cron 処理内では、このキャッシュテーブルから `rank_by_wins` (1〜3位) および `rank_by_streak` (1〜3位) を取得して対象ユーザーに報酬を付与する。
 
-### 6.3 処理内容
+### 6.3 処理内容と戦績リセット
 1. **ゴールド付与**: `increment_gold` RPCを使用して、アトミックにゴールドを加算。
 2. **システム通知**: `notifications` テーブルに、「コロシアムランキング報酬」として付与ゴールドを明記した未読通知をインサートする。
 3. **年代記記録**: プレイヤーの個人タイムライン (`user_chronicles`) に、イベントタイプ `system_reward` として「コロシアムランキング入賞」の記録をインサートする。
+4. **戦績の自動リセット**: 報酬の配布が正常に完了した直後、`colosseum_user_stats` 内のすべてのプレイヤーレコードを削除して戦績（勝利数・連勝数）を完全に 0 にクリアする。
+5. **リセット開始時間ガード**: 誤って古い集計データを消去しないよう、現在日時が **JST 2026-06-19 12:00:00 (JST)** 以降の場合のみ、上記の削除クエリ（リセット）を実行するガード条件を設ける。
 
 ---
 
