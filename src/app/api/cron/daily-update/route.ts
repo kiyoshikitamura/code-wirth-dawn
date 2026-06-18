@@ -157,6 +157,15 @@ async function performUpdate(isForceUgcReset: boolean) {
                     is_major_event: true
                 });
 
+                // 5. world_states_history へのインサート（街の噂話の「冒険者の噂」に流す）
+                await supabaseServer.from('world_states_history').insert({
+                    location_id: profile?.current_location_id || null,
+                    event_type: 'colosseum_ranking',
+                    old_value: '---',
+                    new_value: `${info.gold.toLocaleString()}G`,
+                    message: `冒険者「${info.userName}」が闘技場の定期集計にて優秀な戦績を収め、${reasonText}の賞金として ${info.gold.toLocaleString()}G を獲得したそうだ！`,
+                });
+
                 colosseumRewardCount++;
             }
 
