@@ -44,6 +44,7 @@ async function seedItems() {
         if (rawTypeBase === 'consumable') type = 'consumable';
         else if (rawTypeBase === 'material') type = 'material';
         else if (rawTypeBase === 'item') type = 'item';
+        else if (rawTypeBase === 'equipment') type = 'equipment';
         else type = 'skill'; // skill_card, gear, book, scroll, manual, grimoire → "skill"
 
 
