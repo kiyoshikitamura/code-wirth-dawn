@@ -294,6 +294,7 @@ function InnPageInner() {
                     showHistoryBadge={showHistoryBadge}
                     isHub={isHub}
                     isMapRecommended={(() => {
+                        if (userProfile && (userProfile.level || 1) >= 3) return false; // Lv3以上バイパス
                         const completedQuests = useGameStore.getState().completedQuests;
                         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                         const clearedCount = completedQuests?.length ?? 0;
@@ -306,6 +307,8 @@ function InnPageInner() {
 
                 {/* 目的ガイダンスバナー (Onboarding Banner) */}
                 {(() => {
+                    if (userProfile && (userProfile.level || 1) >= 3) return null; // Lv3以上バイパス
+
                     const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                     const clearedCount = completedQuests?.length ?? 0;
 
@@ -351,7 +354,9 @@ function InnPageInner() {
                         const clearedCount = completedQuests?.length ?? 0;
 
                         let recommendedFacility: string | null = null;
-                        if (!isEp1Cleared) {
+                        if (userProfile && (userProfile.level || 1) >= 3) {
+                            recommendedFacility = null; // Lv3以上バイパス
+                        } else if (!isEp1Cleared) {
                             recommendedFacility = 'guild';
                         } else if (clearedCount < 2) {
                             recommendedFacility = null;
