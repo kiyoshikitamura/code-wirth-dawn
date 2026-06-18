@@ -297,14 +297,17 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
 
                                     {/* Stats */}
                                     <div className="flex items-center gap-4 flex-shrink-0 text-right">
-                                        <div>
-                                            <span className="text-[10px] text-slate-500 block font-bold">累計勝利</span>
-                                            <span className="text-xs text-emerald-400 font-black">{entry.wins}勝</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] text-slate-500 block font-bold">最大連勝</span>
-                                            <span className="text-xs text-orange-400 font-black">{entry.maxStreak}連勝</span>
-                                        </div>
+                                        {activeTab === 'wins' ? (
+                                            <div>
+                                                <span className="text-[10px] text-slate-500 block font-bold">累計勝利</span>
+                                                <span className="text-xs text-emerald-400 font-black">{entry.wins}勝</span>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <span className="text-[10px] text-slate-500 block font-bold">最大連勝</span>
+                                                <span className="text-xs text-orange-400 font-black">{entry.maxStreak}連勝</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
