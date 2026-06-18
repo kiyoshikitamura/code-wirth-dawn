@@ -36,15 +36,31 @@ export async function POST(req: Request) {
         // Record quest activity log (Spec Dashboard Extensions)
         try {
             if (currentProfile?.current_quest_id) {
-                const { error: logErr } = await supabaseServer
-                    .from('quest_activity_logs')
-                    .insert({
-                        user_id: userId,
-                        scenario_id: currentProfile.current_quest_id,
-                        action: 'abandon'
-                    });
-                if (logErr) {
-                    console.error('[Quest Give Up] Failed to write quest_activity_logs:', logErr);
+                const questIdStr = String(currentProfile.current_quest_id);
+                if (questIdStr.startsWith('colosseum_')) {
+                    const difficulty = questIdStr.replace('colosseum_', '');
+                    const { error: logErr } = await supabaseServer
+                        .from('colosseum_activity_logs')
+                        .insert({
+                            user_id: userId,
+                            difficulty,
+                            action: 'abandon',
+                            gold_cost: 0
+                        });
+                    if (logErr) {
+                        console.error('[Quest Give Up] Failed to write colosseum_activity_logs:', logErr);
+                    }
+                } else {
+                    const { error: logErr } = await supabaseServer
+                        .from('quest_activity_logs')
+                        .insert({
+                            user_id: userId,
+                            scenario_id: currentProfile.current_quest_id,
+                            action: 'abandon'
+                        });
+                    if (logErr) {
+                        console.error('[Quest Give Up] Failed to write quest_activity_logs:', logErr);
+                    }
                 }
             }
         } catch (logErr) {

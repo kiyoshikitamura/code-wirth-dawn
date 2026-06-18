@@ -73,6 +73,22 @@ interface DailyKPI {
     mpu: number;
 }
 
+interface ColosseumSummary {
+    totalPlayers: number;
+    totalBattles: number;
+    winRate: number;
+    maxStreak: number;
+    totalGoldSpent: number;
+}
+
+interface ColosseumDaily {
+    date: string;
+    starts: { easy: number; normal: number; hard: number };
+    completes: { easy: number; normal: number; hard: number };
+    abandons: { easy: number; normal: number; hard: number };
+    goldSpent: number;
+}
+
 interface KPIData {
     summary: KPISummary;
     levelDistribution: LevelDistribution;
@@ -80,6 +96,10 @@ interface KPIData {
     questRanking: QuestRanking[];
     questStats: QuestStats[];
     dailyKPI: DailyKPI[];
+    colosseum?: {
+        summary: ColosseumSummary;
+        daily: ColosseumDaily[];
+    };
 }
 
 export default function AdminDashboardPage() {
@@ -87,7 +107,7 @@ export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-    const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments' | 'colosseum'>('users');
     const [daysRange, setDaysRange] = useState<number>(30);
     
 
@@ -246,7 +266,7 @@ export default function AdminDashboardPage() {
         );
     }
 
-    const { summary, levelDistribution, subscriptionDistribution, questRanking, dailyKPI } = data;
+    const { summary, levelDistribution, subscriptionDistribution, questRanking, dailyKPI, colosseum } = data;
 
     // 自前SVGグラフ用の座標計算
     const svgWidth = 800;
@@ -288,6 +308,33 @@ export default function AdminDashboardPage() {
         return { x, y };
     });
     const mauLinePath = mauPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    // E. 折れ線グラフ用: コロシアム挑戦数
+    const colosseumDaily = colosseum?.daily || [];
+    const maxColosseumStarts = Math.max(
+        ...colosseumDaily.map(d => (d.starts.easy + d.starts.normal + d.starts.hard)),
+        5
+    );
+    const colEasyPoints = colosseumDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.starts.easy / maxColosseumStarts) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const colEasyLinePath = colEasyPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    const colNormalPoints = colosseumDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.starts.normal / maxColosseumStarts) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const colNormalLinePath = colNormalPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    const colHardPoints = colosseumDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.starts.hard / maxColosseumStarts) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const colHardLinePath = colHardPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
     const mauAreaPath = mauPoints.length > 0 
         ? `${mauLinePath} L ${mauPoints[mauPoints.length - 1].x} ${svgHeight - padding} L ${mauPoints[0].x} ${svgHeight - padding} Z`
         : '';
@@ -451,6 +498,12 @@ export default function AdminDashboardPage() {
                                     >
                                         課金決済
                                     </button>
+                                    <button
+                                        onClick={() => setActiveTab('colosseum')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'colosseum' ? 'bg-amber-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        コロシアム
+                                    </button>
                                 </div>
                                 <button
                                     onClick={exportDailyKPICsv}
@@ -464,8 +517,34 @@ export default function AdminDashboardPage() {
 
                         {/* 自前SVGグラフ */}
                         <div className="relative">
-                            {/* 折れ線グラフ: ユーザー登録 & アクティブUU */}
-                            {(activeTab === 'users' || activeTab === 'dau') && (
+                            {/* コロシアム総合サマリー */}
+                            {activeTab === 'colosseum' && colosseum && (
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">挑戦プレイヤー数</div>
+                                        <div className="text-sm font-bold text-amber-400">{colosseum.summary.totalPlayers} UU</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">総バトル数</div>
+                                        <div className="text-sm font-bold text-blue-400">{colosseum.summary.totalBattles} 戦</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">平均勝率</div>
+                                        <div className="text-sm font-bold text-emerald-400">{colosseum.summary.winRate} %</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">歴代最高連勝</div>
+                                        <div className="text-sm font-bold text-pink-400">{colosseum.summary.maxStreak} 連勝</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド</div>
+                                        <div className="text-sm font-bold text-yellow-500">{colosseum.summary.totalGoldSpent.toLocaleString()} G</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 折れ線グラフ: ユーザー登録 & アクティブUU & コロシアム */}
+                            {(activeTab === 'users' || activeTab === 'dau' || activeTab === 'colosseum') && (
                                 <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="overflow-visible">
                                     <defs>
                                         <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
@@ -481,7 +560,7 @@ export default function AdminDashboardPage() {
                                     {/* グリッド横線 */}
                                     {[0, 1, 2, 3, 4].map((n) => {
                                         const y = padding + (n / 4) * (svgHeight - padding * 2);
-                                        const currentMax = activeTab === 'users' ? maxUsers : maxActive;
+                                        const currentMax = activeTab === 'users' ? maxUsers : (activeTab === 'dau' ? maxActive : maxColosseumStarts);
                                         const label = Math.round(currentMax - (n / 4) * currentMax);
                                         return (
                                             <g key={n} opacity="0.15">
@@ -500,6 +579,9 @@ export default function AdminDashboardPage() {
                                     {activeTab === 'users' && userLinePath && <path d={userLinePath} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
                                     {activeTab === 'dau' && mauLinePath && <path d={mauLinePath} fill="none" stroke="#6366f1" strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" strokeLinejoin="round" />}
                                     {activeTab === 'dau' && dauLinePath && <path d={dauLinePath} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'colosseum' && colEasyLinePath && <path d={colEasyLinePath} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'colosseum' && colNormalLinePath && <path d={colNormalLinePath} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'colosseum' && colHardLinePath && <path d={colHardLinePath} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
 
                                     {/* ガイドホバー */}
                                     {dailyKPI.map((d, i) => {
@@ -526,6 +608,13 @@ export default function AdminDashboardPage() {
                                                             <>
                                                                 <circle cx={mauPoints[i].x} cy={mauPoints[i].y} r="5" fill="#6366f1" stroke="#fff" strokeWidth="1.5" />
                                                                 <circle cx={dauPoints[i].x} cy={dauPoints[i].y} r="5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
+                                                            </>
+                                                        )}
+                                                        {activeTab === 'colosseum' && colEasyPoints[i] && colNormalPoints[i] && colHardPoints[i] && (
+                                                            <>
+                                                                <circle cx={colEasyPoints[i].x} cy={colEasyPoints[i].y} r="4" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
+                                                                <circle cx={colNormalPoints[i].x} cy={colNormalPoints[i].y} r="4" fill="#3b82f6" stroke="#fff" strokeWidth="1.5" />
+                                                                <circle cx={colHardPoints[i].x} cy={colHardPoints[i].y} r="4" fill="#f59e0b" stroke="#fff" strokeWidth="1.5" />
                                                             </>
                                                         )}
                                                     </g>
@@ -624,6 +713,15 @@ export default function AdminDashboardPage() {
                                             <div className="text-blue-400 font-bold border-t border-gray-800/55 pt-1 mt-1">勝率: {dailyKPI[hoveredIdx].winRate}%</div>
                                         </>
                                     )}
+                                    {activeTab === 'colosseum' && colosseumDaily[hoveredIdx] && (
+                                        <div className="space-y-1 mt-1">
+                                            <div className="text-amber-400 font-semibold text-[10px]">コロシアム挑戦状況</div>
+                                            <div className="text-green-400 text-[10px]">Easy: {colosseumDaily[hoveredIdx].starts.easy}回 / 制覇: {colosseumDaily[hoveredIdx].completes.easy}</div>
+                                            <div className="text-blue-400 text-[10px]">Normal: {colosseumDaily[hoveredIdx].starts.normal}回 / 制覇: {colosseumDaily[hoveredIdx].completes.normal}</div>
+                                            <div className="text-yellow-500 text-[10px]">Hard: {colosseumDaily[hoveredIdx].starts.hard}回 / 制覇: {colosseumDaily[hoveredIdx].completes.hard}</div>
+                                            <div className="text-orange-400 font-semibold text-[10px] border-t border-gray-800/55 pt-0.5 mt-0.5">回収: {colosseumDaily[hoveredIdx].goldSpent.toLocaleString()} G</div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -659,6 +757,13 @@ export default function AdminDashboardPage() {
                                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded" /><span className="text-gray-400">勝利</span></div>
                                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded" /><span className="text-gray-400">敗北</span></div>
                                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-500 rounded" /><span className="text-gray-400">逃亡</span></div>
+                                </>
+                            )}
+                            {activeTab === 'colosseum' && (
+                                <>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded" /><span className="text-gray-400">Easy挑戦</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-500 rounded" /><span className="text-gray-400">Normal挑戦</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-500 rounded" /><span className="text-gray-400">Hard挑戦</span></div>
                                 </>
                             )}
                         </div>

@@ -259,6 +259,85 @@ export async function GET(req: Request) {
         const dpu = payingUsersByDate[todayStr] ? payingUsersByDate[todayStr].size : 0;
         const mpu = getUniqueUsersInWindow(payingUsersByDate, todayStr, 30);
 
+        // Fetch Colosseum stats via RPC
+        const { data: colStats, error: colStatsErr } = await supabaseServer
+            .rpc('get_colosseum_summary_stats');
+        
+        let colSummary = {
+            totalPlayers: 0,
+            totalBattles: 0,
+            winRate: 0,
+            maxStreak: 0,
+            totalGoldSpent: 0
+        };
+
+        if (!colStatsErr && colStats && colStats.length > 0) {
+            const row = colStats[0];
+            const battles = Number(row.total_battles || 0);
+            const wins = Number(row.total_wins || 0);
+            colSummary = {
+                totalPlayers: Number(row.total_players || 0),
+                totalBattles: battles,
+                winRate: battles > 0 ? Math.round((wins / battles) * 100) : 0,
+                maxStreak: Number(row.max_streak || 0),
+                totalGoldSpent: Number(row.total_gold_spent || 0)
+            };
+        } else if (colStatsErr) {
+            console.error('[Admin KPI] Colosseum summary RPC error:', colStatsErr);
+        }
+
+        // Fetch daily Colosseum stats via RPC
+        const { data: colDaily, error: colDailyErr } = await supabaseServer
+            .rpc('get_colosseum_daily_stats', { days_limit: days });
+
+        const colDailyMap: Record<string, { 
+            starts: Record<string, number>, 
+            completes: Record<string, number>, 
+            abandons: Record<string, number>,
+            goldSpent: number 
+        }> = {};
+
+        (colDaily || []).forEach((row: any) => {
+            const date = row.date;
+            if (!colDailyMap[date]) {
+                colDailyMap[date] = {
+                    starts: { easy: 0, normal: 0, hard: 0 },
+                    completes: { easy: 0, normal: 0, hard: 0 },
+                    abandons: { easy: 0, normal: 0, hard: 0 },
+                    goldSpent: 0
+                };
+            }
+            const diff = (row.difficulty || 'easy') as 'easy' | 'normal' | 'hard';
+            const action = (row.action || 'start') as 'start' | 'complete' | 'abandon';
+            const count = Number(row.count || 0);
+            const gold = Number(row.gold_spent || 0);
+
+            colDailyMap[date].goldSpent += gold;
+            if (action === 'start') {
+                colDailyMap[date].starts[diff] = count;
+            } else if (action === 'complete') {
+                colDailyMap[date].completes[diff] = count;
+            } else if (action === 'abandon') {
+                colDailyMap[date].abandons[diff] = count;
+            }
+        });
+
+        const dailyColosseumKPI = targetDaysList.map(date => {
+            const entry = colDailyMap[date] || {
+                starts: { easy: 0, normal: 0, hard: 0 },
+                completes: { easy: 0, normal: 0, hard: 0 },
+                abandons: { easy: 0, normal: 0, hard: 0 },
+                goldSpent: 0
+            };
+            return {
+                date,
+                starts: entry.starts,
+                completes: entry.completes,
+                abandons: entry.abandons,
+                goldSpent: entry.goldSpent
+            };
+        });
+
         return NextResponse.json({
             summary: {
                 totalUsers,
@@ -287,7 +366,11 @@ export async function GET(req: Request) {
             subscriptionDistribution,
             questRanking,
             questStats,
-            dailyKPI
+            dailyKPI,
+            colosseum: {
+                summary: colSummary,
+                daily: dailyColosseumKPI
+            }
         });
 
     } catch (err: any) {

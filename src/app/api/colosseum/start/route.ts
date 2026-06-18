@@ -112,6 +112,20 @@ export async function POST(req: Request) {
             console.warn('[Colosseum Start] Failed to initialize colosseum stats:', statsError);
         }
 
+        // Record colosseum activity log
+        const { error: logError } = await supabase
+            .from('colosseum_activity_logs')
+            .insert({
+                user_id,
+                difficulty,
+                action: 'start',
+                gold_cost: goldCost
+            });
+
+        if (logError) {
+            console.error('[Colosseum Start] Failed to write colosseum_activity_logs:', logError);
+        }
+
         // Record start event in user_chronicles
         const { error: chronicleError } = await supabase
             .from('user_chronicles')

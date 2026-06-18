@@ -546,7 +546,7 @@ export async function POST(req: Request) {
                 accumulated_days: updates.accumulated_days,
                 location_id: quest.location_id || updates.current_location_id || user.current_location_id,
                 location_name: newLocationName || (repChange ? repChange.location : null),
-                scenario_id: isUgcV2 ? null : quest_id,
+                scenario_id: (isUgcV2 || String(quest_id).startsWith('colosseum_')) ? null : quest_id,
                 ugc_scenario_id: isUgcV2 ? quest_id : null,
                 title: result === 'success' ? `クエストクリア: ${quest.title}` : `クエスト失敗/放棄: ${quest.title}`,
                 description: result === 'success' 
@@ -559,6 +559,23 @@ export async function POST(req: Request) {
                 if (error) console.error('[Quest Complete] Failed to write quest result to user_chronicles:', error);
             })
         );
+
+        // Record Colosseum activity log on success
+        if (result === 'success' && String(quest_id).startsWith('colosseum_')) {
+            const difficulty = String(quest_id).replace('colosseum_', '');
+            historyPromises.push(
+                supabase.from('colosseum_activity_logs')
+                    .insert({
+                        user_id,
+                        difficulty,
+                        action: 'complete',
+                        gold_cost: 0
+                    })
+                    .then(({ error }: any) => {
+                        if (error) console.error('[Quest Complete] Failed to write colosseum_activity_logs:', error);
+                    })
+            );
+        }
 
         // 13b. 加齢イベント（年齢値が上がった場合のみ）
         if (changes.aged_up) {
