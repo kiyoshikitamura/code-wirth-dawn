@@ -89,13 +89,17 @@ function InnPageInner() {
     const completedQuests = useGameStore(state => state.completedQuests);
     const [visitedTavern, setVisitedTavern] = useState(false);
     const [visitedShop, setVisitedShop] = useState(false);
+    const [visitedGossip, setVisitedGossip] = useState(false);
+    const [visitedMap, setVisitedMap] = useState(false);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
             setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
             setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
+            setVisitedGossip(localStorage.getItem('wirth_dawn_visited_gossip') === 'true');
+            setVisitedMap(localStorage.getItem('wirth_dawn_visited_map') === 'true');
         }
-    }, [showTavern, showShop]);
+    }, [showTavern, showShop, activeModal]);
 
     React.useEffect(() => {
         if (showTavern) {
@@ -110,6 +114,13 @@ function InnPageInner() {
             setVisitedShop(true);
         }
     }, [showShop]);
+
+    React.useEffect(() => {
+        if (activeModal === 'gossip') {
+            localStorage.setItem('wirth_dawn_visited_gossip', 'true');
+            setVisitedGossip(true);
+        }
+    }, [activeModal]);
 
     if (loading || !userProfile || !worldState) {
         return (
@@ -274,7 +285,12 @@ function InnPageInner() {
                     onOpenHistory={openHistoryHall}
                     onReturnHub={returnToHub}
                     onLeaveHub={leaveHub}
-                    onOpenMap={() => router.push('/world-map')}
+                    onOpenMap={() => {
+                        if (typeof window !== 'undefined') {
+                            localStorage.setItem('wirth_dawn_visited_map', 'true');
+                        }
+                        router.push('/world-map');
+                    }}
                     showHistoryBadge={showHistoryBadge}
                     isHub={isHub}
                     isMapRecommended={(() => {
@@ -283,7 +299,8 @@ function InnPageInner() {
                         const clearedCount = completedQuests?.length ?? 0;
                         const visitedTavern = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_tavern') === 'true';
                         const visitedShop = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_shop') === 'true';
-                        return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop;
+                        const visitedMap = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_map') === 'true';
+                        return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop && !visitedMap;
                     })()}
                 />
 
@@ -301,7 +318,7 @@ function InnPageInner() {
                         bannerText = '依頼達成！次は酒場で仲間を集めよう';
                     } else if (!visitedShop) {
                         bannerText = '仲間獲得！次は道具屋で装備を整えよう';
-                    } else {
+                    } else if (!visitedGossip && !visitedMap) {
                         bannerText = '街の噂を集めたり、地図から冒険に旅立とう';
                     }
 
@@ -342,8 +359,10 @@ function InnPageInner() {
                             recommendedFacility = 'inn';
                         } else if (!visitedShop) {
                             recommendedFacility = 'shop';
-                        } else {
+                        } else if (!visitedGossip && !visitedMap) {
                             recommendedFacility = 'gossip_and_map';
+                        } else {
+                            recommendedFacility = null;
                         }
 
                         return (
