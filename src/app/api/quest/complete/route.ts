@@ -291,20 +291,26 @@ export async function POST(req: Request) {
                 .select('reward_id, rarity')
                 .eq('reward_type', 'skill');
 
+            const difficulty = String(quest_id).replace('colosseum_', ''); // easy, normal, hard
+            const count = difficulty === 'hard' ? 2 : 1;
+
             const chooseWeightedReward = (pool: { reward_id: string; rarity: string }[]): string | null => {
                 if (!pool || pool.length === 0) return null;
-                const weightMap: Record<string, number> = {
-                    common: 70,
-                    rare: 25,
-                    super_rare: 5
-                };
+                // Easy: 70/25/5, Normal: 40/50/10, Hard: 30/40/30
+                let weightMap: Record<string, number> = { common: 70, rare: 25, super_rare: 5 };
+                if (difficulty === 'normal') {
+                    weightMap = { common: 40, rare: 50, super_rare: 10 };
+                } else if (difficulty === 'hard') {
+                    weightMap = { common: 30, rare: 40, super_rare: 30 };
+                }
+
                 let totalWeight = 0;
                 for (const item of pool) {
-                    totalWeight += weightMap[item.rarity] || 70;
+                    totalWeight += weightMap[item.rarity] || 0;
                 }
                 let randomVal = Math.random() * totalWeight;
                 for (const item of pool) {
-                    const weight = weightMap[item.rarity] || 70;
+                    const weight = weightMap[item.rarity] || 0;
                     if (randomVal < weight) {
                         return item.reward_id;
                     }
@@ -312,9 +318,6 @@ export async function POST(req: Request) {
                 }
                 return pool[0].reward_id;
             };
-
-            const difficulty = String(quest_id).replace('colosseum_', ''); // easy, normal, hard
-            const count = difficulty === 'hard' ? 2 : 1;
 
             if (itemPool && itemPool.length > 0) {
                 if (!effectiveRewards.items) effectiveRewards.items = [];
