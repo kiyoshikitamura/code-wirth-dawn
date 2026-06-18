@@ -449,12 +449,12 @@ export default function TitlePage() {
 
     // ─── TITLE / CHAR_CREATION 背景 ───────────────────────────────────────
     const renderTitleBackground = () => (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden bg-stone-950">
             <div
                 className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-                style={{ backgroundImage: 'url("/backgrounds/key_visual/main_kv_journey_empty.png")' }}
+                style={{ backgroundImage: 'url("/backgrounds/key_visual/cozy_inn.png")' }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-stone-950/70" />
             <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: 'url("/textures/dark-leather.png")' }} />
         </div>
     );
@@ -513,39 +513,39 @@ export default function TitlePage() {
                         {/* New Game — Google OAuth 必須 (利用規約同意後に実行) */}
                         <button
                             onClick={() => setShowTermsModal(true)}
-                            className="w-full bg-amber-900/20 border border-amber-500/50 text-amber-400 font-serif py-3.5 rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all shadow-lg flex justify-center items-center gap-2 group"
+                            className="w-full bg-amber-900/40 border border-amber-500/70 text-amber-300 font-serif py-3.5 rounded hover:bg-amber-800/60 hover:border-amber-400 transition-all shadow-lg flex justify-center items-center gap-2 group"
                         >
-                            <Sword className="w-4 h-4 group-hover:text-amber-300 transition-colors" />
-                            <span className="group-hover:text-amber-200 tracking-widest text-base">New Game</span>
+                            <Sword className="w-4 h-4 group-hover:text-amber-200 transition-colors" />
+                            <span className="group-hover:text-amber-100 tracking-widest text-base">New Game</span>
                         </button>
 
                         {/* Continue — Google OAuth */}
                         <button
                             onClick={() => setMode('CONTINUE_MENU')}
-                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-3.5 rounded hover:bg-slate-800 hover:border-slate-400 transition-all tracking-widest flex justify-center items-center gap-2 group"
+                            className="w-full bg-stone-900/60 border border-stone-700 text-stone-300 font-serif py-3.5 rounded hover:bg-stone-800/80 hover:border-amber-800/60 transition-all tracking-widest flex justify-center items-center gap-2 group"
                         >
-                            <LogIn className="w-4 h-4 group-hover:text-slate-200 transition-colors" />
-                            <span className="group-hover:text-white">Continue / Transfer</span>
+                            <LogIn className="w-4 h-4 group-hover:text-amber-200 transition-colors" />
+                            <span className="group-hover:text-stone-100">Continue / Transfer</span>
                         </button>
 
                         {/* Test Play — 匿名（7日間のみ） */}
                         <button
                             onClick={handleTestPlay}
-                            className="w-full bg-slate-900/40 border border-slate-500/70 text-slate-300 font-serif py-3.5 rounded hover:bg-slate-800/60 hover:text-slate-200 hover:border-slate-400 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
+                            className="w-full bg-stone-900/50 border border-stone-800 text-stone-400 font-serif py-3.5 rounded hover:bg-stone-800/60 hover:text-stone-200 hover:border-stone-600 transition-all tracking-widest flex flex-col items-center gap-1 text-sm"
                         >
                             <div className="flex items-center gap-2">
-                                <PlayCircle className="w-4 h-4 text-slate-400" />
+                                <PlayCircle className="w-4 h-4 text-stone-500" />
                                 <span className="font-bold">Test Play</span>
                             </div>
-                            <span className="text-[10px] text-slate-400/80 tracking-wide">アカウント連携なし・7日間限定</span>
+                            <span className="text-[10px] text-stone-500 tracking-wide">アカウント連携なし・7日間限定</span>
                         </button>
 
                         {/* Play Guide / プレイガイド */}
                         <Link
                             href="/play-guide"
-                            className="w-full bg-slate-900/30 border border-slate-800 text-slate-400 font-serif py-3.5 rounded hover:bg-amber-950/10 hover:text-amber-400 hover:border-amber-500/40 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
+                            className="w-full bg-stone-900/40 border border-stone-800 text-stone-400 font-serif py-3.5 rounded hover:bg-amber-950/20 hover:text-amber-400 hover:border-amber-800/40 transition-all tracking-widest flex items-center justify-center gap-2 text-sm group"
                         >
-                            <BookOpen className="w-4 h-4 text-slate-500 group-hover:text-amber-500 transition-colors" />
+                            <BookOpen className="w-4 h-4 text-stone-500 group-hover:text-amber-500 transition-colors" />
                             <span className="font-bold">プレイガイド</span>
                         </Link>
 
@@ -649,13 +649,13 @@ export default function TitlePage() {
 
                         <button
                             onClick={handleContinue}
-                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 font-serif py-3.5 rounded hover:bg-slate-800 hover:border-amber-500/50 hover:text-amber-200 transition-all flex flex-col items-center gap-1 group"
+                            className="w-full bg-stone-900/60 border border-stone-700 text-stone-300 font-serif py-3.5 rounded hover:bg-stone-800/80 hover:border-amber-500/50 hover:text-amber-200 transition-all flex flex-col items-center gap-1 group"
                         >
                             <div className="flex items-center gap-2">
                                 <LogIn className="w-4 h-4 group-hover:text-amber-400 transition-colors" />
                                 <span className="tracking-widest text-base">前回の継続</span>
                             </div>
-                            <span className="text-[10px] text-slate-400/80 tracking-wide">Googleアカウントでログインして続きから始める</span>
+                            <span className="text-[10px] text-stone-500 tracking-wide">Googleアカウントでログインして続きから始める</span>
                         </button>
 
                         <button
@@ -669,7 +669,7 @@ export default function TitlePage() {
                         <button
                             type="button"
                             onClick={() => { setAuthError(null); setMode('MENU'); }}
-                            className="w-full border border-slate-700 hover:border-slate-500 text-slate-500 hover:text-slate-300 font-serif text-xs tracking-widest py-2 rounded transition-colors text-center"
+                            className="w-full border border-stone-800 hover:border-stone-600 text-stone-500 hover:text-stone-300 font-serif text-xs tracking-widest py-2 rounded transition-colors text-center"
                         >
                             タイトルに戻る
                         </button>
