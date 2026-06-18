@@ -27,7 +27,14 @@ export async function POST(req: Request) {
                 .select('name, prosperity_level')
                 .eq('id', profile.current_location_id)
                 .maybeSingle();
-            if (loc) prosperityLevel = loc.prosperity_level || 3;
+            if (loc) {
+                const { data: ws } = await supabaseService
+                    .from('world_states')
+                    .select('prosperity_level')
+                    .eq('location_name', loc.name)
+                    .maybeSingle();
+                prosperityLevel = ws?.prosperity_level || loc.prosperity_level || 3;
+            }
         }
 
         // 2. インベントリからアイテム検索（join items）

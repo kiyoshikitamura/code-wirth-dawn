@@ -490,7 +490,7 @@ export default function ShopModal({ onClose }: Props) {
                     ) : (
                         // SELL MODE
                         inventory && inventory.length > 0 ? (
-                            inventory.map((invItem) => {
+                            inventory.filter(i => !i.is_skill && i.item_type !== 'skill_card').map((invItem) => {
                                 const isUgc = !!(invItem as any).is_ugc;
                                 const sellPrice = isUgc ? 1
                                     : (meta?.prosperity === 1) ? Math.floor(((invItem as any).base_price || 0) * 1.5)
