@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle } from 'lucide-react';
+import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
 interface LevelUpInfo {
@@ -127,7 +127,7 @@ export default function QuestResultModal({
                 <div className="p-5 space-y-4 relative z-10">
 
                     {/* ── §2 報酬セクション ── */}
-                    {isSuccess && (gold_gained > 0 || earnedExp || repChange) && (
+                    {isSuccess && (gold_gained > 0 || earnedExp || repChange || (lootSaved && lootSaved.length > 0)) && (
                         <section>
                             <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                 <Award className="w-3 h-3" /> 報酬
@@ -168,21 +168,24 @@ export default function QuestResultModal({
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                            {/* 獲得アイテム・スキル */}
-                            {lootSaved && lootSaved.length > 0 && (
-                                <div className="mt-2 space-y-1">
-                                    {lootSaved.map((loot: any, i: number) => (
-                                        <div key={i} className="flex items-center gap-2 bg-black/30 px-2.5 py-1.5 rounded border border-gray-800 text-xs">
-                                            <span className="text-purple-400">{loot.type === 'skill' ? '📜' : '📦'}</span>
-                                            <span className="text-slate-300">{loot.name || `Item #${loot.itemId}`}</span>
-                                            <span className="text-gray-500 ml-auto">{loot.type === 'skill' ? '習得' : `x${loot.quantity || 1}`}</span>
+                                {/* 獲得アイテム・スキルをグリッドカード形式で表示 */}
+                                {lootSaved && lootSaved.map((loot: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-2.5 bg-black/40 p-2.5 rounded border border-purple-500/30 shadow-[0_0_8px_rgba(168,85,247,0.1)] col-span-1">
+                                        <div className="p-1.5 bg-purple-900/30 rounded-full text-purple-400">
+                                            {loot.type === 'skill' ? <BookOpen className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+                                        <div className="min-w-0">
+                                            <div className="text-slate-200 font-bold text-xs truncate">{loot.name}</div>
+                                            <div className="text-[9px] text-gray-500">
+                                                {loot.type === 'skill' ? '新スキル修得' : `アイテム獲得 (x${loot.quantity || 1})`}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </section>
                     )}
+
 
                     {/* 失敗時の名声・VITペナルティ */}
                     {!isSuccess && ((repChange && repChange.amount !== 0) || (safeChanges?.battle_defeat_vit_penalty ?? 0) > 0) && (

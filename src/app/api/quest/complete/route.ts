@@ -279,29 +279,59 @@ export async function POST(req: Request) {
             }
             : { ...qRewards };
 
-        // Colosseum salvage rewards
+        // Colosseum salvage rewards (Weighted random selection based on rarity)
         if (result === 'success' && String(quest_id).startsWith('colosseum_')) {
             const { data: itemPool } = await supabase
                 .from('colosseum_reward_pool')
-                .select('reward_id')
+                .select('reward_id, rarity')
                 .eq('reward_type', 'item');
             
             const { data: skillPool } = await supabase
                 .from('colosseum_reward_pool')
-                .select('reward_id')
+                .select('reward_id, rarity')
                 .eq('reward_type', 'skill');
 
+            const chooseWeightedReward = (pool: { reward_id: string; rarity: string }[]): string | null => {
+                if (!pool || pool.length === 0) return null;
+                const weightMap: Record<string, number> = {
+                    common: 70,
+                    rare: 25,
+                    super_rare: 5
+                };
+                let totalWeight = 0;
+                for (const item of pool) {
+                    totalWeight += weightMap[item.rarity] || 70;
+                }
+                let randomVal = Math.random() * totalWeight;
+                for (const item of pool) {
+                    const weight = weightMap[item.rarity] || 70;
+                    if (randomVal < weight) {
+                        return item.reward_id;
+                    }
+                    randomVal -= weight;
+                }
+                return pool[0].reward_id;
+            };
+
+            const difficulty = String(quest_id).replace('colosseum_', ''); // easy, normal, hard
+            const count = difficulty === 'hard' ? 2 : 1;
+
             if (itemPool && itemPool.length > 0) {
-                const randItem = itemPool[Math.floor(Math.random() * itemPool.length)];
                 if (!effectiveRewards.items) effectiveRewards.items = [];
-                effectiveRewards.items.push(randItem.reward_id);
+                for (let c = 0; c < count; c++) {
+                    const chosen = chooseWeightedReward(itemPool);
+                    if (chosen) effectiveRewards.items.push(chosen);
+                }
             }
             if (skillPool && skillPool.length > 0) {
-                const randSkill = skillPool[Math.floor(Math.random() * skillPool.length)];
                 if (!effectiveRewards.skills) effectiveRewards.skills = [];
-                effectiveRewards.skills.push(randSkill.reward_id);
+                for (let c = 0; c < count; c++) {
+                    const chosen = chooseWeightedReward(skillPool);
+                    if (chosen) effectiveRewards.skills.push(chosen);
+                }
             }
         }
+
 
         if (result === 'success') {
             const rewards = effectiveRewards;
