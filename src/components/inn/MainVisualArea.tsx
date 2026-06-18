@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, MapPin, Compass, Home, ArrowLeft } from 'lucide-react';
+import { BookOpen, MapPin, Compass, Home, ArrowLeft, MessageSquare } from 'lucide-react';
 import { WorldState } from '@/types/game';
 
 interface MainVisualAreaProps {
@@ -9,12 +9,28 @@ interface MainVisualAreaProps {
     onReturnHub?: () => void;
     onLeaveHub?: () => void;
     onOpenMap?: () => void;
+    onOpenGossip?: () => void;
     showHistoryBadge?: boolean;
+    showGossipBadge?: boolean;
     isHub?: boolean; // v27.0: ハブ判定（繁栄度バッジ非表示、フレーバー固定）
     isMapRecommended?: boolean;
+    isGossipRecommended?: boolean;
 }
 
-export default function MainVisualArea({ worldState, locationSlug, onOpenHistory, onReturnHub, onLeaveHub, onOpenMap, showHistoryBadge, isHub = false, isMapRecommended = false }: MainVisualAreaProps) {
+export default function MainVisualArea({ 
+    worldState, 
+    locationSlug, 
+    onOpenHistory, 
+    onReturnHub, 
+    onLeaveHub, 
+    onOpenMap, 
+    onOpenGossip,
+    showHistoryBadge, 
+    showGossipBadge,
+    isHub = false, 
+    isMapRecommended = false,
+    isGossipRecommended = false
+}: MainVisualAreaProps) {
     const prosperity = isHub ? 4 : (worldState?.prosperity_level || 3);
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
@@ -121,6 +137,7 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                 <button
                     onClick={onOpenHistory}
                     className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-amber-600/40 shadow-lg flex items-center justify-center text-amber-500 hover:bg-amber-900/60 hover:text-amber-300 transition-colors active:scale-95 focus:outline-none"
+                    title="私の歴史を開く"
                 >
                     <BookOpen size={18} />
                     {showHistoryBadge && (
@@ -147,6 +164,27 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                         <ArrowLeft size={18} />
                     </button>
                 )}
+                {onOpenGossip && !isHub && (
+                    <button
+                        onClick={onOpenGossip}
+                        className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md shadow-lg flex items-center justify-center transition-all active:scale-95 focus:outline-none ${
+                            isGossipRecommended
+                                ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
+                                : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
+                        }`}
+                        title="街の噂話を聞く"
+                    >
+                        <MessageSquare size={18} />
+                        {showGossipBadge && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-slate-950">
+                                !
+                            </span>
+                        )}
+                        {isGossipRecommended && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-slate-950 scale-95 leading-none animate-pulse">噂</span>
+                        )}
+                    </button>
+                )}
                 {onOpenMap && !isHub && (
                     <button
                         onClick={onOpenMap}
@@ -155,6 +193,7 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                                 ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
                                 : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
                         }`}
+                        title="ワールドマップを開く"
                     >
                         <Compass size={18} />
                         {isMapRecommended && (
@@ -177,7 +216,7 @@ export default function MainVisualArea({ worldState, locationSlug, onOpenHistory
                             </p>
                         )}
                     </div>
-                    {/* v27.0: ハブでは繁栄度バッジ非表示 */}
+                    {/* flex-shrink-0 */}
                     {!isHub && (
                         <div className={`flex-shrink-0 px-3 py-1.5 rounded-lg border backdrop-blur-sm text-xs font-black tracking-wider ${prosperityBadgeClass}`}>
                             {prosperityLabel}

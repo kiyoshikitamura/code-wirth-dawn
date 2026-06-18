@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Bed, Activity, ShoppingBag, Church, Shield, MessageSquare, BookOpen, ClipboardList, Trophy, Swords } from 'lucide-react';
+import React from 'react';
+import { Bed, Activity, ShoppingBag, Church, Shield, BookOpen, ClipboardList, Trophy, Swords } from 'lucide-react';
 
 export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip' | 'collection' | 'questLog' | 'ranking' | 'ugcGuild' | 'colosseum';
 
@@ -10,16 +10,13 @@ interface FacilityGridProps {
 }
 
 export default function FacilityGrid({ onSelectFacility, isHub = false, recommendedFacility = null }: FacilityGridProps) {
-    const [hasReadGossip, setHasReadGossip] = useState(false);
-
-    // 通常拠点: 宿屋/酒場 → ギルド/道具屋 → 神殿 → ステータス → 街の噂話 → コロシアム
+    // 通常拠点: 宿屋/酒場 → ギルド → 道具屋 → 神殿 → ステータス → コロシアム
     const locationFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋/酒場', sub: 'Inn', icon: Bed },
         { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
         { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
         { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
-        { id: 'gossip', label: '街の噂話', sub: 'Gossip', icon: MessageSquare },
         { id: 'colosseum', label: 'コロシアム', sub: 'Colosseum', icon: Swords },
     ];
 
@@ -39,7 +36,6 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
     const facilities = isHub ? hubFacilities : locationFacilitiesFiltered;
 
     const handleSelect = (id: FacilityType) => {
-        if (id === 'gossip') setHasReadGossip(true);
         onSelectFacility(id);
     };
 
@@ -47,10 +43,9 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
         <div className="px-4 pt-6 pb-2 grid grid-cols-2 gap-3 max-w-lg mx-auto w-full">
             {facilities.map((item) => {
                 const isRecommended = (item.id === 'guild' && recommendedFacility === 'guild') ||
-                                      (item.id === 'ugcGuild' && recommendedFacility === 'guild') ||
-                                      (item.id === 'inn' && recommendedFacility === 'inn') ||
-                                      (item.id === 'shop' && recommendedFacility === 'shop') ||
-                                      (item.id === 'gossip' && recommendedFacility === 'gossip_and_map');
+                                       (item.id === 'ugcGuild' && recommendedFacility === 'guild') ||
+                                       (item.id === 'inn' && recommendedFacility === 'inn') ||
+                                       (item.id === 'shop' && recommendedFacility === 'shop');
 
                 return (
                     <button
@@ -64,9 +59,6 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
                     >
                         <div className="relative p-2 bg-amber-500/10 rounded-lg text-amber-400 group-hover:text-amber-300 group-hover:bg-amber-500/20 transition-colors">
                             <item.icon size={20} />
-                            {item.id === 'gossip' && !hasReadGossip && (
-                                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-[#122042]">!</span>
-                            )}
                             {isRecommended && (
                                 <span className="absolute -top-1.5 -right-1.5 bg-amber-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-[#122042] scale-95 leading-none">推奨</span>
                             )}

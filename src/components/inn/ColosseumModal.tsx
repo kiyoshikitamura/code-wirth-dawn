@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
-import { Swords, Trophy, X } from 'lucide-react';
+import { Swords, Trophy, X, BookOpen } from 'lucide-react';
 import ColosseumRankingModal from './ColosseumRankingModal';
 
 interface ColosseumModalProps {
@@ -17,6 +17,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [showRankings, setShowRankings] = useState(false);
+    const [showRules, setShowRules] = useState(false);
 
     const userLevel = userProfile?.level || 1;
     const goldCosts = {
@@ -69,6 +70,122 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
         return <ColosseumRankingModal onClose={() => setShowRankings(false)} />;
     }
 
+    if (showRules) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="relative w-full max-w-lg bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[90vh]">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#11203b]/80 border-b border-[#1e345b]">
+                        <div className="flex items-center gap-2 text-amber-400">
+                            <BookOpen size={20} className="animate-pulse" />
+                            <h2 className="font-black tracking-widest text-lg text-slate-100">闘技場ルール説明</h2>
+                        </div>
+                        <button
+                            onClick={() => setShowRules(false)}
+                            className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-slate-300 leading-relaxed no-scrollbar">
+                        <section className="space-y-2">
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ コロシアムとは</h3>
+                            <p className="text-xs">
+                                腕に覚えのある冒険者たちが集う連続戦闘施設です。デッキがロックされた状態で、難易度ごとに設定された連戦に挑みます。
+                            </p>
+                        </section>
+
+                        <section className="space-y-2">
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ 挑戦クラスと報酬ルール</h3>
+                            <div className="space-y-1.5 text-xs font-medium">
+                                <p><strong className="text-emerald-400 font-bold">Easy クラス (全5戦):</strong> 挑戦費 [Lv × 10 G]</p>
+                                <p className="pl-4 text-slate-400">報酬: 800 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点</p>
+                                <p><strong className="text-amber-400 font-bold">Normal クラス (全10戦):</strong> 挑戦費 [Lv × 30 G]</p>
+                                <p className="pl-4 text-slate-400">報酬: 2,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点</p>
+                                <p><strong className="text-rose-400 font-bold">Hard クラス (全20戦):</strong> 挑戦費 [Lv × 50 G]</p>
+                                <p className="pl-4 text-slate-400">報酬: 4,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点</p>
+                            </div>
+                        </section>
+
+                        <section className="space-y-2">
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ 重複スキル変換ルール</h3>
+                            <p className="text-xs">
+                                既に習得済みのスキルがクリア報酬として抽選された場合、データベースへの重複登録はスキップされ、代わりに<span className="text-amber-300 font-black">「交易品（換金アイテム）」がランダムで1点</span>付与されます。
+                                リザルト画面には「[交易品名] (スキル重複変換)」として表示されます。
+                            </p>
+                        </section>
+
+                        <section className="space-y-2">
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ 報酬出現確率 (レアリティ)</h3>
+                            <p className="text-xs mb-1">獲得するランダム報酬は、クラスごとに以下の確率で抽選されます。</p>
+                            <table className="w-full text-xs text-left border-collapse border border-[#1e345b] bg-[#11203b]/20">
+                                <thead>
+                                    <tr className="bg-[#11203b]/60 border-b border-[#1e345b] text-blue-200">
+                                        <th className="p-2 border-r border-[#1e345b]">クラス</th>
+                                        <th className="p-2 border-r border-[#1e345b]">Common</th>
+                                        <th className="p-2 border-r border-[#1e345b]">Rare</th>
+                                        <th className="p-2">Super Rare</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-[#1e345b]">
+                                        <td className="p-2 border-r border-[#1e345b] text-emerald-400 font-bold">Easy</td>
+                                        <td className="p-2 border-r border-[#1e345b]">70%</td>
+                                        <td className="p-2 border-r border-[#1e345b]">25%</td>
+                                        <td className="p-2">5%</td>
+                                    </tr>
+                                    <tr className="border-b border-[#1e345b]">
+                                        <td className="p-2 border-r border-[#1e345b] text-amber-400 font-bold">Normal</td>
+                                        <td className="p-2 border-r border-[#1e345b]">40%</td>
+                                        <td className="p-2 border-r border-[#1e345b]">50%</td>
+                                        <td className="p-2">10%</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="p-2 border-r border-[#1e345b] text-rose-400 font-bold">Hard</td>
+                                        <td className="p-2 border-r border-[#1e345b]">30%</td>
+                                        <td className="p-2 border-r border-[#1e345b]/40">40%</td>
+                                        <td className="p-2">30%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
+
+                        <section className="space-y-2">
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ ギブアップペナルティ</h3>
+                            <p className="text-xs">
+                                挑戦中に撤退（ギブアップ）または敗北した場合、挑戦費は戻りません。さらに、<span className="text-rose-400 font-black">滞在地域の名声値が減少（-3〜-10のランダム）し、プレイヤーのVIT（生命力寿命）が1減少</span>します。
+                            </p>
+                        </section>
+
+                        <section className="space-y-2">
+                            <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ ランキング報酬</h3>
+                            <p className="text-xs">
+                                コロシアムの「勝利数」および「最多連勝数」のランキング上位者には、6時間ごと（JST 6時/12時/18時/24時）の集計時に以下の報酬がゲーム内郵便（システム通知）を通じて送られます。
+                            </p>
+                            <ul className="list-disc pl-4 text-xs space-y-1 text-slate-400 mt-1">
+                                <li>1位: <span className="text-amber-400 font-bold">20,000 G</span></li>
+                                <li>2位: <span className="text-amber-400 font-bold">10,000 G</span></li>
+                                <li>3位: <span className="text-amber-400 font-bold">5,000 G</span></li>
+                            </ul>
+                        </section>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] flex justify-end">
+                        <button
+                            onClick={() => setShowRules(false)}
+                            className="px-6 py-2.5 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
+                        >
+                            戻る
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="relative w-full max-w-lg bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[90vh]">
@@ -105,7 +222,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 <span className="text-sm font-bold text-slate-200">バルガス</span>
                             </div>
                             <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                                「ようこそ、ここは腕に覚えのある冒険者たちが集う闘技場だ。連続勝ち抜き戦に挑戦するか？それとも他の猛者たちのランキングを見るか？」
+                                「ここは腕に覚えのある冒険者たちが集う闘技場だ。連続勝ち抜き戦に挑戦するか？それとも他の猛者たちのランキングを見るか？」
                             </p>
                         </div>
                     </div>
@@ -136,7 +253,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <span className="text-[10px] text-slate-400">(全5戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 800G / 200EXP / +5名声 / ランダム報酬2点
+                                    報酬: 800 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点
                                 </p>
                             </div>
                             <div className="text-right">
@@ -161,7 +278,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <span className="text-[10px] text-slate-400">(全10戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 2,000G / 400EXP / +10名声 / ランダム報酬2点
+                                    報酬: 2,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点
                                 </p>
                             </div>
                             <div className="text-right">
@@ -186,7 +303,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <span className="text-[10px] text-slate-400">(全20戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 4,000G / 800EXP / +20名声 / ランダム報酬2点 (高難度)
+                                    報酬: 4,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点
                                 </p>
                             </div>
                             <div className="text-right">
@@ -204,18 +321,25 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] grid grid-cols-2 gap-3">
+                <div className="px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] grid grid-cols-3 gap-2">
+                    <button
+                        onClick={() => setShowRules(true)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
+                    >
+                        <BookOpen size={14} />
+                        ルール
+                    </button>
                     <button
                         onClick={() => setShowRankings(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300"
+                        className="flex items-center justify-center gap-1.5 px-3 py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
                     >
-                        <Trophy size={16} />
+                        <Trophy size={14} />
                         ランキング
                     </button>
                     <button
                         disabled={loading || !selectedDiff}
                         onClick={() => selectedDiff && handleChallenge(selectedDiff)}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-xs tracking-widest transition-all ${
+                        className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-black text-xs tracking-wider transition-all ${
                             selectedDiff
                                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-[#070e1e] active:scale-95 shadow-lg shadow-amber-500/20'
                                 : 'bg-slate-800 text-slate-500 border border-slate-700/50 cursor-not-allowed'

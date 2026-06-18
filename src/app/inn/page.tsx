@@ -293,8 +293,20 @@ function InnPageInner() {
                         }
                         router.push('/world-map');
                     }}
+                    onOpenGossip={() => handleSelectFacility('gossip')}
                     showHistoryBadge={showHistoryBadge}
+                    showGossipBadge={!visitedGossip}
                     isHub={isHub}
+                    isGossipRecommended={(() => {
+                        if (userProfile && (userProfile.level || 1) >= 3) return false; // Lv3以上バイパス
+                        const completedQuests = useGameStore.getState().completedQuests;
+                        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                        const clearedCount = completedQuests?.length ?? 0;
+                        const visitedTavern = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_tavern') === 'true';
+                        const visitedShop = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_shop') === 'true';
+                        const visitedGossip = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_gossip') === 'true';
+                        return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop && !visitedGossip;
+                    })()}
                     isMapRecommended={(() => {
                         if (userProfile && (userProfile.level || 1) >= 3) return false; // Lv3以上バイパス
                         const completedQuests = useGameStore.getState().completedQuests;

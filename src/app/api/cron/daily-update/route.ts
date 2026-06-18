@@ -53,6 +53,117 @@ async function performUpdate(isForceUgcReset: boolean) {
         if (colosseumErr) throw colosseumErr;
 
         logs.push(`[RankingAggregation] Reputation, Alignment, and Colosseum rankings aggregated via RPC`);
+
+        // 2.6. コロシアムランキング報酬付与処理 (6時間ごと)
+        try {
+            const { data: topWins, error: topWinsErr } = await supabaseServer
+                .from('ranking_colosseum_cache')
+                .select('user_id, rank_by_wins, user_name')
+                .lte('rank_by_wins', 3)
+                .order('rank_by_wins', { ascending: true });
+
+            const { data: topStreaks, error: topStreaksErr } = await supabaseServer
+                .from('ranking_colosseum_cache')
+                .select('user_id, rank_by_streak, user_name')
+                .lte('rank_by_streak', 3)
+                .order('rank_by_streak', { ascending: true });
+
+            if (topWinsErr) throw topWinsErr;
+            if (topStreaksErr) throw topStreaksErr;
+
+            const rewardMap: Map<string, {
+                gold: number;
+                reasons: string[];
+                userName: string;
+            }> = new Map();
+
+            const prizeList = [20000, 10000, 5000];
+
+            if (topWins && topWins.length > 0) {
+                for (const u of topWins) {
+                    const rank = u.rank_by_wins;
+                    if (rank && rank >= 1 && rank <= 3) {
+                        const prize = prizeList[rank - 1];
+                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        current.gold += prize;
+                        current.reasons.push(`勝利数ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        rewardMap.set(u.user_id, current);
+                    }
+                }
+            }
+
+            if (topStreaks && topStreaks.length > 0) {
+                for (const u of topStreaks) {
+                    const rank = u.rank_by_streak;
+                    if (rank && rank >= 1 && rank <= 3) {
+                        const prize = prizeList[rank - 1];
+                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        current.gold += prize;
+                        current.reasons.push(`連勝数ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        rewardMap.set(u.user_id, current);
+                    }
+                }
+            }
+
+            let colosseumRewardCount = 0;
+            for (const [userId, info] of rewardMap.entries()) {
+                // 1. ゴールド付与
+                const { data: isSuccess, error: goldErr } = await supabaseServer
+                    .rpc('increment_gold', { p_user_id: userId, p_amount: info.gold });
+
+                if (goldErr) {
+                    logs.push(`[ColosseumReward] Failed to award gold to user ${userId}: ${goldErr.message}`);
+                    continue;
+                }
+
+                // 2. システム通知インサート
+                const reasonText = info.reasons.join('、および');
+                const message = `🏆 コロシアムランキング報酬獲得！ ${reasonText} を達成し、合計 ${info.gold.toLocaleString()}G を獲得しました。郵便受け（所持金）に直接付与されました。`;
+                
+                await supabaseServer.from('notifications').insert({
+                    user_id: userId,
+                    type: 'system',
+                    message: message,
+                    read: false
+                });
+
+                // 3. user_profiles からロケーションIDや累積日数を引く
+                const { data: profile } = await supabaseServer
+                    .from('user_profiles')
+                    .select('current_location_id, accumulated_days')
+                    .eq('id', userId)
+                    .single();
+
+                let locationName = null;
+                if (profile?.current_location_id) {
+                    const { data: loc } = await supabaseServer
+                        .from('locations')
+                        .select('name')
+                        .eq('id', profile.current_location_id)
+                        .maybeSingle();
+                    locationName = loc?.name || null;
+                }
+
+                // 4. user_chronicles インサート
+                await supabaseServer.from('user_chronicles').insert({
+                    user_id: userId,
+                    event_type: 'system_reward',
+                    accumulated_days: profile?.accumulated_days || 0,
+                    location_id: profile?.current_location_id || null,
+                    location_name: locationName,
+                    title: '闘技場ランキング報酬獲得',
+                    description: `闘技場の定期集計において優秀な戦績を残し、${reasonText}の栄誉と賞金 ${info.gold.toLocaleString()}G を獲得した。`,
+                    param_changes: { gold: info.gold },
+                    is_major_event: true
+                });
+
+                colosseumRewardCount++;
+            }
+
+            logs.push(`[ColosseumReward] Awarded colosseum ranking prizes to ${colosseumRewardCount} users`);
+        } catch (colosseumRewardErr: any) {
+            logs.push(`[ColosseumReward] error: ${colosseumRewardErr.message}`);
+        }
     } catch (rankErr: any) {
         logs.push(`[RankingAggregation] error: ${rankErr.message}`);
     }
