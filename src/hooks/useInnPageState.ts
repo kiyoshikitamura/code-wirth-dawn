@@ -98,6 +98,7 @@ export function useInnPageState() {
     const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
     const [showWorldChanged, setShowWorldChanged] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
+    const [hasCheckedGougai, setHasCheckedGougai] = useState(false);
 
     // gougaiEvents がセットされたら、情勢変化ポップアップを表示
     useEffect(() => {
@@ -403,9 +404,10 @@ export function useInnPageState() {
 
     // Gougai Detection
     useEffect(() => {
-        if (!initialLoadComplete) return;
+        if (!initialLoadComplete || hasCheckedGougai) return;
         if (!userProfile?.id || gougaiEvents.length > 0) return;
         const checkGougai = async () => {
+            setHasCheckedGougai(true);
             try {
                 const res = await fetch(`/api/world-history/get-updates?user_id=${userProfile.id}`);
                 if (res.ok) {
@@ -419,7 +421,7 @@ export function useInnPageState() {
             }
         };
         checkGougai();
-    }, [userProfile, initialLoadComplete, gougaiEvents.length]);
+    }, [userProfile, initialLoadComplete, hasCheckedGougai]);
 
     const handleCloseGougai = async () => {
         if (gougaiEvents.length > 0 && userProfile?.id) {
