@@ -20,7 +20,7 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
         { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'gossip', label: '街の噂話', sub: 'Gossip', icon: MessageSquare },
-        { id: 'colosseum', label: 'コロシアム', sub: 'Colosseum', icon: Swords },
+        // { id: 'colosseum', label: 'コロシアム', sub: 'Colosseum', icon: Swords },
     ];
 
     // ハブ: 宿屋/ステータスのみ
