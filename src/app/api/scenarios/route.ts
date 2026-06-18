@@ -62,10 +62,12 @@ export async function GET(req: Request) {
                 const nodes: Record<string, any> = {};
                 nodes['start'] = {
                     next: 'battle_1',
-                    text: `コロシアム (${diffLabel}) に挑戦だ！全${numBattles}戦の連続エネミーバトルとなる。勝ち抜いて豪華な報酬を掴み取るのだ！`,
+                    text: `コロシアム (${diffLabel}) に挑戦だ！全${numBattles}戦 of 連続エネミーバトルとなる。勝ち抜いて豪華な報酬を掴み取るのだ！`,
                     type: 'text',
                     bg_key: 'bg_colosseum',
-                    params: { bg: 'bg_colosseum', type: 'text', speaker_name: 'バルガス' },
+                    bgm: 'bgm_quest_calm',
+                    bgm_key: 'bgm_quest_calm',
+                    params: { bg: 'bg_colosseum', type: 'text', speaker_name: 'バルガス', bgm: 'bgm_quest_calm' },
                     choices: [],
                     speaker_name: 'バルガス'
                 };
@@ -98,7 +100,9 @@ export async function GET(req: Request) {
                             text: `${i}戦目を突破した！息つく暇もなく、次の戦いが待ち受けている。`,
                             type: 'text',
                             bg_key: 'bg_colosseum',
-                            params: { bg: 'bg_colosseum', type: 'text' },
+                            bgm: 'bgm_quest_calm',
+                            bgm_key: 'bgm_quest_calm',
+                            params: { bg: 'bg_colosseum', type: 'text', bgm: 'bgm_quest_calm' },
                             choices: []
                         };
                     }
@@ -109,7 +113,9 @@ export async function GET(req: Request) {
                     text: `見事、全${numBattles}戦を勝ち抜いたぞ！お前の実力は本物だ。これが称賛のクリア報酬だ！`,
                     type: 'text',
                     bg_key: 'bg_colosseum',
-                    params: { bg: 'bg_colosseum', type: 'text', speaker_name: 'バルガス' },
+                    bgm: 'bgm_quest_calm',
+                    bgm_key: 'bgm_quest_calm',
+                    params: { bg: 'bg_colosseum', type: 'text', speaker_name: 'バルガス', bgm: 'bgm_quest_calm' },
                     choices: [],
                     speaker_name: 'バルガス'
                 };
@@ -119,7 +125,9 @@ export async function GET(req: Request) {
                     text: `くっ、力及ばずか...。だが、この敗北を糧に強くなればいい。またの挑戦を待っているぞ。`,
                     type: 'text',
                     bg_key: 'bg_colosseum',
-                    params: { bg: 'bg_colosseum', type: 'text', speaker_name: 'バルガス' },
+                    bgm: 'bgm_quest_calm',
+                    bgm_key: 'bgm_quest_calm',
+                    params: { bg: 'bg_colosseum', type: 'text', speaker_name: 'バルガス', bgm: 'bgm_quest_calm' },
                     choices: [],
                     speaker_name: 'バルガス'
                 };
@@ -128,12 +136,15 @@ export async function GET(req: Request) {
                     text: 'コロシアム制覇！強者としての名声が高まった。',
                     type: 'end',
                     bg_key: 'bg_colosseum',
+                    bgm: 'bgm_quest_calm',
+                    bgm_key: 'bgm_quest_calm',
                     params: {
                         bg: 'bg_colosseum',
                         type: 'end',
                         result: 'success',
                         rewards: rewards,
-                        speaker_name: 'バルガス'
+                        speaker_name: 'バルガス',
+                        bgm: 'bgm_quest_calm'
                     },
                     result: 'success',
                     choices: [],
@@ -144,11 +155,14 @@ export async function GET(req: Request) {
                     text: 'コロシアム敗北。悔しさを胸に、さらなる修行を積もう。',
                     type: 'end',
                     bg_key: 'bg_colosseum',
+                    bgm: 'bgm_quest_calm',
+                    bgm_key: 'bgm_quest_calm',
                     params: {
                         bg: 'bg_colosseum',
                         type: 'end',
                         result: 'failure',
-                        speaker_name: 'バルガス'
+                        speaker_name: 'バルガス',
+                        bgm: 'bgm_quest_calm'
                     },
                     result: 'failure',
                     choices: [],
