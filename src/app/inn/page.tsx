@@ -86,6 +86,31 @@ function InnPageInner() {
         leaveHub,
     } = state;
 
+    const completedQuests = useGameStore(state => state.completedQuests);
+    const [visitedTavern, setVisitedTavern] = useState(false);
+    const [visitedShop, setVisitedShop] = useState(false);
+
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
+            setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
+        }
+    }, [showTavern, showShop]);
+
+    React.useEffect(() => {
+        if (showTavern) {
+            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
+            setVisitedTavern(true);
+        }
+    }, [showTavern]);
+
+    React.useEffect(() => {
+        if (showShop) {
+            localStorage.setItem('wirth_dawn_visited_shop', 'true');
+            setVisitedShop(true);
+        }
+    }, [showShop]);
+
     if (loading || !userProfile || !worldState) {
         return (
             <div className="h-screen w-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
@@ -264,31 +289,6 @@ function InnPageInner() {
 
                 {/* 目的ガイダンスバナー (Onboarding Banner) */}
                 {(() => {
-                    const completedQuests = useGameStore(state => state.completedQuests);
-                    const [visitedTavern, setVisitedTavern] = useState(false);
-                    const [visitedShop, setVisitedShop] = useState(false);
-
-                    React.useEffect(() => {
-                        if (typeof window !== 'undefined') {
-                            setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
-                            setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
-                        }
-                    }, [showTavern, showShop]);
-
-                    React.useEffect(() => {
-                        if (showTavern) {
-                            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
-                            setVisitedTavern(true);
-                        }
-                    }, [showTavern]);
-
-                    React.useEffect(() => {
-                        if (showShop) {
-                            localStorage.setItem('wirth_dawn_visited_shop', 'true');
-                            setVisitedShop(true);
-                        }
-                    }, [showShop]);
-
                     const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                     const clearedCount = completedQuests?.length ?? 0;
 
@@ -330,17 +330,6 @@ function InnPageInner() {
                 {/* Facility Grid Navigation */}
                 <div className="flex-1 w-full bg-[#0a1628]">
                     {(() => {
-                        const completedQuests = useGameStore(state => state.completedQuests);
-                        const [visitedTavern, setVisitedTavern] = useState(false);
-                        const [visitedShop, setVisitedShop] = useState(false);
-
-                        React.useEffect(() => {
-                            if (typeof window !== 'undefined') {
-                                setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
-                                setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
-                            }
-                        }, [showTavern, showShop]);
-
                         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                         const clearedCount = completedQuests?.length ?? 0;
 
