@@ -33,6 +33,53 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
     const [streakRanking, setStreakRanking] = useState<RankingEntry[]>([]);
     const [myStats, setMyStats] = useState<UserStats | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [countdown, setCountdown] = useState<string>('');
+
+    useEffect(() => {
+        const updateTimer = () => {
+            const now = new Date();
+            // JST offset (UTC+9)
+            const jstOffset = 9 * 60 * 60 * 1000;
+            const jstTime = new Date(now.getTime() + jstOffset);
+            
+            const jstHours = jstTime.getUTCHours();
+            
+            // Target hours (6, 12, 18, 24)
+            const targets = [6, 12, 18, 24];
+            let nextTargetHour = 24;
+            for (const hour of targets) {
+                if (jstHours < hour) {
+                    nextTargetHour = hour;
+                    break;
+                }
+            }
+            
+            const targetJstDate = new Date(jstTime);
+            if (nextTargetHour === 24) {
+                targetJstDate.setUTCHours(24, 0, 0, 0);
+            } else {
+                targetJstDate.setUTCHours(nextTargetHour, 0, 0, 0);
+            }
+            
+            const diffMs = targetJstDate.getTime() - jstTime.getTime();
+            
+            if (diffMs <= 0) {
+                setCountdown("00時間00分00秒");
+                return;
+            }
+            
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            
+            const pad = (n: number) => String(n).padStart(2, '0');
+            setCountdown(`${pad(hours)}時間${pad(minutes)}分${pad(seconds)}秒`);
+        };
+
+        updateTimer();
+        const intervalId = setInterval(updateTimer, 1000);
+        return () => clearInterval(intervalId);
+    }, []);
 
     useEffect(() => {
         const fetchRankings = async () => {
@@ -99,10 +146,16 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
 
                 {/* My Stats Box (Fixed at top of content area) */}
                 <div className="bg-[#12223f]/80 border-b border-[#1d3357] px-6 py-4 space-y-2">
-                    <h3 className="text-[10px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1">
-                        <Award size={12} />
-                        あなたの闘技場成績
-                    </h3>
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-[10px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1">
+                            <Award size={12} />
+                            あなたの闘技場成績
+                        </h3>
+                        <div className="text-[9px] font-bold text-slate-400 bg-slate-950/40 border border-[#233f6d]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                            報酬集計まで: <span className="font-mono text-amber-400">{countdown}</span>
+                        </div>
+                    </div>
                     {loading ? (
                         <div className="h-10 flex items-center justify-center">
                             <Loader2 size={16} className="animate-spin text-slate-400" />
