@@ -1,3 +1,4 @@
+/* eslint-disable prefer-spread, prefer-rest-params, @typescript-eslint/no-unused-expressions */
 /**
  * X (Twitter) Ads Conversion Pixel Utility
  */

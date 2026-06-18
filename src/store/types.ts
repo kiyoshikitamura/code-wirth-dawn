@@ -85,5 +85,7 @@ export interface GameState {
     // 先行ロード用アクション
     prefetchTownData: (token?: string, force?: boolean) => Promise<void>;
     lastInitPageFetchTime?: number;
+
+    completedQuests: { scenario_id: number | null; ugc_scenario_id: string | null }[] | null;
 }
 

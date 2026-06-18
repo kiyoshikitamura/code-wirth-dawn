@@ -110,7 +110,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
 
     // ─── 闇市 (56-60) ─────────────────────────────────────────────
     '56': { effectType: 'attack', effectId: 'drain' as any },                               // 吸血（ダメージの50%回復）
-    '57': { effectType: 'support_activate', skipDamage: true },                            // 闇の代償（AP全回復）
+    '57': { effectType: 'support_activate', effectId: 'ap_max' as any, skipDamage: true },                            // 闇の代償（AP全回復）
     '58': { effectType: 'instakill' },                                                     // 死殺剣（確率即死）
     '59': { effectType: 'support_activate', effectId: 'berserk' as any, effectDuration: 3, skipDamage: true }, // v4.1: 狂戦士の薬 (ATK×2.0 + DEF半減)
     '60': { effectType: 'recoil_attack' },                                                 // 魂の生贄（全体+自傷）

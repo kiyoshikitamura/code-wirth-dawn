@@ -1012,7 +1012,17 @@ export default function QuestPage() {
                             lootSaved={resultOverlay.data?.loot_saved}
                             guestConversion={resultOverlay.data?.guest_conversion}
                             isTestPlay={isTestPlay}
-                            onClose={() => router.push(isTestPlay ? '/workshop' : '/inn')}
+                            onClose={async () => {
+                                if (!isTestPlay) {
+                                    // クエストボードのキャッシュクリア
+                                    useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                                    if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                                        sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                                    }
+                                    await fetchUserProfile();
+                                }
+                                router.push(isTestPlay ? '/workshop' : '/inn');
+                            }}
                         />
                     </div>
                 )}

@@ -129,7 +129,8 @@ export async function GET(req: Request) {
             locationQuests,
             loreDataResult,
             secretQuestsResult,
-            resonanceCountResult
+            resonanceCountResult,
+            completedQuestsResult
         ] = await Promise.all([
             // ワールド状態
             supabaseAuth
@@ -245,7 +246,13 @@ export async function GET(req: Request) {
                       .eq('is_alive', true)
                       .not('name', 'is', null)
                       .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-                : Promise.resolve({ count: null })
+                : Promise.resolve({ count: null }),
+
+            // 7. completedQuests
+            supabaseAuth
+                .from('user_completed_quests')
+                .select('scenario_id, ugc_scenario_id')
+                .eq('user_id', user.id)
         ]);
 
         // ── 覇権計算 ──
@@ -405,7 +412,8 @@ export async function GET(req: Request) {
             tavern_shadows: tavernShadows || [],
             party_members: partyMembers || [],
             location_quests: locationQuests || { quests: [], special_quests: [], normal_quests: [] },
-            gossip_data: gossipData
+            gossip_data: gossipData,
+            completed_quests: completedQuestsResult.data || []
         };
 
         return NextResponse.json(response);

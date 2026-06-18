@@ -25,6 +25,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
     // v30: Onboarding & Battle UX/Visual Enhancements
     const [shouldShake, setShouldShake] = useState(false);
+    const [shouldEnemyShake, setShouldEnemyShake] = useState(false);
+    const [enemyActiveSkill, setEnemyActiveSkill] = useState<string | null>(null);
+    const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
+    const [isStrongActive, setIsStrongActive] = useState(false);
     const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean }[]>([]);
     const [apErrorActive, setApErrorActive] = useState(false);
 
@@ -71,7 +75,32 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         processQueue,
         flushQueue,
         enqueuedUpToRef,
-    } = useBattleTypewriter(userProfile?.hp);
+    } = useBattleTypewriter(userProfile?.hp, (msg) => {
+        if (msg.includes('の『')) {
+            const isEnemyPhase = battleState.battlePhase !== 'player';
+            if (isEnemyPhase) {
+                const match = msg.match(/の『(.+?)』/);
+                const skillName = match ? match[1] : '';
+                if (skillName) {
+                    setEnemyActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongEnemyActive(true);
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                        setTimeout(() => {
+                            setShouldShake(true);
+                            setTimeout(() => setShouldShake(false), 300);
+                        }, 150);
+                    }
+                    setTimeout(() => {
+                        setEnemyActiveSkill(null);
+                        setIsStrongEnemyActive(false);
+                    }, 1000);
+                }
+            }
+        }
+    });
 
     // プレイヤーの被ダメージ検知
     useEffect(() => {
@@ -98,6 +127,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             if (prevTargetHpRef.current !== null && currentTarget.id === battleState.enemy?.id) {
                 const diff = prevTargetHpRef.current - currentTarget.hp;
                 if (diff > 0) {
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 300);
+
+                    setShouldEnemyShake(true);
+                    setTimeout(() => setShouldEnemyShake(false), 300);
+
                     const id = Date.now() + Math.random();
                     setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false }]);
                     setTimeout(() => {
@@ -251,6 +286,19 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (selectedCardIndex === index) {
             // 2段階目: 実行
 
+            // 強スキル判定
+            const isStrong = apCost >= 3 || (card.power != null && card.power >= 25) || /極|超|真|神|絶|終焉|バースト|メガ|ギガ|テラ/g.test(card.name);
+            if (isStrong) {
+                setIsStrongActive(true);
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 300);
+                setTimeout(() => {
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 300);
+                }, 150);
+                setTimeout(() => setIsStrongActive(false), 1000);
+            }
+
             // v2.9.3i: ヒールカードの場合、ターゲット選択モードに移行
             // target_typeがDB未設定でもcardEffectsのheal判定でフォールバック
             const cardEffect = getCardEffectInfo(card);
@@ -296,10 +344,15 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     if (card.name.includes('風') || card.name.includes('疾')) effect = 'WIND';
                     else if (card.name.includes('突') || card.name.includes('槍') || card.name.includes('針')) effect = 'PIERCE';
                     else if (card.name.includes('打') || card.name.includes('砕') || card.name.includes('バッシュ')) effect = 'BLUNT';
+                    else if (card.name.includes('火') || card.name.includes('炎') || card.name.includes('爆') || card.name.includes('バーン') || card.name.includes('ファイア')) effect = 'FIRE';
+                    else if (card.name.includes('雷') || card.name.includes('電') || card.name.includes('サンダー') || card.name.includes('ライトニング')) effect = 'LIGHTNING';
+                    else if (card.name.includes('氷') || card.name.includes('凍') || card.name.includes('フリーズ') || card.name.includes('アイス')) effect = 'ICE';
+                    else if (card.name.includes('闇') || card.name.includes('影') || card.name.includes('ダーク') || card.name.includes('シャドウ') || card.name.includes('デス')) effect = 'DARK';
+                    else if (card.name.includes('光') || card.name.includes('聖') || card.name.includes('シャイン') || card.name.includes('ホーリー')) effect = 'HOLY';
                     else effect = 'SLASH';
                 }
                 setActiveEffect(effect);
-                setTimeout(() => setActiveEffect(null), 500);
+                setTimeout(() => setActiveEffect(null), 800);
             } else {
                 setActiveEffect('BUFF');
                 setTimeout(() => setActiveEffect(null), 700);
@@ -321,6 +374,21 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (!healTargetMode) return;
         const { card } = healTargetMode;
         setHealTargetMode(null);
+
+        // 強スキル判定
+        const apCost = card.ap_cost ?? 1;
+        const isStrong = apCost >= 3 || (card.power != null && card.power >= 25) || /極|超|真|神|絶|終焉|バースト|メガ|ギガ|テラ/g.test(card.name);
+        if (isStrong) {
+            setIsStrongActive(true);
+            setShouldShake(true);
+            setTimeout(() => setShouldShake(false), 300);
+            setTimeout(() => {
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 300);
+            }, 150);
+            setTimeout(() => setIsStrongActive(false), 1000);
+        }
+
         setActiveEffect('BUFF');
         setTimeout(() => setActiveEffect(null), 700);
         try {
@@ -469,6 +537,33 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'
         } ${shouldShake ? 'shake-active' : ''}`}>
 
+            {/* 強スキル発動時のフラッシュオーバーレイ */}
+            {isStrongActive && (
+                <div className="absolute inset-0 z-50 pointer-events-none bg-white animate-strong-flash" />
+            )}
+
+            {/* エネミースキル警告カットイン ＆ 被攻撃スワイプ爪痕エフェクト */}
+            {enemyActiveSkill && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+                    <div className="absolute w-[150%] h-[8px] bg-red-600/90 shadow-[0_0_20px_rgba(220,38,38,1)] rotate-12 translate-y-[-20px] animate-enemy-swipe1" />
+                    <div className="absolute w-[150%] h-[8px] bg-red-600/90 shadow-[0_0_20px_rgba(220,38,38,1)] -rotate-12 translate-y-[20px] animate-enemy-swipe2" />
+                    <div className="absolute inset-0 bg-red-950/20 animate-pulse" />
+                    
+                    <div className="absolute inset-x-0 top-1/4 flex flex-col items-center justify-center z-50">
+                        <div className={`w-full py-3 border-y flex flex-col items-center justify-center shadow-2xl backdrop-blur-sm ${
+                            isStrongEnemyActive
+                                ? 'bg-red-950/90 text-red-500 border-red-500/50 shadow-[0_0_40px_rgba(220,38,38,0.8)]'
+                                : 'bg-amber-950/90 text-amber-500 border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.6)]'
+                        }`}>
+                            <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">ENEMY SKILL WARNING</span>
+                            <span className="font-serif text-2xl md:text-3xl font-extrabold tracking-widest animate-pulse">
+                                『{enemyActiveSkill}』
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* CSS for animations */}
             <style jsx>{`
                 @keyframes targetPulse {
@@ -517,6 +612,192 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 .ap-pulse-error {
                     animation: pulseRedBorder 0.4s ease-in-out 2;
                 }
+
+                @keyframes enemyShake {
+                    0%, 100% { transform: translate(0, 0); }
+                    15% { transform: translate(-8px, 0); }
+                    30% { transform: translate(6px, 0); }
+                    45% { transform: translate(-6px, 0); }
+                    60% { transform: translate(4px, 0); }
+                    75% { transform: translate(-3px, 0); }
+                    90% { transform: translate(2px, 0); }
+                }
+                .animate-enemy-shake {
+                    animation: enemyShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+                }
+
+                @keyframes strongFlash {
+                    0% { opacity: 0; }
+                    10% { opacity: 1; }
+                    30% { opacity: 0.8; }
+                    100% { opacity: 0; }
+                }
+                .animate-strong-flash {
+                    animation: strongFlash 0.8s ease-out forwards;
+                }
+
+                /* Slash 1 & 2 */
+                @keyframes slash1 {
+                    0% { transform: rotate(45deg) scaleX(0); opacity: 0; }
+                    30% { transform: rotate(45deg) scaleX(1.2); opacity: 1; }
+                    100% { transform: rotate(45deg) scaleX(1); opacity: 0; }
+                }
+                @keyframes slash2 {
+                    0% { transform: rotate(-45deg) scaleX(0); opacity: 0; }
+                    30% { transform: rotate(-45deg) scaleX(1.2); opacity: 1; }
+                    100% { transform: rotate(-45deg) scaleX(1); opacity: 0; }
+                }
+                .animate-slash1 { animation: slash1 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+                .animate-slash2 { animation: slash2 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+
+                /* Wind */
+                @keyframes wind1 {
+                    0% { transform: translateX(100px) rotate(12deg); opacity: 0; }
+                    50% { transform: translateX(-20px) rotate(12deg); opacity: 1; }
+                    100% { transform: translateX(-100px) rotate(12deg); opacity: 0; }
+                }
+                @keyframes wind2 {
+                    0% { transform: translateX(-100px) rotate(-12deg); opacity: 0; }
+                    50% { transform: translateX(20px) rotate(-12deg); opacity: 1; }
+                    100% { transform: translateX(100px) rotate(-12deg); opacity: 0; }
+                }
+                .animate-wind1 { animation: wind1 0.4s ease-in-out forwards; }
+                .animate-wind2 { animation: wind2 0.4s ease-in-out forwards; }
+
+                /* Pierce */
+                @keyframes pierce {
+                    0% { transform: translateY(80px) scaleY(0.2); opacity: 0; }
+                    40% { transform: translateY(-10px) scaleY(1.2); opacity: 1; }
+                    100% { transform: translateY(-40px) scaleY(0.8); opacity: 0; }
+                }
+                .animate-pierce { animation: pierce 0.35s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; }
+
+                /* Blunt */
+                @keyframes blunt {
+                    0% { transform: scale(0.2); opacity: 0; }
+                    50% { transform: scale(1.1); opacity: 1; }
+                    100% { transform: scale(1); opacity: 0; }
+                }
+                @keyframes shockwave {
+                    0% { transform: scale(0.5); opacity: 0.8; }
+                    100% { transform: scale(1.8); opacity: 0; }
+                }
+                .animate-blunt { animation: blunt 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+                .animate-shockwave { animation: shockwave 0.5s ease-out forwards; }
+
+                /* Fire */
+                @keyframes fireExplosion {
+                    0% { transform: scale(0.3); opacity: 0; filter: blur(5px); }
+                    30% { transform: scale(1.1); opacity: 0.9; filter: blur(2px); }
+                    100% { transform: scale(1.4); opacity: 0; filter: blur(10px); }
+                }
+                @keyframes fireCore {
+                    0% { transform: scale(0.2); opacity: 0; }
+                    40% { transform: scale(1); opacity: 1; }
+                    100% { transform: scale(1.2); opacity: 0; }
+                }
+                .animate-fire-explosion { animation: fireExplosion 0.6s ease-out forwards; }
+                .animate-fire-core { animation: fireCore 0.5s ease-out forwards; }
+
+                /* Sparkles */
+                @keyframes sparkle1 {
+                    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+                    100% { transform: translate(-40px, -60px) scale(0.2); opacity: 0; }
+                }
+                @keyframes sparkle2 {
+                    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+                    100% { transform: translate(50px, -50px) scale(0.2); opacity: 0; }
+                }
+                @keyframes sparkle3 {
+                    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+                    100% { transform: translate(-20px, -80px) scale(0.2); opacity: 0; }
+                }
+                .animate-sparkle-1 { animation: sparkle1 0.6s ease-out forwards; }
+                .animate-sparkle-2 { animation: sparkle2 0.6s ease-out forwards; }
+                .animate-sparkle-3 { animation: sparkle3 0.6s ease-out forwards; }
+
+                /* Lightning */
+                @keyframes lightningFlash {
+                    0%, 100% { opacity: 0; }
+                    20%, 40% { opacity: 1; }
+                    30%, 50% { opacity: 0.5; }
+                }
+                @keyframes lightningBolt {
+                    0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+                    10% { transform: scaleY(1.1); opacity: 1; }
+                    30% { transform: scaleY(1) skewX(-10deg); opacity: 1; }
+                    35% { transform: scaleY(1) skewX(10deg); opacity: 0.8; }
+                    100% { transform: scaleY(1); opacity: 0; }
+                }
+                .animate-lightning-flash { animation: lightningFlash 0.5s ease-out forwards; }
+                .animate-lightning-bolt { animation: lightningBolt 0.5s ease-in-out forwards; }
+
+                /* Ice */
+                @keyframes iceCrystal {
+                    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+                    50% { transform: scale(1.1) rotate(90deg); opacity: 0.7; }
+                    100% { transform: scale(1) rotate(180deg); opacity: 0; }
+                }
+                @keyframes iceFreeze {
+                    0% { transform: scale(0.3); opacity: 0; }
+                    40% { transform: scale(1); opacity: 0.6; }
+                    100% { transform: scale(1.2); opacity: 0; }
+                }
+                .animate-ice-crystal { animation: iceCrystal 0.6s ease-out forwards; }
+                .animate-ice-freeze { animation: iceFreeze 0.5s ease-out forwards; }
+
+                @keyframes shard1 {
+                    0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+                    100% { transform: translate(-50px, 40px) rotate(360deg); opacity: 0; }
+                }
+                @keyframes shard2 {
+                    0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+                    100% { transform: translate(60px, 30px) rotate(-360deg); opacity: 0; }
+                }
+                .animate-ice-shard-1 { animation: shard1 0.6s ease-out forwards; }
+                .animate-ice-shard-2 { animation: shard2 0.6s ease-out forwards; }
+
+                /* Dark */
+                @keyframes darkHole {
+                    0% { transform: scale(0.1) rotate(0deg); opacity: 0; }
+                    20% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+                    80% { transform: scale(1) rotate(720deg); opacity: 0.9; }
+                    100% { transform: scale(0) rotate(1080deg); opacity: 0; }
+                }
+                .animate-dark-hole { animation: darkHole 0.8s ease-in-out forwards; }
+
+                /* Holy */
+                @keyframes holyPillar {
+                    0% { transform: scaleX(0.1); opacity: 0; }
+                    30% { transform: scaleX(1.3); opacity: 1; }
+                    50% { transform: scaleX(1); opacity: 0.9; }
+                    100% { transform: scaleX(0.8); opacity: 0; }
+                }
+                @keyframes holyRing {
+                    0% { transform: scale(0.1) translateY(40px); opacity: 0; }
+                    40% { transform: scale(1) translateY(0); opacity: 0.8; }
+                    100% { transform: scale(1.4) translateY(-30px); opacity: 0; }
+                }
+                .animate-holy-pillar { animation: holyPillar 0.7s ease-in-out forwards; }
+                .animate-holy-ring { animation: holyRing 0.7s ease-out forwards; }
+
+                /* Enemy Swipe */
+                @keyframes swipe1 {
+                    0% { transform: translate(-100px, -100px) rotate(12deg) scaleX(0); opacity: 0; }
+                    30% { transform: translate(0, 0) rotate(12deg) scaleX(1.2); opacity: 1; }
+                    100% { transform: translate(100px, 100px) rotate(12deg) scaleX(1); opacity: 0; }
+                }
+                @keyframes swipe2 {
+                    0% { transform: translate(100px, -100px) rotate(-12deg) scaleX(0); opacity: 0; }
+                    30% { transform: translate(0, 0) rotate(-12deg) scaleX(1.2); opacity: 1; }
+                    100% { transform: translate(-100px, 100px) rotate(-12deg) scaleX(1); opacity: 0; }
+                }
+                .animate-enemy-swipe1 { animation: swipe1 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+                .animate-enemy-swipe2 { animation: swipe2 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+
+                .animate-delay-100 { animation-delay: 100ms; }
+                .animate-delay-150 { animation-delay: 150ms; }
+                .animate-delay-200 { animation-delay: 200ms; }
             `}</style>
 
             {/* BATTLE HEADER — safe-area対応 */}
@@ -581,6 +862,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                             <div className={`w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] relative transition-all duration-500 flex items-center justify-center
                                 ${target.hp > 0 ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
                                 ${activeEffect && activeEffect !== 'BUFF' ? 'flash-active' : ''}
+                                ${shouldEnemyShake ? 'animate-enemy-shake' : ''}
                             `}>
                                 {target.image_url ? (
                                     <img src={target.image_url} alt={target.name} className="max-w-full max-h-full object-contain drop-shadow-2xl" />
@@ -607,21 +889,74 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
                                 {/* Action Animations strictly for attack on target */}
                                 {target.hp > 0 && activeEffect && activeEffect !== 'BUFF' && (
-                                    <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+                                    <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center overflow-hidden">
                                         {activeEffect === 'SLASH' && (
-                                            <div className="w-[120%] h-[3px] bg-red-400 rotate-45 shadow-[0_0_25px_rgba(248,113,113,1)] animate-in slide-in-from-top-12 duration-300" />
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-[120%] h-[4px] bg-red-400 rotate-45 shadow-[0_0_25px_rgba(248,113,113,1)] animate-slash1" />
+                                                <div className="absolute w-[120%] h-[4px] bg-red-300 -rotate-45 shadow-[0_0_25px_rgba(248,113,113,1)] animate-slash2 animate-delay-150" />
+                                                <div className="absolute w-12 h-12 rounded-full border border-red-500/50 bg-red-500/20 animate-ping" />
+                                            </div>
                                         )}
                                         {activeEffect === 'WIND' && (
-                                            <div className="block">
-                                                <div className="w-24 h-[2px] bg-sky-200 shadow-[0_0_20px_rgba(186,230,253,1)] animate-in slide-in-from-right-16 fade-in duration-300 mb-3" />
-                                                <div className="w-16 h-[2px] bg-sky-300 shadow-[0_0_20px_rgba(186,230,253,1)] animate-in slide-in-from-left-16 fade-in duration-300" />
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-32 h-[3px] bg-sky-200 shadow-[0_0_20px_rgba(186,230,253,1)] rotate-12 animate-wind1" />
+                                                <div className="absolute w-24 h-[2px] bg-sky-300 shadow-[0_0_20px_rgba(186,230,253,1)] -rotate-12 animate-wind2 animate-delay-100" />
+                                                <div className="absolute w-28 h-28 rounded-full border-2 border-dashed border-sky-300/40 animate-spin" />
                                             </div>
                                         )}
                                         {activeEffect === 'PIERCE' && (
-                                            <div className="w-2 h-24 bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,1)] animate-in slide-in-from-bottom-16 fade-in duration-200" />
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-3 h-32 bg-slate-100 shadow-[0_0_25px_rgba(255,255,255,1)] animate-pierce" />
+                                                <div className="absolute w-1.5 h-24 bg-sky-200 shadow-[0_0_20px_rgba(186,230,253,1)] translate-x-4 -translate-y-4 animate-pierce animate-delay-100" />
+                                                <div className="absolute w-1.5 h-24 bg-sky-200 shadow-[0_0_20px_rgba(186,230,253,1)] -translate-x-4 translate-y-4 animate-pierce animate-delay-200" />
+                                            </div>
                                         )}
                                         {activeEffect === 'BLUNT' && (
-                                            <div className="w-16 h-16 rounded-full border-[6px] border-amber-500 bg-amber-200/40 shadow-[0_0_25px_rgba(245,158,11,1)] animate-in zoom-in fade-in duration-300" />
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-16 h-16 rounded-full border-[6px] border-amber-500 bg-amber-200/40 shadow-[0_0_25px_rgba(245,158,11,1)] animate-blunt" />
+                                                <div className="absolute w-24 h-24 rounded-full border-2 border-amber-400 animate-ping" />
+                                                <div className="absolute w-32 h-32 rounded-full border border-orange-500/30 animate-shockwave" />
+                                            </div>
+                                        )}
+                                        {activeEffect === 'FIRE' && (
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-24 h-24 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 opacity-80 blur-sm animate-fire-explosion" />
+                                                <div className="absolute w-16 h-16 rounded-full bg-white opacity-90 blur-xs animate-fire-core" />
+                                                <div className="absolute w-2 h-2 bg-orange-400 rounded-full animate-sparkle-1" />
+                                                <div className="absolute w-3 h-3 bg-yellow-300 rounded-full animate-sparkle-2" />
+                                                <div className="absolute w-2.5 h-2.5 bg-red-500 rounded-full animate-sparkle-3" />
+                                            </div>
+                                        )}
+                                        {activeEffect === 'LIGHTNING' && (
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-blue-400/20 opacity-0 animate-lightning-flash" />
+                                                <div className="absolute w-[8px] h-48 bg-white shadow-[0_0_20px_rgba(191,219,254,1)] animate-lightning-bolt" />
+                                                <div className="absolute w-[4px] h-40 bg-sky-200 shadow-[0_0_15px_rgba(56,189,248,1)] rotate-15 translate-x-4 animate-lightning-bolt animate-delay-100" />
+                                                <div className="absolute w-[4px] h-40 bg-sky-200 shadow-[0_0_15px_rgba(56,189,248,1)] -rotate-15 -translate-x-4 animate-lightning-bolt animate-delay-150" />
+                                            </div>
+                                        )}
+                                        {activeEffect === 'ICE' && (
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-28 h-28 border-2 border-sky-300 rotate-45 opacity-60 animate-ice-crystal" />
+                                                <div className="absolute w-28 h-28 border-2 border-sky-300 -rotate-45 opacity-60 animate-ice-crystal animate-delay-150" />
+                                                <div className="absolute w-16 h-16 bg-sky-200/30 backdrop-blur-xs rounded-full animate-ice-freeze" />
+                                                <div className="absolute w-2 h-2 bg-sky-100 rotate-12 animate-ice-shard-1" />
+                                                <div className="absolute w-2 h-2 bg-sky-100 -rotate-12 animate-ice-shard-2" />
+                                            </div>
+                                        )}
+                                        {activeEffect === 'DARK' && (
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-20 h-20 rounded-full bg-black border-4 border-purple-600/80 shadow-[0_0_30px_rgba(147,51,234,0.8)] animate-dark-hole" />
+                                                <div className="absolute w-28 h-28 border border-purple-500/40 rounded-full border-dashed animate-spin duration-1000" />
+                                                <div className="absolute w-32 h-32 bg-gradient-to-r from-purple-900/30 to-black/30 rounded-full blur-md animate-ping" />
+                                            </div>
+                                        )}
+                                        {activeEffect === 'HOLY' && (
+                                            <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="absolute w-12 h-64 bg-gradient-to-b from-yellow-100/10 via-yellow-200/80 to-white/90 shadow-[0_0_35px_rgba(253,224,71,0.8)] animate-holy-pillar" />
+                                                <div className="absolute w-24 h-24 rounded-full border-4 border-yellow-300/60 animate-holy-ring" />
+                                                <div className="absolute w-32 h-32 rounded-full border border-yellow-200/30 animate-holy-ring animate-delay-200" />
+                                            </div>
                                         )}
                                     </div>
                                 )}

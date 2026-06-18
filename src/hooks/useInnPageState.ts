@@ -234,6 +234,7 @@ export function useInnPageState() {
                         partyMembers: data.party_members || [],
                         locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
                         gossipData: data.gossip_data,
+                        completedQuests: data.completed_quests || [],
                         lastInitPageFetchTime: Date.now(), // 更新
                     });
 

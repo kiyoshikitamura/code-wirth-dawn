@@ -252,36 +252,119 @@ function InnPageInner() {
                     onOpenMap={() => router.push('/world-map')}
                     showHistoryBadge={showHistoryBadge}
                     isHub={isHub}
+                    isMapRecommended={(() => {
+                        const completedQuests = useGameStore.getState().completedQuests;
+                        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                        const clearedCount = completedQuests?.length ?? 0;
+                        const visitedTavern = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_tavern') === 'true';
+                        const visitedShop = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_shop') === 'true';
+                        return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop;
+                    })()}
                 />
 
                 {/* 目的ガイダンスバナー (Onboarding Banner) */}
-                {!userProfile.current_quest_id && (userProfile.level || 1) === 1 && showGuideBanner && (
-                    <div className="mx-4 mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start justify-between gap-2 shadow-lg shadow-amber-950/20 animate-in slide-in-from-top duration-300">
-                        <div className="flex gap-2">
-                            <span className="text-amber-400 font-bold text-sm">💡</span>
-                            <div className="min-w-0">
-                                <p className="text-xs font-bold text-amber-300">旅の目的</p>
-                                <p className="text-[11px] text-slate-300 leading-relaxed mt-0.5">
-                                    ギルドで最初の依頼<span className="text-amber-400 font-bold">『第1話「始まりの轍」』</span>を引き受けましょう！
-                                </p>
+                {(() => {
+                    const completedQuests = useGameStore(state => state.completedQuests);
+                    const [visitedTavern, setVisitedTavern] = useState(false);
+                    const [visitedShop, setVisitedShop] = useState(false);
+
+                    React.useEffect(() => {
+                        if (typeof window !== 'undefined') {
+                            setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
+                            setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
+                        }
+                    }, [showTavern, showShop]);
+
+                    React.useEffect(() => {
+                        if (showTavern) {
+                            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
+                            setVisitedTavern(true);
+                        }
+                    }, [showTavern]);
+
+                    React.useEffect(() => {
+                        if (showShop) {
+                            localStorage.setItem('wirth_dawn_visited_shop', 'true');
+                            setVisitedShop(true);
+                        }
+                    }, [showShop]);
+
+                    const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                    const clearedCount = completedQuests?.length ?? 0;
+
+                    let bannerText = '';
+                    if (!isEp1Cleared) {
+                        bannerText = 'ギルドで第1話「始まりの轍」を受注しよう！';
+                    } else if (clearedCount < 2) {
+                        bannerText = '第1話クリア！続けて別の依頼をこなそう';
+                    } else if (!visitedTavern) {
+                        bannerText = '依頼達成！次は酒場で仲間を集めよう';
+                    } else if (!visitedShop) {
+                        bannerText = '仲間獲得！次は道具屋で装備を整えよう';
+                    } else {
+                        bannerText = '街の噂を集めたり、地図から冒険に旅立とう';
+                    }
+
+                    if (!userProfile.current_quest_id && bannerText && showGuideBanner) {
+                        return (
+                            <div className="mx-4 mt-4 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between gap-2 shadow-lg shadow-amber-950/20 animate-in slide-in-from-top duration-300">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <span className="text-amber-400 font-bold text-xs flex-shrink-0">💡</span>
+                                    <div className="min-w-0 flex-1 flex items-center gap-1.5 text-xs text-slate-300">
+                                        <span className="font-bold text-amber-300 whitespace-nowrap flex-shrink-0">旅の目的:</span>
+                                        <span className="truncate font-medium text-slate-100">{bannerText}</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowGuideBanner(false)}
+                                    className="text-slate-400 hover:text-slate-200 transition-colors p-0.5 flex-shrink-0"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
-                        </div>
-                        <button 
-                            onClick={() => setShowGuideBanner(false)}
-                            className="text-slate-400 hover:text-slate-200 transition-colors p-0.5 flex-shrink-0"
-                        >
-                            <X size={14} />
-                        </button>
-                    </div>
-                )}
+                        );
+                    }
+                    return null;
+                })()}
 
                 {/* Facility Grid Navigation */}
                 <div className="flex-1 w-full bg-[#0a1628]">
-                    <FacilityGrid 
-                        onSelectFacility={handleSelectFacility} 
-                        isHub={isHub} 
-                        isQuestRecommended={!userProfile.current_quest_id && (userProfile.level || 1) === 1}
-                    />
+                    {(() => {
+                        const completedQuests = useGameStore(state => state.completedQuests);
+                        const [visitedTavern, setVisitedTavern] = useState(false);
+                        const [visitedShop, setVisitedShop] = useState(false);
+
+                        React.useEffect(() => {
+                            if (typeof window !== 'undefined') {
+                                setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
+                                setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
+                            }
+                        }, [showTavern, showShop]);
+
+                        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                        const clearedCount = completedQuests?.length ?? 0;
+
+                        let recommendedFacility: string | null = null;
+                        if (!isEp1Cleared) {
+                            recommendedFacility = 'guild';
+                        } else if (clearedCount < 2) {
+                            recommendedFacility = null;
+                        } else if (!visitedTavern) {
+                            recommendedFacility = 'inn';
+                        } else if (!visitedShop) {
+                            recommendedFacility = 'shop';
+                        } else {
+                            recommendedFacility = 'gossip_and_map';
+                        }
+
+                        return (
+                            <FacilityGrid 
+                                onSelectFacility={handleSelectFacility} 
+                                isHub={isHub} 
+                                recommendedFacility={recommendedFacility}
+                            />
+                        );
+                    })()}
                     <CreatorsWorkshopBanner
                         isHub={isHub}
                         onOpenWorkshop={() => router.push('/workshop')}

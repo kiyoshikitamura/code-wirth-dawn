@@ -29,7 +29,7 @@ export interface BattleTypewriterResult {
  * バトルログのタイプライター表示・キュー管理・HP同期を担うカスタムフック。
  * BattleView.tsx から抽出。
  */
-export function useBattleTypewriter(initialHp?: number | null): BattleTypewriterResult {
+export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: (msg: string) => void): BattleTypewriterResult {
     const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
     const [typingText, setTypingText] = useState<string>('');
     const [isTypingDone, setIsTypingDone] = useState(true);
@@ -102,6 +102,7 @@ export function useBattleTypewriter(initialHp?: number | null): BattleTypewriter
         // 通常メッセージ: タイプライター
         isTypingRef.current = true;
         setIsTypingDone(false);
+        if (onMessageStart) onMessageStart(message);
         let charIdx = 0;
         setTypingText('');
 

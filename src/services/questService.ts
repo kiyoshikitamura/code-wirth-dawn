@@ -283,12 +283,37 @@ export class QuestService {
             if (user.current_location_id) {
                 const { data: loc } = await supabase
                     .from('locations')
-                    .select('slug, nation_id')
+                    .select('name, slug, nation_id, ruling_nation_id')
                     .eq('id', user.current_location_id)
                     .maybeSingle();
-                // nation_id は locations テーブルの nation_id カラム、または slug ベースで判定
-                const locNation = loc?.nation_id || loc?.slug;
-                if (locNation !== requirements.nation_id) {
+                
+                let locNation = loc?.ruling_nation_id || loc?.nation_id || loc?.slug;
+                if (loc?.name) {
+                    const { data: ws } = await supabase
+                        .from('world_states')
+                        .select('controlling_nation')
+                        .eq('location_name', loc.name)
+                        .maybeSingle();
+                    if (ws?.controlling_nation) {
+                        locNation = ws.controlling_nation;
+                    }
+                }
+
+                const nationSlugToLocationTag: Record<string, string> = {
+                    'Roland': 'loc_holy_empire',
+                    'Markand': 'loc_marcund',
+                    'Yato': 'loc_yatoshin',
+                    'Karyu': 'loc_haryu',
+                };
+                
+                const currentTag = locNation ? (nationSlugToLocationTag[locNation] || locNation) : null;
+                const reqTag = requirements.nation_id;
+                
+                const isNationMatch = currentTag === reqTag || 
+                                     (reqTag === 'loc_roland' && currentTag === 'loc_holy_empire') ||
+                                     locNation === reqTag;
+
+                if (!isNationMatch) {
                     return { valid: false, reason: `Must be in nation ${requirements.nation_id} (Current: ${locNation || 'unknown'})` };
                 }
             } else {

@@ -45,10 +45,17 @@ export async function POST(req: Request) {
             // Deduct AP
             playerState.current_ap -= apCost;
 
-            // Process AP recovery card effects (e.g. Meditation)
+            // Process AP recovery card effects (e.g. Meditation, Dark Pact)
             const resolvedEffectId = card.effect_id || (card.effect_data && card.effect_data.effect_id);
             if (resolvedEffectId === 'ap_recover') {
                 playerState.current_ap = Math.min(15, playerState.current_ap + 3);
+            } else if (resolvedEffectId === 'ap_max') {
+                playerState.current_ap = 15;
+                if (playerState.stats) {
+                    const maxHp = playerState.stats.max_hp || 100;
+                    const selfDmg = Math.max(1, Math.floor(maxHp * 0.1));
+                    playerState.stats.hp = Math.max(0, (playerState.stats.hp || maxHp) - selfDmg);
+                }
             }
 
             // Simple Damage Route

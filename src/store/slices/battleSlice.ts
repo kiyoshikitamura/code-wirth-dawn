@@ -1274,6 +1274,25 @@ export const createBattleSlice = (
                         const newAp = Math.min(15, battleState.current_ap + 3);
                         set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
                         logMsg = `✨ ${card.name}を使用！ APが3回復した（現在: ${newAp}）`;
+                    } else if (effectInfo.effectId === 'ap_max' as any) {
+                        const newAp = 15;
+                        const maxHp = effectivePlayerMaxHp;
+                        const selfDmg = Math.max(1, Math.floor(maxHp * 0.1));
+                        const currentHp = get().userProfile?.hp || 0;
+                        const newHp = Math.max(0, currentHp - selfDmg);
+                        
+                        set(state => ({ 
+                            userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
+                            battleState: { ...state.battleState, current_ap: newAp } 
+                        }));
+                        
+                        logMsg = `✨ ${card.name}を発動！ AP全回復！ (自傷ダメージ -${selfDmg})`;
+                        healSyncHp = newHp;
+                        const { selectedProfileId } = get();
+                        fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                        }).catch(console.error);
                     } else if (effectInfo.effectId) {
                         const newEffects = applyEffect(get().battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
                         set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
