@@ -77,7 +77,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                 userName: string;
             }> = new Map();
 
-            const prizeList = [20000, 10000, 5000];
+            const prizeList = [10000, 5000, 1000];
 
             if (topWins && topWins.length > 0) {
                 for (const u of topWins) {

@@ -165,9 +165,9 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 コロシアムの「勝利数」および「最多連勝数」のランキング上位者には、6時間ごと（JST 6時/12時/18時/24時）の集計時に以下の報酬がゲーム内郵便（システム通知）を通じて送られます。
                             </p>
                             <ul className="list-disc pl-4 text-xs space-y-1 text-slate-400 mt-1">
-                                <li>1位: <span className="text-amber-400 font-bold">20,000 G</span></li>
-                                <li>2位: <span className="text-amber-400 font-bold">10,000 G</span></li>
-                                <li>3位: <span className="text-amber-400 font-bold">5,000 G</span></li>
+                                <li>1位: <span className="text-amber-400 font-bold">10,000 G</span></li>
+                                <li>2位: <span className="text-amber-400 font-bold">5,000 G</span></li>
+                                <li>3位: <span className="text-amber-400 font-bold">1,000 G</span></li>
                             </ul>
                         </section>
                     </div>
