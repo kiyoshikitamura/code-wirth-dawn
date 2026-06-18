@@ -245,7 +245,7 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
   ローカル環境では単に空データが返されるだけのサイレントエラーとなるが、**Vercelサーバーレス環境（本番やプレビュー環境）ではこの PostgREST エラーが例外（Exception）として直接スローされ、API全体が500エラーでクラッシュする**という重大な環境依存挙動がある.
   スキーマキャッシュで解決できない結合エラーを避けるため、必要な結合は外部キーが正しく定義されているテーブル（例：`inventory`）に代替し、クエリ側で `is_equipped = true` のフィルターをかけるなど、スキーマの安全性と堅牢性を重視した設計とすること.
 - **世界情勢履歴における複数外部キー関係下でのPostgREST JOIN解決 (PGRST201)**:
-  `world_states_history` から `locations` への結合を行う際、外部キーが `world_states_history_location_id_fkey` と `world_states_history_location_name_fkey` の2つ存在するため、曖昧さを回避するためには `locations!world_states_history_location_id_fkey` のように外部キー名を明示的に指定して JOIN を行う必要がある.
+  `world_states_history` から `locations` への結合を行う際、外部キーが `world_states_history_location_id_fkey` と `world_states_history_location_name_fkey` の2つ存在するため、曖昧さを回避するためには `locations!world_states_history_location_id_fkey` のように外部キー名を明示的に指定して JOIN を行う必要がある（対象：`/api/init-page`, `/api/gossip`, `/api/world-history/get-updates` 等）.
   これを怠ると、ローカル環境では問題なくとも Vercel 環境では API 500 クラッシュを誘発するため、スキーマ変更後はすべてのリレーション結合に細心の注意を払うこと.
 - **OAuth後のセッション遅延を考慮したデータフェッチ側のリトライ**:
   Google OAuthから戻った直後のSPA遷移時、セッション確立タイムラグにより `getAuthToken()` が一時的に `null` を返す過渡期がある.

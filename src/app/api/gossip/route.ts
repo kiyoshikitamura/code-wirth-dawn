@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         if (tab === 'all' || tab === 'news') {
             const { data: worldNews, error: newsError } = await supabase
                 .from('world_states_history')
-                .select('id, message, old_value, new_value, event_type, created_at, location:locations(name)')
+                .select('id, message, old_value, new_value, event_type, created_at, location:locations!world_states_history_location_id_fkey(name)')
                 .order('created_at', { ascending: false })
                 .limit(10);
 

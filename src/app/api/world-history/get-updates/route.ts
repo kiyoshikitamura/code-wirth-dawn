@@ -24,7 +24,7 @@ export async function GET(req: Request) {
             .from('world_states_history')
             .select(`
                 *,
-                location:locations(name)
+                location:locations!world_states_history_location_id_fkey(name)
             `)
             .order('created_at', { ascending: false })
             .limit(10); // Limit to latest 10 news items
