@@ -97,12 +97,12 @@ export async function updateWorldSimulation() {
         } else {
             states.forEach(s => {
                 if (s.location_name === '名もなき旅人の拠所') return;
-                s.order_score = Math.max(10, Math.round((s.order_score || 10) * 0.8));
-                s.chaos_score = Math.max(10, Math.round((s.chaos_score || 10) * 0.8));
-                s.justice_score = Math.max(10, Math.round((s.justice_score || 10) * 0.8));
-                s.evil_score = Math.max(10, Math.round((s.evil_score || 10) * 0.8));
+                s.order_score = 50 + Math.round(((s.order_score || 50) - 50) * 0.8);
+                s.chaos_score = 50 + Math.round(((s.chaos_score || 50) - 50) * 0.8);
+                s.justice_score = 50 + Math.round(((s.justice_score || 50) - 50) * 0.8);
+                s.evil_score = 50 + Math.round(((s.evil_score || 50) - 50) * 0.8);
             });
-            logs.push(`[WorldSim] Applied 20% decay to all alignment scores.`);
+            logs.push(`[WorldSim] Applied 20% decay towards neutral (50) to all alignment scores.`);
         }
 
         // Map states by location name for easy access
@@ -348,11 +348,25 @@ export async function updateWorldSimulation() {
             // Friction 51-80: Trend towards Stagnant/Declining (Lv3→Lv2)
             // Friction 81+:   Trend towards Ruined (Lv1)
 
+            // 2. Determine Trend based on Location Type
+            const isCapital = loc.type === 'Capital';
             let targetLevel = 3; // Stagnant default
-            if (friction <= 20) targetLevel = 5;
-            else if (friction <= 50) targetLevel = 4;
-            else if (friction <= 80) targetLevel = 2;
-            else targetLevel = 1;
+
+            if (isCapital) {
+                // 首都の判定テーブル: 摩擦50（放置状態）で Lv4 に収束
+                if (friction <= 20) targetLevel = 5;
+                else if (friction <= 55) targetLevel = 4;
+                else if (friction <= 80) targetLevel = 3;
+                else if (friction <= 90) targetLevel = 2;
+                else targetLevel = 1;
+            } else {
+                // 一般拠点の判定テーブル: 摩擦50（放置状態）で Lv3 に収束
+                if (friction <= 20) targetLevel = 5;
+                else if (friction <= 45) targetLevel = 4;
+                else if (friction <= 75) targetLevel = 3;
+                else if (friction <= 90) targetLevel = 2;
+                else targetLevel = 1;
+            }
 
             // 3. Update Prosperity Level
             // spec v11.1: Resistance — friction >= RESISTANCE_THRESHOLD かつ新規占領時は崩壊強制

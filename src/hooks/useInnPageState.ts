@@ -425,7 +425,7 @@ export function useInnPageState() {
         if (gougaiEvents.length > 0 && userProfile?.id) {
             const latestId = gougaiEvents[0].id;
             try {
-                await fetch('/api/world-history/mark-seen', {
+                await fetch('/api/world-history/get-updates', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userProfile.id, last_seen_history_id: latestId })

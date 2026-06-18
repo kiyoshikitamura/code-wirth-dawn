@@ -12,7 +12,7 @@ export async function GET(req: Request) {
         }
 
         // 1. Get user's last seen history reference
-        const { data: viewData, error: viewError } = await supabase
+        const { data: viewData, error: viewError } = await supabaseAdmin
             .from('user_world_views')
             .select('last_seen_history_id')
             .eq('user_id', userId)
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('user_world_views')
             .upsert({
                 user_id,
