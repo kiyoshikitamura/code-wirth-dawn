@@ -25,6 +25,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_battle': '/backgrounds/battle_bg.png',
 
     // ── クエスト用背景 (public/images/quests/) ──
+    'bg_colosseum': '/images/quests/bg_colosseum.png',
     'bg_wasteland': '/images/quests/bg_wasteland.png',
     'bg_desert': '/images/quests/bg_desert.png',
     'bg_slum': '/images/quests/bg_slum.png',

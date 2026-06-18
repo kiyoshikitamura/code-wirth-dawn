@@ -49,7 +49,10 @@ async function performUpdate(isForceUgcReset: boolean) {
         });
         if (alignErr) throw alignErr;
 
-        logs.push(`[RankingAggregation] Reputation and Alignment rankings aggregated via RPC`);
+        const { error: colosseumErr } = await supabaseServer.rpc('aggregate_colosseum_ranking');
+        if (colosseumErr) throw colosseumErr;
+
+        logs.push(`[RankingAggregation] Reputation, Alignment, and Colosseum rankings aggregated via RPC`);
     } catch (rankErr: any) {
         logs.push(`[RankingAggregation] error: ${rankErr.message}`);
     }

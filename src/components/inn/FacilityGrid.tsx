@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Bed, Activity, ShoppingBag, Church, Shield, MessageSquare, BookOpen, ClipboardList, Trophy } from 'lucide-react';
+import { Bed, Activity, ShoppingBag, Church, Shield, MessageSquare, BookOpen, ClipboardList, Trophy, Swords } from 'lucide-react';
 
-export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip' | 'collection' | 'questLog' | 'ranking' | 'ugcGuild';
+export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip' | 'collection' | 'questLog' | 'ranking' | 'ugcGuild' | 'colosseum';
 
 interface FacilityGridProps {
     onSelectFacility: (facility: FacilityType) => void;
@@ -12,7 +12,7 @@ interface FacilityGridProps {
 export default function FacilityGrid({ onSelectFacility, isHub = false, recommendedFacility = null }: FacilityGridProps) {
     const [hasReadGossip, setHasReadGossip] = useState(false);
 
-    // 通常拠点: 宿屋/酒場 → ギルド/道具屋 → 神殿 → ステータス → 街の噂話
+    // 通常拠点: 宿屋/酒場 → ギルド/道具屋 → 神殿 → ステータス → 街の噂話 → コロシアム
     const locationFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋/酒場', sub: 'Inn', icon: Bed },
         { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
@@ -20,6 +20,7 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
         { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'gossip', label: '街の噂話', sub: 'Gossip', icon: MessageSquare },
+        { id: 'colosseum', label: 'コロシアム', sub: 'Colosseum', icon: Swords },
     ];
 
     // ハブ: 宿屋/ステータスのみ

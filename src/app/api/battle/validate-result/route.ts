@@ -94,6 +94,50 @@ export async function POST(req: Request) {
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', battle_session_id);
+
+            // Update Colosseum stats if user is currently in a Colosseum quest
+            try {
+                const { data: userProfile } = await supabaseServer
+                    .from('user_profiles')
+                    .select('current_quest_id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (userProfile?.current_quest_id && String(userProfile.current_quest_id).startsWith('colosseum_')) {
+                    const { data: stats } = await supabaseServer
+                        .from('colosseum_user_stats')
+                        .select('wins, losses, current_streak, max_streak')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+
+                    const currentStats = stats || { wins: 0, losses: 0, current_streak: 0, max_streak: 0 };
+
+                    if (validatedResult === 'victory') {
+                        const nextStreak = currentStats.current_streak + 1;
+                        const newMax = Math.max(currentStats.max_streak, nextStreak);
+                        await supabaseServer
+                            .from('colosseum_user_stats')
+                            .upsert({
+                                user_id: user.id,
+                                wins: currentStats.wins + 1,
+                                current_streak: nextStreak,
+                                max_streak: newMax,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id' });
+                    } else if (validatedResult === 'defeat' || validatedResult === 'escape') {
+                        await supabaseServer
+                            .from('colosseum_user_stats')
+                            .upsert({
+                                user_id: user.id,
+                                losses: currentStats.losses + 1,
+                                current_streak: 0,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id' });
+                    }
+                }
+            } catch (statsErr) {
+                console.error('[Battle Validate] Failed to update Colosseum stats:', statsErr);
+            }
         }
 
         // 6. Battle Completion Token の発行

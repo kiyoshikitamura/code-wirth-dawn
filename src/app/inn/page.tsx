@@ -34,6 +34,7 @@ import WorldChangedModal from '@/components/inn/WorldChangedModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
+import ColosseumModal from '@/components/inn/ColosseumModal';
 
 // デバッグ系: 開発環境のみロード
 const QuestTestPanel = dynamic(() => import('@/components/debug/QuestTestPanel'), { ssr: false });
@@ -227,6 +228,7 @@ function InnPageInner() {
                 {activeModal === 'collection' && <CollectionModal onClose={() => setActiveModal(null)} />}
                 {activeModal === 'questLog' && <QuestLogModal onClose={() => setActiveModal(null)} />}
                 {activeModal === 'ranking' && <RankingModal onClose={() => setActiveModal(null)} />}
+                {activeModal === 'colosseum' && <ColosseumModal onClose={() => setActiveModal(null)} />}
 
                 {activeModal === 'questBoard' && (
                     userProfile?.current_quest_id ? (

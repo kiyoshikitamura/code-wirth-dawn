@@ -61,21 +61,68 @@ export async function POST(req: Request) {
         let quest: any = null;
         let isUgcV2 = false;
 
-        const questColumns = 'id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, days_success, days_failure, is_ugc, share_text, script_data';
-        const [ugcResult, officialResult] = await Promise.all([
-            supabase.from('ugc_scenarios').select(questColumns).eq('id', quest_id).single(),
-            supabase.from('scenarios').select(questColumns).eq('id', quest_id).single()
-        ]);
+        if (String(quest_id).startsWith('colosseum_')) {
+            const difficulty = String(quest_id).replace('colosseum_', ''); // easy, normal, hard
+            let numBattles = 5;
+            let diffLabel = 'Easy';
+            let diffVal = 1;
+            let rewards = { gold: 800, exp: 200, reputation: 5 };
+            if (difficulty === 'normal') {
+                numBattles = 10;
+                diffLabel = 'Normal';
+                diffVal = 2;
+                rewards = { gold: 2000, exp: 400, reputation: 10 };
+            } else if (difficulty === 'hard') {
+                numBattles = 20;
+                diffLabel = 'Hard';
+                diffVal = 3;
+                rewards = { gold: 4000, exp: 800, reputation: 20 };
+            }
 
-        if (ugcResult.data) {
-            quest = ugcResult.data;
-            isUgcV2 = true;
-            // UGCクエストのplay_countインクリメント（fire-and-forget）
-            void supabase.rpc('increment_ugc_play_count', { p_scenario_id: quest_id }).then(({ error }) => { if (error) console.warn('UGC play count increment failed:', error); });
-        } else if (officialResult.data) {
-            quest = officialResult.data;
+            // Fetch user profile current_location_id
+            const { data: userLoc } = await supabase
+                .from('user_profiles')
+                .select('current_location_id')
+                .eq('id', user_id)
+                .single();
+
+            quest = {
+                id: quest_id,
+                slug: quest_id,
+                title: `コロシアム (${diffLabel})`,
+                description: `全${numBattles}戦の連続エネミーバトルに勝ち残り、報酬を獲得しろ。`,
+                quest_type: 'normal',
+                requirements: {},
+                conditions: {},
+                rewards: rewards,
+                rec_level: 1,
+                difficulty: diffVal,
+                is_urgent: false,
+                client_name: 'バルガス',
+                impact: {},
+                location_id: userLoc?.current_location_id || null,
+                days_success: 0,
+                days_failure: 0,
+                is_ugc: false,
+                share_text: `コロシアム (${diffLabel}) を制覇しました！`
+            };
         } else {
-            return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+            const questColumns = 'id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, days_success, days_failure, is_ugc, share_text, script_data';
+            const [ugcResult, officialResult] = await Promise.all([
+                supabase.from('ugc_scenarios').select(questColumns).eq('id', quest_id).single(),
+                supabase.from('scenarios').select(questColumns).eq('id', quest_id).single()
+            ]);
+
+            if (ugcResult.data) {
+                quest = ugcResult.data;
+                isUgcV2 = true;
+                // UGCクエストのplay_countインクリメント（fire-and-forget）
+                void supabase.rpc('increment_ugc_play_count', { p_scenario_id: quest_id }).then(({ error }) => { if (error) console.warn('UGC play count increment failed:', error); });
+            } else if (officialResult.data) {
+                quest = officialResult.data;
+            } else {
+                return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+            }
         }
 
         console.log(`[QuestComplete] ID: ${quest_id}, UGCv2: ${isUgcV2}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
@@ -221,8 +268,8 @@ export async function POST(req: Request) {
             ? {
                 ...qRewards,
                 ...nRewards,
-                items: mergedItems,
-                skills: mergedSkills,
+                items: mergedItems ? [...mergedItems] : [],
+                skills: mergedSkills ? [...mergedSkills] : [],
                 alignment_shift: (qRewards.alignment_shift || nRewards.alignment_shift)
                     ? {
                         ...(qRewards.alignment_shift || {}),
@@ -230,7 +277,31 @@ export async function POST(req: Request) {
                       }
                     : undefined
             }
-            : qRewards;
+            : { ...qRewards };
+
+        // Colosseum salvage rewards
+        if (result === 'success' && String(quest_id).startsWith('colosseum_')) {
+            const { data: itemPool } = await supabase
+                .from('colosseum_reward_pool')
+                .select('reward_id')
+                .eq('reward_type', 'item');
+            
+            const { data: skillPool } = await supabase
+                .from('colosseum_reward_pool')
+                .select('reward_id')
+                .eq('reward_type', 'skill');
+
+            if (itemPool && itemPool.length > 0) {
+                const randItem = itemPool[Math.floor(Math.random() * itemPool.length)];
+                if (!effectiveRewards.items) effectiveRewards.items = [];
+                effectiveRewards.items.push(randItem.reward_id);
+            }
+            if (skillPool && skillPool.length > 0) {
+                const randSkill = skillPool[Math.floor(Math.random() * skillPool.length)];
+                if (!effectiveRewards.skills) effectiveRewards.skills = [];
+                effectiveRewards.skills.push(randSkill.reward_id);
+            }
+        }
 
         if (result === 'success') {
             const rewards = effectiveRewards;

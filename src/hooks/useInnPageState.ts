@@ -481,10 +481,12 @@ export function useInnPageState() {
             if (facility === 'collection') setActiveModal('collection');
             if (facility === 'questLog') setActiveModal('questLog');
             if (facility === 'ranking') setActiveModal('ranking');
+            if (facility === 'colosseum') setActiveModal('colosseum');
         } else {
             const facilitySeMap: Record<string, string> = {
                 inn: 'se_enter_inn', guild: 'se_enter_guild',
                 shop: 'se_enter_shop', temple: 'se_enter_temple',
+                colosseum: 'se_enter_guild',
             };
             const seKey = facilitySeMap[facility];
             if (seKey) soundManager?.playSE(seKey);
