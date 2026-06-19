@@ -56,6 +56,21 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
 
     // キューを即時フラッシュ（NEXT ボタンで早送り）
     const flushQueue = useCallback(() => {
+        // 先にキュー内の全ての同期制御メッセージを即時適用する (Bug B)
+        typingQueue.current.forEach(message => {
+            if (message.startsWith('__hp_sync:')) {
+                const newHp = parseInt(message.slice(10), 10);
+                if (!isNaN(newHp)) setLiveHp(newHp);
+            } else if (message.startsWith('__party_sync:')) {
+                const parts = message.slice(13).split(':');
+                const memberId = parts[0];
+                const newDur = parseInt(parts[1], 10);
+                if (memberId && !isNaN(newDur)) {
+                    setLivePartyDurability(prev => ({ ...prev, [memberId]: newDur }));
+                }
+            }
+        });
+
         const remaining = [
             ...(activeMessage ? [activeMessage] : []),
             ...typingQueue.current.filter(m => !m.startsWith('__'))

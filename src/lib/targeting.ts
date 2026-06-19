@@ -7,7 +7,7 @@
  */
 
 import type { Card, BattleState, TargetType } from '@/types/game';
-import { hasEffect, type StatusEffect } from './statusEffects';
+import { hasEffect, isStunned, type StatusEffect } from './statusEffects';
 
 // ─── 型定義 ───────────────────────────────────────────────
 
@@ -53,6 +53,15 @@ export function validateCardUse(
     // ─── Step 1: APチェック ───
     const playerEffects = (battleState.player_effects || []) as StatusEffect[];
     const enemyEffects = (battleState.enemy?.status_effects || []) as StatusEffect[];
+
+    // 行動不能（スタン・拘束・凍結）チェック (Bug E)
+    if (isStunned(playerEffects)) {
+        return {
+            valid: false,
+            error: 'スタン状態のためカードを使用できない！'
+        };
+    }
+
     const apCost = getCardApCost(card, playerEffects, enemyEffects);
     const currentAp = battleState.current_ap || 0;
 

@@ -148,6 +148,11 @@ export function applyEffect(
     duration: number,
     value?: number
 ): StatusEffect[] {
+    // スタン・拘束・凍結の付与時にスタン免疫がある場合は無効化する (Bug J)
+    if ((id === 'stun' || id === 'bind' || id === 'freeze') && hasEffect(effects, 'stun_immune')) {
+        return effects;
+    }
+
     const existing = effects.find(e => e.id === id);
     if (existing) {
         return effects.map(e => {
@@ -209,11 +214,15 @@ export function hasEffect(effects: StatusEffect[], id: StatusEffectId): boolean 
  * 攻撃力の乗算係数を返す。atk_up → 1.0 + 累積値(デフォ0.5)、それ以外 → 1.0
  */
 export function getAttackMod(effects: StatusEffect[]): number {
+    let mod = 1.0;
     const atkEffect = effects.find(e => e.id === 'atk_up' && e.duration > 0);
     if (atkEffect) {
-        return 1.0 + (atkEffect.value ?? 0.5);
+        mod += (atkEffect.value ?? 0.5);
     }
-    return 1.0;
+    if (hasEffect(effects, 'berserk')) {
+        mod *= 2.0; // 狂戦士効果: 与ダメージ 2倍 (Bug T)
+    }
+    return mod;
 }
 
 /**
@@ -238,7 +247,14 @@ export function getAtkDownMod(effects: StatusEffect[]): number {
  * 防御デバフの DEF 減算率を返す。def_down → DEF半減(0.5倍)、それ以外 → 1.0
  */
 export function getDefDownMod(effects: StatusEffect[]): number {
-    return hasEffect(effects, 'def_down') ? 0.5 : 1.0;
+    let mod = 1.0;
+    if (hasEffect(effects, 'def_down')) {
+        mod *= 0.5; // 防御DOWN: DEF半減
+    }
+    if (hasEffect(effects, 'berserk')) {
+        mod *= 0.5; // 狂戦士効果: DEF半減 (Bug T)
+    }
+    return mod;
 }
 
 /**
@@ -333,7 +349,7 @@ export function getBleedDamage(effects: StatusEffect[]): number {
  * スタン/拘束中か判定。スタン中はAP回復も行動もできない。
  */
 export function isStunned(effects: StatusEffect[]): boolean {
-    return hasEffect(effects, 'stun') || hasEffect(effects, 'bind');
+    return hasEffect(effects, 'stun') || hasEffect(effects, 'bind') || hasEffect(effects, 'freeze');
 }
 
 // ─── 挑発判定 (v2.7) ────────────────────────────────────────
@@ -358,4 +374,16 @@ export function cureStatus(effects: StatusEffect[]): StatusEffect[] {
 
 export function cureDebuff(effects: StatusEffect[]): StatusEffect[] {
     return effects.filter(e => !DEBUFF_EFFECTS.includes(e.id));
+}
+
+/**
+ * 効果が自身/味方用のバフ（自分自身に適用される効果）であるかどうかを判定する (Bug U)
+ */
+export function isSelfBuffEffect(id: string): boolean {
+    const debuffs = [
+        'poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear',
+        'blind', 'blind_minor', 'atk_down', 'def_down', 'freeze', 'curse',
+        'death_sentence', 'crit_vulnerability'
+    ];
+    return !debuffs.includes(id);
 }

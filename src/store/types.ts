@@ -65,7 +65,7 @@ export interface GameState {
 
     setTarget: (enemyId: string) => void;
     setTactic: (tactic: 'Aggressive' | 'Defensive' | 'Standby') => void;
-    fleeBattle: () => void;
+    fleeBattle: (forceSuccess?: boolean) => void;
 
     _hasHydrated: boolean;
     setHasHydrated: (state: boolean) => void;

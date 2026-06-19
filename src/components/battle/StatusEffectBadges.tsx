@@ -38,6 +38,17 @@ const BADGE_MAP: Partial<Record<StatusEffectId, BadgeDef>> = {
     curse:        { label: '☯',   category: 'debuff', color: 'text-purple-300', bg: 'bg-purple-900/80', border: 'border-purple-500',  blink: 'mid' },
     // ─ 特殊バフ ──────────────────────────────────────
     barrier:      { label: '🛡',  category: 'buff',   color: 'text-amber-300',  bg: 'bg-amber-900/80',  border: 'border-amber-500',   blink: 'slow' },
+    berserk:             { label: '狂', category: 'buff',   color: 'text-red-200',    bg: 'bg-red-950/80',    border: 'border-red-500',     blink: 'mid' },
+    counter_spike:       { label: '刺', category: 'buff',   color: 'text-amber-200',  bg: 'bg-amber-950/80',  border: 'border-amber-500',   blink: null },
+    unyielding_barrier:  { label: '不', category: 'buff',   color: 'text-indigo-200', bg: 'bg-indigo-950/80', border: 'border-indigo-500',  blink: null },
+    sacrificial_ap:      { label: '贄', category: 'buff',   color: 'text-emerald-200', bg: 'bg-emerald-950/80', border: 'border-emerald-500', blink: null },
+    mana_charge:         { label: '充', category: 'buff',   color: 'text-purple-200', bg: 'bg-purple-950/80', border: 'border-purple-500',  blink: null },
+    death_sentence:      { label: '💀', category: 'debuff', color: 'text-neutral-200', bg: 'bg-neutral-900/80',  border: 'border-neutral-500',  blink: 'slow' },
+    cover_all:           { label: '代', category: 'buff',   color: 'text-orange-200', bg: 'bg-orange-950/80', border: 'border-orange-500',  blink: null },
+    revenge_shield:      { label: '報', category: 'buff',   color: 'text-blue-200',   bg: 'bg-blue-950/80',   border: 'border-blue-500',    blink: null },
+    soul_boost:          { label: '魂', category: 'buff',   color: 'text-pink-200',   bg: 'bg-pink-950/80',   border: 'border-pink-500',    blink: null },
+    element_resonance:   { label: '共', category: 'buff',   color: 'text-teal-200',   bg: 'bg-teal-950/80',   border: 'border-teal-500',    blink: null },
+    crit_vulnerability:  { label: '脆', category: 'debuff', color: 'text-red-300',    bg: 'bg-red-950/80',    border: 'border-red-400',     blink: null },
     // cure_* / ap_max は即時効果のため表示不要
 };
 
@@ -113,6 +124,10 @@ export default function StatusEffectBadges({
                         bleed: '出血', bleed_minor: '出血(軽)', fear: '恐怖',
                         atk_down: '攻撃力低下', def_down: '防御力低下',
                         burn: '炎上', freeze: '凍結', curse: '呪い', barrier: 'バリア',
+                        berserk: '狂戦士', counter_spike: '棘の鎧', unyielding_barrier: '不屈の防壁',
+                        sacrificial_ap: '生贄の儀式', mana_charge: 'マナチャージ', death_sentence: '死神の宣告',
+                        cover_all: '身代わりの盾', revenge_shield: '報復の盾', soul_boost: 'ソウルブースト',
+                        element_resonance: '属性の共鳴', crit_vulnerability: '被クリ率UP',
                     };
                     const jaName = jaNames[e.id] || e.id;
                     return (

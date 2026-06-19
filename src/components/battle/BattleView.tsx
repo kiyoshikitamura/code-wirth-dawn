@@ -7,7 +7,7 @@ import { useGameStore } from '@/store/gameStore';
 import { useRouter } from 'next/navigation';
 import { Shield, Sword, Sparkles, Heart, Footprints, Settings, Skull, Clock, Target, Users, User, LogOut, ScrollText, Zap, X } from 'lucide-react';
 import Image from 'next/image';
-import { hasTaunt, StatusEffect, getEffectName } from '@/lib/statusEffects';
+import { hasTaunt, StatusEffect, getEffectName, isStunned } from '@/lib/statusEffects';
 import XShareButton from '../shared/XShareButton';
 import { Enemy } from '@/types/game';
 import StatusEffectBadges from './StatusEffectBadges';
@@ -35,6 +35,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
 
     const prevLiveHpRef = useRef<number | null>(null);
     const prevTargetHpRef = useRef<number | null>(null);
+    const prevTargetIdRef = useRef<string | null>(null);
+
+    // Concurrency phase lock for NEXT button
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const nextTimeoutRef1 = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const nextTimeoutRef2 = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const {
         battleState,
@@ -134,7 +140,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     useEffect(() => {
         const currentTarget = battleState.enemy;
         if (currentTarget && currentTarget.hp !== null) {
-            if (prevTargetHpRef.current !== null && currentTarget.id === battleState.enemy?.id) {
+            // ターゲットIDが一致し、かつ前回のHP記録がある場合のみ被ダメージ検知を行う
+            if (prevTargetIdRef.current === currentTarget.id && prevTargetHpRef.current !== null) {
                 const diff = prevTargetHpRef.current - currentTarget.hp;
                 if (diff > 0) {
                     setShouldShake(true);
@@ -151,8 +158,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 }
             }
             prevTargetHpRef.current = currentTarget.hp;
+            prevTargetIdRef.current = currentTarget.id;
         } else {
             prevTargetHpRef.current = null;
+            prevTargetIdRef.current = null;
         }
     }, [battleState.enemy?.hp, battleState.enemy?.id]);
 
@@ -266,16 +275,29 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     }, [battleState.isVictory, selectedScenario, battleState.enemy]);
 
+    // マウント解除時にタイマーをクリーンアップ
+    useEffect(() => {
+        return () => {
+            if (nextTimeoutRef1.current) clearTimeout(nextTimeoutRef1.current);
+            if (nextTimeoutRef2.current) clearTimeout(nextTimeoutRef2.current);
+        };
+    }, []);
+
     // v15.0: canInteract = プレイヤーフェーズ中のみ操作可能
     // battlePhaseが'player'でない間（npc_done / enemy_done）は常にロック
     const battlePhase = battleState.battlePhase ?? 'player';
     // Bug fix: ターン1のボーナスログ再生中はカード操作をロック（ログ乱れ防止）
     const isInitialLogPlaying = battleState.turn === 1 && !isTypingDone && displayedLogs.length < battleState.messages.length;
-    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat && !isInitialLogPlaying && !isActioning;
+    
+    // プレイヤーがスタン・拘束・凍結状態の場合は操作をロック (Bug E)
+    const playerEffectsNow = battleState.player_effects as StatusEffect[];
+    const isPlayerStunned = isStunned(playerEffectsNow);
+    const canInteract = battlePhase === 'player' && !battleState.isVictory && !battleState.isDefeat && !isInitialLogPlaying && !isActioning && !isPlayerStunned;
+    
     // NEXT ボタンの押下可否: ログ再生中（isTypingDone=false）かつプレイヤーフェーズ外は不可
-    // プレイヤーフェーズ中はログ再生中でも NEXT 可能（早送り）
+    // トランジション中、またはアクション実行中は不可
     const canPressNext = !battleState.isVictory && !battleState.isDefeat &&
-        (battlePhase === 'player' || isTypingDone);
+        (battlePhase === 'player' || isTypingDone) && !isTransitioning && !isActioning;
 
     const handleCardClick = async (index: number) => {
         if (!canInteract) return;
@@ -296,7 +318,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             const isHealCard = card.target_type === 'single_ally' ||
                 cardEffect.effectType === 'heal' ||
                 card.type === 'Heal' || card.name.includes('回復') || card.name.includes('治癒') || card.name.includes('応急') || card.name.includes('ヒール') || card.name.includes('癒');
-            const isAllyHeal = isHealCard && cardEffect.effectType !== 'buff_party' && cardEffect.effectType !== 'cure_self';
+            // 全体回復カード（target_type === 'all_allies'）の場合は単体選択モードに入らないようにする (Bug X)
+            const isAllyHeal = isHealCard && card.target_type !== 'all_allies' && cardEffect.effectType !== 'buff_party' && cardEffect.effectType !== 'cure_self';
 
             const isBuff = card.type === 'Support' ||
                 card.type === 'Defense' ||
@@ -415,7 +438,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         if (battlePhase === 'player') {
             // プレイヤーフェーズ: 残ログを早送り → NPC フェーズ実行
             flushQueue();
-            await runNpcPhase();
+            try {
+                setIsTransitioning(true);
+                await runNpcPhase();
+            } finally {
+                setIsTransitioning(false);
+            }
         } else if (battlePhase === 'npc_done' && isTypingDone) {
             // NPC 完了 → 勝利済みならスキップ、そうでなければ ENEMY フェーズ
             if (battleState.isVictory || battleState.battle_result === 'victory') {
@@ -423,11 +451,16 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                 useGameStore.getState().advanceTurn();
                 return;
             }
+            setIsTransitioning(true);
             setShowPhaseOverlay('enemy');
-            setTimeout(() => setShowPhaseOverlay(null), 1200);
+            nextTimeoutRef1.current = setTimeout(() => setShowPhaseOverlay(null), 1200);
             // オーバーレイと同タイミングで敵フェーズ開始（600ms後）
-            setTimeout(async () => {
-                await runEnemyPhase();
+            nextTimeoutRef2.current = setTimeout(async () => {
+                try {
+                    await runEnemyPhase();
+                } finally {
+                    setIsTransitioning(false);
+                }
             }, 600);
         } else if (battlePhase === 'enemy_done' && isTypingDone) {
             // 敵フェーズ完了 → 次ターン開始（手札配布 + battlePhase:'player'へ）

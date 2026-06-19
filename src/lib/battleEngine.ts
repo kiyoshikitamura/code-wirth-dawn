@@ -1,6 +1,6 @@
 
 import { Card, PartyMember, UserProfile } from '@/types/game';
-import { StatusEffect, getAttackMod, getDefBonus, getDefDownMod } from '@/lib/statusEffects';
+import { StatusEffect, getAttackMod, getDefBonus, getDefDownMod, isStunned } from '@/lib/statusEffects';
 import { getNoiseInjectionCount } from '@/lib/passiveEffects';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 
@@ -200,7 +200,10 @@ export function routeDamage(
     partyMembers: PartyMember[],
     rawDamage: number
 ): DamageResult {
-    const blockers = partyMembers.filter(m => m.is_active && m.durability > 0);
+    // 行動不能状態（スタン・拘束・凍結）のメンバーはかばう判定/被弾対象から除外する (Bug P)
+    const blockers = partyMembers.filter(m => 
+        m.is_active && (m.durability ?? 0) > 0 && !isStunned((m.status_effects || []) as StatusEffect[])
+    );
 
     // v3.3: パーティがいる場合、まずランダムターゲット選択（30%）
     // これにより敵がプレイヤーのみを狙い続ける偏りを緩和する

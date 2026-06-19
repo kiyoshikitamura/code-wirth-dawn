@@ -28,8 +28,8 @@ export const createQuestSlice = (
         }));
     },
 
-    fleeBattle: () => {
-        const success = Math.random() < 0.5;
+    fleeBattle: (forceSuccess?: boolean) => {
+        const success = forceSuccess !== undefined ? forceSuccess : Math.random() < 0.5;
 
         if (success) {
             set(state => ({
@@ -48,8 +48,6 @@ export const createQuestSlice = (
                     battlePhase: 'npc_done',
                 }
             }));
-            // v15.0: setTimeout を使って非同期に敵フェーズ実行
-            setTimeout(() => { get().processEnemyTurn(false); }, 300);
         }
     },
 

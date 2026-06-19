@@ -10,6 +10,7 @@
 
 import { Card, PartyMember } from '@/types/game';
 import { BATTLE_RULES } from '@/constants/battle_rules';
+import { getMissChance, StatusEffect, hasEffect } from './statusEffects';
 
 // ─── Types ───────────────────────────────────────────────
 export type AIRole = 'striker' | 'guardian' | 'medic';
@@ -38,6 +39,7 @@ export interface BattleContext {
     enemyName: string; // v2.7: ダメージ対象エネミー名
     partyMembers: PartyMember[];
     playerEffects?: { id: string; duration: number }[]; // v2.6: プレイヤーのバフ・デバフ用
+    enemyEffects?: { id: string; duration: number }[]; // 敵の状態異常判定用 (Bug AC)
     trackedEnemies?: { id: string; name: string; hp: number; def: number }[]; // v4.1: Smart AI ターゲット最適化用
     currentTurnNumber?: number; // v4.1: レガシースキル判定用
 }
@@ -118,6 +120,25 @@ function applyLegacySkill(
     };
 }
 
+/**
+ * 味方NPC用カードAP消費量計算 (Bug Z & 退行防止)
+ */
+function getNpcCardApCost(card: Card, npc: PartyMember, enemyEffects?: { id: string; duration: number }[]): number {
+    let cost = card.ap_cost ?? 1;
+    const effects = (npc.status_effects || []) as StatusEffect[];
+    if (card.type === 'Skill' && effects.some(e => e.id === 'sacrificial_ap' && e.duration > 0)) {
+        cost = Math.max(0, cost - 1);
+    }
+    const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+    if (baseId === '122' && enemyEffects) {
+        const hasBleed = enemyEffects.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
+        if (hasBleed) {
+            cost = 0;
+        }
+    }
+    return cost;
+}
+
 // ─── Core AI Logic ───────────────────────────────────────
 
 /**
@@ -160,8 +181,8 @@ export function resolveNpcTurn(
 
     const needsHeal = context.playerHp < context.playerMaxHp * healThreshold
         || context.partyMembers.some(m =>
-            m.id !== npc.id && m.is_active && m.durability > 0
-            && m.durability < m.max_durability * healThreshold
+            m.is_active && (m.durability ?? 0) > 0
+            && (m.durability ?? 0) < (m.max_durability || m.durability || 100) * healThreshold // 自分自身も含めて判定 (Bug AB)
         );
 
     if (needsHeal && actions.length < MAX_ACTIONS_PER_TURN) {
@@ -173,7 +194,7 @@ export function resolveNpcTurn(
 
     // 3. Wait Logic (Smart AI only)
     if (npc.ai_grade === 'smart') {
-        const shouldWait = evaluateWaitLogic(npc, deck);
+        const shouldWait = evaluateWaitLogic(npc, deck, context.enemyEffects);
         if (shouldWait) {
             actions.push({
                 type: 'pass',
@@ -211,7 +232,7 @@ export function resolveNpcTurn(
             if ((c.type === 'Defense' || c.type === 'Support') && c.target_type && ENEMY_TARGETS.includes(c.target_type)) return true;
             return false;
         })
-        .sort((a, b) => (b.ap_cost ?? 1) - (a.ap_cost ?? 1));
+        .sort((a, b) => getNpcCardApCost(b, npc, context.enemyEffects) - getNpcCardApCost(a, npc, context.enemyEffects));
 
     const lastUsed = (npc as any).lastUsedCardId as string | undefined;
     const maxAttackCards = npc.ai_grade === 'smart' ? 2 : 1; // v4.1: Smart は2枚
@@ -238,14 +259,14 @@ export function resolveNpcTurn(
         const candidates = attackCards.filter(c =>
             c.id !== lastUsed &&
             !usedThisTurn.includes(c.id) &&
-            (npc.current_ap || 0) >= (c.ap_cost ?? 1)
+            (npc.current_ap || 0) >= getNpcCardApCost(c, npc, context.enemyEffects)
         );
 
         if (candidates.length > 0) {
             const card = candidates[0];
             const action = executeCard(npc, card, effectiveContext);
             actions.push(action);
-            npc.current_ap = (npc.current_ap || 0) - (card.ap_cost ?? 1);
+            npc.current_ap = (npc.current_ap || 0) - getNpcCardApCost(card, npc, context.enemyEffects);
             usedThisTurn.push(card.id);
             (npc as any).lastUsedCardId = card.id;
             attacksUsed++;
@@ -255,14 +276,14 @@ export function resolveNpcTurn(
     }
 
     // カード攻撃が0回だった場合は基本攻撃フォールバック
-    if (attacksUsed === 0 && !actions.some(a => a.type === 'attack')) {
+    if (attacksUsed === 0 && !actions.some(a => a.type === 'attack') && actions.length < MAX_ACTIONS_PER_TURN) {
         actions.push(createBasicAttack(npc, effectiveContext));
         (npc as any).lastUsedCardId = undefined;
     }
 
     // 攻撃アクションが1件もない場合は基本攻撃フォールバック
     const hasAttackAction = actions.some(a => a.type === 'attack');
-    if (!hasAttackAction) {
+    if (!hasAttackAction && actions.length < MAX_ACTIONS_PER_TURN) {
         actions.push(createBasicAttack(npc, context));
     }
 
@@ -281,17 +302,17 @@ function tryEmergencyHeal(
 
     // Check if any party member is below 50% durability
     const injuredMember = context.partyMembers.find(m =>
-        m.id !== npc.id && m.is_active && m.durability > 0 &&
-        m.durability < m.max_durability * 0.5
+        m.is_active && (m.durability ?? 0) > 0 &&
+        (m.durability ?? 0) < (m.max_durability || m.durability || 100) * 0.5 // 自分自身も含めて判定 (Bug AB)
     );
 
     if (!playerInDanger && !injuredMember) return null;
 
     let targetName = playerInDanger ? 'あなた' : injuredMember?.name || '味方';
-    let targetLostHp = playerInDanger ? (context.playerMaxHp - context.playerHp) : injuredMember ? (injuredMember.max_durability - injuredMember.durability) : 0;
+    let targetLostHp = playerInDanger ? (context.playerMaxHp - context.playerHp) : injuredMember ? ((injuredMember.max_durability || injuredMember.durability || 100) - injuredMember.durability) : 0;
 
     // Find a heal card we can afford
-    const healCard = deck.find(c => {
+    const healCards = deck.filter(c => {
         const isHeal =
             (c as any).type === 'Heal' ||
             c.name.includes('回復') ||
@@ -310,13 +331,18 @@ function tryEmergencyHeal(
             return false;
         }
 
-        return (c.ap_cost ?? 1) <= (npc.current_ap || 0);
+        return true;
     });
 
-    if (!healCard) return null;
+    const affordableHeal = healCards.filter(c =>
+        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
+    );
 
+    if (affordableHeal.length === 0) return null;
+
+    const healCard = affordableHeal[0];
     const healAmount = Math.abs((healCard as any).effect_val ?? healCard.power ?? 15);
-    npc.current_ap = (npc.current_ap || 0) - (healCard.ap_cost ?? 1);
+    npc.current_ap = (npc.current_ap || 0) - getNpcCardApCost(healCard, npc, context.enemyEffects);
 
     return {
         type: 'heal',
@@ -327,19 +353,16 @@ function tryEmergencyHeal(
     };
 }
 
-function evaluateWaitLogic(npc: PartyMember, deck: Card[]): boolean {
-    // Smart AI: Check if there's a powerful card (cost >= 5)
-    // that we can't afford now but could afford at AP 10
-    const hasUltimate = deck.some(c => (c.ap_cost ?? 1) >= 5);
+function evaluateWaitLogic(npc: PartyMember, deck: Card[], enemyEffects?: { id: string; duration: number }[]): boolean {
+    const hasUltimate = deck.some(c => getNpcCardApCost(c, npc, enemyEffects) >= 5);
     const currentAp = npc.current_ap || 0;
 
     if (hasUltimate && currentAp < 5) {
         return true; // Save AP for the big move
     }
 
-    // Also wait if we have no playable cards at all
     const hasPlayable = deck.some(c =>
-        (c.ap_cost ?? 1) <= currentAp
+        getNpcCardApCost(c, npc, enemyEffects) <= currentAp
     );
 
     return !hasPlayable;
@@ -369,7 +392,7 @@ function tryRoleBasedBuff(
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
     const buffCards = deck.filter(c =>
         c.effect_id &&
-        (c.ap_cost ?? 1) <= (npc.current_ap || 0) &&
+        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0) &&
         !(c.target_type && ENEMY_TARGETS.includes(c.target_type)) // 敵対象デバフは除外
     );
 
@@ -386,7 +409,7 @@ function tryRoleBasedBuff(
     } else if (npc.ai_role === 'medic') {
         // regen/def_upを優先(味方が傷ついている場合)
         const allyInDanger = context.playerHp < context.playerMaxHp * 0.7 ||
-            context.partyMembers.some(m => m.id !== npc.id && m.durability < m.max_durability * 0.7);
+            context.partyMembers.some(m => m.is_active && (m.durability ?? 0) > 0 && (m.durability ?? 0) < (m.max_durability || m.durability || 100) * 0.7); // 自分自身も含めて判定 (Bug AB)
 
         if (allyInDanger) {
             const playerHasRegen = context.playerEffects?.some(e => e.id === 'regen');
@@ -414,7 +437,7 @@ function tryRoleBasedBuff(
         }
     }
 
-    // ロール不問: バフカードがあれば一般的に使用試行
+    // ロール不問: 一般的なバフカード使用試行
     if (!targetCard) {
         // まだ付与されていないバフを探す
         targetCard = buffCards.find(c => {
@@ -425,7 +448,7 @@ function tryRoleBasedBuff(
 
     if (!targetCard) return null;
 
-    npc.current_ap = (npc.current_ap || 0) - (targetCard.ap_cost ?? 1);
+    npc.current_ap = (npc.current_ap || 0) - getNpcCardApCost(targetCard, npc, context.enemyEffects);
 
     const isSelf = SELF_BUFF_EFFECTS.includes(targetCard.effect_id || '');
     const targetName = isSelf ? npc.name : 'あなた';
@@ -456,18 +479,18 @@ function tryDebuffEnemy(
         ENEMY_DEBUFF_EFFECTS.includes(c.effect_id) &&
         c.target_type && ENEMY_TARGETS.includes(c.target_type) &&
         (c.type === 'Support' || c.type === 'Defense') &&
-        (c.ap_cost ?? 1) <= (npc.current_ap || 0)
+        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
     );
 
     if (debuffCards.length === 0) return null;
 
     // 既に敵に付与済みのデバフは除外
     const unusedDebuff = debuffCards.find(c => {
-        const alreadyApplied = context.playerEffects?.some(e => e.id === c.effect_id); // enemy_effectsはcontextに含まれていないため簡易判定
+        const alreadyApplied = context.enemyEffects?.some(e => e.id === c.effect_id); // 敵の効果配列を参照 (Bug AC)
         return !alreadyApplied;
     }) || debuffCards[0]; // 全部付与済みなら最初のを使う
 
-    npc.current_ap = (npc.current_ap || 0) - (unusedDebuff.ap_cost ?? 1);
+    npc.current_ap = (npc.current_ap || 0) - getNpcCardApCost(unusedDebuff, npc, context.enemyEffects);
 
     const damage = unusedDebuff.power ?? (unusedDebuff as any).effect_val ?? 0;
 
@@ -520,7 +543,10 @@ function executeCard(
 
     // v4.0: ミス判定
     const critRate = npc.ai_grade === 'smart' ? BATTLE_RULES.NPC_HIGH_GRADE_CRIT_RATE : BATTLE_RULES.NPC_CRIT_RATE;
-    if (Math.random() < BATTLE_RULES.NPC_MISS_RATE) {
+    // 暗闇・目潰しによるミス率加算 (Bug Q)
+    const blindMissChance = getMissChance((npc.status_effects || []) as StatusEffect[]);
+    const totalMissChance = BATTLE_RULES.NPC_MISS_RATE + blindMissChance;
+    if (Math.random() < totalMissChance) {
         return {
             type: 'attack',
             card,
@@ -528,7 +554,7 @@ function executeCard(
             isMiss: true,
             targetEnemyName: context.enemyName,
             usedCardId: card.id,
-            message: `${npc.name}の${card.name}！ ミス！ 攻撃は外れた！`
+            message: `${npc.name}の${card.name}！ ミス！ 攻撃は外れた！${totalMissChance > BATTLE_RULES.NPC_MISS_RATE ? ' (目潰し)' : ''}`
         };
     }
 
@@ -577,13 +603,16 @@ function createBasicAttack(
     context: BattleContext
 ): NpcAction {
     // v4.0: ミス判定
-    if (Math.random() < BATTLE_RULES.NPC_MISS_RATE) {
+    // 暗闇・目潰しによるミス率加算 (Bug Q)
+    const blindMissChance = getMissChance((npc.status_effects || []) as StatusEffect[]);
+    const totalMissChance = BATTLE_RULES.NPC_MISS_RATE + blindMissChance;
+    if (Math.random() < totalMissChance) {
         return {
             type: 'attack',
             damage: 0,
             isMiss: true,
             targetEnemyName: context.enemyName,
-             message: `${npc.name}の援護攻撃！ ミス！ 攻撃は外れた！`
+            message: `${npc.name}の援護攻撃！ ミス！ 攻撃は外れた！${totalMissChance > BATTLE_RULES.NPC_MISS_RATE ? ' (目潰し)' : ''}`
         };
     }
 
