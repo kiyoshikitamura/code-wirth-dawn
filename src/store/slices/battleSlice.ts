@@ -465,8 +465,19 @@ export const createBattleSlice = (
             tickMessages.push(...eTick.messages);
             let newHp = Math.max(0, enemy.hp + eTick.hpDelta);
             if (eTick.expired.includes('death_sentence')) {
-                newHp = 0;
-                tickMessages.push(`💀 ${enemy.name}は死神の宣告により即死した！`);
+                const isBoss = enemy.name.includes('ボス') ||
+                    enemy.name.toLowerCase().includes('boss') ||
+                    enemy.slug?.includes('boss') ||
+                    enemy.slug?.includes('dragon') ||
+                    enemy.level >= 20;
+                if (isBoss) {
+                    const bossDmg = Math.max(300, Math.floor(enemy.maxHp * 0.2));
+                    newHp = Math.max(0, newHp - bossDmg);
+                    tickMessages.push(`💀 ${enemy.name}はボス特性により即死を無効化し、代わりに ${bossDmg} の大ダメージを受けた！`);
+                } else {
+                    newHp = 0;
+                    tickMessages.push(`💀 ${enemy.name}は死神の宣告により即死した！`);
+                }
             }
             if (newHp > 0) allEnemiesDead = false;
             return { ...enemy, hp: newHp, status_effects: eTick.newEffects };
