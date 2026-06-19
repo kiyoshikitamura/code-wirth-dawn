@@ -326,6 +326,8 @@ export default function AcademyModal({ onClose }: Props) {
                                             className="absolute inset-0 bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center border border-amber-600/55 rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 flex flex-col items-center justify-between shadow-lg overflow-hidden"
                                             style={{
                                                 backfaceVisibility: 'hidden',
+                                                visibility: isFlipped ? 'hidden' : 'visible',
+                                                transition: 'visibility 0s ' + (isFlipped ? '0.25s' : '0s'),
                                             }}
                                         >
                                             <div className="absolute inset-0 bg-indigo-950/45 rounded-xl sm:rounded-2xl pointer-events-none" />
@@ -344,6 +346,8 @@ export default function AcademyModal({ onClose }: Props) {
                                             style={{
                                                 backfaceVisibility: 'hidden',
                                                 transform: 'rotateY(180deg)',
+                                                visibility: isFlipped ? 'visible' : 'hidden',
+                                                transition: 'visibility 0s ' + (isFlipped ? '0s' : '0.25s'),
                                             }}
                                         >
                                             {/* Rarity & Header */}
@@ -434,7 +438,7 @@ export default function AcademyModal({ onClose }: Props) {
                     <h2 className="font-bold flex items-center gap-1.5 sm:gap-2 text-amber-500">
                         <Sparkles size={14} className="text-amber-500 animate-pulse" />
                         <span className="text-[10px] sm:text-xs text-slate-200 uppercase tracking-widest">
-                            <span className="hidden sm:inline">魔術学院 ─ </span>ブースターショップ
+                            魔術学院
                         </span>
                     </h2>
                     <div className="flex items-center gap-2 sm:gap-3">
