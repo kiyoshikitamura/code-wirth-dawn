@@ -86,7 +86,7 @@ export async function GET(req: Request) {
 
                 // 称号更新の履歴を user_chronicles に記録
                 const currentLocName = profile.locations?.name || null;
-                await client.from('user_chronicles').insert({
+                await supabaseServer.from('user_chronicles').insert({
                     user_id: profile.id,
                     event_type: 'title_gained',
                     accumulated_days: profile.accumulated_days || 0,
@@ -116,7 +116,7 @@ export async function GET(req: Request) {
 
             // 必要な場合に限り更新を適用
             if (needsUpdate) {
-                await client.from('user_profiles').update(updates).eq('id', profile.id);
+                await supabaseServer.from('user_profiles').update(updates).eq('id', profile.id);
             }
 
             // share_data_listがあればprofileオブジェクトに付与
