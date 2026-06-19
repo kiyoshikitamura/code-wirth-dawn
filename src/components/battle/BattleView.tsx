@@ -92,6 +92,10 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                             setShouldShake(true);
                             setTimeout(() => setShouldShake(false), 300);
                         }, 150);
+                    } else {
+                        // 弱・通常攻撃時も軽く揺らして臨場感を出す
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 200);
                     }
                     setTimeout(() => {
                         setEnemyActiveSkill(null);
@@ -99,6 +103,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     }, 1000);
                 }
             }
+        }
+
+        // あなた（プレイヤー）への被ダメージメッセージ開始時にも即時画面を揺らす（ディレイ解消）
+        if (msg.includes('あなたに') && (msg.includes('ダメージ') || msg.includes('のダメージ'))) {
+            setShouldShake(true);
+            setTimeout(() => setShouldShake(false), 300);
         }
     });
 
