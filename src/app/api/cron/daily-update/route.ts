@@ -179,6 +179,49 @@ async function performUpdate(isForceUgcReset: boolean) {
             const now = new Date();
             const resetStartTime = new Date('2026-06-19T12:00:00+09:00'); // JST 6/19 12:00
             if (now >= resetStartTime) {
+                // A. ランキングキャッシュの履歴退避 (1ヶ月保存用)
+                try {
+                    const { data: cacheData } = await supabaseServer
+                        .from('ranking_colosseum_cache')
+                        .select('user_id, user_name, avatar_url, wins, max_streak, rank_by_wins, rank_by_streak, aggregated_at');
+
+                    if (cacheData && cacheData.length > 0) {
+                        const historyRecords = cacheData.map(r => ({
+                            cycle_end_at: r.aggregated_at || now.toISOString(),
+                            user_id: r.user_id,
+                            user_name: r.user_name,
+                            wins: r.wins,
+                            max_streak: r.max_streak,
+                            rank_by_wins: r.rank_by_wins,
+                            rank_by_streak: r.rank_by_streak
+                        }));
+
+                        const { error: histError } = await supabaseServer
+                            .from('colosseum_ranking_history')
+                            .insert(historyRecords);
+                        
+                        if (histError) {
+                            logs.push(`[ColosseumReset] Failed to archive ranking history: ${histError.message}`);
+                        } else {
+                            logs.push(`[ColosseumReset] Successfully archived ${historyRecords.length} ranking records to history`);
+                        }
+                    }
+                } catch (archiveExc: any) {
+                    logs.push(`[ColosseumReset] Archiving exception: ${archiveExc.message}`);
+                }
+
+                // B. キャッシュの即時リセット (表示クリア)
+                const { error: cacheResetErr } = await supabaseServer
+                    .from('ranking_colosseum_cache')
+                    .delete()
+                    .neq('user_id', '00000000-0000-0000-0000-000000000000');
+                if (cacheResetErr) {
+                    logs.push(`[ColosseumReset] Failed to clear ranking cache: ${cacheResetErr.message}`);
+                } else {
+                    logs.push(`[ColosseumReset] Successfully cleared ranking display cache`);
+                }
+
+                // C. 戦績テーブルのリセット
                 const { error: resetErr } = await supabaseServer
                     .from('colosseum_user_stats')
                     .delete()
@@ -188,6 +231,22 @@ async function performUpdate(isForceUgcReset: boolean) {
                     logs.push(`[ColosseumReset] Failed to reset user stats: ${resetErr.message}`);
                 } else {
                     logs.push(`[ColosseumReset] Successfully reset user stats for the new 6h cycle`);
+                }
+
+                // D. 30日以上前の古い履歴のクリーンアップ (1ヶ月保存)
+                try {
+                    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+                    const { error: cleanError } = await supabaseServer
+                        .from('colosseum_ranking_history')
+                        .delete()
+                        .lt('cycle_end_at', thirtyDaysAgo);
+                    if (cleanError) {
+                        logs.push(`[ColosseumReset] Failed to clean old history: ${cleanError.message}`);
+                    } else {
+                        logs.push(`[ColosseumReset] Cleaned up colosseum history older than 30 days`);
+                    }
+                } catch (cleanExc: any) {
+                    logs.push(`[ColosseumReset] Cleanup exception: ${cleanExc.message}`);
                 }
             } else {
                 logs.push(`[ColosseumReset] Reset skipped (starts from JST 6/19 12:00)`);

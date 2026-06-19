@@ -180,9 +180,12 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                             <Award size={12} />
                             あなたの闘技場成績
                         </h3>
-                        <div className="text-[9px] font-bold text-slate-400 bg-slate-950/40 border border-[#233f6d]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                            報酬集計まで: <span className="font-mono text-amber-400">{countdown}</span>
+                        <div className="flex flex-col items-end gap-1">
+                            <div className="text-[9px] font-bold text-slate-400 bg-slate-950/40 border border-[#233f6d]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                報酬集計まで: <span className="font-mono text-amber-400">{countdown}</span>
+                            </div>
+                            <span className="text-[8px] text-slate-400/80">※ランキングは15分ごとに自動更新されます</span>
                         </div>
                     </div>
                     {loading ? (
