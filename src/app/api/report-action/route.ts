@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         // --- 3. Update User Profile & Title ---
         // For now, fetch the first profile (Demo Mode)
         let shareDataList: any[] = [];
-        const { data: profile } = await supabase.from('user_profiles').select('id, order_pts, chaos_pts, justice_pts, evil_pts, title_name, gold, updated_at, accumulated_days, current_location_id').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
         if (profile) {
 
             const newOrderPts = (profile.order_pts || 0) + incOrder;
