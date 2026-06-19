@@ -206,7 +206,7 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                                     <span className="text-sm font-black text-slate-100">
                                         {myStats.streakRank ? `${myStats.streakRank}位` : '圏外'}
                                     </span>
-                                    <span className="text-[10px] text-orange-400 font-bold">({myStats.currentStreak}連勝 / 最大 {myStats.maxStreak})</span>
+                                    <span className="text-[10px] text-orange-400 font-bold">({myStats.currentStreak}連勝中、最大 {myStats.maxStreak}連勝)</span>
                                 </div>
                             </div>
                         </div>
