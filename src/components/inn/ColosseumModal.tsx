@@ -170,7 +170,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 <li>3位: <span className="text-amber-400 font-bold">1,000 G</span></li>
                             </ul>
                             <p className="text-xs text-rose-300 font-medium mt-2">
-                                ⚠️ 集計期間（6時間）の終了時に、全プレイヤーのコロシアム戦績（勝利数・連勝数）はすべて 0 にリセットされます（リセット仕様は JST 6/19 12:00 の集計より開始されます）。
+                                ⚠️ 集計期間（6時間）の終了時に、全プレイヤーのコロシアム戦績（勝利数・連勝数）はすべて 0 にリセットされます。
                             </p>
                         </section>
                     </div>
