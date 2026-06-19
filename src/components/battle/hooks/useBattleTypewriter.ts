@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 export interface BattleTypewriterResult {
     // Display state
@@ -40,6 +40,56 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
     const isTypingRef = useRef(false);
     const enqueuedUpToRef = useRef(0);
 
+    const processQueueRef = useRef<() => void>(() => {});
+
+    // タイプライターキューを1件処理
+    const processQueue = useCallback(() => {
+        if (typingQueue.current.length === 0 && !isTypingRef.current) {
+            setIsTypingDone(true);
+            return;
+        }
+        if (isTypingRef.current || typingQueue.current.length === 0) return;
+
+        const message = typingQueue.current.shift()!;
+
+        // __hp_sync:NNN — HPバーのみ更新（表示しない）
+        if (message.startsWith('__hp_sync:')) {
+            const newHp = parseInt(message.slice(10), 10);
+            if (!isNaN(newHp)) setLiveHp(newHp);
+            setTimeout(() => processQueueRef.current(), 0);
+            return;
+        }
+
+        // __party_sync:ID:DUR — パーティHPバーのみ更新（表示しない）
+        if (message.startsWith('__party_sync:')) {
+            const parts = message.slice(13).split(':');
+            const memberId = parts[0];
+            const newDur = parseInt(parts[1], 10);
+            if (memberId && !isNaN(newDur)) {
+                setLivePartyDurability(prev => ({ ...prev, [memberId]: newDur }));
+            }
+            setTimeout(() => processQueueRef.current(), 0);
+            return;
+        }
+
+        // ターン区切り（--- ターン N ---）は即時表示
+        if (/^--- .+ ---$/.test(message)) {
+            setDisplayedLogs(prev => [...prev, message]);
+            if (typingQueue.current.length === 0) {
+                setIsTypingDone(true);
+            } else {
+                setTimeout(() => processQueueRef.current(), 80);
+            }
+            return;
+        }
+
+        // 通常メッセージ: 子コンポーネントでタイプライターさせる
+        isTypingRef.current = true;
+        setIsTypingDone(false);
+        if (onMessageStart) onMessageStart(message);
+        setActiveMessage(message);
+    }, [onMessageStart]);
+
     const completeActiveMessage = useCallback(() => {
         if (!isTypingRef.current || !activeMessage) return;
 
@@ -48,11 +98,15 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
         isTypingRef.current = false;
 
         if (typingQueue.current.length > 0) {
-            setTimeout(() => processQueue(), 80);
+            setTimeout(() => processQueueRef.current(), 80);
         } else {
             setIsTypingDone(true);
         }
     }, [activeMessage]);
+
+    useEffect(() => {
+        processQueueRef.current = processQueue;
+    }, [processQueue]);
 
     // キューを即時フラッシュ（NEXT ボタンで早送り）
     const flushQueue = useCallback(() => {
@@ -83,54 +137,6 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
         }
         setIsTypingDone(true);
     }, [activeMessage]);
-
-    // タイプライターキューを1件処理
-    const processQueue = useCallback(() => {
-        if (typingQueue.current.length === 0 && !isTypingRef.current) {
-            setIsTypingDone(true);
-            return;
-        }
-        if (isTypingRef.current || typingQueue.current.length === 0) return;
-
-        const message = typingQueue.current.shift()!;
-
-        // __hp_sync:NNN — HPバーのみ更新（表示しない）
-        if (message.startsWith('__hp_sync:')) {
-            const newHp = parseInt(message.slice(10), 10);
-            if (!isNaN(newHp)) setLiveHp(newHp);
-            setTimeout(() => processQueue(), 0);
-            return;
-        }
-
-        // __party_sync:ID:DUR — パーティHPバーのみ更新（表示しない）
-        if (message.startsWith('__party_sync:')) {
-            const parts = message.slice(13).split(':');
-            const memberId = parts[0];
-            const newDur = parseInt(parts[1], 10);
-            if (memberId && !isNaN(newDur)) {
-                setLivePartyDurability(prev => ({ ...prev, [memberId]: newDur }));
-            }
-            setTimeout(() => processQueue(), 0);
-            return;
-        }
-
-        // ターン区切り（--- ターン N ---）は即時表示
-        if (/^--- .+ ---$/.test(message)) {
-            setDisplayedLogs(prev => [...prev, message]);
-            if (typingQueue.current.length === 0) {
-                setIsTypingDone(true);
-            } else {
-                setTimeout(() => processQueue(), 80);
-            }
-            return;
-        }
-
-        // 通常メッセージ: 子コンポーネントでタイプライターさせる
-        isTypingRef.current = true;
-        setIsTypingDone(false);
-        if (onMessageStart) onMessageStart(message);
-        setActiveMessage(message);
-    }, [onMessageStart]);
 
     return {
         displayedLogs,

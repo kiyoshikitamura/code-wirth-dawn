@@ -27,23 +27,22 @@ interface NpcDialogModalProps {
 // Typewriter hook
 function useTypewriter(text: string, speed: number = 30) {
     const [prevText, setPrevText] = useState(text);
-    const [displayed, setDisplayed] = useState('');
-    const [done, setDone] = useState(false);
+    const [displayed, setDisplayed] = useState(speed <= 0 ? text : '');
+    const [done, setDone] = useState(speed <= 0 ? true : false);
 
     if (text !== prevText) {
         setPrevText(text);
-        setDisplayed('');
-        setDone(text ? false : true);
-    }
-
-    useEffect(() => {
-        if (!text) return;
-        
         if (speed <= 0) {
             setDisplayed(text);
             setDone(true);
-            return;
+        } else {
+            setDisplayed('');
+            setDone(text ? false : true);
         }
+    }
+
+    useEffect(() => {
+        if (!text || speed <= 0) return;
 
         const timer = setInterval(() => {
             setDisplayed(prev => {
