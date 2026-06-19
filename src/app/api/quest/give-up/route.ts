@@ -50,6 +50,28 @@ export async function POST(req: Request) {
                     if (logErr) {
                         console.error('[Quest Give Up] Failed to write colosseum_activity_logs:', logErr);
                     }
+
+                    // Reset Colosseum streak and increment losses
+                    try {
+                        const { data: stats } = await supabaseServer
+                            .from('colosseum_user_stats')
+                            .select('wins, losses, current_streak, max_streak')
+                            .eq('user_id', userId)
+                            .maybeSingle();
+
+                        const currentStats = stats || { wins: 0, losses: 0, current_streak: 0, max_streak: 0 };
+
+                        await supabaseServer
+                            .from('colosseum_user_stats')
+                            .upsert({
+                                user_id: userId,
+                                losses: currentStats.losses + 1,
+                                current_streak: 0,
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'user_id' });
+                    } catch (statsErr) {
+                        console.error('[Quest Give Up] Failed to reset Colosseum stats:', statsErr);
+                    }
                 } else {
                     const { error: logErr } = await supabaseServer
                         .from('quest_activity_logs')
