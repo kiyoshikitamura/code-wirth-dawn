@@ -657,6 +657,14 @@ export const createBattleSlice = (
         const { battleState, userProfile } = get();
         if (battleState.isVictory || battleState.isDefeat) return;
 
+        // 行動不可状態・ターンフェーズチェック (Bug H)
+        const isPlayerStunned = isStunned((battleState.player_effects || []) as StatusEffect[]);
+        const isPlayerPhase = (battleState.battlePhase ?? 'player') === 'player';
+        if (!isPlayerPhase || isPlayerStunned) {
+            console.warn('[useBattleItem] 行動不可またはプレイヤーターン外のためアイテムを使用できません');
+            return;
+        }
+
         const ed = (item as any).effect_data || {};
         const prevHp = userProfile?.hp ?? 0;
         let newHp = prevHp;
@@ -785,11 +793,23 @@ export const createBattleSlice = (
             effectApplied = true;
             const duration = ed.effect_duration ?? 3;
             const isEnemy = ed.target === 'enemy';
-            const isSelfBuff = ['regen', 'atk_up', 'def_up', 'stun_immune', 'evasion_up', 'taunt'].includes(ed.effect_id);
+            const isSelfBuff = isSelfBuffEffect(ed.effect_id);
 
             if (isEnemy) {
-                newEnemyEffects = [...newEnemyEffects, { id: ed.effect_id, duration }];
-                itemMessages.push(`🔮 ${item.name}を投げつけた！ 敵に「${effectName(ed.effect_id)}」を付与した！(${duration}ターン)`);
+                const targetEnemy = updatedEnemies.find((e: any) => e.id === battleState.enemy?.id && e.hp > 0)
+                    || updatedEnemies.find((e: any) => e.hp > 0);
+                if (targetEnemy) {
+                    const enemyEffects = (targetEnemy.status_effects || []) as StatusEffect[];
+                    const isStunEffect = ed.effect_id === 'stun' || ed.effect_id === 'bind' || ed.effect_id === 'freeze';
+                    const finalDuration = isStunEffect ? duration + 1 : duration; // 持続時間+1T補正 (Bug AF)
+                    const newEffects = applyEffect(enemyEffects, ed.effect_id, finalDuration);
+                    updatedEnemies = updatedEnemies.map((e: any) =>
+                        e.id === targetEnemy.id ? { ...e, status_effects: newEffects } : e
+                    );
+                    itemMessages.push(`🔮 ${item.name}を投げつけた！ ${targetEnemy.name}に「${effectName(ed.effect_id)}」を付与した！(${finalDuration}ターン)`);
+                } else {
+                    itemMessages.push(`🔮 ${item.name}を使用したが、対象の敵が見つからなかった。`);
+                }
             } else if (isSelfBuff) {
                 newPlayerEffects = [
                     ...newPlayerEffects.filter((e: any) => e.id !== ed.effect_id),
@@ -810,14 +830,14 @@ export const createBattleSlice = (
             if (ed.atk_bonus && ed.atk_bonus > 0) {
                 newPlayerEffects = [
                     ...newPlayerEffects.filter((e: any) => e.id !== 'atk_up'),
-                    { id: 'atk_up', duration }
+                    { id: 'atk_up', duration, value: ed.atk_bonus } // value プロパティをセット (Bug O)
                 ];
                 parts.push(`攻撃力UP`);
             }
             if (ed.def_bonus && ed.def_bonus > 0) {
                 newPlayerEffects = [
                     ...newPlayerEffects.filter((e: any) => e.id !== 'def_up'),
-                    { id: 'def_up', duration }
+                    { id: 'def_up', duration, value: ed.def_bonus } // value プロパティをセット (Bug O)
                 ];
                 parts.push(`防御力UP`);
             }
@@ -830,9 +850,10 @@ export const createBattleSlice = (
         if (ed.stun_self_chance != null && ed.stun_self_chance > 0) {
             if (Math.random() < ed.stun_self_chance) {
                 const stunDur = ed.stun_self_duration ?? 1;
+                const finalStunDur = stunDur + 1; // 自スタン補正 +1T
                 newPlayerEffects = [
                     ...newPlayerEffects.filter((e: any) => e.id !== 'stun'),
-                    { id: 'stun', duration: stunDur }
+                    { id: 'stun', duration: finalStunDur }
                 ];
                 itemMessages.push(`🍺 ${item.name}に酔ってしまった！ 1ターン行動不能！`);
             }
@@ -877,27 +898,41 @@ export const createBattleSlice = (
             bi.id === item.id ? { ...bi, quantity: (bi.quantity || 1) - 1 } : bi
         );
 
-        set(state => {
-            const updates: any = {
-                battleState: {
-                    ...state.battleState,
-                    messages: [...state.battleState.messages, ...itemMessages],
-                    player_effects: newPlayerEffects,
-                    enemy_effects: newEnemyEffects,
-                    battleItems: newBattleItems,
-                    enemies: updatedEnemies,
-                }
-            };
-            if (userProfile) {
-                updates.userProfile = state.userProfile
-                    ? { ...state.userProfile, hp: newHp }
-                    : state.userProfile;
-                updates.inventory = state.inventory.map((inv: any) =>
-                    inv.id === item.id ? { ...inv, quantity: (inv.quantity || 1) - 1 } : inv
-                );
+        const finalAllDead = updatedEnemies.every(e => e.hp <= 0);
+        const isPlayerDead = newHp <= 0;
+
+        if (isPlayerDead) {
+            itemMessages.push('あなたは力尽きた...');
+        } else if (finalAllDead) {
+            itemMessages.push('アイテムの威力により、敵を打ち倒した！ 勝利！');
+        }
+
+        set(state => ({
+            userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
+            inventory: state.inventory.map((inv: any) =>
+                inv.id === item.id ? { ...inv, quantity: (inv.quantity || 1) - 1 } : inv
+            ),
+            battleState: {
+                ...state.battleState,
+                messages: [...state.battleState.messages, ...itemMessages],
+                player_effects: newPlayerEffects,
+                battleItems: newBattleItems,
+                enemies: updatedEnemies,
+                enemy: finalAllDead ? null : updatedEnemies.find(e => e.id === state.battleState.enemy?.id && e.hp > 0) || updatedEnemies.find(e => e.hp > 0) || null,
+                isVictory: !isPlayerDead && (finalAllDead || state.battleState.isVictory),
+                isDefeat: isPlayerDead || state.battleState.isDefeat
             }
-            return updates;
-        });
+        }));
+
+        if (isPlayerDead) {
+            soundManager?.playSE('se_battle_lose');
+            const { selectedProfileId } = get();
+            fetch('/api/profile/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hp: 0, profileId: selectedProfileId })
+            }).catch(console.error);
+        }
 
         const session = await supabase.auth.getSession();
         fetch('/api/item/use', {
@@ -911,7 +946,7 @@ export const createBattleSlice = (
 
         if (fleeNow) {
             await new Promise(r => setTimeout(r, 800));
-            get().fleeBattle();
+            get().fleeBattle(true); // forceSuccessを連携 (Bug AH)
         }
     },
 
@@ -2440,6 +2475,7 @@ export const createBattleSlice = (
             freshBattle.enemy.name :
             (freshBattle.enemies?.find(e => e.hp > 0)?.name || '敵');
         const updatedParty = [...party];
+        let currentPlayerEffects = [...(freshBattle.player_effects || [])] as StatusEffect[];
 
         for (let i = 0; i < updatedParty.length; i++) {
             // v2.8: Skip if all enemies already dead
@@ -2467,7 +2503,7 @@ export const createBattleSlice = (
                 enemyDef,
                 enemyName: resolvedEnemyName,
                 partyMembers: updatedParty,
-                playerEffects: freshBattle.player_effects,
+                playerEffects: currentPlayerEffects, // 最新のプレイヤー状態を連携 (Bug AD 対策)
                 enemyEffects: enemyEffects as any, // 敵状態異常を連携 (Bug AC)
                 currentTurnNumber: freshBattle.turn, // ターン数を連携 (Bug S)
             };
@@ -2516,9 +2552,7 @@ export const createBattleSlice = (
                         const targetType = action.card?.target_type || '';
                         if (targetType === 'all_allies') {
                             // 味方全体バフ (Bug AD): プレイヤーと全員に適用
-                            const currentEffects = get().battleState.player_effects as StatusEffect[];
-                            const newEffects = applyEffect(currentEffects, effectId, duration);
-                            set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, duration);
                             for (let j = 0; j < updatedParty.length; j++) {
                                 if (updatedParty[j].is_active && (updatedParty[j].durability ?? 0) > 0) {
                                     updatedParty[j] = {
@@ -2530,9 +2564,7 @@ export const createBattleSlice = (
                             member = updatedParty[i];
                         } else if (action.targetName === 'あなた' || action.targetName === '味方') {
                             // プレイヤー単体バフ: プレイヤーのみに適用 (Bug AD)
-                            const currentEffects = get().battleState.player_effects as StatusEffect[];
-                            const newEffects = applyEffect(currentEffects, effectId, duration);
-                            set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, duration);
                         } else {
                             // NPC自己バフ: NPC自身のみに適用 (Bug AD)
                             member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, duration) };
@@ -2590,7 +2622,14 @@ export const createBattleSlice = (
         }
 
         set(state => ({
-            battleState: { ...state.battleState, enemy: nextTarget, enemies: updatedEnemies, party: updatedParty, messages: newMessages }
+            battleState: {
+                ...state.battleState,
+                enemy: nextTarget,
+                enemies: updatedEnemies,
+                party: updatedParty,
+                player_effects: currentPlayerEffects,
+                messages: newMessages
+            }
         }));
 
         if (allEnemiesDead) {
