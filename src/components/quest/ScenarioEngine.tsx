@@ -53,6 +53,7 @@ export default function ScenarioEngine({
     const [isProcessingResult, setIsProcessingResult] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const prepareTriggeredRef = useRef(false);
 
     // 背景クロスフェード用: 前回の背景URLを保持し、2レイヤーでスムーズに切り替え
     const [prevBgUrl, setPrevBgUrl] = useState<string>('');
@@ -393,12 +394,19 @@ export default function ScenarioEngine({
         img.src = bgUrl;
     }, [bgUrl]);
 
-    // クエスト結果の先行読み込み（プレフェッチ）トリガー
+    // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御
     useEffect(() => {
         if (endReady && endReady.result !== 'abort' && onPrepareResult) {
+            if (prepareTriggeredRef.current) return;
+            prepareTriggeredRef.current = true;
             onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
         }
     }, [endReady, history, onPrepareResult]);
+
+    // ノード切り替え時に、プレフェッチ送信済みフラグをリセット
+    useEffect(() => {
+        prepareTriggeredRef.current = false;
+    }, [currentNodeId]);
 
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">

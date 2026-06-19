@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation'; // Added useSearchParams
 import { useGameStore } from '@/store/gameStore';
 import { useQuestState } from '@/store/useQuestState';
@@ -101,7 +101,7 @@ export default function QuestPage() {
         }
     }, [id]);
 
-    const handlePrepareResult = async (result: 'success' | 'failure', history: string[], nodeRewards?: any) => {
+    const handlePrepareResult = useCallback(async (result: 'success' | 'failure', history: string[], nodeRewards?: any) => {
         if (prefetchStartedRef.current) return;
         prefetchStartedRef.current = true;
         setIsPrefetching(true);
@@ -307,7 +307,7 @@ export default function QuestPage() {
         } finally {
             setIsPrefetching(false);
         }
-    };
+    }, [scenario, userProfile, fetchUserProfile, isTestPlay, searchParams, router]);
 
     const handleComplete = (result: 'success' | 'failure' | 'abort') => {
         if (result === 'abort') {
