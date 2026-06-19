@@ -29,7 +29,39 @@ export type CardEffectType =
     | 'shield_slam'      // 防御値アタック
     | 'pay_to_win'       // ゴールド消費攻撃
     | 'double_cast'      // ダブルキャスト
-    | 'search_light';    // サーチドロー
+    | 'search_light'     // サーチドロー
+    | 'wound_tear'
+    | 'defpless_prey'
+    | 'epidemic_fog'
+    | 'unyielding_wall'
+    | 'sacrifice_oath'
+    | 'desperado'
+    | 'sacrificial_ritual'
+    | 'desperate_strike'
+    | 'detonation'
+    | 'freeze_lancer'
+    | 'chain_lightning'
+    | 'prominence'
+    | 'brain_spin'
+    | 'recycle'
+    | 'blood_pursuit'
+    | 'flame_burst'
+    | 'frozen_wave'
+    | 'iron_bastion'
+    | 'revenge_shield_card'
+    | 'giant_body'
+    | 'grounding'
+    | 'gambler_dice'
+    | 'soul_boost_card'
+    | 'ruin_pact'
+    | 'element_resonance_card'
+    | 'plasma_shower'
+    | 'absolute_zero'
+    | 'fire_wave'
+    | 'quick_draw'
+    | 'tactical_plan'
+    | 'time_reverse'
+    | 'mana_filter';
 
 export interface CardEffectInfo {
     effectType: CardEffectType;
@@ -145,12 +177,47 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '85': { effectType: 'support_activate', effectId: 'atk_up', effectDuration: 5, skipDamage: true }, // ゴーレムコア（ATK UP 5T）
     '86': { effectType: 'aoe_attack', effectId: 'bind', effectDuration: 1 },                       // 海神の怒涛（全体90+拘束1T）
     '87': { effectType: 'attack', effectId: 'stun', effectDuration: 1 },                           // 覇王の大斧（130dmg+スタン1T）
-    // ─── 魔術学院 追加 (101, 105, 129, 119, 118) ───────────────────
-    '101': { effectType: 'catharsis' },                                                            // カタルシス
-    '105': { effectType: 'shield_slam' },                                                           // シールドスラム
-    '129': { effectType: 'pay_to_win' },                                                            // 成金の一撃
-    '119': { effectType: 'double_cast', skipDamage: true },                                         // ダブルキャスト
-    '118': { effectType: 'search_light', skipDamage: true },                                        // サーチライト
+    // ─── 魔術学院 追加 (全40種) ───────────────────
+    '101': { effectType: 'catharsis' },                                                              // カタルシス
+    '102': { effectType: 'wound_tear' },                                                             // 傷口をえぐる
+    '103': { effectType: 'defpless_prey' },                                                           // 無防備な獲物
+    '104': { effectType: 'epidemic_fog' },                                                            // 伝染病の霧
+    '105': { effectType: 'shield_slam' },                                                             // シールドスラム
+    '106': { effectType: 'buff_self', effectId: 'counter_spike' as StatusEffectId, effectDuration: 3, skipDamage: true }, // スパイクアーマー
+    '107': { effectType: 'unyielding_wall' },                                                         // 不屈の防陣
+    '108': { effectType: 'sacrifice_oath' },                                                          // 犠牲の誓約
+    '109': { effectType: 'desperado' },                                                               // デスペラード
+    '110': { effectType: 'sacrificial_ritual' },                                                      // 生贄の儀式
+    '111': { effectType: 'desperate_strike' },                                                        // 捨て身の一撃
+    '112': { effectType: 'detonation' },                                                              // デトネーション
+    '113': { effectType: 'buff_self', effectId: 'mana_charge' as StatusEffectId, effectDuration: 3, skipDamage: true }, // マナチャージ
+    '114': { effectType: 'freeze_lancer' },                                                           // フリーズランサー
+    '115': { effectType: 'chain_lightning' },                                                         // 雷電の連鎖
+    '116': { effectType: 'prominence' },                                                              // プロミネンス
+    '117': { effectType: 'brain_spin', skipDamage: true },                                            // ブレインスピン
+    '118': { effectType: 'search_light', skipDamage: true },                                          // サーチライト
+    '119': { effectType: 'double_cast', skipDamage: true },                                           // ダブルキャスト
+    '120': { effectType: 'recycle', skipDamage: true },                                               // リサイクル
+    '121': { effectType: 'debuff_enemy', effectId: 'death_sentence' as StatusEffectId, effectDuration: 5, skipDamage: true }, // 死神の宣告
+    '122': { effectType: 'blood_pursuit' },                                                           // 血の追撃
+    '123': { effectType: 'flame_burst' },                                                             // フレイムバースト
+    '124': { effectType: 'frozen_wave', skipDamage: true },                                           // 凍てつく波動
+    '125': { effectType: 'iron_bastion', skipDamage: true },                                          // アイアンバスティオン
+    '126': { effectType: 'revenge_shield_card', skipDamage: true },                                   // リベンジシールド
+    '127': { effectType: 'giant_body', skipDamage: true },                                            // 巨人の肉体
+    '128': { effectType: 'grounding', skipDamage: true },                                             // グラウンディング
+    '129': { effectType: 'pay_to_win' },                                                              // 成金の一撃
+    '130': { effectType: 'gambler_dice' },                                                            // ギャンブラーダイス
+    '131': { effectType: 'soul_boost_card', skipDamage: true },                                       // ソウルブースト
+    '132': { effectType: 'ruin_pact' },                                                               // 破滅の契約
+    '133': { effectType: 'element_resonance_card', skipDamage: true },                                // 属性の共鳴
+    '134': { effectType: 'plasma_shower' },                                                           // プラズマシャワー
+    '135': { effectType: 'absolute_zero' },                                                           // アブソリュートゼロ
+    '136': { effectType: 'fire_wave' },                                                               // ファイアウェーブ
+    '137': { effectType: 'quick_draw', skipDamage: true },                                            // クイックドロー
+    '138': { effectType: 'tactical_plan', skipDamage: true },                                         // タクティカルプラン
+    '139': { effectType: 'time_reverse', skipDamage: true },                                          // タイムリバース
+    '140': { effectType: 'mana_filter', skipDamage: true },                                           // マナフィルター
 };
 
 // ─── ユーティリティ ─────────────────────────────────────────

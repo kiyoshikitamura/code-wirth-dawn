@@ -1,6 +1,6 @@
 
 import { Card, PartyMember, UserProfile } from '@/types/game';
-import { StatusEffect, getAttackMod, getDefBonus } from '@/lib/statusEffects';
+import { StatusEffect, getAttackMod, getDefBonus, getDefDownMod } from '@/lib/statusEffects';
 import { getNoiseInjectionCount } from '@/lib/passiveEffects';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 
@@ -45,7 +45,8 @@ export function calculateDamageV4(
     // 4. DEF減算: 物理のみ。魔法はDEF・defBonusともに貫通。
     if (!isMagic) {
         const defBonus = getDefBonus(defenderEffects);
-        dmg = dmg - targetDef - defBonus;
+        const defDownMod = getDefDownMod(defenderEffects);
+        dmg = dmg - Math.floor(targetDef * defDownMod) - defBonus;
     }
 
     // 5. 最終ダメージ

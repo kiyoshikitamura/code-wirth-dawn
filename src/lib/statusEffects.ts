@@ -39,7 +39,17 @@ export type StatusEffectId =
     | 'ap_max'      // AP全回復（card_dark_pact用）
     | 'ap_recover'  // AP回復（瞑想用）
     | 'barrier'     // バリア: def_upの全体版（聖壁等）
-    | 'berserk';    // v4.1: 狂戦士 ATK×2.0 + DEF半減
+    | 'berserk'     // v4.1: 狂戦士 ATK×2.0 + DEF半減
+    | 'counter_spike' // 棘の鎧 (反射)
+    | 'unyielding_barrier' // 不屈 of 防壁バリア
+    | 'sacrificial_ap' // 生贄の儀式 AP軽減
+    | 'mana_charge'  // マナチャージ AP回復
+    | 'death_sentence' // 死神の宣告 即死カウント
+    | 'cover_all'    // アイアンバスティオン 単体攻撃肩代わり
+    | 'revenge_shield' // 報復の盾 ダメージ反射蓄積
+    | 'soul_boost'   // ソウルブースト 威力2.5倍
+    | 'element_resonance' // 属性の共鳴
+    | 'crit_vulnerability'; // 被クリティカル率UP
 
 // ─── v2.9.3k: デバフ成功率テーブル ─────────────────────────────
 // 各デバフeffect_idごとの付与成功率（0.0〜1.0）
@@ -106,6 +116,16 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     ap_recover:   'AP回復',
     barrier:      'バリア',
     berserk:      '狂戦士',
+    counter_spike: '棘の鎧',
+    unyielding_barrier: '不屈の防陣',
+    sacrificial_ap: '生贄の儀式',
+    mana_charge:  'マナチャージ',
+    death_sentence: '死神の宣告',
+    cover_all:    '身代わりの盾',
+    revenge_shield: '報復の盾',
+    soul_boost:   'ソウルブースト',
+    element_resonance: '属性の共鳴',
+    crit_vulnerability: '被クリティカル率UP',
 };
 
 export function getEffectName(id: StatusEffectId): string {

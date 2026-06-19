@@ -24,13 +24,36 @@ export interface ValidationResult {
  * 2. ターゲット不正 → エラー
  * 両方パスで valid: true。
  */
+export function getCardApCost(
+    card: Card,
+    playerEffects: StatusEffect[],
+    enemyEffects: StatusEffect[]
+): number {
+    let cost = card.ap_cost ?? 1;
+    // sacrificial_ap: reduces AP cost of Skill cards by 1 (min 0)
+    if (card.type === 'Skill' && playerEffects.some(e => e.id === 'sacrificial_ap' && e.duration > 0)) {
+        cost = Math.max(0, cost - 1);
+    }
+    // blood_pursuit (ID 122): AP cost becomes 0 if target is bleeding
+    const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+    if (baseId === '122') {
+        const hasBleed = enemyEffects.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
+        if (hasBleed) {
+            cost = 0;
+        }
+    }
+    return cost;
+}
+
 export function validateCardUse(
     card: Card,
     targetId: string | undefined,
     battleState: BattleState
 ): ValidationResult {
     // ─── Step 1: APチェック ───
-    const apCost = card.ap_cost ?? 1;
+    const playerEffects = (battleState.player_effects || []) as StatusEffect[];
+    const enemyEffects = (battleState.enemy?.status_effects || []) as StatusEffect[];
+    const apCost = getCardApCost(card, playerEffects, enemyEffects);
     const currentAp = battleState.current_ap || 0;
 
     if (currentAp < apCost) {

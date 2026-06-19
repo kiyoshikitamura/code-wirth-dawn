@@ -106,7 +106,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 123,card_flame_burst,フレイムバースト,Magic,2,none,0,15,all_enemies,burn_double,/images/items/book_flame_burst_1781808256666.png,炎上起爆魔法。全体に15ダメージ。対象が炎上状態の場合、その対象に対するダメージが2倍になる。
 124,card_frozen_wave,凍てつく波動,Magic,3,none,0,0,all_enemies,dispel_freeze,/images/items/book_frozen_wave_1781808267687.png,氷の波動。敵全体のすべてのバフ効果を解除し、1ターンの間「拘束（凍結）」状態にする。
 125,card_iron_bastion,アイアンバスティオン,Defense,3,none,0,0,all_allies,cover_all,/images/items/book_iron_bastion_1781808278646.png,鉄壁の防壁。パーティ全員への単体攻撃を使用者が肩代わりし、自身のDEFを3ターンの間+35する。
-126,card_revenge_shield,リベンジシールド,Defense,2,none,0,0,self,revenge_shield,/images/items/book_revenge_shield_1781808287823.png,报复の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。
+126,card_revenge_shield,リベンジシールド,Defense,2,none,0,0,self,revenge_shield,/images/items/book_revenge_shield_1781808287823.png,報復の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。
 127,card_giant_body,巨人の肉体,Support,1,none,0,0,single_ally,hp_cap_up,/images/items/book_giant_body_1781808298415.png,肉体強化。指定した味方の最大HPを戦闘終了まで+50し、HPを50回復する（最大HP上昇は累積しない）。
 128,card_grounding,グラウンディング,Defense,2,none,0,0,self,stun_immune_up,/images/items/book_grounding_1781808308871.png,大地の構え。自身に「2ターンの間、スタン・拘束無効（スタン免疫）」を付与し、DEFを+15する。
 129,card_pay_to_win,成金の一撃,Skill,2,none,0,30,single_enemy,gold_recoil,/images/items/book_pay_to_win_1781803536472.png,ゴールド消費攻撃。威力: 30。所持ゴールドの2%(最大1,000G)を消費し、消費額の10%(最大+100)を威力に加算。

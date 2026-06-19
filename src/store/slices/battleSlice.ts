@@ -3,8 +3,8 @@ import { Card, Enemy, PartyMember, InventoryItem } from '@/types/game';
 import { buildBattleDeck, routeDamage, calculateDamage, calculateDamageV4, rollMiss } from '@/lib/battleEngine';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 import { resolveNpcTurn, determineRole, determineGrade, BattleContext } from '@/lib/npcAI';
-import { StatusEffect, applyEffect, removeEffect, hasEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId } from '@/lib/statusEffects';
-import { validateCardUse, getDefaultTarget } from '@/lib/targeting';
+import { StatusEffect, applyEffect, removeEffect, hasEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId, NEGATIVE_EFFECTS } from '@/lib/statusEffects';
+import { validateCardUse, getDefaultTarget, getCardApCost } from '@/lib/targeting';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getPassiveLabel } from '@/lib/passiveEffects';
 import { getEnemySkill, loadEnemySkillsFromDB } from '@/lib/enemySkills';
@@ -57,6 +57,7 @@ export const createBattleSlice = (
                 party: [],
                 turn: 1,
                 current_ap: 5,
+                cardsPlayedThisTurn: 0,
                 messages: [],
                 isVictory: false,
                 isDefeat: false,
@@ -309,6 +310,7 @@ export const createBattleSlice = (
                 party: partyMembers,
                 turn: 1,
                 current_ap: initialAp,
+                cardsPlayedThisTurn: 0,
                 messages: startMessages,
                 isVictory: false,
                 isDefeat: false,
@@ -461,7 +463,11 @@ export const createBattleSlice = (
             let eEffects = [...(enemy.status_effects || [])] as StatusEffect[];
             const eTick = tickEffects(eEffects, enemy.maxHp, enemy.name);
             tickMessages.push(...eTick.messages);
-            const newHp = Math.max(0, enemy.hp + eTick.hpDelta);
+            let newHp = Math.max(0, enemy.hp + eTick.hpDelta);
+            if (eTick.expired.includes('death_sentence')) {
+                newHp = 0;
+                tickMessages.push(`💀 ${enemy.name}は死神の宣告により即死した！`);
+            }
             if (newHp > 0) allEnemiesDead = false;
             return { ...enemy, hp: newHp, status_effects: eTick.newEffects };
         });
@@ -519,6 +525,7 @@ export const createBattleSlice = (
                 ...state.battleState,
                 isPlayerTurn: true,
                 battlePhase: 'player' as const,
+                cardsPlayedThisTurn: 0,
             }
         }));
     },
@@ -867,8 +874,9 @@ export const createBattleSlice = (
         }
         if (!targetEnemy) return;
 
-        let finalApCost = card ? (card.ap_cost ?? 1) : 1;
-        const tempPlayerEffects = [...(battleState.player_effects || [])];
+        const tempPlayerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
+        const tempEnemyEffects = [...(targetEnemy?.status_effects || [])] as StatusEffect[];
+        let finalApCost = card ? getCardApCost(card, tempPlayerEffects, tempEnemyEffects) : 1;
         const isSkillOrMagic = card && (card.type === 'Skill' || card.type === 'Magic');
         const hasDoubleCast = isSkillOrMagic && hasEffect(tempPlayerEffects as StatusEffect[], 'double_cast' as StatusEffectId);
 
@@ -882,7 +890,13 @@ export const createBattleSlice = (
             if (hasDoubleCast) {
                 finalApCost = 0;
             }
-            set(state => ({ battleState: { ...state.battleState, current_ap: (battleState.current_ap || 0) - finalApCost } }));
+            set(state => ({
+                battleState: {
+                    ...state.battleState,
+                    current_ap: (battleState.current_ap || 0) - finalApCost,
+                    cardsPlayedThisTurn: (state.battleState.cardsPlayedThisTurn || 0) + 1
+                }
+            }));
 
             if (card.cost_type === 'item') {
                 const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
@@ -891,6 +905,7 @@ export const createBattleSlice = (
                         battleState: {
                             ...state.battleState,
                             current_ap: (state.battleState.current_ap || 0) + finalApCost,
+                            cardsPlayedThisTurn: Math.max(0, (state.battleState.cardsPlayedThisTurn || 0) - 1),
                             messages: [...state.battleState.messages, `${card.name}の素材が尽きた！（1戦闘1回制限）`]
                         }
                     }));
@@ -982,6 +997,67 @@ export const createBattleSlice = (
 
             effectInfo = getCardEffectInfo(card);
             soundManager?.playSEForCardEffect(effectInfo.effectType);
+
+            // Soul Boost check
+            let damageMultiplier = 1;
+            const hasSoulBoost = card && (card.type === 'Skill' || card.type === 'Magic') && currentPlayerEffects.some(se => se.id === 'soul_boost');
+            if (hasSoulBoost) {
+                damageMultiplier = 2.5;
+                currentPlayerEffects = currentPlayerEffects.filter(se => se.id !== 'soul_boost');
+            }
+
+            // Element Resonance check
+            const hasElementResonance = card && card.type === 'Magic' && currentPlayerEffects.some(se => se.id === 'element_resonance');
+            if (hasElementResonance) {
+                currentPlayerEffects = currentPlayerEffects.filter(se => se.id !== 'element_resonance');
+                const cardName = card.name;
+                const cardSlug = card.slug || '';
+                const isFire = cardName.includes('炎') || cardName.includes('火') || cardName.includes('ファイア') || cardName.includes('フレイム') || cardSlug.includes('fire') || cardSlug.includes('flame') || cardSlug.includes('prominence');
+                const isIce = cardName.includes('氷') || cardName.includes('凍') || cardName.includes('フリーズ') || cardName.includes('零') || cardSlug.includes('freeze') || cardSlug.includes('frozen') || cardSlug.includes('absolute');
+                const isLightning = cardName.includes('雷') || cardName.includes('電') || cardName.includes('プラズマ') || cardSlug.includes('lightning') || cardSlug.includes('plasma');
+                
+                let resBuffId: StatusEffectId | null = null;
+                let resBuffVal = 0;
+                let resonanceMsg = '';
+                if (isFire) {
+                    resBuffId = 'atk_up';
+                    resBuffVal = 0.10;
+                    resonanceMsg = '属性共鳴(炎)！全員の攻撃力+10% (3T)！';
+                } else if (isIce) {
+                    resBuffId = 'def_up';
+                    resBuffVal = 10;
+                    resonanceMsg = '属性共鳴(氷)！全員の防御力+10 (3T)！';
+                } else if (isLightning) {
+                    resBuffId = 'evasion_up';
+                    resBuffVal = 0.10;
+                    resonanceMsg = '属性共鳴(雷)！全員の回避率+10% (3T)！';
+                }
+                
+                if (resBuffId) {
+                    currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], resBuffId, 3, resBuffVal);
+                    const newParty = (battleState.party || []).map(m => {
+                        if (!m.is_active || (m.durability ?? 0) <= 0) return m;
+                        return {
+                            ...m,
+                            status_effects: applyEffect((m.status_effects || []) as StatusEffect[], resBuffId!, 3, resBuffVal)
+                        };
+                    });
+                    set(state => ({ battleState: { ...state.battleState, party: newParty } }));
+                    newMessages.push(`✨ ${resonanceMsg}`);
+                }
+            }
+
+            // Mana Charge check
+            const hasManaCharge = card && card.type === 'Magic' && currentPlayerEffects.some(se => se.id === 'mana_charge');
+            if (hasManaCharge) {
+                newMessages.push(`✨ マナチャージの効果でAPが1回復した！`);
+                set(state => ({
+                    battleState: {
+                        ...state.battleState,
+                        current_ap: Math.min(15, (state.battleState.current_ap || 0) + 1)
+                    }
+                }));
+            }
 
             // v4.0: プレイヤー攻撃ミス判定（攻撃系アクションのみ）
             const attackEffectTypes = ['aoe_attack', 'debuff_enemy', 'instakill', 'pierce_attack', 'multi_attack', 'recoil_attack'];
@@ -1113,6 +1189,586 @@ export const createBattleSlice = (
                             logMsg = `${card.name}を使用！ デッキから「${chosenCard.name}」を探し出して手札に加えた。`;
                         } else {
                             logMsg = `${card.name}を使用したが、デッキに対象となるカード（回復・防御）がなかった。`;
+                        }
+                        break;
+                    }
+                    case 'wound_tear': {
+                        const hasBleed = loopTargetEnemy.status_effects?.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
+                        const basePower = (hasBleed ? 62 : 25) * damageMultiplier;
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！`;
+                        if (hasBleed) {
+                            customTargetEffects = (loopTargetEnemy.status_effects || []).map(e => {
+                                if (e.id === 'bleed' || e.id === 'bleed_minor') {
+                                    return { ...e, duration: e.duration + 2 };
+                                }
+                                return e;
+                            }) as StatusEffect[];
+                            logMsg += ` 出血の残り持続時間を2ターン延長！`;
+                        } else {
+                            customTargetEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'bleed_minor', 2);
+                        }
+                        break;
+                    }
+                    case 'defpless_prey': {
+                        const isImmobilized = loopTargetEnemy.status_effects?.some(e => e.id === 'stun' || e.id === 'bind' || e.id === 'freeze');
+                        const basePower = (card.power ?? 40) * damageMultiplier;
+                        const targetDef = isImmobilized ? 0 : (loopTargetEnemy.def || 0);
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(basePower, targetDef, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        if (isImmobilized) {
+                            logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} 行動不能の隙を突き、防御力を完全に無視して ${damage} のダメージ！`;
+                        } else {
+                            logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！`;
+                        }
+                        break;
+                    }
+                    case 'epidemic_fog': {
+                        const poisonedEnemy = currentEnemies.find(e => e.hp > 0 && e.status_effects?.some(se => se.id === 'poison'));
+                        const poisonDuration = poisonedEnemy
+                            ? (poisonedEnemy.status_effects?.find(se => se.id === 'poison')?.duration || 3)
+                            : 0;
+                        const basePower = (card.power ?? 15) * damageMultiplier;
+                        const result = calculateDamageV4(basePower, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        isAoe = true;
+                        logMsg = `${card.name}で全体攻撃！ 各敵に ${damage} のダメージ！`;
+                        if (poisonDuration > 0) {
+                            logMsg += ` さらに、毒が他の全ての敵に伝染した！ (毒 ${poisonDuration}T)`;
+                            currentEnemies = currentEnemies.map(e => {
+                                if (e.hp <= 0) return e;
+                                const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], 'poison', poisonDuration);
+                                return { ...e, status_effects: newEffects };
+                            });
+                        }
+                        break;
+                    }
+                    case 'unyielding_wall': {
+                        const playerMaxHp = effectivePlayerMaxHp;
+                        const playerHp = userProfile?.hp || 0;
+                        const addBarrier = playerHp <= playerMaxHp * 0.3;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 25);
+                        if (addBarrier) {
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'unyielding_barrier', 2, 30);
+                        }
+                        const newParty = (battleState.party || []).map(m => {
+                            if (!m.is_active || (m.durability ?? 0) <= 0) return m;
+                            let mEffects = (m.status_effects || []) as StatusEffect[];
+                            mEffects = applyEffect(mEffects, 'def_up', 2, 25);
+                            if (addBarrier) {
+                                mEffects = applyEffect(mEffects, 'unyielding_barrier', 2, 30);
+                            }
+                            return { ...m, status_effects: mEffects };
+                        });
+                        set(state => ({ battleState: { ...state.battleState, party: newParty } }));
+                        logMsg = `${card.name}を使用！ 味方全体のDEF+25 (2T)！`;
+                        if (addBarrier) {
+                            logMsg += ` 残りHPが30%以下のため、ダメージ30軽減のバリア効果を追加！`;
+                        }
+                        break;
+                    }
+                    case 'sacrifice_oath': {
+                        const resolvedTargetId = targetId || getDefaultTarget(card, battleState);
+                        const party = [...(battleState.party || [])];
+                        const idx = party.findIndex(m => String(m.id) === resolvedTargetId);
+                        if (idx >= 0) {
+                            const member = party[idx];
+                            const mEffects = (member.status_effects || []) as StatusEffect[];
+                            const debuffs = mEffects.filter(e => NEGATIVE_EFFECTS.includes(e.id));
+                            const cleanedMemberEffects = mEffects.filter(e => !NEGATIVE_EFFECTS.includes(e.id));
+                            party[idx] = { ...member, status_effects: cleanedMemberEffects };
+                            debuffs.forEach(d => {
+                                currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], d.id, d.duration, d.value);
+                            });
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 20);
+                            set(state => ({ battleState: { ...state.battleState, party } }));
+                            logMsg = `${card.name}を使用！ ${member.name}のデバフを全て自身に引き受け、自身のDEFを+20 (2T)した！`;
+                        } else {
+                            logMsg = `${card.name}を使用したが、対象の味方が見つからなかった。`;
+                        }
+                        break;
+                    }
+                    case 'desperado': {
+                        const playerMaxHp = effectivePlayerMaxHp;
+                        const playerHp = userProfile?.hp || 0;
+                        const hpRatio = playerHp / playerMaxHp;
+                        const multiplier = 1 + 2 * (1 - hpRatio);
+                        const basePower = Math.floor((card.power ?? 50) * multiplier * damageMultiplier);
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} 残りHPに応じて ${damage} のダメージ！ (威力倍率: ${multiplier.toFixed(2)}倍)`;
+                        break;
+                    }
+                    case 'sacrificial_ritual': {
+                        const playerMaxHp = effectivePlayerMaxHp;
+                        const selfDmg = Math.max(1, Math.floor(playerMaxHp * 0.15));
+                        const currentHp = userProfile?.hp || 0;
+                        const newHp = Math.max(0, currentHp - selfDmg);
+                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                        healSyncHp = newHp;
+                        const { selectedProfileId } = get();
+                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'sacrificial_ap', 2);
+                        logMsg = `${card.name}を使用！ 最大HPの15%自傷 (-${selfDmg} HP)！ 2ターンの間、物理スキルの消費APを1減少！`;
+                        break;
+                    }
+                    case 'desperate_strike': {
+                        const basePower = (card.power ?? 70) * damageMultiplier;
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_down', 2);
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！ 自身に2ターンの防御力DOWN（被ダメ1.5倍）を付与した！`;
+                        break;
+                    }
+                    case 'detonation': {
+                        const basePower = (card.power ?? 90) * damageMultiplier;
+                        const result = calculateDamageV4(basePower, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        isAoe = true;
+                        logMsg = `${card.name}で全体攻撃！ 各敵に ${damage} のダメージ！`;
+                        const otherHandCards = nextHand.filter(c => c.id !== card.id);
+                        let exhaustedCount = 0;
+                        const exhaustedList: typeof nextHand = [];
+                        while (exhaustedCount < 2 && otherHandCards.length > 0) {
+                            const randIdx = Math.floor(Math.random() * otherHandCards.length);
+                            const removed = otherHandCards.splice(randIdx, 1)[0];
+                            nextHand = nextHand.filter(c => c.id !== removed.id);
+                            exhaustedList.push(removed);
+                            exhaustedCount++;
+                        }
+                        if (exhaustedList.length > 0) {
+                            set(state => ({
+                                battleState: {
+                                    ...state.battleState,
+                                    exhaustPile: [...state.battleState.exhaustPile, ...exhaustedList.map(c => ({ id: c.id, name: c.name, type: c.type }))]
+                                }
+                            }));
+                            logMsg += ` さらに手札から「${exhaustedList.map(c => c.name).join('」「')}」が除外された！`;
+                        }
+                        break;
+                    }
+                    case 'freeze_lancer': {
+                        const isFrozenOrBound = loopTargetEnemy.status_effects?.some(e => e.id === 'freeze' || e.id === 'bind');
+                        const basePower = (isFrozenOrBound ? 45 : 30) * damageMultiplier;
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], true, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！`;
+                        if (isFrozenOrBound) {
+                            customTargetEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'stun', 1);
+                            logMsg += ` 対象が凍結・拘束状態のためダメージ1.5倍＋1ターンスタン追加！`;
+                        }
+                        break;
+                    }
+                    case 'chain_lightning': {
+                        const hitsCount = 3;
+                        let hitLogs: string[] = [];
+                        let totalDmg = 0;
+                        const hitTargetsMap: Record<string, number> = {};
+                        for (let hit = 0; hit < hitsCount; hit++) {
+                            let aliveEnemies = currentEnemies.filter(e => e.hp > 0);
+                            if (aliveEnemies.length === 0) break;
+                            const picked = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+                            const targetHasCritVul = picked.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                            const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                            const result = calculateDamageV4(20 * damageMultiplier, picked.def || 0, currentPlayerEffects as StatusEffect[], picked.status_effects as StatusEffect[] || [], true, effectivePlayerAtk, finalCritRate);
+                            totalDmg += result.damage;
+                            currentEnemies = currentEnemies.map(e => e.id === picked.id ? { ...e, hp: Math.max(0, e.hp - result.damage) } : e);
+                            hitTargetsMap[picked.id] = (hitTargetsMap[picked.id] || 0) + 1;
+                            const critLabel = result.isCritical ? ' クリティカル！' : '';
+                            hitLogs.push(`${picked.name}に ${result.damage} ダメージ${critLabel}`);
+                        }
+                        for (const enemyId of Object.keys(hitTargetsMap)) {
+                            if (hitTargetsMap[enemyId] > 1) {
+                                const enemyObj = currentEnemies.find(e => e.id === enemyId);
+                                if (enemyObj && enemyObj.hp > 0) {
+                                    const stunEffects = applyEffect((enemyObj.status_effects || []) as StatusEffect[], 'stun', 1);
+                                    currentEnemies = currentEnemies.map(e => e.id === enemyId ? { ...e, status_effects: stunEffects } : e);
+                                    hitLogs.push(`${enemyObj.name}は連続ヒットによりスタンした！`);
+                                }
+                            }
+                        }
+                        damage = 0;
+                        logMsg = `${card.name}！ 連鎖する紫電が炸裂！\n` + hitLogs.join('\n');
+                        break;
+                    }
+                    case 'prominence': {
+                        let burnLogs: string[] = [];
+                        let prominenceDmg = (card.power ?? 50) * damageMultiplier;
+                        currentEnemies = currentEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const burnEffect = e.status_effects?.find(se => se.id === 'burn');
+                            let extra = 0;
+                            if (burnEffect) {
+                                extra = burnEffect.duration * 10;
+                            }
+                            const targetHasCritVul = e.status_effects?.some(se => se.id === 'crit_vulnerability' && se.duration > 0);
+                            const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                            const result = calculateDamageV4(prominenceDmg, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, finalCritRate);
+                            const finalDmg = result.damage + extra;
+                            const newHp = Math.max(0, e.hp - finalDmg);
+                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], 'burn', 3);
+                            if (extra > 0) {
+                                burnLogs.push(`${e.name}に極大炎上！ 追加 ${extra} ダメージ！ (合計 ${finalDmg} ダメージ)`);
+                            } else {
+                                burnLogs.push(`${e.name}に ${finalDmg} ダメージ！`);
+                            }
+                            return { ...e, hp: newHp, status_effects: newEffects };
+                        });
+                        damage = 0;
+                        logMsg = `${card.name}を発動！ 戦場全体を焼き尽くす！\n` + burnLogs.join('\n');
+                        break;
+                    }
+                    case 'brain_spin': {
+                        const handCount = nextHand.filter(c => c.id !== card.id).length;
+                        const discardedHand = nextHand.filter(c => c.id !== card.id);
+                        nextDiscardPile = [...nextDiscardPile, ...discardedHand];
+                        nextHand = [];
+                        const deck = get().deck;
+                        const drawCount = Math.min(deck.length, handCount);
+                        const drawn: typeof nextHand = [];
+                        const remainingDeck = [...deck];
+                        for (let draw = 0; draw < drawCount; draw++) {
+                            if (remainingDeck.length === 0) break;
+                            drawn.push(remainingDeck.shift()!);
+                        }
+                        nextHand = drawn;
+                        set({ deck: remainingDeck });
+                        const currentAp = battleState.current_ap || 0;
+                        const newAp = Math.min(15, currentAp + 1);
+                        set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
+                        logMsg = `${card.name}を使用！ 手札の ${handCount} 枚のカードを全て捨て、新たに ${drawCount} 枚ドロー！ APが1回復した！`;
+                        break;
+                    }
+                    case 'recycle': {
+                        const nonItemDiscards = nextDiscardPile.filter(c => c.type !== 'Item');
+                        if (nonItemDiscards.length > 0) {
+                            const pickedCard = nonItemDiscards[Math.floor(Math.random() * nonItemDiscards.length)];
+                            nextDiscardPile = nextDiscardPile.filter(c => c !== pickedCard);
+                            const reducedCard = {
+                                ...pickedCard,
+                                ap_cost: Math.max(0, (pickedCard.ap_cost ?? 1) - 1)
+                            };
+                            nextHand.push(reducedCard);
+                            logMsg = `${card.name}を使用！ 捨て札から「${pickedCard.name}」を手札に戻した (コストが1減少)！`;
+                        } else {
+                            logMsg = `${card.name}を使用したが、捨て札に対象となるカードがなかった。`;
+                        }
+                        break;
+                    }
+                    case 'blood_pursuit': {
+                        const hasBleed = loopTargetEnemy.status_effects?.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
+                        const basePower = (card.power ?? 20) * damageMultiplier;
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！`;
+                        if (hasBleed) {
+                            nextHand.push(card);
+                            logMsg += ` 対象が出血状態のため、カードが手札に返還された！`;
+                        }
+                        break;
+                    }
+                    case 'flame_burst': {
+                        let burstLogs: string[] = [];
+                        damage = 0;
+                        currentEnemies = currentEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const hasBurn = e.status_effects?.some(se => se.id === 'burn');
+                            const power = (hasBurn ? 30 : 15) * damageMultiplier;
+                            const targetHasCritVul = e.status_effects?.some(se => se.id === 'crit_vulnerability' && se.duration > 0);
+                            const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                            const result = calculateDamageV4(power, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, finalCritRate);
+                            const finalDmg = result.damage;
+                            const newHp = Math.max(0, e.hp - finalDmg);
+                            if (hasBurn) {
+                                burstLogs.push(`${e.name}に爆発！ 炎上のため2倍の ${finalDmg} ダメージ！`);
+                            } else {
+                                burstLogs.push(`${e.name}に ${finalDmg} ダメージ！`);
+                            }
+                            return { ...e, hp: newHp };
+                        });
+                        logMsg = `${card.name}で全体爆撃！\n` + burstLogs.join('\n');
+                        break;
+                    }
+                    case 'frozen_wave': {
+                        let frozenLogs: string[] = [];
+                        currentEnemies = currentEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const cleanedEffects = (e.status_effects || []).filter(se => NEGATIVE_EFFECTS.includes(se.id as StatusEffectId));
+                            const finalEffects = applyEffect(cleanedEffects as StatusEffect[], 'bind', 1);
+                            frozenLogs.push(`${e.name}の強化効果を解除し、凍結・拘束した！`);
+                            return { ...e, status_effects: finalEffects };
+                        });
+                        logMsg = `${card.name}を使用！\n` + frozenLogs.join('\n');
+                        break;
+                    }
+                    case 'iron_bastion': {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'cover_all', 3);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 35);
+                        logMsg = `${card.name}を展開！ 3ターンの間、パーティへの単体攻撃を肩代わりし、自身のDEFを+35した！`;
+                        break;
+                    }
+                    case 'revenge_shield_card': {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 1, 15);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'revenge_shield', 1);
+                        logMsg = `${card.name}を使用！ 1ターンの間、自身のDEFを+15し、受けたダメージの100%を物理反射する！`;
+                        break;
+                    }
+                    case 'giant_body': {
+                        const resolvedTargetId = targetId || getDefaultTarget(card, battleState);
+                        if (resolvedTargetId === 'player') {
+                            if (userProfile) {
+                                if ((userProfile as any).giant_body_applied) {
+                                    const newHp = Math.min(userProfile.max_hp || 100, (userProfile.hp || 0) + 50);
+                                    set(state => ({
+                                        userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
+                                    }));
+                                    healSyncHp = newHp;
+                                    const { selectedProfileId } = get();
+                                    fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                                    logMsg = `${card.name}を自身に使用！ HPを50回復した！(最大HP上昇は既に適用済み)`;
+                                } else {
+                                    const newMaxHp = (userProfile.max_hp || 100) + 50;
+                                    const newHp = Math.min(newMaxHp, (userProfile.hp || 0) + 50);
+                                    set(state => ({
+                                        userProfile: state.userProfile ? { ...state.userProfile, max_hp: newMaxHp, hp: newHp, giant_body_applied: true } : null
+                                    }));
+                                    healSyncHp = newHp;
+                                    const { selectedProfileId } = get();
+                                    fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                                    logMsg = `${card.name}を自身に使用！ 最大HPを戦闘終了まで+50し、HPを50回復した！`;
+                                }
+                            }
+                        } else {
+                            const party = [...(battleState.party || [])];
+                            const idx = party.findIndex(m => String(m.id) === resolvedTargetId);
+                            if (idx >= 0) {
+                                const member = party[idx];
+                                if ((member as any).giant_body_applied) {
+                                    const maxDur = (member as any).max_hp || member.max_durability || member.durability || 100;
+                                    const newDur = Math.min(maxDur, (member.durability ?? 0) + 50);
+                                    party[idx] = {
+                                        ...member,
+                                        durability: newDur
+                                    } as any;
+                                    set(state => ({ battleState: { ...state.battleState, party } }));
+                                    logMsg = `${card.name}を ${member.name} に使用！ HPを50回復した！(最大HP上昇は既に適用済み)`;
+                                    newMessages.push(`__party_sync:${member.id}:${newDur}`);
+                                } else {
+                                    const currentMax = (member as any).max_hp || member.max_durability || 100;
+                                    const newMax = currentMax + 50;
+                                    const newDur = Math.min(newMax, (member.durability ?? 0) + 50);
+                                    party[idx] = {
+                                        ...member,
+                                        max_hp: newMax,
+                                        max_durability: newMax,
+                                        durability: newDur,
+                                        giant_body_applied: true
+                                    } as any;
+                                    set(state => ({ battleState: { ...state.battleState, party } }));
+                                    logMsg = `${card.name}を ${member.name} に使用！ 最大HPを戦闘終了まで+50し、HPを50回復した！`;
+                                    newMessages.push(`__party_sync:${member.id}:${newDur}`);
+                                }
+                            } else {
+                                logMsg = `${card.name}を使用したが、対象の味方が見つからなかった。`;
+                            }
+                        }
+                        break;
+                    }
+                    case 'grounding': {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'stun_immune', 2);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 15);
+                        logMsg = `${card.name}を使用！ 2ターンの間、スタン・拘束無効（スタン免疫）を付与し、DEFを+15した！`;
+                        break;
+                    }
+                    case 'gambler_dice': {
+                        const randomDmg = Math.floor((Math.floor(Math.random() * 120) + 1) * damageMultiplier);
+                        const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                        const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                        const result = calculateDamageV4(randomDmg, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                        damage = result.damage;
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！ 運命のダイスは「${Math.floor(randomDmg / damageMultiplier)}」！${critLabel} ${damage} の物理ダメージ！`;
+                        break;
+                    }
+                    case 'soul_boost_card': {
+                        const playerHp = userProfile?.hp || 0;
+                        const selfDmg = Math.max(1, Math.floor(playerHp * 0.2));
+                        const newHp = Math.max(0, playerHp - selfDmg);
+                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                        healSyncHp = newHp;
+                        const { selectedProfileId } = get();
+                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'soul_boost', 99);
+                        logMsg = `${card.name}を使用！ 現在HPの20%を自傷 (-${selfDmg} HP)！ 次に放つ物理・魔法カードの威力を2.5倍にするバフを得た！`;
+                        break;
+                    }
+                    case 'ruin_pact': {
+                        const otherHandCards = nextHand.filter(c => c.id !== card.id);
+                        const count = otherHandCards.length;
+                        nextHand = [];
+                        if (count > 0) {
+                            set(state => ({
+                                battleState: {
+                                    ...state.battleState,
+                                    exhaustPile: [...state.battleState.exhaustPile, ...otherHandCards.map(c => ({ id: c.id, name: c.name, type: c.type }))]
+                                }
+                            }));
+                            let logs: string[] = [];
+                            for (let i = 0; i < count; i++) {
+                                let alive = currentEnemies.filter(e => e.hp > 0);
+                                if (alive.length === 0) break;
+                                const picked = alive[Math.floor(Math.random() * alive.length)];
+                                const targetHasCritVul = picked.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                                const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                                const result = calculateDamageV4(25 * damageMultiplier, picked.def || 0, currentPlayerEffects as StatusEffect[], picked.status_effects as StatusEffect[] || [], true, effectivePlayerAtk, finalCritRate);
+                                currentEnemies = currentEnemies.map(e => e.id === picked.id ? { ...e, hp: Math.max(0, e.hp - result.damage) } : e);
+                                logs.push(`${picked.name}に ${result.damage} ダメージ`);
+                            }
+                            damage = 0;
+                            logMsg = `${card.name}！ 手札 ${count} 枚を除外し、破滅の魔弾をばら撒く！\n` + logs.join('\n');
+                        } else {
+                            logMsg = `${card.name}を使用したが、手札に他のカードがなかった。`;
+                        }
+                        break;
+                    }
+                    case 'element_resonance_card': {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'element_resonance', 99);
+                        logMsg = `${card.name}！ エレメンタルの共鳴を得た。次に使用する魔法(Magic)の属性に応じた全体バフが発動する！`;
+                        break;
+                    }
+                    case 'plasma_shower': {
+                        damage = (card.power ?? 30) * damageMultiplier;
+                        const result = calculateDamageV4(damage, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        isAoe = true;
+                        logMsg = `${card.name}を発動！ 雷雨が降り注ぎ、敵全体に ${damage} のダメージ！`;
+                        currentEnemies = currentEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const newHp = Math.max(0, e.hp - damage);
+                            let newEffects = (e.status_effects || []) as StatusEffect[];
+                            if (newHp > 0 && Math.random() < 0.15) {
+                                newEffects = applyEffect(newEffects, 'stun', 1);
+                                newMessages.push(`→ ${e.name}は感電してスタンした！`);
+                            }
+                            return { ...e, hp: newHp, status_effects: newEffects };
+                        });
+                        damage = 0;
+                        break;
+                    }
+                    case 'absolute_zero': {
+                        damage = (card.power ?? 25) * damageMultiplier;
+                        const result = calculateDamageV4(damage, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        isAoe = true;
+                        logMsg = `${card.name}を発動！ 氷の嵐が敵全体に ${damage} のダメージ！`;
+                        currentEnemies = currentEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const newHp = Math.max(0, e.hp - damage);
+                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], 'crit_vulnerability', 2);
+                            return { ...e, hp: newHp, status_effects: newEffects };
+                        });
+                        damage = 0;
+                        break;
+                    }
+                    case 'fire_wave': {
+                        damage = (card.power ?? 20) * damageMultiplier;
+                        const result = calculateDamageV4(damage, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        isAoe = true;
+                        logMsg = `${card.name}で烈火の波！ 敵全体に ${damage} のダメージ！`;
+                        currentEnemies = currentEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const newHp = Math.max(0, e.hp - damage);
+                            let newEffects = (e.status_effects || []) as StatusEffect[];
+                            const burnEffect = newEffects.find(se => se.id === 'burn');
+                            if (burnEffect) {
+                                newEffects = newEffects.map(se => se.id === 'burn' ? { ...se, duration: se.duration + 1 } : se);
+                                newMessages.push(`→ ${e.name}の炎上ターンが1ターン延長された！`);
+                            }
+                            return { ...e, hp: newHp, status_effects: newEffects };
+                        });
+                        damage = 0;
+                        break;
+                    }
+                    case 'quick_draw': {
+                        const deck = get().deck;
+                        const drawCount = Math.min(2, deck.length);
+                        const drawn: typeof nextHand = [];
+                        const remainingDeck = [...deck];
+                        for (let draw = 0; draw < drawCount; draw++) {
+                            if (remainingDeck.length === 0) break;
+                            drawn.push(remainingDeck.shift()!);
+                        }
+                        nextHand = [...nextHand, ...drawn];
+                        set({ deck: remainingDeck });
+                        logMsg = `${card.name}を使用！ 山札から ${drawCount} 枚ドロー！`;
+                        const isFirstCard = (battleState.cardsPlayedThisTurn || 0) <= 1;
+                        if (isFirstCard) {
+                            const newAp = Math.min(15, battleState.current_ap + 1);
+                            set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
+                            logMsg += ` さらにこのターン最初のカードプレイのため、APが1回復した！`;
+                        }
+                        break;
+                    }
+                    case 'tactical_plan': {
+                        const deck = get().deck;
+                        const drawn = deck.slice(0, 3);
+                        if (drawn.length > 0) {
+                            const picked = drawn[Math.floor(Math.random() * drawn.length)];
+                            nextHand.push(picked);
+                            const remainingDeck = deck.filter(c => c !== picked);
+                            set({ deck: remainingDeck });
+                            logMsg = `${card.name}を使用！ デッキの上の3枚から「${picked.name}」を手札に加え、残りを山札に戻した。`;
+                        } else {
+                            logMsg = `${card.name}を使用したが、山札にカードがなかった。`;
+                        }
+                        break;
+                    }
+                    case 'time_reverse': {
+                        const lastPlayedCard = nextDiscardPile[nextDiscardPile.length - 1];
+                        if (lastPlayedCard) {
+                            nextDiscardPile = nextDiscardPile.slice(0, -1);
+                            const halvedCard = {
+                                ...lastPlayedCard,
+                                ap_cost: Math.floor((lastPlayedCard.ap_cost ?? 1) / 2)
+                            };
+                            nextHand.push(halvedCard);
+                            logMsg = `${card.name}を使用！ 直前に使用した「${lastPlayedCard.name}」を手札に戻し、そのAPコストを半分にした！`;
+                        } else {
+                            logMsg = `${card.name}を使用したが、直前にプレイしたカードが見つからなかった。`;
+                        }
+                        break;
+                    }
+                    case 'mana_filter': {
+                        const discardable = nextHand.filter(c => c.id !== card.id && (c.type === 'Support' || c.type === 'Magic'));
+                        if (discardable.length > 0) {
+                            const picked = discardable[Math.floor(Math.random() * discardable.length)];
+                            nextHand = nextHand.filter(c => c.id !== picked.id);
+                            nextDiscardPile = [...nextDiscardPile, picked];
+                            const newAp = Math.min(15, battleState.current_ap + 3);
+                            set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
+                            logMsg = `${card.name}を使用！ 手札の「${picked.name}」を捨て、APを3回復した！`;
+                        } else {
+                            logMsg = `${card.name}を使用したが、手札に捨てる対象（魔法・サポート）となるカードがなかった。`;
                         }
                         break;
                     }
@@ -1415,14 +2071,17 @@ export const createBattleSlice = (
                         break;
                     }
                     default: {
-                        damage = card.power ?? 0;
+                        damage = (card.power ?? 0) * damageMultiplier;
                         if (damage > 0) {
                             const isMagic = card.type === 'Magic' || card.name.includes('魔法') || card.name.toLowerCase().includes('magic') || card.name.toLowerCase().includes('fire');
-                            const result = calculateDamageV4(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], isMagic, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                            const targetHasCritVul = loopTargetEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                            const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                            const result = calculateDamageV4(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], isMagic, effectivePlayerAtk, finalCritRate);
                             damage = result.damage;
                             const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
                             logMsg = `${loopTargetEnemy.name}に${card.name}を使用！${critLabel} ${damage} のダメージ！`;
                         } else { logMsg = `${card.name}を使用！`; }
+                        break;
                     }
                 }
 
@@ -1931,7 +2590,9 @@ export const createBattleSlice = (
         let vitDamageTaken = battleState.vitDamageTakenThisTurn;
 
         for (const enemy of activeEnemies) {
-            const enemyStatusEffects = (enemy.status_effects || []) as StatusEffect[];
+            const currentEnemyStatus = updatedEnemies.find(e => e.id === enemy.id);
+            if (!currentEnemyStatus || currentEnemyStatus.hp <= 0) continue;
+            const enemyStatusEffects = (currentEnemyStatus.status_effects || []) as StatusEffect[];
             if (isStunned(enemyStatusEffects)) {
                 newMessages.push(`${enemy.name}はスタン状態で行動できない！`);
                 continue;
@@ -2141,7 +2802,18 @@ export const createBattleSlice = (
                 continue;
             }
 
-            const result = routeDamage(newParty, finalEnemyAtk);
+            let result = routeDamage(newParty, finalEnemyAtk);
+
+            // cover_all check: if player has cover_all, redirect any PartyMember attack to Player
+            const hasCoverAll = playerEffectsNow.some(e => e.id === 'cover_all' && e.duration > 0);
+            if (hasCoverAll && result.target === 'PartyMember') {
+                result = {
+                    target: 'Player',
+                    damage: result.damage,
+                    isCovered: true,
+                    message: `身代わりの盾！ あなたが攻撃を肩代わりした！`
+                };
+            }
 
             if (result.target === 'PartyMember' && result.targetId) {
                 newParty = newParty.map(p => {
@@ -2151,7 +2823,10 @@ export const createBattleSlice = (
                         const defBonus = getDefBonus(pEffects);
                         const defDownMod = getDefDownMod(pEffects);
                         const effectiveDef = Math.floor((baseDef + defBonus) * defDownMod);
-                        const mitigated = Math.max(1, result.damage - effectiveDef);
+                        let mitigated = Math.max(1, result.damage - effectiveDef);
+                        if (pEffects.some(e => e.id === 'unyielding_barrier' && e.duration > 0)) {
+                            mitigated = Math.max(1, mitigated - 30);
+                        }
                         const newDur = Math.max(0, p.durability - mitigated);
                         const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
                         const defDesc = effectiveDef > 0 ? ` (防御減算 -${effectiveDef})` : '';
@@ -2178,7 +2853,10 @@ export const createBattleSlice = (
                 // v2.9.3h: DEF DOWNデバフ適用（DEF半減）
                 const defDownMod = getDefDownMod(currentPlayerEffects);
                 const effectiveDef = Math.floor((def + defBonus) * defDownMod);
-                const mitigated = Math.max(1, result.damage - effectiveDef);
+                let mitigated = Math.max(1, result.damage - effectiveDef);
+                if (currentPlayerEffects.some(e => e.id === 'unyielding_barrier' && e.duration > 0)) {
+                    mitigated = Math.max(1, mitigated - 30);
+                }
 
                 if (newUserProfile) {
                     const prevHp = newUserProfile.hp || 0;
@@ -2189,8 +2867,38 @@ export const createBattleSlice = (
 
                     if (mitigated > 0) {
                         const defDesc = effectiveDef > 0 ? ` (防御減算 -${effectiveDef})` : '';
+                        if (result.isCovered) {
+                            newMessages.push(`身代わりの盾！ あなたが攻撃を肩代わりした！`);
+                        }
                         newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} あなたに ${mitigated} ダメージ${defDesc} (HP: ${prevHp} → ${newHp})`);
                         newMessages.push(`__hp_sync:${newHp}`);
+
+                        // Reflection check
+                        let reflectDmg = 0;
+                        let reflectMsgs: string[] = [];
+
+                        if (playerEffectsNow.some(e => e.id === 'counter_spike' && e.duration > 0)) {
+                            const spikeDmg = Math.max(1, Math.floor(def / 2));
+                            reflectDmg += spikeDmg;
+                            reflectMsgs.push(`棘の鎧の効果で ${enemy.name} に ${spikeDmg} ダメージを反射！`);
+                        }
+                        if (playerEffectsNow.some(e => e.id === 'revenge_shield' && e.duration > 0)) {
+                            const revDmg = mitigated;
+                            reflectDmg += revDmg;
+                            reflectMsgs.push(`報復の盾の効果で ${enemy.name} に ${revDmg} ダメージを反射！`);
+                        }
+
+                        if (reflectDmg > 0) {
+                            const eIdx = updatedEnemies.findIndex(e => e.id === enemy.id);
+                            if (eIdx !== -1) {
+                                const newEnemyHp = Math.max(0, updatedEnemies[eIdx].hp - reflectDmg);
+                                updatedEnemies[eIdx] = { ...updatedEnemies[eIdx], hp: newEnemyHp };
+                                newMessages.push(...reflectMsgs);
+                                if (newEnemyHp <= 0) {
+                                    newMessages.push(`${enemy.name}は反射ダメージで倒れた！`);
+                                }
+                            }
+                        }
                     } else {
                         newMessages.push('あなたに攻撃！ しかしもう意識がない…');
                     }
@@ -2338,6 +3046,7 @@ export const createBattleSlice = (
                         vitDamageTakenThisTurn: false,
                         isPlayerTurn: true,
                         battlePhase: 'player',
+                        cardsPlayedThisTurn: 0,
                     }
                 }));
                 get().dealHand();

@@ -118,7 +118,7 @@ VALUES (125, 'card_iron_bastion', 'アイアンバスティオン', 'Defense', 3
 ON CONFLICT (id) DO UPDATE SET slug=EXCLUDED.slug, name=EXCLUDED.name, type=EXCLUDED.type, ap_cost=EXCLUDED.ap_cost, cost_type=EXCLUDED.cost_type, cost_val=EXCLUDED.cost_val, effect_val=EXCLUDED.effect_val, target_type=EXCLUDED.target_type, effect_id=EXCLUDED.effect_id, image_url=EXCLUDED.image_url, description=EXCLUDED.description;
 
 INSERT INTO public.cards (id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description)
-VALUES (126, 'card_revenge_shield', 'リベンジシールド', 'Defense', 2, 'none', 0, 0, 'self', 'revenge_shield', '/images/items/book_revenge_shield_1781808287823.png', '报复の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。')
+VALUES (126, 'card_revenge_shield', 'リベンジシールド', 'Defense', 2, 'none', 0, 0, 'self', 'revenge_shield', '/images/items/book_revenge_shield_1781808287823.png', '報復の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。')
 ON CONFLICT (id) DO UPDATE SET slug=EXCLUDED.slug, name=EXCLUDED.name, type=EXCLUDED.type, ap_cost=EXCLUDED.ap_cost, cost_type=EXCLUDED.cost_type, cost_val=EXCLUDED.cost_val, effect_val=EXCLUDED.effect_val, target_type=EXCLUDED.target_type, effect_id=EXCLUDED.effect_id, image_url=EXCLUDED.image_url, description=EXCLUDED.description;
 
 INSERT INTO public.cards (id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description)
@@ -130,7 +130,7 @@ VALUES (128, 'card_grounding', 'グラウンディング', 'Defense', 2, 'none',
 ON CONFLICT (id) DO UPDATE SET slug=EXCLUDED.slug, name=EXCLUDED.name, type=EXCLUDED.type, ap_cost=EXCLUDED.ap_cost, cost_type=EXCLUDED.cost_type, cost_val=EXCLUDED.cost_val, effect_val=EXCLUDED.effect_val, target_type=EXCLUDED.target_type, effect_id=EXCLUDED.effect_id, image_url=EXCLUDED.image_url, description=EXCLUDED.description;
 
 INSERT INTO public.cards (id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description)
-VALUES (129, 'card_pay_to_win', '成金の一撃', 'Skill', 2, 'none', 0, 30, 'single_enemy', 'gold_recoil', '/images/items/book_pay_to_win_1781803536472.png', 'ゴールド消費攻撃。威力: 30。所持ゴールドの2%(最大1')
+VALUES (129, 'card_pay_to_win', '成金の一撃', 'Skill', 2, 'none', 0, 30, 'single_enemy', 'gold_recoil', '/images/items/book_pay_to_win_1781803536472.png', 'ゴールド消費攻撃。威力: 30。所持ゴールドの2%(最大1,000G)を消費し、消費額の10%(最大+100)を威力に加算する。')
 ON CONFLICT (id) DO UPDATE SET slug=EXCLUDED.slug, name=EXCLUDED.name, type=EXCLUDED.type, ap_cost=EXCLUDED.ap_cost, cost_type=EXCLUDED.cost_type, cost_val=EXCLUDED.cost_val, effect_val=EXCLUDED.effect_val, target_type=EXCLUDED.target_type, effect_id=EXCLUDED.effect_id, image_url=EXCLUDED.image_url, description=EXCLUDED.description;
 
 INSERT INTO public.cards (id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description)

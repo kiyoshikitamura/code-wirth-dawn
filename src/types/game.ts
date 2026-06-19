@@ -543,6 +543,7 @@ export interface BattleState {
   // v15.0: フェーズ制バトルフロー
   // 'player'= プレイヤー操作中 | 'npc_done'= NPC処理完了・Enemy待機 | 'enemy_done'= 敵処理完了・次ターン待機
   battlePhase?: 'player' | 'npc_done' | 'enemy_done';
+  cardsPlayedThisTurn?: number;
 }
 
 export type Scenario = ScenarioDB;
