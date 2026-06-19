@@ -89,7 +89,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                     </div>
 
                     {/* Body */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-slate-300 leading-relaxed no-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-slate-300 leading-relaxed">
                         <section className="space-y-2">
                             <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ コロシアムとは</h3>
                             <p className="text-xs">
