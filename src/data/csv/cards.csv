@@ -109,7 +109,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 126,card_revenge_shield,リベンジシールド,Defense,2,none,0,0,self,revenge_shield,/images/items/book_revenge_shield_1781808287823.png,報復の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。
 127,card_giant_body,巨人の肉体,Support,1,none,0,0,single_ally,hp_cap_up,/images/items/book_giant_body_1781808298415.png,肉体強化。指定した味方の最大HPを戦闘終了まで+50し、HPを50回復する（最大HP上昇は累積しない）。
 128,card_grounding,グラウンディング,Defense,2,none,0,0,self,stun_immune_up,/images/items/book_grounding_1781808308871.png,大地の構え。自身に「2ターンの間、スタン・拘束無効（スタン免疫）」を付与し、DEFを+15する。
-129,card_pay_to_win,成金の一撃,Skill,2,none,0,30,single_enemy,gold_recoil,/images/items/book_pay_to_win_1781803536472.png,ゴールド消費攻撃。威力: 30。所持ゴールドの2%(最大1,000G)を消費し、消費額の10%(最大+100)を威力に加算。
+129,card_pay_to_win,成金の一撃,Skill,2,none,0,30,single_enemy,gold_recoil,/images/items/book_pay_to_win_1781803536472.png,"ゴールド消費攻撃。威力: 30。所持ゴールドの2%(最大1,000G)を消費し、消費額の10%(最大+100)を威力に加算。"
 130,card_gambler_dice,ギャンブラーダイス,Skill,1,none,0,60,single_enemy,random_dice,/images/items/book_gambler_dice_1781808320188.png,運試し。敵単体にランダムで 1 〜 120 の物理ダメージを与える（期待値60）。
 131,card_soul_boost,ソウルブースト,Support,2,none,0,0,self,soul_boost,/images/items/book_soul_boost_1781808330743.png,魂の暴走。自身のHPを現在値の20%消費し、次の物理または魔法カードの威力を2.5倍にする。
 132,card_ruin_pact,破滅の契約,Magic,3,none,0,0,random_enemy,discard_all_damage,/images/items/book_ruin_pact_1781808341084.png,破滅の契約。手札の他のカードを全て除外し、除外したカード1枚につき25の魔法ダメージをランダムにばら撒く。

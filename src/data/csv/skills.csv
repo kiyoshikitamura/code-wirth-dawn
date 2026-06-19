@@ -1,14 +1,14 @@
 id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_market,image_url,_comment
-3011,book_strike,教本:強打,1,500,2,any,2,false,/images/items/skill_vital_strike.png,汎用: 基礎的な物理攻撃。
-3012,book_slash,教本:斬撃,2,600,2,any,2,false,/images/items/book_slash.png,剣の腹で斬りつけ、敵に出血を強いる基礎的な剣術が記された薄い教本。 （効果: 敵単体に12のダメージ・軽微な出血付与・消費AP 1）
-3013,book_thrust,教本:突き,3,600,2,any,2,false,/images/items/book_thrust.png,隙を突いて鋭利な一撃を叩き込む、刺突攻撃に特化した技術書。 （効果: 敵単体に18のダメージ・消費AP 1）
-3014,book_guard,教本:防御,4,500,2,any,1,false,/images/items/skill_barrier_all.png,汎用: 防御力を一時上昇。
-3015,book_first_aid,教本:応急手当,5,800,2,any,1,false,/images/items/skill_first_aid.png,汎用: 基礎的な回復。
-3016,book_shield_bash,教本:シールドバッシュ,6,1200,1,any,2,false,/images/items/book_shield_bash.png,盾を武器として扱い、敵の体勢を崩す豪快な戦術を学ぶための教本。 （効果: 敵単体の防御力（DEF）を10上昇・1ターンスタン付与・消費AP 2）
-3017,book_focus,教本:集中,7,1000,2,any,2,false,/images/items/book_focus.png,呼吸を整えて次の動きに全神経を集中させる、精神統一のノウハウ。 （効果: 攻撃力上昇付与・消費AP 2）
-3018,book_quick_step,教本:クイックステップ,8,1200,2,any,2,false,/images/items/book_quick_step.png,敵の攻撃を紙一重でかわす、俊敏な身のこなしと足回りの技術書。 （効果: 3ターン回避率30%上昇付与・消費AP 2）
-3019,book_taunt,教本:挑発,9,1000,2,any,2,false,/images/items/skill_provoke.png,汎用: 敵の攻撃を自身に集める。
-3020,book_throw_stone,教本:石投げ,10,500,1,any,1,false,/images/items/book_throw_stone.png,落ちている石でも立派な武器になる。敵の目をくらませる小賢しい投石術。 （効果: 敵単体に8のダメージ・軽微な目潰し付与・消費AP 1）
+3011,book_strike,教本:強打,1,500,2,loc_all,2,false,/images/items/skill_vital_strike.png,汎用: 基礎的な物理攻撃。
+3012,book_slash,教本:斬撃,2,600,2,loc_all,2,false,/images/items/book_slash.png,剣の腹で斬りつけ、敵に出血を強いる基礎的な剣術が記された薄い教本。 （効果: 敵単体に12のダメージ・軽微な出血付与・消費AP 1）
+3013,book_thrust,教本:突き,3,600,2,loc_all,2,false,/images/items/book_thrust.png,隙を突いて鋭利な一撃を叩き込む、刺突攻撃に特化した技術書。 （効果: 敵単体に18のダメージ・消費AP 1）
+3014,book_guard,教本:防御,4,500,2,loc_all,1,false,/images/items/skill_barrier_all.png,汎用: 防御力を一時上昇。
+3015,book_first_aid,教本:応急手当,5,800,2,loc_all,1,false,/images/items/skill_first_aid.png,汎用: 基礎的な回復。
+3016,book_shield_bash,教本:シールドバッシュ,6,1200,1,loc_all,2,false,/images/items/book_shield_bash.png,盾を武器として扱い、敵の体勢を崩す豪快な戦術を学ぶための教本。 （効果: 敵単体の防御力（DEF）を10上昇・1ターンスタン付与・消費AP 2）
+3017,book_focus,教本:集中,7,1000,2,loc_all,2,false,/images/items/book_focus.png,呼吸を整えて次の動きに全神経を集中させる、精神統一のノウハウ。 （効果: 攻撃力上昇付与・消費AP 2）
+3018,book_quick_step,教本:クイックステップ,8,1200,2,loc_all,2,false,/images/items/book_quick_step.png,敵の攻撃を紙一重でかわす、俊敏な身のこなしと足回りの技術書。 （効果: 3ターン回避率30%上昇付与・消費AP 2）
+3019,book_taunt,教本:挑発,9,1000,2,loc_all,2,false,/images/items/skill_provoke.png,汎用: 敵の攻撃を自身に集める。
+3020,book_throw_stone,教本:石投げ,10,500,1,loc_all,1,false,/images/items/book_throw_stone.png,落ちている石でも立派な武器になる。敵の目をくらませる小賢しい投石術。 （効果: 敵単体に8のダメージ・軽微な目潰し付与・消費AP 1）
 3021,scroll_holy_sword,巻物:聖剣,11,6500,3,loc_holy_empire,4,false,/images/items/scroll_holy_sword.png,天からの光を剣に変えて敵を討ち払う、聖教会の高位神官が用いる神秘の巻物。 （効果: 敵単体に50のダメージ・消費AP 3）
 3022,scroll_holy_smite,巻物:裁き,12,6000,3,loc_holy_empire,4,false,/images/items/scroll_holy_smite.png,天からの光の柱を呼び降ろし、邪悪な者を一掃する聖帝国の強力な魔法のスクロール。 （効果: ランダムな敵に50のダメージ・消費AP 3）
 3023,book_prayer,聖書:祈り,13,4500,2,loc_holy_empire,3,false,/images/items/book_heal_s.png,ローラン: 全体リジェネ回復。
@@ -29,45 +29,45 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3038,book_iron_body,教本:鉄布衫,28,4500,2,loc_haryu,3,false,/images/items/skill_iron_skin.png,華龍: 重防御UP。
 3039,book_continuous,奥義書:連撃,29,7500,3,loc_haryu,4,false,/images/items/book_continuous.png,息をつく暇も与えず、流れるように打撃を重ねていく華龍拳法の真髄。 （効果: 敵単体に合計40のダメージ（2回攻撃、2撃目は防御無視）・消費AP 3）
 3040,book_flying_blade,教本:飛刀,30,4000,2,loc_haryu,3,false,/images/items/book_flying_blade.png,離れた敵に向けて曲刀をブーメランのように投擲し、確実に回収する特殊技術。 （効果: ランダムな敵に25の貫通ダメージ（防御無視）・消費AP 2）
-3056,grimoire_blood_drain,禁書:吸血,56,25000,3,any,1,true,/images/items/skill_cannibalism.png,闇市: ダメージの半分回復。
-3057,grimoire_dark_pact,禁書:闇の代償,57,30000,3,any,1,true,/images/items/grimoire_dark_pact.png,自らの血肉を悪魔に捧げることで、一時の無限の力と活力を得る冒涜的な誓約書。 （効果: 即座に自身のAPを全回復するが、代償として最大HPが10%低下する・消費AP 1）
-3058,grimoire_death_strike,禁書:即死攻撃,58,50000,3,any,1,true,/images/items/grimoire_death_strike.png,絶対的な「死」の概念を刃に乗せ、相手の命を一撃で刈り取る外道の暗殺奥義。 （効果: 30%の確率で敵単体を即死させ、失敗時は30のダメージを与える・消費AP 4）
-3059,grimoire_mad_frenzy,禁薬:狂戦士の薬,59,20000,3,any,1,true,/images/items/skill_berserk.png,闇市: 制御不能・ATK2倍/DEF半減。
-3060,grimoire_soul_sac,禁書:魂の生贄,60,40000,4,any,1,true,/images/items/grimoire_soul_sac.png,自身の魂を限界まで燃やし尽くし、世界そのものを破壊するエネルギーを放つ破滅の術式。 （効果: 敵全体に150のダメージ（防御無視）、ただし代償として自身の最大HPの10%の自傷ダメージ・消費AP 5）
+3056,grimoire_blood_drain,禁書:吸血,56,25000,3,loc_all,1,true,/images/items/skill_cannibalism.png,闇市: ダメージの半分回復。
+3057,grimoire_dark_pact,禁書:闇の代償,57,30000,3,loc_all,1,true,/images/items/grimoire_dark_pact.png,自らの血肉を悪魔に捧げることで、一時の無限の力と活力を得る冒涜的な誓約書。 （効果: 即座に自身のAPを全回復するが、代償として最大HPが10%低下する・消費AP 1）
+3058,grimoire_death_strike,禁書:即死攻撃,58,50000,3,loc_all,1,true,/images/items/grimoire_death_strike.png,絶対的な「死」の概念を刃に乗せ、相手の命を一撃で刈り取る外道の暗殺奥義。 （効果: 30%の確率で敵単体を即死させ、失敗時は30のダメージを与える・消費AP 4）
+3059,grimoire_mad_frenzy,禁薬:狂戦士の薬,59,20000,3,loc_all,1,true,/images/items/skill_berserk.png,闇市: 制御不能・ATK2倍/DEF半減。
+3060,grimoire_soul_sac,禁書:魂の生贄,60,40000,4,loc_all,1,true,/images/items/grimoire_soul_sac.png,自身の魂を限界まで燃やし尽くし、世界そのものを破壊するエネルギーを放つ破滅の術式。 （効果: 敵全体に150のダメージ（防御無視）、ただし代償として自身の最大HPの10%の自傷ダメージ・消費AP 5）
 3061,book_poison_brew,教本:調毒,62,2000,2,loc_marcund,2,false,/images/items/item_poison_manual.png,マルカンド: 毒付与攻撃。
 3062,scroll_blood_pact,禁術:血の契約書,63,15000,4,loc_haryu,1,false,/images/items/item_forbidden_scroll.png,華龍: ATK/DEF UP（5T）代償VIT消費。
 3071,spot_regalia_brave,五星の加護,71,0,4,,1,false,/images/items/spot_regalia_brave.png,スポット報酬: 高威力+ATK UP。
 3072,spot_luna_eclips,冥食の理,72,0,4,,1,false,/images/items/spot_luna_eclips.png,スポット報酬: 闇ダメージ+呪い。
 3073,spot_deus_machina,神殺しの光芒,73,0,5,,1,false,/images/items/spot_deus_machina.png,スポット報酬: 最高威力+自傷。
 3074,spot_desert_curse,砂塵の支配,74,0,4,,1,false,/images/items/spot_desert_curse.png,スポット報酬: 全体攻撃+DEF DOWN。
-3065,grimoire_fire,魔導書:火球,65,3500,3,any,3,false,/images/items/grimoire_fire.png,術者の魔力を炎に変換する基礎的な魔法体系が記されている。 （効果: 敵単体に40のダメージ・2ターン炎上付与・消費AP 2）
-3066,grimoire_ice,魔導書:氷槍,66,3500,3,any,3,false,/images/items/grimoire_ice.png,大気中の水分を凍らせて鋭い氷の槍を形成し、敵の動きを鈍らせる魔法の書。 （効果: 敵単体に35のダメージ・1ターン拘束付与・消費AP 2）
-3067,grimoire_thunder,魔導書:雷撃,67,4500,3,any,4,false,/images/items/grimoire_thunder.png,指先から激しい紫電を放ち、敵を痺れさせて行動不能にする雷の魔法の書。 （効果: 敵単体に45のダメージ・1ターンスタン付与・消費AP 3）
+3065,grimoire_fire,魔導書:火球,65,3500,3,loc_all,3,false,/images/items/grimoire_fire.png,術者の魔力を炎に変換する基礎的な魔法体系が記されている。 （効果: 敵単体に40のダメージ・2ターン炎上付与・消費AP 2）
+3066,grimoire_ice,魔導書:氷槍,66,3500,3,loc_all,3,false,/images/items/grimoire_ice.png,大気中の水分を凍らせて鋭い氷の槍を形成し、敵の動きを鈍らせる魔法の書。 （効果: 敵単体に35のダメージ・1ターン拘束付与・消費AP 2）
+3067,grimoire_thunder,魔導書:雷撃,67,4500,3,loc_all,4,false,/images/items/grimoire_thunder.png,指先から激しい紫電を放ち、敵を痺れさせて行動不能にする雷の魔法の書。 （効果: 敵単体に45のダメージ・1ターンスタン付与・消費AP 3）
 3041,scroll_kings_wall,巻物:王の城壁,31,12000,4,loc_holy_empire,5,false,/images/items/scroll_kings_wall.png,ローラン首都: 全体鉄壁防御。
 3042,scroll_dragon_dive,奥義書:ドラゴンダイブ,32,15000,5,loc_haryu,5,false,/images/items/scroll_dragon_dive.png,華龍首都: 全体DEF無視攻撃。
 3043,scroll_miracle,聖典:奇跡,33,20000,5,loc_holy_empire,5,false,/images/items/scroll_miracle.png,ローラン首都: 全体HP全回復。
 3044,scroll_emp_shield,巻物:皇帝の盾,34,10000,3,loc_holy_empire,5,false,/images/items/scroll_emp_shield.png,ローラン首都: 確定タウント。
-3045,scroll_absolute_def,奥義書:絶対防御,35,12000,4,any,5,false,/images/items/scroll_absolute_def.png,全国首都: 自身完全防御。
+3045,scroll_absolute_def,奥義書:絶対防御,35,12000,4,loc_all,5,false,/images/items/scroll_absolute_def.png,全国首都: 自身完全防御。
 3046,scroll_hundred_fists,奥義書:百裂拳,36,14000,4,loc_haryu,5,false,/images/items/scroll_hundred_fists.png,華龍首都: 高威力連撃。
-3047,grimoire_meteor,魔導書:メテオストライク,37,18000,5,any,5,false,/images/items/grimoire_fire.png,全国首都: 全体魔法+炎上。
+3047,grimoire_meteor,魔導書:メテオストライク,37,18000,5,loc_all,5,false,/images/items/grimoire_fire.png,全国首都: 全体魔法+炎上。
 3048,scroll_great_heal,聖典:完全治癒,38,16000,4,loc_holy_empire,5,false,/images/items/scroll_great_heal.png,ローラン首都: 単体HP全回復。
 3049,grimoire_holy_nova,魔導書:ホーリーノヴァ,39,14000,4,loc_holy_empire,5,false,/images/items/grimoire_holy_nova.png,ローラン首都: 全体魔法+目潰し。
 3050,scroll_assassinate,奥義書:暗殺,40,12000,3,loc_yatoshin,5,false,/images/items/manual_assassination.png,夜刀首都: 致死毒攻撃。
-3051,grimoire_demonic,魔導書:魔刃,41,14000,4,any,5,false,/images/items/grimoire_demonic.png,全国首都: 単体大ダメージ。
-3052,grimoire_blood_rage,禁書:血の怒り,42,20000,2,any,1,true,/images/items/skill_berserk.png,闇市: ATK UP(致命)。
-3053,scroll_lion_heart,巻物:獅子の心,43,16000,3,any,5,false,/images/items/scroll_lion_heart.png,全国首都: 全体ATK UP。
-3054,grimoire_swift_wind,魔導書:疾風術,44,10000,2,any,4,false,/images/items/grimoire_swift_wind.png,上位ショップ: 全体回避UP。
+3051,grimoire_demonic,魔導書:魔刃,41,14000,4,loc_all,5,false,/images/items/grimoire_demonic.png,全国首都: 単体大ダメージ。
+3052,grimoire_blood_rage,禁書:血の怒り,42,20000,2,loc_all,1,true,/images/items/skill_berserk.png,闇市: ATK UP(致命)。
+3053,scroll_lion_heart,巻物:獅子の心,43,16000,3,loc_all,5,false,/images/items/scroll_lion_heart.png,全国首都: 全体ATK UP。
+3054,grimoire_swift_wind,魔導書:疾風術,44,10000,2,loc_all,4,false,/images/items/grimoire_swift_wind.png,上位ショップ: 全体回避UP。
 3055,scroll_earth_shatter,奥義書:岩砕き,45,14000,4,loc_haryu,5,false,/images/items/scroll_earth_shatter.png,華龍首都: 全体攻撃+スタン。
-3068,grimoire_soul_rend,魔導書:魂裂き,46,12000,4,any,4,false,/images/items/grimoire_soul_rend.png,上位ショップ: MP吸収魔法。
+3068,grimoire_soul_rend,魔導書:魂裂き,46,12000,4,loc_all,4,false,/images/items/grimoire_soul_rend.png,上位ショップ: MP吸収魔法。
 3069,scroll_phantom,奥義書:幻影撃,47,10000,3,loc_yatoshin,5,false,/images/items/scroll_phantom.png,夜刀首都: ランダム攻撃+目潰し。
 3070,scroll_heaven_slash,奥義書:天翔斬,48,20000,5,loc_yatoshin,5,false,/images/items/scroll_heaven_slash.png,夜刀首都: 最高威力単体攻撃。
-3075,grimoire_dark_sphere,禁書:黒曜球,49,25000,4,any,1,true,/images/items/grimoire_dark_sphere.png,闇市: 全体攻撃+呪い。
+3075,grimoire_dark_sphere,禁書:黒曜球,49,25000,4,loc_all,1,true,/images/items/grimoire_dark_sphere.png,闇市: 全体攻撃+呪い。
 3076,scroll_royal_guard,巻物:近衛の盾,50,10000,3,loc_holy_empire,4,false,/images/items/scroll_royal_guard.png,ローラン: 仲間庇い防御。
 3077,scroll_dragon_scale,巻物:竜の鱗,51,12000,4,loc_haryu,4,false,/images/items/gear_dragon_scale.png,華龍: カウンター防御。
 3078,scroll_void_strike,奥義書:虚空撃,52,16000,4,loc_marcund,5,false,/images/items/scroll_void_strike.png,マルカンド首都: DEF貫通攻撃。
 3079,scroll_blessing,聖典:女神の祝福,53,18000,4,loc_holy_empire,5,false,/images/items/skill_meditation.png,ローラン首都: 全体回復+リジェネ。
 3080,scroll_death_dance,奥義書:死の舞踊,54,16000,4,loc_yatoshin,5,false,/images/items/scroll_death_dance.png,夜刀首都: 全体攻撃+出血。
-3088,grimoire_time_stop,禁書:時止めの法,55,30000,5,any,1,true,/images/items/grimoire_time_stop.png,闇市: 全体スタン(2T)。
+3088,grimoire_time_stop,禁書:時止めの法,55,30000,5,loc_all,1,true,/images/items/grimoire_time_stop.png,闇市: 全体スタン(2T)。
 3081,legend_baphomet_flame,戦利品:獄炎の刻印,81,0,4,,1,false,/images/items/legend_baphomet_flame.png,伝説報酬: 全体炎上攻撃。
 3082,legend_angel_grace,戦利品:天使の恩寵,82,0,4,,1,false,/images/items/legend_angel_grace.png,伝説報酬: 全体回復+リジェネ。
 3083,legend_dragon_inferno,戦利品:竜炎のブレス,83,0,5,,1,false,/images/items/legend_dragon_inferno.png,伝説報酬: 全体攻撃+DEF DOWN。
@@ -75,7 +75,7 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3085,legend_golem_core,戦利品:ゴーレムコア,85,0,4,,1,false,/images/items/legend_golem_core.png,伝説報酬: ATK+DEF自己強化。
 3086,legend_kraken_tide,戦利品:海神の怒涛,86,0,5,,1,false,/images/items/legend_kraken_tide.png,伝説報酬: 全体攻撃+拘束。
 3087,legend_mino_axe,戦利品:覇王の大斧,87,0,5,,1,false,/images/items/legend_mino_axe.png,伝説報酬: 超大ダメ+スタン。
-3063,book_meditation,教本:瞑想,64,600,2,any,3,false,/images/items/skill_meditation.png,汎用: 瞑想してAPを回復する。
+3063,book_meditation,教本:瞑想,64,600,2,loc_all,3,false,/images/items/skill_meditation.png,汎用: 瞑想してAPを回復する。
 3101,book_catharsis,魔術書:カタルシス,101,12000,4,any,1,false,/images/items/book_catharsis_1781803499014.png,毒・炎上を即座に爆発させて大ダメージを与える魔術書。
 3102,book_wound_tear,教本:傷口をえぐる,102,6000,3,any,1,false,/images/items/book_wound_tear_1781808056310.png,出血状態の敵に真価を発揮する剣術書。
 3103,book_defpless_prey,教本:無防備な獲物,103,7000,3,any,1,false,/images/items/book_defpless_prey_1781808066149.png,行動不能状態の敵を容赦なく撃ち抜く刺突の書。

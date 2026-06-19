@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useBattleTypewriter } from './hooks/useBattleTypewriter';
+import { BattleLogBox } from './BattleLogBox';
 import { useGameStore } from '@/store/gameStore';
 import { useRouter } from 'next/navigation';
 import { Shield, Sword, Sparkles, Heart, Footprints, Settings, Skull, Clock, Target, Users, User, LogOut, ScrollText, Zap, X } from 'lucide-react';
@@ -53,8 +54,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     } = useGameStore();
 
     const [logs, setLogs] = useState<string[]>([]);
-    const logEndRef = useRef<HTMLDivElement>(null);
-    const logContainerRef = useRef<HTMLDivElement>(null);
     const [showTurnOverlay, setShowTurnOverlay] = useState(false);
     const [activeEffect, setActiveEffect] = useState<string | null>(null);
     const [selectedPartyMember, setSelectedPartyMember] = useState<any | null>(null);
@@ -66,7 +65,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     // ─── タイプライターフック ────────────────────────────────────────────────
     const {
         displayedLogs, setDisplayedLogs,
-        typingText, setTypingText,
+        activeMessage,
         isTypingDone, setIsTypingDone,
         liveHp, setLiveHp,
         livePartyDurability, setLivePartyDurability,
@@ -74,6 +73,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         isTypingRef: isTyping,
         processQueue,
         flushQueue,
+        completeActiveMessage,
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp, (msg) => {
         if (msg.includes('の『')) {
@@ -150,12 +150,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
     const [showPhaseOverlay, setShowPhaseOverlay] = useState<null | 'player' | 'enemy'>(null);
 
-    // Auto-scroll logs
-    useEffect(() => {
-        if (logContainerRef.current) {
-            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-        }
-    }, [displayedLogs, typingText]);
+
 
     // Track previous messages to detect full reset (new battle)
     const prevMessagesRef = useRef<string[]>([]);
@@ -174,7 +169,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             typingQueue.current = [];
             isTyping.current = false;
             setDisplayedLogs([]);
-            setTypingText('');
             setIsTypingDone(false); // 新バトル開始 → ロック
             enqueuedUpToRef.current = curr.length; // 全メッセージをキューに積む
             typingQueue.current.push(...curr);
@@ -1344,41 +1338,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             )}
 
             {/* BATTLE LOG — スクロール可能 + タイプライター */}
-            <div className="relative z-20 px-3 w-full flex-shrink-0 drop-shadow-md">
-                <div
-                    ref={logContainerRef}
-                    className="bg-black/60 backdrop-blur-lg border border-white/20 rounded p-1.5 text-[10px] font-mono leading-relaxed h-[5.5rem] overflow-y-auto scroll-smooth shadow-inner"
-                    style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
-                >
-                    {displayedLogs.map((log, idx) => {
-                        const isLatest = idx === displayedLogs.length - 1 && !typingText;
-                        // ログ色分け: ユーザー=緑, エネミー=赤, パーティ=青, システム=黄
-                        const isPlayerLog = log.includes('あなた') || log.includes('を使用') || log.includes('のダメージ！');
-                        const isEnemyLog = log.includes('の行動') || log.includes('に攻撃') || log.includes('あなたに') && log.includes('ダメージ');
-                        const isPartyLog = log.includes('がかばった') || log.includes('パーティ') || (battleState.party || []).some((m: any) => log.startsWith(m.name));
-                        const isSystemLog = log.startsWith('---') || log.includes('勝利') || log.includes('敗北') || log.includes('ターゲット') || log.includes('逃') || log.includes('力尽きた') || log.includes('全ての敵');
-                        let logColor = isLatest ? 'text-white drop-shadow' : 'text-slate-300 drop-shadow; opacity-80';
-                        let bulletColor = isLatest ? 'text-amber-400 drop-shadow' : 'text-slate-500 drop-shadow';
-                        if (isSystemLog) { logColor = isLatest ? 'text-yellow-300 drop-shadow' : 'text-yellow-600 drop-shadow'; bulletColor = 'text-yellow-500 drop-shadow'; }
-                        else if (isEnemyLog) { logColor = isLatest ? 'text-red-300 drop-shadow' : 'text-red-700 drop-shadow'; bulletColor = 'text-red-500 drop-shadow'; }
-                        else if (isPartyLog) { logColor = isLatest ? 'text-sky-300 drop-shadow' : 'text-sky-600 drop-shadow'; bulletColor = 'text-sky-400 drop-shadow'; }
-                        else if (isPlayerLog) { logColor = isLatest ? 'text-green-300 drop-shadow' : 'text-green-600 drop-shadow'; bulletColor = 'text-green-500 drop-shadow'; }
-                        return (
-                            <div key={idx} className={`flex gap-1.5 ${logColor} ${isLatest ? 'font-bold' : ''}`}>
-                                <span className={`shrink-0 ${bulletColor}`}>▸</span>
-                                <span className="break-all">{log}</span>
-                            </div>
-                        );
-                    })}
-                    {typingText && (
-                        <div className="flex gap-1.5 text-slate-200 font-bold">
-                            <span className="shrink-0 text-amber-500">▸</span>
-                            <span className="break-all">{typingText}<span className="animate-pulse text-amber-400">|</span></span>
-                        </div>
-                    )}
-                    <div ref={logEndRef} />
-                </div>
-            </div>
+            <BattleLogBox
+                displayedLogs={displayedLogs}
+                activeMessage={activeMessage}
+                onMessageComplete={completeActiveMessage}
+                partyNames={(battleState.party || []).map((m: any) => m.name)}
+            />
 
             {/* Spacer to push cards and buttons to the bottom on long screens */}
             <div className="flex-grow" />

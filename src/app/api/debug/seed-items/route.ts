@@ -135,7 +135,8 @@ export async function GET(request: Request) {
                 nation_tags: nationTags.length > 0 ? nationTags : null,
                 min_prosperity: isNaN(minProsperity) ? 1 : minProsperity,
                 is_black_market: isBlackMarket,
-                effect_data: effectData
+                effect_data: effectData,
+                description: (effectData as any).description || null
             });
         }
 

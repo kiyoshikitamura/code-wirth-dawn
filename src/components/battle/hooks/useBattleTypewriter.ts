@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from 'react';
 export interface BattleTypewriterResult {
     // Display state
     displayedLogs: string[];
-    typingText: string;
+    activeMessage: string | null;
     isTypingDone: boolean;
     liveHp: number | null;
     livePartyDurability: Record<string, number>;
@@ -14,12 +14,12 @@ export interface BattleTypewriterResult {
 
     // Actions
     setLiveHp: (hp: number | null) => void;
-    setTypingText: React.Dispatch<React.SetStateAction<string>>;
     setLivePartyDurability: React.Dispatch<React.SetStateAction<Record<string, number>>>;
     setDisplayedLogs: React.Dispatch<React.SetStateAction<string[]>>;
     setIsTypingDone: React.Dispatch<React.SetStateAction<boolean>>;
     processQueue: () => void;
     flushQueue: () => void;
+    completeActiveMessage: () => void;
     enqueuedUpToRef: React.MutableRefObject<number>;
 }
 
@@ -31,31 +31,43 @@ export interface BattleTypewriterResult {
  */
 export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: (msg: string) => void): BattleTypewriterResult {
     const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
-    const [typingText, setTypingText] = useState<string>('');
+    const [activeMessage, setActiveMessage] = useState<string | null>(null);
     const [isTypingDone, setIsTypingDone] = useState(true);
     const [liveHp, setLiveHp] = useState<number | null>(initialHp ?? null);
     const [livePartyDurability, setLivePartyDurability] = useState<Record<string, number>>({});
 
     const typingQueue = useRef<string[]>([]);
     const isTypingRef = useRef(false);
-    const currentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const enqueuedUpToRef = useRef(0);
+
+    const completeActiveMessage = useCallback(() => {
+        if (!isTypingRef.current || !activeMessage) return;
+
+        setDisplayedLogs(prev => [...prev, activeMessage]);
+        setActiveMessage(null);
+        isTypingRef.current = false;
+
+        if (typingQueue.current.length > 0) {
+            setTimeout(() => processQueue(), 80);
+        } else {
+            setIsTypingDone(true);
+        }
+    }, [activeMessage]);
 
     // キューを即時フラッシュ（NEXT ボタンで早送り）
     const flushQueue = useCallback(() => {
-        if (currentTimerRef.current) {
-            clearInterval(currentTimerRef.current);
-            currentTimerRef.current = null;
-        }
-        const remaining = typingQueue.current.filter(m => !m.startsWith('__'));
+        const remaining = [
+            ...(activeMessage ? [activeMessage] : []),
+            ...typingQueue.current.filter(m => !m.startsWith('__'))
+        ];
         typingQueue.current = [];
         isTypingRef.current = false;
+        setActiveMessage(null);
         if (remaining.length > 0) {
             setDisplayedLogs(prev => [...prev, ...remaining]);
         }
-        setTypingText('');
         setIsTypingDone(true);
-    }, []);
+    }, [activeMessage]);
 
     // タイプライターキューを1件処理
     const processQueue = useCallback(() => {
@@ -90,7 +102,6 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
         // ターン区切り（--- ターン N ---）は即時表示
         if (/^--- .+ ---$/.test(message)) {
             setDisplayedLogs(prev => [...prev, message]);
-            setTypingText('');
             if (typingQueue.current.length === 0) {
                 setIsTypingDone(true);
             } else {
@@ -99,48 +110,28 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
             return;
         }
 
-        // 通常メッセージ: タイプライター
+        // 通常メッセージ: 子コンポーネントでタイプライターさせる
         isTypingRef.current = true;
         setIsTypingDone(false);
         if (onMessageStart) onMessageStart(message);
-        let charIdx = 0;
-        setTypingText('');
-
-        const timerId = setInterval(() => {
-            charIdx++;
-            if (charIdx <= message.length) {
-                setTypingText(message.slice(0, charIdx));
-            } else {
-                clearInterval(timerId);
-                if (currentTimerRef.current === timerId) currentTimerRef.current = null;
-                setDisplayedLogs(prev => [...prev, message]);
-                setTypingText('');
-                isTypingRef.current = false;
-                if (typingQueue.current.length > 0) {
-                    setTimeout(() => processQueue(), 80);
-                } else {
-                    setIsTypingDone(true);
-                }
-            }
-        }, 20);
-        currentTimerRef.current = timerId;
-    }, []);
+        setActiveMessage(message);
+    }, [onMessageStart]);
 
     return {
         displayedLogs,
-        typingText,
+        activeMessage,
         isTypingDone,
         liveHp,
         livePartyDurability,
         typingQueue,
         isTypingRef,
         setLiveHp,
-        setTypingText,
         setLivePartyDurability,
         setDisplayedLogs,
         setIsTypingDone,
         processQueue,
         flushQueue,
+        completeActiveMessage,
         enqueuedUpToRef,
     };
 }
