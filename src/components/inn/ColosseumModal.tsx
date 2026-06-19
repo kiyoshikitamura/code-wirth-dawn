@@ -259,9 +259,9 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     報酬: 800 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点
                                 </p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0 ml-4">
                                 <span className="text-xs text-slate-400 block font-bold">必要経費</span>
-                                <span className="text-sm font-black text-amber-400">{goldCosts.easy} G</span>
+                                <span className="text-sm font-black text-amber-400 whitespace-nowrap">{goldCosts.easy} G</span>
                             </div>
                         </button>
 
@@ -284,9 +284,9 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     報酬: 2,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点
                                 </p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0 ml-4">
                                 <span className="text-xs text-slate-400 block font-bold">必要経費</span>
-                                <span className="text-sm font-black text-amber-400">{goldCosts.normal} G</span>
+                                <span className="text-sm font-black text-amber-400 whitespace-nowrap">{goldCosts.normal} G</span>
                             </div>
                         </button>
 
@@ -309,9 +309,9 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     報酬: 4,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点
                                 </p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0 ml-4">
                                 <span className="text-xs text-slate-400 block font-bold">必要経費</span>
-                                <span className="text-sm font-black text-amber-400">{goldCosts.hard} G</span>
+                                <span className="text-sm font-black text-amber-400 whitespace-nowrap">{goldCosts.hard} G</span>
                             </div>
                         </button>
                     </div>
