@@ -348,9 +348,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     if (card.name.includes('風') || card.name.includes('疾')) effect = 'WIND';
                     else if (card.name.includes('突') || card.name.includes('槍') || card.name.includes('針')) effect = 'PIERCE';
                     else if (card.name.includes('打') || card.name.includes('砕') || card.name.includes('バッシュ')) effect = 'BLUNT';
-                    else if (card.name.includes('火') || card.name.includes('炎') || card.name.includes('爆') || card.name.includes('バーン') || card.name.includes('ファイア')) effect = 'FIRE';
-                    else if (card.name.includes('雷') || card.name.includes('電') || card.name.includes('サンダー') || card.name.includes('ライトニング')) effect = 'LIGHTNING';
-                    else if (card.name.includes('氷') || card.name.includes('凍') || card.name.includes('フリーズ') || card.name.includes('アイス')) effect = 'ICE';
+                    else if (card.name.includes('火') || card.name.includes('炎') || card.name.includes('爆') || card.name.includes('バーン') || card.name.includes('ファイア') || card.name.includes('デトネーション')) effect = 'FIRE';
+                    else if (card.name.includes('雷') || card.name.includes('電') || card.name.includes('サンダー') || card.name.includes('ライトニング') || card.name.includes('プラズマ')) effect = 'LIGHTNING';
+                    else if (card.name.includes('氷') || card.name.includes('凍') || card.name.includes('フリーズ') || card.name.includes('アイス') || card.name.includes('アブソリュート')) effect = 'ICE';
                     else if (card.name.includes('闇') || card.name.includes('影') || card.name.includes('ダーク') || card.name.includes('シャドウ') || card.name.includes('デス')) effect = 'DARK';
                     else if (card.name.includes('光') || card.name.includes('聖') || card.name.includes('シャイン') || card.name.includes('ホーリー')) effect = 'HOLY';
                     else effect = 'SLASH';
