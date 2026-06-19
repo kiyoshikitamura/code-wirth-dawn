@@ -10,7 +10,7 @@ import { getPassiveLabel } from '@/lib/passiveEffects';
 import { getEnemySkill, loadEnemySkillsFromDB } from '@/lib/enemySkills';
 import { useQuestState } from '../useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
-import { soundManager } from '@/lib/soundManager';
+import { soundManager, CARD_EFFECT_SE_MAP } from '@/lib/soundManager';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveMaxHp } from './profileSlice';
 import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
@@ -335,6 +335,19 @@ export const createBattleSlice = (
         });
 
         get().dealHand();
+
+        // バトルで使用されるSEの事前ロードを実行 (v34.6)
+        if (soundManager) {
+            const sm = soundManager;
+            const seToPreload = new Set<string>(['se_hit', 'se_attack', 'se_magic', 'se_heal', 'se_buff', 'se_debuff', 'se_taunt']);
+            equippedCards.forEach(c => {
+                const effInfo = getCardEffectInfo(c as any);
+                const seKey = CARD_EFFECT_SE_MAP[effInfo.effectType];
+                if (seKey) seToPreload.add(seKey);
+            });
+            // バックグラウンドでプリロード（バトル開始自体をブロックしない）
+            Promise.all(Array.from(seToPreload).map(key => sm.preloadSE(key))).catch(console.error);
+        }
 
         // バトルBGM: 通常はbgm_battleを使用。ボスBGMはシナリオパラメータで明示指定時のみ。
         // Note: useBgm(viewMode==='battle'?'bgm_battle':...) と二重再生を避けるため、

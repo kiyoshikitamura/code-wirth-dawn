@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, startTransition } from 'react';
 import { useBattleTypewriter } from './hooks/useBattleTypewriter';
 import { BattleLogBox } from './BattleLogBox';
 import { useGameStore } from '@/store/gameStore';
@@ -360,7 +360,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     setTimeout(() => setActiveEffect(null), 700);
                     try {
                         setIsActioning(true);
-                        await attackEnemy(card, 'player');
+                        startTransition(() => {
+                            attackEnemy(card, 'player');
+                        });
                     } finally {
                         setIsActioning(false);
                     }
@@ -390,7 +392,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             }
             try {
                 setIsActioning(true);
-                await attackEnemy(card);
+                startTransition(() => {
+                    attackEnemy(card);
+                });
             } finally {
                 setIsActioning(false);
             }
@@ -419,7 +423,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setTimeout(() => setActiveEffect(null), 700);
         try {
             setIsActioning(true);
-            await attackEnemy(card, targetMemberId);
+            startTransition(() => {
+                attackEnemy(card, targetMemberId);
+            });
         } finally {
             setIsActioning(false);
         }

@@ -374,6 +374,30 @@ class SoundManager {
     }
 
     // ─── SE ───────────────────────────────────────────────
+    
+    /** 指定されたキーのSEを事前にロードし、デコードしてキャッシュする */
+    async preloadSE(key: string): Promise<void> {
+        if (!this.seEnabled) return;
+        if (!this.audioCtx) this.init();
+        if (!this.audioCtx) return;
+
+        const src = SE_FILES[key];
+        const resolvedSrc = src || (key.startsWith('http') ? key : null);
+        if (!resolvedSrc) return;
+
+        if (this.seBufferCache.has(key)) return;
+
+        try {
+            const response = await fetch(resolvedSrc);
+            if (!response.ok) return;
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+            this.seBufferCache.set(key, buffer);
+            console.log(`[SoundManager] Preloaded & Cached SE: ${key}`);
+        } catch (e) {
+            console.warn(`[SoundManager] SE preload error (${key}):`, e);
+        }
+    }
 
     async playSE(key: string): Promise<void> {
         if (!this.seEnabled) return;
