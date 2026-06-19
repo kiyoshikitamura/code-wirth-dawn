@@ -2536,11 +2536,20 @@ export const createBattleSlice = (
                         const targetIdx = updatedParty.findIndex(m =>
                             m.name === action.targetName || (action.targetName === member.name && m.id === member.id)
                         );
-                        const healTarget = targetIdx >= 0 ? updatedParty[targetIdx] : member;
-                        const newDur = Math.min(healTarget.max_durability || healTarget.durability || 100, (healTarget.durability || 0) + action.healAmount);
-                        if (targetIdx >= 0) updatedParty[targetIdx] = { ...healTarget, durability: newDur };
-                        else { member = { ...member, durability: newDur }; updatedParty[i] = member; }
-                        newMessages.push(`__party_sync:${healTarget.id}:${newDur}`);
+                        if (targetIdx >= 0) {
+                            const healTarget = updatedParty[targetIdx];
+                            const newDur = Math.min(healTarget.max_durability || healTarget.durability || 100, (healTarget.durability || 0) + action.healAmount);
+                            updatedParty[targetIdx] = { ...healTarget, durability: newDur };
+                            if (targetIdx === i) {
+                                member = { ...member, durability: newDur };
+                            }
+                            newMessages.push(`__party_sync:${healTarget.id}:${newDur}`);
+                        } else {
+                            const newDur = Math.min(member.max_durability || member.durability || 100, (member.durability || 0) + action.healAmount);
+                            member = { ...member, durability: newDur };
+                            updatedParty[i] = member;
+                            newMessages.push(`__party_sync:${member.id}:${newDur}`);
+                        }
                     }
                 }
 
@@ -2561,7 +2570,7 @@ export const createBattleSlice = (
                                     };
                                 }
                             }
-                            member = updatedParty[i];
+                            member = { ...member, status_effects: updatedParty[i].status_effects };
                         } else if (action.targetName === 'あなた' || action.targetName === '味方') {
                             // プレイヤー単体バフ: プレイヤーのみに適用 (Bug AD)
                             currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, duration);
