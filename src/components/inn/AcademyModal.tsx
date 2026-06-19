@@ -176,8 +176,9 @@ export default function AcademyModal({ onClose }: Props) {
                 </div>
 
                 {/* Duplicate note */}
-                <p className="text-[9px] sm:text-[10px] text-amber-400/80 mb-3 sm:mb-4 max-w-xs leading-normal bg-amber-955/20 border border-amber-900/30 px-3 py-1.5 rounded-lg">
-                    ※重複カードまたは獲得済みのスキルが出現した場合、1枚につき <span className="text-amber-300 font-bold">500 G</span> 返還されます。
+                <p className="text-[9px] sm:text-[10px] text-amber-400/80 mb-3 sm:mb-4 max-w-xs leading-normal bg-amber-955/20 border border-amber-900/30 px-3 py-1.5 rounded-lg text-center">
+                    ※重複カードまたは習得済みのスキルが出現した場合、<br />
+                    1枚につき <span className="text-amber-300 font-bold">500 G</span> 返還されます。
                 </p>
 
                 {/* Pricing / Buy Button (Smaller layout and arrow removed) */}
