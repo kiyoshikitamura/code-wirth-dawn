@@ -1010,28 +1010,31 @@ export const createBattleSlice = (
 
         // [Security] JWT認証付きでサーバーにアクション同期 (v27.2)
         if (card && battleState.battle_session_id) {
-            try {
-                const authHeaders = await getAuthHeaders();
-                const headers: HeadersInit = {
-                    'Content-Type': 'application/json',
-                    ...authHeaders
-                };
-                const res = await fetch('/api/battle/action', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({
-                        battle_session_id: battleState.battle_session_id,
-                        action_type: 'attack_enemy',
-                        card,
-                        target_id: targetEnemyId,
-                        log_message: `Used ${card?.name}`
-                    })
-                });
-                const data = await res.json();
-                if (data.error) console.warn('Server validation failed:', data.error);
-            } catch (err) {
-                console.error('Action sync failed:', err);
-            }
+            // ノンブロッキングでバックグラウンド実行（演出とローカル計算の即時開始のため）
+            (async () => {
+                try {
+                    const authHeaders = await getAuthHeaders();
+                    const headers: HeadersInit = {
+                        'Content-Type': 'application/json',
+                        ...authHeaders
+                    };
+                    const res = await fetch('/api/battle/action', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            battle_session_id: battleState.battle_session_id,
+                            action_type: 'attack_enemy',
+                            card,
+                            target_id: targetEnemyId,
+                            log_message: `Used ${card?.name}`
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.error) console.warn('Server validation failed:', data.error);
+                } catch (err) {
+                    console.error('Action sync failed:', err);
+                }
+            })();
         }
 
         let nextHand = [...hand];

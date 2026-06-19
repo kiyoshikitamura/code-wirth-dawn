@@ -57,6 +57,13 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'User not found', debug, uError: uError?.message }, { status: 404 });
         }
 
+        // 1.5. Fetch retired characters to calculate generation
+        const { count: retiredCount } = await supabaseServer
+            .from('retired_characters')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+        const generation = (retiredCount || 0) + 1;
+
         // 2. All remaining data fetches in parallel
         const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult] = await Promise.all([
             supabaseServer.from('world_states').select('id, prosperity_level, location_name').maybeSingle(),
@@ -191,6 +198,10 @@ export async function GET(req: Request) {
             if (completedQuestIds.has(String(q.id))) return false;
 
             const reqs = q.requirements || {};
+
+            // 世代チェック (required_generations / min_generation)
+            const reqGen = reqs.required_generations || reqs.min_generation;
+            if (reqGen && generation < reqGen) return false;
 
             // nation_id: 現在地が指定国でなければ非表示（メインシナリオは除外: 舞台設定であり現在地制限ではない）
             const isMainScenario = q.slug && q.slug.startsWith('main_ep');

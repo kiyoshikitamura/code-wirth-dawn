@@ -494,7 +494,7 @@ export class QuestService {
             throw new Error(uError?.message || 'User not found');
         }
 
-        const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult] = await Promise.all([
+        const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult, retiredResult] = await Promise.all([
             supabaseServer.from('world_states').select('id, prosperity_level, location_name').maybeSingle(),
             supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
             supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
@@ -508,12 +508,15 @@ export class QuestService {
                 .in('quest_type', ['normal', 'special'])
                 .not('slug', 'like', 'ugc_%')
                 .limit(200),
+            supabaseServer.from('retired_characters').select('*', { count: 'exact', head: true }).eq('user_id', userId)
         ]);
 
         const worldState = worldStateResult.data;
         const inventory = inventoryResult.data;
         const reputations = reputationsResult.data;
         const completedQuests = completedQuestsResult.data;
+        const retiredCount = retiredResult.count || 0;
+        const generation = retiredCount + 1;
 
          let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
         let currentLocationSlug: string | null = locationResult.data?.slug || null;
@@ -589,6 +592,10 @@ export class QuestService {
             if (completedQuestIds.has(String(q.id))) return false;
 
             const reqs = q.requirements || {};
+            
+            // 世代チェック (required_generations / min_generation)
+            const reqGen = reqs.required_generations || reqs.min_generation;
+            if (reqGen && generation < reqGen) return false;
             
             // ユーザーの現在地が指定の国家 (nation_id) に属しているかチェック
             if (reqs.nation_id && currentLocationTag) {
