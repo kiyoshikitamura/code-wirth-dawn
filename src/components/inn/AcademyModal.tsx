@@ -105,15 +105,15 @@ export default function AcademyModal({ onClose }: Props) {
     const handleFlipAll = () => {
         if (phase !== 'cards_reveal') return;
         
-        let delay = 0;
-        flippedCards.forEach((isFlipped, idx) => {
-            if (!isFlipped) {
-                setTimeout(() => {
-                    handleFlipCard(idx);
-                }, delay);
-                delay += 150;
-            }
-        });
+        // Flip all cards instantly
+        setFlippedCards([true, true, true, true, true]);
+        
+        const hasRare = rolledCards.some(card => card.rarity === 'SR' || card.rarity === 'R');
+        if (hasRare) {
+            soundManager?.playSE('se_level_up');
+        } else {
+            soundManager?.playSE('se_item_get');
+        }
     };
 
     const handleBackToShop = async () => {
@@ -150,26 +150,21 @@ export default function AcademyModal({ onClose }: Props) {
             <div className="absolute inset-0 bg-[url('/effects/magic_circle.png')] opacity-10 bg-center bg-no-repeat bg-contain pointer-events-none mix-blend-screen animate-[spin_60s_linear_infinite]" />
             
             <div className="relative z-10 max-w-md w-full flex flex-col items-center py-2 sm:py-0">
-                {/* Visual Header */}
-                <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-3 sm:mb-6 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
-                    <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-amber-400 animate-pulse" />
-                </div>
-                
                 <h3 className="text-xl sm:text-2xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mb-1 sm:mb-2 tracking-widest">
                     混沌の魔導と反逆の鉄壁
                 </h3>
-                <p className="text-[10px] sm:text-xs text-blue-200/60 mb-5 sm:mb-8 max-w-sm uppercase tracking-[0.2em]">Chaos Spell & Rebel Aegis Booster Pack</p>
+                <p className="text-[10px] sm:text-xs text-blue-200/60 mb-5 sm:mb-6 max-w-sm uppercase tracking-[0.2em]">Chaos Spell & Rebel Aegis Booster Pack</p>
                 
-                {/* Pack Image Container */}
-                <div className="relative w-32 h-44 sm:w-44 sm:h-60 mb-5 sm:mb-8 group cursor-pointer active:scale-95 transition-transform" onClick={handleBuyPack}>
-                    <div className="absolute inset-0 bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center rounded-2xl border-4 border-amber-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] overflow-hidden flex flex-col items-center justify-between p-4 transform group-hover:rotate-1 group-hover:scale-105 transition-all">
+                {/* Pack Image Container (Enlarged and frame removed) */}
+                <div className="relative w-40 h-56 sm:w-52 sm:h-72 mb-5 sm:mb-6 group cursor-pointer active:scale-95 transition-transform" onClick={handleBuyPack}>
+                    <div className="absolute inset-0 bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.45)] overflow-hidden flex flex-col items-center justify-between p-4 transform group-hover:rotate-1 group-hover:scale-105 transition-all">
                         {/* Shimmer/Foil accents */}
                         <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out" />
                         
                         <span className="text-[8px] sm:text-[9px] text-amber-400 font-bold uppercase tracking-[0.25em] border border-amber-500/40 px-2 py-0.5 rounded bg-black/50">EXTRA EDITION</span>
                         
-                        <div className="text-center bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
-                            <span className="block text-base sm:text-xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200 leading-none tracking-widest mb-1 drop-shadow-lg">魔導と鉄壁</span>
+                        <div className="text-center bg-black/60 px-2.5 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
+                            <span className="block text-sm sm:text-lg font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200 leading-none tracking-widest mb-1 drop-shadow-lg whitespace-nowrap">魔導と鉄壁</span>
                             <span className="block text-[7px] sm:text-[8px] text-indigo-300 font-bold uppercase tracking-widest">Booster Pack</span>
                         </div>
                         
@@ -185,29 +180,26 @@ export default function AcademyModal({ onClose }: Props) {
                     ※重複カードまたは獲得済みのスキルが出現した場合、1枚につき <span className="text-amber-300 font-bold">500 G</span> 返還されます。
                 </p>
 
-                {/* Pricing / Buy Button */}
-                <div className="w-full bg-[#161a33]/60 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-blue-900/40 shadow-inner flex flex-col items-center gap-3 sm:gap-4">
-                    <div className="flex items-center gap-2">
+                {/* Pricing / Buy Button (Smaller layout and arrow removed) */}
+                <div className="w-full bg-[#161a33]/60 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-blue-900/40 shadow-inner flex flex-col items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-1.5">
                         <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
-                        <span className="text-xl sm:text-2xl font-mono font-bold text-amber-300">5,000 G</span>
+                        <span className="text-lg sm:text-2xl font-mono font-bold text-amber-300">5,000 G</span>
                     </div>
                     
                     <button
                         onClick={handleBuyPack}
                         disabled={purchasing || gold < 5000}
-                        className={`w-full py-3 sm:py-4 rounded-xl font-bold text-sm tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
+                        className={`px-8 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
                             ${gold < 5000 
                                 ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 border-amber-400 shadow-amber-500/10'
                             }`}
                     >
                         {purchasing ? (
-                            <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                         ) : (
-                            <>
-                                <span>パックを購入する</span>
-                                <ArrowRight className="w-4 h-4" />
-                            </>
+                            <span>パックを購入する</span>
                         )}
                     </button>
                     
@@ -236,8 +228,8 @@ export default function AcademyModal({ onClose }: Props) {
                     {/* Shadow & Glow */}
                     <div className="absolute -inset-4 bg-gradient-to-r from-amber-500 to-purple-600 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse" />
                     
-                    {/* Pack graphics */}
-                    <div className="relative w-full h-full bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center rounded-2xl border-4 border-amber-500 flex flex-col items-center justify-between p-4 sm:p-6 overflow-hidden shadow-2xl">
+                    {/* Pack graphics (Frame removed) */}
+                    <div className="relative w-full h-full bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center rounded-2xl flex flex-col items-center justify-between p-4 sm:p-6 overflow-hidden shadow-2xl">
                         {/* Jagated border at the top to simulate crimped foil */}
                         <div className="absolute top-0 inset-x-0 h-3 sm:h-4 bg-amber-500 flex items-center justify-around opacity-90">
                             {[...Array(10)].map((_, i) => (
@@ -305,9 +297,9 @@ export default function AcademyModal({ onClose }: Props) {
                     )}
                 </div>
 
-                {/* 5 Cards Row/Grid - Optimized columns for mobile */}
-                <div className="flex-1 max-w-5xl mx-auto w-full flex items-center justify-center py-2 sm:py-4 z-10 min-h-0">
-                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 md:gap-5 w-full max-w-md md:max-w-none justify-center">
+                {/* 5 Cards Row/Grid - Flexbox to automatically center rows (3 in top, 2 in bottom) */}
+                <div className="flex-1 max-w-4xl mx-auto w-full flex items-center justify-center py-2 sm:py-4 z-10 min-h-0">
+                    <div className="flex flex-wrap gap-2.5 sm:gap-4 md:gap-5 w-full max-w-sm sm:max-w-xl md:max-w-none justify-center">
                         {rolledCards.map((card, idx) => {
                             const isFlipped = flippedCards[idx];
                             
@@ -315,7 +307,7 @@ export default function AcademyModal({ onClose }: Props) {
                                 <div 
                                     key={idx}
                                     onClick={() => handleFlipCard(idx)}
-                                    className={`relative aspect-[5/7] w-full max-w-[100px] xs:max-w-[120px] sm:max-w-[140px] md:max-w-[160px] mx-auto cursor-pointer rounded-xl sm:rounded-2xl border transition-all duration-300 active:scale-95 select-none
+                                    className={`relative aspect-[5/7] w-[29%] xs:w-[30%] sm:w-[130px] md:w-[160px] cursor-pointer rounded-xl sm:rounded-2xl border transition-all duration-300 active:scale-95 select-none
                                         ${getCardGlowClass(card.rarity, isFlipped)}`}
                                     style={{
                                         perspective: '1000px',
@@ -329,19 +321,20 @@ export default function AcademyModal({ onClose }: Props) {
                                             transition: 'transform 0.6s'
                                         }}
                                     >
-                                        {/* Card Back */}
+                                        {/* Card Back (Uses booster pack wrapper image as background, keeping border) */}
                                         <div 
-                                            className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-purple-955 to-slate-900 border border-amber-600/50 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 flex flex-col items-center justify-between shadow-lg"
+                                            className="absolute inset-0 bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center border border-amber-600/55 rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 flex flex-col items-center justify-between shadow-lg overflow-hidden"
                                             style={{
                                                 backfaceVisibility: 'hidden',
                                             }}
                                         >
-                                            <div className="w-full h-full border border-amber-600/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6">
-                                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400/70 font-black text-[8px] sm:text-[10px]">学院</div>
-                                                <div className="w-7 h-7 sm:w-10 sm:h-10 border border-amber-500/20 rotate-45 flex items-center justify-center">
-                                                    <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-500/30 -rotate-45" />
+                                            <div className="absolute inset-0 bg-indigo-950/45 rounded-xl sm:rounded-2xl pointer-events-none" />
+                                            <div className="relative z-10 w-full h-full border border-amber-500/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6 bg-black/45 backdrop-blur-[0.5px]">
+                                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400/80 font-black text-[8px] sm:text-[10px]">学院</div>
+                                                <div className="w-7 h-7 sm:w-10 sm:h-10 border border-amber-500/25 rotate-45 flex items-center justify-center">
+                                                    <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-400/40 -rotate-45" />
                                                 </div>
-                                                <div className="text-[6px] sm:text-[8px] text-amber-500/40 tracking-[0.15em] sm:tracking-[0.2em] font-bold">WIRTH-DAWN</div>
+                                                <div className="text-[6px] sm:text-[8px] text-amber-550/40 tracking-[0.15em] sm:tracking-[0.2em] font-bold">WIRTH-DAWN</div>
                                             </div>
                                         </div>
 
