@@ -24,7 +24,12 @@ export type CardEffectType =
     | 'aoe_attack'       // 全体攻撃
     | 'debuff_enemy'     // 敵デバフ（毒付与等）
     | 'cure_self'        // 自己の状態異常/デバフ解除
-    | 'support_activate';// Supportカード使用（バトル内永続バフ）
+    | 'support_activate' // Supportカード使用（バトル内永続バフ）
+    | 'catharsis'        // 起爆
+    | 'shield_slam'      // 防御値アタック
+    | 'pay_to_win'       // ゴールド消費攻撃
+    | 'double_cast'      // ダブルキャスト
+    | 'search_light';    // サーチドロー
 
 export interface CardEffectInfo {
     effectType: CardEffectType;
@@ -140,6 +145,12 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '85': { effectType: 'support_activate', effectId: 'atk_up', effectDuration: 5, skipDamage: true }, // ゴーレムコア（ATK UP 5T）
     '86': { effectType: 'aoe_attack', effectId: 'bind', effectDuration: 1 },                       // 海神の怒涛（全体90+拘束1T）
     '87': { effectType: 'attack', effectId: 'stun', effectDuration: 1 },                           // 覇王の大斧（130dmg+スタン1T）
+    // ─── 魔術学院 追加 (101, 105, 129, 119, 118) ───────────────────
+    '101': { effectType: 'catharsis' },                                                            // カタルシス
+    '105': { effectType: 'shield_slam' },                                                           // シールドスラム
+    '129': { effectType: 'pay_to_win' },                                                            // 成金の一撃
+    '119': { effectType: 'double_cast', skipDamage: true },                                         // ダブルキャスト
+    '118': { effectType: 'search_light', skipDamage: true },                                        // サーチライト
 };
 
 // ─── ユーティリティ ─────────────────────────────────────────

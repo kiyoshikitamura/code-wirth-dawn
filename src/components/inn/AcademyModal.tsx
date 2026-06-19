@@ -1,0 +1,489 @@
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Sparkles, Coins, BookOpen, ArrowRight, RotateCcw, X } from 'lucide-react';
+import { useGameStore } from '@/store/gameStore';
+import { soundManager } from '@/lib/soundManager';
+import { getAuthHeaders } from '@/lib/authToken';
+
+interface AcademyCard {
+    id: number;
+    name: string;
+    slug: string;
+    image_url: string;
+    description: string;
+    rarity: 'SR' | 'R' | 'U' | 'C';
+    isDuplicate: boolean;
+}
+
+interface Props {
+    onClose: () => void;
+}
+
+export default function AcademyModal({ onClose }: Props) {
+    const { gold, fetchInventory } = useGameStore();
+    const [phase, setPhase] = useState<'shop' | 'pack_sealed' | 'pack_ripped' | 'cards_reveal'>('shop');
+    const [purchasing, setPurchasing] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [rolledCards, setRolledCards] = useState<AcademyCard[]>([]);
+    const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false, false, false]);
+    const [cashbackRefund, setCashbackRefund] = useState(0);
+    const [newGold, setNewGold] = useState(gold);
+
+    useEffect(() => {
+        // Initialize sound manager
+        soundManager?.init();
+    }, []);
+
+    const handleBuyPack = async () => {
+        if (gold < 5000) {
+            setErrorMsg('ゴールドが不足しています。');
+            return;
+        }
+        if (purchasing) return;
+
+        setPurchasing(true);
+        setErrorMsg(null);
+        soundManager?.playSE('se_click');
+
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/shop/buy-pack', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                }
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setRolledCards(data.cards);
+                setCashbackRefund(data.refund);
+                setNewGold(data.new_gold);
+                setFlippedCards([false, false, false, false, false]);
+                
+                // Advance to sealed pack screen
+                setPhase('pack_sealed');
+                soundManager?.playSE('se_modal_open');
+            } else {
+                setErrorMsg(data.error || 'パックの購入に失敗しました。');
+            }
+        } catch (e) {
+            console.error(e);
+            setErrorMsg('通信エラーが発生しました。');
+        } finally {
+            setPurchasing(false);
+        }
+    };
+
+    const handleRipPack = () => {
+        if (phase !== 'pack_sealed') return;
+        soundManager?.playSE('se_taunt'); // rip sound effect
+        setPhase('pack_ripped');
+        
+        // Auto transition to show cards after a short animation delay
+        setTimeout(() => {
+            setPhase('cards_reveal');
+        }, 800);
+    };
+
+    const handleFlipCard = (index: number) => {
+        if (phase !== 'cards_reveal' || flippedCards[index]) return;
+
+        const newFlipped = [...flippedCards];
+        newFlipped[index] = true;
+        setFlippedCards(newFlipped);
+
+        const card = rolledCards[index];
+        if (card.rarity === 'SR' || card.rarity === 'R') {
+            soundManager?.playSE('se_level_up'); // Rare/SR glow sound
+        } else {
+            soundManager?.playSE('se_item_get'); // Normal get card sound
+        }
+    };
+
+    const handleFlipAll = () => {
+        if (phase !== 'cards_reveal') return;
+        
+        let delay = 0;
+        flippedCards.forEach((isFlipped, idx) => {
+            if (!isFlipped) {
+                setTimeout(() => {
+                    handleFlipCard(idx);
+                }, delay);
+                delay += 150;
+            }
+        });
+    };
+
+    const handleBackToShop = async () => {
+        // Sync local game store stats
+        await useGameStore.getState().fetchUserProfile();
+        await fetchInventory();
+        setPhase('shop');
+    };
+
+    const getRarityBadgeColor = (rarity: string) => {
+        switch (rarity) {
+            case 'SR': return 'bg-purple-900/80 border-purple-400 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.5)]';
+            case 'R': return 'bg-amber-900/80 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]';
+            case 'U': return 'bg-blue-900/80 border-blue-400 text-blue-300';
+            default: return 'bg-slate-800/80 border-slate-600 text-slate-300';
+        }
+    };
+
+    const getCardGlowClass = (rarity: string, isFlipped: boolean) => {
+        if (!isFlipped) return 'border-amber-700/50 hover:border-amber-500/80';
+        switch (rarity) {
+            case 'SR': return 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.6)] animate-pulse';
+            case 'R': return 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]';
+            case 'U': return 'border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]';
+            default: return 'border-slate-700';
+        }
+    };
+
+    const renderShop = () => (
+        <div className="flex-1 flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 text-center bg-[#0d0f1f] bg-radial-gradient text-slate-100 overflow-y-auto relative min-h-0">
+            {/* Background image & gradient overlays */}
+            <div className="absolute inset-0 bg-[url('/images/bg_magic_academy.png')] bg-cover bg-center opacity-25 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0d0f1f]/90 via-[#0d0f1f]/50 to-[#0d0f1f]/95 pointer-events-none" />
+            <div className="absolute inset-0 bg-[url('/effects/magic_circle.png')] opacity-10 bg-center bg-no-repeat bg-contain pointer-events-none mix-blend-screen animate-[spin_60s_linear_infinite]" />
+            
+            <div className="relative z-10 max-w-md w-full flex flex-col items-center py-2 sm:py-0">
+                {/* Visual Header */}
+                <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-3 sm:mb-6 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                    <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-amber-400 animate-pulse" />
+                </div>
+                
+                <h3 className="text-xl sm:text-2xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mb-1 sm:mb-2 tracking-widest">
+                    混沌の魔導と反逆の鉄壁
+                </h3>
+                <p className="text-[10px] sm:text-xs text-blue-200/60 mb-5 sm:mb-8 max-w-sm uppercase tracking-[0.2em]">Chaos Spell & Rebel Aegis Booster Pack</p>
+                
+                {/* Pack Image Container */}
+                <div className="relative w-32 h-44 sm:w-44 sm:h-60 mb-5 sm:mb-8 group cursor-pointer active:scale-95 transition-transform" onClick={handleBuyPack}>
+                    <div className="absolute inset-0 bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center rounded-2xl border-4 border-amber-500 shadow-[0_0_30px_rgba(99,102,241,0.4)] overflow-hidden flex flex-col items-center justify-between p-4 transform group-hover:rotate-1 group-hover:scale-105 transition-all">
+                        {/* Shimmer/Foil accents */}
+                        <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out" />
+                        
+                        <span className="text-[8px] sm:text-[9px] text-amber-400 font-bold uppercase tracking-[0.25em] border border-amber-500/40 px-2 py-0.5 rounded bg-black/50">EXTRA EDITION</span>
+                        
+                        <div className="text-center bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
+                            <span className="block text-base sm:text-xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200 leading-none tracking-widest mb-1 drop-shadow-lg">魔導と鉄壁</span>
+                            <span className="block text-[7px] sm:text-[8px] text-indigo-300 font-bold uppercase tracking-widest">Booster Pack</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 text-amber-400 font-black text-xs sm:text-sm bg-black/75 px-2.5 py-1 rounded-full border border-amber-500/30">
+                            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <span>5 CARDS</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Duplicate note */}
+                <p className="text-[9px] sm:text-[10px] text-amber-400/80 mb-3 sm:mb-4 max-w-xs leading-normal bg-amber-955/20 border border-amber-900/30 px-3 py-1.5 rounded-lg">
+                    ※重複カードまたは獲得済みのスキルが出現した場合、1枚につき <span className="text-amber-300 font-bold">500 G</span> 返還されます。
+                </p>
+
+                {/* Pricing / Buy Button */}
+                <div className="w-full bg-[#161a33]/60 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-blue-900/40 shadow-inner flex flex-col items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2">
+                        <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+                        <span className="text-xl sm:text-2xl font-mono font-bold text-amber-300">5,000 G</span>
+                    </div>
+                    
+                    <button
+                        onClick={handleBuyPack}
+                        disabled={purchasing || gold < 5000}
+                        className={`w-full py-3 sm:py-4 rounded-xl font-bold text-sm tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
+                            ${gold < 5000 
+                                ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 border-amber-400 shadow-amber-500/10'
+                            }`}
+                    >
+                        {purchasing ? (
+                            <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <span>パックを購入する</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
+                    </button>
+                    
+                    {errorMsg && (
+                        <p className="text-xs text-red-400 mt-1">{errorMsg}</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderSealedPack = () => (
+        <div className="flex-1 flex flex-col items-center justify-start sm:justify-center bg-[#070914] text-slate-100 p-4 sm:p-6 relative overflow-y-auto animate-in zoom-in-95 duration-300">
+            <div className="absolute inset-0 bg-[url('/images/bg_magic_academy.png')] bg-cover bg-center opacity-20 pointer-events-none" />
+            <div className="absolute inset-0 bg-radial-gradient opacity-40 mix-blend-screen pointer-events-none" />
+            
+            <div className="relative z-10 flex flex-col items-center text-center py-4">
+                <p className="text-xs text-amber-500 font-bold uppercase tracking-[0.3em] mb-2 sm:mb-4 animate-pulse">購入成功！</p>
+                <h4 className="text-base sm:text-lg font-bold font-serif mb-6 sm:mb-8 text-slate-200">パックをタップして開封してください</h4>
+
+                {/* Floating card pack with ripping indicator */}
+                <div 
+                    onClick={handleRipPack}
+                    className="relative w-44 h-64 sm:w-56 sm:h-80 cursor-pointer group hover:scale-105 active:scale-95 transition-all duration-300"
+                >
+                    {/* Shadow & Glow */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-amber-500 to-purple-600 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse" />
+                    
+                    {/* Pack graphics */}
+                    <div className="relative w-full h-full bg-[url('/images/booster_pack_wrapper.png')] bg-cover bg-center rounded-2xl border-4 border-amber-500 flex flex-col items-center justify-between p-4 sm:p-6 overflow-hidden shadow-2xl">
+                        {/* Jagated border at the top to simulate crimped foil */}
+                        <div className="absolute top-0 inset-x-0 h-3 sm:h-4 bg-amber-500 flex items-center justify-around opacity-90">
+                            {[...Array(10)].map((_, i) => (
+                                <div key={i} className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-indigo-950 rotate-45 transform translate-y-1" />
+                            ))}
+                        </div>
+
+                        <div className="pt-4 sm:pt-6">
+                            <span className="block text-[8px] sm:text-[10px] text-amber-400 font-bold tracking-[0.2em] text-center bg-black/40 px-2 py-0.5 rounded">EXTRA EDITION</span>
+                        </div>
+
+                        <div className="text-center flex-1 flex flex-col justify-center my-2 bg-black/55 px-3 py-2 rounded-xl border border-white/5">
+                            <h3 className="text-xl sm:text-2xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200 tracking-wider mb-1 sm:mb-2">混沌の魔導</h3>
+                            <p className="text-[8px] sm:text-[9px] text-purple-300 font-bold tracking-[0.15em] uppercase">Pack Ripping Ready</p>
+                        </div>
+
+                        {/* Prompt indicator */}
+                        <div className="w-full py-2 sm:py-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 font-bold text-xs animate-bounce bg-black/40">
+                            TAP TO OPEN
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderRippingPack = () => (
+        <div className="flex-1 flex items-center justify-center bg-[#070914] text-slate-100">
+            <div className="relative w-64 h-80 flex flex-col items-center justify-center">
+                {/* Simulating pack tearing apart */}
+                <div className="absolute inset-0 flex flex-col">
+                    <div className="w-full h-1/2 bg-gradient-to-b from-indigo-950 to-purple-900 rounded-t-2xl border-x-4 border-t-4 border-amber-500 animate-[slideOutUp_0.8s_forwards] flex items-end justify-center pb-2 overflow-hidden">
+                        <span className="text-xl font-bold font-serif text-white">撕</span>
+                    </div>
+                    <div className="w-full h-1/2 bg-gradient-to-t from-slate-955 to-purple-900 rounded-b-2xl border-x-4 border-b-4 border-amber-500 animate-[slideOutDown_0.8s_forwards] flex items-start justify-center pt-2 overflow-hidden">
+                        <span className="text-xl font-bold font-serif text-white">裂</span>
+                    </div>
+                </div>
+                {/* Big flash in the middle */}
+                <div className="w-32 h-32 bg-white rounded-full blur-3xl opacity-80 animate-ping absolute" />
+            </div>
+        </div>
+    );
+
+    const renderCardsReveal = () => {
+        const allFlipped = flippedCards.every(f => f);
+        
+        return (
+            <div className="flex-1 flex flex-col bg-[#05060c] text-slate-100 p-3 sm:p-4 relative overflow-y-auto min-h-0">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(88,28,135,0.15),transparent_70%)] pointer-events-none" />
+                
+                {/* Header info */}
+                <div className="w-full max-w-4xl mx-auto flex justify-between items-center mb-3 sm:mb-6 z-10 flex-shrink-0">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] sm:text-[10px] text-amber-500 font-black tracking-widest uppercase">PACK OPENING</span>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-300">カードをタッチしてめくってください</h4>
+                    </div>
+                    {!allFlipped && (
+                        <button
+                            onClick={handleFlipAll}
+                            className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-950 hover:bg-indigo-900 text-indigo-200 border border-indigo-700/50 rounded-lg font-bold text-[10px] sm:text-xs tracking-wider transition-colors active:scale-95"
+                        >
+                            一括オープン
+                        </button>
+                    )}
+                </div>
+
+                {/* 5 Cards Row/Grid - Optimized columns for mobile */}
+                <div className="flex-1 max-w-5xl mx-auto w-full flex items-center justify-center py-2 sm:py-4 z-10 min-h-0">
+                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 md:gap-5 w-full max-w-md md:max-w-none justify-center">
+                        {rolledCards.map((card, idx) => {
+                            const isFlipped = flippedCards[idx];
+                            
+                            return (
+                                <div 
+                                    key={idx}
+                                    onClick={() => handleFlipCard(idx)}
+                                    className={`relative aspect-[5/7] w-full max-w-[100px] xs:max-w-[120px] sm:max-w-[140px] md:max-w-[160px] mx-auto cursor-pointer rounded-xl sm:rounded-2xl border transition-all duration-300 active:scale-95 select-none
+                                        ${getCardGlowClass(card.rarity, isFlipped)}`}
+                                    style={{
+                                        perspective: '1000px',
+                                    }}
+                                >
+                                    <div 
+                                        className="relative w-full h-full duration-500 rounded-xl sm:rounded-2xl"
+                                        style={{
+                                            transformStyle: 'preserve-3d',
+                                            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                                            transition: 'transform 0.6s'
+                                        }}
+                                    >
+                                        {/* Card Back */}
+                                        <div 
+                                            className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-purple-955 to-slate-900 border border-amber-600/50 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 flex flex-col items-center justify-between shadow-lg"
+                                            style={{
+                                                backfaceVisibility: 'hidden',
+                                            }}
+                                        >
+                                            <div className="w-full h-full border border-amber-600/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6">
+                                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400/70 font-black text-[8px] sm:text-[10px]">学院</div>
+                                                <div className="w-7 h-7 sm:w-10 sm:h-10 border border-amber-500/20 rotate-45 flex items-center justify-center">
+                                                    <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-500/30 -rotate-45" />
+                                                </div>
+                                                <div className="text-[6px] sm:text-[8px] text-amber-500/40 tracking-[0.15em] sm:tracking-[0.2em] font-bold">WIRTH-DAWN</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Card Front */}
+                                        <div 
+                                            className="absolute inset-0 bg-[#0c1020] border border-slate-700 rounded-xl sm:rounded-2xl flex flex-col shadow-2xl overflow-hidden"
+                                            style={{
+                                                backfaceVisibility: 'hidden',
+                                                transform: 'rotateY(180deg)',
+                                            }}
+                                        >
+                                            {/* Rarity & Header */}
+                                            <div className="px-1 py-0.5 sm:px-2 sm:py-1.5 flex justify-between items-center bg-black/40 border-b border-slate-800">
+                                                <span className={`text-[6px] sm:text-[8px] px-1 sm:px-1.5 py-0.5 rounded font-black border leading-none ${getRarityBadgeColor(card.rarity)}`}>
+                                                    {card.rarity}
+                                                </span>
+                                                {card.isDuplicate && (
+                                                    <span className="text-[6px] sm:text-[7px] bg-amber-500 text-slate-950 font-black px-0.5 sm:px-1 rounded leading-none border border-amber-400">
+                                                        ダブり
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Card Image */}
+                                            <div className="flex-1 bg-slate-950/60 relative overflow-hidden flex items-center justify-center min-h-[45px] sm:min-h-[70px]">
+                                                {card.image_url ? (
+                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-slate-700" />
+                                                )}
+                                                
+                                                {/* Duplicate Refund Indicator Overlay */}
+                                                {card.isDuplicate && (
+                                                    <div className="absolute inset-0 bg-amber-955/85 backdrop-blur-[1px] flex flex-col items-center justify-center p-1 text-center animate-in fade-in duration-300">
+                                                        <Coins className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-400 mb-0.5 animate-bounce" />
+                                                        <span className="text-[7px] sm:text-[8px] text-amber-400 font-bold uppercase leading-none">+500G</span>
+                                                        <span className="text-[5px] sm:text-[6px] text-amber-300/60 mt-0.5 whitespace-nowrap hidden sm:inline">キャッシュバック</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Card Name & Description */}
+                                            <div className="p-1 sm:p-2 bg-[#101426] border-t border-slate-800 flex flex-col gap-0.5 sm:gap-1 shrink-0">
+                                                <span className="text-[9px] sm:text-xs font-bold text-slate-100 truncate">{card.name}</span>
+                                                <p className="text-[6px] sm:text-[8px] text-slate-400 leading-normal h-6 sm:h-10 overflow-hidden line-clamp-2 sm:line-clamp-3">
+                                                    {card.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Footer and summary */}
+                {allFlipped && (
+                    <div className="w-full max-w-md mx-auto bg-[#13162b]/80 border border-blue-900/40 rounded-2xl p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3 z-10 flex-shrink-0 animate-in fade-in slide-in-from-bottom-5 duration-300 mt-2 sm:mt-4">
+                        {cashbackRefund > 0 && (
+                            <div className="flex items-center gap-1 sm:gap-1.5 text-amber-300 text-[10px] sm:text-xs font-bold bg-amber-955/40 border border-amber-800/40 px-2.5 py-1 rounded-lg text-center">
+                                <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                                <span>ダブり重複分として {cashbackRefund.toLocaleString()} G が返還されました！</span>
+                            </div>
+                        )}
+                        
+                        <div className="flex gap-2 sm:gap-3 w-full">
+                            <button
+                                onClick={handleBackToShop}
+                                className="flex-1 py-2 sm:py-3 bg-[#1e234a] hover:bg-[#282e5e] text-blue-200 border border-blue-800/40 rounded-xl font-bold text-[10px] sm:text-xs tracking-wider transition-colors active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5"
+                            >
+                                <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <span>もう一度引く</span>
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    await useGameStore.getState().fetchUserProfile();
+                                    await fetchInventory();
+                                    onClose();
+                                }}
+                                className="flex-1 py-2 sm:py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 border border-amber-400 rounded-xl font-bold text-[10px] sm:text-xs tracking-wider transition-all active:scale-95 shadow-md shadow-amber-500/10"
+                            >
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const mainContent = createPortal(
+        <div className="fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 md:p-4">
+            <div className="bg-[#070914] text-slate-100 w-full max-w-4xl h-full md:h-[90dvh] flex flex-col md:rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.8)] border-0 md:border-2 border-blue-950 relative overflow-hidden">
+                {/* Header */}
+                <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-blue-950 flex justify-between items-center bg-[#0d1127] relative z-20 shrink-0">
+                    <h2 className="font-bold flex items-center gap-1.5 sm:gap-2 text-amber-500">
+                        <Sparkles size={14} className="text-amber-500 animate-pulse" />
+                        <span className="text-[10px] sm:text-xs text-slate-200 uppercase tracking-widest">
+                            <span className="hidden sm:inline">魔術学院 ─ </span>ブースターショップ
+                        </span>
+                    </h2>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1 bg-amber-955/40 border border-amber-800/40 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold text-amber-400">
+                            <Coins size={12} className="text-amber-400" />
+                            <span>{newGold.toLocaleString()} G</span>
+                        </div>
+                        <button 
+                            onClick={onClose} 
+                            className="text-slate-500 hover:text-white transition-colors focus:outline-none p-1"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Phase Router */}
+                {phase === 'shop' && renderShop()}
+                {phase === 'pack_sealed' && renderSealedPack()}
+                {phase === 'pack_ripped' && renderRippingPack()}
+                {phase === 'cards_reveal' && renderCardsReveal()}
+
+                {/* Footer branding */}
+                <div className="py-2.5 px-4 bg-black/40 border-t border-blue-950 text-center text-[9px] text-slate-600 font-mono tracking-wider flex-shrink-0">
+                    ACADEMY SPECIAL PACK EDITION V1.0 • NOITS-DRAGO
+                </div>
+            </div>
+            
+            {/* Embedded styles for ripping animation */}
+            <style jsx global>{`
+                @keyframes slideOutUp {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(-120%); opacity: 0; }
+                }
+                @keyframes slideOutDown {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(120%); opacity: 0; }
+                }
+            `}</style>
+        </div>,
+        document.body
+    );
+
+    return mainContent;
+}

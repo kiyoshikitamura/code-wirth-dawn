@@ -76,3 +76,43 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3086,legend_kraken_tide,戦利品:海神の怒涛,86,0,5,,1,false,/images/items/legend_kraken_tide.png,伝説報酬: 全体攻撃+拘束。
 3087,legend_mino_axe,戦利品:覇王の大斧,87,0,5,,1,false,/images/items/legend_mino_axe.png,伝説報酬: 超大ダメ+スタン。
 3063,book_meditation,教本:瞑想,64,600,2,any,3,false,/images/items/skill_meditation.png,汎用: 瞑想してAPを回復する。
+3101,book_catharsis,魔術書:カタルシス,101,12000,4,any,1,false,/images/items/book_catharsis_1781803499014.png,毒・炎上を即座に爆発させて大ダメージを与える魔術書。
+3102,book_wound_tear,教本:傷口をえぐる,102,6000,3,any,1,false,/images/items/book_wound_tear_1781808056310.png,出血状態の敵に真価を発揮する剣術書。
+3103,book_defpless_prey,教本:無防備な獲物,103,7000,3,any,1,false,/images/items/book_defpless_prey_1781808066149.png,行動不能状態の敵を容赦なく撃ち抜く刺突の書。
+3104,book_epidemic_fog,魔術書:伝染病の霧,104,8000,3,any,1,false,/images/items/book_epidemic_fog_1781808075688.png,毒の呪いを周囲に伝染させる禁忌の魔導書。
+3105,book_shield_slam,教本:シールドスラム,105,8000,3,any,1,false,/images/items/book_shield_slam_1781803510217.png,自身の防御バフの威力を衝撃波に変える盾闘術の書。
+3106,book_spike_armor,教本:スパイクアーマー,106,5000,2,any,1,false,/images/items/book_spike_armor_1781808088434.png,受けた攻撃の衝撃をトゲで返す反射防御の教本。
+3107,book_unyielding_wall,巻物:不屈の防陣,107,14000,4,any,1,false,/images/items/book_unyielding_wall_1781808100088.png,危機的状況で味方を強固に守る不屈の防壁巻物。
+3108,book_sacrifice_oath,巻物:犠牲の誓約,108,4500,2,any,1,false,/images/items/book_sacrifice_oath_1781808111009.png,仲間の厄災を引き受け、自身の盾とする近衛騎士の誓約書。
+3109,book_desperado,教本:デスペラード,109,15000,4,any,1,false,/images/items/book_desperado_1781808120065.png,自身の傷が深いほど破壊力を増す背水の一撃の書。
+3110,book_sacrificial_ritual,教本:生贄の儀式,110,10000,3,any,1,false,/images/items/book_sacrificial_ritual_1781808130718.png,自らの血肉を捧げ、物理スキルの消費APを減らす儀式教本。
+3111,book_desperate_strike,教本:捨て身の一撃,111,6000,3,any,1,false,/images/items/book_desperate_strike_1781808140404.png,強力な一撃と引き換えに防御能力を低下させる捨て身の教本。
+3112,book_detonation,魔術書:デトネーション,112,16000,4,any,1,false,/images/items/book_detonation_1781808151205.png,手札を犠牲にして破滅の炎を呼び覚ます魔導書。
+3113,book_mana_charge,魔術書:マナチャージ,113,12000,4,any,1,false,/images/items/book_mana_charge_1781808165101.png,魔法の詠唱速度と効率を高め、APを回復させる魔導書。
+3114,book_freeze_lancer,魔術書:フリーズランサー,114,7500,3,any,1,false,/images/items/book_freeze_lancer_1781808176255.png,凍りついた敵をさらに氷漬けにして砕き割る氷術書。
+3115,book_chain_lightning,魔術書:雷電の連鎖,115,9000,3,any,1,false,/images/items/book_chain_lightning_1781808185985.png,敵から敵へと伝う紫電を放つ連鎖雷撃の書。
+3116,book_prominence,魔術書:プロミネンス,116,20000,5,any,1,false,/images/items/book_prominence_1781808195431.png,戦場全体を焼き尽くす極大炎上魔法の古代魔導書。
+3117,book_brain_spin,教本:ブレインスピン,117,5000,2,any,1,false,/images/items/book_brain_spin_1781808206627.png,戦況に応じて手札を一気に整え直す精神統一の教本。
+3118,book_search_light,教本:サーチライト,118,8500,3,any,1,false,/images/items/book_search_light_1781808216346.png,デッキから守りや癒やしの技術を瞬時に呼び出す検索の書。
+3119,book_double_cast,巻物:ダブルキャスト,119,22000,5,any,1,false,/images/items/book_double_cast_1781803523307.png,次に放つ術や技を強制的に二重発動させる奥義の巻物。
+3120,book_recycle,教本:リサイクル,120,9500,3,any,1,false,/images/items/book_recycle_1781808226651.png,使用済みの技術を脳内に呼び戻し、コストを下げる技術書。
+3121,book_death_sentence,禁書:死神の宣告,121,25000,4,any,1,true,/images/items/book_death_sentence_1781808236722.png,闇市: 5ターン後に相手を即死させる死神の呪い。
+3122,book_blood_pursuit,教本:血の追撃,122,5500,2,any,1,false,/images/items/book_blood_pursuit_1781808246566.png,出血している敵を斬った勢いで即座に次の行動へ移る剣術書。
+3123,book_flame_burst,魔術書:フレイムバースト,123,7500,3,any,1,false,/images/items/book_flame_burst_1781808256666.png,燃え盛る対象を起爆し大炎上を引き起こす炎魔法の書。
+3124,book_frozen_wave,魔術書:凍てつく波動,124,18000,4,any,1,false,/images/items/book_frozen_wave_1781808267687.png,敵のバフを全て打ち消し凍結させる凍気魔法の書。
+3125,book_iron_bastion,巻物:アイアンバスティオン,125,15000,4,any,1,false,/images/items/book_iron_bastion_1781808278646.png,味方への攻撃を一手に引き受け、強固に耐え抜く重装騎士の巻物。
+3126,book_revenge_shield,教本:リベンジシールド,126,8000,3,any,1,false,/images/items/book_revenge_shield_1781808287823.png,受けた攻撃のダメージを100%反射して返す報復の盾闘術書。
+3127,book_giant_body,教本:巨人の肉体,127,4500,2,any,1,false,/images/items/book_giant_body_1781808298415.png,肉体の限界値を一時的に引き上げ、強靭にする活性化の書。
+3128,book_grounding,教本:グラウンディング,128,5000,2,any,1,false,/images/items/book_grounding_1781808308871.png,大地の構えを取り、あらゆる拘束やスタンを跳ね返す防御教本。
+3129,book_pay_to_win,禁書:成金の一撃,129,15000,4,any,1,true,/images/items/book_pay_to_win_1781803536472.png,闇市: 所持ゴールドを直接威力に変換する金満攻撃の禁書。
+3130,book_gambler_dice,教本:ギャンブラーダイス,130,4000,2,any,1,false,/images/items/book_gambler_dice_1781808320188.png,運を天に任せて破格の破壊力を狙うギャンブル教本。
+3131,book_soul_boost,教本:ソウルブースト,131,9000,3,any,1,false,/images/items/book_soul_boost_1781808330743.png,自らの生命力を限界まで絞り出し、次の威力を跳ね上げる禁術書。
+3132,book_ruin_pact,禁書:破滅の契約,132,18000,3,any,1,true,/images/items/book_ruin_pact_1781808341084.png,闇市: 手札を全て除外して無数の魔弾を放つ破滅の契約書。
+3133,book_element_resonance,教本:属性の共鳴,133,5000,2,any,1,false,/images/items/book_element_resonance_1781808352432.png,次に唱える属性魔法に応じて味方全員を強化する共鳴の教本。
+3134,book_plasma_shower,魔術書:プラズマシャワー,134,8500,3,any,1,false,/images/items/book_plasma_shower_1781808367043.png,広範囲に雷撃を落とし、敵全体をスタンさせる大雷撃の魔導書。
+3135,book_absolute_zero,魔術書:アブソリュートゼロ,135,9000,3,any,1,false,/images/items/book_absolute_zero_1781808375050.png,極寒の冷気で敵の熱量を奪い、クリティカルを受けやすくする氷術書。
+3136,book_fire_wave,魔術書:ファイアウェーブ,136,6000,2,any,1,false,/images/items/book_fire_wave_1781808385428.png,烈火の波。全体に20の炎ダメージ＋炎上状態の持続ターンを1ターン延長する。
+3137,book_quick_draw,教本:クイックドロー,137,5000,2,any,1,false,/images/items/book_quick_draw_1781808396512.png,ターンの初めに行うことでAPを減らさずにカードを引く速引の書。
+3138,book_tactical_plan,教本:タクティカルプラン,138,5000,2,any,1,false,/images/items/book_tactical_plan_1781808406275.png,デッキの上を予測し、完璧な配牌へと導く戦術立案の教本。
+3139,book_time_reverse,巻物:タイムリバース,139,12000,4,any,1,false,/images/items/book_time_reverse_1781808416548.png,直前に使用した魔法や技をAP半減で呼び戻す時間遡行の巻物。
+3140,book_mana_filter,教本:マナフィルター,140,5000,2,any,1,false,/images/items/book_mana_filter_1781808425325.png,不要な魔力をAPへと変換し、大技へと繋げる魔力ろ過の教本。

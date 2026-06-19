@@ -67,6 +67,8 @@ export default function ShopModal({ onClose }: Props) {
     const [purchaseIsError, setPurchaseIsError] = useState(false);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
     const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null); // 詳細ポップアップ用
+    const [sellItemForQtySelect, setSellItemForQtySelect] = useState<any | null>(null);
+    const [sellQtyInput, setSellQtyInput] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);
@@ -198,14 +200,14 @@ export default function ShopModal({ onClose }: Props) {
         }
     };
 
-    const handleSell = async (itemId: number, itemName: string, itemType: string) => {
+    const handleSell = async (itemId: number, itemName: string, itemType: string, quantity: number = 1) => {
         const isQuestActive = !!userProfile?.current_quest_id;
         const isKeyItem = itemType === 'key_item' || itemType === 'trade_good' || itemType === 'consumable';
 
         if (isQuestActive && isKeyItem) {
             if (!confirm(`警告：この品を売却すると現在の依頼は失敗し、依頼主からの信用を失います。それでも売却しますか？`)) return;
         } else {
-            if (!confirm(`「${itemName}」を売却しますか？`)) return;
+            if (!confirm(`「${itemName}」を${quantity > 1 ? `${quantity}個` : ''}売却しますか？`)) return;
         }
 
         if (purchasing) return;
@@ -221,7 +223,7 @@ export default function ShopModal({ onClose }: Props) {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({ item_id: itemId, quantity: 1 })
+                body: JSON.stringify({ item_id: itemId, quantity })
             });
             const data = await res.json();
 
@@ -514,7 +516,14 @@ export default function ShopModal({ onClose }: Props) {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => handleSell(invItem.item_id, (invItem as any).name || '不明', (invItem as any).type)}
+                                            onClick={() => {
+                                                if (invItem.quantity >= 2) {
+                                                    setSellItemForQtySelect(invItem);
+                                                    setSellQtyInput(1);
+                                                } else {
+                                                    handleSell(invItem.item_id, (invItem as any).name || '不明', (invItem as any).type, 1);
+                                                }
+                                            }}
                                             disabled={purchasing === String(invItem.item_id) || invItem.is_equipped}
                                             className={`px-4 py-2 rounded flex items-center gap-2 min-w-[100px] justify-center transition-all ${invItem.is_equipped
                                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed border border-gray-600'
@@ -548,9 +557,106 @@ export default function ShopModal({ onClose }: Props) {
         document.body
     );
 
+    const renderQuantitySelector = () => {
+        if (!sellItemForQtySelect) return null;
+        
+        const isUgc = !!sellItemForQtySelect.is_ugc;
+        const sellPrice = isUgc ? 1
+            : (meta?.prosperity === 1) ? Math.floor((sellItemForQtySelect.base_price || 0) * 1.5)
+                : Math.floor((sellItemForQtySelect.base_price || 0) / 2);
+        
+        const maxQty = sellItemForQtySelect.quantity;
+        const totalValue = sellPrice * sellQtyInput;
+        
+        return createPortal(
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                <div className="bg-[#e3d5b8] border-4 border-[#8b5a2b] rounded-lg p-5 w-full max-w-sm text-[#2c241b] shadow-2xl animate-in zoom-in-95 duration-200">
+                    <h3 className="text-lg font-bold font-serif mb-3 border-b-2 border-[#8b5a2b] pb-2 tracking-wide text-[#3e2723]">売却個数の選択</h3>
+                    <p className="text-sm font-semibold mb-1 text-[#3e2723]">{sellItemForQtySelect.name}</p>
+                    <p className="text-xs text-[#8b6f4e] mb-4">所持数: {maxQty}個 (売却単価: {sellPrice} G)</p>
+                    
+                    <div className="flex flex-col gap-3 mb-5">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setSellQtyInput(prev => Math.max(1, prev - 1))}
+                                className="w-10 h-10 border border-[#8b5a2b] rounded bg-amber-900/10 hover:bg-amber-900/20 active:scale-95 text-[#2c241b] font-bold text-lg"
+                            >
+                                -
+                            </button>
+                            <input
+                                type="number"
+                                min={1}
+                                max={maxQty}
+                                value={sellQtyInput}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value, 10);
+                                    if (!isNaN(val)) {
+                                        setSellQtyInput(Math.max(1, Math.min(maxQty, val)));
+                                    }
+                                }}
+                                className="flex-1 h-10 text-center border-2 border-[#8b5a2b] rounded bg-white text-[#2c241b] font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-900"
+                            />
+                            <button
+                                onClick={() => setSellQtyInput(prev => Math.min(maxQty, prev + 1))}
+                                className="w-10 h-10 border border-[#8b5a2b] rounded bg-amber-900/10 hover:bg-amber-900/20 active:scale-95 text-[#2c241b] font-bold text-lg"
+                            >
+                                +
+                            </button>
+                        </div>
+                        
+                        <input
+                            type="range"
+                            min={1}
+                            max={maxQty}
+                            value={sellQtyInput}
+                            onChange={(e) => setSellQtyInput(parseInt(e.target.value, 10))}
+                            className="w-full accent-blue-900 mt-2 cursor-pointer"
+                        />
+                        
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => setSellQtyInput(maxQty)}
+                                className="text-xs font-bold text-blue-900 hover:underline"
+                            >
+                                全て選択 (最大 {maxQty} 個)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-amber-900/10 p-3 rounded border border-amber-900/20 mb-5 text-center">
+                        <span className="text-xs text-amber-900 font-bold">合計売却額: </span>
+                        <span className="text-lg font-serif font-black text-amber-950">{totalValue.toLocaleString()} G</span>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setSellItemForQtySelect(null)}
+                            className="flex-1 py-2 border border-gray-700 text-gray-700 hover:bg-black/5 rounded font-bold text-sm transition-colors"
+                        >
+                            キャンセル
+                        </button>
+                        <button
+                            onClick={async () => {
+                                const qty = sellQtyInput;
+                                const item = sellItemForQtySelect;
+                                setSellItemForQtySelect(null);
+                                await handleSell(item.item_id, item.name || '不明', item.type, qty);
+                            }}
+                            className="flex-1 py-2 bg-blue-900 hover:bg-blue-800 text-blue-100 rounded font-bold text-sm shadow-md transition-all active:scale-95"
+                        >
+                            売却する
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        );
+    };
+
     return (
         <>
             {renderItemDetail()}
+            {renderQuantitySelector()}
             {mainContent}
             {/* ===== 購入中 / 購入完了 Overlay ===== */}
             {purchasePhase !== 'idle' && createPortal(

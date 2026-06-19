@@ -1,7 +1,7 @@
 import React from 'react';
-import { Bed, Activity, ShoppingBag, Church, Shield, BookOpen, ClipboardList, Trophy, Swords } from 'lucide-react';
+import { Bed, Activity, ShoppingBag, Church, Shield, BookOpen, ClipboardList, Trophy, Swords, Sparkles } from 'lucide-react';
 
-export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip' | 'collection' | 'questLog' | 'ranking' | 'ugcGuild' | 'colosseum';
+export type FacilityType = 'inn' | 'map' | 'status' | 'settings' | 'shop' | 'temple' | 'guild' | 'gossip' | 'collection' | 'questLog' | 'ranking' | 'ugcGuild' | 'colosseum' | 'magicAcademy';
 
 interface FacilityGridProps {
     onSelectFacility: (facility: FacilityType) => void;
@@ -16,6 +16,7 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
         { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
         { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
         { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
+        { id: 'magicAcademy', label: '魔術学院', sub: 'Magic Academy', icon: Sparkles },
         { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'colosseum', label: 'コロシアム', sub: 'Colosseum', icon: Swords },
     ];

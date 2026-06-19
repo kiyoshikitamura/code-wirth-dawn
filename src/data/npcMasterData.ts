@@ -18,7 +18,7 @@ export interface NpcMasterEntry {
   dialogues: NpcDialogues;
 }
 
-export type FacilityKey = 'inn' | 'guild' | 'shop' | 'temple';
+export type FacilityKey = 'inn' | 'guild' | 'shop' | 'temple' | 'magicAcademy';
 
 type NpcMasterMap = Record<string, Partial<Record<FacilityKey, NpcMasterEntry>>>;
 
@@ -36,6 +36,12 @@ export const NPC_MASTER: NpcMasterMap = {
       'よう、疲れてるみたいだな。ゆっくり休んでいきな。',
       '……面倒は起こすなよ。金さえ払えば休ませてやるが。',
       '帰れ！うちの敷居はまたがせねぇ。他を当たんな！'
+    )),
+    magicAcademy: npc('テオドール', '図書館長', img('npc_academy_theodore'), d(
+      'おお、高名な英雄殿！あなたのような探求者にこそ、我が魔術学院の秘技をお見せしたい。さあ、1パック 5,000ゴールドで新たな力を得ていかれよ！',
+      'ここは魔術学院だ。いにしえの叡智が封印された『ブースターパック』から、新たな魔法やスキルの知識を得ることができるぞ。1パック 5,000ゴールドだが、挑戦してみるかね？',
+      '……お主のような素行の悪い者に、あまり秘術を教えたくはないのだがな。まあ、5,000ゴールドを払うというなら、1パック授けてやろう。',
+      '悪名高い汝のような者に、学院の誇り高きスペルカードを授けるわけにはいかん。即刻立ち去るがよい！'
     )),
   },
 

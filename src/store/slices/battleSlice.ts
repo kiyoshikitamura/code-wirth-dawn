@@ -3,7 +3,7 @@ import { Card, Enemy, PartyMember, InventoryItem } from '@/types/game';
 import { buildBattleDeck, routeDamage, calculateDamage, calculateDamageV4, rollMiss } from '@/lib/battleEngine';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 import { resolveNpcTurn, determineRole, determineGrade, BattleContext } from '@/lib/npcAI';
-import { StatusEffect, applyEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId } from '@/lib/statusEffects';
+import { StatusEffect, applyEffect, removeEffect, hasEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId } from '@/lib/statusEffects';
 import { validateCardUse, getDefaultTarget } from '@/lib/targeting';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getPassiveLabel } from '@/lib/passiveEffects';
@@ -867,6 +867,11 @@ export const createBattleSlice = (
         }
         if (!targetEnemy) return;
 
+        let finalApCost = card ? (card.ap_cost ?? 1) : 1;
+        const tempPlayerEffects = [...(battleState.player_effects || [])];
+        const isSkillOrMagic = card && (card.type === 'Skill' || card.type === 'Magic');
+        const hasDoubleCast = isSkillOrMagic && hasEffect(tempPlayerEffects as StatusEffect[], 'double_cast' as StatusEffectId);
+
         if (card) {
             const resolvedTargetId = targetId || getDefaultTarget(card, battleState);
             const validation = validateCardUse(card, resolvedTargetId, battleState);
@@ -874,8 +879,10 @@ export const createBattleSlice = (
                 set(state => ({ battleState: { ...state.battleState, messages: [...state.battleState.messages, validation.error || '行動できません'] } }));
                 return;
             }
-            const apCost = card.ap_cost ?? 1;
-            set(state => ({ battleState: { ...state.battleState, current_ap: (battleState.current_ap || 0) - apCost } }));
+            if (hasDoubleCast) {
+                finalApCost = 0;
+            }
+            set(state => ({ battleState: { ...state.battleState, current_ap: (battleState.current_ap || 0) - finalApCost } }));
 
             if (card.cost_type === 'item') {
                 const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
@@ -883,7 +890,7 @@ export const createBattleSlice = (
                     set(state => ({
                         battleState: {
                             ...state.battleState,
-                            current_ap: (state.battleState.current_ap || 0) + apCost,
+                            current_ap: (state.battleState.current_ap || 0) + finalApCost,
                             messages: [...state.battleState.messages, `${card.name}の素材が尽きた！（1戦闘1回制限）`]
                         }
                     }));
@@ -940,23 +947,37 @@ export const createBattleSlice = (
             return;
         }
 
+        let currentEnemies = battleState.enemies.map(e => ({ ...e, status_effects: [...(e.status_effects || []).map(se => ({ ...se }))] }));
+        let currentPlayerEffects = [...(battleState.player_effects || []).map(se => ({ ...se }))];
+        let currentConsumedItems = [...(battleState.consumedItems || [])];
+        let currentExhaustPile = [...(battleState.exhaustPile || []).map(ep => ({ ...ep }))];
+        let currentActiveSupportBuffs = [...(battleState.activeSupportBuffs || [])];
+        let newMessages = [...battleState.messages];
+
+        if (hasDoubleCast) {
+            currentPlayerEffects = removeEffect(currentPlayerEffects as StatusEffect[], 'double_cast' as StatusEffectId);
+        }
+
+        const loops = hasDoubleCast ? 2 : 1;
+        let allDead = false;
+
         if (card) {
-            const bleedDmg = getBleedDamage(battleState.player_effects as StatusEffect[]);
+            const bleedDmg = getBleedDamage(currentPlayerEffects as StatusEffect[]);
             if (bleedDmg > 0 && userProfile) {
                 const newHp = Math.max(0, (userProfile.hp || 0) - bleedDmg);
                 set(state => ({
-                    userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
-                    battleState: { ...state.battleState, messages: [...state.battleState.messages, `出血ダメージ！ HP -${bleedDmg}`] }
+                    userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
                 }));
+                newMessages.push(`出血ダメージ！ HP -${bleedDmg}`);
             }
 
             if (card.id === 'struggle' && userProfile) {
                 const selfDmg = 1;
                 const newHp = Math.max(0, (userProfile.hp || 0) - selfDmg);
                 set(state => ({
-                    userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
-                    battleState: { ...state.battleState, messages: [...state.battleState.messages, `あがきの反動！ HP -${selfDmg}`] }
+                    userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
                 }));
+                newMessages.push(`あがきの反動！ HP -${selfDmg}`);
             }
 
             effectInfo = getCardEffectInfo(card);
@@ -972,590 +993,677 @@ export const createBattleSlice = (
                 set(state => ({
                     hand: nextHand,
                     discardPile: nextDiscardPile,
-                    battleState: { ...state.battleState, messages: [...state.battleState.messages, logMsg] }
+                    battleState: {
+                        ...state.battleState,
+                        player_effects: currentPlayerEffects,
+                        messages: [...newMessages, logMsg]
+                    }
                 }));
                 return;
             }
 
-            switch (effectInfo.effectType) {
-                case 'heal': {
-                    const healAmount = (card as any).effect_val ?? card.power ?? 20;
-                    // targetId が明示的に渡されていればそれを優先（BattleViewのターゲット選択UIから）
-                    const cardTargetType = (targetId && targetId !== 'player') ? 'single_ally' : (card.target_type || 'self');
-                    const resolvedTargetId = targetId || getDefaultTarget(card, battleState);
+            for (let loop = 0; loop < loops; loop++) {
+                let loopTargetEnemyId = targetId || battleState.enemy?.id;
+                let loopTargetEnemy = currentEnemies.find(e => e.id === loopTargetEnemyId);
 
-                    if (cardTargetType === 'single_ally' && resolvedTargetId && resolvedTargetId !== 'player') {
-                        // ─── 味方単体ヒール（early return で後段の共通パスをスキップ）───
-                        const party = [...(battleState.party || [])];
-                        const idx = party.findIndex(m => String(m.id) === resolvedTargetId);
-                        if (idx >= 0 && healAmount > 0) {
-                            const member = party[idx];
-                            const maxDur = (member as any).max_hp || member.max_durability || member.durability || 100;
-                            const curDur = member.durability ?? 0;
-                            const healed = Math.min(healAmount, maxDur - curDur);
-                            const newDur = curDur + healed;
-                            party[idx] = { ...member, durability: newDur };
-                            logMsg = `♥ ${card.name}で ${member.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`;
-                            
-                            // 味方単体ヒール時のカード消費（手札削除＆捨て札/除外処理）
-                            const finalHand = nextHand.filter(c => c.id !== card.id);
-                            let finalDiscardPile = [...nextDiscardPile];
-                            if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
+                if (!loopTargetEnemy || loopTargetEnemy.hp <= 0) {
+                    loopTargetEnemy = currentEnemies.find(e => e.hp > 0);
+                    loopTargetEnemyId = loopTargetEnemy?.id;
+                }
+                if (!loopTargetEnemy) {
+                    allDead = true;
+                    break;
+                }
+
+                damage = 0;
+                isAoe = false;
+                let customTargetEffects: StatusEffect[] | null = null;
+                logMsg = '';
+                healSyncHp = null;
+
+                switch (effectInfo.effectType) {
+                    case 'catharsis': {
+                        const basePower = card.power ?? 0;
+                        const isMagic = true;
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], isMagic, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        let finalDmg = result.damage;
+
+                        const targetMaxHp = loopTargetEnemy.maxHp || 100;
+                        const dotPerTurn = Math.max(1, Math.floor(targetMaxHp * 0.05));
+                        
+                        let detonateDmg = 0;
+                        const poisonEffect = loopTargetEnemy.status_effects?.find(e => e.id === 'poison');
+                        const burnEffect = loopTargetEnemy.status_effects?.find(e => e.id === 'burn');
+                        
+                        if (poisonEffect) {
+                            detonateDmg += poisonEffect.duration * dotPerTurn;
+                        }
+                        if (burnEffect) {
+                            detonateDmg += burnEffect.duration * dotPerTurn;
+                        }
+                        
+                        finalDmg += detonateDmg;
+                        damage = finalDmg;
+                        
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel}`;
+                        if (detonateDmg > 0) {
+                            logMsg += ` 状態異常を起爆！ 追加 ${detonateDmg} ダメージ！`;
+                        }
+                        logMsg += ` 合計 ${finalDmg} のダメージ！`;
+
+                        customTargetEffects = (loopTargetEnemy.status_effects || []).filter(e => e.id !== 'poison' && e.id !== 'burn') as StatusEffect[];
+                        break;
+                    }
+                    case 'shield_slam': {
+                        const defBonus = getDefBonus(currentPlayerEffects as StatusEffect[]);
+                        const baseDamage = 10 + defBonus;
+                        
+                        const result = calculateDamageV4(baseDamage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} 防御力を乗せた衝撃で ${damage} のダメージ！`;
+                        
+                        currentPlayerEffects = currentPlayerEffects.filter(
+                            e => e.id !== 'def_up' && e.id !== 'def_up_heavy' && e.id !== 'barrier'
+                        );
+                        break;
+                    }
+                    case 'pay_to_win': {
+                        const currentGold = userProfile?.gold || get().gold || 0;
+                        const spentGold = Math.min(1000, Math.floor(currentGold * 0.02));
+                        const newGold = Math.max(0, currentGold - spentGold);
+                        
+                        set(state => ({
+                            gold: newGold,
+                            userProfile: state.userProfile ? { ...state.userProfile, gold: newGold } : null
+                        }));
+                        
+                        const { selectedProfileId } = get();
+                        fetch('/api/profile/update-status', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ gold: newGold, profileId: selectedProfileId })
+                        }).catch(console.error);
+                        
+                        const bonusDmg = Math.floor(spentGold / 10);
+                        const basePower = (card.power ?? 30) + bonusDmg;
+                        
+                        const result = calculateDamageV4(basePower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                        damage = result.damage;
+                        
+                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                        logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} 金貨 ${spentGold} 枚を投げつけて ${damage} のダメージ！ (残り金貨: ${newGold})`;
+                        break;
+                    }
+                    case 'double_cast': {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'double_cast' as StatusEffectId, 1);
+                        logMsg = `${card.name}を唱えた！ 次に使用する「Magic」または「Skill」カードが2回連続で発動する！`;
+                        break;
+                    }
+                    case 'search_light': {
+                        const deck = get().deck;
+                        const matchCards = deck.filter(c => c.type === 'Heal' || c.type === 'Defense');
+                        if (matchCards.length > 0) {
+                            const chosenCard = matchCards[Math.floor(Math.random() * matchCards.length)];
+                            nextHand.push(chosenCard);
+                            const newDeck = deck.filter(c => c !== chosenCard);
+                            set({ deck: newDeck });
+                            logMsg = `${card.name}を使用！ デッキから「${chosenCard.name}」を探し出して手札に加えた。`;
+                        } else {
+                            logMsg = `${card.name}を使用したが、デッキに対象となるカード（回復・防御）がなかった。`;
+                        }
+                        break;
+                    }
+                    case 'heal': {
+                        const healAmount = (card as any).effect_val ?? card.power ?? 20;
+                        const cardTargetType = (targetId && targetId !== 'player') ? 'single_ally' : (card.target_type || 'self');
+                        const resolvedTargetId = targetId || getDefaultTarget(card, battleState);
+
+                        if (cardTargetType === 'single_ally' && resolvedTargetId && resolvedTargetId !== 'player') {
+                            const party = [...(battleState.party || [])];
+                            const idx = party.findIndex(m => String(m.id) === resolvedTargetId);
+                            if (idx >= 0 && healAmount > 0) {
+                                const member = party[idx];
+                                const maxDur = (member as any).max_hp || member.max_durability || member.durability || 100;
+                                const curDur = member.durability ?? 0;
+                                const healed = Math.min(healAmount, maxDur - curDur);
+                                const newDur = curDur + healed;
+                                party[idx] = { ...member, durability: newDur };
+                                logMsg = `♥ ${card.name}で ${member.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`;
+                                
+                                const finalHand = nextHand.filter(c => c.id !== card.id);
+                                let finalDiscardPile = [...nextDiscardPile];
+                                if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
+                                    set(state => ({
+                                        battleState: {
+                                            ...state.battleState,
+                                            exhaustPile: [...state.battleState.exhaustPile, { id: card.id, name: card.name, type: card.type }],
+                                            consumedItems: [...state.battleState.consumedItems, card.id],
+                                        }
+                                    }));
+                                } else {
+                                    finalDiscardPile = [...finalDiscardPile, card];
+                                }
+
+                                const healMessages = [...newMessages, logMsg, `__party_sync:${member.id}:${newDur}`];
                                 set(state => ({
+                                    hand: finalHand,
+                                    discardPile: finalDiscardPile,
                                     battleState: {
                                         ...state.battleState,
-                                        exhaustPile: [...state.battleState.exhaustPile, { id: card.id, name: card.name, type: card.type }],
-                                        consumedItems: [...state.battleState.consumedItems, card.id],
+                                        party,
+                                        messages: healMessages,
                                     }
                                 }));
+                                return;
                             } else {
-                                finalDiscardPile = [...finalDiscardPile, card];
+                                logMsg = `${card.name}を使用！(対象の体力は満たんでいる)`;
                             }
-
-                            // 手札管理 + メッセージ + パーティ更新を一括で確定し return
-                            const healMessages = [...get().battleState.messages, logMsg, `__party_sync:${member.id}:${newDur}`];
-                            set(state => ({
-                                hand: finalHand,
-                                discardPile: finalDiscardPile,
-                                battleState: {
-                                    ...state.battleState,
-                                    party,
-                                    messages: healMessages,
-                                }
-                            }));
-                            return;
+                        } else if (cardTargetType === 'all_allies') {
+                            const healMsgs: string[] = [];
+                            if (userProfile && healAmount > 0) {
+                                const maxHp = effectivePlayerMaxHp;
+                                const prevHp2 = userProfile.hp || 0;
+                                const newHp = Math.min(maxHp, prevHp2 + healAmount);
+                                set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                                healSyncHp = newHp;
+                                healMsgs.push(`♥ ${card.name}で あなたのHP +${newHp - prevHp2} 回復！ (${newHp}/${maxHp})`);
+                                const { selectedProfileId } = get();
+                                fetch('/api/profile/update-status', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                                }).catch(console.error);
+                            }
+                            const party = [...(battleState.party || [])];
+                            for (let pi = 0; pi < party.length; pi++) {
+                                const m = party[pi];
+                                if (!m.is_active || (m.durability ?? 0) <= 0) continue;
+                                const maxDur = (m as any).max_hp || m.max_durability || m.durability || 100;
+                                const curDur = m.durability ?? 0;
+                                if (curDur >= maxDur) continue;
+                                const healed = Math.min(healAmount, maxDur - curDur);
+                                const newDur = curDur + healed;
+                                party[pi] = { ...m, durability: newDur };
+                                healMsgs.push(`♥ ${m.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`);
+                                healMsgs.push(`__party_sync:${m.id}:${newDur}`);
+                            }
+                            if (party.length > 0) {
+                                set(state => ({ battleState: { ...state.battleState, party } }));
+                            }
+                            logMsg = healMsgs.length > 0 ? healMsgs[0] : `${card.name}を使用！`;
+                            if (healMsgs.length > 1) {
+                                const extraMsgs = healMsgs.slice(1);
+                                newMessages.push(...extraMsgs);
+                            }
                         } else {
-                            logMsg = `${card.name}を使用！(対象の体力は満たんでいる)`;
+                            if (userProfile && healAmount > 0) {
+                                const maxHp = effectivePlayerMaxHp;
+                                const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
+                                set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                                logMsg = `♥ ${card.name}で HP +${healAmount} 回復！ (${newHp}/${maxHp})`;
+                                healSyncHp = newHp;
+                                const { selectedProfileId } = get();
+                                fetch('/api/profile/update-status', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                                }).catch(console.error);
+                            } else { logMsg = `${card.name}を使用！(体力は満たんでいる)`; }
                         }
-                    } else if (cardTargetType === 'all_allies') {
-                        // ─── 味方全体ヒール ───
-                        const healMsgs: string[] = [];
-                        // プレイヤー回復
-                        if (userProfile && healAmount > 0) {
-                            const maxHp = effectivePlayerMaxHp;
-                            const prevHp2 = userProfile.hp || 0;
-                            const newHp = Math.min(maxHp, prevHp2 + healAmount);
+                        break;
+                    }
+                    case 'escape': {
+                        nextHand = nextHand.filter(c => c.id !== card.id);
+                        nextDiscardPile = [...nextDiscardPile, card];
+                        logMsg = `${card.name}を使用！ 戦闘から離脱した！`;
+                        soundManager?.playSE('se_escape');
+                        set(state => ({
+                            hand: nextHand,
+                            discardPile: nextDiscardPile,
+                            battleState: { ...state.battleState, isDefeat: true, battle_result: 'escape', messages: [...newMessages, logMsg] }
+                        }));
+                        return;
+                    }
+                    case 'buff_self': {
+                        if (effectInfo.effectId) {
+                            const defValue = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy')
+                                ? (effectInfo.defValue ?? card.power ?? 10) : undefined;
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3, defValue);
+                            logMsg = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy')
+                                ? `${card.name}を使用！ DEF +${defValue} (${effectInfo.effectDuration || 3}T)！`
+                                : `${card.name}を使用！ ${getEffectName(effectInfo.effectId)}を得た！`;
+                        } else { logMsg = `${card.name}を使用！`; }
+                        break;
+                    }
+                    case 'taunt': {
+                        if (effectInfo.effectId) {
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 2);
+                        }
+                        logMsg = `${card.name}を使用！ 敵の攻撃を引きつけた！`;
+                        break;
+                    }
+                    case 'buff_party': {
+                        if (effectInfo.effectId) {
+                            const defValue = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy' || effectInfo.effectId === 'barrier')
+                                ? (effectInfo.defValue ?? 0) : undefined;
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3, defValue);
+                            
+                            const newParty = (battleState.party || []).map(m => {
+                                if (!m.is_active || (m.durability ?? 0) <= 0) return m;
+                                return {
+                                    ...m,
+                                    status_effects: applyEffect((m.status_effects || []) as StatusEffect[], effectInfo!.effectId!, effectInfo!.effectDuration || 3, defValue)
+                                };
+                            });
+
+                            set(state => ({ battleState: { ...state.battleState, party: newParty } }));
+                            logMsg = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy' || effectInfo.effectId === 'barrier')
+                                ? `${card.name}を展開！ パーティ全体のDEF +${defValue} (${effectInfo.effectDuration || 3}T)！`
+                                : `${card.name}を展開！ パーティ全体が守られた！`;
+                        }
+                        break;
+                    }
+                    case 'aoe_attack': {
+                        damage = card.power ?? 0;
+                        if (damage > 0) {
+                            const isMagic = card.name.includes('魔法') || card.name.toLowerCase().includes('magic');
+                            const result = calculateDamageV4(damage, 0, currentPlayerEffects as StatusEffect[], [], isMagic, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                            damage = result.damage;
+                            const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                            logMsg = `${card.name}で全体攻撃！${critLabel} 各敵に ${damage} のダメージ！`;
+                        } else {
+                            logMsg = `${card.name}で全体攻撃！`;
+                        }
+                        isAoe = true;
+                        break;
+                    }
+                    case 'debuff_enemy': {
+                        damage = card.power ?? 0;
+                        if (damage > 0) {
+                            damage = calculateDamage(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], true, effectivePlayerAtk);
+                            logMsg = `${loopTargetEnemy.name}に${card.name}！ ${damage} ダメージ！`;
+                        } else {
+                            const eName = effectInfo.effectId ? getEffectName(effectInfo.effectId) : card.name;
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ ${eName}を付与！`;
+                        }
+                        if (card.target_type === 'all_enemies' || effectInfo.target_type === 'all_enemies') {
+                            isAoe = true;
+                            const pwr = card.power && card.power > 0 ? `(${card.power}%)` : '';
+                            logMsg = `敵全体に${card.name}を使用！ ${effectInfo.effectId ? getEffectName(effectInfo.effectId) + pwr : ''}を付与！`;
+                        }
+                        break;
+                    }
+                    case 'instakill': {
+                        if (Math.random() < 0.3) {
+                            damage = loopTargetEnemy.hp;
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 致命的な一撃が決まった！`;
+                        } else {
+                            const fallbackPower = Math.max(card.power || 0, effectivePlayerAtk + 10);
+                            const result = calculateDamageV4(fallbackPower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                            damage = result.damage;
+                            const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 即死には失敗したが、${critLabel}${damage} のダメージ！`;
+                        }
+                        break;
+                    }
+                    case 'pierce_attack': {
+                        damage = card.power ?? 0;
+                        if (damage > 0) {
+                            damage = calculateDamage(damage, 0, currentPlayerEffects as StatusEffect[], [], true, effectivePlayerAtk);
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 防御を貫通して ${damage} のダメージ！`;
+                        } else {
+                            logMsg = `${card.name}を使用！`;
+                        }
+                        break;
+                    }
+                    case 'multi_attack': {
+                        damage = (card.power ?? 0) * 2;
+                        if (damage > 0) {
+                            damage = calculateDamage(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk);
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 怒涛の連撃で ${damage} のダメージ！`;
+                        } else {
+                            logMsg = `${card.name}を使用！`;
+                        }
+                        break;
+                    }
+                    case 'recoil_attack': {
+                        damage = card.power ?? 0;
+                        if (damage > 0) {
+                            damage = calculateDamage(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk);
+                            logMsg = `${card.name}を使用！ 敵全体に ${damage} のダメージ！`;
+                            isAoe = true;
+                            
+                            const recoil = Math.floor(damage * 0.2); 
+                            const currentHp = get().userProfile?.hp || 0;
+                            const newHp = Math.max(0, currentHp - recoil);
                             set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                            logMsg += ` (反動ダメージ -${recoil})`;
                             healSyncHp = newHp;
-                            healMsgs.push(`♥ ${card.name}で あなたのHP +${newHp - prevHp2} 回復！ (${newHp}/${maxHp})`);
-                            const { selectedProfileId } = get();
-                            fetch('/api/profile/update-status', {
-                                method: 'POST',
-                                body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                            }).catch(console.error);
+                        } else {
+                            logMsg = `${card.name}を使用！`;
                         }
-                        // パーティメンバー回復
-                        const party = [...(battleState.party || [])];
-                        for (let pi = 0; pi < party.length; pi++) {
-                            const m = party[pi];
-                            if (!m.is_active || (m.durability ?? 0) <= 0) continue;
-                            const maxDur = (m as any).max_hp || m.max_durability || m.durability || 100;
-                            const curDur = m.durability ?? 0;
-                            if (curDur >= maxDur) continue;
-                            const healed = Math.min(healAmount, maxDur - curDur);
-                            const newDur = curDur + healed;
-                            party[pi] = { ...m, durability: newDur };
-                            healMsgs.push(`♥ ${m.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`);
-                            healMsgs.push(`__party_sync:${m.id}:${newDur}`);
-                        }
-                        if (party.length > 0) {
-                            set(state => ({ battleState: { ...state.battleState, party } }));
-                        }
-                        logMsg = healMsgs.length > 0 ? healMsgs[0] : `${card.name}を使用！`;
-                        // 追加メッセージをまとめて追加
-                        if (healMsgs.length > 1) {
-                            const extraMsgs = healMsgs.slice(1);
-                            set(state => ({
-                                battleState: { ...state.battleState, messages: [...state.battleState.messages, ...extraMsgs] }
-                            }));
-                        }
-                    } else {
-                        // ─── プレイヤー自己回復（デフォルト / self / single_ally→player） ───
+                        break;
+                    }
+                    case 'cure_self': {
+                        const healAmount = (card as any).effect_val ?? card.power ?? 0;
+                        let healMsg = '';
                         if (userProfile && healAmount > 0) {
                             const maxHp = effectivePlayerMaxHp;
                             const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
                             set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
-                            logMsg = `♥ ${card.name}で HP +${healAmount} 回復！ (${newHp}/${maxHp})`;
+                            healMsg = ` HP +${healAmount} 回復！ (${newHp}/${maxHp}) 及び`;
                             healSyncHp = newHp;
                             const { selectedProfileId } = get();
                             fetch('/api/profile/update-status', {
                                 method: 'POST',
                                 body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
                             }).catch(console.error);
-                        } else { logMsg = `${card.name}を使用！(体力は満たんでいる)`; }
+                        }
+
+                        if (effectInfo.cureType === 'status') {
+                            const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse'];
+                            currentPlayerEffects = currentPlayerEffects.filter(e => !statusAilments.includes(e.id));
+                            logMsg = `${card.name}を使用！${healMsg}状態異常を回復した！`;
+                        } else if (effectInfo.cureType === 'debuff') {
+                            currentPlayerEffects = currentPlayerEffects.filter(e => !['atk_down', 'def_down'].includes(e.id));
+                            logMsg = `${card.name}を使用！${healMsg}デバフを解除した！`;
+                        } else {
+                            const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'atk_down', 'def_down'];
+                            currentPlayerEffects = currentPlayerEffects.filter(e => !statusAilments.includes(e.id));
+                            logMsg = `${card.name}を使用！${healMsg}状態を正常に戻した！`;
+                        }
+                        break;
                     }
-                    break;
+                    case 'support_activate': {
+                        const passiveLabel = getPassiveLabel(card.id);
+                        if (!currentActiveSupportBuffs.includes(card.id)) {
+                            currentActiveSupportBuffs.push(card.id);
+                        }
+                        if (effectInfo.effectId === 'berserk') {
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'atk_up' as StatusEffectId, effectInfo.effectDuration || 3);
+                            logMsg = `⚠ ${card.name}を服用！ ATK×2.0 だがDEF半減（${effectInfo.effectDuration || 3}T）`;
+                        } else if (effectInfo.effectId === 'ap_recover' as any) {
+                            const newAp = Math.min(15, battleState.current_ap + 3);
+                            set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
+                            logMsg = `✨ ${card.name}を使用！ APが3回復した（現在: ${newAp}）`;
+                        } else if (effectInfo.effectId === 'ap_max' as any) {
+                            const newAp = 15;
+                            const maxHp = effectivePlayerMaxHp;
+                            const selfDmg = Math.max(1, Math.floor(maxHp * 0.1));
+                            const currentHp = get().userProfile?.hp || 0;
+                            const newHp = Math.max(0, currentHp - selfDmg);
+                            
+                            set(state => ({ 
+                                userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
+                                battleState: { ...state.battleState, current_ap: newAp } 
+                            }));
+                            
+                            logMsg = `✨ ${card.name}を発動！ AP全回復！ (自傷ダメージ -${selfDmg})`;
+                            healSyncHp = newHp;
+                            const { selectedProfileId } = get();
+                            fetch('/api/profile/update-status', {
+                                method: 'POST',
+                                body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
+                            }).catch(console.error);
+                        } else if (effectInfo.effectId) {
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
+                            logMsg = `✨ ${card.name}を発動！ ${getEffectName(effectInfo.effectId)}(${effectInfo.effectDuration || 3}T) ${passiveLabel}`;
+                        } else {
+                            logMsg = `✨ ${card.name}を発動！ ${passiveLabel}（バトル終了まで）`;
+                        }
+                        break;
+                    }
+                    default: {
+                        damage = card.power ?? 0;
+                        if (damage > 0) {
+                            const isMagic = card.type === 'Magic' || card.name.includes('魔法') || card.name.toLowerCase().includes('magic') || card.name.toLowerCase().includes('fire');
+                            const result = calculateDamageV4(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], isMagic, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                            damage = result.damage;
+                            const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！${critLabel} ${damage} のダメージ！`;
+                        } else { logMsg = `${card.name}を使用！`; }
+                    }
                 }
-                case 'escape': {
+
+                if (loop === 0) {
                     nextHand = nextHand.filter(c => c.id !== card.id);
-                    nextDiscardPile = [...nextDiscardPile, card];
-                    logMsg = `${card.name}を使用！ 戦闘から離脱した！`;
-                    soundManager?.playSE('se_escape');
-                    set(state => ({
-                        hand: nextHand,
-                        discardPile: nextDiscardPile,
-                        battleState: { ...state.battleState, isDefeat: true, battle_result: 'escape', messages: [...state.battleState.messages, logMsg] }
-                    }));
-                    return;
-                }
-                case 'buff_self': {
-                    if (effectInfo.effectId) {
-                        const defValue = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy')
-                            ? (effectInfo.defValue ?? card.power ?? 10) : undefined;
-                        const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3, defValue);
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                        logMsg = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy')
-                            ? `${card.name}を使用！ DEF +${defValue} (${effectInfo.effectDuration || 3}T)！`
-                            : `${card.name}を使用！ ${getEffectName(effectInfo.effectId)}を得た！`;
-                    } else { logMsg = `${card.name}を使用！`; }
-                    break;
-                }
-                case 'taunt': {
-                    if (effectInfo.effectId) {
-                        const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 2);
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
+                    if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
+                        currentExhaustPile.push({ id: card.id, name: card.name, type: card.type });
+                        currentConsumedItems.push(card.id);
+                    } else {
+                        nextDiscardPile = [...nextDiscardPile, card];
                     }
-                    logMsg = `${card.name}を使用！ 敵の攻撃を引きつけた！`;
-                    break;
                 }
-                case 'buff_party': {
-                    if (effectInfo.effectId) {
-                        const defValue = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy' || effectInfo.effectId === 'barrier')
-                            ? (effectInfo.defValue ?? 0) : undefined;
-                        const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3, defValue);
-                        
-                        const newParty = (battleState.party || []).map(m => {
-                            if (!m.is_active || (m.durability ?? 0) <= 0) return m;
-                            return {
-                                ...m,
-                                status_effects: applyEffect((m.status_effects || []) as StatusEffect[], effectInfo!.effectId!, effectInfo!.effectDuration || 3, defValue)
-                            };
+
+                if (!effectInfo.skipDamage && effectInfo.effectId) {
+                    const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectInfo.effectId);
+                    if (isSelfBuff) {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
+                    }
+                    if (effectInfo.effectId === 'stun' && (card.id.match(/^(\d+)/)?.[1] ?? card.id) === '1') {
+                        if (Math.random() < 0.10) {
+                            if (loopTargetEnemy) {
+                                const stunEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'stun' as StatusEffectId, 1);
+                                loopTargetEnemy.status_effects = stunEffects;
+                                currentEnemies = currentEnemies.map(e => e.id === loopTargetEnemyId ? { ...e, status_effects: stunEffects } : e);
+                                newMessages.push(`✨ ${card.name}の衝撃でスタン！`);
+                            }
+                        }
+                    }
+                }
+
+                if (card.effect_id && !effectInfo.effectId) {
+                    const effectId = card.effect_id as StatusEffectId;
+                    const duration = card.effect_duration || 3;
+                    const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectId);
+                    if (isSelfBuff) {
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectId, duration);
+                    }
+                }
+
+                let resistedDebuff: string | null = null;
+                const resistedEnemies: string[] = [];
+                const affectedEnemies: string[] = [];
+                currentEnemies = currentEnemies.map(e => {
+                    if (isAoe && e.hp > 0) {
+                        let newHp = Math.max(0, e.hp - damage);
+                        let newEffects = (e.status_effects || []) as StatusEffect[];
+                        if (effectInfo?.effectId) {
+                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
+                            if (!isSelfBuff) {
+                                if (rollDebuffSuccess(effectInfo.effectId)) {
+                                    const isStunAoe = effectInfo.effectId === 'stun' || effectInfo.effectId === 'bind';
+                                    const aoeDuration = isStunAoe ? (effectInfo?.effectDuration || 3) + 1 : (effectInfo?.effectDuration || 3);
+                                    newEffects = applyEffect(newEffects, effectInfo.effectId, aoeDuration);
+                                    affectedEnemies.push(e.name);
+                                } else {
+                                    resistedEnemies.push(e.name);
+                                }
+                            }
+                        }
+                        return { ...e, hp: newHp, status_effects: newEffects };
+                    }
+                    if (e.id === loopTargetEnemyId) {
+                        let newHp = Math.max(0, e.hp - damage);
+                        let newEffects = customTargetEffects !== null ? customTargetEffects : ((e.status_effects || []) as StatusEffect[]);
+                        const resolvedEffectId = effectInfo?.effectId || (card?.effect_id as StatusEffectId | undefined);
+                        if (resolvedEffectId && isValidEffectId(resolvedEffectId)) {
+                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectId);
+                            if (!isSelfBuff) {
+                                if (rollDebuffSuccess(resolvedEffectId)) {
+                                    const isStunEffect = resolvedEffectId === 'stun' || resolvedEffectId === 'bind';
+                                    const baseDuration = effectInfo?.effectDuration || card?.effect_duration || 3;
+                                    const finalDuration = isStunEffect ? baseDuration + 1 : baseDuration;
+                                    newEffects = applyEffect(newEffects, resolvedEffectId, finalDuration);
+                                } else {
+                                    resistedDebuff = resolvedEffectId;
+                                }
+                            }
+                        }
+                        return { ...e, hp: newHp, status_effects: newEffects };
+                    }
+                    return e;
+                });
+
+                const updatedTargetEnemy = currentEnemies.find(e => e.id === loopTargetEnemyId);
+                const loopIsTargetDead = updatedTargetEnemy ? updatedTargetEnemy.hp <= 0 : false;
+                const loopAllDead = currentEnemies.every(e => e.hp <= 0);
+
+                newMessages.push(logMsg);
+                if (healSyncHp !== null) newMessages.push(`__hp_sync:${healSyncHp}`);
+                if (damage > 0) {
+                    const resolvedEffectIdForDrain = effectInfo?.effectId || (card?.effect_id as string | undefined);
+                    if (resolvedEffectIdForDrain === 'drain') {
+                        const drainHeal = Math.floor(damage * 0.5);
+                        const currentHp = get().userProfile?.hp || 0;
+                        const maxHp = effectivePlayerMaxHp;
+                        const newHp = Math.min(maxHp, currentHp + drainHeal);
+                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                        newMessages.push(`→ 生命力を吸収！ HP +${drainHeal} 回復！`);
+                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
+                    }
+                }
+
+                {
+                    const resolvedEffectIdForLog = effectInfo?.effectId || (card?.effect_id as string | undefined);
+                    if (resolvedEffectIdForLog && isValidEffectId(resolvedEffectIdForLog) && !['atk_up', 'def_up', 'def_up_heavy', 'regen', 'stun_immune', 'evasion_up', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectIdForLog)) {
+                        if (isAoe) {
+                            affectedEnemies.forEach(name => {
+                                newMessages.push(`→ ${name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                            });
+                            resistedEnemies.forEach(name => {
+                                newMessages.push(`→ ${name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
+                            });
+                        } else {
+                            if (resistedDebuff === resolvedEffectIdForLog) {
+                                newMessages.push(`→ ${loopTargetEnemy?.name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
+                            } else if (damage > 0 || effectInfo?.effectType === 'debuff_enemy') {
+                                newMessages.push(`→ ${loopTargetEnemy?.name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
+                            }
+                        }
+                    }
+                }
+
+                if (loopIsTargetDead) {
+                    newMessages.push(`${loopTargetEnemy.name}を倒した！`);
+                    if (updatedTargetEnemy?.drop_rate && updatedTargetEnemy.drop_item_slug && Math.random() * 100 < updatedTargetEnemy.drop_rate) {
+                        newMessages.push(`${updatedTargetEnemy.name}が「${updatedTargetEnemy.drop_item_slug}」を落とした！`);
+                        const dropSlug = updatedTargetEnemy.drop_item_slug;
+                        supabase.auth.getSession().then(({ data: { session } }) => {
+                            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+                            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+                            fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1, source: 'battle_drop' }) })
+                                .catch(err => console.error('Drop add failed', err));
                         });
+                    }
+                }
 
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects, party: newParty } }));
-                        logMsg = (effectInfo.effectId === 'def_up' || effectInfo.effectId === 'def_up_heavy' || effectInfo.effectId === 'barrier')
-                            ? `${card.name}を展開！ パーティ全体のDEF +${defValue} (${effectInfo.effectDuration || 3}T)！`
-                            : `${card.name}を展開！ パーティ全体が守られた！`;
-                    }
-                    break;
-                }
-                case 'aoe_attack': {
-                    damage = card.power ?? 0;
-                    if (damage > 0) {
-                        const isMagic = card.name.includes('魔法') || card.name.toLowerCase().includes('magic');
-                        const result = calculateDamageV4(damage, 0, battleState.player_effects as StatusEffect[], [], isMagic, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
-                        damage = result.damage;
-                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
-                        logMsg = `${card.name}で全体攻撃！${critLabel} 各敵に ${damage} のダメージ！`;
-                    } else {
-                        logMsg = `${card.name}で全体攻撃！`;
-                    }
-                    isAoe = true;
-                    break;
-                }
-                case 'debuff_enemy': {
-                    damage = card.power ?? 0;
-                    if (damage > 0) {
-                        damage = calculateDamage(damage, targetEnemy.def || 0, battleState.player_effects as StatusEffect[], targetEnemy.status_effects as StatusEffect[] || [], true, effectivePlayerAtk);
-                        logMsg = `${targetEnemy.name}に${card.name}！ ${damage} ダメージ！`;
-                    } else {
-                        const eName = effectInfo.effectId ? getEffectName(effectInfo.effectId) : card.name;
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！ ${eName}を付与！`;
-                    }
-                    if (card.target_type === 'all_enemies' || effectInfo.target_type === 'all_enemies') {
-                        isAoe = true;
-                        const pwr = card.power && card.power > 0 ? `(${card.power}%)` : '';
-                        logMsg = `敵全体に${card.name}を使用！ ${effectInfo.effectId ? getEffectName(effectInfo.effectId) + pwr : ''}を付与！`;
-                    }
-                    break;
-                }
-                case 'instakill': {
-                    if (Math.random() < 0.3) {
-                        damage = targetEnemy.hp;
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！ 致命的な一撃が決まった！`;
-                    } else {
-                        // v4.0: 失敗時はATK基準のフォールバックダメージ
-                        const fallbackPower = Math.max(card.power || 0, effectivePlayerAtk + 10);
-                        const result = calculateDamageV4(fallbackPower, targetEnemy.def || 0, battleState.player_effects as StatusEffect[], targetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
-                        damage = result.damage;
-                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！ 即死には失敗したが、${critLabel}${damage} のダメージ！`;
-                    }
-                    break;
-                }
-                case 'pierce_attack': {
-                    damage = card.power ?? 0;
-                    if (damage > 0) {
-                        damage = calculateDamage(damage, 0, battleState.player_effects as StatusEffect[], [], true, effectivePlayerAtk);
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！ 防御を貫通して ${damage} のダメージ！`;
-                    } else {
-                        logMsg = `${card.name}を使用！`;
-                    }
-                    break;
-                }
-                case 'multi_attack': {
-                    damage = (card.power ?? 0) * 2;
-                    if (damage > 0) {
-                        damage = calculateDamage(damage, targetEnemy.def || 0, battleState.player_effects as StatusEffect[], targetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk);
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！ 怒涛の連撃で ${damage} のダメージ！`;
-                    } else {
-                        logMsg = `${card.name}を使用！`;
-                    }
-                    break;
-                }
-                case 'recoil_attack': {
-                    damage = card.power ?? 0;
-                    if (damage > 0) {
-                        damage = calculateDamage(damage, targetEnemy.def || 0, battleState.player_effects as StatusEffect[], targetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk);
-                        logMsg = `${card.name}を使用！ 敵全体に ${damage} のダメージ！`;
-                        isAoe = true;
-                        
-                        const recoil = Math.floor(damage * 0.2); 
-                        const currentHp = get().userProfile?.hp || 0;
-                        const newHp = Math.max(0, currentHp - recoil);
-                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
-                        logMsg += ` (反動ダメージ -${recoil})`;
-                        healSyncHp = newHp;
-                    } else {
-                        logMsg = `${card.name}を使用！`;
-                    }
-                    break;
-                }
-                case 'cure_self': {
-                    const healAmount = (card as any).effect_val ?? card.power ?? 0;
-                    let healMsg = '';
-                    if (userProfile && healAmount > 0) {
-                        const maxHp = effectivePlayerMaxHp;
-                        const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
-                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
-                        healMsg = ` HP +${healAmount} 回復！ (${newHp}/${maxHp}) 及び`;
-                        healSyncHp = newHp;
-                        const { selectedProfileId } = get();
-                        fetch('/api/profile/update-status', {
-                            method: 'POST',
-                            body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                        }).catch(console.error);
-                    }
-
-                    if (effectInfo.cureType === 'status') {
-                        const statusAilments: StatusEffectId[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse'];
-                        const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !statusAilments.includes(e.id));
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                        logMsg = `${card.name}を使用！${healMsg}状態異常を回復した！`;
-                    } else if (effectInfo.cureType === 'debuff') {
-                        const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !['atk_down', 'def_down'].includes(e.id));
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                        logMsg = `${card.name}を使用！${healMsg}デバフを解除した！`;
-                    } else {
-                        const statusAilments: StatusEffectId[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'atk_down', 'def_down'];
-                        const newEffects = (battleState.player_effects as StatusEffect[]).filter(e => !statusAilments.includes(e.id));
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                        logMsg = `${card.name}を使用！${healMsg}状態を正常に戻した！`;
-                    }
-                    break;
-                }
-                case 'support_activate': {
-                    const passiveLabel = getPassiveLabel(card.id);
-                    const currentBuffs = get().battleState.activeSupportBuffs || [];
-                    if (!currentBuffs.includes(card.id)) {
-                        set(state => ({
-                            battleState: {
-                                ...state.battleState,
-                                activeSupportBuffs: [...(state.battleState.activeSupportBuffs || []), card.id],
-                            }
-                        }));
-                    }
-                    // v4.1: berserk (ATK×2.0 + DEF半減)
-                    if (effectInfo.effectId === 'berserk') {
-                        const atkUpEffects = applyEffect(get().battleState.player_effects as StatusEffect[], 'atk_up' as StatusEffectId, effectInfo.effectDuration || 3);
-                        set(state => ({ battleState: { ...state.battleState, player_effects: atkUpEffects } }));
-                        logMsg = `⚠ ${card.name}を服用！ ATK×2.0 だがDEF半減（${effectInfo.effectDuration || 3}T）`;
-                    } else if (effectInfo.effectId === 'ap_recover' as any) {
-                        const newAp = Math.min(15, battleState.current_ap + 3);
-                        set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
-                        logMsg = `✨ ${card.name}を使用！ APが3回復した（現在: ${newAp}）`;
-                    } else if (effectInfo.effectId === 'ap_max' as any) {
-                        const newAp = 15;
-                        const maxHp = effectivePlayerMaxHp;
-                        const selfDmg = Math.max(1, Math.floor(maxHp * 0.1));
-                        const currentHp = get().userProfile?.hp || 0;
-                        const newHp = Math.max(0, currentHp - selfDmg);
-                        
-                        set(state => ({ 
-                            userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null,
-                            battleState: { ...state.battleState, current_ap: newAp } 
-                        }));
-                        
-                        logMsg = `✨ ${card.name}を発動！ AP全回復！ (自傷ダメージ -${selfDmg})`;
-                        healSyncHp = newHp;
-                        const { selectedProfileId } = get();
-                        fetch('/api/profile/update-status', {
-                            method: 'POST',
-                            body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                        }).catch(console.error);
-                    } else if (effectInfo.effectId) {
-                        const newEffects = applyEffect(get().battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
-                        set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                        logMsg = `✨ ${card.name}を発動！ ${getEffectName(effectInfo.effectId)}(${effectInfo.effectDuration || 3}T) ${passiveLabel}`;
-                    } else {
-                        logMsg = `✨ ${card.name}を発動！ ${passiveLabel}（バトル終了まで）`;
-                    }
-                    break;
-                }
-                default: {
-                    damage = card.power ?? 0;
-                    if (damage > 0) {
-                        const isMagic = card.type === 'Magic' || card.name.includes('魔法') || card.name.toLowerCase().includes('magic') || card.name.toLowerCase().includes('fire');
-                        const result = calculateDamageV4(damage, targetEnemy.def || 0, battleState.player_effects as StatusEffect[], targetEnemy.status_effects as StatusEffect[] || [], isMagic, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
-                        damage = result.damage;
-                        const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
-                        logMsg = `${targetEnemy.name}に${card.name}を使用！${critLabel} ${damage} のダメージ！`;
-                    } else { logMsg = `${card.name}を使用！`; }
-                }
-            }
-
-            // Card Cycle
-            nextHand = nextHand.filter(c => c.id !== card.id);
-            if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
-                set(state => ({
-                    battleState: {
-                        ...state.battleState,
-                        exhaustPile: [...state.battleState.exhaustPile, { id: card.id, name: card.name, type: card.type }],
-                        consumedItems: [...state.battleState.consumedItems, card.id],
-                    }
-                }));
-            } else {
-                nextDiscardPile = [...nextDiscardPile, card];
-            }
-
-            // Self-buff via effectInfo
-            if (!effectInfo.skipDamage && effectInfo.effectId) {
-                const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectInfo.effectId);
-                if (isSelfBuff) {
-                    const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
-                    set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                }
-                // v4.1: stun_minor — 強打(card_id=1)のスタンは10%確率で発動
-                if (effectInfo.effectId === 'stun' && (card.id.match(/^(\d+)/)?.[1] ?? card.id) === '1') {
-                    if (Math.random() >= 0.10) {
-                        // 90%でスタン不発動——付与しない
-                    } else {
-                        // 10%でスタン発動
-                        const targetEnemy2 = get().battleState.enemy;
-                        if (targetEnemy2) {
-                            const stunEffects = applyEffect((targetEnemy2.status_effects || []) as StatusEffect[], 'stun' as StatusEffectId, 1);
-                            set(state => ({ battleState: { ...state.battleState, enemy: { ...state.battleState.enemy!, status_effects: stunEffects } } }));
-                            set(state => ({ battleState: { ...state.battleState, messages: [...state.battleState.messages, `✨ ${card.name}の衝撃でスタン！`] } }));
-                        }
-                    }
-                }
-            }
-            // Fallback: card.effect_id
-            if (card.effect_id && !effectInfo.effectId) {
-                const effectId = card.effect_id as StatusEffectId;
-                const duration = card.effect_duration || 3;
-                const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectId);
-                if (isSelfBuff) {
-                    const newEffects = applyEffect(battleState.player_effects as StatusEffect[], effectId, duration);
-                    set(state => ({ battleState: { ...state.battleState, player_effects: newEffects } }));
-                }
-            }
-        }
-
-        // Apply Damage & Effects to Enemies
-        let resistedDebuff: string | null = null; // v2.9.3k: レジスト判定結果
-        const resistedEnemies: string[] = [];
-        const affectedEnemies: string[] = [];
-        let newEnemies = battleState.enemies.map(e => {
-            if (isAoe && e.hp > 0) {
-                let newHp = Math.max(0, e.hp - damage);
-                let newEffects = (e.status_effects || []) as StatusEffect[];
-                if (effectInfo?.effectId) {
-                    const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
-                    if (!isSelfBuff) {
-                        if (rollDebuffSuccess(effectInfo.effectId)) {
-                            const isStunAoe = effectInfo.effectId === 'stun' || effectInfo.effectId === 'bind';
-                            const aoeDuration = isStunAoe ? (effectInfo?.effectDuration || 3) + 1 : (effectInfo?.effectDuration || 3);
-                            newEffects = applyEffect(newEffects, effectInfo.effectId, aoeDuration);
-                            affectedEnemies.push(e.name);
-                        } else {
-                            resistedEnemies.push(e.name);
-                        }
-                    }
-                }
-                return { ...e, hp: newHp, status_effects: newEffects };
-            }
-            if (e.id === targetEnemyId) {
-                let newHp = Math.max(0, e.hp - damage);
-                let newEffects = (e.status_effects || []) as StatusEffect[];
-                const resolvedEffectId = effectInfo?.effectId || (card?.effect_id as StatusEffectId | undefined);
-                if (resolvedEffectId && isValidEffectId(resolvedEffectId)) {
-                    const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectId);
-                    if (!isSelfBuff) {
-                        // v2.9.3k: デバフ成功率判定
-                        if (rollDebuffSuccess(resolvedEffectId)) {
-                            const isStunEffect = resolvedEffectId === 'stun' || resolvedEffectId === 'bind';
-                            const baseDuration = effectInfo?.effectDuration || card?.effect_duration || 3;
-                            const finalDuration = isStunEffect ? baseDuration + 1 : baseDuration;
-                            newEffects = applyEffect(newEffects, resolvedEffectId, finalDuration);
-                        } else {
-                            resistedDebuff = resolvedEffectId;
-                        }
-                    }
-                }
-                return { ...e, hp: newHp, status_effects: newEffects };
-            }
-            return e;
-        });
-
-        const updatedTargetEnemy = newEnemies.find(e => e.id === targetEnemyId);
-        const isTargetDead = updatedTargetEnemy ? updatedTargetEnemy.hp <= 0 : false;
-        const allDead = newEnemies.every(e => e.hp <= 0);
-
-        const newMessages = [...battleState.messages, logMsg];
-        if (healSyncHp !== null) newMessages.push(`__hp_sync:${healSyncHp}`);
-        if (damage > 0) {
-            // v4.0: drain効果 — ダメージの50%をHP回復
-            const resolvedEffectIdForDrain = effectInfo?.effectId || (card?.effect_id as string | undefined);
-            if (resolvedEffectIdForDrain === 'drain') {
-                const drainHeal = Math.floor(damage * 0.5);
-                const currentHp = get().userProfile?.hp || 0;
-                const maxHp = effectivePlayerMaxHp;
-                const newHp = Math.min(maxHp, currentHp + drainHeal);
-                set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
-                newMessages.push(`→ 生命力を吸収！ HP +${drainHeal} 回復！`);
-                fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
-            }
-        }
-        // v4.1: debuff付与/レジストログ（damage=0のpureデバフでも表示）
-        {
-            const resolvedEffectIdForLog = effectInfo?.effectId || (card?.effect_id as string | undefined);
-            if (resolvedEffectIdForLog && isValidEffectId(resolvedEffectIdForLog) && !['atk_up', 'def_up', 'def_up_heavy', 'regen', 'stun_immune', 'evasion_up', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectIdForLog)) {
-                if (isAoe) {
-                    affectedEnemies.forEach(name => {
-                        newMessages.push(`→ ${name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
-                    });
-                    resistedEnemies.forEach(name => {
-                        newMessages.push(`→ ${name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
-                    });
-                } else {
-                    if (resistedDebuff === resolvedEffectIdForLog) {
-                        newMessages.push(`→ ${targetEnemy?.name}は「${getEffectName(resolvedEffectIdForLog as any)}」に抵抗した！`);
-                    } else if (damage > 0 || effectInfo?.effectType === 'debuff_enemy') {
-                        newMessages.push(`→ ${targetEnemy?.name}に「${getEffectName(resolvedEffectIdForLog as any)}」を付与した！`);
-                    }
-                }
-            }
-        }
-        if (isTargetDead) {
-            newMessages.push(`${targetEnemy.name}を倒した！`);
-            if (updatedTargetEnemy?.drop_rate && updatedTargetEnemy.drop_item_slug && Math.random() * 100 < updatedTargetEnemy.drop_rate) {
-                newMessages.push(`${updatedTargetEnemy.name}が「${updatedTargetEnemy.drop_item_slug}」を落とした！`);
-                const dropSlug = updatedTargetEnemy.drop_item_slug;
-                // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    const headers: HeadersInit = { 'Content-Type': 'application/json' };
-                    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
-                    fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1, source: 'battle_drop' }) })
-                        .catch(err => console.error('Drop add failed', err));
-                });
-            }
-        }
-
-        if (allDead) {
-            newMessages.push('全ての敵を倒した！ 勝利！');
-            try {
-                getAuthHeaders().then(authHeaders => {
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        ...authHeaders
-                    };
-                    fetch('/api/report-action', {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
-                    });
-                    // [Security] v27.2: サーバーサイドバトル結果検証
-                    if (battleState.battle_session_id) {
-                        fetch('/api/battle/validate-result', {
-                            method: 'POST',
-                            headers,
-                            body: JSON.stringify({
-                                battle_session_id: battleState.battle_session_id,
-                                claimed_result: 'victory'
-                            })
-                        }).then(res => res.json()).then(data => {
-                            if (data.battle_completion_token) {
-                                set(state => ({
-                                    battleState: { ...state.battleState, battle_completion_token: data.battle_completion_token }
-                                }));
-                            }
-                        }).catch(console.error);
-                    }
-                });
-                // バトル後HPをDB保存してからプロフィール更新
-                const preservedHp = get().userProfile?.hp;
-                const preservedVit = get().userProfile?.vitality;
-                if (preservedHp != null) {
-                    const updateBody: any = { hp: Math.max(0, preservedHp) };
-                    if (preservedVit != null) updateBody.vitality = preservedVit;
-                    fetch('/api/profile/update-status', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updateBody)
-                    }).catch(console.error);
-                }
-                get().fetchWorldState();
-                // fetchUserProfile後にバトルHP復元（DB反映遅延対策）
-                get().fetchUserProfile().then(() => {
-                    if (preservedHp != null) {
-                        set(state => ({
-                            userProfile: state.userProfile
-                                ? { ...state.userProfile, hp: preservedHp, vitality: preservedVit ?? state.userProfile.vitality }
-                                : state.userProfile
-                        }));
-                    }
-                });
-                const partyCount = (get().battleState.party?.length || 0) + 1;
-                const gold = selectedScenario?.reward_gold || 50;
-                get().addGold(Math.floor(gold / partyCount));
-                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                const consumed = (get().battleState.consumedItems || []).filter(cid => uuidRegex.test(cid));
-                if (consumed.length > 0) {
-                    getAuthHeaders().then(authHeaders => {
-                        const headers = {
-                            'Content-Type': 'application/json',
-                            ...authHeaders
-                        };
-                        Promise.all(consumed.map(async (cid) => {
-                            try {
-                                const res = await fetch('/api/battle/use-item', {
+                if (loopAllDead) {
+                    newMessages.push('全ての敵を倒した！ 勝利！');
+                    try {
+                        getAuthHeaders().then(authHeaders => {
+                            const headers = {
+                                'Content-Type': 'application/json',
+                                ...authHeaders
+                            };
+                            fetch('/api/report-action', {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
+                            });
+                            if (battleState.battle_session_id) {
+                                fetch('/api/battle/validate-result', {
                                     method: 'POST',
                                     headers,
-                                    body: JSON.stringify({ inventory_id: cid })
-                                });
-                                if (!res.ok) console.error('Failed to use item API:', cid, await res.text());
-                            } catch (err) {
-                                console.error('Failed to call use-item API:', cid, err);
+                                    body: JSON.stringify({
+                                        battle_session_id: battleState.battle_session_id,
+                                        claimed_result: 'victory'
+                                    })
+                                }).then(res => res.json()).then(data => {
+                                    if (data.battle_completion_token) {
+                                        set(state => ({
+                                            battleState: { ...state.battleState, battle_completion_token: data.battle_completion_token }
+                                        }));
+                                    }
+                                }).catch(console.error);
                             }
-                        }));
-                    });
+                        });
+                        const preservedHp = get().userProfile?.hp;
+                        const preservedVit = get().userProfile?.vitality;
+                        if (preservedHp != null) {
+                            const updateBody: any = { hp: Math.max(0, preservedHp) };
+                            if (preservedVit != null) updateBody.vitality = preservedVit;
+                            fetch('/api/profile/update-status', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(updateBody)
+                            }).catch(console.error);
+                        }
+                        get().fetchWorldState();
+                        get().fetchUserProfile().then(() => {
+                            if (preservedHp != null) {
+                                set(state => ({
+                                    userProfile: state.userProfile
+                                        ? { ...state.userProfile, hp: preservedHp, vitality: preservedVit ?? state.userProfile.vitality }
+                                        : state.userProfile
+                                }));
+                            }
+                        });
+                        const partyCount = (get().battleState.party?.length || 0) + 1;
+                        const gold = selectedScenario?.reward_gold || 50;
+                        get().addGold(Math.floor(gold / partyCount));
+                        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                        const consumed = (get().battleState.consumedItems || []).filter(cid => uuidRegex.test(cid));
+                        if (consumed.length > 0) {
+                            getAuthHeaders().then(authHeaders => {
+                                const headers = {
+                                    'Content-Type': 'application/json',
+                                    ...authHeaders
+                                };
+                                Promise.all(consumed.map(async (cid) => {
+                                    try {
+                                        const res = await fetch('/api/battle/use-item', {
+                                            method: 'POST',
+                                            headers,
+                                            body: JSON.stringify({ inventory_id: cid })
+                                        });
+                                        if (!res.ok) console.error('Failed to use item API:', cid, await res.text());
+                                    } catch (err) {
+                                        console.error('Failed to call use-item API:', cid, err);
+                                    }
+                                }));
+                            });
+                        }
+                    } catch (e) { console.error(e); }
+                    allDead = true;
+                    break;
                 }
-            } catch (e) { console.error(e); }
+            }
         }
+
+        const finalTargetEnemyId = targetId || battleState.enemy?.id;
+        const finalTargetEnemy = currentEnemies.find(e => e.id === finalTargetEnemyId);
+        const isTargetDead = finalTargetEnemy ? finalTargetEnemy.hp <= 0 : false;
+        const finalAllDead = currentEnemies.every(e => e.hp <= 0);
 
         set(state => ({
             hand: nextHand,
             discardPile: nextDiscardPile,
             battleState: {
                 ...state.battleState,
-                enemies: newEnemies,
-                enemy: isTargetDead ? (newEnemies.find(e => e.hp > 0) || null) : updatedTargetEnemy || null,
+                player_effects: currentPlayerEffects,
+                consumedItems: currentConsumedItems,
+                exhaustPile: currentExhaustPile,
+                activeSupportBuffs: currentActiveSupportBuffs,
+                enemies: currentEnemies,
+                enemy: isTargetDead ? (currentEnemies.find(e => e.hp > 0) || null) : finalTargetEnemy || null,
                 messages: newMessages,
-                isVictory: allDead || state.battleState.isVictory
+                isVictory: finalAllDead || state.battleState.isVictory
             }
         }));
     },
+
 
     processPartyTurn: async () => {
         const initialBattle = get().battleState;

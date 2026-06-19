@@ -80,6 +80,7 @@ export function useInnPageState() {
     const [showAccount, setShowAccount] = useState(false);
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
+    const [showAcademy, setShowAcademy] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
     const [resultOverlay, setResultOverlay] = useState<{ result: 'success' | 'failure'; data: any } | null>(null);
     const [restLoading, setRestLoading] = useState(false);
@@ -441,13 +442,13 @@ export function useInnPageState() {
 
     // NPC Data Generator
     const FACILITY_LABELS: Record<string, string> = {
-        inn: '宿屋/酒場', guild: 'ギルド', shop: '道具屋', temple: '神殿'
+        inn: '宿屋/酒場', guild: 'ギルド', shop: '道具屋', temple: '神殿', magicAcademy: '魔術学院'
     };
     const locationSlug = worldState?.location_name || '名もなき旅人の拠所';
 
     const getNpcData = (facility: FacilityType): NpcDialogData | null => {
         const facilityKey = facility as FacilityKey;
-        if (!['inn', 'guild', 'shop', 'temple'].includes(facilityKey)) return null;
+        if (!['inn', 'guild', 'shop', 'temple', 'magicAcademy'].includes(facilityKey)) return null;
 
         const repScore = reputation?.score || 0;
         const resolved = getNpcForLocation(locationSlug, facilityKey, repScore);
@@ -523,6 +524,7 @@ export function useInnPageState() {
         if (activeModal === 'shop') return { buttonText: '品揃えを見る', isDisabled: false };
         if (activeModal === 'temple') return { buttonText: '礼拝堂に行く', isDisabled: false };
         if (activeModal === 'guild') return { buttonText: '依頼を見る', isDisabled: false };
+        if (activeModal === 'magicAcademy') return { buttonText: '魔術学院に入る', isDisabled: false };
         return { buttonText: '機能を利用する', isDisabled: false };
     };
 
@@ -537,6 +539,8 @@ export function useInnPageState() {
         } else if (facility === 'guild') {
             setActiveModal('questBoard');
             fetchQuestsForBoard();
+        } else if (facility === 'magicAcademy') {
+            setShowAcademy(true);
         }
     };
 
@@ -741,7 +745,7 @@ export function useInnPageState() {
     };
 
     // Derived states
-    const activeNpcData = activeModal && ['inn', 'shop', 'temple', 'guild'].includes(activeModal)
+    const activeNpcData = activeModal && ['inn', 'shop', 'temple', 'guild', 'magicAcademy'].includes(activeModal)
         ? getNpcData(activeModal as FacilityType) : null;
     const { buttonText, isDisabled, secondaryActions } = activeDialogConfig();
 
@@ -752,6 +756,7 @@ export function useInnPageState() {
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
+        showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
         resultOverlay, setResultOverlay,

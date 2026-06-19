@@ -38,6 +38,12 @@ function useTypewriter(text: string, speed: number = 30) {
 
     useEffect(() => {
         if (!text) return;
+        
+        if (speed <= 0) {
+            setDisplayed(text);
+            setDone(true);
+            return;
+        }
 
         const timer = setInterval(() => {
             setDisplayed(prev => {
@@ -65,7 +71,8 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     if (!npcData) return null;
 
     const isBanned = npcData.isBanned;
-    const { displayed, done, skip } = useTypewriter(npcData.dialogue, 30);
+    const isTheodore = npcData.name === 'テオドール';
+    const { displayed, done, skip } = useTypewriter(npcData.dialogue, isTheodore ? 0 : 30);
 
     const handleClose = async () => {
         if (isActionLoading) return;
@@ -159,7 +166,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                         <p className={`text-sm md:text-base leading-relaxed font-serif italic ${
                             isBanned ? 'text-red-200' : 'text-slate-200'
                         }`}>
-                            「{displayed}{!done && <span className="inline-block w-0.5 h-4 bg-amber-500/70 animate-pulse ml-0.5 align-middle" />}」
+                            「{isTheodore ? npcData.dialogue : displayed}{!(isTheodore || done) && <span className="inline-block w-0.5 h-4 bg-amber-500/70 animate-pulse ml-0.5 align-middle" />}」
                         </p>
                     </div>
 

@@ -35,6 +35,7 @@ import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
 import ColosseumModal from '@/components/inn/ColosseumModal';
+import AcademyModal from '@/components/inn/AcademyModal';
 
 // デバッグ系: 開発環境のみロード
 const QuestTestPanel = dynamic(() => import('@/components/debug/QuestTestPanel'), { ssr: false });
@@ -62,6 +63,7 @@ function InnPageInner() {
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
+        showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
         resultOverlay, setResultOverlay,
@@ -220,6 +222,7 @@ function InnPageInner() {
 
                 {/* Modals */}
                 {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+                {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} />}
                 {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
                 {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
                 {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}

@@ -47,6 +47,27 @@ export function getNpcForLocation(
 ): ResolvedNpc | null {
   if (!locationSlug) return null;
 
+  // ハブ拠点（名もなき旅人の拠所）を除く全拠点に設置
+  if (locationSlug === '名もなき旅人の拠所' && facilityType === 'magicAcademy') {
+    return null;
+  }
+
+  // 魔術学院はハブ以外全てでテオドールを共有NPCとして表示する
+  if (facilityType === 'magicAcademy') {
+    const theodore = NPC_MASTER['名もなき旅人の拠所']?.magicAcademy;
+    if (!theodore) return null;
+    const fameLevel = getFameLevel(reputationScore);
+    const dialogue = theodore.dialogues[fameLevel];
+    return {
+      name: theodore.name,
+      role: theodore.role,
+      imageUrl: theodore.imageUrl,
+      dialogue,
+      fameLevel,
+      isBanned: fameLevel === 'banned',
+    };
+  }
+
   const locationData = NPC_MASTER[locationSlug];
   if (!locationData) return null;
 
