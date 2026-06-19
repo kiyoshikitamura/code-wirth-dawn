@@ -81,6 +81,15 @@
 * `type` (TEXT) : `'subscription'` (サブスク加入), `'gold_purchase'` (都度購入)
 * `created_at` (TIMESTAMP WITH TIME ZONE)
 
+### 3.3 `colosseum_activity_logs` (コロシアム行動ログ)
+コロシアムの挑戦ライフサイクル（開始、完了、放棄/失敗）を記録し、ダッシュボードのコロシアム集計、クリア率の算出、およびDAU/MAU集計に使用します。
+* `id` (UUID, Primary Key)
+* `user_id` (UUID, Foreign Key -> auth.users)
+* `difficulty` (TEXT) : `'easy'`, `'normal'`, `'hard'`
+* `action` (TEXT) : `'start'` (受注時), `'complete'` (制覇クリア時), `'abandon'` (途中リタイア・戦闘敗北時)
+* `gold_cost` (INTEGER) : 挑戦時に消費されたゴールド額（`action = 'start'` の時のみ記録）
+* `created_at` (TIMESTAMP WITH TIME ZONE)
+
 ---
 
 ## 4. バックエンド API 仕様
@@ -116,6 +125,9 @@
       return uniqueUsers.size;
   };
   ```
+* **コロシアム統計 (Colosseum KPI) の算出**:
+  - `get_colosseum_summary_stats()` RPCを使用して、全期間の累計挑戦プレイヤー数 (`total_players`)、総挑戦数 (`total_battles` = 挑戦数)、総クリア数 (`total_wins` = クリア数)、今期最高連勝 (`max_streak`)、累計回収ゴールド (`total_gold_spent`) を一括でフェッチし、制覇率（クリア率）を `total_wins / total_battles * 100` で計算します。
+  - `get_colosseum_daily_stats(days_limit)` RPCを使用して、直近 `days` 日間の日別・難易度別の開始数・クリア数・放棄数・回収ゴールドを集計します。
 
 ### 4.2 `POST /api/admin/reset`
 テストデータを一括初期化し、開発環境のリセットを行うためのAPI。
@@ -179,4 +191,10 @@ const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 
 * **Supabase 1000行上限の回避**: KPI集計APIでは `.range` を用いた `fetchAll` 再帰取得ロジックを用いて、1000件以上のデータが正しく取得できるようにする。
 * **トップサマリーのMAU/MPU集約**: 日次（DAU/DPU）のブレに左右されない経営判断のため、トップの主要指標には「月間アクティブ (MAU)」と「月間課金者 (MPU)」を採用し、デイリーは下部の詳細分析チャート等で確認するUI構成とする。
 * **クエスト進捗（完了・失敗）ログの記録網羅性**: ユーザー個人用履歴（`user_chronicles`）とは別に、ダッシュボード集計用の行動ログ（`quest_activity_logs`）に対しても、受注時（`start`）だけでなく完了時（`complete` での成功、あるいは戦闘敗北やリタイアによる `abandon`）のログ書き込みを漏れなく実装し、ダッシュボードの集計値に不整合が生じないようにする。また、この KPI ログの書き込み失敗によってゲーム本編の完了処理（報酬付与等）がクラッシュしないよう、適切な try-catch によるエラーハンドリングを適用する。
+
+### 5.4 6時間周期リセット下でのコロシアム集計とインデックス最適化
+* **リセットを考慮したソース選定**: 6時間ごとに `colosseum_user_stats` のレコードがリセット（全削除）される仕様となったため、累計指標（総プレイヤー数、挑戦数、クリア数など）を `colosseum_user_stats` から集計するとデータが消失します。そのため、これらの累計指標は永続的なログテーブルである `colosseum_activity_logs` から集計する方式に変更し、連勝数のみリセット後の値として `colosseum_user_stats` から取得します。
+* **Index Only Scanによる負荷削減**: DAU/MAUやダッシュボードでの開始/完了アクションの頻繁な集計において、DBスキャン負荷を最小化するため、`colosseum_activity_logs` に `(action, created_at)` の複合インデックスを追加します。これにより、テーブルのテーブルフルスキャンを避け、インデックス内の情報のみでスピーディに集計を完了させる設計とします。
+* **データ不在難易度の表示保証**: ログテーブルを直接 `GROUP BY` すると、ログが1件もない難易度（例: 実装直後のHardなど）が表示されなくなります。これを防ぐため、固定の難易度リスト（Easy/Normal/Hard）にログテーブルを `LEFT JOIN` するビュー定義を採用し、常に全難易度がダッシュボードに0件から表示されるようにします。
+* **失敗ログの網羅記録**: コロシアム挑戦中の戦闘で敗北して終了した際にも、`/api/quest/complete` の失敗パスにおいて `colosseum_activity_logs` に `action: 'abandon'` のログを書き込むよう実装します。これにより、ダッシュボードの「総挑戦数」と「完了数＋放棄数」の不整合（開始数だけが異常に増え続ける不具合）を完全に防ぎます。
 

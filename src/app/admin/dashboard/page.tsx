@@ -165,6 +165,7 @@ export default function AdminDashboardPage() {
             if (q.quest_type === 'sub') typeLabel = 'サブ';
             else if (q.quest_type === 'ugc') typeLabel = 'UGC';
             else if (q.quest_type === 'event') typeLabel = 'イベント';
+            else if (q.quest_type === 'colosseum') typeLabel = '闘技場';
 
             return [
                 q.id,
@@ -525,15 +526,15 @@ export default function AdminDashboardPage() {
                                         <div className="text-sm font-bold text-amber-400">{colosseum.summary.totalPlayers} UU</div>
                                     </div>
                                     <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
-                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">総バトル数</div>
-                                        <div className="text-sm font-bold text-blue-400">{colosseum.summary.totalBattles} 戦</div>
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">総挑戦数</div>
+                                        <div className="text-sm font-bold text-blue-400">{colosseum.summary.totalBattles} 回</div>
                                     </div>
                                     <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
-                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">平均勝率</div>
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">制覇率</div>
                                         <div className="text-sm font-bold text-emerald-400">{colosseum.summary.winRate} %</div>
                                     </div>
                                     <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
-                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">歴代最高連勝</div>
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">最高連勝</div>
                                         <div className="text-sm font-bold text-pink-400">{colosseum.summary.maxStreak} 連勝</div>
                                     </div>
                                     <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
@@ -905,6 +906,9 @@ export default function AdminDashboardPage() {
                                         } else if (q.quest_type === 'event') {
                                             typeLabel = 'イベント';
                                             typeColor = 'text-yellow-400 bg-yellow-950/40 border border-yellow-900/30';
+                                        } else if (q.quest_type === 'colosseum') {
+                                            typeLabel = '闘技場';
+                                            typeColor = 'text-amber-400 bg-amber-950/40 border border-amber-900/30';
                                         }
 
                                         return (

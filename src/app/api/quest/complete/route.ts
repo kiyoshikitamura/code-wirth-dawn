@@ -560,15 +560,16 @@ export async function POST(req: Request) {
             })
         );
 
-        // Record Colosseum activity log on success
-        if (result === 'success' && String(quest_id).startsWith('colosseum_')) {
+        // Record Colosseum activity log (complete on success, abandon on failure/defeat)
+        if (String(quest_id).startsWith('colosseum_')) {
             const difficulty = String(quest_id).replace('colosseum_', '');
+            const action = result === 'success' ? 'complete' : 'abandon';
             historyPromises.push(
                 supabase.from('colosseum_activity_logs')
                     .insert({
                         user_id,
                         difficulty,
-                        action: 'complete',
+                        action,
                         gold_cost: 0
                     })
                     .then(({ error }: any) => {
