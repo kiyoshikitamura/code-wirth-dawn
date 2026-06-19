@@ -15,6 +15,7 @@ export interface CollectionEnemyEntry {
     exp_reward: number | null;
     gold_reward: number | null;
     drop_item_name: string | null;
+    death_immune?: boolean | null;
 }
 
 // ─── アイテム ───

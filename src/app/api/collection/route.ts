@@ -41,7 +41,7 @@ export async function GET(req: Request) {
             userSkillsRes,
             npcEncountersRes,
         ] = await Promise.all([
-            supabaseService.from('enemies').select('id, slug, name, level, hp, atk, def, reward_exp, reward_gold, drop_item_id, drop_item_slug'),
+            supabaseService.from('enemies').select('id, slug, name, level, hp, atk, def, reward_exp, reward_gold, drop_item_id, drop_item_slug, death_immune'),
             supabaseService.from('items').select('id, slug, name, type, sub_type, base_price, effect_data'),
             supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, image_url, cards(name, type, ap_cost, effect_val, description)'),
             supabaseService.from('npcs').select('slug, name, epithet, job_class, level, max_hp, attack, defense, cover_rate, hire_cost, introduction'),
@@ -77,6 +77,7 @@ export async function GET(req: Request) {
             exp_reward: unlockedEnemies.has(e.id) ? e.reward_exp : null,
             gold_reward: unlockedEnemies.has(e.id) ? e.reward_gold : null,
             drop_item_name: unlockedEnemies.has(e.id) ? (itemSlugToName.get(e.drop_item_slug) || null) : null,
+            death_immune: unlockedEnemies.has(e.id) ? e.death_immune : null,
         })).sort((a, b) => a.id - b.id);
 
         const items: CollectionItemEntry[] = (itemsRes.data || []).filter((i: any) => i.id != null).map((i: any) => ({

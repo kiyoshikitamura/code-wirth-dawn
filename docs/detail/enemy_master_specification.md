@@ -1,6 +1,11 @@
-# Wirth-Dawn Enemy Master Specification (v16.6) & Security/UX Audit
+# Wirth-Dawn Enemy Master Specification (v16.7) & Security/UX Audit
 
-本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**131種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UXの追加実装案を統合したものです。
+本ドキュメントは、「Code: Wirth-Dawn」のワールドマップおよび汎用クエストで登場する全**131種**のエネミー（enemies）および敵スキル（enemy_skills）の定義、ならびにバトルの致命的な脆弱性監査およびUI/UX of 追加実装案を統合したものです。
+
+> **v16.7 (2026-06-19) 変更点 — 即死耐性（death_immune）の導入:**
+> - **即死耐性カラムの追加**: `enemies` テーブルに `death_immune` カラム（デフォルト FALSE）を追加。
+> - **ボス即死耐性の有効化**: `boss_%`, `enemy_boss_%`, `enemy_spot_%`, `enemy_god_%`, `enemy_bounty_%` のパターンに合致するボス級エネミーの `death_immune` を TRUE に設定。
+> - **即死スキル（死殺剣、死神の宣告等）の耐性判定対応**: 即死耐性持ちの敵に対して、即死効果を無効化し割合ダメージやフォールバックダメージを適用するロジックを実装。
 
 > **v16.6 (2026-05-13) 変更点 — Phase 2 Rep連動ボス追加 & 監査修正:**
 > - **T1 Rep連動ボス4体追加（5101-5104）**: `boss_graverobber_leader`, `boss_giant_scorpion`, `boss_toll_bandit`, `boss_river_god`。序盤地方クエスト用。
@@ -110,6 +115,7 @@
 *   `spawn_type` (TEXT): `random` (通常), `quest_only` (クエスト専用), `bounty` (賞金稼ぎ/イベント専用)
 *   `action_pattern` (JSONB): 行動パターン。確率（prob）や条件（condition）と使用スキル（skill）を定義する。
     *   例: `[{"skill": "slap", "prob": 70}, {"skill": "heal", "condition": "hp_under:30", "prob": 30}]`
+*   `death_immune` (BOOLEAN): 即死耐性（デフォルトFALSE）。ボスや特殊エネミーに対して即死スキル効果を無効化する。
 
 **【enemy_skills テーブル】**
 *   `id` (BIGINT): 一意な識別子

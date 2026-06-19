@@ -75,6 +75,7 @@ export async function GET(req: Request) {
             level: e.level || Math.floor(e.hp / 10) || 1, // v2.9.3g: DB level優先
             image_url: e.image_url || `/images/enemies/${e.slug || 'default'}.png`,
             status_effects: [],
+            death_immune: e.death_immune || false,
             vit_damage: e.vit_damage,
             traits: e.traits,
             drop_rate: e.drop_rate,
@@ -148,6 +149,7 @@ async function getEnemiesFromGroup(groupSlug: string) {
             level: e.level || Math.floor(e.hp / 10) || 1, // v2.9.3g: DB level優先
             image_url: e.image_url || `/images/enemies/${e.slug}.png`,
             status_effects: [],
+            death_immune: e.death_immune || false,
             vit_damage: e.vit_damage,
             traits: e.traits,
             drop_rate: e.drop_rate,

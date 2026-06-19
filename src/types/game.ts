@@ -81,6 +81,7 @@ export interface Enemy {
   image?: string;
   slug?: string; // v2.1
   traits?: string[]; // Added v10 for special effects like drain_vit
+  death_immune?: boolean; // v28.1: Instant death resistance parameter
   drop_rate?: number; // v2.6: ドロップ率 0-100
   drop_item_slug?: string; // v2.6: ドロップアイテムslug
   status_effects?: { id: string; duration: number }[]; // v3.5: Per-enemy effects

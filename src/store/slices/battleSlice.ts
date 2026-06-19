@@ -465,15 +465,10 @@ export const createBattleSlice = (
             tickMessages.push(...eTick.messages);
             let newHp = Math.max(0, enemy.hp + eTick.hpDelta);
             if (eTick.expired.includes('death_sentence')) {
-                const isBoss = enemy.name.includes('ボス') ||
-                    enemy.name.toLowerCase().includes('boss') ||
-                    enemy.slug?.includes('boss') ||
-                    enemy.slug?.includes('dragon') ||
-                    enemy.level >= 20;
-                if (isBoss) {
+                if (enemy.death_immune) {
                     const bossDmg = Math.max(300, Math.floor(enemy.maxHp * 0.2));
                     newHp = Math.max(0, newHp - bossDmg);
-                    tickMessages.push(`💀 ${enemy.name}はボス特性により即死を無効化し、代わりに ${bossDmg} の大ダメージを受けた！`);
+                    tickMessages.push(`💀 ${enemy.name}は即死耐性により即死を無効化し、代わりに ${bossDmg} の大ダメージを受けた！`);
                 } else {
                     newHp = 0;
                     tickMessages.push(`💀 ${enemy.name}は死神の宣告により即死した！`);
@@ -1962,7 +1957,13 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'instakill': {
-                        if (Math.random() < 0.3) {
+                        if (loopTargetEnemy.death_immune) {
+                            const fallbackPower = Math.max(card.power || 0, effectivePlayerAtk + 10);
+                            const result = calculateDamageV4(fallbackPower, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, BATTLE_RULES.PLAYER_CRIT_RATE);
+                            damage = result.damage;
+                            const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 即死を無効化されたが、${critLabel}${damage} のダメージ！`;
+                        } else if (Math.random() < 0.3) {
                             damage = loopTargetEnemy.hp;
                             logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 致命的な一撃が決まった！`;
                         } else {
