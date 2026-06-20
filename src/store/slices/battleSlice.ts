@@ -149,6 +149,9 @@ export const createBattleSlice = (
         partyMembers.forEach(p => { p.inject_cards?.forEach(id => neededCardIds.add(String(id))); });
 
         const BASIC_CARD_IDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+        if (worldState?.status === 'Zenith' || worldState?.status === '絶頂') {
+            BASIC_CARD_IDS.push('61');
+        }
         const allNeededIds = new Set([...Array.from(neededCardIds), ...BASIC_CARD_IDS]);
 
         let partyCardPool: Card[] = [];
@@ -212,9 +215,9 @@ export const createBattleSlice = (
             equippedCards,
             partyMembers,
             (id) => {
-                const fromPool = partyCardPool.find(c => c.id === String(id));
+                const fromPool = partyCardPool.find(c => c.id === String(id) || c.slug === id);
                 if (fromPool) return fromPool;
-                return CARD_POOL.find(c => c.id === String(id));
+                return CARD_POOL.find(c => c.id === String(id) || c.slug === id);
             },
             worldState?.status,
             userProfile?.level || 1
@@ -2420,7 +2423,7 @@ export const createBattleSlice = (
             }
         }
 
-        const finalTargetEnemyId = targetId || battleState.enemy?.id;
+        const finalTargetEnemyId = (targetId && currentEnemies.some(e => e.id === targetId)) ? targetId : battleState.enemy?.id;
         const finalTargetEnemy = currentEnemies.find(e => e.id === finalTargetEnemyId);
         const isTargetDead = finalTargetEnemy ? finalTargetEnemy.hp <= 0 : false;
         const finalAllDead = currentEnemies.every(e => e.hp <= 0);
