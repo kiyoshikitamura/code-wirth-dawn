@@ -139,6 +139,7 @@ class SoundManager {
     private seBufferCache: Map<string, AudioBuffer> = new Map();
     private seEnabled = true;
     private readonly SE_VOLUME = 0.8;
+    private seLoadFailedCache: Set<string> = new Set();
 
     // 初期化済みフラグ
     private initialized = false;
@@ -378,6 +379,7 @@ class SoundManager {
     /** 指定されたキーのSEを事前にロードし、デコードしてキャッシュする */
     async preloadSE(key: string): Promise<void> {
         if (!this.seEnabled) return;
+        if (this.seLoadFailedCache.has(key)) return;
         if (!this.audioCtx) this.init();
         if (!this.audioCtx) return;
 
@@ -388,19 +390,30 @@ class SoundManager {
         if (this.seBufferCache.has(key)) return;
 
         try {
-            const response = await fetch(resolvedSrc);
-            if (!response.ok) return;
+            const response = await fetch(resolvedSrc, { cache: 'force-cache' });
+            if (!response.ok) {
+                this.seLoadFailedCache.add(key);
+                return;
+            }
             const arrayBuffer = await response.arrayBuffer();
-            const buffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+            
+            const decodePromise = this.audioCtx.decodeAudioData(arrayBuffer);
+            const timeoutPromise = new Promise<AudioBuffer>((_, reject) =>
+                setTimeout(() => reject(new Error('decodeAudioData timeout (2000ms)')), 2000)
+            );
+            const buffer = await Promise.race([decodePromise, timeoutPromise]);
+            
             this.seBufferCache.set(key, buffer);
             console.log(`[SoundManager] Preloaded & Cached SE: ${key}`);
         } catch (e) {
+            this.seLoadFailedCache.add(key);
             console.warn(`[SoundManager] SE preload error (${key}):`, e);
         }
     }
 
     async playSE(key: string): Promise<void> {
         if (!this.seEnabled) return;
+        if (this.seLoadFailedCache.has(key)) return;
         if (!this.audioCtx) this.init();
         if (!this.audioCtx) return;
 
@@ -417,13 +430,20 @@ class SoundManager {
         try {
             let buffer = this.seBufferCache.get(key);
             if (!buffer) {
-                const response = await fetch(resolvedSrc);
+                const response = await fetch(resolvedSrc, { cache: 'force-cache' });
                 if (!response.ok) {
                     console.warn(`[SoundManager] Failed to fetch SE: ${resolvedSrc}`);
+                    this.seLoadFailedCache.add(key);
                     return;
                 }
                 const arrayBuffer = await response.arrayBuffer();
-                buffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+                
+                const decodePromise = this.audioCtx.decodeAudioData(arrayBuffer);
+                const timeoutPromise = new Promise<AudioBuffer>((_, reject) =>
+                    setTimeout(() => reject(new Error('decodeAudioData timeout (2000ms)')), 2000)
+                );
+                buffer = await Promise.race([decodePromise, timeoutPromise]);
+                
                 this.seBufferCache.set(key, buffer);
             }
 
@@ -437,6 +457,7 @@ class SoundManager {
             gainNode.connect(this.audioCtx.destination);
             source.start(0);
         } catch (e) {
+            this.seLoadFailedCache.add(key);
             console.warn(`[SoundManager] SE play error (${key}):`, e);
         }
     }

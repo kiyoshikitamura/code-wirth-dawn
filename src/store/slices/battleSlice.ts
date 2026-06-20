@@ -336,15 +336,18 @@ export const createBattleSlice = (
 
         get().dealHand();
 
-        // バトルで使用されるSEの事前ロードを実行 (v34.6)
+        // バトルで使用されるSEの事前ロードを実行 (v34.9: 走査対象を shuffledDeck に拡張)
         if (soundManager) {
             const sm = soundManager;
             const seToPreload = new Set<string>(['se_hit', 'se_attack', 'se_magic', 'se_heal', 'se_buff', 'se_debuff', 'se_taunt']);
-            equippedCards.forEach(c => {
+            
+            // 山札に入るすべての初期カード (shuffledDeck) に対して SE をプリロード
+            shuffledDeck.forEach(c => {
                 const effInfo = getCardEffectInfo(c as any);
                 const seKey = CARD_EFFECT_SE_MAP[effInfo.effectType];
                 if (seKey) seToPreload.add(seKey);
             });
+            
             // バックグラウンドでプリロード（バトル開始自体をブロックしない）
             Promise.all(Array.from(seToPreload).map(key => sm.preloadSE(key))).catch(console.error);
         }
