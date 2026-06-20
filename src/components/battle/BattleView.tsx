@@ -252,6 +252,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
     // battleState.party 全体を監視すると毎ターンのメンバー更新で不要なレンダリングが発生するため
     // length のみ監視し、0 → N の変化（= 新しいバトル開始）時のみ実行する
     const prevPartyLengthRef = useRef(0);
+    const actionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
         const len = battleState.party?.length ?? 0;
         if (len > 0 && prevPartyLengthRef.current === 0) {
@@ -280,6 +281,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         return () => {
             if (nextTimeoutRef1.current) clearTimeout(nextTimeoutRef1.current);
             if (nextTimeoutRef2.current) clearTimeout(nextTimeoutRef2.current);
+            if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
         };
     }, []);
 
@@ -360,10 +362,17 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     setTimeout(() => setActiveEffect(null), 700);
                     try {
                         setIsActioning(true);
-                        attackEnemy(card, 'player');
-                        setTimeout(() => {
+                        attackEnemy(card, 'player').then(success => {
+                            if (success) {
+                                actionTimeoutRef.current = setTimeout(() => {
+                                    setIsActioning(false);
+                                }, 750);
+                            } else {
+                                setIsActioning(false);
+                            }
+                        }).catch(() => {
                             setIsActioning(false);
-                        }, 750);
+                        });
                     } catch (e) {
                         setIsActioning(false);
                     }
@@ -393,10 +402,17 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             }
             try {
                 setIsActioning(true);
-                attackEnemy(card);
-                setTimeout(() => {
+                attackEnemy(card).then(success => {
+                    if (success) {
+                        actionTimeoutRef.current = setTimeout(() => {
+                            setIsActioning(false);
+                        }, 750);
+                    } else {
+                        setIsActioning(false);
+                    }
+                }).catch(() => {
                     setIsActioning(false);
-                }, 750);
+                });
             } catch (e) {
                 setIsActioning(false);
             }
@@ -425,10 +441,17 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setTimeout(() => setActiveEffect(null), 700);
         try {
             setIsActioning(true);
-            attackEnemy(card, targetMemberId);
-            setTimeout(() => {
+            attackEnemy(card, targetMemberId).then(success => {
+                if (success) {
+                    actionTimeoutRef.current = setTimeout(() => {
+                        setIsActioning(false);
+                    }, 750);
+                } else {
+                    setIsActioning(false);
+                }
+            }).catch(() => {
                 setIsActioning(false);
-            }, 750);
+            });
         } catch (e) {
             setIsActioning(false);
         }

@@ -29,7 +29,7 @@ export interface GameState {
     selectedScenario: Scenario | null;
     selectScenario: (scenario: Scenario | null) => void;
     startBattle: (enemy: Enemy | Enemy[]) => void;
-    attackEnemy: (card?: Card, targetId?: string) => Promise<void>;
+    attackEnemy: (card?: Card, targetId?: string) => Promise<boolean>;
     waitTurn: () => Promise<void>;
     endTurn: () => Promise<void>;
     runNpcPhase: () => Promise<void>;

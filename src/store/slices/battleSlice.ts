@@ -963,14 +963,14 @@ export const createBattleSlice = (
         }
     },
 
-    attackEnemy: async (card?: Card, targetId?: string) => {
+    attackEnemy: async (card?: Card, targetId?: string): Promise<boolean> => {
         const { battleState, selectedScenario, hand, userProfile } = get();
 
         const effectivePlayerAtk = getEffectiveAtk(userProfile, battleState);
         const effectivePlayerMaxHp = getEffectiveMaxHp(userProfile, battleState);
 
         const anyAlive = battleState.enemies?.some(e => e.hp > 0);
-        if (!anyAlive || battleState.isVictory || battleState.isDefeat) return;
+        if (!anyAlive || battleState.isVictory || battleState.isDefeat) return false;
 
         let targetEnemyId = targetId || battleState.enemy?.id;
         let targetEnemy = battleState.enemies.find(e => e.id === targetEnemyId);
@@ -979,7 +979,7 @@ export const createBattleSlice = (
             targetEnemy = battleState.enemies.find(e => e.hp > 0);
             targetEnemyId = targetEnemy?.id;
         }
-        if (!targetEnemy) return;
+        if (!targetEnemy) return false;
 
         const tempPlayerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
         const tempEnemyEffects = [...(targetEnemy?.status_effects || [])] as StatusEffect[];
@@ -992,7 +992,7 @@ export const createBattleSlice = (
             const validation = validateCardUse(card, resolvedTargetId, battleState);
             if (!validation.valid) {
                 set(state => ({ battleState: { ...state.battleState, messages: [...state.battleState.messages, validation.error || '行動できません'] } }));
-                return;
+                return false;
             }
             if (hasDoubleCast) {
                 finalApCost = 0;
@@ -1016,7 +1016,7 @@ export const createBattleSlice = (
                             messages: [...state.battleState.messages, `${card.name}の素材が尽きた！（1戦闘1回制限）`]
                         }
                     }));
-                    return;
+                    return false;
                 }
             }
         }
@@ -1069,7 +1069,7 @@ export const createBattleSlice = (
                 },
                 hand: nextHand,
             }));
-            return;
+            return true;
         }
 
         let currentEnemies = battleState.enemies.map(e => ({ ...e, status_effects: [...(e.status_effects || []).map(se => ({ ...se }))] }));
@@ -1185,7 +1185,7 @@ export const createBattleSlice = (
                         messages: [...newMessages, logMsg]
                     }
                 }));
-                return;
+                return true;
             }
 
             for (let loop = 0; loop < loops; loop++) {
@@ -1923,7 +1923,7 @@ export const createBattleSlice = (
                                         messages: healMessages,
                                     }
                                 }));
-                                return;
+                                return true;
                             } else {
                                 logMsg = `${card.name}を使用！(対象の体力は満たんでいる)`;
                             }
@@ -1989,7 +1989,7 @@ export const createBattleSlice = (
                             discardPile: nextDiscardPile,
                             battleState: { ...state.battleState, isDefeat: true, battle_result: 'escape', messages: [...newMessages, logMsg] }
                         }));
-                        return;
+                        return true;
                     }
                     case 'buff_self': {
                         if (effectInfo.effectId) {
@@ -2437,6 +2437,7 @@ export const createBattleSlice = (
                 isVictory: finalAllDead || state.battleState.isVictory
             }
         }));
+        return true;
     },
 
 
