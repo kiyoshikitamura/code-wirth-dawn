@@ -868,7 +868,14 @@ export default function QuestPage() {
             await fetchUserProfile();
             // 4. バトル表示フラグをクリア（パーティHP情報は連戦引き継ぎ用に保持）
             useGameStore.setState((state: any) => ({
-                battleState: { ...state.battleState, enemy: null, enemies: [] }
+                battleState: {
+                    ...state.battleState,
+                    enemy: null,
+                    enemies: [],
+                    isVictory: false,
+                    isDefeat: false,
+                    battle_result: undefined
+                }
             }));
 
             // 5. 護衛対象HP0チェック: ゲストがバトル中に倒れた場合は敗北扱い
@@ -891,7 +898,15 @@ export default function QuestPage() {
             // バトル敗北/撤退: end_failure ノードに遷移してシナリオテキストを表示
             // バトルステートをクリア（ゲストNPCのparty残留防止）
             useGameStore.setState((state: any) => ({
-                battleState: { ...state.battleState, enemy: null, enemies: [], party: [] }
+                battleState: {
+                    ...state.battleState,
+                    enemy: null,
+                    enemies: [],
+                    party: [],
+                    isVictory: false,
+                    isDefeat: false,
+                    battle_result: undefined
+                }
             }));
 
             // シナリオ内の end_failure ノードを検索

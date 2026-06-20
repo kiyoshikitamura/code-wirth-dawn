@@ -216,7 +216,8 @@ export default function ScenarioEngine({
         onComplete,
         showingTravel,
         showToast,
-        nodeTrigger
+        nodeTrigger,
+        script
     });
 
 

@@ -28,6 +28,7 @@ interface NodeProcessorOptions {
     showingTravel: any;
     showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
     nodeTrigger: number;
+    script: any;
 }
 
 export function useScenarioNodeProcessor({
@@ -44,6 +45,7 @@ export function useScenarioNodeProcessor({
     showingTravel,
     showToast,
     nodeTrigger,
+    script,
 }: NodeProcessorOptions) {
     const { userProfile, inventory } = useGameStore();
     const questState = useQuestState();
@@ -72,8 +74,22 @@ export function useScenarioNodeProcessor({
         processedNodeRef.current = currentNodeId;
 
         const processNode = async () => {
-            // BGM切替
-            const bgmKey = currentNode.bgm || currentNode.bgm_key;
+            // BGM切替 (定義がない場合は履歴を遡って再生)
+            let bgmKey = currentNode.bgm || currentNode.bgm_key;
+            if (!bgmKey && script?.nodes) {
+                const hist = historyRef.current || [];
+                for (let i = hist.length - 1; i >= 0; i--) {
+                    const prevNodeId = hist[i];
+                    const prevNode = script.nodes[prevNodeId];
+                    if (prevNode?.bgm || prevNode?.bgm_key) {
+                        bgmKey = prevNode.bgm || prevNode.bgm_key;
+                        break;
+                    }
+                }
+            }
+            if (!bgmKey) {
+                bgmKey = 'bgm_quest_calm'; // デフォルトフォールバック
+            }
             if (bgmKey && soundManager) soundManager.playBgm(bgmKey);
 
             // 終了ノードSE
