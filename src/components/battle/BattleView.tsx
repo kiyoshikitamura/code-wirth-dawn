@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, startTransition } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useBattleTypewriter } from './hooks/useBattleTypewriter';
 import { BattleLogBox } from './BattleLogBox';
 import { useGameStore } from '@/store/gameStore';
@@ -360,10 +360,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
                     setTimeout(() => setActiveEffect(null), 700);
                     try {
                         setIsActioning(true);
-                        startTransition(() => {
-                            attackEnemy(card, 'player');
-                        });
-                    } finally {
+                        attackEnemy(card, 'player');
+                        setTimeout(() => {
+                            setIsActioning(false);
+                        }, 750);
+                    } catch (e) {
                         setIsActioning(false);
                     }
                 }
@@ -392,10 +393,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
             }
             try {
                 setIsActioning(true);
-                startTransition(() => {
-                    attackEnemy(card);
-                });
-            } finally {
+                attackEnemy(card);
+                setTimeout(() => {
+                    setIsActioning(false);
+                }, 750);
+            } catch (e) {
                 setIsActioning(false);
             }
         } else {
@@ -423,10 +425,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         setTimeout(() => setActiveEffect(null), 700);
         try {
             setIsActioning(true);
-            startTransition(() => {
-                attackEnemy(card, targetMemberId);
-            });
-        } finally {
+            attackEnemy(card, targetMemberId);
+            setTimeout(() => {
+                setIsActioning(false);
+            }, 750);
+        } catch (e) {
             setIsActioning(false);
         }
     };
