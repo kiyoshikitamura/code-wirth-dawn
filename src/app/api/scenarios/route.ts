@@ -52,7 +52,7 @@ export async function GET(req: Request) {
                     diffVal = 2;
                     rewards = { gold: 2000, exp: 400, reputation: 10 };
                 } else if (difficulty === 'hard') {
-                    numBattles = 20;
+                    numBattles = 10;
                     diffLabel = 'Hard';
                     diffVal = 3;
                     rewards = { gold: 4000, exp: 800, reputation: 20 };
@@ -191,8 +191,8 @@ export async function GET(req: Request) {
                     client_name: 'バルガス',
                     impact: {},
                     location_id: profile?.current_location_id || null,
-                    days_success: 0,
-                    days_failure: 0,
+                    days_success: 3,
+                    days_failure: 3,
                     is_ugc: false,
                     share_text: `コロシアム (${diffLabel}) を制覇しました！`,
                     script_data: {

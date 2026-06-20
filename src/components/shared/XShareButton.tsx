@@ -6,9 +6,10 @@ interface XShareButtonProps {
     shareUrl?: string;  // OGPカード表示用の /share?t=... URL
     className?: string;
     variant?: 'primary' | 'outline' | 'large';
+    iconOnly?: boolean;
 }
 
-export default function XShareButton({ text, shareUrl, className = '', variant = 'primary' }: XShareButtonProps) {
+export default function XShareButton({ text, shareUrl, className = '', variant = 'primary', iconOnly = false }: XShareButtonProps) {
     const handleShare = () => {
         const tweetUrl = new URL('https://twitter.com/intent/tweet');
         tweetUrl.searchParams.append('text', text);
@@ -30,10 +31,11 @@ export default function XShareButton({ text, shareUrl, className = '', variant =
     return (
         <button
             onClick={handleShare}
-            className={`${baseStyles} ${variants[variant]} ${className}`}
+            className={`${baseStyles} ${variants[variant]} ${iconOnly ? 'gap-0' : ''} ${className}`}
+            title="Xでシェア"
         >
             <Twitter className="w-5 h-5 fill-current" />
-            <span>ポストして伝説を刻む</span>
+            {!iconOnly && <span>ポストして伝説を刻む</span>}
         </button>
     );
 }

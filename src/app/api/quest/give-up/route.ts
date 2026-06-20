@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { supabaseServer } from '@/lib/supabase-admin';
 import { consumeUsedItems } from '@/services/questCompleteHelpers';
+import { processAging } from '@/services/questService';
 
 
 export async function POST(req: Request) {
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
         // ユーザープロフィール取得（VIT減少・年代記用）
         const { data: currentProfile } = await supabaseServer
             .from('user_profiles')
-            .select('vitality, current_location_id, current_quest_id, accumulated_days')
+            .select('vitality, current_location_id, current_quest_id, accumulated_days, age, age_days, max_vitality, atk, def')
             .eq('id', userId)
             .single();
 
@@ -75,14 +76,41 @@ export async function POST(req: Request) {
         // 1. プロフィール更新: ロック解除 (quest_started_atのnull化含む) + VIT -1 (楽観的排他制御)
 
         const currentVit = currentProfile.vitality ?? 100;
+        const updatePayload: Record<string, any> = {
+            current_quest_id: null,
+            current_quest_state: null,
+            quest_started_at: null,
+            vitality: Math.max(0, currentVit - 1),
+        };
+
+        let daysPassed = 0;
+        const isColosseum = currentProfile.current_quest_id && String(currentProfile.current_quest_id).startsWith('colosseum_');
+
+        if (isColosseum) {
+            daysPassed = 3;
+            const { newAge, newAgeDays, decay } = processAging(
+                currentProfile.age || 20,
+                currentProfile.age_days || 0,
+                3
+            );
+            updatePayload.accumulated_days = (currentProfile.accumulated_days || 0) + 3;
+            updatePayload.age = newAge;
+            updatePayload.age_days = newAgeDays;
+            
+            if (decay.vit > 0 || decay.atk > 0 || decay.def > 0) {
+                const maxVit = currentProfile.max_vitality || 100;
+                if (decay.vit > 0) {
+                    updatePayload.max_vitality = Math.max(0, maxVit - decay.vit);
+                    updatePayload.vitality = Math.min(updatePayload.vitality, updatePayload.max_vitality);
+                }
+                if (decay.atk > 0) updatePayload.atk = Math.max(1, (currentProfile.atk || 1) - decay.atk);
+                if (decay.def > 0) updatePayload.def = Math.max(1, (currentProfile.def || 1) - decay.def);
+            }
+        }
+
         const { data: updatedProfiles, error } = await supabaseServer
             .from('user_profiles')
-            .update({
-                current_quest_id: null,
-                current_quest_state: null,
-                quest_started_at: null,
-                vitality: Math.max(0, currentVit - 1),
-            })
+            .update(updatePayload)
             .eq('id', userId)
             .eq('current_quest_id', currentProfile.current_quest_id)
             .select('id');
@@ -228,10 +256,20 @@ export async function POST(req: Request) {
         return NextResponse.json({
             success: true,
             message: 'Quest abandoned.',
+            days_passed: daysPassed,
             penalty: {
-                vit: -1,
+                vit: 1,
                 reputation: repPenalty,
                 location: repLocationName,
+            },
+            changes: {
+                gold_gained: 0,
+                old_age: currentProfile.age || 18,
+                new_age: updatePayload.age || currentProfile.age || 18,
+                aged_up: (updatePayload.age || currentProfile.age || 18) > (currentProfile.age || 18),
+                vit_penalty: 1,
+                atk_decay: updatePayload.atk ? (currentProfile.atk - updatePayload.atk) : 0,
+                def_decay: updatePayload.def ? (currentProfile.def - updatePayload.def) : 0,
             }
         });
 

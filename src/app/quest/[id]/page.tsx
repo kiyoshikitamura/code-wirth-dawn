@@ -1040,7 +1040,7 @@ export default function QuestPage() {
 
                 <main className="flex-1 overflow-hidden relative flex flex-col">
                     {viewMode === 'scenario' ? (
-                        <div className="flex-1 flex flex-col relative">
+                        <div className="flex-1 relative w-full h-full flex flex-col">
 
                             <ScenarioEngine
                                 scenario={scenario}
