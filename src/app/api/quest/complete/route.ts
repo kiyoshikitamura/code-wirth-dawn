@@ -14,6 +14,7 @@ import {
     processPartyWearCycle,
     processReputationChange,
     persistLootPool,
+    consumeUsedItems,
 } from '@/services/questCompleteHelpers';
 import { UGC_REWARD_LIMITS } from '@/lib/ugc/ugcConfig';
 import { verifyBattleCompletionToken } from '@/app/api/battle/validate-result/route';
@@ -221,6 +222,9 @@ export async function POST(req: Request) {
             const questExp = (quest.rewards?.exp) || expFallback;
             const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100);
             earnedExp = questExp + battleBonus;
+            if (isUgcV2) {
+                earnedExp = UGC_REWARD_LIMITS.fixed_exp || 30;
+            }
 
             const growthResult = calculateGrowth(
                 currentLevel, currentExp, earnedExp,
@@ -254,22 +258,13 @@ export async function POST(req: Request) {
         const qRewards = quest.rewards || {};
         const nRewards = node_rewards || {};
 
-        // Merge items safely: if both have items, combine them. If one has items, use that.
-        const mergedItems = (Array.isArray(qRewards.items) && qRewards.items.length > 0)
-            ? qRewards.items
-            : (Array.isArray(nRewards.items) ? nRewards.items : undefined);
-
-        // Merge skills safely
-        const mergedSkills = (Array.isArray(qRewards.skills) && qRewards.skills.length > 0)
-            ? qRewards.skills
-            : (Array.isArray(nRewards.skills) ? nRewards.skills : undefined);
-
+        // ノード報酬のアイテム・スキルはマージから排除（二重付与防止：クライアントの loot_pool で付与されるため）
         const effectiveRewards = result === 'success'
             ? {
                 ...qRewards,
                 ...nRewards,
-                items: mergedItems ? [...mergedItems] : [],
-                skills: mergedSkills ? [...mergedSkills] : [],
+                items: Array.isArray(qRewards.items) ? [...qRewards.items] : [],
+                skills: Array.isArray(qRewards.skills) ? [...qRewards.skills] : [],
                 alignment_shift: (qRewards.alignment_shift || nRewards.alignment_shift)
                     ? {
                         ...(qRewards.alignment_shift || {}),
@@ -278,6 +273,43 @@ export async function POST(req: Request) {
                     : undefined
             }
             : { ...qRewards };
+
+        // UGC報酬制限（アイテム数、スキルカード数、スキルパワー）の適用
+        if (result === 'success' && isUgcV2) {
+            // アイテム数上限 (3)
+            if (effectiveRewards.items && Array.isArray(effectiveRewards.items)) {
+                effectiveRewards.items = effectiveRewards.items.slice(0, UGC_REWARD_LIMITS.max_items || 3);
+            }
+            // スキルカード数上限 (1)
+            if (effectiveRewards.skills && Array.isArray(effectiveRewards.skills)) {
+                effectiveRewards.skills = effectiveRewards.skills.slice(0, UGC_REWARD_LIMITS.max_skill_cards || 1);
+                
+                // スキルカードパワー上限検証 (25)
+                const allowedSkills = [];
+                for (const skillIdStr of effectiveRewards.skills) {
+                    const skillId = parseInt(String(skillIdStr), 10);
+                    if (isNaN(skillId)) continue;
+                    
+                    try {
+                        const { data: skillRow } = await supabase
+                            .from('skills')
+                            .select('card_id, cards!inner(power)')
+                            .eq('id', skillId)
+                            .maybeSingle();
+                        
+                        const power = (skillRow as any)?.cards?.power || 0;
+                        if (power <= (UGC_REWARD_LIMITS.max_skill_power || 25)) {
+                            allowedSkills.push(skillIdStr);
+                        } else {
+                            console.warn(`[Security] UGC skill reward ${skillId} blocked. Power ${power} exceeds limit ${UGC_REWARD_LIMITS.max_skill_power}`);
+                        }
+                    } catch (e) {
+                        console.error('[Security] Failed to validate UGC skill card power:', e);
+                    }
+                }
+                effectiveRewards.skills = allowedSkills;
+            }
+        }
 
         // Colosseum salvage rewards (Weighted random selection based on rarity)
         if (result === 'success' && String(quest_id).startsWith('colosseum_')) {
@@ -381,6 +413,7 @@ export async function POST(req: Request) {
         // §6. ロック解除 + プロフィール更新
         // ═══════════════════════════════════════
         updates.current_quest_id = null;
+        updates.quest_started_at = null;
         updates.blessing_data = null;
 
         console.log('[QuestComplete] Updates payload:', JSON.stringify(updates, null, 2));
@@ -389,9 +422,17 @@ export async function POST(req: Request) {
             .from('user_profiles').update(updates).eq('id', user_id);
         if (updateError) throw updateError;
 
-        // Record quest activity log (Spec Dashboard Extensions) - Removed redundant insert to prevent duplicate user_chronicles records
-
-
+        // Record quest activity log (Spec Dashboard Extensions)
+        try {
+            await supabase.from('quest_activity_logs').insert({
+                user_id,
+                quest_id,
+                action: result === 'success' ? 'complete' : 'abandon',
+                created_at: new Date().toISOString()
+            });
+        } catch (logErr) {
+            console.error('[QuestComplete] Failed to record quest activity log:', logErr);
+        }
 
         if (result === 'success') {
             const rewardPromises: PromiseLike<any>[] = [];
@@ -414,6 +455,9 @@ export async function POST(req: Request) {
             // Items + Loot
             rewardPromises.push(grantRewardItems(supabase, user_id, effectiveRewards, lootSaved));
             rewardPromises.push(persistLootPool(supabase, user_id, loot_pool));
+            if (consumed_items && consumed_items.length > 0) {
+                rewardPromises.push(consumeUsedItems(supabase, user_id, consumed_items));
+            }
 
             await Promise.all(rewardPromises);
         }

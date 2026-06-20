@@ -43,6 +43,8 @@ interface QuestProgressState {
     // v4.0 Expansion: Quest-local flags & escort
     questFlags: Record<string, number>;  // key -> value (curse count, correct answers, etc.)
     isEscortMission: boolean;            // true when guest has is_escort_target flag
+    currentNodeId: string | null;        // Added for location resume
+
 
     // Loot Pool (at-risk items)
     lootPool: LootItem[];
@@ -84,7 +86,7 @@ interface QuestProgressState {
 
     // v4.0 Actions
     removeGuest: () => void;
-    setFlag: (key: string, delta: number) => void;
+    setFlag: (key: string, value: number, isSet?: boolean) => void;
     getFlag: (key: string) => number;
     applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => void;
     checkEscortFailure: () => boolean;
@@ -107,6 +109,7 @@ const initialState = {
     // v4.0
     questFlags: {} as Record<string, number>,
     isEscortMission: false,
+    currentNodeId: null as string | null,
 };
 
 export const useQuestState = create<QuestProgressState>()(persist((set, get) => ({
@@ -129,6 +132,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             // v4.0: クエスト開始時にフラグとエスコートをリセット
             questFlags: {},
             isEscortMission: false,
+            currentNodeId: 'start',
         });
     },
 
@@ -225,6 +229,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             // v4.0
             questFlags: savedState.questFlags || {},
             isEscortMission: savedState.isEscortMission || false,
+            currentNodeId: savedState.currentNodeId || 'start',
         });
     },
 
@@ -234,11 +239,11 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         set({ guest: null, isEscortMission: false });
     },
 
-    setFlag: (key: string, delta: number) => {
+    setFlag: (key: string, value: number, isSet?: boolean) => {
         set((state) => ({
             questFlags: {
                 ...state.questFlags,
-                [key]: (state.questFlags[key] || 0) + delta,
+                [key]: isSet ? value : (state.questFlags[key] || 0) + value,
             },
         }));
     },

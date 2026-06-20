@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         // Verify user exists and is not already in a quest
         const { data: user, error: uError } = await supabase
             .from('user_profiles')
-            .select('id, current_quest_id, hp, max_hp')
+            .select('id, current_quest_id, hp, max_hp, level')
             .eq('id', user_id)
             .single();
 
@@ -69,6 +69,15 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
             }
             quest = { ...ugcQuest, quest_type: 'ugc' };
+        }
+
+        // UGC最低受注レベル制限（Lv5）
+        const isUgc = quest.quest_type === 'ugc';
+        const userLevel = user.level || 1;
+        if (isUgc && userLevel < 5) {
+            return NextResponse.json({
+                error: 'UGCクエストを受注するにはレベル5以上である必要があります。'
+            }, { status: 403 });
         }
 
         // Set quest lock (Spec v3.3 §4.2: Deck Locking)

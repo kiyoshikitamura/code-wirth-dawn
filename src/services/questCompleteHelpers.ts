@@ -417,7 +417,7 @@ export async function processReputationChange(
     // 成功時: rewards.reputation を名声報酬として加算
     if (result === 'success' && effectiveRewards?.reputation) {
         const repAmount = effectiveRewards.reputation;
-        const locId = updates.current_location_id || user.current_location_id;
+        const locId = user.current_location_id || updates.current_location_id;
         if (locId) {
             const { data: locForRep } = await supabase.from('locations').select('name').eq('id', locId).maybeSingle();
             const repLocName = locForRep?.name;
@@ -486,6 +486,60 @@ export async function persistLootPool(
                 .insert({ user_id, item_id: loot.itemId });
         } catch (histErr) {
             console.warn('[QuestComplete] Loot item history recording failed:', histErr);
+        }
+    }
+}
+
+// ────────────────────────────────────────
+// §8. 使用済みアイテム一括遅延消費
+// ────────────────────────────────────────
+
+export async function consumeUsedItems(
+    supabase: SupabaseClient,
+    user_id: string,
+    consumed_items: string[]
+): Promise<void> {
+    if (!Array.isArray(consumed_items) || consumed_items.length === 0) return;
+
+    for (const itemRef of consumed_items) {
+        if (!itemRef) continue;
+
+        let query = supabase.from('inventory').select('id, quantity, item_id');
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemRef);
+        const isNumber = !isNaN(parseInt(itemRef, 10)) && String(parseInt(itemRef, 10)) === String(itemRef);
+
+        if (isUuid) {
+            query = query.eq('id', itemRef).eq('user_id', user_id);
+        } else if (isNumber) {
+            query = query.eq('item_id', parseInt(itemRef, 10)).eq('user_id', user_id);
+        } else {
+            try {
+                const { data: itemRow } = await supabase.from('items').select('id').eq('slug', itemRef).maybeSingle();
+                if (itemRow) {
+                    query = query.eq('item_id', itemRow.id).eq('user_id', user_id);
+                } else {
+                    console.warn(`[QuestComplete] Consumed item slug '${itemRef}' not found in DB`);
+                    continue;
+                }
+            } catch (e) {
+                console.error(`[QuestComplete] Consumed item slug resolution error for '${itemRef}':`, e);
+                continue;
+            }
+        }
+
+        const { data: existing } = await query.maybeSingle();
+
+        if (existing) {
+            const newQty = (existing.quantity || 1) - 1;
+            if (newQty <= 0) {
+                await supabase.from('inventory').delete().eq('id', existing.id);
+                console.log(`[QuestComplete] Item ${itemRef} completely consumed (deleted from inventory).`);
+            } else {
+                await supabase.from('inventory').update({ quantity: newQty }).eq('id', existing.id);
+                console.log(`[QuestComplete] Item ${itemRef} quantity decremented to ${newQty}.`);
+            }
+        } else {
+            console.warn(`[QuestComplete] Item ${itemRef} intended for consumption but not found in inventory.`);
         }
     }
 }

@@ -76,6 +76,7 @@ export default function QuestPage() {
     // Battle Return Logic
     useEffect(() => {
         const pending = localStorage.getItem('pending_quest_resume');
+        let restored = false;
         if (pending) {
             try {
                 const { questId, nextNodeId } = JSON.parse(pending);
@@ -88,15 +89,21 @@ export default function QuestPage() {
                         setInitialNodeId(nextNodeId);
                         localStorage.removeItem('pending_quest_resume');
                         window.history.replaceState({}, '', `/quest/${id}`); // Clean URL
+                        restored = true;
                     } else if (result === 'lose' || result === 'escape') {
                         localStorage.removeItem('pending_quest_resume');
-                        // router.push('/inn'); // Don't auto redirect on lose here, let user see failure or retry logic if any
-                        // actually, if we lose, we might want to fail the quest?
-                        // For now just resuming.
                     }
                 }
             } catch (e) {
                 localStorage.removeItem('pending_quest_resume');
+            }
+        }
+
+        // If not restored via battle transition check, try restoring from Zustand's current node state
+        if (!restored) {
+            const savedNodeId = useQuestState.getState().currentNodeId;
+            if (savedNodeId && savedNodeId !== 'start') {
+                setInitialNodeId(savedNodeId);
             }
         }
     }, [id]);
@@ -248,6 +255,13 @@ export default function QuestPage() {
             // クエスト終了時にゲストが残っている場合、通常雇用変換のためにAPIへ送信
             const remainingGuest = useQuestState.getState().guest;
 
+            // Zustand から戦利品、消費アイテム、死亡NPCを取得
+            const questStateData = useQuestState.getState();
+            const lootPoolData = isSuccess ? questStateData.lootPool : [];
+            const consumedItemsData = questStateData.consumedItems;
+            const deadNpcsData = questStateData.deadNpcs;
+            const finalDefeatedMemberIds = Array.from(new Set([...defeatedMemberIds, ...deadNpcsData]));
+
             const res = await fetch('/api/quest/complete', {
                 method: 'POST',
                 headers: {
@@ -258,9 +272,9 @@ export default function QuestPage() {
                     quest_id: scenario?.id,
                     result: isSuccess ? 'success' : 'failure',
                     history: history || [],
-                    loot_pool: [],
-                    consumed_items: [],
-                    defeated_member_ids: defeatedMemberIds,
+                    loot_pool: lootPoolData,
+                    consumed_items: consumedItemsData,
+                    defeated_member_ids: finalDefeatedMemberIds,
                     node_rewards: nodeRewards || null,
                     remaining_guest: remainingGuest ? {
                         slug: (remainingGuest as any).slug,
@@ -279,7 +293,7 @@ export default function QuestPage() {
                 prefetchStartedRef.current = false; // 再試行できるようにする
             } else {
                 const data = await res.json();
-                useQuestState.getState().resetQuest();
+                useQuestState.getState().finalizeQuest(isSuccess ? 'success' : 'failure');
                 useGameStore.setState({ lastInitPageFetchTime: 0 });
                 await fetchUserProfile();
 
@@ -501,6 +515,11 @@ export default function QuestPage() {
         try {
             const authHeaders = await getAuthHeaders();
 
+            // Zustand から消費アイテム、死亡NPCを取得
+            const questStateData = useQuestState.getState();
+            const consumedItemsData = questStateData.consumedItems;
+            const deadNpcsData = questStateData.deadNpcs;
+
             const res = await fetch('/api/quest/complete', {
                 method: 'POST',
                 headers: {
@@ -512,8 +531,8 @@ export default function QuestPage() {
                     result: 'failure',
                     history: [],
                     loot_pool: [],
-                    consumed_items: [],
-                    defeated_member_ids: [],
+                    consumed_items: consumedItemsData,
+                    defeated_member_ids: deadNpcsData,
                     remaining_guest: null,
                     battle_defeat: false,
                 })
@@ -521,6 +540,7 @@ export default function QuestPage() {
 
             if (res.ok) {
                 const data = await res.json();
+                useQuestState.getState().finalizeQuest('failure');
                 await fetchUserProfile();
                 setResultOverlay({ result: 'failure', data });
             } else {
@@ -769,13 +789,35 @@ export default function QuestPage() {
     };
 
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
-        if (result === 'win') {
-            // バトル後のHP/VITをストアから取得（battleSliceが更新済み）
-            const storeState = useGameStore.getState();
-            const battleHp = storeState.userProfile?.hp;
-            const battleVit = storeState.userProfile?.vitality;
-            const battleParty = storeState.battleState?.party || [];
+        localStorage.removeItem('pending_quest_resume');
 
+        const storeState = useGameStore.getState();
+        const battleHp = storeState.userProfile?.hp;
+        const battleVit = storeState.userProfile?.vitality;
+        const battleParty = storeState.battleState?.party || [];
+        const droppedItems = storeState.battleState?.droppedItems || [];
+        const consumedItems = storeState.battleState?.consumedItems || [];
+
+        const partyHpMap: Record<string, number> = {};
+        const deadNpcIds: string[] = [];
+        battleParty.forEach((pm: any) => {
+            if ((pm.durability ?? pm.hp ?? 1) <= 0) {
+                deadNpcIds.push(String(pm.id || pm.slug));
+            } else {
+                partyHpMap[String(pm.id)] = pm.durability ?? pm.hp;
+            }
+        });
+
+        // 状態を useQuestState ストアへ同期
+        useQuestState.getState().updateAfterBattle({
+            playerHp: battleHp || 0,
+            partyHp: partyHpMap,
+            deadNpcIds,
+            droppedItems,
+            usedConsumables: consumedItems
+        });
+
+        if (result === 'win') {
             // 1. プレイヤーHP/VITをDBに永続化（Service Role APIで確実に書き込み）
             const authToken = await getAuthToken();
             if (battleHp != null && userProfile?.id) {
@@ -795,9 +837,9 @@ export default function QuestPage() {
                 }
             }
 
-            // 2. パーティメンバーのHPをDBに永続化（連戦時のHP引き継ぎ用）
+            // 2. パーティメンバーのHPをDBに永続化（連戦時のHP引き継ぎ用、ゲストは除外）
             const partyUpdates = battleParty
-                .filter((pm: any) => pm.id && pm.durability != null)
+                .filter((pm: any) => pm.id && pm.durability != null && pm.origin_type !== 'quest_guest')
                 .map((pm: any) => ({ id: pm.id, durability: Math.max(0, pm.durability) }));
             if (partyUpdates.length > 0) {
                 try {
@@ -907,6 +949,12 @@ export default function QuestPage() {
                         });
                     }
 
+                    // Zustand から消費アイテム、死亡NPCを取得
+                    const questStateData = useQuestState.getState();
+                    const consumedItemsData = questStateData.consumedItems;
+                    const deadNpcsData = questStateData.deadNpcs;
+                    const finalDefeatedMemberIds = Array.from(new Set([...defeatedMemberIds, ...deadNpcsData]));
+
                     const res = await fetch('/api/quest/complete', {
                         method: 'POST',
                         headers: {
@@ -918,8 +966,8 @@ export default function QuestPage() {
                             result: 'failure',
                             history: [],
                             loot_pool: [],
-                            consumed_items: [],
-                            defeated_member_ids: defeatedMemberIds,
+                            consumed_items: consumedItemsData,
+                            defeated_member_ids: finalDefeatedMemberIds,
                             remaining_guest: null,
                             battle_defeat: result === 'lose',
                         })
@@ -927,6 +975,7 @@ export default function QuestPage() {
 
                     if (res.ok) {
                         const data = await res.json();
+                        useQuestState.getState().finalizeQuest('failure');
                         await fetchUserProfile();
                         setViewMode('scenario');
                         setResultOverlay({ result: 'failure', data });
@@ -1020,6 +1069,7 @@ export default function QuestPage() {
                                         sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                                     }
                                     await fetchUserProfile();
+                                    await useGameStore.getState().fetchInventory();
                                 }
                                 router.push(isTestPlay ? '/workshop' : '/inn');
                             }}
