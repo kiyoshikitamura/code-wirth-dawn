@@ -509,4 +509,63 @@ export function useScenarioNodeProcessor({
         // cleanup不要: timeoutRefで管理、processedNodeRefガードで再実行防止
 
     }, [currentNodeId, currentNode, userProfile, nodeTrigger]);
+
+    // [Security/Resume] Sync quest state to server DB
+    useEffect(() => {
+        if (!questState.isInQuest || !questState.questId) return;
+
+        // Skip test play / debug bypass
+        if (typeof window !== 'undefined') {
+            const search = window.location.search;
+            if (search.includes('test_play=true') || search.includes('debug_bypass=true')) {
+                return;
+            }
+        }
+
+        const syncState = async () => {
+            try {
+                const statePayload = {
+                    isInQuest: questState.isInQuest,
+                    questId: questState.questId,
+                    questType: questState.questType,
+                    playerHp: questState.playerHp,
+                    playerMaxHp: questState.playerMaxHp,
+                    partyHp: questState.partyHp,
+                    deadNpcs: questState.deadNpcs,
+                    lootPool: questState.lootPool,
+                    consumedItems: questState.consumedItems,
+                    guest: questState.guest,
+                    currentLocationId: questState.currentLocationId,
+                    elapsedDays: questState.elapsedDays,
+                    questFlags: questState.questFlags,
+                    isEscortMission: questState.isEscortMission,
+                    currentNodeId: currentNodeId,
+                };
+
+                const authHeaders = await getAuthHeaders();
+                await fetch('/api/quest/save-state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    body: JSON.stringify({
+                        quest_id: questState.questId,
+                        quest_state: statePayload
+                    })
+                });
+            } catch (err) {
+                console.error('[Quest State Sync] Failed to sync state:', err);
+            }
+        };
+
+        const timer = setTimeout(syncState, 300);
+        return () => clearTimeout(timer);
+    }, [
+        currentNodeId,
+        questState.questId,
+        questState.isInQuest,
+        questState.playerHp,
+        questState.guest,
+        questState.lootPool.length,
+        questState.consumedItems.length,
+        questState.elapsedDays
+    ]);
 }

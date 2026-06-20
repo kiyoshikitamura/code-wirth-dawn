@@ -52,9 +52,14 @@ export async function POST(req: Request) {
             }
         }
 
-        // 1. プロフィール更新: ロック解除 (quest_started_atのnull化含む) + VIT -1
-        const currentVit = currentProfile?.vitality ?? 100;
-        const { error } = await supabaseServer
+        if (!currentProfile?.current_quest_id) {
+            console.warn(`[Quest Give Up] User ${userId} attempted to abandon a quest but has no active quest.`);
+            return NextResponse.json({ error: 'You do not have an active quest to abandon.' }, { status: 400 });
+        }
+
+        // 1. プロフィール更新: ロック解除 (quest_started_atのnull化含む) + VIT -1 (楽観的排他制御)
+        const currentVit = currentProfile.vitality ?? 100;
+        const { data: updatedProfiles, error } = await supabaseServer
             .from('user_profiles')
             .update({
                 current_quest_id: null,
@@ -62,9 +67,16 @@ export async function POST(req: Request) {
                 quest_started_at: null,
                 vitality: Math.max(0, currentVit - 1),
             })
-            .eq('id', userId);
+            .eq('id', userId)
+            .eq('current_quest_id', currentProfile.current_quest_id)
+            .select('id');
 
         if (error) throw error;
+
+        if (!updatedProfiles || updatedProfiles.length === 0) {
+            console.warn(`[Security] API rejected quest abandon due to race condition. User: ${userId}, Quest: ${currentProfile.current_quest_id}`);
+            return NextResponse.json({ error: 'Quest abandon already processed.' }, { status: 409 });
+        }
 
         // Record quest activity log (Spec Dashboard Extensions)
         try {

@@ -281,6 +281,51 @@ export async function convertGuestToPartyMember(
     const guestName = body.remaining_guest.name || 'ゲストNPC';
     console.log(`[QuestComplete] ゲスト残留検出: ${guestName} (${guestSlug})`);
 
+    const questId = body.quest_id;
+    if (!questId) {
+        console.warn(`[QuestComplete] ゲストNPC雇用試行時に quest_id が指定されていません`);
+        return null;
+    }
+
+    // [Security] ゲストNPCのなりすまし検証（このクエストで出現したNPCか確認）
+    let isGuestAllowed = false;
+    const isColosseum = String(questId).startsWith('colosseum_');
+    if (!isColosseum) {
+        const { data: questData } = await supabase
+            .from('scenarios')
+            .select('script_data')
+            .eq('id', questId)
+            .maybeSingle();
+
+        let scriptData = questData?.script_data;
+        if (!scriptData) {
+            const { data: ugcQuestData } = await supabase
+                .from('ugc_scenarios')
+                .select('script_data')
+                .eq('id', questId)
+                .maybeSingle();
+            scriptData = ugcQuestData?.script_data;
+        }
+
+        if (scriptData && scriptData.nodes) {
+            const nodes = scriptData.nodes;
+            for (const nodeId of Object.keys(nodes)) {
+                const node = nodes[nodeId];
+                if (node && node.type === 'guest_join' && node.params?.guest_id) {
+                    if (String(node.params.guest_id).trim() === guestSlug) {
+                        isGuestAllowed = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!isGuestAllowed) {
+        console.warn(`[Security] Unauthorized guest NPC conversion blocked: user_id=${user_id}, quest_id=${questId}, npc_slug=${guestSlug}`);
+        return { name: guestName, success: false, reason: 'このクエストで仲間になったNPCではありません。' };
+    }
+
     try {
         const { data: npcData } = await supabase
             .from('npcs').select('*').eq('slug', guestSlug).maybeSingle();

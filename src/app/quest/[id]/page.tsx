@@ -466,10 +466,18 @@ export default function QuestPage() {
                                 console.error("Failed to start quest on server:", startRes.status);
                             }
                         } else {
-                            // すでに開始済みの場合: ローカル状態のみ初期化 (再開)（すでに開始済みならスキップ）
+                            // すでに開始済みの場合: ローカル状態の初期化またはDBからのレジューム復元
                             const qs = useQuestState.getState();
                             if (qs.questId !== id || !qs.isInQuest) {
-                                useQuestState.getState().startQuest(startParams);
+                                if (currentProfile?.current_quest_state) {
+                                    console.log('[QuestPage] Restoring quest state from server DB:', currentProfile.current_quest_state);
+                                    useQuestState.getState().resumeQuest(currentProfile.current_quest_state);
+                                    if (currentProfile.current_quest_state.currentNodeId) {
+                                        setInitialNodeId(currentProfile.current_quest_state.currentNodeId);
+                                    }
+                                } else {
+                                    useQuestState.getState().startQuest(startParams);
+                                }
                             }
                         }
                     }
