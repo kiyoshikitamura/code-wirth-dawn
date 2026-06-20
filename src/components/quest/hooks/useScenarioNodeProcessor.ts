@@ -218,8 +218,19 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.type === 'check_equipped') {
-                const requiredItemId = currentNode.params?.item_id || currentNode.item_id;
+                let requiredItemId = currentNode.params?.item_id || currentNode.item_id;
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
+                const activeNodeId = currentNodeId;
+
+                // slug文字列の場合は数値IDに解決
+                if (typeof requiredItemId === 'string' && isNaN(parseInt(requiredItemId, 10))) {
+                    try {
+                        const { data: itemRow } = await supabase.from('items').select('id').eq('slug', requiredItemId).maybeSingle();
+                        if (processedNodeRef.current !== activeNodeId) return;
+                        if (itemRow) requiredItemId = itemRow.id;
+                    } catch (e) { console.error('[check_equipped] Slug resolution error:', e); }
+                }
+
                 const hasEquipped = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId) && i.is_equipped).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
@@ -398,6 +409,23 @@ export function useScenarioNodeProcessor({
                 const threshold = currentNode.params?.threshold ?? currentNode.params?.value ?? 1;
                 const operator = currentNode.params?.operator || '>=';
                 let passed = false;
+
+                // 特殊対応: 6020_main_ep20 の Zeno relic check (flagKey が無いが、特定の choices がある場合)
+                if (!flagKey && (currentNodeId === 'check_items' || currentNode.choices?.some((c: any) => c.label === 'items_all_relics'))) {
+                    await useGameStore.getState().fetchInventory();
+                    const latestInventory = useGameStore.getState().inventory || [];
+                    const ownedIds = new Set(latestInventory.map((i: any) => Number(i.item_id)));
+                    const relicIds = [505, 506, 507]; // 冥王の護符、軍神の剣、女神の鎧
+                    const hasAll = relicIds.every(id => ownedIds.has(id));
+
+                    const targetLabel = hasAll ? 'items_all_relics' : 'items_missing';
+                    const targetChoice = currentNode.choices?.find((c: any) => c.label === targetLabel);
+                    if (targetChoice) {
+                        setCurrentNodeId(targetChoice.next);
+                        return;
+                    }
+                }
+
                 if (flagKey) {
                     const flagVal = questState.getFlag(flagKey);
                     if (operator === '>=' && flagVal >= threshold) passed = true;
