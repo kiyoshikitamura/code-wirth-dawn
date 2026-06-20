@@ -406,7 +406,9 @@ class SoundManager {
             this.seBufferCache.set(key, buffer);
             console.log(`[SoundManager] Preloaded & Cached SE: ${key}`);
         } catch (e) {
-            this.seLoadFailedCache.add(key);
+            if (this.audioCtx?.state !== 'suspended') {
+                this.seLoadFailedCache.add(key);
+            }
             console.warn(`[SoundManager] SE preload error (${key}):`, e);
         }
     }
@@ -457,7 +459,9 @@ class SoundManager {
             gainNode.connect(this.audioCtx.destination);
             source.start(0);
         } catch (e) {
-            this.seLoadFailedCache.add(key);
+            if (this.audioCtx?.state !== 'suspended') {
+                this.seLoadFailedCache.add(key);
+            }
             console.warn(`[SoundManager] SE play error (${key}):`, e);
         }
     }
@@ -481,6 +485,7 @@ class SoundManager {
     dispose(): void {
         this.stopBgm();
         this.seBufferCache.clear();
+        this.seLoadFailedCache.clear();
         if (this.audioCtx) {
             this.audioCtx.close().catch(() => {});
             this.audioCtx = null;
