@@ -1490,7 +1490,7 @@ export const createBattleSlice = (
                         const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
                         logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！`;
                         if (isFrozenOrBound) {
-                            customTargetEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'stun', 1);
+                            customTargetEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'stun', 2);
                             logMsg += ` 対象が凍結・拘束状態のためダメージ1.5倍＋1ターンスタン追加！`;
                         }
                         break;
@@ -1517,7 +1517,7 @@ export const createBattleSlice = (
                             if (hitTargetsMap[enemyId] > 1) {
                                 const enemyObj = currentEnemies.find(e => e.id === enemyId);
                                 if (enemyObj && enemyObj.hp > 0) {
-                                    const stunEffects = applyEffect((enemyObj.status_effects || []) as StatusEffect[], 'stun', 1);
+                                    const stunEffects = applyEffect((enemyObj.status_effects || []) as StatusEffect[], 'stun', 2);
                                     currentEnemies = currentEnemies.map(e => e.id === enemyId ? { ...e, status_effects: stunEffects } : e);
                                     hitLogs.push(`${enemyObj.name}は連続ヒットによりスタンした！`);
                                 }
@@ -1633,7 +1633,7 @@ export const createBattleSlice = (
                         currentEnemies = currentEnemies.map(e => {
                             if (e.hp <= 0) return e;
                             const cleanedEffects = (e.status_effects || []).filter(se => NEGATIVE_EFFECTS.includes(se.id as StatusEffectId));
-                            const finalEffects = applyEffect(cleanedEffects as StatusEffect[], 'bind', 1);
+                            const finalEffects = applyEffect(cleanedEffects as StatusEffect[], 'bind', 2);
                             frozenLogs.push(`${e.name}の強化効果を解除し、凍結・拘束した！`);
                             return { ...e, status_effects: finalEffects };
                         });
@@ -1786,7 +1786,7 @@ export const createBattleSlice = (
                             const newHp = Math.max(0, e.hp - damage);
                             let newEffects = (e.status_effects || []) as StatusEffect[];
                             if (newHp > 0 && Math.random() < 0.15) {
-                                newEffects = applyEffect(newEffects, 'stun', 1);
+                                newEffects = applyEffect(newEffects, 'stun', 2);
                                 newMessages.push(`→ ${e.name}は感電してスタンした！`);
                             }
                             return { ...e, hp: newHp, status_effects: newEffects };
@@ -2210,7 +2210,7 @@ export const createBattleSlice = (
                     if (effectInfo.effectId === 'stun' && (card.id.match(/^(\d+)/)?.[1] ?? card.id) === '1') {
                         if (Math.random() < 0.10) {
                             if (loopTargetEnemy) {
-                                const stunEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'stun' as StatusEffectId, 1);
+                                const stunEffects = applyEffect((loopTargetEnemy.status_effects || []) as StatusEffect[], 'stun' as StatusEffectId, 2);
                                 loopTargetEnemy.status_effects = stunEffects;
                                 currentEnemies = currentEnemies.map(e => e.id === loopTargetEnemyId ? { ...e, status_effects: stunEffects } : e);
                                 newMessages.push(`✨ ${card.name}の衝撃でスタン！`);
@@ -2591,22 +2591,26 @@ export const createBattleSlice = (
                             updatedParty[i] = member;
                         }
                     } else {
-                        // v2.9.3k: デバフ成功率判定
-                        if (rollDebuffSuccess(effectId)) {
-                            // スタン・拘束・凍結の場合は duration + 1 の補正を適用 (Bug AF)
-                            const isStunEffect = effectId === 'stun' || effectId === 'bind' || effectId === 'freeze';
-                            const finalDuration = isStunEffect ? duration + 1 : duration;
+                        // 強打(カードID: 1)の場合は共通処理でのスタン付与をスキップ（個別処理で10%判定されるため）
+                        const isStrikeCard = (action.card?.id?.match(/^(\d+)/)?.[1] ?? action.card?.id) === '1';
+                        if (!isStrikeCard) {
+                            // v2.9.3k: デバフ成功率判定
+                            if (rollDebuffSuccess(effectId)) {
+                                // スタン・拘束・凍結の場合は duration + 1 の補正を適用 (Bug AF)
+                                const isStunEffect = effectId === 'stun' || effectId === 'bind' || effectId === 'freeze';
+                                const finalDuration = isStunEffect ? duration + 1 : duration;
 
-                            trackedEnemies = trackedEnemies.map(e => {
-                                if (e.id === currentTargetId) {
-                                    const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
-                                    return { ...e, status_effects: newEffects };
-                                }
-                                return e;
-                            });
-                            newMessages.push(`→ ${resolvedEnemyName}に「${getEffectName(effectId)}」を付与した！(${finalDuration}ターン)`);
-                        } else {
-                            newMessages.push(`→ ${resolvedEnemyName}は「${getEffectName(effectId)}」に抵抗した！`);
+                                trackedEnemies = trackedEnemies.map(e => {
+                                    if (e.id === currentTargetId) {
+                                        const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
+                                        return { ...e, status_effects: newEffects };
+                                    }
+                                    return e;
+                                });
+                                newMessages.push(`→ ${resolvedEnemyName}に「${getEffectName(effectId)}」を付与した！(${finalDuration}ターン)`);
+                            } else {
+                                newMessages.push(`→ ${resolvedEnemyName}は「${getEffectName(effectId)}」に抵抗した！`);
+                            }
                         }
                     }
                 }
