@@ -15,6 +15,15 @@ import { getEffectiveAtk, getEffectiveDef, getEffectiveMaxHp } from './profileSl
 import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
 
+const isTurnEndTickCompensated = (id: StatusEffectId): boolean => {
+    return [
+        'stun', 'bind', 'freeze',                  // 行動不能デバフ
+        'def_up', 'evasion_up', 'taunt',          // 敵ターン中意味を持つバフ
+        'unyielding_barrier', 'cover_all',         // 敵ターン中意味を持つバフ
+        'atk_down', 'blind', 'blind_minor'         // 敵ターン中意味を持つデバフ
+    ].includes(id);
+};
+
 // ─── ノイズカードのフォールバック ────────────────────────────────────────────
 const CARD_POOL: Card[] = [
     { id: 'card_noise', name: 'Noise', type: 'Basic', description: '心に増す雑音。使用不可。', cost: 1, power: 0 },
@@ -1374,16 +1383,16 @@ export const createBattleSlice = (
                         const playerMaxHp = effectivePlayerMaxHp;
                         const playerHp = userProfile?.hp || 0;
                         const addBarrier = playerHp <= playerMaxHp * 0.3;
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 25);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 25);
                         if (addBarrier) {
-                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'unyielding_barrier', 2, 30);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'unyielding_barrier', 3, 30);
                         }
                         const newParty = (battleState.party || []).map(m => {
                             if (!m.is_active || (m.durability ?? 0) <= 0) return m;
                             let mEffects = (m.status_effects || []) as StatusEffect[];
-                            mEffects = applyEffect(mEffects, 'def_up', 2, 25);
+                            mEffects = applyEffect(mEffects, 'def_up', 3, 25);
                             if (addBarrier) {
-                                mEffects = applyEffect(mEffects, 'unyielding_barrier', 2, 30);
+                                mEffects = applyEffect(mEffects, 'unyielding_barrier', 3, 30);
                             }
                             return { ...m, status_effects: mEffects };
                         });
@@ -1407,7 +1416,7 @@ export const createBattleSlice = (
                             debuffs.forEach(d => {
                                 currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], d.id, d.duration, d.value);
                             });
-                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 20);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 20);
                             set(state => ({ battleState: { ...state.battleState, party } }));
                             logMsg = `${card.name}を使用！ ${member.name}のデバフを全て自身に引き受け、自身のDEFを+20 (2T)した！`;
                         } else {
@@ -1641,14 +1650,14 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'iron_bastion': {
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'cover_all', 3);
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 35);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'cover_all', 4);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 4, 35);
                         logMsg = `${card.name}を展開！ 3ターンの間、パーティへの単体攻撃を肩代わりし、自身のDEFを+35した！`;
                         break;
                     }
                     case 'revenge_shield_card': {
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 1, 15);
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'revenge_shield', 1);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 15);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'revenge_shield', 2);
                         logMsg = `${card.name}を使用！ 1ターンの間、自身のDEFを+15し、受けたダメージの100%を物理反射する！`;
                         break;
                     }
@@ -1714,8 +1723,8 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'grounding': {
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'stun_immune', 2);
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 15);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'stun_immune', 3);
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 15);
                         logMsg = `${card.name}を使用！ 2ターンの間、スタン・拘束無効（スタン免疫）を付与し、DEFを+15した！`;
                         break;
                     }
@@ -2205,7 +2214,9 @@ export const createBattleSlice = (
                 if (!effectInfo.skipDamage && effectInfo.effectId) {
                     const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectInfo.effectId);
                     if (isSelfBuff) {
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
+                        const dur = effectInfo.effectDuration || 3;
+                        const finalDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, finalDuration);
                     }
                     if (effectInfo.effectId === 'stun' && (card.id.match(/^(\d+)/)?.[1] ?? card.id) === '1') {
                         if (Math.random() < 0.10) {
@@ -2224,7 +2235,8 @@ export const createBattleSlice = (
                     const duration = card.effect_duration || 3;
                     const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt'].includes(effectId);
                     if (isSelfBuff) {
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectId, duration);
+                        const finalDuration = isTurnEndTickCompensated(effectId) ? duration + 1 : duration;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectId, finalDuration);
                     }
                 }
 
@@ -2239,8 +2251,8 @@ export const createBattleSlice = (
                             const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
                             if (!isSelfBuff) {
                                 if (rollDebuffSuccess(effectInfo.effectId)) {
-                                    const isStunAoe = effectInfo.effectId === 'stun' || effectInfo.effectId === 'bind';
-                                    const aoeDuration = isStunAoe ? (effectInfo?.effectDuration || 3) + 1 : (effectInfo?.effectDuration || 3);
+                                    const dur = effectInfo?.effectDuration || 3;
+                                    const aoeDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
                                     newEffects = applyEffect(newEffects, effectInfo.effectId, aoeDuration);
                                     affectedEnemies.push(e.name);
                                 } else {
@@ -2258,9 +2270,8 @@ export const createBattleSlice = (
                             const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectId);
                             if (!isSelfBuff) {
                                 if (rollDebuffSuccess(resolvedEffectId)) {
-                                    const isStunEffect = resolvedEffectId === 'stun' || resolvedEffectId === 'bind';
                                     const baseDuration = effectInfo?.effectDuration || card?.effect_duration || 3;
-                                    const finalDuration = isStunEffect ? baseDuration + 1 : baseDuration;
+                                    const finalDuration = isTurnEndTickCompensated(resolvedEffectId) ? baseDuration + 1 : baseDuration;
                                     newEffects = applyEffect(newEffects, resolvedEffectId, finalDuration);
                                 } else {
                                     resistedDebuff = resolvedEffectId;
@@ -2567,27 +2578,28 @@ export const createBattleSlice = (
                 if (action.effectId) {
                     const effectId = action.effectId as StatusEffectId;
                     const duration = action.effectDuration || 3;
+                    const finalDuration = isTurnEndTickCompensated(effectId) ? duration + 1 : duration;
                     const isSelfBuff = isSelfBuffEffect(effectId);
                     if (isSelfBuff) {
                         const targetType = action.card?.target_type || '';
                         if (targetType === 'all_allies') {
                             // 味方全体バフ (Bug AD): プレイヤーと全員に適用
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, duration);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration);
                             for (let j = 0; j < updatedParty.length; j++) {
                                 if (updatedParty[j].is_active && (updatedParty[j].durability ?? 0) > 0) {
                                     updatedParty[j] = {
                                         ...updatedParty[j],
-                                        status_effects: applyEffect((updatedParty[j].status_effects || []) as StatusEffect[], effectId, duration)
+                                        status_effects: applyEffect((updatedParty[j].status_effects || []) as StatusEffect[], effectId, finalDuration)
                                     };
                                 }
                             }
                             member = { ...member, status_effects: updatedParty[i].status_effects };
                         } else if (action.targetName === 'あなた' || action.targetName === '味方') {
                             // プレイヤー単体バフ: プレイヤーのみに適用 (Bug AD)
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, duration);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration);
                         } else {
                             // NPC自己バフ: NPC自身のみに適用 (Bug AD)
-                            member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, duration) };
+                            member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, finalDuration) };
                             updatedParty[i] = member;
                         }
                     } else {
@@ -2596,9 +2608,6 @@ export const createBattleSlice = (
                         if (!isStrikeCard) {
                             // v2.9.3k: デバフ成功率判定
                             if (rollDebuffSuccess(effectId)) {
-                                // スタン・拘束・凍結の場合は duration + 1 の補正を適用 (Bug AF)
-                                const isStunEffect = effectId === 'stun' || effectId === 'bind' || effectId === 'freeze';
-                                const finalDuration = isStunEffect ? duration + 1 : duration;
 
                                 trackedEnemies = trackedEnemies.map(e => {
                                     if (e.id === currentTargetId) {
