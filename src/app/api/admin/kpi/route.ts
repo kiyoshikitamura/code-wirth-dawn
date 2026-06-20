@@ -5,16 +5,14 @@ export const dynamic = 'force-dynamic';
 
 // Helper to fetch all records in range for views (light-weight since database handles aggregation)
 async function fetchAll<T>(
-    queryBuilder: any,
-    selectColumns: string,
+    query: any,
     orderColumn: string = 'id'
 ): Promise<T[]> {
     let allData: T[] = [];
     let from = 0;
     const limit = 1000;
     while (true) {
-        const { data, error } = await queryBuilder
-            .select(selectColumns)
+        const { data, error } = await query
             .order(orderColumn, { ascending: true })
             .range(from, from + limit - 1);
         if (error) throw error;
@@ -96,8 +94,9 @@ export async function GET(req: Request) {
 
         // D. Quest stats (starts, completes, abandons per scenario)
         const questStatsData = await fetchAll<any>(
-            supabaseServer.from('quest_activity_stats_view'),
-            'scenario_id, title, quest_type, start_count, complete_count, abandon_count',
+            supabaseServer
+                .from('quest_activity_stats_view')
+                .select('scenario_id, title, quest_type, start_count, complete_count, abandon_count'),
             'scenario_id'
         );
 
@@ -157,20 +156,30 @@ export async function GET(req: Request) {
 
         // F. Daily time-series stats (last 366 days in JST)
         const dailyBasicData = await fetchAll<any>(
-            supabaseServer.from('daily_basic_stats_view'),
-            'date, new_users, total_battles, victories, defeats, fleds, revenue, dpu, dau',
+            supabaseServer
+                .from('daily_basic_stats_view')
+                .select('date, new_users, total_battles, victories, defeats, fleds, revenue, dpu, dau'),
             'date'
         );
 
+        // Calculate the oldest date needed for sliding window MAU/MPU (days + 30 days ago)
+        const oldestDate = new Date();
+        oldestDate.setDate(oldestDate.getDate() - (days + 30));
+        const oldestDateStr = toJstDateStr(oldestDate);
+
         // G. Light-weight user IDs per day to compute sliding window MAU/MPU
         const dailyActiveUserIds = await fetchAll<any>(
-            supabaseServer.from('daily_active_user_ids_view'),
-            'date, user_id',
+            supabaseServer
+                .from('daily_active_user_ids_view')
+                .select('date, user_id')
+                .gte('date', oldestDateStr),
             'date'
         );
         const dailyPayingUserIds = await fetchAll<any>(
-            supabaseServer.from('daily_paying_user_ids_view'),
-            'date, user_id',
+            supabaseServer
+                .from('daily_paying_user_ids_view')
+                .select('date, user_id')
+                .gte('date', oldestDateStr),
             'date'
         );
 
