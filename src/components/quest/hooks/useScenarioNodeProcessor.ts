@@ -86,8 +86,40 @@ export function useScenarioNodeProcessor({
             // ─── 自動分岐ノード群 ─────────────────────────────────────
 
             if (currentNode.type === 'check_world') {
-                // (変更なし - 既存ロジックを維持)
+                const stat = currentNode.params?.stat || currentNode.params?.key || currentNode.req_stat;
+                const val = currentNode.params?.threshold ?? currentNode.params?.value ?? currentNode.req_val ?? 0;
+                const operator = currentNode.params?.operator || '>=';
+                
+                const worldState = useGameStore.getState().worldState;
+                let passed = false;
+                
+                if (worldState) {
+                    let worldVal = 0;
+                    if (stat === 'order') worldVal = worldState.order_score || 0;
+                    else if (stat === 'chaos') worldVal = worldState.chaos_score || 0;
+                    else if (stat === 'justice') worldVal = worldState.justice_score || 0;
+                    else if (stat === 'evil') worldVal = worldState.evil_score || 0;
+                    else if (stat === 'prosperity') worldVal = worldState.prosperity_level || 3;
+                    
+                    if (operator === '>=' && worldVal >= val) passed = true;
+                    else if (operator === '<=' && worldVal <= val) passed = true;
+                    else if (operator === '==' && worldVal === val) passed = true;
+                    else if (operator === '>' && worldVal > val) passed = true;
+                    else if (operator === '<' && worldVal < val) passed = true;
+                }
+                
+                const successNode = currentNode.next || currentNode.choices?.find((c: any) => c.label === 'success')?.next;
+                const failNode = currentNode.fallback || currentNode.choices?.find((c: any) => c.label === 'failure')?.next;
+                
+                if (successNode || failNode) {
+                    setCurrentNodeId(passed ? (successNode || currentNode.next) : (failNode || currentNode.fallback));
+                } else {
+                    const fallbackNext = currentNode.next || currentNode.condNext;
+                    const fallbackFail = currentNode.fallback || currentNode.condFallback;
+                    setCurrentNodeId(passed ? (fallbackNext || currentNode.next) : (fallbackFail || currentNode.fallback));
+                }
             }
+
 
             else if (currentNode.type === 'random_branch') {
                 const prob = currentNode.prob || currentNode.params?.prob || 50;
@@ -118,11 +150,24 @@ export function useScenarioNodeProcessor({
                 const stat = currentNode.req_stat;
                 const val = currentNode.req_val || 0;
                 let passed = false;
-                if (stat === 'order' && (userProfile?.alignment?.order || 0) >= val) passed = true;
+                
+                if (stat === 'order' && (userProfile?.order_pts || 0) >= val) passed = true;
+                else if (stat === 'chaos' && (userProfile?.chaos_pts || 0) >= val) passed = true;
+                else if (stat === 'justice' && (userProfile?.justice_pts || 0) >= val) passed = true;
+                else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
+                
                 const successChoice = currentNode.choices?.find((c: any) => c.label === 'success');
                 const failChoice = currentNode.choices?.find((c: any) => c.label === 'failure');
-                if (successChoice && failChoice) setCurrentNodeId(passed ? successChoice.next : failChoice.next);
+                
+                if (successChoice && failChoice) {
+                    setCurrentNodeId(passed ? successChoice.next : failChoice.next);
+                } else {
+                    const fallbackNext = currentNode.next || currentNode.condNext;
+                    const fallbackFail = currentNode.fallback || currentNode.condFallback;
+                    setCurrentNodeId(passed ? (fallbackNext || currentNode.next) : (fallbackFail || currentNode.fallback));
+                }
             }
+
 
             else if (currentNode.type === 'check_possession') {
                 let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;
