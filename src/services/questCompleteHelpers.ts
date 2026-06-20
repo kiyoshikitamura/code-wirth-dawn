@@ -54,17 +54,18 @@ export async function applyAlignmentShift(
         for (const [key, val] of Object.entries(alignmentShift)) {
             const wCol = worldColMap[key];
             if (wCol && typeof val === 'number' && val > 0 && questLocationName) {
-                const { data: ws } = await supabase
-                    .from('world_states').select('*')
-                    .eq('location_name', questLocationName).maybeSingle();
-                if (ws) {
-                    await supabase.from('world_states')
-                        .update({ [wCol]: ((ws as any)[wCol] || 0) + val })
-                        .eq('id', (ws as any).id);
+                // Read-Modify-Write による競合（ロストアップデート）を防ぐため、アトミックな RPC を使用して加算
+                const { error: rpcError } = await supabase.rpc('increment_world_state_alignment', {
+                    p_location_name: questLocationName,
+                    p_column_name: wCol,
+                    p_amount: val
+                });
+                if (rpcError) {
+                    console.error(`[QuestComplete] Failed to increment location alignment via RPC:`, rpcError.message);
                 }
             }
         }
-        console.log(`[QuestComplete] Location alignment synced to ${questLocationName || questLocationId}`);
+        console.log(`[QuestComplete] Location alignment synced atomically to ${questLocationName || questLocationId}`);
     }
 
     return alignmentShift;

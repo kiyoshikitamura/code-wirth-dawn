@@ -534,14 +534,7 @@ export class QuestService {
 
         let allWorldStates = allWorldStatesResult.data || [];
 
-        const { resetStaleAlignmentScores } = await import('@/services/worldStateReset');
-        const { resetCount } = await resetStaleAlignmentScores();
-        if (resetCount > 0) {
-            const { data: refreshed } = await supabaseServer
-                .from('world_states')
-                .select('id, order_score, chaos_score, justice_score, evil_score, updated_at');
-            if (refreshed) allWorldStates = refreshed;
-        }
+        // worldStateReset 処理は廃止され、世界状態の更新は Cron (updateWorldSimulation) に統合されたため、リセット処理は削除
 
         let worldAlignPcts = { order_ratio: 50, justice_ratio: 50, chaos_ratio: 50, evil_ratio: 50 };
         let worldAlignPts = { order: 0, chaos: 0, justice: 0, evil: 0 };
