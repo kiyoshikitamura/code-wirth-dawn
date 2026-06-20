@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabase-admin';
 import { supabase as anonSupabase } from '@/lib/supabase';
 import { setQuestLock } from '@/lib/questLock';
+import { QuestService } from '@/services/questService';
 
 /**
  * POST /api/quest/start
@@ -77,6 +78,14 @@ export async function POST(req: Request) {
         if (isUgc && userLevel < 5) {
             return NextResponse.json({
                 error: 'UGCクエストを受注するにはレベル5以上である必要があります。'
+            }, { status: 403 });
+        }
+
+        // 受注前提条件 (requirements) のサーバーサイド事前検証
+        const validation = await QuestService.validateRequirements(supabase, user_id, quest.requirements);
+        if (!validation.valid) {
+            return NextResponse.json({
+                error: 'Quest prerequisites not met: ' + validation.reason
             }, { status: 403 });
         }
 

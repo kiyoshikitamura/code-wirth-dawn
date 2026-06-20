@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
         const body = await req.json();
         const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards } = body;
-        const lootSaved = Array.isArray(loot_pool) ? loot_pool : [];
+        let lootSaved: any[] = [];
 
         // ═══════════════════════════════════════
         // §0. 認証
@@ -179,6 +179,92 @@ export async function POST(req: Request) {
             console.warn(`[Security] API rejected quest completion. User ${user_id} blocked from ${quest_id}: ${validation.reason}`);
             return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
         }
+
+        // [Security] loot_pool validation and resolution
+        const filteredLootPool: any[] = [];
+        if (Array.isArray(loot_pool) && loot_pool.length > 0) {
+            const allowedItemsSet = await getQuestAllowedItems(supabase, quest, quest_id);
+            console.log(`[QuestComplete] Whitelist for quest ${quest_id}:`, Array.from(allowedItemsSet));
+
+            const identifiers = new Set<string>();
+            for (const loot of loot_pool) {
+                if (loot && loot.itemId) {
+                    identifiers.add(String(loot.itemId).trim());
+                }
+            }
+
+            if (identifiers.size > 0) {
+                const idList: number[] = [];
+                const slugList: string[] = [];
+                for (const ident of identifiers) {
+                    const parsed = parseInt(ident, 10);
+                    if (!isNaN(parsed) && String(parsed) === ident) {
+                        idList.push(parsed);
+                    } else {
+                        slugList.push(ident);
+                    }
+                }
+
+                let query = supabase.from('items').select('id, slug, name');
+                const filters: string[] = [];
+                if (idList.length > 0) filters.push(`id.in.(${idList.join(',')})`);
+                if (slugList.length > 0) {
+                    const escapedSlugs = slugList.map(s => `"${s}"`).join(',');
+                    filters.push(`slug.in.(${escapedSlugs})`);
+                }
+                
+                let dbItems: any[] = [];
+                if (filters.length > 0) {
+                    const { data } = await query.or(filters.join(','));
+                    if (data) dbItems = data;
+                }
+
+                if (quest.is_ugc && slugList.length > 0) {
+                    const { data: ugcData } = await supabase
+                        .from('ugc_items')
+                        .select('id, slug, name')
+                        .in('slug', slugList);
+                    if (ugcData) dbItems = [...dbItems, ...ugcData];
+                }
+
+                const itemMap = new Map<string, { id: number; slug: string; name: string }>();
+                for (const item of dbItems) {
+                    itemMap.set(String(item.id), item);
+                    if (item.slug) {
+                        itemMap.set(item.slug.trim(), item);
+                    }
+                }
+
+                for (const loot of loot_pool) {
+                    if (!loot || !loot.itemId) continue;
+                    const ident = String(loot.itemId).trim();
+                    let isAllowed = false;
+                    const mappedItem = itemMap.get(ident);
+                    
+                    if (allowedItemsSet.has(ident)) {
+                        isAllowed = true;
+                    } else if (mappedItem && (allowedItemsSet.has(String(mappedItem.id)) || (mappedItem.slug && allowedItemsSet.has(mappedItem.slug.trim())))) {
+                        isAllowed = true;
+                    }
+
+                    if (isAllowed) {
+                        if (mappedItem) {
+                            filteredLootPool.push({
+                                ...loot,
+                                itemId: mappedItem.id,
+                                itemName: mappedItem.name
+                            });
+                        } else {
+                            filteredLootPool.push(loot);
+                        }
+                    } else {
+                        console.warn(`[Security] Unauthorized item in loot_pool filtered out: user_id=${user_id}, quest_id=${quest_id}, item_id=${loot.itemId}`);
+                    }
+                }
+            }
+        }
+
+        lootSaved.push(...filteredLootPool);
 
         // ═══════════════════════════════════════
         // §2. 加齢 + ステータス減衰
@@ -418,9 +504,18 @@ export async function POST(req: Request) {
 
         console.log('[QuestComplete] Updates payload:', JSON.stringify(updates, null, 2));
 
-        const { error: updateError } = await supabase
-            .from('user_profiles').update(updates).eq('id', user_id);
+        const { data: updatedProfiles, error: updateError } = await supabase
+            .from('user_profiles')
+            .update(updates)
+            .eq('id', user_id)
+            .eq('current_quest_id', quest_id)
+            .select('id');
         if (updateError) throw updateError;
+
+        if (!updatedProfiles || updatedProfiles.length === 0) {
+            console.warn(`[Security] API rejected quest completion due to race condition or inactive quest. User: ${user_id}, Quest: ${quest_id}`);
+            return NextResponse.json({ error: 'Quest is already completed or inactive.' }, { status: 409 });
+        }
 
         // Record quest activity log (Spec Dashboard Extensions)
         try {
@@ -454,7 +549,7 @@ export async function POST(req: Request) {
 
             // Items + Loot
             rewardPromises.push(grantRewardItems(supabase, user_id, effectiveRewards, lootSaved));
-            rewardPromises.push(persistLootPool(supabase, user_id, loot_pool));
+            rewardPromises.push(persistLootPool(supabase, user_id, filteredLootPool));
             if (consumed_items && consumed_items.length > 0) {
                 rewardPromises.push(consumeUsedItems(supabase, user_id, consumed_items));
             }
@@ -728,4 +823,121 @@ export async function POST(req: Request) {
             error: e.message || 'Unknown server error'
         }, { status: 500 });
     }
+}
+
+/**
+ * [Security] Constructs a whitelist of allowed item IDs/slugs for a quest.
+ */
+async function getQuestAllowedItems(supabase: any, quest: any, questId: string): Promise<Set<string>> {
+    const allowed = new Set<string>();
+
+    // 1. Add items from quest.rewards.items
+    if (quest.rewards?.items && Array.isArray(quest.rewards.items)) {
+        for (const item of quest.rewards.items) {
+            if (item) allowed.add(String(item).trim());
+        }
+    }
+
+    // 2. Scan script_data nodes
+    const nodes = quest.script_data?.nodes || {};
+    const enemyGroupSlugs = new Set<string>();
+
+    for (const nodeId of Object.keys(nodes)) {
+        const node = nodes[nodeId];
+        if (!node) continue;
+
+        // Node level rewards
+        if (node.rewards?.items && Array.isArray(node.rewards.items)) {
+            for (const item of node.rewards.items) {
+                if (item) allowed.add(String(item).trim());
+            }
+        }
+        if (node.params?.rewards?.items && Array.isArray(node.params.rewards.items)) {
+            for (const item of node.params.rewards.items) {
+                if (item) allowed.add(String(item).trim());
+            }
+        }
+
+        // Enemy groups referenced in battle/boss nodes
+        if (node.type === 'battle' || node.nodeType === 'battle' || node.type === 'boss') {
+            if (node.enemy_group_id) {
+                enemyGroupSlugs.add(String(node.enemy_group_id).trim());
+            }
+        }
+    }
+
+    // 3. For Colosseum quests
+    if (String(questId).startsWith('colosseum_')) {
+        const difficulty = String(questId).replace('colosseum_', ''); // easy, normal, hard
+        
+        // Fetch all possible items in colosseum_reward_pool
+        const { data: itemPool } = await supabase
+            .from('colosseum_reward_pool')
+            .select('reward_id')
+            .eq('reward_type', 'item');
+        if (itemPool) {
+            for (const row of itemPool) {
+                if (row.reward_id) allowed.add(String(row.reward_id).trim());
+            }
+        }
+
+        // Fetch all enemy groups for this difficulty
+        const { data: colGroups } = await supabase
+            .from('colosseum_enemy_groups')
+            .select('enemy_group_slug')
+            .eq('difficulty', difficulty);
+        if (colGroups) {
+            for (const row of colGroups) {
+                if (row.enemy_group_slug) enemyGroupSlugs.add(row.enemy_group_slug.trim());
+            }
+        }
+    }
+
+    // 4. Resolve enemy drops from referenced enemy groups
+    if (enemyGroupSlugs.size > 0) {
+        const { data: groups } = await supabase
+            .from('enemy_groups')
+            .select('slug, members')
+            .in('slug', Array.from(enemyGroupSlugs));
+
+        const enemySlugs = new Set<string>();
+        if (groups) {
+            for (const g of groups) {
+                if (Array.isArray(g.members)) {
+                    for (const m of g.members) {
+                        if (m) enemySlugs.add(String(m).trim());
+                    }
+                }
+            }
+        }
+
+        if (enemySlugs.size > 0) {
+            const { data: enemiesData } = await supabase
+                .from('enemies')
+                .select('slug, drop_item_slug, drop_item_id')
+                .in('slug', Array.from(enemySlugs));
+
+            if (enemiesData) {
+                for (const e of enemiesData) {
+                    if (e.drop_item_slug) allowed.add(String(e.drop_item_slug).trim());
+                    if (e.drop_item_id) allowed.add(String(e.drop_item_id).trim());
+                }
+            }
+
+            if (quest.is_ugc) {
+                const { data: ugcEnemiesData } = await supabase
+                    .from('ugc_enemies')
+                    .select('slug, drop_item_slug, drop_item_id')
+                    .in('slug', Array.from(enemySlugs));
+                if (ugcEnemiesData) {
+                    for (const e of ugcEnemiesData) {
+                        if (e.drop_item_slug) allowed.add(String(e.drop_item_slug).trim());
+                        if (e.drop_item_id) allowed.add(String(e.drop_item_id).trim());
+                    }
+                }
+            }
+        }
+    }
+
+    return allowed;
 }
