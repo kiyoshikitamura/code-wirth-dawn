@@ -401,16 +401,26 @@ export default function ScenarioEngine({
         if (bgUrl === prevBgUrl && bgReady) return;
         // 新しい背景をプリロードしてからフェードイン
         setBgReady(false);
+        let timerId: NodeJS.Timeout | null = null;
+
         const img = new Image();
         img.onload = () => {
             setPrevBgUrl(bgUrl);
-            setBgReady(true);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
         };
         img.onerror = () => {
             setPrevBgUrl(bgUrl);
-            setBgReady(true);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
         };
         img.src = bgUrl;
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
     }, [bgUrl]);
 
     // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御

@@ -499,6 +499,7 @@ export async function POST(req: Request) {
         // §6. ロック解除 + プロフィール更新
         // ═══════════════════════════════════════
         updates.current_quest_id = null;
+        updates.current_quest_state = null;
         updates.quest_started_at = null;
         updates.blessing_data = null;
 

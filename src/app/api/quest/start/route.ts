@@ -47,29 +47,43 @@ export async function POST(req: Request) {
             }, { status: 409 });
         }
 
-        // Verify quest exists (公式 → UGC v2 フォールバック)
+        // Verify quest exists (公式 → UGC v2 フォールバック → コロシアム動的)
         let quest: any = null;
-        const { data: officialQuest, error: qError } = await supabase
-            .from('scenarios')
-            .select('id, title, slug, quest_type')
-            .eq('id', quest_id)
-            .single();
-
-        if (officialQuest) {
-            quest = officialQuest;
+        if (String(quest_id).startsWith('colosseum_')) {
+            const difficulty = String(quest_id).replace('colosseum_', '');
+            if (!['easy', 'normal', 'hard'].includes(difficulty)) {
+                return NextResponse.json({ error: 'Invalid colosseum difficulty' }, { status: 400 });
+            }
+            const diffLabel = difficulty === 'normal' ? 'Normal' : (difficulty === 'hard' ? 'Hard' : 'Easy');
+            quest = {
+                id: quest_id,
+                title: `コロシアム (${diffLabel})`,
+                quest_type: 'normal',
+                requirements: {}
+            };
         } else {
-            // UGC v2: ugc_scenarios から検索
-            const { data: ugcQuest, error: ugcErr } = await supabase
-                .from('ugc_scenarios')
-                .select('id, title, slug, scenario_type')
+            const { data: officialQuest, error: qError } = await supabase
+                .from('scenarios')
+                .select('id, title, slug, quest_type')
                 .eq('id', quest_id)
-                .eq('status', 'published')
                 .single();
 
-            if (ugcErr || !ugcQuest) {
-                return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+            if (officialQuest) {
+                quest = officialQuest;
+            } else {
+                // UGC v2: ugc_scenarios から検索
+                const { data: ugcQuest, error: ugcErr } = await supabase
+                    .from('ugc_scenarios')
+                    .select('id, title, slug, scenario_type')
+                    .eq('id', quest_id)
+                    .eq('status', 'published')
+                    .single();
+
+                if (ugcErr || !ugcQuest) {
+                    return NextResponse.json({ error: 'Quest not found' }, { status: 404 });
+                }
+                quest = { ...ugcQuest, quest_type: 'ugc' };
             }
-            quest = { ...ugcQuest, quest_type: 'ugc' };
         }
 
         // UGC最低受注レベル制限（Lv5）
@@ -82,7 +96,7 @@ export async function POST(req: Request) {
         }
 
         // 受注前提条件 (requirements) のサーバーサイド事前検証
-        const validation = await QuestService.validateRequirements(supabase, user_id, quest.requirements);
+        const validation = await QuestService.validateRequirements(supabase, user_id, quest.requirements || {});
         if (!validation.valid) {
             return NextResponse.json({
                 error: 'Quest prerequisites not met: ' + validation.reason
