@@ -1039,24 +1039,20 @@ export default function QuestPage() {
                 )}
 
                 <main className="flex-1 overflow-hidden relative flex flex-col">
-                    {viewMode === 'scenario' ? (
-                        <div className="flex-1 relative w-full h-full flex flex-col">
-
-                            <ScenarioEngine
-                                scenario={scenario}
-                                initialNodeId={initialNodeId}
-                                onBattleStart={startBattle}
-                                onPrepareResult={handlePrepareResult}
-                                isResultReady={!!prefetchedResult}
-                                isPreparingResult={isPrefetching}
-                                onComplete={handleComplete}
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex-1 relative w-full h-full">
-                            <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} />
-                        </div>
-                    )}
+                    <div className={`flex-1 relative w-full h-full flex flex-col ${viewMode !== 'scenario' ? 'hidden' : ''}`}>
+                        <ScenarioEngine
+                            scenario={scenario}
+                            initialNodeId={initialNodeId}
+                            onBattleStart={startBattle}
+                            onPrepareResult={handlePrepareResult}
+                            isResultReady={!!prefetchedResult}
+                            isPreparingResult={isPrefetching}
+                            onComplete={handleComplete}
+                        />
+                    </div>
+                    <div className={`flex-1 relative w-full h-full ${viewMode !== 'battle' ? 'hidden' : ''}`}>
+                        <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} />
+                    </div>
                 </main>
                 {/* ギブアップ（放棄）処理中ローディングオーバーレイ */}
                 {isGivingUp && (

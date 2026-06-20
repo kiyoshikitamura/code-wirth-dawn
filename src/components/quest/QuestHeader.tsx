@@ -24,10 +24,10 @@ export default function QuestHeader({
     setIsPartyOpen,
     vitalityPulse
 }: QuestHeaderProps) {
-    const { userProfile, battleState, equipBonus, fetchEquipment } = useGameStore();
-    const [fetchedParty, setFetchedParty] = useState<PartyMember[]>([]);
+    const { userProfile, battleState, equipBonus, fetchEquipment, partyMembers } = useGameStore();
+    const [fetchedParty, setFetchedParty] = useState<PartyMember[]>(partyMembers || []);
     const [showStatus, setShowStatus] = useState(false);
-    const [isPartyLoading, setIsPartyLoading] = useState(true);
+    const [isPartyLoading, setIsPartyLoading] = useState(false);
 
     // 装備ボーナス取得
     useEffect(() => {
@@ -39,14 +39,34 @@ export default function QuestHeader({
     const [mountKey] = useState(() => Date.now());
     useEffect(() => {
         if (!userProfile?.id) return;
-        setTimeout(() => setIsPartyLoading(true), 0);
+
+        let active = true;
+        const loadingTimer = setTimeout(() => {
+            if (active) {
+                setIsPartyLoading(true);
+            }
+        }, 150);
+
         fetch(`/api/party/list?owner_id=${userProfile.id}`)
             .then(r => r.json())
             .then(data => {
-                setFetchedParty(data.party || []);
-                setIsPartyLoading(false);
+                if (active) {
+                    clearTimeout(loadingTimer);
+                    setFetchedParty(data.party || []);
+                    setIsPartyLoading(false);
+                }
             })
-            .catch(() => { setIsPartyLoading(false); });
+            .catch(() => {
+                if (active) {
+                    clearTimeout(loadingTimer);
+                    setIsPartyLoading(false);
+                }
+            });
+
+        return () => {
+            active = false;
+            clearTimeout(loadingTimer);
+        };
     }, [userProfile?.id, mountKey]);
 
     // battleState.party はバトル中のみ使用（前回バトルの残留データで新規パーティが隠れる問題を防止）

@@ -45,17 +45,17 @@ export async function GET(req: Request) {
                 let numBattles = 5;
                 let diffLabel = 'Easy';
                 let diffVal = 1;
-                let rewards = { gold: 800, exp: 200, reputation: 5 };
+                let rewards = { gold: 400, exp: 200, reputation: 5 };
                 if (difficulty === 'normal') {
                     numBattles = 10;
                     diffLabel = 'Normal';
                     diffVal = 2;
-                    rewards = { gold: 2000, exp: 400, reputation: 10 };
+                    rewards = { gold: 1000, exp: 400, reputation: 10 };
                 } else if (difficulty === 'hard') {
                     numBattles = 10;
                     diffLabel = 'Hard';
                     diffVal = 3;
-                    rewards = { gold: 4000, exp: 800, reputation: 20 };
+                    rewards = { gold: 2000, exp: 800, reputation: 20 };
                 }
 
                 // Compile nodes
