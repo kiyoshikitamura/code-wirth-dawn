@@ -1904,32 +1904,13 @@ export const createBattleSlice = (
                                 const newDur = curDur + healed;
                                 party[idx] = { ...member, durability: newDur };
                                 logMsg = `♥ ${card.name}で ${member.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`;
-                                
-                                const finalHand = nextHand.filter(c => c.id !== card.id);
-                                let finalDiscardPile = [...nextDiscardPile];
-                                if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
-                                    set(state => ({
-                                        battleState: {
-                                            ...state.battleState,
-                                            exhaustPile: [...state.battleState.exhaustPile, { id: card.id, name: card.name, type: card.type }],
-                                            consumedItems: [...state.battleState.consumedItems, card.id],
-                                        }
-                                    }));
-                                } else {
-                                    finalDiscardPile = [...finalDiscardPile, card];
-                                }
-
-                                const healMessages = [...newMessages, logMsg, `__party_sync:${member.id}:${newDur}`];
+                                newMessages.push(`__party_sync:${member.id}:${newDur}`);
                                 set(state => ({
-                                    hand: finalHand,
-                                    discardPile: finalDiscardPile,
                                     battleState: {
                                         ...state.battleState,
-                                        party,
-                                        messages: healMessages,
+                                        party
                                     }
                                 }));
-                                return true;
                             } else {
                                 logMsg = `${card.name}を使用！(対象の体力は満たんでいる)`;
                             }
