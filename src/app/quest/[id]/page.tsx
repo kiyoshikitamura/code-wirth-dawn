@@ -347,9 +347,9 @@ export default function QuestPage() {
         }
         async function loadScenario() {
             try {
-                // 最新のユーザー情報を読み込む
+                // 最新のユーザー情報を読み込む (コロシアムの場合は最新のロック状態を強制取得するため常にフェッチ)
                 let currentProfile = userProfile;
-                if (!currentProfile) {
+                if (!currentProfile || (typeof id === 'string' && id.startsWith('colosseum_'))) {
                     await fetchUserProfile();
                     currentProfile = useGameStore.getState().userProfile;
                 }

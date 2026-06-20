@@ -50,8 +50,6 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
 
             if (res.ok) {
                 const data = await res.json();
-                // Refresh local profile store so quest lock is registered
-                await fetchUserProfile();
                 // Route to quest execution page
                 router.push(`/quest/colosseum_${difficulty}`);
             } else {
