@@ -13,20 +13,53 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        // ユーザープロフィール取得（VIT減少用）
+        // ユーザープロフィール取得（VIT減少・年代記用）
         const { data: currentProfile } = await supabaseServer
             .from('user_profiles')
-            .select('vitality, current_location_id, current_quest_id')
+            .select('vitality, current_location_id, current_quest_id, accumulated_days')
             .eq('id', userId)
             .single();
 
-        // 1. プロフィール更新: ロック解除 + VIT -1
+        let questTitle = '未知のクエスト';
+        let isUgc = false;
+        if (currentProfile?.current_quest_id) {
+            const questId = currentProfile.current_quest_id;
+            const isColosseum = String(questId).startsWith('colosseum_');
+            if (isColosseum) {
+                const difficulty = String(questId).replace('colosseum_', '');
+                const diffLabel = difficulty === 'normal' ? 'Normal' : (difficulty === 'hard' ? 'Hard' : 'Easy');
+                questTitle = `コロシアム (${diffLabel})`;
+            } else {
+                const { data: officialQuest } = await supabaseServer
+                    .from('scenarios')
+                    .select('title')
+                    .eq('id', questId)
+                    .maybeSingle();
+                
+                if (officialQuest) {
+                    questTitle = officialQuest.title;
+                } else {
+                    const { data: ugcQuest } = await supabaseServer
+                        .from('ugc_scenarios')
+                        .select('title')
+                        .eq('id', questId)
+                        .maybeSingle();
+                    if (ugcQuest) {
+                        questTitle = ugcQuest.title;
+                        isUgc = true;
+                    }
+                }
+            }
+        }
+
+        // 1. プロフィール更新: ロック解除 (quest_started_atのnull化含む) + VIT -1
         const currentVit = currentProfile?.vitality ?? 100;
         const { error } = await supabaseServer
             .from('user_profiles')
             .update({
                 current_quest_id: null,
                 current_quest_state: null,
+                quest_started_at: null,
                 vitality: Math.max(0, currentVit - 1),
             })
             .eq('id', userId);
@@ -127,6 +160,40 @@ export async function POST(req: Request) {
                 }
             } catch (repErr) {
                 console.error('[Quest Give Up] Reputation penalty update exception:', repErr);
+            }
+        }
+
+        // 3. 冒険日誌への失敗履歴の自動記述 (user_chronicles)
+        if (currentProfile?.current_quest_id) {
+            const questId = currentProfile.current_quest_id;
+            try {
+                const paramChanges: any = {
+                    vitality_penalty: 1,
+                };
+                if (repPenalty !== 0 && repLocationName) {
+                    paramChanges.reputation = {
+                        location_name: repLocationName,
+                        delta: repPenalty
+                    };
+                }
+
+                await supabaseServer
+                    .from('user_chronicles')
+                    .insert({
+                        user_id: userId,
+                        event_type: 'quest_failure',
+                        accumulated_days: currentProfile.accumulated_days || 0,
+                        location_id: currentProfile.current_location_id,
+                        location_name: repLocationName,
+                        scenario_id: (isUgc || String(questId).startsWith('colosseum_')) ? null : questId,
+                        ugc_scenario_id: isUgc ? questId : null,
+                        title: `クエスト放棄: ${questTitle}`,
+                        description: `宿屋にてクエスト『${questTitle}』を放棄し、撤退を余儀なくされた。`,
+                        param_changes: paramChanges,
+                        is_major_event: false
+                    });
+            } catch (chronicleErr) {
+                console.error('[Quest Give Up] Failed to write user_chronicles:', chronicleErr);
             }
         }
 

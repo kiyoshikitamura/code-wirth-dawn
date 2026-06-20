@@ -127,16 +127,20 @@ export function useScenarioNodeProcessor({
             else if (currentNode.type === 'check_possession') {
                 let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;
                 const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
+                const activeNodeId = currentNodeId;
                 // slug文字列の場合は数値IDに解決
                 if (typeof requiredItemId === 'string' && isNaN(parseInt(requiredItemId, 10))) {
                     try {
                         const { data: itemRow } = await supabase.from('items').select('id').eq('slug', requiredItemId).maybeSingle();
+                        if (processedNodeRef.current !== activeNodeId) return;
                         if (itemRow) requiredItemId = itemRow.id;
                     } catch (e) { console.error('[check_possession] Slug resolution error:', e); }
                 }
                 await useGameStore.getState().fetchInventory();
+                if (processedNodeRef.current !== activeNodeId) return;
                 const latestInv = useGameStore.getState().inventory || [];
-                const hasItem = latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) >= reqQty;
+                const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
+                const hasItem = latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
