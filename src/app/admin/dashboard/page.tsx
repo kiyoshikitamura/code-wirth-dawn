@@ -89,6 +89,20 @@ interface ColosseumDaily {
     goldSpent: number;
 }
 
+interface AcademySummary {
+    totalPlayers: number;
+    totalPacks: number;
+    totalGoldSpent: number;
+    totalRefundGold: number;
+}
+
+interface AcademyDaily {
+    date: string;
+    packs: Record<string, number>;
+    goldSpent: Record<string, number>;
+    refundGold: Record<string, number>;
+}
+
 interface KPIData {
     summary: KPISummary;
     levelDistribution: LevelDistribution;
@@ -100,6 +114,10 @@ interface KPIData {
         summary: ColosseumSummary;
         daily: ColosseumDaily[];
     };
+    academy?: {
+        summary: AcademySummary;
+        daily: AcademyDaily[];
+    };
 }
 
 export default function AdminDashboardPage() {
@@ -107,7 +125,7 @@ export default function AdminDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-    const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments' | 'colosseum'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments' | 'colosseum' | 'academy'>('users');
     const [daysRange, setDaysRange] = useState<number>(30);
     
 
@@ -267,7 +285,7 @@ export default function AdminDashboardPage() {
         );
     }
 
-    const { summary, levelDistribution, subscriptionDistribution, questRanking, dailyKPI, colosseum } = data;
+    const { summary, levelDistribution, subscriptionDistribution, questRanking, dailyKPI, colosseum, academy } = data;
 
     // 自前SVGグラフ用の座標計算
     const svgWidth = 800;
@@ -342,6 +360,56 @@ export default function AdminDashboardPage() {
 
     // D. 棒グラフ用: 課金売上金額推移 (Stripe)
     const maxRevenue = Math.max(...dailyKPI.map(d => d.revenue), 1000);
+
+    // F. 魔術学院
+    const academyDaily = academy?.daily || [];
+    const maxAcademyPacks = Math.max(...academyDaily.map(d => Object.values(d.packs).reduce((a, b) => a + b, 0)), 5);
+    const maxAcademyGold = Math.max(...academyDaily.map(d => Object.values(d.goldSpent).reduce((a, b) => a + b, 0)), 1000);
+    const acadPackPoints = academyDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const total = Object.values(d.packs).reduce((a, b) => a + b, 0);
+        const y = svgHeight - padding - (total / maxAcademyPacks) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const acadPackLinePath = acadPackPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const acadPackAreaPath = acadPackPoints.length > 0
+        ? `${acadPackLinePath} L ${acadPackPoints[acadPackPoints.length - 1].x} ${svgHeight - padding} L ${acadPackPoints[0].x} ${svgHeight - padding} Z`
+        : '';
+
+    // シリーズ別の累計集計
+    const academySeriesSummary: Record<string, {
+        series: string;
+        packs: number;
+        goldSpent: number;
+        refundGold: number;
+    }> = {};
+
+    academyDaily.forEach(d => {
+        Object.keys(d.packs).forEach(series => {
+            if (!academySeriesSummary[series]) {
+                academySeriesSummary[series] = {
+                    series,
+                    packs: 0,
+                    goldSpent: 0,
+                    refundGold: 0
+                };
+            }
+            academySeriesSummary[series].packs += d.packs[series] || 0;
+            academySeriesSummary[series].goldSpent += d.goldSpent[series] || 0;
+            academySeriesSummary[series].refundGold += d.refundGold[series] || 0;
+        });
+    });
+
+    const academySeriesList = Object.values(academySeriesSummary);
+
+    const getSeriesDisplayName = (series: string) => {
+        switch (series) {
+            case 'chaos_and_rebellion':
+                return '混沌と反逆 (Chaos & Rebellion)';
+            default:
+                return series;
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#070d19] text-gray-100 font-sans p-6 relative">
@@ -505,6 +573,12 @@ export default function AdminDashboardPage() {
                                     >
                                         コロシアム
                                     </button>
+                                    <button
+                                        onClick={() => setActiveTab('academy')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'academy' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        魔術学院
+                                    </button>
                                 </div>
                                 <button
                                     onClick={exportDailyKPICsv}
@@ -540,6 +614,28 @@ export default function AdminDashboardPage() {
                                     <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
                                         <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド</div>
                                         <div className="text-sm font-bold text-yellow-500">{colosseum.summary.totalGoldSpent.toLocaleString()} G</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 魔術学院総合サマリー */}
+                            {activeTab === 'academy' && academy && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">購入プレイヤー数</div>
+                                        <div className="text-sm font-bold text-indigo-400">{academy.summary.totalPlayers} UU</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">総パック購入数 (回転数)</div>
+                                        <div className="text-sm font-bold text-blue-400">{academy.summary.totalPacks} パック</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド (実質消費)</div>
+                                        <div className="text-sm font-bold text-emerald-400">{academy.summary.totalGoldSpent.toLocaleString()} G</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">累計返還ゴールド</div>
+                                        <div className="text-sm font-bold text-yellow-500">{academy.summary.totalRefundGold.toLocaleString()} G</div>
                                     </div>
                                 </div>
                             )}
@@ -626,6 +722,107 @@ export default function AdminDashboardPage() {
                                 </svg>
                             )}
 
+                            {/* 折れ線・棒グラフ混在: 魔術学院 */}
+                            {activeTab === 'academy' && academyDaily.length > 0 && (
+                                <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="overflow-visible">
+                                    <defs>
+                                        <linearGradient id="academyPackGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
+                                            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    {/* グリッド横線 */}
+                                    {[0, 1, 2, 3, 4].map((n) => {
+                                        const y = padding + (n / 4) * (svgHeight - padding * 2);
+                                        // 左軸: パック購入数
+                                        const leftLabel = Math.round(maxAcademyPacks - (n / 4) * maxAcademyPacks);
+                                        // 右軸: 消費ゴールド
+                                        const rightLabel = `${Math.round(maxAcademyGold - (n / 4) * maxAcademyGold).toLocaleString()} G`;
+                                        return (
+                                            <g key={n} opacity="0.15">
+                                                <line x1={padding} y1={y} x2={svgWidth - padding} y2={y} stroke="#fff" strokeDasharray="3" />
+                                                <text x={padding - 10} y={y + 4} fill="#fff" fontSize="10" textAnchor="end">{leftLabel}</text>
+                                                <text x={svgWidth - padding + 10} y={y + 4} fill="#fff" fontSize="10" textAnchor="start">{rightLabel}</text>
+                                            </g>
+                                        );
+                                    })}
+
+                                    {/* 棒グラフ: 消費ゴールド */}
+                                    {academyDaily.map((d, i) => {
+                                        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+                                        const barWidth = Math.max(1, colWidth - Math.max(1, colWidth * 0.2));
+                                        const totalGold = Object.values(d.goldSpent).reduce((sum, v) => sum + v, 0);
+                                        const heightGold = (totalGold / maxAcademyGold) * (svgHeight - padding * 2);
+                                        const yGold = svgHeight - padding - heightGold;
+                                        return (
+                                            <g key={i}>
+                                                {heightGold > 0 && (
+                                                    <rect
+                                                        x={x - barWidth / 2}
+                                                        y={yGold}
+                                                        width={barWidth}
+                                                        height={heightGold}
+                                                        fill="#10b981"
+                                                        opacity="0.6"
+                                                        rx="0.5"
+                                                    />
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+
+                                    {/* 折れ線塗りつぶし領域: パック購入数 */}
+                                    {acadPackAreaPath && <path d={acadPackAreaPath} fill="url(#academyPackGrad)" />}
+
+                                    {/* 折れ線本体: パック購入数 */}
+                                    {acadPackLinePath && (
+                                        <path
+                                            d={acadPackLinePath}
+                                            fill="none"
+                                            stroke="#6366f1"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    )}
+
+                                    {/* ガイドホバー */}
+                                    {academyDaily.map((d, i) => {
+                                        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+                                        return (
+                                            <g key={i}>
+                                                <rect
+                                                    x={x - colWidth / 2}
+                                                    y={padding}
+                                                    width={colWidth}
+                                                    height={svgHeight - padding * 2}
+                                                    fill="transparent"
+                                                    className="cursor-pointer"
+                                                    onMouseEnter={() => setHoveredIdx(i)}
+                                                    onMouseLeave={() => setHoveredIdx(null)}
+                                                />
+                                                {hoveredIdx === i && (
+                                                    <g>
+                                                        <line x1={x} y1={padding} x2={x} y2={svgHeight - padding} stroke="#fff" strokeWidth="1" strokeDasharray="2" opacity="0.4" />
+                                                        {acadPackPoints[i] && (
+                                                            <circle
+                                                                cx={acadPackPoints[i].x}
+                                                                cy={acadPackPoints[i].y}
+                                                                r="5"
+                                                                fill="#6366f1"
+                                                                stroke="#fff"
+                                                                strokeWidth="1.5"
+                                                            />
+                                                        )}
+                                                    </g>
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+                                </svg>
+                            )}
+
                             {/* 棒グラフ: バトル統計 & 課金決済 */}
                             {(activeTab === 'battles' || activeTab === 'payments') && (
                                 <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="overflow-visible">
@@ -690,7 +887,9 @@ export default function AdminDashboardPage() {
                                         top: '10%'
                                     }}
                                 >
-                                    <div className="font-bold border-b border-gray-800 pb-1 text-gray-300">{dailyKPI[hoveredIdx].date}</div>
+                                    <div className="font-bold border-b border-gray-800 pb-1 text-gray-300">
+                                        {activeTab === 'academy' ? academyDaily[hoveredIdx]?.date : dailyKPI[hoveredIdx]?.date}
+                                    </div>
                                     {activeTab === 'users' && <div className="text-blue-400">新規ユーザー: {dailyKPI[hoveredIdx].newUsers} 名</div>}
                                     {activeTab === 'dau' && (
                                         <>
@@ -721,6 +920,22 @@ export default function AdminDashboardPage() {
                                             <div className="text-blue-400 text-[10px]">Normal: {colosseumDaily[hoveredIdx].starts.normal}回 / 制覇: {colosseumDaily[hoveredIdx].completes.normal}</div>
                                             <div className="text-yellow-500 text-[10px]">Hard: {colosseumDaily[hoveredIdx].starts.hard}回 / 制覇: {colosseumDaily[hoveredIdx].completes.hard}</div>
                                             <div className="text-orange-400 font-semibold text-[10px] border-t border-gray-800/55 pt-0.5 mt-0.5">回収: {colosseumDaily[hoveredIdx].goldSpent.toLocaleString()} G</div>
+                                        </div>
+                                    )}
+                                    {activeTab === 'academy' && academyDaily[hoveredIdx] && (
+                                        <div className="space-y-1 mt-1">
+                                            <div className="text-indigo-400 font-semibold text-[10px]">魔術学院購入状況</div>
+                                            {Object.entries(academyDaily[hoveredIdx].packs).map(([series, count]) => (
+                                                <div key={series} className="text-blue-400 text-[10px]">
+                                                    {getSeriesDisplayName(series)}: {count}パック
+                                                </div>
+                                            ))}
+                                            <div className="text-emerald-400 font-semibold text-[10px] border-t border-gray-800/55 pt-0.5 mt-0.5">
+                                                消費: {Object.values(academyDaily[hoveredIdx].goldSpent).reduce((sum, v) => sum + v, 0).toLocaleString()} G
+                                            </div>
+                                            <div className="text-yellow-500 text-[10px]">
+                                                返還: {Object.values(academyDaily[hoveredIdx].refundGold).reduce((sum, v) => sum + v, 0).toLocaleString()} G
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -765,6 +980,18 @@ export default function AdminDashboardPage() {
                                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded" /><span className="text-gray-400">Easy挑戦</span></div>
                                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-500 rounded" /><span className="text-gray-400">Normal挑戦</span></div>
                                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-500 rounded" /><span className="text-gray-400">Hard挑戦</span></div>
+                                </>
+                            )}
+                            {activeTab === 'academy' && (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3.5 h-0.5 border-t-2 border-indigo-500" />
+                                        <span className="text-gray-400">パック購入数（折れ線）</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-emerald-500 rounded" />
+                                        <span className="text-gray-400">消費ゴールド（棒）</span>
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -863,87 +1090,144 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                {/* 全クエスト詳細分析テーブル */}
-                <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-sm font-semibold tracking-wide text-gray-300 flex items-center gap-2">
-                            <Trophy size={16} className="text-yellow-400" />
-                            全クエスト別詳細分析（実行数・クリア数・クリア率）
-                        </h2>
-                        <button
-                            onClick={exportQuestStatsCsv}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
-                        >
-                            <Download size={12} />
-                            CSV出力
-                        </button>
-                    </div>
+                {/* 詳細分析テーブル（アクティブタブ別） */}
+                {activeTab === 'academy' ? (
+                    <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-sm font-semibold tracking-wide text-gray-300 flex items-center gap-2">
+                                <Coins size={16} className="text-indigo-400" />
+                                魔術学院 シリーズ別詳細分析（パック購入数・消費ゴールド・返還ゴールド）
+                            </h2>
+                        </div>
 
-                    {data.questStats && data.questStats.length > 0 ? (
                         <div className="overflow-y-auto max-h-96 pr-2 custom-scrollbar">
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
                                     <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                        <th className="py-3 px-4 font-semibold w-16">ID</th>
-                                        <th className="py-3 px-4 font-semibold w-24">種別</th>
-                                        <th className="py-3 px-4 font-semibold">クエスト名 / シナリオタイトル</th>
-                                        <th className="py-3 px-4 font-semibold text-right w-24">実行数</th>
-                                        <th className="py-3 px-4 font-semibold text-right w-24">クリア数</th>
-                                        <th className="py-3 px-4 font-semibold text-right w-24">放棄数</th>
-                                        <th className="py-3 px-4 font-semibold text-right w-28">クリア率</th>
+                                        <th className="py-3 px-4 font-semibold">シリーズ名</th>
+                                        <th className="py-3 px-4 font-semibold text-right w-32">総パック購入数</th>
+                                        <th className="py-3 px-4 font-semibold text-right w-36">累計消費ゴールド</th>
+                                        <th className="py-3 px-4 font-semibold text-right w-36">累計返還ゴールド</th>
+                                        <th className="py-3 px-4 font-semibold text-right w-40">1パック当り実質消費</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-850">
-                                    {data.questStats.map((q) => {
-                                        let typeLabel = 'メイン';
-                                        let typeColor = 'text-blue-400 bg-blue-950/40 border border-blue-900/30';
-                                        if (q.quest_type === 'sub') {
-                                            typeLabel = 'サブ';
-                                            typeColor = 'text-purple-400 bg-purple-950/40 border border-purple-900/30';
-                                        } else if (q.quest_type === 'ugc') {
-                                            typeLabel = 'UGC';
-                                            typeColor = 'text-pink-400 bg-pink-950/40 border border-pink-900/30';
-                                        } else if (q.quest_type === 'event') {
-                                            typeLabel = 'イベント';
-                                            typeColor = 'text-yellow-400 bg-yellow-950/40 border border-yellow-900/30';
-                                        } else if (q.quest_type === 'colosseum') {
-                                            typeLabel = '闘技場';
-                                            typeColor = 'text-amber-400 bg-amber-950/40 border border-amber-900/30';
-                                        }
-
-                                        return (
-                                            <tr key={q.id} className="hover:bg-gray-800/20 transition-colors text-gray-300">
-                                                <td className="py-3 px-4 text-gray-500 font-mono">#{q.id}</td>
-                                                <td className="py-3 px-4">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${typeColor}`}>
-                                                        {typeLabel}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-4 font-semibold">{q.title}</td>
-                                                <td className="py-3 px-4 text-right font-semibold text-gray-400">{q.startCount} 回</td>
-                                                <td className="py-3 px-4 text-right font-semibold text-emerald-400">{q.completeCount} 回</td>
-                                                <td className="py-3 px-4 text-right font-semibold text-red-400">{q.abandonCount} 回</td>
-                                                <td className="py-3 px-4 text-right font-semibold">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                                        q.clearRate >= 80 ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-900/30' :
-                                                        q.clearRate >= 50 ? 'text-yellow-400 bg-yellow-950/40 border border-yellow-900/30' :
-                                                        q.startCount > 0 ? 'text-red-400 bg-red-950/40 border border-red-900/30' : 'text-gray-500 bg-gray-900/40'
-                                                    }`}>
-                                                        {q.startCount > 0 ? `${q.clearRate}%` : '未挑戦'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                    {academySeriesList.length > 0 ? (
+                                        academySeriesList.map((s) => {
+                                            const avgSpent = s.packs > 0 ? Math.round(s.goldSpent / s.packs) : 0;
+                                            return (
+                                                <tr key={s.series} className="hover:bg-gray-800/20 transition-colors text-gray-300">
+                                                    <td className="py-3 px-4 font-semibold text-indigo-300">
+                                                        {getSeriesDisplayName(s.series)}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-blue-400">
+                                                        {s.packs.toLocaleString()} パック
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-emerald-400">
+                                                        {s.goldSpent.toLocaleString()} G
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-yellow-500">
+                                                        {s.refundGold.toLocaleString()} G
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-gray-400">
+                                                        {avgSpent.toLocaleString()} G / パック
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={5} className="text-center py-8 text-gray-500">
+                                                選択された期間内に購入データがありません。
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                    ) : (
-                        <div className="text-center py-8 text-gray-500 text-xs">
-                            現在、クエスト統計データが存在しません。
+                    </div>
+                ) : (
+                    <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-sm font-semibold tracking-wide text-gray-300 flex items-center gap-2">
+                                <Trophy size={16} className="text-yellow-400" />
+                                全クエスト別詳細分析（実行数・クリア数・クリア率）
+                            </h2>
+                            <button
+                                onClick={exportQuestStatsCsv}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
+                            >
+                                <Download size={12} />
+                                CSV出力
+                            </button>
                         </div>
-                    )}
-                </div>
+
+                        {data.questStats && data.questStats.length > 0 ? (
+                            <div className="overflow-y-auto max-h-96 pr-2 custom-scrollbar">
+                                <table className="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                            <th className="py-3 px-4 font-semibold w-16">ID</th>
+                                            <th className="py-3 px-4 font-semibold w-24">種別</th>
+                                            <th className="py-3 px-4 font-semibold">クエスト名 / シナリオタイトル</th>
+                                            <th className="py-3 px-4 font-semibold text-right w-24">実行数</th>
+                                            <th className="py-3 px-4 font-semibold text-right w-24">クリア数</th>
+                                            <th className="py-3 px-4 font-semibold text-right w-24">放棄数</th>
+                                            <th className="py-3 px-4 font-semibold text-right w-28">クリア率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-850">
+                                        {data.questStats.map((q) => {
+                                            let typeLabel = 'メイン';
+                                            let typeColor = 'text-blue-400 bg-blue-950/40 border border-blue-900/30';
+                                            if (q.quest_type === 'sub') {
+                                                typeLabel = 'サブ';
+                                                typeColor = 'text-purple-400 bg-purple-950/40 border border-purple-900/30';
+                                            } else if (q.quest_type === 'ugc') {
+                                                typeLabel = 'UGC';
+                                                typeColor = 'text-pink-400 bg-pink-950/40 border border-pink-900/30';
+                                            } else if (q.quest_type === 'event') {
+                                                typeLabel = 'イベント';
+                                                typeColor = 'text-yellow-400 bg-yellow-950/40 border border-yellow-900/30';
+                                            } else if (q.quest_type === 'colosseum') {
+                                                typeLabel = '闘技場';
+                                                typeColor = 'text-amber-400 bg-amber-950/40 border border-amber-900/30';
+                                            }
+
+                                            return (
+                                                <tr key={q.id} className="hover:bg-gray-800/20 transition-colors text-gray-300">
+                                                    <td className="py-3 px-4 text-gray-500 font-mono">#{q.id}</td>
+                                                    <td className="py-3 px-4">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${typeColor}`}>
+                                                            {typeLabel}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 px-4 font-semibold">{q.title}</td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-gray-400">{q.startCount} 回</td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-emerald-400">{q.completeCount} 回</td>
+                                                    <td className="py-3 px-4 text-right font-semibold text-red-400">{q.abandonCount} 回</td>
+                                                    <td className="py-3 px-4 text-right font-semibold">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                            q.clearRate >= 80 ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-900/30' :
+                                                            q.clearRate >= 50 ? 'text-yellow-400 bg-yellow-950/40 border border-yellow-900/30' :
+                                                            q.startCount > 0 ? 'text-red-400 bg-red-950/40 border border-red-900/30' : 'text-gray-500 bg-gray-900/40'
+                                                        }`}>
+                                                            {q.startCount > 0 ? `${q.clearRate}%` : '未挑戦'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500 text-xs">
+                                現在、クエスト統計データが存在しません。
+                            </div>
+                        )}
+                    </div>
+                )}
             </main>
 
 

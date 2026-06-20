@@ -90,6 +90,15 @@
 * `gold_cost` (INTEGER) : 挑戦時に消費されたゴールド額（`action = 'start'` の時のみ記録）
 * `created_at` (TIMESTAMP WITH TIME ZONE)
 
+### 3.4 `academy_pack_logs` (魔術学院パック購入ログ)
+魔術学院でのパック（スキルカード）購入ライフサイクルログを記録し、ダッシュボードでのゴールド回収およびパック回転数分析に使用します。
+* `id` (UUID, Primary Key)
+* `user_id` (UUID, Foreign Key -> auth.users)
+* `pack_series` (TEXT) : パックのシリーズ識別名（例: `'chaos_and_rebellion'`）
+* `gold_spent` (INTEGER) : 重複によるキャッシュバック返還後の実質消費ゴールド額
+* `refund_gold` (INTEGER) : 重複カードによるキャッシュバック（返還）ゴールド額
+* `created_at` (TIMESTAMP WITH TIME ZONE)
+
 ---
 
 ## 4. バックエンド API 仕様
@@ -128,6 +137,9 @@
 * **コロシアム統計 (Colosseum KPI) の算出**:
   - `get_colosseum_summary_stats()` RPCを使用して、全期間の累計挑戦プレイヤー数 (`total_players`)、総挑戦数 (`total_battles` = 挑戦数)、総クリア数 (`total_wins` = クリア数)、今期最高連勝 (`max_streak`)、累計回収ゴールド (`total_gold_spent`) を一括でフェッチし、制覇率（クリア率）を `total_wins / total_battles * 100` で計算します。
   - `get_colosseum_daily_stats(days_limit)` RPCを使用して、直近 `days` 日間の日別・難易度別の開始数・クリア数・放棄数・回収ゴールドを集計します。
+* **魔術学院統計 (Academy KPI) の算出**:
+  - `get_academy_summary_stats()` RPCを使用して、全期間の累計購入プレイヤー数 (`total_players`)、総パック購入数 (`total_packs`)、累計回収ゴールド (`total_gold_spent` = 実質消費ゴールド)、累計返還ゴールド (`total_refund_gold`) を一括でフェッチします。
+  - `get_academy_daily_stats(days_limit)` RPCを使用して、直近 `days` 日間の日別・シリーズ別の購入数・実質消費ゴールド・返還ゴールドを集計します。
 
 ### 4.2 `POST /api/admin/reset`
 テストデータを一括初期化し、開発環境のリセットを行うためのAPI。
@@ -197,4 +209,8 @@ const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 
 * **Index Only Scanによる負荷削減**: DAU/MAUやダッシュボードでの開始/完了アクションの頻繁な集計において、DBスキャン負荷を最小化するため、`colosseum_activity_logs` に `(action, created_at)` の複合インデックスを追加します。これにより、テーブルのテーブルフルスキャンを避け、インデックス内の情報のみでスピーディに集計を完了させる設計とします。
 * **データ不在難易度の表示保証**: ログテーブルを直接 `GROUP BY` すると、ログが1件もない難易度（例: 実装直後のHardなど）が表示されなくなります。これを防ぐため、固定の難易度リスト（Easy/Normal/Hard）にログテーブルを `LEFT JOIN` するビュー定義を採用し、常に全難易度がダッシュボードに0件から表示されるようにします。
 * **失敗ログの網羅記録**: コロシアム挑戦中の戦闘で敗北して終了した際にも、`/api/quest/complete` の失敗パスにおいて `colosseum_activity_logs` に `action: 'abandon'` のログを書き込むよう実装します。これにより、ダッシュボードの「総挑戦数」と「完了数＋放棄数」の不整合（開始数だけが異常に増え続ける不具合）を完全に防ぎます。
+
+### 5.5 魔術学院の重複返還考慮とインデックス最適化
+* **実質消費とキャッシュバックの分離**: 魔術学院では、すでに所持しているスキルカードが重複して排出された場合、1枚あたり 500 G がその場でキャッシュバック（返還）されます。このため、ダッシュボードで正確な「実質ゴールド消費（ゲーム内からのゴールド回収）」を追跡できるよう、ログには額面上の価格ではなく、キャッシュバック返還後の純粋なゴールド消費額（`gold_spent`）と、返還されたキャッシュバック額（`refund_gold`）を分けて記録し、合算・可視化を行っています。
+* **複合インデックスによるIndex Only Scan**: 日次およびシリーズ別のパック購入数推移を無駄なテーブルスキャンなしで高速に処理するため、`(pack_series, created_at)` に対する複合インデックスを適用しています。これにより、レコード件数が増大した場合でも、テーブル実データへのアクセスをスキップし、インデックス内の情報だけで高速に `GROUP BY` 集計（Index Only Scan）を終わらせることができ、DB負荷の増加を完全に防ぐことができます。
 

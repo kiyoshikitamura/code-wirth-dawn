@@ -140,6 +140,23 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: 'スキルの登録に失敗しました。' }, { status: 500 });
             }
         }
+
+        // 8.5 Record pack purchase activity log
+        try {
+            const { error: logError } = await supabaseService
+                .from('academy_pack_logs')
+                .insert({
+                    user_id: profile.id,
+                    pack_series: 'chaos_and_rebellion',
+                    gold_spent: netCost,
+                    refund_gold: refundGold
+                });
+            if (logError) {
+                console.error('[Buy Pack API] Failed to write academy_pack_logs:', logError);
+            }
+        } catch (logExc) {
+            console.error('[Buy Pack API] Exception writing academy_pack_logs:', logExc);
+        }
         
         // 9. Fetch card details for response
         const rolledIds = results.map(r => r.skill_id);

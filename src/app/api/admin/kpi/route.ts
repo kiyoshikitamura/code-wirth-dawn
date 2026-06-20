@@ -338,6 +338,68 @@ export async function GET(req: Request) {
             };
         });
 
+        // Fetch Magic Academy stats via RPC
+        const { data: acadStats, error: acadStatsErr } = await supabaseServer
+            .rpc('get_academy_summary_stats');
+        
+        let acadSummary = {
+            totalPlayers: 0,
+            totalPacks: 0,
+            totalGoldSpent: 0,
+            totalRefundGold: 0
+        };
+
+        if (!acadStatsErr && acadStats && acadStats.length > 0) {
+            const row = acadStats[0];
+            acadSummary = {
+                totalPlayers: Number(row.total_players || 0),
+                totalPacks: Number(row.total_packs || 0),
+                totalGoldSpent: Number(row.total_gold_spent || 0),
+                totalRefundGold: Number(row.total_refund_gold || 0)
+            };
+        } else if (acadStatsErr) {
+            console.error('[Admin KPI] Academy summary RPC error:', acadStatsErr);
+        }
+
+        // Fetch daily Magic Academy stats via RPC
+        const { data: acadDaily, error: acadDailyErr } = await supabaseServer
+            .rpc('get_academy_daily_stats', { days_limit: days });
+
+        const acadDailyMap: Record<string, {
+            packs: Record<string, number>,
+            goldSpent: Record<string, number>,
+            refundGold: Record<string, number>
+        }> = {};
+
+        (acadDaily || []).forEach((row: any) => {
+            const date = row.date;
+            if (!acadDailyMap[date]) {
+                acadDailyMap[date] = {
+                    packs: {},
+                    goldSpent: {},
+                    refundGold: {}
+                };
+            }
+            const series = row.pack_series || 'chaos_and_rebellion';
+            acadDailyMap[date].packs[series] = Number(row.pack_count || 0);
+            acadDailyMap[date].goldSpent[series] = Number(row.gold_spent || 0);
+            acadDailyMap[date].refundGold[series] = Number(row.refund_gold || 0);
+        });
+
+        const dailyAcademyKPI = targetDaysList.map(date => {
+            const entry = acadDailyMap[date] || {
+                packs: {},
+                goldSpent: {},
+                refundGold: {}
+            };
+            return {
+                date,
+                packs: entry.packs,
+                goldSpent: entry.goldSpent,
+                refundGold: entry.refundGold
+            };
+        });
+
         return NextResponse.json({
             summary: {
                 totalUsers,
@@ -370,6 +432,10 @@ export async function GET(req: Request) {
             colosseum: {
                 summary: colSummary,
                 daily: dailyColosseumKPI
+            },
+            academy: {
+                summary: acadSummary,
+                daily: dailyAcademyKPI
             }
         });
 
