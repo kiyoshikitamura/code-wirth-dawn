@@ -59,12 +59,16 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
         setLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
+            const consumedItems = useQuestState.getState().consumedItems || [];
             const res = await fetch('/api/quest/give-up', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...authHeaders
-                }
+                },
+                body: JSON.stringify({
+                    consumed_items: consumedItems
+                })
             });
 
             if (res.ok) {

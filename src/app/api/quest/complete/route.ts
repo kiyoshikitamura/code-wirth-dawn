@@ -550,12 +550,15 @@ export async function POST(req: Request) {
             // Items + Loot
             rewardPromises.push(grantRewardItems(supabase, user_id, effectiveRewards, lootSaved));
             rewardPromises.push(persistLootPool(supabase, user_id, filteredLootPool));
-            if (consumed_items && consumed_items.length > 0) {
-                rewardPromises.push(consumeUsedItems(supabase, user_id, consumed_items));
-            }
 
             await Promise.all(rewardPromises);
         }
+
+        // クエストの成否に関わらず、消費されたアイテム（consumed_items）はインベントリから差し引く
+        if (consumed_items && consumed_items.length > 0) {
+            await consumeUsedItems(supabase, user_id, consumed_items);
+        }
+
 
         // ═══════════════════════════════════════
         // §8-§9. ゲストNPC正規雇用 + パーティVIT摩耗 (parallelized)
@@ -857,6 +860,24 @@ async function getQuestAllowedItems(supabase: any, quest: any, questId: string):
                 if (item) allowed.add(String(item).trim());
             }
         }
+        // Node level single item_id or array items (v4.0 reward node support)
+        if (node.item_id) {
+            allowed.add(String(node.item_id).trim());
+        }
+        if (node.params?.item_id) {
+            allowed.add(String(node.params.item_id).trim());
+        }
+        if (node.params?.items && Array.isArray(node.params.items)) {
+            for (const item of node.params.items) {
+                if (typeof item === 'object' && item !== null) {
+                    if (item.item_id) allowed.add(String(item.item_id).trim());
+                    if (item.itemId) allowed.add(String(item.itemId).trim());
+                } else if (item) {
+                    allowed.add(String(item).trim());
+                }
+            }
+        }
+
 
         // Enemy groups referenced in battle/boss nodes
         if (node.type === 'battle' || node.nodeType === 'battle' || node.type === 'boss') {

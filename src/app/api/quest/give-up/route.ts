@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { supabaseServer } from '@/lib/supabase-admin';
+import { consumeUsedItems } from '@/services/questCompleteHelpers';
+
 
 export async function POST(req: Request) {
     try {
@@ -12,6 +14,10 @@ export async function POST(req: Request) {
         if (!userId) {
             return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
+
+        const body = await req.json().catch(() => ({}));
+        const { consumed_items } = body;
+
 
         // ユーザープロフィール取得（VIT減少・年代記用）
         const { data: currentProfile } = await supabaseServer
@@ -57,7 +63,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'You do not have an active quest to abandon.' }, { status: 400 });
         }
 
+        // 放棄時に消費されたアイテム（consumed_items）があればインベントリから差し引く
+        if (consumed_items && consumed_items.length > 0) {
+            try {
+                await consumeUsedItems(supabaseServer, userId, consumed_items);
+            } catch (consumeErr) {
+                console.error('[Quest Give Up] Failed to consume items during abandon:', consumeErr);
+            }
+        }
+
         // 1. プロフィール更新: ロック解除 (quest_started_atのnull化含む) + VIT -1 (楽観的排他制御)
+
         const currentVit = currentProfile.vitality ?? 100;
         const { data: updatedProfiles, error } = await supabaseServer
             .from('user_profiles')
