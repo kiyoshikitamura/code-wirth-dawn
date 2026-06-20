@@ -1,6 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Cache structure for maintenance settings
+interface MaintenanceSettings {
+    force_maintenance: boolean;
+    start_at: string | null;
+    end_at: string | null;
+    admin_bypass_key?: string;
+}
+
+let cachedSettings: MaintenanceSettings | null = null;
+let lastFetchedTime = 0;
+const CACHE_TTL_MS = 15000; // Cache maintenance settings for 15 seconds
+const DB_TIMEOUT_MS = 1200; // Timeout database query after 1.2 seconds to prevent middleware timeout
+
 export async function middleware(request: NextRequest) {
     const { nextUrl } = request;
     const path = nextUrl.pathname;
@@ -32,38 +45,50 @@ export async function middleware(request: NextRequest) {
     let endAt: string | null = null;
     let bypassKey: string | null = null;
 
-    try {
-        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: { persistSession: false, autoRefreshToken: false }
-        });
-        
-        // system_settings から設定を取得
-        const { data } = await supabase
-            .from('system_settings')
-            .select('value')
-            .eq('key', 'maintenance')
-            .maybeSingle();
+    const now = Date.now();
+    let settings = cachedSettings;
 
-        const settings = data?.value as {
-            force_maintenance: boolean;
-            start_at: string | null;
-            end_at: string | null;
-            admin_bypass_key?: string;
-        } | null;
+    if (!cachedSettings || now - lastFetchedTime > CACHE_TTL_MS) {
+        try {
+            const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+                auth: { persistSession: false, autoRefreshToken: false }
+            });
+            
+            // system_settings から設定を取得 (Promise.race でタイムアウト処理)
+            const fetchPromise = supabase
+                .from('system_settings')
+                .select('value')
+                .eq('key', 'maintenance')
+                .maybeSingle();
 
-        if (settings) {
-            const now = new Date();
-            const startAt = settings.start_at ? new Date(settings.start_at) : null;
-            endAt = settings.end_at;
-            const endDate = settings.end_at ? new Date(settings.end_at) : null;
-            bypassKey = settings.admin_bypass_key || null;
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Database query timed out')), DB_TIMEOUT_MS)
+            );
 
-            const inScheduledRange = startAt && endDate && now >= startAt && now <= endDate;
-            isMaintenanceActive = settings.force_maintenance === true || !!inScheduledRange;
+            const result = await Promise.race([fetchPromise, timeoutPromise]) as any;
+            const fetched = result?.data?.value as MaintenanceSettings | null;
+
+            if (fetched) {
+                cachedSettings = fetched;
+                settings = fetched;
+                lastFetchedTime = now;
+            }
+        } catch (e) {
+            console.warn('[Middleware] Maintenance setting check failed, using cached settings or default:', e);
+            // 一時的な接続エラーの場合、頻繁なDB接続試行を避けるためにキャッシュ寿命を短くリセット（3秒後に再試行）
+            lastFetchedTime = now - CACHE_TTL_MS + 3000;
         }
-    } catch (e) {
-        console.warn('[Middleware] Maintenance setting check failed:', e);
-        // エラー時はフォールバックしてメンテナンスを適用しない（サービス停止を防ぐ）
+    }
+
+    if (settings) {
+        const nowDate = new Date();
+        const startAt = settings.start_at ? new Date(settings.start_at) : null;
+        endAt = settings.end_at;
+        const endDate = settings.end_at ? new Date(settings.end_at) : null;
+        bypassKey = settings.admin_bypass_key || null;
+
+        const inScheduledRange = startAt && endDate && nowDate >= startAt && nowDate <= endDate;
+        isMaintenanceActive = settings.force_maintenance === true || !!inScheduledRange;
     }
 
     // 3. 管理者バイパスの判定
