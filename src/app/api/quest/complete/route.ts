@@ -564,7 +564,7 @@ export async function POST(req: Request) {
             ? body.defeated_member_ids.map((id: any) => String(id))
             : [];
         const [guestConversion, partyChanges] = await Promise.all([
-            result === 'success' ? convertGuestToPartyMember(supabase, user_id, body) : Promise.resolve(null),
+            result === 'success' ? convertGuestToPartyMember(supabase, user_id, body, quest) : Promise.resolve(null),
             processPartyWearCycle(supabase, user_id, result, defeatedIds)
         ]);
 

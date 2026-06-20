@@ -273,7 +273,8 @@ export async function grantRewardItems(
 export async function convertGuestToPartyMember(
     supabase: SupabaseClient,
     user_id: string,
-    body: any
+    body: any,
+    quest?: any
 ): Promise<{ name: string; success: boolean; reason?: string } | null> {
     if (!body.remaining_guest?.slug) return null;
 
@@ -291,22 +292,7 @@ export async function convertGuestToPartyMember(
     let isGuestAllowed = false;
     const isColosseum = String(questId).startsWith('colosseum_');
     if (!isColosseum) {
-        const { data: questData } = await supabase
-            .from('scenarios')
-            .select('script_data')
-            .eq('id', questId)
-            .maybeSingle();
-
-        let scriptData = questData?.script_data;
-        if (!scriptData) {
-            const { data: ugcQuestData } = await supabase
-                .from('ugc_scenarios')
-                .select('script_data')
-                .eq('id', questId)
-                .maybeSingle();
-            scriptData = ugcQuestData?.script_data;
-        }
-
+        const scriptData = quest?.script_data;
         if (scriptData && scriptData.nodes) {
             const nodes = scriptData.nodes;
             for (const nodeId of Object.keys(nodes)) {
