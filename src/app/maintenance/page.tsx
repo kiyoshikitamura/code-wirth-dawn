@@ -22,12 +22,14 @@ export default async function MaintenancePage() {
 
         if (settings?.end_at) {
             const endDate = new Date(settings.end_at);
-            // 日本時間にフォーマット (JST)
-            const year = endDate.getFullYear();
-            const month = endDate.getMonth() + 1;
-            const date = endDate.getDate();
-            const hours = String(endDate.getHours()).padStart(2, '0');
-            const minutes = String(endDate.getMinutes()).padStart(2, '0');
+            // 日本時間 (JST: UTC+9) にフォーマット
+            const jstOffset = 9 * 60 * 60 * 1000;
+            const jstDate = new Date(endDate.getTime() + jstOffset);
+            const year = jstDate.getUTCFullYear();
+            const month = jstDate.getUTCMonth() + 1;
+            const date = jstDate.getUTCDate();
+            const hours = String(jstDate.getUTCHours()).padStart(2, '0');
+            const minutes = String(jstDate.getUTCMinutes()).padStart(2, '0');
 
             endTimeStr = `${year}年${month}月${date}日 ${hours}:${minutes} 頃 (予定)`;
         }
