@@ -75,7 +75,7 @@ export async function POST(req: Request) {
                 diffVal = 2;
                 rewards = { gold: 1000, exp: 400, reputation: 10 };
             } else if (difficulty === 'hard') {
-                numBattles = 10;
+                numBattles = 20;
                 diffLabel = 'Hard';
                 diffVal = 3;
                 rewards = { gold: 2000, exp: 800, reputation: 20 };
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
             // Generate nodes mock to pass the battle verification check
             const nodesMock: Record<string, any> = {};
             for (let i = 1; i <= numBattles; i++) {
-                nodesMock[`colosseum_battle_${i}`] = { type: 'battle', nodeType: 'battle' };
+                nodesMock[`battle_${i}`] = { type: 'battle', nodeType: 'battle' };
             }
 
             // Fetch user profile current_location_id
