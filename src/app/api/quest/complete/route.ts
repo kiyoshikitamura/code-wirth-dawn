@@ -15,6 +15,7 @@ import {
     processReputationChange,
     persistLootPool,
     consumeUsedItems,
+    grantReputationChanges,
 } from '@/services/questCompleteHelpers';
 import { UGC_REWARD_LIMITS } from '@/lib/ugc/ugcConfig';
 import { verifyBattleCompletionToken } from '@/app/api/battle/validate-result/route';
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards } = body;
+        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards, reputation_changes } = body;
         let lootSaved: any[] = [];
 
         // ═══════════════════════════════════════
@@ -178,6 +179,31 @@ export async function POST(req: Request) {
         if (!validation.valid) {
             console.warn(`[Security] API rejected quest completion. User ${user_id} blocked from ${quest_id}: ${validation.reason}`);
             return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
+        }
+
+        // [Security] reputation_changes の検証
+        const verifiedRepChanges: Record<string, number> = {};
+        if (reputation_changes && typeof reputation_changes === 'object') {
+            const nodes = quest?.script_data?.nodes || {};
+            const allowedDeltas: Record<string, number> = {};
+
+            Object.values(nodes).forEach((node: any) => {
+                if (node && node.type === 'modify_reputation') {
+                    const loc = node.params?.location_name || '現在地';
+                    const amount = node.params?.amount || node.params?.value || 0;
+                    allowedDeltas[loc] = (allowedDeltas[loc] || 0) + Math.abs(amount); // 変動許容の上限を蓄積
+                }
+            });
+
+            for (const [loc, amount] of Object.entries(reputation_changes)) {
+                const allowedMax = allowedDeltas[loc] || 0;
+                const requestedAbs = Math.abs(amount as number);
+                if (requestedAbs > allowedMax) {
+                    console.warn(`[Security] Reputation change for location '${loc}' from user ${user_id} exceeded allowed limit. Requested: ${amount}, Allowed Max: ${allowedMax}`);
+                    return NextResponse.json({ error: 'Security check failed: reputation change exceeded limits.' }, { status: 403 });
+                }
+                verifiedRepChanges[loc] = amount as number;
+            }
         }
 
         // [Security] loot_pool validation and resolution
@@ -551,6 +577,8 @@ export async function POST(req: Request) {
             // Items + Loot
             rewardPromises.push(grantRewardItems(supabase, user_id, effectiveRewards, lootSaved));
             rewardPromises.push(persistLootPool(supabase, user_id, filteredLootPool));
+            // 名声一括反映の追加
+            rewardPromises.push(grantReputationChanges(supabase, user_id, verifiedRepChanges, user.current_location_id));
 
             await Promise.all(rewardPromises);
         }

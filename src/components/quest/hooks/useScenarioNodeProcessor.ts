@@ -456,31 +456,12 @@ export function useScenarioNodeProcessor({
             }
             else if (currentNode.type === 'modify_reputation') {
                 const amount = currentNode.params?.amount || currentNode.params?.value || 0;
-                const locName = currentNode.params?.location_name;
+                const locName = currentNode.params?.location_name || '現在地';
                 const activeNodeId = currentNodeId;
                 if (amount !== 0) {
-                    try {
-                        const authHeaders = await getAuthHeaders();
-                        const res = await fetch('/api/reputation/update', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...authHeaders },
-                            body: JSON.stringify({ amount, locationName: locName })
-                        });
-                        // 非同期処理中にノードが切り替わっていないか検証
-                        if (processedNodeRef.current !== activeNodeId) return;
-
-                        if (res.ok) {
-                            const data = await res.json();
-                            const resolvedLoc = data?.location || locName || '現在地';
-                            showToast(`名声 ${amount > 0 ? '+' : ''}${amount} (${resolvedLoc})`, amount > 0 ? 'success' : 'error');
-                            setHistory(prev => [...prev, `[Reputation] 名声が ${amount > 0 ? '+' : ''}${amount} 変動した`]);
-                        } else {
-                            showToast(`名声 ${amount > 0 ? '+' : ''}${amount} (${locName || '現在地'})`, amount > 0 ? 'success' : 'error');
-                        }
-                    } catch (e) {
-                        console.error('[modify_reputation] API error:', e);
-                        showToast(`名声 ${amount > 0 ? '+' : ''}${amount} (${locName || '現在地'})`, amount > 0 ? 'success' : 'error');
-                    }
+                    questState.addReputationChange(locName, amount);
+                    showToast(`名声 ${amount > 0 ? '+' : ''}${amount} (${locName})`, amount > 0 ? 'success' : 'error');
+                    setHistory(prev => [...prev, `[Reputation] 名声が ${amount > 0 ? '+' : ''}${amount} 変動した`]);
                 }
                 
                 // 非同期処理中にノードが切り替わっていないか検証
@@ -629,6 +610,7 @@ export function useScenarioNodeProcessor({
                     questFlags: questState.questFlags,
                     isEscortMission: questState.isEscortMission,
                     currentNodeId: currentNodeId,
+                    reputationChanges: questState.reputationChanges,
                 };
 
                 const authHeaders = await getAuthHeaders();

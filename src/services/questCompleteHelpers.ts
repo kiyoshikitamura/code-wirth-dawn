@@ -575,3 +575,42 @@ export async function consumeUsedItems(
         }
     }
 }
+
+/**
+ * クエスト中に蓄積された名声変動を一括適用
+ */
+export async function grantReputationChanges(
+    supabase: any,
+    user_id: string,
+    reputation_changes: Record<string, number>,
+    currentLocationId: string | null
+): Promise<void> {
+    if (!reputation_changes || Object.keys(reputation_changes).length === 0) return;
+
+    for (const [locationName, amount] of Object.entries(reputation_changes)) {
+        let targetLoc = locationName;
+        if (targetLoc === '現在地' && currentLocationId) {
+            const { data: loc } = await supabase.from('locations').select('name').eq('id', currentLocationId).maybeSingle();
+            if (loc) targetLoc = loc.name;
+        }
+
+        if (!targetLoc || targetLoc === '現在地') continue;
+
+        const { data: existing } = await supabase
+            .from('reputations')
+            .select('id, score')
+            .eq('user_id', user_id)
+            .eq('location_name', targetLoc)
+            .maybeSingle();
+
+        if (existing) {
+            await supabase.from('reputations')
+                .update({ score: (existing.score || 0) + amount })
+                .eq('id', existing.id);
+        } else {
+            await supabase.from('reputations')
+                .insert({ user_id, location_name: targetLoc, score: amount });
+        }
+        console.log(`[QuestComplete/Reputation] Applied accumulated reputation change: ${amount} at ${targetLoc}`);
+    }
+}

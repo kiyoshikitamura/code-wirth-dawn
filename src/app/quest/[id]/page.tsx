@@ -276,6 +276,7 @@ export default function QuestPage() {
                     consumed_items: consumedItemsData,
                     defeated_member_ids: finalDefeatedMemberIds,
                     node_rewards: nodeRewards || null,
+                    reputation_changes: questStateData.reputationChanges,
                     remaining_guest: remainingGuest ? {
                         slug: (remainingGuest as any).slug,
                         name: remainingGuest.name,

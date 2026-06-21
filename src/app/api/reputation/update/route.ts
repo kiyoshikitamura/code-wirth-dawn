@@ -13,6 +13,16 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
         const authHeader = req.headers.get('authorization');
+        
+        // [Security] 旧名声更新APIの一般アクセス閉鎖（管理者キーのみ許可）
+        const adminSecret = process.env.ADMIN_SECRET_KEY;
+        const isSystemRequest = adminSecret && authHeader === `Bearer ${adminSecret}`;
+        
+        if (!isSystemRequest) {
+            console.warn(`[Security] Direct reputation update blocked. Deprecated API accessed.`);
+            return NextResponse.json({ error: 'This API is deprecated and disabled for security reasons.' }, { status: 403 });
+        }
+
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
         }

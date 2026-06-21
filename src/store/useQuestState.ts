@@ -31,6 +31,8 @@ interface QuestProgressState {
     playerHp: number;
     playerMaxHp: number;
     partyHp: Record<string, number>;  // npc_id -> current HP
+    reputationChanges: Record<string, number>;  // location_name -> delta
+
 
     // NPC Death
     deadNpcs: string[];
@@ -91,6 +93,7 @@ interface QuestProgressState {
     applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => void;
     checkEscortFailure: () => boolean;
     setEscortMission: (value: boolean) => void;
+    addReputationChange: (locationName: string, amount: number) => void;
 }
 
 const initialState = {
@@ -110,6 +113,7 @@ const initialState = {
     questFlags: {} as Record<string, number>,
     isEscortMission: false,
     currentNodeId: null as string | null,
+    reputationChanges: {} as Record<string, number>,
 };
 
 export const useQuestState = create<QuestProgressState>()(persist((set, get) => ({
@@ -133,6 +137,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             questFlags: {},
             isEscortMission: false,
             currentNodeId: 'start',
+            reputationChanges: {},
         });
     },
 
@@ -230,6 +235,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             questFlags: savedState.questFlags || {},
             isEscortMission: savedState.isEscortMission || false,
             currentNodeId: savedState.currentNodeId || 'start',
+            reputationChanges: savedState.reputationChanges || {},
         });
     },
 
@@ -275,6 +281,18 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
 
     setEscortMission: (value: boolean) => {
         set({ isEscortMission: value });
+    },
+
+    addReputationChange: (locationName: string, amount: number) => {
+        set((state) => {
+            const key = locationName || '現在地';
+            return {
+                reputationChanges: {
+                    ...state.reputationChanges,
+                    [key]: (state.reputationChanges[key] || 0) + amount,
+                },
+            };
+        });
     },
 }),
     {
