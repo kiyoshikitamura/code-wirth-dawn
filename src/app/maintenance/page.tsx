@@ -127,26 +127,26 @@ export default async function MaintenancePage() {
 
                 {/* アクションボタン */}
                 <div>
+                    <style>{`
+                        .maintenance-btn {
+                            display: inline-block;
+                            background-color: #e4e4e7;
+                            color: #18181b;
+                            font-size: 14px;
+                            font-weight: 600;
+                            padding: 12px 32px;
+                            border-radius: 8px;
+                            text-decoration: none;
+                            transition: background-color 0.2s, transform 0.1s;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        }
+                        .maintenance-btn:hover {
+                            background-color: #ffffff;
+                        }
+                    `}</style>
                     <a 
                         href="/" 
-                        style={{
-                            display: 'inline-block',
-                            backgroundColor: '#e4e4e7',
-                            color: '#18181b',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            padding: '12px 32px',
-                            borderRadius: '8px',
-                            textDecoration: 'none',
-                            transition: 'background-color 0.2s, transform 0.1s',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                        }}
-                        onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = '#ffffff';
-                        }}
-                        onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = '#e4e4e7';
-                        }}
+                        className="maintenance-btn"
                     >
                         再読み込み
                     </a>
