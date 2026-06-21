@@ -188,7 +188,7 @@ export default function QuestResultModal({
 
 
                     {/* 失敗時の名声・VITペナルティ */}
-                    {!isSuccess && ((repChange && repChange.amount !== 0) || (safeChanges?.battle_defeat_vit_penalty ?? 0) > 0) && (
+                    {!isSuccess && ((repChange && repChange.amount !== 0) || (safeChanges?.battle_defeat_vit_penalty ?? 0) > 0 || (safeChanges?.vit_penalty ?? 0) > 0) && (
                         <section>
                             <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                 <ArrowDown className="w-3 h-3" /> ペナルティ
@@ -205,13 +205,13 @@ export default function QuestResultModal({
                                         </div>
                                     </div>
                                 )}
-                                {(safeChanges?.battle_defeat_vit_penalty ?? 0) > 0 && (
+                                {((safeChanges?.battle_defeat_vit_penalty ?? 0) > 0 || (safeChanges?.vit_penalty ?? 0) > 0) && (
                                     <div className="flex items-center gap-2.5 bg-red-950/30 p-2.5 rounded border border-red-900/50">
                                         <div className="p-1.5 bg-red-900/30 rounded-full text-red-400">
                                             <Heart className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <div className="text-red-300 font-bold text-sm">VIT -{safeChanges.battle_defeat_vit_penalty}</div>
+                                            <div className="text-red-300 font-bold text-sm">VIT -{(safeChanges.battle_defeat_vit_penalty ?? 0) + (safeChanges.vit_penalty ?? 0)}</div>
                                         </div>
                                     </div>
                                 )}
