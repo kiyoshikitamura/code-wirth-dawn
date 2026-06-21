@@ -242,7 +242,8 @@ function InnPageInner() {
                         quests={allQuests}
                         isLoading={loadingQuests}
                         onSelect={(s) => {
-                            const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
+                            const isColosseum = s.id ? String(s.id).startsWith('colosseum_') : false;
+                            const isUgc = !isColosseum && ((s as any).is_ugc || isNaN(Number(s.id)));
                             router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
                         }}
                         onGiveUpComplete={async (data) => {

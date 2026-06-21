@@ -70,7 +70,7 @@ export const createProfileSlice = (
         const { userProfile } = get();
         try {
             const headers = await getAuthHeaders();
-            const res = await fetch('/api/equipment', { headers });
+            const res = await fetch('/api/equipment', { headers, cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 const bonus = data.bonus || { atk: 0, def: 0, hp: 0 };
@@ -92,7 +92,7 @@ export const createProfileSlice = (
             const authHeaders = await getAuthHeaders();
             const headers: HeadersInit = { ...authHeaders };
 
-            const res = await fetch(url, { headers });
+            const res = await fetch(url, { headers, cache: 'no-store' });
             if (res.ok) {
                 const profile = await res.json();
                 // C2最適化: Profile APIが equipment_bonus を含めて返すため、
