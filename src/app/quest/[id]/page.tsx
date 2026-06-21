@@ -1051,7 +1051,7 @@ export default function QuestPage() {
                         />
                     </div>
                     <div className={`flex-1 relative w-full h-full ${viewMode !== 'battle' ? 'hidden' : ''}`}>
-                        <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} />
+                        <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} disableRedirect={true} />
                     </div>
                 </main>
                 {/* ギブアップ（放棄）処理中ローディングオーバーレイ */}

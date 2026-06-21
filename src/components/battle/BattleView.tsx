@@ -18,9 +18,10 @@ interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
     battleTitle?: string;
     bgImageUrl?: string;
+    disableRedirect?: boolean;
 }
 
-export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: BattleViewProps) {
+export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disableRedirect }: BattleViewProps) {
     const router = useRouter();
     const hasHydrated = useGameStore(state => state._hasHydrated);
 
@@ -240,11 +241,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
         fetchUserProfile();
         const hydrated = useGameStore.persist.hasHydrated();
-        if (hydrated && !battleState.enemy) {
+        if (!disableRedirect && hydrated && !battleState.enemy) {
             console.warn('[BattlePage] 敵がいません。/inn に戻ります。');
             router.push('/inn');
         }
-    }, []);
+    }, [disableRedirect]);
 
     const [isActioning, setIsActioning] = useState(false);
 
