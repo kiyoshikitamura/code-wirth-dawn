@@ -40,6 +40,7 @@ export default function QuestPage() {
     } | null>(null);
     const [isPrefetching, setIsPrefetching] = useState(false);
     const prefetchStartedRef = useRef(false);
+    const successNodeIdRef = useRef<string | null>(null);
 
     // シナリオやクエストIDが変わったタイミングでプレフェッチ状態をリセット
     useEffect(() => {
@@ -805,7 +806,7 @@ export default function QuestPage() {
         // 背景画像のプリロード完了を待機
         await preloadBgPromise;
 
-        setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
+        successNodeIdRef.current = successNodeId; // Win時に進むノードをメモリに保持
         setBattleBgUrl(targetBgUrl);
         const targetBgm = bgm || 'bgm_battle';
         setBattleBgm(targetBgm); // CSVのバトルBGMを保存（指定なしの場合はデフォルト）
@@ -914,6 +915,11 @@ export default function QuestPage() {
                     return;
                 }
             }
+
+            // 勝利後に遷移するノードを設定して進める
+            const targetNextNode = successNodeIdRef.current || 'end_success';
+            setInitialNodeId(targetNextNode);
+            successNodeIdRef.current = null; // クリア
 
             setViewMode('scenario');
         } else {
