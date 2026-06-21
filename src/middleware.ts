@@ -105,20 +105,41 @@ export async function middleware(request: NextRequest) {
     // きたむ様 (c1cf67dd-527a-497e-bf88-ce10c2cb516f) をメンテナンス通過許可（ホワイトリスト）に追加
     if (!hasBypass) {
         const allCookies = request.cookies.getAll();
-        const authCookie = allCookies.find(c => c.name.includes('auth-token'));
-        if (authCookie?.value) {
+        const authCookies = allCookies
+            .filter(c => c.name.includes('auth-token'))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        if (authCookies.length > 0) {
             try {
+                const rawCookieValue = authCookies.map(c => c.value).join('');
                 let accessToken: string | null = null;
-                const val = decodeURIComponent(authCookie.value);
-                if (val.startsWith('[') || val.startsWith('{')) {
-                    const parsed = JSON.parse(val);
+                let rawVal = decodeURIComponent(rawCookieValue);
+
+                // Supabase SSR が書き込むクッキー値は Base64 エンコードされた JSON の可能性がある
+                if (!rawVal.startsWith('[') && !rawVal.startsWith('{')) {
+                    try {
+                        let base64 = rawVal.replace(/-/g, '+').replace(/_/g, '/');
+                        while (base64.length % 4) {
+                            base64 += '=';
+                        }
+                        const decoded = atob(base64);
+                        if (decoded.startsWith('[') || decoded.startsWith('{')) {
+                            rawVal = decoded;
+                        }
+                    } catch {
+                        // デコードに失敗した場合は生の値をそのまま使用する
+                    }
+                }
+
+                if (rawVal.startsWith('[') || rawVal.startsWith('{')) {
+                    const parsed = JSON.parse(rawVal);
                     if (Array.isArray(parsed)) {
                         accessToken = parsed[0];
                     } else if (parsed.access_token) {
                         accessToken = parsed.access_token;
                     }
                 } else {
-                    accessToken = val;
+                    accessToken = rawVal;
                 }
 
                 if (accessToken) {
@@ -187,23 +208,44 @@ export async function middleware(request: NextRequest) {
     // Root path (/) の場合のみリダイレクト処理を行う
     if (path === '/') {
         const allCookies = request.cookies.getAll();
-        const authCookie = allCookies.find(c => c.name.includes('auth-token'));
+        const authCookies = allCookies
+            .filter(c => c.name.includes('auth-token'))
+            .sort((a, b) => a.name.localeCompare(b.name));
 
-        if (!authCookie?.value) {
+        if (authCookies.length === 0) {
             return NextResponse.redirect(new URL('/title', request.url));
         }
 
         try {
+            const rawCookieValue = authCookies.map(c => c.value).join('');
             let accessToken: string | null = null;
-            try {
-                const parsed = JSON.parse(decodeURIComponent(authCookie.value));
+            let rawVal = decodeURIComponent(rawCookieValue);
+
+            // Supabase SSR が書き込むクッキー値は Base64 エンコードされた JSON の可能性がある
+            if (!rawVal.startsWith('[') && !rawVal.startsWith('{')) {
+                try {
+                    let base64 = rawVal.replace(/-/g, '+').replace(/_/g, '/');
+                    while (base64.length % 4) {
+                        base64 += '=';
+                    }
+                    const decoded = atob(base64);
+                    if (decoded.startsWith('[') || decoded.startsWith('{')) {
+                        rawVal = decoded;
+                    }
+                } catch {
+                    // デコードに失敗した場合は生の値をそのまま使用する
+                }
+            }
+
+            if (rawVal.startsWith('[') || rawVal.startsWith('{')) {
+                const parsed = JSON.parse(rawVal);
                 if (Array.isArray(parsed)) {
                     accessToken = parsed[0];
                 } else if (parsed.access_token) {
                     accessToken = parsed.access_token;
                 }
-            } catch {
-                accessToken = authCookie.value;
+            } else {
+                accessToken = rawVal;
             }
 
             if (!accessToken) {
