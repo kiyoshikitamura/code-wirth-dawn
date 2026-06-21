@@ -24,6 +24,13 @@ export default function WorldMapPage() {
     const { userProfile, worldState, hubState, fetchUserProfile, fetchWorldState, fetchHubState } = useGameStore();
     useBgm('bgm_field');
     useAuthGuard(); // タイトル画面経由チェック
+
+    // Guard: Redirect to inn if there is an active quest in progress (Spec Resume Lock)
+    useEffect(() => {
+        if (userProfile?.current_quest_id) {
+            router.replace('/inn');
+        }
+    }, [userProfile?.current_quest_id, router]);
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [traveling, setTraveling] = useState(false);

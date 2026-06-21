@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ScenarioDB } from '@/types/game';
 import { getAssetUrl } from '@/config/assets';
 import { Scroll, Sword, Skull, ArrowRight, MapPin, Shield, Star, User } from 'lucide-react';
@@ -32,8 +32,20 @@ export default function ScenarioEngine({
     onBattleStart,
     initialNodeId
 }: Props) {
+    const router = useRouter();
+    const { userProfile, worldState, battleState, inventory } = useGameStore();
+    const questState = useQuestState();
+    const { questFlags } = questState;
+
     const defaultNodeId = 'start';
-    const [currentNodeId, setCurrentNodeId] = useState(initialNodeId || defaultNodeId);
+    const [currentNodeId, setCurrentNodeIdRaw] = useState(initialNodeId || defaultNodeId);
+    const [nodeTrigger, setNodeTrigger] = useState(0);
+
+    const setCurrentNodeId = useCallback((nodeId: string) => {
+        setCurrentNodeIdRaw(nodeId);
+        setNodeTrigger(prev => prev + 1);
+    }, []);
+
     const [history, setHistory] = useState<string[]>([]);
     const [feed, setFeed] = useState<string[]>([]);
     const feedEndRef = useRef<HTMLDivElement>(null);
@@ -42,6 +54,14 @@ export default function ScenarioEngine({
     useEffect(() => {
         if (initialNodeId) setCurrentNodeId(initialNodeId);
     }, [initialNodeId]);
+
+    // 自動同期 useEffect (Zustand に currentNodeId を同期してリロード時に復元可能にする)
+    useEffect(() => {
+        if (questState.isInQuest) {
+            useQuestState.setState({ currentNodeId });
+        }
+    }, [currentNodeId, questState.isInQuest]);
+
 
     // v3.6 UI State
     const [showingGuestJoin, setShowingGuestJoin] = useState<any>(null);
@@ -81,11 +101,8 @@ export default function ScenarioEngine({
         setTypewriterDone(complete);
     };
 
-    // グローバル状態へのアクセス
-    const { userProfile, worldState, battleState, inventory } = useGameStore();
-    const { questFlags } = useQuestState();
-    const questState = useQuestState();
-    const router = useRouter();
+    // グローバル状態へのアクセス (上の宣言に移行)
+
 
     // フィードの最下部へスクロール
     useEffect(() => {
@@ -198,7 +215,9 @@ export default function ScenarioEngine({
         onBattleStart,
         onComplete,
         showingTravel,
-        showToast
+        showToast,
+        nodeTrigger,
+        script
     });
 
 
@@ -382,16 +401,26 @@ export default function ScenarioEngine({
         if (bgUrl === prevBgUrl && bgReady) return;
         // 新しい背景をプリロードしてからフェードイン
         setBgReady(false);
+        let timerId: NodeJS.Timeout | null = null;
+
         const img = new Image();
         img.onload = () => {
             setPrevBgUrl(bgUrl);
-            setBgReady(true);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
         };
         img.onerror = () => {
             setPrevBgUrl(bgUrl);
-            setBgReady(true);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
         };
         img.src = bgUrl;
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
     }, [bgUrl]);
 
     // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御
@@ -616,7 +645,7 @@ export default function ScenarioEngine({
                             onClick={() => {
                                 questState.addGuest(showingGuestJoin.data);
                                 // 護衛対象フラグが設定されている場合、エスコートミッションを有効化
-                                if (currentNode?.params?.is_escort_target) {
+                                if (currentNode?.params?.is_escort_target || currentNode?.is_escort_target) {
                                     questState.setEscortMission(true);
                                 }
                                 setHistory(prev => [...prev, `[Guest] ${showingGuestJoin.data.name} が同行した。`]);

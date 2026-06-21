@@ -529,6 +529,7 @@ export interface BattleState {
   // v2.6 Deck Cycle
   exhaustPile: { id: string; name: string; type: string }[]; // Consumable使用済み
   consumedItems: string[]; // 戦闘後インベントリ同期用 inventory_id[]
+  droppedItems?: { itemId: string; itemName: string; quantity: number }[]; // 戦闘中ドロップ品蓄積用
   // v2.11 Final
   vitDamageTakenThisTurn?: boolean; // drain_vit 1ターン1回制限
   battle_result?: 'victory' | 'defeat' | 'time_over' | 'flee' | 'escape'; // 戦闘結果

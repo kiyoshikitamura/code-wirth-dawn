@@ -77,11 +77,19 @@ export default function ChronicleModal({ events, onClose }: ChronicleModalProps)
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 bg-[#2c1810]/5 border-t border-[#2c1810]/10 flex flex-col gap-3">
-                    <XShareButton text={shareText} shareUrl={shareUrl} variant="large" className="!bg-[#2c1810] !text-[#f4e4bc] hover:!bg-[#4a2c1e]" />
+                <div className="p-4 bg-[#2c1810]/5 border-t border-[#2c1810]/10 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#2c1810]/70 font-serif">歴史を刻む：</span>
+                        <XShareButton
+                            text={shareText}
+                            shareUrl={shareUrl}
+                            iconOnly={true}
+                            className="!w-10 !h-10 !p-0 !bg-[#2c1810] !text-[#f4e4bc] hover:!bg-[#4a2c1e] !rounded-full shadow-md flex items-center justify-center"
+                        />
+                    </div>
                     <button
                         onClick={onClose}
-                        className="w-full py-3 text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors"
+                        className="px-5 py-2 bg-[#2c1810] hover:bg-[#4a2c1e] text-[#f4e4bc] text-xs font-bold rounded transition-colors shadow-md font-serif"
                     >
                         閉じる
                     </button>

@@ -43,6 +43,7 @@ export async function setQuestLock(userId: string, questId: string): Promise<voi
         .from('user_profiles')
         .update({
             current_quest_id: questId,
+            current_quest_state: null,
             quest_started_at: new Date().toISOString()
         })
         .eq('id', userId);
@@ -56,6 +57,7 @@ export async function releaseQuestLock(userId: string): Promise<void> {
         .from('user_profiles')
         .update({
             current_quest_id: null,
+            current_quest_state: null,
             quest_started_at: null
         })
         .eq('id', userId);

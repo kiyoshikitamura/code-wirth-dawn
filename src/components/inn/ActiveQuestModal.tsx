@@ -14,9 +14,10 @@ interface ActiveQuestModalProps {
     onSelect: (scenario: Scenario) => void;
     isLoading?: boolean;
     onGiveUpComplete: (data: any) => void;
+    showCloseButton?: boolean;
 }
 
-export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests, onSelect, isLoading, onGiveUpComplete }: ActiveQuestModalProps) {
+export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests, onSelect, isLoading, onGiveUpComplete, showCloseButton }: ActiveQuestModalProps) {
     const [loading, setLoading] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
@@ -46,10 +47,23 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
 
     const currentQuestId = userProfile.current_quest_id;
     const activeQuest = quests.find(q => String(q.id) === currentQuestId);
-    const isUgcId = currentQuestId && (currentQuestId.includes('-') || isNaN(Number(currentQuestId)));
-    const questTitle = activeQuest?.title || 
-        (isUgcId ? `進行中の依頼 (UGCクエスト)` : 
-        (!isLoading && currentQuestId ? '進行中の依頼があります' : '進行中の依頼情報を取得中...'));
+    const isColosseum = currentQuestId ? currentQuestId.startsWith('colosseum_') : false;
+    const isUgcId = currentQuestId && !isColosseum && (currentQuestId.includes('-') || isNaN(Number(currentQuestId)));
+    
+    let questTitle = activeQuest?.title;
+    if (!questTitle) {
+        if (isColosseum) {
+            const diff = currentQuestId?.split('_')[1];
+            const diffLabel = diff ? diff.charAt(0).toUpperCase() + diff.slice(1) : '';
+            questTitle = `進行中の挑戦 (コロシアム - ${diffLabel})`;
+        } else if (isUgcId) {
+            questTitle = `進行中の依頼 (UGCクエスト)`;
+        } else if (!isLoading && currentQuestId) {
+            questTitle = `進行中の依頼があります`;
+        } else {
+            questTitle = `進行中の依頼情報を取得中...`;
+        }
+    }
 
     const handleGiveUp = async () => {
         if (!confirm("本当にこの依頼を放棄（ギブアップ）しますか？\n\n【放棄ペナルティ】\n・最大体力（VIT）が1減少します。\n・この拠点での名声値が低下します。\n・進行状況や一時獲得アイテムは失われます。")) {
@@ -59,12 +73,16 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
         setLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
+            const consumedItems = useQuestState.getState().consumedItems || [];
             const res = await fetch('/api/quest/give-up', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...authHeaders
-                }
+                },
+                body: JSON.stringify({
+                    consumed_items: consumedItems
+                })
             });
 
             if (res.ok) {
@@ -104,13 +122,15 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
                         <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
                         <h2 className="text-base font-serif font-bold tracking-widest text-amber-400">進行中の依頼あり</h2>
                     </div>
-                    <button 
-                        onClick={handleClose} 
-                        disabled={isClosing || loading}
-                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    {showCloseButton !== false && (
+                        <button 
+                            onClick={handleClose} 
+                            disabled={isClosing || loading}
+                            className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Content */}

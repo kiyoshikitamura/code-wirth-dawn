@@ -14,6 +14,8 @@ import {
     processPartyWearCycle,
     processReputationChange,
     persistLootPool,
+    consumeUsedItems,
+    grantReputationChanges,
 } from '@/services/questCompleteHelpers';
 import { UGC_REWARD_LIMITS } from '@/lib/ugc/ugcConfig';
 import { verifyBattleCompletionToken } from '@/app/api/battle/validate-result/route';
@@ -40,8 +42,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards } = body;
-        const lootSaved = Array.isArray(loot_pool) ? loot_pool : [];
+        const { quest_id, result, history, loot_pool, consumed_items, battle_defeat, node_rewards, reputation_changes } = body;
+        let lootSaved: any[] = [];
 
         // ═══════════════════════════════════════
         // §0. 認証
@@ -66,17 +68,17 @@ export async function POST(req: Request) {
             let numBattles = 5;
             let diffLabel = 'Easy';
             let diffVal = 1;
-            let rewards = { gold: 800, exp: 200, reputation: 5 };
+            let rewards = { gold: 400, exp: 200, reputation: 5 };
             if (difficulty === 'normal') {
                 numBattles = 10;
                 diffLabel = 'Normal';
                 diffVal = 2;
-                rewards = { gold: 2000, exp: 400, reputation: 10 };
+                rewards = { gold: 1000, exp: 400, reputation: 10 };
             } else if (difficulty === 'hard') {
-                numBattles = 20;
+                numBattles = 10;
                 diffLabel = 'Hard';
                 diffVal = 3;
-                rewards = { gold: 4000, exp: 800, reputation: 20 };
+                rewards = { gold: 2000, exp: 800, reputation: 20 };
             }
 
             // Fetch user profile current_location_id
@@ -101,8 +103,8 @@ export async function POST(req: Request) {
                 client_name: 'バルガス',
                 impact: {},
                 location_id: userLoc?.current_location_id || null,
-                days_success: 0,
-                days_failure: 0,
+                days_success: 3,
+                days_failure: 3,
                 is_ugc: false,
                 share_text: `コロシアム (${diffLabel}) を制覇しました！`
             };
@@ -179,6 +181,117 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Quest prerequisites not met: ' + validation.reason }, { status: 403 });
         }
 
+        // [Security] reputation_changes の検証
+        const verifiedRepChanges: Record<string, number> = {};
+        if (reputation_changes && typeof reputation_changes === 'object') {
+            const nodes = quest?.script_data?.nodes || {};
+            const allowedDeltas: Record<string, number> = {};
+
+            Object.values(nodes).forEach((node: any) => {
+                if (node && node.type === 'modify_reputation') {
+                    const loc = node.params?.location_name || '現在地';
+                    const amount = node.params?.amount || node.params?.value || 0;
+                    allowedDeltas[loc] = (allowedDeltas[loc] || 0) + Math.abs(amount); // 変動許容の上限を蓄積
+                }
+            });
+
+            for (const [loc, amount] of Object.entries(reputation_changes)) {
+                const allowedMax = allowedDeltas[loc] || 0;
+                const requestedAbs = Math.abs(amount as number);
+                if (requestedAbs > allowedMax) {
+                    console.warn(`[Security] Reputation change for location '${loc}' from user ${user_id} exceeded allowed limit. Requested: ${amount}, Allowed Max: ${allowedMax}`);
+                    return NextResponse.json({ error: 'Security check failed: reputation change exceeded limits.' }, { status: 403 });
+                }
+                verifiedRepChanges[loc] = amount as number;
+            }
+        }
+
+        // [Security] loot_pool validation and resolution
+        const filteredLootPool: any[] = [];
+        if (Array.isArray(loot_pool) && loot_pool.length > 0) {
+            const allowedItemsSet = await getQuestAllowedItems(supabase, quest, quest_id);
+            console.log(`[QuestComplete] Whitelist for quest ${quest_id}:`, Array.from(allowedItemsSet));
+
+            const identifiers = new Set<string>();
+            for (const loot of loot_pool) {
+                if (loot && loot.itemId) {
+                    identifiers.add(String(loot.itemId).trim());
+                }
+            }
+
+            if (identifiers.size > 0) {
+                const idList: number[] = [];
+                const slugList: string[] = [];
+                for (const ident of identifiers) {
+                    const parsed = parseInt(ident, 10);
+                    if (!isNaN(parsed) && String(parsed) === ident) {
+                        idList.push(parsed);
+                    } else {
+                        slugList.push(ident);
+                    }
+                }
+
+                let query = supabase.from('items').select('id, slug, name');
+                const filters: string[] = [];
+                if (idList.length > 0) filters.push(`id.in.(${idList.join(',')})`);
+                if (slugList.length > 0) {
+                    const escapedSlugs = slugList.map(s => `"${s}"`).join(',');
+                    filters.push(`slug.in.(${escapedSlugs})`);
+                }
+                
+                let dbItems: any[] = [];
+                if (filters.length > 0) {
+                    const { data } = await query.or(filters.join(','));
+                    if (data) dbItems = data;
+                }
+
+                if (quest.is_ugc && slugList.length > 0) {
+                    const { data: ugcData } = await supabase
+                        .from('ugc_items')
+                        .select('id, slug, name')
+                        .in('slug', slugList);
+                    if (ugcData) dbItems = [...dbItems, ...ugcData];
+                }
+
+                const itemMap = new Map<string, { id: number; slug: string; name: string }>();
+                for (const item of dbItems) {
+                    itemMap.set(String(item.id), item);
+                    if (item.slug) {
+                        itemMap.set(item.slug.trim(), item);
+                    }
+                }
+
+                for (const loot of loot_pool) {
+                    if (!loot || !loot.itemId) continue;
+                    const ident = String(loot.itemId).trim();
+                    let isAllowed = false;
+                    const mappedItem = itemMap.get(ident);
+                    
+                    if (allowedItemsSet.has(ident)) {
+                        isAllowed = true;
+                    } else if (mappedItem && (allowedItemsSet.has(String(mappedItem.id)) || (mappedItem.slug && allowedItemsSet.has(mappedItem.slug.trim())))) {
+                        isAllowed = true;
+                    }
+
+                    if (isAllowed) {
+                        if (mappedItem) {
+                            filteredLootPool.push({
+                                ...loot,
+                                itemId: mappedItem.id,
+                                itemName: mappedItem.name
+                            });
+                        } else {
+                            filteredLootPool.push(loot);
+                        }
+                    } else {
+                        console.warn(`[Security] Unauthorized item in loot_pool filtered out: user_id=${user_id}, quest_id=${quest_id}, item_id=${loot.itemId}`);
+                    }
+                }
+            }
+        }
+
+        lootSaved.push(...filteredLootPool);
+
         // ═══════════════════════════════════════
         // §2. 加齢 + ステータス減衰
         // ═══════════════════════════════════════
@@ -221,6 +334,9 @@ export async function POST(req: Request) {
             const questExp = (quest.rewards?.exp) || expFallback;
             const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100);
             earnedExp = questExp + battleBonus;
+            if (isUgcV2) {
+                earnedExp = UGC_REWARD_LIMITS.fixed_exp || 30;
+            }
 
             const growthResult = calculateGrowth(
                 currentLevel, currentExp, earnedExp,
@@ -254,22 +370,13 @@ export async function POST(req: Request) {
         const qRewards = quest.rewards || {};
         const nRewards = node_rewards || {};
 
-        // Merge items safely: if both have items, combine them. If one has items, use that.
-        const mergedItems = (Array.isArray(qRewards.items) && qRewards.items.length > 0)
-            ? qRewards.items
-            : (Array.isArray(nRewards.items) ? nRewards.items : undefined);
-
-        // Merge skills safely
-        const mergedSkills = (Array.isArray(qRewards.skills) && qRewards.skills.length > 0)
-            ? qRewards.skills
-            : (Array.isArray(nRewards.skills) ? nRewards.skills : undefined);
-
+        // ノード報酬のアイテム・スキルはマージから排除（二重付与防止：クライアントの loot_pool で付与されるため）
         const effectiveRewards = result === 'success'
             ? {
                 ...qRewards,
                 ...nRewards,
-                items: mergedItems ? [...mergedItems] : [],
-                skills: mergedSkills ? [...mergedSkills] : [],
+                items: Array.isArray(qRewards.items) ? [...qRewards.items] : [],
+                skills: Array.isArray(qRewards.skills) ? [...qRewards.skills] : [],
                 alignment_shift: (qRewards.alignment_shift || nRewards.alignment_shift)
                     ? {
                         ...(qRewards.alignment_shift || {}),
@@ -278,6 +385,43 @@ export async function POST(req: Request) {
                     : undefined
             }
             : { ...qRewards };
+
+        // UGC報酬制限（アイテム数、スキルカード数、スキルパワー）の適用
+        if (result === 'success' && isUgcV2) {
+            // アイテム数上限 (3)
+            if (effectiveRewards.items && Array.isArray(effectiveRewards.items)) {
+                effectiveRewards.items = effectiveRewards.items.slice(0, UGC_REWARD_LIMITS.max_items || 3);
+            }
+            // スキルカード数上限 (1)
+            if (effectiveRewards.skills && Array.isArray(effectiveRewards.skills)) {
+                effectiveRewards.skills = effectiveRewards.skills.slice(0, UGC_REWARD_LIMITS.max_skill_cards || 1);
+                
+                // スキルカードパワー上限検証 (25)
+                const allowedSkills = [];
+                for (const skillIdStr of effectiveRewards.skills) {
+                    const skillId = parseInt(String(skillIdStr), 10);
+                    if (isNaN(skillId)) continue;
+                    
+                    try {
+                        const { data: skillRow } = await supabase
+                            .from('skills')
+                            .select('card_id, cards!inner(power)')
+                            .eq('id', skillId)
+                            .maybeSingle();
+                        
+                        const power = (skillRow as any)?.cards?.power || 0;
+                        if (power <= (UGC_REWARD_LIMITS.max_skill_power || 25)) {
+                            allowedSkills.push(skillIdStr);
+                        } else {
+                            console.warn(`[Security] UGC skill reward ${skillId} blocked. Power ${power} exceeds limit ${UGC_REWARD_LIMITS.max_skill_power}`);
+                        }
+                    } catch (e) {
+                        console.error('[Security] Failed to validate UGC skill card power:', e);
+                    }
+                }
+                effectiveRewards.skills = allowedSkills;
+            }
+        }
 
         // Colosseum salvage rewards (Weighted random selection based on rarity)
         if (result === 'success' && String(quest_id).startsWith('colosseum_')) {
@@ -381,17 +525,36 @@ export async function POST(req: Request) {
         // §6. ロック解除 + プロフィール更新
         // ═══════════════════════════════════════
         updates.current_quest_id = null;
+        updates.current_quest_state = null;
+        updates.quest_started_at = null;
         updates.blessing_data = null;
 
         console.log('[QuestComplete] Updates payload:', JSON.stringify(updates, null, 2));
 
-        const { error: updateError } = await supabase
-            .from('user_profiles').update(updates).eq('id', user_id);
+        const { data: updatedProfiles, error: updateError } = await supabase
+            .from('user_profiles')
+            .update(updates)
+            .eq('id', user_id)
+            .eq('current_quest_id', quest_id)
+            .select('id');
         if (updateError) throw updateError;
 
-        // Record quest activity log (Spec Dashboard Extensions) - Removed redundant insert to prevent duplicate user_chronicles records
+        if (!updatedProfiles || updatedProfiles.length === 0) {
+            console.warn(`[Security] API rejected quest completion due to race condition or inactive quest. User: ${user_id}, Quest: ${quest_id}`);
+            return NextResponse.json({ error: 'Quest is already completed or inactive.' }, { status: 409 });
+        }
 
-
+        // Record quest activity log (Spec Dashboard Extensions)
+        try {
+            await supabase.from('quest_activity_logs').insert({
+                user_id,
+                quest_id,
+                action: result === 'success' ? 'complete' : 'abandon',
+                created_at: new Date().toISOString()
+            });
+        } catch (logErr) {
+            console.error('[QuestComplete] Failed to record quest activity log:', logErr);
+        }
 
         if (result === 'success') {
             const rewardPromises: PromiseLike<any>[] = [];
@@ -413,10 +576,18 @@ export async function POST(req: Request) {
 
             // Items + Loot
             rewardPromises.push(grantRewardItems(supabase, user_id, effectiveRewards, lootSaved));
-            rewardPromises.push(persistLootPool(supabase, user_id, loot_pool));
+            rewardPromises.push(persistLootPool(supabase, user_id, filteredLootPool));
+            // 名声一括反映の追加
+            rewardPromises.push(grantReputationChanges(supabase, user_id, verifiedRepChanges, user.current_location_id));
 
             await Promise.all(rewardPromises);
         }
+
+        // クエストの成否に関わらず、消費されたアイテム（consumed_items）はインベントリから差し引く
+        if (consumed_items && consumed_items.length > 0) {
+            await consumeUsedItems(supabase, user_id, consumed_items);
+        }
+
 
         // ═══════════════════════════════════════
         // §8-§9. ゲストNPC正規雇用 + パーティVIT摩耗 (parallelized)
@@ -425,7 +596,7 @@ export async function POST(req: Request) {
             ? body.defeated_member_ids.map((id: any) => String(id))
             : [];
         const [guestConversion, partyChanges] = await Promise.all([
-            result === 'success' ? convertGuestToPartyMember(supabase, user_id, body) : Promise.resolve(null),
+            result === 'success' ? convertGuestToPartyMember(supabase, user_id, body, quest) : Promise.resolve(null),
             processPartyWearCycle(supabase, user_id, result, defeatedIds)
         ]);
 
@@ -684,4 +855,139 @@ export async function POST(req: Request) {
             error: e.message || 'Unknown server error'
         }, { status: 500 });
     }
+}
+
+/**
+ * [Security] Constructs a whitelist of allowed item IDs/slugs for a quest.
+ */
+async function getQuestAllowedItems(supabase: any, quest: any, questId: string): Promise<Set<string>> {
+    const allowed = new Set<string>();
+
+    // 1. Add items from quest.rewards.items
+    if (quest.rewards?.items && Array.isArray(quest.rewards.items)) {
+        for (const item of quest.rewards.items) {
+            if (item) allowed.add(String(item).trim());
+        }
+    }
+
+    // 2. Scan script_data nodes
+    const nodes = quest.script_data?.nodes || {};
+    const enemyGroupSlugs = new Set<string>();
+
+    for (const nodeId of Object.keys(nodes)) {
+        const node = nodes[nodeId];
+        if (!node) continue;
+
+        // Node level rewards
+        if (node.rewards?.items && Array.isArray(node.rewards.items)) {
+            for (const item of node.rewards.items) {
+                if (item) allowed.add(String(item).trim());
+            }
+        }
+        if (node.params?.rewards?.items && Array.isArray(node.params.rewards.items)) {
+            for (const item of node.params.rewards.items) {
+                if (item) allowed.add(String(item).trim());
+            }
+        }
+        // Node level single item_id or array items (v4.0 reward node support)
+        if (node.item_id) {
+            allowed.add(String(node.item_id).trim());
+        }
+        if (node.params?.item_id) {
+            allowed.add(String(node.params.item_id).trim());
+        }
+        if (node.params?.items && Array.isArray(node.params.items)) {
+            for (const item of node.params.items) {
+                if (typeof item === 'object' && item !== null) {
+                    if (item.item_id) allowed.add(String(item.item_id).trim());
+                    if (item.itemId) allowed.add(String(item.itemId).trim());
+                } else if (item) {
+                    allowed.add(String(item).trim());
+                }
+            }
+        }
+
+
+        // Enemy groups referenced in battle/boss nodes
+        if (node.type === 'battle' || node.nodeType === 'battle' || node.type === 'boss') {
+            if (node.enemy_group_id) {
+                enemyGroupSlugs.add(String(node.enemy_group_id).trim());
+            }
+        }
+    }
+
+    // 3. For Colosseum quests
+    if (String(questId).startsWith('colosseum_')) {
+        const difficulty = String(questId).replace('colosseum_', ''); // easy, normal, hard
+        
+        // Fetch all possible items in colosseum_reward_pool
+        const { data: itemPool } = await supabase
+            .from('colosseum_reward_pool')
+            .select('reward_id')
+            .eq('reward_type', 'item');
+        if (itemPool) {
+            for (const row of itemPool) {
+                if (row.reward_id) allowed.add(String(row.reward_id).trim());
+            }
+        }
+
+        // Fetch all enemy groups for this difficulty
+        const { data: colGroups } = await supabase
+            .from('colosseum_enemy_groups')
+            .select('enemy_group_slug')
+            .eq('difficulty', difficulty);
+        if (colGroups) {
+            for (const row of colGroups) {
+                if (row.enemy_group_slug) enemyGroupSlugs.add(row.enemy_group_slug.trim());
+            }
+        }
+    }
+
+    // 4. Resolve enemy drops from referenced enemy groups
+    if (enemyGroupSlugs.size > 0) {
+        const { data: groups } = await supabase
+            .from('enemy_groups')
+            .select('slug, members')
+            .in('slug', Array.from(enemyGroupSlugs));
+
+        const enemySlugs = new Set<string>();
+        if (groups) {
+            for (const g of groups) {
+                if (Array.isArray(g.members)) {
+                    for (const m of g.members) {
+                        if (m) enemySlugs.add(String(m).trim());
+                    }
+                }
+            }
+        }
+
+        if (enemySlugs.size > 0) {
+            const { data: enemiesData } = await supabase
+                .from('enemies')
+                .select('slug, drop_item_slug, drop_item_id')
+                .in('slug', Array.from(enemySlugs));
+
+            if (enemiesData) {
+                for (const e of enemiesData) {
+                    if (e.drop_item_slug) allowed.add(String(e.drop_item_slug).trim());
+                    if (e.drop_item_id) allowed.add(String(e.drop_item_id).trim());
+                }
+            }
+
+            if (quest.is_ugc) {
+                const { data: ugcEnemiesData } = await supabase
+                    .from('ugc_enemies')
+                    .select('slug, drop_item_slug, drop_item_id')
+                    .in('slug', Array.from(enemySlugs));
+                if (ugcEnemiesData) {
+                    for (const e of ugcEnemiesData) {
+                        if (e.drop_item_slug) allowed.add(String(e.drop_item_slug).trim());
+                        if (e.drop_item_id) allowed.add(String(e.drop_item_id).trim());
+                    }
+                }
+            }
+        }
+    }
+
+    return allowed;
 }

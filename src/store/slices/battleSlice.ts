@@ -74,6 +74,7 @@ export const createBattleSlice = (
                 enemy_effects: [],
                 exhaustPile: [],
                 consumedItems: [],
+                droppedItems: [],
                 vitDamageTakenThisTurn: false,
                 battle_result: undefined,
                 activeSupportBuffs: [],
@@ -205,7 +206,10 @@ export const createBattleSlice = (
             const pmAny = pm as any;
             const fullHp = pm.max_durability || pmAny.max_hp || pmAny.hp || pm.durability || 100;
             // 連戦時: 前のバトルのHPを引き継ぐ（存在する場合）
-            const carriedHp = prevPartyHpMap[String(pm.id)];
+            let carriedHp = prevPartyHpMap[String(pm.id)];
+            if (carriedHp === undefined && questState.partyHp) {
+                carriedHp = questState.partyHp[String(pm.id)];
+            }
             const currentHp = carriedHp !== undefined ? Math.max(0, carriedHp) : fullHp;
 
             return {
@@ -463,7 +467,9 @@ export const createBattleSlice = (
             const isNowActive = newDur > 0;
             if (!isNowActive && member.is_active) {
                 tickMessages.push(`${member.name}は力尽きた...`);
-                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+                if (member.origin_type !== 'quest_guest') {
+                    supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+                }
             }
             return {
                 ...member,
@@ -948,7 +954,8 @@ export const createBattleSlice = (
                 enemies: updatedEnemies,
                 enemy: finalAllDead ? null : updatedEnemies.find(e => e.id === state.battleState.enemy?.id && e.hp > 0) || updatedEnemies.find(e => e.hp > 0) || null,
                 isVictory: !isPlayerDead && (finalAllDead || state.battleState.isVictory),
-                isDefeat: isPlayerDead || state.battleState.isDefeat
+                isDefeat: isPlayerDead || state.battleState.isDefeat,
+                consumedItems: [...(state.battleState.consumedItems || []), String(item.item_id || item.slug || item.id)]
             }
         }));
 
@@ -2323,12 +2330,15 @@ export const createBattleSlice = (
                     if (updatedTargetEnemy?.drop_rate && updatedTargetEnemy.drop_item_slug && Math.random() * 100 < updatedTargetEnemy.drop_rate) {
                         newMessages.push(`${updatedTargetEnemy.name}が「${updatedTargetEnemy.drop_item_slug}」を落とした！`);
                         const dropSlug = updatedTargetEnemy.drop_item_slug;
-                        supabase.auth.getSession().then(({ data: { session } }) => {
-                            const headers: HeadersInit = { 'Content-Type': 'application/json' };
-                            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
-                            fetch('/api/inventory', { method: 'POST', headers, body: JSON.stringify({ item_slug: dropSlug, quantity: 1, source: 'battle_drop' }) })
-                                .catch(err => console.error('Drop add failed', err));
-                        });
+                        set(state => ({
+                            battleState: {
+                                ...state.battleState,
+                                droppedItems: [
+                                    ...(state.battleState.droppedItems || []),
+                                    { itemId: dropSlug, itemName: dropSlug, quantity: 1 }
+                                ]
+                            }
+                        }));
                     }
                 }
 
@@ -3029,7 +3039,9 @@ export const createBattleSlice = (
                         newMessages.push(`__party_sync:${p.id}:${newDur}`);
                         if (newDur <= 0) {
                             newMessages.push(`${p.name}は力尽きた...`);
-                            supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
+                            if (p.origin_type !== 'quest_guest') {
+                                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
+                            }
                         }
                         return { ...p, durability: newDur, is_active: newDur > 0 };
                     }

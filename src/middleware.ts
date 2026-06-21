@@ -102,6 +102,46 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // きたむ様 (c1cf67dd-527a-497e-bf88-ce10c2cb516f) をメンテナンス通過許可（ホワイトリスト）に追加
+    if (!hasBypass) {
+        const allCookies = request.cookies.getAll();
+        const authCookie = allCookies.find(c => c.name.includes('auth-token'));
+        if (authCookie?.value) {
+            try {
+                let accessToken: string | null = null;
+                const val = decodeURIComponent(authCookie.value);
+                if (val.startsWith('[') || val.startsWith('{')) {
+                    const parsed = JSON.parse(val);
+                    if (Array.isArray(parsed)) {
+                        accessToken = parsed[0];
+                    } else if (parsed.access_token) {
+                        accessToken = parsed.access_token;
+                    }
+                } else {
+                    accessToken = val;
+                }
+
+                if (accessToken) {
+                    const parts = accessToken.split('.');
+                    if (parts.length === 3) {
+                        const base64Url = parts[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = atob(base64);
+                        const payload = JSON.parse(jsonPayload);
+                        const userId = payload.sub;
+                        
+                        if (userId === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f') {
+                            hasBypass = true;
+                            console.log(`[Middleware] Maintenance bypass granted for user: ${userId}`);
+                        }
+                    }
+                }
+            } catch (e) {
+                // デコードエラーは静かにスルー
+            }
+        }
+    }
+
     // 4. メンテナンス時の制限適用
     if (isMaintenanceActive && !hasBypass) {
         // APIリクエストの場合は JSON で 503 を返す

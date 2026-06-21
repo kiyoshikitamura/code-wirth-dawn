@@ -455,11 +455,16 @@ export default function QuestResultModal({
                                         ? `${window.location.origin}/share?t=${sd.slug}&${new URLSearchParams(sd.vars).toString()}`
                                         : undefined;
                                     return (
-                                        <div key={idx} className="space-y-1.5">
-                                            <p className="text-gray-300 text-xs italic leading-relaxed">
+                                        <div key={idx} className="flex items-center gap-3 justify-between bg-black/20 p-2 rounded">
+                                            <p className="text-gray-300 text-xs italic leading-relaxed flex-1">
                                                 "{sd.text.length > 80 ? sd.text.substring(0, 80) + '...' : sd.text}"
                                             </p>
-                                            <XShareButton text={sd.text} shareUrl={shareUrl} variant="large" />
+                                            <XShareButton
+                                                text={sd.text}
+                                                shareUrl={shareUrl}
+                                                iconOnly={true}
+                                                className="!w-9 !h-9 !p-0 shadow-md !bg-white hover:!bg-gray-200 !text-black !rounded-full flex items-center justify-center shrink-0"
+                                            />
                                         </div>
                                     );
                                 })}
@@ -472,10 +477,16 @@ export default function QuestResultModal({
                                     <Trophy className="w-3 h-3" />
                                     <span>冒険を共有しよう</span>
                                 </div>
-                                <p className="text-gray-300 text-xs italic leading-relaxed">
-                                    "{shareText.length > 80 ? shareText.substring(0, 80) + '...' : shareText}"
-                                </p>
-                                <XShareButton text={shareText} variant="large" />
+                                <div className="flex items-center gap-3 justify-between bg-black/20 p-2 rounded">
+                                    <p className="text-gray-300 text-xs italic leading-relaxed flex-1">
+                                        "{shareText.length > 80 ? shareText.substring(0, 80) + '...' : shareText}"
+                                    </p>
+                                    <XShareButton
+                                        text={shareText}
+                                        iconOnly={true}
+                                        className="!w-9 !h-9 !p-0 shadow-md !bg-white hover:!bg-gray-200 !text-black !rounded-full flex items-center justify-center shrink-0"
+                                    />
+                                </div>
                             </div>
                         </section>
                     )}

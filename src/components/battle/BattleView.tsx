@@ -18,9 +18,10 @@ interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
     battleTitle?: string;
     bgImageUrl?: string;
+    disableRedirect?: boolean;
 }
 
-export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: BattleViewProps) {
+export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disableRedirect }: BattleViewProps) {
     const router = useRouter();
     const hasHydrated = useGameStore(state => state._hasHydrated);
 
@@ -240,11 +241,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
         fetchUserProfile();
         const hydrated = useGameStore.persist.hasHydrated();
-        if (hydrated && !battleState.enemy) {
+        if (!disableRedirect && hydrated && !battleState.enemy) {
             console.warn('[BattlePage] 敵がいません。/inn に戻ります。');
             router.push('/inn');
         }
-    }, []);
+    }, [disableRedirect]);
 
     const [isActioning, setIsActioning] = useState(false);
 
@@ -524,8 +525,36 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl }: Bat
         }
     }, [battleState.isVictory, battleState.isDefeat, battleState.messages]);
 
-    if (!hasHydrated) return <div className="p-8 text-white min-h-screen bg-gray-900 flex items-center justify-center">Loading Data...</div>;
-    if (!battleState.enemy && !battleState.isVictory && !battleState.isDefeat) return <div className="p-8 text-white min-h-screen bg-gray-900 flex items-center justify-center">Loading Battle...</div>;
+    if (!hasHydrated) return (
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">
+            {bgImageUrl && (
+                <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-60 z-0 pointer-events-none" 
+                    style={{ backgroundImage: `url('${bgImageUrl}')` }} 
+                />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0 pointer-events-none" />
+            <div className="relative z-10 flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-300 font-serif tracking-widest">Loading Data...</p>
+            </div>
+        </div>
+    );
+    if (!battleState.enemy && !battleState.isVictory && !battleState.isDefeat) return (
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">
+            {bgImageUrl && (
+                <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-60 z-0 pointer-events-none" 
+                    style={{ backgroundImage: `url('${bgImageUrl}')` }} 
+                />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-0 pointer-events-none" />
+            <div className="relative z-10 flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-slate-300 font-serif tracking-widest">Loading Battle...</p>
+            </div>
+        </div>
+    );
 
     const target = battleState.enemy;
     const enemies = battleState.enemies || (battleState.enemy ? [battleState.enemy] : []);

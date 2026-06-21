@@ -233,54 +233,57 @@ function InnPageInner() {
                 {activeModal === 'ranking' && <RankingModal onClose={() => setActiveModal(null)} />}
                 {activeModal === 'colosseum' && <ColosseumModal onClose={() => setActiveModal(null)} />}
 
+                {/* Global Forced Active Quest Modal */}
+                {userProfile?.current_quest_id && (
+                    <ActiveQuestModal
+                        isOpen={true}
+                        onClose={() => {}}
+                        userProfile={userProfile}
+                        quests={allQuests}
+                        isLoading={loadingQuests}
+                        onSelect={(s) => {
+                            const isColosseum = s.id ? String(s.id).startsWith('colosseum_') : false;
+                            const isUgc = !isColosseum && ((s as any).is_ugc || isNaN(Number(s.id)));
+                            router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
+                        }}
+                        onGiveUpComplete={async (data) => {
+                            // 楽観的ローカルクリア: 即座にフラグを解除してモーダルを消す
+                            const profile = useGameStore.getState().userProfile;
+                            if (profile) {
+                                useGameStore.setState({
+                                    userProfile: {
+                                        ...profile,
+                                        current_quest_id: undefined,
+                                        current_quest_state: undefined
+                                    }
+                                });
+                            }
+                            // 最新情報を非同期フェッチして同期
+                            await useGameStore.getState().fetchUserProfile();
+                            setResultOverlay({ result: 'failure', data });
+                        }}
+                        showCloseButton={false}
+                    />
+                )}
+
                 {activeModal === 'questBoard' && (
-                    userProfile?.current_quest_id ? (
-                        <ActiveQuestModal
-                            isOpen={true}
-                            onClose={() => setActiveModal(null)}
-                            userProfile={userProfile}
-                            quests={allQuests}
-                            isLoading={loadingQuests}
-                            onSelect={(s) => {
-                                const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
-                                router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
-                            }}
-                            onGiveUpComplete={(data) => setResultOverlay({ result: 'failure', data })}
-                        />
-                    ) : (
-                        <QuestBoardModal
-                            isOpen={true}
-                            onClose={() => setActiveModal(null)}
-                            userProfile={userProfile}
-                            quests={allQuests}
-                            loading={loadingQuests}
-                            onSelect={(s) => router.push(`/quest/${s.id}`)}
-                        />
-                    )
+                    <QuestBoardModal
+                        isOpen={true}
+                        onClose={() => setActiveModal(null)}
+                        userProfile={userProfile}
+                        quests={allQuests}
+                        loading={loadingQuests}
+                        onSelect={(s) => router.push(`/quest/${s.id}`)}
+                    />
                 )}
 
                 {activeModal === 'ugcGuild' && userProfile && (
-                    userProfile.current_quest_id ? (
-                        <ActiveQuestModal
-                            isOpen={true}
-                            onClose={() => setActiveModal(null)}
-                            userProfile={userProfile}
-                            quests={allQuests}
-                            isLoading={loadingQuests}
-                            onSelect={(s) => {
-                                const isUgc = (s as any).is_ugc || isNaN(Number(s.id));
-                                router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
-                            }}
-                            onGiveUpComplete={(data) => setResultOverlay({ result: 'failure', data })}
-                        />
-                    ) : (
-                        <UgcQuestBoardPanel
-                            isOpen={true}
-                            onClose={() => setActiveModal(null)}
-                            userLevel={userProfile.level || 1}
-                            onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
-                        />
-                    )
+                    <UgcQuestBoardPanel
+                        isOpen={true}
+                        onClose={() => setActiveModal(null)}
+                        userLevel={userProfile.level || 1}
+                        onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
+                    />
                 )}
 
                 {/* Main Visual */}
@@ -461,7 +464,7 @@ function InnPageInner() {
                         result={resultOverlay.result}
                         questTitle={resultOverlay.data?.quest_title || '放棄した依頼'}
                         rewards={resultOverlay.data?.rewards || {}}
-                        changes={{
+                        changes={resultOverlay.data?.changes || {
                             gold_gained: 0,
                             old_age: userProfile?.age || 18,
                             new_age: userProfile?.age || 18,

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         // Blessing消費: 戦闘後にblessing_dataをクリア（spec_v16 §4: 次バトルで消費）
         updatePayload.blessing_data = null;
 
-        // v27.0: 移動日数消費 + 加齢処理（勝利時のみ移動完了のため日数を消費）
+        // v27.0: 移動日数消費 + 加齢処理（敗北して出発地に引き返す際も、経過日数として適用される）
         const daysToTravel = travel_days || 1;
         const { newAge, newAgeDays, decay } = processAging(
             profile.age || 20,

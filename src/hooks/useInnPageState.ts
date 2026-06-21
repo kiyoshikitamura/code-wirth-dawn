@@ -92,6 +92,13 @@ export function useInnPageState() {
     const [allQuests, setAllQuests] = useState<any[]>([]);
     const [loadingQuests, setLoadingQuests] = useState(false);
 
+    const locationQuests = useGameStore(state => state.locationQuests);
+    useEffect(() => {
+        if (locationQuests?.quests) {
+            setAllQuests(locationQuests.quests);
+        }
+    }, [locationQuests]);
+
     // Reputation
     const [reputation, setReputation] = useState<any>(null);
 

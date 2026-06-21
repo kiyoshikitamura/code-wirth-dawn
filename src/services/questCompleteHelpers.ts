@@ -54,17 +54,18 @@ export async function applyAlignmentShift(
         for (const [key, val] of Object.entries(alignmentShift)) {
             const wCol = worldColMap[key];
             if (wCol && typeof val === 'number' && val > 0 && questLocationName) {
-                const { data: ws } = await supabase
-                    .from('world_states').select('*')
-                    .eq('location_name', questLocationName).maybeSingle();
-                if (ws) {
-                    await supabase.from('world_states')
-                        .update({ [wCol]: ((ws as any)[wCol] || 0) + val })
-                        .eq('id', (ws as any).id);
+                // Read-Modify-Write による競合（ロストアップデート）を防ぐため、アトミックな RPC を使用して加算
+                const { error: rpcError } = await supabase.rpc('increment_world_state_alignment', {
+                    p_location_name: questLocationName,
+                    p_column_name: wCol,
+                    p_amount: val
+                });
+                if (rpcError) {
+                    console.error(`[QuestComplete] Failed to increment location alignment via RPC:`, rpcError.message);
                 }
             }
         }
-        console.log(`[QuestComplete] Location alignment synced to ${questLocationName || questLocationId}`);
+        console.log(`[QuestComplete] Location alignment synced atomically to ${questLocationName || questLocationId}`);
     }
 
     return alignmentShift;
@@ -272,13 +273,44 @@ export async function grantRewardItems(
 export async function convertGuestToPartyMember(
     supabase: SupabaseClient,
     user_id: string,
-    body: any
+    body: any,
+    quest?: any
 ): Promise<{ name: string; success: boolean; reason?: string } | null> {
     if (!body.remaining_guest?.slug) return null;
 
     const guestSlug = body.remaining_guest.slug;
     const guestName = body.remaining_guest.name || 'ゲストNPC';
     console.log(`[QuestComplete] ゲスト残留検出: ${guestName} (${guestSlug})`);
+
+    const questId = body.quest_id;
+    if (!questId) {
+        console.warn(`[QuestComplete] ゲストNPC雇用試行時に quest_id が指定されていません`);
+        return null;
+    }
+
+    // [Security] ゲストNPCのなりすまし検証（このクエストで出現したNPCか確認）
+    let isGuestAllowed = false;
+    const isColosseum = String(questId).startsWith('colosseum_');
+    if (!isColosseum) {
+        const scriptData = quest?.script_data;
+        if (scriptData && scriptData.nodes) {
+            const nodes = scriptData.nodes;
+            for (const nodeId of Object.keys(nodes)) {
+                const node = nodes[nodeId];
+                if (node && node.type === 'guest_join' && node.params?.guest_id) {
+                    if (String(node.params.guest_id).trim() === guestSlug) {
+                        isGuestAllowed = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!isGuestAllowed) {
+        console.warn(`[Security] Unauthorized guest NPC conversion blocked: user_id=${user_id}, quest_id=${questId}, npc_slug=${guestSlug}`);
+        return { name: guestName, success: false, reason: 'このクエストで仲間になったNPCではありません。' };
+    }
 
     try {
         const { data: npcData } = await supabase
@@ -417,7 +449,7 @@ export async function processReputationChange(
     // 成功時: rewards.reputation を名声報酬として加算
     if (result === 'success' && effectiveRewards?.reputation) {
         const repAmount = effectiveRewards.reputation;
-        const locId = updates.current_location_id || user.current_location_id;
+        const locId = user.current_location_id || updates.current_location_id;
         if (locId) {
             const { data: locForRep } = await supabase.from('locations').select('name').eq('id', locId).maybeSingle();
             const repLocName = locForRep?.name;
@@ -487,5 +519,98 @@ export async function persistLootPool(
         } catch (histErr) {
             console.warn('[QuestComplete] Loot item history recording failed:', histErr);
         }
+    }
+}
+
+// ────────────────────────────────────────
+// §8. 使用済みアイテム一括遅延消費
+// ────────────────────────────────────────
+
+export async function consumeUsedItems(
+    supabase: SupabaseClient,
+    user_id: string,
+    consumed_items: string[]
+): Promise<void> {
+    if (!Array.isArray(consumed_items) || consumed_items.length === 0) return;
+
+    for (const itemRef of consumed_items) {
+        if (!itemRef) continue;
+
+        let query = supabase.from('inventory').select('id, quantity, item_id');
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemRef);
+        const isNumber = !isNaN(parseInt(itemRef, 10)) && String(parseInt(itemRef, 10)) === String(itemRef);
+
+        if (isUuid) {
+            query = query.eq('id', itemRef).eq('user_id', user_id);
+        } else if (isNumber) {
+            query = query.eq('item_id', parseInt(itemRef, 10)).eq('user_id', user_id);
+        } else {
+            try {
+                const { data: itemRow } = await supabase.from('items').select('id').eq('slug', itemRef).maybeSingle();
+                if (itemRow) {
+                    query = query.eq('item_id', itemRow.id).eq('user_id', user_id);
+                } else {
+                    console.warn(`[QuestComplete] Consumed item slug '${itemRef}' not found in DB`);
+                    continue;
+                }
+            } catch (e) {
+                console.error(`[QuestComplete] Consumed item slug resolution error for '${itemRef}':`, e);
+                continue;
+            }
+        }
+
+        const { data: existing } = await query.maybeSingle();
+
+        if (existing) {
+            const newQty = (existing.quantity || 1) - 1;
+            if (newQty <= 0) {
+                await supabase.from('inventory').delete().eq('id', existing.id);
+                console.log(`[QuestComplete] Item ${itemRef} completely consumed (deleted from inventory).`);
+            } else {
+                await supabase.from('inventory').update({ quantity: newQty }).eq('id', existing.id);
+                console.log(`[QuestComplete] Item ${itemRef} quantity decremented to ${newQty}.`);
+            }
+        } else {
+            console.warn(`[QuestComplete] Item ${itemRef} intended for consumption but not found in inventory.`);
+        }
+    }
+}
+
+/**
+ * クエスト中に蓄積された名声変動を一括適用
+ */
+export async function grantReputationChanges(
+    supabase: any,
+    user_id: string,
+    reputation_changes: Record<string, number>,
+    currentLocationId: string | null
+): Promise<void> {
+    if (!reputation_changes || Object.keys(reputation_changes).length === 0) return;
+
+    for (const [locationName, amount] of Object.entries(reputation_changes)) {
+        let targetLoc = locationName;
+        if (targetLoc === '現在地' && currentLocationId) {
+            const { data: loc } = await supabase.from('locations').select('name').eq('id', currentLocationId).maybeSingle();
+            if (loc) targetLoc = loc.name;
+        }
+
+        if (!targetLoc || targetLoc === '現在地') continue;
+
+        const { data: existing } = await supabase
+            .from('reputations')
+            .select('id, score')
+            .eq('user_id', user_id)
+            .eq('location_name', targetLoc)
+            .maybeSingle();
+
+        if (existing) {
+            await supabase.from('reputations')
+                .update({ score: (existing.score || 0) + amount })
+                .eq('id', existing.id);
+        } else {
+            await supabase.from('reputations')
+                .insert({ user_id, location_name: targetLoc, score: amount });
+        }
+        console.log(`[QuestComplete/Reputation] Applied accumulated reputation change: ${amount} at ${targetLoc}`);
     }
 }

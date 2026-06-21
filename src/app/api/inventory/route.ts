@@ -336,8 +336,8 @@ export async function PATCH(req: Request) {
         // 実際に更新するテーブルを決定
         const useUserSkillsTable = is_skill && !isLegacySkill;
 
-        // クエスト進行中の装備変更制限 (is_equipped: true にする場合のみ、bypass_lockがない場合)
-        if (is_equipped && userId && !bypass_lock) {
+        // クエスト進行中の装備変更制限 (bypass_lockがない場合)
+        if (userId && !bypass_lock) {
             const { data: profile } = await supabaseServer
                 .from('user_profiles')
                 .select('current_quest_id, quest_started_at')
@@ -347,19 +347,22 @@ export async function PATCH(req: Request) {
             if (profile?.current_quest_id && profile.quest_started_at) {
                 // 実際に使用するテーブルから取得日時を確認
                 const tableName = useUserSkillsTable ? 'user_skills' : 'inventory';
+                const columnName = useUserSkillsTable ? 'created_at' : 'acquired_at';
                 const { data: invItem } = await supabaseServer
                     .from(tableName)
-                    .select('acquired_at')
+                    .select(columnName)
                     .eq('id', inventory_id)
                     .single();
 
-                if (invItem && invItem.acquired_at) {
+                const timeValue = invItem ? (useUserSkillsTable ? (invItem as any).created_at : (invItem as any).acquired_at) : null;
+
+                if (timeValue) {
                     const questStarted = new Date(profile.quest_started_at).getTime();
-                    const itemAcquired = new Date(invItem.acquired_at).getTime();
+                    const itemAcquired = new Date(timeValue).getTime();
 
                     if (itemAcquired < questStarted) {
                         return NextResponse.json(
-                            { error: 'クエスト進行中は、事前所持アイテムを新たに装備できません。' },
+                            { error: 'クエスト進行中は、事前所持アイテムの装備変更（着脱）はできません。' },
                             { status: 400 }
                         );
                     }

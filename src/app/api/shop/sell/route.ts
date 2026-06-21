@@ -93,11 +93,13 @@ export async function POST(req: Request) {
                 if (quest.requirements?.has_item == item_id) {
                     isBetrayal = true;
                 }
-                // script_data 内のノードで item_id を参照しているか効率的にチェック
+                // script_data.nodes 内のノードで item_id を参照しているか効率的にチェック
                 if (!isBetrayal && quest.script_data) {
-                    const nodes = Array.isArray(quest.script_data) ? quest.script_data : Object.values(quest.script_data);
+                    const scriptDataObj = quest.script_data as any;
+                    const nodesMap = scriptDataObj.nodes || {};
+                    const nodes = Object.values(nodesMap);
                     for (const node of nodes) {
-                        const params = typeof node === 'object' ? (node as any).params || node : node;
+                        const params = typeof node === 'object' && node !== null ? (node as any).params || node : node;
                         if (params && (params.item_id == item_id || params.require_item_id == item_id)) {
                             isBetrayal = true;
                             break;

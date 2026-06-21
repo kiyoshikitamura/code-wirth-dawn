@@ -50,8 +50,6 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
 
             if (res.ok) {
                 const data = await res.json();
-                // Refresh local profile store so quest lock is registered
-                await fetchUserProfile();
                 // Route to quest execution page
                 router.push(`/quest/colosseum_${difficulty}`);
             } else {
@@ -101,11 +99,12 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                             <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ 挑戦クラスと報酬ルール</h3>
                             <div className="space-y-1.5 text-xs font-medium">
                                 <p><strong className="text-emerald-400 font-bold">Easy クラス (全5戦):</strong> 挑戦費 [Lv × 10 G]</p>
-                                <p className="pl-4 text-slate-400">報酬: 800 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点</p>
+                                <p className="pl-4 text-slate-400">報酬: 400 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点</p>
                                 <p><strong className="text-amber-400 font-bold">Normal クラス (全10戦):</strong> 挑戦費 [Lv × 30 G]</p>
-                                <p className="pl-4 text-slate-400">報酬: 2,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点</p>
-                                <p><strong className="text-rose-400 font-bold">Hard クラス (全20戦):</strong> 挑戦費 [Lv × 50 G]</p>
-                                <p className="pl-4 text-slate-400">報酬: 4,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点</p>
+                                <p className="pl-4 text-slate-400">報酬: 1,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点</p>
+                                <p><strong className="text-rose-400 font-bold">Hard クラス (全10戦):</strong> 挑戦費 [Lv × 50 G]</p>
+                                <p className="pl-4 text-slate-400">報酬: 2,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点</p>
+                                <p className="text-[10px] text-amber-300 font-bold mt-1">※すべてのクラスにおいて、挑戦後は成功・失敗（ギブアップ含む）を問わず一律で3日間が経過します。</p>
                             </div>
                         </section>
 
@@ -181,7 +180,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                             onClick={() => setShowRules(false)}
                             className="px-6 py-2.5 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
                         >
-                            戻る
+                            閉じる
                         </button>
                     </div>
                 </div>
@@ -256,7 +255,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <span className="text-[10px] text-slate-400">(全5戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 800 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点
+                                    報酬: 400 G / 200 EXP / +5 名声 / ランダムアイテムまたはスキル1点
                                 </p>
                             </div>
                             <div className="text-right shrink-0 ml-4">
@@ -281,7 +280,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <span className="text-[10px] text-slate-400">(全10戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 2,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点
+                                    報酬: 1,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点
                                 </p>
                             </div>
                             <div className="text-right shrink-0 ml-4">
@@ -303,10 +302,10 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-black text-rose-400">Hard クラス</span>
-                                    <span className="text-[10px] text-slate-400">(全20戦)</span>
+                                    <span className="text-[10px] text-slate-400">(全10戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 4,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点
+                                    報酬: 2,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点
                                 </p>
                             </div>
                             <div className="text-right shrink-0 ml-4">
@@ -324,25 +323,23 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] grid grid-cols-3 gap-2">
+                <div className="px-4 sm:px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] grid grid-cols-3 gap-1.5 sm:gap-2">
                     <button
                         onClick={() => setShowRules(true)}
-                        className="flex items-center justify-center gap-1.5 px-3 py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
+                        className="flex items-center justify-center gap-1 px-1 sm:px-3 py-2.5 sm:py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-[11px] sm:text-xs font-bold text-slate-300 active:scale-95"
                     >
-                        <BookOpen size={14} />
                         ルール
                     </button>
                     <button
                         onClick={() => setShowRankings(true)}
-                        className="flex items-center justify-center gap-1.5 px-3 py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
+                        className="flex items-center justify-center gap-1 px-1 sm:px-3 py-2.5 sm:py-3 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-[11px] sm:text-xs font-bold text-slate-300 active:scale-95"
                     >
-                        <Trophy size={14} />
                         ランキング
                     </button>
                     <button
                         disabled={loading || !selectedDiff}
                         onClick={() => selectedDiff && handleChallenge(selectedDiff)}
-                        className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl font-black text-xs tracking-wider transition-all ${
+                        className={`flex items-center justify-center gap-1 px-1 sm:px-3 py-2.5 sm:py-3 rounded-xl font-black text-[11px] sm:text-xs tracking-wider transition-all ${
                             selectedDiff
                                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-[#070e1e] active:scale-95 shadow-lg shadow-amber-500/20'
                                 : 'bg-slate-800 text-slate-500 border border-slate-700/50 cursor-not-allowed'

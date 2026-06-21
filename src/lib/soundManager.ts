@@ -227,6 +227,8 @@ class SoundManager {
     async playBgm(key: string): Promise<void> {
         if (!key || key === this.currentBgmKey) return;
 
+        this.init();
+
         // BGM OFF時: キーだけ記録して実際の再生はスキップ
         if (!this.bgmEnabled) {
             this.currentBgmKey = key;

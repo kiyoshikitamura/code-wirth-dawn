@@ -45,24 +45,24 @@ export async function GET(req: Request) {
                 let numBattles = 5;
                 let diffLabel = 'Easy';
                 let diffVal = 1;
-                let rewards = { gold: 800, exp: 200, reputation: 5 };
+                let rewards = { gold: 400, exp: 200, reputation: 5 };
                 if (difficulty === 'normal') {
                     numBattles = 10;
                     diffLabel = 'Normal';
                     diffVal = 2;
-                    rewards = { gold: 2000, exp: 400, reputation: 10 };
+                    rewards = { gold: 1000, exp: 400, reputation: 10 };
                 } else if (difficulty === 'hard') {
-                    numBattles = 20;
+                    numBattles = 10;
                     diffLabel = 'Hard';
                     diffVal = 3;
-                    rewards = { gold: 4000, exp: 800, reputation: 20 };
+                    rewards = { gold: 2000, exp: 800, reputation: 20 };
                 }
 
                 // Compile nodes
                 const nodes: Record<string, any> = {};
                 nodes['start'] = {
                     next: 'battle_1',
-                    text: `コロシアム (${diffLabel}) に挑戦だ！全${numBattles}戦 of 連続エネミーバトルとなる。勝ち抜いて豪華な報酬を掴み取るのだ！`,
+                    text: `コロシアム (${diffLabel}) に挑戦だ！全${numBattles}戦の連続エネミーバトルとなる。勝ち抜いて豪華な報酬を掴み取るのだ！`,
                     type: 'text',
                     bg_key: 'bg_colosseum',
                     bgm: 'bgm_quest_calm',
@@ -191,8 +191,8 @@ export async function GET(req: Request) {
                     client_name: 'バルガス',
                     impact: {},
                     location_id: profile?.current_location_id || null,
-                    days_success: 0,
-                    days_failure: 0,
+                    days_success: 3,
+                    days_failure: 3,
                     is_ugc: false,
                     share_text: `コロシアム (${diffLabel}) を制覇しました！`,
                     script_data: {

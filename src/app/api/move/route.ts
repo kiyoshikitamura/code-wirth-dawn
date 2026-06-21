@@ -299,11 +299,15 @@ export async function POST(req: Request) {
         }
 
         // #11 全拠点制覇 (世代1回)
-        // 訪問記録をUPSERT
+        // 訪問記録をUPSERT（重複訪問時はユニーク制約エラーが発生するため try-catch でスルー）
         let shareDataList: any[] = [];
-        await supabaseService
-            .from('user_visited_locations')
-            .insert({ user_id: profile.id, location_id: targetData.id });
+        try {
+            await supabaseService
+                .from('user_visited_locations')
+                .insert({ user_id: profile.id, location_id: targetData.id });
+        } catch (insertErr) {
+            console.log('[Move] Duplicate visit logged or unique constraint handled safely:', insertErr);
+        }
 
         const { count: visitedCount } = await supabaseService
             .from('user_visited_locations')

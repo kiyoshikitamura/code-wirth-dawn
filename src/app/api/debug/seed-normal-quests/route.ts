@@ -336,17 +336,17 @@ export async function GET(request: Request) {
     const normalQuests: NormalQuestSeed[] = [
         {
             id: 7001, slug: 'qst_gen_deliver', rec_level: 2, difficulty: 2,
-            time_cost: 8, days_success: 8, days_failure: 8,
+            time_cost: 8, days_success: 8, days_failure: 4,
             rewards: { gold: 250, exp: 30, reputation: 2 },
         },
         {
             id: 7002, slug: 'qst_gen_escort', rec_level: 2, difficulty: 2,
-            time_cost: 8, days_success: 8, days_failure: 8,
+            time_cost: 8, days_success: 8, days_failure: 4,
             rewards: { gold: 350, exp: 40, reputation: 3 },
         },
         {
             id: 7003, slug: 'qst_gen_scavenge', rec_level: 2, difficulty: 2,
-            time_cost: 3, days_success: 3, days_failure: 3,
+            time_cost: 3, days_success: 3, days_failure: 2,
             rewards: { gold: 250, exp: 35, reputation: 2 },
             // Note: 闇ルート (Gold:500, Rep:-5, Evil:10, Chaos:10) はシナリオエンジン側で処理
         },
@@ -357,23 +357,23 @@ export async function GET(request: Request) {
         },
         {
             id: 7005, slug: 'qst_gen_bear', rec_level: 2, difficulty: 2,
-            time_cost: 4, days_success: 4, days_failure: 4,
+            time_cost: 4, days_success: 4, days_failure: 2,
             rewards: { gold: 200, exp: 35, reputation: 5, items: [700] }, // item_bear_pelt
         },
         {
             id: 7006, slug: 'qst_gen_smuggle', rec_level: 2, difficulty: 2,
-            time_cost: 8, days_success: 8, days_failure: 8,
+            time_cost: 8, days_success: 8, days_failure: 4,
             rewards: { gold: 800, exp: 40, reputation: -5, alignment_shift: { evil: 5, chaos: 5 } },
             requirements: { max_reputation: -50 },
         },
         {
             id: 7007, slug: 'qst_gen_rat', rec_level: 2, difficulty: 2,
-            time_cost: 2, days_success: 2, days_failure: 2,
+            time_cost: 2, days_success: 2, days_failure: 1,
             rewards: { gold: 400, exp: 30, reputation: 2 },
         },
         {
             id: 7008, slug: 'qst_gen_mercy', rec_level: 2, difficulty: 2,
-            time_cost: 4, days_success: 4, days_failure: 4,
+            time_cost: 4, days_success: 4, days_failure: 2,
             rewards: { gold: 10, exp: 20, reputation: 10, alignment_shift: { justice: 10, order: 10 } },
         },
     ];
