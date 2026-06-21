@@ -206,7 +206,10 @@ export const createBattleSlice = (
             const pmAny = pm as any;
             const fullHp = pm.max_durability || pmAny.max_hp || pmAny.hp || pm.durability || 100;
             // 連戦時: 前のバトルのHPを引き継ぐ（存在する場合）
-            const carriedHp = prevPartyHpMap[String(pm.id)];
+            let carriedHp = prevPartyHpMap[String(pm.id)];
+            if (carriedHp === undefined && questState.partyHp) {
+                carriedHp = questState.partyHp[String(pm.id)];
+            }
             const currentHp = carriedHp !== undefined ? Math.max(0, carriedHp) : fullHp;
 
             return {
