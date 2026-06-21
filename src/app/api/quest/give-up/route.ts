@@ -29,6 +29,8 @@ export async function POST(req: Request) {
 
         let questTitle = '未知のクエスト';
         let isUgc = false;
+        let daysPassed = 1; // 通常クエストはデフォルト1日
+
         if (currentProfile?.current_quest_id) {
             const questId = currentProfile.current_quest_id;
             const isColosseum = String(questId).startsWith('colosseum_');
@@ -36,23 +38,26 @@ export async function POST(req: Request) {
                 const difficulty = String(questId).replace('colosseum_', '');
                 const diffLabel = difficulty === 'normal' ? 'Normal' : (difficulty === 'hard' ? 'Hard' : 'Easy');
                 questTitle = `コロシアム (${diffLabel})`;
+                daysPassed = 3; // コロシアムは3日
             } else {
                 const { data: officialQuest } = await supabaseServer
                     .from('scenarios')
-                    .select('title')
+                    .select('title, days_failure')
                     .eq('id', questId)
                     .maybeSingle();
                 
                 if (officialQuest) {
                     questTitle = officialQuest.title;
+                    daysPassed = officialQuest.days_failure ?? 1;
                 } else {
                     const { data: ugcQuest } = await supabaseServer
                         .from('ugc_scenarios')
-                        .select('title')
+                        .select('title, days_failure')
                         .eq('id', questId)
                         .maybeSingle();
                     if (ugcQuest) {
                         questTitle = ugcQuest.title;
+                        daysPassed = ugcQuest.days_failure ?? 1;
                         isUgc = true;
                     }
                 }
@@ -83,17 +88,13 @@ export async function POST(req: Request) {
             vitality: Math.max(0, currentVit - 1),
         };
 
-        let daysPassed = 0;
-        const isColosseum = currentProfile.current_quest_id && String(currentProfile.current_quest_id).startsWith('colosseum_');
-
-        if (isColosseum) {
-            daysPassed = 3;
+        if (daysPassed > 0) {
             const { newAge, newAgeDays, decay } = processAging(
                 currentProfile.age || 20,
                 currentProfile.age_days || 0,
-                3
+                daysPassed
             );
-            updatePayload.accumulated_days = (currentProfile.accumulated_days || 0) + 3;
+            updatePayload.accumulated_days = (currentProfile.accumulated_days || 0) + daysPassed;
             updatePayload.age = newAge;
             updatePayload.age_days = newAgeDays;
             
