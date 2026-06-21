@@ -167,7 +167,15 @@ export function resolveNpcTurn(
     // v2.8: Per-turn same-card limit removed. used_this_turn kept but not enforced.
     npc.used_this_turn = [];
 
-    const deck = npc.signature_deck || [];
+    // NPCが使用できない・不具合を引き起こす特殊効果付きのカードを除外
+    const EXCLUDED_NPC_CARDS = [
+        // 既存カード (10種)
+        '20', '24', '56', '57', '58', '59', '60', '64', '73', '85',
+        // 新カードパック「魔術学院」追加カード (18種)
+        '101', '105', '110', '111', '112', '114', '115', '116', '118', '119', '120', 
+        '124', '129', '131', '132', '133', '139', '140'
+    ];
+    const deck = (npc.signature_deck || []).filter(c => !EXCLUDED_NPC_CARDS.includes(c.id));
     if (deck.length === 0) {
         // No cards: basic attack fallback
         actions.push(createBasicAttack(npc, context));
