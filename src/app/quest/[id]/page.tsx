@@ -480,6 +480,15 @@ export default function QuestPage() {
                                     useQuestState.getState().startQuest(startParams);
                                 }
                             }
+
+                            // プレイヤーHPをgameStoreのuserProfile.hpに同期（宿屋宿泊等による全回復不正を防止）
+                            const currentQs = useQuestState.getState();
+                            if (currentQs.isInQuest && typeof currentQs.playerHp === 'number') {
+                                console.log('[QuestPage] Syncing restored playerHp to userProfile:', currentQs.playerHp);
+                                useGameStore.setState(state => ({
+                                    userProfile: state.userProfile ? { ...state.userProfile, hp: currentQs.playerHp } : null
+                                }));
+                            }
                         }
                     }
                 } else {
