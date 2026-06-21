@@ -35,7 +35,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 34,card_emp_shield,皇帝の盾,Defense,3,none,0,0,single_ally,taunt_100,/images/items/scroll_emp_shield.png,生命を盾にして仲間を守る。指定した仲間への攻撃を必ずかばうよう敵の攻撃を引きつける（確定タウント）。
 35,card_absolute_def,絶対防御,Defense,4,none,0,50,self,invulnerable,/images/items/scroll_absolute_def.png,極限まで防御に特化した構えをとる。2ターンの間、受けるダメージをDEF+50分だけ軽減する（自身）。
 36,card_hundred_fists,百裂拳,Skill,4,none,0,75,single_enemy,multi_hit,/images/items/scroll_hundred_fists.png,怒涛の連続拳で敵を打ち砕く。2回攻撃し、合計75のダメージを与える。
-37,card_meteor_strike,メテオストライク,Magic,5,none,0,100,all_enemies,burn,/images/items/grimoire_fire.png,天空から隕石を呼び寄せ敵全体を焼き尽くす。全体に100の魔法ダメージとともに毒（2ターン）を付与する。
+37,card_meteor_strike,メテオストライク,Magic,5,none,0,100,all_enemies,burn,/images/items/grimoire_fire.png,天空から隕石を呼び寄せ敵全体を焼き尽くす。全体に100の魔法ダメージとともに炎上（2ターン）を付与する。
 38,card_great_heal,完全治癒,Heal,4,none,0,999,single_ally,,/images/items/scroll_great_heal.png,神の力で瀕死の仲間を完全回復する。単体のHPを全回復する。
 39,card_holy_nova,ホーリーノヴァ,Magic,4,none,0,60,all_enemies,blind,/images/items/grimoire_holy_nova.png,聖なる光を爆発させ敵全体を浄化する。全体に60の魔法ダメージとともに1ターンの目潰しを付与する。
 40,card_assassinate,暗殺,Skill,3,none,0,50,single_enemy,poison_fatal,/images/items/manual_assassination.png,急所を正確に狙った暗殺の一撃。50のダメージを与えつつ、強い毒（3ターン）を付与する。

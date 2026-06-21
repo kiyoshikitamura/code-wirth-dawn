@@ -1588,7 +1588,7 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'recycle': {
-                        const nonItemDiscards = nextDiscardPile.filter(c => c.type !== 'Item');
+                        const nonItemDiscards = nextDiscardPile.filter(c => c.type !== 'Item' && c.id !== '57' && c.id !== '119');
                         if (nonItemDiscards.length > 0) {
                             const pickedCard = nonItemDiscards[Math.floor(Math.random() * nonItemDiscards.length)];
                             nextDiscardPile = nextDiscardPile.filter(c => c !== pickedCard);
@@ -2542,11 +2542,28 @@ export const createBattleSlice = (
                 newMessages.push(action.message);
 
                 if ((action.type === 'attack' || action.type === 'debuff') && action.damage) {
-                    enemyHp = Math.max(0, enemyHp - action.damage);
-                    // Update tracked enemies array
-                    trackedEnemies = trackedEnemies.map(e =>
-                        e.id === currentTargetId ? { ...e, hp: enemyHp } : e
-                    );
+                    const isAoe = action.card?.target_type === 'all_enemies';
+                    if (isAoe) {
+                        trackedEnemies = trackedEnemies.map(e => {
+                            if (e.hp > 0) {
+                                const newHp = Math.max(0, e.hp - action.damage!);
+                                if (e.id === currentTargetId) {
+                                    enemyHp = newHp;
+                                }
+                                if (newHp <= 0 && e.id !== currentTargetId) {
+                                    newMessages.push(`${e.name}を倒した！`);
+                                }
+                                return { ...e, hp: newHp };
+                            }
+                            return e;
+                        });
+                    } else {
+                        enemyHp = Math.max(0, enemyHp - action.damage);
+                        // Update tracked enemies array
+                        trackedEnemies = trackedEnemies.map(e =>
+                            e.id === currentTargetId ? { ...e, hp: enemyHp } : e
+                        );
+                    }
                 }
 
                 if (action.type === 'heal' && action.healAmount) {
@@ -2609,19 +2626,43 @@ export const createBattleSlice = (
                         // 強打(カードID: 1)の場合は共通処理でのスタン付与をスキップ（個別処理で10%判定されるため）
                         const isStrikeCard = (action.card?.id?.match(/^(\d+)/)?.[1] ?? action.card?.id) === '1';
                         if (!isStrikeCard) {
-                            // v2.9.3k: デバフ成功率判定
-                            if (rollDebuffSuccess(effectId)) {
-
+                            const isAoe = action.card?.target_type === 'all_enemies';
+                            if (isAoe) {
+                                const affectedEnemies: string[] = [];
+                                const resistedEnemies: string[] = [];
                                 trackedEnemies = trackedEnemies.map(e => {
-                                    if (e.id === currentTargetId) {
-                                        const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
-                                        return { ...e, status_effects: newEffects };
+                                    if (e.hp > 0) {
+                                        if (rollDebuffSuccess(effectId)) {
+                                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
+                                            affectedEnemies.push(e.name);
+                                            return { ...e, status_effects: newEffects };
+                                        } else {
+                                            resistedEnemies.push(e.name);
+                                            return e;
+                                        }
                                     }
                                     return e;
                                 });
-                                newMessages.push(`→ ${resolvedEnemyName}に「${getEffectName(effectId)}」を付与した！(${finalDuration}ターン)`);
+                                affectedEnemies.forEach(name => {
+                                    newMessages.push(`→ ${name}に「${getEffectName(effectId)}」を付与した！(${finalDuration}ターン)`);
+                                });
+                                resistedEnemies.forEach(name => {
+                                    newMessages.push(`→ ${name}は「${getEffectName(effectId)}」に抵抗した！`);
+                                });
                             } else {
-                                newMessages.push(`→ ${resolvedEnemyName}は「${getEffectName(effectId)}」に抵抗した！`);
+                                // v2.9.3k: デバフ成功率判定
+                                if (rollDebuffSuccess(effectId)) {
+                                    trackedEnemies = trackedEnemies.map(e => {
+                                        if (e.id === currentTargetId) {
+                                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
+                                            return { ...e, status_effects: newEffects };
+                                        }
+                                        return e;
+                                    });
+                                    newMessages.push(`→ ${resolvedEnemyName}に「${getEffectName(effectId)}」を付与した！(${finalDuration}ターン)`);
+                                } else {
+                                    newMessages.push(`→ ${resolvedEnemyName}は「${getEffectName(effectId)}」に抵抗した！`);
+                                }
                             }
                         }
                     }

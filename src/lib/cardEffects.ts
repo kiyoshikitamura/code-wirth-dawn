@@ -125,7 +125,7 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
     '34': { effectType: 'taunt', effectId: 'taunt', effectDuration: 3, skipDamage: true }, // 皇帝の盾
     '35': { effectType: 'buff_self', effectId: 'def_up_heavy', effectDuration: 2, defValue: 50, skipDamage: true }, // 絶対防御
     '36': { effectType: 'multi_attack' },                                                  // 百連打
-    '37': { effectType: 'aoe_attack', effectId: 'poison', effectDuration: 2 },             // メテオストライク（全体+毒）
+    '37': { effectType: 'aoe_attack', effectId: 'burn', effectDuration: 2 },             // メテオストライク（全体+炎上）
     '38': { effectType: 'heal', skipDamage: true },                                        // 完全治癒
     '39': { effectType: 'aoe_attack', effectId: 'blind', effectDuration: 1 },              // ホーリーノヴァ
     '40': { effectType: 'attack', effectId: 'poison', effectDuration: 3 },                 // 暗殺（毒付与）

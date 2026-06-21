@@ -585,6 +585,9 @@ function executeCard(
     const finalDmg = Math.max(1, Math.floor(dmg));
     const critLabel = isCritical ? ' クリティカルヒット！' : '';
 
+    const isAoe = card.target_type === 'all_enemies';
+    const targetMsg = isAoe ? '敵全体' : context.enemyName;
+
     return {
         type: 'attack',
         card,
@@ -592,9 +595,9 @@ function executeCard(
         isCritical,
         effectId: card.effect_id,
         effectDuration: card.effect_duration || 3,
-        targetEnemyName: context.enemyName,
+        targetEnemyName: targetMsg,
         usedCardId: card.id,
-        message: `${npc.name}の${card.name}！${critLabel} ${context.enemyName}に ${finalDmg} のダメージ！`
+        message: `${npc.name}の${card.name}！${critLabel} ${targetMsg}に ${finalDmg} のダメージ！`
     };
 }
 
