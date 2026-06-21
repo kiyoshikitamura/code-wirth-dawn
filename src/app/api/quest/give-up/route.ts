@@ -80,12 +80,15 @@ export async function POST(req: Request) {
 
         // 1. プロフィール更新: ロック解除 (quest_started_atのnull化含む) + VIT -1 (楽観的排他制御)
 
+        const currentMaxVit = currentProfile.max_vitality ?? 100;
         const currentVit = currentProfile.vitality ?? 100;
+        const newMaxVit = Math.max(0, currentMaxVit - 1);
         const updatePayload: Record<string, any> = {
             current_quest_id: null,
             current_quest_state: null,
             quest_started_at: null,
-            vitality: Math.max(0, currentVit - 1),
+            max_vitality: newMaxVit,
+            vitality: Math.min(Math.max(0, currentVit - 1), newMaxVit),
         };
 
         if (daysPassed > 0) {
