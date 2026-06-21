@@ -40,6 +40,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     // Concurrency phase lock for NEXT button
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [isResultTransitioning, setIsResultTransitioning] = useState(false);
     const nextTimeoutRef1 = useRef<ReturnType<typeof setTimeout> | null>(null);
     const nextTimeoutRef2 = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -569,6 +570,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     // Victory/Defeat action handler
     const handleResultAction = async (resultType: 'win' | 'lose' | 'escape') => {
+        if (isResultTransitioning) return;
+        setIsResultTransitioning(true);
+
         const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
         const returnUrl = urlParams.get('return_url');
         const bType = urlParams.get('type');
@@ -615,17 +619,22 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
         // v20: Bounty敗北ペナルティはgameStore.processEnemyTurn内で処理済み
 
-        if (returnUrl) {
-            const separator = returnUrl.includes('?') ? '&' : '?';
-            router.push(`${returnUrl}${separator}battle_result=${resultType}${bType ? `&type=${bType}` : ''}`);
-        } else if (onBattleEnd) {
-            // クエスト中バトル: 親コンポーネント(QuestPage)のハンドラーを呼ぶ
-            onBattleEnd(resultType);
-        } else if (selectedScenario) {
-            // battle-testなどスタンドアロンバトル
-            router.push(`/inn?battle_result=${resultType}`);
-        } else {
-            router.push(`/inn?battle_result=${resultType}${bType ? `&type=${bType}` : ''}`);
+        try {
+            if (returnUrl) {
+                const separator = returnUrl.includes('?') ? '&' : '?';
+                router.push(`${returnUrl}${separator}battle_result=${resultType}${bType ? `&type=${bType}` : ''}`);
+            } else if (onBattleEnd) {
+                // クエスト中バトル: 親コンポーネント(QuestPage)のハンドラーを呼ぶ
+                await onBattleEnd(resultType);
+            } else if (selectedScenario) {
+                // battle-testなどスタンドアロンバトル
+                router.push(`/inn?battle_result=${resultType}`);
+            } else {
+                router.push(`/inn?battle_result=${resultType}${bType ? `&type=${bType}` : ''}`);
+            }
+        } catch (err) {
+            console.error("Error executing result action:", err);
+            setIsResultTransitioning(false);
         }
     };
 
@@ -1709,8 +1718,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
                                 <div className="flex items-center justify-center gap-2 mt-2">
                                     <button
+                                        disabled={isResultTransitioning}
                                         onClick={() => handleResultAction('win')}
-                                        className="px-6 py-2 bg-gradient-to-r from-yellow-900 to-yellow-700 text-yellow-100 border border-yellow-500 rounded text-sm hover:scale-105 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.3)] font-bold"
+                                        className={`px-6 py-2 bg-gradient-to-r from-yellow-900 to-yellow-700 text-yellow-100 border border-yellow-500 rounded text-sm font-bold shadow-[0_0_15px_rgba(234,179,8,0.3)] transition-all ${
+                                            isResultTransitioning
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'hover:scale-105'
+                                        }`}
                                     >
                                         {selectedScenario ? '次へ進む' : '凱旋する'}
                                     </button>
@@ -1732,8 +1746,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 <p className="text-gray-500 font-sans tracking-widest text-sm">戦略的撤退...</p>
                                 <div className="flex items-center justify-center gap-2">
                                     <button
+                                        disabled={isResultTransitioning}
                                         onClick={() => handleResultAction('escape')}
-                                        className="px-6 py-2 bg-gray-800 text-gray-300 border border-gray-600 rounded text-sm hover:bg-gray-700 transition-colors font-bold"
+                                        className={`px-6 py-2 bg-gray-800 text-gray-300 border border-gray-600 rounded text-sm font-bold transition-all ${
+                                            isResultTransitioning
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'hover:bg-gray-700'
+                                        }`}
                                     >
                                         戦線離脱
                                     </button>
@@ -1755,8 +1774,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 <p className="text-red-400/80 font-sans tracking-widest text-sm">意識が遠のいていく...</p>
                                 <div className="flex items-center justify-center gap-2">
                                     <button
+                                        disabled={isResultTransitioning}
                                         onClick={() => handleResultAction('lose')}
-                                        className="px-6 py-2 bg-red-950/80 text-red-200 border border-red-800 rounded text-sm hover:bg-red-900 transition-colors font-bold"
+                                        className={`px-6 py-2 bg-red-950/80 text-red-200 border border-red-800 rounded text-sm font-bold transition-all ${
+                                            isResultTransitioning
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'hover:bg-red-900'
+                                        }`}
                                     >
                                         運ばれる
                                     </button>

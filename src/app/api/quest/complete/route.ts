@@ -81,6 +81,12 @@ export async function POST(req: Request) {
                 rewards = { gold: 2000, exp: 800, reputation: 20 };
             }
 
+            // Generate nodes mock to pass the battle verification check
+            const nodesMock: Record<string, any> = {};
+            for (let i = 1; i <= numBattles; i++) {
+                nodesMock[`colosseum_battle_${i}`] = { type: 'battle', nodeType: 'battle' };
+            }
+
             // Fetch user profile current_location_id
             const { data: userLoc } = await supabase
                 .from('user_profiles')
@@ -106,7 +112,10 @@ export async function POST(req: Request) {
                 days_success: 3,
                 days_failure: 3,
                 is_ugc: false,
-                share_text: `コロシアム (${diffLabel}) を制覇しました！`
+                share_text: `コロシアム (${diffLabel}) を制覇しました！`,
+                script_data: {
+                    nodes: nodesMock
+                }
             };
         } else {
             const questColumns = 'id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, days_success, days_failure, is_ugc, share_text, script_data';

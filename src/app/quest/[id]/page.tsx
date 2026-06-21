@@ -64,6 +64,7 @@ export default function QuestPage() {
     const [isPartyOpen, setIsPartyOpen] = useState(true);
     const [vitalityPulse, setVitalityPulse] = useState(true);
     const isStartingBattleRef = useRef(false); // 戦闘開始連打防止ガード
+    const isProcessingEndRef = useRef(false); // 戦闘終了処理の多重実行防止ガード
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -820,176 +821,45 @@ export default function QuestPage() {
     };
 
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
-        localStorage.removeItem('pending_quest_resume');
+        if (isProcessingEndRef.current) return;
+        isProcessingEndRef.current = true;
 
-        const storeState = useGameStore.getState();
-        const battleHp = storeState.userProfile?.hp;
-        const battleVit = storeState.userProfile?.vitality;
-        const battleParty = storeState.battleState?.party || [];
-        const droppedItems = storeState.battleState?.droppedItems || [];
-        const consumedItems = storeState.battleState?.consumedItems || [];
+        try {
+            localStorage.removeItem('pending_quest_resume');
 
-        const partyHpMap: Record<string, number> = {};
-        const deadNpcIds: string[] = [];
-        battleParty.forEach((pm: any) => {
-            if ((pm.durability ?? pm.hp ?? 1) <= 0) {
-                deadNpcIds.push(String(pm.id || pm.slug));
-            } else {
-                partyHpMap[String(pm.id)] = pm.durability ?? pm.hp;
-            }
-        });
+            const storeState = useGameStore.getState();
+            const battleHp = storeState.userProfile?.hp;
+            const battleVit = storeState.userProfile?.vitality;
+            const battleParty = storeState.battleState?.party || [];
+            const droppedItems = storeState.battleState?.droppedItems || [];
+            const consumedItems = storeState.battleState?.consumedItems || [];
 
-        // 状態を useQuestState ストアへ同期
-        useQuestState.getState().updateAfterBattle({
-            playerHp: battleHp || 0,
-            partyHp: partyHpMap,
-            deadNpcIds,
-            droppedItems,
-            usedConsumables: consumedItems
-        });
-
-        if (result === 'win') {
-            // 1. プレイヤーHP/VITをDBに永続化（Service Role APIで確実に書き込み）
-            const authToken = await getAuthToken();
-            if (battleHp != null && userProfile?.id) {
-                try {
-                    const updateBody: any = { hp: Math.max(0, battleHp) };
-                    if (battleVit != null) updateBody.vitality = battleVit;
-                    await fetch('/api/profile/update-status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                        },
-                        body: JSON.stringify(updateBody)
-                    });
-                } catch (e) {
-                    console.warn('[QuestPage] Failed to persist post-battle HP/VIT:', e);
+            const partyHpMap: Record<string, number> = {};
+            const deadNpcIds: string[] = [];
+            battleParty.forEach((pm: any) => {
+                if ((pm.durability ?? pm.hp ?? 1) <= 0) {
+                    deadNpcIds.push(String(pm.id || pm.slug));
+                } else {
+                    partyHpMap[String(pm.id)] = pm.durability ?? pm.hp;
                 }
-            }
+            });
 
-            // 2. パーティメンバーのHPをDBに永続化（連戦時のHP引き継ぎ用、ゲストは除外）
-            const partyUpdates = battleParty
-                .filter((pm: any) => pm.id && pm.durability != null && pm.origin_type !== 'quest_guest')
-                .map((pm: any) => ({ id: pm.id, durability: Math.max(0, pm.durability) }));
-            if (partyUpdates.length > 0) {
-                try {
-                    await fetch('/api/party/update-hp', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                        },
-                        body: JSON.stringify({ members: partyUpdates })
-                    });
-                } catch (e) {
-                    console.warn('[QuestPage] Failed to persist party HP:', e);
-                }
-            }
+            // 状態を useQuestState ストアへ同期
+            useQuestState.getState().updateAfterBattle({
+                playerHp: battleHp || 0,
+                partyHp: partyHpMap,
+                deadNpcIds,
+                droppedItems,
+                usedConsumables: consumedItems
+            });
 
-            // 3. ストアを最新DB値で同期（ヘッダー/次バトルの正確なHP表示のため）
-            await fetchUserProfile();
-            // 4. バトル表示フラグをクリア（パーティHP情報は連戦引き継ぎ用に保持）
-            useGameStore.setState((state: any) => ({
-                battleState: {
-                    ...state.battleState,
-                    enemy: null,
-                    enemies: [],
-                    isVictory: false,
-                    isDefeat: false,
-                    battle_result: undefined
-                }
-            }));
-
-            // 5. 護衛対象HP0チェック: ゲストがバトル中に倒れた場合は敗北扱い
-            const questState = useQuestState.getState();
-            if (questState.isEscortMission && questState.guest) {
-                const guestId = String(questState.guest.id);
-                const guestSlug = (questState.guest as any).slug;
-                const guestInBattle = battleParty.find((pm: any) => String(pm.id) === guestId || (guestSlug && pm.slug === guestSlug));
-                const guestHp = (guestInBattle as any)?.durability ?? (guestInBattle as any)?.hp ?? -1;
-                if (guestHp <= 0) {
-                    // 護衛対象が死亡 → 敗北として end_failure に遷移
-                    questState.removeGuest();
-                    handleBattleEnd('lose');
-                    return;
-                }
-            }
-
-            // 勝利後に遷移するノードを設定して進める
-            const targetNextNode = successNodeIdRef.current || 'end_success';
-            setInitialNodeId(targetNextNode);
-            successNodeIdRef.current = null; // クリア
-
-            setViewMode('scenario');
-        } else {
-            // バトル敗北/撤退: end_failure ノードに遷移してシナリオテキストを表示
-            // バトルステートをクリア（ゲストNPCのparty残留防止）
-            useGameStore.setState((state: any) => ({
-                battleState: {
-                    ...state.battleState,
-                    enemy: null,
-                    enemies: [],
-                    party: [],
-                    isVictory: false,
-                    isDefeat: false,
-                    battle_result: undefined
-                }
-            }));
-
-            // シナリオ内の end_failure ノードを検索
-            let scriptNodes = scenario?.script_data?.nodes || {};
-            if (Object.keys(scriptNodes).length === 0 && scenario?.flow_nodes && Array.isArray(scenario.flow_nodes)) {
-                const nodesObj: Record<string, any> = {};
-                scenario.flow_nodes.forEach((node: any) => { nodesObj[node.id] = node; });
-                scriptNodes = nodesObj;
-            }
-            const failNodeId = Object.entries(scriptNodes)
-                .find(([, n]: [string, any]) =>
-                    (n.type === 'end' && (n.result === 'failure' || n.params?.result === 'failure')) || n.type === 'end_failure'
-                )?.[0];
-
-            if (failNodeId) {
-                // end_failure ノードに遷移 → シナリオエンジンが失敗テキストを表示
-                // → ユーザーが「結果を確認する」を押した時に onComplete(failure) が発火
-                setInitialNodeId(failNodeId);
-                setViewMode('scenario');
-            } else {
-                // フォールバック: end_failure ノードが存在しない場合は従来通り直接ポップアップ
-                useQuestState.getState().resetQuest();
-
-                // テストプレイ/デバッグモード: APIを呼ばずモック結果を表示
-                if (isTestPlay) {
-                    setViewMode('scenario');
-                    setResultOverlay({
-                        result: 'failure',
-                        data: {
-                            quest_title: scenario?.title,
-                            rewards: {},
-                            days_passed: 0,
-                            earned_exp: 0,
-                            changes: { gold_gained: 0, old_age: 0, new_age: 0, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
-                            rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
-                        }
-                    });
-                    return;
-                }
-
-                try {
-                    const authToken = await getAuthToken();
-
-                    const bs = useGameStore.getState().battleState;
-                    const defeatedMemberIds = (bs?.party || [])
-                        .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
-                        .map((m: any) => String(m.id));
-
-                    // 撤退時: バトル中に受けたダメージをDBに永続化（HP保持のため）
-                    const escapeState = useGameStore.getState().userProfile;
-                    const escapeHp = escapeState?.hp;
-                    const escapeVit = escapeState?.vitality;
-                    if (escapeHp != null && userProfile?.id) {
-                        const updateBody: any = { hp: Math.max(0, escapeHp) };
-                        if (escapeVit != null) updateBody.vitality = escapeVit;
+            if (result === 'win') {
+                // 1. プレイヤーHP/VITをDBに永続化（Service Role APIで確実に書き込み）
+                const authToken = await getAuthToken();
+                if (battleHp != null && userProfile?.id) {
+                    try {
+                        const updateBody: any = { hp: Math.max(0, battleHp) };
+                        if (battleVit != null) updateBody.vitality = battleVit;
                         await fetch('/api/profile/update-status', {
                             method: 'POST',
                             headers: {
@@ -998,47 +868,190 @@ export default function QuestPage() {
                             },
                             body: JSON.stringify(updateBody)
                         });
+                    } catch (e) {
+                        console.warn('[QuestPage] Failed to persist post-battle HP/VIT:', e);
+                    }
+                }
+
+                // 2. パーティメンバーのHPをDBに永続化（連戦時のHP引き継ぎ用、ゲストは除外）
+                const partyUpdates = battleParty
+                    .filter((pm: any) => pm.id && pm.durability != null && pm.origin_type !== 'quest_guest')
+                    .map((pm: any) => ({ id: pm.id, durability: Math.max(0, pm.durability) }));
+                if (partyUpdates.length > 0) {
+                    try {
+                        await fetch('/api/party/update-hp', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                            },
+                            body: JSON.stringify({ members: partyUpdates })
+                        });
+                    } catch (e) {
+                        console.warn('[QuestPage] Failed to persist party HP:', e);
+                    }
+                }
+
+                // 3. ストアを最新DB値で同期（ヘッダー/次バトルの正確なHP表示のため）
+                await fetchUserProfile();
+                // 4. バトル表示フラグをクリア（パーティHP情報は連戦引き継ぎ用に保持）
+                useGameStore.setState((state: any) => ({
+                    battleState: {
+                        ...state.battleState,
+                        enemy: null,
+                        enemies: [],
+                        isVictory: false,
+                        isDefeat: false,
+                        battle_result: undefined
+                    }
+                }));
+
+                // 5. 護衛対象HP0チェック: ゲストがバトル中に倒れた場合は敗北扱い
+                const questState = useQuestState.getState();
+                if (questState.isEscortMission && questState.guest) {
+                    const guestId = String(questState.guest.id);
+                    const guestSlug = (questState.guest as any).slug;
+                    const guestInBattle = battleParty.find((pm: any) => String(pm.id) === guestId || (guestSlug && pm.slug === guestSlug));
+                    const guestHp = (guestInBattle as any)?.durability ?? (guestInBattle as any)?.hp ?? -1;
+                    if (guestHp <= 0) {
+                        // 護衛対象が死亡 → 敗北として end_failure に遷移
+                        questState.removeGuest();
+                        isProcessingEndRef.current = false; // ロック解除して lose を処理
+                        await handleBattleEnd('lose');
+                        return;
+                    }
+                }
+
+                // 勝利後に遷移するノードを設定して進める
+                const fallbackNodeId = useQuestState.getState().currentNodeId || 'start';
+                const targetNextNode = successNodeIdRef.current || fallbackNodeId;
+                if (!successNodeIdRef.current) {
+                    console.warn(`[QuestPage] successNodeIdRef is null! Falling back to current node: ${fallbackNodeId}`);
+                }
+                setInitialNodeId(targetNextNode);
+                successNodeIdRef.current = null; // クリア
+
+                setViewMode('scenario');
+            } else {
+                // バトル敗北/撤退: end_failure ノードに遷移してシナリオテキストを表示
+                // バトルステートをクリア（ゲストNPCのparty残留防止）
+                useGameStore.setState((state: any) => ({
+                    battleState: {
+                        ...state.battleState,
+                        enemy: null,
+                        enemies: [],
+                        party: [],
+                        isVictory: false,
+                        isDefeat: false,
+                        battle_result: undefined
+                    }
+                }));
+
+                // シナリオ内の end_failure ノードを検索
+                let scriptNodes = scenario?.script_data?.nodes || {};
+                if (Object.keys(scriptNodes).length === 0 && scenario?.flow_nodes && Array.isArray(scenario.flow_nodes)) {
+                    const nodesObj: Record<string, any> = {};
+                    scenario.flow_nodes.forEach((node: any) => { nodesObj[node.id] = node; });
+                    scriptNodes = nodesObj;
+                }
+                const failNodeId = Object.entries(scriptNodes)
+                    .find(([, n]: [string, any]) =>
+                        (n.type === 'end' && (n.result === 'failure' || n.params?.result === 'failure')) || n.type === 'end_failure'
+                    )?.[0];
+
+                if (failNodeId) {
+                    // end_failure ノードに遷移 → シナリオエンジンが失敗テキストを表示
+                    // → ユーザーが「結果を確認する」を押した時に onComplete(failure) が発火
+                    setInitialNodeId(failNodeId);
+                    setViewMode('scenario');
+                } else {
+                    // フォールバック: end_failure ノードが存在しない場合は従来通り直接ポップアップ
+                    useQuestState.getState().resetQuest();
+
+                    // テストプレイ/デバッグモード: APIを呼ばずモック結果を表示
+                    if (isTestPlay) {
+                        setViewMode('scenario');
+                        setResultOverlay({
+                            result: 'failure',
+                            data: {
+                                quest_title: scenario?.title,
+                                rewards: {},
+                                days_passed: 0,
+                                earned_exp: 0,
+                                changes: { gold_gained: 0, old_age: 0, new_age: 0, aged_up: false, vit_penalty: 0, atk_decay: 0, def_decay: 0 },
+                                rep_change: null, party_changes: null, loot_saved: [], guest_conversion: null, new_location_name: null,
+                            }
+                        });
+                        return;
                     }
 
-                    // Zustand から消費アイテム、死亡NPCを取得
-                    const questStateData = useQuestState.getState();
-                    const consumedItemsData = questStateData.consumedItems;
-                    const deadNpcsData = questStateData.deadNpcs;
-                    const finalDefeatedMemberIds = Array.from(new Set([...defeatedMemberIds, ...deadNpcsData]));
+                    try {
+                        const authToken = await getAuthToken();
 
-                    const res = await fetch('/api/quest/complete', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                        },
-                        body: JSON.stringify({
-                            quest_id: scenario?.id,
-                            result: 'failure',
-                            history: [],
-                            loot_pool: [],
-                            consumed_items: consumedItemsData,
-                            defeated_member_ids: finalDefeatedMemberIds,
-                            remaining_guest: null,
-                            battle_defeat: result === 'lose',
-                        })
-                    });
+                        const bs = useGameStore.getState().battleState;
+                        const defeatedMemberIds = (bs?.party || [])
+                            .filter((m: any) => (m.durability ?? m.hp ?? 1) <= 0)
+                            .map((m: any) => String(m.id));
 
-                    if (res.ok) {
-                        const data = await res.json();
-                        useQuestState.getState().finalizeQuest('failure');
-                        await fetchUserProfile();
-                        setViewMode('scenario');
-                        setResultOverlay({ result: 'failure', data });
-                    } else {
-                        console.error('[QuestPage] Battle failure complete API error');
+                        // 撤退時: バトル中に受けたダメージをDBに永続化（HP保持のため）
+                        const escapeState = useGameStore.getState().userProfile;
+                        const escapeHp = escapeState?.hp;
+                        const escapeVit = escapeState?.vitality;
+                        if (escapeHp != null && userProfile?.id) {
+                            const updateBody: any = { hp: Math.max(0, escapeHp) };
+                            if (escapeVit != null) updateBody.vitality = escapeVit;
+                            await fetch('/api/profile/update-status', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                                },
+                                body: JSON.stringify(updateBody)
+                            });
+                        }
+
+                        // Zustand から消費アイテム、死亡NPCを取得
+                        const questStateData = useQuestState.getState();
+                        const consumedItemsData = questStateData.consumedItems;
+                        const deadNpcsData = questStateData.deadNpcs;
+                        const finalDefeatedMemberIds = Array.from(new Set([...defeatedMemberIds, ...deadNpcsData]));
+
+                        const res = await fetch('/api/quest/complete', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                            },
+                            body: JSON.stringify({
+                                quest_id: scenario?.id,
+                                result: 'failure',
+                                history: [],
+                                loot_pool: [],
+                                consumed_items: consumedItemsData,
+                                defeated_member_ids: finalDefeatedMemberIds,
+                                remaining_guest: null,
+                                battle_defeat: result === 'lose',
+                            })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            useQuestState.getState().finalizeQuest('failure');
+                            await fetchUserProfile();
+                            setViewMode('scenario');
+                            setResultOverlay({ result: 'failure', data });
+                        } else {
+                            console.error('[QuestPage] Battle failure complete API error');
+                            router.push('/inn');
+                        }
+                    } catch (e) {
+                        console.error('[QuestPage] Battle failure handling error:', e);
                         router.push('/inn');
                     }
-                } catch (e) {
-                    console.error('[QuestPage] Battle failure handling error:', e);
-                    router.push('/inn');
                 }
             }
+        } finally {
+            isProcessingEndRef.current = false;
         }
     };
 

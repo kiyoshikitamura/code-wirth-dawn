@@ -115,7 +115,8 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 戦闘終了検証時、コロシアム中のバトルであれば戦績 (`colosseum_user_stats`) を更新する。
 
 ### 4.4 `POST /api/quest/complete`（既存拡張）
-コロシアム制覇時に、報酬プールからウェイトに基づいてアイテム・スキルを抽選してユーザーに付与する。
+- **報酬付与**: コロシアム制覇時に、報酬プールからウェイトに基づいてアイテム・スキルを抽選してユーザーに付与する。
+- **戦闘検証（セキュリティ強化）**: コロシアム完了時においても、バトル検証トークン（`battle_completion_token`）による戦闘検証が必須化される。API側では、難易度（Easy/Normal/Hard）に応じた連続戦闘ノード（`colosseum_battle_1` から `colosseum_battle_N`）をモックとして構築して検証ロジックを通すことで、チートによるクリアワープや改ざんを確実に遮断する。
 
 ---
 
