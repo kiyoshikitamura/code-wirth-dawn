@@ -62,7 +62,7 @@ export async function GET(req: Request) {
                 const nodes: Record<string, any> = {};
                 nodes['start'] = {
                     next: 'battle_1',
-                    text: `コロシアム (${diffLabel}) に挑戦だ！全${numBattles}戦 of 連続エネミーバトルとなる。勝ち抜いて豪華な報酬を掴み取るのだ！`,
+                    text: `コロシアム (${diffLabel}) に挑戦だ！全${numBattles}戦の連続エネミーバトルとなる。勝ち抜いて豪華な報酬を掴み取るのだ！`,
                     type: 'text',
                     bg_key: 'bg_colosseum',
                     bgm: 'bgm_quest_calm',

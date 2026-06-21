@@ -655,6 +655,15 @@ export default function QuestPage() {
         }
         isStartingBattleRef.current = true;
 
+        // 背景画像のプリロードを非同期で開始
+        const targetBgUrl = getAssetUrl(bgKey || 'bg_wasteland');
+        const preloadBgPromise = new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // エラー時も進行不能を防ぐためresolve
+            img.src = targetBgUrl;
+        });
+
         try {
         let enemies: Enemy[] = [{ id: 'slime', name: 'スライム', hp: 50, maxHp: 50, level: 1 }];
 
@@ -783,8 +792,11 @@ export default function QuestPage() {
             nextNodeId: successNodeId
         }));
 
+        // 背景画像のプリロード完了を待機
+        await preloadBgPromise;
+
         setInitialNodeId(successNodeId); // Win時に進むノードをセットしておく
-        setBattleBgUrl(getAssetUrl(bgKey || 'bg_wasteland'));
+        setBattleBgUrl(targetBgUrl);
         const targetBgm = bgm || 'bgm_battle';
         setBattleBgm(targetBgm); // CSVのバトルBGMを保存（指定なしの場合はデフォルト）
         setViewMode('battle');
