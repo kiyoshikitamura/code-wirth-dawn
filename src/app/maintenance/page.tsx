@@ -100,32 +100,7 @@ export default async function MaintenancePage() {
                     お客様にはご不便をおかけいたしますが、ご理解とご協力のほどよろしくお願い申し上げます。
                 </p>
 
-                {/* 予定時刻表示エリア (可読性重視の高コントラスト設計) */}
-                <div style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    padding: '20px 16px',
-                    marginBottom: '32px',
-                }}>
-                    <span style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: '#71717a',
-                        marginBottom: '6px',
-                    }}>
-                        メンテナンス終了予定
-                    </span>
-                    <span style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: '#f4f4f5',
-                    }}>
-                        {endTimeStr}
-                    </span>
-                </div>
+
 
                 {/* アクションボタン */}
                 <div>
