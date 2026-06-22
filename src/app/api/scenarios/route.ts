@@ -52,7 +52,7 @@ export async function GET(req: Request) {
                     diffVal = 2;
                     rewards = { gold: 1000, exp: 400, reputation: 10 };
                 } else if (difficulty === 'hard') {
-                    numBattles = 20;
+                    numBattles = 10;
                     diffLabel = 'Hard';
                     diffVal = 3;
                     rewards = { gold: 2000, exp: 800, reputation: 20 };

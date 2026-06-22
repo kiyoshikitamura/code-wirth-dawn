@@ -191,6 +191,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             isTyping.current = false;
             setDisplayedLogs([]);
             setIsTypingDone(false); // 新バトル開始 → ロック
+            setIsResultTransitioning(false); // 新バトル開始時に結果遷移ロックをリセット
+            setIsTransitioning(false); // 新バトル開始時にトランジションロックをリセット
             enqueuedUpToRef.current = curr.length; // 全メッセージをキューに積む
             typingQueue.current.push(...curr);
             setLiveHp(userProfile?.hp ?? null); // 新バトル開始時に HP バーをリセット
