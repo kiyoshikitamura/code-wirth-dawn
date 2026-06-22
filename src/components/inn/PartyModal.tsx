@@ -106,7 +106,8 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
     const renderDetailPopup = () => {
         if (!selectedDetail) return null;
 
-        const vit = selectedDetail.vitality ?? selectedDetail.durability ?? 100;
+        const vit = selectedDetail.vitality ?? 
+            (selectedDetail.max_durability ? Math.round((selectedDetail.durability / selectedDetail.max_durability) * 100) : 100);
         const originTypeLabel = 
             selectedDetail.origin_type === 'shadow_active' ? '影の残像' : 
             selectedDetail.origin_type === 'shadow_heroic' ? '英霊' : '傭兵';
@@ -144,7 +145,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                             <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
                                 <div className="text-green-400 font-bold font-mono text-xs">
-                                    {selectedDetail.max_hp ?? selectedDetail.hp ?? '—'}
+                                    {selectedDetail.hp ?? selectedDetail.durability ?? 0} / {selectedDetail.max_hp ?? selectedDetail.max_durability ?? 100}
                                 </div>
                             </div>
                             <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
@@ -269,7 +270,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                                                     {member.name}
                                                 </div>
                                                 <div className="text-[10px] text-slate-500 mt-0.5">
-                                                    {member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / VIT: {member.vitality ?? member.durability ?? '—'}
+                                                    {member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / HP: {member.hp ?? member.durability ?? 0}/{member.max_hp ?? member.max_durability ?? 100}
                                                 </div>
                                             </div>
                                         </div>

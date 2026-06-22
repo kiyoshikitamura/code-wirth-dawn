@@ -247,8 +247,8 @@ function PartyMemberIcon({ member, hpPct, maxHp, isGuest }: {
                             <span className="text-slate-200 font-mono">{member.durability ?? 0} / {maxHp}</span>
                         </div>
                         <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
-                            <span className={`font-bold ${((member as any).vitality ?? (member as any).durability ?? 100) <= 20 ? 'text-red-400' : 'text-amber-400'}`}>VIT</span>
-                            <span className="text-slate-200 font-mono">{(member as any).vitality ?? (member as any).durability ?? '—'}</span>
+                            <span className={`font-bold ${((member as any).vitality ?? (member.durability && maxHp ? Math.round((member.durability / maxHp) * 100) : 100)) <= 20 ? 'text-red-400' : 'text-amber-400'}`}>VIT</span>
+                            <span className="text-slate-200 font-mono">{(member as any).vitality ?? (member.durability && maxHp ? Math.round((member.durability / maxHp) * 100) : 100)}</span>
                         </div>
                         <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                             <span className="text-red-400 font-bold">攻撃力</span>

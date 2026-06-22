@@ -135,7 +135,7 @@ export class PartyService {
                 icon_url: resolvedImageUrl,
                 skill_names: skillNames,
                 flavor_text: npc?.introduction || npc?.flavor_text || member.introduction || member.flavor_text || undefined,
-                vitality: member.vitality ?? 100,
+                vitality: member.vitality ?? (resolvedMaxHp > 0 ? Math.round((currentDurability / resolvedMaxHp) * 100) : 100),
             };
         });
     }

@@ -67,7 +67,9 @@ CREATE TABLE party_members (
 - バトルHP0: バトル中のHPが0になった場合、バトルから脱落。DBで`is_active=false, durability=0`に即時更新。
 - VIT0離脱: クエスト完了時にVIT（`durability`カラム）が0以下になると`party_members`から削除され離脱。形見アイテム生成。
 
-> **用語定義 (v4.1)**: 「バトルHP」= `max_durability`（バトル毎にリセット）。「VIT(寿命)」= `durability`（クエスト完了毎に減少、回復困難）。UIではバトルHPを緑色、VITをオレンジ色のバーで表示。
+> **用語定義 (v4.1)**: 「バトルHP」= `max_durability`（バトル毎にリセット）。「VIT(寿命)」= `durability`（クエスト完了毎に減少、回復困難）。
+> - UIでの表示において、プレイヤーのVIT上限が100であるのに対しNPCのdurabilityは高値（例: 250等）をとるため、NPCのVITはパーセンテージ `(durability / max_durability) * 100` で100点満点に正規化して表示する。
+> - クエスト結果画面での寿命減少表示は、誤解を避けるため「VIT」ではなく「耐久」ラベル（例: `耐久 250 ▸ 245`）を使用する。
 
 - **VIT摩耗計算** (`POST /api/quest/complete`):
   - 成功: -5, 失敗/撤退: -10, バトルHP0追加: -10
