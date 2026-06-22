@@ -255,9 +255,14 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                                     <div 
                                         key={member.id} 
                                         onClick={() => setSelectedDetail(member)} 
-                                        className="flex items-center justify-between p-2.5 bg-slate-900/30 border border-slate-800/80 hover:border-slate-700 cursor-pointer active:bg-slate-900/50 transition-all rounded-lg group"
+                                        className="flex items-center justify-between p-2.5 bg-slate-900/30 border border-slate-800/80 hover:border-slate-700 cursor-pointer active:bg-slate-900/50 transition-all rounded-lg group animate-in fade-in duration-150"
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            {/* 順序番号 (1〜4) */}
+                                            <span className="text-[11px] font-mono font-bold text-slate-500 w-3 text-center shrink-0">
+                                                {index + 1}
+                                            </span>
+                                            {/* アイコン */}
                                             <div className="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center shrink-0 overflow-hidden border border-slate-800/60">
                                                 {member.icon_url || member.image_url ? (
                                                     <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover animate-in fade-in" />
@@ -265,16 +270,21 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                                                     <div className="text-purple-400 font-bold text-xs">{member.name[0]}</div>
                                                 )}
                                             </div>
-                                            <div>
-                                                <div className="text-xs font-bold text-purple-300 group-hover:text-purple-200 transition-colors">
+                                            {/* 名前・職業 */}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-xs font-bold text-purple-300 group-hover:text-purple-200 transition-colors truncate">
                                                     {member.name}
                                                 </div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5">
-                                                    {member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / HP: {member.hp ?? member.durability ?? 0}/{member.max_hp ?? member.max_durability ?? 100}
+                                                <div className="text-[9px] text-slate-500 mt-0.5 truncate">
+                                                    {member.epithet || toJpJobClass(member.job_class || 'Adventurer')}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3 shrink-0 ml-1" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center gap-2 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
+                                            {/* HP表示バッジ（改行防止） */}
+                                            <div className="text-[9px] font-mono bg-black/40 px-1.5 py-0.5 rounded border border-slate-800 text-green-400 font-bold shrink-0">
+                                                HP {member.hp ?? member.durability ?? 0}/{member.max_hp ?? member.max_durability ?? 100}
+                                            </div>
                                             {party.length > 1 && (
                                                 <div className="flex items-center gap-1 bg-slate-950/40 rounded border border-slate-800/80 p-0.5">
                                                     <button
