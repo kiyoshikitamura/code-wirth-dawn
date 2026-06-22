@@ -44,22 +44,20 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const nextTimeoutRef1 = useRef<ReturnType<typeof setTimeout> | null>(null);
     const nextTimeoutRef2 = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const {
-        battleState,
-        hand,
-        attackEnemy,
-        endTurn,
-        runNpcPhase,
-        runEnemyPhase,
-        waitTurn,
-        setTactic,
-        fleeBattle,
-        selectedScenario,
-        fetchUserProfile,
-        userProfile,
-        setTarget,
-        useBattleItem,
-    } = useGameStore();
+    const battleState = useGameStore(state => state.battleState);
+    const hand = useGameStore(state => state.hand);
+    const attackEnemy = useGameStore(state => state.attackEnemy);
+    const endTurn = useGameStore(state => state.endTurn);
+    const runNpcPhase = useGameStore(state => state.runNpcPhase);
+    const runEnemyPhase = useGameStore(state => state.runEnemyPhase);
+    const waitTurn = useGameStore(state => state.waitTurn);
+    const setTactic = useGameStore(state => state.setTactic);
+    const fleeBattle = useGameStore(state => state.fleeBattle);
+    const selectedScenario = useGameStore(state => state.selectedScenario);
+    const fetchUserProfile = useGameStore(state => state.fetchUserProfile);
+    const userProfile = useGameStore(state => state.userProfile);
+    const setTarget = useGameStore(state => state.setTarget);
+    const useBattleItem = useGameStore(state => state.useBattleItem);
 
     const [logs, setLogs] = useState<string[]>([]);
     const [showTurnOverlay, setShowTurnOverlay] = useState(false);
@@ -973,7 +971,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         <div className="relative transition-all duration-500 flex flex-col items-center flex-shrink-0 z-20">
                             {/* Huge Sprite Image */}
                             <div className={`w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] relative transition-all duration-500 flex items-center justify-center
-                                ${target.hp > 0 ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
+                                ${(target.hp > 0 || (activeEffect && activeEffect !== 'BUFF')) ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
                                 ${activeEffect && activeEffect !== 'BUFF' ? 'flash-active' : ''}
                                 ${shouldEnemyShake ? 'animate-enemy-shake' : ''}
                             `}>
