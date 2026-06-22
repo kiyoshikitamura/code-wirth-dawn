@@ -8,7 +8,7 @@
 
 ## 1. 概要
 
-名もなき旅人の拠所（ハブ）に以下3つの閲覧機能を追加する。
+名もなき旅人の拠所（ハブ）および通常拠点（宿屋/酒場）に以下3つの閲覧機能を追加・表示する。
 いずれも **閲覧専用**（ゲーム進行への影響なし）の情報表示施設。
 
 | 施設 | FacilityType | 目的 |
@@ -19,10 +19,10 @@
 
 ### 1.1 拡張性
 
-ハブ施設は `FacilityGrid.tsx` の `hubFacilities` 配列に追加するだけで動的に増やせる設計。
+ハブ施設および通常拠点施設は `FacilityGrid.tsx` の `hubFacilities` / `locationFacilities` 配列に追加するだけで動的に増やせる設計。
 新規施設追加時のチェックリスト:
 1. `FacilityType` union型に追加
-2. `hubFacilities` 配列にエントリ追加
+2. `hubFacilities` / `locationFacilities` 配列にエントリ追加
 3. `inn/page.tsx` の `handleSelectFacility` と modal rendering に分岐追加
 4. 対応するモーダルコンポーネントを作成
 
