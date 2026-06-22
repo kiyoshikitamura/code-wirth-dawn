@@ -2714,38 +2714,36 @@ export const createBattleSlice = (
             const finalMessages = [...newMessages, 'パーティの活躍により、宿敵を打ち倒した！ 勝利！'];
             const isQuestBattle = useQuestState.getState().isInQuest;
             try {
-                const authHeaders = await getAuthHeaders();
-                const headers: HeadersInit = {
-                    'Content-Type': 'application/json',
-                    ...authHeaders
-                };
-                // クエスト外バトル（パブバトル等）のみ世界への影響を報告
-                if (!isQuestBattle) {
-                    await fetch('/api/report-action', {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
-                    });
-                }
-                // [Security] v27.2: サーバーサイドバトル結果検証
-                const bsid = get().battleState.battle_session_id;
-                if (bsid) {
-                    try {
-                        const vRes = await fetch('/api/battle/validate-result', {
+                getAuthHeaders().then(authHeaders => {
+                    const headers: HeadersInit = {
+                        'Content-Type': 'application/json',
+                        ...authHeaders
+                    };
+                    // クエスト外バトル（パブバトル等）のみ世界への影響を報告
+                    if (!isQuestBattle) {
+                        fetch('/api/report-action', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
+                        }).catch(console.error);
+                    }
+                    // [Security] v27.2: サーバーサイドバトル結果検証
+                    const bsid = get().battleState.battle_session_id;
+                    if (bsid) {
+                        fetch('/api/battle/validate-result', {
                             method: 'POST',
                             headers,
                             body: JSON.stringify({ battle_session_id: bsid, claimed_result: 'victory' })
-                        });
-                        const vData = await vRes.json();
-                        if (vData.battle_completion_token) {
-                            set(state => ({
-                                battleState: { ...state.battleState, battle_completion_token: vData.battle_completion_token }
-                            }));
-                        }
-                    } catch (err) {
-                        console.error('Validation failed:', err);
+                        }).then(vRes => vRes.json()).then(vData => {
+                            if (vData.battle_completion_token) {
+                                set(state => ({
+                                    battleState: { ...state.battleState, battle_completion_token: vData.battle_completion_token }
+                                }));
+                            }
+                        }).catch(err => console.error('Validation failed:', err));
                     }
-                }
+                }).catch(console.error);
+
                 // バトル後のHP/VITをDB保存（Service Role API使用でRLSバイパス）
                 const battleHp = get().userProfile?.hp;
                 const battleVit = get().userProfile?.vitality;
@@ -2753,24 +2751,25 @@ export const createBattleSlice = (
                 if (battleHp != null && battleUserId) {
                     const updateBody: any = { hp: Math.max(0, battleHp) };
                     if (battleVit != null) updateBody.vitality = battleVit;
-                    await fetch('/api/profile/update-status', {
+                    fetch('/api/profile/update-status', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(updateBody)
-                    });
+                    }).catch(console.error);
                 }
-                await get().fetchWorldState();
+                get().fetchWorldState();
                 // fetchUserProfile 後にバトル中のHP値を復元（DB遅延による上書き防止）
                 const preservedHp = get().userProfile?.hp;
                 const preservedVit = get().userProfile?.vitality;
-                await get().fetchUserProfile();
-                if (preservedHp != null) {
-                    set(state => ({
-                        userProfile: state.userProfile
-                            ? { ...state.userProfile, hp: preservedHp, vitality: preservedVit ?? state.userProfile.vitality }
-                            : state.userProfile
-                    }));
-                }
+                get().fetchUserProfile().then(() => {
+                    if (preservedHp != null) {
+                        set(state => ({
+                            userProfile: state.userProfile
+                                ? { ...state.userProfile, hp: preservedHp, vitality: preservedVit ?? state.userProfile.vitality }
+                                : state.userProfile
+                        }));
+                    }
+                }).catch(console.error);
                 // クエスト外バトルのみ金貨報酬を付与（クエスト中バトルの報酬はクエスト完了APIで処理）
                 if (!isQuestBattle) {
                     const partyCount = (initialBattle.party.length || 0) + 1;
