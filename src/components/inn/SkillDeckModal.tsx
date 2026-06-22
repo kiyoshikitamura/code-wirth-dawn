@@ -17,6 +17,9 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
     const [partyLoading, setPartyLoading] = useState(false);
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    const [showStock, setShowStock] = useState(true);
+    const [showNPC, setShowNPC] = useState(true);
+    const [costFilter, setCostFilter] = useState<'all' | '0' | '1' | '2' | '3+'>('all');
 
     useEffect(() => {
         fetchInventory();
@@ -274,100 +277,167 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
 
                     {/* Section 2: Stock Skills */}
                     <section className="space-y-2">
-                        <h3 className="text-xs font-bold text-slate-300 flex items-center gap-1">
-                            <Layers className="w-3.5 h-3.5" /> 所持スキルストック ({stockSkills.length})
-                        </h3>
-                        {stockSkills.length === 0 ? (
-                            <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed">
-                                未装備の所持スキルはありません
+                        <button
+                            onClick={() => setShowStock(!showStock)}
+                            className="w-full flex items-center justify-between text-xs font-bold text-slate-300 hover:text-slate-100 transition-colors py-1 select-none"
+                        >
+                            <div className="flex items-center gap-1">
+                                <Layers className="w-3.5 h-3.5 text-slate-400" />
+                                <span>所持スキルストック ({stockSkills.length})</span>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-1.5">
-                                {stockSkills.map(item => {
-                                    const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
-                                    const isLocked = isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
-                                    const isOverCost = currentDeckCost + (item.cost || 0) > maxDeckCost;
-                                    const isDisabled = isLocked || isOverCost;
-
-                                    return (
-                                        <div 
-                                            key={item.id}
-                                            onClick={() => setSelectedDetail(item)}
-                                            className="flex items-center justify-between p-2 rounded-lg bg-slate-900/30 border border-slate-800/80 hover:border-slate-700 transition-all cursor-pointer group active:bg-slate-900/50"
-                                        >
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="w-8 h-8 rounded bg-slate-950 flex items-center justify-center shrink-0 border border-slate-800/60 overflow-hidden shadow-inner">
-                                                    {item.image_url ? (
-                                                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <Zap className="w-3.5 h-3.5 text-slate-500" />
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="text-xs font-bold text-slate-300 group-hover:text-slate-100 transition-colors truncate">{item.name}</div>
-                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className="text-[10px] text-cyan-500 font-mono">コスト: {item.cost || 0}</span>
-                                                        {isLocked && <span className="text-[9px] text-red-500 font-semibold font-serif">※クエスト中装備不可</span>}
-                                                        {isOverCost && <span className="text-[9px] text-orange-500 font-semibold">※コスト超過</span>}
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                                {showStock ? '▲ 閉じる' : '▼ 開く'}
+                            </span>
+                        </button>
+                        
+                        {showStock && (
+                            <>
+                                {/* コストフィルタ */}
+                                <div className="flex flex-wrap gap-1 items-center bg-slate-950/40 p-2 rounded border border-slate-900/60 mb-2">
+                                    <span className="text-[10px] text-slate-500 mr-1">コストフィルタ:</span>
+                                    {(['all', '0', '1', '2', '3+'] as const).map(f => {
+                                        const count = stockSkills.filter(item => {
+                                            if (f === 'all') return true;
+                                            const cost = item.cost || 0;
+                                            if (f === '3+') return cost >= 3;
+                                            return cost === parseInt(f, 10);
+                                        }).length;
+                                        return (
                                             <button
-                                                onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    await handleToggle(item);
-                                                }}
-                                                disabled={togglingId === item.id || isDisabled}
-                                                className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all active:scale-95 ${
-                                                    isDisabled
-                                                        ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
-                                                        : 'bg-blue-900 hover:bg-blue-800 text-blue-100 border border-blue-700'
+                                                key={f}
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setCostFilter(f); }}
+                                                className={`px-2 py-0.5 text-[9px] rounded font-bold border transition-colors ${
+                                                    costFilter === f
+                                                        ? 'bg-blue-900 border-blue-700 text-blue-200'
+                                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                                                 }`}
                                             >
-                                                {togglingId === item.id ? '...' : '装備'}
+                                                {f === 'all' ? `すべて (${stockSkills.length})` : f === '3+' ? `3+ (${count})` : `C${f} (${count})`}
                                             </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {stockSkills.filter(item => {
+                                    if (costFilter === 'all') return true;
+                                    const cost = item.cost || 0;
+                                    if (costFilter === '3+') return cost >= 3;
+                                    return cost === parseInt(costFilter, 10);
+                                }).length === 0 ? (
+                                    <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed">
+                                        {costFilter === 'all' ? '未装備の所持スキルはありません' : 'フィルタ条件に合うスキルはありません'}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-1.5">
+                                        {stockSkills
+                                            .filter(item => {
+                                                if (costFilter === 'all') return true;
+                                                const cost = item.cost || 0;
+                                                if (costFilter === '3+') return cost >= 3;
+                                                return cost === parseInt(costFilter, 10);
+                                            })
+                                            .map(item => {
+                                                const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
+                                                const isLocked = isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
+                                                const isOverCost = currentDeckCost + (item.cost || 0) > maxDeckCost;
+                                                const isDisabled = isLocked || isOverCost;
+
+                                                return (
+                                                    <div 
+                                                        key={item.id}
+                                                        onClick={() => setSelectedDetail(item)}
+                                                        className="flex items-center justify-between p-2 rounded-lg bg-slate-900/30 border border-slate-800/80 hover:border-slate-700 transition-all cursor-pointer group active:bg-slate-900/50"
+                                                    >
+                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                            <div className="w-8 h-8 rounded bg-slate-950 flex items-center justify-center shrink-0 border border-slate-800/60 overflow-hidden shadow-inner">
+                                                                {item.image_url ? (
+                                                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <Zap className="w-3.5 h-3.5 text-slate-500" />
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <div className="text-xs font-bold text-slate-300 group-hover:text-slate-100 transition-colors truncate">{item.name}</div>
+                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                    <span className="text-[10px] text-cyan-500 font-mono">コスト: {item.cost || 0}</span>
+                                                                    {isLocked && <span className="text-[9px] text-red-500 font-semibold font-serif">※クエスト中装備不可</span>}
+                                                                    {isOverCost && <span className="text-[9px] text-orange-500 font-semibold">※コスト超過</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                await handleToggle(item);
+                                                            }}
+                                                            disabled={togglingId === item.id || isDisabled}
+                                                            className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all active:scale-95 ${
+                                                                isDisabled
+                                                                    ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
+                                                                    : 'bg-blue-900 hover:bg-blue-800 text-blue-100 border border-blue-700'
+                                                            }`}
+                                                        >
+                                                            {togglingId === item.id ? '...' : '装備'}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </section>
 
                     {/* Section 3: Hired NPC Cards */}
                     <section className="space-y-2">
-                        <h3 className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                            <Users className="w-3.5 h-3.5" /> 同行NPC支援カード ({partyCards.length})
-                        </h3>
-                        {partyLoading ? (
-                            <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed animate-pulse">
-                                カード情報を読み込み中...
+                        <button
+                            onClick={() => setShowNPC(!showNPC)}
+                            className="w-full flex items-center justify-between text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors py-1 select-none"
+                        >
+                            <div className="flex items-center gap-1.5">
+                                <Users className="w-3.5 h-3.5 text-amber-500" />
+                                <span>同行NPC支援カード ({partyCards.length})</span>
                             </div>
-                        ) : partyCards.length === 0 ? (
-                            <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed">
-                                同行NPCによる支援カードはありません
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-2">
-                                {partyCards.map(card => (
-                                    <div 
-                                        key={card.id}
-                                        onClick={() => setSelectedDetail(card)}
-                                        className="flex items-center gap-2 p-2 rounded-lg bg-amber-950/5 border border-amber-900/20 hover:border-amber-700/40 cursor-pointer active:bg-amber-950/10 transition-all min-w-0"
-                                    >
-                                        <div className="w-8 h-8 rounded bg-slate-950 border border-amber-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-                                            {card.image_url ? (
-                                                <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                            )}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="text-[11px] font-bold text-amber-300 truncate">{card.name}</div>
-                                            <div className="text-[9px] text-slate-400 truncate mt-0.5">{card.type || 'Support'}</div>
-                                        </div>
+                            <span className="text-[10px] text-amber-600/70 font-mono">
+                                {showNPC ? '▲ 閉じる' : '▼ 開く'}
+                            </span>
+                        </button>
+                        
+                        {showNPC && (
+                            <>
+                                {partyLoading ? (
+                                    <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed animate-pulse">
+                                        カード情報を読み込み中...
                                     </div>
-                                ))}
-                            </div>
+                                ) : partyCards.length === 0 ? (
+                                    <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed">
+                                        同行NPCによる支援カードはありません
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {partyCards.map(card => (
+                                            <div 
+                                                key={card.id}
+                                                onClick={() => setSelectedDetail(card)}
+                                                className="flex items-center gap-2 p-2 rounded-lg bg-amber-950/5 border border-amber-900/20 hover:border-amber-700/40 cursor-pointer active:bg-amber-950/10 transition-all min-w-0"
+                                            >
+                                                <div className="w-8 h-8 rounded bg-slate-950 border border-amber-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                                                    {card.image_url ? (
+                                                        <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-[11px] font-bold text-amber-300 truncate">{card.name}</div>
+                                                    <div className="text-[9px] text-slate-400 truncate mt-0.5">{card.type || 'Support'}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </section>
 

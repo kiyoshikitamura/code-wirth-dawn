@@ -1,15 +1,12 @@
-
 import React from 'react';
 import { useGameStore } from '@/store/gameStore';
-import { Shield, Backpack, Zap, Heart, Sword, Star, Users, Flame, X } from 'lucide-react';
+import { Shield, Backpack, Zap, Heart, Sword, Users, Flame, X } from 'lucide-react';
 import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
-import { formatEffectData, getEffectList, getItemImageUrl, getSlotLabel, getEquipmentBonus } from '@/lib/itemUtils';
-import { supabase } from '@/lib/supabase';
-import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
-import { toJpJobClass } from '@/lib/jobClass';
 import SkillDeckModal from './SkillDeckModal';
-
+import EquipModal from './EquipModal';
+import ItemModal from './ItemModal';
+import PartyModal from './PartyModal';
 
 interface StatusModalProps {
     onClose: () => void;
@@ -17,205 +14,37 @@ interface StatusModalProps {
     questLocked?: boolean;
 }
 
-type TabKey = 'items' | 'equip' | 'party';
-
-type DetailType = 'skill' | 'item' | 'npc' | 'equip';
-interface DetailTarget { type: DetailType; data: any; }
-
 export default function StatusModal({ onClose, isCampMode, questLocked }: StatusModalProps) {
-    const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile,
-            fetchEquipment, equippedItems: equipped, equipBonus } = useGameStore();
-    const [activeTab, setActiveTab] = React.useState<TabKey>('items');
+    const { userProfile, fetchUserProfile, equipBonus } = useGameStore();
     const [showSkillDeck, setShowSkillDeck] = React.useState(false);
-    const [detail, setDetail] = React.useState<DetailTarget | null>(null);
-    const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
-    const [enlargedImage, setEnlargedImage] = React.useState<string | null>(null);
-    const [equipLoadingSlot, setEquipLoadingSlot] = React.useState<string | null>(null);
-    const [skillToggleLoading, setSkillToggleLoading] = React.useState<string | null>(null);
+    const [showEquip, setShowEquip] = React.useState(false);
+    const [showItems, setShowItems] = React.useState(false);
+    const [showParty, setShowParty] = React.useState(false);
 
     React.useEffect(() => {
-        fetchInventory();
         fetchUserProfile();
     }, []);
-
-    // userProfile が読み込まれてからも再取得（初回マウント時は userProfile が null の可能性）
-    React.useEffect(() => {
-        if (userProfile?.id) fetchEquipment();
-    }, [userProfile?.id]);
-
-    const consumables = inventory.filter(i => !i.is_skill && i.item_type !== 'skill_card');
-    const skills = inventory.filter(i => i.is_skill || i.item_type === 'skill_card');
-    // 装備済み item_id を Set に収集してから equipmentItems をフィルタリング（重複除去）
-    const equippedItemIds = new Set(equipped.map((e: any) => String(e.item_id)));
-    const equipmentItems = consumables.filter(i =>
-        (i.item_type === 'equipment' || (i as any).type === 'equipment') &&
-        !equippedItemIds.has(String((i as any).item_id || i.id))
-    );
-    const currentDeckCost = skills.filter(i => i.is_equipped).reduce((sum, i) => sum + (i.cost || 0), 0);
-
-    const handleToggleSkill = async (item: any) => {
-        if (questLocked) {
-            alert("クエスト進行中はスキルの装備変更ができません。");
-            return;
-        }
-        const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
-        if (!item.is_equipped) {
-            if (currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10)) {
-                alert("デッキコスト上限を超えています。レベルを上げてキャパシティを増やしてください。");
-                return;
-            }
-            if (isQuestActive && item.acquired_at && userProfile?.quest_started_at) {
-                const acquiredTime = new Date(item.acquired_at).getTime();
-                const startedTime = new Date(userProfile.quest_started_at).getTime();
-                if (acquiredTime < startedTime) {
-                    alert("クエスト進行中は、事前所持アイテムを新たに装備できません。");
-                    return;
-                }
-            }
-        }
-        setSkillToggleLoading(item.id);
-        try {
-            await toggleEquip(item.id, item.is_equipped, isCampMode);
-        } finally {
-            setSkillToggleLoading(null);
-        }
-    };
-
-    // v25: フィールド場面での消耗品使用
-    const handleUseFieldItem = async (item: any) => {
-        const itemType = item.item_type || item.type || '';
-        const useTiming = item.effect_data?.use_timing || item.use_timing || 'field';
-
-        if (useTiming === 'battle') {
-            alert(`「${item.name}」はバトル中のみ使用できます。`);
-            return;
-        }
-        if (useTiming === 'passive') {
-            alert(`「${item.name}」は所持するだけで効果を発揮します。`);
-            return;
-        }
-
-        // 汎用フィールド使用 API
-        if (!confirm(`「${item.name}」を使用しますか？`)) return;
-        const authHeaders = await getAuthHeaders();
-        const res = await fetch('/api/item/use', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...authHeaders
-            },
-            body: JSON.stringify({ inventory_id: item.id, use_context: 'field' })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            // サーバーからの効果メッセージを優先表示
-            let msg = data.message || `「${item.name}」を使用しました。`;
-            alert(msg);
-            fetchInventory();
-            fetchUserProfile();
-        } else {
-            alert('使用に失敗しました: ' + (data.error || 'Unknown'));
-        }
-        setDetail(null);
-    };
-
-    const handleEquipItem = async (invItem: any, slot: string) => {
-        if (questLocked) {
-            alert("クエスト進行中は装備の変更ができません。");
-            return;
-        }
-        setEquipLoadingSlot(slot);
-        try {
-            const authHeaders = await getAuthHeaders();
-            if (!Object.keys(authHeaders).length) { alert('認証エラー'); return; }
-            const res = await fetch('/api/equipment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...authHeaders
-                },
-                body: JSON.stringify({ inventory_id: invItem.id, slot })
-            });
-            const resData = await res.json();
-                if (res.ok) {
-                // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
-                await Promise.all([fetchEquipment(), fetchInventory(), fetchUserProfile()]);
-                // v28: APIが返す最新HP値でストアを即時上書き（race condition回避）
-                if (resData.updated_hp !== undefined && userProfile) {
-                    useGameStore.setState({
-                        userProfile: { ...useGameStore.getState().userProfile!, hp: resData.updated_hp }
-                    });
-                }
-            } else {
-                alert(resData.error || '装備に失敗しました。');
-            }
-        } catch (e) { console.error(e); alert('通信エラー'); }
-        finally { setEquipLoadingSlot(null); }
-    };
-
-    const handleUnequip = async (slot: string) => {
-        if (questLocked) {
-            alert("クエスト進行中は装備の変更ができません。");
-            return;
-        }
-        setEquipLoadingSlot(slot);
-        try {
-            const authHeaders = await getAuthHeaders();
-            if (!Object.keys(authHeaders).length) { alert('認証エラー'); return; }
-            const res = await fetch(`/api/equipment?slot=${slot}`, {
-                method: 'DELETE',
-                headers: authHeaders
-            });
-            if (res.ok) {
-                const resData = await res.json();
-                // v27: equipment APIがinventory.is_equippedも同時更新するため、PATCH不要
-                await Promise.all([fetchEquipment(), fetchInventory(), fetchUserProfile()]);
-                // v28: APIが返す最新HP値でストアを即時上書き（race condition回避）
-                if (resData.updated_hp !== undefined && userProfile) {
-                    useGameStore.setState({
-                        userProfile: { ...useGameStore.getState().userProfile!, hp: resData.updated_hp }
-                    });
-                }
-            }
-        } catch (e) { console.error(e); }
-        finally { setEquipLoadingSlot(null); }
-    };
-
 
     const vitalityStatus = userProfile?.vitality ? getVitalityStatus(userProfile.vitality) : 'Prime';
     const flameColor = vitalityStatus === 'Prime' ? 'text-orange-500' : vitalityStatus === 'Twilight' ? 'text-orange-800' : 'text-gray-700';
 
-    const tabs: { key: TabKey; label: string; icon: React.ReactNode; count?: number }[] = [
-        { key: 'items', label: '所持品', icon: <Backpack className="w-3.5 h-3.5" />, count: consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').length },
-        { key: 'equip', label: '装備', icon: <Shield className="w-3.5 h-3.5" />, count: equipped.length + equipmentItems.length },
-        { key: 'party', label: 'パーティ', icon: <Users className="w-3.5 h-3.5" /> },
-    ];
-
     return (
         <>
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-lg h-[92dvh] bg-gray-900 border border-gray-800 rounded-lg shadow-2xl overflow-hidden flex flex-col">
+            <div className="w-full max-w-lg h-auto max-h-[92dvh] bg-gray-900 border border-gray-800 rounded-lg shadow-2xl overflow-hidden flex flex-col">
 
                 {/* ── ヘッダー ── */}
                 <header className="flex items-center justify-between px-4 py-2.5 border-b border-gray-800 bg-gray-950/60 shrink-0">
                     <h2 className="text-base font-serif text-gray-100 font-bold tracking-wider flex items-center gap-2">
                         <Shield className="w-4 h-4 text-amber-500" /> ステータス
                     </h2>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowSkillDeck(true)}
-                            className="px-2.5 py-1 text-xs font-bold text-amber-400 border border-amber-500/30 hover:border-amber-400/60 rounded bg-amber-950/20 transition-all flex items-center gap-1 active:scale-95"
-                        >
-                            <Zap className="w-3 h-3 text-amber-400" /> スキルデッキ
-                        </button>
-                        <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-white bg-gray-800/50 rounded-full hover:bg-gray-700 transition-colors">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
+                    <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-white bg-gray-800/50 rounded-full hover:bg-gray-700 transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
                 </header>
 
                 {/* ── 基礎ステータス（常時表示） ── */}
-                <div className="px-4 py-3 border-b border-gray-800 bg-black/30 shrink-0 space-y-2.5">
+                <div className="px-4 py-4 bg-black/30 shrink-0 space-y-4 overflow-y-auto">
                     {/* プロフィール行 */}
                     <div className="flex gap-3 items-center">
                         <div className="w-14 h-14 rounded-full border-2 border-gray-700 overflow-hidden bg-black shrink-0">
@@ -249,25 +78,25 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
                                 <div className="text-[9px] text-gray-600">HP</div>
                                 <div className="text-xs text-green-400 font-bold flex items-center justify-center gap-1">
-                                    <Heart className="w-3 h-3" />
-                                    {userProfile?.hp ?? 0}/{(userProfile?.max_hp ?? 100) + equipBonus.hp}
-                                    {equipBonus.hp > 0 && <span className="text-[10px] ml-0.5 text-emerald-500 font-medium">+{equipBonus.hp}</span>}
+                                    <Heart className="w-3.5 h-3.5" />
+                                    {userProfile?.hp ?? 0}/{(userProfile?.max_hp ?? 100) + (equipBonus?.hp || 0)}
+                                    {(equipBonus?.hp || 0) > 0 && <span className="text-[10px] ml-0.5 text-emerald-500 font-medium">+{equipBonus.hp}</span>}
                                 </div>
                             </div>
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
                                 <div className="text-[9px] text-gray-600">ATK</div>
                                 <div className="text-xs text-red-400 font-bold flex items-center justify-center gap-1">
-                                    <Sword className="w-3 h-3" />
-                                    {(userProfile?.atk ?? 10) + equipBonus.atk}
-                                    {equipBonus.atk > 0 && <span className="text-[10px] ml-0.5 text-orange-400 font-medium">+{equipBonus.atk}</span>}
+                                    <Sword className="w-3.5 h-3.5" />
+                                    {(userProfile?.atk ?? 10) + (equipBonus?.atk || 0)}
+                                    {(equipBonus?.atk || 0) > 0 && <span className="text-[10px] ml-0.5 text-orange-400 font-medium">+{equipBonus.atk}</span>}
                                 </div>
                             </div>
                             <div className="bg-gray-900/60 px-2 py-1 rounded border border-gray-800 text-center">
                                 <div className="text-[9px] text-gray-600">DEF</div>
                                 <div className="text-xs text-slate-400 font-bold flex items-center justify-center gap-1">
-                                    <Shield className="w-3 h-3" />
-                                    {(userProfile?.def ?? 0) + equipBonus.def}
-                                    {equipBonus.def > 0 && <span className="text-[10px] ml-0.5 text-cyan-400 font-medium">+{equipBonus.def}</span>}
+                                    <Shield className="w-3.5 h-3.5" />
+                                    {(userProfile?.def ?? 0) + (equipBonus?.def || 0)}
+                                    {(equipBonus?.def || 0) > 0 && <span className="text-[10px] ml-0.5 text-cyan-400 font-medium">+{equipBonus.def}</span>}
                                 </div>
                             </div>
                         </div>
@@ -295,6 +124,38 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                         </span>
                     </div>
 
+                    {/* 2x2 ナビゲーションボタン */}
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                        <button
+                            onClick={() => setShowSkillDeck(true)}
+                            className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-500/40 hover:border-indigo-400 text-xs font-bold text-indigo-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-indigo-900/80"
+                        >
+                            <Zap className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                            スキルデッキ
+                        </button>
+                        <button
+                            onClick={() => setShowEquip(true)}
+                            className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-br from-amber-950/70 to-slate-900 border border-amber-600/40 hover:border-amber-500 text-xs font-bold text-amber-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-amber-900/70"
+                        >
+                            <Shield className="w-4 h-4 text-orange-400" />
+                            装備品
+                        </button>
+                        <button
+                            onClick={() => setShowItems(true)}
+                            className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-br from-emerald-950/70 to-slate-900 border border-emerald-600/40 hover:border-emerald-500 text-xs font-bold text-emerald-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-emerald-900/70"
+                        >
+                            <Backpack className="w-4 h-4 text-emerald-400" />
+                            所持品
+                        </button>
+                        <button
+                            onClick={() => setShowParty(true)}
+                            className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-br from-purple-950/70 to-slate-900 border border-purple-600/40 hover:border-purple-500 text-xs font-bold text-purple-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-purple-900/70"
+                        >
+                            <Users className="w-4 h-4 text-purple-400" />
+                            パーティ
+                        </button>
+                    </div>
+
                     {/* 通行許可証の有効期限表示 */}
                     {userProfile?.pass_expires_at && Object.keys(userProfile.pass_expires_at).length > 0 && (() => {
                         const activePasses: { name: string; daysLeft: number }[] = [];
@@ -316,7 +177,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                         }
                         if (activePasses.length === 0) return null;
                         return (
-                            <div className="bg-gray-950/40 p-2 rounded border border-gray-800 text-[10px] space-y-1">
+                            <div className="bg-gray-950/40 p-2.5 rounded border border-gray-800/80 text-[10px] space-y-1 mt-2">
                                 <div className="text-gray-500 font-bold uppercase tracking-wider">有効な通行許可:</div>
                                 <div className="grid grid-cols-2 gap-1.5 mt-0.5">
                                     {activePasses.map((pass, i) => (
@@ -329,474 +190,35 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                         );
                     })()}
                 </div>
-
-                {/* ── タブバー ── */}
-                <div className="flex border-b border-gray-800 bg-black/20 shrink-0">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            className={`flex-1 py-2 text-xs font-bold tracking-wider transition-colors flex items-center justify-center gap-1.5 ${
-                                activeTab === tab.key
-                                    ? 'text-amber-400 border-b-2 border-amber-500 bg-amber-900/10'
-                                    : 'text-gray-500 hover:text-gray-300'
-                            }`}
-                        >
-                            {tab.icon}
-                            {tab.label}
-                            {tab.count != null && <span className="text-[9px] bg-gray-800 text-gray-400 px-1 rounded">{tab.count}</span>}
-                        </button>
-                    ))}
-                </div>
-
-                {/* ── タブコンテンツ（スクロール領域） ── */}
-                <div className="flex-1 overflow-y-auto p-3 scrollbar-thin scrollbar-thumb-gray-700">
-
-
-
-                    {/* タブ: 装備品 */}
-                    {activeTab === 'equip' && (
-                        <div className="space-y-3">
-                            {/* 装備ボーナス表示 */}
-                            {(equipBonus.atk > 0 || equipBonus.def > 0 || equipBonus.hp > 0) && (
-                                <div className="flex items-center gap-3 bg-orange-900/20 px-3 py-2 rounded border border-orange-800/40">
-                                    <span className="text-[10px] text-orange-400 font-bold">装備ボーナス</span>
-                                    {equipBonus.atk > 0 && <span className="text-xs text-red-400 font-mono">ATK+{equipBonus.atk}</span>}
-                                    {equipBonus.def > 0 && <span className="text-xs text-blue-400 font-mono">DEF+{equipBonus.def}</span>}
-                                    {equipBonus.hp > 0 && <span className="text-xs text-green-400 font-mono">HP+{equipBonus.hp}</span>}
-                                </div>
-                            )}
-
-                            {/* 3スロット表示 */}
-                            {(['weapon', 'armor', 'accessory'] as const).map(slot => {
-                                const eq = equipped.find((e: any) => e.slot === slot);
-                                const slotLabel = getSlotLabel(slot);
-                                const slotIcon = slot === 'weapon' ? <Sword className="w-3.5 h-3.5 text-red-400" /> : slot === 'armor' ? <Shield className="w-3.5 h-3.5 text-blue-400" /> : <Star className="w-3.5 h-3.5 text-amber-400" />;
-                                return (
-                                    <div key={slot} className="p-2 bg-gray-800/40 rounded border border-gray-700 overflow-hidden">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            {slotIcon}
-                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{slotLabel}</span>
-                                        </div>
-                                        {eq?.item ? (
-                                            <div onClick={() => setDetail({ type: 'equip', data: { ...eq.item, _slot: slot, _isEquipped: true } })} className="flex items-center gap-2 p-1.5 bg-orange-900/15 rounded border border-orange-800/30 overflow-hidden cursor-pointer hover:border-orange-700/50 active:bg-orange-900/25 transition-colors">
-                                                <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                    {eq.item.image_url ? <img src={eq.item.image_url} alt={eq.item.name} className="w-full h-full object-cover" /> : slotIcon}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-gray-200 font-bold truncate">{eq.item.name}</div>
-                                                    <div className="text-[9px] text-gray-500 flex flex-wrap gap-x-1">
-                                                        {eq.item.effect_data?.atk_bonus ? <span className="text-red-400">ATK+{eq.item.effect_data.atk_bonus}</span> : null}
-                                                        {eq.item.effect_data?.def_bonus ? <span className="text-blue-400">DEF+{eq.item.effect_data.def_bonus}</span> : null}
-                                                        {eq.item.effect_data?.hp_bonus ? <span className="text-green-400">HP+{eq.item.effect_data.hp_bonus}</span> : null}
-                                                    </div>
-                                                </div>
-                                                <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center text-gray-600 py-2 text-[10px] border border-dashed border-gray-700 rounded">未装備</div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-
-                            {/* 装備可能アイテム一覧 */}
-                            {equipmentItems.length > 0 && (
-                                <div className="mt-2">
-                                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5">装備可能アイテム</div>
-                                    <div className="space-y-1">
-                                        {equipmentItems.map(item => {
-                                            const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
-                                            const subType = (item as any).sub_type || ((item as any).item_type === 'equipment' ? 'weapon' : 'weapon');
-                                            const bonus = getEquipmentBonus(item.effect_data);
-                                            return (
-                                                <div key={item.id} onClick={() => setDetail({ type: 'equip', data: { ...item, _slot: subType, _isEquipped: false } })} className="flex items-center gap-2 p-1.5 bg-black/30 rounded border border-gray-800 overflow-hidden cursor-pointer hover:border-gray-600 active:bg-gray-800/60 transition-colors">
-                                                    <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Shield className="w-3 h-3 text-orange-400" />}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-xs text-gray-300 font-bold truncate">{item.name}</div>
-                                                        <div className="text-[9px] text-gray-500 flex flex-wrap gap-x-1">
-                                                            {bonus.atk > 0 && <span className="text-red-400">ATK+{bonus.atk}</span>}
-                                                            {bonus.def > 0 && <span className="text-blue-400">DEF+{bonus.def}</span>}
-                                                            {bonus.hp > 0 && <span className="text-green-400">HP+{bonus.hp}</span>}
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* タブ2: 所持品 (装備品・スキルを除外) */}
-                    {activeTab === 'items' && (
-                        <div>
-                            {consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').length === 0 ? (
-                                <div className="text-center text-gray-500 py-8 text-xs">所持品はありません。</div>
-                            ) : (
-                                <div className="space-y-1">
-                                    {consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').map(item => {
-                                        const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
-                                        return (
-                                        <div key={item.id} onClick={() => setDetail({ type: 'item', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">
-                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                    {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Heart className="w-3 h-3 text-green-400" />}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="text-xs text-gray-300 font-bold truncate">
-                                                        {item.name} <span className="text-gray-500 font-normal">x{item.quantity}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
-                                        </div>
-                                    );})}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* タブ3: パーティ */}
-                    {activeTab === 'party' && (
-                        <PartyList userProfile={userProfile} onSelect={(npc: any) => setDetail({ type: 'npc', data: npc })} onDismissRef={partyDismissRef} />
-                    )}
-                </div>
-
-                {/* ── 詳細ポップアップ ── */}
-                {detail && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-100" onClick={() => setDetail(null)}>
-                        <div className="bg-gray-900 border border-gray-700 w-full max-w-md mx-4 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
-                            {/* ポップアップヘッダー */}
-                            <div className="bg-gray-800/80 px-4 py-3 flex items-center gap-3 border-b border-gray-700">
-                                <div 
-                                    className={`w-14 h-14 rounded-lg bg-gray-700/60 border border-gray-600 flex items-center justify-center shrink-0 overflow-hidden ${
-                                        (detail.type === 'npc' && (detail.data.icon_url || detail.data.image_url)) || (detail.type !== 'npc' && ((detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : detail.data.image_url)) ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
-                                    }`}
-                                    onClick={(e) => {
-                                        let imgUrl = null;
-                                        if (detail.type === 'npc') {
-                                            imgUrl = detail.data.icon_url || detail.data.image_url;
-                                        } else {
-                                            imgUrl = detail.data.image_url || ((detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : null);
-                                        }
-                                        if (imgUrl) {
-                                            e.stopPropagation();
-                                            setEnlargedImage(imgUrl);
-                                        }
-                                    }}
-                                >
-                                    {detail.type === 'npc' ? (
-                                        detail.data.icon_url || detail.data.image_url
-                                            ? <img src={detail.data.icon_url || detail.data.image_url} alt={detail.data.name} className="w-full h-full object-cover" />
-                                            : <Users className="w-5 h-5 text-blue-400" />
-                                    ) : (() => {
-                                        const imgUrl = detail.data.image_url || ((detail.data as any).slug ? getItemImageUrl((detail.data as any).slug) : null);
-                                        return imgUrl
-                                            ? <img src={imgUrl} alt={detail.data.name} className="w-full h-full object-cover" />
-                                            : detail.type === 'skill'
-                                                ? <Zap className="w-5 h-5 text-purple-400" />
-                                                : <Heart className="w-5 h-5 text-green-400" />;
-                                    })()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-sm font-bold text-white truncate">{detail.data.epithet ? `${detail.data.epithet} ${detail.data.name}` : detail.data.name}</h3>
-                                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                                        {detail.type === 'skill' && <><span className="text-purple-400">スキル</span><span className="text-cyan-500">Cost:{detail.data.cost || 0}</span>{detail.data.is_equipped && <span className="text-amber-400">装備中</span>}</>}
-                                        {detail.type === 'item' && <><span className="text-green-400">所持品</span><span>x{detail.data.quantity}</span></>}
-                                        {detail.type === 'equip' && <><span className="text-orange-400">装備品</span>{detail.data._isEquipped && <span className="text-amber-400">装備中</span>}</>}
-                                        {detail.type === 'npc' && <><span className="text-blue-400">Lv.{detail.data.level || '?'} {detail.data.job_class || '冒険者'}</span></>}
-                                    </div>
-                                </div>
-                                <button onClick={() => setDetail(null)} className="text-gray-500 hover:text-white p-1">✕</button>
-                            </div>
-
-                            {/* ポップアップ内容 */}
-                            <div className="px-4 py-3 space-y-3">
-                                {/* フレーバーテキスト */}
-                                {detail.type !== 'npc' && detail.data.effect_data?.description && (
-                                    <div className="bg-amber-950/20 rounded-lg p-2.5 border border-amber-900/30">
-                                        <p className="text-xs text-amber-400/80 italic leading-relaxed">「{detail.data.effect_data.description}」</p>
-                                    </div>
-                                )}
-                                {detail.type === 'npc' && detail.data.flavor_text && (
-                                    <div className="bg-blue-950/20 rounded-lg p-2.5 border border-blue-900/30">
-                                        <p className="text-xs text-blue-400/80 italic leading-relaxed">「{detail.data.flavor_text}」</p>
-                                    </div>
-                                )}
-
-                                {/* 効果詳細（構造化グリッド） */}
-                                {(detail.type !== 'npc' && detail.type !== 'equip') && detail.data.effect_data && (() => {
-                                    const effectList = getEffectList(detail.data.effect_data);
-                                    if (effectList.length === 0) return null;
-                                    return (
-                                        <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700">
-                                            <div className="text-[10px] text-gray-500 mb-1.5">効果</div>
-                                            <div className="grid grid-cols-2 gap-1.5">
-                                                {effectList.map((eff, i) => (
-                                                    <div key={i} className="flex items-center justify-between bg-black/30 rounded px-2 py-1 border border-gray-800">
-                                                        <span className="text-[10px] text-gray-400">{eff.label}</span>
-                                                        <span className={`text-xs font-bold ${eff.color}`}>{eff.value}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
-
-                                {/* 装備品詳細 */}
-                                {detail.type === 'equip' && detail.data.effect_data && (() => {
-                                    const bonus = getEquipmentBonus(detail.data.effect_data);
-                                    const effectList = getEffectList(detail.data.effect_data);
-                                    const hasBonuses = bonus.atk > 0 || bonus.def > 0 || bonus.hp > 0;
-                                    return (
-                                        <>
-                                            {hasBonuses && (
-                                                <div className="bg-orange-900/20 rounded-lg p-2.5 border border-orange-800/30">
-                                                    <div className="text-[10px] text-orange-400 mb-1.5">装備ボーナス</div>
-                                                    <div className="flex gap-3">
-                                                        {bonus.atk > 0 && <span className="text-sm text-red-400 font-bold font-mono">ATK+{bonus.atk}</span>}
-                                                        {bonus.def > 0 && <span className="text-sm text-blue-400 font-bold font-mono">DEF+{bonus.def}</span>}
-                                                        {bonus.hp > 0 && <span className="text-sm text-green-400 font-bold font-mono">HP+{bonus.hp}</span>}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {effectList.length > 0 && (
-                                                <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700">
-                                                    <div className="text-[10px] text-gray-500 mb-1.5">効果</div>
-                                                    <div className="grid grid-cols-2 gap-1.5">
-                                                        {effectList.map((eff, i) => (
-                                                            <div key={i} className="flex items-center justify-between bg-black/30 rounded px-2 py-1 border border-gray-800">
-                                                                <span className="text-[10px] text-gray-400">{eff.label}</span>
-                                                                <span className={`text-xs font-bold ${eff.color}`}>{eff.value}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    );
-                                })()}
-
-                                {/* NPC詳細 */}
-                                {detail.type === 'npc' && (
-                                    <>
-                                        {/* ステータスグリッド */}
-                                        <div className="grid grid-cols-4 gap-2">
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
-                                                <div className="text-green-400 font-bold font-mono">{detail.data.max_hp ?? detail.data.hp ?? '—'}</div>
-                                            </div>
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">ATK</div>
-                                                <div className="text-red-400 font-bold font-mono">{detail.data.atk ?? '—'}</div>
-                                            </div>
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">DEF</div>
-                                                <div className="text-blue-400 font-bold font-mono">{detail.data.def ?? '—'}</div>
-                                            </div>
-                                            <div className="bg-black/40 rounded p-2 text-center border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-0.5">VIT</div>
-                                                <div className={`font-bold font-mono ${((detail.data as any).vitality ?? detail.data.durability ?? 100) <= 20 ? 'text-red-400' : 'text-amber-400'}`}>{(detail.data as any).vitality ?? detail.data.durability ?? 100}</div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-gray-800/50 rounded-lg p-2.5 border border-gray-700 space-y-1.5">
-                                            <div className="flex justify-between text-xs"><span className="text-gray-500">職種</span><span className="text-gray-200">{detail.data.job_class || '冒険者'}</span></div>
-                                            <div className="flex justify-between text-xs"><span className="text-gray-500">タイプ</span><span className="text-gray-200">{detail.data.origin_type === 'shadow_active' ? '影の残像' : detail.data.origin_type === 'shadow_heroic' ? '英霊' : '傭兵'}</span></div>
-                                        </div>
-                                        {/* 所持スキル */}
-                                        {detail.data.skill_names && detail.data.skill_names.length > 0 && (
-                                            <div className="bg-black/30 rounded-lg p-2.5 border border-gray-800">
-                                                <div className="text-[10px] text-gray-500 mb-1.5">スキル</div>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {detail.data.skill_names.map((name: string, i: number) => (
-                                                        <span key={i} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 text-[10px] rounded border border-gray-700">{name}</span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-
-                                {/* アクションボタン */}
-                                <div className="flex gap-2 pt-1">
-                                    <button onClick={() => setDetail(null)} className="flex-1 py-2 border border-gray-700 text-gray-400 hover:text-white text-xs rounded-lg transition-colors">
-                                        閉じる
-                                    </button>
-                                    {detail.type === 'skill' && (
-                                        <button
-                                            onClick={async () => { await handleToggleSkill(detail.data); setDetail(null); }}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                                                detail.data.is_equipped
-                                                    ? 'bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50'
-                                                    : 'bg-purple-900/30 text-purple-400 border border-purple-800 hover:bg-purple-900/50'
-                                            }`}
-                                        >
-                                            {detail.data.is_equipped ? '装備を外す' : '装備する'}
-                                        </button>
-                                    )}
-                                    {detail.type === 'equip' && (
-                                        <button
-                                            onClick={async () => {
-                                                if (detail.data._isEquipped) {
-                                                    await handleUnequip(detail.data._slot);
-                                                } else {
-                                                    await handleEquipItem(detail.data, detail.data._slot);
-                                                }
-                                                setDetail(null);
-                                            }}
-                                            disabled={!!equipLoadingSlot}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                                                detail.data._isEquipped
-                                                    ? 'bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50'
-                                                    : 'bg-orange-900/30 text-orange-400 border border-orange-800 hover:bg-orange-900/50'
-                                            } ${equipLoadingSlot ? 'opacity-50 cursor-wait' : ''}`}
-                                        >
-                                            {equipLoadingSlot ? '処理中…' : detail.data._isEquipped ? '装備を外す' : '装備する'}
-                                        </button>
-                                    )}
-                                    {/* v25: 消耗品の使用ボタン */}
-                                    {detail.type === 'item' && (() => {
-                                        const ed = detail.data.effect_data || {};
-                                        const timing = ed.use_timing || detail.data.use_timing || 'field';
-                                        if (timing === 'battle') {
-                                            return (
-                                                <div className="flex-1 py-2 text-xs text-center text-amber-600/70 border border-amber-900/30 rounded-lg">
-                                                    🗡 バトル中のみ使用可
-                                                </div>
-                                            );
-                                        }
-                                        if (timing === 'passive') {
-                                            return (
-                                                <div className="flex-1 py-2 text-xs text-center text-gray-600 border border-gray-800 rounded-lg">
-                                                    ○ 所持効果
-                                                </div>
-                                            );
-                                        }
-                                        // field または未定義 → 使用ボタン
-                                        return (
-                                            <button
-                                                onClick={() => handleUseFieldItem(detail.data)}
-                                                className="flex-1 py-2 text-xs font-bold rounded-lg bg-green-900/30 text-green-400 border border-green-800 hover:bg-green-900/50 transition-all"
-                                            >
-                                                使用する
-                                            </button>
-                                        );
-                                    })()}
-                                    {detail.type === 'npc' && (
-                                        <button
-                                            onClick={async () => {
-                                                if (!confirm(`${detail.data.name}と別れますか？`)) return;
-                                                if (partyDismissRef.current) {
-                                                    await partyDismissRef.current(detail.data.id, detail.data.name);
-                                                }
-                                                setDetail(null);
-                                            }}
-                                            className="flex-1 py-2 text-xs font-bold rounded-lg bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50 transition-all"
-                                        >
-                                            別れる
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
 
-        {/* ===== Enlarged Image Popup ===== */}
-        {enlargedImage && (
-            <div 
-                className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
-                onClick={() => setEnlargedImage(null)}
-            >
-                <div className="relative max-w-2xl max-h-[90vh] flex flex-col items-center">
-                    <button 
-                        onClick={() => setEnlargedImage(null)}
-                        className="absolute -top-10 right-0 text-white hover:text-amber-400 p-2"
-                    >
-                        <X className="w-8 h-8" />
-                    </button>
-                    <img 
-                        src={enlargedImage} 
-                        alt="Enlarged view" 
-                        className="object-contain max-w-full max-h-[85vh] rounded shadow-2xl"
-                    />
-                </div>
-            </div>
+        {/* ── サブモーダル ── */}
+        {showSkillDeck && (
+            <SkillDeckModal
+                onClose={() => setShowSkillDeck(false)}
+                questLocked={questLocked}
+                isCampMode={isCampMode}
+            />
         )}
-            {showSkillDeck && (
-                <SkillDeckModal
-                    onClose={() => setShowSkillDeck(false)}
-                    questLocked={questLocked}
-                    isCampMode={isCampMode}
-                />
-            )}
+        {showEquip && (
+            <EquipModal
+                onClose={() => setShowEquip(false)}
+                questLocked={questLocked}
+                isCampMode={isCampMode}
+            />
+        )}
+        {showItems && (
+            <ItemModal
+                onClose={() => setShowItems(false)}
+            />
+        )}
+        {showParty && (
+            <PartyModal
+                onClose={() => setShowParty(false)}
+                userProfile={userProfile}
+            />
+        )}
         </>
     );
 }
-
-function PartyList({ userProfile, onSelect, onDismissRef }: { userProfile: any; onSelect: (npc: any) => void; onDismissRef: React.MutableRefObject<((id: string, name: string) => Promise<void>) | null> }) {
-    const [party, setParty] = React.useState<any[]>([]);
-    const [loading, setLoading] = React.useState(true);
-
-    const handleDismiss = React.useCallback(async (memberId: string, name: string) => {
-        try {
-            // auth tokenを取得してDELETEリクエストに付与
-            const { getAuthHeaders } = await import('@/lib/authToken');
-            const headers: HeadersInit = { 'Content-Type': 'application/json', ...(await getAuthHeaders()) };
-
-            const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE', headers });
-            if (res.ok) { setParty(prev => prev.filter(p => p.id !== memberId)); }
-            else {
-                const errData = await res.json().catch(() => ({}));
-                alert(`別れに失敗しました。${errData.error ? `（${errData.error}）` : ''}`);
-            }
-        } catch (e) { console.error(e); alert('エラーが発生しました。'); }
-    }, []);
-
-    React.useEffect(() => {
-        onDismissRef.current = handleDismiss;
-    }, [handleDismiss, onDismissRef]);
-
-    React.useEffect(() => {
-        if (!userProfile?.id) return;
-        import('@/lib/authToken').then(async ({ getAuthHeaders }) => {
-            const headers = await getAuthHeaders();
-            return fetch(`/api/party/list?owner_id=${userProfile.id}`, { headers });
-        })
-            .then(res => res.json())
-            .then(data => { setParty(data.party || []); setLoading(false); })
-            .catch(err => { console.error('Failed to fetch party:', err); setLoading(false); });
-    }, [userProfile?.id]);
-
-
-
-    if (loading) return <div className="text-xs text-gray-500 py-4 text-center">読み込み中...</div>;
-    if (party.length === 0) return <div className="text-xs text-gray-500 py-8 text-center">同行者はいません。<br /><span className="text-[10px] text-amber-600">酒場で仲間を雇おう！</span></div>;
-
-    return (
-        <div className="space-y-1">
-            {party.map(member => (
-                <div key={member.id} onClick={() => onSelect(member)} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 cursor-pointer active:bg-gray-800/60 transition-colors">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                            {member.icon_url || member.image_url ? <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover" /> : <div className="text-gray-400 text-[10px]">{member.name[0]}</div>}
-                        </div>
-                        <div>
-                            <div className="text-xs text-blue-300 font-bold">{member.name}</div>
-                            <div className="text-[10px] text-gray-500">{member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / VIT:{(member as any).vitality ?? member.durability ?? '—'}</div>
-                        </div>
-                    </div>
-                    <span className="text-[9px] text-gray-600 shrink-0">▶</span>
-                </div>
-            ))}
-        </div>
-    );
-}
-
