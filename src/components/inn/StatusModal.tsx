@@ -8,6 +8,7 @@ import { formatEffectData, getEffectList, getItemImageUrl, getSlotLabel, getEqui
 import { supabase } from '@/lib/supabase';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { toJpJobClass } from '@/lib/jobClass';
+import SkillDeckModal from './SkillDeckModal';
 
 
 interface StatusModalProps {
@@ -16,7 +17,7 @@ interface StatusModalProps {
     questLocked?: boolean;
 }
 
-type TabKey = 'deck' | 'items' | 'equip' | 'party';
+type TabKey = 'items' | 'equip' | 'party';
 
 type DetailType = 'skill' | 'item' | 'npc' | 'equip';
 interface DetailTarget { type: DetailType; data: any; }
@@ -24,7 +25,8 @@ interface DetailTarget { type: DetailType; data: any; }
 export default function StatusModal({ onClose, isCampMode, questLocked }: StatusModalProps) {
     const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile,
             fetchEquipment, equippedItems: equipped, equipBonus } = useGameStore();
-    const [activeTab, setActiveTab] = React.useState<TabKey>('deck');
+    const [activeTab, setActiveTab] = React.useState<TabKey>('items');
+    const [showSkillDeck, setShowSkillDeck] = React.useState(false);
     const [detail, setDetail] = React.useState<DetailTarget | null>(null);
     const partyDismissRef = React.useRef<((id: string, name: string) => Promise<void>) | null>(null);
     const [enlargedImage, setEnlargedImage] = React.useState<string | null>(null);
@@ -184,7 +186,6 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
     const flameColor = vitalityStatus === 'Prime' ? 'text-orange-500' : vitalityStatus === 'Twilight' ? 'text-orange-800' : 'text-gray-700';
 
     const tabs: { key: TabKey; label: string; icon: React.ReactNode; count?: number }[] = [
-        { key: 'deck', label: 'デッキ', icon: <Zap className="w-3.5 h-3.5" />, count: skills.length },
         { key: 'items', label: '所持品', icon: <Backpack className="w-3.5 h-3.5" />, count: consumables.filter(i => (i.quantity || 0) > 0 && i.item_type !== 'equipment' && i.type !== 'equipment').length },
         { key: 'equip', label: '装備', icon: <Shield className="w-3.5 h-3.5" />, count: equipped.length + equipmentItems.length },
         { key: 'party', label: 'パーティ', icon: <Users className="w-3.5 h-3.5" /> },
@@ -200,9 +201,17 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                     <h2 className="text-base font-serif text-gray-100 font-bold tracking-wider flex items-center gap-2">
                         <Shield className="w-4 h-4 text-amber-500" /> ステータス
                     </h2>
-                    <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-white bg-gray-800/50 rounded-full hover:bg-gray-700 transition-colors">
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowSkillDeck(true)}
+                            className="px-2.5 py-1 text-xs font-bold text-amber-400 border border-amber-500/30 hover:border-amber-400/60 rounded bg-amber-950/20 transition-all flex items-center gap-1 active:scale-95"
+                        >
+                            <Zap className="w-3 h-3 text-amber-400" /> スキルデッキ
+                        </button>
+                        <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-white bg-gray-800/50 rounded-full hover:bg-gray-700 transition-colors">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </header>
 
                 {/* ── 基礎ステータス（常時表示） ── */}
@@ -343,87 +352,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                 {/* ── タブコンテンツ（スクロール領域） ── */}
                 <div className="flex-1 overflow-y-auto p-3 scrollbar-thin scrollbar-thumb-gray-700">
 
-                    {/* タブ1: デッキ/スキル */}
-                    {activeTab === 'deck' && (
-                        <div className="space-y-3">
-                            {/* デッキコスト表示 */}
-                            <div className="flex items-center justify-between bg-gray-800/40 px-3 py-1.5 rounded border border-gray-700">
-                                <span className="text-xs text-gray-400">デッキコスト</span>
-                                <span className={`text-sm font-mono font-bold ${currentDeckCost > (userProfile?.max_deck_cost || 10) ? 'text-red-400' : 'text-cyan-400'}`}>
-                                    {currentDeckCost} / {userProfile?.max_deck_cost || 10}
-                                </span>
-                            </div>
 
-                            {/* 装備中スキル */}
-                            <div>
-                                <div className="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                    <Star className="w-3 h-3" /> 装備中 ({skills.filter(i => i.is_equipped).length})
-                                </div>
-                                {skills.filter(i => i.is_equipped).length === 0 ? (
-                                    <div className="text-center text-gray-600 py-3 text-xs">装備中のスキルがありません。</div>
-                                ) : (
-                                    <div className="space-y-1">
-                                        {skills.filter(i => i.is_equipped).map(item => {
-                                            const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
-                                            return (
-                                            <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-purple-900/10 rounded border border-purple-900/30 hover:border-purple-700/50 transition-colors cursor-pointer active:bg-purple-900/20">
-                                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                    <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-purple-400" />}
-                                                    </div>
-                                                    <span className="text-xs text-gray-200 font-bold truncate">{item.name}</span>
-                                                    <span className="text-[9px] text-cyan-600 border border-cyan-900 px-1 rounded shrink-0">C:{item.cost || 0}</span>
-                                                </div>
-                                                <span className="text-[9px] text-gray-600 shrink-0 ml-1">▶</span>
-                                            </div>
-                                        );})}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* 未装備スキル */}
-                            <div>
-                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                                    <Zap className="w-3 h-3" /> 未装備ストック ({skills.filter(i => !i.is_equipped).length})
-                                </div>
-                                {skills.filter(i => !i.is_equipped).length === 0 ? (
-                                    <div className="text-center text-gray-600 py-3 text-xs">
-                                        未装備のスキルはありません。<br />
-                                        <span className="text-amber-600 text-[10px]">道具屋でスキルを購入しよう！</span>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-1">
-                                        {skills.filter(i => !i.is_equipped).map(item => {
-                                            const isQuestActive = !!userProfile?.current_quest_id && !isCampMode;
-                                            const isLocked = isQuestActive && item.acquired_at && userProfile?.quest_started_at && new Date(item.acquired_at).getTime() < new Date(userProfile.quest_started_at).getTime();
-                                            const isOverCost = currentDeckCost + (item.cost || 0) > (userProfile?.max_deck_cost || 10);
-                                            const isDisabled = isLocked || isOverCost;
-                                            const imgUrl = item.image_url || ((item as any).slug ? getItemImageUrl((item as any).slug) : null);
-
-                                            return (
-                                                <div key={item.id} onClick={() => setDetail({ type: 'skill', data: item })} className="flex items-center justify-between p-1.5 bg-black/30 rounded border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer active:bg-gray-800/60">
-                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                        <div className="w-7 h-7 rounded bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
-                                                            {imgUrl ? <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" /> : <Zap className="w-3 h-3 text-gray-500" />}
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <div className="text-xs text-gray-400 font-bold truncate">{item.name}</div>
-                                                            {isLocked && <div className="text-[9px] text-red-500">※クエスト中装備不可</div>}
-                                                            {isOverCost && <div className="text-[9px] text-orange-500">※コスト超過</div>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 shrink-0 ml-1">
-                                                        <span className="text-[9px] text-cyan-600 border border-cyan-900 px-1 rounded">C:{item.cost || 0}</span>
-                                                        <span className="text-[9px] text-gray-600">▶</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* タブ: 装備品 */}
                     {activeTab === 'equip' && (
@@ -801,6 +730,13 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                 </div>
             </div>
         )}
+            {showSkillDeck && (
+                <SkillDeckModal
+                    onClose={() => setShowSkillDeck(false)}
+                    questLocked={questLocked}
+                    isCampMode={isCampMode}
+                />
+            )}
         </>
     );
 }

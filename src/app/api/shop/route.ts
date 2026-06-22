@@ -318,7 +318,7 @@ export async function GET(req: Request) {
 // POST: Buy Item or Skill
 export async function POST(req: Request) {
     try {
-        const { item_id, _source } = await req.json();
+        const { item_id, _source, quantity = 1 } = await req.json();
         const profile = await getAuthenticatedProfile(req);
 
         // 出禁チェック（共通モジュール）
@@ -326,9 +326,9 @@ export async function POST(req: Request) {
 
         // 分岐: スキル購入 vs アイテム購入
         if (_source === 'skill') {
-            return await handleSkillPurchase(profile, item_id);
+            return await handleSkillPurchase(profile, item_id, quantity);
         } else {
-            return await handleItemPurchase(profile, item_id);
+            return await handleItemPurchase(profile, item_id, quantity);
         }
 
     } catch (e: any) {
@@ -340,7 +340,14 @@ export async function POST(req: Request) {
 }
 
 // スキル購入処理
-async function handleSkillPurchase(profile: UserProfileDB, skillId: number) {
+async function handleSkillPurchase(profile: UserProfileDB, skillId: number, quantity: number) {
+    if (typeof quantity !== 'number' || quantity <= 0 || !Number.isInteger(quantity)) {
+        return NextResponse.json({ error: '購入個数が無効です。' }, { status: 400 });
+    }
+    if (quantity !== 1) {
+        return NextResponse.json({ error: 'スキルは1個ずつしか購入できません。' }, { status: 400 });
+    }
+
     // 1. Fetch Skill
     const { data: skillData, error: skillError } = await supabaseService
         .from('skills')
@@ -390,7 +397,11 @@ async function handleSkillPurchase(profile: UserProfileDB, skillId: number) {
 }
 
 // アイテム購入処理
-async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
+async function handleItemPurchase(profile: UserProfileDB, itemId: number, quantity: number) {
+    if (typeof quantity !== 'number' || quantity <= 0 || !Number.isInteger(quantity)) {
+        return NextResponse.json({ error: '購入個数が無効です。' }, { status: 400 });
+    }
+
     // 1. Fetch Item
     const { data: itemData, error: itemError } = await supabaseService
         .from('items')
@@ -403,11 +414,14 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
 
     // 2. Calculate Price (L1 v27.3: 共通関数を使用)
     const { multiplier: priceMultiplier, prosperityLevel } = await getInflationMultiplier(profile.current_location_id);
-    let finalPrice = Math.floor(item.base_price * priceMultiplier);
+    let finalPrice = Math.floor(item.base_price * priceMultiplier) * quantity;
 
     // 2b. 通行許可証の重複購入チェック
     const PASS_SLUGS = ['item_pass_roland', 'item_pass_karyu', 'item_pass_yato', 'item_pass_markand'];
     if (item.slug && PASS_SLUGS.includes(item.slug)) {
+        if (quantity !== 1) {
+            return NextResponse.json({ error: '通行許可証は1枚ずつしか購入できません。' }, { status: 400 });
+        }
         const { count } = await supabaseService
             .from('inventory')
             .select('*', { count: 'exact', head: true })
@@ -420,6 +434,9 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
 
     // 2b-2. 爆薬の重複購入チェック
     if (item.slug === 'item_explosive') {
+        if (quantity !== 1) {
+            return NextResponse.json({ error: 'このアイテムは1個ずつしか購入できません。' }, { status: 400 });
+        }
         const { count } = await supabaseService
             .from('inventory')
             .select('*', { count: 'exact', head: true })
@@ -439,7 +456,7 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
             .eq('item_id', item.id);
 
         const totalQty = (existingRows || []).reduce((sum: number, row: any) => sum + (row.quantity || 1), 0);
-        if (totalQty >= 10) {
+        if (totalQty + quantity > 10) {
             return NextResponse.json({ error: `「${item.name}」は最大10個までしか所持できません。` }, { status: 400 });
         }
     }
@@ -453,7 +470,7 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
             .eq('item_id', item.id);
 
         const totalQty = (existingRows || []).reduce((sum: number, row: any) => sum + (row.quantity || 1), 0);
-        if (totalQty >= 3) {
+        if (totalQty + quantity > 3) {
             return NextResponse.json({ error: `「${item.name}」は最大3個までしか所持できません。` }, { status: 400 });
         }
     }
@@ -465,6 +482,9 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
 
     // 4. Handle Special Items (e.g. Capital Pass)
     if (item.slug === 'capital_pass') {
+        if (quantity !== 1) {
+            return NextResponse.json({ error: '通行許可証は1枚ずつしか購入できません。' }, { status: 400 });
+        }
         const currentDays = profile.accumulated_days || 0;
         const newExpiry = currentDays + 30;
         const updatedPasses = { ...(profile.pass_expires_at || {}) } as Record<string, number>;
@@ -494,7 +514,7 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number) {
         .insert({
             user_id: profile.id,
             item_id: item.id,
-            quantity: 1,
+            quantity: quantity,
             is_equipped: false,
             is_skill: false,
             acquired_at: new Date().toISOString()

@@ -56,23 +56,25 @@ let price = Math.floor(basePrice * inflationMap[prosperityLevel]);
 ### 3.3 API: POST /api/shop (購入実行)
 ```
 POST /api/shop
-Body: { item_id: number, user_id: string }
+Body: { item_id: number, quantity?: number }
 ```
 
 処理:
-1. ゴールド残高チェック。
-2. `inventory` テーブルに**新規行を挿入**（同一アイテムの複数行が生じる）。
-3. `increment_gold` RPC でゴールドを原子的に減算。
-4. 失敗時は RPC で返金（ロールバック）。
+1. `quantity` の正の整数検証（デフォルト1）。
+2. ゴールド残高チェック（単価 × quantity）。
+3. 所持上限チェック：`現在の所持数 + quantity` が上限（消耗品10個、装備品3個、スキル/許可証1個）を超える場合は拒否。
+4. `inventory` テーブルに指定した `quantity` を持つ新規行を挿入。
+5. `increment_gold` RPC でゴールドを原子的に減算。
+6. 失敗時は RPC で返金（ロールバック）。
 
 ### 3.4 購入個数制限 (v27)
 
 | アイテム種別 | 同一アイテム上限 | 備考 |
 |---|---|---|
-| 消耗品 (`consumable`) | 10個 | v25で追加 |
-| 装備品 (`equipment`) | 3個 | v27で追加 |
-| スキルカード (`skill`) | 1個 | 重複習得不可 |
-| 通行許可証 (`key_item`) | 1個 | 重複購入不可 |
+| 消耗品 (`consumable`) | 10個 | v25で追加、個数指定購入可能 |
+| 装備品 (`equipment`) | 3個 | v27で追加、個数指定購入可能 |
+| スキルカード (`skill`) | 1個 | 重複習得不可、数量指定不可 (1固定) |
+| 通行許可証 (`key_item`) | 1個 | 重複購入不可、数量指定不可 (1固定) |
 
 ---
 
@@ -83,16 +85,16 @@ Body: { item_id: number, user_id: string }
 ```
 POST /api/shop/sell
 Headers: { Authorization: Bearer <jwt> }
-Body: { item_id: number, quantity?: number }
 ```
+Body: { item_id: number, quantity?: number }
 
 ### 4.2 売却処理フロー
 1. **認証**: JWT から `user_id` を取得。Service Role Client で RLS をバイパス。
 2. **数量バリデーション**: `quantity` が正の整数であること（負の数や小数、文字列を拒否）を検証。
-3. **在庫・所持数確認**: `inventory` テーブルから `item_id = item_id` かつ `user_id = userId` の行を `.limit(1)` で取得し、所持数量 `ownedQty` が要求された `quantity` 以上であることを検証。
-4. **装備チェック**: `is_equipped === true` の場合、またはスキルアイテムの場合は **売却拒否** (400エラー)。
+3. **在庫・所持数確認**: `inventory` テーブルから `item_id = item_id` かつ `user_id = userId` の行（未装備 `is_equipped === false` のみ）を全取得し、合計の所持数量が `quantity` 以上であることを検証（装備中のアイテムは売却不可）。
+4. **装備・スキルチェック**: スキルアイテムの場合は **売却拒否** (400エラー)。装備中のアイテムは売却対象外とする。
 5. **価格計算**: `sell_price`（通常は `base_price / 2`）を計算し、総額 `sell_price * quantity` を算出。
-6. **インベントリ更新**: 所持数が売却数より多い場合は減算して更新し、所持数と売却数が等しい場合は該当行を削除。
+6. **インベントリ更新 (複数行減算)**: 取得した未装備の行をループし、売却個数に達するまで数量の減算（UPDATE）または行の削除（DELETE）を順次行います。
 7. **ゴールド加算**: `increment_gold` RPC で原子的に加算。
 
 > **Note (spec v14 実装済み)**: `.limit(1)` は購入により同一アイテムが複数行存在する問題への対処。崩壊拠点（Prosperity=1）での**闇市売却ボーナス（base_price × 1.5）実装済み**。
