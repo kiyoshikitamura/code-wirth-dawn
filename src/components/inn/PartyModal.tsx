@@ -4,6 +4,7 @@ import { Users, X, Heart, Sword, Shield, Activity, ChevronUp, ChevronDown } from
 import { toJpJobClass } from '@/lib/jobClass';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useQuestState } from '@/store/useQuestState';
+import { useGameStore } from '@/store/gameStore';
 
 interface PartyModalProps {
     onClose: () => void;
@@ -103,7 +104,9 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
             const headers: HeadersInit = { 'Content-Type': 'application/json', ...(await getAuthHeaders()) };
             const res = await fetch(`/api/party/member?id=${memberId}`, { method: 'DELETE', headers });
             if (res.ok) {
-                setParty(prev => prev.filter(p => p.id !== memberId));
+                const newParty = party.filter(p => p.id !== memberId);
+                setParty(newParty);
+                useGameStore.getState().setPartyMembers(newParty);
                 alert(`${name}と別れました。`);
             } else {
                 const errData = await res.json().catch(() => ({}));
