@@ -517,13 +517,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     useEffect(() => {
         if (battleState.isVictory || battleState.isDefeat || isEscaped) {
-            // ログキューが空になるまで待ってからオーバーレイ表示
+            // ログのキューイングがすべて完了し、かつ再生が完全に終わるまで待ってからオーバーレイ表示
             const checkInterval = setInterval(() => {
-                if (!isTyping.current && typingQueue.current.length === 0) {
+                const isQueueingPending = enqueuedUpToRef.current < battleState.messages.length;
+                if (!isQueueingPending && !isTyping.current && typingQueue.current.length === 0) {
                     clearInterval(checkInterval);
                     setTimeout(() => setShowResultOverlay(true), 800);
                 }
-            }, 200);
+            }, 100);
             return () => clearInterval(checkInterval);
         }
     }, [battleState.isVictory, battleState.isDefeat, battleState.messages]);
