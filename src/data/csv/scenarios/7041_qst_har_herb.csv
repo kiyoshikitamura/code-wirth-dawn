@@ -33,7 +33,7 @@ CHOICE,,lose,,end_failure_01
 NODE,collect_01,"周囲の安全を確保し、ようやく霊草の前に膝をつく。これ以上傷つけないよう慎重に周囲の土を掘る。","{""bg"":""bg_har_cliff"",""bgm"":""bgm_quest_calm"",""type"":""text""}",collect_02
 NODE,collect_02,"宦官の言葉通り、茎を折らないように根元からそっと引き抜き、持参した柔らかい布で優しく包み込んだ。","{""bg"":""bg_har_cliff"",""bgm"":""bgm_quest_calm"",""type"":""text""}",collect_03
 NODE,collect_03,"採取は無さに完了した。しかし、まだ仕事は半分だ。これを萎れる前に都まで持ち帰らねばならない。","{""bg"":""bg_har_cliff"",""bgm"":""bgm_quest_calm"",""type"":""text""}",collect
-NODE,collect,"「霊草」を手に入れた！","{""bg"":""bg_har_cliff"",""bgm"":""bgm_quest_calm"",""type"":""reward"",""item_id"":""item_spirit_herb""}",descent_01
+NODE,collect,"「霊草」を手に入れた！","{""bg"":""bg_har_cliff"",""bgm"":""bgm_quest_calm"",""type"":""reward"",""item_id"":""item_spirit_herb"",""quantity"":3}",descent_01
 NODE,descent_01,"霊草を大切に懐へ収め、登りよりもさらに気を使いながら、危険な断崖を慎重に下っていく。","{""bg"":""bg_har_cliff"",""bgm"":""bgm_field"",""type"":""text""}",descent_02
 NODE,descent_02,"崖を下りきった後は、休む間もなく都への帰路を急いだ。","{""bg"":""bg_har_cliff"",""bgm"":""bgm_field"",""type"":""text""}",descent_02_02
 NODE,descent_02_02,"夜を徹して走り続け、ようやく山のふもとの街道まで戻ってきた。霊草の鮮度は保たれている。","{""bg"":""bg_har_cliff"",""bgm"":""bgm_field"",""type"":""text""}",descent_02_03
