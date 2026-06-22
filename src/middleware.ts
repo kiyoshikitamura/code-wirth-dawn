@@ -154,10 +154,7 @@ export async function middleware(request: NextRequest) {
                         const payload = JSON.parse(jsonPayload);
                         const userId = payload.sub;
                         
-                        if (
-                            userId === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' ||
-                            userId === '5ad434ec-763f-473e-939f-14a5e9e1cc93'
-                        ) {
+                        if (userId === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f') {
                             hasBypass = true;
                             console.log(`[Middleware] Maintenance bypass granted for user: ${userId}`);
                         }
