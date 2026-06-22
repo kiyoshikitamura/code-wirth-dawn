@@ -201,7 +201,13 @@ export function useScenarioNodeProcessor({
                 if (processedNodeRef.current !== activeNodeId) return;
                 const latestInv = useGameStore.getState().inventory || [];
                 const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
-                const hasItem = latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount >= reqQty;
+                
+                // クエスト戦利品プール（未永続化アイテム）の個数を合算
+                const questLootCount = (questState.lootPool || [])
+                    .filter((i: any) => String(i.itemId) === String(requiredItemId))
+                    .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0);
+                
+                const hasItem = (latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount) >= reqQty;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
@@ -284,8 +290,14 @@ export function useScenarioNodeProcessor({
                 const latestInv = useGameStore.getState().inventory || [];
                 // すでにクエスト内で「消費予定」として蓄積されている分をカウントして差し引く
                 const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
-                const hasItem = latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount >= reqQty;
-                console.log(`[check_delivery] item_id=${requiredItemId}, reqQty=${reqQty}, hasItem=${hasItem}, consumed=${alreadyConsumedCount}, inv count=${latestInv.length}`);
+
+                // クエスト戦利品プール（未永続化アイテム）の個数を合算
+                const questLootCount = (questState.lootPool || [])
+                    .filter((i: any) => String(i.itemId) === String(requiredItemId))
+                    .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0);
+
+                const hasItem = (latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount) >= reqQty;
+                console.log(`[check_delivery] item_id=${requiredItemId}, reqQty=${reqQty}, hasItem=${hasItem}, consumed=${alreadyConsumedCount}, lootPool=${questLootCount}, inv count=${latestInv.length}`);
 
                 if (hasItem) {
                     if (removeOnSuccess) {
