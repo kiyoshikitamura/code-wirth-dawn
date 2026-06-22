@@ -471,7 +471,8 @@ export default function QuestPage() {
                         } else {
                             // すでに開始済みの場合: ローカル状態の初期化またはDBからのレジューム復元
                             const qs = useQuestState.getState();
-                            if (qs.questId !== id || !qs.isInQuest) {
+                            // サーバー側の current_quest_state が null の場合も強制的に初期化を走らせる (2戦目開始バグ防止)
+                            if (qs.questId !== id || !qs.isInQuest || !currentProfile?.current_quest_state) {
                                 if (currentProfile?.current_quest_state) {
                                     console.log('[QuestPage] Restoring quest state from server DB:', currentProfile.current_quest_state);
                                     useQuestState.getState().resumeQuest(currentProfile.current_quest_state);
