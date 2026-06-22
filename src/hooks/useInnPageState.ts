@@ -103,17 +103,7 @@ export function useInnPageState() {
     const [reputation, setReputation] = useState<any>(null);
 
     // News & History Logic
-    const [gougaiEvents, setGougaiEvents] = useState<any[]>([]);
-    const [showWorldChanged, setShowWorldChanged] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
-    const [hasCheckedGougai, setHasCheckedGougai] = useState(false);
-
-    // gougaiEvents がセットされたら、情勢変化ポップアップを表示
-    useEffect(() => {
-        if (gougaiEvents.length > 0) {
-            setShowWorldChanged(true);
-        }
-    }, [gougaiEvents]);
 
     // Profile 読み込み時にチュートリアル未完了なら表示
     useEffect(() => {
@@ -153,14 +143,6 @@ export function useInnPageState() {
         }
     };
 
-    const handleCloseWorldChanged = async () => {
-        setShowWorldChanged(false);
-        await handleCloseGougai();
-    };
-
-    const handleOpenGougaiFromNotify = () => {
-        setShowWorldChanged(false);
-    };
 
     // Badge states (赤！バッジ)
     const [showHistoryBadge, setShowHistoryBadge] = useState(true);
@@ -264,10 +246,7 @@ export function useInnPageState() {
                         setReputation(data.reputation || { rank: 'Stranger', score: 0 });
                     }
 
-                    // Gougai（号外）
-                    if (data.gougai && data.gougai.length > 0) {
-                        setGougaiEvents(data.gougai);
-                    }
+
 
                     if (!data.profile) {
                         router.push('/title');
@@ -410,42 +389,7 @@ export function useInnPageState() {
         }
     }, [worldState?.location_name]);
 
-    // Gougai Detection
-    useEffect(() => {
-        if (!initialLoadComplete || hasCheckedGougai) return;
-        if (!userProfile?.id || gougaiEvents.length > 0) return;
-        const checkGougai = async () => {
-            setHasCheckedGougai(true);
-            try {
-                const res = await fetch(`/api/world-history/get-updates?user_id=${userProfile.id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.news && data.news.length > 0) {
-                        setGougaiEvents(data.news);
-                    }
-                }
-            } catch (e) {
-                console.error("号外チェック失敗", e);
-            }
-        };
-        checkGougai();
-    }, [userProfile, initialLoadComplete, hasCheckedGougai]);
 
-    const handleCloseGougai = async () => {
-        if (gougaiEvents.length > 0 && userProfile?.id) {
-            const latestId = gougaiEvents[0].id;
-            try {
-                await fetch('/api/world-history/get-updates', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userProfile.id, last_seen_history_id: latestId })
-                });
-            } catch (e) {
-                console.error("ニュース既読マーク失敗", e);
-            }
-        }
-        setGougaiEvents([]);
-    };
 
     // NPC Data Generator
     const FACILITY_LABELS: Record<string, string> = {
@@ -772,9 +716,7 @@ export function useInnPageState() {
         toast,
         allQuests, loadingQuests,
         reputation,
-        gougaiEvents, handleCloseGougai,
         showTutorial, handleCompleteTutorial,
-        showWorldChanged, handleCloseWorldChanged, handleOpenGougaiFromNotify,
         showHistoryBadge,
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,

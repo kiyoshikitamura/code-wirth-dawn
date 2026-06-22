@@ -27,10 +27,8 @@ import GossipModal from '@/components/world/GossipModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
 import ActiveQuestModal from '@/components/inn/ActiveQuestModal';
 import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
-import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 import TutorialModal from '@/components/inn/TutorialModal';
-import WorldChangedModal from '@/components/inn/WorldChangedModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
@@ -72,9 +70,7 @@ function InnPageInner() {
         toast,
         allQuests, loadingQuests,
         reputation,
-        gougaiEvents, handleCloseGougai,
         showTutorial, handleCompleteTutorial,
-        showWorldChanged, handleCloseWorldChanged, handleOpenGougaiFromNotify,
         showHistoryBadge,
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
@@ -187,18 +183,7 @@ function InnPageInner() {
                     <TutorialModal onComplete={handleCompleteTutorial} />
                 )}
 
-                {/* World Changed Notification Popup */}
-                {showWorldChanged && (
-                    <WorldChangedModal 
-                        onOpenGougai={handleOpenGougaiFromNotify} 
-                        onClose={handleCloseWorldChanged} 
-                    />
-                )}
 
-                {/* Gougai Modal */}
-                {gougaiEvents.length > 0 && !showWorldChanged && (
-                    <ChronicleModal events={gougaiEvents} onClose={handleCloseGougai} />
-                )}
 
                 {/* NPC Dialog */}
                 {activeNpcData && activeModal && (
