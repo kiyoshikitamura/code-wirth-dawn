@@ -475,13 +475,17 @@ export async function POST(req: Request) {
             if (difficulty === 'hard') {
                 if (itemPool && itemPool.length > 0) {
                     if (!effectiveRewards.items) effectiveRewards.items = [];
-                    const chosen = chooseWeightedReward(itemPool);
-                    if (chosen) effectiveRewards.items.push(chosen);
+                    for (let i = 0; i < 2; i++) {
+                        const chosen = chooseWeightedReward(itemPool);
+                        if (chosen) effectiveRewards.items.push(chosen);
+                    }
                 }
                 if (skillPool && skillPool.length > 0) {
                     if (!effectiveRewards.skills) effectiveRewards.skills = [];
-                    const chosen = chooseWeightedReward(skillPool);
-                    if (chosen) effectiveRewards.skills.push(chosen);
+                    for (let i = 0; i < 2; i++) {
+                        const chosen = chooseWeightedReward(skillPool);
+                        if (chosen) effectiveRewards.skills.push(chosen);
+                    }
                 }
             } else {
                 // Easy & Normal: EITHER 1 item OR 1 skill (50% chance each)

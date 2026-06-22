@@ -103,7 +103,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 <p><strong className="text-amber-400 font-bold">Normal クラス (全10戦):</strong> 挑戦費 [Lv × 30 G]</p>
                                 <p className="pl-4 text-slate-400">報酬: 1,000 G / 400 EXP / +10 名声 / ランダムアイテムまたはスキル1点</p>
                                 <p><strong className="text-rose-400 font-bold">Hard クラス (全10戦):</strong> 挑戦費 [Lv × 50 G]</p>
-                                <p className="pl-4 text-slate-400">報酬: 2,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点</p>
+                                <p className="pl-4 text-slate-400">報酬: 2,000 G / 800 EXP / +20 名声 / アイテム2点 ＆ スキル2点</p>
                                 <p className="text-[10px] text-amber-300 font-bold mt-1">※すべてのクラスにおいて、挑戦後は成功・失敗（ギブアップ含む）を問わず一律で3日間が経過します。</p>
                             </div>
                         </section>
@@ -305,7 +305,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <span className="text-[10px] text-slate-400">(全10戦)</span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    報酬: 2,000 G / 800 EXP / +20 名声 / アイテム1点 ＆ スキル1点
+                                    報酬: 2,000 G / 800 EXP / +20 名声 / アイテム2点 ＆ スキル2点
                                 </p>
                             </div>
                             <div className="text-right shrink-0 ml-4">

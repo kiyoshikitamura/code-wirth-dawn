@@ -61,23 +61,29 @@ export async function GET(req: Request) {
                 .limit(RANKING_LIMIT)
         ]);
 
-        const winsRanking = (winsRankRes.data || []).map((r: any) => ({
-            rank: r.rank_by_wins,
-            userId: r.user_id,
-            name: r.user_name || '名もなき旅人',
-            avatarUrl: r.avatar_url,
-            wins: r.wins,
-            maxStreak: r.max_streak
-        }));
+        const excludedUserIds = ['c1cf67dd-527a-497e-bf88-ce10c2cb516f', '5ad434ec-763f-473e-939f-14a5e9e1cc93'];
 
-        const streakRanking = (streakRankRes.data || []).map((r: any) => ({
-            rank: r.rank_by_streak,
-            userId: r.user_id,
-            name: r.user_name || '名もなき旅人',
-            avatarUrl: r.avatar_url,
-            wins: r.wins,
-            maxStreak: r.max_streak
-        }));
+        const winsRanking = (winsRankRes.data || [])
+            .filter((r: any) => !excludedUserIds.includes(r.user_id))
+            .map((r: any) => ({
+                rank: r.rank_by_wins,
+                userId: r.user_id,
+                name: r.user_name || '名もなき旅人',
+                avatarUrl: r.avatar_url,
+                wins: r.wins,
+                maxStreak: r.max_streak
+            }));
+
+        const streakRanking = (streakRankRes.data || [])
+            .filter((r: any) => !excludedUserIds.includes(r.user_id))
+            .map((r: any) => ({
+                rank: r.rank_by_streak,
+                userId: r.user_id,
+                name: r.user_name || '名もなき旅人',
+                avatarUrl: r.avatar_url,
+                wins: r.wins,
+                maxStreak: r.max_streak
+            }));
 
         // Determine user stats
         const { data: userStats } = await supabaseService
