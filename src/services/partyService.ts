@@ -8,7 +8,9 @@ export class PartyService {
             .from('party_members')
             .select('*')
             .eq('owner_id', ownerId)
-            .eq('is_active', true);
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: true });
 
         if (error) {
             console.error('Party list error:', error);
@@ -136,5 +138,23 @@ export class PartyService {
                 vitality: member.vitality ?? 100,
             };
         });
+    }
+
+    static async reorderPartyMembers(ownerId: string, memberIds: string[]): Promise<void> {
+        const promises = memberIds.map((id, index) => {
+            return supabaseServer
+                .from('party_members')
+                .update({ sort_order: index })
+                .eq('id', id)
+                .eq('owner_id', ownerId);
+        });
+
+        const results = await Promise.all(promises);
+        for (const r of results) {
+            if (r.error) {
+                console.error('Failed to update party member sort_order:', r.error);
+                throw new Error(r.error.message);
+            }
+        }
     }
 }

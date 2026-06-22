@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, X, Heart, Sword, Shield, Activity } from 'lucide-react';
+import { Users, X, Heart, Sword, Shield, Activity, ChevronUp, ChevronDown } from 'lucide-react';
 import { toJpJobClass } from '@/lib/jobClass';
 import { getAuthHeaders } from '@/lib/authToken';
 
@@ -13,6 +13,55 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
     const [party, setParty] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+    const [reordering, setReordering] = useState(false);
+
+    const handleReorder = async (newParty: any[]) => {
+        if (reordering) return;
+        setReordering(true);
+
+        const originalParty = [...party];
+        setParty(newParty);
+
+        try {
+            const memberIds = newParty.map(p => p.id);
+            const headers: HeadersInit = { 'Content-Type': 'application/json', ...(await getAuthHeaders()) };
+            const res = await fetch('/api/party/reorder', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ memberIds })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                alert(`順序の変更に失敗しました。${errData.error ? `（${errData.error}）` : ''}`);
+                setParty(originalParty);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('通信エラーが発生しました。');
+            setParty(originalParty);
+        } finally {
+            setReordering(false);
+        }
+    };
+
+    const handleMoveUp = (index: number) => {
+        if (index === 0) return;
+        const newParty = [...party];
+        const temp = newParty[index];
+        newParty[index] = newParty[index - 1];
+        newParty[index - 1] = temp;
+        handleReorder(newParty);
+    };
+
+    const handleMoveDown = (index: number) => {
+        if (index === party.length - 1) return;
+        const newParty = [...party];
+        const temp = newParty[index];
+        newParty[index] = newParty[index + 1];
+        newParty[index + 1] = temp;
+        handleReorder(newParty);
+    };
 
     const fetchPartyList = async () => {
         if (!userProfile?.id) return;
@@ -196,32 +245,73 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-2">
-                            {party.map(member => (
-                                <div 
-                                    key={member.id} 
-                                    onClick={() => setSelectedDetail(member)} 
-                                    className="flex items-center justify-between p-2.5 bg-slate-900/30 border border-slate-800/80 hover:border-slate-700 cursor-pointer active:bg-slate-900/50 transition-all rounded-lg group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center shrink-0 overflow-hidden border border-slate-800/60">
-                                            {member.icon_url || member.image_url ? (
-                                                <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover animate-in fade-in" />
-                                            ) : (
-                                                <div className="text-purple-400 font-bold text-xs">{member.name[0]}</div>
-                                            )}
+                            {party.map((member, index) => {
+                                const isFirst = index === 0;
+                                const isLast = index === party.length - 1;
+                                const questLocked = !!userProfile?.current_quest_id;
+
+                                return (
+                                    <div 
+                                        key={member.id} 
+                                        onClick={() => setSelectedDetail(member)} 
+                                        className="flex items-center justify-between p-2.5 bg-slate-900/30 border border-slate-800/80 hover:border-slate-700 cursor-pointer active:bg-slate-900/50 transition-all rounded-lg group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center shrink-0 overflow-hidden border border-slate-800/60">
+                                                {member.icon_url || member.image_url ? (
+                                                    <img src={member.icon_url || member.image_url} alt={member.name} className="w-full h-full object-cover animate-in fade-in" />
+                                                ) : (
+                                                    <div className="text-purple-400 font-bold text-xs">{member.name[0]}</div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-purple-300 group-hover:text-purple-200 transition-colors">
+                                                    {member.name}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    {member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / VIT: {member.vitality ?? member.durability ?? '—'}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="text-xs font-bold text-purple-300 group-hover:text-purple-200 transition-colors">
-                                                {member.name}
-                                            </div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">
-                                                {member.epithet || toJpJobClass(member.job_class || 'Adventurer')} / VIT: {member.vitality ?? member.durability ?? '—'}
-                                            </div>
+                                        <div className="flex items-center gap-3 shrink-0 ml-1" onClick={e => e.stopPropagation()}>
+                                            {party.length > 1 && (
+                                                <div className="flex items-center gap-1 bg-slate-950/40 rounded border border-slate-800/80 p-0.5">
+                                                    <button
+                                                        onClick={() => handleMoveUp(index)}
+                                                        disabled={isFirst || reordering || questLocked}
+                                                        className={`p-1 rounded transition-colors ${
+                                                            isFirst || reordering || questLocked
+                                                                ? 'text-slate-700 cursor-not-allowed'
+                                                                : 'text-slate-400 hover:text-purple-400 hover:bg-purple-950/20 active:scale-90'
+                                                        }`}
+                                                        title={questLocked ? 'クエスト進行中は並び替えできません' : '上へ'}
+                                                    >
+                                                        <ChevronUp className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleMoveDown(index)}
+                                                        disabled={isLast || reordering || questLocked}
+                                                        className={`p-1 rounded transition-colors ${
+                                                            isLast || reordering || questLocked
+                                                                ? 'text-slate-700 cursor-not-allowed'
+                                                                : 'text-slate-400 hover:text-purple-400 hover:bg-purple-950/20 active:scale-90'
+                                                        }`}
+                                                        title={questLocked ? 'クエスト進行中は並び替えできません' : '下へ'}
+                                                    >
+                                                        <ChevronDown className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <button 
+                                                onClick={() => setSelectedDetail(member)}
+                                                className="text-[10px] text-slate-500 hover:text-purple-300 font-medium py-1 px-1.5 rounded hover:bg-slate-800/40 transition-colors"
+                                            >
+                                                ▶ 詳細
+                                            </button>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] text-slate-500 shrink-0 ml-1">▶ 詳細</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
