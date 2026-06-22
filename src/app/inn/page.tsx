@@ -169,7 +169,7 @@ function InnPageInner() {
             )}
 
             {/* Mobile View Container */}
-            <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
+            <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar md:custom-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
                 <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} onOpenShop={() => setShowShop(true)} equipBonus={equipBonus} />
