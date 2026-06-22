@@ -190,7 +190,7 @@ export class LifeCycleService {
                     name: profile.name || profile.title_name,
                     job_class: 'Hero',
                     level: profile.level,
-                    durability: profile.max_hp ?? 100,
+                    durability: 100, // 初期VITを100に設定
                     max_durability: profile.max_hp ?? 100,
                     atk: profile.atk ?? profile.attack ?? 0,  // v8.1: 正しいフィールド名を使用
                     def: profile.def ?? profile.defense ?? 0,

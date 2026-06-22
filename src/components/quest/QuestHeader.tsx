@@ -52,7 +52,18 @@ export default function QuestHeader({
             .then(data => {
                 if (active) {
                     clearTimeout(loadingTimer);
-                    setFetchedParty(data.party || []);
+                    let partyData = data.party || [];
+                    const questState = useQuestState.getState();
+                    if (questState.isInQuest) {
+                        partyData = partyData.map((m: any) => {
+                            const savedHp = questState.partyHp[String(m.id)];
+                            return {
+                                ...m,
+                                hp: savedHp !== undefined ? Math.max(0, savedHp) : m.max_hp
+                            };
+                        });
+                    }
+                    setFetchedParty(partyData);
                     setIsPartyLoading(false);
                 }
             })
@@ -189,11 +200,13 @@ export default function QuestHeader({
                                 <span className="text-[10px] text-slate-600 italic">同行者なし</span>
                             )}
                             {party_members.map((m: PartyMember) => {
-                                const maxHp = (m as any).max_hp || m.max_durability || m.durability || 100;
-                                const hpPct = Math.max(0, Math.min(100, (m.durability / Math.max(1, maxHp)) * 100));
+                                const currentHp = isBattleActive ? m.durability : (m.hp ?? 0);
+                                const maxHp = isBattleActive ? (m.max_durability || 100) : (m.max_hp || 100);
+                                const hpPct = Math.max(0, Math.min(100, (currentHp / Math.max(1, maxHp)) * 100));
+                                const vit = (m as any).vitality ?? (isBattleActive ? 100 : (m.durability ?? 100));
                                 const isGuest = m.origin_type === 'quest_guest';
                                 return (
-                                    <PartyMemberIcon key={m.id} member={m} hpPct={hpPct} maxHp={maxHp} isGuest={isGuest} />
+                                    <PartyMemberIcon key={m.id} member={m} hp={currentHp} maxHp={maxHp} hpPct={hpPct} vit={vit} isGuest={isGuest} />
                                 );
                             })}
                         </div>
@@ -208,8 +221,8 @@ export default function QuestHeader({
 }
 
 /** パーティメンバーアイコン — BattleViewと同じスタイル（名前表示+タップで詳細ポップアップ） */
-function PartyMemberIcon({ member, hpPct, maxHp, isGuest }: {
-    member: PartyMember; hpPct: number; maxHp: number; isGuest: boolean;
+function PartyMemberIcon({ member, hp, maxHp, hpPct, vit, isGuest }: {
+    member: PartyMember; hp: number; maxHp: number; hpPct: number; vit: number; isGuest: boolean;
 }) {
     const [showPopup, setShowPopup] = useState(false);
 
@@ -244,11 +257,11 @@ function PartyMemberIcon({ member, hpPct, maxHp, isGuest }: {
                     <div className="space-y-2 text-[11px]">
                         <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                             <span className="text-green-400 font-bold">HP</span>
-                            <span className="text-slate-200 font-mono">{member.durability ?? 0} / {maxHp}</span>
+                            <span className="text-slate-200 font-mono">{hp} / {maxHp}</span>
                         </div>
                         <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
-                            <span className={`font-bold ${((member as any).vitality ?? (member.durability && maxHp ? Math.round((member.durability / maxHp) * 100) : 100)) <= 20 ? 'text-red-400' : 'text-amber-400'}`}>VIT</span>
-                            <span className="text-slate-200 font-mono">{(member as any).vitality ?? (member.durability && maxHp ? Math.round((member.durability / maxHp) * 100) : 100)}</span>
+                            <span className={`font-bold ${vit <= 20 ? 'text-red-400' : 'text-amber-400'}`}>VIT</span>
+                            <span className="text-slate-200 font-mono">{vit}</span>
                         </div>
                         <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
                             <span className="text-red-400 font-bold">攻撃力</span>

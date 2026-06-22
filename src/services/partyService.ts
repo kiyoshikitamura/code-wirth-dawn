@@ -111,7 +111,6 @@ export class PartyService {
             const resolvedMaxHp = (rawMaxDur && rawMaxDur !== 100)
                 ? rawMaxDur
                 : (npcHp ?? rawMaxDur ?? 100);
-            const currentDurability = member.durability ?? resolvedMaxHp;
 
             return {
                 ...member,
@@ -121,10 +120,10 @@ export class PartyService {
                 level: (member.origin_type === 'shadow_active' || member.origin_type === 'shadow_heroic')
                     ? (member.level ?? npc?.level ?? null)
                     : (npc?.level ?? member.level ?? null),
-                hp: currentDurability,
+                hp: resolvedMaxHp, // HPの保存は行わず、街（非戦闘時）では常に全回復状態で表示
                 max_hp: resolvedMaxHp,
-                durability: currentDurability,
-                max_durability: resolvedMaxHp,
+                durability: member.durability ?? 100, // 残り寿命（VIT: 0-100）として定義
+                max_durability: resolvedMaxHp, // 最大戦闘HPを保持
                 atk: (member.origin_type === 'shadow_active' || member.origin_type === 'shadow_heroic')
                     ? (member.atk ?? npc?.attack ?? npc?.atk ?? null)
                     : (npc?.attack ?? npc?.atk ?? member.atk ?? null),
@@ -135,7 +134,7 @@ export class PartyService {
                 icon_url: resolvedImageUrl,
                 skill_names: skillNames,
                 flavor_text: npc?.introduction || npc?.flavor_text || member.introduction || member.flavor_text || undefined,
-                vitality: member.vitality ?? (resolvedMaxHp > 0 ? Math.round((currentDurability / resolvedMaxHp) * 100) : 100),
+                vitality: Math.min(100, Math.max(0, member.durability ?? 100)), // VITパーセンテージは耐久（寿命）の値をそのまま使用
             };
         });
     }

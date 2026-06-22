@@ -353,7 +353,7 @@ export async function convertGuestToPartyMember(
                 image_url: `/images/npcs/${npcData.slug}.png`,
                 origin_type: 'quest_guest', level: npcData.level || 1,
                 atk: npcData.atk || 0, def: npcData.def || 0,
-                durability: guestMaxHp, max_durability: guestMaxHp,
+                durability: 100, max_durability: guestMaxHp, // 初期VITを100に設定
                 inject_cards: cardIds, is_active: true, royalty_rate: 0,
             });
 
@@ -381,7 +381,8 @@ export async function processPartyWearCycle(
     defeatedIds: string[]
 ): Promise<any[]> {
     const partyChanges: any[] = [];
-    const basePenalty = result === 'success' ? 5 : 10;
+    // クエスト1回ごとにVITが1〜5ランダムで減少する
+    const basePenalty = Math.floor(Math.random() * 5) + 1;
 
     const { data: activeParty } = await supabase
         .from('party_members').select('id, name, durability, inject_cards, is_active')
@@ -392,8 +393,7 @@ export async function processPartyWearCycle(
     for (const member of activeParty) {
         const oldDurability = member.durability ?? 100;
         const effectiveOldDur = member.is_active === false ? 0 : oldDurability;
-        const defeatedPenalty = defeatedIds.includes(String(member.id)) ? 10 : 0;
-        const totalPenalty = basePenalty + defeatedPenalty;
+        const totalPenalty = basePenalty; // 敗北・撤退によらず一律1〜5のランダム減算
         const newDurability = Math.max(0, effectiveOldDur - totalPenalty);
 
         if (newDurability <= 0) {

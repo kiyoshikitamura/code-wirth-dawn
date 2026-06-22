@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Users, X, Heart, Sword, Shield, Activity, ChevronUp, ChevronDown } from 'lucide-react';
 import { toJpJobClass } from '@/lib/jobClass';
 import { getAuthHeaders } from '@/lib/authToken';
+import { useQuestState } from '@/store/useQuestState';
 
 interface PartyModalProps {
     onClose: () => void;
@@ -14,6 +15,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
     const [loading, setLoading] = useState(true);
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
     const [reordering, setReordering] = useState(false);
+    const questState = useQuestState();
 
     const handleReorder = async (newParty: any[]) => {
         if (reordering) return;
@@ -71,7 +73,18 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
             const res = await fetch(`/api/party/list?owner_id=${userProfile.id}`, { headers });
             if (res.ok) {
                 const data = await res.json();
-                setParty(data.party || []);
+                let partyData = data.party || [];
+                // クエスト中ならZustandから残り戦闘HPをマージする
+                if (questState.isInQuest) {
+                    partyData = partyData.map((m: any) => {
+                        const savedHp = questState.partyHp[String(m.id)];
+                        return {
+                            ...m,
+                            hp: savedHp !== undefined ? Math.max(0, savedHp) : m.max_hp
+                        };
+                    });
+                }
+                setParty(partyData);
             }
         } catch (err) {
             console.error('Failed to fetch party:', err);
@@ -106,8 +119,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
     const renderDetailPopup = () => {
         if (!selectedDetail) return null;
 
-        const vit = selectedDetail.vitality ?? 
-            (selectedDetail.max_durability ? Math.round((selectedDetail.durability / selectedDetail.max_durability) * 100) : 100);
+        const vit = selectedDetail.vitality ?? selectedDetail.durability ?? 100;
         const originTypeLabel = 
             selectedDetail.origin_type === 'shadow_active' ? '影の残像' : 
             selectedDetail.origin_type === 'shadow_heroic' ? '英霊' : '傭兵';
@@ -145,7 +157,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                             <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
                                 <div className="text-green-400 font-bold font-mono text-xs">
-                                    {selectedDetail.hp ?? selectedDetail.durability ?? 0} / {selectedDetail.max_hp ?? selectedDetail.max_durability ?? 100}
+                                    {selectedDetail.hp ?? 0} / {selectedDetail.max_hp ?? 100}
                                 </div>
                             </div>
                             <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
@@ -284,7 +296,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                                         <div className="flex items-center gap-2 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
                                             {/* HP表示バッジ（改行防止） */}
                                             <div className="text-[9px] font-mono bg-black/40 px-1.5 py-0.5 rounded border border-slate-800 text-green-400 font-bold shrink-0">
-                                                HP {member.hp ?? member.durability ?? 0}/{member.max_hp ?? member.max_durability ?? 100}
+                                                HP {member.hp ?? 0}/{member.max_hp ?? 100}
                                             </div>
                                             {party.length > 1 && (
                                                 <div className="flex items-center gap-1 bg-slate-950/40 rounded border border-slate-800/80 p-0.5">
