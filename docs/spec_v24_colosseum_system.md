@@ -206,3 +206,19 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 ### 9.2 チュートリアルアピール (Onboarding Highlight)
 - 新規プレイヤー作成直後のチュートリアル中、システムが「街の噂話」を推奨しているフラグ（`recommendedFacility === 'gossip_and_map'` または `recommendedFacility === 'gossip'`）を検知した場合、キービジュアル内に新設された「街の噂話」アイコンも、地図アイコンと同時にバウンス（弾むアニメーション）および光るエフェクト（パルス）を適用し、ユーザーに対して強力にアピールする。これにより、チュートリアル導線の実装漏れを防ぎ、確実に進行をナビゲートする。
 
+---
+
+## 10. 検証用アカウントのランキング除外 (Verification Account Exclusion)
+
+本番環境の機能検証に使用される管理者・検証用アカウント（きたむアカウント）は、一般のプレイヤー同士のランキング競争を阻害しないため、コロシアムランキングの集計対象から除外される。
+
+### 10.1 対象アカウントID
+- **新ID**: `5ad434ec-763f-473e-939f-14a5e9e1cc93`
+- **旧ID**: `c1cf67dd-527a-497e-bf88-ce10c2cb516f`
+
+### 10.2 除外処理の実装
+1. **APIフィルタリング**:
+   - `/api/ranking/colosseum` API のレスポンス返却前に、`winsRanking` と `streakRanking` から対象の `userId` を配列フィルタリングで排除する。
+2. **データベース上のレコードクリア**:
+   - テスト運用の過程で一時的に作成された `colosseum_user_stats` および `ranking_colosseum_cache` 内の該当IDの戦績・キャッシュレコードは、データベースメンテナンス用スクリプト等を通じて完全に削除する。
+
