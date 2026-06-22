@@ -157,25 +157,25 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                     <div className="p-4 space-y-4">
                         {/* Stats Grid */}
                         <div className="grid grid-cols-4 gap-2">
-                            <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
+                            <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
                                 <div className="text-green-400 font-bold font-mono text-xs">
                                     {selectedDetail.hp ?? 0} / {selectedDetail.max_hp ?? 100}
                                 </div>
                             </div>
-                            <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
+                            <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">ATK</div>
                                 <div className="text-red-400 font-bold font-mono text-xs">
                                     {selectedDetail.atk ?? '—'}
                                 </div>
                             </div>
-                            <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
+                            <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">DEF</div>
                                 <div className="text-blue-400 font-bold font-mono text-xs">
                                     {selectedDetail.def ?? '—'}
                                 </div>
                             </div>
-                            <div className="bg-black/40 rounded p-2 text-center border border-slate-800">
+                            <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">VIT</div>
                                 <div className={`font-bold font-mono text-xs ${vit <= 20 ? 'text-red-400 animate-pulse' : 'text-amber-400'}`}>
                                     {vit}
