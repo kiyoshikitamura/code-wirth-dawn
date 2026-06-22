@@ -112,18 +112,21 @@ export async function POST(req: Request) {
         try {
             const { data: partyMembers } = await supabaseService
                 .from('party_members')
-                .select('id, is_active')
+                .select('id, max_durability')
                 .eq('owner_id', id);
 
             if (partyMembers && partyMembers.length > 0) {
-                const inactiveIds = partyMembers.filter(m => !m.is_active).map(m => m.id);
-                if (inactiveIds.length > 0) {
-                    await supabaseService
+                const updatePromises = partyMembers.map((m: any) => {
+                    return supabaseService
                         .from('party_members')
-                        .update({ is_active: true })
-                        .in('id', inactiveIds);
-                    partyHealed = inactiveIds.length;
-                }
+                        .update({ 
+                            durability: m.max_durability || 100, 
+                            is_active: true 
+                        })
+                        .eq('id', m.id);
+                });
+                await Promise.all(updatePromises);
+                partyHealed = partyMembers.length;
             }
         } catch (partyErr) {
             console.warn('[Inn Rest] Failed to heal party members:', partyErr);

@@ -19,7 +19,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [showStock, setShowStock] = useState(false);
-    const [showNPC, setShowNPC] = useState(true);
+    const [showNPC, setShowNPC] = useState(false);
     const [costFilter, setCostFilter] = useState<'all' | '1' | '2' | '3' | '4+'>('all');
 
     useEffect(() => {
@@ -72,13 +72,13 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                 card_type: card.type,
                                 target_type: card.target_type,
                                 effect_id: card.effect_id,
+                                ap_cost: card.ap_cost, // AP表示が必要なため追加
                             };
                             if (card.type === 'Heal') {
                                 effect_data.heal = card.effect_val;
                             } else {
                                 effect_data.power = card.effect_val;
                             }
-                            // AP表記は不要なため、ap_cost はシミュレート用の effect_data に含めない
                             return {
                                 ...card,
                                 effect_data
@@ -176,14 +176,12 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                     {/* Content */}
                     <div className="p-4 space-y-4">
                         {/* Stats Grid */}
-                        <div className={isSkillCard ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
-                            {isSkillCard && (
-                                <div className="bg-slate-900/80 p-2 rounded border border-slate-800 flex flex-col items-center">
-                                    <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                                    <span className="text-[9px] text-gray-500 mt-1">AP消費</span>
-                                    <span className="text-xs font-bold text-cyan-400 font-mono">{apCost}</span>
-                                </div>
-                            )}
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-slate-900/80 p-2 rounded border border-slate-800 flex flex-col items-center">
+                                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                                <span className="text-[9px] text-gray-500 mt-1">AP消費</span>
+                                <span className="text-xs font-bold text-cyan-400 font-mono">{apCost}</span>
+                            </div>
                             <div className="bg-slate-900/80 p-2 rounded border border-slate-800 flex flex-col items-center">
                                 {isMagic ? <Wand2 className="w-3.5 h-3.5 text-purple-400" /> : <Sword className="w-3.5 h-3.5 text-orange-400" />}
                                 <span className="text-[9px] text-gray-500 mt-1">威力</span>

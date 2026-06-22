@@ -16,9 +16,9 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
     const [loadingSlot, setLoadingSlot] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showWeapons, setShowWeapons] = useState(true);
-    const [showArmors, setShowArmors] = useState(true);
-    const [showAccessories, setShowAccessories] = useState(true);
+    const [showWeapons, setShowWeapons] = useState(false);
+    const [showArmors, setShowArmors] = useState(false);
+    const [showAccessories, setShowAccessories] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
