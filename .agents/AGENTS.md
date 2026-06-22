@@ -31,4 +31,4 @@
   - コロシアムなどの連戦・特殊クエストであっても、完了API（`/api/quest/complete`）でバトル検証トークンによる署名チェックがスキップされないよう、モック定義時にも適切な `script_data.nodes` を構築し、サーバーサイドでの改ざん・ワープ防止策を確実に作動させること。
 - **バトル終了時のログ再生完了ガード**:
   - 敵を全滅させてバトルが勝利した際、Zustand store で `isVictory` が即座に `true` に更新されるが、フロントエンドのメッセージ同期とタイプライター再生が完了する前に Victory 画面がオーバーレイ表示されてしまってはならない。
-  - レンダリング時の過渡状態（メッセージがストアに追加されたが、まだ `typingQueue` にプッシュされていない瞬間）を回避するため、必ず `enqueuedUpToRef.current < battleState.messages.length` チェック（未エンキューメッセージの存在チェック）と、`isTyping.current`（再生中）および `typingQueue.current.length === 0`（キュー残数）の双方をポーリング検証すること。
+  - タイマーによるポーリング判定は非同期な状態更新（`validate-result` や `userProfile` の更新など）と競合して誤検知しやすいため、実際にタイプライター表示完了したログ配列数 (`displayedLogs.length`) と、ストアから届いた全メッセージから非表示の同期用メッセージを除外した実テキストログ数 (`battleState.messages.filter(m => !m.startsWith('__')).length`) を直接比較して、双方が一致するまで遷移をガードする実装規約を徹底すること。

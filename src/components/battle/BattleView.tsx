@@ -517,17 +517,21 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     useEffect(() => {
         if (battleState.isVictory || battleState.isDefeat || isEscaped) {
-            // ログのキューイングがすべて完了し、かつ再生が完全に終わるまで待ってからオーバーレイ表示
-            const checkInterval = setInterval(() => {
-                const isQueueingPending = enqueuedUpToRef.current < battleState.messages.length;
-                if (!isQueueingPending && !isTyping.current && typingQueue.current.length === 0) {
-                    clearInterval(checkInterval);
-                    setTimeout(() => setShowResultOverlay(true), 800);
-                }
-            }, 100);
-            return () => clearInterval(checkInterval);
+            // __ で始まる同期・制御メッセージを除く実際のテキストログ数をカウント
+            const textMessages = battleState.messages.filter(m => !m.startsWith('__'));
+            
+            // 実際に画面上にタイプライター表示完了したログ数 (displayedLogs) が
+            // 発生したすべてのテキストログ数 (textMessages) に達するまで待ってからオーバーレイを表示
+            if (displayedLogs.length >= textMessages.length) {
+                const timer = setTimeout(() => {
+                    setShowResultOverlay(true);
+                }, 800);
+                return () => clearTimeout(timer);
+            }
+        } else {
+            setShowResultOverlay(false);
         }
-    }, [battleState.isVictory, battleState.isDefeat, battleState.messages]);
+    }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs]);
 
     if (!hasHydrated) return (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">

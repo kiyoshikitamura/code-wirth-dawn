@@ -623,7 +623,7 @@
 * **SVGグラフの動的リサイズ＆ホバー最適化**: 30日〜365日の期間選択時にグラフが重なったりホバーが機能しなくなるのを防ぐため、カラム幅 `colWidth = (svgWidth - padding * 2) / dailyKPI.length` および棒幅 `barWidth = Math.max(1, colWidth - Math.max(1, colWidth * 0.2))` を動的算出する。
 * **Excel of 日本語文字化け防止**: 日別KPI履歴およびクエスト統計のCSV出力時、先頭にBOMコード（`0xEF, 0xBB, 0xBF`）を挿入することで、日本語Windows環境 of ExcelでのMojibakeを完全に回避する。
 * **外部キー制約の安全な初期化順序**: 管理者初期化時、`quest_activity_logs` および `payment_logs` をはじめとする子テーブルから順に物理削除を行うことで、リレーション制約違反を回避して安全にリセットを実行する。
-* **バトル終了時のログ再生完了ガード**: 敵を全滅させてバトルが勝利した際、Zustand store で `isVictory` が即座に `true` に更新されるが、メッセージ同期とタイプライター再生が完了する前に Victory 画面がオーバーレイ表示されるのを防ぐため、`enqueuedUpToRef.current < messages.length` による過渡状態判定と `isTyping` 状態をポーリング検証して演出完了を待機する。
+* **バトル終了時のログ再生完了ガード**: 敵を全滅させてバトルが勝利した際、Zustand store で `isVictory` が即座に `true` に更新されるが、メッセージ同期とタイプライター再生が完了する前に Victory 画面がオーバーレイ表示されるのを防ぐため、実際に表示完了したログ数 (`displayedLogs.length`) と実テキストログ数 (`messages.filter(m => !m.startsWith('__')).length`) を直接比較して演出の完了を確実かつ堅牢に待機する。
 
 ---
 
