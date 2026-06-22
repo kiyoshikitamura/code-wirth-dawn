@@ -381,8 +381,6 @@ export async function processPartyWearCycle(
     defeatedIds: string[]
 ): Promise<any[]> {
     const partyChanges: any[] = [];
-    // クエスト1回ごとにVITが1〜5ランダムで減少する
-    const basePenalty = Math.floor(Math.random() * 5) + 1;
 
     const { data: activeParty } = await supabase
         .from('party_members').select('id, name, durability, inject_cards, is_active')
@@ -393,7 +391,8 @@ export async function processPartyWearCycle(
     for (const member of activeParty) {
         const oldDurability = member.durability ?? 100;
         const effectiveOldDur = member.is_active === false ? 0 : oldDurability;
-        const totalPenalty = basePenalty; // 敗北・撤退によらず一律1〜5のランダム減算
+        // クエスト1回ごとにVITが1〜5ランダムでメンバー個別に減少する
+        const totalPenalty = Math.floor(Math.random() * 5) + 1;
         const newDurability = Math.max(0, effectiveOldDur - totalPenalty);
 
         if (newDurability <= 0) {
