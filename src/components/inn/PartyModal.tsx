@@ -236,8 +236,9 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
-                        <div className="text-center text-xs text-slate-500 py-12 animate-pulse">
-                            パーティ情報を読み込み中...
+                        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                            <div className="w-8 h-8 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+                            <span className="text-xs text-purple-400 font-medium">情報を読み込み中...</span>
                         </div>
                     ) : party.length === 0 ? (
                         <div className="text-center text-slate-500 py-12 text-xs border border-dashed border-slate-800 rounded-lg bg-slate-950/10">

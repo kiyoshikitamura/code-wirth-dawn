@@ -15,24 +15,39 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
     const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile } = useGameStore();
     const [partyCards, setPartyCards] = useState<any[]>([]);
     const [partyLoading, setPartyLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
     const [togglingId, setTogglingId] = useState<string | null>(null);
-    const [showStock, setShowStock] = useState(true);
+    const [showStock, setShowStock] = useState(false);
     const [showNPC, setShowNPC] = useState(true);
     const [costFilter, setCostFilter] = useState<'all' | '1' | '2' | '3' | '4+'>('all');
 
     useEffect(() => {
-        fetchInventory();
-        fetchUserProfile();
-        fetchPartyCards();
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                await fetchUserProfile();
+                const ownerId = useGameStore.getState().userProfile?.id;
+                await Promise.all([
+                    fetchInventory(),
+                    fetchPartyCards(ownerId)
+                ]);
+            } catch (e) {
+                console.error('Failed to load SkillDeck data', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
     }, []);
 
-    const fetchPartyCards = async () => {
-        if (!userProfile?.id) return;
+    const fetchPartyCards = async (ownerId?: string) => {
+        const uid = ownerId || userProfile?.id;
+        if (!uid) return;
         setPartyLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
-            const res = await fetch(`/api/party/list?owner_id=${userProfile.id}`, { headers: authHeaders });
+            const res = await fetch(`/api/party/list?owner_id=${uid}`, { headers: authHeaders });
             if (res.ok) {
                 const data = await res.json();
                 const party = data.party || [];
@@ -51,7 +66,25 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                     const cardsRes = await fetch(`/api/cards?ids=${uniqueIds.join(',')}`);
                     if (cardsRes.ok) {
                         const cardsData = await cardsRes.json();
-                        setPartyCards(cardsData.cards || []);
+                        const mappedCards = (cardsData.cards || []).map((card: any) => {
+                            // 同行NPC支援カード用の effect_data をシミュレート
+                            const effect_data: any = {
+                                card_type: card.type,
+                                target_type: card.target_type,
+                                effect_id: card.effect_id,
+                            };
+                            if (card.type === 'Heal') {
+                                effect_data.heal = card.effect_val;
+                            } else {
+                                effect_data.power = card.effect_val;
+                            }
+                            // AP表記は不要なため、ap_cost はシミュレート用の effect_data に含めない
+                            return {
+                                ...card,
+                                effect_data
+                            };
+                        });
+                        setPartyCards(mappedCards);
                     }
                 }
             }
@@ -143,12 +176,14 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                     {/* Content */}
                     <div className="p-4 space-y-4">
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-slate-900/80 p-2 rounded border border-slate-800 flex flex-col items-center">
-                                <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                                <span className="text-[9px] text-gray-500 mt-1">AP消費</span>
-                                <span className="text-xs font-bold text-cyan-400 font-mono">{apCost}</span>
-                            </div>
+                        <div className={isSkillCard ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
+                            {isSkillCard && (
+                                <div className="bg-slate-900/80 p-2 rounded border border-slate-800 flex flex-col items-center">
+                                    <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                                    <span className="text-[9px] text-gray-500 mt-1">AP消費</span>
+                                    <span className="text-xs font-bold text-cyan-400 font-mono">{apCost}</span>
+                                </div>
+                            )}
                             <div className="bg-slate-900/80 p-2 rounded border border-slate-800 flex flex-col items-center">
                                 {isMagic ? <Wand2 className="w-3.5 h-3.5 text-purple-400" /> : <Sword className="w-3.5 h-3.5 text-orange-400" />}
                                 <span className="text-[9px] text-gray-500 mt-1">威力</span>
@@ -217,8 +252,14 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    
-                    {/* Deck Cost capacity */}
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                            <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                            <span className="text-xs text-blue-400 font-medium">情報を読み込み中...</span>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Deck Cost capacity */}
                     <div className="bg-gradient-to-r from-blue-950/40 to-slate-900/60 p-3 rounded-lg border border-blue-900/30 flex justify-between items-center shadow-inner">
                         <div className="flex flex-col">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">デッキキャパシティ</span>
@@ -415,24 +456,29 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                         同行NPCによる支援カードはありません
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 gap-1.5">
                                         {partyCards.map(card => (
                                             <div 
                                                 key={card.id}
                                                 onClick={() => setSelectedDetail(card)}
-                                                className="flex items-center gap-2 p-2 rounded-lg bg-amber-950/5 border border-amber-900/20 hover:border-amber-700/40 cursor-pointer active:bg-amber-950/10 transition-all min-w-0"
+                                                className="flex items-center justify-between p-2 rounded-lg bg-amber-950/5 border border-amber-900/20 hover:border-amber-700/40 cursor-pointer active:bg-amber-950/10 transition-all group"
                                             >
-                                                <div className="w-8 h-8 rounded bg-slate-950 border border-amber-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-                                                    {card.image_url ? (
-                                                        <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                                    )}
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="w-8 h-8 rounded bg-slate-950 border border-amber-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                                                        {card.image_url ? (
+                                                            <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-xs font-bold text-amber-300 group-hover:text-amber-200 transition-colors truncate">{card.name}</div>
+                                                        <div className="text-[10px] text-slate-400 font-serif mt-0.5">種別: {card.type || 'Support'}</div>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <div className="text-[11px] font-bold text-amber-300 truncate">{card.name}</div>
-                                                    <div className="text-[9px] text-slate-400 truncate mt-0.5">{card.type || 'Support'}</div>
-                                                </div>
+                                                <span className="px-2.5 py-1 text-[10px] font-bold rounded bg-amber-950/30 border border-amber-900/40 text-amber-300 hover:bg-amber-900/40 transition-colors shrink-0">
+                                                    詳細
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
@@ -440,7 +486,8 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                             </>
                         )}
                     </section>
-
+                        </>
+                    )}
                 </div>
 
                 {/* Footer */}

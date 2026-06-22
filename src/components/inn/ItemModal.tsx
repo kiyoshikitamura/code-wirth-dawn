@@ -12,9 +12,20 @@ interface ItemModalProps {
 export default function ItemModal({ onClose }: ItemModalProps) {
     const { inventory, fetchInventory, fetchUserProfile } = useGameStore();
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchInventory();
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                await fetchInventory();
+            } catch (e) {
+                console.error('Failed to load Item data', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
     }, []);
 
     // 装備品・スキルを除外した消耗品等
@@ -163,7 +174,12 @@ export default function ItemModal({ onClose }: ItemModalProps) {
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto p-4">
-                    {consumables.length === 0 ? (
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                            <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                            <span className="text-xs text-emerald-400 font-medium">情報を読み込み中...</span>
+                        </div>
+                    ) : consumables.length === 0 ? (
                         <div className="text-center text-slate-500 py-12 text-xs border border-dashed border-slate-800 rounded-lg bg-slate-950/10">
                             所持している消耗品等はありません。
                         </div>

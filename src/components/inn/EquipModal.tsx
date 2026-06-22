@@ -15,14 +15,27 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
     const { userProfile, inventory, fetchInventory, fetchUserProfile, fetchEquipment, equippedItems: equipped, equipBonus } = useGameStore();
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
     const [loadingSlot, setLoadingSlot] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
     const [showWeapons, setShowWeapons] = useState(true);
     const [showArmors, setShowArmors] = useState(true);
     const [showAccessories, setShowAccessories] = useState(true);
 
     useEffect(() => {
-        fetchInventory();
-        fetchUserProfile();
-        fetchEquipment();
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                await Promise.all([
+                    fetchInventory(),
+                    fetchUserProfile(),
+                    fetchEquipment()
+                ]);
+            } catch (e) {
+                console.error('Failed to load Equip data', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
     }, []);
 
     // 装備済み item_id を Set に収集して、ストックのフィルタリングに使用する
@@ -243,8 +256,14 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    
-                    {/* Equipment Bonuses */}
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                            <div className="w-8 h-8 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
+                            <span className="text-xs text-orange-400 font-medium">情報を読み込み中...</span>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Equipment Bonuses */}
                     {(equipBonus.atk > 0 || equipBonus.def > 0 || equipBonus.hp > 0) && (
                         <div className="bg-gradient-to-r from-orange-950/35 to-slate-900/60 p-3 rounded-lg border border-orange-900/25 flex justify-between items-center shadow-inner">
                             <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">合計装備ボーナス</span>
@@ -501,7 +520,8 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                             </div>
                         )}
                     </section>
-
+                        </>
+                    )}
                 </div>
 
                 {/* Footer */}
