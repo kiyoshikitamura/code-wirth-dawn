@@ -19,7 +19,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [showStock, setShowStock] = useState(true);
     const [showNPC, setShowNPC] = useState(true);
-    const [costFilter, setCostFilter] = useState<'all' | '0' | '1' | '2' | '3+'>('all');
+    const [costFilter, setCostFilter] = useState<'all' | '1' | '2' | '3' | '4+'>('all');
 
     useEffect(() => {
         fetchInventory();
@@ -181,7 +181,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                         )}
 
                         {/* Action Button (only for player owned skills) */}
-                        {selectedDetail.id != null && (
+                        {isSkillCard && selectedDetail.id != null && (
                             <button
                                 onClick={() => handleToggle(selectedDetail)}
                                 disabled={togglingId === selectedDetail.id}
@@ -295,11 +295,11 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                 {/* コストフィルタ */}
                                 <div className="flex flex-wrap gap-1 items-center bg-slate-950/40 p-2 rounded border border-slate-900/60 mb-2">
                                     <span className="text-[10px] text-slate-500 mr-1">コストフィルタ:</span>
-                                    {(['all', '0', '1', '2', '3+'] as const).map(f => {
+                                    {(['all', '1', '2', '3', '4+'] as const).map(f => {
                                         const count = stockSkills.filter(item => {
                                             if (f === 'all') return true;
                                             const cost = item.cost || 0;
-                                            if (f === '3+') return cost >= 3;
+                                            if (f === '4+') return cost >= 4;
                                             return cost === parseInt(f, 10);
                                         }).length;
                                         return (
@@ -313,7 +313,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                                                 }`}
                                             >
-                                                {f === 'all' ? `すべて (${stockSkills.length})` : f === '3+' ? `3+ (${count})` : `C${f} (${count})`}
+                                                {f === 'all' ? `すべて (${stockSkills.length})` : f === '4+' ? `C4+ (${count})` : `C${f} (${count})`}
                                             </button>
                                         );
                                     })}
@@ -322,7 +322,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                 {stockSkills.filter(item => {
                                     if (costFilter === 'all') return true;
                                     const cost = item.cost || 0;
-                                    if (costFilter === '3+') return cost >= 3;
+                                    if (costFilter === '4+') return cost >= 4;
                                     return cost === parseInt(costFilter, 10);
                                 }).length === 0 ? (
                                     <div className="text-center text-xs text-slate-500 py-4 bg-slate-950/20 rounded border border-slate-900 border-dashed">
@@ -334,7 +334,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                             .filter(item => {
                                                 if (costFilter === 'all') return true;
                                                 const cost = item.cost || 0;
-                                                if (costFilter === '3+') return cost >= 3;
+                                                if (costFilter === '4+') return cost >= 4;
                                                 return cost === parseInt(costFilter, 10);
                                             })
                                             .map(item => {
