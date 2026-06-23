@@ -47,6 +47,45 @@ export type BattleSliceActions = Pick<
     | 'useItem'
 >;
 
+// ─── ステータス更新・生命力消費ヘルパー (認証トークン自動付与) ─────────────────
+async function updateProfileStatusHelper(updates: { hp?: number; gold?: number; exp?: number; vitality?: number }, userProfileId: string | null) {
+    try {
+        const authHeaders = await getAuthHeaders();
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+            ...authHeaders
+        };
+        const body = {
+            ...updates,
+            profileId: userProfileId
+        };
+        await fetch('/api/profile/update-status', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body)
+        });
+    } catch (e) {
+        console.error('[updateProfileStatusHelper] Failed to sync status:', e);
+    }
+}
+
+async function consumeVitalityHelper(amount: number, userProfileId: string | null) {
+    try {
+        const authHeaders = await getAuthHeaders();
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+            ...authHeaders
+        };
+        await fetch('/api/profile/consume-vitality', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ amount, profileId: userProfileId })
+        });
+    } catch (e) {
+        console.error('[consumeVitalityHelper] Failed to consume vitality:', e);
+    }
+}
+
 export const createBattleSlice = (
     set: (partial: Partial<GameState> | ((state: GameState) => Partial<GameState>)) => void,
     get: () => GameState
@@ -260,10 +299,7 @@ export const createBattleSlice = (
                         userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
                     }));
                     // DB同期（非同期・失敗許容）
-                    fetch('/api/profile/update-status', {
-                        method: 'POST',
-                        body: JSON.stringify({ hp: newHp, profileId: userProfile.id })
-                    }).catch(console.error);
+                    updateProfileStatusHelper({ hp: newHp }, userProfile.id);
                 }
             }
         }
@@ -502,10 +538,7 @@ export const createBattleSlice = (
             }));
             tickMessages.push(`__hp_sync:${newHp}`);
             const { selectedProfileId } = get();
-            fetch('/api/profile/update-status', {
-                method: 'POST',
-                body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-            }).catch(console.error);
+            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
         }
 
         if (isDeadFromDoT) {
@@ -962,11 +995,7 @@ export const createBattleSlice = (
         if (isPlayerDead) {
             soundManager?.playSE('se_battle_lose');
             const { selectedProfileId } = get();
-            fetch('/api/profile/update-status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hp: 0, profileId: selectedProfileId })
-            }).catch(console.error);
+            updateProfileStatusHelper({ hp: 0 }, get().userProfile?.id || selectedProfileId);
         }
 
         const session = await supabase.auth.getSession();
@@ -1314,11 +1343,7 @@ export const createBattleSlice = (
                         }));
                         
                         const { selectedProfileId } = get();
-                        fetch('/api/profile/update-status', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ gold: newGold, profileId: selectedProfileId })
-                        }).catch(console.error);
+                        updateProfileStatusHelper({ gold: newGold }, get().userProfile?.id || selectedProfileId);
                         
                         const bonusDmg = Math.floor(spentGold / 10);
                         const basePower = (card.power ?? 30) + bonusDmg;
@@ -1474,7 +1499,7 @@ export const createBattleSlice = (
                         set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                         healSyncHp = newHp;
                         const { selectedProfileId } = get();
-                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                        updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                         currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'sacrificial_ap', 2);
                         logMsg = `${card.name}を使用！ 最大HPの15%自傷 (-${selfDmg} HP)！ 2ターンの間、物理スキルの消費APを1減少！`;
                         break;
@@ -1700,7 +1725,7 @@ export const createBattleSlice = (
                                     }));
                                     healSyncHp = newHp;
                                     const { selectedProfileId } = get();
-                                    fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                                    updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                                     logMsg = `${card.name}を自身に使用！ HPを50回復した！(最大HP上昇は既に適用済み)`;
                                 } else {
                                     const newMaxHp = (userProfile.max_hp || 100) + 50;
@@ -1710,7 +1735,7 @@ export const createBattleSlice = (
                                     }));
                                     healSyncHp = newHp;
                                     const { selectedProfileId } = get();
-                                    fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                                    updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                                     logMsg = `${card.name}を自身に使用！ 最大HPを戦闘終了まで+50し、HPを50回復した！`;
                                 }
                             }
@@ -1773,7 +1798,7 @@ export const createBattleSlice = (
                         set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                         healSyncHp = newHp;
                         const { selectedProfileId } = get();
-                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp, profileId: selectedProfileId }) }).catch(console.error);
+                        updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                         currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'soul_boost', 99);
                         logMsg = `${card.name}を使用！ 現在HPの20%を自傷 (-${selfDmg} HP)！ 次に放つ物理・魔法カードの威力を2.5倍にするバフを得た！`;
                         break;
@@ -1989,10 +2014,7 @@ export const createBattleSlice = (
                                 }
                                 healMsgs.push(msg);
                                 const { selectedProfileId } = get();
-                                fetch('/api/profile/update-status', {
-                                    method: 'POST',
-                                    body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                                }).catch(console.error);
+                                updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                             }
                             const party = [...(battleState.party || [])];
                             for (let pi = 0; pi < party.length; pi++) {
@@ -2053,10 +2075,7 @@ export const createBattleSlice = (
                                 }
                                 healSyncHp = newHp;
                                 const { selectedProfileId } = get();
-                                fetch('/api/profile/update-status', {
-                                    method: 'POST',
-                                    body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                                }).catch(console.error);
+                                updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                             } else {
                                 logMsg = `${card.name}を使用！(体力は満たんでいる)`;
                                 if (effectInfo.effectId) {
@@ -2217,10 +2236,7 @@ export const createBattleSlice = (
                             healMsg = ` HP +${healAmount} 回復！ (${newHp}/${maxHp}) 及び`;
                             healSyncHp = newHp;
                             const { selectedProfileId } = get();
-                            fetch('/api/profile/update-status', {
-                                method: 'POST',
-                                body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                            }).catch(console.error);
+                            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                         }
 
                         if (effectInfo.cureType === 'status') {
@@ -2264,10 +2280,7 @@ export const createBattleSlice = (
                             logMsg = `✨ ${card.name}を発動！ AP全回復！ (自傷ダメージ -${selfDmg})`;
                             healSyncHp = newHp;
                             const { selectedProfileId } = get();
-                            fetch('/api/profile/update-status', {
-                                method: 'POST',
-                                body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
-                            }).catch(console.error);
+                            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
                         } else if (effectInfo.effectId) {
                             currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, effectInfo.effectDuration || 3);
                             logMsg = `✨ ${card.name}を発動！ ${getEffectName(effectInfo.effectId)}(${effectInfo.effectDuration || 3}T) ${passiveLabel}`;
@@ -2388,7 +2401,7 @@ export const createBattleSlice = (
                         const newHp = Math.min(maxHp, currentHp + drainHeal);
                         set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                         newMessages.push(`→ 生命力を吸収！ HP +${drainHeal} 回復！`);
-                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
+                        updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
                     }
                 }
 
@@ -2464,11 +2477,7 @@ export const createBattleSlice = (
                         if (preservedHp != null) {
                             const updateBody: any = { hp: Math.max(0, preservedHp) };
                             if (preservedVit != null) updateBody.vitality = preservedVit;
-                            fetch('/api/profile/update-status', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(updateBody)
-                            }).catch(console.error);
+                            updateProfileStatusHelper(updateBody, get().userProfile?.id || null);
                         }
                         get().fetchWorldState();
                         get().fetchUserProfile().then(() => {
@@ -2668,7 +2677,7 @@ export const createBattleSlice = (
                         const maxHp = getEffectiveMaxHp(get().userProfile, get());
                         const newHp = Math.min(maxHp, currentHp + healAmount);
                         set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
-                        fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
+                        updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
                         newMessages.push(`__hp_sync:${newHp}`);
                     } else {
                         const targetIdx = updatedParty.findIndex(m =>
@@ -2855,11 +2864,7 @@ export const createBattleSlice = (
                 if (battleHp != null && battleUserId) {
                     const updateBody: any = { hp: Math.max(0, battleHp) };
                     if (battleVit != null) updateBody.vitality = battleVit;
-                    fetch('/api/profile/update-status', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updateBody)
-                    }).catch(console.error);
+                    updateProfileStatusHelper(updateBody, battleUserId);
                 }
                 get().fetchWorldState();
                 // fetchUserProfile 後にバトル中のHP値を復元（DB遅延による上書き防止）
@@ -2882,7 +2887,7 @@ export const createBattleSlice = (
                     get().addGold(reward);
                     finalMessages.push(`報酬 金貨 ${rewardGold} 枚を獲得。`);
                     if (partyCount > 1) finalMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
-                    fetch('/api/profile/update-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gold: get().gold }) }).catch(console.error);
+                    updateProfileStatusHelper({ gold: get().gold }, get().userProfile?.id || null);
                     finalMessages.push('あなたの活躍が、世界の情勢に微かな変化をもたらしました。');
                 }
             } catch (e) { console.error(e); }
@@ -3256,10 +3261,7 @@ export const createBattleSlice = (
                             vitDamageTaken = true;
                             newMessages.push('生命力を奪われた！ (Vitality -1)');
                             const { selectedProfileId } = get();
-                            fetch('/api/profile/consume-vitality', {
-                                method: 'POST',
-                                body: JSON.stringify({ amount: 1, profileId: selectedProfileId })
-                            }).catch(console.error);
+                            consumeVitalityHelper(1, get().userProfile?.id || selectedProfileId);
                         }
                     }
 
@@ -3327,10 +3329,7 @@ export const createBattleSlice = (
                     newMessages.push(`賞金稼ぎに身包みを剥がされた… 所持金の半分（${penalty}G）を失った！`);
                     setTimeout(() => {
                         get().spendGold(penalty);
-                        fetch('/api/profile/update-status', {
-                            method: 'POST',
-                            body: JSON.stringify({ gold: Math.max(0, currentGold - penalty) })
-                        }).catch(console.error);
+                        updateProfileStatusHelper({ gold: Math.max(0, currentGold - penalty) }, get().userProfile?.id || null);
                     }, 100);
                 }
             }
