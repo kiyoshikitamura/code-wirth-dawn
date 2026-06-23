@@ -145,11 +145,11 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         const state = get();
 
         // Update HP (carry-over)
-        const updatedPartyHp = { ...(state.partyHp || {}), ...result.partyHp };
+        const updatedPartyHp = { ...(state.partyHp || {}), ...(result.partyHp || {}) };
 
         // Process NPC deaths: remove dead NPCs from partyHp
         const newDeadNpcs = [...(state.deadNpcs || [])];
-        for (const npcId of result.deadNpcIds) {
+        for (const npcId of result.deadNpcIds || []) {
             if (!newDeadNpcs.includes(npcId)) {
                 newDeadNpcs.push(npcId);
             }
@@ -157,10 +157,10 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         }
 
         // Accumulate loot
-        const updatedLoot = [...(state.lootPool || []), ...result.droppedItems];
+        const updatedLoot = [...(state.lootPool || []), ...(result.droppedItems || [])];
 
         // Track consumed items
-        const updatedConsumed = [...(state.consumedItems || []), ...result.usedConsumables];
+        const updatedConsumed = [...(state.consumedItems || []), ...(result.usedConsumables || [])];
 
         set({
             playerHp: result.playerHp,

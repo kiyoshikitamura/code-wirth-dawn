@@ -362,7 +362,7 @@ export function useScenarioNodeProcessor({
                                 consumedItems: [], // Completely clear consumedItems
                                 reputationChanges: {},
                                 questFlags: {
-                                    ...state.questFlags,
+                                    ...(state.questFlags || {}),
                                     [`checkpoint_done_${activeNodeId}`]: 1
                                 }
                             }));
