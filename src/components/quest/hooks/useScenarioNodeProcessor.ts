@@ -570,7 +570,9 @@ export function useScenarioNodeProcessor({
                 const rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
                 const rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
                 const singleItemId = currentNode.params?.item_id || currentNode.item_id || currentNode.params?.rewards?.item_id || currentNode.rewards?.item_id;
-                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold);
+                const alignmentShift = currentNode.params?.alignment_shift || currentNode.params?.rewards?.alignment_shift || currentNode.rewards?.alignment_shift;
+                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold, 'alignment:', alignmentShift);
+
 
                 const activeNodeId = currentNodeId;
                 let rewardItems: any[] | undefined;
@@ -605,6 +607,21 @@ export function useScenarioNodeProcessor({
 
                 const itemsToGrant: any[] = [];
                 const msgs: string[] = [];
+
+                if (alignmentShift && typeof alignmentShift === 'object') {
+                    for (const [key, val] of Object.entries(alignmentShift)) {
+                        const amount = Number(val);
+                        if (amount !== 0 && ['order', 'chaos', 'justice', 'evil'].includes(key)) {
+                            itemsToGrant.push({
+                                itemId: `align_${key}`,
+                                itemName: `アライメント (${key})`,
+                                quantity: amount
+                            });
+                            msgs.push(`${key} ${amount > 0 ? '+' : ''}${amount}`);
+                        }
+                    }
+                }
+
 
                 if (rewardGold) {
                     itemsToGrant.push({ itemId: 'gold', itemName: 'ゴールド', quantity: rewardGold });

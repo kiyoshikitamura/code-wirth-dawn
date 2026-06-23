@@ -229,8 +229,9 @@ CSVの `params` カラム内のJSON: `{"type":"text", "bg":"bg_wasteland"}`
 5. **Vitality摩耗**: パーティメンバーのVIT減少処理。
 6. **ゲストNPC→通常雇用変換** (v15.2): クエスト成功時に`leave`ノードを通過せず残留したゲストNPCを`party_members`テーブルにINSERTし、正規メンバーとして永続化。パーティ上限(4名)・重複チェック付き。
 
-### 8.0.1.1 クエスト途中（loot_pool）で獲得したゴールド・経験値の合算反映 (v29.1)
-クエスト中の選択肢や中間イベントで増減したゴールドや経験値は一時的に `loot_pool` に `{ itemId: 'gold', quantity: ... }` / `{ itemId: 'exp', quantity: ... }` として蓄積される。クエスト完了 API（`api/quest/complete`）では、アイテム whitelist バリデーション処理（`getQuestAllowedItems`）の前にこれらのゴールド・経験値データを抽出し、クエスト全体の最終報酬に合算して反映する（ゴールドは `increment_gold` RPCに合算、経験値は `earnedExp` に合算されてレベルアップ計算に反映される）。
+### 8.0.1.1 クエスト途中（loot_pool）で獲得したゴールド・経験値・アライメントの合算反映 (v29.1)
+クエスト中の選択肢や中間イベント、`reward` ノード等で増減したゴールド、経験値、アライメント値（Order / Chaos / Justice / Evil）は一時的に `loot_pool` に `{ itemId: 'gold' | 'exp' | 'align_order' | 'align_chaos' | 'align_justice' | 'align_evil', quantity: ... }` として蓄積される。クエスト完了 API（`api/quest/complete`）では、アイテム whitelist バリデーション処理（`getQuestAllowedItems`）の前にこれらを抽出し、クエスト全体の最終報酬に合算して反映する（ゴールドは `increment_gold` RPCに合算、経験値は `earnedExp` に加算、アライメント値は `effectiveRewards.alignment_shift` にマージされて最終的にプレイヤープロファイルおよび拠点アライメントに反映される）。
+
 
 ### 8.0.1 クエスト放棄ペナルティ (v27)
 

@@ -215,10 +215,11 @@ export async function POST(req: Request) {
             }
         }
 
-        // loot_poolからゴールドと経験値を抽出
+        // loot_poolからゴールド、経験値、アライメント変動を抽出
         let lootGoldSum = 0;
         let lootExpSum = 0;
         let totalGoldReward = 0;
+        const lootAlignShift: Record<string, number> = { order: 0, chaos: 0, justice: 0, evil: 0 };
         const filteredLootInput = [];
 
         if (Array.isArray(loot_pool)) {
@@ -229,11 +230,17 @@ export async function POST(req: Request) {
                     lootGoldSum += Number(item.quantity || 0);
                 } else if (itemIdStr === 'exp') {
                     lootExpSum += Number(item.quantity || 0);
+                } else if (itemIdStr.startsWith('align_')) {
+                    const alignKey = itemIdStr.replace('align_', '');
+                    if (['order', 'chaos', 'justice', 'evil'].includes(alignKey)) {
+                        lootAlignShift[alignKey] = (lootAlignShift[alignKey] || 0) + Number(item.quantity || 0);
+                    }
                 } else {
                     filteredLootInput.push(item);
                 }
             }
         }
+
 
         // [Security] loot_pool validation and resolution
         const filteredLootPool: any[] = [];
@@ -429,7 +436,7 @@ export async function POST(req: Request) {
                 ...nRewards,
                 items: Array.isArray(qRewards.items) ? [...qRewards.items] : [],
                 skills: Array.isArray(qRewards.skills) ? [...qRewards.skills] : [],
-                alignment_shift: (qRewards.alignment_shift || nRewards.alignment_shift)
+                alignment_shift: (qRewards.alignment_shift || nRewards.alignment_shift || Object.values(lootAlignShift).some(v => v !== 0))
                     ? {
                         ...(qRewards.alignment_shift || {}),
                         ...(nRewards.alignment_shift || {})
@@ -437,6 +444,21 @@ export async function POST(req: Request) {
                     : undefined
             }
             : { ...qRewards };
+
+        // アライメントの合算処理 (loot_pool内のalign_値をマージ)
+        if (result === 'success' && (effectiveRewards.alignment_shift || Object.values(lootAlignShift).some(v => v !== 0))) {
+            const shift = effectiveRewards.alignment_shift || {};
+            const mergedShift: Record<string, number> = {};
+            for (const key of ['order', 'chaos', 'justice', 'evil']) {
+                const baseVal = Number(shift[key]) || 0;
+                const lootVal = lootAlignShift[key] || 0;
+                if (baseVal !== 0 || lootVal !== 0) {
+                    mergedShift[key] = baseVal + lootVal;
+                }
+            }
+            effectiveRewards.alignment_shift = Object.keys(mergedShift).length > 0 ? mergedShift : undefined;
+        }
+
 
         // UGC報酬制限（アイテム数、スキルカード数、スキルパワー）の適用
         if (result === 'success' && isUgcV2) {
