@@ -45,6 +45,13 @@ export async function GET(request: Request) {
         const client = await pool.connect();
         try {
             await client.query(`
+                -- ADD IS_REPEATABLE COLUMN
+                ALTER TABLE public.scenarios
+                  ADD COLUMN IF NOT EXISTS is_repeatable BOOLEAN DEFAULT FALSE;
+
+                -- RELOAD PostgREST SCHEMA CACHE
+                NOTIFY pgrst, 'reload schema';
+
                 -- 0. ADD SUBSCRIPTION BONUS AND TRIAL COLUMNS
                 ALTER TABLE public.user_profiles
                   ADD COLUMN IF NOT EXISTS last_weekly_bonus_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
