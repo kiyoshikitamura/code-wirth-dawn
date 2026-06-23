@@ -38,6 +38,9 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                 const errData = await res.json().catch(() => ({}));
                 alert(`順序の変更に失敗しました。${errData.error ? `（${errData.error}）` : ''}`);
                 setParty(originalParty);
+            } else {
+                // Update Zustand store so other modals and the battle engine receive the new sorted order
+                useGameStore.getState().setPartyMembers(newParty);
             }
         } catch (e) {
             console.error(e);
