@@ -229,6 +229,50 @@ export default function ScenarioEngine({
         script
     });
 
+    // 背景画像のプリロードとクロスフェード制御
+    const bgUrl = getAssetUrl(currentNode?.bg_key || 'default');
+    useEffect(() => {
+        if (!bgUrl) return;
+        // 同じURLなら何もしない
+        if (bgUrl === prevBgUrl && bgReady) return;
+        // 新しい背景をプリロードしてからフェードイン
+        setBgReady(false);
+        let timerId: NodeJS.Timeout | null = null;
+
+        const img = new Image();
+        img.onload = () => {
+            setPrevBgUrl(bgUrl);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
+        };
+        img.onerror = () => {
+            setPrevBgUrl(bgUrl);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
+        };
+        img.src = bgUrl;
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
+    }, [bgUrl]);
+
+    // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御
+    useEffect(() => {
+        if (endReady && endReady.result !== 'abort' && onPrepareResult) {
+            if (prepareTriggeredRef.current) return;
+            prepareTriggeredRef.current = true;
+            onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
+        }
+    }, [endReady, history, onPrepareResult]);
+
+    // ノード切り替え時に、プレフェッチ送信済みフラグをリセット
+    useEffect(() => {
+        prepareTriggeredRef.current = false;
+    }, [currentNodeId]);
+
 
     // --- アクション ---
 
@@ -401,50 +445,6 @@ export default function ScenarioEngine({
         setHistory(prev => [...prev, currentNodeId]);
         setCurrentNodeId(choice.next);
     };
-
-    // 背景画像のプリロードとクロスフェード制御
-    const bgUrl = getAssetUrl(currentNode.bg_key || 'default');
-    useEffect(() => {
-        if (!bgUrl) return;
-        // 同じURLなら何もしない
-        if (bgUrl === prevBgUrl && bgReady) return;
-        // 新しい背景をプリロードしてからフェードイン
-        setBgReady(false);
-        let timerId: NodeJS.Timeout | null = null;
-
-        const img = new Image();
-        img.onload = () => {
-            setPrevBgUrl(bgUrl);
-            timerId = setTimeout(() => {
-                setBgReady(true);
-            }, 50);
-        };
-        img.onerror = () => {
-            setPrevBgUrl(bgUrl);
-            timerId = setTimeout(() => {
-                setBgReady(true);
-            }, 50);
-        };
-        img.src = bgUrl;
-
-        return () => {
-            if (timerId) clearTimeout(timerId);
-        };
-    }, [bgUrl]);
-
-    // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御
-    useEffect(() => {
-        if (endReady && endReady.result !== 'abort' && onPrepareResult) {
-            if (prepareTriggeredRef.current) return;
-            prepareTriggeredRef.current = true;
-            onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
-        }
-    }, [endReady, history, onPrepareResult]);
-
-    // ノード切り替え時に、プレフェッチ送信済みフラグをリセット
-    useEffect(() => {
-        prepareTriggeredRef.current = false;
-    }, [currentNodeId]);
 
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
