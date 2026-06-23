@@ -353,17 +353,20 @@ export function useScenarioNodeProcessor({
                         });
 
                         if (res.ok && processedNodeRef.current === activeNodeId) {
-                            // Clear client-side temporary stores
-                            useQuestState.getState().updateAfterBattle({
+                            // Clear client-side temporary stores and set flag in a single batch update to prevent React render glitches
+                            useQuestState.setState((state) => ({
                                 playerHp: useGameStore.getState().userProfile?.hp || 0,
                                 partyHp: {},
-                                deadNpcIds: [],
-                                droppedItems: [], // Clears lootPool
-                                usedConsumables: [] // Clears consumedItems
-                            });
-                            useQuestState.setState({ reputationChanges: {} });
+                                deadNpcs: [],
+                                lootPool: [], // Completely clear lootPool
+                                consumedItems: [], // Completely clear consumedItems
+                                reputationChanges: {},
+                                questFlags: {
+                                    ...state.questFlags,
+                                    [`checkpoint_done_${activeNodeId}`]: 1
+                                }
+                            }));
 
-                            questState.setFlag(`checkpoint_done_${activeNodeId}`, 1);
                             showToast('💾 チェックポイント: 戦利品を保存しました。', 'success');
 
                             // Refresh local profile/inventory so they can be equipped immediately
