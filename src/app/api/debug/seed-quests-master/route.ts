@@ -104,7 +104,8 @@ export async function GET(request: Request) {
                 requirements,
                 conditions,
                 rewards,
-                location_tags
+                location_tags,
+                is_repeatable: row.is_repeatable === 'true' || row.is_repeatable === true || row.is_repeatable === '1'
             };
 
             const { error } = await supabase.from('scenarios').upsert(upsertData, { onConflict: 'id' });

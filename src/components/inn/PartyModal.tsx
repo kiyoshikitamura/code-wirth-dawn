@@ -9,9 +9,10 @@ import { useGameStore } from '@/store/gameStore';
 interface PartyModalProps {
     onClose: () => void;
     userProfile: any;
+    isCampMode?: boolean;
 }
 
-export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
+export default function PartyModal({ onClose, userProfile, isCampMode }: PartyModalProps) {
     const [party, setParty] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
@@ -224,12 +225,14 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                         )}
 
                         {/* Action Button */}
-                        <button
-                            onClick={() => handleDismiss(selectedDetail.id, selectedDetail.name)}
-                            className="w-full py-2 rounded text-xs font-bold bg-red-955/80 text-red-200 border border-red-800/60 hover:bg-red-900/70 transition-all active:scale-95"
-                        >
-                            同行を終える（別れる）
-                        </button>
+                        {!isCampMode && (
+                            <button
+                                onClick={() => handleDismiss(selectedDetail.id, selectedDetail.name)}
+                                className="w-full py-2 rounded text-xs font-bold bg-red-955/80 text-red-200 border border-red-800/60 hover:bg-red-900/70 transition-all active:scale-95"
+                            >
+                                同行を終える（別れる）
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>,
@@ -268,7 +271,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                             {party.map((member, index) => {
                                 const isFirst = index === 0;
                                 const isLast = index === party.length - 1;
-                                const questLocked = !!userProfile?.current_quest_id;
+                                const questLocked = !!userProfile?.current_quest_id && !isCampMode;
 
                                 return (
                                     <div 

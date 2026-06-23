@@ -359,7 +359,7 @@ export default function ScenarioEngine({
     }
 
     // Camp UI
-    if (currentNode?.type === 'camp') {
+    if (currentNode?.type === 'camp' && !endReady) {
         const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
         return (
@@ -373,13 +373,23 @@ export default function ScenarioEngine({
                 <h2 className="text-2xl font-serif text-amber-400 mb-1 z-10 drop-shadow-md">野営地</h2>
                 <p className="text-slate-500 mb-6 z-10 text-sm italic text-center max-w-xs">「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」</p>
 
-                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm">
-                    <p className="text-amber-400/80 font-bold text-sm mb-4">※ここでは特別に、デッキ・装備変更が許可されます。</p>
+                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm w-full flex flex-col gap-3">
+                    <p className="text-amber-400/80 font-bold text-sm mb-1">※ここでは特別に、デッキ・装備変更が許可されます。</p>
                     <button
                         onClick={() => setShowCampStatus(true)}
-                        className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98]"
+                        className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
                     >
                         デッキ編成・装備変更
+                    </button>
+                    <button
+                        onClick={() => {
+                            if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰ってギルドに報告（クリア）しますか？")) {
+                                setEndReady({ result: 'success' });
+                            }
+                        }}
+                        className="bg-emerald-950/60 text-emerald-200 border border-emerald-700/40 px-8 py-3 hover:bg-emerald-900/40 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                    >
+                        探索を終えて帰還する (クリア)
                     </button>
                 </div>
 

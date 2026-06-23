@@ -1,50 +1,50 @@
-id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rewards_summary,client_name,_comment
-6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""location_id"":""loc_border_town"",""min_level"":1}",true,,Gold:100|Rep:10|Order:5,王国軍,メインシナリオ第1話
-6002,main_ep02,第2話「砂礫の国境線」,2,1,2,"{""completed_quest"":""main_ep01"",""location_id"":""loc_border_town""}",true,,Gold:200|Rep:10|Order:5|Move:loc_oasis,王国軍,メインシナリオ第2話
-6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,"{""completed_quest"":""main_ep02"",""location_id"":""loc_oasis""}",true,,Gold:300|Rep:10|Justice:5|Move:loc_plains_city,交易商会,メインシナリオ第3話
-6004,main_ep04,第4話「砂塵の激突」,4,1,2,"{""completed_quest"":""main_ep03"",""location_id"":""loc_plains_city""}",true,,Gold:400|Rep:10|Justice:10|Move:loc_meridia,交易商会,メインシナリオ第4話
-6005,main_ep05,第5話「大義という名の虚妄」,5,1,2,"{""completed_quest"":""main_ep04"",""location_id"":""loc_meridia""}",true,,Gold:500|Rep:10|Item:501|Justice:10|Move:loc_frontier_village,交易商会,メインシナリオ第5話
-6006,main_ep06,第6話「逃亡者の道」,6,1,2,"{""completed_quest"":""main_ep05"",""location_id"":""loc_frontier_village""}",true,,Gold:600|Rep:10|Chaos:5|Move:loc_temple_town,忍び衆,メインシナリオ第6話
-6007,main_ep07,第7話「刃の掟」,10,1,2,"{""completed_quest"":""main_ep06"",""location_id"":""loc_temple_town""}",true,,Gold:700|Rep:10|Justice:5|Move:loc_yato,代官所,メインシナリオ第7話
-6008,main_ep08,第8話「夜霧の凶刃」,11,2,1,"{""completed_quest"":""main_ep07"",""location_id"":""loc_yato""}",true,,Gold:350|Rep:10|Order:5|Move:loc_valley,なし,メインシナリオ第8話
-6009,main_ep09,第9話「大名行列の護衛」,12,2,2,"{""completed_quest"":""main_ep08"",""location_id"":""loc_valley""}",true,,Gold:400|Rep:10|Evil:5|Move:loc_yato,なし,メインシナリオ第9話
-6010,main_ep10,第10話「世界の底が抜ける日」,15,2,2,"{""completed_quest"":""main_ep09"",""location_id"":""loc_yato""}",true,,Gold:500|Rep:15|Item:502|Justice:10|Move:loc_charon,なし,メインシナリオ第10話
-6011,main_ep11,第11話「天使降臨」,16,3,2,"{""completed_quest"":""main_ep10"",""location_id"":""loc_charon""}",true,,Gold:1200|Rep:15|Order:5|Move:loc_meridia,なし,メインシナリオ第11話
-6012,main_ep12,第12話「炎の審判者」,17,3,2,"{""completed_quest"":""main_ep11"",""location_id"":""loc_meridia""}",true,,Gold:1500|Rep:15|Order:5|Move:loc_charon,なし,メインシナリオ第12話
-6013,main_ep13,第13話「癒しの暴君」,18,3,2,"{""completed_quest"":""main_ep12"",""location_id"":""loc_charon""}",true,,Gold:1800|Rep:20|Order:5|Move:loc_yato,なし,メインシナリオ第13話
-6014,main_ep14,第14話「啓示の使者」,19,3,2,"{""completed_quest"":""main_ep13"",""location_id"":""loc_yato""}",true,,Gold:2000|Rep:20|Order:5|Move:loc_regalia,なし,メインシナリオ第14話
-6015,main_ep15,第15話「天軍の長」,20,4,2,"{""completed_quest"":""main_ep14"",""location_id"":""loc_regalia""}",true,,Gold:2500|Rep:30|Item:503|Order:5|Move:loc_border_town,なし,メインシナリオ第15話
-6016,main_ep16,第16話「英霊の石碑」,21,4,2,"{""completed_quest"":""main_ep15"",""required_generations"":2,""location_id"":""loc_border_town""}",true,,Gold:3000|Rep:20|Order:5|Move:loc_meridia,なし,メインシナリオ第16話
-6017,main_ep17,第17話「冥府の門」,22,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_meridia""}",true,,Gold:3500|Rep:25|Item:505|Order:5|Move:loc_charon,なし,メインシナリオ第17話
-6018,main_ep18,第18話「戦神の洗礼」,22,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_charon""}",true,,Gold:3500|Rep:25|Item:506|Order:5|Move:loc_yato,なし,メインシナリオ第18話
-6019,main_ep19,第19話「月光の狩人」,23,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_yato""}",true,,Gold:3500|Rep:25|Item:507|Order:5|Move:loc_regalia,なし,メインシナリオ第19話
-6020,main_ep20,第20話「蒼暁の剣」,25,5,2,"{""completed_quest"":""main_ep17||main_ep18||main_ep19"",""location_id"":""loc_regalia""}",true,,Gold:15000|Rep:50|Item:504|Order:5,なし,メインシナリオ第20話
-6101,qst_spot_roland,忘却の五英霊,20,5,7,"{""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。
-6102,qst_spot_yato,冥食の残滓,20,5,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,,忍び衆,夜刀スポット: 冥食の夜。生贄の少女を護衛し冥の門の四大妖怪を退けよ。
-6103,qst_spot_karyu,天を衝く塔,20,5,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,,地方太守,華龍スポット: 霊山に虚無の塔が出現。四神を退け頂の神に挑め。
-6104,qst_spot_markand,黄金の沈黙,20,5,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,,交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。
-5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。
-5102,qst_rep_scorpion_hunt,巨大蠍の討伐,6,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_marcund""}",false,,,オアシス村長,[討伐依頼] オアシス近郊に巣を作った巨大毒蠍を駆除せよ。
-5103,qst_rep_toll_bandit,山賊の関所破り,5,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_yatoshin""}",false,,,自警団,[討伐依頼] 山間の街道に不法な関所を設けた山賊を排除せよ。
-5104,qst_rep_river_god,河伯の怒り,6,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_haryu""}",false,,,村の長老,[鎮撫依頼] 河の氾濫を引き起こす妖怪を鎮めよ。
-5111,qst_rep_mutant,狂気の錬金術師,10,3,4,"{""completed_quest"":""main_ep02"",""min_reputation"":30,""nation_id"":""loc_roland""}",false,,,聖騎士団,[指名手配] 地下水道で違法な生体実験を繰り返す狂気の錬金術師を捕縛せよ。
-5112,qst_rep_bandit_king,砂漠の盗賊王,11,3,4,"{""completed_quest"":""main_ep02"",""min_reputation"":30,""nation_id"":""loc_marcund""}",false,,,商人ギルド,[討伐依頼] マルカンド近郊のキャラバンを襲う「砂漠の盗賊王」のアジトを強襲せよ。
-5113,qst_rep_cursed_blade,妖刀の辻斬り,12,3,4,"{""completed_quest"":""main_ep03"",""min_reputation"":40,""nation_id"":""loc_yatoshin""}",false,,,町奉行,[討伐依頼] 夜な夜な町を徘徊する辻斬り事件の解決。妖刀に憑かれた剣士を討て。
-5114,qst_rep_false_sage,偽りの邪仙,13,3,4,"{""completed_quest"":""main_ep03"",""min_reputation"":40,""nation_id"":""loc_haryu""}",false,,,地方役人,[討伐依頼] 不死の薬と偽って毒を売り捌き、村人を洗脳する「邪仙」を討伐せよ。
-5201,qst_rep_crusader,聖騎士団の叛逆者,18,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":50,""nation_id"":""loc_holy_empire""}",false,,,王国軍,[討伐令] 聖騎士団を脱走した元団長が辺境で反乱。鎮圧せよ。
-5202,qst_rep_sand_king,砂漠の僭王,19,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":60,""nation_id"":""loc_marcund""}",false,,,交易商会,[緊急依頼] 砂漠の交易路を支配する「砂の王」を排除せよ。
-5203,qst_rep_oni_general,鬼将軍の再臨,19,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":60,""nation_id"":""loc_yatoshin""}",false,,,代官所,[退魔依頼] 古戦場に百年前の鬼将の亡霊が復活。周辺の村が脅かされている。
-5204,qst_rep_jade_serpent,翡翠蛇の毒牙,20,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":70,""nation_id"":""loc_haryu""}",false,,,地方太守,[討伐令] 翡翠鉱脈に巣を作った巨大毒蛇を排除せよ。
-5205,qst_rep_heretic_sage,異端の大賢者,21,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":80,""nation_id"":""loc_holy_empire""}",false,,,冒険者ギルド,[最重要] 禁忌の魔法を研究する大賢者が地下墓地で実験を続けている。
-5206,qst_rep_war_djinn,戦の魔神,21,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":90,""nation_id"":""loc_marcund""}",false,,,冒険者ギルド,[封印解除] 砂漠の遺跡から封印が解けた戦の魔神が目覚めた。
-5207,qst_rep_nine_tails,九尾の大狐,23,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":100}",false,,,冒険者ギルド,[最高討伐令] 東方二国にまたがる霊山に千年の大妖狐が出現。地脈が乱れ災厄が広がる。
-6105,qst_legend_baphomet,悪魔バフォメット,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 古代の封印が解け、大悪魔バフォメットが地上に現れた。討伐せよ。
-6106,qst_legend_angel,降臨せし天使,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[神罰] 天空から降臨した天使が聖都を焼き払おうとしている。止めるのは貴方だ。
-6107,qst_legend_dragon,デザートドラゴン,27,6,10,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[竜殺し] マルカンドの大砂漠に古代の砂竜が覚醒した。命知らずの猛者を求む。
-6108,qst_legend_kirin,神域の幻獣,27,6,10,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 華龍国の霊峰に神獣・麒麟が降臨し、結界を張って人の立ち入りを拒んでいる。
-6109,qst_legend_golem,オメガ・ゴーレム,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 古代魔導帝国の遺跡から起動した巨大ゴーレムが都市に向かっている。迎撃せよ。
-6110,qst_legend_kraken,大海の悪夢 クラーケン,28,6,12,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 交易海域に巨大な海魔クラーケンが出現し、船舶を沈めている。海上決戦に挑め。
-6111,qst_legend_minotaur,迷宮の覇者 牛頭王,26,6,9,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 夜刀神国の地下に古代の迷宮が出現し、牛頭の化け物が支配している。
-6112,qst_demon_intro,次元の狭間：予兆,1,1,1,"{}",false,,,冒険者ギルド,[異界調査] 世界の中心に突如現れた謎の巨大な裂け目。戻らない先遣隊の噂を追え。
-7050,qst_demon_explore,次元の狭間：調査探索,8,4,8,"{""completed_quest"":""qst_demon_intro""}",false,,Gold:500|Exp:250|Item:4001,冒険者ギルド,[異界調査] 魔界との交点たる次元の狭間の深部を調査せよ。
-7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。
+id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rewards_summary,client_name,_comment,is_repeatable
+6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""location_id"":""loc_border_town"",""min_level"":1}",true,,Gold:100|Rep:10|Order:5,王国軍,メインシナリオ第1話,false
+6002,main_ep02,第2話「砂礫の国境線」,2,1,2,"{""completed_quest"":""main_ep01"",""location_id"":""loc_border_town""}",true,,Gold:200|Rep:10|Order:5|Move:loc_oasis,王国軍,メインシナリオ第2話,false
+6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,"{""completed_quest"":""main_ep02"",""location_id"":""loc_oasis""}",true,,Gold:300|Rep:10|Justice:5|Move:loc_plains_city,交易商会,メインシナリオ第3話,false
+6004,main_ep04,第4話「砂塵の激突」,4,1,2,"{""completed_quest"":""main_ep03"",""location_id"":""loc_plains_city""}",true,,Gold:400|Rep:10|Justice:10|Move:loc_meridia,交易商会,メインシナリオ第4話,false
+6005,main_ep05,第5話「大義という名の虚妄」,5,1,2,"{""completed_quest"":""main_ep04"",""location_id"":""loc_meridia""}",true,,Gold:500|Rep:10|Item:501|Justice:10|Move:loc_frontier_village,交易商会,メインシナリオ第5話,false
+6006,main_ep06,第6話「逃亡者の道」,6,1,2,"{""completed_quest"":""main_ep05"",""location_id"":""loc_frontier_village""}",true,,Gold:600|Rep:10|Chaos:5|Move:loc_temple_town,忍び衆,メインシナリオ第6話,false
+6007,main_ep07,第7話「刃の掟」,10,1,2,"{""completed_quest"":""main_ep06"",""location_id"":""loc_temple_town""}",true,,Gold:700|Rep:10|Justice:5|Move:loc_yato,代官所,メインシナリオ第7話,false
+6008,main_ep08,第8話「夜霧の凶刃」,11,2,1,"{""completed_quest"":""main_ep07"",""location_id"":""loc_yato""}",true,,Gold:350|Rep:10|Order:5|Move:loc_valley,なし,メインシナリオ第8話,false
+6009,main_ep09,第9話「大名行列の護衛」,12,2,2,"{""completed_quest"":""main_ep08"",""location_id"":""loc_valley""}",true,,Gold:400|Rep:10|Evil:5|Move:loc_yato,なし,メインシナリオ第9話,false
+6010,main_ep10,第10話「世界の底が抜ける日」,15,2,2,"{""completed_quest"":""main_ep09"",""location_id"":""loc_yato""}",true,,Gold:500|Rep:15|Item:502|Justice:10|Move:loc_charon,なし,メインシナリオ第10話,false
+6011,main_ep11,第11話「天使降臨」,16,3,2,"{""completed_quest"":""main_ep10"",""location_id"":""loc_charon""}",true,,Gold:1200|Rep:15|Order:5|Move:loc_meridia,なし,メインシナリオ第11話,false
+6012,main_ep12,第12話「炎の審判者」,17,3,2,"{""completed_quest"":""main_ep11"",""location_id"":""loc_meridia""}",true,,Gold:1500|Rep:15|Order:5|Move:loc_charon,なし,メインシナリオ第12話,false
+6013,main_ep13,第13話「癒しの暴君」,18,3,2,"{""completed_quest"":""main_ep12"",""location_id"":""loc_charon""}",true,,Gold:1800|Rep:20|Order:5|Move:loc_yato,なし,メインシナリオ第13話,false
+6014,main_ep14,第14話「啓示の使者」,19,3,2,"{""completed_quest"":""main_ep13"",""location_id"":""loc_yato""}",true,,Gold:2000|Rep:20|Order:5|Move:loc_regalia,なし,メインシナリオ第14話,false
+6015,main_ep15,第15話「天軍の長」,20,4,2,"{""completed_quest"":""main_ep14"",""location_id"":""loc_regalia""}",true,,Gold:2500|Rep:30|Item:503|Order:5|Move:loc_border_town,なし,メインシナリオ第15話,false
+6016,main_ep16,第16話「英霊の石碑」,21,4,2,"{""completed_quest"":""main_ep15"",""required_generations"":2,""location_id"":""loc_border_town""}",true,,Gold:3000|Rep:20|Order:5|Move:loc_meridia,なし,メインシナリオ第16話,false
+6017,main_ep17,第17話「冥府の門」,22,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_meridia""}",true,,Gold:3500|Rep:25|Item:505|Order:5|Move:loc_charon,なし,メインシナリオ第17話,false
+6018,main_ep18,第18話「戦神の洗礼」,22,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_charon""}",true,,Gold:3500|Rep:25|Item:506|Order:5|Move:loc_yato,なし,メインシナリオ第18話,false
+6019,main_ep19,第19話「月光の狩人」,23,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_yato""}",true,,Gold:3500|Rep:25|Item:507|Order:5|Move:loc_regalia,なし,メインシナリオ第19話,false
+6020,main_ep20,第20話「蒼暁の剣」,25,5,2,"{""completed_quest"":""main_ep17||main_ep18||main_ep19"",""location_id"":""loc_regalia""}",true,,Gold:15000|Rep:50|Item:504|Order:5,なし,メインシナリオ第20話,false
+6101,qst_spot_roland,忘却の五英霊,20,5,7,"{""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。,false
+6102,qst_spot_yato,冥食の残滓,20,5,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,,忍び衆,夜刀スポット: 冥食の夜。生贄の少女を護衛し冥の門の四大妖怪を退けよ。,false
+6103,qst_spot_karyu,天を衝く塔,20,5,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,,地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
+6104,qst_spot_markand,黄金の沈黙,20,5,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,,交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
+5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
+5102,qst_rep_scorpion_hunt,巨大蠍の討伐,6,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_marcund""}",false,,,オアシス村長,[討伐依頼] オアシス近郊に巣を作った巨大毒蠍を駆除せよ。,false
+5103,qst_rep_toll_bandit,山賊の関所破り,5,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_yatoshin""}",false,,,自警団,[討伐依頼] 山間の街道に不法な関所を設けた山賊を排除せよ。,false
+5104,qst_rep_river_god,河伯の怒り,6,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_haryu""}",false,,,村の長老,[鎮撫依頼] 河の氾濫を引き起こす妖怪を鎮めよ。,false
+5111,qst_rep_mutant,狂気の錬金術師,10,3,4,"{""completed_quest"":""main_ep02"",""min_reputation"":30,""nation_id"":""loc_roland""}",false,,,聖騎士団,[指名手配] 地下水道で違法な生体実験を繰り返す狂気の錬金術師を捕縛せよ。,false
+5112,qst_rep_bandit_king,砂漠の盗賊王,11,3,4,"{""completed_quest"":""main_ep02"",""min_reputation"":30,""nation_id"":""loc_marcund""}",false,,,商人ギルド,[討伐依頼] マルカンド近郊のキャラバンを襲う「砂漠の盗賊王」のアジトを強襲せよ。,false
+5113,qst_rep_cursed_blade,妖刀の辻斬り,12,3,4,"{""completed_quest"":""main_ep03"",""min_reputation"":40,""nation_id"":""loc_yatoshin""}",false,,,町奉行,[討伐依頼] 夜な夜な町を徘徊する辻斬り事件の解決。妖刀に憑かれた剣士を討て。,false
+5114,qst_rep_false_sage,偽りの邪仙,13,3,4,"{""completed_quest"":""main_ep03"",""min_reputation"":40,""nation_id"":""loc_haryu""}",false,,,地方役人,[討伐依頼] 不死の薬と偽って毒を売り捌き、村人を洗脳する「邪仙」を討伐せよ。,false
+5201,qst_rep_crusader,聖騎士団の叛逆者,18,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":50,""nation_id"":""loc_holy_empire""}",false,,,王国軍,[討伐令] 聖騎士団を脱走した元団長が辺境で反乱。鎮圧せよ。,false
+5202,qst_rep_sand_king,砂漠の僭王,19,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":60,""nation_id"":""loc_marcund""}",false,,,交易商会,[緊急依頼] 砂漠の交易路を支配する「砂の王」を排除せよ。,false
+5203,qst_rep_oni_general,鬼将軍の再臨,19,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":60,""nation_id"":""loc_yatoshin""}",false,,,代官所,[退魔依頼] 古戦場に百年前の鬼将の亡霊が復活。周辺の村が脅かされている。,false
+5204,qst_rep_jade_serpent,翡翠蛇の毒牙,20,4,6,"{""completed_quest"":""main_ep05"",""min_reputation"":70,""nation_id"":""loc_haryu""}",false,,,地方太守,[討伐令] 翡翠鉱脈に巣を作った巨大毒蛇を排除せよ。,false
+5205,qst_rep_heretic_sage,異端の大賢者,21,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":80,""nation_id"":""loc_holy_empire""}",false,,,冒険者ギルド,[最重要] 禁忌の魔法を研究する大賢者が地下墓地で実験を続けている。,false
+5206,qst_rep_war_djinn,戦の魔神,21,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":90,""nation_id"":""loc_marcund""}",false,,,冒険者ギルド,[封印解除] 砂漠の遺跡から封印が解けた戦の魔神が目覚めた。,false
+5207,qst_rep_nine_tails,九尾の大狐,23,5,6,"{""completed_quest"":""main_ep10"",""min_reputation"":100}",false,,,冒険者ギルド,[最高討伐令] 東方二国にまたがる霊山に千年の大妖狐が出現。地脈が乱れ災厄が広がる。,false
+6105,qst_legend_baphomet,悪魔バフォメット,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 古代の封印が解け、大悪魔バフォメットが地上に現れた。討伐せよ。,false
+6106,qst_legend_angel,降臨せし天使,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[神罰] 天空から降臨した天使が聖都を焼き払おうとしている。止めるのは貴方だ。,false
+6107,qst_legend_dragon,デザートドラゴン,27,6,10,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[竜殺し] マルカンドの大砂漠に古代の砂竜が覚醒した。命知らずの猛者を求む。,false
+6108,qst_legend_kirin,神域の幻獣,27,6,10,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 華龍国の霊峰に神獣・麒麟が降臨し、結界を張って人の立ち入りを拒んでいる。,false
+6109,qst_legend_golem,オメガ・ゴーレム,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 古代魔導帝国の遺跡から起動した巨大ゴーレムが都市に向かっている。迎撃せよ。,false
+6110,qst_legend_kraken,大海の悪夢 クラーケン,28,6,12,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 交易海域に巨大な海魔クラーケンが出現し、船舶を沈めている。海上決戦に挑め。,false
+6111,qst_legend_minotaur,迷宮の覇者 牛頭王,26,6,9,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 夜刀神国の地下に古代の迷宮が出現し、牛頭の化け物が支配している。,false
+6112,qst_demon_intro,次元の狭間：予兆,1,1,1,"{}",false,,,冒険者ギルド,[異界調査] 世界の中心に突如現れた謎の巨大な裂け目。戻らない先遣隊の噂を追え。,false
+7050,qst_demon_explore,次元の狭間：調査探索,8,4,8,"{""completed_quest"":""qst_demon_intro""}",false,,Gold:500|Exp:250|Item:4001,冒険者ギルド,[異界調査] 魔界との交点たる次元の狭間の深部を調査せよ。,true
+7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。,true

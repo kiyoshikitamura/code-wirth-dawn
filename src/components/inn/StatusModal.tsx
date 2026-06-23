@@ -217,6 +217,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
             <PartyModal
                 onClose={() => setShowParty(false)}
                 userProfile={userProfile}
+                isCampMode={isCampMode}
             />
         )}
         </>
