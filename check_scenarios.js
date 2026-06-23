@@ -18,66 +18,33 @@ const supabase = createClient(supabaseUrl, serviceKey, {
 });
 
 async function main() {
-    // Check scenario 7001
-    const { data: q7001, error: e7001 } = await supabase
+    // Check scenario 7050
+    const { data: q7050, error: e7050 } = await supabase
         .from('scenarios')
         .select('id, title, slug, quest_type, requirements, script_data')
-        .eq('id', 7001)
+        .eq('id', 7050)
         .maybeSingle();
 
-    console.log('--- 7001 Query ---');
-    if (e7001) {
-        console.error('Error fetching 7001:', e7001.message);
-    } else if (!q7001) {
-        console.log('Quest 7001 not found in DB.');
+    console.log('--- 7050 Query ---');
+    if (e7050) {
+        console.error('Error fetching 7050:', e7050.message);
+    } else if (!q7050) {
+        console.log('Quest 7050 not found in DB.');
     } else {
-        console.log('Quest 7001:', {
-            id: q7001.id,
-            title: q7001.title,
-            slug: q7001.slug,
-            quest_type: q7001.quest_type,
-            requirements: q7001.requirements,
-            has_script_data: !!q7001.script_data,
-            has_nodes: q7001.script_data ? !!q7001.script_data.nodes : false,
-            node_count: q7001.script_data && q7001.script_data.nodes ? Object.keys(q7001.script_data.nodes).length : 0
+        console.log('Quest 7050:', {
+            id: q7050.id,
+            title: q7050.title,
+            slug: q7050.slug,
+            quest_type: q7050.quest_type,
+            requirements: q7050.requirements,
+            has_script_data: !!q7050.script_data,
+            has_nodes: q7050.script_data ? !!q7050.script_data.nodes : false,
+            node_count: q7050.script_data && q7050.script_data.nodes ? Object.keys(q7050.script_data.nodes).length : 0
         });
-    }
-
-    // Check scenario 6001
-    const { data: q6001, error: e6001 } = await supabase
-        .from('scenarios')
-        .select('id, title, slug, quest_type, requirements, script_data')
-        .eq('id', 6001)
-        .maybeSingle();
-
-    console.log('--- 6001 Query ---');
-    if (e6001) {
-        console.error('Error fetching 6001:', e6001.message);
-    } else if (!q6001) {
-        console.log('Quest 6001 not found in DB.');
-    } else {
-        console.log('Quest 6001:', {
-            id: q6001.id,
-            title: q6001.title,
-            slug: q6001.slug,
-            quest_type: q6001.quest_type,
-            requirements: q6001.requirements,
-            has_script_data: !!q6001.script_data,
-            has_nodes: q6001.script_data ? !!q6001.script_data.nodes : false,
-            node_count: q6001.script_data && q6001.script_data.nodes ? Object.keys(q6001.script_data.nodes).length : 0
-        });
-    }
-
-    // Check all scenarios in DB count
-    const { count, error: countErr } = await supabase
-        .from('scenarios')
-        .select('*', { count: 'exact', head: true });
-    
-    console.log('--- DB Info ---');
-    if (countErr) {
-        console.error('Error getting count:', countErr.message);
-    } else {
-        console.log('Total scenarios in DB:', count);
+        if (q7050.script_data) {
+            console.log('Script Data Nodes:');
+            console.log(JSON.stringify(q7050.script_data.nodes, null, 2));
+        }
     }
 }
 

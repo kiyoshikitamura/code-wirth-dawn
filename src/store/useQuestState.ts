@@ -289,7 +289,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         if (!state.isEscortMission || !state.guest) return false;
         // ゲストが deadNpcs に含まれていれば護衛失敗
         const guestId = (state.guest as any).id || (state.guest as any).slug;
-        return state.deadNpcs.includes(guestId);
+        return (state.deadNpcs || []).includes(guestId);
     },
 
     setEscortMission: (value: boolean) => {
@@ -310,5 +310,18 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
 }),
     {
         name: 'quest-storage',
+        merge: (persistedState: any, currentState) => {
+            if (!persistedState) return currentState;
+            return {
+                ...currentState,
+                ...persistedState,
+                partyHp: persistedState.partyHp || currentState.partyHp || {},
+                deadNpcs: persistedState.deadNpcs || currentState.deadNpcs || [],
+                lootPool: persistedState.lootPool || currentState.lootPool || [],
+                consumedItems: persistedState.consumedItems || currentState.consumedItems || [],
+                questFlags: persistedState.questFlags || currentState.questFlags || {},
+                reputationChanges: persistedState.reputationChanges || currentState.reputationChanges || {},
+            };
+        }
     }
 ));

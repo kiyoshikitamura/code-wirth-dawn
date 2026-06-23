@@ -81,7 +81,7 @@ export default function PartyModal({ onClose, userProfile }: PartyModalProps) {
                 // クエスト中ならZustandから残り戦闘HPをマージする
                 if (questState.isInQuest) {
                     partyData = partyData.map((m: any) => {
-                        const savedHp = questState.partyHp[String(m.id)];
+                        const savedHp = questState.partyHp?.[String(m.id)];
                         return {
                             ...m,
                             hp: savedHp !== undefined ? Math.max(0, savedHp) : m.max_hp

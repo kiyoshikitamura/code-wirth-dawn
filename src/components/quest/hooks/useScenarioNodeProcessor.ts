@@ -200,7 +200,7 @@ export function useScenarioNodeProcessor({
                 await useGameStore.getState().fetchInventory();
                 if (processedNodeRef.current !== activeNodeId) return;
                 const latestInv = useGameStore.getState().inventory || [];
-                const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
+                const alreadyConsumedCount = (questState.consumedItems || []).filter(id => String(id) === String(requiredItemId)).length;
                 
                 // クエスト戦利品プール（未永続化アイテム）の個数を合算
                 const questLootCount = (questState.lootPool || [])
@@ -289,7 +289,7 @@ export function useScenarioNodeProcessor({
 
                 const latestInv = useGameStore.getState().inventory || [];
                 // すでにクエスト内で「消費予定」として蓄積されている分をカウントして差し引く
-                const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
+                const alreadyConsumedCount = (questState.consumedItems || []).filter(id => String(id) === String(requiredItemId)).length;
 
                 // クエスト戦利品プール（未永続化アイテム）の個数を合算
                 const questLootCount = (questState.lootPool || [])
@@ -346,8 +346,8 @@ export function useScenarioNodeProcessor({
                             },
                             body: JSON.stringify({
                                 quest_id: questState.questId,
-                                loot_pool: questState.lootPool,
-                                consumed_items: questState.consumedItems,
+                                loot_pool: questState.lootPool || [],
+                                consumed_items: questState.consumedItems || [],
                                 reputation_changes: questState.reputationChanges || {}
                             })
                         });
@@ -691,17 +691,17 @@ export function useScenarioNodeProcessor({
                     questType: questState.questType,
                     playerHp: questState.playerHp,
                     playerMaxHp: questState.playerMaxHp,
-                    partyHp: questState.partyHp,
-                    deadNpcs: questState.deadNpcs,
-                    lootPool: questState.lootPool,
-                    consumedItems: questState.consumedItems,
+                    partyHp: questState.partyHp || {},
+                    deadNpcs: questState.deadNpcs || [],
+                    lootPool: questState.lootPool || [],
+                    consumedItems: questState.consumedItems || [],
                     guest: questState.guest,
                     currentLocationId: questState.currentLocationId,
                     elapsedDays: questState.elapsedDays,
                     questFlags: questState.questFlags,
                     isEscortMission: questState.isEscortMission,
                     currentNodeId: currentNodeId,
-                    reputationChanges: questState.reputationChanges,
+                    reputationChanges: questState.reputationChanges || {},
                 };
 
                 const authHeaders = await getAuthHeaders();
@@ -726,8 +726,8 @@ export function useScenarioNodeProcessor({
         questState.isInQuest,
         questState.playerHp,
         questState.guest,
-        questState.lootPool.length,
-        questState.consumedItems.length,
+        (questState.lootPool || []).length,
+        (questState.consumedItems || []).length,
         questState.elapsedDays
     ]);
 }
