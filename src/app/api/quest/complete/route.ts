@@ -304,6 +304,26 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §2. 加齢 + ステータス減衰
         // ═══════════════════════════════════════
+        // HP装備補正値の算出（本番・クエスト完了時HP引き継ぎ不具合修正用）
+        let equipHpBonus = 0;
+        try {
+            const { data: equipResult } = await supabase
+                .from('inventory')
+                .select('items!inner(effect_data)')
+                .eq('user_id', user_id)
+                .eq('is_equipped', true);
+            if (equipResult) {
+                for (const eq of equipResult) {
+                    const effectData = (eq as any).items?.effect_data;
+                    if (effectData && effectData.hp_bonus) {
+                        equipHpBonus += effectData.hp_bonus;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[QuestComplete] Failed to fetch equipment HP bonus:', e);
+        }
+
         let daysPassed = 1;
         if (result === 'success') daysPassed = quest.days_success ?? 1;
         else if (result === 'failure') daysPassed = quest.days_failure ?? 1;
@@ -321,13 +341,13 @@ export async function POST(req: Request) {
             updates.def = Math.max(1, (user.def || 1) - decay.def);
         }
 
-        // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1）
+        // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1、HPは装備補正込みで全快）
         let battleDefeatVitPenalty = 0;
         if (result === 'failure') {
             battleDefeatVitPenalty = 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
-            updates.hp = user.max_hp || 100;
+            updates.hp = (user.max_hp || 100) + equipHpBonus;
         }
 
         // ═══════════════════════════════════════
@@ -360,7 +380,7 @@ export async function POST(req: Request) {
                 const info = growthResult.levelInfo;
                 updates.level = info.new_level;
                 updates.max_hp = info.new_max_hp;
-                updates.hp = info.new_max_hp;
+                updates.hp = info.new_max_hp + equipHpBonus;
                 updates.max_deck_cost = info.new_max_cost;
                 updates.atk = (updates.atk || user.atk || 1) + info.atk_increase;
                 updates.def = (updates.def || user.def || 1) + info.def_increase;

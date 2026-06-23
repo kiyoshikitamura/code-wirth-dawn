@@ -752,3 +752,4 @@ processEnemyTurn
 | v27.5 | 2026-05-20 | seed-npcs API新設（npcs+party_membersテンプレート二重同期）。NPC全57件のcover_rate/level/atk/def/max_hp をDB同期。JOB_CLASS_JPをlib/jobClass.tsに統一。npcs_db_dump.csv削除。 |
 | v27.6 | 2026-05-21 | コレクション機能改善: NPC図鑑タブ追加(user_npc_encounters新設)、SkillDetailPopup新設(cards join)、EnemyDetailPopup React化、types/collection.ts型定義導入。ensure-npc-encounters マイグレーションAPI追加。 |
 | **v28** | **2026-06-01** | **旧VIT/MPコストシステム廃止。cards.csvのcost_type→`none`/cost_val→`0`に統一。Card型から`mp`/`vitality`除去。`canAffordCard()`削除。バトルカードのコストはAPのみ有効。cost_type=`item`（1バトル1回制限）は維持。DBシード済。** |
+| **v29.0** | **2026-06-23** | **気の癒やしの回復＋リジェネ同時適用、デトネーションのミス時手札破棄の強制発動、およびクエスト進行中（開始時・回復時・完了時のレベルアップや失敗ペナルティ含む）の装備HP増加補正維持を実装。** |

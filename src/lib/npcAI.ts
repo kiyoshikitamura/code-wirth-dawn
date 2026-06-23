@@ -357,6 +357,8 @@ function tryEmergencyHeal(
         card: healCard,
         healAmount,
         targetName,
+        effectId: healCard.effect_id,
+        effectDuration: healCard.effect_duration || 3,
         message: `${npc.name}の${healCard.name}！ ${targetName}のHPが ${healAmount} 回復した。`
     };
 }

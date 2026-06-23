@@ -108,6 +108,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
     const maxDeckCost = userProfile?.max_deck_cost || 10;
 
     const handleToggle = async (item: any) => {
+        if (togglingId) return; // Prevent double/rapid clicking
         if (questLocked) {
             alert("クエスト進行中はスキルの装備変更ができません。");
             return;
@@ -222,7 +223,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                         {isSkillCard && selectedDetail.id != null && (
                             <button
                                 onClick={() => handleToggle(selectedDetail)}
-                                disabled={togglingId === selectedDetail.id}
+                                disabled={togglingId !== null}
                                 className={`w-full py-2 rounded text-xs font-bold transition-all ${
                                     selectedDetail.is_equipped
                                         ? 'bg-red-950/80 text-red-200 border border-red-800/60 hover:bg-red-900/70'
@@ -308,7 +309,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                                 e.stopPropagation();
                                                 await handleToggle(item);
                                             }}
-                                            disabled={togglingId === item.id}
+                                            disabled={togglingId !== null}
                                             className="px-2.5 py-1 text-[10px] font-bold rounded bg-red-950/70 border border-red-900/60 hover:bg-red-900/80 text-red-200 transition-colors active:scale-95"
                                         >
                                             {togglingId === item.id ? '...' : '外す'}
@@ -415,7 +416,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                                                 e.stopPropagation();
                                                                 await handleToggle(item);
                                                             }}
-                                                            disabled={togglingId === item.id || isDisabled}
+                                                            disabled={togglingId !== null || isDisabled}
                                                             className={`px-2.5 py-1 text-[10px] font-bold rounded transition-all active:scale-95 ${
                                                                 isDisabled
                                                                     ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed'
