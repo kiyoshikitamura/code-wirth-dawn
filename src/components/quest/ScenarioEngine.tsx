@@ -79,11 +79,6 @@ export default function ScenarioEngine({
     const [prevBgUrl, setPrevBgUrl] = useState<string>('');
     const [bgReady, setBgReady] = useState(false);
 
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
     const historyRef = useRef(history);
     useEffect(() => { historyRef.current = history; }, [history]);
 
@@ -268,11 +263,6 @@ export default function ScenarioEngine({
     };
 
     // --- レンダリング ---
-
-    // ハイドレーション不整合によるクライアントサイドクラッシュを防止するためのマウントガード
-    if (!mounted) {
-        return <div className="w-full h-full bg-slate-950" />;
-    }
 
     // Special Shop UI
     if (currentNode?.type === 'shop_special') {

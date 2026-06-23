@@ -28,6 +28,11 @@ export default function QuestPage() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isGivingUp, setIsGivingUp] = useState(false);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
     const [battleBgUrl, setBattleBgUrl] = useState<string>('/images/quests/bg_wasteland.png');
     const [battleBgm, setBattleBgm] = useState<string>('bgm_battle'); // CSVのbattle BGMを保持
@@ -1037,6 +1042,16 @@ export default function QuestPage() {
             isProcessingEndRef.current = false;
         }
     };
+
+    if (!mounted) {
+        return (
+            <div className="flex items-center justify-center h-screen w-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
+                <div className="text-center">
+                    <p className="text-sm text-slate-400 animate-pulse">ローディング中...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex items-center justify-center h-screen w-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
