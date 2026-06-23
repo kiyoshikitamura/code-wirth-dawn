@@ -215,14 +215,34 @@ export async function POST(req: Request) {
             }
         }
 
+        // loot_poolからゴールドと経験値を抽出
+        let lootGoldSum = 0;
+        let lootExpSum = 0;
+        let totalGoldReward = 0;
+        const filteredLootInput = [];
+
+        if (Array.isArray(loot_pool)) {
+            for (const item of loot_pool) {
+                if (!item) continue;
+                const itemIdStr = String(item.itemId).trim();
+                if (itemIdStr === 'gold') {
+                    lootGoldSum += Number(item.quantity || 0);
+                } else if (itemIdStr === 'exp') {
+                    lootExpSum += Number(item.quantity || 0);
+                } else {
+                    filteredLootInput.push(item);
+                }
+            }
+        }
+
         // [Security] loot_pool validation and resolution
         const filteredLootPool: any[] = [];
-        if (Array.isArray(loot_pool) && loot_pool.length > 0) {
+        if (filteredLootInput.length > 0) {
             const allowedItemsSet = await getQuestAllowedItems(supabase, quest, quest_id);
             console.log(`[QuestComplete] Whitelist for quest ${quest_id}:`, Array.from(allowedItemsSet));
 
             const identifiers = new Set<string>();
-            for (const loot of loot_pool) {
+            for (const loot of filteredLootInput) {
                 if (loot && loot.itemId) {
                     identifiers.add(String(loot.itemId).trim());
                 }
@@ -270,8 +290,9 @@ export async function POST(req: Request) {
                     }
                 }
 
-                for (const loot of loot_pool) {
+                for (const loot of filteredLootInput) {
                     if (!loot || !loot.itemId) continue;
+
                     const ident = String(loot.itemId).trim();
                     let isAllowed = false;
                     const mappedItem = itemMap.get(ident);
@@ -366,6 +387,8 @@ export async function POST(req: Request) {
             if (isUgcV2) {
                 earnedExp = UGC_REWARD_LIMITS.fixed_exp || 30;
             }
+            earnedExp += lootExpSum;
+
 
             const growthResult = calculateGrowth(
                 currentLevel, currentExp, earnedExp,
@@ -594,15 +617,21 @@ export async function POST(req: Request) {
 
             // Gold
             if (isUgcV2) {
+                totalGoldReward = (UGC_REWARD_LIMITS.fixed_gold || 30) + lootGoldSum;
+            } else {
+                totalGoldReward = (Number(effectiveRewards?.gold) || 0) + lootGoldSum;
+            }
+
+            if (isUgcV2) {
                 rewardPromises.push(
-                    supabase.rpc('increment_gold', { p_user_id: user_id, p_amount: UGC_REWARD_LIMITS.fixed_gold })
+                    supabase.rpc('increment_gold', { p_user_id: user_id, p_amount: totalGoldReward })
                         .then(({ error }: any) => { if (error) console.error('Failed to increment UGC gold:', error); }),
                     supabase.rpc('increment_ugc_clear_count', { p_scenario_id: quest_id })
                         .then(({ error }: any) => { if (error) console.warn('UGC clear count failed:', error); })
                 );
-            } else if (effectiveRewards?.gold) {
+            } else if (totalGoldReward !== 0) {
                 rewardPromises.push(
-                    supabase.rpc('increment_gold', { p_user_id: user_id, p_amount: effectiveRewards.gold })
+                    supabase.rpc('increment_gold', { p_user_id: user_id, p_amount: totalGoldReward })
                         .then(({ error }: any) => { if (error) console.error('Failed to increment gold via RPC:', error); })
                 );
             }
@@ -705,7 +734,8 @@ export async function POST(req: Request) {
         }
 
         const changes = {
-            gold_gained: isUgcV2 ? UGC_REWARD_LIMITS.fixed_gold : (effectiveRewards?.gold || 0),
+            gold_gained: totalGoldReward,
+
             old_age: user.age,
             new_age: updates.age,
             aged_up: (newAge - (user.age || 18)) > 0,
@@ -832,7 +862,8 @@ export async function POST(req: Request) {
 
         // 所持金マイルストーン
         if (result === 'success') {
-            const finalGold = (user.gold || 0) + (effectiveRewards?.gold || 0);
+            const finalGold = (user.gold || 0) + totalGoldReward;
+
             for (const milestone of GOLD_MILESTONES) {
                 if (finalGold >= milestone && (user.gold || 0) < milestone) {
                     const fired = await checkAndFireTrigger(supabase, user_id, 'gold_milestone', String(milestone));

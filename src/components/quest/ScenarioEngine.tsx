@@ -175,14 +175,16 @@ export default function ScenarioEngine({
             typewriterRef.current = null;
         }
 
-        let fullText = currentNode?.text || (
+        let fullText = endReady ? (
+            endReady.result === 'success' ? '調査を終え、無事に帰還の途についた...' : '冒険はここで潰えてしまった...'
+        ) : (currentNode?.text || (
             currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
             currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
-        );
+        ));
         fullText = replacePlayerName(fullText);
 
-        // 非テキストノードは即時表示（guest_joinはプロセッサが自動遷移するためスキップ）
-        if (!currentNode || ['battle', 'camp', 'shop_access', 'supply', 'guest_join'].includes(currentNode.type || '')) {
+        // 非テキストノードは即時表示（guest_joinはプロセッサが自動遷移するためスキップ、ただしendReady時は通常テキスト扱い）
+        if (!endReady && (!currentNode || ['battle', 'camp', 'shop_access', 'supply', 'guest_join'].includes(currentNode.type || ''))) {
             setDisplayedText(fullText);
             setTypewriterDone(true);
             return;
@@ -209,7 +211,7 @@ export default function ScenarioEngine({
                 typewriterRef.current = null;
             }
         };
-    }, [currentNodeId]);
+    }, [currentNodeId, endReady]);
 
     // --- ノードプロセッサー (useScenarioNodeProcessor フックに委譲) ---
     useScenarioNodeProcessor({
@@ -428,7 +430,10 @@ export default function ScenarioEngine({
     }
 
     const questResult = currentNode.params?.result || currentNode.result;
-    const isSuccess = questResult === 'success' || currentNode.type === 'end_success';
+    const isSuccess = endReady
+        ? endReady.result === 'success'
+        : (questResult === 'success' || currentNode.type === 'end_success');
+
 
     const handleChoice = (choice: any) => {
         // 要件の検証
@@ -532,9 +537,45 @@ export default function ScenarioEngine({
 
                 {/* Choices */}
                 <div className="flex flex-col gap-2 shrink-0">
-                    {/* 自動処理ノードはボタンを出さない（プロセッサが自動遷移） */}
-                    {['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward'].includes(currentNode.type || '') ? (
+                    {endReady ? (
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="text-center font-bold text-xl py-2 animate-pulse tracking-widest">
+                                {isSuccess ? (
+                                    <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
+                                ) : (
+                                    <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    if (isResultReady && !isProcessingResult) {
+                                        setIsProcessingResult(true);
+                                        onComplete(endReady.result, history, endReady.nodeRewards);
+                                    }
+                                }}
+                                disabled={!isResultReady || isProcessingResult}
+                                className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
+                                    isSuccess
+                                        ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
+                                        : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
+                                } ${(!isResultReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
+                            >
+                                {isProcessingResult ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        画面を切り替え中...
+                                    </span>
+                                ) : !isResultReady ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        判定中...
+                                    </span>
+                                ) : '結果を確認する'}
+                            </button>
+                        </div>
+                    ) : ['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward'].includes(currentNode.type || '') ? (
                         <div className="text-center text-slate-500 text-sm py-3 animate-pulse">処理中...</div>
+
                     ) : currentNode.type === 'battle' ? (
                         <div className="flex flex-col gap-3">
                             <button
@@ -602,37 +643,20 @@ export default function ScenarioEngine({
                                         <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
                                     )}
                                 </div>
-                                {/* Phase 2: ユーザーボタン操作による遷移 */}
                                 <button
-                                    onClick={() => {
-                                        if (endReady && isResultReady && !isProcessingResult) {
-                                            setIsProcessingResult(true);
-                                            onComplete(endReady.result, history, endReady.nodeRewards);
-                                        }
-                                    }}
-                                    disabled={!endReady || !isResultReady || isProcessingResult}
-                                    className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
-                                        isSuccess
-                                            ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
-                                            : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
-                                    } ${(!endReady || !isResultReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
+                                    disabled={true}
+                                    className="w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all opacity-50 cursor-wait bg-amber-900/40 border border-amber-600 text-amber-200"
                                 >
-                                    {isProcessingResult ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            画面を切り替え中...
-                                        </span>
-                                    ) : !isResultReady ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            判定中...
-                                        </span>
-                                    ) : '結果を確認する'}
+                                    <span className="flex items-center justify-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        判定中...
+                                    </span>
                                 </button>
                             </div>
                         ) : (
                             <div className="text-center text-slate-500 italic pb-2 text-sm tracking-widest">...</div>
                         )
+
                     )}
                 </div>
             </div>
