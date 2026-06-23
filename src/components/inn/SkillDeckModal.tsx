@@ -84,7 +84,16 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                                 effect_data
                             };
                         });
+                        
+                        // Sort mappedCards based on the order of uniqueIds (which matches the party order)
+                        mappedCards.sort((a: any, b: any) => {
+                            const indexA = uniqueIds.indexOf(a.id);
+                            const indexB = uniqueIds.indexOf(b.id);
+                            return indexA - indexB;
+                        });
+
                         setPartyCards(mappedCards);
+
                     }
                 }
             }
