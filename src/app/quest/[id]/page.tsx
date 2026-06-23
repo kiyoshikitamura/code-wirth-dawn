@@ -416,8 +416,9 @@ export default function QuestPage() {
 
                     // startQuest 用のパラメータをビルド
                     const questType = (loadedScenario.quest_type === 'special' ? 'special' : 'normal') as 'normal' | 'special';
-                    const playerHp = currentProfile?.hp || currentProfile?.max_hp || 100;
-                    const playerMaxHp = currentProfile?.max_hp || 100;
+                    const equipHpBonus = useGameStore.getState().equipBonus?.hp || 0;
+                    const playerMaxHp = (currentProfile?.max_hp || 100) + equipHpBonus;
+                    const playerHp = Math.min(playerMaxHp, currentProfile?.hp || playerMaxHp);
                     const currentLocationId = currentProfile?.current_location_id || undefined;
                     
                     const store = useGameStore.getState();

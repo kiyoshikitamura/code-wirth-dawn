@@ -1198,6 +1198,31 @@ export const createBattleSlice = (
                 logMsg = `${card.name}を使用！ ミス！ 攻撃は外れた！`;
                 nextHand = nextHand.filter(c => c.id !== card.id);
                 nextDiscardPile = [...nextDiscardPile, card];
+
+                // --- デトネーションのミス時手札破棄処理の追加 ---
+                if (effectInfo.effectType === 'detonation') {
+                    const otherHandCards = nextHand.filter(c => c.id !== card.id);
+                    let exhaustedCount = 0;
+                    const exhaustedList: typeof nextHand = [];
+                    while (exhaustedCount < 2 && otherHandCards.length > 0) {
+                        const randIdx = Math.floor(Math.random() * otherHandCards.length);
+                        const removed = otherHandCards.splice(randIdx, 1)[0];
+                        nextHand = nextHand.filter(c => c.id !== removed.id);
+                        exhaustedList.push(removed);
+                        exhaustedCount++;
+                    }
+                    if (exhaustedList.length > 0) {
+                        const finalExhaustedList = exhaustedList.map(c => ({ id: c.id, name: c.name, type: c.type }));
+                        set(state => ({
+                            battleState: {
+                                ...state.battleState,
+                                exhaustPile: [...(state.battleState.exhaustPile || []), ...finalExhaustedList]
+                            }
+                        }));
+                        logMsg += ` さらに手札から「${exhaustedList.map(c => c.name).join('」「')}」が除外された！`;
+                    }
+                }
+
                 set(state => ({
                     hand: nextHand,
                     discardPile: nextDiscardPile,
@@ -1918,8 +1943,20 @@ export const createBattleSlice = (
                                 const curDur = member.durability ?? 0;
                                 const healed = Math.min(healAmount, maxDur - curDur);
                                 const newDur = curDur + healed;
-                                party[idx] = { ...member, durability: newDur };
+
+                                // Apply status effect if present (気の癒やし等のリジェネ付与用)
+                                let newEffects = [...(member.status_effects || [])];
+                                if (effectInfo.effectId) {
+                                    const dur = effectInfo.effectDuration || 3;
+                                    const finalDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
+                                    newEffects = applyEffect(newEffects as StatusEffect[], effectInfo.effectId, finalDuration);
+                                }
+
+                                party[idx] = { ...member, durability: newDur, status_effects: newEffects };
                                 logMsg = `♥ ${card.name}で ${member.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`;
+                                if (effectInfo.effectId) {
+                                    logMsg += `、${getEffectName(effectInfo.effectId)}を付与！`;
+                                }
                                 newMessages.push(`__party_sync:${member.id}:${newDur}`);
                                 set(state => ({
                                     battleState: {
@@ -1936,9 +1973,21 @@ export const createBattleSlice = (
                                 const maxHp = effectivePlayerMaxHp;
                                 const prevHp2 = userProfile.hp || 0;
                                 const newHp = Math.min(maxHp, prevHp2 + healAmount);
+
+                                // Apply status effect to player
+                                if (effectInfo.effectId) {
+                                    const dur = effectInfo.effectDuration || 3;
+                                    const finalDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
+                                    currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, finalDuration);
+                                }
+
                                 set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                                 healSyncHp = newHp;
-                                healMsgs.push(`♥ ${card.name}で あなたのHP +${newHp - prevHp2} 回復！ (${newHp}/${maxHp})`);
+                                let msg = `♥ ${card.name}で あなたのHP +${newHp - prevHp2} 回復！ (${newHp}/${maxHp})`;
+                                if (effectInfo.effectId) {
+                                    msg += `、${getEffectName(effectInfo.effectId)}を付与！`;
+                                }
+                                healMsgs.push(msg);
                                 const { selectedProfileId } = get();
                                 fetch('/api/profile/update-status', {
                                     method: 'POST',
@@ -1951,11 +2000,30 @@ export const createBattleSlice = (
                                 if (!m.is_active || (m.durability ?? 0) <= 0) continue;
                                 const maxDur = (m as any).max_hp || m.max_durability || m.durability || 100;
                                 const curDur = m.durability ?? 0;
-                                if (curDur >= maxDur) continue;
+
+                                // Apply status effect to party member
+                                let newEffects = [...(m.status_effects || [])];
+                                if (effectInfo.effectId) {
+                                    const dur = effectInfo.effectDuration || 3;
+                                    const finalDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
+                                    newEffects = applyEffect(newEffects as StatusEffect[], effectInfo.effectId, finalDuration);
+                                }
+
+                                if (curDur >= maxDur) {
+                                    if (effectInfo.effectId) {
+                                        party[pi] = { ...m, status_effects: newEffects };
+                                        healMsgs.push(`♥ ${m.name}に ${getEffectName(effectInfo.effectId)} を付与！`);
+                                    }
+                                    continue;
+                                }
                                 const healed = Math.min(healAmount, maxDur - curDur);
                                 const newDur = curDur + healed;
-                                party[pi] = { ...m, durability: newDur };
-                                healMsgs.push(`♥ ${m.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`);
+                                party[pi] = { ...m, durability: newDur, status_effects: newEffects };
+                                let msg = `♥ ${m.name}のHP +${healed} 回復！ (${newDur}/${maxDur})`;
+                                if (effectInfo.effectId) {
+                                    msg += `、${getEffectName(effectInfo.effectId)}を付与！`;
+                                }
+                                healMsgs.push(msg);
                                 healMsgs.push(`__party_sync:${m.id}:${newDur}`);
                             }
                             if (party.length > 0) {
@@ -1970,15 +2038,34 @@ export const createBattleSlice = (
                             if (userProfile && healAmount > 0) {
                                 const maxHp = effectivePlayerMaxHp;
                                 const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
+
+                                // Apply status effect to self
+                                if (effectInfo.effectId) {
+                                    const dur = effectInfo.effectDuration || 3;
+                                    const finalDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
+                                    currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, finalDuration);
+                                }
+
                                 set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                                 logMsg = `♥ ${card.name}で HP +${healAmount} 回復！ (${newHp}/${maxHp})`;
+                                if (effectInfo.effectId) {
+                                    logMsg += `、${getEffectName(effectInfo.effectId)}を付与！`;
+                                }
                                 healSyncHp = newHp;
                                 const { selectedProfileId } = get();
                                 fetch('/api/profile/update-status', {
                                     method: 'POST',
                                     body: JSON.stringify({ hp: newHp, profileId: selectedProfileId })
                                 }).catch(console.error);
-                            } else { logMsg = `${card.name}を使用！(体力は満たんでいる)`; }
+                            } else {
+                                logMsg = `${card.name}を使用！(体力は満たんでいる)`;
+                                if (effectInfo.effectId) {
+                                    const dur = effectInfo.effectDuration || 3;
+                                    const finalDuration = isTurnEndTickCompensated(effectInfo.effectId) ? dur + 1 : dur;
+                                    currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], effectInfo.effectId, finalDuration);
+                                    logMsg += `、${getEffectName(effectInfo.effectId)}を付与！`;
+                                }
+                            }
                         }
                         break;
                     }
@@ -2566,11 +2653,20 @@ export const createBattleSlice = (
                     }
                 }
 
-                if (action.type === 'heal' && action.healAmount) {
+                // Action heal processing
+                let healAmount = action.healAmount || 0;
+                if (!healAmount && action.card) {
+                    const effInfo = getCardEffectInfo(action.card);
+                    if (effInfo.effectType === 'heal') {
+                        healAmount = (action.card as any).effect_val ?? action.card.power ?? 20;
+                    }
+                }
+
+                if ((action.type === 'heal' || healAmount > 0) && healAmount > 0) {
                     if (action.targetName === 'あなた') {
                         const currentHp = get().userProfile?.hp || 0;
                         const maxHp = getEffectiveMaxHp(get().userProfile, get());
-                        const newHp = Math.min(maxHp, currentHp + action.healAmount);
+                        const newHp = Math.min(maxHp, currentHp + healAmount);
                         set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                         fetch('/api/profile/update-status', { method: 'POST', body: JSON.stringify({ hp: newHp }) }).catch(console.error);
                         newMessages.push(`__hp_sync:${newHp}`);
@@ -2580,14 +2676,14 @@ export const createBattleSlice = (
                         );
                         if (targetIdx >= 0) {
                             const healTarget = updatedParty[targetIdx];
-                            const newDur = Math.min(healTarget.max_durability || healTarget.durability || 100, (healTarget.durability || 0) + action.healAmount);
+                            const newDur = Math.min(healTarget.max_durability || healTarget.durability || 100, (healTarget.durability || 0) + healAmount);
                             updatedParty[targetIdx] = { ...healTarget, durability: newDur };
                             if (targetIdx === i) {
                                 member = { ...member, durability: newDur };
                             }
                             newMessages.push(`__party_sync:${healTarget.id}:${newDur}`);
                         } else {
-                            const newDur = Math.min(member.max_durability || member.durability || 100, (member.durability || 0) + action.healAmount);
+                            const newDur = Math.min(member.max_durability || member.durability || 100, (member.durability || 0) + healAmount);
                             member = { ...member, durability: newDur };
                             updatedParty[i] = member;
                             newMessages.push(`__party_sync:${member.id}:${newDur}`);
@@ -2618,9 +2714,17 @@ export const createBattleSlice = (
                             // プレイヤー単体バフ: プレイヤーのみに適用 (Bug AD)
                             currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration);
                         } else {
-                            // NPC自己バフ: NPC自身のみに適用 (Bug AD)
-                            member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, finalDuration) };
-                            updatedParty[i] = member;
+                            // NPCバフ: 対象メンバーに適用。対象名が別NPCならそのNPCに適用、そうでなければ自身に適用
+                            const targetIdx = updatedParty.findIndex(m => m.name === action.targetName);
+                            if (targetIdx >= 0 && targetIdx !== i) {
+                                updatedParty[targetIdx] = {
+                                    ...updatedParty[targetIdx],
+                                    status_effects: applyEffect((updatedParty[targetIdx].status_effects || []) as StatusEffect[], effectId, finalDuration)
+                                };
+                            } else {
+                                member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, finalDuration) };
+                                updatedParty[i] = member;
+                            }
                         }
                     } else {
                         // 強打(カードID: 1)の場合は共通処理でのスタン付与をスキップ（個別処理で10%判定されるため）
