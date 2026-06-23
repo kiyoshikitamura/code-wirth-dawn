@@ -420,6 +420,22 @@ export async function processPartyWearCycle(
                         }
                         mementoName = item.name;
                         console.log(`[Memento] Created memento item ${item.name} from perished shadow ${member.name}.`);
+                    } else {
+                        // Fallback to "物資ボックス" (ID: 701, slug: 'item_supply_box') for basic/unlinked skills
+                        const fallbackItemId = 701;
+                        const { data: fallbackItem } = await supabase.from('items').select('id, name').eq('id', fallbackItemId).maybeSingle();
+                        if (fallbackItem) {
+                            const { data: existingInv } = await supabase
+                                .from('inventory').select('id, quantity')
+                                .eq('user_id', user_id).eq('item_id', fallbackItem.id).maybeSingle();
+                            if (existingInv) {
+                                await supabase.from('inventory').update({ quantity: existingInv.quantity + 1 }).eq('id', existingInv.id);
+                            } else {
+                                await supabase.from('inventory').insert({ user_id, item_id: fallbackItem.id, quantity: 1 });
+                            }
+                            mementoName = fallbackItem.name;
+                            console.log(`[Memento] Created fallback memento item ${fallbackItem.name} from perished shadow ${member.name}.`);
+                        }
                     }
                 }
             }

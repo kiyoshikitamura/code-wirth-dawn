@@ -74,7 +74,7 @@ CREATE TABLE party_members (
 > 
 > - **VIT摩耗計算** (`POST /api/quest/complete`):
 >   - クエスト成否やバトルでの脱落有無を問わず、クエスト1回ごとに、各パーティメンバー個別に **`1〜5` のランダム値** を減算します。
->   - 寿命（`durability` カラム）が `0` 以下になったNPCは `party_members` から自動的に削除され、遺品として形見アイテム（メメント）をインベントリに残して離脱します。
+>   - 寿命（`durability` カラム）が `0` 以下になったNPCは `party_members` から自動的に削除され、遺品として形見アイテム（メメント）をインベントリに残して離脱します。対応するスキルアイテムが items テーブルに存在しない場合（基本スキルの場合など）、フォールバックとして「物資ボックス (ID: 701, slug: 'item_supply_box')」がインベントリに付与されます。
 >   - 全`owner_id`メンバーを取得して処理し、`delete()` 失敗時は `update({is_active: false, durability: 0})` でフォールバックします。
 
 ### 4.2 AI Grade別の挙動
