@@ -563,9 +563,9 @@ export function useScenarioNodeProcessor({
                 }, 1000);
             }
             else if (currentNode.type === 'reward') {
-                const rawItems = currentNode.params?.items;
-                const rewardGold = currentNode.params?.gold;
-                const singleItemId = currentNode.params?.item_id || currentNode.item_id;
+                const rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
+                const rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
+                const singleItemId = currentNode.params?.item_id || currentNode.item_id || currentNode.params?.rewards?.item_id || currentNode.rewards?.item_id;
                 console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold);
 
                 const activeNodeId = currentNodeId;
