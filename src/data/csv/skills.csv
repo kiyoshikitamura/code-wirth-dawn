@@ -116,3 +116,5 @@ id,slug,name,card_id,base_price,deck_cost,nation_tags,min_prosperity,is_black_ma
 3138,book_tactical_plan,教本:タクティカルプラン,138,5000,2,any,1,false,/images/items/book_tactical_plan_1781808406275.png,戦場のすべてを見渡し、次の一手を確実な勝利へとつなげる戦術立案の書。
 3139,book_time_reverse,巻物:タイムリバース,139,12000,4,any,1,false,/images/items/book_time_reverse_1781808416548.png,周囲の時間を局所的に巻き戻し、直前の強力な行動を少ないコストで再構築する巻物。
 3140,book_mana_filter,教本:マナフィルター,140,5000,2,any,1,false,/images/items/book_mana_filter_1781808425325.png,余分な大気中の魔力をろ過して純粋なAPへと変換し、大技に繋げる魔力ろ過の書。
+3141,skill_demon_fire_abyss,魔界の黒炎,141,5000,3,loc_all,1,false,/images/items/scroll_holy_sword.png,魔術書: 魔界の火術を学ぶ。
+3142,skill_demon_claw_shadow,シャドークロウ,142,4000,2,loc_all,1,false,/images/items/book_dagger.png,教本: 影の爪の刺突技術。

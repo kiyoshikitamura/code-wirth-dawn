@@ -43,7 +43,7 @@ interface QuestProgressState {
     elapsedDays: number;
 
     // v4.0 Expansion: Quest-local flags & escort
-    questFlags: Record<string, number>;  // key -> value (curse count, correct answers, etc.)
+    questFlags: Record<string, number | string>;  // key -> value (curse count, correct answers, etc.)
     isEscortMission: boolean;            // true when guest has is_escort_target flag
     currentNodeId: string | null;        // Added for location resume
 
@@ -88,8 +88,8 @@ interface QuestProgressState {
 
     // v4.0 Actions
     removeGuest: () => void;
-    setFlag: (key: string, value: number, isSet?: boolean) => void;
-    getFlag: (key: string) => number;
+    setFlag: (key: string, value: number | string, isSet?: boolean) => void;
+    getFlag: (key: string) => any;
     applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => void;
     checkEscortFailure: () => boolean;
     setEscortMission: (value: boolean) => void;
@@ -110,7 +110,7 @@ const initialState = {
     currentLocationId: null as string | null,
     elapsedDays: 0,
     // v4.0
-    questFlags: {} as Record<string, number>,
+    questFlags: {} as Record<string, number | string>,
     isEscortMission: false,
     currentNodeId: null as string | null,
     reputationChanges: {} as Record<string, number>,
@@ -245,17 +245,30 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         set({ guest: null, isEscortMission: false });
     },
 
-    setFlag: (key: string, value: number, isSet?: boolean) => {
-        set((state) => ({
-            questFlags: {
-                ...state.questFlags,
-                [key]: isSet ? value : (state.questFlags[key] || 0) + value,
-            },
-        }));
+    setFlag: (key: string, value: number | string, isSet?: boolean) => {
+        set((state) => {
+            const currentVal = state.questFlags[key];
+            let newVal: number | string;
+            if (isSet) {
+                newVal = value;
+            } else {
+                if (typeof value === 'string' || typeof currentVal === 'string') {
+                    newVal = value;
+                } else {
+                    newVal = (currentVal || 0) + value;
+                }
+            }
+            return {
+                questFlags: {
+                    ...state.questFlags,
+                    [key]: newVal,
+                },
+            };
+        });
     },
 
     getFlag: (key: string) => {
-        return get().questFlags[key] || 0;
+        return get().questFlags[key] ?? 0;
     },
 
     applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => {

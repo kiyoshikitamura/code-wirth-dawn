@@ -105,4 +105,21 @@
   - スキルデッキ管理（`SkillDeckModal`）において、スキルの装備・装備解除（外す）アクションを実行する際は、非同期リクエストの実行中（`togglingId !== null`）すべてのアクションボタンを `disabled` にすること。
   - 重複リクエストや連打による多重送信を防ぐため、実行処理の先頭で `togglingId` の有無による早期リターン等の排他制御（連打防止）を行うこと。
 
+## 11. クエスト中チェックポイント、他プレイヤー遭遇、および前景画像（fg_image）の仕様規約 (v36)
+- **チェックポイント確定セーブの挙動と連動**:
+  - クエスト中の野営地（`camp` ノード）の処理開始時に、API `/api/quest/checkpoint` を呼び出し、クライアント側の `lootPool`, `consumedItems`, `reputationChanges` をデータベースに永続化させること。
+  - セーブ成功時は速やかにクライアントの `lootPool` と `consumedItems` をクリアし、`fetchUserProfile()` と `fetchInventory()` を並行して呼び出してローカル状態を最新化すること。これにより、野営モーダルを開いた直後から獲得したアイテムを装備可能にする。
+- **同一拠点プレイヤーとの遭遇イベント**:
+  - `POST /api/quest/meet-player` エンドポイントでは、プレイヤーの現在地と同じ拠点にいる自分以外のユーザー名をランダムに1人取得する。
+  - 他のユーザーが存在しない、あるいはエラーが発生した場合は、必ずNPCマスタデータやダミーの冒険者名（「冒険者ジーク」など）をフォールバックとして返却し、空の文字列やエラーを返さないこと。
+  - 取得したプレイヤー名はクライアント側の `questState` のフラグ（`met_player_name`）に保持し、テキスト描画時に文字列内の `{met_player_name}` プレースホルダーをすべて動的に置換する処理を徹底すること。
+- **前景画像レイヤーの描画 (fg_image)**:
+  - ノードデータ（`fg_image` または `params.fg_image`）が指定されている場合、`ScenarioEngine.tsx` は背景画像レイヤーとダイアログボックスの間のレイヤーに画像を重ねて描画すること。
+  - 前景画像はダイアログボックスに表示される `speaker_image_url`（顔アイコン）とは異なり、画面中央付近に立ち絵や宝箱として表示されるため、最大高さ（例: `max-h-[55%]`）や位置調整マージンを設定し、不快なアセット切り替えを防ぐためのフェードインアニメーションを適用すること。
+
+- **チェックポイント・他プレイヤー遭遇仕様の補足 (v36.1)**:
+  - **Zustandストア状態更新の整合性**: `reputationChanges` などの一時状態をクリアする際は、ストアの状態を直接ミューテートする（例: `useQuestState.getState().reputationChanges = ...`）のではなく、Zustandの反応性（Reactivity）を保証するため、必ず `useQuestState.setState({ reputationChanges: {} })` のように `setState` 経由で更新すること。
+  - **questFlags の文字列値保存と上書き制御**: `questFlags` は `Record<string, number | string>` 型に拡張されており、プレイヤー名などの文字列も保持できる。文字列をセットする際は、加算演算子によるバグ（例: `0` に `"プレイヤー名"` が加算されて `"0プレイヤー名"` と文字列結合される問題）を防ぐため、必ず `setFlag('met_player_name', player_name, true)` と第3引数 `isSet: true` を明示的に指定して上書き代入すること。また、テキスト表示側の置換処理 `{met_player_name}` では、型エラーを防ぐため必ず `String(questState.getFlag('met_player_name'))` のように文字列キャストを適用すること。
+  - **サーバーサイド API 引数の整合性**: チェックポイントAPI `/api/quest/checkpoint` にて `reputation_changes` を適用する際は、`grantReputationChanges` に `supabase, user_id, reputation_changes, user.current_location_id` の 4 つの引数を正しく引き渡して、アライメント更新および location 名声更新を一括適用すること。
+
 

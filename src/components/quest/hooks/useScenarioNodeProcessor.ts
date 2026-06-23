@@ -331,6 +331,82 @@ export function useScenarioNodeProcessor({
                 questState.healParty(0.5);
             }
 
+            else if (currentNode.type === 'camp') {
+                const activeNodeId = currentNodeId;
+                const isCheckpointDone = questState.getFlag(`checkpoint_done_${activeNodeId}`);
+                
+                if (!isCheckpointDone) {
+                    try {
+                        const authHeaders = await getAuthHeaders();
+                        const res = await fetch('/api/quest/checkpoint', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...authHeaders
+                            },
+                            body: JSON.stringify({
+                                quest_id: questState.questId,
+                                loot_pool: questState.lootPool,
+                                consumed_items: questState.consumedItems,
+                                reputation_changes: questState.reputationChanges || {}
+                            })
+                        });
+
+                        if (res.ok && processedNodeRef.current === activeNodeId) {
+                            // Clear client-side temporary stores
+                            useQuestState.getState().updateAfterBattle({
+                                playerHp: useGameStore.getState().userProfile?.hp || 0,
+                                partyHp: {},
+                                deadNpcIds: [],
+                                droppedItems: [], // Clears lootPool
+                                usedConsumables: [] // Clears consumedItems
+                            });
+                            useQuestState.setState({ reputationChanges: {} });
+
+                            questState.setFlag(`checkpoint_done_${activeNodeId}`, 1);
+                            showToast('💾 チェックポイント: 戦利品を保存しました。', 'success');
+
+                            // Refresh local profile/inventory so they can be equipped immediately
+                            await Promise.all([
+                                useGameStore.getState().fetchUserProfile(),
+                                useGameStore.getState().fetchInventory()
+                            ]);
+                        }
+                    } catch (e) {
+                        console.error('[Checkpoint] Checkpoint API error:', e);
+                    }
+                }
+            }
+
+            else if (currentNode.type === 'meet_player' || currentNode.action === 'meet_player') {
+                const activeNodeId = currentNodeId;
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+
+                try {
+                    const authHeaders = await getAuthHeaders();
+                    const res = await fetch('/api/quest/meet-player', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...authHeaders
+                        }
+                    });
+
+                    if (res.ok && processedNodeRef.current === activeNodeId) {
+                        const data = await res.json();
+                        if (data.player_name) {
+                            questState.setFlag('met_player_name', data.player_name, true);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[meet_player] Failed to fetch nearby player:', e);
+                }
+
+                if (processedNodeRef.current === activeNodeId && nextId) {
+                    setCurrentNodeId(nextId);
+                }
+            }
+
             // ─── アクションノード群 ──────────────────────────────────────
 
             if (currentNode.type === 'battle') {

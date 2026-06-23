@@ -112,6 +112,9 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_ruin_crypt': '/images/quests/bg_crypt.png',  // 遺跡地下墓地 → 地下墓地にフォールバック
     'bg_marcund': '/images/quests/bg_memory_oasis.png',  // マルカンドオアシスへのエイリアス
     'bg_marcund_desert': '/images/quests/bg_desert.png',  // マルカンド砂漠 → 砂漠共通にフォールバック
+    // 前景画像 (スプライト)
+    'fg_demon_soldier': '/images/quests/fg_demon_soldier.png',
+    'fg_chest_locked': '/images/quests/fg_chest_locked.png',
 };
 
 export function getAssetUrl(key: string): string {

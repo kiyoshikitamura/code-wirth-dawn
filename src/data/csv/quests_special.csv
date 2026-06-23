@@ -45,3 +45,4 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 6109,qst_legend_golem,オメガ・ゴーレム,25,6,8,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 古代魔導帝国の遺跡から起動した巨大ゴーレムが都市に向かっている。迎撃せよ。
 6110,qst_legend_kraken,大海の悪夢 クラーケン,28,6,12,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 交易海域に巨大な海魔クラーケンが出現し、船舶を沈めている。海上決戦に挑め。
 6111,qst_legend_minotaur,迷宮の覇者 牛頭王,26,6,9,"{""completed_quest"":""main_ep15""}",false,,,冒険者ギルド,[封印指定] 夜刀神国の地下に古代の迷宮が出現し、牛頭の化け物が支配している。
+6112,qst_demon_intro,次元の狭間：予兆,1,1,1,"{}",false,,,冒険者ギルド,[異界調査] 世界の中心に突如現れた謎の巨大な裂け目。戻らない先遣隊の噂を追え。

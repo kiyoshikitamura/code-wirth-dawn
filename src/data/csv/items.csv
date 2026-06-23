@@ -1,4 +1,4 @@
-﻿id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market,effect_data,linked_card_id
+id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market,effect_data,linked_card_id
 15,item_potion_s,傷薬,consumable,,100,,1,false,"{""heal"":50,""use_timing"":""battle"",""description"":""安価な薬草をすり潰して作った気休め程度の軟膏。傷口に擦り込むと激痛が走る。""}",
 16,item_ration,携帯保存食,consumable,,50,,1,false,"{""heal"":30,""use_timing"":""field"",""description"":""カチカチに硬化した干し肉と黒パンのセット。歯が欠けそうになるが、腹持ちは良い。食べるとHP30回復。""}",
 17,item_torch,松明,consumable,,80,,2,false,"{""use_timing"":""field"",""effect"":""encounter_mod"",""encounter_rate_mod"":-0.5,""description"":""暗いダンジョンを照らす必需品。道を照らして安全に進むことで、次の移動時のエンカウント率が50%減少する。""}",
@@ -167,3 +167,6 @@
 3020,item_secret_document,封をされた密書,material,,0,,1,false,"{""description"":""決して中を見てはならないと念を押された黒い巻物。忍び衆への納品用。""}",
 3030,item_spirit_herb,霊草,material,,0,loc_haryu,1,false,"{""description"":""華龍の霊山にのみ自生する稀少な薬草。白い花が目印で、仙丹の原料として宦官が高値で買い取る。守護獣が棲む危険な岩場に群生する。""}",
 3045,item_foxfire_charm,狐火の護符,equipment,accessory,0,loc_haryu,1,false,"{""atk_bonus"":5,""def_bonus"":3,""hp_bonus"":5,""description"":""妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。""}",
+4001,item_demon_chest_unidentified,未鑑定の魔導宝箱,trade_good,,100,,1,false,"{""description"":""次元の狭間から持ち帰られた、強固な魔族の封印が施された黒い宝箱。熟練の鑑定士でなければ開けることはできない。""}",
+4002,item_demon_blade_abyss,魔界の漆黒剣,equipment,weapon,0,,1,false,"{""atk_bonus"":25,""description"":""深淵の魔鉄を鍛え上げて作られた禍々しい両刃剣。手にした者の精神を蝕み、攻撃力を25上昇させる。""}",
+4003,item_demon_armor_shadow,影魔の戦衣,equipment,armor,0,,1,false,"{""def_bonus"":18,""description"":""影魔の表皮を加工して作られた軽量の防具。着用者の輪郭をぼやけさせ、防御力を18上昇させる。""}",

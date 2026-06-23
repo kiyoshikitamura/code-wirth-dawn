@@ -82,6 +82,13 @@ export default function ScenarioEngine({
     const historyRef = useRef(history);
     useEffect(() => { historyRef.current = history; }, [history]);
 
+    // プレイヤー名プレースホルダー置換ヘルパー
+    const replacePlayerName = (text: string) => {
+        if (!text) return text;
+        const metPlayerName = questState.getFlag('met_player_name') || '見知らぬ冒険者';
+        return text.replace(/{met_player_name}/g, String(metPlayerName));
+    };
+
     // Phase 3: タイプライター演出
     const [displayedText, setDisplayedText] = useState('');
     const [typewriterDone, setTypewriterDone] = useState(false);
@@ -92,10 +99,11 @@ export default function ScenarioEngine({
             typewriterRef.current = null;
         }
         if (complete) {
-            const fullText = currentNode?.text || (
+            let fullText = currentNode?.text || (
                 currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
                 currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
             );
+            fullText = replacePlayerName(fullText);
             setDisplayedText(fullText);
         }
         setTypewriterDone(complete);
@@ -167,10 +175,11 @@ export default function ScenarioEngine({
             typewriterRef.current = null;
         }
 
-        const fullText = currentNode?.text || (
+        let fullText = currentNode?.text || (
             currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
             currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
         );
+        fullText = replacePlayerName(fullText);
 
         // 非テキストノードは即時表示（guest_joinはプロセッサが自動遷移するためスキップ）
         if (!currentNode || ['battle', 'camp', 'shop_access', 'supply', 'guest_join'].includes(currentNode.type || '')) {
@@ -463,7 +472,16 @@ export default function ScenarioEngine({
             {/* 下部グラデーション（テキスト領域の可読性確保） */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent pointer-events-none" />
 
-            {/* 話者キャラ画像 — テキストログ内にアイコンがあるため背景表示は削除 */}
+            {/* 前景画像レイヤー（キャラクター立ち絵、宝箱など） */}
+            {(currentNode?.fg_image || currentNode?.params?.fg_image) && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 mb-28 animate-in fade-in duration-500">
+                    <img 
+                        src={getAssetUrl(currentNode.fg_image || currentNode.params?.fg_image)} 
+                        alt="Foreground Object" 
+                        className="max-h-[55%] w-auto object-contain" 
+                    />
+                </div>
+            )}
 
             <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
                 {/* Main Text Dialog */}
@@ -480,7 +498,7 @@ export default function ScenarioEngine({
                         {/* 話者名タグ: speaker指定あり→金色表示 / なし→非表示 */}
                         {(currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker) ? (
                             <div className="text-amber-400 text-[10px] font-bold tracking-widest mb-1">
-                                ◆ {currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker}
+                                ◆ {replacePlayerName(currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker)}
                             </div>
                         ) : null}
                         {/* 固定高さテキスト領域 + スクロール */}

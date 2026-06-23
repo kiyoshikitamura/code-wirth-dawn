@@ -1,0 +1,7 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"ギルドの掲示板に黒い紋章の張り紙がある。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_calm"",""type"":""text""}",intro_01
+NODE,intro_01,"『次元の狭間について：世界の中心に不気味な裂け目が出現した。調査を依頼する』","{""bg"":""bg_guild"",""type"":""text""}",meet_trigger
+NODE,meet_trigger,"","{""bg"":""bg_guild"",""type"":""meet_player""}",talk_with_adventurer
+NODE,talk_with_adventurer,"「よう、お前もあの次元の狭間に興味があるのか？」","{""bg"":""bg_guild"",""speaker_name"":""{met_player_name}"",""type"":""text""}",talk_02
+NODE,talk_02,"「気をつけてな。あそこから帰ってきた者は誰もいないそうだ…」","{""bg"":""bg_guild"",""speaker_name"":""{met_player_name}"",""type"":""text""}",end_intro
+NODE,end_intro,"不吉な警告を胸に、あなたは狭間への挑戦を決意した。","{""bg"":""bg_guild"",""rewards"":{""exp"":50,""gold"":100},""type"":""end"",""result"":""success""}",
