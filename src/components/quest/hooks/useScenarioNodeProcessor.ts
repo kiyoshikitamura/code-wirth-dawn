@@ -354,7 +354,8 @@ export function useScenarioNodeProcessor({
 
                         if (res.ok && processedNodeRef.current === activeNodeId) {
                             // Clear client-side temporary stores and set flag in a single batch update to prevent React render glitches
-                            useQuestState.setState((state) => ({
+                            const latestState = useQuestState.getState();
+                            useQuestState.setState({
                                 playerHp: useGameStore.getState().userProfile?.hp || 0,
                                 partyHp: {},
                                 deadNpcs: [],
@@ -362,10 +363,10 @@ export function useScenarioNodeProcessor({
                                 consumedItems: [], // Completely clear consumedItems
                                 reputationChanges: {},
                                 questFlags: {
-                                    ...(state.questFlags || {}),
+                                    ...(latestState.questFlags || {}),
                                     [`checkpoint_done_${activeNodeId}`]: 1
                                 }
-                            }));
+                            });
 
                             showToast('💾 チェックポイント: 戦利品を保存しました。', 'success');
 
@@ -685,23 +686,24 @@ export function useScenarioNodeProcessor({
 
         const syncState = async () => {
             try {
+                const latestQuestState = useQuestState.getState();
                 const statePayload = {
-                    isInQuest: questState.isInQuest,
-                    questId: questState.questId,
-                    questType: questState.questType,
-                    playerHp: questState.playerHp,
-                    playerMaxHp: questState.playerMaxHp,
-                    partyHp: questState.partyHp || {},
-                    deadNpcs: questState.deadNpcs || [],
-                    lootPool: questState.lootPool || [],
-                    consumedItems: questState.consumedItems || [],
-                    guest: questState.guest,
-                    currentLocationId: questState.currentLocationId,
-                    elapsedDays: questState.elapsedDays,
-                    questFlags: questState.questFlags,
-                    isEscortMission: questState.isEscortMission,
+                    isInQuest: latestQuestState.isInQuest,
+                    questId: latestQuestState.questId,
+                    questType: latestQuestState.questType,
+                    playerHp: latestQuestState.playerHp,
+                    playerMaxHp: latestQuestState.playerMaxHp,
+                    partyHp: latestQuestState.partyHp || {},
+                    deadNpcs: latestQuestState.deadNpcs || [],
+                    lootPool: latestQuestState.lootPool || [],
+                    consumedItems: latestQuestState.consumedItems || [],
+                    guest: latestQuestState.guest,
+                    currentLocationId: latestQuestState.currentLocationId,
+                    elapsedDays: latestQuestState.elapsedDays,
+                    questFlags: latestQuestState.questFlags,
+                    isEscortMission: latestQuestState.isEscortMission,
                     currentNodeId: currentNodeId,
-                    reputationChanges: questState.reputationChanges || {},
+                    reputationChanges: latestQuestState.reputationChanges || {},
                 };
 
                 const authHeaders = await getAuthHeaders();
@@ -709,7 +711,7 @@ export function useScenarioNodeProcessor({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({
-                        quest_id: questState.questId,
+                        quest_id: latestQuestState.questId,
                         quest_state: statePayload
                     })
                 });
