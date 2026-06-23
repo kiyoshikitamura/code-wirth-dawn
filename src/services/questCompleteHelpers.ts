@@ -230,7 +230,7 @@ export async function grantRewardItems(
                 const { data: tradeGoods } = await supabase
                     .from('items')
                     .select('id, name')
-                    .eq('type', 'trade_good');
+                    .in('type', ['trade_good', 'material']);
                 
                 if (tradeGoods && tradeGoods.length > 0) {
                     const picked = tradeGoods[Math.floor(Math.random() * tradeGoods.length)];
