@@ -145,10 +145,10 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         const state = get();
 
         // Update HP (carry-over)
-        const updatedPartyHp = { ...state.partyHp, ...result.partyHp };
+        const updatedPartyHp = { ...(state.partyHp || {}), ...result.partyHp };
 
         // Process NPC deaths: remove dead NPCs from partyHp
-        const newDeadNpcs = [...state.deadNpcs];
+        const newDeadNpcs = [...(state.deadNpcs || [])];
         for (const npcId of result.deadNpcIds) {
             if (!newDeadNpcs.includes(npcId)) {
                 newDeadNpcs.push(npcId);
@@ -157,10 +157,10 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
         }
 
         // Accumulate loot
-        const updatedLoot = [...state.lootPool, ...result.droppedItems];
+        const updatedLoot = [...(state.lootPool || []), ...result.droppedItems];
 
         // Track consumed items
-        const updatedConsumed = [...state.consumedItems, ...result.usedConsumables];
+        const updatedConsumed = [...(state.consumedItems || []), ...result.usedConsumables];
 
         set({
             playerHp: result.playerHp,
@@ -247,7 +247,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
 
     setFlag: (key: string, value: number | string, isSet?: boolean) => {
         set((state) => {
-            const currentVal = state.questFlags[key];
+            const currentVal = state.questFlags?.[key];
             let newVal: number | string;
             if (isSet) {
                 newVal = value;
@@ -260,7 +260,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
             }
             return {
                 questFlags: {
-                    ...state.questFlags,
+                    ...(state.questFlags || {}),
                     [key]: newVal,
                 },
             };
@@ -268,7 +268,7 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
     },
 
     getFlag: (key: string) => {
-        return get().questFlags[key] ?? 0;
+        return get().questFlags?.[key] ?? 0;
     },
 
     applyTrapDamage: (params: { hp_percent?: number; hp_flat?: number }) => {

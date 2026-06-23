@@ -56,7 +56,7 @@ export default function QuestHeader({
                     const questState = useQuestState.getState();
                     if (questState.isInQuest) {
                         partyData = partyData.map((m: any) => {
-                            const savedHp = questState.partyHp[String(m.id)];
+                            const savedHp = questState.partyHp?.[String(m.id)];
                             return {
                                 ...m,
                                 hp: savedHp !== undefined ? Math.max(0, savedHp) : m.max_hp
