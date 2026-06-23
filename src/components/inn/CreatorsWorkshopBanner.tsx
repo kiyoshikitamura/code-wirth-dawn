@@ -7,10 +7,8 @@ interface CreatorsWorkshopBannerProps {
 }
 
 export default function CreatorsWorkshopBanner({ onOpenWorkshop, isHub }: CreatorsWorkshopBannerProps) {
-    // 名もなき旅人の拠所でのみ表示 (v27.0: isHub propsで判定)
-    if (!isHub) {
-        return null;
-    }
+    // クリエイターズ工房のリンクを一時的に取り下げ (v30.1)
+    return null;
 
     return (
         <div className="px-4 pt-2 pb-6 w-full max-w-lg mx-auto">
