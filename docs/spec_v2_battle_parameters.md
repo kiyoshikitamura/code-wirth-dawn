@@ -375,6 +375,9 @@ FinalDamage = max(1, BasicDamage - Enemy.DEF)
 - クライアントサイドバトルロジックの結果を「完全に否定」するのではなく、「最低限の妥当性チェック」を行う
 - サーバーの `enemy_data` はリアルタイム同期されていない場合があるため、クライアントの主張も条件付きで受け入れる
 - `battle_completion_token` は報酬付与パス（`quest/complete` 等）で検証可能
+- **バトル終了時の非同期非ブロッキングUI設計 (v29.0)**:
+  - 勝利判定およびそれに伴う各種API呼び出し（`/api/report-action`, `/api/battle/validate-result`, `/api/profile/update-status` など）は、UIスレッドをブロックしないよう `await` せずにバックグラウンドで非同期実行する。
+  - バトル結果のログ出力・状態更新（`isVictory: true`）を最優先でUIへ反映し、ネットワーク遅延がテキストログの進行タイムラグを発生させないようにする。
 
 ### 9.3 セキュリティアーキテクチャ (v27.2)
 

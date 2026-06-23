@@ -29,6 +29,7 @@ const playCreepyAudio = () => {
 
 interface ShopItem {
     id: string;
+    slug?: string;
     name: string;
     type: string;
     sub_type?: string;
@@ -69,6 +70,7 @@ export default function ShopModal({ onClose }: Props) {
     const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null); // 詳細ポップアップ用
     const [sellItemForQtySelect, setSellItemForQtySelect] = useState<any | null>(null);
     const [sellQtyInput, setSellQtyInput] = useState<number>(1);
+    const [buyQtyInput, setBuyQtyInput] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);
@@ -106,9 +108,10 @@ export default function ShopModal({ onClose }: Props) {
         }
     };
 
-    const handleBuy = async (item: ShopItem) => {
+    const handleBuy = async (item: ShopItem, quantity: number = 1) => {
         if (item.is_rumored) return;
-        if (gold < (item.current_price as number)) {
+        const totalPrice = (item.current_price as number) * quantity;
+        if (gold < totalPrice) {
             setPurchaseResultMsg('金貨が足りません！');
             setPurchaseIsError(true);
             setPurchasePhase('done');
@@ -128,7 +131,7 @@ export default function ShopModal({ onClose }: Props) {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({ item_id: item.id, _source: item._source || 'item' })
+                body: JSON.stringify({ item_id: item.id, _source: item._source || 'item', quantity })
             });
             const data = await res.json();
 
@@ -267,11 +270,26 @@ export default function ShopModal({ onClose }: Props) {
     // アイテム詳細ポップアップ
     const renderItemDetail = () => {
         if (!selectedItem) return null;
-        const canBuy = gold >= (selectedItem.current_price as number);
+
+        const PASS_SLUGS = ['item_pass_roland', 'item_pass_karyu', 'item_pass_yato', 'item_pass_markand', 'capital_pass'];
+        const isSingleOnly = selectedItem.type === 'skill' || selectedItem.type === 'skill_card' || PASS_SLUGS.includes(selectedItem.slug || '') || selectedItem.slug === 'item_explosive';
+
+        const limit = selectedItem.type === 'consumable' ? 10 : selectedItem.type === 'equipment' ? 3 : 1;
+        const ownedItem = inventory?.find(i => String(i.item_id) === String(selectedItem.id));
+        const ownedQty = ownedItem ? (ownedItem.quantity || 1) : 0;
+        const maxByLimit = Math.max(0, limit - ownedQty);
+        const maxByGold = Math.floor(gold / (selectedItem.current_price as number));
+        const maxBuyQty = isSingleOnly ? 1 : Math.min(maxByGold, maxByLimit);
+
+        const currentBuyQty = isSingleOnly ? 1 : Math.max(1, Math.min(maxBuyQty, buyQtyInput));
+        const totalPrice = (selectedItem.current_price as number) * currentBuyQty;
+        const canBuy = gold >= totalPrice && maxBuyQty > 0;
+
         const typeLabel = getItemTypeLabel(selectedItem.type);
         const typeBorder = getItemTypeBorderColor(selectedItem.type);
         const itemImg = selectedItem.image_url || ((selectedItem as any).slug ? getItemImageUrl((selectedItem as any).slug) : null);
         const effectList = getEffectList(selectedItem.effect_data);
+
         return createPortal(
             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
                 <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
@@ -307,6 +325,55 @@ export default function ShopModal({ onClose }: Props) {
                                 </div>
                             </div>
                         )}
+
+                        {/* 個数選択 UI */}
+                        {!isSingleOnly && maxBuyQty > 0 && (
+                            <div className="bg-gray-800/40 rounded-lg p-3 border border-gray-700 space-y-2">
+                                <div className="flex justify-between items-center text-xs text-gray-400">
+                                    <span>個数指定 (上限: {limit} / 所持: {ownedQty})</span>
+                                    <button
+                                        onClick={() => setBuyQtyInput(maxBuyQty)}
+                                        className="text-yellow-500 font-bold hover:underline"
+                                    >
+                                        最大 ({maxBuyQty}個)
+                                    </button>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setBuyQtyInput(prev => Math.max(1, prev - 1))}
+                                        className="w-8 h-8 rounded border border-gray-600 bg-gray-700/50 flex items-center justify-center font-bold text-white hover:bg-gray-600"
+                                    >
+                                        -
+                                    </button>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={maxBuyQty}
+                                        value={buyQtyInput}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value, 10);
+                                            if (!isNaN(val)) setBuyQtyInput(Math.max(1, Math.min(maxBuyQty, val)));
+                                        }}
+                                        className="flex-1 text-center bg-gray-950 border border-gray-700 rounded py-1 font-bold text-white focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={() => setBuyQtyInput(prev => Math.min(maxBuyQty, prev + 1))}
+                                        className="w-8 h-8 rounded border border-gray-600 bg-gray-700/50 flex items-center justify-center font-bold text-white hover:bg-gray-600"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {maxBuyQty <= 0 && !isSingleOnly && (
+                            <div className="bg-red-950/20 rounded-lg p-3 border border-red-900/30 text-center">
+                                <p className="text-xs text-red-400 font-bold">
+                                    {ownedQty >= limit ? `これ以上所持できません（所持上限: ${limit}個）` : '資金が不足しています'}
+                                </p>
+                            </div>
+                        )}
+
                         {(selectedItem.description || selectedItem.effect_data?.flavor_text || selectedItem.effect_data?.description) && (
                             <div className="bg-amber-950/20 rounded-lg p-3 border border-amber-900/30">
                                 <p className="text-xs text-amber-400/80 italic leading-relaxed">
@@ -322,7 +389,7 @@ export default function ShopModal({ onClose }: Props) {
                                 閉じる
                             </button>
                             <button
-                                onClick={async () => { await handleBuy(selectedItem); setSelectedItem(null); }}
+                                onClick={async () => { await handleBuy(selectedItem, currentBuyQty); setSelectedItem(null); }}
                                 disabled={!canBuy || !!purchasing}
                                 className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
                                     !canBuy
@@ -330,7 +397,7 @@ export default function ShopModal({ onClose }: Props) {
                                         : 'bg-yellow-600 hover:bg-yellow-500 text-black border border-yellow-500 shadow-lg'
                                 }`}
                             >
-                                {purchasing ? '購入中...' : !canBuy ? '資金不足' : `購入する (${(selectedItem.current_price as number).toLocaleString()} G)`}
+                                {purchasing ? '購入中...' : !canBuy ? (ownedQty >= limit ? '上限到達' : '資金不足') : `購入する (${totalPrice.toLocaleString()} G)`}
                             </button>
                         </div>
                     </div>
@@ -473,7 +540,7 @@ export default function ShopModal({ onClose }: Props) {
                                                 )}
                                             </div>
                                             <button
-                                                onClick={() => setSelectedItem(item)}
+                                                onClick={() => { setBuyQtyInput(1); setSelectedItem(item); }}
                                                 className="px-3 py-2 rounded flex-shrink-0 whitespace-nowrap text-sm font-bold border border-[#8b5a2b] text-[#8b5a2b] hover:bg-[#8b5a2b]/10 transition-all"
                                             >
                                                 詳細

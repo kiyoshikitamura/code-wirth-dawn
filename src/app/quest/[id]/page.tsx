@@ -874,25 +874,6 @@ export default function QuestPage() {
                     }
                 }
 
-                // 2. パーティメンバーのHPをDBに永続化（連戦時のHP引き継ぎ用、ゲストは除外）
-                const partyUpdates = battleParty
-                    .filter((pm: any) => pm.id && pm.durability != null && pm.origin_type !== 'quest_guest')
-                    .map((pm: any) => ({ id: pm.id, durability: Math.max(0, pm.durability) }));
-                if (partyUpdates.length > 0) {
-                    try {
-                        await fetch('/api/party/update-hp', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                            },
-                            body: JSON.stringify({ members: partyUpdates })
-                        });
-                    } catch (e) {
-                        console.warn('[QuestPage] Failed to persist party HP:', e);
-                    }
-                }
-
                 // 3. ストアを最新DB値で同期（ヘッダー/次バトルの正確なHP表示のため）
                 await fetchUserProfile();
                 // 4. バトル表示フラグをクリア（パーティHP情報は連戦引き継ぎ用に保持）

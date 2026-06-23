@@ -37,7 +37,7 @@ export async function POST(req: Request) {
             }
         }
 
-        // 2. インベントリからアイテム検索（join items）
+        // 2. インベントリからアイテム検索（join items、is_equipped === false の未装備品のみを対象に全取得）
         console.log(`[Sell] Looking for item_id=${item_id} (type: ${typeof item_id}) for user=${profile.id}`);
 
         const { data: invItems, error: invError } = await supabaseService
@@ -45,33 +45,31 @@ export async function POST(req: Request) {
             .select('*, items(*)')
             .eq('user_id', profile.id)
             .eq('item_id', item_id)
-            .limit(1);
+            .eq('is_equipped', false);
 
-        const invItem = invItems?.[0];
-        console.log(`[Sell] Query result:`, invItem ? `Found id=${invItem.id}, qty=${invItem.quantity}` : 'Not found', invError?.message || '');
-
-        if (invError || !invItem) {
+        if (invError || !invItems || invItems.length === 0) {
             return NextResponse.json({
-                error: '指定のアイテムを所持していません。',
+                error: '指定の未装備アイテムを所持していません。',
                 debug: { item_id, item_id_type: typeof item_id, user_id: profile.id, dbError: invError?.message }
             }, { status: 404 });
         }
 
         // [Security] 所持数チェック
-        const ownedQty = invItem.quantity ?? 1;
-        if (ownedQty < quantity) {
-            console.warn(`[Security] User ${profile.id} attempted to sell ${quantity} items but only owns ${ownedQty} (item_id: ${item_id})`);
+        const totalOwnedQty = invItems.reduce((sum, row) => sum + (row.quantity ?? 1), 0);
+        if (totalOwnedQty < quantity) {
+            console.warn(`[Security] User ${profile.id} attempted to sell ${quantity} items but only owns ${totalOwnedQty} (item_id: ${item_id})`);
             return NextResponse.json({ error: '所持数が不足しています。' }, { status: 400 });
         }
 
         // 2.5 スキルアイテムの売却防止
-        const item = invItem.items as any;
+        const firstInvItem = invItems[0];
+        const item = firstInvItem.items as any;
         if (item?.type === 'skill' || item?.is_skill === true) {
             return NextResponse.json({ error: '売却不可: このスキルは売却できません。' }, { status: 400 });
         }
 
         // 3. 売却価格計算
-        const isUgc = invItem.is_ugc === true;
+        const isUgc = firstInvItem.is_ugc === true;
         const isRuined = prosperityLevel === 1;
         const sellPrice = isUgc ? 1
             : isRuined ? Math.floor((item?.base_price || 0) * 1.5)
@@ -113,12 +111,20 @@ export async function POST(req: Request) {
         }
 
         // 5. インベントリ更新
-        if (invItem.quantity > quantity) {
-            const { error: updateError } = await supabaseService.from('inventory').update({ quantity: invItem.quantity - quantity }).eq('id', invItem.id);
-            if (updateError) throw updateError;
-        } else {
-            const { error: deleteError } = await supabaseService.from('inventory').delete().eq('id', invItem.id);
-            if (deleteError) throw deleteError;
+        let remainingQtyToSell = quantity;
+        for (const invItem of invItems) {
+            if (remainingQtyToSell <= 0) break;
+            const currentQty = invItem.quantity ?? 1;
+
+            if (currentQty <= remainingQtyToSell) {
+                const { error: deleteError } = await supabaseService.from('inventory').delete().eq('id', invItem.id);
+                if (deleteError) throw deleteError;
+                remainingQtyToSell -= currentQty;
+            } else {
+                const { error: updateError } = await supabaseService.from('inventory').update({ quantity: currentQty - remainingQtyToSell }).eq('id', invItem.id);
+                if (updateError) throw updateError;
+                remainingQtyToSell = 0;
+            }
         }
 
         // 6. 裏切りペナルティ

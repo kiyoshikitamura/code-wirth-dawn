@@ -67,13 +67,15 @@ CREATE TABLE party_members (
 - バトルHP0: バトル中のHPが0になった場合、バトルから脱落。DBで`is_active=false, durability=0`に即時更新。
 - VIT0離脱: クエスト完了時にVIT（`durability`カラム）が0以下になると`party_members`から削除され離脱。形見アイテム生成。
 
-> **用語定義 (v4.1)**: 「バトルHP」= `max_durability`（バトル毎にリセット）。「VIT(寿命)」= `durability`（クエスト完了毎に減少、回復困難）。UIではバトルHPを緑色、VITをオレンジ色のバーで表示。
-
-- **VIT摩耗計算** (`POST /api/quest/complete`):
-  - 成功: -5, 失敗/撤退: -10, バトルHP0追加: -10
-  - `is_active=false`（バトルで力尽きた）メンバーは `durability=0` として扱い確実に削除対象にする
-  - 全`owner_id`メンバーを取得（`is_active`フィルタなし）し、バトル脱落メンバーの漏れを防止
-  - `delete()` 失敗時は `update({is_active: false, durability: 0})` でフォールバック
+> **用語定義 (v5.0)**:
+> - 「バトルHP」の最大値は `max_durability` で表現され、クエスト終了時（戦闘外）には常に全回復した状態（`hp` = `max_hp` = `max_durability`）で表示され、データベースへの現在HPの保存は行いません（戦闘中の連戦引き継ぎ時のみ、クライアント側のZustandストアで一時退避・マージされます）。
+> - 「VIT (寿命)」は `durability` カラム（初期値および最大値はすべてのNPCで一律固定で **`100`**）で管理されます。
+> - クエスト結果画面での寿命減少表示は、「耐久 100 ▸ 97」のように表示します。
+> 
+> - **VIT摩耗計算** (`POST /api/quest/complete`):
+>   - クエスト成否やバトルでの脱落有無を問わず、クエスト1回ごとに、各パーティメンバー個別に **`1〜5` のランダム値** を減算します。
+>   - 寿命（`durability` カラム）が `0` 以下になったNPCは `party_members` から自動的に削除され、遺品として形見アイテム（メメント）をインベントリに残して離脱します。
+>   - 全`owner_id`メンバーを取得して処理し、`delete()` 失敗時は `update({is_active: false, durability: 0})` でフォールバックします。
 
 ### 4.2 AI Grade別の挙動
 | Grade | 特徴 |

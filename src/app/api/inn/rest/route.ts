@@ -107,23 +107,26 @@ export async function POST(req: Request) {
 
         if (error) throw error;
 
-        // パーティメンバーのHP全回復（HP0のメンバーも回復）
+        // パーティメンバーの生存状態の復帰（戦闘不能メンバーの復活）
+        // ※HPの保存は行わず非戦闘時は全回復表示されるため、宿屋では戦闘不能になったメンバーを復帰（is_active = true）させる処理のみをおこない、寿命（durability）は変更しません。
         let partyHealed = 0;
         try {
             const { data: partyMembers } = await supabaseService
                 .from('party_members')
-                .select('id, is_active')
+                .select('id')
                 .eq('owner_id', id);
 
             if (partyMembers && partyMembers.length > 0) {
-                const inactiveIds = partyMembers.filter(m => !m.is_active).map(m => m.id);
-                if (inactiveIds.length > 0) {
-                    await supabaseService
+                const updatePromises = partyMembers.map((m: any) => {
+                    return supabaseService
                         .from('party_members')
-                        .update({ is_active: true })
-                        .in('id', inactiveIds);
-                    partyHealed = inactiveIds.length;
-                }
+                        .update({ 
+                            is_active: true 
+                        })
+                        .eq('id', m.id);
+                });
+                await Promise.all(updatePromises);
+                partyHealed = partyMembers.length;
             }
         } catch (partyErr) {
             console.warn('[Inn Rest] Failed to heal party members:', partyErr);

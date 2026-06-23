@@ -181,6 +181,8 @@ export interface PartyMember {
   origin: 'system' | 'ghost';
   origin_type?: string; // e.g. 'system_mercenary', 'shadow_heroic', 'active_shadow'
   job_class: string;
+  hp?: number;
+  max_hp?: number;
 
   durability: number;
   max_durability: number;

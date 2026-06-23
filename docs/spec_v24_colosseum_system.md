@@ -236,3 +236,4 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 
 ### 11.3 敵撃破演出と攻撃エフェクトの同期 (Kill Animation Delay)
 - 敵のHPが 0 になった際、攻撃エフェクト（魔法・斬撃など）の再生が完了する前に敵スプライトが即座に死亡（モノクロ・ぼかし）状態になってしまう同期ズレを防ぐため、攻撃エフェクト（`activeEffect`）が終了するまで敵スプライトの生存（通常カラー）表示を維持させる遅延制御を行う。
+

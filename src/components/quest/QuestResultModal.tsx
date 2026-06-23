@@ -399,7 +399,7 @@ export default function QuestResultModal({
                                                 <span className="text-orange-400 font-bold">離脱</span>
                                             ) : (
                                                 <span className="text-gray-400 font-mono">
-                                                    VIT {pc.oldDurability} ▸ {pc.newDurability}
+                                                    耐久 {pc.oldDurability} ▸ {pc.newDurability}
                                                 </span>
                                             )}
                                         </div>

@@ -27,10 +27,8 @@ import GossipModal from '@/components/world/GossipModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
 import ActiveQuestModal from '@/components/inn/ActiveQuestModal';
 import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
-import ChronicleModal from '@/components/world/ChronicleModal';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 import TutorialModal from '@/components/inn/TutorialModal';
-import WorldChangedModal from '@/components/inn/WorldChangedModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
@@ -72,9 +70,7 @@ function InnPageInner() {
         toast,
         allQuests, loadingQuests,
         reputation,
-        gougaiEvents, handleCloseGougai,
         showTutorial, handleCompleteTutorial,
-        showWorldChanged, handleCloseWorldChanged, handleOpenGougaiFromNotify,
         showHistoryBadge,
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
@@ -169,7 +165,7 @@ function InnPageInner() {
             )}
 
             {/* Mobile View Container */}
-            <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar flex flex-col pb-10">
+            <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar md:custom-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
                 <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} onOpenShop={() => setShowShop(true)} equipBonus={equipBonus} />
@@ -187,18 +183,7 @@ function InnPageInner() {
                     <TutorialModal onComplete={handleCompleteTutorial} />
                 )}
 
-                {/* World Changed Notification Popup */}
-                {showWorldChanged && (
-                    <WorldChangedModal 
-                        onOpenGougai={handleOpenGougaiFromNotify} 
-                        onClose={handleCloseWorldChanged} 
-                    />
-                )}
 
-                {/* Gougai Modal */}
-                {gougaiEvents.length > 0 && !showWorldChanged && (
-                    <ChronicleModal events={gougaiEvents} onClose={handleCloseGougai} />
-                )}
 
                 {/* NPC Dialog */}
                 {activeNpcData && activeModal && (

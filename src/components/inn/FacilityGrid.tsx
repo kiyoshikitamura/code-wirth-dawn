@@ -10,15 +10,18 @@ interface FacilityGridProps {
 }
 
 export default function FacilityGrid({ onSelectFacility, isHub = false, recommendedFacility = null }: FacilityGridProps) {
-    // 通常拠点: 宿屋/酒場 → ギルド → 道具屋 → 神殿 → ステータス → コロシアム
+    // 通常拠点: 宿屋/酒場 → ギルド → 道具屋 → 神殿 → ステータス → コロシアム → 各種閲覧
     const locationFacilities: { id: FacilityType; label: string; sub: string; icon: any }[] = [
         { id: 'inn', label: '宿屋/酒場', sub: 'Inn', icon: Bed },
         { id: 'guild', label: 'ギルド', sub: 'Guild', icon: Shield },
         { id: 'shop', label: '道具屋', sub: 'Shop', icon: ShoppingBag },
         { id: 'temple', label: '神殿', sub: 'Temple', icon: Church },
         { id: 'magicAcademy', label: '魔術学院', sub: 'Magic Academy', icon: Sparkles },
-        { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
         { id: 'colosseum', label: 'コロシアム', sub: 'Colosseum', icon: Swords },
+        { id: 'status', label: 'ステータス', sub: 'Status', icon: Activity },
+        { id: 'collection', label: 'コレクション', sub: 'Collection', icon: BookOpen },
+        { id: 'questLog', label: 'クエスト記録', sub: 'Quest Log', icon: ClipboardList },
+        { id: 'ranking', label: 'ランキング', sub: 'Ranking', icon: Trophy },
     ];
 
     // ハブ: 宿屋/ステータスのみ

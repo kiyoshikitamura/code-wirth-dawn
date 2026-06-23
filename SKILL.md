@@ -278,10 +278,10 @@ develop で開発 → push → CI (lint+build) → Preview Deploy で確認 → 
 
 - **チュートリアルスライド表示と世界情勢変化ポップアップの設計方針**:
   - `user_profiles` テーブルに `is_tutorial_completed` (BOOLEAN, DEFAULT FALSE) カラムを追加し、初回キャラクター作成時のチュートリアル表示制御に使用する。
-  - 世界情勢変化が起きた際、`gougaiEvents`（未読の世界履歴）を検知して、まず `WorldChangedModal` をポップアップ表示する。
+  - 世界情勢変化時の自動ポップアップ表示（`WorldChangedModal` や `ChronicleModal`）は廃止されたため、拠点アクセス時にこれらを自動でポップアップ表示してはならない。
   - 新聞風号外モーダル（`ChronicleModal`）内の「Gougai」という英語表記は非推奨であり、日本語の「号外」のみに変更すること。
   - スライド切り替えなどの UI アクションにおいて、`soundManager` による SE 再生（`se_click` や `se_quest_accept` など）を適切に実行すること。
-  - ポップアップの表示順は `TutorialModal`（チュートリアル）が最優先され、次に `WorldChangedModal`（情勢変化）が優先されるように制御すること。
+  - ポップアップの表示順は `TutorialModal`（チュートリアル）が最優先されるように制御すること。
 
 ## API認証およびハイブリッドキャッシュの教訓 (v4.5)
 
