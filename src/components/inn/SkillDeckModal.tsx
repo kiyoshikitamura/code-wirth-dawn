@@ -12,7 +12,7 @@ interface SkillDeckModalProps {
 }
 
 export default function SkillDeckModal({ onClose, questLocked, isCampMode }: SkillDeckModalProps) {
-    const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile } = useGameStore();
+    const { userProfile, inventory, fetchInventory, toggleEquip, fetchUserProfile, partyMembers } = useGameStore();
     const [partyCards, setPartyCards] = useState<any[]>([]);
     const [partyLoading, setPartyLoading] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -27,11 +27,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
             setLoading(true);
             try {
                 await fetchUserProfile();
-                const ownerId = useGameStore.getState().userProfile?.id;
-                await Promise.all([
-                    fetchInventory(),
-                    fetchPartyCards(ownerId)
-                ]);
+                await fetchInventory();
             } catch (e) {
                 console.error('Failed to load SkillDeck data', e);
             } finally {
@@ -41,18 +37,16 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
         loadData();
     }, []);
 
-    const fetchPartyCards = async (ownerId?: string) => {
-        const uid = ownerId || userProfile?.id;
-        if (!uid) return;
-        setPartyLoading(true);
-        try {
-            const authHeaders = await getAuthHeaders();
-            const res = await fetch(`/api/party/list?owner_id=${uid}`, { headers: authHeaders });
-            if (res.ok) {
-                const data = await res.json();
-                const party = data.party || [];
+    useEffect(() => {
+        const loadPartyCards = async () => {
+            if (!partyMembers || partyMembers.length === 0) {
+                setPartyCards([]);
+                return;
+            }
+            setPartyLoading(true);
+            try {
                 const cardIdsSet = new Set<number>();
-                party.forEach((member: any) => {
+                partyMembers.forEach((member: any) => {
                     if (member.inject_cards && Array.isArray(member.inject_cards)) {
                         member.inject_cards.forEach((id: any) => {
                             const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
@@ -93,16 +87,18 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
                         });
 
                         setPartyCards(mappedCards);
-
                     }
+                } else {
+                    setPartyCards([]);
                 }
+            } catch (e) {
+                console.error('Failed to load party cards', e);
+            } finally {
+                setPartyLoading(false);
             }
-        } catch (e) {
-            console.error('Failed to fetch party cards', e);
-        } finally {
-            setPartyLoading(false);
-        }
-    };
+        };
+        loadPartyCards();
+    }, [partyMembers]);
 
     const skills = inventory.filter(i => i.is_skill || i.item_type === 'skill_card');
     const equippedSkills = skills.filter(i => i.is_equipped);
