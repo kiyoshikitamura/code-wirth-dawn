@@ -180,6 +180,10 @@ export async function grantRewardItems(
                     .select('name')
                     .eq('id', itemId)
                     .maybeSingle();
+                if (!found) {
+                    console.warn(`[QuestComplete] Item ID '${itemId}' not found in items table. Skipping grant to prevent FK violation.`);
+                    continue;
+                }
                 itemDef = found;
             }
 
