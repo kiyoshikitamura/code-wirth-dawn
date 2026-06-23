@@ -62,9 +62,10 @@ export async function GET(req: Request) {
         }
 
         const [repDescRes, repAscRes] = await Promise.all([
-            supabaseService.from('ranking_reputation_cache').select('*').order('rank_desc', { ascending: true }).limit(RANKING_LIMIT),
-            supabaseService.from('ranking_reputation_cache').select('*').order('rank_asc', { ascending: true }).limit(RANKING_LIMIT),
+            supabaseService.from('ranking_reputation_cache').select('*').neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f').order('rank_desc', { ascending: true }).limit(RANKING_LIMIT),
+            supabaseService.from('ranking_reputation_cache').select('*').neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f').order('rank_asc', { ascending: true }).limit(RANKING_LIMIT),
         ]);
+
 
         const topDesc = (repDescRes.data || []).map((r: any) => ({
             rank: r.rank_desc, userId: r.user_id, name: r.user_name || '名もなき旅人', value: r.total_reputation,
@@ -109,8 +110,10 @@ export async function GET(req: Request) {
         const alignTopRes = await supabaseService
             .from('ranking_alignment_cache')
             .select('*')
+            .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
             .order('rank', { ascending: true })
             .limit(RANKING_LIMIT);
+
 
         const alignTop = (alignTopRes.data || []).map((r: any) => ({
             rank: r.rank,
@@ -143,6 +146,12 @@ export async function GET(req: Request) {
         // Inject current user's real-time values into reputation list (topDesc / topAsc)
         const injectRealtimeRep = (list: any[], order: 'desc' | 'asc') => {
             let newList = [...list];
+            if (userId === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f') {
+                newList.forEach((entry: any, index: number) => {
+                    entry.rank = index + 1;
+                });
+                return newList;
+            }
             let me = newList.find((r: any) => r.userId === userId);
             if (me) {
                 me.value = myRepTotal;
@@ -176,27 +185,29 @@ export async function GET(req: Request) {
 
         // Inject current user's real-time values into alignment list (alignTop)
         let finalAlignTop = [...alignTop];
-        let meAlign = finalAlignTop.find((r: any) => r.userId === userId);
-        if (meAlign) {
-            meAlign.order = myAlignValues.order;
-            meAlign.chaos = myAlignValues.chaos;
-            meAlign.justice = myAlignValues.justice;
-            meAlign.evil = myAlignValues.evil;
-            meAlign.total = myAlignValues.total;
-            meAlign.name = myProfile?.name || '名もなき旅人';
-        } else {
-            const lastVal = finalAlignTop.length > 0 ? finalAlignTop[finalAlignTop.length - 1].total : -Infinity;
-            if (myAlignValues.total >= lastVal || finalAlignTop.length < RANKING_LIMIT) {
-                finalAlignTop.push({
-                    rank: 999,
-                    userId: userId,
-                    name: myProfile?.name || '名もなき旅人',
-                    order: myAlignValues.order,
-                    chaos: myAlignValues.chaos,
-                    justice: myAlignValues.justice,
-                    evil: myAlignValues.evil,
-                    total: myAlignValues.total
-                });
+        if (userId !== 'c1cf67dd-527a-497e-bf88-ce10c2cb516f') {
+            let meAlign = finalAlignTop.find((r: any) => r.userId === userId);
+            if (meAlign) {
+                meAlign.order = myAlignValues.order;
+                meAlign.chaos = myAlignValues.chaos;
+                meAlign.justice = myAlignValues.justice;
+                meAlign.evil = myAlignValues.evil;
+                meAlign.total = myAlignValues.total;
+                meAlign.name = myProfile?.name || '名もなき旅人';
+            } else {
+                const lastVal = finalAlignTop.length > 0 ? finalAlignTop[finalAlignTop.length - 1].total : -Infinity;
+                if (myAlignValues.total >= lastVal || finalAlignTop.length < RANKING_LIMIT) {
+                    finalAlignTop.push({
+                        rank: 999,
+                        userId: userId,
+                        name: myProfile?.name || '名もなき旅人',
+                        order: myAlignValues.order,
+                        chaos: myAlignValues.chaos,
+                        justice: myAlignValues.justice,
+                        evil: myAlignValues.evil,
+                        total: myAlignValues.total
+                    });
+                }
             }
         }
         finalAlignTop.sort((a, b) => b.total - a.total);
@@ -204,6 +215,7 @@ export async function GET(req: Request) {
         finalAlignTop.forEach((entry: any, index: number) => {
             entry.rank = index + 1;
         });
+
 
         return NextResponse.json({
             reputation: {

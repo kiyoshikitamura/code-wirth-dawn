@@ -82,7 +82,10 @@ export class ShadowService {
                 .eq('is_alive', true)
                 .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
                 .neq('name', null)
+                .not('name', 'ilike', 'テスト%')
+                .not('name', 'ilike', 'test%')
                 .limit(20); // 候補を多めに取得してからランダム〆5体を選抜
+
 
             if (activeUsers && activeUsers.length > 0) {
                 // v2.7: user_skillsテーブルから装備済みスキルを一括取得（gossip/route.tsと同様の正しい実装）
@@ -362,19 +365,23 @@ export class ShadowService {
             heroicOwnerId = heroicMember.owner_id;
             
         } else if (shadow.origin_type === 'shadow_active') {
-            // user_profiles から level/atk/def/hp/job_class を取得して再計算および所在地チェック
+            // user_profiles から name/level/atk/def/hp/job_class を取得して再計算および所在地チェック
             const { data: userProfile } = await this.supabase
                 .from('user_profiles')
-                .select('level, is_alive, current_location_id, atk, def, max_hp, job_class')
+                .select('name, level, is_alive, current_location_id, atk, def, max_hp, job_class')
                 .eq('id', shadow.profile_id)
                 .single();
                 
             if (!userProfile || !userProfile.is_alive) {
                 return { success: false, error: '対象のプレイヤーは現在雇用できません（死亡または存在しません）。' };
             }
+            if (userProfile.name && (userProfile.name.toLowerCase().startsWith('テスト') || userProfile.name.toLowerCase().startsWith('test'))) {
+                return { success: false, error: 'テストアカウントは雇用できません。' };
+            }
             if (userProfile.current_location_id !== hirer.current_location_id) {
                 return { success: false, error: '対象のプレイヤーは既に別の地点に移動しました。' };
             }
+
             
             finalContractFee = (userProfile.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
 
