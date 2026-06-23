@@ -62,9 +62,24 @@ export async function GET(req: Request) {
         }
 
         const [repDescRes, repAscRes] = await Promise.all([
-            supabaseService.from('ranking_reputation_cache').select('*').neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f').order('rank_desc', { ascending: true }).limit(RANKING_LIMIT),
-            supabaseService.from('ranking_reputation_cache').select('*').neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f').order('rank_asc', { ascending: true }).limit(RANKING_LIMIT),
+            supabaseService.from('ranking_reputation_cache')
+                .select('*')
+                .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+                .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
+                .not('user_name', 'ilike', 'テスト%')
+                .not('user_name', 'ilike', 'test%')
+                .order('rank_desc', { ascending: true })
+                .limit(RANKING_LIMIT),
+            supabaseService.from('ranking_reputation_cache')
+                .select('*')
+                .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+                .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
+                .not('user_name', 'ilike', 'テスト%')
+                .not('user_name', 'ilike', 'test%')
+                .order('rank_asc', { ascending: true })
+                .limit(RANKING_LIMIT),
         ]);
+
 
 
         const topDesc = (repDescRes.data || []).map((r: any) => ({
@@ -111,8 +126,12 @@ export async function GET(req: Request) {
             .from('ranking_alignment_cache')
             .select('*')
             .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+            .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
+            .not('user_name', 'ilike', 'テスト%')
+            .not('user_name', 'ilike', 'test%')
             .order('rank', { ascending: true })
             .limit(RANKING_LIMIT);
+
 
 
         const alignTop = (alignTopRes.data || []).map((r: any) => ({
@@ -146,7 +165,7 @@ export async function GET(req: Request) {
         // Inject current user's real-time values into reputation list (topDesc / topAsc)
         const injectRealtimeRep = (list: any[], order: 'desc' | 'asc') => {
             let newList = [...list];
-            if (userId === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f') {
+            if (userId === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || userId === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || (myProfile?.name && (myProfile.name.toLowerCase().startsWith('テスト') || myProfile.name.toLowerCase().startsWith('test')))) {
                 newList.forEach((entry: any, index: number) => {
                     entry.rank = index + 1;
                 });
@@ -185,7 +204,7 @@ export async function GET(req: Request) {
 
         // Inject current user's real-time values into alignment list (alignTop)
         let finalAlignTop = [...alignTop];
-        if (userId !== 'c1cf67dd-527a-497e-bf88-ce10c2cb516f') {
+        if (userId !== 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' && userId !== '5ad434ec-763f-473e-939f-14a5e9e1cc93' && !(myProfile?.name && (myProfile.name.toLowerCase().startsWith('テスト') || myProfile.name.toLowerCase().startsWith('test')))) {
             let meAlign = finalAlignTop.find((r: any) => r.userId === userId);
             if (meAlign) {
                 meAlign.order = myAlignValues.order;
@@ -215,6 +234,7 @@ export async function GET(req: Request) {
         finalAlignTop.forEach((entry: any, index: number) => {
             entry.rank = index + 1;
         });
+
 
 
         return NextResponse.json({
