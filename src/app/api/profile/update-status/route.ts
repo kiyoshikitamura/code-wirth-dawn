@@ -21,12 +21,8 @@ export async function POST(req: Request) {
         if (!userId) userId = body.profileId || null;
 
         if (!userId) {
-            const { data: latest } = await supabaseServer.from('user_profiles').select('id').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-            userId = latest?.id || null;
-        }
-
-        if (!userId) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            console.warn('[POST /api/profile/update-status] No userId found: 401');
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
         const updates: any = {};

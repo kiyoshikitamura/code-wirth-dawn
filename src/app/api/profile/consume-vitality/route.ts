@@ -15,20 +15,19 @@ export async function POST(req: Request) {
         }
 
         // Dynamic User Identification
-        // Dynamic User Identification
-        const { data: { user } } = await supabase.auth.getUser();
+        const authClient = createAuthClient(req);
+        const { data: { user } } = await authClient.auth.getUser();
         let query = supabase.from('user_profiles').select('*');
 
         // Priority: 1. Auth ID, 2. Body ID
-        // Note: consume-vitality requires explicit profile target in demo mode
-        const targetId = user?.id || (body as any).profileId; // body was destructured above, need to access full body or add to destructure
+        const targetId = user?.id || profileId;
 
-        if (targetId) {
-            query = query.eq('id', targetId);
-        } else {
-            // Fallback (Legacy/Demo - Not recommended but kept for backward compat)
-            query = query.order('updated_at', { ascending: false }).limit(1);
+        if (!targetId) {
+            console.warn('[POST /api/profile/consume-vitality] No targetId found: 401');
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
+
+        query = query.eq('id', targetId);
 
         const { data: profiles } = await query;
         const profile = profiles?.[0];
