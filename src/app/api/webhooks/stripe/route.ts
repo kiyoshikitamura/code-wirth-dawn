@@ -238,7 +238,18 @@ export async function POST(req: Request) {
             case 'customer.subscription.updated': {
                 // ─── サブスク更新（プラン変更やトライアル終了など） ───
                 const subscription = event.data.object as Stripe.Subscription;
-                const userId = subscription.metadata?.user_id;
+                let userId = subscription.metadata?.user_id;
+
+                if (!userId && subscription.customer) {
+                    try {
+                        const customer = await stripe.customers.retrieve(subscription.customer as string);
+                        if ('metadata' in customer) {
+                            userId = customer.metadata?.user_id;
+                        }
+                    } catch (custErr) {
+                        console.error('[webhooks/stripe] Failed to retrieve customer for updated subscription:', custErr);
+                    }
+                }
 
                 if (!userId) {
                     console.error('[webhooks/stripe] updatedイベントで user_id が特定できません。subscriptionId:', subscription.id);
@@ -306,7 +317,18 @@ export async function POST(req: Request) {
 
                 // Bug-1修正: Subscriptionのメタデータから直接 user_id を取得する
                 // (チェックアウト時に subscription_data.metadata に user_id を設定済み)
-                const userId = subscription.metadata?.user_id;
+                let userId = subscription.metadata?.user_id;
+
+                if (!userId && subscription.customer) {
+                    try {
+                        const customer = await stripe.customers.retrieve(subscription.customer as string);
+                        if ('metadata' in customer) {
+                            userId = customer.metadata?.user_id;
+                        }
+                    } catch (custErr) {
+                        console.error('[webhooks/stripe] Failed to retrieve customer for deleted subscription:', custErr);
+                    }
+                }
 
                 if (!userId) {
                     console.error('[webhooks/stripe] 解約イベントで user_id が特定できません。subscriptionId:', subscription.id);

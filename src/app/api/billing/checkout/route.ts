@@ -95,10 +95,19 @@ export async function POST(req: Request) {
 
         if (mode === 'subscription') {
             // ─── サブスクリプション決済 ───
-            if (!tier || !PRICE_IDS[tier]) {
+            if (!tier || (tier !== 'basic' && tier !== 'premium')) {
                 return NextResponse.json(
                     { error: `tier は 'basic' または 'premium' を指定してください。` },
                     { status: 400 }
+                );
+            }
+
+            const priceId = PRICE_IDS[tier];
+            if (!priceId) {
+                console.error(`[checkout] Price ID for tier "${tier}" is not configured in environment variables (STRIPE_PRICE_ID_${tier.toUpperCase()}).`);
+                return NextResponse.json(
+                    { error: `サーバー環境設定エラー: プラン「${tier}」の決済ID（環境変数）が設定されていません。Vercelの環境変数をご確認ください。` },
+                    { status: 500 }
                 );
             }
 
@@ -147,6 +156,14 @@ export async function POST(req: Request) {
                 );
             }
 
+            if (!pkg.priceId) {
+                console.error(`[checkout] Price ID for package "${packageKey}" is not configured in environment variables.`);
+                return NextResponse.json(
+                    { error: `サーバー環境設定エラー: パッケージ「${packageKey}」の決済ID（環境変数）が設定されていません。Vercelの環境変数をご確認ください。` },
+                    { status: 500 }
+                );
+            }
+
             // 1回限り購入パッケージのバリデーション
             if (pkg.isLimited && pkg.packageKey) {
                 const flagColumn = pkg.packageKey === 'starter_pack' ? 'has_purchased_starter' : 'has_purchased_elite';
@@ -166,6 +183,20 @@ export async function POST(req: Request) {
                 }
             }
 
+            // Stripe Customer の特定（emailまたはmetadataから）
+            const customers = await stripe.customers.list({
+                limit: 1,
+                email: user.email || undefined,
+            });
+            let customerId: string | null = customers.data[0]?.id || null;
+            if (!customerId) {
+                const searchResult = await stripe.customers.search({
+                    query: `metadata["user_id"]:"${userId}"`,
+                    limit: 1,
+                });
+                customerId = searchResult.data[0]?.id || null;
+            }
+
             const sessionMetadata: Record<string, string> = {
                 user_id: userId,
                 gold_amount: String(pkg.goldAmount),
@@ -174,15 +205,22 @@ export async function POST(req: Request) {
                 sessionMetadata.package_key = pkg.packageKey;
             }
 
-            const session = await stripe.checkout.sessions.create({
+            const sessionData: any = {
                 mode: 'payment',
                 line_items: [{ price: pkg.priceId, quantity: 1 }],
                 client_reference_id: userId,
-                customer_email: user.email || undefined, // Stripe Customer のメールアドレスを統一
                 metadata: sessionMetadata,
                 success_url: `${origin}/inn?billing=gold_success&amount=${pkg.goldAmount}${pkg.packageKey ? `&package=${pkg.packageKey}` : ''}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
-            });
+            };
+
+            if (customerId) {
+                sessionData.customer = customerId;
+            } else {
+                sessionData.customer_email = user.email || undefined;
+            }
+
+            const session = await stripe.checkout.sessions.create(sessionData);
 
             return NextResponse.json({ url: session.url });
 
