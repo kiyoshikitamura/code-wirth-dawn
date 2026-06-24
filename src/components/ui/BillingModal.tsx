@@ -16,9 +16,6 @@ export default function BillingModal({ onClose }: Props) {
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     
-    // 特商法同意チェックボックス
-    const [agreed, setAgreed] = useState(false);
-    
     // 購入確認ポップアップの状態
     const [purchaseConfirm, setPurchaseConfirm] = useState<{
         type: 'subscription' | 'gold';
@@ -55,10 +52,6 @@ export default function BillingModal({ onClose }: Props) {
     // プラン入会要求
     const requestUpgradeTier = (tier: 'basic' | 'premium') => {
         soundManager?.playSE('se_click');
-        if (!agreed) {
-            setError('特商法および利用規約への同意が必要です。');
-            return;
-        }
         setError(null);
         setPurchaseConfirm({ type: 'subscription', tier });
     };
@@ -79,10 +72,6 @@ export default function BillingModal({ onClose }: Props) {
     // ゴールド・パッケージ購入要求
     const requestBuyGold = (packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k' | 'gold_starter' | 'gold_elite') => {
         soundManager?.playSE('se_click');
-        if (!agreed) {
-            setError('特商法および利用規約への同意が必要です。');
-            return;
-        }
         setError(null);
         setPurchaseConfirm({ type: 'gold', packageKey });
     };
@@ -171,7 +160,7 @@ export default function BillingModal({ onClose }: Props) {
                                 <div>
                                     <div className="flex justify-between items-baseline mb-2">
                                         <h4 className="font-serif font-black text-indigo-400 text-base">Basic プラン</h4>
-                                        <span className="text-slate-400 text-xs font-mono font-bold">880 円 / 月</span>
+                                        <span className="text-slate-400 text-xs font-mono font-bold">880円（税込）/ 月</span>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mb-4 leading-normal">
                                         週ごとのゴールドに加え、魔術学院で強力なスキルを獲得できる各種鍵アイテムを毎週付与する標準プラン。
@@ -215,7 +204,7 @@ export default function BillingModal({ onClose }: Props) {
                                 <div>
                                     <div className="flex justify-between items-baseline mb-2">
                                         <h4 className="font-serif font-black text-amber-400 text-base">Premium プラン</h4>
-                                        <span className="text-slate-400 text-xs font-mono font-bold">2,200 円 / 月</span>
+                                        <span className="text-slate-400 text-xs font-mono font-bold">2,200円（税込）/ 月</span>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mb-4 leading-normal">
                                         旅人の冒険枠・英霊スロットを大幅に拡張し、毎週大量のゴールドと複数の鍵を付与する最上位プラン。
@@ -263,7 +252,7 @@ export default function BillingModal({ onClose }: Props) {
                                 <div>
                                     <div className="flex justify-between items-baseline mb-2">
                                         <h4 className="font-serif font-black text-teal-400 text-base">スターターパック</h4>
-                                        <span className="text-slate-400 text-xs font-mono font-bold">880 円</span>
+                                        <span className="text-slate-400 text-xs font-mono font-bold">880円（税込）</span>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mb-4 leading-normal">
                                         冒険をスタートした旅人のために、大量のゴールドと合計8個のパック開封用鍵を同梱したお得なブースト用パック。
@@ -306,7 +295,7 @@ export default function BillingModal({ onClose }: Props) {
                                 <div>
                                     <div className="flex justify-between items-baseline mb-2">
                                         <h4 className="font-serif font-black text-orange-400 text-base">エリートパック</h4>
-                                        <span className="text-slate-400 text-xs font-mono font-bold">1,320 円</span>
+                                        <span className="text-slate-400 text-xs font-mono font-bold">1,320円（税込）</span>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mb-4 leading-normal">
                                         一気に戦力を整えたい探求者へ、30,000Gと大量の鍵アイテム（合計13個）を詰め合わせた、最もコストパフォーマンスの高い限定パック。
@@ -365,7 +354,7 @@ export default function BillingModal({ onClose }: Props) {
                                     disabled={loadingKey !== null}
                                     className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-750 rounded-lg text-[10px] font-bold tracking-wider transition-all active:scale-[0.97]"
                                 >
-                                    {loadingKey === 'gold_10k' ? '処理中...' : '330円で購入'}
+                                    {loadingKey === 'gold_10k' ? '処理中...' : '330円（税込）で購入'}
                                 </button>
                             </div>
 
@@ -382,7 +371,7 @@ export default function BillingModal({ onClose }: Props) {
                                     disabled={loadingKey !== null}
                                     className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-750 rounded-lg text-[10px] font-bold tracking-wider transition-all active:scale-[0.97]"
                                 >
-                                    {loadingKey === 'gold_30k' ? '処理中...' : '950円で購入'}
+                                    {loadingKey === 'gold_30k' ? '処理中...' : '950円（税込）で購入'}
                                 </button>
                             </div>
 
@@ -402,7 +391,7 @@ export default function BillingModal({ onClose }: Props) {
                                     disabled={loadingKey !== null}
                                     className="w-full py-1.5 bg-gradient-to-r from-amber-900/35 to-amber-800/35 hover:from-amber-900/50 hover:to-amber-800/50 text-amber-100 border border-amber-900/50 rounded-lg text-[10px] font-bold tracking-wider transition-all active:scale-[0.97]"
                                 >
-                                    {loadingKey === 'gold_50k' ? '処理中...' : '1,430円で購入'}
+                                    {loadingKey === 'gold_50k' ? '処理中...' : '1,430円（税込）で購入'}
                                 </button>
                             </div>
                         </div>
@@ -410,25 +399,9 @@ export default function BillingModal({ onClose }: Props) {
                 </div>
 
                 {/* フッター */}
-                <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
-                                className="rounded border-slate-800 bg-slate-900 text-amber-600 focus:ring-amber-500/50 focus:ring-2 w-4 h-4 cursor-pointer"
-                            />
-                            <span className="text-[10px] text-slate-350 font-bold">
-                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline inline-flex items-center gap-0.5">利用規約<ExternalLink size={8} /></a>
-                                および
-                                <a href="/legal" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline inline-flex items-center gap-0.5">特定商取引法に基づく表記<ExternalLink size={8} /></a>
-                                に同意します。
-                            </span>
-                        </label>
-                    </div>
-                    <div className="flex items-center gap-1 text-[9px] text-slate-500">
-                        <ShieldCheck size={12} className="text-emerald-600" />
+                <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950 flex justify-center items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-500 font-sans">
+                        <ShieldCheck size={14} className="text-emerald-600" />
                         <span>SSL 暗号化により決済データは安全に送信されます。</span>
                     </div>
                 </div>

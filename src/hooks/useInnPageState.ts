@@ -25,6 +25,11 @@ export function useInnPageState() {
     const searchParams = useSearchParams();
     const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated } = useGameStore();
 
+    const [billingDialog, setBillingDialog] = useState<{
+        title: string;
+        message: string;
+    } | null>(null);
+
     useEffect(() => {
         if (_hasHydrated && userProfile && worldState) {
             setLoading(false);
@@ -35,15 +40,48 @@ export function useInnPageState() {
     useEffect(() => {
         const billing = searchParams.get('billing');
         if (billing === 'success' || billing === 'gold_success') {
+            const tier = searchParams.get('tier');
+            const amount = searchParams.get('amount');
+            const pkg = searchParams.get('package');
+
+            let title = '購入完了';
+            let message = '';
+
+            if (billing === 'success') {
+                title = '契約が反映されました';
+                if (tier === 'premium') {
+                    message = '旅人のサブスクリプション（Premium プラン）が有効になりました。\n特典として「5,000 G」と「知識と契約の鍵 x3」、「魔道と鉄壁の鍵 x2」が宿屋の倉庫（インベントリ）に付与されました。';
+                } else {
+                    message = '旅人のサブスクリプション（Basic プラン）が有効になりました。\n特典として「2,000 G」と「知識と契約の鍵 x1」、「魔道と鉄壁の鍵 x1」が宿屋の倉庫（インベントリ）に付与されました。';
+                }
+            } else {
+                if (pkg === 'starter_pack') {
+                    title = 'スターターパック購入完了';
+                    message = 'スターターパックの購入が反映されました！\n「10,000 G」と「知識と契約の鍵 x5」、「魔道と鉄壁の鍵 x3」が宿屋の倉庫（インベントリ）に付与されました。';
+                } else if (pkg === 'elite_pack') {
+                    title = 'エリートパック購入完了';
+                    message = 'エリートパックの購入が反映されました！\n「30,000 G」と「知識と契約の鍵 x8」、「魔道と鉄壁の鍵 x5」が宿屋の倉庫（インベントリ）に付与されました。';
+                } else {
+                    title = 'ゴールド購入完了';
+                    const goldG = amount ? Number(amount).toLocaleString() : '---';
+                    message = `ご購入いただいた「${goldG} G」が所持ゴールドに反映されました。`;
+                }
+            }
+
+            setBillingDialog({ title, message });
+            soundManager?.playSE('se_item_get');
+
+            // ユーザープロフィールを再読み込みして最新データを画面に即時反映
+            fetchUserProfile();
+
             const purchaseId = process.env.NEXT_PUBLIC_X_CONVERSION_PURCHASE_ID;
             if (purchaseId) {
                 import('@/utils/xads').then(({ trackXEvent }) => {
-                    const tier = searchParams.get('tier');
-                    const amount = Number(searchParams.get('amount') || 0);
+                    const amountVal = Number(amount || 0);
                     // 金額算出（サブスクの場合は想定金額等）
                     const value = billing === 'success' 
                         ? (tier === 'premium' ? 1000 : 500) // プラン別仮金額
-                        : amount;
+                        : amountVal;
 
                     trackXEvent(purchaseId, {
                         value: String(value),
@@ -57,9 +95,10 @@ export function useInnPageState() {
             url.searchParams.delete('billing');
             url.searchParams.delete('tier');
             url.searchParams.delete('amount');
+            url.searchParams.delete('package');
             window.history.replaceState({}, '', url.pathname + url.search);
         }
-    }, [searchParams]);
+    }, [searchParams, fetchUserProfile]);
 
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
     const bgmKey = getBgmKey(
@@ -705,6 +744,7 @@ export function useInnPageState() {
         // State
         router, loading, worldState, userProfile, equipBonus, isHub,
         activeModal, setActiveModal,
+        billingDialog, setBillingDialog,
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,

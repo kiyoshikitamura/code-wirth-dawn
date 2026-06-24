@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useInnPageState } from '@/hooks/useInnPageState';
+import { soundManager } from '@/lib/soundManager';
 import InnHeader from '@/components/inn/InnHeader';
 import MainVisualArea from '@/components/inn/MainVisualArea';
 import FacilityGrid, { FacilityType } from '@/components/inn/FacilityGrid';
@@ -66,6 +67,7 @@ function InnPageInner() {
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
         showBilling, setShowBilling,
+        billingDialog, setBillingDialog,
         resultOverlay, setResultOverlay,
         restLoading,
         traveling,
@@ -442,6 +444,20 @@ function InnPageInner() {
                     cancelText="キャンセル"
                     onConfirm={executeRest}
                     onCancel={() => setShowRestConfirm(false)}
+                />
+            )}
+
+            {/* 決済反映完了ダイアログ */}
+            {billingDialog && (
+                <ConfirmDialog
+                    title={billingDialog.title}
+                    message={billingDialog.message}
+                    confirmText="閉じる"
+                    singleButton={true}
+                    onConfirm={() => {
+                        soundManager?.playSE('se_click');
+                        setBillingDialog(null);
+                    }}
                 />
             )}
 
