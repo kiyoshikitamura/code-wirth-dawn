@@ -331,6 +331,8 @@ export function useInnPageState() {
 
         const syncAnonymousFlag = async () => {
             try {
+                // OAuth直後のアクセストークン交換タイムラグ対策として1秒待機
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user || user.is_anonymous) return;
                 await supabase.from('user_profiles').update({ is_anonymous: false }).eq('id', user.id);
