@@ -444,8 +444,7 @@ export default function QuestResultModal({
                         </section>
                     )}
 
-                    /* ── シェアセクション 一時廃止 ── */
-                    null
+                    {/* ── シェアセクション 一時廃止 ── */}
                 </div>
 
                 <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10">
