@@ -30,11 +30,57 @@ interface ListCard {
 
 interface Props {
     onClose: () => void;
+    onOpenBilling: () => void;
 }
 
+<<<<<<< HEAD
 export default function AcademyModal({ onClose }: Props) {
     const { gold, fetchInventory } = useGameStore();
     const [phase, setPhase] = useState<'shop' | 'pack_sealed' | 'pack_ripped' | 'cards_reveal'>('shop');
+=======
+// パック別の定数設定
+const SERIES_CONFIG = {
+    chaos_and_rebellion: {
+        id: 'chaos_and_rebellion' as const,
+        name: '混沌の魔導と反逆の鉄壁',
+        sub: 'Chaos Spell & Rebel Aegis Booster Pack',
+        wrapperImage: '/images/booster_pack_wrapper.png',
+        cardBackImage: '/images/booster_pack_wrapper.png',
+        price: 5000,
+        refund: 500,
+        keyId: 77,
+        keySlug: 'item_academy_key',
+        keyName: '魔術学院キー',
+        themeBg: 'via-[#0d0f1f]/50',
+        cardBackBg: 'bg-indigo-950/45',
+        themeGlow: 'shadow-[0_0_30px_rgba(99,102,241,0.45)]',
+        colorClass: 'from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 border-amber-400 shadow-amber-500/10',
+        textColor: 'text-amber-400'
+    },
+    basic: {
+        id: 'basic' as const,
+        name: '黎明の知識と古の契約',
+        sub: 'Ancient Knowledge & Covenant of Dawn',
+        wrapperImage: '/images/card_back_basic.png',
+        cardBackImage: '/images/card_back_basic.png',
+        price: 3000,
+        refund: 300,
+        keyId: 76,
+        keySlug: 'item_basic_key',
+        keyName: 'ベーシックキー',
+        themeBg: 'via-[#09152b]/50',
+        cardBackBg: 'bg-slate-900/40',
+        themeGlow: 'shadow-[0_0_30px_rgba(14,165,233,0.45)]',
+        colorClass: 'from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 border-cyan-400 shadow-cyan-500/10',
+        textColor: 'text-cyan-400'
+    }
+};
+
+export default function AcademyModal({ onClose, onOpenBilling }: Props) {
+    const { gold, inventory, fetchInventory, fetchUserProfile } = useGameStore();
+    const [currentSeries, setCurrentSeries] = useState<'basic' | 'chaos_and_rebellion'>('chaos_and_rebellion');
+    const [phase, setPhase] = useState<'shop' | 'pack_sealed' | 'pack_ripped' | 'cards_reveal' | 'card_list'>('shop');
+>>>>>>> e9c9193 (feat: update subscription weekly bonus and add starter/elite packages with isolated billing modal)
     const [purchasing, setPurchasing] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [rolledCards, setRolledCards] = useState<AcademyCard[]>([]);
@@ -176,11 +222,77 @@ export default function AcademyModal({ onClose }: Props) {
                         {/* Shimmer/Foil accents */}
                         <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out" />
                         
+<<<<<<< HEAD
                         <span className="text-[8px] sm:text-[9px] text-amber-400 font-bold uppercase tracking-[0.25em] border border-amber-500/40 px-2 py-0.5 rounded bg-black/50">EXTRA EDITION</span>
                         
                         <div className="text-center bg-black/60 px-2.5 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm">
                             <span className="block text-sm sm:text-lg font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200 leading-none tracking-widest mb-1 drop-shadow-lg whitespace-nowrap">魔導と鉄壁</span>
                             <span className="block text-[7px] sm:text-[8px] text-indigo-300 font-bold uppercase tracking-widest">Booster Pack</span>
+=======
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                            {/* ゴールドで購入ボタン */}
+                            <div className="flex-1 w-full flex flex-col items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                    <Coins className="w-3.5 h-3.5 text-amber-400" />
+                                    <span className="font-mono font-bold text-amber-300 text-sm sm:text-base">{activeConfig.price.toLocaleString()} G</span>
+                                </div>
+                                {gold < activeConfig.price ? (
+                                    <button
+                                        onClick={onOpenBilling}
+                                        className="w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 border-amber-400 shadow-amber-500/10"
+                                    >
+                                        ゴールドをチャージ
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleBuyPack(false)}
+                                        disabled={purchasing}
+                                        className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
+                                            ${gold < activeConfig.price 
+                                                ? 'bg-slate-800/50 text-slate-500 border-slate-700 cursor-not-allowed'
+                                                : `bg-gradient-to-r ${activeConfig.colorClass}`
+                                            }`}
+                                    >
+                                        {purchasing && !keyCount ? (
+                                            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <span>G でパック購入</span>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* 鍵で開封ボタン */}
+                            <div className="flex-1 w-full flex flex-col items-center gap-1.5">
+                                <div className="text-[10px] text-slate-400 font-bold tracking-wider">
+                                    {activeConfig.keyName} (所持: <span className={keyCount > 0 ? 'text-green-400 font-bold' : 'text-slate-500'}>{keyCount}</span>)
+                                </div>
+                                {keyCount <= 0 ? (
+                                    <button
+                                        onClick={onOpenBilling}
+                                        className="w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-emerald-950 border-emerald-400 shadow-emerald-500/10"
+                                    >
+                                        鍵を購入する
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleBuyPack(true)}
+                                        disabled={purchasing}
+                                        className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
+                                            ${keyCount <= 0 
+                                                ? 'bg-slate-800/30 text-slate-650 border-slate-800 cursor-not-allowed shadow-none'
+                                                : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-emerald-950 border-emerald-400 shadow-emerald-500/10'
+                                            }`}
+                                    >
+                                        {purchasing && keyCount > 0 ? (
+                                            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <span>鍵でパック開封</span>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+>>>>>>> e9c9193 (feat: update subscription weekly bonus and add starter/elite packages with isolated billing modal)
                         </div>
                         
                         <div className="flex items-center gap-1 text-amber-400 font-black text-xs sm:text-sm bg-black/75 px-2.5 py-1 rounded-full border border-amber-500/30">

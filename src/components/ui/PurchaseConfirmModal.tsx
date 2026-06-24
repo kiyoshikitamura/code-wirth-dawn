@@ -5,20 +5,10 @@ import { Crown, Zap, Coins, Check, ExternalLink, ShieldCheck } from 'lucide-reac
 
 type PurchaseType = 'subscription' | 'gold';
 
-interface SubscriptionInfo {
-    type: 'subscription';
-    tier: 'basic' | 'premium';
-}
-
-interface GoldInfo {
-    type: 'gold';
-    packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k';
-}
-
-type PurchaseInfo = SubscriptionInfo | GoldInfo;
-
 interface PurchaseConfirmModalProps {
-    purchase: PurchaseInfo;
+    type: PurchaseType;
+    tier?: 'basic' | 'premium';
+    packageKey?: 'gold_10k' | 'gold_30k' | 'gold_50k' | 'gold_starter' | 'gold_elite';
     onConfirm: () => void;
     onCancel: () => void;
     loading?: boolean;
@@ -36,7 +26,7 @@ const PLAN_DETAILS = {
             'キャラクタースロット 3枠',
             '英霊登録 最大3体',
             '英霊ロイヤリティ 25%',
-            'Weekly 2,000G ボーナス',
+            'Weekly 2,000G ＋ 鍵各1個 ボーナス',
             '⚡ 青枠プロフィール装飾',
         ],
     },
@@ -51,7 +41,7 @@ const PLAN_DETAILS = {
             'キャラクタースロット 5枠',
             '英霊登録 最大10体',
             '英霊ロイヤリティ 35%',
-            'Weekly 5,000G ボーナス',
+            'Weekly 5,000G ＋ 知識と契約の鍵x3、魔道と知識の鍵x2 ボーナス',
             '👑 金枠プロフィール装飾',
         ],
     },
@@ -59,7 +49,7 @@ const PLAN_DETAILS = {
 
 const GOLD_DETAILS = {
     gold_10k: {
-        name: 'スターターパック',
+        name: 'ゴールドパック・ミニ',
         amount: '10,000 G',
         price: '330円（税込）',
     },
@@ -73,6 +63,16 @@ const GOLD_DETAILS = {
         amount: '50,000 G',
         price: '1,430円（税込）',
     },
+    gold_starter: {
+        name: 'スターターパック (限定)',
+        amount: '10,000 G ＋ 知識と契約の鍵 x5 ＋ 魔道と知識の鍵 x3 (実質 40,000 G分)',
+        price: '880円（税込）',
+    },
+    gold_elite: {
+        name: 'エリートパック (限定)',
+        amount: '30,000 G ＋ 知識と契約の鍵 x8 ＋ 魔道と知識の鍵 x5 (実質 79,000 G分)',
+        price: '1,320円（税込）',
+    },
 };
 
 /**
@@ -81,15 +81,17 @@ const GOLD_DETAILS = {
  * プラン内容・金額・自動更新の有無を明示してから決済画面へ遷移する。
  */
 export default function PurchaseConfirmModal({
-    purchase,
+    type,
+    tier,
+    packageKey,
     onConfirm,
     onCancel,
     loading = false,
 }: PurchaseConfirmModalProps) {
     const [agreed, setAgreed] = useState(false);
 
-    if (purchase.type === 'subscription') {
-        const plan = PLAN_DETAILS[purchase.tier];
+    if (type === 'subscription' && tier) {
+        const plan = PLAN_DETAILS[tier];
         return (
             <div
                 className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
@@ -176,63 +178,67 @@ export default function PurchaseConfirmModal({
     }
 
     // ── ゴールド購入 ──
-    const gold = GOLD_DETAILS[purchase.packageKey];
-    return (
-        <div
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
-            onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
-        >
-            <div className="bg-[#1a120b] border-2 border-yellow-700/60 w-full max-w-sm shadow-2xl p-5 animate-in zoom-in-95 duration-200">
-                {/* ヘッダー */}
-                <div className="flex items-center gap-2 mb-4 border-b border-[#3e2723] pb-3">
-                    <Coins className="w-5 h-5 text-yellow-400" />
-                    <h3 className="text-lg font-serif font-bold text-[#e3d5b8]">ゴールド購入</h3>
-                </div>
-
-                {/* 購入内容 */}
-                <div className="bg-black/40 border border-slate-700 rounded p-3 mb-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">パッケージ</span>
-                        <span className="font-bold text-[#e3d5b8]">{gold.name}</span>
+    if (type === 'gold' && packageKey) {
+        const gold = GOLD_DETAILS[packageKey];
+        return (
+            <div
+                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
+                onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+            >
+                <div className="bg-[#1a120b] border-2 border-yellow-700/60 w-full max-w-sm shadow-2xl p-5 animate-in zoom-in-95 duration-200">
+                    {/* ヘッダー */}
+                    <div className="flex items-center gap-2 mb-4 border-b border-[#3e2723] pb-3">
+                        <Coins className="w-5 h-5 text-yellow-400" />
+                        <h3 className="text-lg font-serif font-bold text-[#e3d5b8]">ゴールド購入</h3>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">付与ゴールド</span>
-                        <span className="font-bold text-yellow-400">🪙 {gold.amount}</span>
+
+                    {/* 購入内容 */}
+                    <div className="bg-black/40 border border-slate-700 rounded p-3 mb-4 space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-400">パッケージ</span>
+                            <span className="font-bold text-[#e3d5b8]">{gold.name}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-400">内容・付与アイテム</span>
+                            <span className="font-bold text-yellow-400"> {gold.amount}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-400">価格</span>
+                            <span className="font-bold text-[#e3d5b8]">{gold.price}</span>
+                        </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">価格</span>
-                        <span className="font-bold text-[#e3d5b8]">{gold.price}</span>
+
+                    <p className="text-[11px] text-slate-500 mb-4">
+                        ※ 一度限りの購入です（自動更新なし）。決済完了後、ゲーム内にゴールドとアイテムが即時付与されます。
+                    </p>
+
+                    {/* ボタン */}
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onCancel}
+                            disabled={loading}
+                            className="flex-1 py-2.5 text-sm font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors disabled:opacity-40"
+                        >
+                            キャンセル
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            disabled={loading}
+                            className="flex-1 py-2.5 text-sm font-bold bg-yellow-900/40 border border-yellow-600 text-yellow-200 rounded hover:bg-yellow-900/60 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
+                        >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            {loading ? '処理中...' : '購入に進む'}
+                        </button>
                     </div>
+
+                    <p className="text-[9px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
+                        <ShieldCheck className="w-3 h-3" />
+                        Stripe決済画面に遷移します
+                    </p>
                 </div>
-
-                <p className="text-[11px] text-slate-500 mb-4">
-                    ※ 一度限りの購入です（自動更新なし）。決済完了後、ゲーム内にゴールドが即時付与されます。
-                </p>
-
-                {/* ボタン */}
-                <div className="flex gap-3">
-                    <button
-                        onClick={onCancel}
-                        disabled={loading}
-                        className="flex-1 py-2.5 text-sm font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors disabled:opacity-40"
-                    >
-                        キャンセル
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        disabled={loading}
-                        className="flex-1 py-2.5 text-sm font-bold bg-yellow-900/40 border border-yellow-600 text-yellow-200 rounded hover:bg-yellow-900/60 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
-                    >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        {loading ? '処理中...' : '購入に進む'}
-                    </button>
-                </div>
-
-                <p className="text-[9px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
-                    <ShieldCheck className="w-3 h-3" />
-                    Stripe決済画面に遷移します
-                </p>
             </div>
-        </div>
-    );
+        );
+    }
+
+    return null;
 }

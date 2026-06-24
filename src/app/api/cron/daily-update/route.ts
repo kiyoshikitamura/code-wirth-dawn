@@ -297,14 +297,12 @@ async function performUpdate(isForceUgcReset: boolean) {
             // 最終ボーナスから7日未経過ならスキップ
             if (user.last_weekly_bonus_at && user.last_weekly_bonus_at > sevenDaysAgo) continue;
 
-            const amount = user.subscription_tier === 'premium' ? 5000 : 2000;
+            // アトミックRPCを呼び出してゴールド＋鍵を付与し、同時に日付を更新する
+            const { data: isSuccess, error: bonusErr } = await supabaseServer
+                .rpc('process_weekly_subscription_bonus', { p_user_id: user.id, p_tier: user.subscription_tier });
 
-            // アトミックRPCを呼び出して二重付与を完全に防止し、同時に日付を更新する
-            const { data: isSuccess, error: goldErr } = await supabaseServer
-                .rpc('process_weekly_gold_bonus', { p_user_id: user.id, p_amount: amount });
-
-            if (goldErr) {
-                logs.push(`[WeeklyBonus] Failed to award user ${user.id}: ${goldErr.message}`);
+            if (bonusErr) {
+                logs.push(`[WeeklyBonus] Failed to award user ${user.id}: ${bonusErr.message}`);
             } else if (isSuccess) {
                 bonusCount++;
             }

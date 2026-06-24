@@ -42,7 +42,7 @@ export async function POST(req: Request) {
             premium: process.env.STRIPE_PRICE_ID_PREMIUM || '',
         };
 
-        const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number }> = {
+        const GOLD_PACKAGES: Record<string, { priceId: string; goldAmount: number; isLimited?: boolean; packageKey?: string }> = {
             gold_10k: {
                 priceId: process.env.STRIPE_PRICE_ID_GOLD_10K || '',
                 goldAmount: 10000,
@@ -54,6 +54,18 @@ export async function POST(req: Request) {
             gold_50k: {
                 priceId: process.env.STRIPE_PRICE_ID_GOLD_50K || '',
                 goldAmount: 50000,
+            },
+            gold_starter: {
+                priceId: process.env.STRIPE_PRICE_ID_STARTER_PACK || '',
+                goldAmount: 10000,
+                isLimited: true,
+                packageKey: 'starter_pack',
+            },
+            gold_elite: {
+                priceId: process.env.STRIPE_PRICE_ID_ELITE_PACK || '',
+                goldAmount: 30000,
+                isLimited: true,
+                packageKey: 'elite_pack',
             },
         };
 
@@ -130,9 +142,36 @@ export async function POST(req: Request) {
             const pkg = packageKey ? GOLD_PACKAGES[packageKey] : null;
             if (!pkg) {
                 return NextResponse.json(
-                    { error: `packageKey は 'gold_10k', 'gold_30k', または 'gold_50k' を指定してください。` },
+                    { error: `packageKey は 'gold_10k', 'gold_30k', 'gold_50k', 'gold_starter', または 'gold_elite' を指定してください。` },
                     { status: 400 }
                 );
+            }
+
+            // 1回限り購入パッケージのバリデーション
+            if (pkg.isLimited && pkg.packageKey) {
+                const flagColumn = pkg.packageKey === 'starter_pack' ? 'has_purchased_starter' : 'has_purchased_elite';
+                const { data: profile, error: profileErr } = await supabaseAdmin
+                    .from('user_profiles')
+                    .select(flagColumn)
+                    .eq('id', userId)
+                    .single();
+
+                if (profileErr) {
+                    console.error('[checkout] Profile fetch error for limited pack:', profileErr);
+                    return NextResponse.json({ error: 'ユーザープロファイルが見つかりません。' }, { status: 400 });
+                }
+
+                if (profile && (profile as any)[flagColumn] === true) {
+                    return NextResponse.json({ error: 'この限定パックはすでに購入済みです。' }, { status: 400 });
+                }
+            }
+
+            const sessionMetadata: Record<string, string> = {
+                user_id: userId,
+                gold_amount: String(pkg.goldAmount),
+            };
+            if (pkg.packageKey) {
+                sessionMetadata.package_key = pkg.packageKey;
             }
 
             const session = await stripe.checkout.sessions.create({
@@ -140,8 +179,8 @@ export async function POST(req: Request) {
                 line_items: [{ price: pkg.priceId, quantity: 1 }],
                 client_reference_id: userId,
                 customer_email: user.email || undefined, // Stripe Customer のメールアドレスを統一
-                metadata: { user_id: userId, gold_amount: String(pkg.goldAmount) },
-                success_url: `${origin}/inn?billing=gold_success&amount=${pkg.goldAmount}`,
+                metadata: sessionMetadata,
+                success_url: `${origin}/inn?billing=gold_success&amount=${pkg.goldAmount}${pkg.packageKey ? `&package=${pkg.packageKey}` : ''}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
             });
 

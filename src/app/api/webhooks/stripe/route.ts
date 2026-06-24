@@ -149,14 +149,13 @@ export async function POST(req: Request) {
                     console.log(`[webhooks/stripe] subscription_tier → ${newTier}, status → ${subStatus} for user ${userId}`);
 
                     if (shouldAwardBonus) {
-                        const amount = newTier === 'premium' ? 5000 : 2000;
                         const { data: isSuccess, error: rpcErr } = await supabaseAdmin
-                            .rpc('process_weekly_gold_bonus', { p_user_id: userId, p_amount: amount });
+                            .rpc('process_weekly_subscription_bonus', { p_user_id: userId, p_tier: newTier });
                         
                         if (rpcErr) {
-                            console.error('[webhooks/stripe] Failed to award initial weekly gold bonus:', rpcErr);
+                            console.error('[webhooks/stripe] Failed to award initial weekly bonus:', rpcErr);
                         } else {
-                            console.log(`[webhooks/stripe] Awarded initial weekly bonus of ${amount}G to user ${userId} (success: ${isSuccess})`);
+                            console.log(`[webhooks/stripe] Awarded initial weekly bonus (tier: ${newTier}) to user ${userId} (success: ${isSuccess})`);
                         }
                     }
 
@@ -178,7 +177,32 @@ export async function POST(req: Request) {
                     // ─── ゴールド都度購入 ───
                     const goldAmount = Number(session.metadata?.gold_amount ?? 0);
 
-                    if (goldAmount > 0) {
+                    const packageKey = session.metadata?.package_key;
+
+                    if (packageKey) {
+                        const { data: isSuccess, error: packErr } = await supabaseAdmin
+                            .rpc('process_package_purchase', { p_user_id: userId, p_package_key: packageKey });
+
+                        if (packErr || !isSuccess) {
+                            console.error(`[webhooks/stripe] Failed to process package purchase ${packageKey} for user ${userId}:`, packErr);
+                            throw packErr || new Error('Package purchase processing failed');
+                        }
+                        console.log(`[webhooks/stripe] Processed package ${packageKey} for user ${userId}`);
+
+                        // Record payment log (Spec Dashboard Extensions)
+                        const { error: payLogErr } = await supabaseAdmin
+                            .from('payment_logs')
+                            .insert({
+                                id: session.id,
+                                user_id: userId,
+                                amount: session.amount_total ?? 0,
+                                gold_amount: goldAmount,
+                                type: 'gold_purchase'
+                            });
+                        if (payLogErr) {
+                            console.error('[webhooks/stripe] Failed to write payment_logs for package purchase:', payLogErr);
+                        }
+                    } else if (goldAmount > 0) {
                         const { data: profile, error: fetchErr } = await supabaseAdmin
                             .from('user_profiles')
                             .select('gold')
@@ -264,14 +288,13 @@ export async function POST(req: Request) {
                 console.log(`[webhooks/stripe] subscription.updated: tier → ${newTier}, status → ${subStatus} for user ${userId}`);
 
                 if (shouldAwardBonus) {
-                    const amount = newTier === 'premium' ? 5000 : 2000;
                     const { data: isSuccess, error: rpcErr } = await supabaseAdmin
-                        .rpc('process_weekly_gold_bonus', { p_user_id: userId, p_amount: amount });
+                        .rpc('process_weekly_subscription_bonus', { p_user_id: userId, p_tier: newTier });
                     
                     if (rpcErr) {
-                        console.error('[webhooks/stripe] Failed to award initial weekly gold bonus on update:', rpcErr);
+                        console.error('[webhooks/stripe] Failed to award initial weekly bonus on update:', rpcErr);
                     } else {
-                        console.log(`[webhooks/stripe] Awarded initial weekly bonus of ${amount}G to user ${userId} on update (success: ${isSuccess})`);
+                        console.log(`[webhooks/stripe] Awarded initial weekly bonus (tier: ${newTier}) to user ${userId} on update (success: ${isSuccess})`);
                     }
                 }
                 break;

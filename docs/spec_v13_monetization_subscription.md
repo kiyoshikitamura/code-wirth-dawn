@@ -67,7 +67,7 @@ UPDATE user_profiles
 | キャラクタースロット数 | 1枠 | 3枠 | 5枠 |
 | 英霊 (Heroic) 登録数 | 不可 (0) | 最大 3体 | 最大 10体 |
 | 英霊ロイヤリティ率 | — | **25%** (Free=登録不可) | **35%** |
-| Weeklyログインボーナス | なし | **2,000G/週** (約8,000G/月) | **5,000G/週** (約20,000G/月) |
+| Weeklyログインボーナス | なし | **2,000G ＋ 知識と契約の鍵x1 ＋ 魔道と知識の鍵x1 / 週** | **5,000G ＋ 知識と契約の鍵x3 ＋ 魔道と知識の鍵x2 / 週** |
 | プロフィール装飾 | なし | ⚡ 青枠 + Basicバッジ | 👑 金枠 + Premiumバッジ |
 | UGC 公開枠 *(Phase 2)* | 最大 1クエスト | 最大 5クエスト | 最大 30クエスト |
 | UGC 保存枠 *(Phase 2)* | 最大 5クエスト | 最大 10クエスト | 最大 50クエスト |
@@ -134,35 +134,54 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 
 ---
 
-## 6. ゴールド都度購入 (One-time Gold Purchases)
+## 6. パッケージおよびゴールドの都度購入 (One-time Package & Gold Purchases)
 
-### 6.1 パッケージ一覧
+### 6.1 商品ラインナップ
 
-ユーザーは必要に応じて以下のゴールドパッケージを購入できる。
+#### 6.1.1 アカウント限定パッケージ (1アカウントにつき1回のみ購入可能)
+ユーザーはアカウント保護（Google等との連携）を完了している場合、以下の限定お得パッケージを1回限り購入できる。
 
-| パッケージ名 | 付与ゴールド | 価格（税込） | 環境変数 | 説明 |
+| パッケージ名 | 価格（税込） | 内容アイテム | 実質価値換算 | 環境変数 |
 |---|---|---|---|---|
-| スターターパック | 10,000 G | 330円 | `STRIPE_PRICE_ID_GOLD_10K` | お手軽な初期ブースト用 |
-| スタンダードパック | 30,000 G | 950円 | `STRIPE_PRICE_ID_GOLD_30K` | 標準的なパッケージ |
-| アドベンチャーパック | 50,000 G | 1,430円 | `STRIPE_PRICE_ID_GOLD_50K` | まとめ買い・コスパ重視向け |
+| **スターターパック** | 880円 | 10,000 G ＋ 知識と契約の鍵 x5 ＋ 魔道と知識 of 鍵 x3 | 実質 40,000 G 分 | `STRIPE_PRICE_ID_STARTER_PACK` |
+| **エリートパック** | 1,320円 | 30,000 G ＋ 知識と契約の鍵 x8 ＋ 魔道と知識 of 鍵 x5 | 実質 79,000 G 分 | `STRIPE_PRICE_ID_ELITE_PACK` |
+
+* **購入制限判定**:
+  - `user_profiles` テーブルに追加された `has_purchased_starter` / `has_purchased_elite` カラムでフラグ管理する。
+  - フロントエンド、Checkout API (`/api/billing/checkout`)、Stripe Webhook (`/api/webhooks/stripe`) の各レイヤーで重複購入を防止・検証する。
+
+#### 6.1.2 通常ゴールドパッケージ (購入回数の制限なし)
+必要なゴールドを単品で都度購入することができる。
+
+| パッケージ名 | 獲得ゴールド | 価格（税込） | 環境変数 | 説明 |
+|---|---|---|---|---|
+| **ゴールドパック・ミニ** | 10,000 G | 330円 | `STRIPE_PRICE_ID_GOLD_10K` | お手軽な初期ブースト用（旧スターターパック） |
+| **スタンダードパック** | 30,000 G | 950円 | `STRIPE_PRICE_ID_GOLD_30K` | 標準的なパッケージ |
+| **アドベンチャーパック** | 50,000 G | 1,430円 | `STRIPE_PRICE_ID_GOLD_50K` | コスパ重視向け |
 
 > [!NOTE]
-> 価格はStripe管理コンソール上の Price 設定に依存する。コード側では Price ID と付与ゴールドのみを管理する。
+> 通常ゴールドパッケージの購入回数制限はない。スターターパック／エリートパックのみが「1回限り」の制限を受ける。
 
-### 6.2 購入フロー
+### 6.2 購入フローとセキュリティ
 
-1. アカウント設定モーダル（`AccountSettingsModal.tsx`）の「ゴールド購入」セクションから、パッケージを選択してボタンを押下する。
-2. `POST /api/billing/checkout` に `{ userId, mode: 'payment', priceId }` を送信し、Stripe Checkout URL を取得する。
-3. Stripe の決済画面にリダイレクト。決済完了後、`/inn?billing=gold_success&amount=<付与G>` へリダイレクトされる。
-4. Stripe から `checkout.session.completed` Webhook が届き、`increment_gold` RPC を実行してゴールドを加算する。
+1. **購入トリガー**: 統合課金モーダル（`BillingModal.tsx`）からパッケージを選択し、「特定商取引法に基づく表示に同意する」にチェックを入れて購入ボタンを押下する。
+2. **決済セッション発行**: `POST /api/billing/checkout` に `{ mode: 'payment', packageKey }` を送信する。
+   - API側はJWT検証から `userId` を特定。
+   - `packageKey` が `gold_starter` または `gold_elite` の場合、DBを検索してすでに `has_purchased_starter` または `has_purchased_elite` が `true` になっていないかチェックし、購入済みの場合は `400 Bad Request` で処理を遮断する。
+   - Stripe Session 作成時の metadata に `package_key` として `'starter_pack'` または `'elite_pack'` を設定し、`gold_amount` も含める。
+3. **Stripe決済画面**: Stripe決済ページへ遷移し、決済完了後 `/inn?billing=gold_success&amount=<付与G>&package=<packageKey>` にリダイレクトされる。
+4. **Webhook付与処理**: Stripe Webhook (`checkout.session.completed`) でイベントを受信。
+   - メタデータに `package_key` が含まれている場合、PostgreSQL RPC である `process_package_purchase` を呼び出す。
+   - RPC内部でアトミックに「ゴールドの加算」「鍵アイテムのインベントリ追加 (upsert)」「購入済みフラグの `true` 更新」を行い、多重付与や二重購入をデータベースのトランザクションレベルで防ぐ。
+   - `package_key` が含まれない通常ゴールド購入の場合は、従来通り `increment_gold` RPC にてゴールドのみを加算する。
 
 ### 6.3 UI実装箇所
 
 | ファイル | 内容 |
 |---|---|
-| `AccountSettingsModal.tsx` | ゴールド購入ボタンの配置 ✅ **実装済み** |
-| `billing/checkout/route.ts` | `mode: 'payment'` の Checkout Session 発行 ✅ **実装済み** |
-| `webhooks/stripe/route.ts` | `gold_amount` の加算処理 ✅ **実装済み** |
+| `BillingModal.tsx` | 統合課金モーダル。サブスクプラン表示および通常・限定都度課金パッケージの選択、1回限り購入済み商品の非活性化、特商法確認チェックのUIを実装。 |
+| `billing/checkout/route.ts` | JWT認証、1回限り購入パッケージの事前チェック、Metadata追加。 |
+| `webhooks/stripe/route.ts` | 限定パッケージのWebhookハンドリング、アトミック付与RPC `process_package_purchase` の呼び出し。 |
 
 ---
 
@@ -357,3 +376,37 @@ const { count: draftCount } = await supabase
   3. 該当の Stripe 顧客に紐づくサブスクリプションリストを取得し、`status` が `active` または `trialing` のものを即時解約する。
 * **フォールバック設計**:
   Stripe APIの呼び出しに失敗（ネットワーク障害やAPI Keyの不備等）した場合でも、ユーザーのゲーム体験を阻害しないよう例外をキャッチして警告ログを出力し、データベース上のキャラクターデータ削除処理自体は正常に進める。
+
+---
+
+## 12. v38.0 改訂: 課金導線UIの分離と新規パッケージ (2026-06-24)
+
+### 12.1 課金導線UIの分離再設計
+従来は設定画面（`AccountSettingsModal`）に混在していた「ゴールド購入」および「プラン入会」のUIを完全に削除し、Stripeカスタマーポータルの起動ボタンのみを維持する。
+新しく、設定画面とは独立した統合課金モーダル `BillingModal.tsx` を新設し、全ての課金（サブスクプラン紹介・加入手続き、通常およびアカウント限定都度課金パッケージの購入）をここに集約・カプセル化する。
+
+### 12.2 統合課金モーダルへのアクセス導線
+統合課金モーダル `BillingModal` へアクセスする導線を以下の箇所に新規配置する。
+1. **宿屋ヘッダーおよびワールドマップヘッダー**: ⚙アイコンの左隣に「カード・コイン」を模した課金ボタンを追加し、クリック時に直接 `BillingModal` を起動させる。
+2. **魔術学院 (AcademyModal)**: ゴールドまたは鍵が不足しており、カードパックの購入・開封が行えない場合、エラー文の隣に「ゴールド/鍵をチャージする」等の導線ボタンを動的に表示。クリック時に `BillingModal` をポップアップ起動し、ユーザーにチャージを促すシームレスなUXを構築する。
+
+### 12.3 新規限定パッケージと購入制御
+- 1アカウントにつき1回限り購入可能な「スターターパック (880円 / 実質40k G分)」および「エリートパック (1320円 / 実質79k G分)」を追加。
+- アカウント限定チェックのバリデーションは、ゲーム側（サーバー Checkout API、フロントUIの非活性化、Stripe Webhook）の3層ガードで厳密に行う。
+- 決済成功時のゴールドおよび鍵アイテムの付与は、DBレベルのトランザクションを保証する PostgreSQL RPC (`process_package_purchase`) により、アトミックに処理される。
+
+### 12.4 既存加入者への鍵アイテム一括補填
+サブスクリプション特典のアップデートに伴い、現在アクティブな既存加入者に対し、本来付与されるべきだった鍵アイテム（Basic: 知識と契約の鍵x1, 魔道と知識の鍵x1 / Premium: 知識と契約の鍵x3, 魔道と知識の鍵x2）を一度だけインベントリに補填付与するマイグレーション SQL (`20260624000001_compensate_existing_subscribers.sql`) を実行する。
+
+### 12.5 実装状態（更新）
+
+| 機能 | 状態 |
+|---|---|
+| 統合課金モーダル (`BillingModal.tsx`) | ✅ **実装済み** |
+| 設定画面 (`AccountSettingsModal.tsx`) からの課金分離 | ✅ **実装済み** |
+| ヘッダー（GlobalStatusBar, InnHeader）への課金導線配置 | ✅ **実装済み** |
+| 魔術学院 (`AcademyModal.tsx`) でのゴールド/鍵不足チャージ遷移 | ✅ **実装済み** |
+| アトミックなWeeklyサブスクボーナスRPC (`process_weekly_subscription_bonus`) | ✅ **実装済み** |
+| アトミックなパッケージ購入処理RPC (`process_package_purchase`) | ✅ **実装済み** |
+| Stripe Webhook での限定パッケージ処理とWeeklyボーナス鍵対応 | ✅ **実装済み** |
+| 既存加入者への鍵アイテム一括補填SQL | ✅ **実装済み** |
