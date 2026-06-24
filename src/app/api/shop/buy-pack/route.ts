@@ -218,3 +218,98 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status });
     }
 }
+
+// GET: パック内の収録カード一覧の取得
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const packSeries = searchParams.get('pack_series') === 'basic' ? 'basic' : 'chaos_and_rebellion';
+        
+        const pools = packSeries === 'basic' ? BASIC_POOLS : ACADEMY_POOLS;
+        const allIds = [
+            ...pools.SR,
+            ...pools.R,
+            ...pools.U,
+            ...pools.C
+        ];
+
+        const { data: skillDetails, error: detailsError } = await supabaseService
+            .from('skills')
+            .select(`
+                id,
+                name,
+                slug,
+                image_url,
+                description,
+                cards (
+                    id,
+                    slug,
+                    name,
+                    type,
+                    cost_type,
+                    cost_val,
+                    effect_val,
+                    ap_cost,
+                    target_type,
+                    effect_id,
+                    image_url,
+                    description
+                )
+            `)
+            .in('id', allIds);
+
+        if (detailsError) {
+            throw detailsError;
+        }
+
+        // ID順にソートし、レアリティ情報をマージして返却する
+        const skillsResponse = (skillDetails || []).map((detail: any) => {
+            const skillId = Number(detail.id);
+            const rarity = getSkillRarity(skillId);
+            const card = detail.cards;
+            const effectData = card ? {
+                cost_val: card.cost_val,
+                effect_val: card.effect_val,
+                cost_type: card.cost_type,
+                card_type: card.type,
+                ap_cost: card.ap_cost ?? 1,
+                target_type: card.target_type,
+                effect_id: card.effect_id || null,
+                image_url: card.image_url || null,
+                description: detail.description || card.description || card.name
+            } : {};
+
+            return {
+                id: skillId,
+                name: detail.name,
+                slug: detail.slug,
+                image_url: card?.image_url || detail.image_url || '/images/items/book_focus.png',
+                description: card?.description || detail.description || '',
+                ap_cost: card?.ap_cost || 1,
+                card_type: card?.type || 'Skill',
+                rarity,
+                effect_data: effectData
+            };
+        });
+
+        // ソート順：SR -> R -> U -> C、かつその中ではID昇順にする
+        const rarityWeight = { SR: 4, R: 3, U: 2, C: 1 };
+        skillsResponse.sort((a, b) => {
+            const weightA = rarityWeight[a.rarity] || 0;
+            const weightB = rarityWeight[b.rarity] || 0;
+            if (weightA !== weightB) {
+                return weightB - weightA; // 高レアリティ優先
+            }
+            return a.id - b.id; // 同レアリティ内ではID順
+        });
+
+        return NextResponse.json({
+            success: true,
+            cards: skillsResponse
+        });
+
+    } catch (err: any) {
+        console.error('[Buy Pack API GET] Error:', err);
+        return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    }
+}

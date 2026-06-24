@@ -4,6 +4,7 @@ import { Sparkles, Coins, BookOpen, ArrowRight, RotateCcw, X } from 'lucide-reac
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 import { getAuthHeaders } from '@/lib/authToken';
+import { getEffectList } from '@/lib/itemUtils';
 
 interface AcademyCard {
     id: number;
@@ -13,6 +14,18 @@ interface AcademyCard {
     description: string;
     rarity: 'SR' | 'R' | 'U' | 'C';
     isDuplicate: boolean;
+}
+
+interface ListCard {
+    id: number;
+    name: string;
+    slug: string;
+    image_url: string;
+    description: string;
+    ap_cost: number;
+    card_type: string;
+    rarity: 'SR' | 'R' | 'U' | 'C';
+    effect_data?: any;
 }
 
 interface Props {
@@ -368,7 +381,7 @@ export default function AcademyModal({ onClose }: Props) {
                                             {/* Card Image */}
                                             <div className="flex-1 bg-slate-950/60 relative overflow-hidden flex items-center justify-center min-h-[45px] sm:min-h-[70px]">
                                                 {card.image_url ? (
-                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-contain" />
                                                 ) : (
                                                     <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-slate-700" />
                                                 )}
@@ -429,6 +442,131 @@ export default function AcademyModal({ onClose }: Props) {
                         </div>
                     </div>
                 )}
+            </div>
+        );
+    };
+
+    // 5. カードリスト確認画面（ギャラリービュー）
+    const renderCardList = () => {
+        const activeConfig = SERIES_CONFIG[currentSeries];
+        
+        return (
+            <div className="flex-1 flex flex-col bg-[#05060c] text-slate-100 p-4 relative overflow-hidden min-h-0">
+                {/* コレクション風ヘッダー */}
+                <div className="flex justify-between items-center mb-4 z-10 shrink-0">
+                    <div className="flex flex-col">
+                        <span className={`text-[9px] sm:text-[10px] ${activeConfig.textColor} font-black tracking-widest uppercase`}>
+                            {activeConfig.name}
+                        </span>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-300">パック収録カード一覧</h4>
+                    </div>
+                    <button
+                        onClick={() => setPhase('shop')}
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 rounded-lg font-bold text-[10px] sm:text-xs transition-colors active:scale-95"
+                    >
+                        パック選択へ戻る
+                    </button>
+                </div>
+
+                {/* 収録カードのグリッドリスト */}
+                <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden z-10 min-h-0">
+                    {/* カードグリッド */}
+                    <div className="flex-1 overflow-y-auto pr-1">
+                        {listLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                                <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                                <span className="text-xs text-blue-400 font-medium">カード情報を取得中...</span>
+                            </div>
+                        ) : packCards.length === 0 ? (
+                            <div className="text-center text-slate-500 py-12 text-xs">カードがありません。</div>
+                        ) : (
+                            <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                                {packCards.map((card) => (
+                                    <div
+                                        key={card.id}
+                                        onMouseEnter={() => setHoveredCard(card)}
+                                        onClick={() => setHoveredCard(card)}
+                                        className={`relative aspect-[5/7] cursor-pointer rounded-lg border bg-[#0b0e1b] overflow-hidden p-0.5 hover:scale-105 active:scale-95 transition-all
+                                            ${hoveredCard?.id === card.id ? 'border-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-slate-800 hover:border-slate-650'}`}
+                                    >
+                                        <div className="w-full h-full flex flex-col relative">
+                                            {/* レアリティバッジ */}
+                                            <div className="absolute top-0.5 left-0.5 z-10">
+                                                <span className={`text-[5px] sm:text-[6px] px-1 py-0.5 rounded font-black border leading-none scale-90 ${getRarityBadgeColor(card.rarity)}`}>
+                                                    {card.rarity}
+                                                </span>
+                                            </div>
+                                            {/* イメージ */}
+                                            <div className="flex-1 bg-slate-950/60 overflow-hidden flex items-center justify-center">
+                                                {card.image_url ? (
+                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-contain" />
+                                                ) : (
+                                                    <BookOpen className="w-4 h-4 text-slate-700" />
+                                                )}
+                                            </div>
+                                            {/* 名前 */}
+                                            <div className="bg-[#0f1326] p-1 border-t border-slate-900 shrink-0 text-center">
+                                                <span className="text-[7px] sm:text-[8px] font-bold text-slate-200 block truncate">{card.name}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* カード詳細スペックプレビューパネル（右側） */}
+                    <div className="w-full md:w-60 bg-[#0f1328]/80 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col gap-3 shrink-0 justify-center min-h-[140px] md:min-h-0 backdrop-blur-md">
+                        {hoveredCard ? (
+                            (() => {
+                                const effectList = getEffectList(hoveredCard.effect_data);
+                                return (
+                                    <div className="flex flex-col gap-2.5 text-left animate-in fade-in slide-in-from-right-3 duration-250">
+                                        <div className="flex justify-between items-start gap-1">
+                                            <h4 className="text-xs sm:text-sm font-bold text-slate-100 font-serif leading-snug">{hoveredCard.name}</h4>
+                                            <span className={`text-[6px] sm:text-[7px] px-1.5 py-0.5 rounded font-black border ${getRarityBadgeColor(hoveredCard.rarity)} shrink-0`}>
+                                                {hoveredCard.rarity}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-1.5 text-[8px] sm:text-[9px] text-slate-400">
+                                            <div className="bg-black/30 px-2 py-0.5 rounded border border-slate-900 flex justify-between">
+                                                <span>コスト</span>
+                                                <span className="font-bold text-slate-200">{hoveredCard.ap_cost} AP</span>
+                                            </div>
+                                            <div className="bg-black/30 px-2 py-0.5 rounded border border-slate-900 flex justify-between">
+                                                <span>タイプ</span>
+                                                <span className="font-bold text-slate-200">{hoveredCard.card_type}</span>
+                                            </div>
+                                        </div>
+
+                                        {effectList.length > 0 && (
+                                            <div className="bg-slate-900/40 rounded-lg p-2 border border-slate-800/80">
+                                                <div className="grid grid-cols-2 gap-1">
+                                                    {effectList.map((eff, i) => (
+                                                        <div key={i} className="flex items-center justify-between bg-black/25 rounded px-1.5 py-0.5 border border-slate-900/60 text-[8px] sm:text-[9px]">
+                                                            <span className="text-slate-400">{eff.label}</span>
+                                                            <span className={`font-bold ${eff.color}`}>{eff.value}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="border-t border-slate-800/80 pt-2 text-[10px] sm:text-xs text-slate-300 leading-normal min-h-[40px]">
+                                            {hoveredCard.description}
+                                        </div>
+                                    </div>
+                                );
+                            })()
+                        ) : (
+                            <div className="text-center text-slate-500 py-6 text-[10px] sm:text-xs flex flex-col items-center justify-center gap-2">
+                                <List className="w-5 h-5 text-slate-700" />
+                                <span>カードをホバーまたはタップすると<br />詳細説明が表示されます。</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         );
     };
