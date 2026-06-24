@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,94 +46,29 @@ export async function GET(request: Request) {
     try {
         const client = await pool.connect();
         try {
-            await client.query(`
-                -- ADD IS_REPEATABLE COLUMN
-                ALTER TABLE public.scenarios
-                  ADD COLUMN IF NOT EXISTS is_repeatable BOOLEAN DEFAULT FALSE;
+            const migration1Path = path.join(process.cwd(), 'supabase', 'migrations', '20260624000000_add_monetization_packages_and_rpc.sql');
+            const migration2Path = path.join(process.cwd(), 'supabase', 'migrations', '20260624000001_compensate_existing_subscribers.sql');
 
-                -- RELOAD PostgREST SCHEMA CACHE
-                NOTIFY pgrst, 'reload schema';
+            if (!fs.existsSync(migration1Path) || !fs.existsSync(migration2Path)) {
+                return NextResponse.json({ success: false, error: 'Migration files not found in migrations directory.' }, { status: 404 });
+            }
 
-                -- 0. ADD SUBSCRIPTION BONUS AND TRIAL COLUMNS
-                ALTER TABLE public.user_profiles
-                  ADD COLUMN IF NOT EXISTS last_weekly_bonus_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-                  ADD COLUMN IF NOT EXISTS has_used_trial BOOLEAN NOT NULL DEFAULT false;
+            const sql1 = fs.readFileSync(migration1Path, 'utf8');
+            const sql2 = fs.readFileSync(migration2Path, 'utf8');
 
-                -- 1. DROP UNIQUE INDEXES
-                DROP INDEX IF EXISTS public.idx_chronicles_unique_quest;
-                DROP INDEX IF EXISTS public.idx_chronicles_unique_ugc_quest;
-
-                -- 2. RE-CREATE VIEW DISTINCT ON
-                CREATE OR REPLACE VIEW public.user_completed_quests AS
-                SELECT DISTINCT ON (user_id, COALESCE(scenario_id::text, ugc_scenario_id::text))
-                    id,
-                    user_id,
-                    scenario_id,
-                    ugc_scenario_id,
-                    created_at AS completed_at,
-                    accumulated_days AS accumulated_days_at_completion
-                FROM public.user_chronicles
-                WHERE event_type = 'quest_success'
-                ORDER BY user_id, COALESCE(scenario_id::text, ugc_scenario_id::text), created_at DESC;
-
-                -- 3. RE-CREATE TRIGGER FUNCTION
-                CREATE OR REPLACE FUNCTION public.insert_completed_quests_trigger()
-                RETURNS TRIGGER AS $$
-                DECLARE
-                    v_loc_id UUID;
-                    v_loc_name TEXT;
-                    v_title TEXT;
-                BEGIN
-                    SELECT p.current_location_id, l.name 
-                    INTO v_loc_id, v_loc_name
-                    FROM public.user_profiles p
-                    LEFT JOIN public.locations l ON l.id = p.current_location_id
-                    WHERE p.id = NEW.user_id;
-
-                    IF v_loc_id IS NULL AND NEW.scenario_id IS NOT NULL THEN
-                        SELECT location_id, (SELECT name FROM public.locations WHERE id = s.location_id)
-                        INTO v_loc_id, v_loc_name
-                        FROM public.scenarios s
-                        WHERE s.id = NEW.scenario_id;
-                    END IF;
-
-                    IF NEW.ugc_scenario_id IS NOT NULL THEN
-                        v_title := COALESCE((SELECT title FROM public.ugc_scenarios WHERE id = NEW.ugc_scenario_id), 'クエスト完了');
-                        INSERT INTO public.user_chronicles (
-                            user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at
-                        ) VALUES (
-                            NEW.user_id, 
-                            'quest_success', 
-                            COALESCE(NEW.accumulated_days_at_completion, (SELECT accumulated_days FROM public.user_profiles WHERE id = NEW.user_id), 0), 
-                            NULL, 
-                            NEW.ugc_scenario_id,
-                            v_loc_id,
-                            v_loc_name,
-                            'クエストクリア: ' || v_title,
-                            'クエストを成功させた。',
-                            COALESCE(NEW.completed_at, NOW())
-                        );
-                    ELSE
-                        v_title := COALESCE((SELECT title FROM public.scenarios WHERE id = NEW.scenario_id), 'クエスト完了');
-                        INSERT INTO public.user_chronicles (
-                            user_id, event_type, accumulated_days, scenario_id, ugc_scenario_id, location_id, location_name, title, description, created_at
-                        ) VALUES (
-                            NEW.user_id, 
-                            'quest_success', 
-                            COALESCE(NEW.accumulated_days_at_completion, (SELECT accumulated_days FROM public.user_profiles WHERE id = NEW.user_id), 0), 
-                            NEW.scenario_id, 
-                            NULL,
-                            v_loc_id,
-                            v_loc_name,
-                            'クエストクリア: ' || v_title,
-                            'クエストを成功させた。',
-                            COALESCE(NEW.completed_at, NOW())
-                        );
-                    END IF;
-                    RETURN NEW;
-                END;
-                $$ LANGUAGE plpgsql;
-            `);
+            await client.query('BEGIN');
+            try {
+                await client.query(sql1);
+                await client.query(sql2);
+                
+                // RELOAD PostgREST SCHEMA CACHE
+                await client.query("NOTIFY pgrst, 'reload schema';");
+                
+                await client.query('COMMIT');
+            } catch (err) {
+                await client.query('ROLLBACK');
+                throw err;
+            }
         } finally {
             client.release();
         }
