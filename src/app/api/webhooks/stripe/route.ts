@@ -348,6 +348,74 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case 'invoice.payment_succeeded': {
+                // ─── 定期サブスク決済成功（継続課金やトライアル終了時など） ───
+                const invoice = event.data.object as Stripe.Invoice;
+
+                // 金額が発生していない場合は無視（トライアル期間中の0円請求書など）
+                if ((invoice.amount_paid ?? 0) <= 0) {
+                    console.log(`[webhooks/stripe] Ignored zero-dollar invoice payment: ${invoice.id}`);
+                    break;
+                }
+
+                // 新規契約時の初回請求（checkout.session.completed 側で記録済み）は二重計上を防ぐため無視
+                if (invoice.billing_reason === 'subscription_create') {
+                    console.log(`[webhooks/stripe] Ignored initial subscription creation invoice to avoid duplication with checkout session: ${invoice.id}`);
+                    break;
+                }
+
+                // メタデータから user_id を探索
+                let userId = invoice.metadata?.user_id || (invoice as any).subscription_details?.metadata?.user_id;
+
+                // サブスクリプション情報からのフォールバック取得
+                const subId = typeof (invoice as any).subscription === 'string' ? (invoice as any).subscription : (invoice as any).subscription?.id;
+                if (!userId && subId) {
+                    try {
+                        const subscription = await stripe.subscriptions.retrieve(subId);
+                        userId = subscription.metadata?.user_id;
+                    } catch (subErr) {
+                        console.error('[webhooks/stripe] Failed to retrieve subscription for invoice:', subErr);
+                    }
+                }
+
+                // 顧客情報からのフォールバック取得
+                const custId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+                if (!userId && custId) {
+                    try {
+                        const customer = await stripe.customers.retrieve(custId);
+                        if ('metadata' in customer && customer.metadata) {
+                            userId = customer.metadata.user_id;
+                        }
+                    } catch (custErr) {
+                        console.error('[webhooks/stripe] Failed to retrieve customer for invoice:', custErr);
+                    }
+                }
+
+                if (!userId) {
+                    console.error('[webhooks/stripe] invoice.payment_succeeded イベントで user_id が特定できませんでした。invoiceId:', invoice.id);
+                    break;
+                }
+
+                // payment_logs テーブルに決済ログを記録
+                const { error: payLogErr } = await supabaseAdmin
+                    .from('payment_logs')
+                    .insert({
+                        id: invoice.id,
+                        user_id: userId,
+                        amount: invoice.amount_paid ?? 0,
+                        gold_amount: 0,
+                        type: 'subscription'
+                    });
+
+                if (payLogErr) {
+                    console.error('[webhooks/stripe] Failed to write payment_logs for subscription invoice payment:', payLogErr);
+                    throw payLogErr;
+                }
+
+                console.log(`[webhooks/stripe] Successfully logged subscription invoice payment: ${invoice.id} (${invoice.amount_paid} units) for user ${userId}`);
+                break;
+            }
+
             default:
                 // 未対応イベントは無視
                 break;

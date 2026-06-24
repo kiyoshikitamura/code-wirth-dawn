@@ -432,3 +432,19 @@ const { count: draftCount } = await supabase
 - Stripe 決済が成功して宿屋（`/inn`）に戻った際、ユーザーに対して何がゲームに反映されたかを明示するための演出。
 - URL パラメータ（`?billing=success` 等）をトリガーにして、アトミックに加算されたゴールド数と鍵数を算出して明記した「購入完了反映ダイアログ」を表示し、ゲーム内SE `se_item_get` を再生するとともに、`fetchUserProfile()` によって表示ゴールド・鍵数を即時更新する。
 
+---
+
+## 13. v40.0 改訂: 決済完了ポップアップ検出ミスマッチ修正、および検証用アカウントデータのクリーンアップ手順 (2026-06-24)
+
+### 13.1 決済完了反映ダイアログの検出キー拡張
+- **背景**: StripeのCheckout Session成功時にリダイレクトされるパラメータ `package=starter_pack` / `package=elite_pack` に対し、フロントエンド（`useInnPageState.ts`）側が旧定義名である `gold_starter` / `gold_elite` のみで判定を行っていたため、限定パッケージ購入完了ダイアログで鍵の獲得本数が正常表示されないミスマッチが発生していた。
+- **対応**: [useInnPageState.ts](file:///D:/dev/code-wirth-dawn/src/hooks/useInnPageState.ts) の判定条件を拡張し、Stripeから送信される本番定義値および互換名（`starter_pack` / `elite_pack` と `gold_starter` / `gold_elite`）の双方を正常にマッチング可能にした。
+
+### 13.2 アカウントデータリセット時の負数防止ガード
+- テストアカウントのリセットや購入パッケージ取り消しに伴うゴールド減算時、所持ゴールドがマイナス（0未満）になって上限チェック等で 0G に上書きリセットされるのを防ぐため、減算時に `Math.max(0, currentGold - 40000)` の安全下限ガードを適用する。
+
+### 13.3 テスト課金ログの除外とStripeサブスクリプションの完全リセット手順
+本番環境で管理者やテスターが課金・サブスク動作確認を行った後、データを初期化する際は以下の手順を順次実行してデータを完全にクリーンアップする。
+1. **売上集計（ダッシュボード）からの除外**: `payment_logs` テーブルより、該当ユーザーのテスト決済記録（`user_id`）をすべて物理削除する。これにより、管理者ダッシュボード（`payment_summary_view`）の集計値から安全に除外される。
+2. **Stripeのアクティブな定期課金の強制終了**: 対象ユーザーのメールアドレス/カスタマーIDをStripe API（または Stripe ダッシュボード）から特定し、アクティブ状態（`active` または `trialing`）のサブスクリプションを `stripe.subscriptions.cancel` 等で即時キャンセルする。
+3. **ユーザープロファイルのサブスク状態・トライアル利用状況のリセット**: 対象ユーザープロファイル（`user_profiles`）の `subscription_tier` を `'free'`、`subscription_status` を `'inactive'`、`has_used_trial` を `false` に更新し、次回のテストで「新規の無料トライアル（7日間）」が問題なく適用・検証できる初期状態を担保する。
