@@ -168,6 +168,11 @@ export async function middleware(request: NextRequest) {
 
     // 4. メンテナンス時の制限適用
     if (isMaintenanceActive && !hasBypass) {
+        // Stripe Webhook および Cron ジョブはメンテナンスチェックから除外して通過させる
+        if (path === '/api/webhooks/stripe' || path.startsWith('/api/cron/')) {
+            return NextResponse.next();
+        }
+
         // APIリクエストの場合は JSON で 503 を返す
         if (path.startsWith('/api')) {
             return new NextResponse(
