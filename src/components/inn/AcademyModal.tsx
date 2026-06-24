@@ -86,6 +86,8 @@ export default function AcademyModal({ onClose }: Props) {
 
     useEffect(() => {
         soundManager?.init();
+        fetchUserProfile();
+        fetchInventory();
     }, []);
 
     // 鍵の所持数
