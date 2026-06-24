@@ -331,11 +331,18 @@ export async function GET(req: Request) {
                 image_url,
                 description,
                 cards (
+                    id,
+                    slug,
                     name,
-                    description,
-                    image_url,
+                    type,
+                    cost_type,
+                    cost_val,
+                    effect_val,
                     ap_cost,
-                    type
+                    target_type,
+                    effect_id,
+                    image_url,
+                    description
                 )
             `)
             .in('id', allIds);
@@ -348,15 +355,29 @@ export async function GET(req: Request) {
         const skillsResponse = (skillDetails || []).map((detail: any) => {
             const skillId = Number(detail.id);
             const rarity = getSkillRarity(skillId);
+            const card = detail.cards;
+            const effectData = card ? {
+                cost_val: card.cost_val,
+                effect_val: card.effect_val,
+                cost_type: card.cost_type,
+                card_type: card.type,
+                ap_cost: card.ap_cost ?? 1,
+                target_type: card.target_type,
+                effect_id: card.effect_id || null,
+                image_url: card.image_url || null,
+                description: detail.description || card.description || card.name
+            } : {};
+
             return {
                 id: skillId,
                 name: detail.name,
                 slug: detail.slug,
-                image_url: detail.cards?.image_url || detail.image_url || '/images/items/book_focus.png',
-                description: detail.cards?.description || detail.description || '',
-                ap_cost: detail.cards?.ap_cost || 1,
-                card_type: detail.cards?.type || 'Skill',
-                rarity
+                image_url: card?.image_url || detail.image_url || '/images/items/book_focus.png',
+                description: card?.description || detail.description || '',
+                ap_cost: card?.ap_cost || 1,
+                card_type: card?.type || 'Skill',
+                rarity,
+                effect_data: effectData
             };
         });
 

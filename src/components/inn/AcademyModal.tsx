@@ -4,6 +4,7 @@ import { Sparkles, Coins, BookOpen, RotateCcw, X, ChevronLeft, ChevronRight, Lis
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 import { getAuthHeaders } from '@/lib/authToken';
+import { getEffectList } from '@/lib/itemUtils';
 
 interface AcademyCard {
     id: number;
@@ -24,6 +25,7 @@ interface ListCard {
     ap_cost: number;
     card_type: string;
     rarity: 'SR' | 'R' | 'U' | 'C';
+    effect_data?: any;
 }
 
 interface Props {
@@ -559,7 +561,7 @@ export default function AcademyModal({ onClose }: Props) {
                                             {/* カード画像 */}
                                             <div className="flex-1 bg-slate-950/60 relative overflow-hidden flex items-center justify-center min-h-[45px] sm:min-h-[70px]">
                                                 {card.image_url ? (
-                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-contain" />
                                                 ) : (
                                                     <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-slate-700" />
                                                 )}
@@ -677,7 +679,7 @@ export default function AcademyModal({ onClose }: Props) {
                                             {/* イメージ */}
                                             <div className="flex-1 bg-slate-950/60 overflow-hidden flex items-center justify-center">
                                                 {card.image_url ? (
-                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-cover" />
+                                                    <img src={card.image_url} alt={card.name} className="w-full h-full object-contain" />
                                                 ) : (
                                                     <BookOpen className="w-4 h-4 text-slate-700" />
                                                 )}
@@ -696,29 +698,47 @@ export default function AcademyModal({ onClose }: Props) {
                     {/* カード詳細スペックプレビューパネル（右側） */}
                     <div className="w-full md:w-60 bg-[#0f1328]/80 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col gap-3 shrink-0 justify-center min-h-[140px] md:min-h-0 backdrop-blur-md">
                         {hoveredCard ? (
-                            <div className="flex flex-col gap-2.5 text-left animate-in fade-in slide-in-from-right-3 duration-250">
-                                <div className="flex justify-between items-start gap-1">
-                                    <h4 className="text-xs sm:text-sm font-bold text-slate-100 font-serif leading-snug">{hoveredCard.name}</h4>
-                                    <span className={`text-[6px] sm:text-[7px] px-1.5 py-0.5 rounded font-black border ${getRarityBadgeColor(hoveredCard.rarity)} shrink-0`}>
-                                        {hoveredCard.rarity}
-                                    </span>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-1.5 text-[8px] sm:text-[9px] text-slate-400">
-                                    <div className="bg-black/30 px-2 py-0.5 rounded border border-slate-900 flex justify-between">
-                                        <span>コスト</span>
-                                        <span className="font-bold text-slate-200">{hoveredCard.ap_cost} AP</span>
-                                    </div>
-                                    <div className="bg-black/30 px-2 py-0.5 rounded border border-slate-900 flex justify-between">
-                                        <span>タイプ</span>
-                                        <span className="font-bold text-slate-200">{hoveredCard.card_type}</span>
-                                    </div>
-                                </div>
+                            (() => {
+                                const effectList = getEffectList(hoveredCard.effect_data);
+                                return (
+                                    <div className="flex flex-col gap-2.5 text-left animate-in fade-in slide-in-from-right-3 duration-250">
+                                        <div className="flex justify-between items-start gap-1">
+                                            <h4 className="text-xs sm:text-sm font-bold text-slate-100 font-serif leading-snug">{hoveredCard.name}</h4>
+                                            <span className={`text-[6px] sm:text-[7px] px-1.5 py-0.5 rounded font-black border ${getRarityBadgeColor(hoveredCard.rarity)} shrink-0`}>
+                                                {hoveredCard.rarity}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-1.5 text-[8px] sm:text-[9px] text-slate-400">
+                                            <div className="bg-black/30 px-2 py-0.5 rounded border border-slate-900 flex justify-between">
+                                                <span>コスト</span>
+                                                <span className="font-bold text-slate-200">{hoveredCard.ap_cost} AP</span>
+                                            </div>
+                                            <div className="bg-black/30 px-2 py-0.5 rounded border border-slate-900 flex justify-between">
+                                                <span>タイプ</span>
+                                                <span className="font-bold text-slate-200">{hoveredCard.card_type}</span>
+                                            </div>
+                                        </div>
 
-                                <div className="border-t border-slate-800/80 pt-2 text-[10px] sm:text-xs text-slate-300 leading-normal min-h-[50px]">
-                                    {hoveredCard.description}
-                                </div>
-                            </div>
+                                        {effectList.length > 0 && (
+                                            <div className="bg-slate-900/40 rounded-lg p-2 border border-slate-800/80">
+                                                <div className="grid grid-cols-2 gap-1">
+                                                    {effectList.map((eff, i) => (
+                                                        <div key={i} className="flex items-center justify-between bg-black/25 rounded px-1.5 py-0.5 border border-slate-900/60 text-[8px] sm:text-[9px]">
+                                                            <span className="text-slate-400">{eff.label}</span>
+                                                            <span className={`font-bold ${eff.color}`}>{eff.value}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="border-t border-slate-800/80 pt-2 text-[10px] sm:text-xs text-slate-300 leading-normal min-h-[40px]">
+                                            {hoveredCard.description}
+                                        </div>
+                                    </div>
+                                );
+                            })()
                         ) : (
                             <div className="text-center text-slate-500 py-6 text-[10px] sm:text-xs flex flex-col items-center justify-center gap-2">
                                 <List className="w-5 h-5 text-slate-700" />
