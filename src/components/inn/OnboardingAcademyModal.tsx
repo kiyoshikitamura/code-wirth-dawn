@@ -210,21 +210,28 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
                     </p>
 
                     {/* パックビジュアル */}
-                    <div className="my-8 relative w-48 aspect-[3/4] bg-gradient-to-b from-[#131630] to-[#070914] border-2 border-amber-500/30 rounded-xl shadow-xl flex flex-col items-center justify-between p-4 overflow-hidden group">
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.08),transparent_70%)]" />
+                    <div 
+                        className="my-8 relative w-48 aspect-[3/4] border-2 border-amber-500/30 rounded-xl shadow-xl flex flex-col items-center justify-between p-4 overflow-hidden group"
+                        style={{
+                            backgroundImage: "url('/images/card_back_basic.png')",
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                        }}
+                    >
+                        <div className="absolute inset-0 bg-slate-900/40 pointer-events-none" />
                         
-                        <span className="text-[10px] text-amber-500/60 font-bold tracking-widest uppercase">WIRTH-DAWN</span>
+                        <span className="relative z-10 text-[10px] text-amber-400 font-bold tracking-widest uppercase">WIRTH-DAWN</span>
                         
-                        <div className="w-12 h-12 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center my-2">
-                            <Sparkles className="w-6 h-6 text-amber-400/70" />
+                        <div className="relative z-10 w-12 h-12 rounded-full border border-amber-500/20 bg-black/40 flex items-center justify-center my-2">
+                            <Sparkles className="w-6 h-6 text-amber-400" />
                         </div>
                         
-                        <div className="flex flex-col items-center">
-                            <span className="text-sm font-black text-amber-100/90 tracking-widest">黎明の知識と古の契約</span>
-                            <span className="text-[9px] text-slate-500 font-bold tracking-wide mt-0.5">BASIC STARTER PACK</span>
+                        <div className="relative z-10 flex flex-col items-center bg-black/50 p-2 rounded-lg border border-amber-500/10">
+                            <span className="text-xs font-black text-amber-100 tracking-widest">黎明の知識と古の契約</span>
+                            <span className="text-[8px] text-slate-355 font-bold tracking-wide mt-0.5">BASIC STARTER PACK</span>
                         </div>
 
-                        <span className="text-[8px] text-slate-600 font-bold">CARDS × 5 BOOSTER</span>
+                        <span className="relative z-10 text-[8px] text-slate-200 font-bold bg-black/40 px-2 py-0.5 rounded">CARDS × 5 BOOSTER</span>
                     </div>
 
                     {errorMsg && (
@@ -242,17 +249,14 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
                         {isPurchasing ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin text-amber-200" />
-                                契約を呼び出しています...
+                                契約を結んでいます...
                             </>
                         ) : (
                             <>
-                                知識と契約の鍵で契約を結ぶ (1個消費)
+                                魔導の契約を結ぶ
                             </>
                         )}
                     </button>
-                    <p className="text-[10px] text-slate-500 font-medium mt-3">
-                        ※ チュートリアル用の特別な契約のため、鍵は自動的に消費されます。
-                    </p>
                 </div>
             )}
 
