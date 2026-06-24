@@ -114,7 +114,7 @@ export async function GET(req: Request) {
             'item_bear_pelt', 'item_supply_box', 'item_healing_herb',
             'item_tengu_fan', 'item_bandit_treasure',
             // 特殊入手のみ（ショップ販売不可）
-            'item_royal_decree', 'item_explosive',
+            'item_royal_decree', 'item_explosive', 'item_basic_key', 'item_academy_key',
         ]);
         const filteredItems = allItems.filter(item => {
             // 除外リストのアイテムはショップに並べない

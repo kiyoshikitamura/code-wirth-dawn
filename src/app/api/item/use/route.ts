@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { supabaseServer } from '@/lib/supabase-admin';
+import { getSkillRarity } from '@/lib/rarity';
 
 export async function POST(req: Request) {
     try {
@@ -276,6 +277,126 @@ export async function POST(req: Request) {
                     appliedEffects.push(`次の移動時のエンカウント率が${Math.abs(mod * 100)}%減少する`);
                 } else {
                     appliedEffects.push(`次の移動時のエンカウント率が${mod * 100}%上昇する`);
+                }
+            }
+
+            // ■ open_pack（鍵アイテム使用によるパック開封効果）
+            if (effectData.effect === 'open_pack' && effectData.pack_series) {
+                const packSeries = effectData.pack_series === 'basic' ? 'basic' : 'chaos_and_rebellion';
+                
+                // プール定義
+                const ACADEMY_POOLS = {
+                    SR: [3101, 3116, 3119],
+                    R: [3107, 3109, 3112, 3113, 3124, 3125, 3139],
+                    U: [3102, 3103, 3105, 3110, 3114, 3115, 3118, 3120, 3126, 3131],
+                    C: [3104, 3106, 3108, 3111, 3117, 3122, 3123, 3127, 3128, 3130, 3133, 3134, 3135, 3136, 3137, 3138, 3140]
+                };
+
+                const BASIC_POOLS = {
+                    SR: [3021, 3022, 3035, 3041, 3042, 3043, 3045],
+                    R: [3023, 3024, 3025, 3029, 3031, 3037, 3039, 3044],
+                    U: [3027, 3028, 3030, 3032, 3033, 3034, 3036, 3038, 3040, 3062, 3065, 3066, 3067],
+                    C: [3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020, 3026, 3061]
+                };
+
+                const config = packSeries === 'basic' ? {
+                    pools: BASIC_POOLS,
+                    refund: 300,
+                    log_series: 'basic'
+                } : {
+                    pools: ACADEMY_POOLS,
+                    refund: 500,
+                    log_series: 'chaos_and_rebellion'
+                };
+
+                // 確率ロールヘルパー
+                const rollCard = (guaranteed: boolean, pools: typeof ACADEMY_POOLS) => {
+                    const rand = Math.random() * 100;
+                    let rarity: 'SR' | 'R' | 'U' | 'C' = 'C';
+                    if (guaranteed) {
+                        rarity = rand < 20 ? 'SR' : 'R';
+                    } else {
+                        if (rand < 3) rarity = 'SR';
+                        else if (rand < 15) rarity = 'R';
+                        else if (rand < 40) rarity = 'U';
+                        else rarity = 'C';
+                    }
+                    const pool = pools[rarity];
+                    return { rarity, skillId: pool[Math.floor(Math.random() * pool.length)] };
+                };
+
+                // 所持済みスキル取得
+                const { data: ownedSkillsResult } = await supabaseServer
+                    .from('user_skills')
+                    .select('skill_id')
+                    .eq('user_id', user.id);
+                const ownedSkillIdsSet = new Set<number>((ownedSkillsResult || []).map(s => Number(s.skill_id)));
+
+                // ロール
+                const rolled: { rarity: 'SR' | 'R' | 'U' | 'C'; skillId: number }[] = [];
+                for (let i = 0; i < 4; i++) {
+                    rolled.push(rollCard(false, config.pools));
+                }
+                rolled.push(rollCard(true, config.pools));
+
+                const trackingSet = new Set<number>(ownedSkillIdsSet);
+                let refundGold = 0;
+                const insertSkillIds: number[] = [];
+
+                const results = rolled.map(roll => {
+                    const isDuplicate = trackingSet.has(roll.skillId);
+                    if (isDuplicate) {
+                        refundGold += config.refund;
+                    } else {
+                        trackingSet.add(roll.skillId);
+                        insertSkillIds.push(roll.skillId);
+                    }
+                    return roll.skillId;
+                });
+
+                // ゴールドキャッシュバックの反映（消費は0G、重複時のみゴールド加算）
+                if (refundGold > 0) {
+                    await supabaseServer
+                        .rpc('increment_gold', { p_user_id: user.id, p_amount: refundGold });
+                }
+
+                // スキル登録
+                if (insertSkillIds.length > 0) {
+                    const inserts = insertSkillIds.map(sid => ({
+                        user_id: user.id,
+                        skill_id: sid,
+                        is_equipped: false
+                    }));
+                    await supabaseServer
+                        .from('user_skills')
+                        .insert(inserts);
+                }
+
+                // ログ記録
+                try {
+                    await supabaseServer
+                        .from('academy_pack_logs')
+                        .insert({
+                            user_id: user.id,
+                            pack_series: config.log_series,
+                            gold_spent: 0,
+                            refund_gold: refundGold
+                        });
+                } catch (e) {
+                    console.error('Failed to log pack opening via item use:', e);
+                }
+
+                // 詳細取得
+                const { data: skillDetails } = await supabaseServer
+                    .from('skills')
+                    .select('id, name')
+                    .in('id', results);
+                const nameMap = new Map<number, string>((skillDetails || []).map(s => [Number(s.id), s.name]));
+
+                const names = results.map(rid => nameMap.get(rid) || '未知の教本');
+                appliedEffects.push(`パックを開封しました！獲得カード: ${names.join(', ')}`);
+                if (refundGold > 0) {
+                    appliedEffects.push(`重複キャッシュバックで ${refundGold} G 獲得しました`);
                 }
             }
 

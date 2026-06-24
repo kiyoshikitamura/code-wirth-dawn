@@ -240,6 +240,7 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 - `billing/checkout/route.ts` でセッション作成時に `customer_email: user.email` を指定し、Stripe 顧客のメールアドレスを Google 連携メールアドレスと統一。
 - `webhooks/stripe/route.ts` の `checkout.session.completed` 受信時に、動的に `stripe.customers.update` を実行して顧客オブジェクトの `metadata.user_id` に `userId` を設定するように修正。
 - これにより、カスタマーポータル（`/api/billing/portal`）呼び出し時に、メールアドレスによる検索、およびメタデータ `user_id` による検索の両方のルートで確実に顧客情報が特定できるようになり、解約・変更処理が完全に動作することを確認。
+- **追記 (2026-06-24 追加修正)**: Stripeカスタマーポータルや外部決済UIから解約が行われた際、Stripeの Subscription オブジェクト自体に `metadata.user_id` が付与されない場合がある。この場合でも確実にユーザーを特定して即時解約を適用するため、Stripe Customer ID から顧客オブジェクトを逆引きして `customer.metadata.user_id` を参照するフォールバック処理を Webhook (`/api/webhooks/stripe`) に追加し、解約漏れバグを完全に防止した。
 
 ---
 
@@ -410,3 +411,24 @@ const { count: draftCount } = await supabase
 | アトミックなパッケージ購入処理RPC (`process_package_purchase`) | ✅ **実装済み** |
 | Stripe Webhook での限定パッケージ処理とWeeklyボーナス鍵対応 | ✅ **実装済み** |
 | 既存加入者への鍵アイテム一括補填SQL | ✅ **実装済み** |
+
+### 12.6 プレビューテストに基づく追加仕様およびバグ修正 (2026-06-24)
+
+プレビュー環境でのテストユーザーによる検証段階で発生した問題に対応するため、以下の追加仕様および修正を適用した。
+
+#### 12.6.1 価格表記の「（税込）」統一
+- 統合課金モーダル（`BillingModal`）および購入確認ポップアップ（`PurchaseConfirmModal`）に表示されるすべてのサブスクプラン金額および都度購入パッケージ金額に対し、例外なく「（税込）」を付与する。
+  - 例: 「880円（税込）/月」「1,320円（税込）」
+
+#### 12.6.2 同意チェックボックスの「購入確認ポップアップ」への完全移行
+- 決済開始前の法的な確認の確実性を担保するため、「利用規約および特定商取引法に基づく表示への同意」チェックボックスを統合課金モーダル（`BillingModal`）から、購入ボタン押下直前の確認ポップアップ（`PurchaseConfirmModal`）へ全面的に移行する。
+- ユーザーがチェックを入れない限り、Stripe 決済画面（Checkout URL）を発行するAPIの呼び出し自体を完全に無効化（ボタンの disabled 化）する。
+
+#### 12.6.3 サブスクリプション重複移行エラーの解消
+- Basic プラン加入中のユーザーが Premium プランを購入しようとする際、Stripe 側で `the price specified is inactive` などの不整合エラーが発生する問題の解決。
+- `POST /api/billing/checkout` 内において、すでにアクティブなサブスクリプション（`active` または `trialing`）が存在するユーザーの場合は、Stripe API を用いて既存サブスクリプションの即時キャンセル（`stripe.subscriptions.cancel`）を実行し、同一の Stripe 顧客 ID をバインドして新規セッションを再発行する仕様。
+
+#### 12.6.4 決済完了時アトミック報酬ダイアログの表示
+- Stripe 決済が成功して宿屋（`/inn`）に戻った際、ユーザーに対して何がゲームに反映されたかを明示するための演出。
+- URL パラメータ（`?billing=success` 等）をトリガーにして、アトミックに加算されたゴールド数と鍵数を算出して明記した「購入完了反映ダイアログ」を表示し、ゲーム内SE `se_item_get` を再生するとともに、`fetchUserProfile()` によって表示ゴールド・鍵数を即時更新する。
+
