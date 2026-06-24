@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
+    { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 export async function GET(req: Request) {
     try {
@@ -16,6 +23,74 @@ export async function GET(req: Request) {
         const stripe = new Stripe(stripeSecret || 'sk_test_dummy', {
             apiVersion: '2026-02-25.clover',
         });
+
+        // 接続テスト
+        let stripeTest = 'UNKNOWN';
+        let stripeDetails: any = {};
+        if (stripeSecret) {
+            try {
+                const account = await stripe.accounts.retrieve();
+                stripeTest = 'CONNECTED_SUCCESS';
+                stripeDetails.account_id = account.id;
+                stripeDetails.account_email = account.email;
+            } catch (err: any) {
+                stripeTest = `CONNECTION_FAILED: ${err.message}`;
+            }
+        }
+
+        // action=reset_sub の処理
+        const action = searchParams.get('action');
+        const targetUserId = searchParams.get('user_id') || 'af2848d0-40f2-4f75-bd2b-ac633184107c';
+        let resetResult = null;
+
+        if (action === 'reset_sub' && targetUserId) {
+            // 1. DBのサブスク情報をリセット
+            const { error: dbErr } = await supabaseAdmin
+                .from('user_profiles')
+                .update({
+                    subscription_tier: 'free',
+                    subscription_status: 'canceled'
+                })
+                .eq('id', targetUserId);
+
+            // 2. Stripe側サブスクを即時解約
+            let stripeCancelledCount = 0;
+            if (stripeSecret && stripeTest === 'CONNECTED_SUCCESS') {
+                // メールアドレスまたはメタデータから顧客を検索
+                const searchResult = await stripe.customers.search({
+                    query: `metadata["user_id"]:"${targetUserId}"`,
+                    limit: 1,
+                });
+                let customerId = searchResult.data[0]?.id || null;
+
+                if (customerId) {
+                    const activeSubscriptions = await stripe.subscriptions.list({
+                        customer: customerId,
+                        status: 'active',
+                    });
+                    const trialingSubscriptions = await stripe.subscriptions.list({
+                        customer: customerId,
+                        status: 'trialing',
+                    });
+                    const subsToCancel = [...activeSubscriptions.data, ...trialingSubscriptions.data];
+                    for (const sub of subsToCancel) {
+                        try {
+                            await stripe.subscriptions.cancel(sub.id);
+                            stripeCancelledCount++;
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                }
+            }
+
+            resetResult = {
+                success: !dbErr,
+                dbError: dbErr ? dbErr.message : null,
+                stripeCancelledCount,
+                message: `User ${targetUserId} subscription reset to free in DB, and cancelled ${stripeCancelledCount} active subscriptions in Stripe.`
+            };
+        }
 
         // 各環境変数の読み込み状況 (一部をマスクして表示)
         const mask = (val: string | undefined) => {
@@ -36,23 +111,6 @@ export async function GET(req: Request) {
             STRIPE_PRICE_ID_STARTER_PACK: mask(process.env.STRIPE_PRICE_ID_STARTER_PACK),
             STRIPE_PRICE_ID_ELITE_PACK: mask(process.env.STRIPE_PRICE_ID_ELITE_PACK),
         };
-
-        // Stripe接続テスト
-        let stripeTest = 'UNKNOWN';
-        let stripeDetails: any = {};
-        if (stripeSecret) {
-            try {
-                // アカウント情報の取得
-                const account = await stripe.accounts.retrieve();
-                stripeTest = 'CONNECTED_SUCCESS';
-                stripeDetails.account_id = account.id;
-                stripeDetails.account_email = account.email;
-            } catch (err: any) {
-                stripeTest = `CONNECTION_FAILED: ${err.message}`;
-            }
-        } else {
-            stripeTest = 'STRIPE_SECRET_KEY_IS_EMPTY';
-        }
 
         // 各 Price ID の Stripe 側存在チェック
         const priceIds = [
@@ -100,6 +158,7 @@ export async function GET(req: Request) {
             stripeTest,
             stripeDetails,
             priceChecks,
+            resetResult
         });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
