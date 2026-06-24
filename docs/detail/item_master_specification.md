@@ -1,5 +1,6 @@
 # Wirth-Dawn Item Master Specification (v16.9) & Security/UX Audit
-| **v17.0** | **2026-06-24** | **魔術学院ベーシックパックおよび既存カード開封用鍵アイテム2種（ベーシックキー、魔術学院キー）の仕様追加。** |
+| **v17.1** | **2026-06-24** | **鍵アイテム2種の名称・説明文の変更（知識と契約の鍵、魔道と知識の鍵）。** |
+| **v17.0** | **2026-06-24** | **魔術学院ベーシックパックおよび既存カード開封用鍵アイテム2種（知識と契約の鍵、魔道と知識の鍵）の仕様追加。** |
 
 本ドキュメントは、「Code: Wirth-Dawn」の経済システムおよびゲーム体験の基盤となるアイテムマスタ（itemsテーブル）定義、およびそれに伴うセキュリティ監査検証とUI/UX追加実装提案を統合したものです。
 
@@ -103,8 +104,8 @@
 32. `item_foxfire_charm` (狐火の護符 / material / 非売品): 妖狐の姫から授かった神秘的な護符。狐火の力が宿り、持ち主を霊的な危害から守る。7045「妖狐の婚礼」のBルート報酬。ID: 3045。
 
 #### ⑩ 鍵アイテム（2種 / パック開封用 / 非売品 / v17.0追加）
-33. `item_basic_key` (ベーシックキー / consumable / 2000G): effect_data: `{use_timing: 'field', effect: 'open_pack', pack_series: 'basic'}`. ベーシックパック「黎明の知識と古の契約」を開封するための鍵。ショップ販売リストからは除外。
-34. `item_academy_key` (魔術学院キー / consumable / 3000G): effect_data: `{use_timing: 'field', effect: 'open_pack', pack_series: 'chaos_and_rebellion'}`. 魔術学院ブースターパック「混沌の魔導と反逆の鉄壁」を開封するための鍵。ショップ販売リストからは除外。
+33. `item_basic_key` (知識と契約の鍵 / consumable / 2000G): effect_data: `{use_timing: 'field', effect: 'open_pack', pack_series: 'basic'}`. カードパック「黎明の知識と古の契約」を開封することのできる鍵。ショップ販売リストからは除外。
+34. `item_academy_key` (魔道と知識の鍵 / consumable / 3000G): effect_data: `{use_timing: 'field', effect: 'open_pack', pack_series: 'chaos_and_rebellion'}`. カードパック「混沌の魔道と反逆の鉄壁」を開封することのできる鍵。ショップ販売リストからは除外。
 
 > **※補足**: 実データ稼働に伴い追加された「基本消費アイテムのバリエーション（松明、解毒剤等）」や「上記ボス関連素材・武具」を含め、計60種のアクティブなアイテムを**すべて公式正史**として承認する。
 > 
