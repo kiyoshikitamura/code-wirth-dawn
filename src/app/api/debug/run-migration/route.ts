@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     const dbUrl = process.env.DATABASE_URL
         || process.env.SUPABASE_DB_URL
-        || `postgresql://postgres.${projectRef}:${process.env.SUPABASE_DB_PASSWORD || serviceKey}@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`;
+        || `postgresql://postgres.${projectRef}:${process.env.SUPABASE_DB_PASSWORD || 'izasama5723'}@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`;
 
     const pool = new Pool({
         connectionString: dbUrl,
