@@ -16,7 +16,11 @@ interface KPISummary {
     pendingReports: number;
     dau: number;
     mau: number;
+    anonMau?: number;
+    authMau?: number;
     totalQuests: number;
+    anonUsers?: number;
+    authUsers?: number;
 
     // Payments & Subscriptions
     totalRevenue: number;
@@ -68,6 +72,8 @@ interface DailyKPI {
     winRate: number;
     dau: number;
     mau: number;
+    anonMau?: number;
+    authMau?: number;
     revenue: number;
     dpu: number;
     mpu: number;
@@ -457,7 +463,10 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
                         <div className="text-xl font-bold text-blue-400 tracking-tight">{summary.totalUsers} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-2">平均レベル: {summary.avgLevel}</p>
+                        <p className="text-[10px] text-gray-500 mt-1">
+                            本登録: {summary.authUsers || 0}名 / ゲスト: {summary.anonUsers || 0}名
+                        </p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">平均レベル: {summary.avgLevel}</p>
                     </div>
 
                     {/* 月間アクティブ (MAU) */}
@@ -469,7 +478,10 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
                         <div className="text-xl font-bold text-emerald-400 tracking-tight">{summary.mau} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-2">
+                        <p className="text-[10px] text-gray-500 mt-1">
+                            本登録: {summary.authMau || 0}名 / ゲスト: {summary.anonMau || 0}名
+                        </p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">
                             アクティビティ率: {((summary.mau / Math.max(1, summary.totalUsers)) * 100).toFixed(1)}%
                         </p>
                     </div>
@@ -484,7 +496,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <div className="text-xl font-bold text-yellow-400 tracking-tight">{summary.mpu} 名</div>
                         <p className="text-[10px] text-gray-500 mt-2">
-                            課金転換率: {((summary.mpu / Math.max(1, summary.totalUsers)) * 100).toFixed(1)}%
+                            課金転換率: {((summary.mpu / Math.max(1, summary.mau)) * 100).toFixed(1)}% (対MAU)
                         </p>
                     </div>
 
@@ -892,11 +904,16 @@ export default function AdminDashboardPage() {
                                     </div>
                                     {activeTab === 'users' && <div className="text-blue-400">新規ユーザー: {dailyKPI[hoveredIdx].newUsers} 名</div>}
                                     {activeTab === 'dau' && (
-                                        <>
-                                            <div className="text-emerald-400 font-bold">DAU (日間): {dailyKPI[hoveredIdx].dau} UU</div>
-                                            <div className="text-indigo-400">MAU (月間): {dailyKPI[hoveredIdx].mau} UU</div>
-                                        </>
-                                    )}
+                                         <>
+                                             <div className="text-emerald-400 font-bold">DAU (日間): {dailyKPI[hoveredIdx].dau} UU</div>
+                                             <div className="text-indigo-400">
+                                                 MAU (月間): {dailyKPI[hoveredIdx].mau} UU
+                                                 <span className="text-[10px] text-gray-500 block">
+                                                     (本登録: {dailyKPI[hoveredIdx].authMau || 0} / ゲスト: {dailyKPI[hoveredIdx].anonMau || 0})
+                                                 </span>
+                                             </div>
+                                         </>
+                                     )}
                                     {activeTab === 'payments' && (
                                         <>
                                             <div className="text-yellow-400 font-bold">売上金額: {dailyKPI[hoveredIdx].revenue.toLocaleString()} 円</div>

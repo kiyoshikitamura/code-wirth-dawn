@@ -65,6 +65,25 @@ export async function GET(req: Request) {
         const maxGold = profileSummary.max_gold || 0;
         const avgLevel = Math.round(Number(profileSummary.avg_level || 0) * 10) / 10;
 
+        // Fetch all user profiles for anonymity mapping and registration breakdown
+        const { data: allUsers, error: allUsersErr } = await supabaseServer
+            .from('user_profiles')
+            .select('id, is_anonymous');
+        if (allUsersErr) throw allUsersErr;
+
+        const isAnonymousMap = new Map();
+        let anonUsers = 0;
+        let authUsers = 0;
+        (allUsers || []).forEach(u => {
+            const isAnon = u.is_anonymous === true;
+            isAnonymousMap.set(u.id, isAnon);
+            if (isAnon) {
+                anonUsers++;
+            } else {
+                authUsers++;
+            }
+        });
+
         // B. Level Distribution
         const { data: levelDist, error: lvlDistErr } = await supabaseServer
             .from('user_level_distribution_view')
@@ -196,8 +215,8 @@ export async function GET(req: Request) {
             payingUsersByDate[row.date].add(row.user_id);
         });
 
-        // Helper to compute unique count in a window
-        const getUniqueUsersInWindow = (activityMap: Record<string, Set<string>>, targetDateStr: string, windowDays: number = 30): number => {
+        // Helper to compute unique count in a window with details
+        const getUniqueUsersInWindowDetails = (activityMap: Record<string, Set<string>>, targetDateStr: string, windowDays: number = 30) => {
             const targetDate = new Date(targetDateStr);
             const uniqueUsers = new Set<string>();
             for (let i = 0; i < windowDays; i++) {
@@ -209,7 +228,26 @@ export async function GET(req: Request) {
                     usersOnDay.forEach(uid => uniqueUsers.add(uid));
                 }
             }
-            return uniqueUsers.size;
+            
+            let anon = 0;
+            let auth = 0;
+            uniqueUsers.forEach(uid => {
+                if (isAnonymousMap.get(uid)) {
+                    anon++;
+                } else {
+                    auth++;
+                }
+            });
+            
+            return {
+                total: uniqueUsers.size,
+                anon,
+                auth
+            };
+        };
+
+        const getUniqueUsersInWindow = (activityMap: Record<string, Set<string>>, targetDateStr: string, windowDays: number = 30): number => {
+            return getUniqueUsersInWindowDetails(activityMap, targetDateStr, windowDays).total;
         };
 
         // H. Map daily KPI array for the requested range
@@ -236,6 +274,7 @@ export async function GET(req: Request) {
                 dpu: 0,
                 dau: 0
             };
+            const mauDetails = getUniqueUsersInWindowDetails(activeUsersByDate, date, 30);
             return {
                 date,
                 newUsers: basic.new_users,
@@ -245,7 +284,9 @@ export async function GET(req: Request) {
                 fleds: basic.fleds,
                 winRate: basic.total_battles > 0 ? Math.round((basic.victories / basic.total_battles) * 100) : 0,
                 dau: basic.dau,
-                mau: getUniqueUsersInWindow(activeUsersByDate, date, 30),
+                mau: mauDetails.total,
+                anonMau: mauDetails.anon,
+                authMau: mauDetails.auth,
                 revenue: basic.revenue,
                 dpu: basic.dpu,
                 mpu: getUniqueUsersInWindow(payingUsersByDate, date, 30)
@@ -264,7 +305,7 @@ export async function GET(req: Request) {
         // Extract latest values for DAU/MAU/DPU/MPU summaries
         const todayStr = toJstDateStr(new Date());
         const dau = activeUsersByDate[todayStr] ? activeUsersByDate[todayStr].size : 0;
-        const mau = getUniqueUsersInWindow(activeUsersByDate, todayStr, 30);
+        const mauDetails = getUniqueUsersInWindowDetails(activeUsersByDate, todayStr, 30);
         const dpu = payingUsersByDate[todayStr] ? payingUsersByDate[todayStr].size : 0;
         const mpu = getUniqueUsersInWindow(payingUsersByDate, todayStr, 30);
 
@@ -412,6 +453,8 @@ export async function GET(req: Request) {
         return NextResponse.json({
             summary: {
                 totalUsers,
+                anonUsers,
+                authUsers,
                 totalGold,
                 avgGold,
                 maxGold,
@@ -419,7 +462,9 @@ export async function GET(req: Request) {
                 totalBattles,
                 winRate,
                 dau,
-                mau,
+                mau: mauDetails.total,
+                anonMau: mauDetails.anon,
+                authMau: mauDetails.auth,
                 totalQuests,
                 pendingReports: 0,
                 
