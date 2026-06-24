@@ -106,7 +106,7 @@ export default function BillingModal({ onClose }: Props) {
     const currentTier = userProfile?.subscription_tier || 'free';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
             {/* 特商法確認モーダル */}
             {purchaseConfirm && (
                 <PurchaseConfirmModal
