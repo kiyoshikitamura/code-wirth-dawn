@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, Coins, Heart, Star, AlertTriangle, Trophy, Settings } from 'lucide-react';
+import { User, Coins, Heart, Star, AlertTriangle, Trophy, Settings, CreditCard } from 'lucide-react';
 import { WorldState, UserProfile } from '@/types/game';
 import HegemonyModal from '@/components/world/HegemonyModal';
 
@@ -12,10 +12,11 @@ interface InnHeaderProps {
     onOpenSettings?: () => void;
     onOpenStatus?: () => void;
     onOpenShop?: () => void;
+    onOpenBilling?: () => void;
     equipBonus?: { atk: number; def: number; hp: number };
 }
 
-export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, onOpenShop, equipBonus }: InnHeaderProps) {
+export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, onOpenShop, onOpenBilling, equipBonus }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
     const [showHegemony, setShowHegemony] = useState(false);
 
@@ -101,6 +102,15 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                     <Trophy size={12} className="text-amber-400" />
                     世界の覇権
                 </button>
+                {onOpenBilling && (
+                    <button
+                        onClick={onOpenBilling}
+                        className="p-1.5 bg-[#0a1628]/60 rounded border border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 transition-colors active:scale-90 shrink-0"
+                        aria-label="魔導ショップ"
+                    >
+                        <CreditCard size={14} />
+                    </button>
+                )}
                 {onOpenSettings && (
                     <button
                         onClick={onOpenSettings}

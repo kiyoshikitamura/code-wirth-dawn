@@ -124,6 +124,10 @@ export interface UserProfile {
   evil_pts: number;
   gold: number;
   updated_at: string;
+  
+  subscription_tier?: 'free' | 'basic' | 'premium';
+  has_purchased_starter?: boolean;
+  has_purchased_elite?: boolean;
 
   current_location_id?: string;
   current_location_name?: string; // Joined field

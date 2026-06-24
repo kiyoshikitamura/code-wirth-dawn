@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Map as MapIcon, User as UserIcon, Shield } from 'lucide-react';
+import { Calendar, Trophy, Settings, Coins, Heart, LogIn, Map as MapIcon, User as UserIcon, Shield, CreditCard } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { DEFAULT_HEGEMONY } from '@/constants/nations';
 
 import HegemonyModal from './HegemonyModal';
 import AccountSettingsModal from '../inn/AccountSettingsModal';
 import StatusModal from '../inn/StatusModal';
+import BillingModal from '../ui/BillingModal';
 
 interface Props {
     currentLocationName: string;
@@ -19,6 +20,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
     const { userProfile, worldState, gold, showStatus, setShowStatus, equipBonus } = useGameStore();
     const [showHegemony, setShowHegemony] = React.useState(false);
     const [showSettings, setShowSettings] = React.useState(false);
+    const [showBilling, setShowBilling] = React.useState(false);
 
     // Calendar & Age Computation
     const totalDays = userProfile?.accumulated_days || 0;
@@ -38,6 +40,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
             {showHegemony && <HegemonyModal worldState={worldState} onClose={() => setShowHegemony(false)} />}
             {showSettings && <AccountSettingsModal onClose={() => setShowSettings(false)} />}
             {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
+            {showBilling && <BillingModal onClose={() => setShowBilling(false)} />}
 
             {/* 覇権・暦 */}
             <div className="flex justify-between items-center mb-3">
@@ -57,9 +60,14 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
                         ))}
                     </div>
                 </button>
-                <button onClick={() => setShowSettings(true)} className="p-1.5 text-slate-400 group relative">
-                    <Settings size={16} className="group-hover:text-amber-500 transition-colors" />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => setShowBilling(true)} className="p-1.5 text-slate-400 group relative" title="魔導ショップ">
+                        <CreditCard size={16} className="group-hover:text-amber-500 transition-colors" />
+                    </button>
+                    <button onClick={() => setShowSettings(true)} className="p-1.5 text-slate-400 group relative" title="設定">
+                        <Settings size={16} className="group-hover:text-amber-500 transition-colors" />
+                    </button>
+                </div>
             </div>
 
             {/* プロフィール */}

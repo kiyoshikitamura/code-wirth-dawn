@@ -34,6 +34,7 @@ import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
 import ColosseumModal from '@/components/inn/ColosseumModal';
 import AcademyModal from '@/components/inn/AcademyModal';
+import BillingModal from '@/components/ui/BillingModal';
 
 // デバッグ系: 開発環境のみロード
 const QuestTestPanel = dynamic(() => import('@/components/debug/QuestTestPanel'), { ssr: false });
@@ -64,6 +65,7 @@ function InnPageInner() {
         showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
+        showBilling, setShowBilling,
         resultOverlay, setResultOverlay,
         restLoading,
         traveling,
@@ -168,7 +170,7 @@ function InnPageInner() {
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar md:custom-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
-                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} onOpenShop={() => setShowShop(true)} equipBonus={equipBonus} />
+                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} onOpenShop={() => setShowShop(true)} onOpenBilling={() => setShowBilling(true)} equipBonus={equipBonus} />
 
                 {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
                 {showVitalityDeath && userProfile && (
@@ -207,10 +209,11 @@ function InnPageInner() {
 
                 {/* Modals */}
                 {showShop && <ShopModal onClose={() => setShowShop(false)} />}
-                {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} />}
+                {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
                 {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
                 {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
                 {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
+                {showBilling && <BillingModal onClose={() => setShowBilling(false)} />}
 
 
                 {activeModal === 'collection' && <CollectionModal onClose={() => setActiveModal(null)} />}

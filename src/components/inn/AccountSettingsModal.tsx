@@ -9,7 +9,6 @@ import { useGameStore } from '@/store/gameStore';
 import { clearGameStarted } from '@/hooks/useAuthGuard';
 import { UI_RULES } from '@/constants/game_rules';
 import SoundSettingsPanel from '@/components/sound/SoundSettingsPanel';
-import PurchaseConfirmModal from '@/components/ui/PurchaseConfirmModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface Props {
@@ -52,8 +51,6 @@ export default function AccountSettingsModal({ onClose }: Props) {
     const [linkLoading, setLinkLoading] = useState(false);
     const [linkSuccess, setLinkSuccess] = useState(false);
 
-    // v27.0: 購入確認ポップアップ
-    const [purchaseConfirm, setPurchaseConfirm] = useState<any>(null);
     // v27.0: タイトルに戻る確認
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     // v27.0: プラン詳細展開
@@ -169,57 +166,6 @@ export default function AccountSettingsModal({ onClose }: Props) {
         navigator.clipboard.writeText(userProfile.id);
         setIdCopied(true);
         setTimeout(() => setIdCopied(false), 2000);
-    };
-
-    // ── 共通billing呼び出し（JWT認証付き） v27.0 ──
-    const callBillingCheckout = async (body: Record<string, any>) => {
-        const token = await getAuthToken();
-        if (!token) throw new Error('認証セッションがありません');
-        const res = await fetch('/api/billing/checkout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '決済URLの取得に失敗しました');
-        return data.url;
-    };
-
-    // ── プランアップグレード（確認ポップアップ経由） ──
-    const requestUpgradeTier = (tier: 'basic' | 'premium') => {
-        setPurchaseConfirm({ type: 'subscription', tier });
-    };
-    const executeUpgradeTier = async (tier: 'basic' | 'premium') => {
-        setBillingLoading(tier);
-        try {
-            const url = await callBillingCheckout({ mode: 'subscription', tier });
-            window.location.href = url;
-        } catch (e: any) {
-            setError(e.message);
-        } finally {
-            setBillingLoading(null);
-            setPurchaseConfirm(null);
-        }
-    };
-
-    // ── ゴールド購入（確認ポップアップ経由） ──
-    const requestBuyGold = (packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k') => {
-        setPurchaseConfirm({ type: 'gold', packageKey });
-    };
-    const executeBuyGold = async (packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k') => {
-        setBillingLoading(packageKey);
-        try {
-            const url = await callBillingCheckout({ mode: 'payment', packageKey });
-            window.location.href = url;
-        } catch (e: any) {
-            setError(e.message);
-        } finally {
-            setBillingLoading(null);
-            setPurchaseConfirm(null);
-        }
     };
 
     // ── Stripe カスタマーポータル v27.0 ──
@@ -629,78 +575,6 @@ export default function AccountSettingsModal({ onClose }: Props) {
                             </p>
                         </div>
                     )}
-
-                    {/* プラン変更 / ゴールド購入 */}
-                    {!isAnonymous && (
-                        <div className="space-y-4">
-                            {currentTier !== 'premium' && (
-                                <div className="space-y-2">
-                                    <h4 className="text-[#a38b6b] text-xs font-bold">
-                                        プラン変更
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {currentTier === 'free' && (
-                                            <button
-                                                onClick={() => requestUpgradeTier('basic')}
-                                                disabled={!!billingLoading}
-                                                className="w-full flex items-center justify-center py-2.5 px-4 border border-blue-600 text-blue-300 text-sm font-bold rounded hover:bg-blue-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                            >
-                                                Basic にアップグレード
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => requestUpgradeTier('premium')}
-                                            disabled={!!billingLoading}
-                                            className="w-full flex items-center justify-center py-2.5 px-4 border border-yellow-500 text-yellow-300 text-sm font-bold rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                        >
-                                            Premium にアップグレード
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <h4 className="text-[#a38b6b] text-xs font-bold">
-                                    ゴールド購入
-                                </h4>
-                                <div className="space-y-2">
-                                    <button
-                                        onClick={() => requestBuyGold('gold_10k')}
-                                        disabled={!!billingLoading}
-                                        className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <span className="text-yellow-400 font-bold whitespace-nowrap">10,000 G</span>
-                                            <span className="text-gray-400 text-xs">スターターパック</span>
-                                        </span>
-                                        <span className="font-bold text-yellow-300">330円（税込）</span>
-                                    </button>
-                                    <button
-                                        onClick={() => requestBuyGold('gold_30k')}
-                                        disabled={!!billingLoading}
-                                        className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-700/50 text-yellow-200 text-sm rounded hover:bg-yellow-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <span className="text-yellow-400 font-bold whitespace-nowrap">30,000 G</span>
-                                            <span className="text-gray-400 text-xs">スタンダードパック</span>
-                                        </span>
-                                        <span className="font-bold text-yellow-300">950円（税込）</span>
-                                    </button>
-                                    <button
-                                        onClick={() => requestBuyGold('gold_50k')}
-                                        disabled={!!billingLoading}
-                                        className="w-full flex items-center justify-between py-2.5 px-4 border border-yellow-600/60 text-yellow-200 text-sm rounded hover:bg-yellow-900/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-yellow-900/10"
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <span className="text-yellow-400 font-bold whitespace-nowrap">50,000 G</span>
-                                            <span className="text-gray-400 text-xs">アドベンチャーパック</span>
-                                        </span>
-                                        <span className="font-bold text-yellow-300">1,430円（税込）</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* ── 最下部：タイトルに戻る ── */}
@@ -745,22 +619,6 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 )}
             </div>
         </div>
-
-        {/* v27.0: 購入確認ポップアップ */}
-        {purchaseConfirm && (
-            <PurchaseConfirmModal
-                purchase={purchaseConfirm}
-                loading={!!billingLoading}
-                onConfirm={() => {
-                    if (purchaseConfirm.type === 'subscription') {
-                        executeUpgradeTier(purchaseConfirm.tier);
-                    } else {
-                        executeBuyGold(purchaseConfirm.packageKey);
-                    }
-                }}
-                onCancel={() => setPurchaseConfirm(null)}
-            />
-        )}
 
         {/* v27.0: タイトルに戻る確認ダイアログ */}
         {showLogoutConfirm && (

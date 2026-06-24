@@ -30,6 +30,7 @@ interface ListCard {
 
 interface Props {
     onClose: () => void;
+    onOpenBilling: () => void;
 }
 
 // パック別の定数設定
@@ -70,7 +71,7 @@ const SERIES_CONFIG = {
     }
 };
 
-export default function AcademyModal({ onClose }: Props) {
+export default function AcademyModal({ onClose, onOpenBilling }: Props) {
     const { gold, inventory, fetchInventory, fetchUserProfile } = useGameStore();
     const [currentSeries, setCurrentSeries] = useState<'basic' | 'chaos_and_rebellion'>('chaos_and_rebellion');
     const [phase, setPhase] = useState<'shop' | 'pack_sealed' | 'pack_ripped' | 'cards_reveal' | 'card_list'>('shop');
@@ -339,43 +340,61 @@ export default function AcademyModal({ onClose }: Props) {
                                     <Coins className="w-3.5 h-3.5 text-amber-400" />
                                     <span className="font-mono font-bold text-amber-300 text-sm sm:text-base">{activeConfig.price.toLocaleString()} G</span>
                                 </div>
-                                <button
-                                    onClick={() => handleBuyPack(false)}
-                                    disabled={purchasing || gold < activeConfig.price}
-                                    className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
-                                        ${gold < activeConfig.price 
-                                            ? 'bg-slate-800/50 text-slate-500 border-slate-700 cursor-not-allowed'
-                                            : `bg-gradient-to-r ${activeConfig.colorClass}`
-                                        }`}
-                                >
-                                    {purchasing && !keyCount ? (
-                                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        <span>G でパック購入</span>
-                                    )}
-                                </button>
+                                {gold < activeConfig.price ? (
+                                    <button
+                                        onClick={onOpenBilling}
+                                        className="w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 border-amber-400 shadow-amber-500/10"
+                                    >
+                                        ゴールドをチャージ
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleBuyPack(false)}
+                                        disabled={purchasing}
+                                        className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
+                                            ${gold < activeConfig.price 
+                                                ? 'bg-slate-800/50 text-slate-500 border-slate-700 cursor-not-allowed'
+                                                : `bg-gradient-to-r ${activeConfig.colorClass}`
+                                            }`}
+                                    >
+                                        {purchasing && !keyCount ? (
+                                            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <span>G でパック購入</span>
+                                        )}
+                                    </button>
+                                )}
                             </div>
 
-                            {/* 鍵で開封ボタン (所持数にかかわらず枠は表示し、ない場合は非活性) */}
+                            {/* 鍵で開封ボタン */}
                             <div className="flex-1 w-full flex flex-col items-center gap-1.5">
                                 <div className="text-[10px] text-slate-400 font-bold tracking-wider">
                                     {activeConfig.keyName} (所持: <span className={keyCount > 0 ? 'text-green-400 font-bold' : 'text-slate-500'}>{keyCount}</span>)
                                 </div>
-                                <button
-                                    onClick={() => handleBuyPack(true)}
-                                    disabled={purchasing || keyCount <= 0}
-                                    className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
-                                        ${keyCount <= 0 
-                                            ? 'bg-slate-800/30 text-slate-650 border-slate-800 cursor-not-allowed shadow-none'
-                                            : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-emerald-950 border-emerald-400 shadow-emerald-500/10'
-                                        }`}
-                                >
-                                    {purchasing && keyCount > 0 ? (
-                                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        <span>鍵でパック開封</span>
-                                    )}
-                                </button>
+                                {keyCount <= 0 ? (
+                                    <button
+                                        onClick={onOpenBilling}
+                                        className="w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-emerald-950 border-emerald-400 shadow-emerald-500/10"
+                                    >
+                                        鍵を購入する
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleBuyPack(true)}
+                                        disabled={purchasing}
+                                        className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
+                                            ${keyCount <= 0 
+                                                ? 'bg-slate-800/30 text-slate-650 border-slate-800 cursor-not-allowed shadow-none'
+                                                : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-emerald-950 border-emerald-400 shadow-emerald-500/10'
+                                            }`}
+                                    >
+                                        {purchasing && keyCount > 0 ? (
+                                            <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <span>鍵でパック開封</span>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         </div>
                         
