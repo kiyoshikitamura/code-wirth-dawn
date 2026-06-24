@@ -32,6 +32,8 @@ export default function AcademyModal({ onClose }: Props) {
     useEffect(() => {
         // Initialize sound manager
         soundManager?.init();
+        fetchUserProfile();
+        fetchInventory();
     }, []);
 
     const handleBuyPack = async () => {
