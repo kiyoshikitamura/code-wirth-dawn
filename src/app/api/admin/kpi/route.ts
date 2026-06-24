@@ -66,10 +66,9 @@ export async function GET(req: Request) {
         const avgLevel = Math.round(Number(profileSummary.avg_level || 0) * 10) / 10;
 
         // Fetch all user profiles for anonymity mapping and registration breakdown
-        const { data: allUsers, error: allUsersErr } = await supabaseServer
-            .from('user_profiles')
-            .select('id, is_anonymous');
-        if (allUsersErr) throw allUsersErr;
+        const allUsers = await fetchAll<any>(
+            supabaseServer.from('user_profiles').select('id, is_anonymous')
+        );
 
         const isAnonymousMap = new Map();
         let anonUsers = 0;
@@ -92,7 +91,8 @@ export async function GET(req: Request) {
         if (lvlDistErr) throw lvlDistErr;
 
         const levelDistribution = {
-            '1-5': levelDist.range_1_5 || 0,
+            '1': levelDist.range_1 || 0,
+            '2-5': levelDist.range_2_5 || 0,
             '6-10': levelDist.range_6_10 || 0,
             '11-15': levelDist.range_11_15 || 0,
             '16+': levelDist.range_16_plus || 0

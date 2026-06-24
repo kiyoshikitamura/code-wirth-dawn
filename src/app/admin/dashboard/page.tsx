@@ -34,7 +34,8 @@ interface KPISummary {
 }
 
 interface LevelDistribution {
-    '1-5': number;
+    '1': number;
+    '2-5': number;
     '6-10': number;
     '11-15': number;
     '16+': number;
