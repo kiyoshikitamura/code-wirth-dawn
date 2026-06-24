@@ -45,7 +45,7 @@ const SERIES_CONFIG = {
         refund: 500,
         keyId: 77,
         keySlug: 'item_academy_key',
-        keyName: '魔術学院キー',
+        keyName: '魔道と鉄壁の鍵',
         themeBg: 'via-[#0d0f1f]/50',
         cardBackBg: 'bg-indigo-950/45',
         themeGlow: 'shadow-[0_0_30px_rgba(99,102,241,0.45)]',
@@ -62,7 +62,7 @@ const SERIES_CONFIG = {
         refund: 300,
         keyId: 76,
         keySlug: 'item_basic_key',
-        keyName: 'ベーシックキー',
+        keyName: '知識と契約の鍵',
         themeBg: 'via-[#09152b]/50',
         cardBackBg: 'bg-slate-900/40',
         themeGlow: 'shadow-[0_0_30px_rgba(14,165,233,0.45)]',
@@ -75,7 +75,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
     const { gold, inventory, fetchInventory, fetchUserProfile } = useGameStore();
     const [currentSeries, setCurrentSeries] = useState<'basic' | 'chaos_and_rebellion'>('chaos_and_rebellion');
     const [phase, setPhase] = useState<'shop' | 'pack_sealed' | 'pack_ripped' | 'cards_reveal' | 'card_list'>('shop');
-    const [purchasing, setPurchasing] = useState(false);
+    const [purchasingType, setPurchasingType] = useState<'gold' | 'key' | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [rolledCards, setRolledCards] = useState<AcademyCard[]>([]);
     const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false, false, false]);
@@ -103,9 +103,9 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
             setErrorMsg('ゴールドが不足しています。');
             return;
         }
-        if (purchasing) return;
+        if (purchasingType !== null) return;
 
-        setPurchasing(true);
+        setPurchasingType(buyWithKey ? 'key' : 'gold');
         setErrorMsg(null);
         soundManager?.playSE('se_click');
 
@@ -140,7 +140,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
             console.error(e);
             setErrorMsg('通信エラーが発生しました。');
         } finally {
-            setPurchasing(false);
+            setPurchasingType(null);
         }
     };
 
@@ -350,14 +350,14 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                 ) : (
                                     <button
                                         onClick={() => handleBuyPack(false)}
-                                        disabled={purchasing}
+                                        disabled={purchasingType !== null}
                                         className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
                                             ${gold < activeConfig.price 
                                                 ? 'bg-slate-800/50 text-slate-500 border-slate-700 cursor-not-allowed'
                                                 : `bg-gradient-to-r ${activeConfig.colorClass}`
                                             }`}
                                     >
-                                        {purchasing && !keyCount ? (
+                                        {purchasingType === 'gold' ? (
                                             <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                                         ) : (
                                             <span>G でパック購入</span>
@@ -381,14 +381,14 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                 ) : (
                                     <button
                                         onClick={() => handleBuyPack(true)}
-                                        disabled={purchasing}
+                                        disabled={purchasingType !== null}
                                         className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-xs tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border
                                             ${keyCount <= 0 
                                                 ? 'bg-slate-800/30 text-slate-650 border-slate-800 cursor-not-allowed shadow-none'
                                                 : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-emerald-950 border-emerald-400 shadow-emerald-500/10'
                                             }`}
                                     >
-                                        {purchasing && keyCount > 0 ? (
+                                        {purchasingType === 'key' ? (
                                             <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                                         ) : (
                                             <span>鍵でパック開封</span>

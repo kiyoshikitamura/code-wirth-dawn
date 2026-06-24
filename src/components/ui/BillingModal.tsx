@@ -14,6 +14,7 @@ interface Props {
 export default function BillingModal({ onClose }: Props) {
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
+    const [portalLoading, setPortalLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
     // 購入確認ポップアップの状態
@@ -27,6 +28,29 @@ export default function BillingModal({ onClose }: Props) {
         soundManager?.init();
         fetchUserProfile();
     }, []);
+
+    const handleOpenPortal = async () => {
+        soundManager?.playSE('se_click');
+        setPortalLoading(true);
+        setError(null);
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/billing/portal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'ポータルの起動に失敗しました。');
+            window.location.href = data.url;
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setPortalLoading(false);
+        }
+    };
 
     const handleClose = () => {
         soundManager?.playSE('se_click');
@@ -237,6 +261,24 @@ export default function BillingModal({ onClose }: Props) {
                                 </button>
                             </div>
                         </div>
+
+                        {currentTier !== 'free' && (
+                            <div className="mt-4 p-4 rounded-xl border border-slate-800/80 bg-[#120f1c]/35 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                                <div>
+                                    <h4 className="text-xs font-bold text-slate-200">サブスクリプションの変更・解約について</h4>
+                                    <p className="text-[10px] text-slate-400 mt-1 leading-normal">
+                                        プランのアップグレード、お支払い方法の変更、解約などのお手続きは、Stripeカスタマーポータルより安全に行っていただくことができます。
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleOpenPortal}
+                                    disabled={portalLoading || loadingKey !== null}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 text-slate-350 hover:text-white font-bold text-xs rounded-lg transition-all active:scale-[0.97] shrink-0"
+                                >
+                                    {portalLoading ? '処理中...' : 'プラン管理・解約手続き'}
+                                </button>
+                            </div>
+                        )}
                     </section>
 
                     {/* 2. アカウント1回限り限定パッケージ */}

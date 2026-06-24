@@ -124,16 +124,60 @@ export async function POST(req: Request) {
                 subscriptionData.trial_period_days = 7; // 最初の1週間無料トライアル
             }
 
-            const session = await stripe.checkout.sessions.create({
+            // Stripe Customer を特定する（emailまたはmetadataから）
+            const customers = await stripe.customers.list({
+                limit: 1,
+                email: user.email || undefined,
+            });
+            let customerId: string | null = customers.data[0]?.id || null;
+            if (!customerId) {
+                const searchResult = await stripe.customers.search({
+                    query: `metadata["user_id"]:"${userId}"`,
+                    limit: 1,
+                });
+                customerId = searchResult.data[0]?.id || null;
+            }
+
+            // 既存の顧客が別プランに加入している場合は、そのサブスクリプションを即時解約する
+            if (customerId) {
+                const activeSubscriptions = await stripe.subscriptions.list({
+                    customer: customerId,
+                    status: 'active',
+                });
+                const trialingSubscriptions = await stripe.subscriptions.list({
+                    customer: customerId,
+                    status: 'trialing',
+                });
+
+                const subsToCancel = [...activeSubscriptions.data, ...trialingSubscriptions.data];
+
+                for (const sub of subsToCancel) {
+                    console.log(`[checkout] Cancelling existing subscription ${sub.id} for user ${userId} to change tier to ${tier}`);
+                    try {
+                        await stripe.subscriptions.cancel(sub.id);
+                    } catch (cancelErr) {
+                        console.error(`[checkout] Failed to cancel subscription ${sub.id}:`, cancelErr);
+                    }
+                }
+            }
+
+            const sessionData: any = {
                 mode: 'subscription',
                 line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],
                 client_reference_id: userId,           // Webhook で user_id を特定するため必須
-                customer_email: user.email || undefined, // Stripe Customer のメールアドレスを統一
                 metadata: { user_id: userId, tier },
                 subscription_data: subscriptionData,
                 success_url: `${origin}/inn?billing=success&tier=${tier}`,
                 cancel_url: `${origin}/inn?billing=cancel`,
-            });
+            };
+
+            if (customerId) {
+                sessionData.customer = customerId;
+            } else {
+                sessionData.customer_email = user.email || undefined;
+            }
+
+            const session = await stripe.checkout.sessions.create(sessionData);
 
             return NextResponse.json({ url: session.url });
 
