@@ -294,22 +294,25 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
                                         >
                                             {/* カード裏面 */}
                                             <div
-                                                className="absolute inset-0 border border-amber-600/40 rounded-xl sm:rounded-2xl p-1 flex flex-col items-center justify-between shadow-lg overflow-hidden bg-gradient-to-b from-[#131630] to-[#070914]"
+                                                className="absolute inset-0 border border-amber-600/55 rounded-xl sm:rounded-2xl p-1.5 flex flex-col items-center justify-between shadow-lg overflow-hidden"
                                                 style={{
                                                     backfaceVisibility: 'hidden',
                                                     visibility: isFlipped ? 'hidden' : 'visible',
                                                     transition: 'visibility 0s ' + (isFlipped ? '0.25s' : '0s'),
+                                                    backgroundImage: "url('/images/card_back_basic.png')",
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center'
                                                 }}
                                             >
-                                                <div className="absolute inset-0 bg-indigo-950/40 rounded-xl sm:rounded-2xl pointer-events-none" />
-                                                <div className="relative z-10 w-full h-full border border-amber-500/10 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-4 bg-black/30 backdrop-blur-[0.5px]">
-                                                    <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-amber-500/5 border border-amber-500/20 flex items-center justify-center text-amber-400/80 font-black text-[8px] sm:text-[9px]">
+                                                <div className="absolute inset-0 bg-slate-900/40 rounded-xl sm:rounded-2xl pointer-events-none" />
+                                                <div className="relative z-10 w-full h-full border border-amber-500/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6 bg-black/45 backdrop-blur-[0.5px]">
+                                                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400/80 font-black text-[8px] sm:text-[10px]">
                                                         契約
                                                     </div>
-                                                    <div className="w-6 h-6 sm:w-8 sm:h-8 border border-amber-500/20 rotate-45 flex items-center justify-center">
-                                                        <Sparkles className="w-3 h-3 sm:w-4.5 h-4.5 text-amber-400/30 -rotate-45" />
+                                                    <div className="w-7 h-7 sm:w-10 sm:h-10 border border-amber-500/25 rotate-45 flex items-center justify-center">
+                                                        <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-400/40 -rotate-45" />
                                                     </div>
-                                                    <div className="text-[6px] sm:text-[7px] text-amber-500/30 tracking-widest font-bold">WIRTH</div>
+                                                    <div className="text-[6px] sm:text-[8px] text-amber-550/40 tracking-[0.15em] sm:tracking-[0.2em] font-bold">WIRTH-DAWN</div>
                                                 </div>
                                             </div>
 

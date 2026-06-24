@@ -36,14 +36,18 @@ export async function POST(req: Request) {
 
         // プロファイルを検索（再誕フローの場合は既存プロファイルがあることがある）
         let profileId: string | null = null;
+        let isTutorialCompleted = false;
 
         const { data: existingProfile } = await client
             .from('user_profiles')
-            .select('id')
+            .select('id, is_tutorial_completed')
             .eq('id', resolvedUserId)
             .maybeSingle();
 
-        if (existingProfile) profileId = existingProfile.id;
+        if (existingProfile) {
+            profileId = existingProfile.id;
+            isTutorialCompleted = !!existingProfile.is_tutorial_completed;
+        }
 
         let updates: any = {
             name: title_name, // User Input -> Name
@@ -134,6 +138,24 @@ export async function POST(req: Request) {
                 .eq('id', profileId);
 
             if (error) throw error;
+
+            // 既存更新時であってもチュートリアル未完了の場合は、初期鍵 (item_id: 76) を自動補填・付与する
+            if (!isTutorialCompleted) {
+                const { error: keyError } = await supabaseServer
+                    .from('inventory')
+                    .upsert(
+                        {
+                            user_id: profileId,
+                            item_id: 76,
+                            quantity: 1,
+                            is_equipped: false
+                        },
+                        { onConflict: 'user_id,item_id' }
+                    );
+                if (keyError) {
+                    console.error('[Init Profile] 既存更新時（チュートリアル未完了）の鍵付与に失敗しました:', keyError);
+                }
+            }
 
             // #13 世代継承シェア (繰返) -> 号外一時廃止に伴い抑止
             let shareDataList: any[] = [];
