@@ -16,9 +16,6 @@ export default function BillingModal({ onClose }: Props) {
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     
-    // 特商法同意チェックボックス
-    const [agreed, setAgreed] = useState(false);
-    
     // 購入確認ポップアップの状態
     const [purchaseConfirm, setPurchaseConfirm] = useState<{
         type: 'subscription' | 'gold';
@@ -55,10 +52,6 @@ export default function BillingModal({ onClose }: Props) {
     // プラン入会要求
     const requestUpgradeTier = (tier: 'basic' | 'premium') => {
         soundManager?.playSE('se_click');
-        if (!agreed) {
-            setError('特商法および利用規約への同意が必要です。');
-            return;
-        }
         setError(null);
         setPurchaseConfirm({ type: 'subscription', tier });
     };
@@ -79,10 +72,6 @@ export default function BillingModal({ onClose }: Props) {
     // ゴールド・パッケージ購入要求
     const requestBuyGold = (packageKey: 'gold_10k' | 'gold_30k' | 'gold_50k' | 'gold_starter' | 'gold_elite') => {
         soundManager?.playSE('se_click');
-        if (!agreed) {
-            setError('特商法および利用規約への同意が必要です。');
-            return;
-        }
         setError(null);
         setPurchaseConfirm({ type: 'gold', packageKey });
     };
@@ -412,20 +401,9 @@ export default function BillingModal({ onClose }: Props) {
                 {/* フッター */}
                 <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
                     <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
-                                className="rounded border-slate-800 bg-slate-900 text-amber-600 focus:ring-amber-500/50 focus:ring-2 w-4 h-4 cursor-pointer"
-                            />
-                            <span className="text-[10px] text-slate-350 font-bold">
-                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline inline-flex items-center gap-0.5">利用規約<ExternalLink size={8} /></a>
-                                および
-                                <a href="/legal" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:underline inline-flex items-center gap-0.5">特定商取引法に基づく表記<ExternalLink size={8} /></a>
-                                に同意します。
-                            </span>
-                        </label>
+                        <span className="text-[10px] text-slate-500">
+                            各種決済には外部のセキュアな決済システム（Stripe）を使用しています。
+                        </span>
                     </div>
                     <div className="flex items-center gap-1 text-[9px] text-slate-500">
                         <ShieldCheck size={12} className="text-emerald-600" />
