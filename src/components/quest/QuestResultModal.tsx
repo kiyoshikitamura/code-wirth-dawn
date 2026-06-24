@@ -87,6 +87,8 @@ export default function QuestResultModal({
         if (isClosing) return;
         setIsClosing(true);
         try {
+            // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
+            sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
             await onClose();
         } catch (e) {
             console.error('[QuestResultModal] onClose failed:', e);
@@ -442,54 +444,8 @@ export default function QuestResultModal({
                         </section>
                     )}
 
-                    {/* ── シェアセクション（号外システム統合） ── */}
-                    {(shareDataList && shareDataList.length > 0) ? (
-                        <section className="border-t border-gray-800 pt-3">
-                            <div className="bg-amber-900/10 border border-amber-500/20 p-3 rounded-lg space-y-2">
-                                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-[10px]">
-                                    <Trophy className="w-3 h-3" />
-                                    <span>号外！冒険を共有しよう</span>
-                                </div>
-                                {shareDataList.map((sd, idx) => {
-                                    const shareUrl = typeof window !== 'undefined'
-                                        ? `${window.location.origin}/share?t=${sd.slug}&${new URLSearchParams(sd.vars).toString()}`
-                                        : undefined;
-                                    return (
-                                        <div key={idx} className="flex items-center gap-3 justify-between bg-black/20 p-2 rounded">
-                                            <p className="text-gray-300 text-xs italic leading-relaxed flex-1">
-                                                "{sd.text.length > 80 ? sd.text.substring(0, 80) + '...' : sd.text}"
-                                            </p>
-                                            <XShareButton
-                                                text={sd.text}
-                                                shareUrl={shareUrl}
-                                                iconOnly={true}
-                                                className="!w-9 !h-9 !p-0 shadow-md !bg-white hover:!bg-gray-200 !text-black !rounded-full flex items-center justify-center shrink-0"
-                                            />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    ) : shareText && (
-                        <section className="border-t border-gray-800 pt-3">
-                            <div className="bg-amber-900/10 border border-amber-500/20 p-3 rounded-lg space-y-2">
-                                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-[10px]">
-                                    <Trophy className="w-3 h-3" />
-                                    <span>冒険を共有しよう</span>
-                                </div>
-                                <div className="flex items-center gap-3 justify-between bg-black/20 p-2 rounded">
-                                    <p className="text-gray-300 text-xs italic leading-relaxed flex-1">
-                                        "{shareText.length > 80 ? shareText.substring(0, 80) + '...' : shareText}"
-                                    </p>
-                                    <XShareButton
-                                        text={shareText}
-                                        iconOnly={true}
-                                        className="!w-9 !h-9 !p-0 shadow-md !bg-white hover:!bg-gray-200 !text-black !rounded-full flex items-center justify-center shrink-0"
-                                    />
-                                </div>
-                            </div>
-                        </section>
-                    )}
+                    /* ── シェアセクション 一時廃止 ── */
+                    null
                 </div>
 
                 <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10">

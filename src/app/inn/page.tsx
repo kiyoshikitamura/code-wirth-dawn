@@ -29,7 +29,9 @@ import QuestBoardModal from '@/components/inn/QuestBoardModal';
 import ActiveQuestModal from '@/components/inn/ActiveQuestModal';
 import UgcQuestBoardPanel from '@/components/ugc/UgcQuestBoardPanel';
 import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
-import TutorialModal from '@/components/inn/TutorialModal';
+import OnboardingAcademyModal from '@/components/inn/OnboardingAcademyModal';
+import GuestRegisterPromoModal from '@/components/inn/GuestRegisterPromoModal';
+import StarterPackPromoModal from '@/components/inn/StarterPackPromoModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
@@ -90,10 +92,23 @@ function InnPageInner() {
     } = state;
 
     const completedQuests = useGameStore(state => state.completedQuests);
+    const partyMembers = useGameStore(state => state.partyMembers);
+
     const [visitedTavern, setVisitedTavern] = useState(false);
     const [visitedShop, setVisitedShop] = useState(false);
     const [visitedGossip, setVisitedGossip] = useState(false);
     const [visitedMap, setVisitedMap] = useState(false);
+
+    // 新規: 7段階のナビゲーション監視フラグ
+    const [visitedGuild, setVisitedGuild] = useState(false);
+    const [visitedAcademy, setVisitedAcademy] = useState(false);
+    const [visitedStatus, setVisitedStatus] = useState(false);
+    const [visitedSettings, setVisitedSettings] = useState(false);
+    const [visitedBilling, setVisitedBilling] = useState(false);
+
+    // 新規: プロモーションモーダルの表示ステート
+    const [showGuestRegisterPromo, setShowGuestRegisterPromo] = useState(false);
+    const [showStarterPackPromo, setShowStarterPackPromo] = useState(false);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -101,8 +116,87 @@ function InnPageInner() {
             setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
             setVisitedGossip(localStorage.getItem('wirth_dawn_visited_gossip') === 'true');
             setVisitedMap(localStorage.getItem('wirth_dawn_visited_map') === 'true');
+            setVisitedGuild(localStorage.getItem('wirth_dawn_visited_guild') === 'true');
+            setVisitedAcademy(localStorage.getItem('wirth_dawn_visited_academy') === 'true');
+            setVisitedStatus(localStorage.getItem('wirth_dawn_visited_status') === 'true');
+            setVisitedSettings(localStorage.getItem('wirth_dawn_visited_settings') === 'true');
+            setVisitedBilling(localStorage.getItem('wirth_dawn_visited_billing') === 'true');
         }
-    }, [showTavern, showShop, activeModal]);
+    }, [showTavern, showShop, showAcademy, showStatus, showAccount, showBilling, activeModal]);
+
+    // モーダル起動時に localStorage に訪問履歴を記録
+    React.useEffect(() => {
+        if (activeModal === 'questBoard' || activeModal === 'guild') {
+            localStorage.setItem('wirth_dawn_visited_guild', 'true');
+            setVisitedGuild(true);
+        }
+    }, [activeModal]);
+
+    React.useEffect(() => {
+        if (showAcademy) {
+            localStorage.setItem('wirth_dawn_visited_academy', 'true');
+            setVisitedAcademy(true);
+        }
+    }, [showAcademy]);
+
+    React.useEffect(() => {
+        if (showStatus) {
+            localStorage.setItem('wirth_dawn_visited_status', 'true');
+            setVisitedStatus(true);
+        }
+    }, [showStatus]);
+
+    React.useEffect(() => {
+        if (showAccount) {
+            localStorage.setItem('wirth_dawn_visited_settings', 'true');
+            setVisitedSettings(true);
+        }
+    }, [showAccount]);
+
+    React.useEffect(() => {
+        if (showBilling) {
+            localStorage.setItem('wirth_dawn_visited_billing', 'true');
+            setVisitedBilling(true);
+        }
+    }, [showBilling]);
+
+    // プロモーション自動表示 useEffect (タスク 3.2, 3.3, 3.4)
+    React.useEffect(() => {
+        if (!userProfile) return;
+
+        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+
+        // 1. 本登録完了直後の遷移検知 (OAuth連携から戻ってきたタイミング)
+        const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
+        if (justRegistered === 'true' && !userProfile.is_anonymous) {
+            sessionStorage.removeItem('wirth_dawn_just_registered');
+            if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                setShowStarterPackPromo(true);
+            }
+        }
+
+        // 2. クエストクリア直後の帰還検知
+        const questJustCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared');
+        if (questJustCleared === 'true') {
+            sessionStorage.removeItem('wirth_dawn_quest_just_cleared');
+            if (userProfile.is_anonymous) {
+                setShowGuestRegisterPromo(true);
+            } else {
+                if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                    setShowStarterPackPromo(true);
+                }
+            }
+        }
+
+        // 3. 本登録ユーザーの次回ログイン時のパック案内
+        if (!userProfile.is_anonymous && isEp1Cleared) {
+            const promoShown = sessionStorage.getItem('wirth_dawn_starter_promo_shown');
+            if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
+                setShowStarterPackPromo(true);
+            }
+        }
+    }, [userProfile, completedQuests]);
 
     React.useEffect(() => {
         if (showTavern) {
@@ -172,7 +266,26 @@ function InnPageInner() {
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar md:custom-scrollbar flex flex-col pb-10">
 
                 {/* Fixed Header */}
-                <InnHeader worldState={worldState} userProfile={userProfile} reputation={reputation} onOpenSettings={() => setShowAccount(true)} onOpenStatus={() => setShowStatus(true)} onOpenShop={() => setShowShop(true)} onOpenBilling={() => setShowBilling(true)} equipBonus={equipBonus} />
+                {(() => {
+                    const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                    const isStatusRecommended = !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedMap && visitedAcademy && visitedShop && visitedBilling && !visitedStatus;
+                    const isSettingsRecommended = !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedMap && visitedAcademy && visitedShop && visitedBilling && visitedStatus && !visitedSettings;
+                    
+                    return (
+                        <InnHeader 
+                            worldState={worldState} 
+                            userProfile={userProfile} 
+                            reputation={reputation} 
+                            onOpenSettings={() => setShowAccount(true)} 
+                            onOpenStatus={() => setShowStatus(true)} 
+                            onOpenShop={() => setShowShop(true)} 
+                            onOpenBilling={() => setShowBilling(true)} 
+                            equipBonus={equipBonus}
+                            isStatusRecommended={isStatusRecommended}
+                            isSettingsRecommended={isSettingsRecommended}
+                        />
+                    );
+                })()}
 
                 {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
                 {showVitalityDeath && userProfile && (
@@ -182,9 +295,22 @@ function InnPageInner() {
                     />
                 )}
 
-                {/* Tutorial Modal */}
+                {/* Onboarding Academy Modal */}
                 {showTutorial && (
-                    <TutorialModal onComplete={handleCompleteTutorial} />
+                    <OnboardingAcademyModal />
+                )}
+
+                {/* Guest Register Promotion Modal */}
+                {showGuestRegisterPromo && (
+                    <GuestRegisterPromoModal onClose={() => setShowGuestRegisterPromo(false)} />
+                )}
+
+                {/* Starter Pack / Elite Pack Promotion Modal */}
+                {showStarterPackPromo && (
+                    <StarterPackPromoModal 
+                        onClose={() => setShowStarterPackPromo(false)} 
+                        onOpenBilling={() => setShowBilling(true)}
+                    />
                 )}
 
 
@@ -320,19 +446,24 @@ function InnPageInner() {
                     if (userProfile && (userProfile.level || 1) >= 3) return null; // Lv3以上バイパス
 
                     const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
-                    const clearedCount = completedQuests?.length ?? 0;
 
                     let bannerText = '';
                     if (!isEp1Cleared) {
                         bannerText = 'ギルドで第1話「始まりの轍」を受注しよう！';
-                    } else if (clearedCount < 2) {
-                        bannerText = '第1話クリア！続けて別の依頼をこなそう';
-                    } else if (!visitedTavern) {
-                        bannerText = '依頼達成！次は酒場で仲間を集めよう';
-                    } else if (!visitedShop) {
-                        bannerText = '仲間獲得！次は道具屋で装備を整えよう';
-                    } else if (!visitedGossip && !visitedMap) {
-                        bannerText = '街の噂を集めたり、地図から冒険に旅立とう';
+                    } else if (partyMembers.length === 0) {
+                        bannerText = '「宿屋/酒場」で最初の仲間（NPC）を雇用しましょう！';
+                    } else if (!visitedGuild) {
+                        bannerText = '「ギルド」で新たな依頼（クエスト）を引き受けましょう！';
+                    } else if (!visitedMap) {
+                        bannerText = '「出発する」を押して、ワールドマップから冒険に旅立ちましょう！';
+                    } else if (!visitedAcademy) {
+                        bannerText = '「魔術学院」で新たな魔導の契約（カードパック購入）やデッキの確認をしましょう！';
+                    } else if (!visitedShop || !visitedBilling) {
+                        bannerText = '「道具屋」や「チャージ」を開いて、冒険に役立つアイテムや金貨を確認しましょう！';
+                    } else if (!visitedStatus) {
+                        bannerText = '「ステータス」を開いて、キャラクターの能力値や装備品を確認しましょう！';
+                    } else if (!visitedSettings) {
+                        bannerText = '「設定（歯車マーク）」を開いて、音量調節やアカウント管理の機能を確認しましょう！';
                     }
 
                     if (!userProfile.current_quest_id && bannerText && showGuideBanner) {
@@ -361,21 +492,22 @@ function InnPageInner() {
                 <div className="flex-1 w-full bg-[#0a1628]">
                     {(() => {
                         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
-                        const clearedCount = completedQuests?.length ?? 0;
 
                         let recommendedFacility: string | null = null;
                         if (userProfile && (userProfile.level || 1) >= 3) {
                             recommendedFacility = null; // Lv3以上バイパス
                         } else if (!isEp1Cleared) {
                             recommendedFacility = 'guild';
-                        } else if (clearedCount < 2) {
-                            recommendedFacility = null;
-                        } else if (!visitedTavern) {
+                        } else if (partyMembers.length === 0) {
                             recommendedFacility = 'inn';
-                        } else if (!visitedShop) {
+                        } else if (!visitedGuild) {
+                            recommendedFacility = 'guild';
+                        } else if (!visitedMap) {
+                            recommendedFacility = null; // 地図出発は施設外(Compassボタン)
+                        } else if (!visitedAcademy) {
+                            recommendedFacility = 'magicAcademy';
+                        } else if (!visitedShop || !visitedBilling) {
                             recommendedFacility = 'shop';
-                        } else if (!visitedGossip && !visitedMap) {
-                            recommendedFacility = 'gossip_and_map';
                         } else {
                             recommendedFacility = null;
                         }

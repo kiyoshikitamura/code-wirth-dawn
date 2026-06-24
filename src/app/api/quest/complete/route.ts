@@ -927,8 +927,8 @@ export async function POST(req: Request) {
             rewards: effectiveRewards,
             earned_exp: result === 'success' ? (effectiveRewards?.exp || 0) : 0,
             loot_saved: lootSaved,
-            share_text: finalShareText,
-            share_data_list: shareDataList,
+            share_text: null, // 号外一時廃止に伴い抑止
+            share_data_list: [], // 号外一時廃止に伴い抑止
             rep_change: repChange,
             party_changes: partyChanges,
             guest_conversion: guestConversion,

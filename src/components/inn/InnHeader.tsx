@@ -14,9 +14,11 @@ interface InnHeaderProps {
     onOpenShop?: () => void;
     onOpenBilling?: () => void;
     equipBonus?: { atk: number; def: number; hp: number };
+    isStatusRecommended?: boolean;
+    isSettingsRecommended?: boolean;
 }
 
-export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, onOpenShop, onOpenBilling, equipBonus }: InnHeaderProps) {
+export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, onOpenShop, onOpenBilling, equipBonus, isStatusRecommended, isSettingsRecommended }: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
     const [showHegemony, setShowHegemony] = useState(false);
 
@@ -114,7 +116,11 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                 {onOpenSettings && (
                     <button
                         onClick={onOpenSettings}
-                        className="p-1.5 bg-[#0a1628]/60 rounded border border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 transition-colors active:scale-90 shrink-0"
+                        className={`p-1.5 rounded border transition-all active:scale-90 shrink-0 ${
+                            isSettingsRecommended
+                                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse'
+                                : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400'
+                        }`}
                         aria-label="設定"
                     >
                         <Settings size={14} />
@@ -123,7 +129,12 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
             </div>
 
             <div className="flex items-center gap-3 mb-2">
-                <button onClick={onOpenStatus} className="relative flex-shrink-0 active:scale-95 transition-transform">
+                <button 
+                    onClick={onOpenStatus} 
+                    className={`relative flex-shrink-0 active:scale-95 transition-transform rounded-full ${
+                        isStatusRecommended ? 'ring-2 ring-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse' : ''
+                    }`}
+                >
                     <div className="w-14 h-14 rounded-full border-2 border-amber-400 overflow-hidden bg-[#0a1628] shadow-[0_0_12px_rgba(251,191,36,0.25)]">
                         {userProfile?.avatar_url ? (
                             <img src={userProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
