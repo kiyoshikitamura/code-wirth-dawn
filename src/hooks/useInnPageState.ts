@@ -56,12 +56,12 @@ export function useInnPageState() {
             } else {
                 const amount = Number(searchParams.get('amount') || 0);
                 const pkg = searchParams.get('package');
-                if (pkg === 'gold_starter') {
+                if (pkg === 'gold_starter' || pkg === 'starter_pack') {
                     title = 'スターターパック (限定)';
                     gold = 10000;
                     basicKeys = 5;
                     academyKeys = 3;
-                } else if (pkg === 'gold_elite') {
+                } else if (pkg === 'gold_elite' || pkg === 'elite_pack') {
                     title = 'エリートパック (限定)';
                     gold = 30000;
                     basicKeys = 8;
