@@ -14,8 +14,8 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 58,item_bomb_large,大型爆弾,consumable,,500,loc_marcund,3,false,"{""aoe_damage"":80,""use_timing"":""battle"",""description"":""強力な爆発物。周囲を広範囲に吹き飛ばす。""}",
 61,item_royal_decree,王家の勅令書,consumable,,1000,loc_holy_empire,4,false,"{""use_timing"":""field"",""effect"":""reputation_boost"",""reputation_amount"":100,""description"":""聖帝国の名のもとに発行された公式な許可証。使用すると現在の拠点での名声が100上昇する。""}",
 64,item_debris_clear,瓦礫撤去許可証,key_item,,0,,1,false,"{""description"":""崩落した道を拓くための公式な許可証。これがないと作業員は動かない。""}",
-76,item_basic_key,ベーシックキー,consumable,,2000,,1,false,"{""use_timing"":""field"",""effect"":""open_pack"",""pack_series"":""basic"",""description"":""古びた青銅の鍵。既存のスキルカードが手に入るベーシックパックを1個開封できる。""}",
-77,item_academy_key,魔術学院キー,consumable,,3000,,1,false,"{""use_timing"":""field"",""effect"":""open_pack"",""pack_series"":""chaos_and_rebellion"",""description"":""まばゆく輝く魔法の鍵。魔術学院のブースターパックを1個開封できる。""}",
+76,item_basic_key,知識と契約の鍵,consumable,,2000,,1,false,"{""use_timing"":""field"",""effect"":""open_pack"",""pack_series"":""basic"",""description"":""カードパック「黎明の知識と古の契約」を開封することのできる鍵""}",
+77,item_academy_key,魔道と知識の鍵,consumable,,3000,,1,false,"{""use_timing"":""field"",""effect"":""open_pack"",""pack_series"":""chaos_and_rebellion"",""description"":""カードパック「混沌の魔道と反逆の鉄壁」を開封することのできる鍵""}",
 187,book_iron_sword,教本:鉄の剣,skill,,500,,2,false,"{""description"":""帝国軍で支給される、基本的な剣術が記された指南書。まずはここから刃の入れ方を学ぶ。""}",2
 188,book_dagger,教本:護身短剣,skill,,300,,1,false,"{""description"":""軽い身のこなしから素早く短剣を突き立てる技術。コストをかけずに隙を突く。""}",18
 189,book_axe,教本:樵の斧,skill,,600,,2,false,"{""description"":""力を込めて重い斧を振り下ろす豪快な戦い方。命中は低いが当たれば骨まで砕く。""}",87

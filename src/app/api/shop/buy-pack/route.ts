@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         };
 
         // 3. 鍵またはゴールドの残高チェックと消費
-        let keyInventoryId: number | null = null;
+        let keyInventoryId: string | null = null;
         
         if (useKey) {
             // 鍵チェック
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
             if (keyInvError || !keyInv || (keyInv.quantity || 0) <= 0) {
                 return NextResponse.json({ error: '対象のパック開封用鍵を所持していません。' }, { status: 400 });
             }
-            keyInventoryId = Number(keyInv.id);
+            keyInventoryId = keyInv.id;
 
             // アトミックに鍵を1枚減らす
             const newQty = (keyInv.quantity || 1) - 1;

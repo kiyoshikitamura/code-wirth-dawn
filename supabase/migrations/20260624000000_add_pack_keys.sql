@@ -7,23 +7,23 @@ VALUES
 (
     76, 
     'item_basic_key', 
-    'ベーシックキー', 
+    '知識と契約の鍵', 
     'consumable', 
     2000, 
     1, 
     '{}', 
-    '{"use_timing": "field", "effect": "open_pack", "pack_series": "basic", "description": "古びた青銅の鍵。既存のスキルカードが手に入るベーシックパックを1個開封できる。"}'::jsonb, 
+    '{"use_timing": "field", "effect": "open_pack", "pack_series": "basic", "description": "カードパック「黎明の知識と古の契約」を開封することのできる鍵"}'::jsonb, 
     false
 ),
 (
     77, 
     'item_academy_key', 
-    '魔術学院キー', 
+    '魔道と知識の鍵', 
     'consumable', 
     3000, 
     1, 
     '{}', 
-    '{"use_timing": "field", "effect": "open_pack", "pack_series": "chaos_and_rebellion", "description": "まばゆく輝く魔法 of 鍵。魔術学院のブースターパックを1個開封できる。"}'::jsonb, 
+    '{"use_timing": "field", "effect": "open_pack", "pack_series": "chaos_and_rebellion", "description": "カードパック「混沌の魔道と反逆の鉄壁」を開封することのできる鍵"}'::jsonb, 
     false
 )
 ON CONFLICT (id) DO UPDATE SET 
