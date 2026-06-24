@@ -1,25 +1,27 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabaseService } from '@/lib/supabase-admin';
 import { getAuthenticatedProfile, checkEmbargo, AuthError } from '@/lib/shopAuth';
+import { getSkillRarity } from '@/lib/rarity';
 
 export const dynamic = 'force-dynamic';
 
-const PACK_PRICE = 5000;
-const REFUND_AMOUNT = 500;
-
-// New 40 skills, excluding the 3 black market ones:
-// 3121 (book_death_sentence), 3129 (book_pay_to_win), 3132 (book_ruin_pact)
-const POOLS = {
+// 排出プール定義
+const ACADEMY_POOLS = {
     SR: [3101, 3116, 3119],
     R: [3107, 3109, 3112, 3113, 3124, 3125, 3139],
     U: [3102, 3103, 3105, 3110, 3114, 3115, 3118, 3120, 3126, 3131],
     C: [3104, 3106, 3108, 3111, 3117, 3122, 3123, 3127, 3128, 3130, 3133, 3134, 3135, 3136, 3137, 3138, 3140]
 };
 
-// Helper to roll one card based on rates:
-// Slots 1-4: SR (3%), R (12%), U (25%), C (60%)
-// Slot 5: SR (20%), R (80%) (Rare guaranteed)
-function rollCard(guaranteedRare: boolean): { rarity: 'SR' | 'R' | 'U' | 'C'; skillId: number } {
+const BASIC_POOLS = {
+    SR: [3021, 3022, 3035, 3041, 3042, 3043, 3045],
+    R: [3023, 3024, 3025, 3029, 3031, 3037, 3039, 3044],
+    U: [3027, 3028, 3030, 3032, 3033, 3034, 3036, 3038, 3040, 3062, 3065, 3066, 3067],
+    C: [3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020, 3026, 3061]
+};
+
+// ヘルパー：確率に基づく1枚のロール
+function rollCard(guaranteedRare: boolean, pools: typeof ACADEMY_POOLS): { rarity: 'SR' | 'R' | 'U' | 'C'; skillId: number } {
     const rand = Math.random() * 100;
     let rarity: 'SR' | 'R' | 'U' | 'C' = 'C';
     
@@ -41,20 +43,29 @@ function rollCard(guaranteedRare: boolean): { rarity: 'SR' | 'R' | 'U' | 'C'; sk
         }
     }
     
-    const pool = POOLS[rarity];
+    const pool = pools[rarity];
     const skillId = pool[Math.floor(Math.random() * pool.length)];
     return { rarity, skillId };
 }
 
+// POST: パック購入（ゴールドまたは鍵消費）
 export async function POST(req: Request) {
     try {
-        // 1. Authenticate user
+        // 1. 認証とリクエスト読み込み
         const profile = await getAuthenticatedProfile(req);
         
-        // 2. Check reputation embargo
+        let body: any = {};
+        try {
+            body = await req.json();
+        } catch (_) {}
+
+        const packSeries = body.pack_series === 'basic' ? 'basic' : 'chaos_and_rebellion';
+        const useKey = !!body.use_key;
+
+        // 2. 名声出禁チェック
         await checkEmbargo(profile);
 
-        // 2.5 Ensure the user is not in the Hub location (Hub does not have Magic Academy)
+        // 2.5 ハブ拠点チェック (ハブ拠点では魔術学院は利用できません)
         const { data: hubState } = await supabaseService
             .from('user_hub_states')
             .select('is_in_hub')
@@ -64,32 +75,92 @@ export async function POST(req: Request) {
         if (hubState?.is_in_hub) {
             return NextResponse.json({ error: 'ハブ拠点では魔術学院は利用できません。' }, { status: 400 });
         }
+
+        // シリーズ設定
+        const config = packSeries === 'basic' ? {
+            price: 3000,
+            refund: 300,
+            key_id: 76,
+            key_slug: 'item_basic_key',
+            pools: BASIC_POOLS,
+            log_series: 'basic'
+        } : {
+            price: 5000,
+            refund: 500,
+            key_id: 77,
+            key_slug: 'item_academy_key',
+            pools: ACADEMY_POOLS,
+            log_series: 'chaos_and_rebellion'
+        };
+
+        // 3. 鍵またはゴールドの残高チェックと消費
+        let keyInventoryId: number | null = null;
         
-        // 3. Double Check Gold
-        if (profile.gold < PACK_PRICE) {
-            return NextResponse.json({ error: 'ゴールドが不足しています。' }, { status: 400 });
+        if (useKey) {
+            // 鍵チェック
+            const { data: keyInv, error: keyInvError } = await supabaseService
+                .from('inventory')
+                .select('id, quantity')
+                .eq('user_id', profile.id)
+                .eq('item_id', config.key_id)
+                .maybeSingle();
+
+            if (keyInvError || !keyInv || (keyInv.quantity || 0) <= 0) {
+                return NextResponse.json({ error: '対象のパック開封用鍵を所持していません。' }, { status: 400 });
+            }
+            keyInventoryId = Number(keyInv.id);
+
+            // アトミックに鍵を1枚減らす
+            const newQty = (keyInv.quantity || 1) - 1;
+            if (newQty <= 0) {
+                const { error: delError } = await supabaseService
+                    .from('inventory')
+                    .delete()
+                    .eq('id', keyInventoryId);
+                if (delError) throw delError;
+            } else {
+                const { error: updError } = await supabaseService
+                    .from('inventory')
+                    .update({ quantity: newQty })
+                    .eq('id', keyInventoryId);
+                if (updError) throw updError;
+            }
+        } else {
+            // 通常ゴールドチェック
+            if (profile.gold < config.price) {
+                return NextResponse.json({ error: 'ゴールドが不足しています。' }, { status: 400 });
+            }
         }
         
-        // 4. Fetch player's current owned skills
+        // 4. プレイヤーの所持済みスキルを取得
         const { data: ownedSkillsResult, error: ownedSkillsError } = await supabaseService
             .from('user_skills')
             .select('skill_id')
             .eq('user_id', profile.id);
             
         if (ownedSkillsError) {
+            // 失敗時は鍵を消費していた場合、ロールバック
+            if (useKey && keyInventoryId) {
+                const { data: existing } = await supabaseService.from('inventory').select('id, quantity').eq('id', keyInventoryId).maybeSingle();
+                if (existing) {
+                    await supabaseService.from('inventory').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', keyInventoryId);
+                } else {
+                    await supabaseService.from('inventory').insert({ id: keyInventoryId, user_id: profile.id, item_id: config.key_id, quantity: 1 });
+                }
+            }
             throw ownedSkillsError;
         }
         
         const ownedSkillIdsSet = new Set<number>((ownedSkillsResult || []).map(s => Number(s.skill_id)));
         
-        // 5. Roll 5 cards
+        // 5. 5枚ロールする
         const rolled: { rarity: 'SR' | 'R' | 'U' | 'C'; skillId: number }[] = [];
         for (let i = 0; i < 4; i++) {
-            rolled.push(rollCard(false));
+            rolled.push(rollCard(false, config.pools));
         }
-        rolled.push(rollCard(true)); // Slot 5 is rare or above guaranteed
+        rolled.push(rollCard(true, config.pools)); // 5枚目はレアリティR以上確定
         
-        // 6. Duplicate check and cashback calculation
+        // 6. 重複救済とキャッシュバック計算
         const trackingSet = new Set<number>(ownedSkillIdsSet);
         let refundGold = 0;
         const insertSkillIds: number[] = [];
@@ -97,7 +168,7 @@ export async function POST(req: Request) {
         const results = rolled.map(roll => {
             const isDuplicate = trackingSet.has(roll.skillId);
             if (isDuplicate) {
-                refundGold += REFUND_AMOUNT;
+                refundGold += config.refund;
             } else {
                 trackingSet.add(roll.skillId);
                 insertSkillIds.push(roll.skillId);
@@ -109,19 +180,28 @@ export async function POST(req: Request) {
             };
         });
         
-        // Calculate final cost
-        const netCost = PACK_PRICE - refundGold;
+        // ゴールド減算トランザクション（鍵消費の場合は純利益（キャッシュバック）のみ加算、またはゴールド消費時の差し引き減算）
+        const netCost = useKey ? 0 : config.price;
+        const finalCostOrBenefit = netCost - refundGold; // 正の値ならゴールド消費、負の値ならゴールド増加（キャッシュバック分）
         
-        // 7. Transaction to deduct gold safely
         const { error: goldError } = await supabaseService
-            .rpc('increment_gold', { p_user_id: profile.id, p_amount: -netCost });
+            .rpc('increment_gold', { p_user_id: profile.id, p_amount: -finalCostOrBenefit });
             
         if (goldError) {
             console.error('[Buy Pack API] Gold deduction failed:', goldError);
-            return NextResponse.json({ error: 'ゴールドの減算に失敗しました。所持金が不足している可能性があります。' }, { status: 400 });
+            // 鍵のロールバック
+            if (useKey && keyInventoryId) {
+                const { data: existing } = await supabaseService.from('inventory').select('id, quantity').eq('id', keyInventoryId).maybeSingle();
+                if (existing) {
+                    await supabaseService.from('inventory').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', keyInventoryId);
+                } else {
+                    await supabaseService.from('inventory').insert({ id: keyInventoryId, user_id: profile.id, item_id: config.key_id, quantity: 1 });
+                }
+            }
+            return NextResponse.json({ error: 'ゴールドの更新に失敗しました。所持金が不足している可能性があります。' }, { status: 400 });
         }
         
-        // 8. Insert new skills
+        // 8. 新規スキルの登録
         if (insertSkillIds.length > 0) {
             const inserts = insertSkillIds.map(sid => ({
                 user_id: profile.id,
@@ -135,20 +215,29 @@ export async function POST(req: Request) {
                 
             if (insertError) {
                 console.error('[Buy Pack API] Skills insertion failed:', insertError);
-                // Refund gold
-                await supabaseService.rpc('increment_gold', { p_user_id: profile.id, p_amount: netCost });
+                // ロールバック処理
+                if (useKey && keyInventoryId) {
+                    const { data: existing } = await supabaseService.from('inventory').select('id, quantity').eq('id', keyInventoryId).maybeSingle();
+                    if (existing) {
+                        await supabaseService.from('inventory').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', keyInventoryId);
+                    } else {
+                        await supabaseService.from('inventory').insert({ id: keyInventoryId, user_id: profile.id, item_id: config.key_id, quantity: 1 });
+                    }
+                } else {
+                    await supabaseService.rpc('increment_gold', { p_user_id: profile.id, p_amount: finalCostOrBenefit });
+                }
                 return NextResponse.json({ error: 'スキルの登録に失敗しました。' }, { status: 500 });
             }
         }
 
-        // 8.5 Record pack purchase activity log
+        // 8.5 購入ログの記録
         try {
             const { error: logError } = await supabaseService
                 .from('academy_pack_logs')
                 .insert({
                     user_id: profile.id,
-                    pack_series: 'chaos_and_rebellion',
-                    gold_spent: netCost,
+                    pack_series: config.log_series,
+                    gold_spent: useKey ? 0 : finalCostOrBenefit,
                     refund_gold: refundGold
                 });
             if (logError) {
@@ -158,7 +247,7 @@ export async function POST(req: Request) {
             console.error('[Buy Pack API] Exception writing academy_pack_logs:', logExc);
         }
         
-        // 9. Fetch card details for response
+        // 9. クライアント返却用カード詳細情報の取得
         const rolledIds = results.map(r => r.skill_id);
         const { data: skillDetails, error: detailsError } = await supabaseService
             .from('skills')
@@ -198,7 +287,7 @@ export async function POST(req: Request) {
             };
         });
         
-        // Fetch new gold total to return
+        // 最新ゴールド取得
         const { data: finalProfile } = await supabaseService
             .from('user_profiles')
             .select('gold')
@@ -209,12 +298,86 @@ export async function POST(req: Request) {
             success: true,
             cards: cardsResponse,
             refund: refundGold,
-            new_gold: finalProfile?.gold ?? (profile.gold - netCost)
+            new_gold: finalProfile?.gold ?? (profile.gold - finalCostOrBenefit)
         });
         
     } catch (err: any) {
         console.error('[Buy Pack API] Error:', err);
         const status = err instanceof AuthError ? err.status : 500;
         return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status });
+    }
+}
+
+// GET: パック内の収録カード一覧の取得
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const packSeries = searchParams.get('pack_series') === 'basic' ? 'basic' : 'chaos_and_rebellion';
+        
+        const pools = packSeries === 'basic' ? BASIC_POOLS : ACADEMY_POOLS;
+        const allIds = [
+            ...pools.SR,
+            ...pools.R,
+            ...pools.U,
+            ...pools.C
+        ];
+
+        const { data: skillDetails, error: detailsError } = await supabaseService
+            .from('skills')
+            .select(`
+                id,
+                name,
+                slug,
+                image_url,
+                description,
+                cards (
+                    name,
+                    description,
+                    image_url,
+                    ap_cost,
+                    type
+                )
+            `)
+            .in('id', allIds);
+
+        if (detailsError) {
+            throw detailsError;
+        }
+
+        // ID順にソートし、レアリティ情報をマージして返却する
+        const skillsResponse = (skillDetails || []).map((detail: any) => {
+            const skillId = Number(detail.id);
+            const rarity = getSkillRarity(skillId);
+            return {
+                id: skillId,
+                name: detail.name,
+                slug: detail.slug,
+                image_url: detail.cards?.image_url || detail.image_url || '/images/items/book_focus.png',
+                description: detail.cards?.description || detail.description || '',
+                ap_cost: detail.cards?.ap_cost || 1,
+                card_type: detail.cards?.type || 'Skill',
+                rarity
+            };
+        });
+
+        // ソート順：SR -> R -> U -> C、かつその中ではID昇順にする
+        const rarityWeight = { SR: 4, R: 3, U: 2, C: 1 };
+        skillsResponse.sort((a, b) => {
+            const weightA = rarityWeight[a.rarity] || 0;
+            const weightB = rarityWeight[b.rarity] || 0;
+            if (weightA !== weightB) {
+                return weightB - weightA; // 高レアリティ優先
+            }
+            return a.id - b.id; // 同レアリティ内ではID順
+        });
+
+        return NextResponse.json({
+            success: true,
+            cards: skillsResponse
+        });
+
+    } catch (err: any) {
+        console.error('[Buy Pack API GET] Error:', err);
+        return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
     }
 }
