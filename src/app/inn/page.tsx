@@ -16,6 +16,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import XShareButton from '@/components/shared/XShareButton';
 import QuestResultModal from '@/components/quest/QuestResultModal';
 import { X } from 'lucide-react';
+import { soundManager } from '@/lib/soundManager';
 
 // モーダル群: ロード時間とチラつきを完全になくすため静的インポート (spec_v27)
 import TavernModal from '@/components/inn/TavernModal';
@@ -77,6 +78,7 @@ function InnPageInner() {
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
         locationSlug,
+        billingSuccess, setBillingSuccess,
         activeNpcData, buttonText, isDisabled, secondaryActions,
         handleSelectFacility,
         handleDialogAction,
@@ -443,6 +445,57 @@ function InnPageInner() {
                     onConfirm={executeRest}
                     onCancel={() => setShowRestConfirm(false)}
                 />
+            )}
+
+            {/* 購入完了反映ダイアログ (spec_v13.6.4) */}
+            {billingSuccess && (
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
+                    <div className="bg-[#1a120b] border-2 border-amber-500/60 w-full max-w-sm shadow-2xl p-6 rounded-lg animate-in zoom-in-95 duration-200">
+                        {/* ヘッダー */}
+                        <div className="flex items-center gap-2 mb-4 border-b border-[#3e2723] pb-3">
+                            <span className="text-xl">🎁</span>
+                            <h3 className="text-lg font-serif font-bold text-[#e3d5b8]">購入処理の完了</h3>
+                        </div>
+
+                        {/* 内容 */}
+                        <div className="text-sm text-slate-350 leading-relaxed mb-6 space-y-3">
+                            <p className="text-xs text-amber-400 font-bold text-center mb-4">
+                                {billingSuccess.title} が正常に反映されました。
+                            </p>
+                            <div className="bg-black/40 border border-[#3e2723] rounded p-4 space-y-2 font-mono">
+                                {billingSuccess.gold > 0 && (
+                                    <div className="flex justify-between items-center text-amber-300 font-bold">
+                                        <span>💰 獲得ゴールド</span>
+                                        <span>+{billingSuccess.gold.toLocaleString()} G</span>
+                                    </div>
+                                )}
+                                {billingSuccess.basicKeys > 0 && (
+                                    <div className="flex justify-between items-center text-teal-300 font-bold">
+                                        <span>🔑 知識と契約の鍵</span>
+                                        <span>+ {billingSuccess.basicKeys} 個</span>
+                                    </div>
+                                )}
+                                {billingSuccess.academyKeys > 0 && (
+                                    <div className="flex justify-between items-center text-indigo-300 font-bold">
+                                        <span>🔑 魔道と鉄壁の鍵</span>
+                                        <span>+ {billingSuccess.academyKeys} 個</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 閉じるボタン */}
+                        <button
+                            onClick={() => {
+                                soundManager?.playSE('se_click');
+                                setBillingSuccess(null);
+                            }}
+                            className="w-full py-2.5 text-sm font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors shadow-lg active:scale-[0.98]"
+                        >
+                            受け取る
+                        </button>
+                    </div>
+                </div>
             )}
 
             {/* Quest Result Overlay (ギルドでの放棄結果用) */}

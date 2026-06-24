@@ -31,18 +31,64 @@ export function useInnPageState() {
         }
     }, [_hasHydrated, userProfile, worldState]);
 
-    // Stripe billing success conversion tracking
+    // Stripe billing success conversion tracking & dialog display (spec_v13.6.4)
     useEffect(() => {
         const billing = searchParams.get('billing');
         if (billing === 'success' || billing === 'gold_success') {
+            let title = 'ご購入ありがとうございました';
+            let gold = 0;
+            let basicKeys = 0;
+            let academyKeys = 0;
+
+            if (billing === 'success') {
+                const tier = searchParams.get('tier');
+                if (tier === 'premium') {
+                    title = 'Premium プラン';
+                    gold = 5000;
+                    basicKeys = 3;
+                    academyKeys = 2;
+                } else {
+                    title = 'Basic プラン';
+                    gold = 2000;
+                    basicKeys = 1;
+                    academyKeys = 1;
+                }
+            } else {
+                const amount = Number(searchParams.get('amount') || 0);
+                const pkg = searchParams.get('package');
+                if (pkg === 'gold_starter') {
+                    title = 'スターターパック (限定)';
+                    gold = 10000;
+                    basicKeys = 5;
+                    academyKeys = 3;
+                } else if (pkg === 'gold_elite') {
+                    title = 'エリートパック (限定)';
+                    gold = 30000;
+                    basicKeys = 8;
+                    academyKeys = 5;
+                } else {
+                    title = 'ゴールドチャージ';
+                    gold = amount;
+                }
+            }
+
+            // Set state to trigger the modal
+            setBillingSuccess({ title, gold, basicKeys, academyKeys });
+
+            // Play SE
+            soundManager?.playSE('se_item_get');
+
+            // Force refresh user profile
+            fetchUserProfile();
+
+            // X Ads Conversion Tracking
             const purchaseId = process.env.NEXT_PUBLIC_X_CONVERSION_PURCHASE_ID;
             if (purchaseId) {
                 import('@/utils/xads').then(({ trackXEvent }) => {
                     const tier = searchParams.get('tier');
                     const amount = Number(searchParams.get('amount') || 0);
-                    // 金額算出（サブスクの場合は想定金額等）
                     const value = billing === 'success' 
-                        ? (tier === 'premium' ? 1000 : 500) // プラン別仮金額
+                        ? (tier === 'premium' ? 1000 : 500) 
                         : amount;
 
                     trackXEvent(purchaseId, {
@@ -52,11 +98,12 @@ export function useInnPageState() {
                 });
             }
 
-            // 二重送信防止のためクエリパラメーターを除去してURLをクリーンアップ
+            // Clean up search parameters to prevent double-triggering
             const url = new URL(window.location.href);
             url.searchParams.delete('billing');
             url.searchParams.delete('tier');
             url.searchParams.delete('amount');
+            url.searchParams.delete('package');
             window.history.replaceState({}, '', url.pathname + url.search);
         }
     }, [searchParams]);
@@ -105,6 +152,14 @@ export function useInnPageState() {
 
     // News & History Logic
     const [showTutorial, setShowTutorial] = useState(false);
+
+    // Billing Success Dialog State (spec_v13.6.4)
+    const [billingSuccess, setBillingSuccess] = useState<{
+        title: string;
+        gold: number;
+        basicKeys: number;
+        academyKeys: number;
+    } | null>(null);
 
     // Profile 読み込み時にチュートリアル未完了なら表示
     useEffect(() => {
@@ -723,6 +778,7 @@ export function useInnPageState() {
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
         locationSlug,
+        billingSuccess, setBillingSuccess,
 
         // NPC
         activeNpcData, buttonText, isDisabled, secondaryActions,
