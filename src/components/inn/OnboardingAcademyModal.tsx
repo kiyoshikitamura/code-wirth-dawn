@@ -24,8 +24,8 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
     const router = useRouter();
     const fetchUserProfile = useGameStore((state) => state.fetchUserProfile);
     
-    // ステップ管理: 'welcome' | 'pack' | 'flip' | 'completed'
-    const [step, setStep] = useState<'welcome' | 'pack' | 'flip' | 'completed'>('welcome');
+    // ステップ管理: 'welcome' | 'pack' | 'ripping' | 'flip' | 'completed'
+    const [step, setStep] = useState<'welcome' | 'pack' | 'ripping' | 'flip' | 'completed'>('welcome');
     const [rolledCards, setRolledCards] = useState<Card[]>([]);
     const [flippedCards, setFlippedCards] = useState<boolean[]>([false, false, false, false, false]);
     
@@ -79,7 +79,11 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
             const data = await res.json();
             if (res.ok && data.success) {
                 setRolledCards(data.cards || []);
-                setStep('flip');
+                soundManager?.playSE('se_taunt');
+                setStep('ripping');
+                setTimeout(() => {
+                    setStep('flip');
+                }, 800);
             } else {
                 setErrorMsg(data.error || 'パックの開封に失敗しました。');
             }
@@ -420,6 +424,36 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
 
                 </div>
             )}
+
+            {/* フェーズ 2.5: 引き裂き演出 */}
+            {step === 'ripping' && (
+                <div className="relative w-64 h-80 flex flex-col items-center justify-center animate-in zoom-in-95 duration-200">
+                    <div className="absolute inset-0 flex flex-col">
+                        <div className="w-full h-1/2 bg-[#09152b] rounded-t-2xl border-x-4 border-t-4 border-amber-500/70 animate-[slideOutUp_0.8s_forwards] flex items-end justify-center pb-2 overflow-hidden"
+                             style={{ backgroundImage: "url('/images/card_back_basic.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                            <div className="absolute inset-0 bg-slate-900/50 pointer-events-none" />
+                            <span className="text-xl font-bold font-serif text-white z-10 select-none">撕</span>
+                        </div>
+                        <div className="w-full h-1/2 bg-[#09152b] rounded-b-2xl border-x-4 border-b-4 border-amber-500/70 animate-[slideOutDown_0.8s_forwards] flex items-start justify-center pt-2 overflow-hidden"
+                             style={{ backgroundImage: "url('/images/card_back_basic.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                            <div className="absolute inset-0 bg-slate-900/50 pointer-events-none" />
+                            <span className="text-xl font-bold font-serif text-white z-10 select-none">裂</span>
+                        </div>
+                    </div>
+                    <div className="w-32 h-32 bg-white rounded-full blur-3xl opacity-80 animate-ping absolute" />
+                </div>
+            )}
+
+            <style jsx global>{`
+                @keyframes slideOutUp {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(-120%); opacity: 0; }
+                }
+                @keyframes slideOutDown {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(120%); opacity: 0; }
+                }
+            `}</style>
 
         </div>,
         document.body

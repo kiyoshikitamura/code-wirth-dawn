@@ -25,6 +25,8 @@ export default function QuestHeader({
     vitalityPulse
 }: QuestHeaderProps) {
     const { userProfile, battleState, equipBonus, fetchEquipment, partyMembers } = useGameStore();
+    const questId = useQuestState((s) => s.questId);
+    const isTutorialQuest = questId === '6001' && userProfile?.is_tutorial_completed === false;
     const [fetchedParty, setFetchedParty] = useState<PartyMember[]>(partyMembers || []);
     const [showStatus, setShowStatus] = useState(false);
     const [isPartyLoading, setIsPartyLoading] = useState(false);
@@ -169,12 +171,14 @@ export default function QuestHeader({
                     </div>
 
                     {/* 設定ボタン */}
-                    <button
-                        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                        className="p-2 bg-slate-800/60 rounded-lg text-slate-400 hover:text-amber-500 border border-slate-700/50 active:scale-95 transition-all shrink-0"
-                    >
-                        <Settings size={18} />
-                    </button>
+                    {!isTutorialQuest && (
+                        <button
+                            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                            className="p-2 bg-slate-800/60 rounded-lg text-slate-400 hover:text-amber-500 border border-slate-700/50 active:scale-95 transition-all shrink-0"
+                        >
+                            <Settings size={18} />
+                        </button>
+                    )}
                 </div>
 
                 {/* パーティ折りたたみ */}
