@@ -121,8 +121,9 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-start pt-20 justify-center p-4 sm:p-6">
-            <div className={`w-full max-w-md border rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-top duration-300 ${
+        <div className="fixed inset-0 z-[100] flex items-start pt-20 justify-center p-4 sm:p-6">
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md pointer-events-none" />
+            <div className={`relative z-10 w-full max-w-md border rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-top duration-300 ${
                 isBanned ? 'bg-red-950/90 border-red-800/60' : 'bg-slate-900 border-amber-900/50'
             }`}>
 

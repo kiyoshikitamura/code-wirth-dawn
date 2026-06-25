@@ -48,8 +48,9 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-55 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="relative w-full max-w-lg bg-[#0b0d19]/95 border border-amber-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="relative z-10 w-full max-w-lg bg-[#0b0d19]/95 border border-amber-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
                 
                 {/* ヘッダー画像エリア */}
                 <div className="relative w-full h-44 sm:h-48 bg-slate-950 border-b border-amber-500/10 flex items-center justify-center overflow-hidden shrink-0">

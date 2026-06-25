@@ -420,8 +420,9 @@ export default function ShopModal({ onClose }: Props) {
     if (!mounted) return null;
 
     const mainContent = createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85dvh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85dvh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
 
                 {/* Header */}
                 <div className={`p-4 border-b-2 border-[#8b5a2b] flex justify-between items-center ${meta?.prosperity === 1 ? 'bg-red-950/80' : 'bg-[#3e2723]'}`}>

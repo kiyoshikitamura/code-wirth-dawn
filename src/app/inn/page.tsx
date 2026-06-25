@@ -385,10 +385,10 @@ function InnPageInner() {
                             worldState={worldState} 
                             userProfile={userProfile} 
                             reputation={reputation} 
-                            onOpenSettings={onboardingTourStep === '5' ? advanceOnboardingStep : (onboardingTourStep ? undefined : () => setShowAccount(true))} 
-                            onOpenStatus={onboardingTourStep ? undefined : () => setShowStatus(true)} 
-                            onOpenShop={onboardingTourStep ? undefined : () => setShowShop(true)} 
-                            onOpenBilling={onboardingTourStep === '5' ? advanceOnboardingStep : (onboardingTourStep ? undefined : () => setShowBilling(true))} 
+                            onOpenSettings={onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowAccount(true))} 
+                            onOpenStatus={isTourActive ? undefined : () => setShowStatus(true)} 
+                            onOpenShop={isTourActive ? undefined : () => setShowShop(true)} 
+                            onOpenBilling={onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowBilling(true))} 
                             equipBonus={equipBonus}
                             isStatusRecommended={isStatusRecommended}
                             isSettingsRecommended={isSettingsRecommended}
@@ -398,120 +398,7 @@ function InnPageInner() {
                     );
                 })()}
 
-                {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
-                {showVitalityDeath && userProfile && (
-                    <VitalityDeathModal
-                        userProfile={userProfile}
-                        onClose={() => setShowVitalityDeath(false)}
-                    />
-                )}
 
-                {/* Onboarding Academy Modal */}
-                {showTutorial && (
-                    <OnboardingAcademyModal />
-                )}
-
-                {/* Guest Register Promotion Modal */}
-                {showGuestRegisterPromo && (
-                    <GuestRegisterPromoModal onClose={() => setShowGuestRegisterPromo(false)} />
-                )}
-
-                {/* Starter Pack / Elite Pack Promotion Modal */}
-                {showStarterPackPromo && (
-                    <StarterPackPromoModal 
-                        onClose={() => setShowStarterPackPromo(false)} 
-                        onOpenBilling={() => setShowBilling(true)}
-                    />
-                )}
-
-
-
-                {/* NPC Dialog */}
-                {activeNpcData && activeModal && (
-                    <NpcDialogModal
-                        key={activeModal}
-                        npcData={activeNpcData}
-                        onClose={() => setActiveModal(null)}
-                        onAction={() => handleDialogAction(activeModal as FacilityType)}
-                        buttonText={buttonText}
-                        isDisabled={isDisabled}
-                        secondaryActions={secondaryActions}
-                    />
-                )}
-
-                {activeModal === 'gossip' && (
-                    <GossipModal
-                        onClose={() => setActiveModal(null)}
-                        onOpenTavern={() => { setActiveModal(null); setShowTavern(true); }}
-                    />
-                )}
-
-                {/* Modals */}
-                {showShop && <ShopModal onClose={() => setShowShop(false)} />}
-                {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
-                {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
-                {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
-                {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
-                {showBilling && <BillingModal onClose={() => setShowBilling(false)} />}
-
-
-                {activeModal === 'collection' && <CollectionModal onClose={() => setActiveModal(null)} />}
-                {activeModal === 'questLog' && <QuestLogModal onClose={() => setActiveModal(null)} />}
-                {activeModal === 'ranking' && <RankingModal onClose={() => setActiveModal(null)} />}
-                {activeModal === 'colosseum' && <ColosseumModal onClose={() => setActiveModal(null)} />}
-
-                {/* Global Forced Active Quest Modal */}
-                {userProfile?.current_quest_id && (
-                    <ActiveQuestModal
-                        isOpen={true}
-                        onClose={() => {}}
-                        userProfile={userProfile}
-                        quests={allQuests}
-                        isLoading={loadingQuests}
-                        onSelect={(s) => {
-                            const isColosseum = s.id ? String(s.id).startsWith('colosseum_') : false;
-                            const isUgc = !isColosseum && ((s as any).is_ugc || isNaN(Number(s.id)));
-                            router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
-                        }}
-                        onGiveUpComplete={async (data) => {
-                            // 楽観的ローカルクリア: 即座にフラグを解除してモーダルを消す
-                            const profile = useGameStore.getState().userProfile;
-                            if (profile) {
-                                useGameStore.setState({
-                                    userProfile: {
-                                        ...profile,
-                                        current_quest_id: undefined,
-                                        current_quest_state: undefined
-                                    }
-                                });
-                            }
-                            // 最新情報を非同期フェッチして同期
-                            await useGameStore.getState().fetchUserProfile();
-                            setResultOverlay({ result: 'failure', data });
-                        }}
-                        showCloseButton={false}
-                    />
-                )}
-
-                {activeModal === 'questBoard' && (
-                    <QuestBoardModal
-                        isOpen={true}
-                        onClose={() => setActiveModal(null)}
-                        userProfile={userProfile}
-                        quests={allQuests}
-                        loading={loadingQuests}
-                        onSelect={(s) => router.push(`/quest/${s.id}`)}
-                    />
-                )}
-
-                {activeModal === 'ugcGuild' && userProfile && (
-                    <UgcQuestBoardPanel
-                        isOpen={true}
-                        onClose={() => setActiveModal(null)}
-                        userLevel={userProfile.level || 1}
-                        onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
-                    />
-                )}
 
                 {/* Main Visual */}
                 <MainVisualArea
@@ -657,10 +544,7 @@ function InnPageInner() {
                     />
                 </div>
 
-                {/* History Hall */}
-                {activeModal === 'history' && userProfile && (
-                    <HistoryArchiveModal userId={userProfile.id} onClose={() => setActiveModal(null)} />
-                )}
+
 
                 {/* v27.0: デバッグツール
                     - 本番: デバッグユーザー（adminKey所持）のみ表示
@@ -759,6 +643,123 @@ function InnPageInner() {
                         }}
                     />
                 </div>
+            )}
+
+            {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
+            {showVitalityDeath && userProfile && (
+                <VitalityDeathModal
+                    userProfile={userProfile}
+                    onClose={() => setShowVitalityDeath(false)}
+                />
+            )}
+
+            {/* Onboarding Academy Modal */}
+            {showTutorial && (
+                <OnboardingAcademyModal />
+            )}
+
+            {/* Guest Register Promotion Modal */}
+            {showGuestRegisterPromo && (
+                <GuestRegisterPromoModal onClose={() => setShowGuestRegisterPromo(false)} />
+            )}
+
+            {/* Starter Pack / Elite Pack Promotion Modal */}
+            {showStarterPackPromo && (
+                <StarterPackPromoModal 
+                    onClose={() => setShowStarterPackPromo(false)} 
+                    onOpenBilling={() => setShowBilling(true)}
+                />
+            )}
+
+            {/* NPC Dialog */}
+            {activeNpcData && activeModal && (
+                <NpcDialogModal
+                    key={activeModal}
+                    npcData={activeNpcData}
+                    onClose={() => setActiveModal(null)}
+                    onAction={() => handleDialogAction(activeModal as FacilityType)}
+                    buttonText={buttonText}
+                    isDisabled={isDisabled}
+                    secondaryActions={secondaryActions}
+                />
+            )}
+
+            {activeModal === 'gossip' && (
+                <GossipModal
+                    onClose={() => setActiveModal(null)}
+                    onOpenTavern={() => { setActiveModal(null); setShowTavern(true); }}
+                />
+            )}
+
+            {/* Modals */}
+            {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+            {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
+            {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
+            {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
+            {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
+            {showBilling && <BillingModal onClose={() => setShowBilling(false)} />}
+
+            {activeModal === 'collection' && <CollectionModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'questLog' && <QuestLogModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'ranking' && <RankingModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'colosseum' && <ColosseumModal onClose={() => setActiveModal(null)} />}
+
+            {/* Global Forced Active Quest Modal */}
+            {userProfile?.current_quest_id && (
+                <ActiveQuestModal
+                    isOpen={true}
+                    onClose={() => {}}
+                    userProfile={userProfile}
+                    quests={allQuests}
+                    isLoading={loadingQuests}
+                    onSelect={(s) => {
+                        const isColosseum = s.id ? String(s.id).startsWith('colosseum_') : false;
+                        const isUgc = !isColosseum && ((s as any).is_ugc || isNaN(Number(s.id)));
+                        router.push(isUgc ? `/quest/${s.id}?source=ugc` : `/quest/${s.id}`);
+                    }}
+                    onGiveUpComplete={async (data) => {
+                        // 楽観的ローカルクリア: 即座にフラグを解除してモーダルを消す
+                        const profile = useGameStore.getState().userProfile;
+                        if (profile) {
+                            useGameStore.setState({
+                                userProfile: {
+                                    ...profile,
+                                    current_quest_id: undefined,
+                                    current_quest_state: undefined
+                                }
+                            });
+                        }
+                        // 最新情報を非同期フェッチして同期
+                        await useGameStore.getState().fetchUserProfile();
+                        setResultOverlay({ result: 'failure', data });
+                    }}
+                    showCloseButton={false}
+                />
+            )}
+
+            {activeModal === 'questBoard' && (
+                <QuestBoardModal
+                    isOpen={true}
+                    onClose={() => setActiveModal(null)}
+                    userProfile={userProfile}
+                    quests={allQuests}
+                    loading={loadingQuests}
+                    onSelect={(s) => router.push(`/quest/${s.id}`)}
+                />
+            )}
+
+            {activeModal === 'ugcGuild' && userProfile && (
+                <UgcQuestBoardPanel
+                    isOpen={true}
+                    onClose={() => setActiveModal(null)}
+                    userLevel={userProfile.level || 1}
+                    onAccept={(q) => router.push(`/quest/${q.id}?source=ugc`)}
+                />
+            )}
+
+            {/* History Hall */}
+            {activeModal === 'history' && userProfile && (
+                <HistoryArchiveModal userId={userProfile.id} onClose={() => setActiveModal(null)} />
             )}
         </div>
     );

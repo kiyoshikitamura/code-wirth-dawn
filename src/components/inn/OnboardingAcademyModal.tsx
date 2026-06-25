@@ -182,7 +182,12 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md select-none overflow-y-auto p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center select-none p-4">
+            {/* 背景（すりガラス） - 兄弟関係にして interactive 要素を含めない */}
+            <div className="absolute inset-0 bg-black/85 backdrop-blur-md pointer-events-none" />
+
+            {/* コンテンツ - backdrop-blur を親に持たないため、iOS Safariでのクリックズレを防止 */}
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-y-auto">
             
             {/* フェーズ 1: 世界観説明 */}
             {step === 'welcome' && (
@@ -464,6 +469,7 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
                     100% { transform: translateY(120%); opacity: 0; }
                 }
             `}</style>
+            </div>
 
         </div>,
         document.body

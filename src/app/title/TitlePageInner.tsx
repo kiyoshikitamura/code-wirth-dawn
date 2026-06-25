@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { setGameStarted, clearGameStarted } from '@/hooks/useAuthGuard';
+import { clearAuthTokenCache } from '@/lib/authToken';
 
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
@@ -82,6 +83,7 @@ export default function TitlePageInner() {
 
         if (error || !user) {
             await supabase.auth.signOut();
+            clearAuthTokenCache();
             setMode('ENTRY');
             return;
         }
@@ -150,6 +152,7 @@ export default function TitlePageInner() {
             if (isReturnToTitle) {
                 // 明示的にタイトルに戻ったので、セッションをクリアしてメニューを表示
                 await supabase.auth.signOut();
+                clearAuthTokenCache();
                 clearGameStarted();
                 setMode('MENU');
                 return;
@@ -159,6 +162,7 @@ export default function TitlePageInner() {
         } else {
             if (isDeleteIntent) {
                 await supabase.auth.signOut();
+                clearAuthTokenCache();
                 setAuthError('削除対象のキャラクターが見つかりませんでした。');
                 setMode('MENU');
                 return;
@@ -233,7 +237,7 @@ export default function TitlePageInner() {
         setAuthError(null);
         // 前回セッション・ストアをクリア
         clearGameStarted();
-        try { await supabase.auth.signOut(); } catch (_) {}
+        try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
         if (typeof window !== 'undefined') {
             localStorage.removeItem('game-storage');
             localStorage.removeItem('quest-storage');
@@ -286,7 +290,7 @@ export default function TitlePageInner() {
         setMode('CREATING');
         setAuthError(null);
         clearGameStarted();
-        try { await supabase.auth.signOut(); } catch (_) {}
+        try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
         if (typeof window !== 'undefined') {
             localStorage.removeItem('game-storage');
             localStorage.removeItem('quest-storage');
@@ -588,6 +592,7 @@ export default function TitlePageInner() {
                         onCancel={async () => {
                             setShowNewGameOverwrite(false);
                             await supabase.auth.signOut();
+                            clearAuthTokenCache();
                             setMode('MENU');
                         }}
                         onConfirm={async () => {
@@ -615,6 +620,7 @@ export default function TitlePageInner() {
                             } catch (err: any) {
                                 setAuthError(`削除に失敗しました: ${err.message}`);
                                 await supabase.auth.signOut();
+                                clearAuthTokenCache();
                                 setMode('MENU');
                             } finally {
                                 setIsDeleting(false);
@@ -821,7 +827,7 @@ export default function TitlePageInner() {
                             type="button"
                             onClick={async () => {
                                 clearGameStarted();
-                                try { await supabase.auth.signOut(); } catch (_) {}
+                                try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
                                 setMode('ENTRY');
                                 setName('');
                                 setAvatarFile(null);

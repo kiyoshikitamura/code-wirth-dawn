@@ -779,8 +779,11 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
     };
 
     const mainContent = createPortal(
-        <div className="fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 md:p-4">
-            <div className="bg-[#070914] text-slate-100 w-full max-w-4xl h-full md:h-[90dvh] flex flex-col md:rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.8)] border-0 md:border-2 border-blue-950 relative overflow-hidden">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-0 md:p-4">
+            {/* 背景（すりガラス） - 兄弟関係にして interactive 要素を含めない */}
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md pointer-events-none" />
+
+            <div className="relative z-10 bg-[#070914] text-slate-100 w-full max-w-4xl h-full md:h-[90dvh] flex flex-col md:rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.8)] border-0 md:border-2 border-blue-950 overflow-hidden">
                 {/* 魔術学院ヘッダー */}
                 <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-blue-950 flex justify-between items-center bg-[#0d1127] relative z-20 shrink-0">
                     <h2 className="font-bold flex items-center gap-1.5 sm:gap-2 text-amber-500">

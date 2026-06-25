@@ -440,8 +440,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     return (
         <>
-        <div className="fixed inset-0 z-[60] flex justify-center items-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-md h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+        <div className="fixed inset-0 z-[60] flex justify-center items-center p-4 animate-in fade-in">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-md h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
 
 
                 {/* ===== Header ===== */}

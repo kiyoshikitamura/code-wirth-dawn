@@ -365,3 +365,16 @@
 3. **ツアー終了後の「宿屋/酒場」推奨バッジの削除**:
    - 施設自動推奨ロジック（`recommendedFacility`）の fallback 条件から `partyMembers.length === 0` 時の `inn` 推奨分岐を削除。
    - ツアーの最終ステップ（ステップ6）でコンパスボタンをタップした際、すべての施設（`tavern`, `guild`, `shop`, `academy`, `settings`, `billing`, `map`）の訪問フラグ（`wirth_dawn_visited_...`）を `localStorage` および React ステート側で一括して `true` に設定するよう修正。これにより、ツアー終了後に不要な推奨バッジが不要に再表示されるのを完全に防止する。
+
+---
+
+## 18. モーダルタップ領域ズレ、設定・課金アイコン消失、およびテストプレイ時のチュートリアル未開始バグの修正 (Version 4.3 追記)
+
+1. **iOS Safariにおけるモーダルタップ領域ズレの修正（backdrop-blur階層分離 ＆ ポータル直下移動）**:
+   - **階層分離**: `backdrop-filter: blur(...)` を対話型要素の親または祖先コンテナに直接指定するとタッチ座標のヒットテストがズレるWebKitバグ対策として、すりガラス背景用の pointer-events-none な sibling div と、対話型要素を内包する `relative z-10` のコンテンツコンテナに階層を分離した。対象となるすべてのモーダル（`GuestRegisterPromoModal.tsx`, `StarterPackPromoModal.tsx`, `QuestResultModal.tsx`, `NpcDialogModal.tsx`, `QuestBoardModal.tsx`, `TavernModal.tsx`, `ShopModal.tsx`, `AcademyModal.tsx`, `OnboardingAcademyModal.tsx`）で実装を修正した。
+   - **ポータル直下（門外）への移動**: `overflow-y-auto` なスクロールコンテナ内で `fixed` 要素をレンダリングするとスクロール量に応じてタップ判定座標がズレるWebKitバグ対策として、`/inn` ページの Mobile View Container（`overflow-y-auto`）内部でレンダリングされていたすべてのモーダルコンポーネントを、スクロールしないルート直下の階層へ移動した。
+2. **ツアー完了後のヘッダー「設定・課金」アイコン復活**:
+   - `InnHeader` に渡す props (`onOpenSettings`, `onOpenStatus`, `onOpenShop`, `onOpenBilling`) の三項演算子の条件式を `onboardingTourStep` から `isTourActive` に変更し、ツアー完了後は確実にヘッダーアイコンのコールバックが有効になりアイコンが復元されるように修正した。
+3. **テストプレイ開始時のキャッシュ残存によるチュートリアル未開始バグ修正**:
+   - タイトル画面でのサインアウト時に `authToken.ts` 内のメモリ上のトークンキャッシュが残存し、再ログイン（テストプレイ開始）時に前ユーザーのプロフィール情報をフェッチしてしまう問題を解消するため、`TitlePageInner.tsx` のすべての `supabase.auth.signOut()` 実行直後に `clearAuthTokenCache()` を呼び出すように変更し、古いトークンキャッシュを強制破棄するように修正した。
+
