@@ -16,9 +16,24 @@ interface InnHeaderProps {
     equipBonus?: { atk: number; def: number; hp: number };
     isStatusRecommended?: boolean;
     isSettingsRecommended?: boolean;
+    isTourActive?: boolean;
+    onboardingTourStep?: string | null;
 }
 
-export default function InnHeader({ worldState, userProfile, reputation, onOpenSettings, onOpenStatus, onOpenShop, onOpenBilling, equipBonus, isStatusRecommended, isSettingsRecommended }: InnHeaderProps) {
+export default function InnHeader({
+    worldState,
+    userProfile,
+    reputation,
+    onOpenSettings,
+    onOpenStatus,
+    onOpenShop,
+    onOpenBilling,
+    equipBonus,
+    isStatusRecommended,
+    isSettingsRecommended,
+    isTourActive = false,
+    onboardingTourStep = null
+}: InnHeaderProps) {
     const [vitalityPulse, setVitalityPulse] = useState(true);
     const [showHegemony, setShowHegemony] = useState(false);
 
@@ -99,7 +114,10 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                 </div>
                 <button
                     onClick={() => setShowHegemony(true)}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-[#0a1628]/60 px-3 py-1.5 rounded border border-[#2a4080]/30 text-[10px] text-amber-400 font-bold hover:text-amber-300 transition-colors active:scale-95"
+                    disabled={isTourActive}
+                    className={`flex-1 flex items-center justify-center gap-1.5 bg-[#0a1628]/60 px-3 py-1.5 rounded border border-[#2a4080]/30 text-[10px] text-amber-400 font-bold ${
+                        isTourActive ? 'opacity-30 pointer-events-none' : 'hover:text-amber-300 active:scale-95'
+                    }`}
                 >
                     <Trophy size={12} className="text-amber-400" />
                     世界の覇権
@@ -107,7 +125,14 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                 {onOpenBilling && (
                     <button
                         onClick={onOpenBilling}
-                        className="p-1.5 bg-[#0a1628]/60 rounded border border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 transition-colors active:scale-90 shrink-0"
+                        disabled={isTourActive && onboardingTourStep !== '5'}
+                        className={`p-1.5 rounded border transition-all shrink-0 ${
+                            isTourActive && onboardingTourStep === '5'
+                                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse active:scale-90'
+                                : isTourActive && onboardingTourStep !== '5'
+                                    ? 'bg-[#0a1628]/60 border-[#2a4080]/10 text-blue-200/10 pointer-events-none'
+                                    : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 active:scale-90'
+                        }`}
                         aria-label="魔導ショップ"
                     >
                         <CreditCard size={14} />
@@ -116,10 +141,13 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
                 {onOpenSettings && (
                     <button
                         onClick={onOpenSettings}
-                        className={`p-1.5 rounded border transition-all active:scale-90 shrink-0 ${
-                            isSettingsRecommended
-                                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse'
-                                : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400'
+                        disabled={isTourActive && onboardingTourStep !== '5'}
+                        className={`p-1.5 rounded border transition-all shrink-0 ${
+                            (isSettingsRecommended || (isTourActive && onboardingTourStep === '5'))
+                                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse active:scale-90'
+                                : isTourActive && onboardingTourStep !== '5'
+                                    ? 'bg-[#0a1628]/60 border-[#2a4080]/10 text-blue-200/10 pointer-events-none'
+                                    : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 active:scale-90'
                         }`}
                         aria-label="設定"
                     >
@@ -131,7 +159,10 @@ export default function InnHeader({ worldState, userProfile, reputation, onOpenS
             <div className="flex items-center gap-3 mb-2">
                 <button 
                     onClick={onOpenStatus} 
-                    className={`relative flex-shrink-0 active:scale-95 transition-transform rounded-full ${
+                    disabled={isTourActive}
+                    className={`relative flex-shrink-0 transition-transform rounded-full ${
+                        isTourActive ? 'pointer-events-none opacity-40' : 'active:scale-95'
+                    } ${
                         isStatusRecommended ? 'ring-2 ring-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-pulse' : ''
                     }`}
                 >

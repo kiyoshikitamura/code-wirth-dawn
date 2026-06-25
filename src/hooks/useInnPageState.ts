@@ -23,8 +23,55 @@ type ModalType = FacilityType | 'workshop' | 'history' | 'questBoard' | 'gossip'
 export function useInnPageState() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated, completedQuests } = useGameStore();
     const locationSlug = worldState?.location_name || '名もなき旅人の拠所';
+
+    // Onboarding tour state management
+    const [onboardingTourStep, setOnboardingTourStep] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!_hasHydrated || !userProfile) return;
+
+        const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
+
+        // Check if Ep 1 is cleared
+        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+
+        if (!isEp1Cleared) {
+            setOnboardingTourStep(null);
+            return;
+        }
+
+        // Safeguard for existing users
+        const isExistingUser = 
+            (userProfile.level || 1) >= 3 ||
+            (completedQuests?.length || 0) >= 2 ||
+            localStorage.getItem('wirth_dawn_visited_map') === 'true' ||
+            (completedQuests?.some(q => q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false);
+
+        if (isExistingUser) {
+            setOnboardingTourStep('completed');
+            if (tourStep !== 'completed') {
+                localStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
+            }
+            return;
+        }
+
+        // For new users who cleared Ep 1 and have no tour step set, initialize to '1'
+        if (!tourStep) {
+            setOnboardingTourStep('1');
+            localStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
+        } else {
+            setOnboardingTourStep(tourStep);
+        }
+    }, [_hasHydrated, userProfile, completedQuests]);
+
+    const advanceOnboardingStep = useCallback(() => {
+        if (!onboardingTourStep || onboardingTourStep === 'completed') return;
+        const nextVal = onboardingTourStep === '6' ? 'completed' : String(Number(onboardingTourStep) + 1);
+        setOnboardingTourStep(nextVal);
+        localStorage.setItem('wirth_dawn_onboarding_tour_step', nextVal);
+    }, [onboardingTourStep]);
 
     const [billingDialog, setBillingDialog] = useState<{
         title: string;
@@ -846,6 +893,9 @@ export function useInnPageState() {
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
         locationSlug,
+        onboardingTourStep,
+        setOnboardingTourStep,
+        advanceOnboardingStep,
 
         // NPC
         activeNpcData, buttonText, isDisabled, secondaryActions,
