@@ -161,46 +161,7 @@ function InnPageInner() {
         }
     }, [showBilling]);
 
-    // プロモーション自動表示 useEffect (タスク 3.2, 3.3, 3.4)
-    React.useEffect(() => {
-        if (!userProfile) return;
-
-        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
-
-        // 1. 本登録完了直後の遷移検知 (OAuth連携から戻ってきたタイミング。URLのcodeがクリーンアップされた後に表示)
-        const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
-        const hasCode = searchParams.has('code');
-        if (justRegistered === 'true' && !userProfile.is_anonymous && !hasCode) {
-            sessionStorage.removeItem('wirth_dawn_just_registered');
-            if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                setShowStarterPackPromo(true);
-            }
-        }
-
-        // 2. クエストクリア直後の帰還検知
-        const questJustCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared');
-        if (questJustCleared === 'true') {
-            sessionStorage.removeItem('wirth_dawn_quest_just_cleared');
-            if (userProfile.is_anonymous) {
-                setShowGuestRegisterPromo(true);
-            } else {
-                if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                    setShowStarterPackPromo(true);
-                }
-            }
-        }
-
-        // 3. 本登録ユーザーの次回ログイン時のパック案内
-        if (!userProfile.is_anonymous && isEp1Cleared) {
-            const promoShown = sessionStorage.getItem('wirth_dawn_starter_promo_shown');
-            if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
-                setShowStarterPackPromo(true);
-            }
-        }
-    }, [userProfile, completedQuests, searchParams]);
-
-    // 新規: チュートリアル後ナビゲーション用のフラグリセット (第1話クリア時および本登録完了時のそれぞれ一度のみ)
+    // プロモーション自動表示 ＆ オンボーディングガイド用フラグリセット一元管理 useEffect (レースコンディション競合防止)
     React.useEffect(() => {
         if (!completedQuests || !userProfile) return;
 
@@ -235,23 +196,31 @@ function InnPageInner() {
         const hasCode = searchParams.has('code');
         if (hasCode) return;
 
-        // 1. 第1話初回クリア時のリセット (ゲスト状態での帰還時など)
-        const resetKey = 'wirth_dawn_onboarding_reset_v3';
-        const hasReset = localStorage.getItem(resetKey) === 'true';
-
-        // 2. 本登録完了時のリセット (OAuth連携リダイレクトバック完了時)
+        // 1. 本登録完了直後の遷移検知 & フラグリセット用パラメータ取得
         const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
         const regResetKey = 'wirth_dawn_onboarding_reg_reset_v3';
         const hasRegReset = localStorage.getItem(regResetKey) === 'true';
+
+        // 2. 第1話初回クリア時のリセット用パラメータ取得
+        const resetKey = 'wirth_dawn_onboarding_reset_v3';
+        const hasReset = localStorage.getItem(resetKey) === 'true';
 
         let shouldReset = false;
         if (!hasReset) {
             localStorage.setItem(resetKey, 'true');
             shouldReset = true;
         }
-        if (justRegistered === 'true' && !userProfile.is_anonymous && !hasRegReset) {
-            localStorage.setItem(regResetKey, 'true');
-            shouldReset = true;
+
+        if (justRegistered === 'true' && !userProfile.is_anonymous) {
+            if (!hasRegReset) {
+                localStorage.setItem(regResetKey, 'true');
+                shouldReset = true;
+            }
+            // 特別パッケージ案内の表示制御
+            sessionStorage.removeItem('wirth_dawn_just_registered');
+            if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                setShowStarterPackPromo(true);
+            }
         }
 
         if (shouldReset) {
@@ -274,6 +243,28 @@ function InnPageInner() {
             setVisitedBilling(false);
             setVisitedStatus(false);
             setVisitedSettings(false);
+        }
+
+        // 3. クエストクリア直後の帰還検知 (ゲスト / 本登録)
+        const questJustCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared');
+        if (questJustCleared === 'true') {
+            sessionStorage.removeItem('wirth_dawn_quest_just_cleared');
+            if (userProfile.is_anonymous) {
+                setShowGuestRegisterPromo(true);
+            } else {
+                if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                    setShowStarterPackPromo(true);
+                }
+            }
+        }
+
+        // 4. 本登録ユーザーの次回ログイン時のパック案内
+        if (!userProfile.is_anonymous && isEp1Cleared) {
+            const promoShown = sessionStorage.getItem('wirth_dawn_starter_promo_shown');
+            if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
+                setShowStarterPackPromo(true);
+            }
         }
     }, [completedQuests, userProfile, searchParams]);
 
