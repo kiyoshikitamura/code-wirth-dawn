@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
-import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown } from 'lucide-react';
+import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown, Loader2 } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
@@ -256,76 +256,74 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
         setHirePhase('loading');
 
-        setTimeout(async () => {
-            // スナップショット（バックアップ）
-            const previousParty = [...partyMembers];
-            const previousGold = gold;
-            const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
+        // スナップショット（バックアップ）
+        const previousParty = [...partyMembers];
+        const previousGold = gold;
+        const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
 
-            // 楽観的UI用の新規メンバーオブジェクト
-            const optimisticMember: PartyMember = {
-                ...shadow,
-                id: shadow.profile_id || `temp-${Date.now()}`,
-                owner_id: userProfile.id,
-                durability: shadow.stats?.hp || 100,
-                max_durability: shadow.stats?.hp || 100,
-                hp: shadow.stats?.hp || 100,
-                max_hp: shadow.stats?.hp || 100,
-                atk: shadow.stats?.atk || 0,
-                def: shadow.stats?.def || 0,
-                is_active: true,
-                source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
-            } as any;
+        // 楽観的UI用の新規メンバーオブジェクト
+        const optimisticMember: PartyMember = {
+            ...shadow,
+            id: shadow.profile_id || `temp-${Date.now()}`,
+            owner_id: userProfile.id,
+            durability: shadow.stats?.hp || 100,
+            max_durability: shadow.stats?.hp || 100,
+            hp: shadow.stats?.hp || 100,
+            max_hp: shadow.stats?.hp || 100,
+            atk: shadow.stats?.atk || 0,
+            def: shadow.stats?.def || 0,
+            is_active: true,
+            source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
+        } as any;
 
-            // Zustandの楽観的更新
-            const newGold = Math.max(0, gold - shadow.contract_fee);
-            useGameStore.setState({
-                gold: newGold,
-                partyMembers: [...partyMembers, optimisticMember],
-                userProfile: storeUserProfile ? {
-                    ...storeUserProfile,
-                    gold: newGold
-                } : null
+        // Zustandの楽観的更新
+        const newGold = Math.max(0, gold - shadow.contract_fee);
+        useGameStore.setState({
+            gold: newGold,
+            partyMembers: [...partyMembers, optimisticMember],
+            userProfile: storeUserProfile ? {
+                ...storeUserProfile,
+                gold: newGold
+            } : null
+        });
+
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/tavern/hire', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                },
+                body: JSON.stringify({ user_id: userProfile.id, shadow })
             });
-
-            try {
-                const authHeaders = await getAuthHeaders();
-                const res = await fetch('/api/tavern/hire', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...authHeaders
-                    },
-                    body: JSON.stringify({ user_id: userProfile.id, shadow })
-                });
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-                    throw new Error(errData.error || '不明なエラー');
-                }
-                const data = await res.json();
-                if (data.success) {
-                    setHireResultMsg('パーティに加入した！ ✨');
-                    setHirePhase('done');
-                    // バックグラウンドで同期
-                    fetchPartyData();
-                    fetchShadows();
-                    useGameStore.getState().fetchUserProfile();
-                    setTimeout(() => setHirePhase('idle'), 2200);
-                } else {
-                    throw new Error(data.error || '不明なエラー');
-                }
-            } catch (e: any) {
-                // ロールバック
-                useGameStore.setState({
-                    gold: previousGold,
-                    partyMembers: previousParty,
-                    userProfile: previousProfile
-                });
-                setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
-                setHirePhase('done');
-                setTimeout(() => setHirePhase('idle'), 2500);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                throw new Error(errData.error || '不明なエラー');
             }
-        }, 0);
+            const data = await res.json();
+            if (data.success) {
+                setHireResultMsg('パーティに加入した！ ✨');
+                setHirePhase('done');
+                // バックグラウンドで同期
+                fetchPartyData();
+                fetchShadows();
+                useGameStore.getState().fetchUserProfile();
+                setTimeout(() => setHirePhase('idle'), 2200);
+            } else {
+                throw new Error(data.error || '不明なエラー');
+            }
+        } catch (e: any) {
+            // ロールバック
+            useGameStore.setState({
+                gold: previousGold,
+                partyMembers: previousParty,
+                userProfile: previousProfile
+            });
+            setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
+            setHirePhase('done');
+            setTimeout(() => setHirePhase('idle'), 2500);
+        }
     };
 
     const handleDismiss = async (memberId: string, memberName: string) => {
@@ -556,8 +554,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         {/* ===== Content ===== */}
                         <div className="flex-1 overflow-y-auto p-3">
                             {loading ? (
-                                <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
-                                    酒場を見回しています...
+                                <div className="h-full flex flex-col items-center justify-center gap-3 text-[#8b5a2b] font-serif">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#8b5a2b]" />
+                                    <span className="animate-pulse text-lg">酒場を見回しています...</span>
                                 </div>
                             ) : activeTab === 'hire' ? (
                                 <div className="space-y-2">
@@ -972,8 +971,14 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                         currentParty.length >= 4 ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
                                         : userProfile.gold < selectedShadow.contract_fee ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
                                         : 'bg-[#8b5a2b] hover:bg-[#6b4522] text-white border border-[#8b5a2b] shadow-lg'
-                                    }`}>
-                                    {currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
+                                    }`}
+                                >
+                                    {hirePhase === 'loading' ? (
+                                        <div className="flex items-center justify-center gap-1.5">
+                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                            <span>手続き中…</span>
+                                        </div>
+                                    ) : currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
                                 </button>
                             )}
                         </div>

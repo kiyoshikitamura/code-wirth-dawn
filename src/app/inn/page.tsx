@@ -347,8 +347,8 @@ function InnPageInner() {
                 {/* Fixed Header */}
                 {(() => {
                     const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
-                    const isStatusRecommended = !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedMap && visitedAcademy && visitedShop && visitedBilling && !visitedStatus;
-                    const isSettingsRecommended = !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedMap && visitedAcademy && visitedShop && visitedBilling && visitedStatus && !visitedSettings;
+                    const isStatusRecommended = !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && !visitedStatus;
+                    const isSettingsRecommended = !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && visitedStatus && !visitedSettings;
                     
                     return (
                         <InnHeader 
@@ -533,8 +533,6 @@ function InnPageInner() {
                         bannerText = '「宿屋/酒場」で最初の仲間（NPC）を雇用しましょう！';
                     } else if (!visitedGuild) {
                         bannerText = '「ギルド」で新たな依頼（クエスト）を引き受けましょう！';
-                    } else if (!visitedMap) {
-                        bannerText = '「出発する」を押して、ワールドマップから冒険に旅立ちましょう！';
                     } else if (!visitedAcademy) {
                         bannerText = '「魔術学院」で新たな魔導の契約（カードパック購入）やデッキの確認をしましょう！';
                     } else if (!visitedShop || !visitedBilling) {
@@ -543,6 +541,8 @@ function InnPageInner() {
                         bannerText = '「ステータス」を開いて、キャラクターの能力値や装備品を確認しましょう！';
                     } else if (!visitedSettings) {
                         bannerText = '「設定（歯車マーク）」を開いて、音量調節やアカウント管理の機能を確認しましょう！';
+                    } else if (!visitedMap) {
+                        bannerText = '「出発する」を押して、ワールドマップから冒険に旅立ちましょう！';
                     }
 
                     if (!userProfile.current_quest_id && bannerText && showGuideBanner) {
@@ -581,8 +581,6 @@ function InnPageInner() {
                             recommendedFacility = 'inn';
                         } else if (!visitedGuild) {
                             recommendedFacility = 'guild';
-                        } else if (!visitedMap) {
-                            recommendedFacility = null; // 地図出発は施設外(Compassボタン)
                         } else if (!visitedAcademy) {
                             recommendedFacility = 'magicAcademy';
                         } else if (!visitedShop || !visitedBilling) {

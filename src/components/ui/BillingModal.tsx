@@ -16,6 +16,7 @@ export default function BillingModal({ onClose }: Props) {
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
     const [portalLoading, setPortalLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
     
     // 購入確認ポップアップの状態
     const [purchaseConfirm, setPurchaseConfirm] = useState<{
@@ -53,6 +54,8 @@ export default function BillingModal({ onClose }: Props) {
     };
 
     const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
         soundManager?.playSE('se_click');
         onClose();
     };
@@ -150,7 +153,11 @@ export default function BillingModal({ onClose }: Props) {
                             魔導ショップ ＆ 旅人の契約
                         </h2>
                     </div>
-                    <button onClick={handleClose} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isClosing}
+                        className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors disabled:opacity-55"
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>

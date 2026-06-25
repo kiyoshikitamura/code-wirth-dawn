@@ -105,6 +105,14 @@ export default function QuestResultModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            {isClosing && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                    <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
+                        {isTestPlay ? 'クリエイターズ工房に戻る中…' : '拠点に移動中…'}
+                    </p>
+                </div>
+            )}
             <div className="bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl relative my-8">
                 <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent pointer-events-none rounded-lg" />
 
