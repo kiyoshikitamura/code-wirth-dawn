@@ -683,3 +683,13 @@
    - 同期判定フラグ `isPromoGuarded`（`isPromoPending || isPromoRequestedSync || showGuestRegisterPromo || showStarterPackPromo`）が `true` の場合、施設ボタン、ヘッダーボタン、出発ボタン等のすべてのインタラクション（クリックハンドラ）を無効化（`undefined` に設定するか `return` による早期離脱）し、且つガードカバーをマウント後即座に表示する。
 3. **モーダル背景によるタップ突き抜けの修正**:
    - `GuestRegisterPromoModal` および `StarterPackPromoModal` の背景マスク要素（`absolute inset-0 bg-black/85`）の `pointer-events-none` クラスを **`pointer-events-auto`** に変更し、モーダルの外側領域をタップしたイベントが背後の宿屋画面の各施設ボタンへ透過するのを完全に遮断する。
+
+---
+
+## 26. 遅延多段階強制スクロールリセット仕様 (Version 4.9.4 追記)
+
+1. **Next.js 非同期スクロール復元と `overflow: hidden` の競合（スクロールロックバグ）の解消**:
+   - クライアントサイド遷移時、Next.js のルーターが非同期で実行するスクロール復元処理（Scroll Restoration）はコンポーネントがマウントされた「後」に実行されるため、マウント時の即時リセットが後から上書きされてしまう問題に対処する。
+   - `InnPageInner` のマウント時 `useEffect` において、即時のスクロールリセット（`window.scrollTo(0, 0)` 等）に加え、`setTimeout`（`0ms`, `50ms`, `150ms`, `300ms`）を用いた多段階の遅延リセットを実行する。
+   - これにより、非同期に上書きされたスクロール位置を確実に `0` へ再上書きし、`overflow: hidden` がかかる前にスクロールを完全にリセットする（スクロール位置がズレた状態で `overflow: hidden` が固定されるバグを防ぐ）。
+   - 結果として、宿屋の各施設ボタン、閉じるボタン、およびマウント直後にポータル表示されるカードパック開封モーダル内のボタンすべてのタップ領域ズレをリロードなしで根絶する。

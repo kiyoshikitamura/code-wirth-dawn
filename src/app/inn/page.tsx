@@ -64,15 +64,35 @@ function InnPageInner() {
 
     useEffect(() => {
         setMounted(true);
-        window.scrollTo(0, 0);
+
+        const resetScroll = () => {
+            window.scrollTo(0, 0);
+            if (document.body) {
+                document.body.scrollTop = 0;
+            }
+            if (document.documentElement) {
+                document.documentElement.scrollTop = 0;
+            }
+        };
+
+        // 即時リセット
+        resetScroll();
+
+        // Next.js の非同期スクロール復元（Scroll Restoration）を確実に潰すための多段階実行
+        const t1 = setTimeout(resetScroll, 0);
+        const t2 = setTimeout(resetScroll, 50);
+        const t3 = setTimeout(resetScroll, 150);
+        const t4 = setTimeout(resetScroll, 300);
+
         if (document.body) {
-            document.body.scrollTop = 0;
             document.body.style.overflow = 'hidden';
         }
-        if (document.documentElement) {
-            document.documentElement.scrollTop = 0;
-        }
+
         return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+            clearTimeout(t4);
             if (document.body) {
                 document.body.style.overflow = '';
             }
