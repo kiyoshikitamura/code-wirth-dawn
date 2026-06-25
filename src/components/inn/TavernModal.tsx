@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile, PartyMember } from '@/types/game';
 import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
@@ -37,14 +37,17 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     } = useGameStore();
 
     const [isClosing, setIsClosing] = useState(false);
+    const closeLockedRef = useRef(false);
 
     const handleClose = async () => {
-        if (isClosing) return;
+        if (closeLockedRef.current || isClosing) return;
+        closeLockedRef.current = true;
         setIsClosing(true);
         try {
             await onClose();
         } catch (e) {
             console.error('[TavernModal] onClose failed:', e);
+            closeLockedRef.current = false;
             setIsClosing(false);
         }
     };

@@ -245,7 +245,24 @@
 2. **初期化および表示遅延処理**:
    - 第1話「始まりの轍」(ID: 6001)をクリアした直後に、宿屋ページにおいて wirth_dawn_visited_tavern などの localStorage キーおよび対応する React ステートを一括でクリア/リセットする。
    - さらに、Google本登録完了時(かつ URL の code クエリパラメータのクリーンアップ完了後)の宿屋ページ表示時にも、再度一括リセットを実行し、過去 of visited 履歴の影響を完全に排除する。
-   - リセットの二重実行を防止するため、初回クリア時には wirth_dawn_onboarding_reset_v3 を、本登録完了時には wirth_dawn_onboarding_reg_reset_v3 をロックキーとして使用する。
+   - リセット of 二重実行を防止するため、初回クリア時には wirth_dawn_onboarding_reset_v3 を、本登録完了時には wirth_dawn_onboarding_reg_reset_v3 をロックキーとして使用する。
    - OAuth連携リダイレクトバック完了後の「特別パッケージ案内(StarterPackPromoModal)」は、URLの code クエリパラメータが完全にクリーンアップされた後に表示制御を行う。
 3. **案内モーダルのデザイン改善**:
    - 特別パッケージ案内モーダル内の「内容を確認する (ショップへ進む)」ボタンの右矢印アイコンを削除する。
+
+---
+
+## 13. 本登録時の遅延競合の解消およびボタン連打・フリーズ防止の徹底 (Version 3.3 追記)
+
+1. **BGMの統一**:
+   - チュートリアル開始からメインクエスト第1話「始まりの轍」を受注してバトルなどのメインクエスト進行が開始されるまでの宿屋拠点BGMは、タイトル画面で流れるBGM（`bgm_title`）に完全に統一し、途中で他のBGM（`bgm_inn` など）に切り替わって雰囲気が途切れないように制御する。
+   - 宿屋ページの `useInnPageState.ts` のBGM選定で `userProfile.is_tutorial_completed === false` の場合は `bgm_title` を返させ、`OnboardingAcademyModal.tsx` 内の `playBgm('bgm_inn')` を削除する。
+2. **本登録コールバック遅延の堅牢化**:
+   - 宿屋ページの `page.tsx` で本登録後のフラグリセットおよびパッケージ案内ポップアップを表示する `useEffect` の依存配列に `searchParams`（`useSearchParams()`）を追加する。
+   - URLクリーンアップ（`cleanUrl()`）によって `code` が消えたタイミング（URL変更による searchParams の更新）で React ステートの再評価がトリガーされるようにし、確実にかつ自動でフラグリセットおよびモーダル表示が行われるようにする。
+   - 設定画面（`AccountSettingsModal.tsx`）から Google 連携（`linkIdentity`）を行う際にも、あらかじめ `wirth_dawn_just_registered` セッションフラグを `sessionStorage` に書き込み、完了後に同じリセット＆プロモーション遷移が走るように統一する。
+   - `useInnPageState.ts` で本登録（セッション交換・プロフィール同期）完了直後に、`fetchInitPage(true)`（`init-page` APIによる一括再フェッチ）を実行し、登録後の最新データを確実にクライアント側ストア（`completedQuests` や `partyMembers` など）に同期する。
+3. **ダイアログボタン等の同期的連打防止（Refロック）とローディングスピナー**:
+   - `NpcDialogModal.tsx` 内のメインアクションボタン、セカンダリアクションボタン（「冒険者を探す」等）、および閉じるボタン（X）に対し、非同期ステート `isActionLoading` の更新時間差をすり抜ける連打を防止するため、同期的Refロック（`clickLockedRef = useRef(false)`）を適用する。
+   - クリックされたボタンのローディング中は、`Loader2` による回転スピナーおよび「読み込み中…」テキスト（閉じるボタンの場合は `X` に代わってスピナー）を表示し、クリックされたボタン以外の操作もすべて非活性（`disabled`）にする。
+   - `TavernModal.tsx` の閉じるボタンに対しても、同様の `closeLockedRef` を適用して多重 close 実行を抑止する。

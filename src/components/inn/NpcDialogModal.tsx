@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, X, Ban } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, X, Ban, Loader2 } from 'lucide-react';
 
 export interface NpcDialogData {
     facilityName: string;
@@ -67,6 +67,7 @@ function useTypewriter(text: string, speed: number = 30) {
 export default function NpcDialogModal({ npcData, onClose, onAction, buttonText, isDisabled, secondaryActions }: NpcDialogModalProps) {
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [clickedAction, setClickedAction] = useState<'main' | 'close' | number | null>(null);
+    const clickLockedRef = useRef(false);
     
     if (!npcData) return null;
 
@@ -75,7 +76,8 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     const { displayed, done, skip } = useTypewriter(npcData.dialogue, isTheodore ? 0 : 30);
 
     const handleClose = async () => {
-        if (isActionLoading) return;
+        if (clickLockedRef.current || isActionLoading) return;
+        clickLockedRef.current = true;
         setIsActionLoading(true);
         setClickedAction('close');
         setTimeout(async () => {
@@ -83,6 +85,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                 await onClose();
             } catch (e) {
                 console.error('[NpcDialogModal] onClose failed:', e);
+                clickLockedRef.current = false;
                 setIsActionLoading(false);
                 setClickedAction(null);
             }
@@ -90,7 +93,8 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     };
 
     const handleAction = async () => {
-        if (isActionLoading || isDisabled || isBanned) return;
+        if (clickLockedRef.current || isActionLoading || isDisabled || isBanned) return;
+        clickLockedRef.current = true;
         setIsActionLoading(true);
         setClickedAction('main');
         setTimeout(async () => {
@@ -98,6 +102,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                 await onAction();
             } catch (e) {
                 console.error('[NpcDialogModal] onAction failed:', e);
+                clickLockedRef.current = false;
                 setIsActionLoading(false);
                 setClickedAction(null);
             }
@@ -105,7 +110,8 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     };
 
     const handleSecondaryAction = async (onClick: () => void | Promise<void>, index: number) => {
-        if (isActionLoading) return;
+        if (clickLockedRef.current || isActionLoading) return;
+        clickLockedRef.current = true;
         setIsActionLoading(true);
         setClickedAction(index);
         setTimeout(async () => {
@@ -113,6 +119,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                 await onClick();
             } catch (e) {
                 console.error('[NpcDialogModal] secondaryAction failed:', e);
+                clickLockedRef.current = false;
                 setIsActionLoading(false);
                 setClickedAction(null);
             }
@@ -136,9 +143,13 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                     <button 
                         onClick={handleClose} 
                         disabled={isActionLoading}
-                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1 disabled:opacity-50"
+                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1 disabled:opacity-50 flex items-center justify-center"
                     >
-                        <X size={18} />
+                        {isActionLoading && clickedAction === 'close' ? (
+                            <Loader2 className="w-[18px] h-[18px] animate-spin text-slate-400" />
+                        ) : (
+                            <X size={18} />
+                        )}
                     </button>
                 </div>
 
@@ -182,14 +193,21 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                         <button
                             onClick={handleAction}
                             disabled={isDisabled || isBanned || isActionLoading}
-                            className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition-all focus:outline-none focus:ring-2 
+                            className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition-all focus:outline-none focus:ring-2 flex items-center justify-center gap-2
                                 ${isBanned
                                     ? 'bg-red-900/40 text-red-300 border border-red-700 cursor-not-allowed'
                                     : (isDisabled || isActionLoading)
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'bg-amber-900/40 hover:bg-amber-800/60 border border-amber-600 text-amber-100 active:scale-95 focus:ring-amber-500'}`}
                         >
-                            {isActionLoading && clickedAction === 'main' ? '読み込み中…' : (isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`)}
+                            {isActionLoading && clickedAction === 'main' ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin text-amber-100" />
+                                    読み込み中…
+                                </>
+                            ) : (
+                                isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`
+                            )}
                         </button>
 
                         {/* セカンダリボタン（宿屋の「冒険者を探す」等） */}
@@ -198,12 +216,19 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                                 key={i}
                                 onClick={() => handleSecondaryAction(action.onClick, i)}
                                 disabled={isActionLoading}
-                                className={`w-full py-3 rounded-xl font-bold text-sm border transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500
+                                className={`w-full py-3 rounded-xl font-bold text-sm border transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-center gap-2
                                     ${isActionLoading
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'border-amber-600 bg-amber-900/30 text-amber-100 hover:bg-amber-800/50 hover:text-white'}`}
                             >
-                                {isActionLoading && clickedAction === i ? '読み込み中…' : action.label}
+                                {isActionLoading && clickedAction === i ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-amber-100" />
+                                        読み込み中…
+                                    </>
+                                ) : (
+                                    action.label
+                                )}
                             </button>
                         ))}
                     </div>

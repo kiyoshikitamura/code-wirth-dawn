@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
@@ -57,6 +57,7 @@ export default function InnPage() {
 }
 
 function InnPageInner() {
+    const searchParams = useSearchParams();
     const [showGuideBanner, setShowGuideBanner] = useState(true);
     const state = useInnPageState();
     const {
@@ -168,7 +169,7 @@ function InnPageInner() {
 
         // 1. 本登録完了直後の遷移検知 (OAuth連携から戻ってきたタイミング。URLのcodeがクリーンアップされた後に表示)
         const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
-        const hasCode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('code');
+        const hasCode = searchParams.has('code');
         if (justRegistered === 'true' && !userProfile.is_anonymous && !hasCode) {
             sessionStorage.removeItem('wirth_dawn_just_registered');
             if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
@@ -197,7 +198,7 @@ function InnPageInner() {
                 setShowStarterPackPromo(true);
             }
         }
-    }, [userProfile, completedQuests]);
+    }, [userProfile, completedQuests, searchParams]);
 
     // 新規: チュートリアル後ナビゲーション用のフラグリセット (第1話クリア時および本登録完了時のそれぞれ一度のみ)
     React.useEffect(() => {
@@ -207,7 +208,7 @@ function InnPageInner() {
         if (!isEp1Cleared) return;
 
         // URLのcodeクエリパラメータが存在しない（＝クリーンアップ完了後）ことを確認して実行
-        const hasCode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('code');
+        const hasCode = searchParams.has('code');
         if (hasCode) return;
 
         // 1. 第1話初回クリア時のリセット (ゲスト状態での帰還時など)
@@ -250,7 +251,7 @@ function InnPageInner() {
             setVisitedStatus(false);
             setVisitedSettings(false);
         }
-    }, [completedQuests, userProfile]);
+    }, [completedQuests, userProfile, searchParams]);
 
     React.useEffect(() => {
         if (showTavern) {

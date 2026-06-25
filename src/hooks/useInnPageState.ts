@@ -102,11 +102,14 @@ export function useInnPageState() {
     }, [searchParams, fetchUserProfile]);
 
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
-    const bgmKey = getBgmKey(
-        worldState?.location_name,
-        worldState?.controlling_nation,
-        worldState?.prosperity_level
-    );
+    const isTutorialActive = userProfile && userProfile.is_tutorial_completed === false;
+    const bgmKey = isTutorialActive
+        ? 'bgm_title'
+        : getBgmKey(
+            worldState?.location_name,
+            worldState?.controlling_nation,
+            worldState?.prosperity_level
+        );
     useBgm(bgmKey);
 
     // UI States
@@ -206,105 +209,89 @@ export function useInnPageState() {
     };
 
     // Initial load — init-page APIで一括取得
-    useEffect(() => {
-        if (!_hasHydrated) return; // ハイドレーション完了まで待機
+    const fetchInitPage = useCallback(async (forceFetch = false) => {
+        const store = useGameStore.getState();
+        const lastFetch = store.lastInitPageFetchTime || 0;
+        const hasData = store.userProfile && store.worldState;
+        
+        // SWRパターン: メモリ上にデータがあれば即表示し、ローディング状態を解除
+        if (hasData && !forceFetch) {
+            setLoading(false);
+            setInitialLoadComplete(true);
+        }
 
-        const loadInitData = async () => {
-            const store = useGameStore.getState();
-            const lastFetch = store.lastInitPageFetchTime || 0;
-            const hasData = store.userProfile && store.worldState;
-            
-            // SWRパターン: メモリ上にデータがあれば即表示し、ローディング状態を解除
-            if (hasData) {
-                setLoading(false);
-                setInitialLoadComplete(true);
+        // キャッシュチェック（直近60秒以内かつ強制フェッチでないならAPI取得自体をスキップ）
+        if (hasData && !forceFetch && Date.now() - lastFetch < 60000) {
+            console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
+            return;
+        }
+
+        try {
+            let token = await (await import('@/lib/authToken')).getAuthToken();
+            const isOauthCallback = typeof window !== 'undefined' && window.location.search.includes('code=');
+            if (!token && isOauthCallback) {
+                // Google OAuth 直後の書き込みタイムラグ対策として1000ms待ってリトライ
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                token = await (await import('@/lib/authToken')).getAuthToken();
             }
+            const headers: HeadersInit = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            // キャッシュチェック（直近60秒以内ならAPI取得自体をスキップ）
-            if (hasData && Date.now() - lastFetch < 60000) {
-                console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
-                return;
-            }
+            const res = await fetch('/api/init-page', { headers, cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
 
-            try {
-                let token = await (await import('@/lib/authToken')).getAuthToken();
-                const isOauthCallback = typeof window !== 'undefined' && window.location.search.includes('code=');
-                if (!token && isOauthCallback) {
-                    // Google OAuth 直後の書き込みタイムラグ対策として1000ms待ってリトライ
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    token = await (await import('@/lib/authToken')).getAuthToken();
-                }
-                const headers: HeadersInit = {};
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const res = await fetch('/api/init-page', { headers, cache: 'no-store' });
-                if (res.ok) {
-                    const data = await res.json();
-
-                    // Profile + gold + equipBonus をストアに反映
-                    if (data.profile) {
-                        useGameStore.setState({
-                            userProfile: data.profile,
-                            gold: data.profile.gold || 0,
-                            equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
-                        });
-                    }
-
-                    // Hub State
-                    if (data.hub_state) {
-                        useGameStore.setState({ hubState: data.hub_state });
-                    }
-
-                    // World State（hegemony 含む）
-                    if (data.world_state) {
-                        useGameStore.setState({ worldState: data.world_state });
-                    }
-
-                    // キャッシュのセット
+                // Profile + gold + equipBonus をストアに反映
+                if (data.profile) {
                     useGameStore.setState({
-                        tavernShadows: data.tavern_shadows || [],
-                        partyMembers: data.party_members || [],
-                        locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
-                        gossipData: data.gossip_data,
-                        completedQuests: data.completed_quests || [],
-                        lastInitPageFetchTime: Date.now(), // 更新
+                        userProfile: data.profile,
+                        gold: data.profile.gold || 0,
+                        equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
                     });
-
-                    if (typeof window !== 'undefined' && data.profile?.current_location_id) {
-                        const locId = data.profile.current_location_id;
-                        try {
-                            if (data.tavern_shadows) {
-                                sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
-                            }
-                            if (data.location_quests) {
-                                sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
-                            }
-                        } catch {}
-                    }
-
-                    // Reputation
-                    if (data.reputation !== undefined) {
-                        setReputation(data.reputation || { rank: 'Stranger', score: 0 });
-                    }
-
-
-
-                    if (!data.profile) {
-                        router.push('/title');
-                    }
-                } else {
-                    // Fallback: 従来の個別フェッチ
-                    await Promise.all([
-                        fetchWorldState(),
-                        useGameStore.getState().fetchUserProfile()
-                    ]);
-                    useGameStore.setState({ lastInitPageFetchTime: Date.now() });
-                    if (!useGameStore.getState().userProfile) {
-                        router.push('/title');
-                    }
                 }
-            } catch (e) {
-                console.error('[useInnPageState] init-page fetch failed, falling back:', e);
+
+                // Hub State
+                if (data.hub_state) {
+                    useGameStore.setState({ hubState: data.hub_state });
+                }
+
+                // World State（hegemony 含む）
+                if (data.world_state) {
+                    useGameStore.setState({ worldState: data.world_state });
+                }
+
+                // キャッシュのセット
+                useGameStore.setState({
+                    tavernShadows: data.tavern_shadows || [],
+                    partyMembers: data.party_members || [],
+                    locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
+                    gossipData: data.gossip_data,
+                    completedQuests: data.completed_quests || [],
+                    lastInitPageFetchTime: Date.now(), // 更新
+                });
+
+                if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                    const locId = data.profile.current_location_id;
+                    try {
+                        if (data.tavern_shadows) {
+                            sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                        }
+                        if (data.location_quests) {
+                            sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                        }
+                    } catch {}
+                }
+
+                // Reputation
+                if (data.reputation !== undefined) {
+                    setReputation(data.reputation || { rank: 'Stranger', score: 0 });
+                }
+
+                if (!data.profile) {
+                    router.push('/title');
+                }
+            } else {
+                // Fallback: 従来の個別フェッチ
                 await Promise.all([
                     fetchWorldState(),
                     useGameStore.getState().fetchUserProfile()
@@ -313,13 +300,27 @@ export function useInnPageState() {
                 if (!useGameStore.getState().userProfile) {
                     router.push('/title');
                 }
-            } finally {
-                setLoading(false);
-                setInitialLoadComplete(true);
             }
-        };
-        loadInitData();
-    }, [router, _hasHydrated]);
+        } catch (e) {
+            console.error('[useInnPageState] init-page fetch failed, falling back:', e);
+            await Promise.all([
+                fetchWorldState(),
+                useGameStore.getState().fetchUserProfile()
+            ]);
+            useGameStore.setState({ lastInitPageFetchTime: Date.now() });
+            if (!useGameStore.getState().userProfile) {
+                router.push('/title');
+            }
+        } finally {
+            setLoading(false);
+            setInitialLoadComplete(true);
+        }
+    }, [router, fetchWorldState]);
+
+    useEffect(() => {
+        if (!_hasHydrated) return; // ハイドレーション完了まで待機
+        fetchInitPage(false);
+    }, [_hasHydrated, fetchInitPage]);
 
     // 拠点施設NPCマスター画像の先行バックグラウンドロード (v39)
     useEffect(() => {
@@ -412,6 +413,7 @@ export function useInnPageState() {
                 if (user && !user.is_anonymous) {
                     await supabase.from('user_profiles').update({ is_anonymous: false }).eq('id', user.id);
                     await fetchUserProfile();
+                    await fetchInitPage(true);
                     console.log('[linkIdentity] 手動アカウント連携完了。is_anonymous → false');
                 }
             } catch (e) {
@@ -422,7 +424,7 @@ export function useInnPageState() {
         };
 
         handleOAuthCallback();
-    }, [fetchUserProfile]);
+    }, [fetchUserProfile, fetchInitPage]);
 
     // エンカウントバトル結果処理
     useEffect(() => {

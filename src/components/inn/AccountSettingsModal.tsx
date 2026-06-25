@@ -196,6 +196,11 @@ export default function AccountSettingsModal({ onClose }: Props) {
         setLinkLoading(true);
         setError('');
         try {
+            // 本登録完了後に自動でパックプロモーションを開くため、sessionStorageにフラグを保存
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('wirth_dawn_just_registered', 'true');
+            }
+
             const { error } = await supabase.auth.linkIdentity({
                 provider: 'google',
                 options: {
@@ -209,6 +214,9 @@ export default function AccountSettingsModal({ onClose }: Props) {
             // → Google OAuth画面にリダイレクトされる
             // → コールバック後 /inn に戻り、匿名アカウントにGoogle identityが紐付く
         } catch (e: any) {
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('wirth_dawn_just_registered');
+            }
             setError(`Google連携に失敗しました: ${e.message}`);
             setLinkLoading(false);
         }

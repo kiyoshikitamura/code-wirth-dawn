@@ -35,7 +35,6 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
 
     // BGMの制御 (必要に応じて)
     useEffect(() => {
-        soundManager?.playBgm('bgm_inn');
         // Preload card back image
         const img = new Image();
         img.src = '/images/card_back_basic.png';
