@@ -235,4 +235,12 @@
      * **注意 (v3.1 追記)**: 戦闘開始ボタン押下時の `isTransitioning = true` について、コンポーネントが破棄されず非表示（hidden）のまま戦闘から戻った場合に進行ロックが解除されない不具合を回避するため、戦闘開始ボタンにも 300ms の自動ロック解除（`setTimeout`）を設定する。また、外部からのノード復元時（`initialNodeId` の変更検知時）に `isTransitioning` を `false` に初期化するセーフガードを適用する。
    - **共通モーダル (`QuestBoardModal.tsx` 等)**: 閉じるボタンのタップ時に、即座にボタンを `disabled` にしつつ同期的に `onClose()` を呼び出して閉じる。
 
+---
 
+## 12. チュートリアルクリア直後のナビゲーションフラグの初期化 (Version 3.1 追記)
+
+1. **初期化の背景**:
+   - チュートリアル第1話クリア前に、テストプレイ履歴が localStorage に残っている、またはプレイヤーが先行して施設を開いた場合、クリア後のナビゲーション（魔術学院や道具屋など）がすでに訪問済みと判定され、途中でスキップされて終了してしまう。
+2. **初期化処理**:
+   - 第1話「始まりの轍」（ID: `6001`）をクリアした直後に、宿屋ページにおいて `wirth_dawn_visited_tavern`, `wirth_dawn_visited_guild`, `wirth_dawn_visited_map`, `wirth_dawn_visited_academy`, `wirth_dawn_visited_shop`, `wirth_dawn_visited_billing`, `wirth_dawn_visited_status`, `wirth_dawn_visited_settings` の localStorage キーおよび対応する React ステートを一括でクリア/リセットする。
+   - この初期化はアカウント（ブラウザ環境）ごとに1度だけ実行されるように、`wirth_dawn_onboarding_reset_v3` フラグで実行ロックをかける。

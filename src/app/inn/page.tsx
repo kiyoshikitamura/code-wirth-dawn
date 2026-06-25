@@ -198,6 +198,38 @@ function InnPageInner() {
         }
     }, [userProfile, completedQuests]);
 
+    // 新規: チュートリアル後ナビゲーション用のフラグリセット (第1話クリア時の一度のみ)
+    React.useEffect(() => {
+        if (!completedQuests) return;
+        const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
+        if (isEp1Cleared) {
+            const resetKey = 'wirth_dawn_onboarding_reset_v3';
+            if (localStorage.getItem(resetKey) !== 'true') {
+                // localStorage のガイド関連フラグをクリア
+                localStorage.removeItem('wirth_dawn_visited_tavern');
+                localStorage.removeItem('wirth_dawn_visited_guild');
+                localStorage.removeItem('wirth_dawn_visited_map');
+                localStorage.removeItem('wirth_dawn_visited_academy');
+                localStorage.removeItem('wirth_dawn_visited_shop');
+                localStorage.removeItem('wirth_dawn_visited_billing');
+                localStorage.removeItem('wirth_dawn_visited_status');
+                localStorage.removeItem('wirth_dawn_visited_settings');
+
+                // Reactステートもリセット
+                setVisitedTavern(false);
+                setVisitedGuild(false);
+                setVisitedMap(false);
+                setVisitedAcademy(false);
+                setVisitedShop(false);
+                setVisitedBilling(false);
+                setVisitedStatus(false);
+                setVisitedSettings(false);
+
+                localStorage.setItem(resetKey, 'true');
+            }
+        }
+    }, [completedQuests]);
+
     React.useEffect(() => {
         if (showTavern) {
             localStorage.setItem('wirth_dawn_visited_tavern', 'true');
