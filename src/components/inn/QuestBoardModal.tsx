@@ -192,7 +192,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
             {/* Detail Popup */}
             {detailQuest && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setDetailQuest(null)}>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80" onClick={() => setDetailQuest(null)}>
                     <div className="bg-[#fdfbf7] text-[#2c241b] w-full max-w-md rounded-lg shadow-2xl border-2 border-[#8b5a2b] overflow-hidden" onClick={e => e.stopPropagation()}>
                         {/* Detail Header */}
                         <div className="bg-[#3e2723] p-4 flex justify-between items-start">
@@ -339,7 +339,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
             {/* Urgent Warning Dialog */}
             {showUrgentWarning && pendingQuest && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85">
                     <div className="bg-[#fdfbf7] text-[#2c241b] w-full max-w-sm rounded-lg shadow-2xl border-2 border-red-600 overflow-hidden">
                         <div className="bg-red-800 p-3 flex items-center gap-2">
                             <AlertTriangle className="w-5 h-5 text-red-300" />

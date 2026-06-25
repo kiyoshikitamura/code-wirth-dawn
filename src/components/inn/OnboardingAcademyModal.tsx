@@ -184,7 +184,7 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center select-none p-4">
             {/* 背景（すりガラス） - 兄弟関係にして interactive 要素を含めない */}
-            <div className="absolute inset-0 bg-black/85 backdrop-blur-md pointer-events-none" />
+            <div className="absolute inset-0 bg-black/90 pointer-events-none" />
 
             {/* コンテンツ - backdrop-blur を親に持たないため、iOS Safariでのクリックズレを防止 */}
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-y-auto">
@@ -339,7 +339,7 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
                                                 }}
                                             >
                                                 <div className="absolute inset-0 bg-slate-900/40 rounded-xl sm:rounded-2xl pointer-events-none" />
-                                                <div className="relative z-10 w-full h-full border border-amber-500/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6 bg-black/45 backdrop-blur-[0.5px]">
+                                                <div className="relative z-10 w-full h-full border border-amber-500/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6 bg-black/60">
                                                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400/80 font-black text-[8px] sm:text-[10px]">
                                                         契約
                                                     </div>

@@ -114,7 +114,7 @@ export default function QuestHeader({
     return (
         <>
             {/* safe-area-inset-top 対応: pt にモバイルのノッチ/時計/電池残量分を確保 */}
-            <div className="sticky top-0 z-50 w-full bg-slate-950/95 backdrop-blur-md border-b border-amber-900/40 text-slate-200 shadow-2xl shrink-0"
+            <div className="sticky top-0 z-50 w-full bg-slate-950 border-b border-amber-900/40 text-slate-200 shadow-2xl shrink-0"
                  style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 6px)' }}>
 
                 {/* メインステータス行 */}
@@ -233,8 +233,8 @@ function PartyMemberIcon({ member, hp, maxHp, hpPct, vit, isGuest }: {
     // ポップアップを document.body に直接レンダリング（overflow:hidden の親を回避）
     const popupPortal = showPopup && typeof document !== 'undefined'
         ? ReactDOM.createPortal(
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPopup(false)}>
-                <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl p-4 w-[280px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80" onClick={() => setShowPopup(false)}>
+                <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 w-[280px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <div className={`w-10 h-10 rounded-full border-2 ${

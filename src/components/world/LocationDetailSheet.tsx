@@ -23,7 +23,7 @@ export default function LocationDetailSheet({ selectedLocation, onClose, onTrave
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+                className="fixed inset-0 bg-black/80 z-40"
                 onClick={onClose}
             />
             {/* Modal */}

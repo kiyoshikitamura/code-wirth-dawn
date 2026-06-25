@@ -420,4 +420,19 @@
 2. **`QuestResultModal` の z-index 向上（安全防護）**:
    - Next.js アプリ内の他の UI 要素（最大 `z-[500]` 前後）に対して、最前面での操作判定をより堅牢に防衛するため、`QuestResultModal.tsx` の最外枠コンテナの z-index を `z-50` から `z-[1000]` へ引き上げた。
 
+---
+
+## 21. 旧ツアー残骸の削除および iOS Safari SPA 遷移後タップ座標ズレの根絶仕様 (Version 4.8 追記)
+
+1. **旧仕様ツアー・推奨バッジロジックの完全削除**:
+   - `page.tsx` (`src/app/inn/page.tsx`) において、ツアー非アクティブ時（`isTourActive === false`）の古い施設推奨バッジ決定ロジック（`visitedGuild`, `visitedAcademy` などの visited フラグに基づく `else` 句の `recommendedFacility` 判定）を完全に削除。ツアー非アクティブ時は常に `recommendedFacility = null` とし、古いバッジが再表示されるバグを防止する。
+   - 第1話（6001）クリア前に宿屋画面の背後に表示されていた、古い手動受注案内バナー（「ギルドで第1話『始まりの轍』を受注しよう！」）の文言表示ロジックを完全に削除。
+2. **プロジェクト全体からのすりガラス効果 (`backdrop-blur`) の完全排除**:
+   - iOS Safari (WebKit) での Next.js クライアント遷移（SPA 遷移）時に、遷移前の画面（`/quest` 画面など）に残存する `backdrop-filter: blur(...)` が内部描画ツリーを狂わせ、リロードするまでタップ判定をズレさせるバグを根絶。
+   - 以下のすべてのコンポーネントにおいて、`backdrop-blur-sm`、`backdrop-blur-md` などの `backdrop-filter` 関連クラスを完全に削除し、高コントラスト半透明背景（`bg-slate-950/95`、`bg-black/85`、`bg-slate-900/90` 等）に置換。
+     - 宿屋モーダル: `OnboardingAcademyModal.tsx`, `PartyModal.tsx`, `QuestBoardModal.tsx`, `SkillDeckModal.tsx`
+     - クエスト画面: `QuestHeader.tsx`, `ScenarioEngine.tsx`
+     - 共通/UIモーダル: `PurchaseConfirmModal.tsx`, `HegemonyModal.tsx`, `LocationDetailSheet.tsx`
+
+
 

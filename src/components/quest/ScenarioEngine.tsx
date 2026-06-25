@@ -274,7 +274,7 @@ export default function ScenarioEngine({
 
                 <div className="flex flex-col gap-3 mb-6 z-10 w-full max-w-sm">
                     {shopItems.map((item: { id: number; name: string; price: number; desc: string }) => (
-                        <div key={item.id} className="bg-slate-900/90 backdrop-blur-sm text-slate-200 p-4 rounded-xl border border-amber-900/40 flex flex-col gap-2 shadow-lg">
+                        <div key={item.id} className="bg-slate-900/95 text-slate-200 p-4 rounded-xl border border-amber-900/40 flex flex-col gap-2 shadow-lg">
                             <div className="flex justify-between items-center border-b border-slate-700/50 pb-2">
                                 <span className="font-bold text-base">{item.name}</span>
                                 <span className="text-amber-400 font-mono text-sm">{item.price} G</span>
@@ -290,7 +290,7 @@ export default function ScenarioEngine({
                     ))}
                 </div>
 
-                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-2 rounded-full border border-slate-700/50 mb-6">
+                <div className="z-10 bg-slate-900 px-6 py-2 rounded-full border border-slate-700/50 mb-6">
                     <span className="text-slate-400 text-sm mr-2">所持金:</span>
                     <span className="text-amber-400 font-bold font-mono text-lg">{userProfile?.gold || 0} G</span>
                 </div>
@@ -320,7 +320,7 @@ export default function ScenarioEngine({
                 <h2 className="text-2xl font-serif text-amber-400 mb-1 z-10 drop-shadow-md">野営地</h2>
                 <p className="text-slate-500 mb-6 z-10 text-sm italic text-center max-w-xs">「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」</p>
 
-                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm">
+                <div className="z-10 bg-slate-900 px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm">
                     <p className="text-amber-400/80 font-bold text-sm mb-4">※ここでは特別に、デッキ・装備変更が許可されます。</p>
                     <button
                         onClick={() => setShowCampStatus(true)}
@@ -467,7 +467,7 @@ export default function ScenarioEngine({
 
             <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
                 {/* Main Text Dialog */}
-                <div className="bg-slate-950/40 backdrop-blur-sm border border-amber-900/40 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
+                <div className="bg-slate-950/85 border border-amber-900/40 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
                     {/* アイコン: 話者画像あり→ポートレート / なし→非表示 */}
                     {currentNode.speaker_image_url ? (
                         <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
@@ -611,7 +611,7 @@ export default function ScenarioEngine({
 
             {/* Guest Join Modal */}
             {showingGuestJoin && (
-                <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-500 p-6">
+                <div className="absolute inset-0 z-50 bg-black/95 flex items-center justify-center animate-in fade-in duration-500 p-6">
                     <div className="bg-slate-900 border border-amber-900/50 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl relative">
                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-4 py-1 font-bold tracking-widest text-xs rounded-full shadow-lg">
                             新たな仲間
@@ -662,10 +662,10 @@ export default function ScenarioEngine({
 
             {/* Travel Modal */}
             {showingTravel && (
-                <div className="absolute inset-0 z-50 bg-slate-950/98 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-700 p-6">
+                <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center animate-in fade-in duration-700 p-6">
 
                     {/* Linear Route Map Display */}
-                    <div className="w-full max-w-sm mb-6 relative bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5 flex items-center justify-center gap-3 overflow-x-auto">
+                    <div className="w-full max-w-sm mb-6 relative bg-slate-900 border border-slate-700/50 rounded-xl p-5 flex items-center justify-center gap-3 overflow-x-auto">
                         {/* Current Location */}
                         <div className="flex flex-col items-center min-w-[70px]">
                             <div className="w-10 h-10 rounded-full border-2 border-blue-500 bg-blue-900/40 flex items-center justify-center shadow-[0_0_10px_rgba(59,130,246,0.3)]">
@@ -704,7 +704,7 @@ export default function ScenarioEngine({
                         {showingTravel.status === 'confirm' ? '移動ルート' : '移動中...'}
                     </h2>
 
-                    <div className="text-center mb-6 bg-slate-900/80 backdrop-blur-sm p-4 rounded-xl border border-slate-700/50 max-w-sm w-full">
+                    <div className="text-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-700/50 max-w-sm w-full">
                         <p className="text-slate-400 text-base flex items-center justify-center gap-2">
                             <span>行き先:</span>
                             <span className="text-amber-400 font-bold text-lg">{showingTravel.dest}</span>

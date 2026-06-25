@@ -23,7 +23,7 @@ export default function HegemonyModal({ worldState, onClose }: Props) {
     const totalLocations = hegemony.reduce((sum: number, n: any) => sum + (n.locations || 0), 0);
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-start justify-center p-4 pt-20 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[150] flex items-start justify-center p-4 pt-20 bg-black/90 animate-in fade-in duration-200">
             <div className="bg-[#1a120b] border-2 border-[#a38b6b] w-full max-w-sm shadow-2xl relative p-5 pb-6 text-slate-200 slide-in-from-top-4">
                 <button
                     onClick={onClose}

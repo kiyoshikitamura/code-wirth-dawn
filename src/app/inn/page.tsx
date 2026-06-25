@@ -473,10 +473,6 @@ function InnPageInner() {
                         } else if (onboardingTourStep === '6') {
                             bannerText = '「出発する」を押して、ワールドマップから冒険に旅立ちましょう！';
                         }
-                    } else {
-                        if (!isEp1Cleared) {
-                            bannerText = 'ギルドで第1話「始まりの轍」を受注しよう！';
-                        }
                     }
 
                     if (!userProfile.current_quest_id && bannerText && (showGuideBanner || isTourActive)) {
@@ -514,20 +510,7 @@ function InnPageInner() {
                             else if (onboardingTourStep === '3') recommendedFacility = 'shop';
                             else if (onboardingTourStep === '4') recommendedFacility = 'magicAcademy';
                         } else {
-                            const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
-                            if (userProfile && (userProfile.level || 1) >= 3) {
-                                recommendedFacility = null;
-                            } else if (!isEp1Cleared) {
-                                recommendedFacility = 'guild';
-                            } else if (!visitedGuild) {
-                                recommendedFacility = 'guild';
-                            } else if (!visitedAcademy) {
-                                recommendedFacility = 'magicAcademy';
-                            } else if (!visitedShop || !visitedBilling) {
-                                recommendedFacility = 'shop';
-                            } else {
-                                recommendedFacility = null;
-                            }
+                            recommendedFacility = null;
                         }
 
                         return (
