@@ -434,5 +434,15 @@
      - クエスト画面: `QuestHeader.tsx`, `ScenarioEngine.tsx`
      - 共通/UIモーダル: `PurchaseConfirmModal.tsx`, `HegemonyModal.tsx`, `LocationDetailSheet.tsx`
 
+---
 
+## 22. アカウント認証プロモ表示判定時の誤タップ防止およびツアー開始遅延制御仕様 (Version 4.9 追記)
 
+1. **プロモーション表示判定中のタップガード追加**:
+   - 第1話（`6001`）クリア後に宿屋に戻ってきた際、キャッシュデータの先行ロードにより画面（施設ボタン等）が即座に描画されるが、プロモーションモーダル（`GuestRegisterPromoModal` / `StarterPackPromoModal`）が実際にマウントされるまでの僅かなラグの間に、ユーザーが背後の施設ボタンなどをタップできてしまう競合バグを解消する。
+   - `sessionStorage` 内にクリアフラグ（`wirth_dawn_quest_just_cleared`）がある場合に、初期状態として `isPromoPending = true` と定義し、画面最前面に透明なガードカバー（`fixed inset-0 z-[300] bg-transparent pointer-events-auto cursor-wait`）を描画して、プロモマウント（または非表示確定）まで一切の操作を受け付けないように制御する。
+2. **ツアー開始タイミングの遅延制御**:
+   - 従来、第1話クリア直後に `useInnPageState` が自動でツアー段階（`onboardingTourStep`）を `'1'` に設定してしまっていたため、プロモモーダルの背後でツアーが並行して開始してしまう不都合があった。
+   - これを解消するため、プロモの判定中（`isPromoPending`）または表示中である間はツアーの開始を完全に保留（`null` のまま）とし、プロモモーダルが閉じられた（`onClose`）タイミングで、ツアーが未開始であれば初めてステップ `'1'` に設定してツアーを起動するように変更する。
+3. **プロモモーダル状態のフック移行**:
+   - ページコンポーネント（`page.tsx`）からプロモモーダルの状態管理（`showGuestRegisterPromo`, `showStarterPackPromo`, 表示判定ロジック等）を `useInnPageState.ts` に移行し、ツアー開始タイミングとの連動を綺麗にカプセル化する。

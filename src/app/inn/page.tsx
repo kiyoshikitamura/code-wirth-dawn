@@ -93,6 +93,23 @@ function InnPageInner() {
         leaveHub,
         onboardingTourStep,
         advanceOnboardingStep,
+
+        // 新規追加
+        showGuestRegisterPromo,
+        showStarterPackPromo,
+        isPromoPending,
+        handleCloseGuestRegisterPromo,
+        handleCloseStarterPackPromo,
+
+        visitedTavern, setVisitedTavern,
+        visitedShop, setVisitedShop,
+        visitedGossip, setVisitedGossip,
+        visitedMap, setVisitedMap,
+        visitedGuild, setVisitedGuild,
+        visitedAcademy, setVisitedAcademy,
+        visitedStatus, setVisitedStatus,
+        visitedSettings, setVisitedSettings,
+        visitedBilling, setVisitedBilling,
     } = state;
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
@@ -133,200 +150,7 @@ function InnPageInner() {
     const completedQuests = useGameStore(state => state.completedQuests);
     const partyMembers = useGameStore(state => state.partyMembers);
 
-    const [visitedTavern, setVisitedTavern] = useState(false);
-    const [visitedShop, setVisitedShop] = useState(false);
-    const [visitedGossip, setVisitedGossip] = useState(false);
-    const [visitedMap, setVisitedMap] = useState(false);
 
-    // 新規: 7段階のナビゲーション監視フラグ
-    const [visitedGuild, setVisitedGuild] = useState(false);
-    const [visitedAcademy, setVisitedAcademy] = useState(false);
-    const [visitedStatus, setVisitedStatus] = useState(false);
-    const [visitedSettings, setVisitedSettings] = useState(false);
-    const [visitedBilling, setVisitedBilling] = useState(false);
-
-    // 新規: プロモーションモーダルの表示ステート
-    const [showGuestRegisterPromo, setShowGuestRegisterPromo] = useState(false);
-    const [showStarterPackPromo, setShowStarterPackPromo] = useState(false);
-
-    React.useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
-            setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
-            setVisitedGossip(localStorage.getItem('wirth_dawn_visited_gossip') === 'true');
-            setVisitedMap(localStorage.getItem('wirth_dawn_visited_map') === 'true');
-            setVisitedGuild(localStorage.getItem('wirth_dawn_visited_guild') === 'true');
-            setVisitedAcademy(localStorage.getItem('wirth_dawn_visited_academy') === 'true');
-            setVisitedStatus(localStorage.getItem('wirth_dawn_visited_status') === 'true');
-            setVisitedSettings(localStorage.getItem('wirth_dawn_visited_settings') === 'true');
-            setVisitedBilling(localStorage.getItem('wirth_dawn_visited_billing') === 'true');
-        }
-    }, [showTavern, showShop, showAcademy, showStatus, showAccount, showBilling, activeModal]);
-
-    // モーダル起動時に localStorage に訪問履歴を記録
-    React.useEffect(() => {
-        if (activeModal === 'questBoard' || activeModal === 'guild') {
-            localStorage.setItem('wirth_dawn_visited_guild', 'true');
-            setVisitedGuild(true);
-        }
-    }, [activeModal]);
-
-    React.useEffect(() => {
-        if (showAcademy) {
-            localStorage.setItem('wirth_dawn_visited_academy', 'true');
-            setVisitedAcademy(true);
-        }
-    }, [showAcademy]);
-
-    React.useEffect(() => {
-        if (showStatus) {
-            localStorage.setItem('wirth_dawn_visited_status', 'true');
-            setVisitedStatus(true);
-        }
-    }, [showStatus]);
-
-    React.useEffect(() => {
-        if (showAccount) {
-            localStorage.setItem('wirth_dawn_visited_settings', 'true');
-            setVisitedSettings(true);
-        }
-    }, [showAccount]);
-
-    React.useEffect(() => {
-        if (showBilling) {
-            localStorage.setItem('wirth_dawn_visited_billing', 'true');
-            setVisitedBilling(true);
-        }
-    }, [showBilling]);
-
-    // プロモーション自動表示 ＆ オンボーディングガイド用フラグリセット一元管理 useEffect (レースコンディション競合防止)
-    React.useEffect(() => {
-        if (!completedQuests || !userProfile) return;
-
-        const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
-
-        // 自己修復: 第1話が未クリア（新規ゲーム開始時やデバッグリセット直後）なら
-        // localStorage と React ステートの訪問フラグを一括クリアして初期状態に戻す
-        if (!isEp1Cleared) {
-            localStorage.removeItem('wirth_dawn_onboarding_reset_v3');
-            localStorage.removeItem('wirth_dawn_onboarding_reg_reset_v3');
-            localStorage.removeItem('wirth_dawn_onboarding_tour_step');
-            localStorage.removeItem('wirth_dawn_visited_tavern');
-            localStorage.removeItem('wirth_dawn_visited_guild');
-            localStorage.removeItem('wirth_dawn_visited_map');
-            localStorage.removeItem('wirth_dawn_visited_academy');
-            localStorage.removeItem('wirth_dawn_visited_shop');
-            localStorage.removeItem('wirth_dawn_visited_billing');
-            localStorage.removeItem('wirth_dawn_visited_status');
-            localStorage.removeItem('wirth_dawn_visited_settings');
-
-            setVisitedTavern(false);
-            setVisitedGuild(false);
-            setVisitedMap(false);
-            setVisitedAcademy(false);
-            setVisitedShop(false);
-            setVisitedBilling(false);
-            setVisitedStatus(false);
-            setVisitedSettings(false);
-            return;
-        }
-
-        // URLのcodeクエリパラメータが存在しない（＝クリーンアップ完了後）ことを確認して実行
-        const hasCode = searchParams.has('code');
-        if (hasCode) return;
-
-        // 1. 本登録完了直後の遷移検知 & フラグリセット用パラメータ取得
-        const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
-        const regResetKey = 'wirth_dawn_onboarding_reg_reset_v3';
-        const hasRegReset = localStorage.getItem(regResetKey) === 'true';
-
-        // 2. 第1話初回クリア時のリセット用パラメータ取得
-        const resetKey = 'wirth_dawn_onboarding_reset_v3';
-        const hasReset = localStorage.getItem(resetKey) === 'true';
-
-        let shouldReset = false;
-        if (!hasReset) {
-            localStorage.setItem(resetKey, 'true');
-            shouldReset = true;
-        }
-
-        if (justRegistered === 'true' && !userProfile.is_anonymous) {
-            if (!hasRegReset) {
-                localStorage.setItem(regResetKey, 'true');
-                shouldReset = true;
-            }
-            // 特別パッケージ案内の表示制御
-            sessionStorage.removeItem('wirth_dawn_just_registered');
-            if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                setShowStarterPackPromo(true);
-            }
-        }
-
-        if (shouldReset) {
-            // localStorage のガイド関連フラグをクリア
-            localStorage.removeItem('wirth_dawn_visited_tavern');
-            localStorage.removeItem('wirth_dawn_visited_guild');
-            localStorage.removeItem('wirth_dawn_visited_map');
-            localStorage.removeItem('wirth_dawn_visited_academy');
-            localStorage.removeItem('wirth_dawn_visited_shop');
-            localStorage.removeItem('wirth_dawn_visited_billing');
-            localStorage.removeItem('wirth_dawn_visited_status');
-            localStorage.removeItem('wirth_dawn_visited_settings');
-
-            // Reactステートもリセット
-            setVisitedTavern(false);
-            setVisitedGuild(false);
-            setVisitedMap(false);
-            setVisitedAcademy(false);
-            setVisitedShop(false);
-            setVisitedBilling(false);
-            setVisitedStatus(false);
-            setVisitedSettings(false);
-        }
-
-        // 3. クエストクリア直後の帰還検知 (ゲスト / 本登録)
-        const questJustCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared');
-        if (questJustCleared === 'true') {
-            sessionStorage.removeItem('wirth_dawn_quest_just_cleared');
-            if (userProfile.is_anonymous) {
-                setShowGuestRegisterPromo(true);
-            } else {
-                if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                    setShowStarterPackPromo(true);
-                }
-            }
-        }
-
-        // 4. 本登録ユーザーの次回ログイン時のパック案内
-        if (!userProfile.is_anonymous && isEp1Cleared) {
-            const promoShown = sessionStorage.getItem('wirth_dawn_starter_promo_shown');
-            if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
-                setShowStarterPackPromo(true);
-            }
-        }
-    }, [completedQuests, userProfile, searchParams]);
-
-    React.useEffect(() => {
-        if (showTavern) {
-            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
-            setVisitedTavern(true);
-        }
-    }, [showTavern]);
-
-    React.useEffect(() => {
-        if (showShop) {
-            localStorage.setItem('wirth_dawn_visited_shop', 'true');
-            setVisitedShop(true);
-        }
-    }, [showShop]);
-
-    React.useEffect(() => {
-        if (activeModal === 'gossip') {
-            localStorage.setItem('wirth_dawn_visited_gossip', 'true');
-            setVisitedGossip(true);
-        }
-    }, [activeModal]);
 
     if (loading || !userProfile || !worldState) {
         return (
@@ -341,6 +165,11 @@ function InnPageInner() {
 
     return (
         <div className="h-screen w-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
+
+            {/* プロモ判定中の操作ガード (v4.9) */}
+            {isPromoPending && (
+                <div className="fixed inset-0 z-[300] bg-transparent pointer-events-auto cursor-wait" />
+            )}
 
             {/* Toast通知（画面中央） */}
             {toast && (
@@ -642,13 +471,13 @@ function InnPageInner() {
 
             {/* Guest Register Promotion Modal */}
             {showGuestRegisterPromo && (
-                <GuestRegisterPromoModal onClose={() => setShowGuestRegisterPromo(false)} />
+                <GuestRegisterPromoModal onClose={handleCloseGuestRegisterPromo} />
             )}
 
             {/* Starter Pack / Elite Pack Promotion Modal */}
             {showStarterPackPromo && (
                 <StarterPackPromoModal 
-                    onClose={() => setShowStarterPackPromo(false)} 
+                    onClose={handleCloseStarterPackPromo} 
                     onOpenBilling={() => setShowBilling(true)}
                 />
             )}
