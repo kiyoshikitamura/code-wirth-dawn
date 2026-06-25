@@ -32,14 +32,19 @@ export function useInnPageState() {
     // 新規: プロモーションモーダルの表示・判定ステート
     const [showGuestRegisterPromo, setShowGuestRegisterPromo] = useState(false);
     const [showStarterPackPromo, setShowStarterPackPromo] = useState(false);
-    const [isPromoPending, setIsPromoPending] = useState(() => {
+    const [isPromoPending, setIsPromoPending] = useState(false);
+
+    // ハイドレーションミスマッチ防止のため、マウント完了後にセッションから同期
+    useEffect(() => {
         if (typeof window !== 'undefined') {
             try {
-                return sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+                const justCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+                if (justCleared) {
+                    setIsPromoPending(true);
+                }
             } catch (e) {}
         }
-        return false;
-    });
+    }, []);
 
     // 新規: 訪問フラグのステート移行
     const [visitedTavern, setVisitedTavern] = useState(false);
@@ -82,8 +87,9 @@ export function useInnPageState() {
 
         // For new users who cleared Ep 1 and have no tour step set, initialize to '1'
         if (!tourStep) {
-            // プロモ表示判定中、またはプロモ表示中の場合はツアー開始を保留する
-            if (isPromoPending || showGuestRegisterPromo || showStarterPackPromo) {
+            // プロモ表示判定中、またはプロモ表示中、または帰還フラグがセッションに残っている場合はツアー開始を保留する
+            const hasJustCleared = typeof window !== 'undefined' && sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+            if (isPromoPending || showGuestRegisterPromo || showStarterPackPromo || hasJustCleared) {
                 return;
             }
             setOnboardingTourStep('1');

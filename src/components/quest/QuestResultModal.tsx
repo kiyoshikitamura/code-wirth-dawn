@@ -94,22 +94,28 @@ export default function QuestResultModal({
         if (closeLockedRef.current || isClosing) return;
         closeLockedRef.current = true;
         setIsClosing(true);
-        setTimeout(async () => {
+        try {
+            sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
+        } catch (err) {
+            console.warn('[QuestResultModal] sessionStorage setItem failed:', err);
+        }
+    };
+
+    useEffect(() => {
+        if (!isClosing) return;
+
+        const timer = setTimeout(async () => {
             try {
-                // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
-                try {
-                    sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
-                } catch (err) {
-                    console.warn('[QuestResultModal] sessionStorage setItem failed:', err);
-                }
                 await onClose();
             } catch (e) {
                 console.error('[QuestResultModal] onClose failed:', e);
                 closeLockedRef.current = false;
                 setIsClosing(false);
             }
-        }, 250);
-    };
+        }, 150);
+
+        return () => clearTimeout(timer);
+    }, [isClosing, onClose]);
 
     const safeChanges = changes || {} as QuestChanges;
     const { level_up, gold_gained = 0, aged_up } = safeChanges;
