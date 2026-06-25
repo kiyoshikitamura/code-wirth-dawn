@@ -52,7 +52,10 @@ export default function ScenarioEngine({
 
     // initialNodeId の変更に反応 (Quest Resume にとって重要)
     useEffect(() => {
-        if (initialNodeId) setCurrentNodeId(initialNodeId);
+        if (initialNodeId) {
+            setCurrentNodeId(initialNodeId);
+            setIsTransitioning(false); // 外部からのノード復帰時に遷移ロックを確実にリセット
+        }
     }, [initialNodeId]);
 
     // 自動同期 useEffect (Zustand に currentNodeId を同期してリロード時に復元可能にする)
@@ -612,6 +615,9 @@ export default function ScenarioEngine({
                                             : (currentNode.enemy_group_id || 'slime');
                                         onBattleStart(enemyId, successId, currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key, currentNode.bgm_key || currentNode.bgm || currentNode.params?.bgm);
                                     }
+                                    setTimeout(() => {
+                                        setIsTransitioning(false);
+                                    }, 300);
                                 }}
                                 disabled={isTransitioning}
                                 className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
