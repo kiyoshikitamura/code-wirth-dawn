@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Sparkles, Key, Coins, Check, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Sparkles, Key, Coins, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 
@@ -10,6 +10,7 @@ interface Props {
 
 export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props) {
     const { userProfile } = useGameStore();
+    const [isCancelling, setIsCancelling] = useState(false);
 
     const hasStarter = !!userProfile?.has_purchased_starter;
     const hasElite = !!userProfile?.has_purchased_elite;
@@ -26,8 +27,11 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
     };
 
     const handleCancel = () => {
+        setIsCancelling(true);
         soundManager?.playSE('se_click');
-        onClose();
+        setTimeout(() => {
+            onClose();
+        }, 80);
     };
 
     return (
@@ -46,7 +50,8 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
                     {/* 右上の閉じるボタン */}
                     <button 
                         onClick={handleCancel}
-                        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 border border-slate-800 text-slate-400 hover:text-white active:scale-95 transition-all z-20"
+                        disabled={isCancelling}
+                        className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 border border-slate-800 text-slate-400 hover:text-white active:scale-95 transition-all z-20 disabled:opacity-50"
                     >
                         <X size={16} />
                     </button>
@@ -149,15 +154,24 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
                 <div className="p-6 border-t border-slate-900 bg-slate-950 flex flex-col sm:flex-row gap-3 shrink-0">
                     <button
                         onClick={handleConfirm}
-                        className="flex-1 py-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 border border-amber-400/20 rounded-xl font-black text-xs tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_15px_rgba(245,158,11,0.15)] active:scale-98"
+                        disabled={isCancelling}
+                        className="flex-1 py-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 border border-amber-400/20 rounded-xl font-black text-xs tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_15px_rgba(245,158,11,0.15)] active:scale-98 disabled:opacity-50"
                     >
                         内容を確認する (ショップへ進む)
                     </button>
                     <button
                         onClick={handleCancel}
-                        className="py-3.5 px-6 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-slate-350 border border-slate-800 rounded-xl font-bold text-xs tracking-wider transition-all active:scale-98"
+                        disabled={isCancelling}
+                        className="py-3.5 px-6 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-slate-350 border border-slate-800 rounded-xl font-bold text-xs tracking-wider transition-all active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                        すぐに冒険を開始する
+                        {isCancelling ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                                準備中...
+                            </>
+                        ) : (
+                            'すぐに冒険を開始する'
+                        )}
                     </button>
                 </div>
 

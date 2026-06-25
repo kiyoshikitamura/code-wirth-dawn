@@ -96,6 +96,17 @@ function InnPageInner() {
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
 
+    // ツアー中に拠点の各施設データをバックグラウンドで先読み（プリフェッチ）
+    React.useEffect(() => {
+        if (isTourActive) {
+            console.log('[Onboarding Tour] Proactively prefetching town data, shop, and inventory...');
+            const store = useGameStore.getState();
+            store.prefetchTownData(undefined, true);
+            store.fetchShop();
+            store.fetchInventory();
+        }
+    }, [isTourActive]);
+
     const handleSelectFacilityOverride = (facility: FacilityType) => {
         if (isTourActive) {
             let isRecommended = false;
@@ -514,7 +525,6 @@ function InnPageInner() {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
                         }
                         advanceOnboardingStep(); // will set to completed
-                        router.push('/world-map');
                     } : (onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => {
                         if (typeof window !== 'undefined') {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
