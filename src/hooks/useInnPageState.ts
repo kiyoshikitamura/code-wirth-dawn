@@ -106,6 +106,7 @@ export function useInnPageState() {
 
     const handleCloseGuestRegisterPromo = useCallback(() => {
         setShowGuestRegisterPromo(false);
+        setIsPromoPending(false);
         const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
         if (isEp1Cleared && !tourStep) {
@@ -118,6 +119,7 @@ export function useInnPageState() {
 
     const handleCloseStarterPackPromo = useCallback(() => {
         setShowStarterPackPromo(false);
+        setIsPromoPending(false);
         const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
         if (isEp1Cleared && !tourStep) {
@@ -1079,17 +1081,19 @@ export function useInnPageState() {
             sessionStorage.removeItem('wirth_dawn_quest_just_cleared');
             if (userProfile.is_anonymous) {
                 setShowGuestRegisterPromo(true);
-                setIsPromoPending(false);
+                setIsPromoPending(true);
             } else {
                 if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
                     setShowStarterPackPromo(true);
-                    setIsPromoPending(false);
+                    setIsPromoPending(true);
                 } else {
                     setIsPromoPending(false);
                 }
             }
         } else {
-            setIsPromoPending(false);
+            if (!showGuestRegisterPromo && !showStarterPackPromo) {
+                setIsPromoPending(false);
+            }
         }
 
         // 4. 本登録ユーザーの次回ログイン時のパック案内
@@ -1098,6 +1102,7 @@ export function useInnPageState() {
             if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
                 sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
                 setShowStarterPackPromo(true);
+                setIsPromoPending(true);
             }
         }
     }, [completedQuests, userProfile, searchParams]);

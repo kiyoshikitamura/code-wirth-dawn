@@ -1196,8 +1196,8 @@ export default function QuestPage() {
                                 if (typeof window !== 'undefined' && userProfile?.current_location_id) {
                                     sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                                 }
-                                fetchUserProfile();
-                                useGameStore.getState().fetchInventory();
+                                await fetchUserProfile();
+                                await useGameStore.getState().fetchInventory();
                             }
                             router.push(isTestPlay ? '/workshop' : '/inn');
                         }}

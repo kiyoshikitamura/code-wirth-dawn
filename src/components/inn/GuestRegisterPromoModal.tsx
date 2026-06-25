@@ -62,7 +62,7 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             <div className="relative z-10 w-full max-w-lg bg-[#0b0d19]/95 border border-amber-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
                 
