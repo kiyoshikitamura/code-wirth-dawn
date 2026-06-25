@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, LogIn, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { soundManager } from '@/lib/soundManager';
@@ -11,6 +12,11 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
     const [loading, setLoading] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleLinkGoogle = async () => {
         setLoading(true);
@@ -47,7 +53,9 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
         }, 250);
     };
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
             <div className="relative z-10 w-full max-w-lg bg-[#0b0d19]/95 border border-amber-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
@@ -114,7 +122,7 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
                     <button
                         onClick={handleCancel}
                         disabled={loading || isCancelling}
-                        className="py-3.5 px-6 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-slate-350 border border-slate-800 rounded-xl font-bold text-xs tracking-wider transition-all active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="py-3.5 px-6 bg-slate-900 hover:bg-slate-855 text-slate-400 hover:text-slate-350 border border-slate-800 rounded-xl font-bold text-xs tracking-wider transition-all active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {isCancelling ? (
                             <>
@@ -128,6 +136,7 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
                 </div>
 
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

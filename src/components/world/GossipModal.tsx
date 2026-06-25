@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, RefreshCw, Newspaper, Sparkles, KeyRound, Beer, Users, ChevronDown } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
@@ -221,6 +222,11 @@ interface Props {
 }
 
 export default function GossipModal({ onClose, onOpenTavern }: Props) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile } = useGameStore();
     const [activeTab, setActiveTab] = useState<TabKey>('news');
     const [simpleProfileUser, setSimpleProfileUser] = useState<any | null>(null);
@@ -293,7 +299,9 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
     let newsDelay = 0;
 
     // ─── レンダリング ───────────────────────────────────────
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200"
             onClick={e => e.target === e.currentTarget && onClose()}
@@ -555,7 +563,8 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
                     introduction={simpleProfileUser.introduction}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 }
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '@/store/gameStore';
 import { X, Sparkles, Zap, Scale, Skull, AlertTriangle } from 'lucide-react';
 
@@ -9,6 +10,11 @@ interface PrayerModalProps {
 }
 
 export default function PrayerModal({ onClose, locationId, locationName }: PrayerModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile, fetchUserProfile, fetchWorldState, worldState } = useGameStore();
     const [selectedAttribute, setSelectedAttribute] = useState<'Order' | 'Chaos' | 'Justice' | 'Evil' | null>(null);
     const [selectedTier, setSelectedTier] = useState<1 | 2 | 3 | null>(null);
@@ -103,8 +109,10 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
         }
     };
 
+    if (!mounted) return null;
+
     if (result) {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-500">
                 <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] p-8 max-w-md w-full text-center relative shadow-[0_0_20px_rgba(0,0,0,0.8)] rounded-sm">
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 -mt-16">
@@ -139,12 +147,13 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                         閉じる
                     </button>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
     if (warningMessage) {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
                 <div className="bg-[#fdfbf7] border-2 border-red-800 p-6 max-w-sm w-full text-center relative shadow-2xl rounded-sm">
                     <h2 className="text-lg font-bold text-red-800 mb-3">所持金が足りません</h2>
@@ -159,11 +168,12 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                         戻る
                     </button>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
             <div className={`bg-[#e3d5b8] text-[#2c241b] border-4 border-[#8b5a2b] max-w-2xl w-full shadow-[0_0_20px_rgba(0,0,0,0.8)] rounded-sm relative flex flex-col max-h-[90vh] overflow-hidden ${isPraying ? 'animate-pulse' : ''}`}>
 
@@ -325,6 +335,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

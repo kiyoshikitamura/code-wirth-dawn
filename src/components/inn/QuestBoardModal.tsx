@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Scroll, AlertTriangle, ChevronRight, Info } from 'lucide-react';
 import { Scenario, UserProfile } from '@/types/game';
 
@@ -14,6 +15,11 @@ interface QuestBoardModalProps {
 type DifficultyTab = 'easy' | 'normal' | 'hard';
 
 export default function QuestBoardModal({ isOpen, onClose, quests, loading, userProfile, onSelect }: QuestBoardModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [activeTab, setActiveTab] = useState<DifficultyTab>('easy');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
@@ -23,6 +29,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     const [isClosing, setIsClosing] = useState(false);
 
     if (!isOpen) return null;
+    if (!mounted) return null;
 
     const handleClose = () => {
         if (isClosing) return;
@@ -66,7 +73,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         { key: 'hard', label: 'Hard', color: 'text-red-400' },
     ];
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
             <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
@@ -361,6 +368,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                     </div>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 }

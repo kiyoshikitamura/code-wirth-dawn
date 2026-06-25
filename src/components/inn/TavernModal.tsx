@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { UserProfile, PartyMember } from '@/types/game';
 import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown, Loader2 } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
@@ -35,6 +36,11 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         gold,
         userProfile: storeUserProfile
     } = useGameStore();
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const closeLockedRef = useRef(false);
 
@@ -437,8 +443,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     const isEmbargoed = reputationScore <= -300;
     if (!isOpen) return null;
+    if (!mounted) return null;
 
-    return (
+    return createPortal(
         <>
         <div className="fixed inset-0 z-[60] flex justify-center items-center p-4 animate-in fade-in">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
@@ -1043,6 +1050,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 </div>
             </div>
         )}
-        </>
+        </>,
+        document.body
     );
 }

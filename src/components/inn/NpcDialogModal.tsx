@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { User, X, Ban, Loader2 } from 'lucide-react';
 
 export interface NpcDialogData {
@@ -65,11 +66,17 @@ function useTypewriter(text: string, speed: number = 30) {
 }
 
 export default function NpcDialogModal({ npcData, onClose, onAction, buttonText, isDisabled, secondaryActions }: NpcDialogModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [clickedAction, setClickedAction] = useState<'main' | 'close' | number | null>(null);
     const clickLockedRef = useRef(false);
     
     if (!npcData) return null;
+    if (!mounted) return null;
 
     const isBanned = npcData.isBanned;
     const isTheodore = npcData.name === 'テオドール';
@@ -120,7 +127,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
         }, 0);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-start pt-20 justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md pointer-events-none" />
             <div className={`relative z-10 w-full max-w-md border rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-top duration-300 ${
@@ -224,6 +231,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

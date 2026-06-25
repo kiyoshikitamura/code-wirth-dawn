@@ -1,5 +1,6 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag, Loader2 } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
@@ -83,6 +84,11 @@ export default function QuestResultModal({
 }: QuestResultModalProps) {
     const [isClosing, setIsClosing] = useState(false);
     const closeLockedRef = useRef(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     
     const handleClose = () => {
         if (closeLockedRef.current || isClosing) return;
@@ -105,8 +111,10 @@ export default function QuestResultModal({
     const { level_up, gold_gained = 0, aged_up } = safeChanges;
     const isSuccess = result === 'success';
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+    if (!mounted) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
             {isClosing && (
                 <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
@@ -116,11 +124,11 @@ export default function QuestResultModal({
                     </p>
                 </div>
             )}
-            <div className="bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl relative my-8">
-                <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent pointer-events-none rounded-lg" />
+            <div className="relative z-10 bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden my-8">
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent pointer-events-none rounded-lg z-0" />
 
                 {/* ── §1 ヘッダー ── */}
-                <header className="p-5 text-center border-b border-gray-800 relative z-10">
+                <header className="p-5 text-center border-b border-gray-800 relative z-10 shrink-0">
                     <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-widest mb-2 ${
                         isSuccess
                             ? 'bg-amber-900/40 border border-amber-600/50 text-amber-400'
@@ -140,7 +148,7 @@ export default function QuestResultModal({
                     <div className="w-16 h-0.5 bg-amber-600/50 mx-auto mt-2 rounded-full" />
                 </header>
 
-                <div className="p-5 space-y-4 relative z-10">
+                <div className="p-5 space-y-4 relative z-10 flex-1 overflow-y-auto custom-scrollbar">
 
                     {/* ── §2 報酬セクション ── */}
                     {isSuccess && (gold_gained > 0 || earnedExp || repChange || (lootSaved && lootSaved.length > 0)) && (
@@ -461,7 +469,7 @@ export default function QuestResultModal({
                     {/* ── シェアセクション 一時廃止 ── */}
                 </div>
 
-                <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10">
+                <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10 shrink-0">
                     <button
                         onClick={handleClose}
                         disabled={isClosing}
@@ -482,6 +490,7 @@ export default function QuestResultModal({
                     </button>
                 </footer>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

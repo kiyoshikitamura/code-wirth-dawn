@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -861,6 +862,11 @@ function DebugPanel({ userProfile, worldState, router, fetchRep }: { userProfile
 // Vitality枯渇死亡モーダル (spec_v15.1 §3.3)
 function VitalityDeathModal({ userProfile, onClose }: { userProfile: any; onClose: () => void }) {
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [retiring, setRetiring] = useState(false);
     const [shareText, setShareText] = useState<string | null>(null);
     const [shareDataList, setShareDataList] = useState<any[]>([]);
@@ -898,7 +904,9 @@ function VitalityDeathModal({ userProfile, onClose }: { userProfile: any; onClos
 
     const handleNewGame = () => { router.push('/title'); };
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-1000">
             <div className="relative w-full max-w-sm mx-4 text-center">
                 <div className="mb-8 space-y-2">
@@ -932,6 +940,7 @@ function VitalityDeathModal({ userProfile, onClose }: { userProfile: any; onClos
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

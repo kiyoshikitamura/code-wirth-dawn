@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Search, Shield, Swords, Star, User, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { UGC_MIN_PLAY_LEVEL } from '@/lib/ugc/ugcConfig';
@@ -37,6 +38,11 @@ const getAuthHeaders = async () => {
 };
 
 export default function UgcQuestBoardPanel({ isOpen, onClose, userLevel, onAccept }: UgcQuestBoardPanelProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [quests, setQuests] = useState<UgcQuest[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
@@ -94,8 +100,9 @@ export default function UgcQuestBoardPanel({ isOpen, onClose, userLevel, onAccep
   };
 
   if (!isOpen) return null;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
         {(loading || isAccepting) && (
@@ -281,6 +288,7 @@ export default function UgcQuestBoardPanel({ isOpen, onClose, userLevel, onAccep
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

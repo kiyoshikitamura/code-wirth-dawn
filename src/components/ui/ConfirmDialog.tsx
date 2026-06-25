@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Info } from 'lucide-react';
 
 interface ConfirmDialogProps {
@@ -40,6 +41,11 @@ export default function ConfirmDialog({
     loading = false,
     singleButton = false,
 }: ConfirmDialogProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const variantStyles = {
         danger: {
             border: 'border-red-700/60',
@@ -60,7 +66,9 @@ export default function ConfirmDialog({
 
     const styles = variantStyles[variant];
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
             onClick={(e) => { if (e.target === e.currentTarget && onCancel) onCancel(); }}
@@ -97,6 +105,7 @@ export default function ConfirmDialog({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

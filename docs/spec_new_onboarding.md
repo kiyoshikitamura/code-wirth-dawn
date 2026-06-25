@@ -378,3 +378,35 @@
 3. **テストプレイ開始時のキャッシュ残存によるチュートリアル未開始バグ修正**:
    - タイトル画面でのサインアウト時に `authToken.ts` 内のメモリ上のトークンキャッシュが残存し、再ログイン（テストプレイ開始）時に前ユーザーのプロフィール情報をフェッチしてしまう問題を解消するため、`TitlePageInner.tsx` のすべての `supabase.auth.signOut()` 実行直後に `clearAuthTokenCache()` を呼び出すように変更し、古いトークンキャッシュを強制破棄するように修正した。
 
+---
+
+## 19. 全モーダルコンポーネントの React Portal 化および iOS Safari タッチオフセットバグの徹底的解消仕様 (Version 4.4 追記)
+
+1. **すべてのモーダル・オーバーレイの React Portal (`createPortal`) 化**:
+   - iOS Safari (WebKit) の長年のバグである「スクロールするコンテナ（`overflow-y-auto`）内、またはスクロールする親と同階層に `fixed` 要素が存在する場合、スクロール量に応じてタップ座標（ヒットテスト）が上下左右にズレる問題」を根絶するため、すべてのモーダルを React Portal を利用して `document.body` 直下にレンダリングする設計に移行した。
+   - Next.js の Hydration Mismatch (SSR/CSR の差異による表示エラー) を避けるため、各モーダルには `mounted` ライフサイクル管理を追加し、マウントが完了（`useEffect` 実行後）してから Portal レンダリングを行う。
+   - **対象ファイル**:
+     - `GuestRegisterPromoModal.tsx`
+     - `StarterPackPromoModal.tsx`
+     - `QuestResultModal.tsx`
+     - `TavernModal.tsx`
+     - `QuestBoardModal.tsx`
+     - `NpcDialogModal.tsx`
+     - `PrayerModal.tsx`
+     - `AccountSettingsModal.tsx`
+     - `StatusModal.tsx`
+     - `BillingModal.tsx`
+     - `ColosseumModal.tsx`
+     - `ColosseumRankingModal.tsx`
+     - `ActiveQuestModal.tsx`
+     - `UgcQuestBoardPanel.tsx`
+     - `HistoryArchiveModal.tsx`
+     - `GossipModal.tsx`
+     - `ConfirmDialog.tsx`
+     - `page.tsx` (`VitalityDeathModal` インライン定義)
+
+2. **`QuestResultModal` のスクロールレイアウト改修**:
+   - `QuestResultModal` 全体をスクロールさせる（`overflow-y-auto`）構造が iOS WebKit のバグや座標ズレを助長していたため、最外枠のスクロールを廃止。
+   - モーダルカードの最大高さを `max-h-[90dvh]` (ダイナミックビューポートハイト) に制限し、`flex flex-col overflow-hidden` を適用。
+   - ヘッダーおよびフッターの「冒険を続ける」ボタン部を `shrink-0` で固定（Sticky）し、報酬アイテムやログを表示するコンテンツ部分のみを `flex-1 overflow-y-auto` とした独立スクロール構造へとリファクタリング。これによりスクロール時のタッチバグを完璧に回避しつつ、小画面デバイスでの操作性を劇的に向上させた。
+

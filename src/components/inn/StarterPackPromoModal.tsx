@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Key, Coins, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
@@ -11,6 +12,11 @@ interface Props {
 export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props) {
     const { userProfile } = useGameStore();
     const [isCancelling, setIsCancelling] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const hasStarter = !!userProfile?.has_purchased_starter;
     const hasElite = !!userProfile?.has_purchased_elite;
@@ -34,7 +40,9 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
         }, 250);
     };
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
             <div className="relative z-10 w-full max-w-2xl bg-[#0b0d19]/95 border border-amber-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
@@ -93,7 +101,7 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
                                         <span className="font-bold text-amber-400">15,000 G</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-[#070914]/60 p-1.5 rounded border border-slate-900">
-                                        <span>🔑 知識と契約の鍵 (basic)</span>
+                                        <span>🔑 知識と契約 of 鍵 (basic)</span>
                                         <span className="font-bold text-slate-200">x 3</span>
                                     </div>
                                     <div className="text-[10px] text-slate-500 text-right mt-1 font-semibold">
@@ -124,17 +132,17 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
                                 </div>
                                 <h3 className="text-sm font-black text-slate-200">深淵の知恵エリートスペシャルパック</h3>
                                 
-                                <div className="mt-3 space-y-1.5 text-xs text-slate-350">
+                                <div className="mt-3 space-y-1.5 text-xs text-slate-355">
                                     <div className="flex justify-between items-center bg-[#070914]/60 p-1.5 rounded border border-slate-900">
                                         <span>🪙 無償ゴールド</span>
                                         <span className="font-bold text-amber-400">30,000 G</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-[#070914]/60 p-1.5 rounded border border-slate-900">
-                                        <span>🔑 知識と契約の鍵 (basic)</span>
+                                        <span>🔑 知識と契約 of 鍵 (basic)</span>
                                         <span className="font-bold text-slate-200">x 8</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-[#070914]/60 p-1.5 rounded border border-slate-900">
-                                        <span>🔑 魔道と鉄壁の鍵 (academy)</span>
+                                        <span>🔑 魔道と鉄壁 of 鍵 (academy)</span>
                                         <span className="font-bold text-slate-200">x 5</span>
                                     </div>
                                     <div className="text-[10px] text-slate-500 text-right mt-1 font-semibold">
@@ -177,6 +185,7 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
                 </div>
 
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

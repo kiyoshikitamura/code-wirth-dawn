@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -39,6 +40,11 @@ const AVATAR_BORDER_COLORS: Record<SubscriptionTier, string> = {
 };
 
 export default function AccountSettingsModal({ onClose }: Props) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile, fetchUserProfile } = useGameStore();
     const router = useRouter();
 
@@ -305,7 +311,9 @@ export default function AccountSettingsModal({ onClose }: Props) {
         }
     };
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-[#1a120b] border-2 border-[#a38b6b] w-full max-w-md shadow-2xl relative p-6 font-sans overflow-y-auto max-h-[90vh]">
@@ -654,6 +662,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 onCancel={() => setShowLogoutConfirm(false)}
             />
         )}
-        </>
+        </>,
+        document.body
     );
 }

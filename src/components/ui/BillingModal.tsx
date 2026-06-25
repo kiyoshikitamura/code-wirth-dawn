@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Coins, Sparkles, Key, CreditCard, ExternalLink, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
@@ -12,6 +13,11 @@ interface Props {
 }
 
 export default function BillingModal({ onClose }: Props) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
     const [portalLoading, setPortalLoading] = useState(false);
@@ -121,7 +127,9 @@ export default function BillingModal({ onClose }: Props) {
     const isPurchasedElite = userProfile?.has_purchased_elite === true;
     const currentTier = userProfile?.subscription_tier || 'free';
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
             {/* 特商法確認モーダル */}
             {purchaseConfirm && (
@@ -455,6 +463,7 @@ export default function BillingModal({ onClose }: Props) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
