@@ -1,8 +1,8 @@
 # spec_new_onboarding: 新規オンボーディングフローおよびおまかせデッキ編成仕様書
 
-**Version**: 1.7  
+**Version**: 1.8  
 **Date**: 2026-06-25  
-**Status**: Planned  
+**Status**: Approved  
 
 ---
 
@@ -176,3 +176,21 @@
 ユーザー体験向上のため、以下の号外新聞シェア機能および画像生成処理を停止する。
 - **UI側**: `QuestResultModal.tsx` 下部の「号外！冒険を共有しよう」セクション（SNSシェア機能）をレンダリングから除外。
 - **API側**: `/api/quest/complete` および `/api/character/retire`, `/api/profile/init` 内の `share_data_list` の生成処理を抑止し、常に空の配列（`[]`）を返す。
+
+---
+
+## 9. プレビューテストプレイにおける不具合修正（Version 1.8 追記）
+
+プレビュー環境のモバイルテストプレイで発生した不具合について、以下の修正を適用する。
+
+1. **オンボーディングパックの演出追加**:
+   - `OnboardingAcademyModal.tsx` のパックビジュアルに通常版と同様のホバー・タップ演出クラス `group hover:scale-105 active:scale-95 transition-all duration-300` および `animate-bounce` による「TAP TO OPEN」表示を実装し、引き心地を統一する。
+2. **メインクエスト1話のノードデータ異常の解消**:
+   - `page.tsx` (`/quest/[id]/page.tsx`) マウント時に Zustand から前回の `currentNodeId` を読み込む際、必ず保存されている `questId` と現在開いている `id` が一致している場合のみ復元するように修正し、ID不一致時は初期値からクエストを開始させる。
+3. **本登録案内ポップアップ画像の配置**:
+   - 0バイトとなっていた `public/images/promos/promo_guest_register.png` および未配置の `promo_starter_pack.png` に、生成済みの正常な画像ファイルをコピー配置する。
+4. **本登録・Google連携完了時のリダイレクト競合の解消**:
+   - `useInnPageState.ts` の OAuth コールバック検出時に、URL の `code` パラメータを即時に削除せず、`supabase.auth.onAuthStateChange` イベントでセッション更新（トークン交換完了）を検知した後にクリーンアップを行うよう変更し、連携後のアカウント移行（`is_anonymous: false`）を確実に反映する。
+5. **案内バナーテキストの見切れ解消**:
+   - `page.tsx` (`/inn/page.tsx`) のガイダンスバナーテキスト内の `truncate` クラスを削除し、モバイル環境でも折り返しによる全文表示を可能にする。
+

@@ -211,27 +211,38 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
 
                     {/* パックビジュアル */}
                     <div 
-                        className="my-8 relative w-48 aspect-[3/4] border-2 border-amber-500/30 rounded-xl shadow-xl flex flex-col items-center justify-between p-4 overflow-hidden group"
-                        style={{
-                            backgroundImage: "url('/images/card_back_basic.png')",
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center'
-                        }}
+                        onClick={() => !isPurchasing && handleBuyPack()}
+                        className="my-8 relative w-48 aspect-[3/4] cursor-pointer group hover:scale-105 active:scale-95 transition-all duration-300"
                     >
-                        <div className="absolute inset-0 bg-slate-900/40 pointer-events-none" />
+                        {/* パック発光 */}
+                        <div className="absolute -inset-4 bg-gradient-to-r from-amber-500 to-purple-600 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse" />
                         
-                        <span className="relative z-10 text-[10px] text-amber-400 font-bold tracking-widest uppercase">WIRTH-DAWN</span>
-                        
-                        <div className="relative z-10 w-12 h-12 rounded-full border border-amber-500/20 bg-black/40 flex items-center justify-center my-2">
-                            <Sparkles className="w-6 h-6 text-amber-400" />
-                        </div>
-                        
-                        <div className="relative z-10 flex flex-col items-center bg-black/50 p-2 rounded-lg border border-amber-500/10">
-                            <span className="text-xs font-black text-amber-100 tracking-widest">黎明の知識と古の契約</span>
-                            <span className="text-[8px] text-slate-355 font-bold tracking-wide mt-0.5">BASIC STARTER PACK</span>
-                        </div>
+                        {/* パック本体 */}
+                        <div 
+                            className="relative w-full h-full border-2 border-amber-500/30 rounded-xl shadow-xl flex flex-col items-center justify-between p-4 overflow-hidden"
+                            style={{
+                                backgroundImage: "url('/images/card_back_basic.png')",
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-slate-900/40 pointer-events-none" />
+                            
+                            <span className="relative z-10 text-[10px] text-amber-400 font-bold tracking-widest uppercase">WIRTH-DAWN</span>
+                            
+                            <div className="relative z-10 w-12 h-12 rounded-full border border-amber-500/20 bg-black/40 flex items-center justify-center my-2">
+                                <Sparkles className="w-6 h-6 text-amber-400" />
+                            </div>
+                            
+                            <div className="relative z-10 flex flex-col items-center bg-black/50 p-2 rounded-lg border border-amber-500/10">
+                                <span className="text-xs font-black text-amber-100 tracking-widest">黎明の知識と古の契約</span>
+                                <span className="text-[8px] text-slate-355 font-bold tracking-wide mt-0.5">BASIC STARTER PACK</span>
+                            </div>
 
-                        <span className="relative z-10 text-[8px] text-slate-200 font-bold bg-black/40 px-2 py-0.5 rounded">CARDS × 5 BOOSTER</span>
+                            <div className="relative z-10 w-full py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 font-bold text-[10px] animate-bounce bg-black/40">
+                                TAP TO OPEN
+                            </div>
+                        </div>
                     </div>
 
                     {errorMsg && (

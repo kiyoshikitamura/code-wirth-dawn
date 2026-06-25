@@ -108,9 +108,12 @@ export default function QuestPage() {
 
         // If not restored via battle transition check, try restoring from Zustand's current node state
         if (!restored) {
-            const savedNodeId = useQuestState.getState().currentNodeId;
-            if (savedNodeId && savedNodeId !== 'start') {
-                setInitialNodeId(savedNodeId);
+            const qs = useQuestState.getState();
+            if (qs.questId === id) {
+                const savedNodeId = qs.currentNodeId;
+                if (savedNodeId && savedNodeId !== 'start') {
+                    setInitialNodeId(savedNodeId);
+                }
             }
         }
     }, [id]);

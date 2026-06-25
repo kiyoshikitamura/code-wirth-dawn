@@ -471,9 +471,9 @@ function InnPageInner() {
                             <div className="mx-4 mt-4 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between gap-2 shadow-lg shadow-amber-950/20 animate-in slide-in-from-top duration-300">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
                                     <span className="text-amber-400 font-bold text-xs flex-shrink-0">💡</span>
-                                    <div className="min-w-0 flex-1 flex items-center gap-1.5 text-xs text-slate-300">
-                                        <span className="font-bold text-amber-300 whitespace-nowrap flex-shrink-0">旅の目的:</span>
-                                        <span className="truncate font-medium text-slate-100">{bannerText}</span>
+                                    <div className="min-w-0 flex-1 flex items-start gap-1.5 text-xs text-slate-300">
+                                        <span className="font-bold text-amber-300 whitespace-nowrap flex-shrink-0 mt-0.5">旅の目的:</span>
+                                        <span className="font-medium text-slate-100 whitespace-normal break-words">{bannerText}</span>
                                     </div>
                                 </div>
                                 <button 

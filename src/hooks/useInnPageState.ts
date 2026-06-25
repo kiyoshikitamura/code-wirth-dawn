@@ -326,23 +326,39 @@ export function useInnPageState() {
         const url = new URL(window.location.href);
         if (!url.searchParams.has('code')) return;
 
-        url.searchParams.delete('code');
-        window.history.replaceState({}, '', url.pathname);
-
-        const syncAnonymousFlag = async () => {
-            try {
-                // OAuth直後のアクセストークン交換タイムラグ対策として1秒待機
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user || user.is_anonymous) return;
-                await supabase.from('user_profiles').update({ is_anonymous: false }).eq('id', user.id);
-                await fetchUserProfile();
-                console.log('[linkIdentity] アカウント連携完了。is_anonymous → false');
-            } catch (e) {
-                console.warn('[linkIdentity] is_anonymous 同期に失敗:', e);
+        const cleanUrl = () => {
+            const currentUrl = new URL(window.location.href);
+            if (currentUrl.searchParams.has('code')) {
+                currentUrl.searchParams.delete('code');
+                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
             }
         };
-        syncAnonymousFlag();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            const user = session?.user;
+            if (user && !user.is_anonymous) {
+                try {
+                    await supabase.from('user_profiles').update({ is_anonymous: false }).eq('id', user.id);
+                    await fetchUserProfile();
+                    console.log('[linkIdentity] アカウント連携完了。is_anonymous → false');
+                    cleanUrl();
+                    subscription.unsubscribe();
+                } catch (e) {
+                    console.warn('[linkIdentity] is_anonymous 同期に失敗:', e);
+                }
+            }
+        });
+
+        // 5秒のセーフティタイムアウト（交換失敗時のURLクリーンアップ用）
+        const timer = setTimeout(() => {
+            cleanUrl();
+            subscription.unsubscribe();
+        }, 5000);
+
+        return () => {
+            clearTimeout(timer);
+            subscription.unsubscribe();
+        };
     }, [fetchUserProfile]);
 
     // エンカウントバトル結果処理
