@@ -75,12 +75,12 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     const [clickedAction, setClickedAction] = useState<'main' | 'close' | number | null>(null);
     const clickLockedRef = useRef(false);
     
+    const isBanned = npcData?.isBanned;
+    const isTheodore = npcData?.name === 'テオドール';
+    const { displayed, done, skip } = useTypewriter(npcData?.dialogue || '', isTheodore ? 0 : 30);
+
     if (!npcData) return null;
     if (!mounted) return null;
-
-    const isBanned = npcData.isBanned;
-    const isTheodore = npcData.name === 'テオドール';
-    const { displayed, done, skip } = useTypewriter(npcData.dialogue, isTheodore ? 0 : 30);
 
     const handleClose = async () => {
         if (clickLockedRef.current) return;

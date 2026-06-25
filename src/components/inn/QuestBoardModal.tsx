@@ -28,6 +28,12 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
     const [isClosing, setIsClosing] = useState(false);
 
+    const tabCounts = useMemo(() => ({
+        easy: quests.filter((q: any) => q.difficulty_tier === 'easy').length,
+        normal: quests.filter((q: any) => q.difficulty_tier === 'normal').length,
+        hard: quests.filter((q: any) => q.difficulty_tier === 'hard').length,
+    }), [quests]);
+
     if (!isOpen) return null;
     if (!mounted) return null;
 
@@ -38,12 +44,6 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     };
 
     const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab || q.slug?.startsWith('main_ep'));
-
-    const tabCounts = useMemo(() => ({
-        easy: quests.filter((q: any) => q.difficulty_tier === 'easy').length,
-        normal: quests.filter((q: any) => q.difficulty_tier === 'normal').length,
-        hard: quests.filter((q: any) => q.difficulty_tier === 'hard').length,
-    }), [quests]);
 
     const handleAccept = (quest: Scenario) => {
         const userLevel = userProfile?.level || 1;

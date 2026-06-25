@@ -373,10 +373,7 @@ export default function QuestPage() {
             } else {
                 const data = await res.json();
                 useQuestState.getState().finalizeQuest(isSuccess ? 'success' : 'failure');
-                const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
-                if (!isTutorialQuest) {
-                    useGameStore.setState({ lastInitPageFetchTime: 0 });
-                }
+                useGameStore.setState({ lastInitPageFetchTime: 0 });
                 await fetchUserProfile();
 
                 setPrefetchedResult({
@@ -388,10 +385,7 @@ export default function QuestPage() {
             console.error(e);
             alert(`通信エラーが発生しました: ${e.message}\n結果の保存に失敗した可能性があります。`);
             useQuestState.getState().resetQuest();
-            const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
-            if (!isTutorialQuest) {
-                useGameStore.setState({ lastInitPageFetchTime: 0 });
-            }
+            useGameStore.setState({ lastInitPageFetchTime: 0 });
             setPrefetchedResult({
                 result,
                 data: {
@@ -1197,14 +1191,10 @@ export default function QuestPage() {
                         isTestPlay={isTestPlay}
                         onClose={async () => {
                             if (!isTestPlay) {
-                                // チュートリアル後(クエスト6001)はプリフェッチしたキャッシュを活かしてロード時間を短縮するため、キャッシュをクリアしない
-                                const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
-                                if (!isTutorialQuest) {
-                                    // クエストボードのキャッシュクリア
-                                    useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                                    if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                                        sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
-                                    }
+                                // クエストボードのキャッシュクリア
+                                useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                                if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                                    sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                                 }
                                 fetchUserProfile();
                                 useGameStore.getState().fetchInventory();
