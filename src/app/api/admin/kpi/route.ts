@@ -30,6 +30,12 @@ function toJstDateStr(dateInput: any): string {
     return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
 
+function toJstMonthStr(dateInput: any): string {
+    if (!dateInput) return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7).replace('-', '/');
+    const d = new Date(dateInput);
+    return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7).replace('-', '/');
+}
+
 export async function GET(req: Request) {
     try {
         // 1. Authorization Check
@@ -181,12 +187,39 @@ export async function GET(req: Request) {
             'date'
         );
 
-        // Calculate the oldest date needed for sliding window MAU/MPU (days + 30 days ago)
+        // Calculate the oldest date needed (maximum of (days + 30) or 366 days for monthly stats)
+        const requiredDays = Math.max(days + 30, 366);
         const oldestDate = new Date();
-        oldestDate.setDate(oldestDate.getDate() - (days + 30));
+        oldestDate.setDate(oldestDate.getDate() - requiredDays);
         const oldestDateStr = toJstDateStr(oldestDate);
 
-        // G. Light-weight user IDs per day to compute sliding window MAU/MPU
+        // Fetch all user profiles with created_at for daily and monthly registration breakdown
+        const allUsersWithCreated = await fetchAll<any>(
+            supabaseServer.from('user_profiles').select('id, is_anonymous, created_at')
+        );
+
+        const newUsersByDate: Record<string, { registered: number; guest: number }> = {};
+        const newUsersByMonth: Record<string, { registered: number; guest: number }> = {};
+
+        (allUsersWithCreated || []).forEach(u => {
+            if (!u.created_at) return;
+            const dateStr = toJstDateStr(u.created_at);
+            const monthStr = toJstMonthStr(u.created_at);
+            const isAnon = u.is_anonymous === true;
+
+            if (!newUsersByDate[dateStr]) newUsersByDate[dateStr] = { registered: 0, guest: 0 };
+            if (!newUsersByMonth[monthStr]) newUsersByMonth[monthStr] = { registered: 0, guest: 0 };
+
+            if (isAnon) {
+                newUsersByDate[dateStr].guest++;
+                newUsersByMonth[monthStr].guest++;
+            } else {
+                newUsersByDate[dateStr].registered++;
+                newUsersByMonth[monthStr].registered++;
+            }
+        });
+
+        // G. Light-weight user IDs per day to compute sliding window MAU/MPU and calendar monthly MAU/MPU
         const dailyActiveUserIds = await fetchAll<any>(
             supabaseServer
                 .from('daily_active_user_ids_view')
@@ -205,14 +238,24 @@ export async function GET(req: Request) {
         // Map user IDs sets per date
         const activeUsersByDate: Record<string, Set<string>> = {};
         const payingUsersByDate: Record<string, Set<string>> = {};
+        const activeUsersByMonth: Record<string, Set<string>> = {};
+        const payingUsersByMonth: Record<string, Set<string>> = {};
 
         dailyActiveUserIds.forEach(row => {
             if (!activeUsersByDate[row.date]) activeUsersByDate[row.date] = new Set();
             activeUsersByDate[row.date].add(row.user_id);
+
+            const m = row.date.slice(0, 7).replace('-', '/'); // "YYYY-MM-DD" -> "YYYY/MM"
+            if (!activeUsersByMonth[m]) activeUsersByMonth[m] = new Set();
+            activeUsersByMonth[m].add(row.user_id);
         });
         dailyPayingUserIds.forEach(row => {
             if (!payingUsersByDate[row.date]) payingUsersByDate[row.date] = new Set();
             payingUsersByDate[row.date].add(row.user_id);
+
+            const m = row.date.slice(0, 7).replace('-', '/');
+            if (!payingUsersByMonth[m]) payingUsersByMonth[m] = new Set();
+            payingUsersByMonth[m].add(row.user_id);
         });
 
         // Helper to compute unique count in a window with details
@@ -275,9 +318,12 @@ export async function GET(req: Request) {
                 dau: 0
             };
             const mauDetails = getUniqueUsersInWindowDetails(activeUsersByDate, date, 30);
+            const newUserBreakdown = newUsersByDate[date] || { registered: 0, guest: 0 };
             return {
                 date,
                 newUsers: basic.new_users,
+                newUsersRegistered: newUserBreakdown.registered,
+                newUsersGuest: newUserBreakdown.guest,
                 totalBattles: basic.total_battles,
                 victories: basic.victories,
                 defeats: basic.defeats,
@@ -290,6 +336,37 @@ export async function GET(req: Request) {
                 revenue: basic.revenue,
                 dpu: basic.dpu,
                 mpu: getUniqueUsersInWindow(payingUsersByDate, date, 30)
+            };
+        });
+
+        // I. Map monthly KPI array for the last 12 months
+        const targetMonthsList: string[] = [];
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            targetMonthsList.push(toJstMonthStr(d));
+        }
+
+        const revenueByMonth: Record<string, number> = {};
+        dailyBasicData.forEach(row => {
+            const m = row.date.slice(0, 7).replace('-', '/');
+            revenueByMonth[m] = (revenueByMonth[m] || 0) + (row.revenue || 0);
+        });
+
+        const monthlyKPI = targetMonthsList.map(month => {
+            const activeSet = activeUsersByMonth[month] || new Set();
+            const payingSet = payingUsersByMonth[month] || new Set();
+            const newUserBreakdown = newUsersByMonth[month] || { registered: 0, guest: 0 };
+            const rev = revenueByMonth[month] || 0;
+            const mau = activeSet.size;
+            const mpu = payingSet.size;
+            return {
+                month,
+                revenue: rev,
+                mau,
+                mpu,
+                newUsersRegistered: newUserBreakdown.registered,
+                newUsersGuest: newUserBreakdown.guest
             };
         });
 
@@ -336,9 +413,9 @@ export async function GET(req: Request) {
             console.error('[Admin KPI] Colosseum summary RPC error:', colStatsErr);
         }
 
-        // Fetch daily Colosseum stats via RPC
+        // Fetch daily Colosseum stats via RPC (up to requiredDays)
         const { data: colDaily, error: colDailyErr } = await supabaseServer
-            .rpc('get_colosseum_daily_stats', { days_limit: days });
+            .rpc('get_colosseum_daily_stats', { days_limit: requiredDays });
 
         const colDailyMap: Record<string, { 
             starts: Record<string, number>, 
@@ -347,8 +424,18 @@ export async function GET(req: Request) {
             goldSpent: number 
         }> = {};
 
+        const colMonthlyMap: Record<string, { 
+            starts: Record<string, number>, 
+            completes: Record<string, number>, 
+            abandons: Record<string, number>,
+            goldSpent: number 
+        }> = {};
+
         (colDaily || []).forEach((row: any) => {
             const date = row.date;
+            const month = date.slice(0, 7).replace('-', '/');
+            
+            // Daily Grouping
             if (!colDailyMap[date]) {
                 colDailyMap[date] = {
                     starts: { easy: 0, normal: 0, hard: 0 },
@@ -357,18 +444,34 @@ export async function GET(req: Request) {
                     goldSpent: 0
                 };
             }
+            
+            // Monthly Grouping
+            if (!colMonthlyMap[month]) {
+                colMonthlyMap[month] = {
+                    starts: { easy: 0, normal: 0, hard: 0 },
+                    completes: { easy: 0, normal: 0, hard: 0 },
+                    abandons: { easy: 0, normal: 0, hard: 0 },
+                    goldSpent: 0
+                };
+            }
+
             const diff = (row.difficulty || 'easy') as 'easy' | 'normal' | 'hard';
             const action = (row.action || 'start') as 'start' | 'complete' | 'abandon';
             const count = Number(row.count || 0);
             const gold = Number(row.gold_spent || 0);
 
             colDailyMap[date].goldSpent += gold;
+            colMonthlyMap[month].goldSpent += gold;
+
             if (action === 'start') {
                 colDailyMap[date].starts[diff] = count;
+                colMonthlyMap[month].starts[diff] = (colMonthlyMap[month].starts[diff] || 0) + count;
             } else if (action === 'complete') {
                 colDailyMap[date].completes[diff] = count;
+                colMonthlyMap[month].completes[diff] = (colMonthlyMap[month].completes[diff] || 0) + count;
             } else if (action === 'abandon') {
                 colDailyMap[date].abandons[diff] = count;
+                colMonthlyMap[month].abandons[diff] = (colMonthlyMap[month].abandons[diff] || 0) + count;
             }
         });
 
@@ -381,6 +484,22 @@ export async function GET(req: Request) {
             };
             return {
                 date,
+                starts: entry.starts,
+                completes: entry.completes,
+                abandons: entry.abandons,
+                goldSpent: entry.goldSpent
+            };
+        });
+
+        const monthlyColosseumKPI = targetMonthsList.map(month => {
+            const entry = colMonthlyMap[month] || {
+                starts: { easy: 0, normal: 0, hard: 0 },
+                completes: { easy: 0, normal: 0, hard: 0 },
+                abandons: { easy: 0, normal: 0, hard: 0 },
+                goldSpent: 0
+            };
+            return {
+                month,
                 starts: entry.starts,
                 completes: entry.completes,
                 abandons: entry.abandons,
@@ -411,9 +530,9 @@ export async function GET(req: Request) {
             console.error('[Admin KPI] Academy summary RPC error:', acadStatsErr);
         }
 
-        // Fetch daily Magic Academy stats via RPC
+        // Fetch daily Magic Academy stats via RPC (up to requiredDays)
         const { data: acadDaily, error: acadDailyErr } = await supabaseServer
-            .rpc('get_academy_daily_stats', { days_limit: days });
+            .rpc('get_academy_daily_stats', { days_limit: requiredDays });
 
         const acadDailyMap: Record<string, {
             packs: Record<string, number>,
@@ -421,8 +540,17 @@ export async function GET(req: Request) {
             refundGold: Record<string, number>
         }> = {};
 
+        const acadMonthlyMap: Record<string, {
+            packs: Record<string, number>,
+            goldSpent: Record<string, number>,
+            refundGold: Record<string, number>
+        }> = {};
+
         (acadDaily || []).forEach((row: any) => {
             const date = row.date;
+            const month = date.slice(0, 7).replace('-', '/');
+            
+            // Daily Grouping
             if (!acadDailyMap[date]) {
                 acadDailyMap[date] = {
                     packs: {},
@@ -430,10 +558,28 @@ export async function GET(req: Request) {
                     refundGold: {}
                 };
             }
+
+            // Monthly Grouping
+            if (!acadMonthlyMap[month]) {
+                acadMonthlyMap[month] = {
+                    packs: {},
+                    goldSpent: {},
+                    refundGold: {}
+                };
+            }
+
             const series = row.pack_series || 'chaos_and_rebellion';
-            acadDailyMap[date].packs[series] = Number(row.pack_count || 0);
-            acadDailyMap[date].goldSpent[series] = Number(row.gold_spent || 0);
-            acadDailyMap[date].refundGold[series] = Number(row.refund_gold || 0);
+            const packCount = Number(row.pack_count || 0);
+            const goldSpent = Number(row.gold_spent || 0);
+            const refundGold = Number(row.refund_gold || 0);
+
+            acadDailyMap[date].packs[series] = packCount;
+            acadDailyMap[date].goldSpent[series] = goldSpent;
+            acadDailyMap[date].refundGold[series] = refundGold;
+
+            acadMonthlyMap[month].packs[series] = (acadMonthlyMap[month].packs[series] || 0) + packCount;
+            acadMonthlyMap[month].goldSpent[series] = (acadMonthlyMap[month].goldSpent[series] || 0) + goldSpent;
+            acadMonthlyMap[month].refundGold[series] = (acadMonthlyMap[month].refundGold[series] || 0) + refundGold;
         });
 
         const dailyAcademyKPI = targetDaysList.map(date => {
@@ -444,6 +590,20 @@ export async function GET(req: Request) {
             };
             return {
                 date,
+                packs: entry.packs,
+                goldSpent: entry.goldSpent,
+                refundGold: entry.refundGold
+            };
+        });
+
+        const monthlyAcademyKPI = targetMonthsList.map(month => {
+            const entry = acadMonthlyMap[month] || {
+                packs: {},
+                goldSpent: {},
+                refundGold: {}
+            };
+            return {
+                month,
                 packs: entry.packs,
                 goldSpent: entry.goldSpent,
                 refundGold: entry.refundGold
@@ -483,13 +643,16 @@ export async function GET(req: Request) {
             questRanking,
             questStats,
             dailyKPI,
+            monthlyKPI,
             colosseum: {
                 summary: colSummary,
-                daily: dailyColosseumKPI
+                daily: dailyColosseumKPI,
+                monthly: monthlyColosseumKPI
             },
             academy: {
                 summary: acadSummary,
-                daily: dailyAcademyKPI
+                daily: dailyAcademyKPI,
+                monthly: monthlyAcademyKPI
             }
         });
 
