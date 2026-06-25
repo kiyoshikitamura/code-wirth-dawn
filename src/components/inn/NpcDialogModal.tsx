@@ -66,6 +66,7 @@ function useTypewriter(text: string, speed: number = 30) {
 
 export default function NpcDialogModal({ npcData, onClose, onAction, buttonText, isDisabled, secondaryActions }: NpcDialogModalProps) {
     const [isActionLoading, setIsActionLoading] = useState(false);
+    const [clickedAction, setClickedAction] = useState<'main' | 'close' | number | null>(null);
     
     if (!npcData) return null;
 
@@ -76,12 +77,14 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     const handleClose = async () => {
         if (isActionLoading) return;
         setIsActionLoading(true);
+        setClickedAction('close');
         setTimeout(async () => {
             try {
                 await onClose();
             } catch (e) {
                 console.error('[NpcDialogModal] onClose failed:', e);
                 setIsActionLoading(false);
+                setClickedAction(null);
             }
         }, 0);
     };
@@ -89,25 +92,29 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     const handleAction = async () => {
         if (isActionLoading || isDisabled || isBanned) return;
         setIsActionLoading(true);
+        setClickedAction('main');
         setTimeout(async () => {
             try {
                 await onAction();
             } catch (e) {
                 console.error('[NpcDialogModal] onAction failed:', e);
                 setIsActionLoading(false);
+                setClickedAction(null);
             }
         }, 0);
     };
 
-    const handleSecondaryAction = async (onClick: () => void | Promise<void>) => {
+    const handleSecondaryAction = async (onClick: () => void | Promise<void>, index: number) => {
         if (isActionLoading) return;
         setIsActionLoading(true);
+        setClickedAction(index);
         setTimeout(async () => {
             try {
                 await onClick();
             } catch (e) {
                 console.error('[NpcDialogModal] secondaryAction failed:', e);
                 setIsActionLoading(false);
+                setClickedAction(null);
             }
         }, 0);
     };
@@ -182,21 +189,21 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'bg-amber-900/40 hover:bg-amber-800/60 border border-amber-600 text-amber-100 active:scale-95 focus:ring-amber-500'}`}
                         >
-                            {isActionLoading ? '読み込み中…' : (isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`)}
+                            {isActionLoading && clickedAction === 'main' ? '読み込み中…' : (isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`)}
                         </button>
 
                         {/* セカンダリボタン（宿屋の「冒険者を探す」等） */}
                         {!isBanned && secondaryActions?.map((action, i) => (
                             <button
                                 key={i}
-                                onClick={() => handleSecondaryAction(action.onClick)}
+                                onClick={() => handleSecondaryAction(action.onClick, i)}
                                 disabled={isActionLoading}
                                 className={`w-full py-3 rounded-xl font-bold text-sm border transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500
                                     ${isActionLoading
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'border-amber-600 bg-amber-900/30 text-amber-100 hover:bg-amber-800/50 hover:text-white'}`}
                             >
-                                {action.label}
+                                {isActionLoading && clickedAction === i ? '読み込み中…' : action.label}
                             </button>
                         ))}
                     </div>

@@ -223,9 +223,15 @@
 2. **クエスト結果画面からの帰還時遷移ラグ解消**:
    - クエスト画面（`/quest/[id]/page.tsx`）のマウント時に、Next.js 遷移先となる `/inn` および `/workshop` を `router.prefetch` で先行ロードし、「冒険を続ける / クリエイターズ工房に戻る」押下時のページロード遅延を解消する。
 3. **Google 認証（linkIdentity）における自動選択リダイレクトの防止**:
-   - `AccountSettingsModal.tsx` および `GuestRegisterPromoModal.tsx` において、`linkIdentity` 実行時に `queryParams: { prompt: 'select_account' }` を指定し、ブラウザでログイン中のアカウントがあっても必ずGoogleのアカウント選択画面を表示させる。
+   - `AccountSettingsModal.tsx` および `GuestRegisterPromoModal.tsx` において、`linkIdentity` 実行時に `queryParams: { prompt: 'select_account consent' }` を指定し、ブラウザのキャッシュや過去の同意状況にかかわらず、必ずGoogleのアカウント選択画面および同意プロンプト画面を表示させる。
 4. **宿屋拠点（/inn）における施設NPCマスター画像の先行ロード**:
    - 宿屋マウント後、`worldState.location_name` と `reputation.score` が確定した時点で、該当エリアの5大施設（宿屋・ギルド・商店・神殿・学院）のNPC画像（`getNpcForLocation` から解決される URL）を `new Image().src` でバックグラウンドで一括ロードし、施設選択時のNPCポートレート表示遅延を解消する。
 5. **設定画面 Google 認証連携タップ時のローディングフィードバック表示**:
    - `AccountSettingsModal.tsx` 内の「Google アカウントと連携する」ボタン押下時に、ローディングスピナーおよび「Google 認証を開始中...」のテキストを表示し、リダイレクト遷移中も画面がフリーズして見えないようにする。
+6. **閉じる・進むボタン等の連打防止とフリーズ感排除（Version 3.0 追記）**:
+   - **施設NPCダイアログ (`NpcDialogModal.tsx`)**: メインボタン（「依頼を見る」等）およびセカンダリボタン（「冒険者を探す」等）のタップ時、即座にボタンを `disabled` にし、テキストを「読み込み中…」に切り替えて連打防止と即時のフィードバックを提供する。
+   - **酒場モーダル (`TavernModal.tsx`)**: 閉じる処理における不要な `isClosing` ローディングオーバーレイと `setTimeout` を撤廃し、同期的かつ即時に `onClose()` を呼び出してモーダルを閉じることでフリーズ感を排除する。
+   - **シナリオ進行 (`ScenarioEngine.tsx`)**: 「次へ」ボタンや選択肢のタップ時、200〜300ms程度の遷移入力ロック（クールダウン）を適用し、連打による意図しない会話の複数ノードスキップを防止する。
+   - **共通モーダル (`QuestBoardModal.tsx` 等)**: 閉じるボタンのタップ時に、即座にボタンを `disabled` にしつつ同期的に `onClose()` を呼び出して閉じる。
+
 

@@ -71,6 +71,7 @@ export default function ScenarioEngine({
     // Phase 2: UX改善 State
     const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; nodeRewards?: any } | null>(null);
     const [isProcessingResult, setIsProcessingResult] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
     const prepareTriggeredRef = useRef(false);
@@ -351,8 +352,14 @@ export default function ScenarioEngine({
                 </div>
 
                 <button
-                    onClick={() => nextId && setCurrentNodeId(nextId)}
-                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-transparent hover:border-slate-400 transition-all text-sm"
+                    onClick={() => {
+                        if (isTransitioning) return;
+                        setIsTransitioning(true);
+                        if (nextId) setCurrentNodeId(nextId);
+                        setTimeout(() => setIsTransitioning(false), 300);
+                    }}
+                    disabled={isTransitioning}
+                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-transparent hover:border-slate-400 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     補給を終えて戻る
                 </button>
@@ -396,8 +403,14 @@ export default function ScenarioEngine({
                 </div>
 
                 <button
-                    onClick={() => nextId && setCurrentNodeId(nextId)}
-                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold"
+                    onClick={() => {
+                        if (isTransitioning) return;
+                        setIsTransitioning(true);
+                        if (nextId) setCurrentNodeId(nextId);
+                        setTimeout(() => setIsTransitioning(false), 300);
+                    }}
+                    disabled={isTransitioning}
+                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     休憩を終えて出発する
                 </button>
@@ -436,6 +449,7 @@ export default function ScenarioEngine({
 
 
     const handleChoice = (choice: any) => {
+        if (isTransitioning) return;
         // 要件の検証
         if (choice.req) {
             const { type, val } = choice.req;
@@ -457,8 +471,12 @@ export default function ScenarioEngine({
             // For now, allow proceed.
         }
 
+        setIsTransitioning(true);
         setHistory(prev => [...prev, currentNodeId]);
         setCurrentNodeId(choice.next);
+        setTimeout(() => {
+            setIsTransitioning(false);
+        }, 300);
     };
 
     return (
@@ -580,6 +598,8 @@ export default function ScenarioEngine({
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => {
+                                    if (isTransitioning) return;
+                                    setIsTransitioning(true);
                                     if (onBattleStart) {
                                         // 勝利後ノード: battle_success_next（CSVのnext_node由来） → choices[0].next → fallback
                                         const successId = currentNode.battle_success_next
@@ -593,7 +613,8 @@ export default function ScenarioEngine({
                                         onBattleStart(enemyId, successId, currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key, currentNode.bgm_key || currentNode.bgm || currentNode.params?.bgm);
                                     }
                                 }}
-                                className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
+                                disabled={isTransitioning}
+                                className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 ⚔️ 戦闘開始
                             </button>
@@ -603,7 +624,8 @@ export default function ScenarioEngine({
                             <button
                                 key={i}
                                 onClick={() => handleChoice(choice)}
-                                className="w-full py-4 px-4 bg-amber-900/40 border border-amber-600 text-amber-100 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-amber-900/60 transition-all active:scale-[0.98] flex items-center justify-between"
+                                disabled={isTransitioning}
+                                className="w-full py-4 px-4 bg-amber-900/40 border border-amber-600 text-amber-100 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-amber-900/60 transition-all active:scale-[0.98] flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span className="flex-1 text-center font-serif truncate px-2">{choice.label}</span>
 
@@ -625,10 +647,16 @@ export default function ScenarioEngine({
                     ) : currentNode.next ? (
                         <button
                             onClick={() => {
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
                                 setHistory(prev => [...prev, currentNodeId]);
                                 setCurrentNodeId(currentNode.next);
+                                setTimeout(() => {
+                                    setIsTransitioning(false);
+                                }, 300);
                             }}
-                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2"
+                            disabled={isTransitioning}
+                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span>次へ</span>
                             <ArrowRight size={14} className="opacity-70" />

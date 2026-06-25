@@ -201,7 +201,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 options: {
                     redirectTo: `${window.location.origin}/inn`,
                     queryParams: {
-                        prompt: 'select_account'
+                        prompt: 'select_account consent'
                     }
                 },
             });

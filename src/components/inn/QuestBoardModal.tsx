@@ -20,9 +20,13 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     const [pendingQuest, setPendingQuest] = useState<Scenario | null>(null);
     const [isAccepting, setIsAccepting] = useState(false);
 
+    const [isClosing, setIsClosing] = useState(false);
+
     if (!isOpen) return null;
 
     const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
         onClose();
     };
 
@@ -85,7 +89,8 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                     </div>
                     <button 
                         onClick={handleClose} 
-                        className="text-[#a38b6b] hover:text-white transition-colors"
+                        disabled={isClosing}
+                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
                     >
                         <X className="w-6 h-6" />
                     </button>

@@ -73,6 +73,13 @@ export default function ShopModal({ onClose }: Props) {
     const [sellItemForQtySelect, setSellItemForQtySelect] = useState<any | null>(null);
     const [sellQtyInput, setSellQtyInput] = useState<number>(1);
     const [buyQtyInput, setBuyQtyInput] = useState<number>(1);
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        onClose();
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -438,7 +445,13 @@ export default function ShopModal({ onClose }: Props) {
                             <Coins className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                             <span className="text-amber-200 font-mono text-sm">{gold.toLocaleString()} G</span>
                         </div>
-                        <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">✕</button>
+                        <button 
+                            onClick={handleClose} 
+                            disabled={isClosing}
+                            className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                        >
+                            ✕
+                        </button>
                     </div>
                 </div>
 

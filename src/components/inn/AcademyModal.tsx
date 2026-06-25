@@ -73,6 +73,14 @@ const SERIES_CONFIG = {
 
 export default function AcademyModal({ onClose, onOpenBilling }: Props) {
     const { gold, inventory, fetchInventory, fetchUserProfile } = useGameStore();
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        onClose();
+    };
+
     const [currentSeries, setCurrentSeries] = useState<'basic' | 'chaos_and_rebellion'>('chaos_and_rebellion');
     const [phase, setPhase] = useState<'shop' | 'pack_sealed' | 'pack_ripped' | 'cards_reveal' | 'card_list'>('shop');
     const [purchasingType, setPurchasingType] = useState<'gold' | 'key' | null>(null);
@@ -787,8 +795,9 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                             <span>{newGold.toLocaleString()} G</span>
                         </div>
                         <button 
-                            onClick={onClose} 
-                            className="text-slate-500 hover:text-white transition-colors focus:outline-none p-1"
+                            onClick={handleClose} 
+                            disabled={isClosing}
+                            className="text-slate-500 hover:text-white transition-colors focus:outline-none p-1 disabled:opacity-50"
                         >
                             <X size={18} />
                         </button>

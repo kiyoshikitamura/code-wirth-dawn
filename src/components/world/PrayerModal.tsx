@@ -15,6 +15,13 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
     const [isPraying, setIsPraying] = useState(false);
     const [result, setResult] = useState<any | null>(null);
     const [warningMessage, setWarningMessage] = useState<string | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        onClose();
+    };
 
     const getProsperityLabel = (level: number) => {
         if (level >= 5) return '絶頂';
@@ -125,8 +132,9 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                     </div>
 
                     <button
-                        onClick={onClose}
-                        className="bg-[#8b5a2b] border border-[#8b5a2b] text-white px-8 py-2 hover:bg-[#6b4522] transition-colors rounded"
+                        onClick={handleClose}
+                        disabled={isClosing}
+                        className="bg-[#8b5a2b] border border-[#8b5a2b] text-white px-8 py-2 hover:bg-[#6b4522] transition-colors rounded disabled:opacity-50"
                     >
                         閉じる
                     </button>
@@ -170,7 +178,11 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
                         </div>
                         <p className="text-[10px] text-[#a38b6b] mt-0.5 font-serif italic">― {locationName}の神殿にて祈りを捧げよ ―</p>
                     </div>
-                    <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isClosing}
+                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                    >
                         <X className="w-6 h-6" />
                     </button>
                 </div>
