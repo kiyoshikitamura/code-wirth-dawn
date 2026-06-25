@@ -76,20 +76,14 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
     const { displayed, done, skip } = useTypewriter(npcData.dialogue, isTheodore ? 0 : 30);
 
     const handleClose = async () => {
-        if (clickLockedRef.current || isActionLoading) return;
+        if (clickLockedRef.current) return;
         clickLockedRef.current = true;
-        setIsActionLoading(true);
-        setClickedAction('close');
-        setTimeout(async () => {
-            try {
-                await onClose();
-            } catch (e) {
-                console.error('[NpcDialogModal] onClose failed:', e);
-                clickLockedRef.current = false;
-                setIsActionLoading(false);
-                setClickedAction(null);
-            }
-        }, 0);
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[NpcDialogModal] onClose failed:', e);
+            clickLockedRef.current = false;
+        }
     };
 
     const handleAction = async () => {
@@ -142,14 +136,9 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                     </h2>
                     <button 
                         onClick={handleClose} 
-                        disabled={isActionLoading}
-                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1 disabled:opacity-50 flex items-center justify-center"
+                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1"
                     >
-                        {isActionLoading && clickedAction === 'close' ? (
-                            <Loader2 className="w-[18px] h-[18px] animate-spin text-slate-400" />
-                        ) : (
-                            <X size={18} />
-                        )}
+                        <X size={18} />
                     </button>
                 </div>
 

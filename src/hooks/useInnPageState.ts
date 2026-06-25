@@ -97,9 +97,9 @@ export function useInnPageState() {
             url.searchParams.delete('tier');
             url.searchParams.delete('amount');
             url.searchParams.delete('package');
-            window.history.replaceState({}, '', url.pathname + url.search);
+            router.replace(url.pathname + url.search);
         }
-    }, [searchParams, fetchUserProfile]);
+    }, [searchParams, fetchUserProfile, router]);
 
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
     const isTutorialActive = userProfile && userProfile.is_tutorial_completed === false;
@@ -367,7 +367,7 @@ export function useInnPageState() {
                 ['error', 'error_description', 'error_code'].forEach(p => {
                     currentUrl.searchParams.delete(p);
                 });
-                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                router.replace(currentUrl.pathname + currentUrl.search);
                 return true;
             }
             return false;
@@ -393,7 +393,7 @@ export function useInnPageState() {
                 changed = true;
             }
             if (changed) {
-                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                router.replace(currentUrl.pathname + currentUrl.search);
             }
         };
 
@@ -424,7 +424,7 @@ export function useInnPageState() {
         };
 
         handleOAuthCallback();
-    }, [fetchUserProfile, fetchInitPage]);
+    }, [fetchUserProfile, fetchInitPage, router]);
 
     // エンカウントバトル結果処理
     useEffect(() => {

@@ -36,19 +36,16 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         userProfile: storeUserProfile
     } = useGameStore();
 
-    const [isClosing, setIsClosing] = useState(false);
     const closeLockedRef = useRef(false);
 
     const handleClose = async () => {
-        if (closeLockedRef.current || isClosing) return;
+        if (closeLockedRef.current) return;
         closeLockedRef.current = true;
-        setIsClosing(true);
         try {
             await onClose();
         } catch (e) {
             console.error('[TavernModal] onClose failed:', e);
             closeLockedRef.current = false;
-            setIsClosing(false);
         }
     };
 
@@ -463,8 +460,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     </div>
                     <button 
                         onClick={handleClose} 
-                        disabled={isClosing}
-                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                        className="text-[#a38b6b] hover:text-white transition-colors"
                     >
                         <X className="w-6 h-6" />
                     </button>

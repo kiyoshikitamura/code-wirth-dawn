@@ -266,3 +266,23 @@
    - `NpcDialogModal.tsx` 内のメインアクションボタン、セカンダリアクションボタン（「冒険者を探す」等）、および閉じるボタン（X）に対し、非同期ステート `isActionLoading` の更新時間差をすり抜ける連打を防止するため、同期的Refロック（`clickLockedRef = useRef(false)`）を適用する。
    - クリックされたボタンのローディング中は、`Loader2` による回転スピナーおよび「読み込み中…」テキスト（閉じるボタンの場合は `X` に代わってスピナー）を表示し、クリックされたボタン以外の操作もすべて非活性（`disabled`）にする。
    - `TavernModal.tsx` の閉じるボタンに対しても、同様の `closeLockedRef` を適用して多重 close 実行を抑止する。
+
+---
+
+## 14. Next.jsルーター状態との完全同期、クエスト結果画面の連打防止、およびガイド自己修復機能の追加 (Version 3.4 追記)
+
+1. **URLクリーンアップのルーター状態同期（Next.jsルーター連携）**:
+   - OAuth本登録完了後にURLから `code` や `error` などのクエリパラメータを削除する際、およびStripe決済完了時のクリーンアップ処理において、`window.history.replaceState` ではなく、Next.jsのルーター経由で `router.replace()` を呼び出す。
+   - これにより、`useSearchParams()` フックがパラメータの削除を検知できるようになり、`page.tsx` 側で `searchParams` に依存しているプロモーション自動表示およびナビゲーションフラグリセット用の `useEffect` が確実にトリガーされ実行される。
+
+2. **閉じる処理における非同期ローディング画面の廃止（規約適合）**:
+   - `AGENTS.md` 第16項の規約に基づき、`NpcDialogModal.tsx` および `TavernModal.tsx` などの閉じる（X）ボタン処理において、不要な非同期 `isActionLoading` / `isClosing` ステートや `setTimeout` による遅延を廃止し、クリックされた瞬間に同期的に `onClose()` を呼び出して即座にアンマウントさせる。二重クリックは同期的Refロックのみでガードする。
+
+3. **クエスト完了画面「冒険を続ける」の連打防止とスピナー表示**:
+   - クエスト結果表示画面である `QuestResultModal.tsx` の「冒険を続ける」ボタンについても、クリック時の非同期ステート `isClosing` の更新ラグによる二重送信を防止するため、`closeLockedRef = useRef(false)` による同期的Refロックを導入する。
+   - 処理中（`isClosing === true`）の間は、ボタンを `disabled` としつつ、`Loader2` による回転スピナーと「読み込み中…」のテキストを表示して視覚的なフィードバックを徹底する。
+
+4. **チュートリアル進行中における visited フラグ・リセットキーの自己修復**:
+   - データベースのリセット（デバッグ reset API 等）による新規ゲーム開始時に、ブラウザ側の `localStorage` に過去 of プレイのリセット完了キー（`wirth_dawn_onboarding_reset_v3`）や `visitedGuild` 訪問フラグが残存したままとなり、第1話クリア後の宿屋ナビゲーションリセットが動かずギルド案内がスキップされる不具合を解消する。
+   - 宿屋ページの `page.tsx` において、`completedQuests` がロードされ、第1話（ID: 6001）が未クリア（`isEp1Cleared` が `false`）のチュートリアル進行期間中に、自動的に `localStorage` 内のオンオンオンリセットキー（`wirth_dawn_onboarding_reset_v3`, `wirth_dawn_onboarding_reg_reset_v3`）および全 wirth_dawn_visited_... フラグ、さらに対応する React の visited ステートを一括クリア（初期化）して修復する。
+   - これにより、新規プレイ開始時は必ず第1話をクリアする前にガイド履歴が完全初期化され、第1話クリア後の「ギルドでのクエスト受注案内」がスキップされずに正常表示されるようになる。

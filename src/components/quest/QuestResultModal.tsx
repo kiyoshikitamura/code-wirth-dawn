@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag, Loader2 } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
 interface LevelUpInfo {
@@ -82,9 +82,11 @@ export default function QuestResultModal({
     shareDataList, repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion, isTestPlay
 }: QuestResultModalProps) {
     const [isClosing, setIsClosing] = useState(false);
+    const closeLockedRef = useRef(false);
     
     const handleClose = async () => {
-        if (isClosing) return;
+        if (closeLockedRef.current || isClosing) return;
+        closeLockedRef.current = true;
         setIsClosing(true);
         try {
             // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
@@ -92,6 +94,7 @@ export default function QuestResultModal({
             await onClose();
         } catch (e) {
             console.error('[QuestResultModal] onClose failed:', e);
+            closeLockedRef.current = false;
             setIsClosing(false);
         }
     };
@@ -451,13 +454,20 @@ export default function QuestResultModal({
                     <button
                         onClick={handleClose}
                         disabled={isClosing}
-                        className={`w-full text-white font-bold py-3 px-6 rounded transition-colors shadow-lg ${
+                        className={`w-full text-white font-bold py-3 px-6 rounded transition-colors shadow-lg flex items-center justify-center gap-2 ${
                             isClosing
                                 ? 'bg-amber-800/60 border border-amber-600/40 text-amber-300/60 cursor-not-allowed'
                                 : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/20'
                         }`}
                     >
-                        {isClosing ? '読み込み中…' : (isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける')}
+                        {isClosing ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                                読み込み中…
+                            </>
+                        ) : (
+                            isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける'
+                        )}
                     </button>
                 </footer>
             </div>

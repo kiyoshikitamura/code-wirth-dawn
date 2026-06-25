@@ -205,7 +205,31 @@ function InnPageInner() {
         if (!completedQuests || !userProfile) return;
 
         const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
-        if (!isEp1Cleared) return;
+
+        // 自己修復: 第1話が未クリア（新規ゲーム開始時やデバッグリセット直後）なら
+        // localStorage と React ステートの訪問フラグを一括クリアして初期状態に戻す
+        if (!isEp1Cleared) {
+            localStorage.removeItem('wirth_dawn_onboarding_reset_v3');
+            localStorage.removeItem('wirth_dawn_onboarding_reg_reset_v3');
+            localStorage.removeItem('wirth_dawn_visited_tavern');
+            localStorage.removeItem('wirth_dawn_visited_guild');
+            localStorage.removeItem('wirth_dawn_visited_map');
+            localStorage.removeItem('wirth_dawn_visited_academy');
+            localStorage.removeItem('wirth_dawn_visited_shop');
+            localStorage.removeItem('wirth_dawn_visited_billing');
+            localStorage.removeItem('wirth_dawn_visited_status');
+            localStorage.removeItem('wirth_dawn_visited_settings');
+
+            setVisitedTavern(false);
+            setVisitedGuild(false);
+            setVisitedMap(false);
+            setVisitedAcademy(false);
+            setVisitedShop(false);
+            setVisitedBilling(false);
+            setVisitedStatus(false);
+            setVisitedSettings(false);
+            return;
+        }
 
         // URLのcodeクエリパラメータが存在しない（＝クリーンアップ完了後）ことを確認して実行
         const hasCode = searchParams.has('code');
