@@ -24,6 +24,7 @@ export function useInnPageState() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated } = useGameStore();
+    const locationSlug = worldState?.location_name || '名もなき旅人の拠所';
 
     const [billingDialog, setBillingDialog] = useState<{
         title: string;
@@ -320,6 +321,24 @@ export function useInnPageState() {
         loadInitData();
     }, [router, _hasHydrated]);
 
+    // 拠点施設NPCマスター画像の先行バックグラウンドロード (v39)
+    useEffect(() => {
+        if (typeof window === 'undefined' || !locationSlug) return;
+        const repScore = reputation?.score || 0;
+        const facilities: FacilityKey[] = ['inn', 'guild', 'shop', 'temple', 'magicAcademy'];
+        facilities.forEach((fac) => {
+            try {
+                const resolved = getNpcForLocation(locationSlug, fac, repScore);
+                if (resolved && resolved.imageUrl) {
+                    const img = new Image();
+                    img.src = resolved.imageUrl;
+                }
+            } catch (e) {
+                console.error('[useInnPageState] Preload NPC image failed:', e);
+            }
+        });
+    }, [locationSlug, reputation?.score]);
+
     // linkIdentity コールバック処理
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -497,7 +516,7 @@ export function useInnPageState() {
     const FACILITY_LABELS: Record<string, string> = {
         inn: '宿屋/酒場', guild: 'ギルド', shop: '道具屋', temple: '神殿', magicAcademy: '魔術学院'
     };
-    const locationSlug = worldState?.location_name || '名もなき旅人の拠所';
+
 
     const getNpcData = (facility: FacilityType): NpcDialogData | null => {
         const facilityKey = facility as FacilityKey;

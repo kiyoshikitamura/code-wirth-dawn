@@ -32,7 +32,10 @@ export default function QuestPage() {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
         setMounted(true);
-    }, []);
+        // Prefetch destination routes to eliminate page transition lag
+        router.prefetch('/inn');
+        router.prefetch('/workshop');
+    }, [router]);
 
     // チュートリアル後（クエスト6001完了時）の拠点（酒場、クエストボード、道具屋）の挙動を軽快にするため、
     // クエストロード時にあらかじめデータをプリフェッチしてキャッシュする

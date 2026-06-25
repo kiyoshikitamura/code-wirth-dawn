@@ -36,6 +36,9 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
     // BGMの制御 (必要に応じて)
     useEffect(() => {
         soundManager?.playBgm('bgm_inn');
+        // Preload card back image
+        const img = new Image();
+        img.src = '/images/card_back_basic.png';
     }, []);
 
     // 5枚すべてめくられたかを判定
@@ -78,7 +81,15 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
 
             const data = await res.json();
             if (res.ok && data.success) {
-                setRolledCards(data.cards || []);
+                const cards: Card[] = data.cards || [];
+                // Preload card front images in parallel during ripping animation (800ms)
+                cards.forEach((card) => {
+                    if (card.image_url) {
+                        const img = new Image();
+                        img.src = card.image_url;
+                    }
+                });
+                setRolledCards(cards);
                 soundManager?.playSE('se_taunt');
                 setStep('ripping');
                 setTimeout(() => {

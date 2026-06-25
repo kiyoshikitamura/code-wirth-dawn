@@ -24,6 +24,9 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/inn`,
+                    queryParams: {
+                        prompt: 'select_account'
+                    }
                 },
             });
             if (error) throw error;

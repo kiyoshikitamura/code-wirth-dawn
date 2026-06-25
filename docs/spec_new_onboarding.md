@@ -212,3 +212,20 @@
    - **道具屋のSWRキャッシュ化**: Zustandの `useGameStore` に道具屋データキャッシュ（`shopCache`）とAPIフェッチアクション `fetchShop` を追加し、`ShopModal.tsx` を酒場と同様のSWRパターン（60秒以内のキャッシュがあればロードなしで即表示、なければバックグラウンドフェッチ）に書き換える。
    - **第1話進行中のプリフェッチ実行**: 第1話「始まりの轍」（`/quest/6001`）の進行中に、非同期バックグラウンド処理として `/api/init-page?prefetch_quest_id=6001`（酒場・クエスト・噂話等の一括取得API）および `fetchShop()` をプリフェッチ実行し、Zustandストアにあらかじめデータをキャッシュしておく。これにより、あらかじめ第1話クリア想定（第2話が出現している状態）のキャッシュが構築される。
    - **第1話完了時のキャッシュ保持**: 通常のクエスト完了時には `lastInitPageFetchTime = 0` や `locationQuests = null` によってキャッシュがクリアされ再フェッチが走るが、第1話（6001）完了時にはこのキャッシュ破棄を抑止する。プリロードされた第1話クリア想定のキャッシュを宿屋帰還後もそのまま使用させることで、ロード時間を完全にゼロにしつつ、クエストボードには最初から第2話が開放された状態が即座に表示される。
+
+---
+
+## 11. 描画・遷移のUX最適化およびGoogle連携強制アカウント選択（Version 2.0 追記）
+
+1. **オンボーディングカード画像の遅延ポップイン解消**:
+   - `OnboardingAcademyModal.tsx` にて、マウント時にカード裏面画像（`/images/card_back_basic.png`）を先行ロード。
+   - パック購入成功時に、Ripping（引き裂き）アニメーション再生中（800ms）を利用して排出カードの画像（`image_url`）を並列プリロード（`new Image().src`）し、めくり画面（`flip`）での画像のチラつきや表示遅延を完全に解消する。
+2. **クエスト結果画面からの帰還時遷移ラグ解消**:
+   - クエスト画面（`/quest/[id]/page.tsx`）のマウント時に、Next.js 遷移先となる `/inn` および `/workshop` を `router.prefetch` で先行ロードし、「冒険を続ける / クリエイターズ工房に戻る」押下時のページロード遅延を解消する。
+3. **Google 認証（linkIdentity）における自動選択リダイレクトの防止**:
+   - `AccountSettingsModal.tsx` および `GuestRegisterPromoModal.tsx` において、`linkIdentity` 実行時に `queryParams: { prompt: 'select_account' }` を指定し、ブラウザでログイン中のアカウントがあっても必ずGoogleのアカウント選択画面を表示させる。
+4. **宿屋拠点（/inn）における施設NPCマスター画像の先行ロード**:
+   - 宿屋マウント後、`worldState.location_name` と `reputation.score` が確定した時点で、該当エリアの5大施設（宿屋・ギルド・商店・神殿・学院）のNPC画像（`getNpcForLocation` から解決される URL）を `new Image().src` でバックグラウンドで一括ロードし、施設選択時のNPCポートレート表示遅延を解消する。
+5. **設定画面 Google 認証連携タップ時のローディングフィードバック表示**:
+   - `AccountSettingsModal.tsx` 内の「Google アカウントと連携する」ボタン押下時に、ローディングスピナーおよび「Google 認証を開始中...」のテキストを表示し、リダイレクト遷移中も画面がフリーズして見えないようにする。
+

@@ -200,6 +200,9 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/inn`,
+                    queryParams: {
+                        prompt: 'select_account'
+                    }
                 },
             });
             if (error) throw error;
@@ -568,7 +571,14 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                 disabled={linkLoading}
                                 className="w-full flex items-center justify-center py-2 px-4 bg-white/10 border border-amber-500/60 text-amber-200 text-xs font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                                Google アカウントと連携する
+                                {linkLoading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mr-2" />
+                                        Google 認証を開始中...
+                                    </>
+                                ) : (
+                                    "Google アカウントと連携する"
+                                )}
                             </button>
                             <p className="text-[10px] text-amber-600/60 text-center mt-2">
                                 7日間の保存期限が解除され、データが永続化されます
