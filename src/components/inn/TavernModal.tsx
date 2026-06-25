@@ -448,7 +448,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     return createPortal(
         <>
         <div className="fixed inset-0 z-[60] flex justify-center items-center p-4 animate-in fade-in">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-md h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
 
 
@@ -887,7 +887,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 ? `${selectedShadow.epithet} ${selectedShadow.name}`
                 : selectedShadow.name;
             return (
-            <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
+            <div className="fixed inset-0 z-[200] bg-black/85 flex items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
                 <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] w-full max-w-md rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
                     {/* Header */}
                     <div className="bg-[#3e2723] p-5 flex items-center gap-4 border-b-2 border-[#8b5a2b]">
@@ -1011,7 +1011,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         {/* ===== Enlarged Image Popup ===== */}
         {enlargedImage && (
             <div 
-                className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+                className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-4 animate-in fade-in"
                 onClick={() => setEnlargedImage(null)}
             >
                 <div className="relative max-w-2xl max-h-[90vh] flex flex-col items-center">
@@ -1031,7 +1031,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         )}
         {/* ===== 加入中 / 加入完了 Overlay ===== */}
         {hirePhase !== 'idle' && (
-            <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+            <div className="fixed inset-0 z-[250] bg-black/80 flex items-center justify-center">
                 <div className={`px-8 py-6 rounded-2xl shadow-2xl text-center animate-in fade-in zoom-in-90 duration-200 border ${
                     hirePhase === 'loading'
                         ? 'bg-[#3e2723]/95 border-[#8b5a2b] text-amber-300'

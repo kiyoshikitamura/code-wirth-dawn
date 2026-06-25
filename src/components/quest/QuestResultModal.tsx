@@ -119,9 +119,9 @@ export default function QuestResultModal({
 
     return createPortal(
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 animate-fade-in">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             {isClosing && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-slate-950/90 z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
                     <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
                         {isTestPlay ? 'クリエイターズ工房に戻る中…' : '拠点に移動中…'}

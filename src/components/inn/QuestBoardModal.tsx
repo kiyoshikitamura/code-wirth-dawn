@@ -75,10 +75,10 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
                 {(loading || isAccepting) && (
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
+                    <div className="absolute inset-0 bg-slate-950/90 z-[100] flex flex-col items-center justify-center gap-3">
                         <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
                             {isAccepting ? '依頼を受注中…' : '読み込み中…'}

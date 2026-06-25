@@ -70,7 +70,7 @@ export default function ConfirmDialog({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 animate-in fade-in duration-150"
             onClick={(e) => { if (e.target === e.currentTarget && onCancel) onCancel(); }}
         >
             <div className={`bg-[#1a120b] border-2 ${styles.border} w-full max-w-sm shadow-2xl p-5 animate-in zoom-in-95 duration-200`}>

@@ -130,7 +130,7 @@ export default function BillingModal({ onClose }: Props) {
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 p-4 overflow-y-auto">
             {/* 特商法確認モーダル */}
             {purchaseConfirm && (
                 <PurchaseConfirmModal
@@ -189,7 +189,7 @@ export default function BillingModal({ onClose }: Props) {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Basic Plan */}
-                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#0a0d1a]/55 backdrop-blur-xs
+                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#0a0d1a]/80
                                 ${currentTier === 'basic' ? 'border-indigo-500/80 shadow-[0_0_15px_rgba(99,102,241,0.25)]' : 'border-slate-800/80 hover:border-slate-700'}`}>
                                 {currentTier === 'basic' && (
                                     <div className="absolute -top-2.5 right-4 bg-indigo-600 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded border border-indigo-400 flex items-center gap-1 shadow-md">
@@ -233,7 +233,7 @@ export default function BillingModal({ onClose }: Props) {
                             </div>
 
                             {/* Premium Plan */}
-                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#120f1c]/55 backdrop-blur-xs
+                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#120f1c]/80
                                 ${currentTier === 'premium' ? 'border-amber-500/80 shadow-[0_0_15px_rgba(245,158,11,0.25)]' : 'border-slate-800/80 hover:border-slate-700'}`}>
                                 {currentTier === 'premium' && (
                                     <div className="absolute -top-2.5 right-4 bg-amber-500 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded border border-amber-400 flex items-center gap-1 shadow-md">

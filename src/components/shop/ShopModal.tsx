@@ -301,7 +301,7 @@ export default function ShopModal({ onClose }: Props) {
         const effectList = getEffectList(selectedItem.effect_data);
 
         return createPortal(
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
                 <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                     {/* アイテムヘッダー */}
                     <div className="bg-gray-800/80 p-5 flex items-center gap-4 border-b border-gray-700">
@@ -421,7 +421,7 @@ export default function ShopModal({ onClose }: Props) {
 
     const mainContent = createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85dvh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
 
                 {/* Header */}
@@ -653,7 +653,7 @@ export default function ShopModal({ onClose }: Props) {
         const totalValue = sellPrice * sellQtyInput;
         
         return createPortal(
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 p-4">
                 <div className="bg-[#e3d5b8] border-4 border-[#8b5a2b] rounded-lg p-5 w-full max-w-sm text-[#2c241b] shadow-2xl animate-in zoom-in-95 duration-200">
                     <h3 className="text-lg font-bold font-serif mb-3 border-b-2 border-[#8b5a2b] pb-2 tracking-wide text-[#3e2723]">売却個数の選択</h3>
                     <p className="text-sm font-semibold mb-1 text-[#3e2723]">{sellItemForQtySelect.name}</p>
@@ -744,7 +744,7 @@ export default function ShopModal({ onClose }: Props) {
             {mainContent}
             {/* ===== 購入中 / 購入完了 Overlay ===== */}
             {purchasePhase !== 'idle' && createPortal(
-                <div className="fixed inset-0 z-[99998] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                <div className="fixed inset-0 z-[99998] bg-black/80 flex items-center justify-center">
                     <div className={`px-8 py-6 rounded-2xl shadow-2xl text-center animate-in fade-in zoom-in-90 duration-200 border ${
                         purchasePhase === 'loading'
                             ? 'bg-[#3e2723]/95 border-[#8b5a2b] text-amber-300'

@@ -321,7 +321,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
     return createPortal(
         <>
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-200">
             <div className="bg-[#1a120b] border-2 border-[#a38b6b] w-full max-w-md shadow-2xl relative p-6 font-sans overflow-y-auto max-h-[90vh]">
                 <button
                     onClick={onClose}
@@ -626,7 +626,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
                 {/* 内部IDポップアップダイアログ */}
                 {showIdPopup && (
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[110] animate-in fade-in duration-150">
+                    <div className="absolute inset-0 bg-black/90 flex items-center justify-center p-4 z-[110] animate-in fade-in duration-150">
                         <div className="bg-[#1a120b] border-2 border-[#a38b6b] p-5 max-w-xs w-full text-center space-y-4 shadow-2xl">
                             <h4 className="text-[#e3d5b8] text-sm font-bold border-b border-[#a38b6b]/30 pb-2">内部ID (お問い合わせ用)</h4>
                             <div className="bg-black/50 p-2 rounded text-xs font-mono text-gray-400 break-all select-all">

@@ -113,7 +113,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
     if (result) {
         return createPortal(
-            <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-500">
+            <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-in fade-in duration-500">
                 <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] p-8 max-w-md w-full text-center relative shadow-[0_0_20px_rgba(0,0,0,0.8)] rounded-sm">
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 -mt-16">
                         <Sparkles className="w-20 h-20 text-amber-500 animate-pulse" />
@@ -154,7 +154,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
 
     if (warningMessage) {
         return createPortal(
-            <div className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+            <div className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center p-4 animate-in fade-in">
                 <div className="bg-[#fdfbf7] border-2 border-red-800 p-6 max-w-sm w-full text-center relative shadow-2xl rounded-sm">
                     <h2 className="text-lg font-bold text-red-800 mb-3">所持金が足りません</h2>
                     <p className="text-[#8b5a2b] mb-6 text-sm flex items-center justify-center gap-2">
@@ -174,7 +174,7 @@ export default function PrayerModal({ onClose, locationId, locationName }: Praye
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-in fade-in">
             <div className={`bg-[#e3d5b8] text-[#2c241b] border-4 border-[#8b5a2b] max-w-2xl w-full shadow-[0_0_20px_rgba(0,0,0,0.8)] rounded-sm relative flex flex-col max-h-[90vh] overflow-hidden ${isPraying ? 'animate-pulse' : ''}`}>
 
                 {/* Header */}

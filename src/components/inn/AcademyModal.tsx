@@ -274,7 +274,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                         {/* 左矢印 */}
                         <button 
                             onClick={toggleSeries}
-                            className="p-1.5 sm:p-2.5 rounded-full bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-500 text-slate-400 hover:text-white transition-all active:scale-90 shrink-0 backdrop-blur-sm z-20"
+                            className="p-1.5 sm:p-2.5 rounded-full bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-500 text-slate-400 hover:text-white transition-all active:scale-90 shrink-0 z-20"
                         >
                             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
@@ -293,11 +293,11 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                             >
                                 <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-white/15 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out" />
                                 
-                                <span className={`text-[8px] sm:text-[9px] ${activeConfig.textColor} font-bold uppercase tracking-[0.25em] border border-current/40 px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs`}>
+                                <span className={`text-[8px] sm:text-[9px] ${activeConfig.textColor} font-bold uppercase tracking-[0.25em] border border-current/40 px-2 py-0.5 rounded bg-black/75`}>
                                     {currentSeries === 'basic' ? 'BASIC EDITION' : 'EXTRA EDITION'}
                                 </span>
                                 
-                                <div className="text-center bg-black/65 px-2 py-1.5 rounded-xl border border-white/5 backdrop-blur-sm w-full">
+                                <div className="text-center bg-black/75 px-2 py-1.5 rounded-xl border border-white/5 w-full">
                                     <span className="block text-xs sm:text-sm font-serif font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-100 leading-tight tracking-widest drop-shadow-md truncate">
                                         {currentSeries === 'basic' ? '黎明の知識' : '魔導と鉄壁'}
                                     </span>
@@ -316,7 +316,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                     e.stopPropagation();
                                     handleOpenCardList();
                                 }}
-                                className="absolute -bottom-2 -right-2 p-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-400 text-blue-400 hover:text-blue-300 transition-all active:scale-90 shadow-lg backdrop-blur-md z-30 group/btn"
+                                className="absolute -bottom-2 -right-2 p-2.5 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-400 text-blue-400 hover:text-blue-300 transition-all active:scale-90 shadow-lg z-30 group/btn"
                                 title="カードリストを確認"
                             >
                                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 group-hover/btn:scale-110 transition-transform" />
@@ -326,20 +326,20 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                         {/* 右矢印 */}
                         <button 
                             onClick={toggleSeries}
-                            className="p-1.5 sm:p-2.5 rounded-full bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-500 text-slate-400 hover:text-white transition-all active:scale-90 shrink-0 backdrop-blur-sm z-20"
+                            className="p-1.5 sm:p-2.5 rounded-full bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/50 hover:border-slate-500 text-slate-400 hover:text-white transition-all active:scale-90 shrink-0 z-20"
                         >
                             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                     </div>
 
                     {/* 重複説明 */}
-                    <p className="text-[9px] sm:text-[10px] text-amber-400/80 mb-3 sm:mb-4 max-w-xs leading-normal bg-amber-955/10 border border-amber-900/20 px-3 py-1.5 rounded-lg text-center backdrop-blur-xs">
+                    <p className="text-[9px] sm:text-[10px] text-amber-400/80 mb-3 sm:mb-4 max-w-xs leading-normal bg-amber-955/20 border border-amber-900/30 px-3 py-1.5 rounded-lg text-center">
                         ※重複カードまたは習得済みのスキルが出現した場合、<br />
                         1枚につき <span className="text-amber-300 font-bold">{activeConfig.refund} G</span> 返還されます。
                     </p>
 
                     {/* 購入・開封コントロール */}
-                    <div className="w-full bg-[#161a33]/65 backdrop-blur-md rounded-2xl p-4 border border-blue-900/40 shadow-inner flex flex-col items-center gap-3">
+                    <div className="w-full bg-[#161a33]/85 rounded-2xl p-4 border border-blue-900/40 shadow-inner flex flex-col items-center gap-3">
                         
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                             {/* ゴールドで購入ボタン */}
@@ -552,7 +552,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                             }}
                                         >
                                             <div className={`absolute inset-0 ${activeConfig.cardBackBg} rounded-xl sm:rounded-2xl pointer-events-none`} />
-                                            <div className="relative z-10 w-full h-full border border-amber-500/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6 bg-black/45 backdrop-blur-[0.5px]">
+                                            <div className="relative z-10 w-full h-full border border-amber-500/20 rounded-lg sm:rounded-xl flex flex-col items-center justify-between py-3 sm:py-6 bg-black/55">
                                                 <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400/80 font-black text-[8px] sm:text-[10px]">
                                                     {currentSeries === 'basic' ? '契約' : '学院'}
                                                 </div>
@@ -595,7 +595,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                                 
                                                 {/* 重複キャッシュバックの表示 */}
                                                 {card.isDuplicate && (
-                                                    <div className="absolute inset-0 bg-amber-955/85 backdrop-blur-[1px] flex flex-col items-center justify-center p-1 text-center animate-in fade-in duration-300">
+                                                    <div className="absolute inset-0 bg-amber-955/90 flex flex-col items-center justify-center p-1 text-center animate-in fade-in duration-300">
                                                         <Coins className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-400 mb-0.5 animate-bounce" />
                                                         <span className="text-[7px] sm:text-[8px] text-amber-400 font-bold uppercase leading-none">+{activeConfig.refund}G</span>
                                                         <span className="text-[5px] sm:text-[6px] text-amber-300/60 mt-0.5 whitespace-nowrap hidden sm:inline">キャッシュバック</span>
@@ -723,7 +723,7 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                     </div>
 
                     {/* カード詳細スペックプレビューパネル（右側） */}
-                    <div className="w-full md:w-60 bg-[#0f1328]/80 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col gap-3 shrink-0 justify-center min-h-[140px] md:min-h-0 backdrop-blur-md">
+                    <div className="w-full md:w-60 bg-[#0f1328]/95 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col gap-3 shrink-0 justify-center min-h-[140px] md:min-h-0">
                         {hoveredCard ? (
                             (() => {
                                 const effectList = getEffectList(hoveredCard.effect_data);
@@ -780,8 +780,8 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
 
     const mainContent = createPortal(
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-0 md:p-4">
-            {/* 背景（すりガラス） - 兄弟関係にして interactive 要素を含めない */}
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md pointer-events-none" />
+            {/* 背景 - 兄弟関係にして interactive 要素を含めない */}
+            <div className="absolute inset-0 bg-slate-950/90 pointer-events-none" />
 
             <div className="relative z-10 bg-[#070914] text-slate-100 w-full max-w-4xl h-full md:h-[90dvh] flex flex-col md:rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.8)] border-0 md:border-2 border-blue-950 overflow-hidden">
                 {/* 魔術学院ヘッダー */}

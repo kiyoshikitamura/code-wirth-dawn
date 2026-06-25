@@ -38,7 +38,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
 
     return createPortal(
         <>
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/90 animate-in fade-in duration-200">
             <div className="w-full max-w-lg h-auto max-h-[92dvh] bg-gray-900 border border-gray-800 rounded-lg shadow-2xl overflow-hidden flex flex-col">
 
                 {/* ── ヘッダー ── */}
