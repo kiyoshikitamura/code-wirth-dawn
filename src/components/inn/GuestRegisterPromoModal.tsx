@@ -25,7 +25,11 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
 
         try {
             // 本登録完了後に自動でパックプロモーションを開くため、sessionStorageにフラグを保存
-            sessionStorage.setItem('wirth_dawn_just_registered', 'true');
+            try {
+                sessionStorage.setItem('wirth_dawn_just_registered', 'true');
+            } catch (err) {
+                console.warn('[GuestRegisterPromoModal] sessionStorage setItem failed:', err);
+            }
 
             const { error } = await supabase.auth.linkIdentity({
                 provider: 'google',
@@ -41,7 +45,9 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
             console.error('[GuestRegisterPromoModal] Google Link Error:', e);
             setErrorMsg(`Google連携に失敗しました: ${e.message}`);
             setLoading(false);
-            sessionStorage.removeItem('wirth_dawn_just_registered');
+            try {
+                sessionStorage.removeItem('wirth_dawn_just_registered');
+            } catch (err) {}
         }
     };
 

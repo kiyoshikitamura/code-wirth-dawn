@@ -239,13 +239,17 @@ export default function TitlePageInner() {
         clearGameStarted();
         try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('game-storage');
-            localStorage.removeItem('quest-storage');
-            // New Game の意図を記録（OAuth後、既存キャラ存在チェック用）
-            sessionStorage.setItem('cwd_new_game_intent', '1');
-            // 古い intent フラグをクリア（残存防止）
-            sessionStorage.removeItem('cwd_return_to_title');
-            sessionStorage.removeItem('cwd_delete_intent');
+            try {
+                localStorage.removeItem('game-storage');
+                localStorage.removeItem('quest-storage');
+                // New Game の意図を記録（OAuth後、既存キャラ存在チェック用）
+                sessionStorage.setItem('cwd_new_game_intent', '1');
+                // 古い intent フラグをクリア（残存防止）
+                sessionStorage.removeItem('cwd_return_to_title');
+                sessionStorage.removeItem('cwd_delete_intent');
+            } catch (err) {
+                console.warn('[TitlePage] Storage operation failed:', err);
+            }
         }
 
         const { error } = await supabase.auth.signInWithOAuth({

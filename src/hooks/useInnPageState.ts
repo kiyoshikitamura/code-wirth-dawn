@@ -70,7 +70,11 @@ export function useInnPageState() {
         if (!onboardingTourStep || onboardingTourStep === 'completed') return;
         const nextVal = onboardingTourStep === '6' ? 'completed' : String(Number(onboardingTourStep) + 1);
         setOnboardingTourStep(nextVal);
-        localStorage.setItem('wirth_dawn_onboarding_tour_step', nextVal);
+        try {
+            localStorage.setItem('wirth_dawn_onboarding_tour_step', nextVal);
+        } catch (err) {
+            console.warn('[useInnPageState] localStorage setItem failed:', err);
+        }
     }, [onboardingTourStep]);
 
     const [billingDialog, setBillingDialog] = useState<{

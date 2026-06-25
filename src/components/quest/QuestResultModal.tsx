@@ -97,7 +97,11 @@ export default function QuestResultModal({
         setTimeout(async () => {
             try {
                 // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
-                sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
+                try {
+                    sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
+                } catch (err) {
+                    console.warn('[QuestResultModal] sessionStorage setItem failed:', err);
+                }
                 await onClose();
             } catch (e) {
                 console.error('[QuestResultModal] onClose failed:', e);
