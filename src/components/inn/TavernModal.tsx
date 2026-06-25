@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { UserProfile, PartyMember } from '@/types/game';
-import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown } from 'lucide-react';
+import { X, UserPlus, Shield, Sword, Heart, RefreshCw, Flag, Sparkles, Ghost, Star, Crown, Loader2 } from 'lucide-react';
 import { ShadowSummary } from '@/services/shadowService';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
@@ -36,19 +37,22 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         userProfile: storeUserProfile
     } = useGameStore();
 
-    const [isClosing, setIsClosing] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const closeLockedRef = useRef(false);
 
     const handleClose = async () => {
-        if (isClosing) return;
-        setIsClosing(true);
-        setTimeout(async () => {
-            try {
-                await onClose();
-            } catch (e) {
-                console.error('[TavernModal] onClose failed:', e);
-                setIsClosing(false);
-            }
-        }, 0);
+        if (closeLockedRef.current) return;
+        closeLockedRef.current = true;
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[TavernModal] onClose failed:', e);
+            closeLockedRef.current = false;
+        }
     };
 
     const activeGold = storeUserProfile?.gold ?? userProfile.gold;
@@ -258,76 +262,74 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
         setHirePhase('loading');
 
-        setTimeout(async () => {
-            // スナップショット（バックアップ）
-            const previousParty = [...partyMembers];
-            const previousGold = gold;
-            const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
+        // スナップショット（バックアップ）
+        const previousParty = [...partyMembers];
+        const previousGold = gold;
+        const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
 
-            // 楽観的UI用の新規メンバーオブジェクト
-            const optimisticMember: PartyMember = {
-                ...shadow,
-                id: shadow.profile_id || `temp-${Date.now()}`,
-                owner_id: userProfile.id,
-                durability: shadow.stats?.hp || 100,
-                max_durability: shadow.stats?.hp || 100,
-                hp: shadow.stats?.hp || 100,
-                max_hp: shadow.stats?.hp || 100,
-                atk: shadow.stats?.atk || 0,
-                def: shadow.stats?.def || 0,
-                is_active: true,
-                source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
-            } as any;
+        // 楽観的UI用の新規メンバーオブジェクト
+        const optimisticMember: PartyMember = {
+            ...shadow,
+            id: shadow.profile_id || `temp-${Date.now()}`,
+            owner_id: userProfile.id,
+            durability: shadow.stats?.hp || 100,
+            max_durability: shadow.stats?.hp || 100,
+            hp: shadow.stats?.hp || 100,
+            max_hp: shadow.stats?.hp || 100,
+            atk: shadow.stats?.atk || 0,
+            def: shadow.stats?.def || 0,
+            is_active: true,
+            source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
+        } as any;
 
-            // Zustandの楽観的更新
-            const newGold = Math.max(0, gold - shadow.contract_fee);
-            useGameStore.setState({
-                gold: newGold,
-                partyMembers: [...partyMembers, optimisticMember],
-                userProfile: storeUserProfile ? {
-                    ...storeUserProfile,
-                    gold: newGold
-                } : null
+        // Zustandの楽観的更新
+        const newGold = Math.max(0, gold - shadow.contract_fee);
+        useGameStore.setState({
+            gold: newGold,
+            partyMembers: [...partyMembers, optimisticMember],
+            userProfile: storeUserProfile ? {
+                ...storeUserProfile,
+                gold: newGold
+            } : null
+        });
+
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/tavern/hire', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                },
+                body: JSON.stringify({ user_id: userProfile.id, shadow })
             });
-
-            try {
-                const authHeaders = await getAuthHeaders();
-                const res = await fetch('/api/tavern/hire', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...authHeaders
-                    },
-                    body: JSON.stringify({ user_id: userProfile.id, shadow })
-                });
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-                    throw new Error(errData.error || '不明なエラー');
-                }
-                const data = await res.json();
-                if (data.success) {
-                    setHireResultMsg('パーティに加入した！ ✨');
-                    setHirePhase('done');
-                    // バックグラウンドで同期
-                    fetchPartyData();
-                    fetchShadows();
-                    useGameStore.getState().fetchUserProfile();
-                    setTimeout(() => setHirePhase('idle'), 2200);
-                } else {
-                    throw new Error(data.error || '不明なエラー');
-                }
-            } catch (e: any) {
-                // ロールバック
-                useGameStore.setState({
-                    gold: previousGold,
-                    partyMembers: previousParty,
-                    userProfile: previousProfile
-                });
-                setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
-                setHirePhase('done');
-                setTimeout(() => setHirePhase('idle'), 2500);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                throw new Error(errData.error || '不明なエラー');
             }
-        }, 0);
+            const data = await res.json();
+            if (data.success) {
+                setHireResultMsg('パーティに加入した！ ✨');
+                setHirePhase('done');
+                // バックグラウンドで同期
+                fetchPartyData();
+                fetchShadows();
+                useGameStore.getState().fetchUserProfile();
+                setTimeout(() => setHirePhase('idle'), 2200);
+            } else {
+                throw new Error(data.error || '不明なエラー');
+            }
+        } catch (e: any) {
+            // ロールバック
+            useGameStore.setState({
+                gold: previousGold,
+                partyMembers: previousParty,
+                userProfile: previousProfile
+            });
+            setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
+            setHirePhase('done');
+            setTimeout(() => setHirePhase('idle'), 2500);
+        }
     };
 
     const handleDismiss = async (memberId: string, memberName: string) => {
@@ -441,17 +443,14 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     const isEmbargoed = reputationScore <= -300;
     if (!isOpen) return null;
+    if (!mounted) return null;
 
-    return (
+    return createPortal(
         <>
-        <div className="fixed inset-0 z-[60] flex justify-center items-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-md h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
-                {isClosing && (
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
-                        <div className="w-8 h-8 border-2 border-[#8b5a2b] border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-[#3e2723] font-serif tracking-widest animate-pulse">読み込み中…</p>
-                    </div>
-                )}
+        <div className="fixed inset-0 z-[60] flex justify-center items-center p-4 animate-in fade-in">
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
+            <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-md h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
+
 
                 {/* ===== Header ===== */}
                 <div className="bg-[#3e2723] border-b-2 border-[#8b5a2b] p-4 flex justify-between items-center flex-shrink-0">
@@ -467,8 +466,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     </div>
                     <button 
                         onClick={handleClose} 
-                        disabled={isClosing}
-                        className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                        className="text-[#a38b6b] hover:text-white transition-colors"
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -564,8 +562,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         {/* ===== Content ===== */}
                         <div className="flex-1 overflow-y-auto p-3">
                             {loading ? (
-                                <div className="h-full flex items-center justify-center text-[#8b5a2b] font-serif animate-pulse text-lg">
-                                    酒場を見回しています...
+                                <div className="h-full flex flex-col items-center justify-center gap-3 text-[#8b5a2b] font-serif">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#8b5a2b]" />
+                                    <span className="animate-pulse text-lg">酒場を見回しています...</span>
                                 </div>
                             ) : activeTab === 'hire' ? (
                                 <div className="space-y-2">
@@ -888,7 +887,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 ? `${selectedShadow.epithet} ${selectedShadow.name}`
                 : selectedShadow.name;
             return (
-            <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
+            <div className="fixed inset-0 z-[200] bg-black/85 flex items-center justify-center p-4" onClick={() => setSelectedShadow(null)}>
                 <div className="bg-[#fdfbf7] border-2 border-[#8b5a2b] w-full max-w-md rounded-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
                     {/* Header */}
                     <div className="bg-[#3e2723] p-5 flex items-center gap-4 border-b-2 border-[#8b5a2b]">
@@ -980,8 +979,14 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                         currentParty.length >= 4 ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
                                         : userProfile.gold < selectedShadow.contract_fee ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed'
                                         : 'bg-[#8b5a2b] hover:bg-[#6b4522] text-white border border-[#8b5a2b] shadow-lg'
-                                    }`}>
-                                    {currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
+                                    }`}
+                                >
+                                    {hirePhase === 'loading' ? (
+                                        <div className="flex items-center justify-center gap-1.5">
+                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                            <span>手続き中…</span>
+                                        </div>
+                                    ) : currentParty.length >= 4 ? 'パーティ満員' : userProfile.gold < selectedShadow.contract_fee ? '資金不足' : `契約を結ぶ (${selectedShadow.contract_fee.toLocaleString()} G)`}
                                 </button>
                             )}
                         </div>
@@ -1006,7 +1011,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         {/* ===== Enlarged Image Popup ===== */}
         {enlargedImage && (
             <div 
-                className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+                className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center p-4 animate-in fade-in"
                 onClick={() => setEnlargedImage(null)}
             >
                 <div className="relative max-w-2xl max-h-[90vh] flex flex-col items-center">
@@ -1026,7 +1031,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         )}
         {/* ===== 加入中 / 加入完了 Overlay ===== */}
         {hirePhase !== 'idle' && (
-            <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+            <div className="fixed inset-0 z-[250] bg-black/80 flex items-center justify-center">
                 <div className={`px-8 py-6 rounded-2xl shadow-2xl text-center animate-in fade-in zoom-in-90 duration-200 border ${
                     hirePhase === 'loading'
                         ? 'bg-[#3e2723]/95 border-[#8b5a2b] text-amber-300'
@@ -1045,6 +1050,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 </div>
             </div>
         )}
-        </>
+        </>,
+        document.body
     );
 }

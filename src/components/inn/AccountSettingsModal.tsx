@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -39,6 +40,11 @@ const AVATAR_BORDER_COLORS: Record<SubscriptionTier, string> = {
 };
 
 export default function AccountSettingsModal({ onClose }: Props) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile, fetchUserProfile } = useGameStore();
     const router = useRouter();
 
@@ -196,16 +202,33 @@ export default function AccountSettingsModal({ onClose }: Props) {
         setLinkLoading(true);
         setError('');
         try {
+            // 本登録完了後に自動でパックプロモーションを開くため、sessionStorageにフラグを保存
+            if (typeof window !== 'undefined') {
+                try {
+                    sessionStorage.setItem('wirth_dawn_just_registered', 'true');
+                } catch (err) {
+                    console.warn('[AccountSettingsModal] sessionStorage setItem failed:', err);
+                }
+            }
+
             const { error } = await supabase.auth.linkIdentity({
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/inn`,
+                    queryParams: {
+                        prompt: 'select_account consent'
+                    }
                 },
             });
             if (error) throw error;
             // → Google OAuth画面にリダイレクトされる
             // → コールバック後 /inn に戻り、匿名アカウントにGoogle identityが紐付く
         } catch (e: any) {
+            if (typeof window !== 'undefined') {
+                try {
+                    sessionStorage.removeItem('wirth_dawn_just_registered');
+                } catch (err) {}
+            }
             setError(`Google連携に失敗しました: ${e.message}`);
             setLinkLoading(false);
         }
@@ -294,9 +317,11 @@ export default function AccountSettingsModal({ onClose }: Props) {
         }
     };
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <>
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-200">
             <div className="bg-[#1a120b] border-2 border-[#a38b6b] w-full max-w-md shadow-2xl relative p-6 font-sans overflow-y-auto max-h-[90vh]">
                 <button
                     onClick={onClose}
@@ -568,7 +593,14 @@ export default function AccountSettingsModal({ onClose }: Props) {
                                 disabled={linkLoading}
                                 className="w-full flex items-center justify-center py-2 px-4 bg-white/10 border border-amber-500/60 text-amber-200 text-xs font-bold rounded hover:bg-amber-900/40 hover:border-amber-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                                Google アカウントと連携する
+                                {linkLoading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mr-2" />
+                                        Google 認証を開始中...
+                                    </>
+                                ) : (
+                                    "Google アカウントと連携する"
+                                )}
                             </button>
                             <p className="text-[10px] text-amber-600/60 text-center mt-2">
                                 7日間の保存期限が解除され、データが永続化されます
@@ -594,7 +626,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
                 {/* 内部IDポップアップダイアログ */}
                 {showIdPopup && (
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[110] animate-in fade-in duration-150">
+                    <div className="absolute inset-0 bg-black/90 flex items-center justify-center p-4 z-[110] animate-in fade-in duration-150">
                         <div className="bg-[#1a120b] border-2 border-[#a38b6b] p-5 max-w-xs w-full text-center space-y-4 shadow-2xl">
                             <h4 className="text-[#e3d5b8] text-sm font-bold border-b border-[#a38b6b]/30 pb-2">内部ID (お問い合わせ用)</h4>
                             <div className="bg-black/50 p-2 rounded text-xs font-mono text-gray-400 break-all select-all">
@@ -636,6 +668,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 onCancel={() => setShowLogoutConfirm(false)}
             />
         )}
-        </>
+        </>,
+        document.body
     );
 }

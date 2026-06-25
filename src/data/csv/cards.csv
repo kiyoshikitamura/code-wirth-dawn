@@ -117,3 +117,5 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 118,card_search_light,サーチライト,Support,1,none,0,0,self,search_light,/images/items/book_search_light_1781808216346.png,デッキから「Heal」または「Defense」タイプのカードを1枚指定して手札に加える。
 119,card_double_cast,ダブルキャスト,Support,2,none,0,0,self,double_cast,/images/items/book_double_cast_1781803523307.png,次に使用する「Magic」または「Skill」カードが消費AP0で2回連続発動する。
 120,card_recycle,リサイクル,Support,1,none,0,0,self,recycle_focus,/images/items/book_recycle_1781808226651.png,捨て札から「Item」以外のランダムなカードを1枚手札に戻す。そのカードのAPコストは戦闘終了まで-1。
+141,card_demon_fire_abyss,魔界の黒炎,Magic,2,none,0,30,single_enemy,burn,/images/items/scroll_holy_sword.png,魔界の火術。敵単体に30の魔法ダメージを与え、2ターンの間「炎上」状態にする。
+142,card_demon_claw_shadow,シャドークロウ,Skill,1,none,0,18,single_enemy,bleed_minor,/images/items/book_dagger.png,影の爪。敵単体に18 of 物理ダメージを与え、出血（軽微）を付与。

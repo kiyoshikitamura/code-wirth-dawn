@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Scroll, AlertTriangle, ChevronRight, Info } from 'lucide-react';
 import { Scenario, UserProfile } from '@/types/game';
 
@@ -14,33 +15,35 @@ interface QuestBoardModalProps {
 type DifficultyTab = 'easy' | 'normal' | 'hard';
 
 export default function QuestBoardModal({ isOpen, onClose, quests, loading, userProfile, onSelect }: QuestBoardModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [activeTab, setActiveTab] = useState<DifficultyTab>('easy');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
     const [pendingQuest, setPendingQuest] = useState<Scenario | null>(null);
-    const [isClosing, setIsClosing] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
 
-    if (!isOpen) return null;
-
-    const handleClose = async () => {
-        if (isClosing) return;
-        setIsClosing(true);
-        try {
-            await onClose();
-        } catch (e) {
-            console.error('[QuestBoardModal] onClose failed:', e);
-            setIsClosing(false);
-        }
-    };
-
-    const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab || q.slug?.startsWith('main_ep'));
+    const [isClosing, setIsClosing] = useState(false);
 
     const tabCounts = useMemo(() => ({
         easy: quests.filter((q: any) => q.difficulty_tier === 'easy').length,
         normal: quests.filter((q: any) => q.difficulty_tier === 'normal').length,
         hard: quests.filter((q: any) => q.difficulty_tier === 'hard').length,
     }), [quests]);
+
+    if (!isOpen) return null;
+    if (!mounted) return null;
+
+    const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        onClose();
+    };
+
+    const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab || q.slug?.startsWith('main_ep'));
 
     const handleAccept = (quest: Scenario) => {
         const userLevel = userProfile?.level || 1;
@@ -70,11 +73,12 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         { key: 'hard', label: 'Hard', color: 'text-red-400' },
     ];
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
-                {(loading || isClosing || isAccepting) && (
-                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center gap-3">
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
+            <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85vh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
+                {(loading || isAccepting) && (
+                    <div className="absolute inset-0 bg-slate-950/90 z-[100] flex flex-col items-center justify-center gap-3">
                         <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
                             {isAccepting ? '依頼を受注中…' : '読み込み中…'}
@@ -147,7 +151,6 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                             : 'bg-[#fdfbf7] border-[#c2b280] hover:border-[#a38b6b]'
                                     }`}
                                     onClick={() => {
-                                        if (isClosing) return;
                                         setDetailQuest(s);
                                     }}
                                 >
@@ -365,6 +368,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                     </div>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 }

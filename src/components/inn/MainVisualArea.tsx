@@ -15,6 +15,7 @@ interface MainVisualAreaProps {
     isHub?: boolean; // v27.0: ハブ判定（繁栄度バッジ非表示、フレーバー固定）
     isMapRecommended?: boolean;
     isGossipRecommended?: boolean;
+    isTourActive?: boolean;
 }
 
 export default function MainVisualArea({ 
@@ -29,7 +30,8 @@ export default function MainVisualArea({
     showGossipBadge,
     isHub = false, 
     isMapRecommended = false,
-    isGossipRecommended = false
+    isGossipRecommended = false,
+    isTourActive = false
 }: MainVisualAreaProps) {
     const prosperity = isHub ? 4 : (worldState?.prosperity_level || 3);
     const locationName = worldState?.location_name || '未知の土地';
@@ -136,7 +138,10 @@ export default function MainVisualArea({
             <div className="absolute top-4 right-4 flex gap-2.5 z-10">
                 <button
                     onClick={onOpenHistory}
-                    className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-amber-600/40 shadow-lg flex items-center justify-center text-amber-500 hover:bg-amber-900/60 hover:text-amber-300 transition-colors active:scale-95 focus:outline-none"
+                    disabled={isTourActive}
+                    className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-amber-600/40 shadow-lg flex items-center justify-center text-amber-500 hover:bg-amber-900/60 hover:text-amber-300 transition-colors active:scale-95 focus:outline-none ${
+                        isTourActive ? 'opacity-30 pointer-events-none' : ''
+                    }`}
                     title="私の歴史を開く"
                 >
                     <BookOpen size={18} />
@@ -149,7 +154,10 @@ export default function MainVisualArea({
                 {onReturnHub && !isHub && (
                     <button
                         onClick={onReturnHub}
-                        className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-blue-600/40 shadow-lg flex items-center justify-center text-blue-400 hover:bg-blue-900/60 hover:text-blue-200 transition-colors active:scale-95 focus:outline-none"
+                        disabled={isTourActive}
+                        className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-blue-600/40 shadow-lg flex items-center justify-center text-blue-400 hover:bg-blue-900/60 hover:text-blue-200 transition-colors active:scale-95 focus:outline-none ${
+                            isTourActive ? 'opacity-30 pointer-events-none' : ''
+                        }`}
                         title="名もなき旅人の拠所へ"
                     >
                         <Home size={18} />
@@ -158,7 +166,10 @@ export default function MainVisualArea({
                 {onLeaveHub && isHub && (
                     <button
                         onClick={onLeaveHub}
-                        className="relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-blue-600/40 shadow-lg flex items-center justify-center text-blue-400 hover:bg-blue-900/60 hover:text-blue-200 transition-colors active:scale-95 focus:outline-none"
+                        disabled={isTourActive}
+                        className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md border border-blue-600/40 shadow-lg flex items-center justify-center text-blue-400 hover:bg-blue-900/60 hover:text-blue-200 transition-colors active:scale-95 focus:outline-none ${
+                            isTourActive ? 'opacity-30 pointer-events-none' : ''
+                        }`}
                         title="直前の拠点へ戻る"
                     >
                         <ArrowLeft size={18} />
@@ -167,10 +178,13 @@ export default function MainVisualArea({
                 {onOpenGossip && !isHub && (
                     <button
                         onClick={onOpenGossip}
+                        disabled={isTourActive}
                         className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md shadow-lg flex items-center justify-center transition-all active:scale-95 focus:outline-none ${
-                            isGossipRecommended
-                                ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
-                                : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
+                            isTourActive
+                                ? 'opacity-30 border border-emerald-600/20 text-emerald-400/20 pointer-events-none'
+                                : isGossipRecommended
+                                    ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
+                                    : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
                         }`}
                         title="街の噂話を聞く"
                     >
@@ -180,7 +194,7 @@ export default function MainVisualArea({
                                 !
                             </span>
                         )}
-                        {isGossipRecommended && (
+                        {!isTourActive && isGossipRecommended && (
                             <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-slate-950 scale-95 leading-none animate-pulse">噂</span>
                         )}
                     </button>
@@ -188,16 +202,19 @@ export default function MainVisualArea({
                 {onOpenMap && !isHub && (
                     <button
                         onClick={onOpenMap}
-                        className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md shadow-lg flex items-center justify-center transition-all active:scale-95 focus:outline-none ${
-                            isMapRecommended
-                                ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
-                                : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
+                        disabled={isTourActive && !isMapRecommended}
+                        className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md shadow-lg flex items-center justify-center transition-all focus:outline-none ${
+                            isTourActive && !isMapRecommended
+                                ? 'opacity-30 border border-[#2a4080]/10 text-blue-200/10 pointer-events-none'
+                                : isMapRecommended
+                                    ? 'border-2 border-amber-500 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.7)] animate-bounce active:scale-95'
+                                    : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200 active:scale-95'
                         }`}
                         title="ワールドマップを開く"
                     >
                         <Compass size={18} />
                         {isMapRecommended && (
-                            <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-slate-950 scale-95 leading-none animate-pulse">MAP</span>
+                            <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-[#0a1628] rounded-full flex items-center justify-center text-[7px] font-black px-1.5 py-0.5 shadow-lg border border-slate-950 scale-95 leading-none animate-pulse">出発</span>
                         )}
                     </button>
                 )}

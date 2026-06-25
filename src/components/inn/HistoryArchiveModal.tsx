@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
     BookOpen, X, Scroll, Globe, Skull, Calendar, MapPin, 
     Award, Heart, Zap, Shield, Plus, Minus, ArrowUp, Compass
@@ -13,6 +14,11 @@ interface HistoryArchiveModalProps {
 type FilterType = 'all' | 'quest' | 'growth' | 'collection' | 'world' | 'hero';
 
 export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [filter, setFilter] = useState<FilterType>('all');
     const [loading, setLoading] = useState(true);
     const [timelineData, setTimelineData] = useState<any[]>([]);
@@ -120,7 +126,9 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
         </button>
     );
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fade-in">
             <div className="relative w-full max-w-2xl bg-[#0a0604] border border-amber-900/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[85vh] sm:h-[720px]">
                 
@@ -330,7 +338,8 @@ export default function HistoryArchiveModal({ userId, onClose }: HistoryArchiveM
                     </p>
                 </footer>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

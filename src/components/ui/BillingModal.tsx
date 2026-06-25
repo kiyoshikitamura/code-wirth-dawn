@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Coins, Sparkles, Key, CreditCard, ExternalLink, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
@@ -12,10 +13,16 @@ interface Props {
 }
 
 export default function BillingModal({ onClose }: Props) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile, fetchUserProfile } = useGameStore();
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [portalLoading, setPortalLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
     
     // 購入確認ポップアップの状態
     const [purchaseConfirm, setPurchaseConfirm] = useState<{
@@ -53,6 +60,8 @@ export default function BillingModal({ onClose }: Props) {
     };
 
     const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
         soundManager?.playSE('se_click');
         onClose();
     };
@@ -118,8 +127,10 @@ export default function BillingModal({ onClose }: Props) {
     const isPurchasedElite = userProfile?.has_purchased_elite === true;
     const currentTier = userProfile?.subscription_tier || 'free';
 
-    return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    if (!mounted) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 p-4 overflow-y-auto">
             {/* 特商法確認モーダル */}
             {purchaseConfirm && (
                 <PurchaseConfirmModal
@@ -150,7 +161,11 @@ export default function BillingModal({ onClose }: Props) {
                             魔導ショップ ＆ 旅人の契約
                         </h2>
                     </div>
-                    <button onClick={handleClose} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                    <button 
+                        onClick={handleClose} 
+                        disabled={isClosing}
+                        className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors disabled:opacity-55"
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -174,7 +189,7 @@ export default function BillingModal({ onClose }: Props) {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Basic Plan */}
-                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#0a0d1a]/55 backdrop-blur-xs
+                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#0a0d1a]/80
                                 ${currentTier === 'basic' ? 'border-indigo-500/80 shadow-[0_0_15px_rgba(99,102,241,0.25)]' : 'border-slate-800/80 hover:border-slate-700'}`}>
                                 {currentTier === 'basic' && (
                                     <div className="absolute -top-2.5 right-4 bg-indigo-600 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded border border-indigo-400 flex items-center gap-1 shadow-md">
@@ -218,7 +233,7 @@ export default function BillingModal({ onClose }: Props) {
                             </div>
 
                             {/* Premium Plan */}
-                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#120f1c]/55 backdrop-blur-xs
+                            <div className={`relative rounded-xl border p-5 flex flex-col justify-between transition-all bg-[#120f1c]/80
                                 ${currentTier === 'premium' ? 'border-amber-500/80 shadow-[0_0_15px_rgba(245,158,11,0.25)]' : 'border-slate-800/80 hover:border-slate-700'}`}>
                                 {currentTier === 'premium' && (
                                     <div className="absolute -top-2.5 right-4 bg-amber-500 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded border border-amber-400 flex items-center gap-1 shadow-md">
@@ -441,18 +456,14 @@ export default function BillingModal({ onClose }: Props) {
                 </div>
 
                 {/* フッター */}
-                <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-slate-500">
-                            各種決済には外部のセキュアな決済システム（Stripe）を使用しています。
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[9px] text-slate-500">
-                        <ShieldCheck size={12} className="text-emerald-600" />
+                <div className="px-6 py-4 border-t border-slate-800/80 bg-slate-950 flex justify-center items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-500 font-sans">
+                        <ShieldCheck size={14} className="text-emerald-600" />
                         <span>SSL 暗号化により決済データは安全に送信されます。</span>
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
@@ -11,6 +12,11 @@ interface ColosseumModalProps {
 }
 
 export default function ColosseumModal({ onClose }: ColosseumModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
     const [selectedDiff, setSelectedDiff] = useState<'easy' | 'normal' | 'hard' | null>(null);
@@ -69,7 +75,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
     }
 
     if (showRules) {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="relative w-full max-w-lg bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[90vh]">
                     {/* Header */}
@@ -174,7 +180,6 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                         </section>
                     </div>
 
-                    {/* Footer */}
                     <div className="px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] flex justify-end">
                         <button
                             onClick={() => setShowRules(false)}
@@ -184,11 +189,14 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                         </button>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="relative w-full max-w-lg bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[90vh]">
                 {/* Header */}
@@ -349,6 +357,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

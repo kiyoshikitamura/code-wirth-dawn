@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { User, X, Ban } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { User, X, Ban, Loader2 } from 'lucide-react';
 
 export interface NpcDialogData {
     facilityName: string;
@@ -65,56 +66,71 @@ function useTypewriter(text: string, speed: number = 30) {
 }
 
 export default function NpcDialogModal({ npcData, onClose, onAction, buttonText, isDisabled, secondaryActions }: NpcDialogModalProps) {
-    const [isActionLoading, setIsActionLoading] = useState(false);
-    
-    if (!npcData) return null;
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
-    const isBanned = npcData.isBanned;
-    const isTheodore = npcData.name === 'テオドール';
-    const { displayed, done, skip } = useTypewriter(npcData.dialogue, isTheodore ? 0 : 30);
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [clickedAction, setClickedAction] = useState<'main' | 'close' | number | null>(null);
+    const clickLockedRef = useRef(false);
+    
+    const isBanned = npcData?.isBanned;
+    const isTheodore = npcData?.name === 'テオドール';
+    const { displayed, done, skip } = useTypewriter(npcData?.dialogue || '', isTheodore ? 0 : 30);
+
+    if (!npcData) return null;
+    if (!mounted) return null;
 
     const handleClose = async () => {
-        if (isActionLoading) return;
-        setIsActionLoading(true);
-        setTimeout(async () => {
-            try {
-                await onClose();
-            } catch (e) {
-                console.error('[NpcDialogModal] onClose failed:', e);
-                setIsActionLoading(false);
-            }
-        }, 0);
+        if (clickLockedRef.current) return;
+        clickLockedRef.current = true;
+        try {
+            await onClose();
+        } catch (e) {
+            console.error('[NpcDialogModal] onClose failed:', e);
+            clickLockedRef.current = false;
+        }
     };
 
     const handleAction = async () => {
-        if (isActionLoading || isDisabled || isBanned) return;
+        if (clickLockedRef.current || isActionLoading || isDisabled || isBanned) return;
+        clickLockedRef.current = true;
         setIsActionLoading(true);
+        setClickedAction('main');
         setTimeout(async () => {
             try {
                 await onAction();
             } catch (e) {
                 console.error('[NpcDialogModal] onAction failed:', e);
+                clickLockedRef.current = false;
                 setIsActionLoading(false);
+                setClickedAction(null);
             }
         }, 0);
     };
 
-    const handleSecondaryAction = async (onClick: () => void | Promise<void>) => {
-        if (isActionLoading) return;
+    const handleSecondaryAction = async (onClick: () => void | Promise<void>, index: number) => {
+        if (clickLockedRef.current || isActionLoading) return;
+        clickLockedRef.current = true;
         setIsActionLoading(true);
+        setClickedAction(index);
         setTimeout(async () => {
             try {
                 await onClick();
             } catch (e) {
                 console.error('[NpcDialogModal] secondaryAction failed:', e);
+                clickLockedRef.current = false;
                 setIsActionLoading(false);
+                setClickedAction(null);
             }
         }, 0);
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-start pt-20 justify-center p-4 sm:p-6">
-            <div className={`w-full max-w-md border rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-top duration-300 ${
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-start pt-20 justify-center p-4 sm:p-6">
+            <div className="absolute inset-0 bg-slate-950/90 pointer-events-none" />
+            <div className={`relative z-10 w-full max-w-md border rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-top duration-300 ${
                 isBanned ? 'bg-red-950/90 border-red-800/60' : 'bg-slate-900 border-amber-900/50'
             }`}>
 
@@ -128,8 +144,7 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                     </h2>
                     <button 
                         onClick={handleClose} 
-                        disabled={isActionLoading}
-                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1 disabled:opacity-50"
+                        className="text-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded p-1"
                     >
                         <X size={18} />
                     </button>
@@ -175,33 +190,48 @@ export default function NpcDialogModal({ npcData, onClose, onAction, buttonText,
                         <button
                             onClick={handleAction}
                             disabled={isDisabled || isBanned || isActionLoading}
-                            className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition-all focus:outline-none focus:ring-2 
+                            className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition-all focus:outline-none focus:ring-2 flex items-center justify-center gap-2
                                 ${isBanned
                                     ? 'bg-red-900/40 text-red-300 border border-red-700 cursor-not-allowed'
                                     : (isDisabled || isActionLoading)
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'bg-amber-900/40 hover:bg-amber-800/60 border border-amber-600 text-amber-100 active:scale-95 focus:ring-amber-500'}`}
                         >
-                            {isActionLoading ? '読み込み中…' : (isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`)}
+                            {isActionLoading && clickedAction === 'main' ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin text-amber-100" />
+                                    読み込み中…
+                                </>
+                            ) : (
+                                isBanned ? '出入り禁止' : buttonText || `${npcData.facilityName}の機能を利用する`
+                            )}
                         </button>
 
                         {/* セカンダリボタン（宿屋の「冒険者を探す」等） */}
                         {!isBanned && secondaryActions?.map((action, i) => (
                             <button
                                 key={i}
-                                onClick={() => handleSecondaryAction(action.onClick)}
+                                onClick={() => handleSecondaryAction(action.onClick, i)}
                                 disabled={isActionLoading}
-                                className={`w-full py-3 rounded-xl font-bold text-sm border transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500
+                                className={`w-full py-3 rounded-xl font-bold text-sm border transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-center gap-2
                                     ${isActionLoading
                                         ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
                                         : 'border-amber-600 bg-amber-900/30 text-amber-100 hover:bg-amber-800/50 hover:text-white'}`}
                             >
-                                {action.label}
+                                {isActionLoading && clickedAction === i ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-amber-100" />
+                                        読み込み中…
+                                    </>
+                                ) : (
+                                    action.label
+                                )}
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

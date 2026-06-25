@@ -139,12 +139,12 @@ export default function PurchaseConfirmModal({
                             type="checkbox"
                             checked={agreed}
                             onChange={(e) => setAgreed(e.target.checked)}
-                            className="mt-0.5 accent-amber-500 w-4 h-4"
+                            className="mt-0.5 accent-amber-500 w-4 h-4 cursor-pointer"
                         />
                         <span className="text-[11px] text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
-                            <a href="/legal/terms" target="_blank" className="text-amber-400 underline">利用規約</a>
+                            <a href="/terms" target="_blank" className="text-amber-400 underline inline-flex items-center gap-0.5">利用規約<ExternalLink className="w-2.5 h-2.5" /></a>
                             ・
-                            <a href="/legal/tokusho" target="_blank" className="text-amber-400 underline">特定商取引法に基づく表記</a>
+                            <a href="/legal" target="_blank" className="text-amber-400 underline inline-flex items-center gap-0.5">特定商取引法に基づく表記<ExternalLink className="w-2.5 h-2.5" /></a>
                             に同意の上、購入に進みます。トライアル期間終了後に自動で課金が開始されます。
                         </span>
                     </label>
@@ -208,9 +208,25 @@ export default function PurchaseConfirmModal({
                         </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-500 mb-4">
+                    <p className="text-[11px] text-slate-500 mb-3">
                         ※ 一度限りの購入です（自動更新なし）。決済完了後、ゲーム内にゴールドとアイテムが即時付与されます。
                     </p>
+
+                    {/* 同意チェック */}
+                    <label className="flex items-start gap-2 mb-4 cursor-pointer group text-left">
+                        <input
+                            type="checkbox"
+                            checked={agreed}
+                            onChange={(e) => setAgreed(e.target.checked)}
+                            className="mt-0.5 accent-amber-500 w-4 h-4 cursor-pointer"
+                        />
+                        <span className="text-[11px] text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
+                            <a href="/terms" target="_blank" className="text-amber-400 underline inline-flex items-center gap-0.5">利用規約<ExternalLink className="w-2.5 h-2.5" /></a>
+                            ・
+                            <a href="/legal" target="_blank" className="text-amber-400 underline inline-flex items-center gap-0.5">特定商取引法に基づく表記<ExternalLink className="w-2.5 h-2.5" /></a>
+                            に同意の上、購入に進みます。
+                        </span>
+                    </label>
 
                     {/* ボタン */}
                     <div className="flex gap-3">
@@ -223,7 +239,7 @@ export default function PurchaseConfirmModal({
                         </button>
                         <button
                             onClick={onConfirm}
-                            disabled={loading}
+                            disabled={loading || !agreed}
                             className="flex-1 py-2.5 text-sm font-bold bg-yellow-900/40 border border-yellow-600 text-yellow-200 rounded hover:bg-yellow-900/60 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
                         >
                             <ExternalLink className="w-3.5 h-3.5" />
