@@ -31,7 +31,7 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
         soundManager?.playSE('se_click');
         setTimeout(() => {
             onClose();
-        }, 80);
+        }, 250);
     };
 
     return (

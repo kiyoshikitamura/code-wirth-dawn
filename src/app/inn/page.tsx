@@ -523,7 +523,20 @@ function InnPageInner() {
                     onOpenMap={onboardingTourStep === '6' ? () => {
                         if (typeof window !== 'undefined') {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
+                            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
+                            localStorage.setItem('wirth_dawn_visited_guild', 'true');
+                            localStorage.setItem('wirth_dawn_visited_shop', 'true');
+                            localStorage.setItem('wirth_dawn_visited_academy', 'true');
+                            localStorage.setItem('wirth_dawn_visited_settings', 'true');
+                            localStorage.setItem('wirth_dawn_visited_billing', 'true');
                         }
+                        setVisitedMap(true);
+                        setVisitedTavern(true);
+                        setVisitedGuild(true);
+                        setVisitedShop(true);
+                        setVisitedAcademy(true);
+                        setVisitedSettings(true);
+                        setVisitedBilling(true);
                         advanceOnboardingStep(); // will set to completed
                     } : (onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => {
                         if (typeof window !== 'undefined') {
@@ -618,8 +631,6 @@ function InnPageInner() {
                                 recommendedFacility = null;
                             } else if (!isEp1Cleared) {
                                 recommendedFacility = 'guild';
-                            } else if (partyMembers.length === 0) {
-                                recommendedFacility = 'inn';
                             } else if (!visitedGuild) {
                                 recommendedFacility = 'guild';
                             } else if (!visitedAcademy) {

@@ -44,7 +44,7 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
         soundManager?.playSE('se_click');
         setTimeout(() => {
             onClose();
-        }, 80);
+        }, 250);
     };
 
     return (

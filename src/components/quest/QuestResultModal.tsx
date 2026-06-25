@@ -84,19 +84,21 @@ export default function QuestResultModal({
     const [isClosing, setIsClosing] = useState(false);
     const closeLockedRef = useRef(false);
     
-    const handleClose = async () => {
+    const handleClose = () => {
         if (closeLockedRef.current || isClosing) return;
         closeLockedRef.current = true;
         setIsClosing(true);
-        try {
-            // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
-            sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
-            await onClose();
-        } catch (e) {
-            console.error('[QuestResultModal] onClose failed:', e);
-            closeLockedRef.current = false;
-            setIsClosing(false);
-        }
+        setTimeout(async () => {
+            try {
+                // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
+                sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
+                await onClose();
+            } catch (e) {
+                console.error('[QuestResultModal] onClose failed:', e);
+                closeLockedRef.current = false;
+                setIsClosing(false);
+            }
+        }, 250);
     };
 
     const safeChanges = changes || {} as QuestChanges;
