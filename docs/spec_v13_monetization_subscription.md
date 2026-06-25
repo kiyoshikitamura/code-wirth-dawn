@@ -240,7 +240,6 @@ Stripe Webhookでは、ネットワーク障害等による重複送信（リト
 - `billing/checkout/route.ts` でセッション作成時に `customer_email: user.email` を指定し、Stripe 顧客のメールアドレスを Google 連携メールアドレスと統一。
 - `webhooks/stripe/route.ts` の `checkout.session.completed` 受信時に、動的に `stripe.customers.update` を実行して顧客オブジェクトの `metadata.user_id` に `userId` を設定するように修正。
 - これにより、カスタマーポータル（`/api/billing/portal`）呼び出し時に、メールアドレスによる検索、およびメタデータ `user_id` による検索の両方のルートで確実に顧客情報が特定できるようになり、解約・変更処理が完全に動作することを確認。
-- **追記 (2026-06-24 追加修正)**: Stripeカスタマーポータルや外部決済UIから解約が行われた際、Stripeの Subscription オブジェクト自体に `metadata.user_id` が付与されない場合がある。この場合でも確実にユーザーを特定して即時解約を適用するため、Stripe Customer ID から顧客オブジェクトを逆引きして `customer.metadata.user_id` を参照するフォールバック処理を Webhook (`/api/webhooks/stripe`) に追加し、解約漏れバグを完全に防止した。
 
 ---
 
@@ -411,40 +410,3 @@ const { count: draftCount } = await supabase
 | アトミックなパッケージ購入処理RPC (`process_package_purchase`) | ✅ **実装済み** |
 | Stripe Webhook での限定パッケージ処理とWeeklyボーナス鍵対応 | ✅ **実装済み** |
 | 既存加入者への鍵アイテム一括補填SQL | ✅ **実装済み** |
-
-### 12.6 プレビューテストに基づく追加仕様およびバグ修正 (2026-06-24)
-
-プレビュー環境でのテストユーザーによる検証段階で発生した問題に対応するため、以下の追加仕様および修正を適用した。
-
-#### 12.6.1 価格表記の「（税込）」統一
-- 統合課金モーダル（`BillingModal`）および購入確認ポップアップ（`PurchaseConfirmModal`）に表示されるすべてのサブスクプラン金額および都度購入パッケージ金額に対し、例外なく「（税込）」を付与する。
-  - 例: 「880円（税込）/月」「1,320円（税込）」
-
-#### 12.6.2 同意チェックボックスの「購入確認ポップアップ」への完全移行
-- 決済開始前の法的な確認の確実性を担保するため、「利用規約および特定商取引法に基づく表示への同意」チェックボックスを統合課金モーダル（`BillingModal`）から、購入ボタン押下直前の確認ポップアップ（`PurchaseConfirmModal`）へ全面的に移行する。
-- ユーザーがチェックを入れない限り、Stripe 決済画面（Checkout URL）を発行するAPIの呼び出し自体を完全に無効化（ボタンの disabled 化）する。
-
-#### 12.6.3 サブスクリプション重複移行エラーの解消
-- Basic プラン加入中のユーザーが Premium プランを購入しようとする際、Stripe 側で `the price specified is inactive` などの不整合エラーが発生する問題の解決。
-- `POST /api/billing/checkout` 内において、すでにアクティブなサブスクリプション（`active` または `trialing`）が存在するユーザーの場合は、Stripe API を用いて既存サブスクリプションの即時キャンセル（`stripe.subscriptions.cancel`）を実行し、同一の Stripe 顧客 ID をバインドして新規セッションを再発行する仕様。
-
-#### 12.6.4 決済完了時アトミック報酬ダイアログの表示
-- Stripe 決済が成功して宿屋（`/inn`）に戻った際、ユーザーに対して何がゲームに反映されたかを明示するための演出。
-- URL パラメータ（`?billing=success` 等）をトリガーにして、アトミックに加算されたゴールド数と鍵数を算出して明記した「購入完了反映ダイアログ」を表示し、ゲーム内SE `se_item_get` を再生するとともに、`fetchUserProfile()` によって表示ゴールド・鍵数を即時更新する。
-
----
-
-## 13. v40.0 改訂: 決済完了ポップアップ検出ミスマッチ修正、および検証用アカウントデータのクリーンアップ手順 (2026-06-24)
-
-### 13.1 決済完了反映ダイアログの検出キー拡張
-- **背景**: StripeのCheckout Session成功時にリダイレクトされるパラメータ `package=starter_pack` / `package=elite_pack` に対し、フロントエンド（`useInnPageState.ts`）側が旧定義名である `gold_starter` / `gold_elite` のみで判定を行っていたため、限定パッケージ購入完了ダイアログで鍵の獲得本数が正常表示されないミスマッチが発生していた。
-- **対応**: [useInnPageState.ts](file:///D:/dev/code-wirth-dawn/src/hooks/useInnPageState.ts) の判定条件を拡張し、Stripeから送信される本番定義値および互換名（`starter_pack` / `elite_pack` と `gold_starter` / `gold_elite`）の双方を正常にマッチング可能にした。
-
-### 13.2 アカウントデータリセット時の負数防止ガード
-- テストアカウントのリセットや購入パッケージ取り消しに伴うゴールド減算時、所持ゴールドがマイナス（0未満）になって上限チェック等で 0G に上書きリセットされるのを防ぐため、減算時に `Math.max(0, currentGold - 40000)` の安全下限ガードを適用する。
-
-### 13.3 テスト課金ログの除外とStripeサブスクリプションの完全リセット手順
-本番環境で管理者やテスターが課金・サブスク動作確認を行った後、データを初期化する際は以下の手順を順次実行してデータを完全にクリーンアップする。
-1. **売上集計（ダッシュボード）からの除外**: `payment_logs` テーブルより、該当ユーザーのテスト決済記録（`user_id`）をすべて物理削除する。これにより、管理者ダッシュボード（`payment_summary_view`）の集計値から安全に除外される。
-2. **Stripeのアクティブな定期課金の強制終了**: 対象ユーザーのメールアドレス/カスタマーIDをStripe API（または Stripe ダッシュボード）から特定し、アクティブ状態（`active` または `trialing`）のサブスクリプションを `stripe.subscriptions.cancel` 等で即時キャンセルする。
-3. **ユーザープロファイルのサブスク状態・トライアル利用状況のリセット**: 対象ユーザープロファイル（`user_profiles`）の `subscription_tier` を `'free'`、`subscription_status` を `'inactive'`、`has_used_trial` を `false` に更新し、次回のテストで「新規の無料トライアル（7日間）」が問題なく適用・検証できる初期状態を担保する。

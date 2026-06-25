@@ -18,7 +18,7 @@ VALUES
 (
     77, 
     'item_academy_key', 
-    '魔道と鉄壁の鍵', 
+    '魔道と知識の鍵', 
     'consumable', 
     3000, 
     1, 

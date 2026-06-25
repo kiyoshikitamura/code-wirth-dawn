@@ -56,10 +56,12 @@ interface Props {
 
 export default function ShopModal({ onClose }: Props) {
     const router = useRouter();
-    const { gold, fetchInventory, userProfile, inventory } = useGameStore();
-    const [items, setItems] = useState<ShopItem[]>([]);
-    const [rumoredItems, setRumoredItems] = useState<ShopItem[]>([]);
-    const [meta, setMeta] = useState<ShopMeta | null>(null);
+    const { gold, fetchInventory, userProfile, inventory, shopCache, fetchShop: storeFetchShop } = useGameStore();
+
+    const items = shopCache?.items || [];
+    const rumoredItems = shopCache?.rumoredItems || [];
+    const meta = shopCache?.meta || null;
+
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [purchasing, setPurchasing] = useState<string | null>(null); // itemId being bought/sold
@@ -71,10 +73,37 @@ export default function ShopModal({ onClose }: Props) {
     const [sellItemForQtySelect, setSellItemForQtySelect] = useState<any | null>(null);
     const [sellQtyInput, setSellQtyInput] = useState<number>(1);
     const [buyQtyInput, setBuyQtyInput] = useState<number>(1);
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        if (isClosing) return;
+        setIsClosing(true);
+        onClose();
+    };
 
     useEffect(() => {
         setMounted(true);
-        fetchShop();
+        const initShop = async () => {
+            const cache = useGameStore.getState().shopCache;
+            const hasData = cache && cache.items && cache.items.length > 0;
+            if (hasData) {
+                setLoading(false);
+                if (cache.meta?.prosperity === 1) {
+                    playCreepyAudio();
+                }
+            }
+
+            // SWR: キャッシュが無いか、60秒以上古い場合のみフェッチ
+            if (!hasData || Date.now() - (cache?.lastFetchTime || 0) > 60000) {
+                await storeFetchShop();
+                setLoading(false);
+                const freshCache = useGameStore.getState().shopCache;
+                if (freshCache?.meta?.prosperity === 1) {
+                    playCreepyAudio();
+                }
+            }
+        };
+        initShop();
     }, []);
 
     // formatEffectData, getItemTypeLabel etc. は @/lib/itemUtils から import 済み
@@ -84,28 +113,9 @@ export default function ShopModal({ onClose }: Props) {
     const getToken = getAuthToken;
 
     const fetchShop = async () => {
-        try {
-            const token = await getToken();
-            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
-            const res = await fetch('/api/shop', {
-                headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setItems(data.items);
-                setRumoredItems(data.rumored_items || []);
-                setMeta(data.meta);
-                if (data.meta.prosperity === 1) {
-                    playCreepyAudio();
-                }
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(true);
+        await storeFetchShop();
+        setLoading(false);
     };
 
     const handleBuy = async (item: ShopItem, quantity: number = 1) => {
@@ -291,7 +301,7 @@ export default function ShopModal({ onClose }: Props) {
         const effectList = getEffectList(selectedItem.effect_data);
 
         return createPortal(
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-150" onClick={() => setSelectedItem(null)}>
                 <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
                     {/* アイテムヘッダー */}
                     <div className="bg-gray-800/80 p-5 flex items-center gap-4 border-b border-gray-700">
@@ -410,8 +420,9 @@ export default function ShopModal({ onClose }: Props) {
     if (!mounted) return null;
 
     const mainContent = createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85dvh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
+            <div className="relative z-10 bg-[#e3d5b8] text-[#2c241b] w-full max-w-4xl h-[85dvh] flex flex-col rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] overflow-hidden">
 
                 {/* Header */}
                 <div className={`p-4 border-b-2 border-[#8b5a2b] flex justify-between items-center ${meta?.prosperity === 1 ? 'bg-red-950/80' : 'bg-[#3e2723]'}`}>
@@ -435,7 +446,13 @@ export default function ShopModal({ onClose }: Props) {
                             <Coins className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                             <span className="text-amber-200 font-mono text-sm">{gold.toLocaleString()} G</span>
                         </div>
-                        <button onClick={onClose} className="text-[#a38b6b] hover:text-white transition-colors">✕</button>
+                        <button 
+                            onClick={handleClose} 
+                            disabled={isClosing}
+                            className="text-[#a38b6b] hover:text-white transition-colors disabled:opacity-50"
+                        >
+                            ✕
+                        </button>
                     </div>
                 </div>
 
@@ -636,7 +653,7 @@ export default function ShopModal({ onClose }: Props) {
         const totalValue = sellPrice * sellQtyInput;
         
         return createPortal(
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 p-4">
                 <div className="bg-[#e3d5b8] border-4 border-[#8b5a2b] rounded-lg p-5 w-full max-w-sm text-[#2c241b] shadow-2xl animate-in zoom-in-95 duration-200">
                     <h3 className="text-lg font-bold font-serif mb-3 border-b-2 border-[#8b5a2b] pb-2 tracking-wide text-[#3e2723]">売却個数の選択</h3>
                     <p className="text-sm font-semibold mb-1 text-[#3e2723]">{sellItemForQtySelect.name}</p>
@@ -727,7 +744,7 @@ export default function ShopModal({ onClose }: Props) {
             {mainContent}
             {/* ===== 購入中 / 購入完了 Overlay ===== */}
             {purchasePhase !== 'idle' && createPortal(
-                <div className="fixed inset-0 z-[99998] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                <div className="fixed inset-0 z-[99998] bg-black/80 flex items-center justify-center">
                     <div className={`px-8 py-6 rounded-2xl shadow-2xl text-center animate-in fade-in zoom-in-90 duration-200 border ${
                         purchasePhase === 'loading'
                             ? 'bg-[#3e2723]/95 border-[#8b5a2b] text-amber-300'

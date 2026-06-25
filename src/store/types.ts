@@ -23,6 +23,13 @@ export interface GameState {
     gold: number;
     addGold: (amount: number) => Promise<void>;
     spendGold: (amount: number) => boolean;
+    shopCache: {
+        items: any[];
+        rumoredItems: any[];
+        meta: any | null;
+        lastFetchTime: number;
+    } | null;
+    fetchShop: () => Promise<void>;
 
     // Actions
     initialize: () => void;

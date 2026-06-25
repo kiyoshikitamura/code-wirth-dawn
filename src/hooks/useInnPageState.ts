@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
-import { getAuthHeaders } from '@/lib/authToken';
+import { getAuthHeaders, clearAuthTokenCache } from '@/lib/authToken';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
@@ -23,7 +23,64 @@ type ModalType = FacilityType | 'workshop' | 'history' | 'questBoard' | 'gossip'
 export function useInnPageState() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated } = useGameStore();
+    const { gold, spendGold, worldState, fetchWorldState, userProfile, fetchUserProfile, showStatus, setShowStatus, hubState, equipBonus, _hasHydrated, completedQuests } = useGameStore();
+    const locationSlug = worldState?.location_name || '名もなき旅人の拠所';
+
+    // Onboarding tour state management
+    const [onboardingTourStep, setOnboardingTourStep] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!_hasHydrated || !userProfile) return;
+
+        const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
+
+        // Check if Ep 1 is cleared
+        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+
+        if (!isEp1Cleared) {
+            setOnboardingTourStep(null);
+            return;
+        }
+
+        // Safeguard for existing users
+        const isExistingUser = 
+            (userProfile.level || 1) >= 3 ||
+            (completedQuests?.length || 0) >= 2 ||
+            localStorage.getItem('wirth_dawn_visited_map') === 'true' ||
+            (completedQuests?.some(q => q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false);
+
+        if (isExistingUser) {
+            setOnboardingTourStep('completed');
+            if (tourStep !== 'completed') {
+                localStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
+            }
+            return;
+        }
+
+        // For new users who cleared Ep 1 and have no tour step set, initialize to '1'
+        if (!tourStep) {
+            setOnboardingTourStep('1');
+            localStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
+        } else {
+            setOnboardingTourStep(tourStep);
+        }
+    }, [_hasHydrated, userProfile, completedQuests]);
+
+    const advanceOnboardingStep = useCallback(() => {
+        if (!onboardingTourStep || onboardingTourStep === 'completed') return;
+        const nextVal = onboardingTourStep === '6' ? 'completed' : String(Number(onboardingTourStep) + 1);
+        setOnboardingTourStep(nextVal);
+        try {
+            localStorage.setItem('wirth_dawn_onboarding_tour_step', nextVal);
+        } catch (err) {
+            console.warn('[useInnPageState] localStorage setItem failed:', err);
+        }
+    }, [onboardingTourStep]);
+
+    const [billingDialog, setBillingDialog] = useState<{
+        title: string;
+        message: string;
+    } | null>(null);
 
     useEffect(() => {
         if (_hasHydrated && userProfile && worldState) {
@@ -31,65 +88,52 @@ export function useInnPageState() {
         }
     }, [_hasHydrated, userProfile, worldState]);
 
-    // Stripe billing success conversion tracking & dialog display (spec_v13.6.4)
+    // Stripe billing success conversion tracking
     useEffect(() => {
         const billing = searchParams.get('billing');
         if (billing === 'success' || billing === 'gold_success') {
-            let title = 'ご購入ありがとうございました';
-            let gold = 0;
-            let basicKeys = 0;
-            let academyKeys = 0;
+            const tier = searchParams.get('tier');
+            const amount = searchParams.get('amount');
+            const pkg = searchParams.get('package');
+
+            let title = '購入完了';
+            let message = '';
 
             if (billing === 'success') {
-                const tier = searchParams.get('tier');
+                title = '契約が反映されました';
                 if (tier === 'premium') {
-                    title = 'Premium プラン';
-                    gold = 5000;
-                    basicKeys = 3;
-                    academyKeys = 2;
+                    message = '旅人のサブスクリプション（Premium プラン）が有効になりました。\n特典として「5,000 G」と「知識と契約の鍵 x3」、「魔道と鉄壁の鍵 x2」が宿屋の倉庫（インベントリ）に付与されました。';
                 } else {
-                    title = 'Basic プラン';
-                    gold = 2000;
-                    basicKeys = 1;
-                    academyKeys = 1;
+                    message = '旅人のサブスクリプション（Basic プラン）が有効になりました。\n特典として「2,000 G」と「知識と契約の鍵 x1」、「魔道と鉄壁の鍵 x1」が宿屋の倉庫（インベントリ）に付与されました。';
                 }
             } else {
-                const amount = Number(searchParams.get('amount') || 0);
-                const pkg = searchParams.get('package');
-                if (pkg === 'gold_starter' || pkg === 'starter_pack') {
-                    title = 'スターターパック (限定)';
-                    gold = 10000;
-                    basicKeys = 5;
-                    academyKeys = 3;
-                } else if (pkg === 'gold_elite' || pkg === 'elite_pack') {
-                    title = 'エリートパック (限定)';
-                    gold = 30000;
-                    basicKeys = 8;
-                    academyKeys = 5;
+                if (pkg === 'starter_pack') {
+                    title = 'スターターパック購入完了';
+                    message = 'スターターパックの購入が反映されました！\n「10,000 G」と「知識と契約の鍵 x5」、「魔道と鉄壁の鍵 x3」が宿屋の倉庫（インベントリ）に付与されました。';
+                } else if (pkg === 'elite_pack') {
+                    title = 'エリートパック購入完了';
+                    message = 'エリートパックの購入が反映されました！\n「30,000 G」と「知識と契約の鍵 x8」、「魔道と鉄壁の鍵 x5」が宿屋の倉庫（インベントリ）に付与されました。';
                 } else {
-                    title = 'ゴールドチャージ';
-                    gold = amount;
+                    title = 'ゴールド購入完了';
+                    const goldG = amount ? Number(amount).toLocaleString() : '---';
+                    message = `ご購入いただいた「${goldG} G」が所持ゴールドに反映されました。`;
                 }
             }
 
-            // Set state to trigger the modal
-            setBillingSuccess({ title, gold, basicKeys, academyKeys });
-
-            // Play SE
+            setBillingDialog({ title, message });
             soundManager?.playSE('se_item_get');
 
-            // Force refresh user profile
+            // ユーザープロフィールを再読み込みして最新データを画面に即時反映
             fetchUserProfile();
 
-            // X Ads Conversion Tracking
             const purchaseId = process.env.NEXT_PUBLIC_X_CONVERSION_PURCHASE_ID;
             if (purchaseId) {
                 import('@/utils/xads').then(({ trackXEvent }) => {
-                    const tier = searchParams.get('tier');
-                    const amount = Number(searchParams.get('amount') || 0);
+                    const amountVal = Number(amount || 0);
+                    // 金額算出（サブスクの場合は想定金額等）
                     const value = billing === 'success' 
-                        ? (tier === 'premium' ? 1000 : 500) 
-                        : amount;
+                        ? (tier === 'premium' ? 1000 : 500) // プラン別仮金額
+                        : amountVal;
 
                     trackXEvent(purchaseId, {
                         value: String(value),
@@ -98,22 +142,25 @@ export function useInnPageState() {
                 });
             }
 
-            // Clean up search parameters to prevent double-triggering
+            // 二重送信防止のためクエリパラメーターを除去してURLをクリーンアップ
             const url = new URL(window.location.href);
             url.searchParams.delete('billing');
             url.searchParams.delete('tier');
             url.searchParams.delete('amount');
             url.searchParams.delete('package');
-            window.history.replaceState({}, '', url.pathname + url.search);
+            router.replace(url.pathname + url.search);
         }
-    }, [searchParams]);
+    }, [searchParams, fetchUserProfile, router]);
 
     // 拠点状態に応じた動的BGM選択 (spec_v14.1 §4)
-    const bgmKey = getBgmKey(
-        worldState?.location_name,
-        worldState?.controlling_nation,
-        worldState?.prosperity_level
-    );
+    const isTutorialActive = userProfile && userProfile.is_tutorial_completed === false;
+    const bgmKey = isTutorialActive
+        ? 'bgm_title'
+        : getBgmKey(
+            worldState?.location_name,
+            worldState?.controlling_nation,
+            worldState?.prosperity_level
+        );
     useBgm(bgmKey);
 
     // UI States
@@ -152,14 +199,6 @@ export function useInnPageState() {
 
     // News & History Logic
     const [showTutorial, setShowTutorial] = useState(false);
-
-    // Billing Success Dialog State (spec_v13.6.4)
-    const [billingSuccess, setBillingSuccess] = useState<{
-        title: string;
-        gold: number;
-        basicKeys: number;
-        academyKeys: number;
-    } | null>(null);
 
     // Profile 読み込み時にチュートリアル未完了なら表示
     useEffect(() => {
@@ -221,105 +260,89 @@ export function useInnPageState() {
     };
 
     // Initial load — init-page APIで一括取得
-    useEffect(() => {
-        if (!_hasHydrated) return; // ハイドレーション完了まで待機
+    const fetchInitPage = useCallback(async (forceFetch = false) => {
+        const store = useGameStore.getState();
+        const lastFetch = store.lastInitPageFetchTime || 0;
+        const hasData = store.userProfile && store.worldState;
+        
+        // SWRパターン: メモリ上にデータがあれば即表示し、ローディング状態を解除
+        if (hasData && !forceFetch) {
+            setLoading(false);
+            setInitialLoadComplete(true);
+        }
 
-        const loadInitData = async () => {
-            const store = useGameStore.getState();
-            const lastFetch = store.lastInitPageFetchTime || 0;
-            const hasData = store.userProfile && store.worldState;
-            
-            // SWRパターン: メモリ上にデータがあれば即表示し、ローディング状態を解除
-            if (hasData) {
-                setLoading(false);
-                setInitialLoadComplete(true);
+        // キャッシュチェック（直近60秒以内かつ強制フェッチでないならAPI取得自体をスキップ）
+        if (hasData && !forceFetch && Date.now() - lastFetch < 60000) {
+            console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
+            return;
+        }
+
+        try {
+            let token = await (await import('@/lib/authToken')).getAuthToken();
+            const isOauthCallback = typeof window !== 'undefined' && window.location.search.includes('code=');
+            if (!token && isOauthCallback) {
+                // Google OAuth 直後の書き込みタイムラグ対策として1000ms待ってリトライ
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                token = await (await import('@/lib/authToken')).getAuthToken();
             }
+            const headers: HeadersInit = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            // キャッシュチェック（直近60秒以内ならAPI取得自体をスキップ）
-            if (hasData && Date.now() - lastFetch < 60000) {
-                console.log('[useInnPageState] skip init-page fetch. Data is fresh.');
-                return;
-            }
+            const res = await fetch('/api/init-page', { headers, cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
 
-            try {
-                let token = await (await import('@/lib/authToken')).getAuthToken();
-                const isOauthCallback = typeof window !== 'undefined' && window.location.search.includes('code=');
-                if (!token && isOauthCallback) {
-                    // Google OAuth 直後の書き込みタイムラグ対策として1000ms待ってリトライ
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    token = await (await import('@/lib/authToken')).getAuthToken();
-                }
-                const headers: HeadersInit = {};
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const res = await fetch('/api/init-page', { headers, cache: 'no-store' });
-                if (res.ok) {
-                    const data = await res.json();
-
-                    // Profile + gold + equipBonus をストアに反映
-                    if (data.profile) {
-                        useGameStore.setState({
-                            userProfile: data.profile,
-                            gold: data.profile.gold || 0,
-                            equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
-                        });
-                    }
-
-                    // Hub State
-                    if (data.hub_state) {
-                        useGameStore.setState({ hubState: data.hub_state });
-                    }
-
-                    // World State（hegemony 含む）
-                    if (data.world_state) {
-                        useGameStore.setState({ worldState: data.world_state });
-                    }
-
-                    // キャッシュのセット
+                // Profile + gold + equipBonus をストアに反映
+                if (data.profile) {
                     useGameStore.setState({
-                        tavernShadows: data.tavern_shadows || [],
-                        partyMembers: data.party_members || [],
-                        locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
-                        gossipData: data.gossip_data,
-                        completedQuests: data.completed_quests || [],
-                        lastInitPageFetchTime: Date.now(), // 更新
+                        userProfile: data.profile,
+                        gold: data.profile.gold || 0,
+                        equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
                     });
-
-                    if (typeof window !== 'undefined' && data.profile?.current_location_id) {
-                        const locId = data.profile.current_location_id;
-                        try {
-                            if (data.tavern_shadows) {
-                                sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
-                            }
-                            if (data.location_quests) {
-                                sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
-                            }
-                        } catch {}
-                    }
-
-                    // Reputation
-                    if (data.reputation !== undefined) {
-                        setReputation(data.reputation || { rank: 'Stranger', score: 0 });
-                    }
-
-
-
-                    if (!data.profile) {
-                        router.push('/title');
-                    }
-                } else {
-                    // Fallback: 従来の個別フェッチ
-                    await Promise.all([
-                        fetchWorldState(),
-                        useGameStore.getState().fetchUserProfile()
-                    ]);
-                    useGameStore.setState({ lastInitPageFetchTime: Date.now() });
-                    if (!useGameStore.getState().userProfile) {
-                        router.push('/title');
-                    }
                 }
-            } catch (e) {
-                console.error('[useInnPageState] init-page fetch failed, falling back:', e);
+
+                // Hub State
+                if (data.hub_state) {
+                    useGameStore.setState({ hubState: data.hub_state });
+                }
+
+                // World State（hegemony 含む）
+                if (data.world_state) {
+                    useGameStore.setState({ worldState: data.world_state });
+                }
+
+                // キャッシュのセット
+                useGameStore.setState({
+                    tavernShadows: data.tavern_shadows || [],
+                    partyMembers: data.party_members || [],
+                    locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
+                    gossipData: data.gossip_data,
+                    completedQuests: data.completed_quests || [],
+                    lastInitPageFetchTime: Date.now(), // 更新
+                });
+
+                if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                    const locId = data.profile.current_location_id;
+                    try {
+                        if (data.tavern_shadows) {
+                            sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                        }
+                        if (data.location_quests) {
+                            sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                        }
+                    } catch {}
+                }
+
+                // Reputation
+                if (data.reputation !== undefined) {
+                    setReputation(data.reputation || { rank: 'Stranger', score: 0 });
+                }
+
+                if (!data.profile) {
+                    router.push('/title');
+                }
+            } else {
+                // Fallback: 従来の個別フェッチ
                 await Promise.all([
                     fetchWorldState(),
                     useGameStore.getState().fetchUserProfile()
@@ -328,36 +351,131 @@ export function useInnPageState() {
                 if (!useGameStore.getState().userProfile) {
                     router.push('/title');
                 }
-            } finally {
-                setLoading(false);
-                setInitialLoadComplete(true);
             }
-        };
-        loadInitData();
-    }, [router, _hasHydrated]);
+        } catch (e) {
+            console.error('[useInnPageState] init-page fetch failed, falling back:', e);
+            await Promise.all([
+                fetchWorldState(),
+                useGameStore.getState().fetchUserProfile()
+            ]);
+            useGameStore.setState({ lastInitPageFetchTime: Date.now() });
+            if (!useGameStore.getState().userProfile) {
+                router.push('/title');
+            }
+        } finally {
+            setLoading(false);
+            setInitialLoadComplete(true);
+        }
+    }, [router, fetchWorldState]);
+
+    useEffect(() => {
+        if (!_hasHydrated) return; // ハイドレーション完了まで待機
+        fetchInitPage(false);
+    }, [_hasHydrated, fetchInitPage]);
+
+    // 拠点施設NPCマスター画像の先行バックグラウンドロード (v39)
+    useEffect(() => {
+        if (typeof window === 'undefined' || !locationSlug) return;
+        const repScore = reputation?.score || 0;
+        const facilities: FacilityKey[] = ['inn', 'guild', 'shop', 'temple', 'magicAcademy'];
+        facilities.forEach((fac) => {
+            try {
+                const resolved = getNpcForLocation(locationSlug, fac, repScore);
+                if (resolved && resolved.imageUrl) {
+                    const img = new Image();
+                    img.src = resolved.imageUrl;
+                }
+            } catch (e) {
+                console.error('[useInnPageState] Preload NPC image failed:', e);
+            }
+        });
+    }, [locationSlug, reputation?.score]);
 
     // linkIdentity コールバック処理
     useEffect(() => {
         if (typeof window === 'undefined') return;
+
+        const checkOAuthErrors = () => {
+            const url = new URL(window.location.href);
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            
+            const error = url.searchParams.get('error') || hashParams.get('error');
+            const errorDesc = url.searchParams.get('error_description') || hashParams.get('error_description');
+
+            if (error) {
+                console.error('[linkIdentity] OAuth error detected:', error, errorDesc);
+                let userFriendlyMsg = 'アカウント連携に失敗しました。';
+                if (error === 'identity_already_linked' || errorDesc?.includes('already_linked') || errorDesc?.includes('already linked')) {
+                    userFriendlyMsg = 'このGoogleアカウントは既に他のプレイヤーデータと連携されています。タイトル画面からこのGoogleアカウントでログインするか、別のGoogleアカウントと連携してください。';
+                } else if (errorDesc) {
+                    userFriendlyMsg = `アカウント連携に失敗しました: ${decodeURIComponent(errorDesc)}`;
+                }
+                alert(userFriendlyMsg);
+
+                // URLクリーンアップ (クエリパラメータとハッシュ)
+                const currentUrl = new URL(window.location.href);
+                currentUrl.hash = '';
+                ['error', 'error_description', 'error_code'].forEach(p => {
+                    currentUrl.searchParams.delete(p);
+                });
+                router.replace(currentUrl.pathname + currentUrl.search);
+                return true;
+            }
+            return false;
+        };
+
+        if (checkOAuthErrors()) return;
+
         const url = new URL(window.location.href);
-        if (!url.searchParams.has('code')) return;
+        const code = url.searchParams.get('code');
+        if (!code) return;
 
-        url.searchParams.delete('code');
-        window.history.replaceState({}, '', url.pathname);
-
-        const syncAnonymousFlag = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user || user.is_anonymous) return;
-                await supabase.from('user_profiles').update({ is_anonymous: false }).eq('id', user.id);
-                await fetchUserProfile();
-                console.log('[linkIdentity] アカウント連携完了。is_anonymous → false');
-            } catch (e) {
-                console.warn('[linkIdentity] is_anonymous 同期に失敗:', e);
+        const cleanUrl = () => {
+            const currentUrl = new URL(window.location.href);
+            let changed = false;
+            ['code', 'error', 'error_description', 'error_code'].forEach(p => {
+                if (currentUrl.searchParams.has(p)) {
+                    currentUrl.searchParams.delete(p);
+                    changed = true;
+                }
+            });
+            if (currentUrl.hash) {
+                currentUrl.hash = '';
+                changed = true;
+            }
+            if (changed) {
+                router.replace(currentUrl.pathname + currentUrl.search);
             }
         };
-        syncAnonymousFlag();
-    }, [fetchUserProfile]);
+
+        const handleOAuthCallback = async () => {
+            try {
+                // セッション交換前にメモリキャッシュをクリア
+                clearAuthTokenCache();
+
+                // 手動で認証コードをセッションと交換する
+                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                if (error) throw error;
+
+                // セッション交換後にも再度クリア（新しいセッションのトークンを確実に取得するため）
+                clearAuthTokenCache();
+
+                const user = data.session?.user;
+                if (user && !user.is_anonymous) {
+                    await supabase.from('user_profiles').update({ is_anonymous: false }).eq('id', user.id);
+                    await fetchUserProfile();
+                    await fetchInitPage(true);
+                    console.log('[linkIdentity] 手動アカウント連携完了。is_anonymous → false');
+                }
+            } catch (e) {
+                console.warn('[linkIdentity] 手動アカウント連携・同期に失敗:', e);
+            } finally {
+                cleanUrl();
+            }
+        };
+
+        handleOAuthCallback();
+    }, [fetchUserProfile, fetchInitPage, router]);
 
     // エンカウントバトル結果処理
     useEffect(() => {
@@ -451,7 +569,7 @@ export function useInnPageState() {
     const FACILITY_LABELS: Record<string, string> = {
         inn: '宿屋/酒場', guild: 'ギルド', shop: '道具屋', temple: '神殿', magicAcademy: '魔術学院'
     };
-    const locationSlug = worldState?.location_name || '名もなき旅人の拠所';
+
 
     const getNpcData = (facility: FacilityType): NpcDialogData | null => {
         const facilityKey = facility as FacilityKey;
@@ -760,6 +878,7 @@ export function useInnPageState() {
         // State
         router, loading, worldState, userProfile, equipBonus, isHub,
         activeModal, setActiveModal,
+        billingDialog, setBillingDialog,
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
@@ -778,7 +897,9 @@ export function useInnPageState() {
         showVitalityDeath, setShowVitalityDeath,
         showRestConfirm, setShowRestConfirm,
         locationSlug,
-        billingSuccess, setBillingSuccess,
+        onboardingTourStep,
+        setOnboardingTourStep,
+        advanceOnboardingStep,
 
         // NPC
         activeNpcData, buttonText, isDisabled, secondaryActions,

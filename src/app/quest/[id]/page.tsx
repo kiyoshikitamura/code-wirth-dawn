@@ -28,6 +28,79 @@ export default function QuestPage() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isGivingUp, setIsGivingUp] = useState(false);
     const [initialNodeId, setInitialNodeId] = useState<string | undefined>(undefined);
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+        // Prefetch destination routes to eliminate page transition lag
+        router.prefetch('/inn');
+        router.prefetch('/workshop');
+    }, [router]);
+
+    // チュートリアル後（クエスト6001完了時）の拠点（酒場、クエストボード、道具屋）の挙動を軽快にするため、
+    // クエストロード時にあらかじめデータをプリフェッチしてキャッシュする
+    useEffect(() => {
+        if (id === '6001') {
+            const prefetchBaseData = async () => {
+                try {
+                    const token = await getAuthToken();
+                    const headers: HeadersInit = {};
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    // /api/init-page?prefetch_quest_id=6001 を呼び出す（クリアした前提のデータをフェッチ）
+                    const initRes = await fetch('/api/init-page?prefetch_quest_id=6001', { headers, cache: 'no-store' });
+                    if (initRes.ok) {
+                        const data = await initRes.json();
+                        // Zustand ストアにキャッシュを同期
+                        if (data.profile) {
+                            useGameStore.setState({
+                                userProfile: data.profile,
+                                gold: data.profile.gold || 0,
+                                equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
+                            });
+                        }
+                        if (data.hub_state) {
+                            useGameStore.setState({ hubState: data.hub_state });
+                        }
+                        if (data.world_state) {
+                            useGameStore.setState({ worldState: data.world_state });
+                        }
+                        useGameStore.setState({
+                            tavernShadows: data.tavern_shadows || [],
+                            partyMembers: data.party_members || [],
+                            locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
+                            gossipData: data.gossip_data,
+                            completedQuests: data.completed_quests || [],
+                            lastInitPageFetchTime: Date.now(),
+                        });
+
+                        // sessionStorageキャッシュも同期
+                        if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                            const locId = data.profile.current_location_id;
+                            try {
+                                if (data.tavern_shadows) {
+                                    sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                                }
+                                if (data.location_quests) {
+                                    sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                                }
+                            } catch {}
+                        }
+                    }
+
+                    // 道具屋キャッシュのプリフェッチ
+                    const store = useGameStore.getState();
+                    if (typeof store.fetchShop === 'function') {
+                        await store.fetchShop();
+                    }
+                } catch (e) {
+                    console.error('[QuestPage] prefetch base data failed:', e);
+                }
+            };
+            prefetchBaseData();
+        }
+    }, [id]);
+
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
     const [battleBgUrl, setBattleBgUrl] = useState<string>('/images/quests/bg_wasteland.png');
     const [battleBgm, setBattleBgm] = useState<string>('bgm_battle'); // CSVのbattle BGMを保持
@@ -103,9 +176,12 @@ export default function QuestPage() {
 
         // If not restored via battle transition check, try restoring from Zustand's current node state
         if (!restored) {
-            const savedNodeId = useQuestState.getState().currentNodeId;
-            if (savedNodeId && savedNodeId !== 'start') {
-                setInitialNodeId(savedNodeId);
+            const qs = useQuestState.getState();
+            if (qs.questId === id) {
+                const savedNodeId = qs.currentNodeId;
+                if (savedNodeId && savedNodeId !== 'start') {
+                    setInitialNodeId(savedNodeId);
+                }
             }
         }
     }, [id]);
@@ -1038,6 +1114,16 @@ export default function QuestPage() {
         }
     };
 
+    if (!mounted) {
+        return (
+            <div className="flex items-center justify-center h-screen w-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
+                <div className="text-center">
+                    <p className="text-sm text-slate-400 animate-pulse">ローディング中...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-center justify-center h-screen w-screen bg-slate-900 font-sans select-none overflow-hidden text-slate-200">
             <div className="relative w-full h-[100dvh] md:max-w-[430px] md:h-[min(844px,92vh)] md:border-[6px] md:border-slate-800 md:rounded-[40px] shadow-2xl overflow-hidden flex flex-col bg-slate-950">
@@ -1088,36 +1174,34 @@ export default function QuestPage() {
 
                 {/* Quest Result Overlay */}
                 {resultOverlay && (
-                    <div className="absolute inset-0 z-[110]">
-                        <QuestResultModal
-                            result={resultOverlay.result}
-                            questTitle={resultOverlay.data?.quest_title}
-                            rewards={resultOverlay.data?.rewards}
-                            changes={resultOverlay.data?.changes}
-                            daysPassed={resultOverlay.data?.days_passed || 0}
-                            shareText={isTestPlay ? undefined : resultOverlay.data?.share_text}
-                            shareDataList={isTestPlay ? undefined : resultOverlay.data?.share_data_list}
-                            repChange={resultOverlay.data?.rep_change}
-                            partyChanges={resultOverlay.data?.party_changes}
-                            newLocationName={resultOverlay.data?.new_location_name}
-                            earnedExp={resultOverlay.data?.earned_exp}
-                            lootSaved={resultOverlay.data?.loot_saved}
-                            guestConversion={resultOverlay.data?.guest_conversion}
-                            isTestPlay={isTestPlay}
-                            onClose={async () => {
-                                if (!isTestPlay) {
-                                    // クエストボードのキャッシュクリア
-                                    useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                                    if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                                        sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
-                                    }
-                                    await fetchUserProfile();
-                                    await useGameStore.getState().fetchInventory();
+                    <QuestResultModal
+                        result={resultOverlay.result}
+                        questTitle={resultOverlay.data?.quest_title}
+                        rewards={resultOverlay.data?.rewards}
+                        changes={resultOverlay.data?.changes}
+                        daysPassed={resultOverlay.data?.days_passed || 0}
+                        shareText={isTestPlay ? undefined : resultOverlay.data?.share_text}
+                        shareDataList={isTestPlay ? undefined : resultOverlay.data?.share_data_list}
+                        repChange={resultOverlay.data?.rep_change}
+                        partyChanges={resultOverlay.data?.party_changes}
+                        newLocationName={resultOverlay.data?.new_location_name}
+                        earnedExp={resultOverlay.data?.earned_exp}
+                        lootSaved={resultOverlay.data?.loot_saved}
+                        guestConversion={resultOverlay.data?.guest_conversion}
+                        isTestPlay={isTestPlay}
+                        onClose={async () => {
+                            if (!isTestPlay) {
+                                // クエストボードのキャッシュクリア
+                                useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                                if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                                    sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                                 }
-                                router.push(isTestPlay ? '/workshop' : '/inn');
-                            }}
-                        />
-                    </div>
+                                fetchUserProfile();
+                                useGameStore.getState().fetchInventory();
+                            }
+                            router.push(isTestPlay ? '/workshop' : '/inn');
+                        }}
+                    />
                 )}
             </div>
         </div>

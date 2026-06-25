@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useGameStore } from '@/store/gameStore';
 import { Trophy, Award, Flame, X, ArrowLeft, Loader2 } from 'lucide-react';
@@ -27,6 +28,11 @@ interface ColosseumRankingModalProps {
 }
 
 export default function ColosseumRankingModal({ onClose }: ColosseumRankingModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile } = useGameStore();
     const currentUserId = userProfile?.id;
     const [activeTab, setActiveTab] = useState<'wins' | 'streaks'>('wins');
@@ -149,7 +155,9 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
 
     const currentRanking = activeTab === 'wins' ? winsRanking : streakRanking;
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="relative w-full max-w-lg bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col h-[90vh]">
                 {/* Header */}
@@ -330,6 +338,7 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                     introduction={selectedUser.introduction}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 }

@@ -64,6 +64,7 @@ export const useGameStore = create<GameState>()(
             equippedItems: [],
             showStatus: false,
             battleState: INITIAL_BATTLE_STATE,
+            shopCache: null,
 
             // ── スライス展開 ─────────────────────────────────────────────
             ...createProfileSlice(set, get),

@@ -246,6 +246,8 @@ export interface UserProfileDB {
   max_deck_cost: number;
   blessing_data?: { hp_pct: number; ap_bonus: number; expires_after_battle: boolean } | null;
   accumulated_days?: number;
+  is_tutorial_completed?: boolean;
+  is_anonymous?: boolean;
   // ...
 }
 

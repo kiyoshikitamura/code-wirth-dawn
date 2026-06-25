@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle, Scroll, LogOut, RefreshCw } from 'lucide-react';
 import { Scenario, UserProfile } from '@/types/game';
 import { useQuestState } from '@/store/useQuestState';
@@ -18,10 +19,16 @@ interface ActiveQuestModalProps {
 }
 
 export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests, onSelect, isLoading, onGiveUpComplete, showCloseButton }: ActiveQuestModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [loading, setLoading] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
     if (!isOpen) return null;
+    if (!mounted) return null;
 
     const handleClose = async () => {
         if (isClosing) return;
@@ -35,13 +42,14 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
     };
 
     if (isLoading) {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-sm rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] p-6 flex flex-col items-center justify-center gap-4">
                     <div className="w-8 h-8 border-2 border-[#8b5a2b] border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm font-serif text-[#3e2723] tracking-widest animate-pulse">読み込み中…</p>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
@@ -104,7 +112,7 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-[#e3d5b8] text-[#2c241b] w-full max-w-md rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)] border-4 border-[#8b5a2b] relative overflow-hidden">
                 {(isClosing || loading) && (
@@ -172,6 +180,7 @@ export default function ActiveQuestModal({ isOpen, onClose, userProfile, quests,
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '@/store/gameStore';
 import { Shield, Backpack, Zap, Heart, Sword, Users, Flame, X } from 'lucide-react';
 import { getVitalityStatus } from '@/lib/character';
@@ -15,6 +16,11 @@ interface StatusModalProps {
 }
 
 export default function StatusModal({ onClose, isCampMode, questLocked }: StatusModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const { userProfile, fetchUserProfile, equipBonus } = useGameStore();
     const [showSkillDeck, setShowSkillDeck] = React.useState(false);
     const [showEquip, setShowEquip] = React.useState(false);
@@ -28,9 +34,11 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
     const vitalityStatus = userProfile?.vitality ? getVitalityStatus(userProfile.vitality) : 'Prime';
     const flameColor = vitalityStatus === 'Prime' ? 'text-orange-500' : vitalityStatus === 'Twilight' ? 'text-orange-800' : 'text-gray-700';
 
-    return (
+    if (!mounted) return null;
+
+    return createPortal(
         <>
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/90 animate-in fade-in duration-200">
             <div className="w-full max-w-lg h-auto max-h-[92dvh] bg-gray-900 border border-gray-800 rounded-lg shadow-2xl overflow-hidden flex flex-col">
 
                 {/* ── ヘッダー ── */}
@@ -217,8 +225,10 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
             <PartyModal
                 onClose={() => setShowParty(false)}
                 userProfile={userProfile}
+                isCampMode={isCampMode}
             />
         )}
-        </>
+        </>,
+        document.body
     );
 }

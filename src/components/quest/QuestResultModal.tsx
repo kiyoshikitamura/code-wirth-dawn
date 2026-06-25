@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag, Loader2 } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
 interface LevelUpInfo {
@@ -82,29 +83,56 @@ export default function QuestResultModal({
     shareDataList, repChange, partyChanges, newLocationName, earnedExp, lootSaved, guestConversion, isTestPlay
 }: QuestResultModalProps) {
     const [isClosing, setIsClosing] = useState(false);
+    const closeLockedRef = useRef(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     
-    const handleClose = async () => {
-        if (isClosing) return;
+    const handleClose = () => {
+        if (closeLockedRef.current || isClosing) return;
+        closeLockedRef.current = true;
         setIsClosing(true);
-        try {
-            await onClose();
-        } catch (e) {
-            console.error('[QuestResultModal] onClose failed:', e);
-            setIsClosing(false);
-        }
+        setTimeout(async () => {
+            try {
+                // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
+                try {
+                    sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
+                } catch (err) {
+                    console.warn('[QuestResultModal] sessionStorage setItem failed:', err);
+                }
+                await onClose();
+            } catch (e) {
+                console.error('[QuestResultModal] onClose failed:', e);
+                closeLockedRef.current = false;
+                setIsClosing(false);
+            }
+        }, 250);
     };
 
     const safeChanges = changes || {} as QuestChanges;
     const { level_up, gold_gained = 0, aged_up } = safeChanges;
     const isSuccess = result === 'success';
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
-            <div className="bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl relative my-8">
-                <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent pointer-events-none rounded-lg" />
+    if (!mounted) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 animate-fade-in">
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
+            {isClosing && (
+                <div className="fixed inset-0 bg-slate-950/90 z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                    <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
+                        {isTestPlay ? 'クリエイターズ工房に戻る中…' : '拠点に移動中…'}
+                    </p>
+                </div>
+            )}
+            <div className="relative z-10 bg-gray-900 border border-amber-500/50 rounded-lg max-w-md w-full shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden my-8">
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent pointer-events-none rounded-lg z-0" />
 
                 {/* ── §1 ヘッダー ── */}
-                <header className="p-5 text-center border-b border-gray-800 relative z-10">
+                <header className="p-5 text-center border-b border-gray-800 relative z-10 shrink-0">
                     <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-widest mb-2 ${
                         isSuccess
                             ? 'bg-amber-900/40 border border-amber-600/50 text-amber-400'
@@ -124,7 +152,7 @@ export default function QuestResultModal({
                     <div className="w-16 h-0.5 bg-amber-600/50 mx-auto mt-2 rounded-full" />
                 </header>
 
-                <div className="p-5 space-y-4 relative z-10">
+                <div className="p-5 space-y-4 relative z-10 flex-1 overflow-y-auto custom-scrollbar">
 
                     {/* ── §2 報酬セクション ── */}
                     {isSuccess && (gold_gained > 0 || earnedExp || repChange || (lootSaved && lootSaved.length > 0)) && (
@@ -442,70 +470,31 @@ export default function QuestResultModal({
                         </section>
                     )}
 
-                    {/* ── シェアセクション（号外システム統合） ── */}
-                    {(shareDataList && shareDataList.length > 0) ? (
-                        <section className="border-t border-gray-800 pt-3">
-                            <div className="bg-amber-900/10 border border-amber-500/20 p-3 rounded-lg space-y-2">
-                                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-[10px]">
-                                    <Trophy className="w-3 h-3" />
-                                    <span>号外！冒険を共有しよう</span>
-                                </div>
-                                {shareDataList.map((sd, idx) => {
-                                    const shareUrl = typeof window !== 'undefined'
-                                        ? `${window.location.origin}/share?t=${sd.slug}&${new URLSearchParams(sd.vars).toString()}`
-                                        : undefined;
-                                    return (
-                                        <div key={idx} className="flex items-center gap-3 justify-between bg-black/20 p-2 rounded">
-                                            <p className="text-gray-300 text-xs italic leading-relaxed flex-1">
-                                                "{sd.text.length > 80 ? sd.text.substring(0, 80) + '...' : sd.text}"
-                                            </p>
-                                            <XShareButton
-                                                text={sd.text}
-                                                shareUrl={shareUrl}
-                                                iconOnly={true}
-                                                className="!w-9 !h-9 !p-0 shadow-md !bg-white hover:!bg-gray-200 !text-black !rounded-full flex items-center justify-center shrink-0"
-                                            />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    ) : shareText && (
-                        <section className="border-t border-gray-800 pt-3">
-                            <div className="bg-amber-900/10 border border-amber-500/20 p-3 rounded-lg space-y-2">
-                                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-[10px]">
-                                    <Trophy className="w-3 h-3" />
-                                    <span>冒険を共有しよう</span>
-                                </div>
-                                <div className="flex items-center gap-3 justify-between bg-black/20 p-2 rounded">
-                                    <p className="text-gray-300 text-xs italic leading-relaxed flex-1">
-                                        "{shareText.length > 80 ? shareText.substring(0, 80) + '...' : shareText}"
-                                    </p>
-                                    <XShareButton
-                                        text={shareText}
-                                        iconOnly={true}
-                                        className="!w-9 !h-9 !p-0 shadow-md !bg-white hover:!bg-gray-200 !text-black !rounded-full flex items-center justify-center shrink-0"
-                                    />
-                                </div>
-                            </div>
-                        </section>
-                    )}
+                    {/* ── シェアセクション 一時廃止 ── */}
                 </div>
 
-                <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10">
+                <footer className="p-4 bg-black/40 text-center border-t border-gray-800 relative z-10 shrink-0">
                     <button
                         onClick={handleClose}
                         disabled={isClosing}
-                        className={`w-full text-white font-bold py-3 px-6 rounded transition-colors shadow-lg ${
+                        className={`w-full text-white font-bold py-3 px-6 rounded transition-colors shadow-lg flex items-center justify-center gap-2 ${
                             isClosing
                                 ? 'bg-amber-800/60 border border-amber-600/40 text-amber-300/60 cursor-not-allowed'
                                 : 'bg-amber-600 hover:bg-amber-500 hover:shadow-amber-500/20'
                         }`}
                     >
-                        {isClosing ? '読み込み中…' : (isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける')}
+                        {isClosing ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                                読み込み中…
+                            </>
+                        ) : (
+                            isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける'
+                        )}
                     </button>
                 </footer>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

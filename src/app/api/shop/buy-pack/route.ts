@@ -95,8 +95,12 @@ export async function POST(req: Request) {
 
         // 3. 鍵またはゴールドの残高チェックと消費
         let keyInventoryId: string | null = null;
+        const isTutorialFreePack = profile.is_tutorial_completed === false && packSeries === 'basic';
         
-        if (useKey) {
+        if (isTutorialFreePack) {
+            // チュートリアル用のフリー開封時は鍵の所持チェック・減算およびゴールド消費をすべてスキップ
+            console.log(`[Buy Pack] User ${profile.id} is in tutorial onboarding. Bypassing key checks.`);
+        } else if (useKey) {
             // 鍵チェック
             const { data: keyInv, error: keyInvError } = await supabaseService
                 .from('inventory')
@@ -181,24 +185,26 @@ export async function POST(req: Request) {
         });
         
         // ゴールド減算トランザクション（鍵消費の場合は純利益（キャッシュバック）のみ加算、またはゴールド消費時の差し引き減算）
-        const netCost = useKey ? 0 : config.price;
-        const finalCostOrBenefit = netCost - refundGold; // 正の値ならゴールド消費、負の値ならゴールド増加（キャッシュバック分）
+        const netCost = (useKey || isTutorialFreePack) ? 0 : config.price;
+        const finalCostOrBenefit = isTutorialFreePack ? 0 : (netCost - refundGold); // 正の値ならゴールド消費、負の値ならゴールド増加（キャッシュバック分）
         
-        const { error: goldError } = await supabaseService
-            .rpc('increment_gold', { p_user_id: profile.id, p_amount: -finalCostOrBenefit });
-            
-        if (goldError) {
-            console.error('[Buy Pack API] Gold deduction failed:', goldError);
-            // 鍵のロールバック
-            if (useKey && keyInventoryId) {
-                const { data: existing } = await supabaseService.from('inventory').select('id, quantity').eq('id', keyInventoryId).maybeSingle();
-                if (existing) {
-                    await supabaseService.from('inventory').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', keyInventoryId);
-                } else {
-                    await supabaseService.from('inventory').insert({ id: keyInventoryId, user_id: profile.id, item_id: config.key_id, quantity: 1 });
+        if (!isTutorialFreePack) {
+            const { error: goldError } = await supabaseService
+                .rpc('increment_gold', { p_user_id: profile.id, p_amount: -finalCostOrBenefit });
+                
+            if (goldError) {
+                console.error('[Buy Pack API] Gold deduction failed:', goldError);
+                // 鍵のロールバック
+                if (useKey && keyInventoryId) {
+                    const { data: existing } = await supabaseService.from('inventory').select('id, quantity').eq('id', keyInventoryId).maybeSingle();
+                    if (existing) {
+                        await supabaseService.from('inventory').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', keyInventoryId);
+                    } else {
+                        await supabaseService.from('inventory').insert({ id: keyInventoryId, user_id: profile.id, item_id: config.key_id, quantity: 1 });
+                    }
                 }
+                return NextResponse.json({ error: 'ゴールドの更新に失敗しました。所持金が不足している可能性があります。' }, { status: 400 });
             }
-            return NextResponse.json({ error: 'ゴールドの更新に失敗しました。所持金が不足している可能性があります。' }, { status: 400 });
         }
         
         // 8. 新規スキルの登録
@@ -216,7 +222,9 @@ export async function POST(req: Request) {
             if (insertError) {
                 console.error('[Buy Pack API] Skills insertion failed:', insertError);
                 // ロールバック処理
-                if (useKey && keyInventoryId) {
+                if (isTutorialFreePack) {
+                    // チュートリアル時はロールバック不要
+                } else if (useKey && keyInventoryId) {
                     const { data: existing } = await supabaseService.from('inventory').select('id, quantity').eq('id', keyInventoryId).maybeSingle();
                     if (existing) {
                         await supabaseService.from('inventory').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', keyInventoryId);
