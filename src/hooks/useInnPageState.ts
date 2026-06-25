@@ -323,6 +323,38 @@ export function useInnPageState() {
     // linkIdentity コールバック処理
     useEffect(() => {
         if (typeof window === 'undefined') return;
+
+        const checkOAuthErrors = () => {
+            const url = new URL(window.location.href);
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            
+            const error = url.searchParams.get('error') || hashParams.get('error');
+            const errorDesc = url.searchParams.get('error_description') || hashParams.get('error_description');
+
+            if (error) {
+                console.error('[linkIdentity] OAuth error detected:', error, errorDesc);
+                let userFriendlyMsg = 'アカウント連携に失敗しました。';
+                if (error === 'identity_already_linked' || errorDesc?.includes('already_linked') || errorDesc?.includes('already linked')) {
+                    userFriendlyMsg = 'このGoogleアカウントは既に他のプレイヤーデータと連携されています。タイトル画面からこのGoogleアカウントでログインするか、別のGoogleアカウントと連携してください。';
+                } else if (errorDesc) {
+                    userFriendlyMsg = `アカウント連携に失敗しました: ${decodeURIComponent(errorDesc)}`;
+                }
+                alert(userFriendlyMsg);
+
+                // URLクリーンアップ (クエリパラメータとハッシュ)
+                const currentUrl = new URL(window.location.href);
+                currentUrl.hash = '';
+                ['error', 'error_description', 'error_code'].forEach(p => {
+                    currentUrl.searchParams.delete(p);
+                });
+                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                return true;
+            }
+            return false;
+        };
+
+        if (checkOAuthErrors()) return;
+
         const url = new URL(window.location.href);
         const code = url.searchParams.get('code');
         if (!code) return;
@@ -330,12 +362,16 @@ export function useInnPageState() {
         const cleanUrl = () => {
             const currentUrl = new URL(window.location.href);
             let changed = false;
-            ['code', 'error', 'error_description'].forEach(p => {
+            ['code', 'error', 'error_description', 'error_code'].forEach(p => {
                 if (currentUrl.searchParams.has(p)) {
                     currentUrl.searchParams.delete(p);
                     changed = true;
                 }
             });
+            if (currentUrl.hash) {
+                currentUrl.hash = '';
+                changed = true;
+            }
             if (changed) {
                 window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
             }
