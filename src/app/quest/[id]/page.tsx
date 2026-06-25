@@ -33,6 +33,71 @@ export default function QuestPage() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // チュートリアル後（クエスト6001完了時）の拠点（酒場、クエストボード、道具屋）の挙動を軽快にするため、
+    // クエストロード時にあらかじめデータをプリフェッチしてキャッシュする
+    useEffect(() => {
+        if (id === '6001') {
+            const prefetchBaseData = async () => {
+                try {
+                    const token = await getAuthToken();
+                    const headers: HeadersInit = {};
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    // /api/init-page?prefetch_quest_id=6001 を呼び出す（クリアした前提のデータをフェッチ）
+                    const initRes = await fetch('/api/init-page?prefetch_quest_id=6001', { headers, cache: 'no-store' });
+                    if (initRes.ok) {
+                        const data = await initRes.json();
+                        // Zustand ストアにキャッシュを同期
+                        if (data.profile) {
+                            useGameStore.setState({
+                                userProfile: data.profile,
+                                gold: data.profile.gold || 0,
+                                equipBonus: data.profile.equip_bonus || { atk: 0, def: 0, hp: 0 },
+                            });
+                        }
+                        if (data.hub_state) {
+                            useGameStore.setState({ hubState: data.hub_state });
+                        }
+                        if (data.world_state) {
+                            useGameStore.setState({ worldState: data.world_state });
+                        }
+                        useGameStore.setState({
+                            tavernShadows: data.tavern_shadows || [],
+                            partyMembers: data.party_members || [],
+                            locationQuests: data.location_quests || { quests: [], special_quests: [], normal_quests: [] },
+                            gossipData: data.gossip_data,
+                            completedQuests: data.completed_quests || [],
+                            lastInitPageFetchTime: Date.now(),
+                        });
+
+                        // sessionStorageキャッシュも同期
+                        if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                            const locId = data.profile.current_location_id;
+                            try {
+                                if (data.tavern_shadows) {
+                                    sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                                }
+                                if (data.location_quests) {
+                                    sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                                }
+                            } catch {}
+                        }
+                    }
+
+                    // 道具屋キャッシュのプリフェッチ
+                    const store = useGameStore.getState();
+                    if (typeof store.fetchShop === 'function') {
+                        await store.fetchShop();
+                    }
+                } catch (e) {
+                    console.error('[QuestPage] prefetch base data failed:', e);
+                }
+            };
+            prefetchBaseData();
+        }
+    }, [id]);
+
     const [viewMode, setViewMode] = useState<'scenario' | 'battle'>('scenario');
     const [battleBgUrl, setBattleBgUrl] = useState<string>('/images/quests/bg_wasteland.png');
     const [battleBgm, setBattleBgm] = useState<string>('bgm_battle'); // CSVのbattle BGMを保持
@@ -305,7 +370,10 @@ export default function QuestPage() {
             } else {
                 const data = await res.json();
                 useQuestState.getState().finalizeQuest(isSuccess ? 'success' : 'failure');
-                useGameStore.setState({ lastInitPageFetchTime: 0 });
+                const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
+                if (!isTutorialQuest) {
+                    useGameStore.setState({ lastInitPageFetchTime: 0 });
+                }
                 await fetchUserProfile();
 
                 setPrefetchedResult({
@@ -317,7 +385,10 @@ export default function QuestPage() {
             console.error(e);
             alert(`通信エラーが発生しました: ${e.message}\n結果の保存に失敗した可能性があります。`);
             useQuestState.getState().resetQuest();
-            useGameStore.setState({ lastInitPageFetchTime: 0 });
+            const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
+            if (!isTutorialQuest) {
+                useGameStore.setState({ lastInitPageFetchTime: 0 });
+            }
             setPrefetchedResult({
                 result,
                 data: {
@@ -1124,10 +1195,14 @@ export default function QuestPage() {
                             isTestPlay={isTestPlay}
                             onClose={async () => {
                                 if (!isTestPlay) {
-                                    // クエストボードのキャッシュクリア
-                                    useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                                    if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                                        sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                                    // チュートリアル後(クエスト6001)はプリフェッチしたキャッシュを活かしてロード時間を短縮するため、キャッシュをクリアしない
+                                    const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
+                                    if (!isTutorialQuest) {
+                                        // クエストボードのキャッシュクリア
+                                        useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                                        if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                                            sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                                        }
                                     }
                                     await fetchUserProfile();
                                     await useGameStore.getState().fetchInventory();

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
-import { getAuthHeaders } from '@/lib/authToken';
+import { getAuthHeaders, clearAuthTokenCache } from '@/lib/authToken';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
@@ -343,9 +343,15 @@ export function useInnPageState() {
 
         const handleOAuthCallback = async () => {
             try {
+                // セッション交換前にメモリキャッシュをクリア
+                clearAuthTokenCache();
+
                 // 手動で認証コードをセッションと交換する
                 const { data, error } = await supabase.auth.exchangeCodeForSession(code);
                 if (error) throw error;
+
+                // セッション交換後にも再度クリア（新しいセッションのトークンを確実に取得するため）
+                clearAuthTokenCache();
 
                 const user = data.session?.user;
                 if (user && !user.is_anonymous) {

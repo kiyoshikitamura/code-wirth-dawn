@@ -1,16 +1,39 @@
 import { supabase } from '@/lib/supabase';
-import { getAuthHeaders } from '@/lib/authToken';
+import { getAuthHeaders, getAuthToken } from '@/lib/authToken';
 import type { GameState } from '../types';
 
 export type InventorySliceActions = Pick<
     GameState,
-    'fetchInventory' | 'toggleEquip'
+    'fetchInventory' | 'toggleEquip' | 'fetchShop'
 >;
 
 export const createInventorySlice = (
     set: (partial: Partial<GameState> | ((state: GameState) => Partial<GameState>)) => void,
     get: () => GameState
 ): InventorySliceActions => ({
+
+    fetchShop: async () => {
+        try {
+            const token = await getAuthToken();
+            const headers: HeadersInit = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const res = await fetch('/api/shop', { headers });
+            if (res.ok) {
+                const data = await res.json();
+                set({
+                    shopCache: {
+                        items: data.items || [],
+                        rumoredItems: data.rumored_items || [],
+                        meta: data.meta || null,
+                        lastFetchTime: Date.now()
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Failed to fetch shop', e);
+        }
+    },
 
     fetchInventory: async () => {
         try {

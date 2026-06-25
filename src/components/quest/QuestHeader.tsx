@@ -26,7 +26,7 @@ export default function QuestHeader({
 }: QuestHeaderProps) {
     const { userProfile, battleState, equipBonus, fetchEquipment, partyMembers } = useGameStore();
     const questId = useQuestState((s) => s.questId);
-    const isTutorialQuest = questId === '6001' && userProfile?.is_tutorial_completed === false;
+    const isTutorialQuest = questId === '6001';
     const [fetchedParty, setFetchedParty] = useState<PartyMember[]>(partyMembers || []);
     const [showStatus, setShowStatus] = useState(false);
     const [isPartyLoading, setIsPartyLoading] = useState(false);

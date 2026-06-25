@@ -56,10 +56,12 @@ interface Props {
 
 export default function ShopModal({ onClose }: Props) {
     const router = useRouter();
-    const { gold, fetchInventory, userProfile, inventory } = useGameStore();
-    const [items, setItems] = useState<ShopItem[]>([]);
-    const [rumoredItems, setRumoredItems] = useState<ShopItem[]>([]);
-    const [meta, setMeta] = useState<ShopMeta | null>(null);
+    const { gold, fetchInventory, userProfile, inventory, shopCache, fetchShop: storeFetchShop } = useGameStore();
+
+    const items = shopCache?.items || [];
+    const rumoredItems = shopCache?.rumoredItems || [];
+    const meta = shopCache?.meta || null;
+
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [purchasing, setPurchasing] = useState<string | null>(null); // itemId being bought/sold
@@ -74,7 +76,27 @@ export default function ShopModal({ onClose }: Props) {
 
     useEffect(() => {
         setMounted(true);
-        fetchShop();
+        const initShop = async () => {
+            const cache = useGameStore.getState().shopCache;
+            const hasData = cache && cache.items && cache.items.length > 0;
+            if (hasData) {
+                setLoading(false);
+                if (cache.meta?.prosperity === 1) {
+                    playCreepyAudio();
+                }
+            }
+
+            // SWR: キャッシュが無いか、60秒以上古い場合のみフェッチ
+            if (!hasData || Date.now() - (cache?.lastFetchTime || 0) > 60000) {
+                await storeFetchShop();
+                setLoading(false);
+                const freshCache = useGameStore.getState().shopCache;
+                if (freshCache?.meta?.prosperity === 1) {
+                    playCreepyAudio();
+                }
+            }
+        };
+        initShop();
     }, []);
 
     // formatEffectData, getItemTypeLabel etc. は @/lib/itemUtils から import 済み
@@ -84,28 +106,9 @@ export default function ShopModal({ onClose }: Props) {
     const getToken = getAuthToken;
 
     const fetchShop = async () => {
-        try {
-            const token = await getToken();
-            // [Security] JWT認証のみ — x-user-id廃止 (v27.2)
-            const res = await fetch('/api/shop', {
-                headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setItems(data.items);
-                setRumoredItems(data.rumored_items || []);
-                setMeta(data.meta);
-                if (data.meta.prosperity === 1) {
-                    playCreepyAudio();
-                }
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        setLoading(true);
+        await storeFetchShop();
+        setLoading(false);
     };
 
     const handleBuy = async (item: ShopItem, quantity: number = 1) => {

@@ -49,6 +49,8 @@ function formatRequirementsHint(req: any): string {
  */
 export async function GET(req: Request) {
     try {
+        const url = new URL(req.url);
+        const prefetchQuestId = url.searchParams.get('prefetch_quest_id');
         const supabaseAuth = createAuthClient(req);
 
         // ── 認証チェック ──
@@ -179,7 +181,7 @@ export async function GET(req: Request) {
 
             // 3. locationQuests (QuestService.getQuestsForLocation)
             (!isHub && locationId)
-                ? QuestService.getQuestsForLocation(user.id, locationId)
+                ? QuestService.getQuestsForLocation(user.id, locationId, prefetchQuestId || undefined)
                 : Promise.resolve({ quests: [], special_quests: [], normal_quests: [] }),
 
             // 4. gossip - loreData (rumors & items)
@@ -403,6 +405,14 @@ export async function GET(req: Request) {
         }
 
         // ── レスポンス組み立て ──
+        const completed_quests = completedQuestsResult.data || [];
+        if (prefetchQuestId && !completed_quests.some((q: any) => String(q.scenario_id) === String(prefetchQuestId))) {
+            completed_quests.push({
+                scenario_id: isNaN(Number(prefetchQuestId)) ? prefetchQuestId : Number(prefetchQuestId),
+                ugc_scenario_id: null
+            });
+        }
+
         const response: any = {
             profile: profile ? { ...profile, equip_bonus: equipBonus } : null,
             hub_state: hubState,
@@ -413,7 +423,7 @@ export async function GET(req: Request) {
             party_members: partyMembers || [],
             location_quests: locationQuests || { quests: [], special_quests: [], normal_quests: [] },
             gossip_data: gossipData,
-            completed_quests: completedQuestsResult.data || []
+            completed_quests: completed_quests
         };
 
         return NextResponse.json(response);
