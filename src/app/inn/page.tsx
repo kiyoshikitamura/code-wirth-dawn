@@ -60,6 +60,25 @@ export default function InnPage() {
 function InnPageInner() {
     const searchParams = useSearchParams();
     const [showGuideBanner, setShowGuideBanner] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        window.scrollTo(0, 0);
+        if (document.body) {
+            document.body.scrollTop = 0;
+            document.body.style.overflow = 'hidden';
+        }
+        if (document.documentElement) {
+            document.documentElement.scrollTop = 0;
+        }
+        return () => {
+            if (document.body) {
+                document.body.style.overflow = '';
+            }
+        };
+    }, []);
+
     const state = useInnPageState();
     const {
         router, loading, worldState, userProfile, equipBonus, isHub,
@@ -112,6 +131,9 @@ function InnPageInner() {
         visitedBilling, setVisitedBilling,
     } = state;
 
+    const isPromoRequestedSync = mounted && typeof window !== 'undefined' && sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+    const isPromoGuarded = isPromoPending || isPromoRequestedSync || showGuestRegisterPromo || showStarterPackPromo;
+
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
 
     // ツアー中に拠点の各施設データをバックグラウンドで先読み（プリフェッチ）
@@ -126,6 +148,9 @@ function InnPageInner() {
     }, [isTourActive]);
 
     const handleSelectFacilityOverride = (facility: FacilityType) => {
+        if (isPromoGuarded) {
+            return;
+        }
         if (isTourActive) {
             let isRecommended = false;
             if (onboardingTourStep === '1' && facility === 'inn') isRecommended = true;
@@ -167,7 +192,7 @@ function InnPageInner() {
         <div className="h-screen w-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
 
             {/* プロモ判定中の操作ガード (v4.9) */}
-            {isPromoPending && (
+            {isPromoGuarded && (
                 <div className="fixed inset-0 z-[300] bg-transparent pointer-events-auto cursor-wait" />
             )}
 
@@ -215,10 +240,10 @@ function InnPageInner() {
                             worldState={worldState} 
                             userProfile={userProfile} 
                             reputation={reputation} 
-                            onOpenSettings={onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowAccount(true))} 
-                            onOpenStatus={isTourActive ? undefined : () => setShowStatus(true)} 
-                            onOpenShop={isTourActive ? undefined : () => setShowShop(true)} 
-                            onOpenBilling={onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowBilling(true))} 
+                            onOpenSettings={isPromoGuarded ? undefined : (onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowAccount(true)))} 
+                            onOpenStatus={isPromoGuarded ? undefined : (isTourActive ? undefined : () => setShowStatus(true))} 
+                            onOpenShop={isPromoGuarded ? undefined : (isTourActive ? undefined : () => setShowShop(true))} 
+                            onOpenBilling={isPromoGuarded ? undefined : (onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowBilling(true)))} 
                             equipBonus={equipBonus}
                             isStatusRecommended={isStatusRecommended}
                             isSettingsRecommended={isSettingsRecommended}
@@ -234,10 +259,10 @@ function InnPageInner() {
                 <MainVisualArea
                     worldState={worldState}
                     locationSlug={isHub ? 'loc_hub' : userProfile?.locations?.slug}
-                    onOpenHistory={openHistoryHall}
-                    onReturnHub={returnToHub}
-                    onLeaveHub={leaveHub}
-                    onOpenMap={onboardingTourStep === '6' ? () => {
+                    onOpenHistory={isPromoGuarded ? () => {} : openHistoryHall}
+                    onReturnHub={isPromoGuarded ? () => {} : returnToHub}
+                    onLeaveHub={isPromoGuarded ? () => {} : leaveHub}
+                    onOpenMap={isPromoGuarded ? () => {} : (onboardingTourStep === '6' ? () => {
                         if (typeof window !== 'undefined') {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
                             localStorage.setItem('wirth_dawn_visited_tavern', 'true');
@@ -260,8 +285,8 @@ function InnPageInner() {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
                         }
                         router.push('/world-map');
-                    })}
-                    onOpenGossip={onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => handleSelectFacility('gossip')}
+                    }))}
+                    onOpenGossip={isPromoGuarded ? () => {} : (onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => handleSelectFacility('gossip'))}
                     showHistoryBadge={showHistoryBadge}
                     showGossipBadge={!visitedGossip}
                     isHub={isHub}

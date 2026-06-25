@@ -669,3 +669,17 @@
    - `QuestResultModal.tsx` の「冒険を続ける」ボタンが押された際、即座に遷移処理を行わず、まず `setIsClosing(true)` のステート更新のみを実行する。
    - コンポーネント内に `isClosing` を監視する `useEffect` を導入し、ステートが `true` に切り替わり React が DOM に「読み込み中…」ボタンおよび全体オーバーレイ（`z-[2000]`）をコミットした後に、`setTimeout` (150ms) を挟んでから `await onClose()` (遷移処理) を実行する。
    - これにより、テストプレイのように非同期 API が走らない場合やレスポンスが極めて高速な場合でも、ブラウザが前面のローディングオーバーレイを確実に画面にピクセル反映（Paint）してから Next.js 遷移が実行されるため、背面スピナーの残像やフリーズ感を完璧に隠蔽する。
+
+---
+
+## 25. スクロール位置残存によるタップ領域ズレ解消、同期プロモガード、およびモーダル背景タップ突き抜け防止仕様 (Version 4.9.3 追記)
+
+1. **Next.js 遷移時のスクロール位置リセットと `body` のスクロール禁止による座標ズレ解消**:
+   - クエスト画面等の長いスクロールが発生するページから宿屋画面へクライアントサイド遷移した際、`body` または `html` にスクロール位置が残ったままになるのを防ぐため、宿屋画面（`InnPageInner`）マウント時（`useEffect`）に `window.scrollTo(0, 0)`、および `document.body`、`document.documentElement` の `scrollTop = 0` を実行する。
+   - さらに、宿屋画面が表示されている間は `document.body.style.overflow = 'hidden'` を適用して `body` レベルのスクロール発生を完全に防止する（クリーンアップ時に元のスタイルに復元する）。
+   - これにより、ビューポートに対するクリック当たり判定（ヒットテスト）の座標ズレを根絶し、リロードを行わなくても施設ボタンやダイアログの「閉じる」ボタン、プロモモーダルの「保留する」ボタンを正確にタップできるようにする。
+2. **レンダー時の同期プロモガード（タイムラグ無効化）**:
+   - `useInnPageState.ts` が `useEffect` 内で帰還フラグをロードして `isPromoPending = true` に更新し、React がガードカバーをコミットするまでの非同期タイムラグ（隙間）での誤タップを防ぐため、クライアントサイドマウント完了後（`mounted === true`）の最初のレンダーから `sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true'` をレンダー中に同期判定する。
+   - 同期判定フラグ `isPromoGuarded`（`isPromoPending || isPromoRequestedSync || showGuestRegisterPromo || showStarterPackPromo`）が `true` の場合、施設ボタン、ヘッダーボタン、出発ボタン等のすべてのインタラクション（クリックハンドラ）を無効化（`undefined` に設定するか `return` による早期離脱）し、且つガードカバーをマウント後即座に表示する。
+3. **モーダル背景によるタップ突き抜けの修正**:
+   - `GuestRegisterPromoModal` および `StarterPackPromoModal` の背景マスク要素（`absolute inset-0 bg-black/85`）の `pointer-events-none` クラスを **`pointer-events-auto`** に変更し、モーダルの外側領域をタップしたイベントが背後の宿屋画面の各施設ボタンへ透過するのを完全に遮断する。
