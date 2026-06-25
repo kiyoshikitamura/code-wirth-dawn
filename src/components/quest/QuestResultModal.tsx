@@ -114,7 +114,7 @@ export default function QuestResultModal({
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none" />
             {isClosing && (
                 <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">

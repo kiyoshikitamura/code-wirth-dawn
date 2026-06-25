@@ -1180,40 +1180,38 @@ export default function QuestPage() {
 
                 {/* Quest Result Overlay */}
                 {resultOverlay && (
-                    <div className="absolute inset-0 z-[110]">
-                        <QuestResultModal
-                            result={resultOverlay.result}
-                            questTitle={resultOverlay.data?.quest_title}
-                            rewards={resultOverlay.data?.rewards}
-                            changes={resultOverlay.data?.changes}
-                            daysPassed={resultOverlay.data?.days_passed || 0}
-                            shareText={isTestPlay ? undefined : resultOverlay.data?.share_text}
-                            shareDataList={isTestPlay ? undefined : resultOverlay.data?.share_data_list}
-                            repChange={resultOverlay.data?.rep_change}
-                            partyChanges={resultOverlay.data?.party_changes}
-                            newLocationName={resultOverlay.data?.new_location_name}
-                            earnedExp={resultOverlay.data?.earned_exp}
-                            lootSaved={resultOverlay.data?.loot_saved}
-                            guestConversion={resultOverlay.data?.guest_conversion}
-                            isTestPlay={isTestPlay}
-                            onClose={async () => {
-                                if (!isTestPlay) {
-                                    // チュートリアル後(クエスト6001)はプリフェッチしたキャッシュを活かしてロード時間を短縮するため、キャッシュをクリアしない
-                                    const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
-                                    if (!isTutorialQuest) {
-                                        // クエストボードのキャッシュクリア
-                                        useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                                        if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                                            sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
-                                        }
+                    <QuestResultModal
+                        result={resultOverlay.result}
+                        questTitle={resultOverlay.data?.quest_title}
+                        rewards={resultOverlay.data?.rewards}
+                        changes={resultOverlay.data?.changes}
+                        daysPassed={resultOverlay.data?.days_passed || 0}
+                        shareText={isTestPlay ? undefined : resultOverlay.data?.share_text}
+                        shareDataList={isTestPlay ? undefined : resultOverlay.data?.share_data_list}
+                        repChange={resultOverlay.data?.rep_change}
+                        partyChanges={resultOverlay.data?.party_changes}
+                        newLocationName={resultOverlay.data?.new_location_name}
+                        earnedExp={resultOverlay.data?.earned_exp}
+                        lootSaved={resultOverlay.data?.loot_saved}
+                        guestConversion={resultOverlay.data?.guest_conversion}
+                        isTestPlay={isTestPlay}
+                        onClose={async () => {
+                            if (!isTestPlay) {
+                                // チュートリアル後(クエスト6001)はプリフェッチしたキャッシュを活かしてロード時間を短縮するため、キャッシュをクリアしない
+                                const isTutorialQuest = id === '6001' || String(scenario?.id) === '6001';
+                                if (!isTutorialQuest) {
+                                    // クエストボードのキャッシュクリア
+                                    useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                                    if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                                        sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                                     }
-                                    fetchUserProfile();
-                                    useGameStore.getState().fetchInventory();
                                 }
-                                router.push(isTestPlay ? '/workshop' : '/inn');
-                            }}
-                        />
-                    </div>
+                                fetchUserProfile();
+                                useGameStore.getState().fetchInventory();
+                            }
+                            router.push(isTestPlay ? '/workshop' : '/inn');
+                        }}
+                    />
                 )}
             </div>
         </div>

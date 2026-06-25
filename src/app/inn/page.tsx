@@ -611,39 +611,37 @@ function InnPageInner() {
 
             {/* Quest Result Overlay (ギルドでの放棄結果用) */}
             {resultOverlay && (
-                <div className="fixed inset-0 z-[500]">
-                    <QuestResultModal
-                        result={resultOverlay.result}
-                        questTitle={resultOverlay.data?.quest_title || '放棄した依頼'}
-                        rewards={resultOverlay.data?.rewards || {}}
-                        changes={resultOverlay.data?.changes || {
-                            gold_gained: 0,
-                            old_age: userProfile?.age || 18,
-                            new_age: userProfile?.age || 18,
-                            aged_up: false,
-                            vit_penalty: resultOverlay.data?.penalty?.vit || 1,
-                            atk_decay: 0,
-                            def_decay: 0,
-                        }}
-                        daysPassed={resultOverlay.data?.days_passed || 0}
-                        repChange={resultOverlay.data?.penalty?.reputation ? {
-                            amount: resultOverlay.data.penalty.reputation,
-                            location: resultOverlay.data.penalty.location || '現在地'
-                        } : null}
-                        onClose={async () => {
-                            // クエストボードのキャッシュクリア
-                            useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                            if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                                sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
-                            }
-                            // プロフィールフェッチ
-                            await useGameStore.getState().fetchUserProfile();
-                            // モーダルを閉じる
-                            setResultOverlay(null);
-                            setActiveModal(null);
-                        }}
-                    />
-                </div>
+                <QuestResultModal
+                    result={resultOverlay.result}
+                    questTitle={resultOverlay.data?.quest_title || '放棄した依頼'}
+                    rewards={resultOverlay.data?.rewards || {}}
+                    changes={resultOverlay.data?.changes || {
+                        gold_gained: 0,
+                        old_age: userProfile?.age || 18,
+                        new_age: userProfile?.age || 18,
+                        aged_up: false,
+                        vit_penalty: resultOverlay.data?.penalty?.vit || 1,
+                        atk_decay: 0,
+                        def_decay: 0,
+                    }}
+                    daysPassed={resultOverlay.data?.days_passed || 0}
+                    repChange={resultOverlay.data?.penalty?.reputation ? {
+                        amount: resultOverlay.data.penalty.reputation,
+                        location: resultOverlay.data.penalty.location || '現在地'
+                    } : null}
+                    onClose={async () => {
+                        // クエストボードのキャッシュクリア
+                        useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
+                        if (typeof window !== 'undefined' && userProfile?.current_location_id) {
+                            sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                        }
+                        // プロフィールフェッチ
+                        await useGameStore.getState().fetchUserProfile();
+                        // モーダルを閉じる
+                        setResultOverlay(null);
+                        setActiveModal(null);
+                    }}
+                />
             )}
 
             {/* Vitality枯渇死亡モーダル (spec_v15.1 §3.3) */}
