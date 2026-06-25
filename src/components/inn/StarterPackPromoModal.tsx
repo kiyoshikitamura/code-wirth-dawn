@@ -152,7 +152,6 @@ export default function StarterPackPromoModal({ onClose, onOpenBilling }: Props)
                         className="flex-1 py-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 border border-amber-400/20 rounded-xl font-black text-xs tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_15px_rgba(245,158,11,0.15)] active:scale-98"
                     >
                         内容を確認する (ショップへ進む)
-                        <ArrowRight size={13} />
                     </button>
                     <button
                         onClick={handleCancel}

@@ -166,9 +166,10 @@ function InnPageInner() {
 
         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
 
-        // 1. 本登録完了直後の遷移検知 (OAuth連携から戻ってきたタイミング)
+        // 1. 本登録完了直後の遷移検知 (OAuth連携から戻ってきたタイミング。URLのcodeがクリーンアップされた後に表示)
         const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
-        if (justRegistered === 'true' && !userProfile.is_anonymous) {
+        const hasCode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('code');
+        if (justRegistered === 'true' && !userProfile.is_anonymous && !hasCode) {
             sessionStorage.removeItem('wirth_dawn_just_registered');
             if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
                 setShowStarterPackPromo(true);
@@ -198,37 +199,58 @@ function InnPageInner() {
         }
     }, [userProfile, completedQuests]);
 
-    // 新規: チュートリアル後ナビゲーション用のフラグリセット (第1話クリア時の一度のみ)
+    // 新規: チュートリアル後ナビゲーション用のフラグリセット (第1話クリア時および本登録完了時のそれぞれ一度のみ)
     React.useEffect(() => {
-        if (!completedQuests) return;
+        if (!completedQuests || !userProfile) return;
+
         const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
-        if (isEp1Cleared) {
-            const resetKey = 'wirth_dawn_onboarding_reset_v3';
-            if (localStorage.getItem(resetKey) !== 'true') {
-                // localStorage のガイド関連フラグをクリア
-                localStorage.removeItem('wirth_dawn_visited_tavern');
-                localStorage.removeItem('wirth_dawn_visited_guild');
-                localStorage.removeItem('wirth_dawn_visited_map');
-                localStorage.removeItem('wirth_dawn_visited_academy');
-                localStorage.removeItem('wirth_dawn_visited_shop');
-                localStorage.removeItem('wirth_dawn_visited_billing');
-                localStorage.removeItem('wirth_dawn_visited_status');
-                localStorage.removeItem('wirth_dawn_visited_settings');
+        if (!isEp1Cleared) return;
 
-                // Reactステートもリセット
-                setVisitedTavern(false);
-                setVisitedGuild(false);
-                setVisitedMap(false);
-                setVisitedAcademy(false);
-                setVisitedShop(false);
-                setVisitedBilling(false);
-                setVisitedStatus(false);
-                setVisitedSettings(false);
+        // URLのcodeクエリパラメータが存在しない（＝クリーンアップ完了後）ことを確認して実行
+        const hasCode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('code');
+        if (hasCode) return;
 
-                localStorage.setItem(resetKey, 'true');
-            }
+        // 1. 第1話初回クリア時のリセット (ゲスト状態での帰還時など)
+        const resetKey = 'wirth_dawn_onboarding_reset_v3';
+        const hasReset = localStorage.getItem(resetKey) === 'true';
+
+        // 2. 本登録完了時のリセット (OAuth連携リダイレクトバック完了時)
+        const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
+        const regResetKey = 'wirth_dawn_onboarding_reg_reset_v3';
+        const hasRegReset = localStorage.getItem(regResetKey) === 'true';
+
+        let shouldReset = false;
+        if (!hasReset) {
+            localStorage.setItem(resetKey, 'true');
+            shouldReset = true;
         }
-    }, [completedQuests]);
+        if (justRegistered === 'true' && !userProfile.is_anonymous && !hasRegReset) {
+            localStorage.setItem(regResetKey, 'true');
+            shouldReset = true;
+        }
+
+        if (shouldReset) {
+            // localStorage のガイド関連フラグをクリア
+            localStorage.removeItem('wirth_dawn_visited_tavern');
+            localStorage.removeItem('wirth_dawn_visited_guild');
+            localStorage.removeItem('wirth_dawn_visited_map');
+            localStorage.removeItem('wirth_dawn_visited_academy');
+            localStorage.removeItem('wirth_dawn_visited_shop');
+            localStorage.removeItem('wirth_dawn_visited_billing');
+            localStorage.removeItem('wirth_dawn_visited_status');
+            localStorage.removeItem('wirth_dawn_visited_settings');
+
+            // Reactステートもリセット
+            setVisitedTavern(false);
+            setVisitedGuild(false);
+            setVisitedMap(false);
+            setVisitedAcademy(false);
+            setVisitedShop(false);
+            setVisitedBilling(false);
+            setVisitedStatus(false);
+            setVisitedSettings(false);
+        }
+    }, [completedQuests, userProfile]);
 
     React.useEffect(() => {
         if (showTavern) {
