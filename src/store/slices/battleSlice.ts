@@ -998,12 +998,19 @@ export const createBattleSlice = (
             updateProfileStatusHelper({ hp: 0 }, get().userProfile?.id || selectedProfileId);
         }
 
-        const session = await supabase.auth.getSession();
+        let session = null;
+        try {
+            const res = await supabase.auth.getSession();
+            session = res?.data?.session;
+        } catch (e) {
+            console.warn('[useBattleItem] getSession failed:', e);
+        }
+
         fetch('/api/item/use', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.data.session?.access_token || ''}`
+                'Authorization': `Bearer ${session?.access_token || ''}`
             },
             body: JSON.stringify({ inventory_id: item.id, use_context: 'battle' })
         }).catch(e => console.warn('[useBattleItem] API同期失敗（続行）', e));
