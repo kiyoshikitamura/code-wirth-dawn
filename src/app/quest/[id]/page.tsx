@@ -34,7 +34,6 @@ export default function QuestPage() {
         setMounted(true);
         // Prefetch destination routes to eliminate page transition lag
         router.prefetch('/inn');
-        router.prefetch('/workshop');
     }, [router]);
 
     // チュートリアル後（クエスト6001完了時）の拠点（酒場、クエストボード、道具屋）の挙動を軽快にするため、
@@ -1199,7 +1198,7 @@ export default function QuestPage() {
                                 fetchUserProfile();
                                 useGameStore.getState().fetchInventory();
                             }
-                            router.push(isTestPlay ? '/workshop' : '/inn');
+                            router.push('/inn');
                         }}
                     />
                 )}
