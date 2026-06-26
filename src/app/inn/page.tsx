@@ -512,6 +512,7 @@ function InnPageInner() {
                             if (onboardingTourStep === '1') recommendedFacility = 'inn';
                             else if (onboardingTourStep === '2') recommendedFacility = 'shop';
                             else if (onboardingTourStep === '3') recommendedFacility = 'magicAcademy';
+                            else if (onboardingTourStep === '4') recommendedFacility = 'status';
                             else if (onboardingTourStep === '6') recommendedFacility = 'guild';
                         } else {
                             const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
