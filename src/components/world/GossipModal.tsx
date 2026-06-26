@@ -41,6 +41,7 @@ export default function GossipModal({ onClose }: Props) {
     const [refreshing, setRefreshing] = useState(false);
     const touchStartY = useRef(0);
     const isAtTopRef = useRef(false);
+    const lastFetchTimeRef = useRef<number>(0);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (!scrollerRef.current || refreshing || loading) return;
@@ -77,6 +78,15 @@ export default function GossipModal({ onClose }: Props) {
 
     // Initial fetch / Reload
     const fetchInitialData = async (isRefresh = false) => {
+        if (isRefresh) {
+            const now = Date.now();
+            if (now - lastFetchTimeRef.current < 3000) {
+                // Throttle pull-to-refresh if triggered within 3s of last fetch
+                await new Promise(resolve => setTimeout(resolve, 650));
+                return;
+            }
+        }
+
         if (!isRefresh) setLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
@@ -93,6 +103,7 @@ export default function GossipModal({ onClose }: Props) {
                 } else {
                     setHasMore(true);
                 }
+                lastFetchTimeRef.current = Date.now();
             }
         } catch (e) {
             console.error('Failed to fetch initial gossip:', e);
