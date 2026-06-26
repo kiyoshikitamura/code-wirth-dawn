@@ -385,72 +385,77 @@ export default function ScenarioEngine({
         const campBgUrl = customBg ? getAssetUrl(customBg) : "/images/quests/bg_camp.png";
 
         return (
-            <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-6">
+            <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-between p-6">
                 <div 
                     className="absolute inset-0 opacity-20 pointer-events-none bg-cover bg-center transition-all duration-500" 
                     style={{ backgroundImage: `url('${campBgUrl}')` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
 
-                {!hideButtons && (
-                    <div className="z-10 w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
-                        <span className="text-3xl">🔥</span>
-                    </div>
-                )}
-                {title && <h2 className="text-2xl font-serif text-amber-400 mb-1 z-10 drop-shadow-md">{title}</h2>}
-                <p className="text-slate-200 mb-6 z-10 text-sm italic text-center max-w-xs">{description}</p>
+                {/* 中央コンテンツ */}
+                <div className="flex-1 flex flex-col items-center justify-center w-full z-10">
+                    {!hideButtons && (
+                        <div className="w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
+                            <span className="text-3xl">🔥</span>
+                        </div>
+                    )}
+                    {title && <h2 className="text-2xl font-serif text-amber-400 mb-1 drop-shadow-md">{title}</h2>}
+                    <p className="text-slate-200 mb-6 text-sm italic text-center max-w-xs">{description}</p>
 
-                {!hideButtons && (
-                    <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm w-full flex flex-col gap-3">
-                        <p className="text-amber-400/80 font-bold text-sm mb-1">※ここでは特別に、デッキ・装備変更が許可されます。</p>
-                        <button
-                            onClick={() => setShowCampStatus(true)}
-                            className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
-                        >
-                            デッキ編成・装備変更
-                        </button>
+                    {!hideButtons && (
+                        <div className="bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm w-full flex flex-col gap-3">
+                            <p className="text-amber-400/80 font-bold text-sm mb-1">※ここでは特別に、デッキ・装備変更が許可されます。</p>
+                            <button
+                                onClick={() => setShowCampStatus(true)}
+                                className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                            >
+                                デッキ編成・装備変更
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰ってギルドに報告（クリア）しますか？")) {
+                                        setEndReady({ result: 'success' });
+                                    }
+                                }}
+                                className="bg-emerald-950/60 text-emerald-200 border border-emerald-700/40 px-8 py-3 hover:bg-emerald-900/40 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                            >
+                                探索を終えて帰還する (クリア)
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* 最下部ボタン */}
+                <div className="w-full max-w-sm z-10 pb-4 flex justify-center shrink-0">
+                    {hideButtons ? (
                         <button
                             onClick={() => {
-                                if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰ってギルドに報告（クリア）しますか？")) {
-                                    setEndReady({ result: 'success' });
-                                }
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
+                                if (nextId) setCurrentNodeId(nextId);
+                                setTimeout(() => setIsTransitioning(false), 300);
                             }}
-                            className="bg-emerald-950/60 text-emerald-200 border border-emerald-700/40 px-8 py-3 hover:bg-emerald-900/40 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                            disabled={isTransitioning}
+                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            探索を終えて帰還する (クリア)
+                            <span>{continueLabel}</span>
+                            <ArrowRight size={14} className="opacity-70" />
                         </button>
-                    </div>
-                )}
-
-                {/* 進めるボタン */}
-                {hideButtons ? (
-                    <button
-                        onClick={() => {
-                            if (isTransitioning) return;
-                            setIsTransitioning(true);
-                            if (nextId) setCurrentNodeId(nextId);
-                            setTimeout(() => setIsTransitioning(false), 300);
-                        }}
-                        disabled={isTransitioning}
-                        className="w-full max-w-sm py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed z-10"
-                    >
-                        <span>{continueLabel}</span>
-                        <ArrowRight size={14} className="opacity-70" />
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => {
-                            if (isTransitioning) return;
-                            setIsTransitioning(true);
-                            if (nextId) setCurrentNodeId(nextId);
-                            setTimeout(() => setIsTransitioning(false), 300);
-                        }}
-                        disabled={isTransitioning}
-                        className="z-10 text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {continueLabel}
-                    </button>
-                )}
+                    ) : (
+                        <button
+                            onClick={() => {
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
+                                if (nextId) setCurrentNodeId(nextId);
+                                setTimeout(() => setIsTransitioning(false), 300);
+                            }}
+                            disabled={isTransitioning}
+                            className="text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {continueLabel}
+                        </button>
+                    )}
+                </div>
 
                 {showCampStatus && <StatusModal onClose={() => setShowCampStatus(false)} isCampMode={true} />}
             </div>
