@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, MapPin, Clock, Loader2 } from 'lucide-react';
+import { X, Plus, MapPin, Clock, Loader2, Trash2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
@@ -151,6 +151,29 @@ export default function GossipModal({ onClose }: Props) {
             setErrorMsg(e.message || '通信エラーが発生しました。');
         } finally {
             setPosting(false);
+        }
+    };
+
+    // Delete post
+    const handleDeletePost = async (postId: string) => {
+        if (!window.confirm('この噂話を削除しますか？')) return;
+        try {
+            soundManager?.playSE('se_click');
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/gossip?postId=${postId}`, {
+                method: 'DELETE',
+                headers: authHeaders
+            });
+            if (res.ok) {
+                soundManager?.playSE('se_click');
+                setPosts(prev => prev.filter(p => p.id !== postId));
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || '削除に失敗しました。');
+            }
+        } catch (e) {
+            console.error('Failed to delete post:', e);
+            alert('削除中にエラーが発生しました。');
         }
     };
 
@@ -306,18 +329,33 @@ export default function GossipModal({ onClose }: Props) {
                                     </div>
                                     {/* Body */}
                                     <div className="flex-1 min-w-0 space-y-1">
-                                        <div className="flex items-baseline gap-1.5 flex-wrap">
-                                            {post.epithet && (
-                                                <span className="text-[10px] text-[#a38b6b] font-bold tracking-wider">
-                                                    [{post.epithet}]
+                                        <div className="flex items-center justify-between gap-1.5">
+                                            <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                                                {post.epithet && (
+                                                    <span className="text-[10px] text-[#a38b6b] font-bold tracking-wider truncate">
+                                                        [{post.epithet}]
+                                                    </span>
+                                                )}
+                                                <span 
+                                                    onClick={() => handleAvatarClick(post)}
+                                                    className={`text-xs font-black text-gray-200 truncate ${post.is_system ? '' : 'cursor-pointer hover:underline'}`}
+                                                >
+                                                    {post.name}
                                                 </span>
+                                            </div>
+                                            {/* Delete Button */}
+                                            {userProfile && post.user_id === userProfile.id && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeletePost(post.id);
+                                                    }}
+                                                    className="text-gray-500 hover:text-red-400 transition-colors p-1 shrink-0"
+                                                    title="削除する"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
                                             )}
-                                            <span 
-                                                onClick={() => handleAvatarClick(post)}
-                                                className={`text-xs font-black text-gray-200 ${post.is_system ? '' : 'cursor-pointer hover:underline'}`}
-                                            >
-                                                {post.name}
-                                            </span>
                                         </div>
                                         <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap break-all">
                                             {post.content}
