@@ -163,7 +163,7 @@ export async function GET(req: Request) {
             // 5. gossip - timeline posts
             supabaseServer
                 .from('gossip_posts')
-                .select('*')
+                .select('*, user_profiles(subscription_tier)')
                 .order('created_at', { ascending: false })
                 .limit(30),
 

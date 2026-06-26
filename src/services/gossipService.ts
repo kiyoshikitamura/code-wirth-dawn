@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
 // Cooldown duration in seconds
-const COOLDOWN_SECONDS = 30;
+const COOLDOWN_SECONDS = 10;
 
 // Excluded Kitamu account
 const EXCLUDED_KITAMU_USER_ID = 'c1cf67dd-527a-497e-bf88-ce10c2cb516f';

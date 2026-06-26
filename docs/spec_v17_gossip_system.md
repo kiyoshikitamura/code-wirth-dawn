@@ -58,7 +58,7 @@
   - 送信データ: `{ content: string }`
   - バリデーション:
     - 140文字以下であること。
-    - 直前投稿から**「30秒」**経過していること（30秒以内の連続投稿は `429 Too Many Requests` エラー）。
+    - 直前投稿から**「10秒」**経過していること（10秒以内の連続投稿は `429 Too Many Requests` エラー）。
     - 禁止ワードフィルタ（誹謗中傷、ハラスメントワード等）に抵触していないこと（抵触時は `400 Bad Request` エラー）。
   - 送信者のプロフィール (`user_profiles`) から最新の `name`、`title_name`、`avatar_url`、`current_location_id` と拠点名を解決して `gossip_posts` に挿入。
 
@@ -106,17 +106,24 @@
 
 ---
 
-## 5. 自己紹介ポップアップ (`SimpleUserProfilePopup`) の要素拡張
-- ポップアップ表示要素を以下の6点に拡張します。
+## 5. 自己紹介ポップアップ (`SimpleUserProfilePopup`) の要素拡張 & 購読プラン（フレーム）表示
+- ポップアップ表示要素を以下の7点に拡張します。
   - **称号 (epithet / title_name)**
   - **ユーザー名 (name)**
   - **ユーザーアイコン (avatarUrl)**
   - **レベル (level)**
   - **ゲーム内年齢 (age)**
   - **自己紹介文 (introduction)**
+  - **購読プランに応じたアバター装飾 (subscription_tier)**
+- **タイムライン & ポップアップ アバター装飾（フレーム）仕様**:
+  - 投稿画面のタイムライン上のアバターアイコン、および自己紹介ポップアップのアバターアイコンについて、ユーザーの購読プラン（`subscription_tier`）に応じた専用グラデーションフレーム（枠線）を適用します。
+    - **Premium**: ゴールドグラデーション枠（`bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600`）
+    - **Basic**: ブルースチールグラデーション枠（`bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500`）
+    - **Free（またはシステム）**: 従来のブロンズ/グレー枠（システムメッセージはパープル枠）
 - **データ取得方法**:
-  - ランキングやタイムライン上のカードをクリックした場合は、`/api/profile?profileId=[ID]` から非同期で現在アクティブなプロフィールを取得し、ポップアップへ渡します。
-  - 酒場（`TavernModal.tsx`）の傭兵NPCをクリックした場合は、`ShadowSummary` に格納されている `level` および mapping したデータをポップアップへ渡します。
+  - タイムライン取得（`/api/gossip`）および初期化API（`/api/init-page`）にて、`gossip_posts` の `user_id` から `user_profiles(subscription_tier)` を結合して取得します。
+  - ランキングやタイムライン上のカードをクリックした場合は、`/api/profile?profileId=[ID]` から非同期で現在アクティブなプロフィール（`subscription_tier` を含む）を取得し、ポップアップへ渡します。
+  - 酒場（`TavernModal.tsx`）の傭兵NPCをクリックした場合は、`ShadowSummary` に格納されている `level` / `subscription_tier` および mapping したデータをポップアップへ渡します。
 
 ---
 
