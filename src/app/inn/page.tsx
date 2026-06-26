@@ -430,7 +430,12 @@ function InnPageInner() {
                     onOpenHistory={openHistoryHall}
                     onReturnHub={returnToHub}
                     onLeaveHub={leaveHub}
-                    onOpenMap={isTourActive ? undefined : () => {
+                    onOpenMap={isTourActive ? () => {
+                        if (onboardingTourStep === '5') {
+                            soundManager?.playSE('se_click');
+                            advanceOnboardingStep();
+                        }
+                    } : () => {
                         if (typeof window !== 'undefined') {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
                         }
@@ -452,6 +457,7 @@ function InnPageInner() {
                         return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop && !visitedGossip;
                     })()}
                     isMapRecommended={onboardingTourStep === '5'}
+                    isTourActive={isTourActive}
                 />
 
                 {/* 目的ガイダンスバナー (Onboarding Banner) */}
