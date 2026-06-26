@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabase';
+import { supabase as defaultSupabase } from '@/lib/supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { Location, WorldState } from '@/types/game';
 import { ECONOMY_RULES } from '@/constants/game_rules';
 
@@ -51,7 +52,8 @@ const RESISTANCE_THRESHOLD = 51;
  * Main function to update world hegemony and location status.
  * Intended to be run every 6 hours via Cron.
  */
-export async function updateWorldSimulation() {
+export async function updateWorldSimulation(supabaseClient?: SupabaseClient) {
+    const client = supabaseClient || defaultSupabase;
     console.log('[WorldSim] Checking release date for 6h world update...');
     const logs: string[] = [];
 
@@ -69,10 +71,10 @@ export async function updateWorldSimulation() {
     console.log('[WorldSim] Starting 6h world update...');
     try {
         // 1. Fetch Data
-        const { data: locations, error: locError } = await supabase.from('locations').select('*');
+        const { data: locations, error: locError } = await client.from('locations').select('*');
         if (locError) throw locError;
 
-        const { data: states, error: stateError } = await supabase.from('world_states').select('*');
+        const { data: states, error: stateError } = await client.from('world_states').select('*');
         if (stateError) throw stateError;
 
         if (!locations || !states) throw new Error('No data found');
@@ -86,7 +88,7 @@ export async function updateWorldSimulation() {
         }
 
         if (isNewMonth) {
-            states.forEach(s => {
+            states.forEach((s: any) => {
                 if (s.location_name === '名もなき旅人の拠所') return;
                 s.order_score = 50;
                 s.chaos_score = 50;
@@ -95,7 +97,7 @@ export async function updateWorldSimulation() {
             });
             logs.push(`[WorldSim] New month detected. Reset all alignment scores to 50.`);
         } else {
-            states.forEach(s => {
+            states.forEach((s: any) => {
                 if (s.location_name === '名もなき旅人の拠所') return;
                 s.order_score = 50 + Math.round(((s.order_score || 50) - 50) * 0.8);
                 s.chaos_score = 50 + Math.round(((s.chaos_score || 50) - 50) * 0.8);
@@ -107,7 +109,7 @@ export async function updateWorldSimulation() {
 
         // Map states by location name for easy access
         const stateMap = new Map<string, WorldState>();
-        states.forEach(s => stateMap.set(s.location_name, s));
+        states.forEach((s: any) => stateMap.set(s.location_name, s));
 
         // 2. Calculate Global Scores (Hegemony) - Exclude Neutral hub "名もなき旅人の拠所"
         let totalOrder = 0;
@@ -115,9 +117,9 @@ export async function updateWorldSimulation() {
         let totalJustice = 0;
         let totalEvil = 0;
 
-        const activeStates = states.filter(s => s.location_name !== '名もなき旅人の拠所');
+        const activeStates = states.filter((s: any) => s.location_name !== '名もなき旅人の拠所');
 
-        activeStates.forEach(s => {
+        activeStates.forEach((s: any) => {
             totalOrder += s.order_score || 0;
             totalChaos += s.chaos_score || 0;
             totalJustice += s.justice_score || 0;
@@ -133,7 +135,7 @@ export async function updateWorldSimulation() {
         logs.push(`Global Scores - Order: ${totalOrder}, Chaos: ${totalChaos}, Justice: ${totalJustice}, Evil: ${totalEvil}`);
 
         // 3. Calculate Target Quotas (Exclude Neutral hub)
-        const activeLocations = locations.filter(l => l.nation_id !== 'Neutral' && l.name !== '名もなき旅人の拠所');
+        const activeLocations = locations.filter((l: any) => l.nation_id !== 'Neutral' && l.name !== '名もなき旅人の拠所');
         const totalLocs = activeLocations.length; // Should be 20
 
         // Simple ratios
@@ -181,7 +183,7 @@ export async function updateWorldSimulation() {
         // We assume the Capital Locations themselves are the anchors.
 
         // Helper: Find capital node for a nation
-        const findCapital = (nationId: string) => locations.find(l => l.type === 'Capital' && l.nation_id === nationId);
+        const findCapital = (nationId: string) => locations.find((l: any) => l.type === 'Capital' && l.nation_id === nationId);
 
         capitals[NATIONS.ROLAND] = findCapital(NATIONS.ROLAND)!;
         capitals[NATIONS.MARKAND] = findCapital(NATIONS.MARKAND)!;
@@ -209,7 +211,7 @@ export async function updateWorldSimulation() {
 
         const claims: { nation: string, locationId: string, dist: number }[] = [];
 
-        activeLocations.forEach(loc => {
+        activeLocations.forEach((loc: any) => {
             Object.keys(NATIONS).forEach(nationKey => {
                 const nation = NATIONS[nationKey as keyof typeof NATIONS];
                 const cap = capitals[nation];
@@ -272,7 +274,7 @@ export async function updateWorldSimulation() {
                     state.evil_score !== 50) {
                     
                     logs.push(`[Hub-Fix] Resetting Neutral hub state to default (Prosperous/Lv4/Align 50)`);
-                    const { error: hubError } = await supabase
+                    const { error: hubError } = await client
                         .from('world_states')
                         .update({
                             controlling_nation: 'Neutral',
@@ -429,7 +431,7 @@ export async function updateWorldSimulation() {
             }
 
             // 5. DB Update
-            const { error: updateError } = await supabase
+            const { error: updateError } = await client
                 .from('world_states')
                 .update({
                     controlling_nation: newOwner,
@@ -451,14 +453,14 @@ export async function updateWorldSimulation() {
 
         // 5.5 Insert History Logs
         if (historyLogs.length > 0) {
-            const { error: histError } = await supabase.from('world_states_history').insert(historyLogs);
+            const { error: histError } = await client.from('world_states_history').insert(historyLogs);
             if (histError) {
                 logs.push(`Error saving history logs: ${histError.message}`);
             } else {
                 logs.push(`[History] Inserted ${historyLogs.length} state change events.`);
                 try {
                     const { GossipService } = await import('@/services/gossipService');
-                    const gossipService = new GossipService(supabase);
+                    const gossipService = new GossipService(client);
                     for (const log of historyLogs) {
                         if (log.message) {
                             await gossipService.postSystemMessage(log.message, log.location_id);
@@ -474,7 +476,7 @@ export async function updateWorldSimulation() {
         // 仕様: spec_v5_shadow_system.md §7 — 英霊データの负荷軽減
         try {
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            const { data: staleHeroics, error: staleError } = await supabase
+            const { data: staleHeroics, error: staleError } = await client
                 .from('party_members')
                 .select('id, name')
                 .eq('origin_type', 'shadow_heroic')
@@ -482,12 +484,12 @@ export async function updateWorldSimulation() {
                 .lt('last_hired_at', thirtyDaysAgo);  // v4.1: last_hired_at ベース
 
             if (!staleError && staleHeroics && staleHeroics.length > 0) {
-                const ids = staleHeroics.map(r => r.id);
-                await supabase
+                const ids = staleHeroics.map((r: any) => r.id);
+                await client
                     .from('party_members')
                     .update({ is_active: false })
                     .in('id', ids);
-                logs.push(`[Cleanup] ${staleHeroics.length}件の英霊の契約を解除: ${staleHeroics.map(r => r.name).join(', ')}`);
+                logs.push(`[Cleanup] ${staleHeroics.length}件の英霊の契約を解除: ${staleHeroics.map((r: any) => r.name).join(', ')}`);
             } else if (!staleError) {
                 logs.push('[Cleanup] 解除対象なし');
             } else {
@@ -504,7 +506,7 @@ export async function updateWorldSimulation() {
         // ただし下限は REP_DECAY_THRESHOLD (100) に固定（仕様確認済み: 102 → 97 ではなく 100）
         try {
             // 対象レコードを一括取得
-            const { data: highReps, error: repFetchError } = await supabase
+            const { data: highReps, error: repFetchError } = await client
                 .from('reputations')
                 .select('id, score')
                 .gt('score', ECONOMY_RULES.REP_DECAY_THRESHOLD);
@@ -519,18 +521,18 @@ export async function updateWorldSimulation() {
 
                 // 結果スコアが threshold を下回るケース → threshold に固定
                 const clampedIds = highReps
-                    .filter(r => r.score + decayAmount < threshold)
-                    .map(r => r.id);
+                    .filter((r: any) => r.score + decayAmount < threshold)
+                    .map((r: any) => r.id);
                 // 結果スコアが threshold 以上のケース → そのまま -5
                 const normalDecayIds = highReps
-                    .filter(r => r.score + decayAmount >= threshold)
-                    .map(r => r.id);
+                    .filter((r: any) => r.score + decayAmount >= threshold)
+                    .map((r: any) => r.id);
 
                 let decayCount = 0;
 
                 // 一括UPDATE: threshold固定グループ
                 if (clampedIds.length > 0) {
-                    const { error: clampError } = await supabase
+                    const { error: clampError } = await client
                         .from('reputations')
                         .update({ score: threshold })
                         .in('id', clampedIds);
@@ -545,8 +547,8 @@ export async function updateWorldSimulation() {
                 // Supabase clientではRAW SQL式でのインクリメントがないため、
                 // スコアの分布が均一でない場合は個別UPDATEが必要。
                 // 実運用上 threshold超のレコード数は少数のため、個別でも問題なし。
-                for (const rep of highReps.filter(r => normalDecayIds.includes(r.id))) {
-                    const { error: repUpdateError } = await supabase
+                for (const rep of highReps.filter((r: any) => normalDecayIds.includes(r.id))) {
+                    const { error: repUpdateError } = await client
                         .from('reputations')
                         .update({ score: rep.score + decayAmount })
                         .eq('id', rep.id);

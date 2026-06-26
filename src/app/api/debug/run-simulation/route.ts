@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { updateWorldSimulation } from '@/lib/world-simulation';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export async function POST() {
 
     try {
         console.log('[デバッグ] 世界変換シミュレーションを手動実行中...');
-        const result = await updateWorldSimulation();
+        const result = await updateWorldSimulation(supabaseServer);
 
         return NextResponse.json({
             success: result.success,

@@ -13,7 +13,7 @@ async function performUpdate(isForceUgcReset: boolean) {
     const logs: string[] = [];
 
     // 1. 世界シミュレーションのアップデート (6時間ごと)
-    const result = await updateWorldSimulation();
+    const result = await updateWorldSimulation(supabaseServer);
     if (!result.success) {
         throw new Error(result.error || 'updateWorldSimulation failed');
     }
