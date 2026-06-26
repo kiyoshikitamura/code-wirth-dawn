@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDashboardSupabase } from '@/lib/supabase-dashboard';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 // Helper to fetch all records in range for views (light-weight since database handles aggregation)
 async function fetchAll<T>(
@@ -54,15 +55,48 @@ export async function GET(req: Request) {
         const daysParam = url.searchParams.get('days');
         const days = daysParam ? parseInt(daysParam, 10) : 30;
 
-        // ═══════════════════════════════════════
-        // §1. Query database Views
-        // ═══════════════════════════════════════
+        const requiredDays = Math.max(days + 30, 366);
+        const oldestDate = new Date();
+        oldestDate.setDate(oldestDate.getDate() - requiredDays);
+        const oldestDateStr = toJstDateStr(oldestDate);
 
-        // A. User Profiles Summary
-        const { data: profileSummary, error: profSumErr } = await supabaseServer
-            .from('user_profile_summary_view')
-            .select('*')
-            .single();
+        // ═══════════════════════════════════════
+        // §1. Query database Views (In Parallel)
+        // ═══════════════════════════════════════
+        const [
+            profileSummaryResult,
+            allUsers,
+            levelDistResult,
+            subDistResult,
+            questStatsData,
+            paySummaryDataResult,
+            dailyBasicData,
+            allUsersWithCreated,
+            dailyActiveUserIds,
+            dailyPayingUserIds,
+            colStatsResult,
+            colDailyResult,
+            acadStatsResult,
+            acadDailyResult
+        ] = await Promise.all([
+            supabaseServer.from('user_profile_summary_view').select('*').single(),
+            fetchAll<any>(supabaseServer.from('user_profiles').select('id, is_anonymous')),
+            supabaseServer.from('user_level_distribution_view').select('*').single(),
+            supabaseServer.from('user_subscription_distribution_view').select('*').single(),
+            fetchAll<any>(supabaseServer.from('quest_activity_stats_view').select('scenario_id, title, quest_type, start_count, complete_count, abandon_count'), 'scenario_id'),
+            supabaseServer.from('payment_summary_view').select('*'),
+            fetchAll<any>(supabaseServer.from('daily_basic_stats_view').select('date, new_users, total_battles, victories, defeats, fleds, revenue, dpu, dau'), 'date'),
+            fetchAll<any>(supabaseServer.from('user_profiles').select('id, is_anonymous, created_at')),
+            fetchAll<any>(supabaseServer.from('daily_active_user_ids_view').select('date, user_id').gte('date', oldestDateStr), 'date'),
+            fetchAll<any>(supabaseServer.from('daily_paying_user_ids_view').select('date, user_id').gte('date', oldestDateStr), 'date'),
+            supabaseServer.rpc('get_colosseum_summary_stats'),
+            supabaseServer.rpc('get_colosseum_daily_stats', { days_limit: requiredDays }),
+            supabaseServer.rpc('get_academy_summary_stats'),
+            supabaseServer.rpc('get_academy_daily_stats', { days_limit: requiredDays })
+        ]);
+
+        // A. User Profiles Summary unpacking
+        const { data: profileSummary, error: profSumErr } = profileSummaryResult;
         if (profSumErr) throw profSumErr;
 
         const totalUsers = profileSummary.total_users || 0;
@@ -70,11 +104,6 @@ export async function GET(req: Request) {
         const avgGold = Math.round(Number(profileSummary.avg_gold || 0));
         const maxGold = profileSummary.max_gold || 0;
         const avgLevel = Math.round(Number(profileSummary.avg_level || 0) * 10) / 10;
-
-        // Fetch all user profiles for anonymity mapping and registration breakdown
-        const allUsers = await fetchAll<any>(
-            supabaseServer.from('user_profiles').select('id, is_anonymous')
-        );
 
         const isAnonymousMap = new Map();
         let anonUsers = 0;
@@ -89,11 +118,8 @@ export async function GET(req: Request) {
             }
         });
 
-        // B. Level Distribution
-        const { data: levelDist, error: lvlDistErr } = await supabaseServer
-            .from('user_level_distribution_view')
-            .select('*')
-            .single();
+        // B. Level Distribution unpacking
+        const { data: levelDist, error: lvlDistErr } = levelDistResult;
         if (lvlDistErr) throw lvlDistErr;
 
         const levelDistribution = {
@@ -104,11 +130,8 @@ export async function GET(req: Request) {
             '16+': levelDist.range_16_plus || 0
         };
 
-        // C. Subscription Distribution
-        const { data: subDist, error: subDistErr } = await supabaseServer
-            .from('user_subscription_distribution_view')
-            .select('*')
-            .single();
+        // C. Subscription Distribution unpacking
+        const { data: subDist, error: subDistErr } = subDistResult;
         if (subDistErr) throw subDistErr;
 
         const subscriptionDistribution = {
@@ -117,14 +140,7 @@ export async function GET(req: Request) {
             premium: subDist.premium_count || 0
         };
 
-        // D. Quest stats (starts, completes, abandons per scenario)
-        const questStatsData = await fetchAll<any>(
-            supabaseServer
-                .from('quest_activity_stats_view')
-                .select('scenario_id, title, quest_type, start_count, complete_count, abandon_count'),
-            'scenario_id'
-        );
-
+        // D. Quest stats processing
         const questStats = questStatsData.map(q => {
             const startCount = q.start_count || 0;
             const completeCount = q.complete_count || 0;
@@ -150,10 +166,8 @@ export async function GET(req: Request) {
             count: q.completeCount
         }));
 
-        // E. Payment summary stats
-        const { data: paySummaryData, error: paySumErr } = await supabaseServer
-            .from('payment_summary_view')
-            .select('*');
+        // E. Payment summary stats unpacking
+        const { data: paySummaryData, error: paySumErr } = paySummaryDataResult;
         if (paySumErr) throw paySumErr;
 
         let totalRevenue = 0;
@@ -179,25 +193,7 @@ export async function GET(req: Request) {
             }
         });
 
-        // F. Daily time-series stats (last 366 days in JST)
-        const dailyBasicData = await fetchAll<any>(
-            supabaseServer
-                .from('daily_basic_stats_view')
-                .select('date, new_users, total_battles, victories, defeats, fleds, revenue, dpu, dau'),
-            'date'
-        );
-
-        // Calculate the oldest date needed (maximum of (days + 30) or 366 days for monthly stats)
-        const requiredDays = Math.max(days + 30, 366);
-        const oldestDate = new Date();
-        oldestDate.setDate(oldestDate.getDate() - requiredDays);
-        const oldestDateStr = toJstDateStr(oldestDate);
-
-        // Fetch all user profiles with created_at for daily and monthly registration breakdown
-        const allUsersWithCreated = await fetchAll<any>(
-            supabaseServer.from('user_profiles').select('id, is_anonymous, created_at')
-        );
-
+        // F. Registration breakdown
         const newUsersByDate: Record<string, { registered: number; guest: number }> = {};
         const newUsersByMonth: Record<string, { registered: number; guest: number }> = {};
 
@@ -219,23 +215,7 @@ export async function GET(req: Request) {
             }
         });
 
-        // G. Light-weight user IDs per day to compute sliding window MAU/MPU and calendar monthly MAU/MPU
-        const dailyActiveUserIds = await fetchAll<any>(
-            supabaseServer
-                .from('daily_active_user_ids_view')
-                .select('date, user_id')
-                .gte('date', oldestDateStr),
-            'date'
-        );
-        const dailyPayingUserIds = await fetchAll<any>(
-            supabaseServer
-                .from('daily_paying_user_ids_view')
-                .select('date, user_id')
-                .gte('date', oldestDateStr),
-            'date'
-        );
-
-        // Map user IDs sets per date
+        // G. Map user IDs sets per date
         const activeUsersByDate: Record<string, Set<string>> = {};
         const payingUsersByDate: Record<string, Set<string>> = {};
         const activeUsersByMonth: Record<string, Set<string>> = {};
@@ -386,10 +366,13 @@ export async function GET(req: Request) {
         const dpu = payingUsersByDate[todayStr] ? payingUsersByDate[todayStr].size : 0;
         const mpu = getUniqueUsersInWindow(payingUsersByDate, todayStr, 30);
 
-        // Fetch Colosseum stats via RPC
-        const { data: colStats, error: colStatsErr } = await supabaseServer
-            .rpc('get_colosseum_summary_stats');
-        
+        // Fetch Colosseum stats via RPC unpacking
+        const { data: colStats, error: colStatsErr } = colStatsResult;
+        const { data: colDaily, error: colDailyErr } = colDailyResult;
+
+        if (colStatsErr) console.error('[Admin KPI] Colosseum summary RPC error:', colStatsErr);
+        if (colDailyErr) console.error('[Admin KPI] Colosseum daily RPC error:', colDailyErr);
+
         let colSummary = {
             totalPlayers: 0,
             totalBattles: 0,
@@ -409,13 +392,7 @@ export async function GET(req: Request) {
                 maxStreak: Number(row.max_streak || 0),
                 totalGoldSpent: Number(row.total_gold_spent || 0)
             };
-        } else if (colStatsErr) {
-            console.error('[Admin KPI] Colosseum summary RPC error:', colStatsErr);
         }
-
-        // Fetch daily Colosseum stats via RPC (up to requiredDays)
-        const { data: colDaily, error: colDailyErr } = await supabaseServer
-            .rpc('get_colosseum_daily_stats', { days_limit: requiredDays });
 
         const colDailyMap: Record<string, { 
             starts: Record<string, number>, 
@@ -507,10 +484,13 @@ export async function GET(req: Request) {
             };
         });
 
-        // Fetch Magic Academy stats via RPC
-        const { data: acadStats, error: acadStatsErr } = await supabaseServer
-            .rpc('get_academy_summary_stats');
-        
+        // Fetch Magic Academy stats via RPC unpacking
+        const { data: acadStats, error: acadStatsErr } = acadStatsResult;
+        const { data: acadDaily, error: acadDailyErr } = acadDailyResult;
+
+        if (acadStatsErr) console.error('[Admin KPI] Academy summary RPC error:', acadStatsErr);
+        if (acadDailyErr) console.error('[Admin KPI] Academy daily RPC error:', acadDailyErr);
+
         let acadSummary = {
             totalPlayers: 0,
             totalPacks: 0,
@@ -526,13 +506,7 @@ export async function GET(req: Request) {
                 totalGoldSpent: Number(row.total_gold_spent || 0),
                 totalRefundGold: Number(row.total_refund_gold || 0)
             };
-        } else if (acadStatsErr) {
-            console.error('[Admin KPI] Academy summary RPC error:', acadStatsErr);
         }
-
-        // Fetch daily Magic Academy stats via RPC (up to requiredDays)
-        const { data: acadDaily, error: acadDailyErr } = await supabaseServer
-            .rpc('get_academy_daily_stats', { days_limit: requiredDays });
 
         const acadDailyMap: Record<string, {
             packs: Record<string, number>,
