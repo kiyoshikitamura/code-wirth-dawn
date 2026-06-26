@@ -623,236 +623,225 @@ export default function AdminDashboardPage() {
 
                         {/* データテーブル */}
                         <div className="overflow-x-auto flex-1 max-h-[550px] custom-scrollbar">
-                            <table className="w-full text-left text-xs border-collapse">
-                                
                                 {/* 1. 日次統計テーブル */}
-                                {parentTab === 'daily' && (
-                                    <>
-                                        {childTab === 'kpi' && (
-                                            <>
-                                                <thead>
-                                                    <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                        <th className="py-3 px-4 font-semibold text-left">日付</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">課金額</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">DAU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">PU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">PUR (課金率)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">ARPPU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">ARPU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">新規登録ユーザー数内訳</th>
+                                {parentTab === 'daily' && childTab === 'kpi' && (
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                                <th className="py-3 px-4 font-semibold text-left">日付</th>
+                                                <th className="py-3 px-4 font-semibold text-right">課金額</th>
+                                                <th className="py-3 px-4 font-semibold text-right">DAU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">PU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">PUR (課金率)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">ARPPU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">ARPU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">新規登録ユーザー数内訳</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-850">
+                                            {(data.dailyKPI || []).slice().reverse().map(d => {
+                                                const pur = d.dau > 0 ? ((d.pu / d.dau) * 100).toFixed(2) + '%' : '0.00%';
+                                                const arppu = d.pu > 0 ? Math.round(d.revenue / d.pu).toLocaleString() + ' 円' : '0 円';
+                                                const arpu = d.dau > 0 ? Math.round(d.revenue / d.dau).toLocaleString() + ' 円' : '0 円';
+                                                const totalNew = d.newUsersRegistered + d.newUsersGuest;
+                                                return (
+                                                    <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
+                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
+                                                        <td className="py-3 px-4 text-right text-yellow-400 font-bold">{d.revenue.toLocaleString()} 円</td>
+                                                        <td className="py-3 px-4 text-right text-emerald-400 font-semibold">{d.dau.toLocaleString()}</td>
+                                                        <td className="py-3 px-4 text-right text-amber-500 font-semibold">{d.pu.toLocaleString()}</td>
+                                                        <td className="py-3 px-4 text-right text-indigo-400 font-semibold">{pur}</td>
+                                                        <td className="py-3 px-4 text-right font-medium">{arppu}</td>
+                                                        <td className="py-3 px-4 text-right font-medium">{arpu}</td>
+                                                        <td className="py-3 px-4 text-right text-gray-400">
+                                                            <span className="font-bold text-gray-250">{totalNew} 名</span>
+                                                            <span className="text-[10px] text-gray-500 block">(本登録: {d.newUsersRegistered} / ゲスト: {d.newUsersGuest})</span>
+                                                        </td>
                                                     </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-850">
-                                                    {(data.dailyKPI || []).slice().reverse().map(d => {
-                                                        const pur = d.dau > 0 ? ((d.pu / d.dau) * 100).toFixed(2) + '%' : '0.00%';
-                                                        const arppu = d.pu > 0 ? Math.round(d.revenue / d.pu).toLocaleString() + ' 円' : '0 円';
-                                                        const arpu = d.dau > 0 ? Math.round(d.revenue / d.dau).toLocaleString() + ' 円' : '0 円';
-                                                        const totalNew = d.newUsersRegistered + d.newUsersGuest;
-                                                        return (
-                                                            <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
-                                                                <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
-                                                                <td className="py-3 px-4 text-right text-yellow-400 font-bold">{d.revenue.toLocaleString()} 円</td>
-                                                                <td className="py-3 px-4 text-right text-emerald-400 font-semibold">{d.dau.toLocaleString()}</td>
-                                                                <td className="py-3 px-4 text-right text-amber-500 font-semibold">{d.pu.toLocaleString()}</td>
-                                                                <td className="py-3 px-4 text-right text-indigo-400 font-semibold">{pur}</td>
-                                                                <td className="py-3 px-4 text-right font-medium">{arppu}</td>
-                                                                <td className="py-3 px-4 text-right font-medium">{arpu}</td>
-                                                                <td className="py-3 px-4 text-right text-gray-400">
-                                                                    <span className="font-bold text-gray-250">{totalNew} 名</span>
-                                                                    <span className="text-[10px] text-gray-500 block">(本登録: {d.newUsersRegistered} / ゲスト: {d.newUsersGuest})</span>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </>
-                                        )}
-                                        {childTab === 'colosseum' && colosseum && (
-                                            <>
-                                                <thead>
-                                                    <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                        <th className="py-3 px-4 font-semibold text-left">日付</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">総挑戦数 (Easy/Norm/Hard)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">総制覇数 (Easy/Norm/Hard)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">総放棄数 (Easy/Norm/Hard)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">回収ゴールド</th>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                                {parentTab === 'daily' && childTab === 'colosseum' && colosseum && (
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                                <th className="py-3 px-4 font-semibold text-left">日付</th>
+                                                <th className="py-3 px-4 font-semibold text-right">総挑戦数 (Easy/Norm/Hard)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">総制覇数 (Easy/Norm/Hard)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">総放棄数 (Easy/Norm/Hard)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">回収ゴールド</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-850">
+                                            {(colosseum?.daily || []).slice().reverse().map(d => {
+                                                const totalStarts = (d.starts?.easy || 0) + (d.starts?.normal || 0) + (d.starts?.hard || 0);
+                                                const totalCompletes = (d.completes?.easy || 0) + (d.completes?.normal || 0) + (d.completes?.hard || 0);
+                                                const totalAbandons = (d.abandons?.easy || 0) + (d.abandons?.normal || 0) + (d.abandons?.hard || 0);
+                                                return (
+                                                    <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
+                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
+                                                        <td className="py-3 px-4 text-right text-blue-400 font-bold">
+                                                            {totalStarts.toLocaleString()} 回
+                                                            <span className="text-[10px] text-gray-500 block">({d.starts.easy} / {d.starts.normal} / {d.starts.hard})</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">
+                                                            {totalCompletes.toLocaleString()} 回
+                                                            <span className="text-[10px] text-gray-500 block">({d.completes.easy} / {d.completes.normal} / {d.completes.hard})</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right text-red-400 font-bold">
+                                                            {totalAbandons.toLocaleString()} 回
+                                                            <span className="text-[10px] text-gray-500 block">({d.abandons.easy} / {d.abandons.normal} / {d.abandons.hard})</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right text-yellow-500 font-bold">{d.goldSpent.toLocaleString()} G</td>
                                                     </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-850">
-                                                    {(colosseum?.daily || []).slice().reverse().map(d => {
-                                                        const totalStarts = (d.starts?.easy || 0) + (d.starts?.normal || 0) + (d.starts?.hard || 0);
-                                                        const totalCompletes = (d.completes?.easy || 0) + (d.completes?.normal || 0) + (d.completes?.hard || 0);
-                                                        const totalAbandons = (d.abandons?.easy || 0) + (d.abandons?.normal || 0) + (d.abandons?.hard || 0);
-                                                        return (
-                                                            <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
-                                                                <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
-                                                                <td className="py-3 px-4 text-right text-blue-400 font-bold">
-                                                                    {totalStarts.toLocaleString()} 回
-                                                                    <span className="text-[10px] text-gray-500 block">({d.starts.easy} / {d.starts.normal} / {d.starts.hard})</span>
-                                                                </td>
-                                                                <td className="py-3 px-4 text-right text-emerald-400 font-bold">
-                                                                    {totalCompletes.toLocaleString()} 回
-                                                                    <span className="text-[10px] text-gray-500 block">({d.completes.easy} / {d.completes.normal} / {d.completes.hard})</span>
-                                                                </td>
-                                                                <td className="py-3 px-4 text-right text-red-400 font-bold">
-                                                                    {totalAbandons.toLocaleString()} 回
-                                                                    <span className="text-[10px] text-gray-500 block">({d.abandons.easy} / {d.abandons.normal} / {d.abandons.hard})</span>
-                                                                </td>
-                                                                <td className="py-3 px-4 text-right text-yellow-500 font-bold">{d.goldSpent.toLocaleString()} G</td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </>
-                                        )}
-                                        {childTab === 'academy' && academy && (
-                                            <>
-                                                <thead>
-                                                    <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                        <th className="py-3 px-4 font-semibold text-left">日付</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">パック開封数 (混沌と反逆)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">消費ゴールド</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">返還ゴールド</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">実質消費ゴールド</th>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                                {parentTab === 'daily' && childTab === 'academy' && academy && (
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                                <th className="py-3 px-4 font-semibold text-left">日付</th>
+                                                <th className="py-3 px-4 font-semibold text-right">パック開封数 (混沌と反逆)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">消費ゴールド</th>
+                                                <th className="py-3 px-4 font-semibold text-right">返還ゴールド</th>
+                                                <th className="py-3 px-4 font-semibold text-right">実質消費ゴールド</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-850">
+                                            {(academy?.daily || []).slice().reverse().map(d => {
+                                                const packs = d.packs?.chaos_and_rebellion || 0;
+                                                const goldSpent = d.goldSpent?.chaos_and_rebellion || 0;
+                                                const refundGold = d.refundGold?.chaos_and_rebellion || 0;
+                                                const netSpent = goldSpent;
+                                                const grossSpent = goldSpent + refundGold;
+                                                return (
+                                                    <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
+                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
+                                                        <td className="py-3 px-4 text-right text-indigo-400 font-bold">{packs.toLocaleString()} パック</td>
+                                                        <td className="py-3 px-4 text-right font-medium">{grossSpent.toLocaleString()} G</td>
+                                                        <td className="py-3 px-4 text-right text-yellow-500 font-semibold">{refundGold.toLocaleString()} G</td>
+                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">{netSpent.toLocaleString()} G</td>
                                                     </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-850">
-                                                    {(academy?.daily || []).slice().reverse().map(d => {
-                                                        const packs = d.packs?.chaos_and_rebellion || 0;
-                                                        const goldSpent = d.goldSpent?.chaos_and_rebellion || 0;
-                                                        const refundGold = d.refundGold?.chaos_and_rebellion || 0;
-                                                        const netSpent = goldSpent;
-                                                        const grossSpent = goldSpent + refundGold;
-                                                        return (
-                                                            <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
-                                                                <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
-                                                                <td className="py-3 px-4 text-right text-indigo-400 font-bold">{packs.toLocaleString()} パック</td>
-                                                                <td className="py-3 px-4 text-right font-medium">{grossSpent.toLocaleString()} G</td>
-                                                                <td className="py-3 px-4 text-right text-yellow-500 font-semibold">{refundGold.toLocaleString()} G</td>
-                                                                <td className="py-3 px-4 text-right text-emerald-400 font-bold">{netSpent.toLocaleString()} G</td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </>
-                                        )}
-                                    </>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 )}
 
                                 {/* 2. 月次統計テーブル */}
-                                {parentTab === 'monthly' && (
-                                    <>
-                                        {childTab === 'kpi' && (
-                                            <>
-                                                <thead>
-                                                    <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                        <th className="py-3 px-4 font-semibold text-left">対象月</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">課金額</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">MAU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">MPU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">MPUR (課金率)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">MARPPU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">MARPU</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">新規登録ユーザー数内訳</th>
+                                {parentTab === 'monthly' && childTab === 'kpi' && (
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                                <th className="py-3 px-4 font-semibold text-left">対象月</th>
+                                                <th className="py-3 px-4 font-semibold text-right">課金額</th>
+                                                <th className="py-3 px-4 font-semibold text-right">MAU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">MPU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">MPUR (課金率)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">MARPPU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">MARPU</th>
+                                                <th className="py-3 px-4 font-semibold text-right">新規登録ユーザー数内訳</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-850">
+                                            {(data.monthlyKPI || []).slice().reverse().map(m => {
+                                                const mpur = m.mau > 0 ? ((m.mpu / m.mau) * 100).toFixed(2) + '%' : '0.00%';
+                                                const marppu = m.mpu > 0 ? Math.round(m.revenue / m.mpu).toLocaleString() + ' 円' : '0 円';
+                                                const marpu = m.mau > 0 ? Math.round(m.revenue / m.mau).toLocaleString() + ' 円' : '0 円';
+                                                const totalNew = m.newUsersRegistered + m.newUsersGuest;
+                                                return (
+                                                    <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
+                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
+                                                        <td className="py-3 px-4 text-right text-yellow-400 font-bold">{m.revenue.toLocaleString()} 円</td>
+                                                        <td className="py-3 px-4 text-right text-emerald-400 font-semibold">{m.mau.toLocaleString()}</td>
+                                                        <td className="py-3 px-4 text-right text-amber-500 font-semibold">{m.mpu.toLocaleString()}</td>
+                                                        <td className="py-3 px-4 text-right text-indigo-400 font-semibold">{mpur}</td>
+                                                        <td className="py-3 px-4 text-right font-medium">{marppu}</td>
+                                                        <td className="py-3 px-4 text-right font-medium">{marpu}</td>
+                                                        <td className="py-3 px-4 text-right text-gray-400">
+                                                            <span className="font-bold text-gray-250">{totalNew} 名</span>
+                                                            <span className="text-[10px] text-gray-500 block">(本登録: {m.newUsersRegistered} / ゲスト: {m.newUsersGuest})</span>
+                                                        </td>
                                                     </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-850">
-                                                    {(data.monthlyKPI || []).slice().reverse().map(m => {
-                                                        const mpur = m.mau > 0 ? ((m.mpu / m.mau) * 100).toFixed(2) + '%' : '0.00%';
-                                                        const marppu = m.mpu > 0 ? Math.round(m.revenue / m.mpu).toLocaleString() + ' 円' : '0 円';
-                                                        const marpu = m.mau > 0 ? Math.round(m.revenue / m.mau).toLocaleString() + ' 円' : '0 円';
-                                                        const totalNew = m.newUsersRegistered + m.newUsersGuest;
-                                                        return (
-                                                            <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
-                                                                <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
-                                                                <td className="py-3 px-4 text-right text-yellow-400 font-bold">{m.revenue.toLocaleString()} 円</td>
-                                                                <td className="py-3 px-4 text-right text-emerald-400 font-semibold">{m.mau.toLocaleString()}</td>
-                                                                <td className="py-3 px-4 text-right text-amber-500 font-semibold">{m.mpu.toLocaleString()}</td>
-                                                                <td className="py-3 px-4 text-right text-indigo-400 font-semibold">{mpur}</td>
-                                                                <td className="py-3 px-4 text-right font-medium">{marppu}</td>
-                                                                <td className="py-3 px-4 text-right font-medium">{marpu}</td>
-                                                                <td className="py-3 px-4 text-right text-gray-400">
-                                                                    <span className="font-bold text-gray-250">{totalNew} 名</span>
-                                                                    <span className="text-[10px] text-gray-500 block">(本登録: {m.newUsersRegistered} / ゲスト: {m.newUsersGuest})</span>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </>
-                                        )}
-                                        {childTab === 'colosseum' && colosseum && (
-                                            <>
-                                                <thead>
-                                                    <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                        <th className="py-3 px-4 font-semibold text-left">対象月</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">総挑戦数 (Easy/Norm/Hard)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">総制覇数 (Easy/Norm/Hard)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">総放棄数 (Easy/Norm/Hard)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">回収ゴールド</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-850">
-                                                    {(colosseum?.monthly || []).slice().reverse().map(m => {
-                                                        const totalStarts = (m.starts?.easy || 0) + (m.starts?.normal || 0) + (m.starts?.hard || 0);
-                                                        const totalCompletes = (m.completes?.easy || 0) + (m.completes?.normal || 0) + (m.completes?.hard || 0);
-                                                        const totalAbandons = (m.abandons?.easy || 0) + (m.abandons?.normal || 0) + (m.abandons?.hard || 0);
-                                                        return (
-                                                            <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
-                                                                <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
-                                                                <td className="py-3 px-4 text-right text-blue-400 font-bold">
-                                                                    {totalStarts.toLocaleString()} 回
-                                                                    <span className="text-[10px] text-gray-500 block">({m.starts.easy} / {m.starts.normal} / {m.starts.hard})</span>
-                                                                </td>
-                                                                <td className="py-3 px-4 text-right text-emerald-400 font-bold">
-                                                                    {totalCompletes.toLocaleString()} 回
-                                                                    <span className="text-[10px] text-gray-500 block">({m.completes.easy} / {m.completes.normal} / {m.completes.hard})</span>
-                                                                </td>
-                                                                <td className="py-3 px-4 text-right text-red-400 font-bold">
-                                                                    {totalAbandons.toLocaleString()} 回
-                                                                    <span className="text-[10px] text-gray-500 block">({m.abandons.easy} / {m.abandons.normal} / {m.abandons.hard})</span>
-                                                                </td>
-                                                                <td className="py-3 px-4 text-right text-yellow-500 font-bold">{m.goldSpent.toLocaleString()} G</td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </>
-                                        )}
-                                        {childTab === 'academy' && academy && (
-                                            <>
-                                                <thead>
-                                                    <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                        <th className="py-3 px-4 font-semibold text-left">対象月</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">パック開封数 (混沌と反逆)</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">消費ゴールド</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">返還ゴールド</th>
-                                                        <th className="py-3 px-4 font-semibold text-right">実質消費ゴールド</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-850">
-                                                    {(academy?.monthly || []).slice().reverse().map(m => {
-                                                        const packs = m.packs?.chaos_and_rebellion || 0;
-                                                        const goldSpent = m.goldSpent?.chaos_and_rebellion || 0;
-                                                        const refundGold = m.refundGold?.chaos_and_rebellion || 0;
-                                                        const netSpent = goldSpent;
-                                                        const grossSpent = goldSpent + refundGold;
-                                                        return (
-                                                            <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
-                                                                <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
-                                                                <td className="py-3 px-4 text-right text-indigo-400 font-bold">{packs.toLocaleString()} パック</td>
-                                                                <td className="py-3 px-4 text-right font-medium">{grossSpent.toLocaleString()} G</td>
-                                                                <td className="py-3 px-4 text-right text-yellow-500 font-semibold">{refundGold.toLocaleString()} G</td>
-                                                                <td className="py-3 px-4 text-right text-emerald-400 font-bold">{netSpent.toLocaleString()} G</td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </>
-                                        )}
-                                    </>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 )}
-                            </table>
+                                {parentTab === 'monthly' && childTab === 'colosseum' && colosseum && (
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                                <th className="py-3 px-4 font-semibold text-left">対象月</th>
+                                                <th className="py-3 px-4 font-semibold text-right">総挑戦数 (Easy/Norm/Hard)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">総制覇数 (Easy/Norm/Hard)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">総放棄数 (Easy/Norm/Hard)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">回収ゴールド</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-850">
+                                            {(colosseum?.monthly || []).slice().reverse().map(m => {
+                                                const totalStarts = (m.starts?.easy || 0) + (m.starts?.normal || 0) + (m.starts?.hard || 0);
+                                                const totalCompletes = (m.completes?.easy || 0) + (m.completes?.normal || 0) + (m.completes?.hard || 0);
+                                                const totalAbandons = (m.abandons?.easy || 0) + (m.abandons?.normal || 0) + (m.abandons?.hard || 0);
+                                                return (
+                                                    <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
+                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
+                                                        <td className="py-3 px-4 text-right text-blue-400 font-bold">
+                                                            {totalStarts.toLocaleString()} 回
+                                                            <span className="text-[10px] text-gray-500 block">({m.starts.easy} / {m.starts.normal} / {m.starts.hard})</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">
+                                                            {totalCompletes.toLocaleString()} 回
+                                                            <span className="text-[10px] text-gray-500 block">({m.completes.easy} / {m.completes.normal} / {m.completes.hard})</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right text-red-400 font-bold">
+                                                            {totalAbandons.toLocaleString()} 回
+                                                            <span className="text-[10px] text-gray-500 block">({m.abandons.easy} / {m.abandons.normal} / {m.abandons.hard})</span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right text-yellow-500 font-bold">{m.goldSpent.toLocaleString()} G</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                                {parentTab === 'monthly' && childTab === 'academy' && academy && (
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
+                                                <th className="py-3 px-4 font-semibold text-left">対象月</th>
+                                                <th className="py-3 px-4 font-semibold text-right">パック開封数 (混沌と反逆)</th>
+                                                <th className="py-3 px-4 font-semibold text-right">消費ゴールド</th>
+                                                <th className="py-3 px-4 font-semibold text-right">返還ゴールド</th>
+                                                <th className="py-3 px-4 font-semibold text-right">実質消費ゴールド</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-850">
+                                            {(academy?.monthly || []).slice().reverse().map(m => {
+                                                const packs = m.packs?.chaos_and_rebellion || 0;
+                                                const goldSpent = m.goldSpent?.chaos_and_rebellion || 0;
+                                                const refundGold = m.refundGold?.chaos_and_rebellion || 0;
+                                                const netSpent = goldSpent;
+                                                const grossSpent = goldSpent + refundGold;
+                                                return (
+                                                    <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
+                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
+                                                        <td className="py-3 px-4 text-right text-indigo-400 font-bold">{packs.toLocaleString()} パック</td>
+                                                        <td className="py-3 px-4 text-right font-medium">{grossSpent.toLocaleString()} G</td>
+                                                        <td className="py-3 px-4 text-right text-yellow-500 font-semibold">{refundGold.toLocaleString()} G</td>
+                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">{netSpent.toLocaleString()} G</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
                         </div>
                     </div>
 
