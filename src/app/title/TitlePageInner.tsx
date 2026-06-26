@@ -630,10 +630,8 @@ export default function TitlePageInner() {
                                 if (!res.ok && res.status !== 404) {
                                     throw new Error((await res.json()).error);
                                 }
-                                if (typeof window !== 'undefined') {
-                                    localStorage.removeItem('game-storage');
-                                    localStorage.removeItem('quest-storage');
-                                }
+                                 safeLocalStorage.removeItem('game-storage');
+                                 safeLocalStorage.removeItem('quest-storage');
                                 await new Promise(r => setTimeout(r, 2500));
                                 setIsTestPlay(false);
                                 setAuthError(null);

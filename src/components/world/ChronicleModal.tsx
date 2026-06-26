@@ -45,7 +45,7 @@ export default function ChronicleModal({ events, onClose }: ChronicleModalProps)
                         <Newspaper className="w-5 h-5 text-amber-500" />
                         <span className="font-serif font-black text-2xl tracking-[0.3em] text-amber-100">号外</span>
                     </div>
-                    <div className="text-[10px] opacity-70 font-mono">WORLD EXTRA EDITION - {new Date().toLocaleDateString()}</div>
+                    <div suppressHydrationWarning className="text-[10px] opacity-70 font-mono">WORLD EXTRA EDITION - {new Date().toLocaleDateString()}</div>
                 </div>
 
                 <div className="p-6 overflow-y-auto flex-1 font-serif">

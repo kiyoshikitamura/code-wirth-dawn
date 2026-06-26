@@ -75,6 +75,14 @@ export const useGameStore = create<GameState>()(
         }),
         {
             name: 'game-storage',
+            version: 1,
+            migrate: (persistedState: any, version: number) => {
+                if (version < 1) {
+                    console.log('[gameStore] Migrating from version 0: Clearing old state to avoid conflicts');
+                    return {};
+                }
+                return persistedState;
+            },
             partialize: (state) => ({
                 // C5最適化: 永続化データを最小限に。
                 // battleState/inventory/deck等はAPI取得されるため不要。
