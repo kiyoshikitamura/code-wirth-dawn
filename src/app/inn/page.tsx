@@ -251,7 +251,7 @@ function InnPageInner() {
 
                 {/* Fixed Header */}
                 {(() => {
-                    const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                    const isEp1Cleared = completedQuests?.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001')) ?? false;
                     
                     const isStatusRecommended = !isTourActive && !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && !visitedStatus;
                     const isSettingsRecommended = !isTourActive && !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && visitedStatus && !visitedSettings;
@@ -311,7 +311,7 @@ function InnPageInner() {
                         if (isTourActive) return false;
                         if (userProfile && (userProfile.level || 1) >= 3) return false; // Lv3以上バイパス
                         const completedQuests = useGameStore.getState().completedQuests;
-                        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                        const isEp1Cleared = completedQuests?.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001')) ?? false;
                         const clearedCount = completedQuests?.length ?? 0;
                         const visitedTavern = safeLocalStorage.getItem('wirth_dawn_visited_tavern') === 'true';
                         const visitedShop = safeLocalStorage.getItem('wirth_dawn_visited_shop') === 'true';
@@ -325,7 +325,7 @@ function InnPageInner() {
                 {(() => {
                     if (userProfile && (userProfile.level || 1) >= 3) return null; // Lv3以上バイパス
 
-                    const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+                    const isEp1Cleared = completedQuests?.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001')) ?? false;
                     let bannerText = '';
                     let showCloseBtn = true;
 

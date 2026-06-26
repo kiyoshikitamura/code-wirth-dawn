@@ -298,6 +298,14 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
 }),
     {
         name: 'quest-storage',
+        version: 1,
+        migrate: (persistedState: any, version: number) => {
+            if (version < 1) {
+                console.log('[questStore] Migrating from version 0: Clearing old state to avoid conflicts');
+                return {};
+            }
+            return persistedState;
+        },
         storage: createJSONStorage(() => safeStateStorage),
     }
 ));

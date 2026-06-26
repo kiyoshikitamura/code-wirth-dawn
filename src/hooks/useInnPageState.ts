@@ -60,7 +60,7 @@ export function useInnPageState() {
         const tourStep = safeLocalStorage.getItem('wirth_dawn_onboarding_tour_step');
 
         // Check if Ep 1 is cleared
-        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+        const isEp1Cleared = completedQuests?.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001')) ?? false;
 
         if (!isEp1Cleared) {
             setOnboardingTourStep(null);
@@ -72,7 +72,7 @@ export function useInnPageState() {
             (userProfile.level || 1) >= 3 ||
             (completedQuests?.length || 0) >= 2 ||
             safeLocalStorage.getItem('wirth_dawn_visited_map') === 'true' ||
-            (completedQuests?.some(q => q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false);
+            (completedQuests?.some(q => q && q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false);
 
         if (isExistingUser) {
             setOnboardingTourStep('completed');
@@ -107,7 +107,7 @@ export function useInnPageState() {
         setShowGuestRegisterPromo(false);
         setIsPromoPending(false);
         const tourStep = safeLocalStorage.getItem('wirth_dawn_onboarding_tour_step');
-        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+        const isEp1Cleared = completedQuests?.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001')) ?? false;
         if (isEp1Cleared && !tourStep) {
             setOnboardingTourStep('1');
             safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
@@ -118,7 +118,7 @@ export function useInnPageState() {
         setShowStarterPackPromo(false);
         setIsPromoPending(false);
         const tourStep = safeLocalStorage.getItem('wirth_dawn_onboarding_tour_step');
-        const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
+        const isEp1Cleared = completedQuests?.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001')) ?? false;
         if (isEp1Cleared && !tourStep) {
             setOnboardingTourStep('1');
             safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
@@ -985,7 +985,7 @@ export function useInnPageState() {
     useEffect(() => {
         if (!completedQuests || !userProfile) return;
 
-        const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
+        const isEp1Cleared = completedQuests.some(q => q && (q.scenario_id === 6001 || String(q.scenario_id) === '6001'));
 
         if (!isEp1Cleared) {
             safeLocalStorage.removeItem('wirth_dawn_onboarding_reset_v3');
