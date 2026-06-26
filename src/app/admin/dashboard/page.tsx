@@ -404,9 +404,9 @@ export default function AdminDashboardPage() {
     const getAcademySeriesList = () => {
         if (!data || !data.academy) return [];
         const summaryMap: Record<string, { series: string; packs: number; goldSpent: number; refundGold: number; }> = {};
-        const source = parentTab === 'daily' ? data.academy.daily : data.academy.monthly;
+        const source = (parentTab === 'daily' ? data.academy?.daily : data.academy?.monthly) || [];
         source.forEach(d => {
-            Object.keys(d.packs).forEach(series => {
+            Object.keys(d.packs || {}).forEach(series => {
                 if (!summaryMap[series]) {
                     summaryMap[series] = { series, packs: 0, goldSpent: 0, refundGold: 0 };
                 }
@@ -642,7 +642,7 @@ export default function AdminDashboardPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-850">
-                                                    {data.dailyKPI.slice().reverse().map(d => {
+                                                    {(data.dailyKPI || []).slice().reverse().map(d => {
                                                         const pur = d.dau > 0 ? ((d.pu / d.dau) * 100).toFixed(2) + '%' : '0.00%';
                                                         const arppu = d.pu > 0 ? Math.round(d.revenue / d.pu).toLocaleString() + ' 円' : '0 円';
                                                         const arpu = d.dau > 0 ? Math.round(d.revenue / d.dau).toLocaleString() + ' 円' : '0 円';
@@ -678,10 +678,10 @@ export default function AdminDashboardPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-850">
-                                                    {colosseum.daily.slice().reverse().map(d => {
-                                                        const totalStarts = d.starts.easy + d.starts.normal + d.starts.hard;
-                                                        const totalCompletes = d.completes.easy + d.completes.normal + d.completes.hard;
-                                                        const totalAbandons = d.abandons.easy + d.abandons.normal + d.abandons.hard;
+                                                    {(colosseum?.daily || []).slice().reverse().map(d => {
+                                                        const totalStarts = (d.starts?.easy || 0) + (d.starts?.normal || 0) + (d.starts?.hard || 0);
+                                                        const totalCompletes = (d.completes?.easy || 0) + (d.completes?.normal || 0) + (d.completes?.hard || 0);
+                                                        const totalAbandons = (d.abandons?.easy || 0) + (d.abandons?.normal || 0) + (d.abandons?.hard || 0);
                                                         return (
                                                             <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
                                                                 <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
@@ -716,10 +716,10 @@ export default function AdminDashboardPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-850">
-                                                    {academy.daily.slice().reverse().map(d => {
-                                                        const packs = d.packs.chaos_and_rebellion || 0;
-                                                        const goldSpent = d.goldSpent.chaos_and_rebellion || 0;
-                                                        const refundGold = d.refundGold.chaos_and_rebellion || 0;
+                                                    {(academy?.daily || []).slice().reverse().map(d => {
+                                                        const packs = d.packs?.chaos_and_rebellion || 0;
+                                                        const goldSpent = d.goldSpent?.chaos_and_rebellion || 0;
+                                                        const refundGold = d.refundGold?.chaos_and_rebellion || 0;
                                                         const netSpent = goldSpent;
                                                         const grossSpent = goldSpent + refundGold;
                                                         return (
@@ -756,7 +756,7 @@ export default function AdminDashboardPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-850">
-                                                    {data.monthlyKPI.slice().reverse().map(m => {
+                                                    {(data.monthlyKPI || []).slice().reverse().map(m => {
                                                         const mpur = m.mau > 0 ? ((m.mpu / m.mau) * 100).toFixed(2) + '%' : '0.00%';
                                                         const marppu = m.mpu > 0 ? Math.round(m.revenue / m.mpu).toLocaleString() + ' 円' : '0 円';
                                                         const marpu = m.mau > 0 ? Math.round(m.revenue / m.mau).toLocaleString() + ' 円' : '0 円';
@@ -792,10 +792,10 @@ export default function AdminDashboardPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-850">
-                                                    {colosseum.monthly.slice().reverse().map(m => {
-                                                        const totalStarts = m.starts.easy + m.starts.normal + m.starts.hard;
-                                                        const totalCompletes = m.completes.easy + m.completes.normal + m.completes.hard;
-                                                        const totalAbandons = m.abandons.easy + m.abandons.normal + m.abandons.hard;
+                                                    {(colosseum?.monthly || []).slice().reverse().map(m => {
+                                                        const totalStarts = (m.starts?.easy || 0) + (m.starts?.normal || 0) + (m.starts?.hard || 0);
+                                                        const totalCompletes = (m.completes?.easy || 0) + (m.completes?.normal || 0) + (m.completes?.hard || 0);
+                                                        const totalAbandons = (m.abandons?.easy || 0) + (m.abandons?.normal || 0) + (m.abandons?.hard || 0);
                                                         return (
                                                             <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
                                                                 <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
@@ -830,10 +830,10 @@ export default function AdminDashboardPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-850">
-                                                    {academy.monthly.slice().reverse().map(m => {
-                                                        const packs = m.packs.chaos_and_rebellion || 0;
-                                                        const goldSpent = m.goldSpent.chaos_and_rebellion || 0;
-                                                        const refundGold = m.refundGold.chaos_and_rebellion || 0;
+                                                    {(academy?.monthly || []).slice().reverse().map(m => {
+                                                        const packs = m.packs?.chaos_and_rebellion || 0;
+                                                        const goldSpent = m.goldSpent?.chaos_and_rebellion || 0;
+                                                        const refundGold = m.refundGold?.chaos_and_rebellion || 0;
                                                         const netSpent = goldSpent;
                                                         const grossSpent = goldSpent + refundGold;
                                                         return (
@@ -892,8 +892,8 @@ export default function AdminDashboardPage() {
                             </div>
                             
                             <div className="space-y-4">
-                                {Object.entries(subscriptionDistribution).map(([tier, count]) => {
-                                    const total = Object.values(subscriptionDistribution).reduce((a, b) => a + b, 0);
+                                {Object.entries(subscriptionDistribution || {}).map(([tier, count]) => {
+                                    const total = Object.values(subscriptionDistribution || {}).reduce((a, b) => a + b, 0);
                                     const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                                     
                                     let color = 'from-gray-500 to-gray-600';
@@ -928,8 +928,8 @@ export default function AdminDashboardPage() {
                                 <h2 className="text-sm font-semibold tracking-wide">プレイヤーレベル分布</h2>
                             </div>
                             <div className="space-y-4">
-                                {Object.entries(levelDistribution).map(([range, count]) => {
-                                    const total = Object.values(levelDistribution).reduce((a, b) => a + b, 0);
+                                {Object.entries(levelDistribution || {}).map(([range, count]) => {
+                                    const total = Object.values(levelDistribution || {}).reduce((a, b) => a + b, 0);
                                     const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                                     return (
                                         <div key={range} className="space-y-1.5">
