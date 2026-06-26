@@ -1,6 +1,7 @@
-import React from 'react';
-import { BookOpen, MapPin, Compass, Home, ArrowLeft, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, MapPin, Compass, Home, ArrowLeft, MessageSquare, X } from 'lucide-react';
 import { WorldState } from '@/types/game';
+import { useGameStore } from '@/store/gameStore';
 
 interface MainVisualAreaProps {
     worldState: WorldState | null;
@@ -33,6 +34,46 @@ export default function MainVisualArea({
     isGossipRecommended = false,
     isTourActive = false
 }: MainVisualAreaProps) {
+    const gossipData = useGameStore(state => state.gossipData);
+    const [showPromo, setShowPromo] = useState(false);
+
+    const latestGossipText = (() => {
+        if (!gossipData) return '';
+        if (gossipData.pinned_system_post) {
+            return gossipData.pinned_system_post.content;
+        }
+        if (gossipData.posts && gossipData.posts.length > 0) {
+            return gossipData.posts[0].content;
+        }
+        return '';
+    })();
+
+    useEffect(() => {
+        if (isTourActive) {
+            setShowPromo(false);
+            return;
+        }
+        if (typeof window !== 'undefined') {
+            const hasVisited = sessionStorage.getItem('session_visited_gossip') === 'true';
+            const hasText = !!latestGossipText;
+            if (!hasVisited && hasText) {
+                setShowPromo(true);
+            }
+        }
+    }, [gossipData, isTourActive, latestGossipText]);
+
+    const dismissGossipPromo = () => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('session_visited_gossip', 'true');
+        }
+        setShowPromo(false);
+    };
+
+    const handleGossipClick = () => {
+        dismissGossipPromo();
+        onOpenGossip?.();
+    };
+
     const prosperity = isHub ? 4 : (worldState?.prosperity_level || 3);
     const locationName = worldState?.location_name || '未知の土地';
     const controllingNation = worldState?.controlling_nation || 'Neutral';
@@ -176,28 +217,59 @@ export default function MainVisualArea({
                     </button>
                 )}
                 {onOpenGossip && !isHub && (
-                    <button
-                        onClick={onOpenGossip}
-                        disabled={isTourActive}
-                        className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md shadow-lg flex items-center justify-center transition-all active:scale-95 focus:outline-none ${
-                            isTourActive
-                                ? 'opacity-30 border border-emerald-600/20 text-emerald-400/20 pointer-events-none'
-                                : isGossipRecommended
-                                    ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
-                                    : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
-                        }`}
-                        title="街の噂話を聞く"
-                    >
-                        <MessageSquare size={18} />
-                        {showGossipBadge && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-slate-950">
-                                !
-                            </span>
+                    <div className="relative">
+                        <button
+                            onClick={handleGossipClick}
+                            disabled={isTourActive}
+                            className={`relative w-10 h-10 rounded-full bg-slate-950/60 backdrop-blur-md shadow-lg flex items-center justify-center transition-all active:scale-95 focus:outline-none ${
+                                isTourActive
+                                    ? 'opacity-30 border border-emerald-600/20 text-emerald-400/20 pointer-events-none'
+                                    : isGossipRecommended
+                                        ? 'border-2 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-bounce'
+                                        : 'border border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-200'
+                            }`}
+                            title="街の噂話を聞く"
+                        >
+                            <MessageSquare size={18} />
+                            {showGossipBadge && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg border-2 border-slate-950">
+                                    !
+                                </span>
+                            )}
+                            {!isTourActive && isGossipRecommended && (
+                                <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-slate-950 scale-95 leading-none animate-pulse">噂</span>
+                            )}
+                        </button>
+
+                        {/* Speech Bubble / Tooltip showing the latest gossip */}
+                        {showPromo && (
+                            <div className="absolute right-0 top-12 w-52 p-2.5 bg-slate-950 border-2 border-emerald-500 rounded-xl shadow-2xl z-40 text-left animate-in fade-in slide-in-from-top-2 duration-300">
+                                {/* Triangle arrow pointing up to the button */}
+                                <div className="absolute top-[-7px] right-3.5 w-3 h-3 bg-slate-950 border-t-2 border-l-2 border-emerald-500 transform rotate-45" />
+                                
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-emerald-400 tracking-wider">📢 最新の噂</span>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                dismissGossipPromo();
+                                            }}
+                                            className="text-gray-400 hover:text-white p-0.5 transition-colors"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-200 leading-relaxed line-clamp-3 break-all font-medium">
+                                        {latestGossipText}
+                                    </p>
+                                    <div className="text-[8px] text-emerald-400/80 font-bold text-right pt-0.5">
+                                        タップして見る ➔
+                                    </div>
+                                </div>
+                            </div>
                         )}
-                        {!isTourActive && isGossipRecommended && (
-                            <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 rounded-full flex items-center justify-center text-[7px] text-white font-black px-1 py-0.5 shadow-lg border border-slate-950 scale-95 leading-none animate-pulse">噂</span>
-                        )}
-                    </button>
+                    </div>
                 )}
                 {onOpenMap && !isHub && (
                     <button

@@ -315,6 +315,9 @@ function InnPageInner() {
         if (activeModal === 'gossip') {
             localStorage.setItem('wirth_dawn_visited_gossip', 'true');
             setVisitedGossip(true);
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('session_visited_gossip', 'true');
+            }
         }
     }, [activeModal]);
 
