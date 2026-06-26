@@ -112,6 +112,40 @@ export async function GET(req: Request) {
                         if (sd) titleShareDataList.push(sd);
                     }
                 }
+
+                // Gossip BBS auto-post for new title gain
+                try {
+                    const userName = profile.name || '旅人';
+                    const TIER_S_TEMPLATES: Record<string, string> = {
+                        '光輝の守護聖者': `「法と正義を体現せし極光の守護聖者『${userName}』が誕生した。その光は闇を切り裂く楔となるだろう。」`,
+                        '終末の覇王': `「無秩序の深淵より現れし終末の覇王『${userName}』。彼らが歩む後に残るのは、絶対的な力と静寂のみである。」`,
+                        '天秤の調停者': `「相反する二つの極みを支配し、秩序と混沌を量る天秤の調停者『${userName}』。その眼差しは世界の均衡を保つ。」`,
+                        '嵐の解放者': `「常識の檻を壊し、自由と正義のために戦う嵐の解放者『${userName}』。世界は彼らの軌跡によって塗り替えられる。」`,
+                        '不滅の古豪': `「歳月を越え、不滅の肉体を維持し続ける不屈の古豪『${userName}』。長き旅路の果てに、なお闘志は衰えず。」`,
+                        '神話の富豪': `「莫大な富と確かな実力を有し、神話の富豪として君臨する『${userName}』。その影響力は世界経済さえ左右する。」`
+                    };
+
+                    const TIER_A_TITLES = ['聖騎士', '暗黒卿', '義賊', '冷徹な執行者', '黄金の暴君', '清廉の騎士団長', '戦乙女', '魔女'];
+
+                    let content: string | null = null;
+                    if (TIER_S_TEMPLATES[newTitle]) {
+                        content = TIER_S_TEMPLATES[newTitle];
+                    } else if (TIER_A_TITLES.includes(newTitle)) {
+                        content = `「数々の試練を乗り越え、冒険者『${userName}』が上位の称号『${newTitle}』を冠した。新たなる英雄の誕生だ。」`;
+                    }
+
+                    if (content) {
+                        const { GossipService } = await import('@/services/gossipService');
+                        const gossipService = new GossipService(supabaseServer);
+                        await gossipService.postSystemMessage(
+                            content,
+                            profile.current_location_id,
+                            profile.id
+                        );
+                    }
+                } catch (gossipErr) {
+                    console.error('[Profile API Gossip] Failed to auto-post title message:', gossipErr);
+                }
             }
 
             // 必要な場合に限り更新を適用

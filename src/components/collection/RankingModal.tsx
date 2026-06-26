@@ -55,6 +55,8 @@ export default function RankingModal({ onClose }: Props) {
         avatarUrl?: string;
         epithet?: string;
         introduction?: string;
+        level?: number;
+        age?: number;
     } | null>(null);
 
     const handleUserClick = async (userId?: string) => {
@@ -72,6 +74,8 @@ export default function RankingModal({ onClose }: Props) {
                     avatarUrl: profileData.avatar_url,
                     epithet: profileData.title_name,
                     introduction: profileData.introduction || '',
+                    level: profileData.level,
+                    age: (profileData.age || 18) + Math.floor((profileData.accumulated_days || 0) / 365)
                 });
             }
         } catch (e) {
@@ -376,6 +380,8 @@ export default function RankingModal({ onClose }: Props) {
                     name={selectedUser.name}
                     epithet={selectedUser.epithet}
                     introduction={selectedUser.introduction}
+                    level={selectedUser.level}
+                    age={selectedUser.age}
                 />
             )}
         </div>,

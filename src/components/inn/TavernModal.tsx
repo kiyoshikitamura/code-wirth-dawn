@@ -1005,6 +1005,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                 name={simpleProfileUser.name}
                 epithet={simpleProfileUser.epithet}
                 introduction={simpleProfileUser.introduction}
+                level={simpleProfileUser.level}
             />
         )}
 

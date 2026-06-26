@@ -250,6 +250,10 @@
 - **自己紹介ポップアップ (`SimpleUserProfilePopup.tsx`)**:
   - 表示項目を「称号」「ユーザー名」「ユーザーアイコン」「レベル」「ゲーム内年齢」「自己紹介文」の6点に拡張し、調和したステータス表示としてレイアウトすること。
   - 表示データは、プレイヤーをタップした際に `/api/profile?profileId=[ID]` から非同期取得した最新のプロファイル情報を同期させる設計を維持すること。
+- **旧仕様のクリーンアップ**:
+  - `rumors` テーブルおよび `scripts/sync_rumors.ts` を廃止・削除すること。
+  - `src/app/api/gossip/route.ts` および `src/app/api/init-page/route.ts` から旧4タブ用のクエリ（`world_states_history`, `rumors`, `scenarios` の特別クエスト、および `ShadowService` の傭兵NPC）を完全に削除し、新しい `gossip_posts` の軽量なクエリへと移行すること。
+  - `GossipModal.tsx` 内の旧タイプライターコンポーネント（`TypewriterCard`, `TypewriterCardWithNext`, `SequentialCards`）、タブ用定数、および酒場誘導ボタンを完全に排除すること。
 
 ## 24. 新オンボーディングガイドツアー再設計および第2話限定案内バナー (v5.0)
 - **ツアー構成と順番**:

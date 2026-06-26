@@ -125,6 +125,28 @@ export class LifeCycleService {
                 }).then(({ error }: any) => {
                     if (error) console.error('[Death Handler] Failed to write hero lifecycle to user_chronicles:', error);
                 });
+
+                // Gossip Auto-Post System Message
+                try {
+                    const { GossipService } = await import('@/services/gossipService');
+                    const gossipService = new GossipService(this.supabase);
+                    const userName = profile.name || '旅人';
+                    if (isRetirement) {
+                        await gossipService.postSystemMessage(
+                            `「冒険者『${userName}』は数々の試練を乗り越え、無事に現役を退いて英霊となった。その偉業を称えよ。」`,
+                            profile.current_location_id,
+                            userId
+                        );
+                    } else {
+                        await gossipService.postSystemMessage(
+                            `「冒険者『${userName}』が旅の途上で力尽き、英霊の系譜にその名を刻んだ。その闘志は次の世代へと受け継がれるだろう。」`,
+                            profile.current_location_id,
+                            userId
+                        );
+                    }
+                } catch (gossipErr) {
+                    console.error('[lifeCycleService Gossip] Failed to auto-post retirement/death message:', gossipErr);
+                }
             }
 
             // 6. 英霊登録（仕様: spec_v13 §4, spec_v10 §3.2）
