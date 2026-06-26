@@ -55,11 +55,6 @@ export async function GET(req: Request) {
         const daysParam = url.searchParams.get('days');
         const days = daysParam ? parseInt(daysParam, 10) : 30;
 
-        const requiredDays = days + 30; // Sliding 30-day MAU/MPU requires days + 30 days of logs
-        const oldestDate = new Date();
-        oldestDate.setDate(oldestDate.getDate() - days);
-        const oldestDateStr = toJstDateStr(oldestDate);
-
         // ═══════════════════════════════════════
         // §1. Query database Views & RPCs (In Parallel)
         // ═══════════════════════════════════════
@@ -69,9 +64,7 @@ export async function GET(req: Request) {
             subDistResult,
             questStatsData,
             paySummaryDataResult,
-            dailyBasicData,
-            dailyActiveUserIdsResult,
-            dailyPayingUserIdsResult,
+            dailyKpiResult,
             monthlyKpiResult,
             colStatsResult,
             colDailyResult,
@@ -83,14 +76,12 @@ export async function GET(req: Request) {
             supabaseServer.from('user_subscription_distribution_view').select('*').single(),
             fetchAll<any>(supabaseServer.from('quest_activity_stats_view').select('scenario_id, title, quest_type, start_count, complete_count, abandon_count'), 'scenario_id'),
             supabaseServer.from('payment_summary_view').select('*'),
-            fetchAll<any>(supabaseServer.from('daily_basic_stats_view').select('date, new_users, new_users_registered, new_users_guest, total_battles, victories, defeats, fleds, revenue, dpu, dau').gte('date', oldestDateStr), 'date'),
-            supabaseServer.rpc('get_daily_active_user_ids', { days_limit: requiredDays }),
-            supabaseServer.rpc('get_daily_paying_user_ids', { days_limit: requiredDays }),
+            supabaseServer.rpc('get_daily_kpi', { days_limit: days }),
             supabaseServer.from('monthly_kpi_view').select('*'),
             supabaseServer.rpc('get_colosseum_summary_stats'),
-            supabaseServer.rpc('get_colosseum_daily_stats', { days_limit: requiredDays }),
+            supabaseServer.rpc('get_colosseum_daily_stats', { days_limit: days }),
             supabaseServer.rpc('get_academy_summary_stats'),
-            supabaseServer.rpc('get_academy_daily_stats', { days_limit: requiredDays })
+            supabaseServer.rpc('get_academy_daily_stats', { days_limit: days })
         ]);
 
         // A. User Profiles Summary unpacking
@@ -105,11 +96,7 @@ export async function GET(req: Request) {
         const maxGold = profileSummary.max_gold || 0;
         const avgLevel = Math.round(Number(profileSummary.avg_level || 0) * 10) / 10;
 
-        const isAnonymousMap = new Map<string, boolean>();
-        const dailyActiveUserIds = dailyActiveUserIdsResult.data || [];
-        dailyActiveUserIds.forEach((u: any) => {
-            isAnonymousMap.set(u.act_user_id, u.is_anon);
-        });
+        // No anonymous map or dailyActiveUserIds list needed in JS (done in RPC)
 
         // B. Level Distribution unpacking
         const { data: levelDist, error: lvlDistErr } = levelDistResult;
@@ -186,57 +173,31 @@ export async function GET(req: Request) {
             }
         });
 
-        // F. Map user IDs sets per date
-        const activeUsersByDate: Record<string, Set<string>> = {};
-        const payingUsersByDate: Record<string, Set<string>> = {};
+        // F. Daily KPI calculations using get_daily_kpi RPC
+        const { data: dailyKpiData, error: dailyKpiErr } = dailyKpiResult;
+        if (dailyKpiErr) throw dailyKpiErr;
 
-        dailyActiveUserIds.forEach((row: any) => {
-            if (!activeUsersByDate[row.act_date]) activeUsersByDate[row.act_date] = new Set();
-            activeUsersByDate[row.act_date].add(row.act_user_id);
-        });
+        const dailyKPI = (dailyKpiData || []).map((row: any) => ({
+            date: row.kpi_date,
+            newUsers: row.new_users,
+            newUsersRegistered: row.new_users_registered,
+            newUsersGuest: row.new_users_guest,
+            totalBattles: row.total_battles,
+            victories: row.victories,
+            defeats: row.defeats,
+            fleds: row.fleds,
+            winRate: row.total_battles > 0 ? Math.round((row.victories / row.total_battles) * 100) : 0,
+            dau: row.dau,
+            mau: row.mau,
+            anonMau: row.anon_mau,
+            authMau: row.auth_mau,
+            revenue: row.revenue,
+            dpu: row.dpu,
+            pu: row.dpu, // Crucial compatibility key for d.pu.toLocaleString() in page.tsx
+            mpu: row.mpu
+        }));
 
-        const dailyPayingUserIds = dailyPayingUserIdsResult.data || [];
-        dailyPayingUserIds.forEach((row: any) => {
-            if (!payingUsersByDate[row.pay_date]) payingUsersByDate[row.pay_date] = new Set();
-            payingUsersByDate[row.pay_date].add(row.pay_user_id);
-        });
-
-        // Helper to compute unique count in a window with details
-        const getUniqueUsersInWindowDetails = (activityMap: Record<string, Set<string>>, targetDateStr: string, windowDays: number = 30) => {
-            const targetDate = new Date(targetDateStr);
-            const uniqueUsers = new Set<string>();
-            for (let i = 0; i < windowDays; i++) {
-                const d = new Date(targetDate);
-                d.setDate(d.getDate() - i);
-                const dateStr = toJstDateStr(d);
-                const usersOnDay = activityMap[dateStr];
-                if (usersOnDay) {
-                    usersOnDay.forEach(uid => uniqueUsers.add(uid));
-                }
-            }
-            
-            let anon = 0;
-            let auth = 0;
-            uniqueUsers.forEach(uid => {
-                if (isAnonymousMap.get(uid)) {
-                    anon++;
-                } else {
-                    auth++;
-                }
-            });
-            
-            return {
-                total: uniqueUsers.size,
-                anon,
-                auth
-            };
-        };
-
-        const getUniqueUsersInWindow = (activityMap: Record<string, Set<string>>, targetDateStr: string, windowDays: number = 30): number => {
-            return getUniqueUsersInWindowDetails(activityMap, targetDateStr, windowDays).total;
-        };
-
-        // G. Map daily KPI array for the requested range
+        // G. Map target days and months lists (used by Colosseum/Academy KPI mapping)
         const targetDaysList: string[] = [];
         for (let i = days - 1; i >= 0; i--) {
             const d = new Date();
@@ -244,56 +205,16 @@ export async function GET(req: Request) {
             targetDaysList.push(toJstDateStr(d));
         }
 
-        const basicDataMap: Record<string, any> = {};
-        dailyBasicData.forEach(row => {
-            basicDataMap[row.date] = row;
-        });
-
-        const dailyKPI = targetDaysList.map(date => {
-            const basic = basicDataMap[date] || {
-                new_users: 0,
-                new_users_registered: 0,
-                new_users_guest: 0,
-                total_battles: 0,
-                victories: 0,
-                defeats: 0,
-                fleds: 0,
-                revenue: 0,
-                dpu: 0,
-                dau: 0
-            };
-            const mauDetails = getUniqueUsersInWindowDetails(activeUsersByDate, date, 30);
-            return {
-                date,
-                newUsers: basic.new_users,
-                newUsersRegistered: basic.new_users_registered || 0,
-                newUsersGuest: basic.new_users_guest || 0,
-                totalBattles: basic.total_battles,
-                victories: basic.victories,
-                defeats: basic.defeats,
-                fleds: basic.fleds,
-                winRate: basic.total_battles > 0 ? Math.round((basic.victories / basic.total_battles) * 100) : 0,
-                dau: basic.dau,
-                mau: mauDetails.total,
-                anonMau: mauDetails.anon,
-                authMau: mauDetails.auth,
-                revenue: basic.revenue,
-                dpu: basic.dpu,
-                pu: basic.dpu, // Crucial compatibility key for d.pu.toLocaleString() in page.tsx
-                mpu: getUniqueUsersInWindow(payingUsersByDate, date, 30)
-            };
-        });
-
-        // H. Map monthly KPI array from database view monthly_kpi_view
-        const { data: monthlyKpiData, error: monthlyKpiErr } = monthlyKpiResult;
-        if (monthlyKpiErr) throw monthlyKpiErr;
-
         const targetMonthsList: string[] = [];
         for (let i = 11; i >= 0; i--) {
             const d = new Date();
             d.setMonth(d.getMonth() - i);
             targetMonthsList.push(toJstMonthStr(d));
         }
+
+        // H. Map monthly KPI array from database view monthly_kpi_view
+        const { data: monthlyKpiData, error: monthlyKpiErr } = monthlyKpiResult;
+        if (monthlyKpiErr) throw monthlyKpiErr;
 
         const monthlyKPI = (monthlyKpiData || []).map((row: any) => ({
             month: row.month,
@@ -307,18 +228,27 @@ export async function GET(req: Request) {
         // Sum overall total battles and wins from all daily stats
         let totalBattles = 0;
         let totalVictories = 0;
-        dailyBasicData.forEach(row => {
-            totalBattles += row.total_battles || 0;
+        dailyKPI.forEach((row: any) => {
+            totalBattles += row.totalBattles || 0;
             totalVictories += row.victories || 0;
         });
         const winRate = totalBattles > 0 ? Math.round((totalVictories / totalBattles) * 100) : 0;
 
-        // Extract latest values for DAU/MAU/DPU/MPU summaries
-        const todayStr = toJstDateStr(new Date());
-        const dau = activeUsersByDate[todayStr] ? activeUsersByDate[todayStr].size : 0;
-        const mauDetails = getUniqueUsersInWindowDetails(activeUsersByDate, todayStr, 30);
-        const dpu = payingUsersByDate[todayStr] ? payingUsersByDate[todayStr].size : 0;
-        const mpu = getUniqueUsersInWindow(payingUsersByDate, todayStr, 30);
+        // Extract latest values for DAU/MAU/DPU/MPU summaries from the last row of dailyKPI
+        const todayRow = dailyKPI[dailyKPI.length - 1] || {
+            dau: 0,
+            mau: 0,
+            anonMau: 0,
+            authMau: 0,
+            dpu: 0,
+            mpu: 0
+        };
+        const dau = todayRow.dau;
+        const mau = todayRow.mau;
+        const anonMau = todayRow.anonMau;
+        const authMau = todayRow.authMau;
+        const dpu = todayRow.dpu;
+        const mpu = todayRow.mpu;
 
         // Fetch Colosseum stats via RPC unpacking
         const { data: colStats, error: colStatsErr } = colStatsResult;
@@ -550,9 +480,9 @@ export async function GET(req: Request) {
                 totalBattles,
                 winRate,
                 dau,
-                mau: mauDetails.total,
-                anonMau: mauDetails.anon,
-                authMau: mauDetails.auth,
+                mau,
+                anonMau,
+                authMau,
                 totalQuests,
                 pendingReports: 0,
                 
