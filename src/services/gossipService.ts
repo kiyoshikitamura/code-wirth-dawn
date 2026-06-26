@@ -111,10 +111,9 @@ export class GossipService {
             if (latestPost) {
                 const elapsedSeconds = (Date.now() - new Date(latestPost.created_at).getTime()) / 1000;
                 if (elapsedSeconds < COOLDOWN_SECONDS) {
-                    const remaining = Math.ceil(COOLDOWN_SECONDS - elapsedSeconds);
                     return { 
                         success: false, 
-                        error: `連続投稿は制限されています。あと ${remaining} 秒お待ちください。`, 
+                        error: '連続投稿は禁止となります', 
                         status: 429 
                     };
                 }
