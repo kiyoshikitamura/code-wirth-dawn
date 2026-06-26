@@ -670,7 +670,31 @@ function InnPageInner() {
                     key={activeModal}
                     npcData={activeNpcData}
                     onClose={() => setActiveModal(null)}
-                    onAction={() => handleDialogAction(activeModal as FacilityType)}
+                    onAction={() => {
+                        if (isTourActive && onboardingTourStep === '6' && activeModal === 'guild') {
+                            if (typeof window !== 'undefined') {
+                                localStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
+                                localStorage.setItem('wirth_dawn_visited_map', 'true');
+                                localStorage.setItem('wirth_dawn_visited_tavern', 'true');
+                                localStorage.setItem('wirth_dawn_visited_guild', 'true');
+                                localStorage.setItem('wirth_dawn_visited_shop', 'true');
+                                localStorage.setItem('wirth_dawn_visited_academy', 'true');
+                                localStorage.setItem('wirth_dawn_visited_settings', 'true');
+                                localStorage.setItem('wirth_dawn_visited_billing', 'true');
+                                localStorage.setItem('wirth_dawn_visited_status', 'true');
+                            }
+                            setVisitedMap(true);
+                            setVisitedTavern(true);
+                            setVisitedGuild(true);
+                            setVisitedShop(true);
+                            setVisitedAcademy(true);
+                            setVisitedSettings(true);
+                            setVisitedBilling(true);
+                            setVisitedStatus(true);
+                            advanceOnboardingStep();
+                        }
+                        handleDialogAction(activeModal as FacilityType);
+                    }}
                     buttonText={buttonText}
                     isDisabled={isDisabled}
                     secondaryActions={secondaryActions}
@@ -737,31 +761,7 @@ function InnPageInner() {
                     userProfile={userProfile}
                     quests={allQuests}
                     loading={loadingQuests}
-                    onSelect={(s) => {
-                        if (isTourActive && onboardingTourStep === '6') {
-                            if (typeof window !== 'undefined') {
-                                localStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
-                                localStorage.setItem('wirth_dawn_visited_map', 'true');
-                                localStorage.setItem('wirth_dawn_visited_tavern', 'true');
-                                localStorage.setItem('wirth_dawn_visited_guild', 'true');
-                                localStorage.setItem('wirth_dawn_visited_shop', 'true');
-                                localStorage.setItem('wirth_dawn_visited_academy', 'true');
-                                localStorage.setItem('wirth_dawn_visited_settings', 'true');
-                                localStorage.setItem('wirth_dawn_visited_billing', 'true');
-                                localStorage.setItem('wirth_dawn_visited_status', 'true');
-                            }
-                            setVisitedMap(true);
-                            setVisitedTavern(true);
-                            setVisitedGuild(true);
-                            setVisitedShop(true);
-                            setVisitedAcademy(true);
-                            setVisitedSettings(true);
-                            setVisitedBilling(true);
-                            setVisitedStatus(true);
-                            advanceOnboardingStep();
-                        }
-                        router.push(`/quest/${s.id}`);
-                    }}
+                    onSelect={(s) => router.push(`/quest/${s.id}`)}
                 />
             )}
 
