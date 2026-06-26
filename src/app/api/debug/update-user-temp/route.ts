@@ -30,13 +30,15 @@ export async function GET(request: Request) {
         auth: { persistSession: false, autoRefreshToken: false }
     });
 
-    // Update level to 20, attack to 500, defense to 500
+    // Update level to 20, attack to 500, defense to 500, atk to 500, def to 500
     const { data, error } = await supabase
         .from('user_profiles')
         .update({
             level: 20,
             attack: 500,
-            defense: 500
+            defense: 500,
+            atk: 500,
+            def: 500
         })
         .eq('id', userId)
         .select();
