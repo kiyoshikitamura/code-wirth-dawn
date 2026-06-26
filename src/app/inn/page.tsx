@@ -329,6 +329,26 @@ function InnPageInner() {
         );
     }
 
+    const isAnyModalOrOverlayOpen = !!(
+        activeModal ||
+        showTavern ||
+        showShop ||
+        showAcademy ||
+        showPrayer ||
+        showStatus ||
+        showBilling ||
+        showAccount ||
+        showVitalityDeath ||
+        showRestConfirm ||
+        billingDialog ||
+        resultOverlay ||
+        showTutorial ||
+        showGuestRegisterPromo ||
+        showStarterPackPromo ||
+        restLoading ||
+        traveling
+    );
+
     return (
         <div className="h-screen w-screen text-gray-200 font-sans select-none overflow-hidden bg-[#070e1e] flex justify-center items-center">
 
@@ -362,7 +382,7 @@ function InnPageInner() {
             )}
 
             {/* オンボーディングツアー Step 1〜5 用の画面全体タップ進行用オーバーレイ */}
-            {isTourActive && onboardingTourStep !== '6' && (
+            {isTourActive && onboardingTourStep !== '6' && !isAnyModalOrOverlayOpen && (
                 <div 
                     onClick={() => {
                         soundManager?.playSE('se_click');
