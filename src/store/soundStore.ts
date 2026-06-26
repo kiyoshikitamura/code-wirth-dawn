@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { soundManager } from '@/lib/soundManager';
+import { safeStateStorage } from '@/lib/safeStorage';
 
 interface SoundState {
     bgmEnabled: boolean;
@@ -34,7 +35,7 @@ export const useSoundStore = create<SoundState>()(
         }),
         {
             name: 'wirth-dawn-sound-settings',
-            storage: createJSONStorage(() => localStorage),
+            storage: createJSONStorage(() => safeStateStorage),
         }
     )
 );

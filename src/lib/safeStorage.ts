@@ -5,6 +5,8 @@
  * SecurityError / DOMException でアプリケーションがクラッシュするのを完全に防ぎます。
  */
 
+import { StateStorage } from 'zustand/middleware';
+
 export const safeLocalStorage = {
     getItem(key: string): string | null {
         if (typeof window === 'undefined') return null;
@@ -58,5 +60,20 @@ export const safeSessionStorage = {
         } catch (e) {
             console.warn('[safeSessionStorage] removeItem failed:', e);
         }
+    }
+};
+
+/**
+ * Zustand の persist ミドルウェア用安全なストレージオブジェクト
+ */
+export const safeStateStorage: StateStorage = {
+    getItem(name: string): string | null {
+        return safeLocalStorage.getItem(name);
+    },
+    setItem(name: string, value: string): void {
+        safeLocalStorage.setItem(name, value);
+    },
+    removeItem(name: string): void {
+        safeLocalStorage.removeItem(name);
     }
 };

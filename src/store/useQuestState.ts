@@ -12,7 +12,8 @@
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { safeStateStorage } from '@/lib/safeStorage';
 import { PartyMember } from '@/types/game';
 
 export interface LootItem {
@@ -297,5 +298,6 @@ export const useQuestState = create<QuestProgressState>()(persist((set, get) => 
 }),
     {
         name: 'quest-storage',
+        storage: createJSONStorage(() => safeStateStorage),
     }
 ));

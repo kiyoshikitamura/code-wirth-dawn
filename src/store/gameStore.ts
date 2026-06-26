@@ -18,6 +18,7 @@ import { createProfileSlice } from './slices/profileSlice';
 import { createBattleSlice } from './slices/battleSlice';
 import { createInventorySlice } from './slices/inventorySlice';
 import { createQuestSlice } from './slices/questSlice';
+import { safeStateStorage } from '@/lib/safeStorage';
 
 // ─── 初期バトルステート ────────────────────────────────────────────────────────
 const INITIAL_BATTLE_STATE: GameState['battleState'] = {
@@ -83,13 +84,7 @@ export const useGameStore = create<GameState>()(
                 equipBonus: state.equipBonus,
                 selectedScenario: state.selectedScenario,
             }),
-            storage: createJSONStorage(() =>
-                typeof window !== 'undefined' ? window.localStorage : {
-                    getItem: () => null,
-                    setItem: () => { },
-                    removeItem: () => { },
-                }
-            ),
+            storage: createJSONStorage(() => safeStateStorage),
             onRehydrateStorage: () => (state) => {
                 state?.setHasHydrated(true);
             }
