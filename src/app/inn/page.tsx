@@ -110,23 +110,7 @@ function InnPageInner() {
 
     const handleSelectFacilityOverride = (facility: FacilityType) => {
         if (isTourActive) {
-            let isRecommended = false;
-            if (onboardingTourStep === '1' && facility === 'inn') isRecommended = true;
-            if (onboardingTourStep === '2' && facility === 'shop') isRecommended = true;
-            if (onboardingTourStep === '3' && facility === 'magicAcademy') isRecommended = true;
-            if (onboardingTourStep === '4' && facility === 'status') isRecommended = true;
-
-            if (isRecommended) {
-                const facilitySeMap: Record<string, string> = {
-                    inn: 'se_enter_inn',
-                    shop: 'se_enter_shop',
-                    magicAcademy: 'se_enter_guild',
-                    status: 'se_click'
-                };
-                const seKey = facilitySeMap[facility];
-                if (seKey) soundManager?.playSE(seKey);
-                advanceOnboardingStep();
-            } else if (onboardingTourStep === '6' && facility === 'guild') {
+            if (onboardingTourStep === '6' && facility === 'guild') {
                 soundManager?.playSE('se_enter_guild');
                 setActiveModal('guild');
             }
@@ -376,6 +360,18 @@ function InnPageInner() {
                 </div>
             )}
 
+            {/* オンボーディングツアー Step 1〜5 用の画面全体タップ進行用オーバーレイ */}
+            {isTourActive && onboardingTourStep !== '6' && (
+                <div 
+                    onClick={() => {
+                        soundManager?.playSE('se_click');
+                        advanceOnboardingStep();
+                    }}
+                    className="fixed inset-0 z-[300] bg-transparent cursor-pointer pointer-events-auto"
+                    aria-label="タップして進む"
+                />
+            )}
+
             {/* Mobile View Container */}
             <div className="relative w-full max-w-[390px] h-[100dvh] md:h-[min(844px,92vh)] bg-[#0a1628] md:border-[6px] md:border-[#1a2d5a] md:rounded-[40px] shadow-2xl overflow-y-auto no-scrollbar md:custom-scrollbar flex flex-col pb-10">
 
@@ -413,15 +409,12 @@ function InnPageInner() {
                     onOpenHistory={openHistoryHall}
                     onReturnHub={returnToHub}
                     onLeaveHub={leaveHub}
-                    onOpenMap={onboardingTourStep === '5' ? () => {
-                        soundManager?.playSE('se_click');
-                        advanceOnboardingStep();
-                    } : (isTourActive ? undefined : () => {
+                    onOpenMap={isTourActive ? undefined : () => {
                         if (typeof window !== 'undefined') {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
                         }
                         router.push('/world-map');
-                    })}
+                    }}
                     onOpenGossip={onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => handleSelectFacility('gossip')}
                     showHistoryBadge={showHistoryBadge}
                     showGossipBadge={!visitedGossip}
