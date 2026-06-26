@@ -200,7 +200,7 @@ export function useScenarioNodeProcessor({
                 await useGameStore.getState().fetchInventory();
                 if (processedNodeRef.current !== activeNodeId) return;
                 const latestInv = useGameStore.getState().inventory || [];
-                const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
+                const alreadyConsumedCount = (questState.consumedItems || []).filter(id => String(id) === String(requiredItemId)).length;
                 
                 // クエスト戦利品プール（未永続化アイテム）の個数を合算
                 const questLootCount = (questState.lootPool || [])
@@ -289,7 +289,7 @@ export function useScenarioNodeProcessor({
 
                 const latestInv = useGameStore.getState().inventory || [];
                 // すでにクエスト内で「消費予定」として蓄積されている分をカウントして差し引く
-                const alreadyConsumedCount = questState.consumedItems.filter(id => String(id) === String(requiredItemId)).length;
+                const alreadyConsumedCount = (questState.consumedItems || []).filter(id => String(id) === String(requiredItemId)).length;
 
                 // クエスト戦利品プール（未永続化アイテム）の個数を合算
                 const questLootCount = (questState.lootPool || [])
@@ -329,6 +329,86 @@ export function useScenarioNodeProcessor({
 
             else if (currentNode.action === 'heal_partial') {
                 questState.healParty(0.5);
+            }
+
+            else if (currentNode.type === 'camp') {
+                const activeNodeId = currentNodeId;
+                const isCheckpointDone = questState.getFlag(`checkpoint_done_${activeNodeId}`);
+                
+                if (!isCheckpointDone) {
+                    try {
+                        const authHeaders = await getAuthHeaders();
+                        const res = await fetch('/api/quest/checkpoint', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...authHeaders
+                            },
+                            body: JSON.stringify({
+                                quest_id: questState.questId,
+                                loot_pool: questState.lootPool || [],
+                                consumed_items: questState.consumedItems || [],
+                                reputation_changes: questState.reputationChanges || {}
+                            })
+                        });
+
+                        if (res.ok && processedNodeRef.current === activeNodeId) {
+                            // Clear client-side temporary stores and set flag in a single batch update to prevent React render glitches
+                            const latestState = useQuestState.getState();
+                            useQuestState.setState({
+                                playerHp: useGameStore.getState().userProfile?.hp || 0,
+                                partyHp: {},
+                                deadNpcs: [],
+                                lootPool: [], // Completely clear lootPool
+                                consumedItems: [], // Completely clear consumedItems
+                                reputationChanges: {},
+                                questFlags: {
+                                    ...(latestState.questFlags || {}),
+                                    [`checkpoint_done_${activeNodeId}`]: 1
+                                }
+                            });
+
+                            showToast('💾 チェックポイント: 戦利品を保存しました。', 'success');
+
+                            // Refresh local profile/inventory so they can be equipped immediately
+                            await Promise.all([
+                                useGameStore.getState().fetchUserProfile(),
+                                useGameStore.getState().fetchInventory()
+                            ]);
+                        }
+                    } catch (e) {
+                        console.error('[Checkpoint] Checkpoint API error:', e);
+                    }
+                }
+            }
+
+            else if (currentNode.type === 'meet_player' || currentNode.action === 'meet_player') {
+                const activeNodeId = currentNodeId;
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+
+                try {
+                    const authHeaders = await getAuthHeaders();
+                    const res = await fetch('/api/quest/meet-player', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...authHeaders
+                        }
+                    });
+
+                    if (res.ok && processedNodeRef.current === activeNodeId) {
+                        const data = await res.json();
+                        if (data.player_name) {
+                            questState.setFlag('met_player_name', data.player_name, true);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[meet_player] Failed to fetch nearby player:', e);
+                }
+
+                if (processedNodeRef.current === activeNodeId && nextId) {
+                    setCurrentNodeId(nextId);
+                }
             }
 
             // ─── アクションノード群 ──────────────────────────────────────
@@ -487,10 +567,12 @@ export function useScenarioNodeProcessor({
                 }, 1000);
             }
             else if (currentNode.type === 'reward') {
-                const rawItems = currentNode.params?.items;
-                const rewardGold = currentNode.params?.gold;
-                const singleItemId = currentNode.params?.item_id || currentNode.item_id;
-                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold);
+                const rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
+                const rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
+                const singleItemId = currentNode.params?.item_id || currentNode.item_id || currentNode.params?.rewards?.item_id || currentNode.rewards?.item_id;
+                const alignmentShift = currentNode.params?.alignment_shift || currentNode.params?.rewards?.alignment_shift || currentNode.rewards?.alignment_shift;
+                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold, 'alignment:', alignmentShift);
+
 
                 const activeNodeId = currentNodeId;
                 let rewardItems: any[] | undefined;
@@ -525,6 +607,21 @@ export function useScenarioNodeProcessor({
 
                 const itemsToGrant: any[] = [];
                 const msgs: string[] = [];
+
+                if (alignmentShift && typeof alignmentShift === 'object') {
+                    for (const [key, val] of Object.entries(alignmentShift)) {
+                        const amount = Number(val);
+                        if (amount !== 0 && ['order', 'chaos', 'justice', 'evil'].includes(key)) {
+                            itemsToGrant.push({
+                                itemId: `align_${key}`,
+                                itemName: `アライメント (${key})`,
+                                quantity: amount
+                            });
+                            msgs.push(`${key} ${amount > 0 ? '+' : ''}${amount}`);
+                        }
+                    }
+                }
+
 
                 if (rewardGold) {
                     itemsToGrant.push({ itemId: 'gold', itemName: 'ゴールド', quantity: rewardGold });
@@ -606,23 +703,24 @@ export function useScenarioNodeProcessor({
 
         const syncState = async () => {
             try {
+                const latestQuestState = useQuestState.getState();
                 const statePayload = {
-                    isInQuest: questState.isInQuest,
-                    questId: questState.questId,
-                    questType: questState.questType,
-                    playerHp: questState.playerHp,
-                    playerMaxHp: questState.playerMaxHp,
-                    partyHp: questState.partyHp,
-                    deadNpcs: questState.deadNpcs,
-                    lootPool: questState.lootPool,
-                    consumedItems: questState.consumedItems,
-                    guest: questState.guest,
-                    currentLocationId: questState.currentLocationId,
-                    elapsedDays: questState.elapsedDays,
-                    questFlags: questState.questFlags,
-                    isEscortMission: questState.isEscortMission,
+                    isInQuest: latestQuestState.isInQuest,
+                    questId: latestQuestState.questId,
+                    questType: latestQuestState.questType,
+                    playerHp: latestQuestState.playerHp,
+                    playerMaxHp: latestQuestState.playerMaxHp,
+                    partyHp: latestQuestState.partyHp || {},
+                    deadNpcs: latestQuestState.deadNpcs || [],
+                    lootPool: latestQuestState.lootPool || [],
+                    consumedItems: latestQuestState.consumedItems || [],
+                    guest: latestQuestState.guest,
+                    currentLocationId: latestQuestState.currentLocationId,
+                    elapsedDays: latestQuestState.elapsedDays,
+                    questFlags: latestQuestState.questFlags,
+                    isEscortMission: latestQuestState.isEscortMission,
                     currentNodeId: currentNodeId,
-                    reputationChanges: questState.reputationChanges,
+                    reputationChanges: latestQuestState.reputationChanges || {},
                 };
 
                 const authHeaders = await getAuthHeaders();
@@ -630,7 +728,7 @@ export function useScenarioNodeProcessor({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({
-                        quest_id: questState.questId,
+                        quest_id: latestQuestState.questId,
                         quest_state: statePayload
                     })
                 });
@@ -647,8 +745,8 @@ export function useScenarioNodeProcessor({
         questState.isInQuest,
         questState.playerHp,
         questState.guest,
-        questState.lootPool.length,
-        questState.consumedItems.length,
+        (questState.lootPool || []).length,
+        (questState.consumedItems || []).length,
         questState.elapsedDays
     ]);
 }

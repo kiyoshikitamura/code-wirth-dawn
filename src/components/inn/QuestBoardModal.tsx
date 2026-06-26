@@ -20,6 +20,13 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         setMounted(true);
     }, []);
 
+    const isRecommendedQuest = (s: Scenario) => {
+        const qId = Number(s.id);
+        const isIdMatch = !isNaN(qId) && qId >= 6001 && qId <= 6020;
+        const isSlugMatch = s.slug?.startsWith('main_ep');
+        return isIdMatch || isSlugMatch;
+    };
+
     const [activeTab, setActiveTab] = useState<DifficultyTab>('easy');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
@@ -163,7 +170,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                             {isDangerous && (
                                                 <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
                                             )}
-                                            {(s.id === 6001 || s.slug === 'main_ep1' || s.title?.includes('第1話')) && (
+                                            {isRecommendedQuest(s) && (
                                                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold animate-pulse">推奨</span>
                                             )}
                                             {s.quest_type === 'special' && (
@@ -192,7 +199,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
             {/* Detail Popup */}
             {detailQuest && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80" onClick={() => setDetailQuest(null)}>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setDetailQuest(null)}>
                     <div className="bg-[#fdfbf7] text-[#2c241b] w-full max-w-md rounded-lg shadow-2xl border-2 border-[#8b5a2b] overflow-hidden" onClick={e => e.stopPropagation()}>
                         {/* Detail Header */}
                         <div className="bg-[#3e2723] p-4 flex justify-between items-start">
@@ -209,7 +216,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-700 text-amber-200">
                                         Lv.{detailQuest.rec_level || 1}
                                     </span>
-                                    {(detailQuest.id === 6001 || detailQuest.slug === 'main_ep1' || detailQuest.title?.includes('第1話')) && (
+                                    {isRecommendedQuest(detailQuest) && (
                                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold animate-pulse">推奨</span>
                                     )}
                                     {(detailQuest as any).quest_type === 'special' && (
@@ -339,7 +346,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
             {/* Urgent Warning Dialog */}
             {showUrgentWarning && pendingQuest && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85">
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
                     <div className="bg-[#fdfbf7] text-[#2c241b] w-full max-w-sm rounded-lg shadow-2xl border-2 border-red-600 overflow-hidden">
                         <div className="bg-red-800 p-3 flex items-center gap-2">
                             <AlertTriangle className="w-5 h-5 text-red-300" />

@@ -94,7 +94,7 @@ export default function PurchaseConfirmModal({
         const plan = PLAN_DETAILS[tier];
         return (
             <div
-                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 animate-in fade-in duration-150"
+                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
                 onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
             >
                 <div className={`bg-[#1a120b] border-2 ${plan.color} w-full max-w-sm shadow-2xl p-5 animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto`}>
@@ -182,7 +182,7 @@ export default function PurchaseConfirmModal({
         const gold = GOLD_DETAILS[packageKey];
         return (
             <div
-                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 animate-in fade-in duration-150"
+                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150"
                 onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
             >
                 <div className="bg-[#1a120b] border-2 border-yellow-700/60 w-full max-w-sm shadow-2xl p-5 animate-in zoom-in-95 duration-200">

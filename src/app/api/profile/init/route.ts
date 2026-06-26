@@ -36,14 +36,18 @@ export async function POST(req: Request) {
 
         // プロファイルを検索（再誕フローの場合は既存プロファイルがあることがある）
         let profileId: string | null = null;
+        let isTutorialCompleted = false;
 
         const { data: existingProfile } = await client
             .from('user_profiles')
-            .select('id')
+            .select('id, is_tutorial_completed')
             .eq('id', resolvedUserId)
             .maybeSingle();
 
-        if (existingProfile) profileId = existingProfile.id;
+        if (existingProfile) {
+            profileId = existingProfile.id;
+            isTutorialCompleted = !!existingProfile.is_tutorial_completed;
+        }
 
         let updates: any = {
             name: title_name, // User Input -> Name
@@ -108,6 +112,23 @@ export async function POST(req: Request) {
                 .single();
 
             if (insertError) throw insertError;
+
+            // 新規作成時：基本キー (item_id: 76) の自動付与
+            const { error: keyError } = await supabaseServer
+                .from('inventory')
+                .upsert(
+                    {
+                        user_id: newProfile.id,
+                        item_id: 76,
+                        quantity: 1,
+                        is_equipped: false
+                    },
+                    { onConflict: 'user_id,item_id' }
+                );
+            if (keyError) {
+                console.error('[Init Profile] 新規登録時の鍵付与に失敗しました:', keyError);
+            }
+
             return NextResponse.json({ success: true, id: newProfile.id });
         } else {
             // UPDATE Mode
@@ -118,23 +139,32 @@ export async function POST(req: Request) {
 
             if (error) throw error;
 
-            // #13 世代継承シェア (繰返)
-            const { count: retiredCount } = await client
-                .from('retired_characters')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', profileId);
-            const generation = (retiredCount || 0) + 1;
-            let shareDataList: any[] = [];
-            if (generation >= 2) {
-                const sd = buildShareData('generation_change', { generation });
-                if (sd) shareDataList.push(sd);
+            // 既存更新時であってもチュートリアル未完了の場合は、初期鍵 (item_id: 76) を自動補填・付与する
+            if (!isTutorialCompleted) {
+                const { error: keyError } = await supabaseServer
+                    .from('inventory')
+                    .upsert(
+                        {
+                            user_id: profileId,
+                            item_id: 76,
+                            quantity: 1,
+                            is_equipped: false
+                        },
+                        { onConflict: 'user_id,item_id' }
+                    );
+                if (keyError) {
+                    console.error('[Init Profile] 既存更新時（チュートリアル未完了）の鍵付与に失敗しました:', keyError);
+                }
             }
+
+            // #13 世代継承シェア (繰返) -> 号外一時廃止に伴い抑止
+            let shareDataList: any[] = [];
 
             return NextResponse.json({
                 success: true,
                 id: profileId,
                 share_data_list: shareDataList,
-                share_text: shareDataList.length > 0 ? shareDataList[0].text : null,
+                share_text: null,
             });
         }
 

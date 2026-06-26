@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { safeSessionStorage } from '@/lib/safeStorage';
 
 interface TermsOfServiceModalProps {
     /** 同意した時のコールバック */
@@ -49,7 +48,9 @@ export default function TermsOfServiceModal({
                         <Link
                             href="/legal/terms"
                             onClick={() => {
-                                safeSessionStorage.setItem('cwd_show_tos', '1');
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem('cwd_show_tos', '1');
+                                }
                             }}
                             className="text-amber-400 hover:text-amber-300 transition-colors text-xs font-serif underline decoration-amber-500/50 hover:decoration-amber-400 font-bold"
                         >
@@ -59,7 +60,9 @@ export default function TermsOfServiceModal({
                         <Link
                             href="/legal/privacy"
                             onClick={() => {
-                                safeSessionStorage.setItem('cwd_show_tos', '1');
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem('cwd_show_tos', '1');
+                                }
                             }}
                             className="text-amber-400 hover:text-amber-300 transition-colors text-xs font-serif underline decoration-amber-500/50 hover:decoration-amber-400 font-bold"
                         >

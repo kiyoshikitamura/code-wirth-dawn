@@ -37,8 +37,7 @@ export async function getAuthToken(): Promise<string | null> {
 
     refreshPromise = (async () => {
         try {
-            const res = await supabase.auth.getSession();
-            const session = res?.data?.session;
+            const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 cachedToken = session.access_token;
                 // expires_at は UNIX秒。ミリ秒に変換
@@ -46,11 +45,6 @@ export async function getAuthToken(): Promise<string | null> {
                 return cachedToken;
             }
             // セッションなし
-            cachedToken = null;
-            tokenExpiresAt = 0;
-            return null;
-        } catch (e) {
-            console.error('[getAuthToken] getSession failed:', e);
             cachedToken = null;
             tokenExpiresAt = 0;
             return null;

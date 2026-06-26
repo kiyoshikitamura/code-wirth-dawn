@@ -483,7 +483,7 @@ export class QuestService {
         return { valid: true };
     }
 
-    static async getQuestsForLocation(userId: string, locationId: string | null): Promise<{ quests: any[]; special_quests: any[]; normal_quests: any[] }> {
+    static async getQuestsForLocation(userId: string, locationId: string | null, prefetchQuestId?: string | null): Promise<{ quests: any[]; special_quests: any[]; normal_quests: any[] }> {
         const { data: user, error: uError } = await supabaseServer
             .from('user_profiles')
             .select('id, level, gold, vitality, order_pts, chaos_pts, justice_pts, evil_pts, current_location_id')
@@ -558,6 +558,9 @@ export class QuestService {
         }
 
         const completedQuestIds = new Set((completedQuests || []).map((q: any) => String(q.scenario_id)));
+        if (prefetchQuestId) {
+            completedQuestIds.add(String(prefetchQuestId));
+        }
 
         const slugToIdMap: Record<string, string> = {};
         for (const q of quests) {

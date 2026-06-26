@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { X, LogIn, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { soundManager } from '@/lib/soundManager';
-import { safeSessionStorage } from '@/lib/safeStorage';
 
 interface Props {
     onClose: () => void;
@@ -26,7 +25,11 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
 
         try {
             // 本登録完了後に自動でパックプロモーションを開くため、sessionStorageにフラグを保存
-            safeSessionStorage.setItem('wirth_dawn_just_registered', 'true');
+            try {
+                sessionStorage.setItem('wirth_dawn_just_registered', 'true');
+            } catch (err) {
+                console.warn('[GuestRegisterPromoModal] sessionStorage setItem failed:', err);
+            }
 
             const { error } = await supabase.auth.linkIdentity({
                 provider: 'google',
@@ -42,7 +45,9 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
             console.error('[GuestRegisterPromoModal] Google Link Error:', e);
             setErrorMsg(`Google連携に失敗しました: ${e.message}`);
             setLoading(false);
-            safeSessionStorage.removeItem('wirth_dawn_just_registered');
+            try {
+                sessionStorage.removeItem('wirth_dawn_just_registered');
+            } catch (err) {}
         }
     };
 
@@ -57,8 +62,8 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/85 pointer-events-auto" />
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             <div className="relative z-10 w-full max-w-lg bg-[#0b0d19]/95 border border-amber-500/25 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
                 
                 {/* ヘッダー画像エリア */}

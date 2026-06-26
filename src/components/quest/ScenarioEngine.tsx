@@ -52,7 +52,10 @@ export default function ScenarioEngine({
 
     // initialNodeId の変更に反応 (Quest Resume にとって重要)
     useEffect(() => {
-        if (initialNodeId) setCurrentNodeId(initialNodeId);
+        if (initialNodeId) {
+            setCurrentNodeId(initialNodeId);
+            setIsTransitioning(false); // 外部からのノード復帰時に遷移ロックを確実にリセット
+        }
     }, [initialNodeId]);
 
     // 自動同期 useEffect (Zustand に currentNodeId を同期してリロード時に復元可能にする)
@@ -71,6 +74,7 @@ export default function ScenarioEngine({
     // Phase 2: UX改善 State
     const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; nodeRewards?: any } | null>(null);
     const [isProcessingResult, setIsProcessingResult] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
     const prepareTriggeredRef = useRef(false);
@@ -82,6 +86,13 @@ export default function ScenarioEngine({
     const historyRef = useRef(history);
     useEffect(() => { historyRef.current = history; }, [history]);
 
+    // プレイヤー名プレースホルダー置換ヘルパー
+    const replacePlayerName = (text: string) => {
+        if (!text) return text;
+        const metPlayerName = questState.getFlag('met_player_name') || '見知らぬ冒険者';
+        return text.replace(/{met_player_name}/g, String(metPlayerName));
+    };
+
     // Phase 3: タイプライター演出
     const [displayedText, setDisplayedText] = useState('');
     const [typewriterDone, setTypewriterDone] = useState(false);
@@ -92,10 +103,11 @@ export default function ScenarioEngine({
             typewriterRef.current = null;
         }
         if (complete) {
-            const fullText = currentNode?.text || (
+            let fullText = currentNode?.text || (
                 currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
                 currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
             );
+            fullText = replacePlayerName(fullText);
             setDisplayedText(fullText);
         }
         setTypewriterDone(complete);
@@ -167,13 +179,16 @@ export default function ScenarioEngine({
             typewriterRef.current = null;
         }
 
-        const fullText = currentNode?.text || (
+        let fullText = endReady ? (
+            endReady.result === 'success' ? '調査を終え、無事に帰還の途についた...' : '冒険はここで潰えてしまった...'
+        ) : (currentNode?.text || (
             currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
             currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'
-        );
+        ));
+        fullText = replacePlayerName(fullText);
 
-        // 非テキストノードは即時表示（guest_joinはプロセッサが自動遷移するためスキップ）
-        if (!currentNode || ['battle', 'camp', 'shop_access', 'supply', 'guest_join'].includes(currentNode.type || '')) {
+        // 非テキストノードは即時表示（guest_joinはプロセッサが自動遷移するためスキップ、ただしendReady時は通常テキスト扱い）
+        if (!endReady && (!currentNode || ['battle', 'camp', 'shop_access', 'supply', 'guest_join'].includes(currentNode.type || ''))) {
             setDisplayedText(fullText);
             setTypewriterDone(true);
             return;
@@ -200,7 +215,7 @@ export default function ScenarioEngine({
                 typewriterRef.current = null;
             }
         };
-    }, [currentNodeId]);
+    }, [currentNodeId, endReady]);
 
     // --- ノードプロセッサー (useScenarioNodeProcessor フックに委譲) ---
     useScenarioNodeProcessor({
@@ -219,6 +234,50 @@ export default function ScenarioEngine({
         nodeTrigger,
         script
     });
+
+    // 背景画像のプリロードとクロスフェード制御
+    const bgUrl = getAssetUrl(currentNode?.bg_key || 'default');
+    useEffect(() => {
+        if (!bgUrl) return;
+        // 同じURLなら何もしない
+        if (bgUrl === prevBgUrl && bgReady) return;
+        // 新しい背景をプリロードしてからフェードイン
+        setBgReady(false);
+        let timerId: NodeJS.Timeout | null = null;
+
+        const img = new Image();
+        img.onload = () => {
+            setPrevBgUrl(bgUrl);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
+        };
+        img.onerror = () => {
+            setPrevBgUrl(bgUrl);
+            timerId = setTimeout(() => {
+                setBgReady(true);
+            }, 50);
+        };
+        img.src = bgUrl;
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
+    }, [bgUrl]);
+
+    // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御
+    useEffect(() => {
+        if (endReady && endReady.result !== 'abort' && onPrepareResult) {
+            if (prepareTriggeredRef.current) return;
+            prepareTriggeredRef.current = true;
+            onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
+        }
+    }, [endReady, history, onPrepareResult]);
+
+    // ノード切り替え時に、プレフェッチ送信済みフラグをリセット
+    useEffect(() => {
+        prepareTriggeredRef.current = false;
+    }, [currentNodeId]);
 
 
     // --- アクション ---
@@ -274,7 +333,7 @@ export default function ScenarioEngine({
 
                 <div className="flex flex-col gap-3 mb-6 z-10 w-full max-w-sm">
                     {shopItems.map((item: { id: number; name: string; price: number; desc: string }) => (
-                        <div key={item.id} className="bg-slate-900/95 text-slate-200 p-4 rounded-xl border border-amber-900/40 flex flex-col gap-2 shadow-lg">
+                        <div key={item.id} className="bg-slate-900/90 backdrop-blur-sm text-slate-200 p-4 rounded-xl border border-amber-900/40 flex flex-col gap-2 shadow-lg">
                             <div className="flex justify-between items-center border-b border-slate-700/50 pb-2">
                                 <span className="font-bold text-base">{item.name}</span>
                                 <span className="text-amber-400 font-mono text-sm">{item.price} G</span>
@@ -290,14 +349,20 @@ export default function ScenarioEngine({
                     ))}
                 </div>
 
-                <div className="z-10 bg-slate-900 px-6 py-2 rounded-full border border-slate-700/50 mb-6">
+                <div className="z-10 bg-slate-900/80 backdrop-blur-sm px-6 py-2 rounded-full border border-slate-700/50 mb-6">
                     <span className="text-slate-400 text-sm mr-2">所持金:</span>
                     <span className="text-amber-400 font-bold font-mono text-lg">{userProfile?.gold || 0} G</span>
                 </div>
 
                 <button
-                    onClick={() => nextId && setCurrentNodeId(nextId)}
-                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-transparent hover:border-slate-400 transition-all text-sm"
+                    onClick={() => {
+                        if (isTransitioning) return;
+                        setIsTransitioning(true);
+                        if (nextId) setCurrentNodeId(nextId);
+                        setTimeout(() => setIsTransitioning(false), 300);
+                    }}
+                    disabled={isTransitioning}
+                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-transparent hover:border-slate-400 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     補給を終えて戻る
                 </button>
@@ -306,36 +371,91 @@ export default function ScenarioEngine({
     }
 
     // Camp UI
-    if (currentNode?.type === 'camp') {
+    const isCampNode = currentNode?.type === 'camp';
+    const isCampHideButtons = isCampNode && (currentNode?.params?.hide_buttons || currentNode?.hide_buttons || false);
+    if (isCampNode && !endReady && !isCampHideButtons) {
         const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+        const hideButtons = currentNode.params?.hide_buttons || currentNode.hide_buttons || false;
+        const continueLabel = currentNode.params?.continue_label || currentNode.continue_label || "休憩を終えて出発する";
+        const title = currentNode.params?.title !== undefined ? currentNode.params.title : (currentNode.title !== undefined ? currentNode.title : "野営地");
+        const description = currentNode.text || "「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」";
+
+        // 背景画像の取得 (currentNode.bg_key があればそれを使う、なければ default の bg_camp.png)
+        const customBg = currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key;
+        const campBgUrl = customBg ? getAssetUrl(customBg) : "/images/quests/bg_camp.png";
 
         return (
-            <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-6">
-                <div className="absolute inset-0 bg-[url('/images/quests/bg_camp.png')] opacity-20 pointer-events-none bg-cover bg-center" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+            <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-between p-6">
+                <div 
+                    className="absolute inset-0 opacity-20 pointer-events-none bg-cover bg-center transition-all duration-500" 
+                    style={{ backgroundImage: `url('${campBgUrl}')` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
 
-                <div className="z-10 w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
-                    <span className="text-3xl">🔥</span>
+                {/* 中央コンテンツ */}
+                <div className="flex-1 flex flex-col items-center justify-center w-full z-10">
+                    {!hideButtons && (
+                        <div className="w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
+                            <span className="text-3xl">🔥</span>
+                        </div>
+                    )}
+                    {title && <h2 className="text-2xl font-serif text-amber-400 mb-1 drop-shadow-md">{title}</h2>}
+                    <p className="text-slate-200 mb-6 text-sm italic text-center max-w-xs">{description}</p>
+
+                    {!hideButtons && (
+                        <div className="bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm w-full flex flex-col gap-3">
+                            <p className="text-amber-400/80 font-bold text-sm mb-1">※ここでは特別に、デッキ・装備変更が許可されます。</p>
+                            <button
+                                onClick={() => setShowCampStatus(true)}
+                                className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                            >
+                                デッキ編成・装備変更
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰ってギルドに報告（クリア）しますか？")) {
+                                        setEndReady({ result: 'success' });
+                                    }
+                                }}
+                                className="bg-emerald-950/60 text-emerald-200 border border-emerald-700/40 px-8 py-3 hover:bg-emerald-900/40 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                            >
+                                探索を終えて帰還する (クリア)
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <h2 className="text-2xl font-serif text-amber-400 mb-1 z-10 drop-shadow-md">野営地</h2>
-                <p className="text-slate-500 mb-6 z-10 text-sm italic text-center max-w-xs">「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」</p>
 
-                <div className="z-10 bg-slate-900 px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm">
-                    <p className="text-amber-400/80 font-bold text-sm mb-4">※ここでは特別に、デッキ・装備変更が許可されます。</p>
-                    <button
-                        onClick={() => setShowCampStatus(true)}
-                        className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98]"
-                    >
-                        デッキ編成・装備変更
-                    </button>
+                {/* 最下部ボタン */}
+                <div className="w-full max-w-sm z-10 pb-4 flex justify-center shrink-0">
+                    {hideButtons ? (
+                        <button
+                            onClick={() => {
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
+                                if (nextId) setCurrentNodeId(nextId);
+                                setTimeout(() => setIsTransitioning(false), 300);
+                            }}
+                            disabled={isTransitioning}
+                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span>{continueLabel}</span>
+                            <ArrowRight size={14} className="opacity-70" />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => {
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
+                                if (nextId) setCurrentNodeId(nextId);
+                                setTimeout(() => setIsTransitioning(false), 300);
+                            }}
+                            disabled={isTransitioning}
+                            className="text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {continueLabel}
+                        </button>
+                    )}
                 </div>
-
-                <button
-                    onClick={() => nextId && setCurrentNodeId(nextId)}
-                    className="z-10 text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold"
-                >
-                    休憩を終えて出発する
-                </button>
 
                 {showCampStatus && <StatusModal onClose={() => setShowCampStatus(false)} isCampMode={true} />}
             </div>
@@ -365,9 +485,13 @@ export default function ScenarioEngine({
     }
 
     const questResult = currentNode.params?.result || currentNode.result;
-    const isSuccess = questResult === 'success' || currentNode.type === 'end_success';
+    const isSuccess = endReady
+        ? endReady.result === 'success'
+        : (questResult === 'success' || currentNode.type === 'end_success');
+
 
     const handleChoice = (choice: any) => {
+        if (isTransitioning) return;
         // 要件の検証
         if (choice.req) {
             const { type, val } = choice.req;
@@ -389,53 +513,13 @@ export default function ScenarioEngine({
             // For now, allow proceed.
         }
 
+        setIsTransitioning(true);
         setHistory(prev => [...prev, currentNodeId]);
         setCurrentNodeId(choice.next);
+        setTimeout(() => {
+            setIsTransitioning(false);
+        }, 300);
     };
-
-    // 背景画像のプリロードとクロスフェード制御
-    const bgUrl = getAssetUrl(currentNode.bg_key || 'default');
-    useEffect(() => {
-        if (!bgUrl) return;
-        // 同じURLなら何もしない
-        if (bgUrl === prevBgUrl && bgReady) return;
-        // 新しい背景をプリロードしてからフェードイン
-        setBgReady(false);
-        let timerId: NodeJS.Timeout | null = null;
-
-        const img = new Image();
-        img.onload = () => {
-            setPrevBgUrl(bgUrl);
-            timerId = setTimeout(() => {
-                setBgReady(true);
-            }, 50);
-        };
-        img.onerror = () => {
-            setPrevBgUrl(bgUrl);
-            timerId = setTimeout(() => {
-                setBgReady(true);
-            }, 50);
-        };
-        img.src = bgUrl;
-
-        return () => {
-            if (timerId) clearTimeout(timerId);
-        };
-    }, [bgUrl]);
-
-    // クエスト結果の先行読み込み（プレフェッチ）トリガーの防衛的制御
-    useEffect(() => {
-        if (endReady && endReady.result !== 'abort' && onPrepareResult) {
-            if (prepareTriggeredRef.current) return;
-            prepareTriggeredRef.current = true;
-            onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
-        }
-    }, [endReady, history, onPrepareResult]);
-
-    // ノード切り替え時に、プレフェッチ送信済みフラグをリセット
-    useEffect(() => {
-        prepareTriggeredRef.current = false;
-    }, [currentNodeId]);
 
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
@@ -463,11 +547,20 @@ export default function ScenarioEngine({
             {/* 下部グラデーション（テキスト領域の可読性確保） */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent pointer-events-none" />
 
-            {/* 話者キャラ画像 — テキストログ内にアイコンがあるため背景表示は削除 */}
+            {/* 前景画像レイヤー（キャラクター立ち絵、宝箱など） */}
+            {(currentNode?.fg_image || currentNode?.params?.fg_image) && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 mb-28 animate-in fade-in duration-500">
+                    <img 
+                        src={getAssetUrl(currentNode.fg_image || currentNode.params?.fg_image)} 
+                        alt="Foreground Object" 
+                        className="max-h-[55%] w-auto object-contain" 
+                    />
+                </div>
+            )}
 
             <div className="relative z-20 px-4 pb-8 space-y-4 w-full mx-auto md:pb-12 max-h-[85vh] flex flex-col justify-end">
                 {/* Main Text Dialog */}
-                <div className="bg-slate-950/85 border border-amber-900/40 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
+                <div className="bg-slate-950/40 backdrop-blur-sm border border-amber-900/40 rounded-xl p-3 shadow-2xl flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500 shrink-0">
                     {/* アイコン: 話者画像あり→ポートレート / なし→非表示 */}
                     {currentNode.speaker_image_url ? (
                         <div className="flex-shrink-0 animate-in fade-in zoom-in-95 duration-300">
@@ -480,7 +573,7 @@ export default function ScenarioEngine({
                         {/* 話者名タグ: speaker指定あり→金色表示 / なし→非表示 */}
                         {(currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker) ? (
                             <div className="text-amber-400 text-[10px] font-bold tracking-widest mb-1">
-                                ◆ {currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker}
+                                ◆ {replacePlayerName(currentNode.speaker_name || currentNode.speaker || currentNode.params?.speaker_name || currentNode.params?.speaker)}
                             </div>
                         ) : null}
                         {/* 固定高さテキスト領域 + スクロール */}
@@ -504,13 +597,51 @@ export default function ScenarioEngine({
 
                 {/* Choices */}
                 <div className="flex flex-col gap-2 shrink-0">
-                    {/* 自動処理ノードはボタンを出さない（プロセッサが自動遷移） */}
-                    {['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward'].includes(currentNode.type || '') ? (
+                    {endReady ? (
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="text-center font-bold text-xl py-2 animate-pulse tracking-widest">
+                                {isSuccess ? (
+                                    <span className="text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">クエスト達成</span>
+                                ) : (
+                                    <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    if (isResultReady && !isProcessingResult) {
+                                        setIsProcessingResult(true);
+                                        onComplete(endReady.result, history, endReady.nodeRewards);
+                                    }
+                                }}
+                                disabled={!isResultReady || isProcessingResult}
+                                className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
+                                    isSuccess
+                                        ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
+                                        : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
+                                } ${(!isResultReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
+                            >
+                                {isProcessingResult ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        画面を切り替え中...
+                                    </span>
+                                ) : !isResultReady ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        判定中...
+                                    </span>
+                                ) : '結果を確認する'}
+                            </button>
+                        </div>
+                    ) : ['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward'].includes(currentNode.type || '') ? (
                         <div className="text-center text-slate-500 text-sm py-3 animate-pulse">処理中...</div>
+
                     ) : currentNode.type === 'battle' ? (
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => {
+                                    if (isTransitioning) return;
+                                    setIsTransitioning(true);
                                     if (onBattleStart) {
                                         // 勝利後ノード: battle_success_next（CSVのnext_node由来） → choices[0].next → fallback
                                         const successId = currentNode.battle_success_next
@@ -523,8 +654,12 @@ export default function ScenarioEngine({
                                             : (currentNode.enemy_group_id || 'slime');
                                         onBattleStart(enemyId, successId, currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key, currentNode.bgm_key || currentNode.bgm || currentNode.params?.bgm);
                                     }
+                                    setTimeout(() => {
+                                        setIsTransitioning(false);
+                                    }, 300);
                                 }}
-                                className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest"
+                                disabled={isTransitioning}
+                                className="w-full bg-red-950/80 border border-red-800 text-red-300 py-4 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(153,27,27,0.5)] active:scale-[0.98] transition-all hover:bg-red-900/80 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 ⚔️ 戦闘開始
                             </button>
@@ -534,7 +669,8 @@ export default function ScenarioEngine({
                             <button
                                 key={i}
                                 onClick={() => handleChoice(choice)}
-                                className="w-full py-4 px-4 bg-amber-900/40 border border-amber-600 text-amber-100 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-amber-900/60 transition-all active:scale-[0.98] flex items-center justify-between"
+                                disabled={isTransitioning}
+                                className="w-full py-4 px-4 bg-amber-900/40 border border-amber-600 text-amber-100 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-amber-900/60 transition-all active:scale-[0.98] flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span className="flex-1 text-center font-serif truncate px-2">{choice.label}</span>
 
@@ -556,10 +692,16 @@ export default function ScenarioEngine({
                     ) : currentNode.next ? (
                         <button
                             onClick={() => {
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
                                 setHistory(prev => [...prev, currentNodeId]);
                                 setCurrentNodeId(currentNode.next);
+                                setTimeout(() => {
+                                    setIsTransitioning(false);
+                                }, 300);
                             }}
-                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2"
+                            disabled={isTransitioning}
+                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span>次へ</span>
                             <ArrowRight size={14} className="opacity-70" />
@@ -574,44 +716,27 @@ export default function ScenarioEngine({
                                         <span className="text-red-500 drop-shadow-lg">クエスト失敗</span>
                                     )}
                                 </div>
-                                {/* Phase 2: ユーザーボタン操作による遷移 */}
                                 <button
-                                    onClick={() => {
-                                        if (endReady && isResultReady && !isProcessingResult) {
-                                            setIsProcessingResult(true);
-                                            onComplete(endReady.result, history, endReady.nodeRewards);
-                                        }
-                                    }}
-                                    disabled={!endReady || !isResultReady || isProcessingResult}
-                                    className={`w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all active:scale-[0.98] ${
-                                        isSuccess
-                                            ? 'bg-amber-900/40 border border-amber-600 text-amber-200 hover:bg-amber-900/60'
-                                            : 'bg-red-950/50 border border-red-800 text-red-300 hover:bg-red-900/60'
-                                    } ${(!endReady || !isResultReady || isProcessingResult) ? 'opacity-50 cursor-wait' : ''}`}
+                                    disabled={true}
+                                    className="w-full py-4 rounded-lg text-sm font-bold tracking-widest transition-all opacity-50 cursor-wait bg-amber-900/40 border border-amber-600 text-amber-200"
                                 >
-                                    {isProcessingResult ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            画面を切り替え中...
-                                        </span>
-                                    ) : !isResultReady ? (
-                                        <span className="flex items-center justify-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            判定中...
-                                        </span>
-                                    ) : '結果を確認する'}
+                                    <span className="flex items-center justify-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        判定中...
+                                    </span>
                                 </button>
                             </div>
                         ) : (
                             <div className="text-center text-slate-500 italic pb-2 text-sm tracking-widest">...</div>
                         )
+
                     )}
                 </div>
             </div>
 
             {/* Guest Join Modal */}
             {showingGuestJoin && (
-                <div className="absolute inset-0 z-50 bg-black/95 flex items-center justify-center animate-in fade-in duration-500 p-6">
+                <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-500 p-6">
                     <div className="bg-slate-900 border border-amber-900/50 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl relative">
                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-4 py-1 font-bold tracking-widest text-xs rounded-full shadow-lg">
                             新たな仲間
@@ -662,10 +787,10 @@ export default function ScenarioEngine({
 
             {/* Travel Modal */}
             {showingTravel && (
-                <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center animate-in fade-in duration-700 p-6">
+                <div className="absolute inset-0 z-50 bg-slate-950/98 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-700 p-6">
 
                     {/* Linear Route Map Display */}
-                    <div className="w-full max-w-sm mb-6 relative bg-slate-900 border border-slate-700/50 rounded-xl p-5 flex items-center justify-center gap-3 overflow-x-auto">
+                    <div className="w-full max-w-sm mb-6 relative bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5 flex items-center justify-center gap-3 overflow-x-auto">
                         {/* Current Location */}
                         <div className="flex flex-col items-center min-w-[70px]">
                             <div className="w-10 h-10 rounded-full border-2 border-blue-500 bg-blue-900/40 flex items-center justify-center shadow-[0_0_10px_rgba(59,130,246,0.3)]">
@@ -704,7 +829,7 @@ export default function ScenarioEngine({
                         {showingTravel.status === 'confirm' ? '移動ルート' : '移動中...'}
                     </h2>
 
-                    <div className="text-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-700/50 max-w-sm w-full">
+                    <div className="text-center mb-6 bg-slate-900/80 backdrop-blur-sm p-4 rounded-xl border border-slate-700/50 max-w-sm w-full">
                         <p className="text-slate-400 text-base flex items-center justify-center gap-2">
                             <span>行き先:</span>
                             <span className="text-amber-400 font-bold text-lg">{showingTravel.dest}</span>

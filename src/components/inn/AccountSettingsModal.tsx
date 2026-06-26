@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
 import { useGameStore } from '@/store/gameStore';
 import { clearGameStarted } from '@/hooks/useAuthGuard';
-import { safeLocalStorage, safeSessionStorage } from '@/lib/safeStorage';
 import { UI_RULES } from '@/constants/game_rules';
 import SoundSettingsPanel from '@/components/sound/SoundSettingsPanel';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -204,7 +203,13 @@ export default function AccountSettingsModal({ onClose }: Props) {
         setError('');
         try {
             // 本登録完了後に自動でパックプロモーションを開くため、sessionStorageにフラグを保存
-            safeSessionStorage.setItem('wirth_dawn_just_registered', 'true');
+            if (typeof window !== 'undefined') {
+                try {
+                    sessionStorage.setItem('wirth_dawn_just_registered', 'true');
+                } catch (err) {
+                    console.warn('[AccountSettingsModal] sessionStorage setItem failed:', err);
+                }
+            }
 
             const { error } = await supabase.auth.linkIdentity({
                 provider: 'google',
@@ -219,7 +224,11 @@ export default function AccountSettingsModal({ onClose }: Props) {
             // → Google OAuth画面にリダイレクトされる
             // → コールバック後 /inn に戻り、匿名アカウントにGoogle identityが紐付く
         } catch (e: any) {
-            safeSessionStorage.removeItem('wirth_dawn_just_registered');
+            if (typeof window !== 'undefined') {
+                try {
+                    sessionStorage.removeItem('wirth_dawn_just_registered');
+                } catch (err) {}
+            }
             setError(`Google連携に失敗しました: ${e.message}`);
             setLinkLoading(false);
         }
@@ -231,9 +240,11 @@ export default function AccountSettingsModal({ onClose }: Props) {
     };
     const executeReturnToTitle = async () => {
         clearGameStarted();
-        safeLocalStorage.removeItem('game-storage');
-        safeLocalStorage.removeItem('quest-storage');
-        safeSessionStorage.setItem('cwd_return_to_title', '1');
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('game-storage');
+            localStorage.removeItem('quest-storage');
+            sessionStorage.setItem('cwd_return_to_title', '1');
+        }
         try { await supabase.auth.signOut(); } catch (_) {}
         window.location.href = '/title';
     };

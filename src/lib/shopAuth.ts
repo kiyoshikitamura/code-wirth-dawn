@@ -21,9 +21,7 @@ export async function getAuthenticatedProfile(req: Request): Promise<UserProfile
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const res = await supabase.auth.getUser(token);
-    const user = res?.data?.user;
-    const error = res?.error;
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
         throw new AuthError('Authentication failed. JWT is required.', 401);

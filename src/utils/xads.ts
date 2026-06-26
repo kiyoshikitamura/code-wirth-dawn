@@ -12,8 +12,7 @@ export function initXPixel(pixelId: string) {
       e.twq || (s = e.twq = function() {
         s.exe ? s.exe.apply(s, arguments) : s.queue.push(arguments);
       }, s.version = '1.1', s.queue = [], u = t.createElement(n), u.async = !0, u.src = 'https://static.ads-twitter.com/uwt.js',
-      a = t.getElementsByTagName(n)[0],
-      (a && a.parentNode ? a.parentNode.insertBefore(u, a) : (t.head || t.getElementsByTagName('head')[0] || t.body).appendChild(u)))
+      a = t.getElementsByTagName(n)[0], a.parentNode.insertBefore(u, a))
     })(window, document, 'script');
 
     (window as any).twq('config', pixelId);

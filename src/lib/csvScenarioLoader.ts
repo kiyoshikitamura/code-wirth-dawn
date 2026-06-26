@@ -220,7 +220,8 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 'flag', 'key', 'delta', 'value', 'threshold', 'operator',
                 'amount', 'location_name', 'items', 'gold',
                 'success_node', 'fail_node',
-                'encounter_rate', 'fallback', 'rewards'];
+                'encounter_rate', 'fallback', 'rewards',
+                'hide_buttons', 'continue_label', 'title'];
             for (const k of passthrough) {
                 if (params[k] !== undefined) {
                     node.params = node.params || {};
@@ -239,7 +240,8 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 } else {
                     node.next = nextNode;
                     // Auto-advance: create a single "continue" choice
-                    node.choices = [{ label: '続ける', next: nextNode }];
+                    const label = params.continue_label || '続ける';
+                    node.choices = [{ label, next: nextNode }];
                 }
             }
 

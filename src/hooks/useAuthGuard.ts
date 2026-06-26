@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getAuthToken, clearAuthTokenCache } from '@/lib/authToken';
 
-import { safeSessionStorage } from '@/lib/safeStorage';
-
 /** sessionStorage キー */
 const GAME_STARTED_KEY = 'cwd_game_started';
 
@@ -15,7 +13,9 @@ const GAME_STARTED_KEY = 'cwd_game_started';
  * title/page.tsx の checkUserStatus で router.push('/inn') 直前に呼ぶ。
  */
 export function setGameStarted(): void {
-    safeSessionStorage.setItem(GAME_STARTED_KEY, '1');
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem(GAME_STARTED_KEY, '1');
+    }
 }
 
 /**
@@ -23,7 +23,9 @@ export function setGameStarted(): void {
  * サインアウト時などに呼ぶ。
  */
 export function clearGameStarted(): void {
-    safeSessionStorage.removeItem(GAME_STARTED_KEY);
+    if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(GAME_STARTED_KEY);
+    }
 }
 
 /**
@@ -56,7 +58,7 @@ export function useAuthGuard(): void {
         }
 
         // ① タイトル経由フラグをチェック
-        const gameStarted = safeSessionStorage.getItem(GAME_STARTED_KEY);
+        const gameStarted = sessionStorage.getItem(GAME_STARTED_KEY);
         if (!gameStarted) {
             router.replace('/title');
             return;
@@ -95,7 +97,7 @@ export function useAuthGuard(): void {
 
             clearGameStarted();
             // タイトル画面で自動リダイレクトされないようにフラグを立てる
-            safeSessionStorage.setItem('cwd_return_to_title', '1');
+            sessionStorage.setItem('cwd_return_to_title', '1');
             router.replace('/title');
         };
         window.addEventListener('popstate', handlePopState);

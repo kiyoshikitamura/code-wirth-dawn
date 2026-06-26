@@ -11,19 +11,13 @@ export default function RootPage() {
   useEffect(() => {
     // Middleware がリダイレクトを処理するため、ここはフォールバック
     // fetchUserProfile を呼ばずに軽量なセッションチェックのみ
-    supabase.auth.getSession()
-      .then((res) => {
-        const session = res?.data?.session;
-        if (session) {
-          router.replace('/inn');
-        } else {
-          router.replace('/title');
-        }
-      })
-      .catch((err) => {
-        console.error('[RootPage] Failed to get session:', err);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace('/inn');
+      } else {
         router.replace('/title');
-      });
+      }
+    });
   }, [router]);
 
   return (

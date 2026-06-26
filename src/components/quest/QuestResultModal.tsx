@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { safeSessionStorage } from '@/lib/safeStorage';
 import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag, Loader2 } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
@@ -95,24 +94,22 @@ export default function QuestResultModal({
         if (closeLockedRef.current || isClosing) return;
         closeLockedRef.current = true;
         setIsClosing(true);
-        safeSessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
-    };
-
-    useEffect(() => {
-        if (!isClosing) return;
-
-        const timer = setTimeout(async () => {
+        setTimeout(async () => {
             try {
+                // 本登録/パック案内プロモーションを帰還時に起動するためのセッションフラグをセット
+                try {
+                    sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
+                } catch (err) {
+                    console.warn('[QuestResultModal] sessionStorage setItem failed:', err);
+                }
                 await onClose();
             } catch (e) {
                 console.error('[QuestResultModal] onClose failed:', e);
                 closeLockedRef.current = false;
                 setIsClosing(false);
             }
-        }, 150);
-
-        return () => clearTimeout(timer);
-    }, [isClosing, onClose]);
+        }, 250);
+    };
 
     const safeChanges = changes || {} as QuestChanges;
     const { level_up, gold_gained = 0, aged_up } = safeChanges;
@@ -124,10 +121,10 @@ export default function QuestResultModal({
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/85 pointer-events-none" />
             {isClosing && (
-                <div className="fixed inset-0 bg-slate-950/90 z-[2000] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-slate-950/90 z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
                     <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
-                        {isTestPlay ? 'クリエイターズ工房に戻る中…' : '拠点に移動中…'}
+                        {isTestPlay ? '宿屋に戻る中…' : '拠点に移動中…'}
                     </p>
                 </div>
             )}
@@ -492,7 +489,7 @@ export default function QuestResultModal({
                                 読み込み中…
                             </>
                         ) : (
-                            isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける'
+                            isTestPlay ? '宿屋に戻る' : '冒険を続ける'
                         )}
                     </button>
                 </footer>

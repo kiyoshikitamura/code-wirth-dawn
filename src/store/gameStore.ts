@@ -18,7 +18,6 @@ import { createProfileSlice } from './slices/profileSlice';
 import { createBattleSlice } from './slices/battleSlice';
 import { createInventorySlice } from './slices/inventorySlice';
 import { createQuestSlice } from './slices/questSlice';
-import { safeStateStorage } from '@/lib/safeStorage';
 
 // ─── 初期バトルステート ────────────────────────────────────────────────────────
 const INITIAL_BATTLE_STATE: GameState['battleState'] = {
@@ -75,14 +74,6 @@ export const useGameStore = create<GameState>()(
         }),
         {
             name: 'game-storage',
-            version: 1,
-            migrate: (persistedState: any, version: number) => {
-                if (version < 1) {
-                    console.log('[gameStore] Migrating from version 0: Clearing old state to avoid conflicts');
-                    return {};
-                }
-                return persistedState;
-            },
             partialize: (state) => ({
                 // C5最適化: 永続化データを最小限に。
                 // battleState/inventory/deck等はAPI取得されるため不要。
@@ -92,7 +83,13 @@ export const useGameStore = create<GameState>()(
                 equipBonus: state.equipBonus,
                 selectedScenario: state.selectedScenario,
             }),
-            storage: createJSONStorage(() => safeStateStorage),
+            storage: createJSONStorage(() =>
+                typeof window !== 'undefined' ? window.localStorage : {
+                    getItem: () => null,
+                    setItem: () => { },
+                    removeItem: () => { },
+                }
+            ),
             onRehydrateStorage: () => (state) => {
                 state?.setHasHydrated(true);
             }

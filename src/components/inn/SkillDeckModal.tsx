@@ -151,7 +151,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
         const power = selectedDetail.effect_data?.effect_val ?? selectedDetail.effect_val ?? selectedDetail.power_value ?? 0;
 
         return createPortal(
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 p-4 animate-in fade-in duration-150" onClick={() => setSelectedDetail(null)}>
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedDetail(null)}>
                 <div className="bg-[#0f172a] border border-blue-900/50 w-full max-w-sm rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                     
                     {/* Header */}
@@ -241,7 +241,7 @@ export default function SkillDeckModal({ onClose, questLocked, isCampMode }: Ski
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 bg-black/90 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
             <div className="w-full max-w-lg h-[90dvh] bg-[#0c1222] border-2 border-blue-950/70 rounded-lg shadow-2xl overflow-hidden flex flex-col relative text-slate-100">
                 
                 {/* Header */}

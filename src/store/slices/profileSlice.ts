@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
-import { safeLocalStorage, safeSessionStorage } from '@/lib/safeStorage';
 import type { GameState } from '../types';
 import { DEFAULT_HEGEMONY } from '@/constants/nations';
 
@@ -58,10 +57,12 @@ export const createProfileSlice = (
     setShowStatus: (show) => set({ showStatus: show }),
 
     clearStorage: () => {
-        safeLocalStorage.removeItem('game-storage');
-        console.log('Storage cleared');
-        if (typeof window !== 'undefined') {
+        try {
+            localStorage.removeItem('game-storage');
+            console.log('Storage cleared');
             window.location.reload();
+        } catch (e) {
+            console.error('Failed to clear storage', e);
         }
     },
 
@@ -306,14 +307,16 @@ export const createProfileSlice = (
                     lastInitPageFetchTime: Date.now(),
                 });
 
-                if (data.profile?.current_location_id) {
+                if (typeof window !== 'undefined' && data.profile?.current_location_id) {
                     const locId = data.profile.current_location_id;
-                    if (data.tavern_shadows) {
-                        safeSessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
-                    }
-                    if (data.location_quests) {
-                        safeSessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
-                    }
+                    try {
+                        if (data.tavern_shadows) {
+                            sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                        }
+                        if (data.location_quests) {
+                            sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                        }
+                    } catch {}
                 }
                 console.log('[prefetchTownData] Prefetch completed successfully & store cached.');
             } else {
