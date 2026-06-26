@@ -36,9 +36,48 @@ export default function GossipModal({ onClose }: Props) {
 
     const scrollerRef = useRef<HTMLDivElement>(null);
 
-    // Initial fetch
-    const fetchInitialData = async () => {
-        setLoading(true);
+    // Pull-to-refresh states & handlers
+    const [pullDistance, setPullDistance] = useState(0);
+    const [refreshing, setRefreshing] = useState(false);
+    const touchStartY = useRef(0);
+    const isAtTopRef = useRef(false);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!scrollerRef.current || refreshing || loading) return;
+        isAtTopRef.current = scrollerRef.current.scrollTop === 0;
+        touchStartY.current = e.touches[0].pageY;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!scrollerRef.current || !isAtTopRef.current || refreshing || loading) return;
+        const currentY = e.touches[0].pageY;
+        const diffY = currentY - touchStartY.current;
+
+        if (diffY > 0) {
+            if (e.cancelable) e.preventDefault();
+            const resistance = 0.45;
+            setPullDistance(Math.min(diffY * resistance, 80));
+        }
+    };
+
+    const handleTouchEnd = async () => {
+        if (!isAtTopRef.current || refreshing || loading) {
+            setPullDistance(0);
+            return;
+        }
+        if (pullDistance > 45) {
+            setRefreshing(true);
+            setPullDistance(45);
+            soundManager?.playSE('se_click');
+            await fetchInitialData(true);
+            setRefreshing(false);
+        }
+        setPullDistance(0);
+    };
+
+    // Initial fetch / Reload
+    const fetchInitialData = async (isRefresh = false) => {
+        if (!isRefresh) setLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
             const res = await fetch(`/api/gossip?limit=30&offset=0`, {
@@ -58,7 +97,7 @@ export default function GossipModal({ onClose }: Props) {
         } catch (e) {
             console.error('Failed to fetch initial gossip:', e);
         } finally {
-            setLoading(false);
+            if (!isRefresh) setLoading(false);
         }
     };
 
@@ -263,8 +302,23 @@ export default function GossipModal({ onClose }: Props) {
                 <div 
                     ref={scrollerRef}
                     onScroll={handleScroll}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                     className="flex-1 overflow-y-auto gossip-scrollbar px-4 py-4 space-y-3 bg-[#0c0e14]/50 relative"
                 >
+                    {/* Pull to Refresh Indicator */}
+                    {(pullDistance > 0 || refreshing) && (
+                        <div 
+                            className="overflow-hidden transition-all duration-150 flex items-center justify-center text-xs text-amber-500 font-bold bg-[#0d0f17]/60 rounded-xl border border-gray-800/40 shadow-inner select-none shrink-0"
+                            style={{ height: `${Math.max(pullDistance, refreshing ? 45 : 0)}px` }}
+                        >
+                            <div className="flex items-center gap-2 py-2">
+                                <Loader2 className={`w-4 h-4 text-amber-400 ${refreshing || pullDistance > 45 ? 'animate-spin' : ''}`} />
+                                <span className="tracking-wide">{refreshing ? '噂話を更新中...' : pullDistance > 45 ? '離して更新' : '下にスワイプして更新'}</span>
+                            </div>
+                        </div>
+                    )}
                     {/* Pinned system post at the very top */}
                     {pinnedSystemPost && (
                         <div className="p-4 rounded-xl border border-[#a38b6b]/40 bg-gradient-to-r from-purple-950/40 to-blue-950/40 space-y-2 flex gap-3 shadow-lg shadow-purple-950/20">
