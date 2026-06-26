@@ -124,7 +124,7 @@ export default function QuestResultModal({
                 <div className="fixed inset-0 bg-slate-950/90 z-[200] flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
                     <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm text-amber-500/70 font-serif tracking-widest animate-pulse">
-                        {isTestPlay ? 'クリエイターズ工房に戻る中…' : '拠点に移動中…'}
+                        {isTestPlay ? '宿屋に戻る中…' : '拠点に移動中…'}
                     </p>
                 </div>
             )}
@@ -489,7 +489,7 @@ export default function QuestResultModal({
                                 読み込み中…
                             </>
                         ) : (
-                            isTestPlay ? 'クリエイターズ工房に戻る' : '冒険を続ける'
+                            isTestPlay ? '宿屋に戻る' : '冒険を続ける'
                         )}
                     </button>
                 </footer>
