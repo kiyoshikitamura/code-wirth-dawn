@@ -12,6 +12,7 @@ interface SimpleUserProfilePopupProps {
     introduction?: string;
     level?: number;
     age?: number;
+    subscriptionTier?: 'free' | 'basic' | 'premium';
 }
 
 export default function SimpleUserProfilePopup({
@@ -23,12 +24,23 @@ export default function SimpleUserProfilePopup({
     introduction,
     level,
     age,
+    subscriptionTier,
 }: SimpleUserProfilePopupProps) {
     if (!isOpen) return null;
 
     const displayAvatar = avatarUrl || '/avatars/adventurer.jpg';
     const displayName = epithet ? `${epithet} ${name}` : name;
     const displayIntro = introduction || '自己紹介は設定されていません。';
+
+    let frameStyle = "w-16 h-16 rounded-full overflow-hidden border-2 border-[#a38b6b]/50 bg-gray-800 shadow-md";
+    let imgWrapperStyle = "w-full h-full";
+    if (subscriptionTier === 'premium') {
+        frameStyle = "w-16 h-16 rounded-full overflow-hidden bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 p-[2px] shadow-lg shadow-yellow-500/10";
+        imgWrapperStyle = "w-full h-full rounded-full overflow-hidden bg-gray-800";
+    } else if (subscriptionTier === 'basic') {
+        frameStyle = "w-16 h-16 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 p-[2px] shadow-lg shadow-blue-500/10";
+        imgWrapperStyle = "w-full h-full rounded-full overflow-hidden bg-gray-800";
+    }
 
     return (
         <div 
@@ -46,19 +58,21 @@ export default function SimpleUserProfilePopup({
                 >
                     <X size={16} />
                 </button>
-
+ 
                 <div className="flex flex-col items-center mt-2 space-y-3">
                     {/* アイコン */}
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#a38b6b]/50 bg-gray-800 shadow-md">
-                        <img
-                            src={displayAvatar}
-                            alt={name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                                // フォールバック画像
-                                (e.target as HTMLImageElement).src = '/avatars/adventurer.jpg';
-                            }}
-                        />
+                    <div className={frameStyle}>
+                        <div className={imgWrapperStyle}>
+                            <img
+                                src={displayAvatar}
+                                alt={name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    // フォールバック画像
+                                    (e.target as HTMLImageElement).src = '/avatars/adventurer.jpg';
+                                }}
+                            />
+                        </div>
                     </div>
 
                     {/* 名前 */}

@@ -73,8 +73,8 @@ export default function GossipModal({ onClose }: Props) {
         const lastPost = localStorage.getItem('last_gossip_post_time');
         if (lastPost) {
             const elapsed = (Date.now() - Number(lastPost)) / 1000;
-            if (elapsed < 30) {
-                setCooldownTime(Math.ceil(30 - elapsed));
+            if (elapsed < 10) {
+                setCooldownTime(Math.ceil(10 - elapsed));
             }
         }
     }, [showPostModal]);
@@ -195,7 +195,8 @@ export default function GossipModal({ onClose }: Props) {
                     epithet: profileData.title_name,
                     introduction: profileData.introduction || '',
                     level: profileData.level,
-                    age: (profileData.age || 18) + Math.floor((profileData.accumulated_days || 0) / 365)
+                    age: (profileData.age || 18) + Math.floor((profileData.accumulated_days || 0) / 365),
+                    subscriptionTier: profileData.subscription_tier
                 });
             }
         } catch (e) {
@@ -321,12 +322,27 @@ export default function GossipModal({ onClose }: Props) {
                             {posts.map((post) => (
                                 <div key={post.id} className="p-4 rounded-xl border border-gray-800 bg-gray-950/40 space-y-2 flex gap-3 hover:border-gray-700/60 transition-colors">
                                     {/* Avatar */}
-                                    <div 
-                                        onClick={() => handleAvatarClick(post)} 
-                                        className={`w-10 h-10 rounded-full overflow-hidden bg-gray-800 border ${post.is_system ? 'border-purple-500/50' : 'border-gray-700/50 cursor-pointer'} shrink-0`}
-                                    >
-                                        <img src={post.avatar_url || '/avatars/adventurer.jpg'} alt={post.name} className="w-full h-full object-cover" />
-                                    </div>
+                                    {(() => {
+                                        const tier = post.user_profiles?.subscription_tier || 'free';
+                                        let frameStyle = "w-10 h-10 rounded-full overflow-hidden bg-gray-800 border border-gray-700/50 cursor-pointer shrink-0";
+                                        let imgWrapperStyle = "w-full h-full";
+                                        if (post.is_system) {
+                                            frameStyle = "w-10 h-10 rounded-full overflow-hidden bg-gray-800 border border-purple-500/50 shrink-0";
+                                        } else if (tier === 'premium') {
+                                            frameStyle = "w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 p-[1.5px] cursor-pointer shrink-0 shadow-md shadow-yellow-500/10";
+                                            imgWrapperStyle = "w-full h-full rounded-full overflow-hidden bg-gray-800";
+                                        } else if (tier === 'basic') {
+                                            frameStyle = "w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 p-[1.5px] cursor-pointer shrink-0 shadow-md shadow-blue-500/10";
+                                            imgWrapperStyle = "w-full h-full rounded-full overflow-hidden bg-gray-800";
+                                        }
+                                        return (
+                                            <div onClick={() => handleAvatarClick(post)} className={frameStyle}>
+                                                <div className={imgWrapperStyle}>
+                                                    <img src={post.avatar_url || '/avatars/adventurer.jpg'} alt={post.name} className="w-full h-full object-cover" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                     {/* Body */}
                                     <div className="flex-1 min-w-0 space-y-1">
                                         <div className="flex items-center justify-between gap-1.5">
@@ -393,7 +409,7 @@ export default function GossipModal({ onClose }: Props) {
                         const lastPost = localStorage.getItem('last_gossip_post_time');
                         if (lastPost) {
                             const elapsed = (Date.now() - Number(lastPost)) / 1000;
-                            if (elapsed < 30) {
+                            if (elapsed < 10) {
                                 soundManager?.playSE('se_click');
                                 alert('連続投稿は禁止となります');
                                 return;
@@ -476,6 +492,7 @@ export default function GossipModal({ onClose }: Props) {
                     introduction={simpleProfileUser.introduction}
                     level={simpleProfileUser.level}
                     age={simpleProfileUser.age}
+                    subscriptionTier={simpleProfileUser.subscriptionTier}
                 />
             )}
         </div>,

@@ -30,7 +30,7 @@ export async function GET(req: Request) {
         // 2. タイムライン投稿リストを取得
         const { data: posts, error: postsError } = await supabase
             .from('gossip_posts')
-            .select('*')
+            .select('*, user_profiles(subscription_tier)')
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
 
