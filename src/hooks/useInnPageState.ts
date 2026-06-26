@@ -902,6 +902,7 @@ export function useInnPageState() {
         onboardingTourStep,
         setOnboardingTourStep,
         advanceOnboardingStep,
+        initialLoadComplete,
 
         // NPC
         activeNpcData, buttonText, isDisabled, secondaryActions,

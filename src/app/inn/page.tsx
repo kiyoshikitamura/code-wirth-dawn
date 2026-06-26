@@ -93,6 +93,7 @@ function InnPageInner() {
         leaveHub,
         onboardingTourStep,
         advanceOnboardingStep,
+        initialLoadComplete,
     } = state;
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
@@ -190,7 +191,7 @@ function InnPageInner() {
 
     // プロモーション自動表示 ＆ オンボーディングガイド用フラグリセット一元管理 useEffect (レースコンディション競合防止)
     React.useEffect(() => {
-        if (!completedQuests || !userProfile) return;
+        if (!initialLoadComplete || !completedQuests || !userProfile) return;
 
         const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
 
@@ -294,7 +295,7 @@ function InnPageInner() {
                 setShowStarterPackPromo(true);
             }
         }
-    }, [completedQuests, userProfile, searchParams]);
+    }, [completedQuests, userProfile, searchParams, initialLoadComplete]);
 
     React.useEffect(() => {
         if (showTavern) {
