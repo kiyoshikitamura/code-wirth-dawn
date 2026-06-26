@@ -91,7 +91,7 @@ export class GossipService {
             // 3. Fetch user profile
             const { data: profile, error: profileErr } = await this.supabase
                 .from('user_profiles')
-                .select('name, title_name, avatar_url, current_location_id, locations(name)')
+                .select('name, title_name, avatar_url, current_location_id, locations:locations!fk_current_location(name)')
                 .eq('id', userId)
                 .single();
 
