@@ -8,6 +8,7 @@ import { getNpcForLocation } from '@/lib/getNpcForLocation';
 import { toJpJobClass } from '@/lib/jobClass';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 import { useGameStore } from '@/store/gameStore';
+import { safeSessionStorage } from '@/lib/safeStorage';
 
 interface TavernModalProps {
     isOpen: boolean;
@@ -102,10 +103,9 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
             // Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
             let hasCache = false;
-            try {
-                const cacheKey = `tavern_shadows_cache_${locationId}`;
-                const cached = sessionStorage.getItem(cacheKey);
-                if (cached) {
+            const cacheKey = `tavern_shadows_cache_${locationId}`;
+            const cached = safeSessionStorage.getItem(cacheKey);
+            if (cached) {
                     const parsed = JSON.parse(cached);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         const asApiFormat = parsed.map((s: any) => ({
@@ -129,9 +129,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         hasCache = true;
                     }
                 }
-            } catch (e) {
-                console.warn(e);
-            }
 
             // キャッシュがあればバックグラウンド更新、なければローディングを表示して通信
             if (hasCache) {
@@ -169,7 +166,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const fetchShadowsWithCache = async () => {
         try {
             const cacheKey = `tavern_shadows_cache_${locationId}`;
-            const cached = sessionStorage.getItem(cacheKey);
+            const cached = safeSessionStorage.getItem(cacheKey);
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed) && parsed.length > 0) {
@@ -206,9 +203,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             const data = await res.json();
             if (data.shadows) {
                 setTavernShadows(data.shadows);
-                try {
-                    sessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(data.shadows));
-                } catch { /* ignore */ }
+                safeSessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(data.shadows));
             }
         } catch (e) {
             console.error("Failed to fetch shadows", e);
@@ -547,7 +542,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 <button
                                     onClick={async () => {
                                         setLoading(true);
-                                        try { sessionStorage.removeItem(`tavern_shadows_cache_${locationId}`); } catch {}
+                                        safeSessionStorage.removeItem(`tavern_shadows_cache_${locationId}`);
                                         await fetchShadows();
                                         setLoading(false);
                                     }}

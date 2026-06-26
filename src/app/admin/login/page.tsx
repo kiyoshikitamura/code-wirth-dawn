@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { safeLocalStorage } from '@/lib/safeStorage';
 
 export default function AdminLoginPage() {
     const [password, setPassword] = useState('');
@@ -23,7 +24,7 @@ export default function AdminLoginPage() {
             });
 
             if (res.ok) {
-                localStorage.setItem('adminKey', password);
+                safeLocalStorage.setItem('adminKey', password);
                 router.push('/admin/dashboard');
             } else {
                 setError('認証キーが正しくありません。');

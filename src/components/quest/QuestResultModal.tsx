@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { safeSessionStorage } from '@/lib/safeStorage';
 import { Shield, Heart, Zap, Award, Coins, Trophy, Clock, MapPin, Users, LogOut, Star, Swords, ArrowDown, XCircle, BookOpen, ShoppingBag, Loader2 } from 'lucide-react';
 import XShareButton from '../shared/XShareButton';
 
@@ -94,11 +95,7 @@ export default function QuestResultModal({
         if (closeLockedRef.current || isClosing) return;
         closeLockedRef.current = true;
         setIsClosing(true);
-        try {
-            sessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
-        } catch (err) {
-            console.warn('[QuestResultModal] sessionStorage setItem failed:', err);
-        }
+        safeSessionStorage.setItem('wirth_dawn_quest_just_cleared', 'true');
     };
 
     useEffect(() => {

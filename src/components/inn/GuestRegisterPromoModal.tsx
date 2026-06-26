@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, LogIn, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { soundManager } from '@/lib/soundManager';
+import { safeSessionStorage } from '@/lib/safeStorage';
 
 interface Props {
     onClose: () => void;
@@ -25,11 +26,7 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
 
         try {
             // 本登録完了後に自動でパックプロモーションを開くため、sessionStorageにフラグを保存
-            try {
-                sessionStorage.setItem('wirth_dawn_just_registered', 'true');
-            } catch (err) {
-                console.warn('[GuestRegisterPromoModal] sessionStorage setItem failed:', err);
-            }
+            safeSessionStorage.setItem('wirth_dawn_just_registered', 'true');
 
             const { error } = await supabase.auth.linkIdentity({
                 provider: 'google',
@@ -45,9 +42,7 @@ export default function GuestRegisterPromoModal({ onClose }: Props) {
             console.error('[GuestRegisterPromoModal] Google Link Error:', e);
             setErrorMsg(`Google連携に失敗しました: ${e.message}`);
             setLoading(false);
-            try {
-                sessionStorage.removeItem('wirth_dawn_just_registered');
-            } catch (err) {}
+            safeSessionStorage.removeItem('wirth_dawn_just_registered');
         }
     };
 

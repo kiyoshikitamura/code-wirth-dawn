@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { safeLocalStorage } from '@/lib/safeStorage';
 import { Users, Coins, Sword, ArrowLeft, CreditCard, Activity, Trophy, Compass, Download, RefreshCw, Calendar, Clock } from 'lucide-react';
 
 interface KPISummary {
@@ -334,7 +335,7 @@ export default function AdminDashboardPage() {
     const router = useRouter();
 
     const fetchData = useCallback(async () => {
-        const adminKey = localStorage.getItem('adminKey');
+        const adminKey = safeLocalStorage.getItem('adminKey');
         if (!adminKey) {
             router.push('/admin/login');
             return;
@@ -347,7 +348,7 @@ export default function AdminDashboardPage() {
             });
 
             if (res.status === 401) {
-                localStorage.removeItem('adminKey');
+                safeLocalStorage.removeItem('adminKey');
                 router.push('/admin/login');
                 return;
             }
@@ -368,7 +369,7 @@ export default function AdminDashboardPage() {
     }, [fetchData]);
 
     const handleLogout = () => {
-        localStorage.removeItem('adminKey');
+        safeLocalStorage.removeItem('adminKey');
         router.push('/admin/login');
     };
 

@@ -17,6 +17,7 @@ import QuestSettingsModal from '@/components/quest/QuestSettingsModal';
 import { Swords, ScrollText } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { soundManager } from '@/lib/soundManager';
+import { safeLocalStorage, safeSessionStorage } from '@/lib/safeStorage';
 
 export default function QuestPage() {
     const params = useParams();
@@ -75,16 +76,14 @@ export default function QuestPage() {
                         });
 
                         // sessionStorageキャッシュも同期
-                        if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                        if (data.profile?.current_location_id) {
                             const locId = data.profile.current_location_id;
-                            try {
-                                if (data.tavern_shadows) {
-                                    sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
-                                }
-                                if (data.location_quests) {
-                                    sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
-                                }
-                            } catch {}
+                            if (data.tavern_shadows) {
+                                safeSessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                            }
+                            if (data.location_quests) {
+                                safeSessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                            }
                         }
                     }
 
@@ -148,9 +147,8 @@ export default function QuestPage() {
 
 
 
-    // Battle Return Logic
     useEffect(() => {
-        const pending = localStorage.getItem('pending_quest_resume');
+        const pending = safeLocalStorage.getItem('pending_quest_resume');
         let restored = false;
         if (pending) {
             try {
@@ -162,15 +160,15 @@ export default function QuestPage() {
 
                     if (result === 'win') {
                         setInitialNodeId(nextNodeId);
-                        localStorage.removeItem('pending_quest_resume');
+                        safeLocalStorage.removeItem('pending_quest_resume');
                         window.history.replaceState({}, '', `/quest/${id}`); // Clean URL
                         restored = true;
                     } else if (result === 'lose' || result === 'escape') {
-                        localStorage.removeItem('pending_quest_resume');
+                        safeLocalStorage.removeItem('pending_quest_resume');
                     }
                 }
             } catch (e) {
-                localStorage.removeItem('pending_quest_resume');
+                safeLocalStorage.removeItem('pending_quest_resume');
             }
         }
 
@@ -195,7 +193,7 @@ export default function QuestPage() {
 
         if (isTestPlay) {
             // テストプレイ完了: 成功・敗北を問わずクエスト動作確認済みとして記録
-            localStorage.setItem(`ugc_tested_${scenario?.id}`, 'true');
+            safeLocalStorage.setItem(`ugc_tested_${scenario?.id}`, 'true');
             try {
                 const authToken = await getAuthToken();
                 await fetch('/api/ugc/v2/test-complete', {
@@ -877,7 +875,7 @@ export default function QuestPage() {
         await useGameStore.getState().startBattle(enemies);
 
         // Save state for resume
-        localStorage.setItem('pending_quest_resume', JSON.stringify({
+        safeLocalStorage.setItem('pending_quest_resume', JSON.stringify({
             questId: id,
             nextNodeId: successNodeId
         }));
@@ -903,7 +901,7 @@ export default function QuestPage() {
         isProcessingEndRef.current = true;
 
         try {
-            localStorage.removeItem('pending_quest_resume');
+            safeLocalStorage.removeItem('pending_quest_resume');
 
             const storeState = useGameStore.getState();
             const battleHp = storeState.userProfile?.hp;
@@ -1193,8 +1191,8 @@ export default function QuestPage() {
                             if (!isTestPlay) {
                                 // クエストボードのキャッシュクリア
                                 useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                                if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                                    sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                                if (userProfile?.current_location_id) {
+                                    safeSessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                                 }
                                 await fetchUserProfile();
                                 await useGameStore.getState().fetchInventory();

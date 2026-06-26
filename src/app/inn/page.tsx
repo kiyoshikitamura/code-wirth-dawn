@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { useInnPageState } from '@/hooks/useInnPageState';
+import { safeLocalStorage, safeSessionStorage } from '@/lib/safeStorage';
 import { soundManager } from '@/lib/soundManager';
 import InnHeader from '@/components/inn/InnHeader';
 import MainVisualArea from '@/components/inn/MainVisualArea';
@@ -151,7 +152,7 @@ function InnPageInner() {
         visitedBilling, setVisitedBilling,
     } = state;
 
-    const isPromoRequestedSync = mounted && typeof window !== 'undefined' && sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+    const isPromoRequestedSync = mounted && safeSessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
     const isPromoGuarded = isPromoPending || isPromoRequestedSync || showGuestRegisterPromo || showStarterPackPromo;
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
@@ -283,15 +284,13 @@ function InnPageInner() {
                     onReturnHub={isPromoGuarded ? () => {} : returnToHub}
                     onLeaveHub={isPromoGuarded ? () => {} : leaveHub}
                     onOpenMap={isPromoGuarded ? () => {} : (onboardingTourStep === '6' ? () => {
-                        if (typeof window !== 'undefined') {
-                            localStorage.setItem('wirth_dawn_visited_map', 'true');
-                            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
-                            localStorage.setItem('wirth_dawn_visited_guild', 'true');
-                            localStorage.setItem('wirth_dawn_visited_shop', 'true');
-                            localStorage.setItem('wirth_dawn_visited_academy', 'true');
-                            localStorage.setItem('wirth_dawn_visited_settings', 'true');
-                            localStorage.setItem('wirth_dawn_visited_billing', 'true');
-                        }
+                        safeLocalStorage.setItem('wirth_dawn_visited_map', 'true');
+                        safeLocalStorage.setItem('wirth_dawn_visited_tavern', 'true');
+                        safeLocalStorage.setItem('wirth_dawn_visited_guild', 'true');
+                        safeLocalStorage.setItem('wirth_dawn_visited_shop', 'true');
+                        safeLocalStorage.setItem('wirth_dawn_visited_academy', 'true');
+                        safeLocalStorage.setItem('wirth_dawn_visited_settings', 'true');
+                        safeLocalStorage.setItem('wirth_dawn_visited_billing', 'true');
                         setVisitedMap(true);
                         setVisitedTavern(true);
                         setVisitedGuild(true);
@@ -301,9 +300,7 @@ function InnPageInner() {
                         setVisitedBilling(true);
                         advanceOnboardingStep(); // will set to completed
                     } : (onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => {
-                        if (typeof window !== 'undefined') {
-                            localStorage.setItem('wirth_dawn_visited_map', 'true');
-                        }
+                        safeLocalStorage.setItem('wirth_dawn_visited_map', 'true');
                         router.push('/world-map');
                     }))}
                     onOpenGossip={isPromoGuarded ? () => {} : (onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => handleSelectFacility('gossip'))}
@@ -316,9 +313,9 @@ function InnPageInner() {
                         const completedQuests = useGameStore.getState().completedQuests;
                         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                         const clearedCount = completedQuests?.length ?? 0;
-                        const visitedTavern = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_tavern') === 'true';
-                        const visitedShop = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_shop') === 'true';
-                        const visitedGossip = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_gossip') === 'true';
+                        const visitedTavern = safeLocalStorage.getItem('wirth_dawn_visited_tavern') === 'true';
+                        const visitedShop = safeLocalStorage.getItem('wirth_dawn_visited_shop') === 'true';
+                        const visitedGossip = safeLocalStorage.getItem('wirth_dawn_visited_gossip') === 'true';
                         return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop && !visitedGossip;
                     })()}
                     isMapRecommended={onboardingTourStep === '6'}
@@ -489,8 +486,8 @@ function InnPageInner() {
                     onClose={async () => {
                         // クエストボードのキャッシュクリア
                         useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
-                        if (typeof window !== 'undefined' && userProfile?.current_location_id) {
-                            sessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
+                        if (userProfile?.current_location_id) {
+                            safeSessionStorage.removeItem(`location_quests_cache_${userProfile.current_location_id}`);
                         }
                         // プロフィールフェッチ
                         await useGameStore.getState().fetchUserProfile();
@@ -633,7 +630,7 @@ function DebugPanelGate({ userProfile, worldState, router, fetchRep }: { userPro
     const [hasAdminKey, setHasAdminKey] = useState(false);
     React.useEffect(() => {
         if (!isProduction) return;
-        const key = localStorage.getItem('adminKey');
+        const key = safeLocalStorage.getItem('adminKey');
         setHasAdminKey(!!key && key.length >= 16);
     }, [isProduction]);
 

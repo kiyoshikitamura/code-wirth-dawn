@@ -100,36 +100,28 @@ export function useInnPageState() {
         if (!onboardingTourStep || onboardingTourStep === 'completed') return;
         const nextVal = onboardingTourStep === '6' ? 'completed' : String(Number(onboardingTourStep) + 1);
         setOnboardingTourStep(nextVal);
-        try {
-            localStorage.setItem('wirth_dawn_onboarding_tour_step', nextVal);
-        } catch (err) {
-            console.warn('[useInnPageState] localStorage setItem failed:', err);
-        }
+        safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', nextVal);
     }, [onboardingTourStep]);
 
     const handleCloseGuestRegisterPromo = useCallback(() => {
         setShowGuestRegisterPromo(false);
         setIsPromoPending(false);
-        const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
+        const tourStep = safeLocalStorage.getItem('wirth_dawn_onboarding_tour_step');
         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
         if (isEp1Cleared && !tourStep) {
             setOnboardingTourStep('1');
-            try {
-                localStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
-            } catch (err) {}
+            safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
         }
     }, [completedQuests]);
 
     const handleCloseStarterPackPromo = useCallback(() => {
         setShowStarterPackPromo(false);
         setIsPromoPending(false);
-        const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
+        const tourStep = safeLocalStorage.getItem('wirth_dawn_onboarding_tour_step');
         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
         if (isEp1Cleared && !tourStep) {
             setOnboardingTourStep('1');
-            try {
-                localStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
-            } catch (err) {}
+            safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
         }
     }, [completedQuests]);
 
@@ -377,16 +369,14 @@ export function useInnPageState() {
                     lastInitPageFetchTime: Date.now(), // 更新
                 });
 
-                if (typeof window !== 'undefined' && data.profile?.current_location_id) {
+                if (data.profile?.current_location_id) {
                     const locId = data.profile.current_location_id;
-                    try {
-                        if (data.tavern_shadows) {
-                            sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
-                        }
-                        if (data.location_quests) {
-                            sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
-                        }
-                    } catch {}
+                    if (data.tavern_shadows) {
+                        safeSessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                    }
+                    if (data.location_quests) {
+                        safeSessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
+                    }
                 }
 
                 // Reputation
@@ -747,18 +737,18 @@ export function useInnPageState() {
 
         // すでにキャッシュがある場合はそれを使用し、バックグラウンドでのみフェッチする
         let cachedQuests = hasQuests;
-        if (!cachedQuests && typeof window !== 'undefined') {
-            try {
-                const cached = sessionStorage.getItem(cacheKey);
-                if (cached) {
+        if (!cachedQuests) {
+            const cached = safeSessionStorage.getItem(cacheKey);
+            if (cached) {
+                try {
                     cachedQuests = JSON.parse(cached);
                     if (cachedQuests) {
                         useGameStore.setState({ locationQuests: cachedQuests });
                         setAllQuests(cachedQuests.quests || []);
                         setLoadingQuests(false);
                     }
-                }
-            } catch {}
+                } catch {}
+            }
         }
 
         // キャッシュが全く存在しない場合のみ、フォアグラウンドローディングを表示
@@ -781,11 +771,7 @@ export function useInnPageState() {
                 setAllQuests(data.quests || []);
                 // キャッシュの更新
                 useGameStore.setState({ locationQuests: questData });
-                if (typeof window !== 'undefined') {
-                    try {
-                        sessionStorage.setItem(cacheKey, JSON.stringify(questData));
-                    } catch {}
-                }
+                safeSessionStorage.setItem(cacheKey, JSON.stringify(questData));
             }
         } catch (e) {
             console.error("クエスト読み込み失敗", e);

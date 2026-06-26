@@ -7,6 +7,7 @@ import { useGameStore } from '@/store/gameStore';
 import { soundManager } from '@/lib/soundManager';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 import { getAuthHeaders } from '@/lib/authToken';
+import { safeSessionStorage } from '@/lib/safeStorage';
 
 // ─── 型定義 ───────────────────────────────────────────────────
 interface WorldNewsItem {
@@ -256,9 +257,7 @@ export default function GossipModal({ onClose, onOpenTavern }: Props) {
             setTabKey(prev => ({ ...prev, [tab]: prev[tab] + 1 }));
             // v2.9.3f: 酒場データをsessionStorageにキャッシュ（TavernModalとの一致用）
             if (tab === 'tavern' && json.tavern_shadows) {
-                try {
-                    sessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(json.tavern_shadows));
-                } catch { /* sessionStorage unavailable */ }
+                safeSessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(json.tavern_shadows));
             }
         } catch (e) {
             console.error('[gossip] fetch error', e);
