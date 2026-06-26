@@ -2351,7 +2351,7 @@ export const createBattleSlice = (
                         let newHp = Math.max(0, e.hp - damage);
                         let newEffects = (e.status_effects || []) as StatusEffect[];
                         if (effectInfo?.effectId) {
-                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune'].includes(effectInfo.effectId);
+                            const isSelfBuff = isSelfBuffEffect(effectInfo.effectId);
                             if (!isSelfBuff) {
                                 if (rollDebuffSuccess(effectInfo.effectId)) {
                                     const dur = effectInfo?.effectDuration || 3;
@@ -2370,7 +2370,7 @@ export const createBattleSlice = (
                         let newEffects = customTargetEffects !== null ? customTargetEffects : ((e.status_effects || []) as StatusEffect[]);
                         const resolvedEffectId = effectInfo?.effectId || (card?.effect_id as StatusEffectId | undefined);
                         if (resolvedEffectId && isValidEffectId(resolvedEffectId)) {
-                            const isSelfBuff = ['atk_up', 'def_up', 'regen', 'stun_immune', 'evasion_up', 'taunt', 'absolute_def', 'invulnerable', 'taunt_100', 'atk_up_fatal', 'morale_up', 'spd_up', 'counter'].includes(resolvedEffectId);
+                            const isSelfBuff = isSelfBuffEffect(resolvedEffectId);
                             if (!isSelfBuff) {
                                 if (rollDebuffSuccess(resolvedEffectId)) {
                                     const baseDuration = effectInfo?.effectDuration || card?.effect_duration || 3;
