@@ -390,12 +390,21 @@ export default function GossipModal({ onClose }: Props) {
                 {/* FAB */}
                 <button
                     onClick={() => {
+                        const lastPost = localStorage.getItem('last_gossip_post_time');
+                        if (lastPost) {
+                            const elapsed = (Date.now() - Number(lastPost)) / 1000;
+                            if (elapsed < 30) {
+                                soundManager?.playSE('se_click');
+                                alert('連続投稿は禁止となります');
+                                return;
+                            }
+                        }
                         soundManager?.playSE('se_click');
                         setShowPostModal(true);
                     }}
-                    className="absolute bottom-5 right-5 w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#a38b6b] text-gray-950 font-black flex items-center justify-center shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all z-20"
+                    className="absolute bottom-5 right-5 w-14 h-14 rounded-full bg-gradient-to-r from-amber-500 to-[#a38b6b] text-gray-950 font-black flex items-center justify-center shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all z-20 select-none cursor-pointer touch-manipulation"
                 >
-                    <Plus size={24} />
+                    <Plus size={28} />
                 </button>
 
                 {/* Post Submit Modal Overlay */}
