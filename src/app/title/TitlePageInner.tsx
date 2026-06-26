@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { setGameStarted, clearGameStarted } from '@/hooks/useAuthGuard';
 import { clearAuthTokenCache } from '@/lib/authToken';
+import { safeLocalStorage, safeSessionStorage } from '@/lib/safeStorage';
 
 export const dynamic = 'force-dynamic';
 import { supabase } from '@/lib/supabase';
@@ -117,16 +118,16 @@ export default function TitlePageInner() {
         }
 
         // Intent フラグの読み取り
-        const isNewGameIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_new_game_intent') === '1';
-        if (isNewGameIntent) sessionStorage.removeItem('cwd_new_game_intent');
+        const isNewGameIntent = safeSessionStorage.getItem('cwd_new_game_intent') === '1';
+        if (isNewGameIntent) safeSessionStorage.removeItem('cwd_new_game_intent');
 
-        const isDeleteIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_delete_intent') === '1';
-        if (isDeleteIntent) sessionStorage.removeItem('cwd_delete_intent');
+        const isDeleteIntent = safeSessionStorage.getItem('cwd_delete_intent') === '1';
+        if (isDeleteIntent) safeSessionStorage.removeItem('cwd_delete_intent');
 
         // 「タイトルに戻る」意図チェック — ゲーム画面から明示的にタイトルへ戻った場合
         // セッションが残存していても自動リダイレクトせずメニューを表示する
-        const isReturnToTitle = typeof window !== 'undefined' && sessionStorage.getItem('cwd_return_to_title') === '1';
-        if (isReturnToTitle) sessionStorage.removeItem('cwd_return_to_title');
+        const isReturnToTitle = safeSessionStorage.getItem('cwd_return_to_title') === '1';
+        if (isReturnToTitle) safeSessionStorage.removeItem('cwd_return_to_title');
 
         if (profile) {
             // 優先度: deleteIntent > newGameIntent > returnToTitle > 自動ログイン
@@ -142,10 +143,8 @@ export default function TitlePageInner() {
                     if (!res.ok) throw new Error((await res.json()).error);
                     clearGameStarted();
                     // ローカルストレージもクリア（New Game が stale データを参照しないように）
-                    if (typeof window !== 'undefined') {
-                        localStorage.removeItem('game-storage');
-                        localStorage.removeItem('quest-storage');
-                    }
+                    safeLocalStorage.removeItem('game-storage');
+                    safeLocalStorage.removeItem('quest-storage');
                     // 削除成功 → サインアウトせずにキャラ作成画面へ直行
                     // （再度OAuth認証する冗長ステップを省く）
                     await new Promise(r => setTimeout(r, 1500));
@@ -221,7 +220,7 @@ export default function TitlePageInner() {
                 // CREATING モード中は onAuthStateChange からの二重呼び出しをスキップ
                 if (modeRef.current !== 'CREATING' && modeRef.current !== 'DELETING') {
                     // 削除意図がある場合は削除中画面を表示（「世界に降り立っています」を見せない）
-                    const hasDeleteIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_delete_intent') === '1';
+                    const hasDeleteIntent = safeSessionStorage.getItem('cwd_delete_intent') === '1';
                     setMode(hasDeleteIntent ? 'DELETING' : 'CREATING');
                     checkUserStatus();
                 }
@@ -239,13 +238,11 @@ export default function TitlePageInner() {
 
     // 利用規約ページなどからの戻り時に、利用規約モーダル表示状態を復元する
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const showTos = sessionStorage.getItem('cwd_show_tos');
-            if (showTos === '1') {
-                sessionStorage.removeItem('cwd_show_tos');
-                setMode('MENU');
-                setShowTermsModal(true);
-            }
+        const showTos = safeSessionStorage.getItem('cwd_show_tos');
+        if (showTos === '1') {
+            safeSessionStorage.removeItem('cwd_show_tos');
+            setMode('MENU');
+            setShowTermsModal(true);
         }
     }, [setMode]);
 
@@ -262,18 +259,16 @@ export default function TitlePageInner() {
         // 前回セッション・ストアをクリア
         clearGameStarted();
         try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
-        if (typeof window !== 'undefined') {
-            try {
-                localStorage.removeItem('game-storage');
-                localStorage.removeItem('quest-storage');
-                // New Game の意図を記録（OAuth後、既存キャラ存在チェック用）
-                sessionStorage.setItem('cwd_new_game_intent', '1');
-                // 古い intent フラグをクリア（残存防止）
-                sessionStorage.removeItem('cwd_return_to_title');
-                sessionStorage.removeItem('cwd_delete_intent');
-            } catch (err) {
-                console.warn('[TitlePage] Storage operation failed:', err);
-            }
+        try {
+            safeLocalStorage.removeItem('game-storage');
+            safeLocalStorage.removeItem('quest-storage');
+            // New Game の意図を記録（OAuth後、既存キャラ存在チェック用）
+            safeSessionStorage.setItem('cwd_new_game_intent', '1');
+            // 古い intent フラグをクリア（残存防止）
+            safeSessionStorage.removeItem('cwd_return_to_title');
+            safeSessionStorage.removeItem('cwd_delete_intent');
+        } catch (err) {
+            console.warn('[TitlePage] Storage operation failed:', err);
         }
 
         const { error } = await supabase.auth.signInWithOAuth({
@@ -297,9 +292,7 @@ export default function TitlePageInner() {
     const handleContinue = async () => {
         setAuthError(null);
         // 古い intent フラグをクリア（残存防止）
-        if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('cwd_return_to_title');
-        }
+        safeSessionStorage.removeItem('cwd_return_to_title');
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -319,10 +312,8 @@ export default function TitlePageInner() {
         setAuthError(null);
         clearGameStarted();
         try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('game-storage');
-            localStorage.removeItem('quest-storage');
-        }
+        safeLocalStorage.removeItem('game-storage');
+        safeLocalStorage.removeItem('quest-storage');
 
         const { error } = await supabase.auth.signInAnonymously();
         if (error) {
@@ -723,7 +714,7 @@ export default function TitlePageInner() {
                         onCancel={() => setShowDeleteConfirm(false)}
                         onConfirm={async () => {
                             setShowDeleteConfirm(false);
-                            if (typeof window !== 'undefined') sessionStorage.setItem('cwd_delete_intent', '1');
+                            safeSessionStorage.setItem('cwd_delete_intent', '1');
                             await handleContinue();
                         }}
                     />

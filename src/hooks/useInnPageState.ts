@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { supabase } from '@/lib/supabase';
 import { getAuthHeaders, clearAuthTokenCache } from '@/lib/authToken';
+import { safeLocalStorage, safeSessionStorage } from '@/lib/safeStorage';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useBgm } from '@/hooks/useBgm';
 import { soundManager } from '@/lib/soundManager';
@@ -36,13 +37,9 @@ export function useInnPageState() {
 
     // ハイドレーションミスマッチ防止のため、マウント完了後にセッションから同期
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            try {
-                const justCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
-                if (justCleared) {
-                    setIsPromoPending(true);
-                }
-            } catch (e) {}
+        const justCleared = safeSessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+        if (justCleared) {
+            setIsPromoPending(true);
         }
     }, []);
 
@@ -60,7 +57,7 @@ export function useInnPageState() {
     useEffect(() => {
         if (!_hasHydrated || !userProfile) return;
 
-        const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
+        const tourStep = safeLocalStorage.getItem('wirth_dawn_onboarding_tour_step');
 
         // Check if Ep 1 is cleared
         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
@@ -74,13 +71,13 @@ export function useInnPageState() {
         const isExistingUser = 
             (userProfile.level || 1) >= 3 ||
             (completedQuests?.length || 0) >= 2 ||
-            localStorage.getItem('wirth_dawn_visited_map') === 'true' ||
+            safeLocalStorage.getItem('wirth_dawn_visited_map') === 'true' ||
             (completedQuests?.some(q => q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false);
 
         if (isExistingUser) {
             setOnboardingTourStep('completed');
             if (tourStep !== 'completed') {
-                localStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
+                safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
             }
             return;
         }
@@ -88,12 +85,12 @@ export function useInnPageState() {
         // For new users who cleared Ep 1 and have no tour step set, initialize to '1'
         if (!tourStep) {
             // プロモ表示判定中、またはプロモ表示中、または帰還フラグがセッションに残っている場合はツアー開始を保留する
-            const hasJustCleared = typeof window !== 'undefined' && sessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
+            const hasJustCleared = safeSessionStorage.getItem('wirth_dawn_quest_just_cleared') === 'true';
             if (isPromoPending || showGuestRegisterPromo || showStarterPackPromo || hasJustCleared) {
                 return;
             }
             setOnboardingTourStep('1');
-            localStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
+            safeLocalStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
         } else {
             setOnboardingTourStep(tourStep);
         }
@@ -931,73 +928,71 @@ export function useInnPageState() {
     // モーダル起動時に localStorage に訪問履歴を記録
     useEffect(() => {
         if (showTavern) {
-            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_tavern', 'true');
             setVisitedTavern(true);
         }
     }, [showTavern]);
 
     useEffect(() => {
         if (showShop) {
-            localStorage.setItem('wirth_dawn_visited_shop', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_shop', 'true');
             setVisitedShop(true);
         }
     }, [showShop]);
 
     useEffect(() => {
         if (activeModal === 'gossip') {
-            localStorage.setItem('wirth_dawn_visited_gossip', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_gossip', 'true');
             setVisitedGossip(true);
         }
     }, [activeModal]);
 
     useEffect(() => {
         if (activeModal === 'questBoard' || activeModal === 'guild') {
-            localStorage.setItem('wirth_dawn_visited_guild', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_guild', 'true');
             setVisitedGuild(true);
         }
     }, [activeModal]);
 
     useEffect(() => {
         if (showAcademy) {
-            localStorage.setItem('wirth_dawn_visited_academy', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_academy', 'true');
             setVisitedAcademy(true);
         }
     }, [showAcademy]);
 
     useEffect(() => {
         if (showStatus) {
-            localStorage.setItem('wirth_dawn_visited_status', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_status', 'true');
             setVisitedStatus(true);
         }
     }, [showStatus]);
 
     useEffect(() => {
         if (showAccount) {
-            localStorage.setItem('wirth_dawn_visited_settings', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_settings', 'true');
             setVisitedSettings(true);
         }
     }, [showAccount]);
 
     useEffect(() => {
         if (showBilling) {
-            localStorage.setItem('wirth_dawn_visited_billing', 'true');
+            safeLocalStorage.setItem('wirth_dawn_visited_billing', 'true');
             setVisitedBilling(true);
         }
     }, [showBilling]);
 
     // マウント時および状態変更時の localstorage 同期
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setVisitedTavern(localStorage.getItem('wirth_dawn_visited_tavern') === 'true');
-            setVisitedShop(localStorage.getItem('wirth_dawn_visited_shop') === 'true');
-            setVisitedGossip(localStorage.getItem('wirth_dawn_visited_gossip') === 'true');
-            setVisitedMap(localStorage.getItem('wirth_dawn_visited_map') === 'true');
-            setVisitedGuild(localStorage.getItem('wirth_dawn_visited_guild') === 'true');
-            setVisitedAcademy(localStorage.getItem('wirth_dawn_visited_academy') === 'true');
-            setVisitedStatus(localStorage.getItem('wirth_dawn_visited_status') === 'true');
-            setVisitedSettings(localStorage.getItem('wirth_dawn_visited_settings') === 'true');
-            setVisitedBilling(localStorage.getItem('wirth_dawn_visited_billing') === 'true');
-        }
+        setVisitedTavern(safeLocalStorage.getItem('wirth_dawn_visited_tavern') === 'true');
+        setVisitedShop(safeLocalStorage.getItem('wirth_dawn_visited_shop') === 'true');
+        setVisitedGossip(safeLocalStorage.getItem('wirth_dawn_visited_gossip') === 'true');
+        setVisitedMap(safeLocalStorage.getItem('wirth_dawn_visited_map') === 'true');
+        setVisitedGuild(safeLocalStorage.getItem('wirth_dawn_visited_guild') === 'true');
+        setVisitedAcademy(safeLocalStorage.getItem('wirth_dawn_visited_academy') === 'true');
+        setVisitedStatus(safeLocalStorage.getItem('wirth_dawn_visited_status') === 'true');
+        setVisitedSettings(safeLocalStorage.getItem('wirth_dawn_visited_settings') === 'true');
+        setVisitedBilling(safeLocalStorage.getItem('wirth_dawn_visited_billing') === 'true');
     }, [showTavern, showShop, showAcademy, showStatus, showAccount, showBilling, activeModal]);
 
     // プロモーション自動表示 ＆ オンボーディングガイド用フラグリセット一元管理 useEffect
@@ -1007,17 +1002,17 @@ export function useInnPageState() {
         const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
 
         if (!isEp1Cleared) {
-            localStorage.removeItem('wirth_dawn_onboarding_reset_v3');
-            localStorage.removeItem('wirth_dawn_onboarding_reg_reset_v3');
-            localStorage.removeItem('wirth_dawn_onboarding_tour_step');
-            localStorage.removeItem('wirth_dawn_visited_tavern');
-            localStorage.removeItem('wirth_dawn_visited_guild');
-            localStorage.removeItem('wirth_dawn_visited_map');
-            localStorage.removeItem('wirth_dawn_visited_academy');
-            localStorage.removeItem('wirth_dawn_visited_shop');
-            localStorage.removeItem('wirth_dawn_visited_billing');
-            localStorage.removeItem('wirth_dawn_visited_status');
-            localStorage.removeItem('wirth_dawn_visited_settings');
+            safeLocalStorage.removeItem('wirth_dawn_onboarding_reset_v3');
+            safeLocalStorage.removeItem('wirth_dawn_onboarding_reg_reset_v3');
+            safeLocalStorage.removeItem('wirth_dawn_onboarding_tour_step');
+            safeLocalStorage.removeItem('wirth_dawn_visited_tavern');
+            safeLocalStorage.removeItem('wirth_dawn_visited_guild');
+            safeLocalStorage.removeItem('wirth_dawn_visited_map');
+            safeLocalStorage.removeItem('wirth_dawn_visited_academy');
+            safeLocalStorage.removeItem('wirth_dawn_visited_shop');
+            safeLocalStorage.removeItem('wirth_dawn_visited_billing');
+            safeLocalStorage.removeItem('wirth_dawn_visited_status');
+            safeLocalStorage.removeItem('wirth_dawn_visited_settings');
 
             setVisitedTavern(false);
             setVisitedGuild(false);
@@ -1037,39 +1032,39 @@ export function useInnPageState() {
             return;
         }
 
-        const justRegistered = sessionStorage.getItem('wirth_dawn_just_registered');
+        const justRegistered = safeSessionStorage.getItem('wirth_dawn_just_registered');
         const regResetKey = 'wirth_dawn_onboarding_reg_reset_v3';
-        const hasRegReset = localStorage.getItem(regResetKey) === 'true';
+        const hasRegReset = safeLocalStorage.getItem(regResetKey) === 'true';
 
         const resetKey = 'wirth_dawn_onboarding_reset_v3';
-        const hasReset = localStorage.getItem(resetKey) === 'true';
+        const hasReset = safeLocalStorage.getItem(resetKey) === 'true';
 
         let shouldReset = false;
         if (!hasReset) {
-            localStorage.setItem(resetKey, 'true');
+            safeLocalStorage.setItem(resetKey, 'true');
             shouldReset = true;
         }
 
         if (justRegistered === 'true' && !userProfile.is_anonymous) {
             if (!hasRegReset) {
-                localStorage.setItem(regResetKey, 'true');
+                safeLocalStorage.setItem(regResetKey, 'true');
                 shouldReset = true;
             }
-            sessionStorage.removeItem('wirth_dawn_just_registered');
+            safeSessionStorage.removeItem('wirth_dawn_just_registered');
             if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
                 setShowStarterPackPromo(true);
             }
         }
 
         if (shouldReset) {
-            localStorage.removeItem('wirth_dawn_visited_tavern');
-            localStorage.removeItem('wirth_dawn_visited_guild');
-            localStorage.removeItem('wirth_dawn_visited_map');
-            localStorage.removeItem('wirth_dawn_visited_academy');
-            localStorage.removeItem('wirth_dawn_visited_shop');
-            localStorage.removeItem('wirth_dawn_visited_billing');
-            localStorage.removeItem('wirth_dawn_visited_status');
-            localStorage.removeItem('wirth_dawn_visited_settings');
+            safeLocalStorage.removeItem('wirth_dawn_visited_tavern');
+            safeLocalStorage.removeItem('wirth_dawn_visited_guild');
+            safeLocalStorage.removeItem('wirth_dawn_visited_map');
+            safeLocalStorage.removeItem('wirth_dawn_visited_academy');
+            safeLocalStorage.removeItem('wirth_dawn_visited_shop');
+            safeLocalStorage.removeItem('wirth_dawn_visited_billing');
+            safeLocalStorage.removeItem('wirth_dawn_visited_status');
+            safeLocalStorage.removeItem('wirth_dawn_visited_settings');
 
             setVisitedTavern(false);
             setVisitedGuild(false);
@@ -1082,9 +1077,9 @@ export function useInnPageState() {
         }
 
         // 3. クエストクリア直後の帰還検知
-        const questJustCleared = sessionStorage.getItem('wirth_dawn_quest_just_cleared');
+        const questJustCleared = safeSessionStorage.getItem('wirth_dawn_quest_just_cleared');
         if (questJustCleared === 'true') {
-            sessionStorage.removeItem('wirth_dawn_quest_just_cleared');
+            safeSessionStorage.removeItem('wirth_dawn_quest_just_cleared');
             if (userProfile.is_anonymous) {
                 setShowGuestRegisterPromo(true);
                 setIsPromoPending(true);
@@ -1104,9 +1099,9 @@ export function useInnPageState() {
 
         // 4. 本登録ユーザーの次回ログイン時のパック案内
         if (!userProfile.is_anonymous && isEp1Cleared) {
-            const promoShown = sessionStorage.getItem('wirth_dawn_starter_promo_shown');
+            const promoShown = safeSessionStorage.getItem('wirth_dawn_starter_promo_shown');
             if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
+                safeSessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
                 setShowStarterPackPromo(true);
                 setIsPromoPending(true);
             }
