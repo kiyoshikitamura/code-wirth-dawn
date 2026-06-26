@@ -371,7 +371,9 @@ export default function ScenarioEngine({
     }
 
     // Camp UI
-    if (currentNode?.type === 'camp' && !endReady) {
+    const isCampNode = currentNode?.type === 'camp';
+    const isCampHideButtons = isCampNode && (currentNode?.params?.hide_buttons || currentNode?.hide_buttons || false);
+    if (isCampNode && !endReady && !isCampHideButtons) {
         const nextId = currentNode.next || currentNode.choices?.[0]?.next;
         const hideButtons = currentNode.params?.hide_buttons || currentNode.hide_buttons || false;
         const continueLabel = currentNode.params?.continue_label || currentNode.continue_label || "休憩を終えて出発する";

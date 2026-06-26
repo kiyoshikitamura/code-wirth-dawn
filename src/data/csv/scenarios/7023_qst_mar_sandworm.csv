@@ -7,7 +7,7 @@ NODE,intro_2,"「囮の荷車の振動で奴を引きずり出し、息の根を
 NODE,prepare,"「それと……これを持っていけ。錬金術師が作った、対砂虫用の特製爆薬だ」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",prepare_detail
 NODE,prepare_detail,"「奴の口内へ叩き込めば、いかなる巨大な外殻だろうと内部から爆破できる」","{""bg"":""bg_tavern_day"",""speaker_name"":""商会の幹部"",""type"":""text""}",receive_explosive
 NODE,receive_explosive,"黒い金属筒に入った爆薬を受け取る。独特のツンとした火薬の臭いと、ずっしりとした重みがあった。","{""bg"":""bg_tavern_day"",""type"":""reward"",""item_id"":""item_explosive""}",save_explosive
-NODE,save_explosive,"爆薬を懐にしっかりと固定し、旅の準備を整えた。","{""bg"":""bg_tavern_day"",""bg_key"":""bg_tavern_day"",""bgm"":""bgm_quest_calm"",""type"":""camp"",""hide_buttons"":true,""continue_label"":""続ける"",""title"":""""}",travel_to_site
+NODE,save_explosive,"爆弾を手に入れた","{""bg"":""bg_tavern_day"",""bg_key"":""bg_tavern_day"",""bgm"":""bgm_quest_calm"",""type"":""camp"",""hide_buttons"":true,""continue_label"":""続ける"",""title"":""""}",travel_to_site
 NODE,travel_to_site,"砂漠の出没地へ向かう。途中で見かけた商隊の残骸は、押し潰され砂に半ば埋もれていた。","{""bg"":""bg_desert"",""bgm"":""bgm_field"",""type"":""text""}",site_desc
 NODE,site_desc,"現場に到着した。周囲の砂丘は漏斗状に崩れ、巨大な陥没穴が幾つも口を開けている。","{""bg"":""bg_desert"",""bgm"":""bgm_quest_tense"",""type"":""text""}",set_bait
 NODE,set_bait,"砂地の上に囮の荷車を据え置く。荷台の隙間に、香辛料の袋をぎっしりと積み上げた。","{""bg"":""bg_desert"",""type"":""text""}",bait_desc

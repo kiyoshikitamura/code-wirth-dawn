@@ -240,7 +240,8 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 } else {
                     node.next = nextNode;
                     // Auto-advance: create a single "continue" choice
-                    node.choices = [{ label: '続ける', next: nextNode }];
+                    const label = params.continue_label || '続ける';
+                    node.choices = [{ label, next: nextNode }];
                 }
             }
 
