@@ -10,6 +10,8 @@ interface SimpleUserProfilePopupProps {
     name: string;
     epithet?: string;
     introduction?: string;
+    level?: number;
+    age?: number;
 }
 
 export default function SimpleUserProfilePopup({
@@ -19,6 +21,8 @@ export default function SimpleUserProfilePopup({
     name,
     epithet,
     introduction,
+    level,
+    age,
 }: SimpleUserProfilePopupProps) {
     if (!isOpen) return null;
 
@@ -68,6 +72,21 @@ export default function SimpleUserProfilePopup({
                             {name}
                         </h4>
                     </div>
+
+                    {/* レベル・年齢 */}
+                    {(level !== undefined || age !== undefined) && (
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-[#e3d5b8]/70 bg-[#0d0906]/40 border border-[#a38b6b]/10 px-2.5 py-0.5 rounded">
+                            {level !== undefined && (
+                                <span>Lv.{level}</span>
+                            )}
+                            {level !== undefined && age !== undefined && (
+                                <span className="text-[#a38b6b]/30">|</span>
+                            )}
+                            {age !== undefined && (
+                                <span>{age}歳</span>
+                            )}
+                        </div>
+                    )}
 
                     {/* 装飾の区切り線 */}
                     <div className="w-12 h-[1px] bg-[#a38b6b]/30 my-1" />

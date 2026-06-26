@@ -456,6 +456,17 @@ export async function updateWorldSimulation() {
                 logs.push(`Error saving history logs: ${histError.message}`);
             } else {
                 logs.push(`[History] Inserted ${historyLogs.length} state change events.`);
+                try {
+                    const { GossipService } = await import('@/services/gossipService');
+                    const gossipService = new GossipService(supabase);
+                    for (const log of historyLogs) {
+                        if (log.message) {
+                            await gossipService.postSystemMessage(log.message, log.location_id);
+                        }
+                    }
+                } catch (gossipErr: any) {
+                    console.error('[WorldSim Gossip] Failed to auto-post world events:', gossipErr);
+                }
             }
         }
 

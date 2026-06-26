@@ -139,7 +139,10 @@ export async function POST(req: Request) {
         console.log(`[QuestComplete] ID: ${quest_id}, UGCv2: ${isUgcV2}, Rewards:`, quest?.rewards, 'NodeRewards:', node_rewards);
 
         const { data: user, error: uError } = await supabase
-            .from('user_profiles').select('id, gold, level, exp, age, age_days, accumulated_days, max_hp, hp, atk, def, attack, max_vitality, vitality, max_deck_cost, order_pts, chaos_pts, justice_pts, evil_pts, title_name, current_location_id, blessing_data, current_quest_id').eq('id', user_id).single();
+            .from('user_profiles')
+            .select('id, name, gold, level, exp, age, age_days, accumulated_days, max_hp, hp, atk, def, attack, max_vitality, vitality, max_deck_cost, order_pts, chaos_pts, justice_pts, evil_pts, title_name, current_location_id, blessing_data, current_quest_id, locations:locations!fk_current_location(name)')
+            .eq('id', user_id)
+            .single();
 
         if (uError || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -879,6 +882,67 @@ export async function POST(req: Request) {
         }
 
         await Promise.all(historyPromises);
+
+        // Gossip System message auto-posts
+        try {
+            const { GossipService } = await import('@/services/gossipService');
+            const gossipService = new GossipService(supabase);
+            const userName = (user as any).name || '名もなき旅人';
+            const locationName = newLocationName || (user as any).locations?.name || '未知の街';
+            const locationId = updates.current_location_id || user.current_location_id;
+
+            // 1. Quest Complete system message
+            if (result === 'success') {
+                const qId = Number(quest.id);
+                const qSlug = quest.slug || '';
+
+                if (qId === 6015 || qSlug === 'main_ep15') {
+                    await gossipService.postSystemMessage(
+                        `「天の軍勢を率いる大天使ミカエルが討たれ、王都レガリアに暁光が戻った。冒険者『${userName}』らの勝利を称えよ。」`,
+                        locationId,
+                        user_id
+                    );
+                } else if (qId === 6020 || qSlug === 'main_ep20') {
+                    await gossipService.postSystemMessage(
+                        `「主神ゼウスの雷撃を退け、地上に真の暁が訪れた。世界を救いし大いなる英雄『${userName}』の叙事詩はここに完成する。」`,
+                        locationId,
+                        user_id
+                    );
+                } else if ([6101, 6102, 6103, 6104].includes(qId) || ['qst_spot_roland', 'qst_spot_yato', 'qst_spot_karyu', 'qst_spot_markand'].includes(qSlug)) {
+                    await gossipService.postSystemMessage(
+                        `「『${locationName}』にて、古より封印されし高難度試練『${quest.title}』が冒険者『${userName}』の手により攻略された。その実力は既に伝説の域に達している。」`,
+                        locationId,
+                        user_id
+                    );
+                } else if ([6105, 6106, 6107, 6108, 6109, 6110, 6111].includes(qId) || ['qst_legend_baphomet', 'qst_legend_angel', 'qst_legend_dragon', 'qst_legend_kirin', 'qst_legend_golem', 'qst_legend_kraken', 'qst_legend_minotaur'].includes(qSlug)) {
+                    await gossipService.postSystemMessage(
+                        `「深淵より出でし災厄の化身『${quest.title}』が、冒険者『${userName}』によって討伐された。この偉業は長く歴史に刻まれるだろう。」`,
+                        locationId,
+                        user_id
+                    );
+                }
+            }
+
+            // 2. Level Milestone system message (Level 20 or 30)
+            if (levelUpInfo) {
+                const nl = levelUpInfo.new_level;
+                if (nl === 20) {
+                    await gossipService.postSystemMessage(
+                        `「数々の死線を越え、冒険者『${userName}』がレベル20の境界に到達した。その名は王都にも響き渡るだろう。」`,
+                        locationId,
+                        user_id
+                    );
+                } else if (nl === 30) {
+                    await gossipService.postSystemMessage(
+                        `「世界の理に迫る者よ。冒険者『${userName}』が前人未到のレベル30に到達した。新たなる伝説の目撃者となれ。」`,
+                        locationId,
+                        user_id
+                    );
+                }
+            }
+        } catch (gossipErr) {
+            console.error('[QuestComplete Gossip] Failed to auto-post system messages:', gossipErr);
+        }
 
         // ─── 旧 §14 の位置（宣言を前に移動したためプレースホルダーのみ） ───
 
