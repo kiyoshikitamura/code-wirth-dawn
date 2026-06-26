@@ -79,10 +79,20 @@ export default function TitlePageInner() {
 
     // ─── ユーザー状態確認 ─────────────────────────────────────────────────
     const checkUserStatus = useCallback(async () => {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        let user = null;
+        try {
+            const { data, error } = await supabase.auth.getUser();
+            if (!error && data) {
+                user = data.user;
+            }
+        } catch (e) {
+            console.error('[TitlePageInner] getUser failed:', e);
+        }
 
-        if (error || !user) {
-            await supabase.auth.signOut();
+        if (!user) {
+            try {
+                await supabase.auth.signOut();
+            } catch (_) {}
             clearAuthTokenCache();
             setMode('ENTRY');
             return;
@@ -96,7 +106,15 @@ export default function TitlePageInner() {
             .maybeSingle();
 
         // セッショントークン取得（削除フローで使用）
-        const { data: { session } } = await supabase.auth.getSession();
+        let session = null;
+        try {
+            const { data } = await supabase.auth.getSession();
+            if (data) {
+                session = data.session;
+            }
+        } catch (e) {
+            console.error('[TitlePageInner] getSession failed:', e);
+        }
 
         // Intent フラグの読み取り
         const isNewGameIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_new_game_intent') === '1';
@@ -190,7 +208,7 @@ export default function TitlePageInner() {
         // modeRef で現在の mode を同期参照し、CREATING 中（Test Play 処理中）は二重呼び出しを防ぐ
         // 注: OAuth コールバックで ?code= の交換がリスナー登録前に完了した場合、
         //     SIGNED_IN ではなく INITIAL_SESSION が発火するため両方をハンドルする
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const authListener = supabase.auth.onAuthStateChange((event, session) => {
             console.log('[title] auth event:', event, 'mode:', modeRef.current);
             const isSignIn = event === 'SIGNED_IN' && session;
             const isOAuthReturn = event === 'INITIAL_SESSION' && session && window.location.search.includes('code=');
@@ -210,7 +228,13 @@ export default function TitlePageInner() {
             }
         });
 
-        return () => subscription.unsubscribe();
+        const subscription = authListener?.data?.subscription;
+
+        return () => {
+            if (subscription) {
+                subscription.unsubscribe();
+            }
+        };
     }, [checkUserStatus, setMode]);
 
     // 利用規約ページなどからの戻り時に、利用規約モーダル表示状態を復元する
@@ -336,7 +360,8 @@ export default function TitlePageInner() {
         setMode('CREATING');
         setIsUploading(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const sessionRes = await supabase.auth.getSession();
+            const session = sessionRes?.data?.session;
             const token = session?.access_token;
             const userId = session?.user?.id;
 
@@ -603,7 +628,8 @@ export default function TitlePageInner() {
                             setShowNewGameOverwrite(false);
                             setMode('DELETING');
                             try {
-                                const { data: { session: freshSession } } = await supabase.auth.getSession();
+                                const sessionRes = await supabase.auth.getSession();
+                                const freshSession = sessionRes?.data?.session;
                                 const token = freshSession?.access_token || pendingSessionToken;
                                 if (!token) throw new Error('セッションが無効です。再度お試しください。');
                                 const res = await fetch('/api/profile/reset', {
