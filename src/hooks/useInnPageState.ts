@@ -28,9 +28,10 @@ export function useInnPageState() {
 
     // Onboarding tour state management
     const [onboardingTourStep, setOnboardingTourStep] = useState<string | null>(null);
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
     useEffect(() => {
-        if (!_hasHydrated || !userProfile) return;
+        if (!_hasHydrated || !userProfile || !initialLoadComplete) return;
 
         const tourStep = localStorage.getItem('wirth_dawn_onboarding_tour_step');
 
@@ -43,11 +44,13 @@ export function useInnPageState() {
         }
 
         // Safeguard for existing users
+        const currentQuestIdStr = userProfile.current_quest_id ? String(userProfile.current_quest_id) : '';
         const isExistingUser = 
             (userProfile.level || 1) >= 3 ||
             (completedQuests?.length || 0) >= 2 ||
             localStorage.getItem('wirth_dawn_visited_map') === 'true' ||
-            (completedQuests?.some(q => q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false);
+            (completedQuests?.some(q => q.scenario_id !== 6001 && String(q.scenario_id) !== '6001') ?? false) ||
+            (currentQuestIdStr !== '' && currentQuestIdStr !== '6001');
 
         if (isExistingUser) {
             setOnboardingTourStep('completed');
@@ -58,13 +61,13 @@ export function useInnPageState() {
         }
 
         // For new users who cleared Ep 1 and have no tour step set, initialize to '1'
-        if (!tourStep) {
+        if (!tourStep || (tourStep !== '1' && tourStep !== '2' && tourStep !== '3' && tourStep !== '4' && tourStep !== '5' && tourStep !== '6' && tourStep !== 'completed')) {
             setOnboardingTourStep('1');
             localStorage.setItem('wirth_dawn_onboarding_tour_step', '1');
         } else {
             setOnboardingTourStep(tourStep);
         }
-    }, [_hasHydrated, userProfile, completedQuests]);
+    }, [_hasHydrated, userProfile, completedQuests, initialLoadComplete]);
 
     const advanceOnboardingStep = useCallback(() => {
         if (!onboardingTourStep || onboardingTourStep === 'completed') return;
@@ -181,7 +184,6 @@ export function useInnPageState() {
     const [restLoading, setRestLoading] = useState(false);
     const [traveling, setTraveling] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
     // Quest Data State (ギルド用)
     const [allQuests, setAllQuests] = useState<any[]>([]);
