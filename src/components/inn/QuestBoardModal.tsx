@@ -20,6 +20,13 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         setMounted(true);
     }, []);
 
+    const isRecommendedQuest = (s: Scenario) => {
+        const qId = Number(s.id);
+        const isIdMatch = !isNaN(qId) && qId >= 6001 && qId <= 6020;
+        const isSlugMatch = s.slug?.startsWith('main_ep');
+        return isIdMatch || isSlugMatch;
+    };
+
     const [activeTab, setActiveTab] = useState<DifficultyTab>('easy');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
@@ -163,7 +170,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                             {isDangerous && (
                                                 <span className="text-red-500 text-sm font-bold animate-pulse" title="推奨レベルを超えています">❗</span>
                                             )}
-                                            {(s.id === 6001 || s.slug === 'main_ep1' || s.title?.includes('第1話')) && (
+                                            {isRecommendedQuest(s) && (
                                                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold animate-pulse">推奨</span>
                                             )}
                                             {s.quest_type === 'special' && (
@@ -209,7 +216,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-700 text-amber-200">
                                         Lv.{detailQuest.rec_level || 1}
                                     </span>
-                                    {(detailQuest.id === 6001 || detailQuest.slug === 'main_ep1' || detailQuest.title?.includes('第1話')) && (
+                                    {isRecommendedQuest(detailQuest) && (
                                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-bold animate-pulse">推奨</span>
                                     )}
                                     {(detailQuest as any).quest_type === 'special' && (

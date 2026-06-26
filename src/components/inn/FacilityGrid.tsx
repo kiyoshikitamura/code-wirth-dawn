@@ -48,7 +48,8 @@ export default function FacilityGrid({ onSelectFacility, isHub = false, recommen
                                        (item.id === 'ugcGuild' && recommendedFacility === 'guild') ||
                                        (item.id === 'inn' && recommendedFacility === 'inn') ||
                                        (item.id === 'shop' && recommendedFacility === 'shop') ||
-                                       (item.id === 'magicAcademy' && recommendedFacility === 'magicAcademy');
+                                       (item.id === 'magicAcademy' && recommendedFacility === 'magicAcademy') ||
+                                       (item.id === 'status' && recommendedFacility === 'status');
 
                 const isDisabled = isTourActive && !isRecommended;
 

@@ -112,18 +112,23 @@ function InnPageInner() {
         if (isTourActive) {
             let isRecommended = false;
             if (onboardingTourStep === '1' && facility === 'inn') isRecommended = true;
-            if (onboardingTourStep === '2' && facility === 'guild') isRecommended = true;
-            if (onboardingTourStep === '3' && facility === 'shop') isRecommended = true;
-            if (onboardingTourStep === '4' && facility === 'magicAcademy') isRecommended = true;
+            if (onboardingTourStep === '2' && facility === 'shop') isRecommended = true;
+            if (onboardingTourStep === '3' && facility === 'magicAcademy') isRecommended = true;
+            if (onboardingTourStep === '4' && facility === 'status') isRecommended = true;
 
             if (isRecommended) {
                 const facilitySeMap: Record<string, string> = {
-                    inn: 'se_enter_inn', guild: 'se_enter_guild',
-                    shop: 'se_enter_shop', magicAcademy: 'se_enter_guild'
+                    inn: 'se_enter_inn',
+                    shop: 'se_enter_shop',
+                    magicAcademy: 'se_enter_guild',
+                    status: 'se_click'
                 };
                 const seKey = facilitySeMap[facility];
                 if (seKey) soundManager?.playSE(seKey);
                 advanceOnboardingStep();
+            } else if (onboardingTourStep === '6' && facility === 'guild') {
+                soundManager?.playSE('se_enter_guild');
+                setActiveModal('guild');
             }
             return;
         }
@@ -386,10 +391,10 @@ function InnPageInner() {
                             worldState={worldState} 
                             userProfile={userProfile} 
                             reputation={reputation} 
-                            onOpenSettings={onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowAccount(true))} 
+                            onOpenSettings={isTourActive ? undefined : () => setShowAccount(true)} 
                             onOpenStatus={isTourActive ? undefined : () => setShowStatus(true)} 
                             onOpenShop={isTourActive ? undefined : () => setShowShop(true)} 
-                            onOpenBilling={onboardingTourStep === '5' ? advanceOnboardingStep : (isTourActive ? undefined : () => setShowBilling(true))} 
+                            onOpenBilling={isTourActive ? undefined : () => setShowBilling(true)} 
                             equipBonus={equipBonus}
                             isStatusRecommended={isStatusRecommended}
                             isSettingsRecommended={isSettingsRecommended}
@@ -408,25 +413,10 @@ function InnPageInner() {
                     onOpenHistory={openHistoryHall}
                     onReturnHub={returnToHub}
                     onLeaveHub={leaveHub}
-                    onOpenMap={onboardingTourStep === '6' ? () => {
-                        if (typeof window !== 'undefined') {
-                            localStorage.setItem('wirth_dawn_visited_map', 'true');
-                            localStorage.setItem('wirth_dawn_visited_tavern', 'true');
-                            localStorage.setItem('wirth_dawn_visited_guild', 'true');
-                            localStorage.setItem('wirth_dawn_visited_shop', 'true');
-                            localStorage.setItem('wirth_dawn_visited_academy', 'true');
-                            localStorage.setItem('wirth_dawn_visited_settings', 'true');
-                            localStorage.setItem('wirth_dawn_visited_billing', 'true');
-                        }
-                        setVisitedMap(true);
-                        setVisitedTavern(true);
-                        setVisitedGuild(true);
-                        setVisitedShop(true);
-                        setVisitedAcademy(true);
-                        setVisitedSettings(true);
-                        setVisitedBilling(true);
-                        advanceOnboardingStep(); // will set to completed
-                    } : (onboardingTourStep && onboardingTourStep !== 'completed' ? undefined : () => {
+                    onOpenMap={onboardingTourStep === '5' ? () => {
+                        soundManager?.playSE('se_click');
+                        advanceOnboardingStep();
+                    } : (isTourActive ? undefined : () => {
                         if (typeof window !== 'undefined') {
                             localStorage.setItem('wirth_dawn_visited_map', 'true');
                         }
@@ -447,7 +437,7 @@ function InnPageInner() {
                         const visitedGossip = typeof window !== 'undefined' && localStorage.getItem('wirth_dawn_visited_gossip') === 'true';
                         return isEp1Cleared && clearedCount >= 2 && visitedTavern && visitedShop && !visitedGossip;
                     })()}
-                    isMapRecommended={onboardingTourStep === '6'}
+                    isMapRecommended={onboardingTourStep === '5'}
                 />
 
                 {/* 目的ガイダンスバナー (Onboarding Banner) */}
@@ -461,21 +451,31 @@ function InnPageInner() {
                     if (isTourActive) {
                         showCloseBtn = false;
                         if (onboardingTourStep === '1') {
-                            bannerText = '宿屋/酒場では仲間を探すことができます。';
+                            bannerText = '「宿屋/酒場」は、一緒に戦う仲間を探せます。';
                         } else if (onboardingTourStep === '2') {
-                            bannerText = 'ギルドでは様々なクエストを受けることができます。';
+                            bannerText = '「道具屋」は、戦闘に役立つアイテムを確認できます。';
                         } else if (onboardingTourStep === '3') {
-                            bannerText = '道具屋では様々なアイテムを購入することができます。';
+                            bannerText = '「魔術学院」は、カードの契約ができます。';
                         } else if (onboardingTourStep === '4') {
-                            bannerText = '魔術学院では魔導の契約やデッキの確認ができます。';
+                            bannerText = '「ステータス」は、カードや装備品の管理ができます。';
                         } else if (onboardingTourStep === '5') {
-                            bannerText = '設定や課金では、音量の調整や特別なパッケージの購入ができます。';
+                            bannerText = '「出発する」を押すと、隣の街へ移動するためのワールドマップが開きます。';
                         } else if (onboardingTourStep === '6') {
-                            bannerText = '「出発する」を押して、ワールドマップから冒険に旅立ちましょう！';
+                            bannerText = 'それでは「ギルド」から依頼を見るに進み、クエストの続きを進めましょう！';
                         }
                     } else {
                         if (!isEp1Cleared) {
                             bannerText = 'ギルドで第1話「始まりの轍」を受注しよう！';
+                        } else {
+                            const isEp2Cleared = completedQuests?.some(q => q.scenario_id === 6002 || String(q.scenario_id) === '6002') ?? false;
+                            if (!isEp2Cleared) {
+                                const isAtBorderTown = worldState?.location_name === '国境の町' || userProfile?.locations?.slug === 'loc_border_town';
+                                if (isAtBorderTown) {
+                                    bannerText = 'ギルドの依頼板から、次のメインクエスト「第2話『砂礫の国境線』」を受注しましょう！';
+                                } else {
+                                    bannerText = '「出発する」からワールドマップを開き、次のメインクエスト発生地「国境の町」へ移動しましょう！';
+                                }
+                            }
                         }
                     }
 
@@ -510,9 +510,9 @@ function InnPageInner() {
 
                         if (isTourActive) {
                             if (onboardingTourStep === '1') recommendedFacility = 'inn';
-                            else if (onboardingTourStep === '2') recommendedFacility = 'guild';
-                            else if (onboardingTourStep === '3') recommendedFacility = 'shop';
-                            else if (onboardingTourStep === '4') recommendedFacility = 'magicAcademy';
+                            else if (onboardingTourStep === '2') recommendedFacility = 'shop';
+                            else if (onboardingTourStep === '3') recommendedFacility = 'magicAcademy';
+                            else if (onboardingTourStep === '6') recommendedFacility = 'guild';
                         } else {
                             const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                             if (userProfile && (userProfile.level || 1) >= 3) {
@@ -743,7 +743,31 @@ function InnPageInner() {
                     userProfile={userProfile}
                     quests={allQuests}
                     loading={loadingQuests}
-                    onSelect={(s) => router.push(`/quest/${s.id}`)}
+                    onSelect={(s) => {
+                        if (isTourActive && onboardingTourStep === '6') {
+                            if (typeof window !== 'undefined') {
+                                localStorage.setItem('wirth_dawn_onboarding_tour_step', 'completed');
+                                localStorage.setItem('wirth_dawn_visited_map', 'true');
+                                localStorage.setItem('wirth_dawn_visited_tavern', 'true');
+                                localStorage.setItem('wirth_dawn_visited_guild', 'true');
+                                localStorage.setItem('wirth_dawn_visited_shop', 'true');
+                                localStorage.setItem('wirth_dawn_visited_academy', 'true');
+                                localStorage.setItem('wirth_dawn_visited_settings', 'true');
+                                localStorage.setItem('wirth_dawn_visited_billing', 'true');
+                                localStorage.setItem('wirth_dawn_visited_status', 'true');
+                            }
+                            setVisitedMap(true);
+                            setVisitedTavern(true);
+                            setVisitedGuild(true);
+                            setVisitedShop(true);
+                            setVisitedAcademy(true);
+                            setVisitedSettings(true);
+                            setVisitedBilling(true);
+                            setVisitedStatus(true);
+                            advanceOnboardingStep();
+                        }
+                        router.push(`/quest/${s.id}`);
+                    }}
                 />
             )}
 

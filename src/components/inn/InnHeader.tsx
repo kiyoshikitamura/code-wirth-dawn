@@ -125,13 +125,11 @@ export default function InnHeader({
                 {onOpenBilling && (
                     <button
                         onClick={onOpenBilling}
-                        disabled={isTourActive && onboardingTourStep !== '5'}
+                        disabled={isTourActive}
                         className={`p-1.5 rounded border transition-all shrink-0 ${
-                            isTourActive && onboardingTourStep === '5'
-                                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse active:scale-90'
-                                : isTourActive && onboardingTourStep !== '5'
-                                    ? 'bg-[#0a1628]/60 border-[#2a4080]/10 text-blue-200/10 pointer-events-none'
-                                    : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 active:scale-90'
+                            isTourActive
+                                ? 'bg-[#0a1628]/60 border-[#2a4080]/10 text-blue-200/10 pointer-events-none'
+                                : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 active:scale-90'
                         }`}
                         aria-label="魔導ショップ"
                     >
@@ -141,11 +139,11 @@ export default function InnHeader({
                 {onOpenSettings && (
                     <button
                         onClick={onOpenSettings}
-                        disabled={isTourActive && onboardingTourStep !== '5'}
+                        disabled={isTourActive}
                         className={`p-1.5 rounded border transition-all shrink-0 ${
-                            (isSettingsRecommended || (isTourActive && onboardingTourStep === '5'))
+                            (isSettingsRecommended && !isTourActive)
                                 ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse active:scale-90'
-                                : isTourActive && onboardingTourStep !== '5'
+                                : isTourActive
                                     ? 'bg-[#0a1628]/60 border-[#2a4080]/10 text-blue-200/10 pointer-events-none'
                                     : 'bg-[#0a1628]/60 border-[#2a4080]/30 text-blue-200/50 hover:text-amber-400 active:scale-90'
                         }`}
