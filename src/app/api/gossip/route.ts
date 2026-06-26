@@ -89,3 +89,58 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
+
+/**
+ * DELETE /api/gossip
+ * 自分の投稿を削除する。
+ * Query: postId
+ */
+export async function DELETE(req: Request) {
+    try {
+        // 認証チェック
+        const authHeader = req.headers.get('authorization');
+        const token = authHeader ? authHeader.replace('Bearer ', '') : '';
+        const supabaseAuth = createAuthClient(req);
+        const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token || undefined);
+        
+        if (!user || authError) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const postId = searchParams.get('postId');
+
+        if (!postId) {
+            return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
+        }
+
+        // 投稿の所有者チェック
+        const { data: post, error: fetchError } = await supabase
+            .from('gossip_posts')
+            .select('user_id')
+            .eq('id', postId)
+            .maybeSingle();
+
+        if (fetchError || !post) {
+            return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+        }
+
+        if (post.user_id !== user.id) {
+            return NextResponse.json({ error: 'You can only delete your own posts.' }, { status: 403 });
+        }
+
+        // 削除実行
+        const { error: deleteError } = await supabase
+            .from('gossip_posts')
+            .delete()
+            .eq('id', postId);
+
+        if (deleteError) throw deleteError;
+
+        return NextResponse.json({ success: true });
+
+    } catch (e: any) {
+        console.error('[gossip DELETE] Error:', e);
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
+}
