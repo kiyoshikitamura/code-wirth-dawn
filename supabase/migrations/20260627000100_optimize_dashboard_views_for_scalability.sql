@@ -19,7 +19,7 @@ FROM public.user_profiles;
 DROP VIEW IF EXISTS public.daily_basic_stats_view CASCADE;
 CREATE OR REPLACE VIEW public.daily_basic_stats_view AS
 WITH date_series AS (
-  SELECT (CURRENT_DATE - i)::date as jst_date
+  SELECT ((NOW() AT TIME ZONE 'Asia/Tokyo')::date - i)::date as jst_date
   FROM generate_series(0, 365) as i
 ),
 new_users AS (
@@ -84,7 +84,7 @@ ORDER BY ds.jst_date ASC;
 CREATE OR REPLACE VIEW public.monthly_kpi_view AS
 WITH month_series AS (
   -- Generate the last 12 months in YYYY/MM format
-  SELECT TO_CHAR(date_trunc('month', (CURRENT_DATE AT TIME ZONE 'Asia/Tokyo') - (i || ' month')::interval), 'YYYY/MM') as jst_month
+  SELECT TO_CHAR(date_trunc('month', (NOW() AT TIME ZONE 'Asia/Tokyo') - (i || ' month')::interval), 'YYYY/MM') as jst_month
   FROM generate_series(0, 11) as i
 ),
 monthly_revenue AS (
