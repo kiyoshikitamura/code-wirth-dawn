@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { updateWorldSimulation } from '@/lib/world-simulation';
 import { supabaseServer } from '@/lib/supabase-admin';
 import { resetStaleAlignmentScores } from '@/services/worldStateReset';
+import { checkAndFireTrigger } from '@/lib/shareUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,83 @@ async function performUpdate(isForceUgcReset: boolean) {
         if (colosseumErr) throw colosseumErr;
 
         logs.push(`[RankingAggregation] Reputation, Alignment, and Colosseum rankings aggregated via RPC`);
+
+        // 2.5.5. 名声とアライメントランキングの1位自動BBS投稿処理
+        // 1. 名声ランキング1位
+        try {
+            const { data: topRep } = await supabaseServer
+                .from('ranking_reputation_cache')
+                .select('user_id, user_name, total_reputation')
+                .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+                .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
+                .not('user_name', 'ilike', 'テスト%')
+                .not('user_name', 'ilike', 'test%')
+                .order('rank_desc', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (topRep && topRep.total_reputation > 0) {
+                const fired = await checkAndFireTrigger(supabaseServer, topRep.user_id, 'ranking_fame_1st', '');
+                if (fired) {
+                    const { GossipService } = await import('@/services/gossipService');
+                    const gossipService = new GossipService(supabaseServer);
+                    // 投稿順序制御：世界情勢変化が最新（最上部）に来るように、ランキング投稿は5秒巻き戻す
+                    const backdateStr = new Date(Date.now() - 5000).toISOString();
+                    await gossipService.postSystemMessage(
+                        `「名声ランキング第1位の栄座に冒険者『${topRep.user_name || '名もなき旅人'}』が輝いた。この世界で最も高名な旅人としてその名を轟かせている。」`,
+                        null,
+                        topRep.user_id,
+                        backdateStr
+                    );
+                    logs.push(`[RankingGossip] Posted reputation rank #1 gossip for user ${topRep.user_id}`);
+                }
+            }
+        } catch (repGossipErr: any) {
+            logs.push(`[RankingGossip] Reputation #1 check error: ${repGossipErr.message}`);
+        }
+
+        // 2. アライメントランキング1位
+        try {
+            const { data: topAlign } = await supabaseServer
+                .from('ranking_alignment_cache')
+                .select('user_id, user_name, order_gained, chaos_gained, justice_gained, evil_gained, total_gained')
+                .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+                .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
+                .not('user_name', 'ilike', 'テスト%')
+                .not('user_name', 'ilike', 'test%')
+                .order('rank', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (topAlign && topAlign.total_gained > 0) {
+                const fired = await checkAndFireTrigger(supabaseServer, topAlign.user_id, 'ranking_alignment_1st', '');
+                if (fired) {
+                    // 最も獲得量の多かった属性軸を判定
+                    const axes = [
+                        { key: '秩序', val: topAlign.order_gained || 0, flavor: '秩序をもたらす' },
+                        { key: '混沌', val: topAlign.chaos_gained || 0, flavor: '混沌を司る' },
+                        { key: '正義', val: topAlign.justice_gained || 0, flavor: '正義を貫く' },
+                        { key: '悪', val: topAlign.evil_gained || 0, flavor: '畏怖される' },
+                    ];
+                    axes.sort((a, b) => b.val - a.val);
+                    const topAxis = axes[0];
+
+                    const { GossipService } = await import('@/services/gossipService');
+                    const gossipService = new GossipService(supabaseServer);
+                    // 投稿順序制御：世界情勢変化が最新（最上部）に来るように、ランキング投稿は5秒巻き戻す
+                    const backdateStr = new Date(Date.now() - 5000).toISOString();
+                    await gossipService.postSystemMessage(
+                        `「${topAxis.key}ランキング第1位の栄冠は、冒険者『${topAlign.user_name || '名もなき旅人'}』の頭上に輝いた。この世界で最も${topAxis.flavor}存在として君臨している。」`,
+                        null,
+                        topAlign.user_id,
+                        backdateStr
+                    );
+                    logs.push(`[RankingGossip] Posted alignment rank #1 gossip for user ${topAlign.user_id} (${topAxis.key})`);
+                }
+            }
+        } catch (alignGossipErr: any) {
+            logs.push(`[RankingGossip] Alignment #1 check error: ${alignGossipErr.message}`);
+        }
 
         // 2.6. コロシアムランキング報酬付与処理 (6時間ごと)
         try {
