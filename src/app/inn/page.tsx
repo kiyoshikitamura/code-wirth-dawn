@@ -72,6 +72,7 @@ function InnPageInner() {
         showStatus, setShowStatus,
         showBilling, setShowBilling,
         billingDialog, setBillingDialog,
+        currentRewardDialog,
         resultOverlay, setResultOverlay,
         restLoading,
         traveling,
@@ -94,6 +95,7 @@ function InnPageInner() {
         onboardingTourStep,
         advanceOnboardingStep,
         initialLoadComplete,
+        handleCloseRewardDialog,
     } = state;
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
@@ -630,6 +632,17 @@ function InnPageInner() {
                         soundManager?.playSE('se_click');
                         setBillingDialog(null);
                     }}
+                />
+            )}
+
+            {/* 闘技場ランキング報酬受け取りダイアログ */}
+            {currentRewardDialog && (
+                <ConfirmDialog
+                    title={currentRewardDialog.title}
+                    message={currentRewardDialog.message}
+                    confirmText="受け取る"
+                    singleButton={true}
+                    onConfirm={handleCloseRewardDialog}
                 />
             )}
 

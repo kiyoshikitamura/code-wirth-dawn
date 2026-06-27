@@ -98,7 +98,7 @@ export async function GET(req: Request) {
             locationQuests,
             pinnedSystemPostResult,
             gossipPostsResult,
-            _dummyPlaceholder,
+            colosseumRewardsResult,
             completedQuestsResult
         ] = await Promise.all([
             // ワールド状態
@@ -167,8 +167,14 @@ export async function GET(req: Request) {
                 .order('created_at', { ascending: false })
                 .limit(30),
 
-            // 6. gossip - placeholder
-            Promise.resolve(null),
+            // 6. colosseum_rewards_notifications
+            supabaseServer
+                .from('notifications')
+                .select('id, message')
+                .eq('user_id', user.id)
+                .eq('read', false)
+                .eq('type', 'system')
+                .like('message', '🏆 コロシアムランキング報酬獲得！%'),
 
             // 7. completedQuests
             supabaseAuth
@@ -269,7 +275,8 @@ export async function GET(req: Request) {
             party_members: partyMembers || [],
             location_quests: locationQuests || { quests: [], special_quests: [], normal_quests: [] },
             gossip_data: gossipData,
-            completed_quests: completed_quests
+            completed_quests: completed_quests,
+            colosseum_rewards: colosseumRewardsResult?.data || []
         };
 
         return NextResponse.json(response);
