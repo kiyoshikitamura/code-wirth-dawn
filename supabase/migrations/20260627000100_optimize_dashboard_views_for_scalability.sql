@@ -2,6 +2,7 @@
 -- Refactor views to include pre-aggregated metrics and avoid Node.js memory exhaustion.
 
 -- 1. Update user_profile_summary_view to pre-calculate anonymous vs authenticated counts
+DROP VIEW IF EXISTS public.user_profile_summary_view CASCADE;
 CREATE OR REPLACE VIEW public.user_profile_summary_view AS
 SELECT
   COUNT(*)::integer as total_users,
@@ -15,6 +16,7 @@ FROM public.user_profiles;
 
 
 -- 2. Update daily_basic_stats_view to include registered vs guest new users
+DROP VIEW IF EXISTS public.daily_basic_stats_view CASCADE;
 CREATE OR REPLACE VIEW public.daily_basic_stats_view AS
 WITH date_series AS (
   SELECT (CURRENT_DATE - i)::date as jst_date
