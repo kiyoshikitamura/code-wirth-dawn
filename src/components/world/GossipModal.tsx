@@ -98,12 +98,20 @@ export default function GossipModal({ onClose }: Props) {
                 setPinnedSystemPost(data.pinned_system_post);
                 setPosts(data.posts || []);
                 setNextOffset(30);
-                if ((data.posts || []).length < 30) {
-                    setHasMore(false);
-                } else {
-                    setHasMore(true);
-                }
+                setHasMore((data.posts || []).length >= 30);
                 lastFetchTimeRef.current = Date.now();
+
+                // Update last_viewed_gossip_time in localStorage to mark as read
+                let maxTime = 0;
+                if (data.pinned_system_post?.created_at) {
+                    maxTime = Math.max(maxTime, new Date(data.pinned_system_post.created_at).getTime());
+                }
+                if (data.posts && data.posts.length > 0 && data.posts[0].created_at) {
+                    maxTime = Math.max(maxTime, new Date(data.posts[0].created_at).getTime());
+                }
+                if (maxTime > 0) {
+                    localStorage.setItem('last_viewed_gossip_time', String(maxTime));
+                }
             }
         } catch (e) {
             console.error('Failed to fetch initial gossip:', e);
