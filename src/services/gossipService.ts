@@ -25,7 +25,8 @@ export class GossipService {
     async postSystemMessage(
         content: string,
         locationId: string | null,
-        targetUserId?: string | null
+        targetUserId?: string | null,
+        createdAt?: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
             // Exclude production Kitamu account from system notifications
@@ -45,18 +46,24 @@ export class GossipService {
                 locationName = loc?.name || null;
             }
 
+            const insertPayload: any = {
+                user_id: null,
+                name: SYSTEM_NAME,
+                epithet: null,
+                avatar_url: SYSTEM_AVATAR_URL,
+                content: content.slice(0, 140),
+                location_id: locationId,
+                location_name: locationName,
+                is_system: true
+            };
+
+            if (createdAt) {
+                insertPayload.created_at = createdAt;
+            }
+
             const { error } = await this.supabase
                 .from('gossip_posts')
-                .insert({
-                    user_id: null,
-                    name: SYSTEM_NAME,
-                    epithet: null,
-                    avatar_url: SYSTEM_AVATAR_URL,
-                    content: content.slice(0, 140),
-                    location_id: locationId,
-                    location_name: locationName,
-                    is_system: true
-                });
+                .insert(insertPayload);
 
             if (error) throw error;
             return { success: true };

@@ -883,13 +883,14 @@ export async function POST(req: Request) {
 
         await Promise.all(historyPromises);
 
+        const userName = (user as any).name || '名もなき旅人';
+        const locationName = newLocationName || (user as any).locations?.name || '未知の街';
+        const locationId = updates.current_location_id || user.current_location_id;
+
         // Gossip System message auto-posts
         try {
             const { GossipService } = await import('@/services/gossipService');
             const gossipService = new GossipService(supabase);
-            const userName = (user as any).name || '名もなき旅人';
-            const locationName = newLocationName || (user as any).locations?.name || '未知の街';
-            const locationId = updates.current_location_id || user.current_location_id;
 
             // 1. Quest Complete system message
             if (result === 'success') {
@@ -970,11 +971,43 @@ export async function POST(req: Request) {
             const currentScore = currentRep?.score || 0;
 
             if (currentScore >= FAME_HERO_THRESHOLD) {
-                const sd = buildShareData('fame_hero', { location: repLocName });
-                if (sd) shareDataList.push(sd);
+                const fired = await checkAndFireTrigger(supabase, user_id, 'fame_hero', repLocName);
+                if (fired) {
+                    const sd = buildShareData('fame_hero', { location: repLocName });
+                    if (sd) shareDataList.push(sd);
+
+                    // Post system message to Gossip BBS
+                    try {
+                        const { GossipService } = await import('@/services/gossipService');
+                        const gossipService = new GossipService(supabase);
+                        await gossipService.postSystemMessage(
+                            `「『${repLocName}』にて、冒険者『${userName}』が英雄として讃えられている。この街の人々にとって、彼らは伝説だ。」`,
+                            locationId,
+                            user_id
+                        );
+                    } catch (gossipErr) {
+                        console.error('[QuestComplete FameHero Gossip] Failed to auto-post:', gossipErr);
+                    }
+                }
             } else if (currentScore <= FAME_VILLAIN_THRESHOLD) {
-                const sd = buildShareData('fame_villain', { location: repLocName });
-                if (sd) shareDataList.push(sd);
+                const fired = await checkAndFireTrigger(supabase, user_id, 'fame_villain', repLocName);
+                if (fired) {
+                    const sd = buildShareData('fame_villain', { location: repLocName });
+                    if (sd) shareDataList.push(sd);
+
+                    // Post system message to Gossip BBS
+                    try {
+                        const { GossipService } = await import('@/services/gossipService');
+                        const gossipService = new GossipService(supabase);
+                        await gossipService.postSystemMessage(
+                            `「『${repLocName}』にて、冒険者『${userName}』が悪名轟く犯罪王として怖れられている。住民はその名を聞くだけで震え上がるそうだ。」`,
+                            locationId,
+                            user_id
+                        );
+                    } catch (gossipErr) {
+                        console.error('[QuestComplete FameVillain Gossip] Failed to auto-post:', gossipErr);
+                    }
+                }
             }
             if (currentScore <= FAME_BANNED_THRESHOLD && (currentScore - repChange.amount) > FAME_BANNED_THRESHOLD) {
                 const sd = buildShareData('location_banned', { location: repLocName });

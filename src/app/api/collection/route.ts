@@ -134,6 +134,19 @@ export async function GET(req: Request) {
             { key: 'npc', total: npcs.length, unlocked: npcs.filter(n => n.unlocked).length },
         ];
 
+        // Fetch user profile name and location for Gossip BBS post
+        let profile: { name: string | null; current_location_id: string | null } | null = null;
+        try {
+            const { data } = await supabaseService
+                .from('user_profiles')
+                .select('name, current_location_id')
+                .eq('id', userId)
+                .single();
+            profile = data;
+        } catch (profileErr) {
+            console.error('[Collection API] Failed to fetch user profile:', profileErr);
+        }
+
         for (const cat of categories) {
             if (cat.total === 0) continue;
             const categoryName = getFlavor('category', cat.key) || cat.key;
@@ -144,6 +157,20 @@ export async function GET(req: Request) {
                 if (fired) {
                     const sd = buildShareData('collection_complete', { category: categoryName });
                     if (sd) shareDataList.push(sd as ShareDataItem);
+
+                    // Post system message to Gossip BBS
+                    try {
+                        const { GossipService } = await import('@/services/gossipService');
+                        const gossipService = new GossipService(supabaseService);
+                        const userName = profile?.name || '名もなき旅人';
+                        await gossipService.postSystemMessage(
+                            `「冒険者『${userName}』が全ての${categoryName}を記録し、${categoryName}図鑑を完成させた。この世界に、もはや未知はない。」`,
+                            profile?.current_location_id || null,
+                            userId
+                        );
+                    } catch (gossipErr) {
+                        console.error('[Collection API Gossip] Failed to auto-post collection complete message:', gossipErr);
+                    }
                 }
             }
             // #10 図鑑半数 (キャラ1回)
