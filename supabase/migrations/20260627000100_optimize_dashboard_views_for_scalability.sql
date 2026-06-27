@@ -1,5 +1,5 @@
 -- Migration: Optimize Dashboard Views for Scalability
--- Refactor views to include pre-aggregated metrics and avoid Node.js memory exhaustion.
+-- Refactor views to include pre-aggregated JST metrics and avoid Node.js memory exhaustion.
 
 -- 1. Update user_profile_summary_view to pre-calculate anonymous vs authenticated counts
 DROP VIEW IF EXISTS public.user_profile_summary_view CASCADE;
@@ -15,7 +15,32 @@ SELECT
 FROM public.user_profiles;
 
 
--- 2. Update daily_basic_stats_view to include registered vs guest new users
+-- 2. Update daily_active_user_ids_view to use correct single JST timezone conversion
+DROP VIEW IF EXISTS public.daily_active_user_ids_view CASCADE;
+CREATE OR REPLACE VIEW public.daily_active_user_ids_view AS
+SELECT 
+  (created_at AT TIME ZONE 'Asia/Tokyo')::date::text as date,
+  user_id
+FROM (
+  SELECT created_at, user_id FROM public.battle_sessions WHERE user_id IS NOT NULL
+  UNION
+  SELECT created_at, user_id FROM public.quest_activity_logs WHERE user_id IS NOT NULL AND action = 'start'
+) combined
+GROUP BY date, user_id;
+
+
+-- 3. Update daily_paying_user_ids_view to use correct single JST timezone conversion
+DROP VIEW IF EXISTS public.daily_paying_user_ids_view CASCADE;
+CREATE OR REPLACE VIEW public.daily_paying_user_ids_view AS
+SELECT 
+  (created_at AT TIME ZONE 'Asia/Tokyo')::date::text as date,
+  user_id
+FROM public.payment_logs
+WHERE user_id IS NOT NULL
+GROUP BY date, user_id;
+
+
+-- 4. Update daily_basic_stats_view to include JST breakdowns
 DROP VIEW IF EXISTS public.daily_basic_stats_view CASCADE;
 CREATE OR REPLACE VIEW public.daily_basic_stats_view AS
 WITH date_series AS (
@@ -24,7 +49,7 @@ WITH date_series AS (
 ),
 new_users AS (
   SELECT 
-    (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo')::date as jst_date,
+    (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date,
     COUNT(*)::integer as count,
     COUNT(*) FILTER (WHERE is_anonymous = false)::integer as registered_count,
     COUNT(*) FILTER (WHERE is_anonymous = true)::integer as guest_count
@@ -33,7 +58,7 @@ new_users AS (
 ),
 battles AS (
   SELECT 
-    (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo')::date as jst_date,
+    (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date,
     COUNT(*)::integer as total,
     COUNT(*) FILTER (WHERE status = 'victory')::integer as victory,
     COUNT(*) FILTER (WHERE status = 'defeat')::integer as defeat,
@@ -43,7 +68,7 @@ battles AS (
 ),
 payments AS (
   SELECT 
-    (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo')::date as jst_date,
+    (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date,
     SUM(amount)::integer as revenue,
     COUNT(DISTINCT user_id)::integer as dpu
   FROM public.payment_logs
@@ -54,9 +79,9 @@ active_uu AS (
     jst_date,
     COUNT(DISTINCT user_id)::integer as dau
   FROM (
-    SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id FROM public.battle_sessions
+    SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id FROM public.battle_sessions
     UNION
-    SELECT (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id FROM public.quest_activity_logs WHERE action = 'start'
+    SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id FROM public.quest_activity_logs WHERE action = 'start'
   ) combined
   GROUP BY jst_date
 )
@@ -80,23 +105,23 @@ LEFT JOIN active_uu a ON ds.jst_date = a.jst_date
 ORDER BY ds.jst_date ASC;
 
 
--- 3. Create monthly_kpi_view to pre-calculate all monthly aggregations on the DB side
+-- 5. Create monthly_kpi_view to pre-calculate all monthly aggregations on the DB side in JST
+DROP VIEW IF EXISTS public.monthly_kpi_view CASCADE;
 CREATE OR REPLACE VIEW public.monthly_kpi_view AS
 WITH month_series AS (
-  -- Generate the last 12 months in YYYY/MM format
   SELECT TO_CHAR(date_trunc('month', (NOW() AT TIME ZONE 'Asia/Tokyo') - (i || ' month')::interval), 'YYYY/MM') as jst_month
   FROM generate_series(0, 11) as i
 ),
 monthly_revenue AS (
   SELECT 
-    TO_CHAR((created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month,
+    TO_CHAR((created_at AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month,
     SUM(amount)::integer as revenue
   FROM public.payment_logs
   GROUP BY jst_month
 ),
 monthly_new_users AS (
   SELECT 
-    TO_CHAR((created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month,
+    TO_CHAR((created_at AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month,
     COUNT(*) FILTER (WHERE is_anonymous = false)::integer as registered_count,
     COUNT(*) FILTER (WHERE is_anonymous = true)::integer as guest_count
   FROM public.user_profiles
@@ -107,15 +132,15 @@ monthly_active_uu AS (
     jst_month,
     COUNT(DISTINCT user_id)::integer as mau
   FROM (
-    SELECT TO_CHAR((created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month, user_id FROM public.battle_sessions WHERE user_id IS NOT NULL
+    SELECT TO_CHAR((created_at AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month, user_id FROM public.battle_sessions WHERE user_id IS NOT NULL
     UNION
-    SELECT TO_CHAR((created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month, user_id FROM public.quest_activity_logs WHERE user_id IS NOT NULL AND action = 'start'
+    SELECT TO_CHAR((created_at AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month, user_id FROM public.quest_activity_logs WHERE user_id IS NOT NULL AND action = 'start'
   ) combined
   GROUP BY jst_month
 ),
 monthly_paying_uu AS (
   SELECT 
-    TO_CHAR((created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month,
+    TO_CHAR((created_at AT TIME ZONE 'Asia/Tokyo'), 'YYYY/MM') as jst_month,
     COUNT(DISTINCT user_id)::integer as mpu
   FROM public.payment_logs
   WHERE user_id IS NOT NULL
