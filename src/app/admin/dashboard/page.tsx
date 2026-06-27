@@ -7,8 +7,8 @@ import { Users, Coins, Sword, ArrowLeft, CreditCard, Activity, Trophy, Compass, 
 
 interface KPISummary {
     totalUsers: number;
-    authUsers: number;
     anonUsers: number;
+    authUsers: number;
     totalGold: number;
     avgGold: number;
     maxGold: number;
