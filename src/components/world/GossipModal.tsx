@@ -78,7 +78,7 @@ export default function GossipModal({ onClose }: Props) {
     };
 
     // Initial fetch / Reload
-    const fetchInitialData = async (isRefresh = false) => {
+    const fetchInitialData = async (isRefresh = false, excludeSys = hideSystemMessages) => {
         if (isRefresh) {
             const now = Date.now();
             if (now - lastFetchTimeRef.current < 3000) {
@@ -91,7 +91,7 @@ export default function GossipModal({ onClose }: Props) {
         if (!isRefresh) setLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
-            const res = await fetch(`/api/gossip?limit=30&offset=0`, {
+            const res = await fetch(`/api/gossip?limit=30&offset=0&excludeSystem=${excludeSys}`, {
                 headers: authHeaders
             });
             if (res.ok) {
@@ -123,13 +123,15 @@ export default function GossipModal({ onClose }: Props) {
 
     useEffect(() => {
         soundManager?.playSE('se_modal_open');
-        fetchInitialData();
+        let initialHideSystem = false;
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('wirth_dawn_gossip_hide_system');
             if (saved === 'true') {
+                initialHideSystem = true;
                 setHideSystemMessages(true);
             }
         }
+        fetchInitialData(false, initialHideSystem);
     }, []);
 
     const handleToggleHideSystem = () => {
@@ -139,6 +141,7 @@ export default function GossipModal({ onClose }: Props) {
         if (typeof window !== 'undefined') {
             localStorage.setItem('wirth_dawn_gossip_hide_system', String(newVal));
         }
+        fetchInitialData(false, newVal);
     };
 
     // Cooldown timer logic
@@ -175,7 +178,7 @@ export default function GossipModal({ onClose }: Props) {
         setLoadingMore(true);
         try {
             const authHeaders = await getAuthHeaders();
-            const res = await fetch(`/api/gossip?limit=30&offset=${nextOffset}`, {
+            const res = await fetch(`/api/gossip?limit=30&offset=${nextOffset}&excludeSystem=${hideSystemMessages}`, {
                 headers: authHeaders
             });
             if (res.ok) {
