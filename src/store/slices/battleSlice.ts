@@ -3322,15 +3322,21 @@ export const createBattleSlice = (
             newMessages.push('あなたは力尽きた...');
 
             const hasBountyEnemy = activeEnemies.some(e => e.spawn_type === 'bounty');
+            const isColosseum = newUserProfile?.current_quest_id && String(newUserProfile.current_quest_id).startsWith('colosseum_');
+
             if (hasBountyEnemy && newUserProfile) {
-                const currentGold = newUserProfile.gold || 0;
-                const penalty = Math.ceil(currentGold / 2);
-                if (penalty > 0) {
-                    newMessages.push(`賞金稼ぎに身包みを剥がされた… 所持金の半分（${penalty}G）を失った！`);
-                    setTimeout(() => {
-                        get().spendGold(penalty);
-                        updateProfileStatusHelper({ gold: Math.max(0, currentGold - penalty) }, get().userProfile?.id || null);
-                    }, 100);
+                if (!isColosseum) {
+                    const currentGold = newUserProfile.gold || 0;
+                    const penalty = Math.ceil(currentGold / 2);
+                    if (penalty > 0) {
+                        newMessages.push(`賞金稼ぎに身包みを剥がされた… 所持金の半分（${penalty}G）を失った！`);
+                        setTimeout(() => {
+                            get().spendGold(penalty);
+                            updateProfileStatusHelper({ gold: Math.max(0, currentGold - penalty) }, get().userProfile?.id || null);
+                        }, 100);
+                    }
+                } else {
+                    newMessages.push(`賞金稼ぎに敗北したが、闘技場の防衛魔術のおかげでゴールドを奪われずに済んだ！`);
                 }
             }
 
