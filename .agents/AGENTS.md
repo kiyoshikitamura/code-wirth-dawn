@@ -256,8 +256,13 @@
   - アバター枠にユーザーの購読プラン（`subscription_tier`）に応じた専用グラデーションフレームを適用すること（Premium: 金グラデーション, Basic: 青グラデーション, Free: 通常）。
   - 表示データは、プレイヤーをタップした際に `/api/profile?profileId=[ID]` から非同期取得した最新のプロファイル情報（`subscription_tier` を含む）を同期させる設計を維持すること。
 - **未閲覧ユーザー向け最新投稿バルーン表示**:
-  - ログイン後、一度も街の噂話（BBS）を開いていないユーザー（`sessionStorage` で管理）に対し、噂話アイコンのすぐ下に翡翠枠の上品なフキダシ型ダイアログ（`border-2 border-emerald-500 bg-slate-950`）を表示し、最新投稿（3行省略）を表示してアピールすること。
+  - `localStorage` に保存された最終閲覧日時（`last_viewed_gossip_time`）と現在の最新投稿日時を比較し、未読の最新投稿がある場合のみ、噂話アイコンのすぐ下に翡翠枠の上品なフキダシ型ダイアログ（`border-2 border-emerald-500 bg-slate-950`）を表示し、最新投稿（3行省略）を表示してアピールすること。
+  - ユーザーが噂話モーダルを開く、またはバルーンの「✕（閉じる）」ボタンをクリックした際に、`localStorage` の最終閲覧日時を最新投稿日時に更新して既読扱いとすること。
   - オンボーディングチュートリアル進行中（`isTourActive === true`）は、ガイダンスバナーとのバッティングを防ぐためバルーンを非表示とすること。
+- **システムメッセージ非表示（フィルター）機能**:
+  - 噂話（BBS）画面に「システムメッセージ非表示」トグルスイッチまたはボタンを配置すること。
+  - トグルの選択状態は `localStorage` の `wirth_dawn_gossip_hide_system` キーに保存し、再読み込みやリロード後も状態を永続化すること。
+  - フィルター有効時は、最上部ピン留め投稿（`pinned_system_post`）およびタイムライン内のシステム投稿（`is_system === true`）を非表示とすること。
 - **旧仕様のクリーンアップ**:
   - `rumors` テーブルおよび `scripts/sync_rumors.ts` を廃止・削除すること。
   - `src/app/api/gossip/route.ts` および `src/app/api/init-page/route.ts` から旧4タブ用のクエリ（`world_states_history`, `rumors`, `scenarios` の特別クエスト、および `ShadowService` の傭兵NPC）を完全に削除し、新しい `gossip_posts` の軽量なクエリへと移行すること。
