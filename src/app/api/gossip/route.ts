@@ -15,23 +15,34 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const limit = Math.min(Number(searchParams.get('limit') || '30'), 100);
         const offset = Math.max(Number(searchParams.get('offset') || '0'), 0);
+        const excludeSystem = searchParams.get('excludeSystem') === 'true';
 
         // 1. 最上段ピン留め用の「最新システムメッセージ」を1件取得
-        const { data: pinnedSystemPost, error: pinError } = await supabase
-            .from('gossip_posts')
-            .select('*')
-            .eq('is_system', true)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        let pinnedSystemPost = null;
+        if (!excludeSystem) {
+            const { data: pinnedData, error: pinError } = await supabase
+                .from('gossip_posts')
+                .select('*')
+                .eq('is_system', true)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-        if (pinError) throw pinError;
+            if (pinError) throw pinError;
+            pinnedSystemPost = pinnedData;
+        }
 
         // 2. タイムライン投稿リストを取得
-        const { data: posts, error: postsError } = await supabase
+        let query = supabase
             .from('gossip_posts')
             .select('*, user_profiles(subscription_tier)')
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (excludeSystem) {
+            query = query.eq('is_system', false);
+        }
+
+        const { data: posts, error: postsError } = await query
             .range(offset, offset + limit - 1);
 
         if (postsError) throw postsError;
