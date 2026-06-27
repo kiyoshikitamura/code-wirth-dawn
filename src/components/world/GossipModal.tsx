@@ -22,6 +22,7 @@ export default function GossipModal({ onClose }: Props) {
     const { userProfile } = useGameStore();
     const [pinnedSystemPost, setPinnedSystemPost] = useState<any | null>(null);
     const [posts, setPosts] = useState<any[]>([]);
+    const [hideSystemMessages, setHideSystemMessages] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -123,7 +124,22 @@ export default function GossipModal({ onClose }: Props) {
     useEffect(() => {
         soundManager?.playSE('se_modal_open');
         fetchInitialData();
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('wirth_dawn_gossip_hide_system');
+            if (saved === 'true') {
+                setHideSystemMessages(true);
+            }
+        }
     }, []);
+
+    const handleToggleHideSystem = () => {
+        const newVal = !hideSystemMessages;
+        setHideSystemMessages(newVal);
+        soundManager?.playSE('se_click');
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('wirth_dawn_gossip_hide_system', String(newVal));
+        }
+    };
 
     // Cooldown timer logic
     useEffect(() => {
@@ -272,6 +288,10 @@ export default function GossipModal({ onClose }: Props) {
         return `${y}/${m}/${day} ${h}:${min}`;
     };
 
+    const displayedPosts = hideSystemMessages
+        ? posts.filter(post => !post.is_system)
+        : posts;
+
     if (!mounted) return null;
 
     return createPortal(
@@ -312,9 +332,23 @@ export default function GossipModal({ onClose }: Props) {
                             </h2>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-white bg-gray-800/50 rounded-full hover:bg-gray-700 transition-colors active:scale-90">
-                        <X size={16} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleToggleHideSystem}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all flex items-center gap-1.5 select-none active:scale-95 ${
+                                hideSystemMessages
+                                    ? 'bg-purple-950/40 border-purple-500/60 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.2)]'
+                                    : 'bg-gray-800/40 border-gray-700/60 text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                            }`}
+                            title={hideSystemMessages ? 'システム投稿を非表示中' : 'システム投稿を表示中'}
+                        >
+                            <span className={`w-1.5 h-1.5 rounded-full ${hideSystemMessages ? 'bg-purple-400 animate-pulse' : 'bg-gray-500'}`} />
+                            システム表示 OFF
+                        </button>
+                        <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-white bg-gray-800/50 rounded-full hover:bg-gray-700 transition-colors active:scale-90">
+                            <X size={16} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Main Content Area */}
@@ -339,7 +373,7 @@ export default function GossipModal({ onClose }: Props) {
                         </div>
                     )}
                     {/* Pinned system post at the very top */}
-                    {pinnedSystemPost && (
+                    {!hideSystemMessages && pinnedSystemPost && (
                         <div className="p-4 rounded-xl border border-[#a38b6b]/40 bg-gradient-to-r from-purple-950/40 to-blue-950/40 space-y-2 flex gap-3 shadow-lg shadow-purple-950/20">
                             {/* Avatar */}
                             <div className="w-10 h-10 rounded-full overflow-hidden bg-purple-900 border border-purple-500/50 shrink-0">
@@ -376,7 +410,7 @@ export default function GossipModal({ onClose }: Props) {
                     )}
 
                     {/* Spacer/Divider if pinned exists */}
-                    {pinnedSystemPost && posts.length > 0 && (
+                    {!hideSystemMessages && pinnedSystemPost && displayedPosts.length > 0 && (
                         <div className="h-[1px] bg-gray-800/80 mx-2 my-4" />
                     )}
 
@@ -386,13 +420,13 @@ export default function GossipModal({ onClose }: Props) {
                             <Loader2 className="w-7 h-7 animate-spin text-amber-400" />
                             <p className="text-xs italic">噂話を集めています…</p>
                         </div>
-                    ) : posts.length === 0 ? (
+                    ) : displayedPosts.length === 0 ? (
                         <div className="text-center py-20">
                             <p className="text-xs text-gray-500 italic">「今は大した噂話はないようだ。また後で来てみよう。」</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {posts.map((post) => (
+                            {displayedPosts.map((post) => (
                                 <div key={post.id} className="p-4 rounded-xl border border-gray-800 bg-gray-950/40 space-y-2 flex gap-3 hover:border-gray-700/60 transition-colors">
                                     {/* Avatar */}
                                     {(() => {
