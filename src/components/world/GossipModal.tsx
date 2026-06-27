@@ -326,9 +326,8 @@ export default function GossipModal({ onClose }: Props) {
                     <div className="flex items-center gap-2.5">
                         <span className="text-xl">📰</span>
                         <div>
-                            <h2 className="text-sm font-black text-gray-100 tracking-wider flex items-center gap-2">
+                            <h2 className="text-sm font-black text-gray-100 tracking-wider">
                                 街の噂話
-                                <span className="text-[9px] text-gray-500 font-normal">Town Gossip BBS</span>
                             </h2>
                         </div>
                     </div>
