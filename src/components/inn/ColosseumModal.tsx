@@ -181,25 +181,25 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
                                     <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">Easy連勝</div>
                                     <ul className="space-y-0.5 font-mono">
-                                        <li>1位: <span className="text-amber-400 font-bold">5,000G</span></li>
-                                        <li>2位: <span className="text-slate-200 font-bold">2,000G</span></li>
+                                        <li>1位: <span className="text-amber-400 font-bold">3,000G</span><span className="text-slate-400 text-[9px] block">＋ 知識と契約の鍵 x1</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">2,000G</span><span className="text-slate-400 text-[9px] block">＋ 知識と契約の鍵 x1</span></li>
                                         <li>3位: <span className="text-slate-400">500G</span></li>
                                     </ul>
                                 </div>
                                 <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
                                     <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">Normal連勝</div>
                                     <ul className="space-y-0.5 font-mono">
-                                        <li>1位: <span className="text-amber-400 font-bold">10,000G</span></li>
-                                        <li>2位: <span className="text-slate-200 font-bold">5,000G</span></li>
+                                        <li>1位: <span className="text-amber-400 font-bold">5,000G</span><span className="text-slate-400 text-[9px] block">＋ 知識と契約の鍵 x11</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">3,000G</span><span className="text-slate-400 text-[9px] block">＋ 知識と契約の鍵 x1</span></li>
                                         <li>3位: <span className="text-slate-400">1,000G</span></li>
                                     </ul>
                                 </div>
                                 <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
                                     <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">Hard連勝</div>
                                     <ul className="space-y-0.5 font-mono">
-                                        <li>1位: <span className="text-amber-400 font-bold">20,000G</span></li>
-                                        <li>2位: <span className="text-slate-200 font-bold">10,000G</span></li>
-                                        <li>3位: <span className="text-slate-400">2,000G</span></li>
+                                        <li>1位: <span className="text-amber-400 font-bold">10,000G</span><span className="text-slate-400 text-[9px] block">＋ 魔道と鉄壁の鍵 x1</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">5,000G</span><span className="text-slate-400 text-[9px] block">＋ 魔道と鉄壁の鍵 x1</span></li>
+                                        <li>3位: <span className="text-slate-400">3,000G</span></li>
                                     </ul>
                                 </div>
                             </div>

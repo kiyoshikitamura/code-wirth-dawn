@@ -148,17 +148,17 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
   - 2位: 5,000 G
   - 3位: 1,000 G
 - **Easy連勝ランキング (Easy Streaks Ranking)**:
-  - 1位: 5,000 G
-  - 2位: 2,000 G
+  - 1位: 3,000 G + 知識と契約の鍵 x1
+  - 2位: 2,000 G + 知識と契約 of 鍵 x1
   - 3位: 500 G
 - **Normal連勝ランキング (Normal Streaks Ranking)**:
-  - 1位: 10,000 G
-  - 2位: 5,000 G
+  - 1位: 5,000 G + 知識と契約 of 鍵 x11
+  - 2位: 3,000 G + 知識と契約 of 鍵 x1
   - 3位: 1,000 G
 - **Hard連勝ランキング (Hard Streaks Ranking)**:
-  - 1位: 20,000 G
-  - 2位: 10,000 G
-  - 3位: 2,000 G
+  - 1位: 10,000 G + 魔道と鉄壁 of 鍵 x1
+  - 2位: 5,000 G + 魔道と鉄壁 of 鍵 x1
+  - 3位: 3,000 G
 
 *※両方のランキングで入賞した場合は、報酬が累積して付与される。*
 

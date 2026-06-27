@@ -169,21 +169,22 @@ async function performUpdate(isForceUgcReset: boolean) {
 
             const rewardMap: Map<string, {
                 gold: number;
+                items: { itemId: number; quantity: number }[];
                 reasons: string[];
                 userName: string;
             }> = new Map();
 
             const winsPrizes = [10000, 5000, 1000];
-            const easyPrizes = [5000, 2000, 500];
-            const normalPrizes = [10000, 5000, 1000];
-            const hardPrizes = [20000, 10000, 2000];
+            const easyPrizes = [3000, 2000, 500];
+            const normalPrizes = [5000, 3000, 1000];
+            const hardPrizes = [10000, 5000, 3000];
 
             if (topWins && topWins.length > 0) {
                 for (const u of topWins) {
                     const rank = u.rank_by_wins;
                     if (u.user_id && rank && rank >= 1 && rank <= 3) {
                         const prize = winsPrizes[rank - 1];
-                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        const current = rewardMap.get(u.user_id) || { gold: 0, items: [] as { itemId: number; quantity: number }[], reasons: [] as string[], userName: u.user_name || '旅人' };
                         current.gold += prize;
                         current.reasons.push(`勝利数ランキング第${rank}位 (${prize.toLocaleString()}G)`);
                         rewardMap.set(u.user_id, current);
@@ -196,9 +197,19 @@ async function performUpdate(isForceUgcReset: boolean) {
                     const rank = u.rank_by_streak_easy;
                     if (u.user_id && rank && rank >= 1 && rank <= 3) {
                         const prize = easyPrizes[rank - 1];
-                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        const current = rewardMap.get(u.user_id) || { gold: 0, items: [] as { itemId: number; quantity: number }[], reasons: [] as string[], userName: u.user_name || '旅人' };
                         current.gold += prize;
-                        current.reasons.push(`Easy連勝ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        
+                        let itemText = '';
+                        if (rank === 1) {
+                            current.items.push({ itemId: 76, quantity: 1 });
+                            itemText = ' ＋ 知識と契約の鍵 x1';
+                        } else if (rank === 2) {
+                            current.items.push({ itemId: 76, quantity: 1 });
+                            itemText = ' ＋ 知識と契約の鍵 x1';
+                        }
+                        
+                        current.reasons.push(`Easy連勝ランキング第${rank}位 (${prize.toLocaleString()}G${itemText})`);
                         rewardMap.set(u.user_id, current);
                     }
                 }
@@ -209,9 +220,19 @@ async function performUpdate(isForceUgcReset: boolean) {
                     const rank = u.rank_by_streak_normal;
                     if (u.user_id && rank && rank >= 1 && rank <= 3) {
                         const prize = normalPrizes[rank - 1];
-                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        const current = rewardMap.get(u.user_id) || { gold: 0, items: [] as { itemId: number; quantity: number }[], reasons: [] as string[], userName: u.user_name || '旅人' };
                         current.gold += prize;
-                        current.reasons.push(`Normal連勝ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        
+                        let itemText = '';
+                        if (rank === 1) {
+                            current.items.push({ itemId: 76, quantity: 11 });
+                            itemText = ' ＋ 知識と契約の鍵 x11';
+                        } else if (rank === 2) {
+                            current.items.push({ itemId: 76, quantity: 1 });
+                            itemText = ' ＋ 知識と契約の鍵 x1';
+                        }
+                        
+                        current.reasons.push(`Normal連勝ランキング第${rank}位 (${prize.toLocaleString()}G${itemText})`);
                         rewardMap.set(u.user_id, current);
                     }
                 }
@@ -222,9 +243,19 @@ async function performUpdate(isForceUgcReset: boolean) {
                     const rank = u.rank_by_streak_hard;
                     if (u.user_id && rank && rank >= 1 && rank <= 3) {
                         const prize = hardPrizes[rank - 1];
-                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        const current = rewardMap.get(u.user_id) || { gold: 0, items: [] as { itemId: number; quantity: number }[], reasons: [] as string[], userName: u.user_name || '旅人' };
                         current.gold += prize;
-                        current.reasons.push(`Hard連勝ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        
+                        let itemText = '';
+                        if (rank === 1) {
+                            current.items.push({ itemId: 77, quantity: 1 });
+                            itemText = ' ＋ 魔道と鉄壁の鍵 x1';
+                        } else if (rank === 2) {
+                            current.items.push({ itemId: 77, quantity: 1 });
+                            itemText = ' ＋ 魔道と鉄壁の鍵 x1';
+                        }
+                        
+                        current.reasons.push(`Hard連勝ランキング第${rank}位 (${prize.toLocaleString()}G${itemText})`);
                         rewardMap.set(u.user_id, current);
                     }
                 }
@@ -241,9 +272,45 @@ async function performUpdate(isForceUgcReset: boolean) {
                     continue;
                 }
 
+                // 1.2. アイテム付与
+                const itemsAddedTextList: string[] = [];
+                for (const item of info.items) {
+                    const { data: inv } = await supabaseServer
+                        .from('inventory')
+                        .select('id, quantity')
+                        .eq('user_id', userId)
+                        .eq('item_id', item.itemId)
+                        .maybeSingle();
+
+                    if (inv) {
+                        const { error: invErr } = await supabaseServer
+                            .from('inventory')
+                            .update({ quantity: inv.quantity + item.quantity })
+                            .eq('id', inv.id);
+                        if (invErr) {
+                            logs.push(`[ColosseumReward] Failed to add item ${item.itemId} to user ${userId}: ${invErr.message}`);
+                        }
+                    } else {
+                        const { error: invErr } = await supabaseServer
+                            .from('inventory')
+                            .insert({
+                                user_id: userId,
+                                item_id: item.itemId,
+                                quantity: item.quantity
+                            });
+                        if (invErr) {
+                            logs.push(`[ColosseumReward] Failed to insert item ${item.itemId} to user ${userId}: ${invErr.message}`);
+                        }
+                    }
+                    const itemName = item.itemId === 76 ? '知識と契約の鍵' : '魔道と鉄壁の鍵';
+                    itemsAddedTextList.push(`${itemName} x${item.quantity}`);
+                }
+
+                const itemsText = itemsAddedTextList.length > 0 ? '、および ' + itemsAddedTextList.join('、') : '';
+
                 // 2. システム通知インサート
                 const reasonText = info.reasons.join('、および');
-                const message = `🏆 コロシアムランキング報酬獲得！ ${reasonText} を達成し、合計 ${info.gold.toLocaleString()}G を獲得しました。郵便受け（所持金）に直接付与されました。`;
+                const message = `🏆 コロシアムランキング報酬獲得！ ${reasonText} を達成し、合計 ${info.gold.toLocaleString()}G${itemsText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
                 
                 await supabaseServer.from('notifications').insert({
                     user_id: userId,
@@ -277,8 +344,8 @@ async function performUpdate(isForceUgcReset: boolean) {
                     location_id: profile?.current_location_id || null,
                     location_name: locationName,
                     title: '闘技場ランキング報酬獲得',
-                    description: `闘技場の定期集計において優秀な戦績を残し、${reasonText}の栄誉と賞金 ${info.gold.toLocaleString()}G を獲得した。`,
-                    param_changes: { gold: info.gold },
+                    description: `闘技場の定期集計において優秀な戦績を残し、${reasonText}の栄誉と賞金 ${info.gold.toLocaleString()}G${itemsText} を獲得した。`,
+                    param_changes: { gold: info.gold, items: info.items },
                     is_major_event: true
                 });
 
@@ -288,7 +355,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                     event_type: 'colosseum_ranking',
                     old_value: '---',
                     new_value: `${info.gold.toLocaleString()}G`,
-                    message: `冒険者「${info.userName}」が闘技場の定期集計にて優秀な戦績を収め、${reasonText}の賞金として ${info.gold.toLocaleString()}G を獲得したそうだ！`,
+                    message: `冒険者「${info.userName}」が闘技場の定期集計にて優秀な戦績を収め、${reasonText}の賞金として ${info.gold.toLocaleString()}G${itemsText} を獲得したそうだ！`,
                 });
 
                 colosseumRewardCount++;
