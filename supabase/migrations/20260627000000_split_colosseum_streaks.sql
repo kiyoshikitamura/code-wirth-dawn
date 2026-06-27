@@ -23,6 +23,32 @@ ADD COLUMN IF NOT EXISTS rank_by_streak_easy INTEGER,
 ADD COLUMN IF NOT EXISTS rank_by_streak_normal INTEGER,
 ADD COLUMN IF NOT EXISTS rank_by_streak_hard INTEGER;
 
+-- Data Migration: Map existing streak columns to their respective difficulty columns based on activity logs
+WITH latest_logs AS (
+  SELECT DISTINCT ON (user_id) user_id, difficulty
+  FROM public.colosseum_activity_logs
+  ORDER BY user_id, created_at DESC
+)
+UPDATE public.colosseum_user_stats s
+SET 
+  current_streak_easy = CASE WHEN COALESCE(l.difficulty, 'easy') = 'easy' THEN s.current_streak ELSE 0 END,
+  max_streak_easy = CASE WHEN COALESCE(l.difficulty, 'easy') = 'easy' THEN s.max_streak ELSE 0 END,
+  current_streak_normal = CASE WHEN l.difficulty = 'normal' THEN s.current_streak ELSE 0 END,
+  max_streak_normal = CASE WHEN l.difficulty = 'normal' THEN s.max_streak ELSE 0 END,
+  current_streak_hard = CASE WHEN l.difficulty = 'hard' THEN s.current_streak ELSE 0 END,
+  max_streak_hard = CASE WHEN l.difficulty = 'hard' THEN s.max_streak ELSE 0 END
+FROM latest_logs l
+WHERE s.user_id = l.user_id;
+
+-- Fallback for users with no activity logs
+UPDATE public.colosseum_user_stats s
+SET 
+  current_streak_easy = s.current_streak,
+  max_streak_easy = s.max_streak
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.colosseum_activity_logs l WHERE l.user_id = s.user_id
+);
+
 -- Recreate aggregate_colosseum_ranking function
 CREATE OR REPLACE FUNCTION public.aggregate_colosseum_ranking()
 RETURNS VOID 
