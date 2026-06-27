@@ -188,6 +188,15 @@ async function performUpdate(isForceUgcReset: boolean) {
                         current.gold += prize;
                         current.reasons.push(`勝利数ランキング第${rank}位 (${prize.toLocaleString()}G)`);
                         rewardMap.set(u.user_id, current);
+
+                        // 個別通知インサート
+                        const message = `🏆 コロシアムランキング報酬獲得！ 勝利数ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G を獲得しました。郵便受け（所持金）に直接付与されました。`;
+                        await supabaseServer.from('notifications').insert({
+                            user_id: u.user_id,
+                            type: 'system',
+                            message: message,
+                            read: false
+                        });
                     }
                 }
             }
@@ -201,16 +210,28 @@ async function performUpdate(isForceUgcReset: boolean) {
                         current.gold += prize;
                         
                         let itemText = '';
+                        let itemLogText = '';
                         if (rank === 1) {
                             current.items.push({ itemId: 76, quantity: 1 });
                             itemText = ' ＋ 知識と契約の鍵 x1';
+                            itemLogText = '、および 知識と契約の鍵 x1';
                         } else if (rank === 2) {
                             current.items.push({ itemId: 76, quantity: 1 });
                             itemText = ' ＋ 知識と契約の鍵 x1';
+                            itemLogText = '、および 知識と契約の鍵 x1';
                         }
                         
                         current.reasons.push(`Easy連勝ランキング第${rank}位 (${prize.toLocaleString()}G${itemText})`);
                         rewardMap.set(u.user_id, current);
+
+                        // 個別通知インサート
+                        const message = `🏆 コロシアムランキング報酬獲得！ Easy連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
+                        await supabaseServer.from('notifications').insert({
+                            user_id: u.user_id,
+                            type: 'system',
+                            message: message,
+                            read: false
+                        });
                     }
                 }
             }
@@ -224,16 +245,28 @@ async function performUpdate(isForceUgcReset: boolean) {
                         current.gold += prize;
                         
                         let itemText = '';
+                        let itemLogText = '';
                         if (rank === 1) {
                             current.items.push({ itemId: 76, quantity: 1 });
                             itemText = ' ＋ 知識と契約の鍵 x1';
+                            itemLogText = '、および 知識と契約 of 鍵 x1';
                         } else if (rank === 2) {
                             current.items.push({ itemId: 76, quantity: 1 });
                             itemText = ' ＋ 知識と契約の鍵 x1';
+                            itemLogText = '、および 知識と契約 of 鍵 x1';
                         }
                         
                         current.reasons.push(`Normal連勝ランキング第${rank}位 (${prize.toLocaleString()}G${itemText})`);
                         rewardMap.set(u.user_id, current);
+
+                        // 個別通知インサート
+                        const message = `🏆 コロシアムランキング報酬獲得！ Normal連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
+                        await supabaseServer.from('notifications').insert({
+                            user_id: u.user_id,
+                            type: 'system',
+                            message: message,
+                            read: false
+                        });
                     }
                 }
             }
@@ -247,16 +280,28 @@ async function performUpdate(isForceUgcReset: boolean) {
                         current.gold += prize;
                         
                         let itemText = '';
+                        let itemLogText = '';
                         if (rank === 1) {
                             current.items.push({ itemId: 77, quantity: 1 });
                             itemText = ' ＋ 魔道と鉄壁の鍵 x1';
+                            itemLogText = '、および 魔道と鉄壁 of 鍵 x1';
                         } else if (rank === 2) {
                             current.items.push({ itemId: 77, quantity: 1 });
                             itemText = ' ＋ 魔道と鉄壁の鍵 x1';
+                            itemLogText = '、および 魔道と鉄壁 of 鍵 x1';
                         }
                         
                         current.reasons.push(`Hard連勝ランキング第${rank}位 (${prize.toLocaleString()}G${itemText})`);
                         rewardMap.set(u.user_id, current);
+
+                        // 個別通知インサート
+                        const message = `🏆 コロシアムランキング報酬獲得！ Hard連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
+                        await supabaseServer.from('notifications').insert({
+                            user_id: u.user_id,
+                            type: 'system',
+                            message: message,
+                            read: false
+                        });
                     }
                 }
             }
@@ -307,17 +352,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                 }
 
                 const itemsText = itemsAddedTextList.length > 0 ? '、および ' + itemsAddedTextList.join('、') : '';
-
-                // 2. システム通知インサート
                 const reasonText = info.reasons.join('、および');
-                const message = `🏆 コロシアムランキング報酬獲得！ ${reasonText} を達成し、合計 ${info.gold.toLocaleString()}G${itemsText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
-                
-                await supabaseServer.from('notifications').insert({
-                    user_id: userId,
-                    type: 'system',
-                    message: message,
-                    read: false
-                });
 
                 // 3. user_profiles からロケーションIDや累積日数を引く
                 const { data: profile } = await supabaseServer
@@ -336,7 +371,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                     locationName = loc?.name || null;
                 }
 
-                // 4. user_chronicles インサート
+                // 4. user_chronicles インサート (合算記録はそのまま維持)
                 await supabaseServer.from('user_chronicles').insert({
                     user_id: userId,
                     event_type: 'system_reward',
@@ -349,7 +384,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                     is_major_event: true
                 });
 
-                // 5. world_states_history へのインサート（街の噂話の「冒険者の噂」に流す）
+                // 5. world_states_history へのインサート（街の噂話の「冒険者の噂」に流す - 合算記録維持）
                 await supabaseServer.from('world_states_history').insert({
                     location_id: profile?.current_location_id || null,
                     event_type: 'colosseum_ranking',

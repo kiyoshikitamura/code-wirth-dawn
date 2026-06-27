@@ -30,6 +30,10 @@ export function useInnPageState() {
     const [onboardingTourStep, setOnboardingTourStep] = useState<string | null>(null);
     const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
+    // コロシアムランキング報酬のキュー管理
+    const [pendingRewardsQueue, setPendingRewardsQueue] = useState<{ id: string; message: string }[]>([]);
+    const [currentRewardDialog, setCurrentRewardDialog] = useState<{ title: string; message: string; id: string } | null>(null);
+
     useEffect(() => {
         if (!_hasHydrated || !userProfile || !initialLoadComplete) return;
 
@@ -311,6 +315,11 @@ export function useInnPageState() {
                 // World State（hegemony 含む）
                 if (data.world_state) {
                     useGameStore.setState({ worldState: data.world_state });
+                }
+
+                // 未読のランキング報酬通知があればキューにロード
+                if (data.colosseum_rewards && data.colosseum_rewards.length > 0) {
+                    setPendingRewardsQueue(data.colosseum_rewards);
                 }
 
                 // キャッシュのセット
@@ -871,6 +880,39 @@ export function useInnPageState() {
         setActiveModal('history');
     };
 
+    // キュー（pendingRewardsQueue）の処理
+    useEffect(() => {
+        if (pendingRewardsQueue.length > 0 && !currentRewardDialog) {
+            const next = pendingRewardsQueue[0];
+            const cleanMessage = next.message.replace('🏆 コロシアムランキング報酬獲得！ ', '');
+            setCurrentRewardDialog({
+                title: '🏆 闘技場ランキング報酬獲得',
+                message: cleanMessage,
+                id: next.id
+            });
+        }
+    }, [pendingRewardsQueue, currentRewardDialog]);
+
+    // 報酬ダイアログを閉じる処理
+    const handleCloseRewardDialog = async () => {
+        if (!currentRewardDialog) return;
+        soundManager?.playSE('se_click');
+        
+        const finishedId = currentRewardDialog.id;
+        setCurrentRewardDialog(null); // 一旦ダイアログを閉じる
+        setPendingRewardsQueue(prev => prev.filter(item => item.id !== finishedId));
+
+        // バックグラウンドで通知を既読化
+        try {
+            await supabase.from('notifications').update({ read: true }).eq('id', finishedId);
+        } catch (e) {
+            console.error('Failed to mark notification as read:', e);
+        }
+        
+        // ユーザー情報を最新に同期
+        fetchUserProfile();
+    };
+
     // Derived states
     const activeNpcData = activeModal && ['inn', 'shop', 'temple', 'guild', 'magicAcademy'].includes(activeModal)
         ? getNpcData(activeModal as FacilityType) : null;
@@ -881,6 +923,7 @@ export function useInnPageState() {
         router, loading, worldState, userProfile, equipBonus, isHub,
         activeModal, setActiveModal,
         billingDialog, setBillingDialog,
+        currentRewardDialog,
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
@@ -915,5 +958,6 @@ export function useInnPageState() {
         fetchRep,
         returnToHub,
         leaveHub,
+        handleCloseRewardDialog,
     };
 }
