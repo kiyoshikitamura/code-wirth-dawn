@@ -225,8 +225,8 @@ async function performUpdate(isForceUgcReset: boolean) {
                         
                         let itemText = '';
                         if (rank === 1) {
-                            current.items.push({ itemId: 76, quantity: 11 });
-                            itemText = ' ＋ 知識と契約の鍵 x11';
+                            current.items.push({ itemId: 76, quantity: 1 });
+                            itemText = ' ＋ 知識と契約の鍵 x1';
                         } else if (rank === 2) {
                             current.items.push({ itemId: 76, quantity: 1 });
                             itemText = ' ＋ 知識と契約の鍵 x1';

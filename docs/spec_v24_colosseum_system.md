@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
   - 2位: 2,000 G + 知識と契約 of 鍵 x1
   - 3位: 500 G
 - **Normal連勝ランキング (Normal Streaks Ranking)**:
-  - 1位: 5,000 G + 知識と契約 of 鍵 x11
+  - 1位: 5,000 G + 知識と契約 of 鍵 x1
   - 2位: 3,000 G + 知識と契約 of 鍵 x1
   - 3位: 1,000 G
 - **Hard連勝ランキング (Hard Streaks Ranking)**:
