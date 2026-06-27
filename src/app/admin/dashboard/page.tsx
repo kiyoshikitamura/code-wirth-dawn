@@ -121,24 +121,47 @@ interface KPIData {
 }
 
 export default function AdminDashboardPage() {
-    const [data, setData] = useState<KPIData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    // Category states
+    const [summary, setSummary] = useState<KPISummary | null>(null);
+    const [levelDistribution, setLevelDistribution] = useState<LevelDistribution | null>(null);
+    const [subscriptionDistribution, setSubscriptionDistribution] = useState<SubscriptionDistribution | null>(null);
+    const [questRanking, setQuestRanking] = useState<QuestRanking[] | null>(null);
+    const [questStats, setQuestStats] = useState<QuestStats[] | null>(null);
+    const [dailyKPI, setDailyKPI] = useState<DailyKPI[] | null>(null);
+    const [colosseum, setColosseum] = useState<{ summary: ColosseumSummary; daily: ColosseumDaily[] } | null>(null);
+    const [academy, setAcademy] = useState<{ summary: AcademySummary; daily: AcademyDaily[] } | null>(null);
+
+    // Category loading states
+    const [loading, setLoading] = useState<Record<string, boolean>>({
+        summary: false,
+        daily: false,
+        quests: false,
+        colosseum: false,
+        academy: false
+    });
+
+    // Category error states
+    const [errors, setErrors] = useState<Record<string, string>>({
+        summary: '',
+        daily: '',
+        quests: '',
+        colosseum: '',
+        academy: ''
+    });
+
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments' | 'colosseum' | 'academy'>('users');
     const [daysRange, setDaysRange] = useState<number>(30);
     
-
-    
     // CSVエクスポート処理 (日別KPI)
     const exportDailyKPICsv = () => {
-        if (!data || !data.dailyKPI) return;
+        if (!dailyKPI) return;
         
         // ヘッダー定義
         const headers = ['日付', '新規ユーザー登録数', '総戦闘数', '勝利数', '敗北数', '逃亡数', '勝率(%)', 'DAU (日間アクティブ)', 'MAU (月間アクティブ)', '売上金額(円)', 'DPU (日間課金者数)', 'MPU (月間課金者数)'];
         
         // データ行構築
-        const rows = data.dailyKPI.map(d => [
+        const rows = dailyKPI.map(d => [
             d.date,
             d.newUsers,
             d.totalBattles,
@@ -172,13 +195,13 @@ export default function AdminDashboardPage() {
 
     // CSVエクスポート処理 (全クエスト統計)
     const exportQuestStatsCsv = () => {
-        if (!data || !data.questStats) return;
+        if (!questStats) return;
         
         // ヘッダー定義
         const headers = ['クエストID', 'クエスト名', '種別', '総実行数', 'クリア数', '放棄数', 'クリア率(%)'];
         
         // データ行構築
-        const rows = data.questStats.map(q => {
+        const rows = questStats.map(q => {
             let typeLabel = 'メイン';
             if (q.quest_type === 'sub') typeLabel = 'サブ';
             else if (q.quest_type === 'ugc') typeLabel = 'UGC';
@@ -215,16 +238,18 @@ export default function AdminDashboardPage() {
 
     const router = useRouter();
 
-    const fetchData = useCallback(async () => {
+    const fetchCategory = useCallback(async (cat: 'summary' | 'daily' | 'quests' | 'colosseum' | 'academy') => {
         const adminKey = localStorage.getItem('adminKey');
         if (!adminKey) {
             router.push('/admin/login');
             return;
         }
 
-        setLoading(true);
+        setLoading(prev => ({ ...prev, [cat]: true }));
+        setErrors(prev => ({ ...prev, [cat]: '' }));
+
         try {
-            const res = await fetch(`/api/admin/kpi?days=${daysRange}`, {
+            const res = await fetch(`/api/admin/kpi?category=${cat}&days=${daysRange}`, {
                 headers: {
                     'x-admin-key': adminKey
                 }
@@ -241,24 +266,58 @@ export default function AdminDashboardPage() {
             }
 
             const json = await res.json();
-            setData(json);
+            
+            if (cat === 'summary') {
+                setSummary(json.summary);
+                setLevelDistribution(json.levelDistribution);
+                setSubscriptionDistribution(json.subscriptionDistribution);
+            } else if (cat === 'daily') {
+                setDailyKPI(json.dailyKPI);
+            } else if (cat === 'quests') {
+                setQuestStats(json.questStats);
+                setQuestRanking(json.questRanking);
+            } else if (cat === 'colosseum') {
+                setColosseum(json.colosseum);
+            } else if (cat === 'academy') {
+                setAcademy(json.academy);
+            }
         } catch (err: any) {
-            setError(err.message || '接続エラーが発生しました');
+            setErrors(prev => ({ ...prev, [cat]: err.message || '接続エラーが発生しました' }));
         } finally {
-            setLoading(false);
+            setLoading(prev => ({ ...prev, [cat]: false }));
         }
     }, [router, daysRange]);
 
+    // Fetch initial basic data (summary and daily chart metrics)
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        fetchCategory('summary');
+        fetchCategory('daily');
+    }, [fetchCategory]);
+
+    const handleTabChange = (tab: 'users' | 'battles' | 'dau' | 'payments' | 'colosseum' | 'academy') => {
+        setActiveTab(tab);
+        if (tab === 'colosseum' && !colosseum && !loading.colosseum) {
+            fetchCategory('colosseum');
+        } else if (tab === 'academy' && !academy && !loading.academy) {
+            fetchCategory('academy');
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('adminKey');
         router.push('/admin/login');
     };
 
-    if (loading) {
+    const handleRefreshAll = () => {
+        fetchCategory('summary');
+        fetchCategory('daily');
+        if (activeTab === 'colosseum' || colosseum) fetchCategory('colosseum');
+        if (activeTab === 'academy' || academy) fetchCategory('academy');
+        if (questStats) fetchCategory('quests');
+    };
+
+    // If summary is loading and not yet populated, show loading screen
+    if (loading.summary && !summary) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#070d19] text-gray-100">
                 <div className="text-center">
@@ -269,13 +328,14 @@ export default function AdminDashboardPage() {
         );
     }
 
-    if (error || !data) {
+    // If summary load failed completely
+    if (errors.summary && !summary) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#070d19] text-gray-100">
                 <div className="max-w-md p-6 bg-red-950/20 border border-red-800/40 rounded-2xl text-center">
-                    <p className="text-red-400 font-semibold mb-4">{error || 'データの読み込みに失敗しました'}</p>
+                    <p className="text-red-400 font-semibold mb-4">{errors.summary || 'データの読み込みに失敗しました'}</p>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => fetchCategory('summary')}
                         className="px-4 py-2 bg-red-900/60 hover:bg-red-800 rounded-lg text-sm text-white transition-all"
                     >
                         再試行
@@ -285,18 +345,22 @@ export default function AdminDashboardPage() {
         );
     }
 
-    const { summary, levelDistribution, subscriptionDistribution, questRanking, dailyKPI, colosseum, academy } = data;
+    if (!summary || !levelDistribution || !subscriptionDistribution) {
+        return null;
+    }
 
     // 自前SVGグラフ用の座標計算
     const svgWidth = 800;
     const svgHeight = 250;
     const padding = 40;
-    const divisor = dailyKPI.length > 1 ? dailyKPI.length - 1 : 1;
-    const colWidth = (svgWidth - padding * 2) / Math.max(1, dailyKPI.length);
+    
+    const currentDailyKPI = dailyKPI || [];
+    const divisor = currentDailyKPI.length > 1 ? currentDailyKPI.length - 1 : 1;
+    const colWidth = (svgWidth - padding * 2) / Math.max(1, currentDailyKPI.length);
 
     // A. 折れ線グラフ用: 新規ユーザー数
-    const maxUsers = Math.max(...dailyKPI.map(d => d.newUsers), 5);
-    const userPoints = dailyKPI.map((d, i) => {
+    const maxUsers = Math.max(...currentDailyKPI.map(d => d.newUsers), 5);
+    const userPoints = currentDailyKPI.map((d, i) => {
         const x = padding + (i / divisor) * (svgWidth - padding * 2);
         const y = svgHeight - padding - (d.newUsers / maxUsers) * (svgHeight - padding * 2);
         return { x, y };
@@ -307,11 +371,11 @@ export default function AdminDashboardPage() {
         : '';
 
     // B. 棒グラフ用: 総バトル数
-    const maxBattles = Math.max(...dailyKPI.map(d => d.totalBattles), 5);
+    const maxBattles = Math.max(...currentDailyKPI.map(d => d.totalBattles), 5);
 
     // C. 折れ線グラフ用: アクティブユーザー数 (DAU / MAU)
-    const maxActive = Math.max(...dailyKPI.map(d => Math.max(d.dau, d.mau)), 5);
-    const dauPoints = dailyKPI.map((d, i) => {
+    const maxActive = Math.max(...currentDailyKPI.map(d => Math.max(d.dau, d.mau)), 5);
+    const dauPoints = currentDailyKPI.map((d, i) => {
         const x = padding + (i / divisor) * (svgWidth - padding * 2);
         const y = svgHeight - padding - (d.dau / maxActive) * (svgHeight - padding * 2);
         return { x, y };
@@ -321,12 +385,15 @@ export default function AdminDashboardPage() {
         ? `${dauLinePath} L ${dauPoints[dauPoints.length - 1].x} ${svgHeight - padding} L ${dauPoints[0].x} ${svgHeight - padding} Z`
         : '';
 
-    const mauPoints = dailyKPI.map((d, i) => {
+    const mauPoints = currentDailyKPI.map((d, i) => {
         const x = padding + (i / divisor) * (svgWidth - padding * 2);
         const y = svgHeight - padding - (d.mau / maxActive) * (svgHeight - padding * 2);
         return { x, y };
     });
     const mauLinePath = mauPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const mauAreaPath = mauPoints.length > 0 
+        ? `${mauLinePath} L ${mauPoints[mauPoints.length - 1].x} ${svgHeight - padding} L ${mauPoints[0].x} ${svgHeight - padding} Z`
+        : '';
 
     // E. 折れ線グラフ用: コロシアム挑戦数
     const colosseumDaily = colosseum?.daily || [];
@@ -354,12 +421,9 @@ export default function AdminDashboardPage() {
         return { x, y };
     });
     const colHardLinePath = colHardPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-    const mauAreaPath = mauPoints.length > 0 
-        ? `${mauLinePath} L ${mauPoints[mauPoints.length - 1].x} ${svgHeight - padding} L ${mauPoints[0].x} ${svgHeight - padding} Z`
-        : '';
 
     // D. 棒グラフ用: 課金売上金額推移 (Stripe)
-    const maxRevenue = Math.max(...dailyKPI.map(d => d.revenue), 1000);
+    const maxRevenue = Math.max(...currentDailyKPI.map(d => d.revenue), 1000);
 
     // F. 魔術学院
     const academyDaily = academy?.daily || [];
@@ -429,12 +493,12 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
                     <button
-                        onClick={fetchData}
-                        disabled={loading}
+                        onClick={handleRefreshAll}
+                        disabled={Object.values(loading).some(Boolean)}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-900/40 text-blue-400 text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
                     >
-                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                        データの更新
+                        <RefreshCw size={14} className={Object.values(loading).some(Boolean) ? 'animate-spin' : ''} />
+                        全ての更新
                     </button>
                     <button
                         onClick={handleLogout}
@@ -544,37 +608,37 @@ export default function AdminDashboardPage() {
                                 </select>
                                 <div className="flex flex-wrap bg-[#070d19] border border-gray-800 rounded-lg p-0.5 text-[10px]">
                                     <button
-                                        onClick={() => setActiveTab('users')}
+                                        onClick={() => handleTabChange('users')}
                                         className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'users' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
                                         ユーザー登録
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('battles')}
+                                        onClick={() => handleTabChange('battles')}
                                         className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'battles' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
                                         バトル統計
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('dau')}
+                                        onClick={() => handleTabChange('dau')}
                                         className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'dau' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
                                         アクティブUU
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('payments')}
+                                        onClick={() => handleTabChange('payments')}
                                         className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'payments' ? 'bg-yellow-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
                                         課金決済
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('colosseum')}
+                                        onClick={() => handleTabChange('colosseum')}
                                         className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'colosseum' ? 'bg-amber-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
                                         コロシアム
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('academy')}
+                                        onClick={() => handleTabChange('academy')}
                                         className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'academy' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
                                         魔術学院
@@ -591,7 +655,49 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* 自前SVGグラフ */}
-                        <div className="relative">
+                        <div className="relative min-h-[250px] flex flex-col items-stretch justify-center">
+                            {/* コロシアムタブのロード中/未ロード */}
+                            {activeTab === 'colosseum' && (loading.colosseum || !colosseum) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a1628]/40 z-10">
+                                    {errors.colosseum ? (
+                                        <p className="text-red-400 text-xs">{errors.colosseum}</p>
+                                    ) : (
+                                        <>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-2"></div>
+                                            <p className="text-xs text-gray-500">コロシアム統計を読み込み中...</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 魔術学院タブのロード中/未ロード */}
+                            {activeTab === 'academy' && (loading.academy || !academy) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a1628]/40 z-10">
+                                    {errors.academy ? (
+                                        <p className="text-red-400 text-xs">{errors.academy}</p>
+                                    ) : (
+                                        <>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mb-2"></div>
+                                            <p className="text-xs text-gray-500">魔術学院統計を読み込み中...</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* その他の一般日次KPIタブのロード中/未ロード */}
+                            {activeTab !== 'colosseum' && activeTab !== 'academy' && (loading.daily || !dailyKPI) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a1628]/40 z-10">
+                                    {errors.daily ? (
+                                        <p className="text-red-400 text-xs">{errors.daily}</p>
+                                    ) : (
+                                        <>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                                            <p className="text-xs text-gray-500">日次KPIデータを読み込み中...</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
                             {/* コロシアム総合サマリー */}
                             {activeTab === 'colosseum' && colosseum && (
                                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
@@ -681,7 +787,7 @@ export default function AdminDashboardPage() {
                                     {activeTab === 'colosseum' && colHardLinePath && <path d={colHardLinePath} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
 
                                     {/* ガイドホバー */}
-                                    {dailyKPI.map((d, i) => {
+                                    {currentDailyKPI.map((d, i) => {
                                         const x = padding + (i / divisor) * (svgWidth - padding * 2);
                                         return (
                                             <g key={i}>
@@ -840,7 +946,7 @@ export default function AdminDashboardPage() {
                                     })}
 
                                     {/* 棒の描画 */}
-                                    {dailyKPI.map((d, i) => {
+                                    {currentDailyKPI.map((d, i) => {
                                         const x = padding + (i / divisor) * (svgWidth - padding * 2);
                                         const barWidth = Math.max(1, colWidth - Math.max(1, colWidth * 0.2));
                                         const yStart = svgHeight - padding;
@@ -888,29 +994,29 @@ export default function AdminDashboardPage() {
                                     }}
                                 >
                                     <div className="font-bold border-b border-gray-800 pb-1 text-gray-300">
-                                        {activeTab === 'academy' ? academyDaily[hoveredIdx]?.date : dailyKPI[hoveredIdx]?.date}
+                                        {activeTab === 'academy' ? academyDaily[hoveredIdx]?.date : currentDailyKPI[hoveredIdx]?.date}
                                     </div>
-                                    {activeTab === 'users' && <div className="text-blue-400">新規ユーザー: {dailyKPI[hoveredIdx].newUsers} 名</div>}
-                                    {activeTab === 'dau' && (
+                                    {activeTab === 'users' && currentDailyKPI[hoveredIdx] && <div className="text-blue-400">新規ユーザー: {currentDailyKPI[hoveredIdx].newUsers} 名</div>}
+                                    {activeTab === 'dau' && currentDailyKPI[hoveredIdx] && (
                                         <>
-                                            <div className="text-emerald-400 font-bold">DAU (日間): {dailyKPI[hoveredIdx].dau} UU</div>
-                                            <div className="text-indigo-400">MAU (月間): {dailyKPI[hoveredIdx].mau} UU</div>
+                                            <div className="text-emerald-400 font-bold">DAU (日間): {currentDailyKPI[hoveredIdx].dau} UU</div>
+                                            <div className="text-indigo-400">MAU (月間): {currentDailyKPI[hoveredIdx].mau} UU</div>
                                         </>
                                     )}
-                                    {activeTab === 'payments' && (
+                                    {activeTab === 'payments' && currentDailyKPI[hoveredIdx] && (
                                         <>
-                                            <div className="text-yellow-400 font-bold">売上金額: {dailyKPI[hoveredIdx].revenue.toLocaleString()} 円</div>
-                                            <div className="text-amber-500">課金者数 (DPU): {dailyKPI[hoveredIdx].dpu} UU</div>
-                                            <div className="text-purple-400">課金者数 (MPU): {dailyKPI[hoveredIdx].mpu} UU</div>
+                                            <div className="text-yellow-400 font-bold">売上金額: {currentDailyKPI[hoveredIdx].revenue.toLocaleString()} 円</div>
+                                            <div className="text-amber-500">課金者数 (DPU): {currentDailyKPI[hoveredIdx].dpu} UU</div>
+                                            <div className="text-purple-400">課金者数 (MPU): {currentDailyKPI[hoveredIdx].mpu} UU</div>
                                         </>
                                     )}
-                                    {activeTab === 'battles' && (
+                                    {activeTab === 'battles' && currentDailyKPI[hoveredIdx] && (
                                         <>
-                                            <div className="text-gray-400">総戦闘: {dailyKPI[hoveredIdx].totalBattles} 回</div>
-                                            <div className="text-emerald-400">勝利: {dailyKPI[hoveredIdx].victories}</div>
-                                            <div className="text-red-400">敗北: {dailyKPI[hoveredIdx].defeats}</div>
-                                            <div className="text-purple-400">逃亡: {dailyKPI[hoveredIdx].fleds}</div>
-                                            <div className="text-blue-400 font-bold border-t border-gray-800/55 pt-1 mt-1">勝率: {dailyKPI[hoveredIdx].winRate}%</div>
+                                            <div className="text-gray-400">総戦闘: {currentDailyKPI[hoveredIdx].totalBattles} 回</div>
+                                            <div className="text-emerald-400">勝利: {currentDailyKPI[hoveredIdx].victories}</div>
+                                            <div className="text-red-400">敗北: {currentDailyKPI[hoveredIdx].defeats}</div>
+                                            <div className="text-purple-400">逃亡: {currentDailyKPI[hoveredIdx].fleds}</div>
+                                            <div className="text-blue-400 font-bold border-t border-gray-800/55 pt-1 mt-1">勝率: {currentDailyKPI[hoveredIdx].winRate}%</div>
                                         </>
                                     )}
                                     {activeTab === 'colosseum' && colosseumDaily[hoveredIdx] && (
@@ -1147,22 +1253,68 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)] relative min-h-[200px]">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-sm font-semibold tracking-wide text-gray-300 flex items-center gap-2">
                                 <Trophy size={16} className="text-yellow-400" />
                                 全クエスト別詳細分析（実行数・クリア数・クリア率）
+                                {questStats && (
+                                    <button
+                                        onClick={() => fetchCategory('quests')}
+                                        disabled={loading.quests}
+                                        className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors"
+                                        title="クエスト統計を更新"
+                                    >
+                                        <RefreshCw size={12} className={loading.quests ? 'animate-spin' : ''} />
+                                    </button>
+                                )}
                             </h2>
-                            <button
-                                onClick={exportQuestStatsCsv}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
-                            >
-                                <Download size={12} />
-                                CSV出力
-                            </button>
+                            {questStats && (
+                                <button
+                                    onClick={exportQuestStatsCsv}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
+                                >
+                                    <Download size={12} />
+                                    CSV出力
+                                </button>
+                            )}
                         </div>
 
-                        {data.questStats && data.questStats.length > 0 ? (
+                        {loading.quests && !questStats && (
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mb-2"></div>
+                                <p className="text-xs text-gray-500">クエスト統計を読み込み中...</p>
+                            </div>
+                        )}
+
+                        {errors.quests && !questStats && (
+                            <div className="text-center py-12">
+                                <p className="text-red-400 text-xs mb-3">{errors.quests}</p>
+                                <button
+                                    onClick={() => fetchCategory('quests')}
+                                    className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-900/40 text-red-400 text-xs rounded-lg transition-all"
+                                >
+                                    再試行
+                                </button>
+                            </div>
+                        )}
+
+                        {!questStats && !loading.quests && !errors.quests && (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <p className="text-xs text-gray-500 mb-4">
+                                    クエスト詳細分析はデータ量が非常に多いため、初期表示の負荷を軽減するために遅延ロードにしています。
+                                </p>
+                                <button
+                                    onClick={() => fetchCategory('quests')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-900/40 text-blue-400 text-xs font-semibold rounded-lg transition-all"
+                                >
+                                    <Trophy size={14} />
+                                    クエスト統計データを読み込む
+                                </button>
+                            </div>
+                        )}
+
+                        {questStats && questStats.length > 0 ? (
                             <div className="overflow-y-auto max-h-96 pr-2 custom-scrollbar">
                                 <table className="w-full text-left text-xs border-collapse">
                                     <thead>
@@ -1177,7 +1329,7 @@ export default function AdminDashboardPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-850">
-                                        {data.questStats.map((q) => {
+                                        {questStats.map((q) => {
                                             let typeLabel = 'メイン';
                                             let typeColor = 'text-blue-400 bg-blue-950/40 border border-blue-900/30';
                                             if (q.quest_type === 'sub') {
@@ -1222,9 +1374,11 @@ export default function AdminDashboardPage() {
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-gray-500 text-xs">
-                                現在、クエスト統計データが存在しません。
-                            </div>
+                            questStats && (
+                                <div className="text-center py-8 text-gray-500 text-xs">
+                                    現在、クエスト統計データが存在しません。
+                                </div>
+                            )
                         )}
                     </div>
                 )}
