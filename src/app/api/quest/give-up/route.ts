@@ -148,18 +148,30 @@ export async function POST(req: Request) {
                     try {
                         const { data: stats } = await supabaseServer
                             .from('colosseum_user_stats')
-                            .select('wins, losses, current_streak, max_streak')
+                            .select('wins, losses, current_streak_easy, max_streak_easy, current_streak_normal, max_streak_normal, current_streak_hard, max_streak_hard')
                             .eq('user_id', userId)
                             .maybeSingle();
 
-                        const currentStats = stats || { wins: 0, losses: 0, current_streak: 0, max_streak: 0 };
+                        const currentStats = stats || {
+                            wins: 0,
+                            losses: 0,
+                            current_streak_easy: 0,
+                            max_streak_easy: 0,
+                            current_streak_normal: 0,
+                            max_streak_normal: 0,
+                            current_streak_hard: 0,
+                            max_streak_hard: 0
+                        };
+
+                        const currentStreakKey = `current_streak_${difficulty}` as const;
 
                         await supabaseServer
                             .from('colosseum_user_stats')
                             .upsert({
                                 user_id: userId,
+                                wins: currentStats.wins,
                                 losses: currentStats.losses + 1,
-                                current_streak: 0,
+                                [currentStreakKey]: 0,
                                 updated_at: new Date().toISOString()
                             }, { onConflict: 'user_id' });
                     } catch (statsErr) {

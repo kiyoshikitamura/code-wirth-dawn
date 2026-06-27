@@ -167,15 +167,44 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                         <section className="space-y-2">
                             <h3 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ ランキング報酬と戦績リセット</h3>
                             <p className="text-xs">
-                                コロシアムの「勝利数」および「最多連勝数」のランキング上位者には、6時間ごと（JST 6時/12時/18時/24時）の集計時に以下の報酬がゲーム内郵便（システム通知）を通じて送られます。
+                                コロシアムの「勝利数（総合）」および「難易度別（Easy/Normal/Hard）の連勝数」のランキング上位者には、6時間ごと（JST 6時/12時/18時/24時）の集計時に以下の報酬（オプションA）がシステム通知を通じて送られます。複数部門で入賞した場合は、報酬が合算されます（該当順位にプレイヤーが不在の場合は「空席」となり配布されません）。
                             </p>
-                            <ul className="list-disc pl-4 text-xs space-y-1 text-slate-400 mt-1">
-                                <li>1位: <span className="text-amber-400 font-bold">10,000 G</span></li>
-                                <li>2位: <span className="text-amber-400 font-bold">5,000 G</span></li>
-                                <li>3位: <span className="text-amber-400 font-bold">1,000 G</span></li>
-                            </ul>
+                            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 mt-2">
+                                <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
+                                    <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">勝利数（総合）</div>
+                                    <ul className="space-y-0.5 font-mono">
+                                        <li>1位: <span className="text-amber-400 font-bold">10,000G</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">5,000G</span></li>
+                                        <li>3位: <span className="text-slate-400">1,000G</span></li>
+                                    </ul>
+                                </div>
+                                <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
+                                    <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">Easy連勝</div>
+                                    <ul className="space-y-0.5 font-mono">
+                                        <li>1位: <span className="text-amber-400 font-bold">5,000G</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">2,000G</span></li>
+                                        <li>3位: <span className="text-slate-400">500G</span></li>
+                                    </ul>
+                                </div>
+                                <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
+                                    <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">Normal連勝</div>
+                                    <ul className="space-y-0.5 font-mono">
+                                        <li>1位: <span className="text-amber-400 font-bold">10,000G</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">5,000G</span></li>
+                                        <li>3位: <span className="text-slate-400">1,000G</span></li>
+                                    </ul>
+                                </div>
+                                <div className="p-2 bg-[#0a1526] rounded border border-[#1b3152]/30">
+                                    <div className="text-amber-400 font-bold border-b border-[#1b3152]/40 pb-0.5 mb-1">Hard連勝</div>
+                                    <ul className="space-y-0.5 font-mono">
+                                        <li>1位: <span className="text-amber-400 font-bold">20,000G</span></li>
+                                        <li>2位: <span className="text-slate-200 font-bold">10,000G</span></li>
+                                        <li>3位: <span className="text-slate-400">2,000G</span></li>
+                                    </ul>
+                                </div>
+                            </div>
                             <p className="text-xs text-rose-300 font-medium mt-2">
-                                ⚠️ 集計期間（6時間）の終了時に、全プレイヤーのコロシアム戦績（勝利数・連勝数）はすべて 0 にリセットされます。
+                                ⚠️ 集計期間（6時間）の終了時に、全プレイヤーのコロシアム戦績（勝利数・各難易度の連勝数）はすべて 0 にリセットされます。
                             </p>
                         </section>
                     </div>

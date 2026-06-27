@@ -1,19 +1,19 @@
 # spec_v24: コロシアム（闘技場）システム仕様書
 
-**Version**: 1.1
-**Date**: 2026-06-18
-**Status**: Implemented & Verified
+**Version**: 1.2
+**Date**: 2026-06-27
+**Status**: Planning & Specification Updated
 
 ---
 
 ## 1. 概要
 
 エンドコンテンツとして、Hub（名もなき旅人の拠所）を除くすべての通常拠点において「コロシアム（闘技場）」機能を実装する。
-プレイヤーはゴールドを消費して難易度別の勝ち抜きエネミーバトルに挑戦し、希少な報酬の獲得や他のプレイヤーとのランキング競走（勝利数・最多連勝数）を楽しむことができる。
+プレイヤーはゴールドを消費して難易度別の勝ち抜きエネミーバトルに挑戦し、希少な報酬の獲得や他のプレイヤーとのランキング競走（勝利数・各難易度ごとの最多連勝数）を楽しむことができる。
 
 ### 1.1 基本ルール
 
-| 難易度 | 総戦数 | エネミーパターン数 | 挑戦費用（ゴールド） | 獲得報酬量（抽選プールより） |
+| 難易度 | 各戦闘数 | エネミーパターン数 | 挑戦費用（ゴールド） | 獲得報酬量（抽選プールより） |
 |:---|:---|:---|:---|:---|
 | **Easy** | 5戦 | 15種類 | プレイヤーレベル × 10 G | アイテムまたはスキル1点 |
 | **Normal** | 10戦 | 30種類 | プレイヤーレベル × 30 G | アイテムまたはスキル1点 |
@@ -23,24 +23,28 @@
 - **デッキロック**: クエスト開始時にデッキがロックされ、挑戦中はスキルの変更や装備の変更が不可となる（一般クエストと同様のQuestEngine統合）。
 - **戦闘構成**: 各戦闘は難易度ごとに定義された `colosseum_enemy_groups` プールからランダムに敵グループが選出される。
 - **進行ノード**: シナリオは「1戦目」「2戦目」...と進行し、最終戦に勝利すると「クリア」、途中で敗北すると「失敗」となる。
-- **敗北・ギブアップ時の処理**: 敗北または途中でクエストを「ギブアップ（リタイア）」した場合、現在の連勝数（`current_streak`）は即座に `0` にリセットされ、敗北数（`losses`）が `+1` 加算される（※バトルの敗北と同一の戦績ペナルティが適用される）。
+- **敗北・ギブアップ時の処理**: 敗北または途中でクエストを「ギブアップ（リタイア）」した場合、挑戦中の難易度に対応した現在の連勝数（`current_streak_easy` / `current_streak_normal` / `current_streak_hard`）は即座に `0` にリセットされ、全体の敗北数（`losses`）が `+1` 加算される（※バトルの敗北と同一の戦績ペナルティが適用される）。
 
 ---
 
 ## 2. データベース設計 (Schema)
 
-コロシアムの進行、統計、ランキング、および報酬制御のために以下のテーブルを追加した。
+コロシアムの進行、統計、ランキング、および報酬制御のために以下のテーブルを追加・拡張した。
 
 ### 2.1 `colosseum_user_stats`（ユーザー戦績）
-各プレイヤーのコロシアム戦績（勝利数、敗北数、現在の連勝数、過去最多連勝数）を記録する。
+各プレイヤーのコロシアム戦績（累計勝利数、累計敗北数、および難易度別の現在連勝数・最多連勝数）を記録する。
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.colosseum_user_stats (
     user_id UUID PRIMARY KEY REFERENCES public.user_profiles(id) ON DELETE CASCADE,
     wins INTEGER NOT NULL DEFAULT 0,
     losses INTEGER NOT NULL DEFAULT 0,
-    current_streak INTEGER NOT NULL DEFAULT 0,
-    max_streak INTEGER NOT NULL DEFAULT 0,
+    current_streak_easy INTEGER NOT NULL DEFAULT 0,
+    max_streak_easy INTEGER NOT NULL DEFAULT 0,
+    current_streak_normal INTEGER NOT NULL DEFAULT 0,
+    max_streak_normal INTEGER NOT NULL DEFAULT 0,
+    current_streak_hard INTEGER NOT NULL DEFAULT 0,
+    max_streak_hard INTEGER NOT NULL DEFAULT 0,
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
@@ -55,15 +59,19 @@ CREATE TABLE IF NOT EXISTS public.ranking_colosseum_cache (
     user_name TEXT,
     avatar_url TEXT, -- ユーザーアバター画像URL
     wins INTEGER NOT NULL DEFAULT 0,
-    max_streak INTEGER NOT NULL DEFAULT 0,
+    max_streak_easy INTEGER NOT NULL DEFAULT 0,
+    max_streak_normal INTEGER NOT NULL DEFAULT 0,
+    max_streak_hard INTEGER NOT NULL DEFAULT 0,
     rank_by_wins INTEGER,
-    rank_by_streak INTEGER,
+    rank_by_streak_easy INTEGER,
+    rank_by_streak_normal INTEGER,
+    rank_by_streak_hard INTEGER,
     aggregated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
 ### 2.3 `colosseum_enemy_groups`（出現エネミープール）
-各難易度に出現する敵グループのスラッグを紐づけるマスタテーブル。Easyは15種、Normalは30種、Hardはユニークボスを含めた30種が登録される。
+各難易度に出現する敵グループのスラッグを紐づけるマスタテーブル。
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.colosseum_enemy_groups (
@@ -74,13 +82,13 @@ CREATE TABLE IF NOT EXISTS public.colosseum_enemy_groups (
 ```
 
 ### 2.4 `colosseum_reward_pool`（クリア報酬プール）
-コロシアムをクリアした際に抽選されるレア・限定アイテム及びスキルのマスタテーブル。各報酬には `rarity` (希少度) が定義され、排出率が重み付け制御される。
+コロシアムをクリアした際に抽選されるレア・限定アイテム及びスキルのマスタテーブル。
 
 ```sql
 CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     reward_type TEXT NOT NULL, -- 'item', 'skill'
-    reward_id TEXT NOT NULL,   -- 各マスタのID（文字列または数値文字）
+    reward_id TEXT NOT NULL,
     name TEXT,
     rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'super_rare'))
 );
@@ -90,16 +98,13 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 
 ## 3. 報酬確率システム (Weighted Probability)
 
-ドロップアイテムおよびスキルは、難易度（Easy / Normal / Hard）ごとの確率ウェイトに基づいて個別にランダム抽選される。高難度になるほど、レア・超レア報酬の排出確率が上がる。
+難易度に応じた報酬抽選ウェイトテーブル。高難度になるほどレア・超レア報酬の排出率が上昇する。
 
 | 難易度 | Common（コモン） | Rare（レア） | Super Rare（スーパーレア） |
 |:---|:---|:---|:---|
-| **Easy** | 70% (ウェイト: 70) | 25% (ウェイト: 25) | 5% (ウェイト: 5) |
-| **Normal** | 40% (ウェイト: 40) | 50% (ウェイト: 50) | 10% (ウェイト: 10) |
-| **Hard** | 30% (ウェイト: 30) | 40% (ウェイト: 40) | 30% (ウェイト: 30) |
-
-- **抽選ロジック**: `/api/quest/complete` 内にて、難易度に応じたウェイトマップを使用し、対応する報酬タイプの全プールからウェイトの総和を算出して境界値による抽選を行う。
-- **Hard報酬**: Hardクリア時は、この抽選処理をアイテム・スキルそれぞれにおいて2回ずつ反復実行して付与する（アイテム2点＋スキル2点＝計4点）。
+| **Easy** | 70% | 25% | 5% |
+| **Normal** | 40% | 50% | 10% |
+| **Hard** | 30% | 40% | 30% |
 
 ---
 
@@ -112,11 +117,11 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 コロシアムランキングと現在ユーザーの順位をフェッチする。
 
 ### 4.3 `POST /api/battle/validate-result`（既存拡張）
-戦闘終了検証時、コロシアム中のバトルであれば戦績 (`colosseum_user_stats`) を更新する。
+戦闘終了検証時、コロシアム中のバトルであれば戦績 (`colosseum_user_stats`) の該当難易度の連勝および累計勝利・敗北数を更新する。
 
 ### 4.4 `POST /api/quest/complete`（既存拡張）
 - **報酬付与**: コロシアム制覇時に、報酬プールからウェイトに基づいてアイテム・スキルを抽選してユーザーに付与する。
-- **戦闘検証（セキュリティ強化）**: コロシアム完了時においても、バトル検証トークン（`battle_completion_token`）による戦闘検証が必須化される。API側では、難易度（Easy/Normal/Hard）に応じた連続戦闘ノード（`colosseum_battle_1` から `colosseum_battle_N`）をモックとして構築して検証ロジックを通すことで、チートによるクリアワープや改ざんを確実に遮断する。
+- **戦闘検証（セキュリティ強化）**: コロシアム完了時においても、バトル検証トークンによる検証が必須化される。
 
 ---
 
@@ -138,25 +143,35 @@ CREATE TABLE IF NOT EXISTS public.colosseum_reward_pool (
 世界シミュレーションの更新（JST 6:00, 12:00, 18:00, 24:00）と同期して実行される Vercel Cron `/api/cron/daily-update` 内にて、コロシアムランキングの上位入賞者に対して自動で報酬を付与し、戦績をクリアする。
 
 ### 6.1 報酬体系
-- **勝利数ランキング (Wins Ranking)**:
-  - 1位: 10000 G
-  - 2位: 5000 G
-  - 3位: 1000 G
-- **連勝数ランキング (Streaks Ranking)**:
-  - 1位: 10000 G
-  - 2位: 5000 G
-  - 3位: 1000 G
+- **勝利数ランキング (Wins Ranking) (総合)**:
+  - 1位: 10,000 G
+  - 2位: 5,000 G
+  - 3位: 1,000 G
+- **Easy連勝ランキング (Easy Streaks Ranking)**:
+  - 1位: 5,000 G
+  - 2位: 2,000 G
+  - 3位: 500 G
+- **Normal連勝ランキング (Normal Streaks Ranking)**:
+  - 1位: 10,000 G
+  - 2位: 5,000 G
+  - 3位: 1,000 G
+- **Hard連勝ランキング (Hard Streaks Ranking)**:
+  - 1位: 20,000 G
+  - 2位: 10,000 G
+  - 3位: 2,000 G
 
 *※両方のランキングで入賞した場合は、報酬が累積して付与される。*
 
-### 6.2 順位の決定とタイ解決
+### 6.2 順位の決定、タイ解決、および空席の例外処理
 - キャッシュテーブル `ranking_colosseum_cache` は集計時に PostgreSQL の `ROW_NUMBER()` 関数によって一意な順位が割り当てられており、同点（タイ）であっても重複のない「1位、2位、3位」が厳密に決定される。
-- Cron 処理内では、このキャッシュテーブルから `rank_by_wins` (1〜3位) および `rank_by_streak` (1〜3位) を取得して対象ユーザーに報酬を付与する。
+- Cron 処理内では、このキャッシュテーブルから `rank_by_wins` (1〜3位) および各難易度の連勝順位を取得して対象ユーザーに報酬を付与する。
+- **空席時の例外処理**: 該当部門の挑戦者が3人未満（例: 2人しか挑戦していない等）で、ある順位（例: 3位）に該当するプレイヤーが存在しない場合は、その順位は「空席」として扱い、ゴールドの付与や通知の送信などは行わずスキップする（存在しないアカウントへの誤配布を防ぐ）。
+- **15分ごとの自動再集計**: ランキングキャッシュ (`ranking_colosseum_cache`) は、最新の戦績を速やかに反映させてユーザーに認識させるため、6時間ごとの報酬集計・リセットとは別に、15分に一度バックグラウンドで自動集計され最新状態へと更新される。
 
 ### 6.3 処理内容と戦績リセット
-1. **ゴールド付与**: `increment_gold` RPCを使用して、アトミックにゴールドを加算。
-2. **システム通知**: `notifications` テーブルに、「コロシアムランキング報酬」として付与ゴールドを明記した未読通知をインサートする。
-3. **年代記記録**: プレイヤーの個人タイムライン (`user_chronicles`) に、イベントタイプ `system_reward` として「コロシアムランキング入賞」の記録をインサートする。
+1. **ゴールド付与**: `increment_gold` RPCを使用して、アトミックにゴールドを加算（空席の場合はスキップ）。
+2. **システム通知**: `notifications` テーブルに、「コロシアムランキング報酬」として付与ゴールドと入賞部門を明記した未読通知をインサートする（空席の場合はスキップ）。
+3. **年代記記録**: プレイヤーの個人タイムライン (`user_chronicles`) に、イベントタイプ `system_reward` として「コロシアムランキング入賞」の記録をインサートする（累計勝利数および難易度別の連勝数の入賞時にそれぞれ記録され、複数部門入賞した場合はゴールドが合算されて記録される。空席の場合はスキップ）。
 4. **戦績の自動リセットと表示キャッシュクリア**:
    - 報酬の配布完了直後、その時点の `ranking_colosseum_cache` の全内容を監査・問い合わせ対応用として **`colosseum_ranking_history` （履歴テーブル）に退避・コピー**する。
    - その後、`ranking_colosseum_cache`（表示キャッシュ）と `colosseum_user_stats`（戦績）のデータを全削除してクリアする。

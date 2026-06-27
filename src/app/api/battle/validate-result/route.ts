@@ -104,35 +104,55 @@ export async function POST(req: Request) {
                     .single();
 
                 if (userProfile?.current_quest_id && String(userProfile.current_quest_id).startsWith('colosseum_')) {
-                    const { data: stats } = await supabaseServer
-                        .from('colosseum_user_stats')
-                        .select('wins, losses, current_streak, max_streak')
-                        .eq('user_id', user.id)
-                        .maybeSingle();
+                    const questId = String(userProfile.current_quest_id);
+                    let difficulty: 'easy' | 'normal' | 'hard' | null = null;
+                    if (questId.includes('easy')) difficulty = 'easy';
+                    else if (questId.includes('normal')) difficulty = 'normal';
+                    else if (questId.includes('hard')) difficulty = 'hard';
 
-                    const currentStats = stats || { wins: 0, losses: 0, current_streak: 0, max_streak: 0 };
+                    if (difficulty) {
+                        const { data: stats } = await supabaseServer
+                            .from('colosseum_user_stats')
+                            .select('wins, losses, current_streak_easy, max_streak_easy, current_streak_normal, max_streak_normal, current_streak_hard, max_streak_hard')
+                            .eq('user_id', user.id)
+                            .maybeSingle();
 
-                    if (validatedResult === 'victory') {
-                        const nextStreak = currentStats.current_streak + 1;
-                        const newMax = Math.max(currentStats.max_streak, nextStreak);
-                        await supabaseServer
-                            .from('colosseum_user_stats')
-                            .upsert({
-                                user_id: user.id,
-                                wins: currentStats.wins + 1,
-                                current_streak: nextStreak,
-                                max_streak: newMax,
-                                updated_at: new Date().toISOString()
-                            }, { onConflict: 'user_id' });
-                    } else if (validatedResult === 'defeat' || validatedResult === 'escape') {
-                        await supabaseServer
-                            .from('colosseum_user_stats')
-                            .upsert({
-                                user_id: user.id,
-                                losses: currentStats.losses + 1,
-                                current_streak: 0,
-                                updated_at: new Date().toISOString()
-                            }, { onConflict: 'user_id' });
+                        const currentStats = stats || {
+                            wins: 0,
+                            losses: 0,
+                            current_streak_easy: 0,
+                            max_streak_easy: 0,
+                            current_streak_normal: 0,
+                            max_streak_normal: 0,
+                            current_streak_hard: 0,
+                            max_streak_hard: 0
+                        };
+
+                        const currentStreakKey = `current_streak_${difficulty}` as const;
+                        const maxStreakKey = `max_streak_${difficulty}` as const;
+
+                        if (validatedResult === 'victory') {
+                            const nextStreak = (currentStats[currentStreakKey] || 0) + 1;
+                            const newMax = Math.max(currentStats[maxStreakKey] || 0, nextStreak);
+                            await supabaseServer
+                                .from('colosseum_user_stats')
+                                .upsert({
+                                    user_id: user.id,
+                                    wins: currentStats.wins + 1,
+                                    [currentStreakKey]: nextStreak,
+                                    [maxStreakKey]: newMax,
+                                    updated_at: new Date().toISOString()
+                                }, { onConflict: 'user_id' });
+                        } else if (validatedResult === 'defeat' || validatedResult === 'escape') {
+                            await supabaseServer
+                                .from('colosseum_user_stats')
+                                .upsert({
+                                    user_id: user.id,
+                                    losses: currentStats.losses + 1,
+                                    [currentStreakKey]: 0,
+                                    updated_at: new Date().toISOString()
+                                }, { onConflict: 'user_id' });
+                        }
                     }
                 }
             } catch (statsErr) {

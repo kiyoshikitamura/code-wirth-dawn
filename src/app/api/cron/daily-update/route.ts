@@ -134,20 +134,38 @@ async function performUpdate(isForceUgcReset: boolean) {
 
         // 2.6. コロシアムランキング報酬付与処理 (6時間ごと)
         try {
-            const { data: topWins, error: topWinsErr } = await supabaseServer
-                .from('ranking_colosseum_cache')
-                .select('user_id, rank_by_wins, user_name')
-                .lte('rank_by_wins', 3)
-                .order('rank_by_wins', { ascending: true });
+            const [topWinsRes, topEasyRes, topNormalRes, topHardRes] = await Promise.all([
+                supabaseServer
+                    .from('ranking_colosseum_cache')
+                    .select('user_id, rank_by_wins, user_name')
+                    .lte('rank_by_wins', 3)
+                    .order('rank_by_wins', { ascending: true }),
+                supabaseServer
+                    .from('ranking_colosseum_cache')
+                    .select('user_id, rank_by_streak_easy, user_name')
+                    .lte('rank_by_streak_easy', 3)
+                    .order('rank_by_streak_easy', { ascending: true }),
+                supabaseServer
+                    .from('ranking_colosseum_cache')
+                    .select('user_id, rank_by_streak_normal, user_name')
+                    .lte('rank_by_streak_normal', 3)
+                    .order('rank_by_streak_normal', { ascending: true }),
+                supabaseServer
+                    .from('ranking_colosseum_cache')
+                    .select('user_id, rank_by_streak_hard, user_name')
+                    .lte('rank_by_streak_hard', 3)
+                    .order('rank_by_streak_hard', { ascending: true })
+            ]);
 
-            const { data: topStreaks, error: topStreaksErr } = await supabaseServer
-                .from('ranking_colosseum_cache')
-                .select('user_id, rank_by_streak, user_name')
-                .lte('rank_by_streak', 3)
-                .order('rank_by_streak', { ascending: true });
+            if (topWinsRes.error) throw topWinsRes.error;
+            if (topEasyRes.error) throw topEasyRes.error;
+            if (topNormalRes.error) throw topNormalRes.error;
+            if (topHardRes.error) throw topHardRes.error;
 
-            if (topWinsErr) throw topWinsErr;
-            if (topStreaksErr) throw topStreaksErr;
+            const topWins = topWinsRes.data;
+            const topEasy = topEasyRes.data;
+            const topNormal = topNormalRes.data;
+            const topHard = topHardRes.data;
 
             const rewardMap: Map<string, {
                 gold: number;
@@ -155,13 +173,16 @@ async function performUpdate(isForceUgcReset: boolean) {
                 userName: string;
             }> = new Map();
 
-            const prizeList = [10000, 5000, 1000];
+            const winsPrizes = [10000, 5000, 1000];
+            const easyPrizes = [5000, 2000, 500];
+            const normalPrizes = [10000, 5000, 1000];
+            const hardPrizes = [20000, 10000, 2000];
 
             if (topWins && topWins.length > 0) {
                 for (const u of topWins) {
                     const rank = u.rank_by_wins;
-                    if (rank && rank >= 1 && rank <= 3) {
-                        const prize = prizeList[rank - 1];
+                    if (u.user_id && rank && rank >= 1 && rank <= 3) {
+                        const prize = winsPrizes[rank - 1];
                         const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
                         current.gold += prize;
                         current.reasons.push(`勝利数ランキング第${rank}位 (${prize.toLocaleString()}G)`);
@@ -170,14 +191,40 @@ async function performUpdate(isForceUgcReset: boolean) {
                 }
             }
 
-            if (topStreaks && topStreaks.length > 0) {
-                for (const u of topStreaks) {
-                    const rank = u.rank_by_streak;
-                    if (rank && rank >= 1 && rank <= 3) {
-                        const prize = prizeList[rank - 1];
+            if (topEasy && topEasy.length > 0) {
+                for (const u of topEasy) {
+                    const rank = u.rank_by_streak_easy;
+                    if (u.user_id && rank && rank >= 1 && rank <= 3) {
+                        const prize = easyPrizes[rank - 1];
                         const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
                         current.gold += prize;
-                        current.reasons.push(`連勝数ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        current.reasons.push(`Easy連勝ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        rewardMap.set(u.user_id, current);
+                    }
+                }
+            }
+
+            if (topNormal && topNormal.length > 0) {
+                for (const u of topNormal) {
+                    const rank = u.rank_by_streak_normal;
+                    if (u.user_id && rank && rank >= 1 && rank <= 3) {
+                        const prize = normalPrizes[rank - 1];
+                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        current.gold += prize;
+                        current.reasons.push(`Normal連勝ランキング第${rank}位 (${prize.toLocaleString()}G)`);
+                        rewardMap.set(u.user_id, current);
+                    }
+                }
+            }
+
+            if (topHard && topHard.length > 0) {
+                for (const u of topHard) {
+                    const rank = u.rank_by_streak_hard;
+                    if (u.user_id && rank && rank >= 1 && rank <= 3) {
+                        const prize = hardPrizes[rank - 1];
+                        const current = rewardMap.get(u.user_id) || { gold: 0, reasons: [] as string[], userName: u.user_name || '旅人' };
+                        current.gold += prize;
+                        current.reasons.push(`Hard連勝ランキング第${rank}位 (${prize.toLocaleString()}G)`);
                         rewardMap.set(u.user_id, current);
                     }
                 }
@@ -261,7 +308,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                 try {
                     const { data: cacheData } = await supabaseServer
                         .from('ranking_colosseum_cache')
-                        .select('user_id, user_name, avatar_url, wins, max_streak, rank_by_wins, rank_by_streak, aggregated_at');
+                        .select('user_id, user_name, avatar_url, wins, max_streak_easy, max_streak_normal, max_streak_hard, rank_by_wins, rank_by_streak_easy, rank_by_streak_normal, rank_by_streak_hard, aggregated_at');
 
                     if (cacheData && cacheData.length > 0) {
                         const historyRecords = cacheData.map(r => ({
@@ -269,9 +316,13 @@ async function performUpdate(isForceUgcReset: boolean) {
                             user_id: r.user_id,
                             user_name: r.user_name,
                             wins: r.wins,
-                            max_streak: r.max_streak,
+                            max_streak_easy: r.max_streak_easy,
+                            max_streak_normal: r.max_streak_normal,
+                            max_streak_hard: r.max_streak_hard,
                             rank_by_wins: r.rank_by_wins,
-                            rank_by_streak: r.rank_by_streak
+                            rank_by_streak_easy: r.rank_by_streak_easy,
+                            rank_by_streak_normal: r.rank_by_streak_normal,
+                            rank_by_streak_hard: r.rank_by_streak_hard
                         }));
 
                         const { error: histError } = await supabaseServer
