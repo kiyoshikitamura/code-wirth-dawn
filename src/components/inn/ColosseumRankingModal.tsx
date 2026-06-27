@@ -17,10 +17,16 @@ interface RankingEntry {
 interface UserStats {
     wins: number;
     losses: number;
-    currentStreak: number;
-    maxStreak: number;
+    currentStreakEasy: number;
+    maxStreakEasy: number;
+    currentStreakNormal: number;
+    maxStreakNormal: number;
+    currentStreakHard: number;
+    maxStreakHard: number;
     winsRank: number | null;
-    streakRank: number | null;
+    streakRankEasy: number | null;
+    streakRankNormal: number | null;
+    streakRankHard: number | null;
 }
 
 interface ColosseumRankingModalProps {
@@ -36,9 +42,12 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
     const { userProfile } = useGameStore();
     const currentUserId = userProfile?.id;
     const [activeTab, setActiveTab] = useState<'wins' | 'streaks'>('wins');
+    const [activeDifficulty, setActiveDifficulty] = useState<'easy' | 'normal' | 'hard'>('easy');
     const [loading, setLoading] = useState(true);
     const [winsRanking, setWinsRanking] = useState<RankingEntry[]>([]);
-    const [streakRanking, setStreakRanking] = useState<RankingEntry[]>([]);
+    const [streakRankingEasy, setStreakRankingEasy] = useState<RankingEntry[]>([]);
+    const [streakRankingNormal, setStreakRankingNormal] = useState<RankingEntry[]>([]);
+    const [streakRankingHard, setStreakRankingHard] = useState<RankingEntry[]>([]);
     const [myStats, setMyStats] = useState<UserStats | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [countdown, setCountdown] = useState<string>('');
@@ -133,7 +142,9 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                 if (res.ok) {
                     const data = await res.json();
                     setWinsRanking(data.winsRanking || []);
-                    setStreakRanking(data.streakRanking || []);
+                    setStreakRankingEasy(data.streakRankingEasy || []);
+                    setStreakRankingNormal(data.streakRankingNormal || []);
+                    setStreakRankingHard(data.streakRankingHard || []);
                     setMyStats(data.myStats || null);
                 } else {
                     const data = await res.json();
@@ -157,7 +168,11 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
         return 'bg-[#152542] text-slate-400 border border-[#233f6a]/30';
     };
 
-    const currentRanking = activeTab === 'wins' ? winsRanking : streakRanking;
+    const currentRanking = activeTab === 'wins' 
+        ? winsRanking 
+        : (activeDifficulty === 'easy' 
+            ? streakRankingEasy 
+            : (activeDifficulty === 'normal' ? streakRankingNormal : streakRankingHard));
 
     if (!mounted) return null;
 
@@ -206,7 +221,7 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                         </div>
                     ) : myStats ? (
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-2 bg-[#0a1526]/80 rounded border border-[#1b3152]/50">
+                            <div className="p-2 bg-[#0a1526]/80 rounded border border-[#1b3152]/50 flex flex-col justify-center">
                                 <div className="text-[9px] text-slate-400 font-bold">勝利数 順位</div>
                                 <div className="flex items-baseline gap-1.5 mt-0.5">
                                     <span className="text-sm font-black text-slate-100">
@@ -215,13 +230,30 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                                     <span className="text-[10px] text-emerald-400 font-bold">({myStats.wins}勝)</span>
                                 </div>
                             </div>
-                            <div className="p-2 bg-[#0a1526]/80 rounded border border-[#1b3152]/50">
+                            <div className="p-2 bg-[#0a1526]/80 rounded border border-[#1b3152]/50 flex flex-col justify-center space-y-1">
                                 <div className="text-[9px] text-slate-400 font-bold">連勝数 順位</div>
-                                <div className="flex items-baseline gap-1.5 mt-0.5">
-                                    <span className="text-sm font-black text-slate-100">
-                                        {myStats.streakRank ? `${myStats.streakRank}位` : '圏外'}
-                                    </span>
-                                    <span className="text-[10px] text-orange-400 font-bold">({myStats.currentStreak}連勝中、最大 {myStats.maxStreak}連勝)</span>
+                                <div className="space-y-0.5 text-[8px]">
+                                    <div className="flex items-center justify-between text-slate-300">
+                                        <span className="font-bold text-slate-400">Easy:</span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-black text-slate-100">{myStats.streakRankEasy ? `${myStats.streakRankEasy}位` : '圏外'}</span>
+                                            <span className="text-orange-400 font-bold">({myStats.currentStreakEasy}/{myStats.maxStreakEasy}連勝)</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-slate-300">
+                                        <span className="font-bold text-slate-400">Normal:</span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-black text-slate-100">{myStats.streakRankNormal ? `${myStats.streakRankNormal}位` : '圏外'}</span>
+                                            <span className="text-orange-400 font-bold">({myStats.currentStreakNormal}/{myStats.maxStreakNormal}連勝)</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-slate-300">
+                                        <span className="font-bold text-slate-400">Hard:</span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-black text-slate-100">{myStats.streakRankHard ? `${myStats.streakRankHard}位` : '圏外'}</span>
+                                            <span className="text-orange-400 font-bold">({myStats.currentStreakHard}/{myStats.maxStreakHard}連勝)</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -257,6 +289,25 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                         最大連勝ランキング
                     </button>
                 </div>
+
+                {/* Sub Tabs for Streak Difficulties */}
+                {activeTab === 'streaks' && (
+                    <div className="flex bg-[#070e1a] border-b border-[#1d3357] px-4 py-1.5 gap-2 flex-shrink-0">
+                        {(['easy', 'normal', 'hard'] as const).map((diff) => (
+                            <button
+                                key={diff}
+                                onClick={() => setActiveDifficulty(diff)}
+                                className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all border ${
+                                    activeDifficulty === diff
+                                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                                        : 'bg-transparent text-slate-400 border-slate-700/50 hover:text-slate-200'
+                                }`}
+                            >
+                                {diff === 'easy' ? '初級 (Easy)' : (diff === 'normal' ? '中級 (Normal)' : '上級 (Hard)')}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* List Body */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
