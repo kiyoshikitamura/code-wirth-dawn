@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { safeLocalStorage } from '@/lib/safeStorage';
-import { Users, Coins, Sword, ArrowLeft, CreditCard, Activity, Trophy, Compass, Download, RefreshCw, Calendar, Clock } from 'lucide-react';
+import { Users, Coins, Sword, ArrowLeft, CreditCard, Activity, Trophy, Compass, Landmark, Download, RefreshCw } from 'lucide-react';
 
 interface KPISummary {
     totalUsers: number;
@@ -17,11 +16,7 @@ interface KPISummary {
     pendingReports: number;
     dau: number;
     mau: number;
-    anonMau?: number;
-    authMau?: number;
     totalQuests: number;
-    anonUsers?: number;
-    authUsers?: number;
 
     // Payments & Subscriptions
     totalRevenue: number;
@@ -35,8 +30,7 @@ interface KPISummary {
 }
 
 interface LevelDistribution {
-    '1': number;
-    '2-5': number;
+    '1-5': number;
     '6-10': number;
     '11-15': number;
     '16+': number;
@@ -67,8 +61,6 @@ interface QuestStats {
 interface DailyKPI {
     date: string;
     newUsers: number;
-    newUsersRegistered: number;
-    newUsersGuest: number;
     totalBattles: number;
     victories: number;
     defeats: number;
@@ -76,21 +68,9 @@ interface DailyKPI {
     winRate: number;
     dau: number;
     mau: number;
-    anonMau?: number;
-    authMau?: number;
     revenue: number;
-    pu: number;
     dpu: number;
     mpu: number;
-}
-
-interface MonthlyKPI {
-    month: string;
-    revenue: number;
-    mau: number;
-    mpu: number;
-    newUsersRegistered: number;
-    newUsersGuest: number;
 }
 
 interface ColosseumSummary {
@@ -103,14 +83,6 @@ interface ColosseumSummary {
 
 interface ColosseumDaily {
     date: string;
-    starts: { easy: number; normal: number; hard: number };
-    completes: { easy: number; normal: number; hard: number };
-    abandons: { easy: number; normal: number; hard: number };
-    goldSpent: number;
-}
-
-interface ColosseumMonthly {
-    month: string;
     starts: { easy: number; normal: number; hard: number };
     completes: { easy: number; normal: number; hard: number };
     abandons: { easy: number; normal: number; hard: number };
@@ -131,13 +103,6 @@ interface AcademyDaily {
     refundGold: Record<string, number>;
 }
 
-interface AcademyMonthly {
-    month: string;
-    packs: Record<string, number>;
-    goldSpent: Record<string, number>;
-    refundGold: Record<string, number>;
-}
-
 interface KPIData {
     summary: KPISummary;
     levelDistribution: LevelDistribution;
@@ -145,149 +110,84 @@ interface KPIData {
     questRanking: QuestRanking[];
     questStats: QuestStats[];
     dailyKPI: DailyKPI[];
-    monthlyKPI: MonthlyKPI[];
     colosseum?: {
         summary: ColosseumSummary;
         daily: ColosseumDaily[];
-        monthly: ColosseumMonthly[];
     };
     academy?: {
         summary: AcademySummary;
         daily: AcademyDaily[];
-        monthly: AcademyMonthly[];
     };
 }
 
 export default function AdminDashboardPage() {
-    const [data, setData] = useState<KPIData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [parentTab, setParentTab] = useState<'daily' | 'monthly'>('daily');
-    const [childTab, setChildTab] = useState<'kpi' | 'colosseum' | 'academy'>('kpi');
+    // Category states
+    const [summary, setSummary] = useState<KPISummary | null>(null);
+    const [levelDistribution, setLevelDistribution] = useState<LevelDistribution | null>(null);
+    const [subscriptionDistribution, setSubscriptionDistribution] = useState<SubscriptionDistribution | null>(null);
+    const [questRanking, setQuestRanking] = useState<QuestRanking[] | null>(null);
+    const [questStats, setQuestStats] = useState<QuestStats[] | null>(null);
+    const [dailyKPI, setDailyKPI] = useState<DailyKPI[] | null>(null);
+    const [colosseum, setColosseum] = useState<{ summary: ColosseumSummary; daily: ColosseumDaily[] } | null>(null);
+    const [academy, setAcademy] = useState<{ summary: AcademySummary; daily: AcademyDaily[] } | null>(null);
+
+    // Category loading states
+    const [loading, setLoading] = useState<Record<string, boolean>>({
+        summary: false,
+        daily: false,
+        quests: false,
+        colosseum: false,
+        academy: false
+    });
+
+    // Category error states
+    const [errors, setErrors] = useState<Record<string, string>>({
+        summary: '',
+        daily: '',
+        quests: '',
+        colosseum: '',
+        academy: ''
+    });
+
+    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+    const [activeTab, setActiveTab] = useState<'users' | 'battles' | 'dau' | 'payments' | 'colosseum' | 'academy'>('users');
     const [daysRange, setDaysRange] = useState<number>(30);
-
-    // CSVエクスポート処理 (現在のタブに応じて出力)
-    const exportCsv = () => {
-        if (!data) return;
-
-        let headers: string[] = [];
-        let rows: any[][] = [];
-        let filename = '';
-
-        if (parentTab === 'daily') {
-            if (childTab === 'kpi') {
-                headers = ['日付', '課金額(円)', 'DAU', 'PU', 'PUR(%)', 'ARPPU(円)', 'ARPU(円)', '登録ユーザー数合計', '本登録数', 'ゲスト数'];
-                rows = data.dailyKPI.map(d => [
-                    d.date,
-                    d.revenue,
-                    d.dau,
-                    d.pu,
-                    d.dau > 0 ? ((d.pu / d.dau) * 100).toFixed(2) : '0.00',
-                    d.pu > 0 ? Math.round(d.revenue / d.pu) : 0,
-                    d.dau > 0 ? Math.round(d.revenue / d.dau) : 0,
-                    d.newUsersRegistered + d.newUsersGuest,
-                    d.newUsersRegistered,
-                    d.newUsersGuest
-                ]);
-                filename = `daily_kpi_${new Date().toISOString().split('T')[0]}.csv`;
-            } else if (childTab === 'colosseum') {
-                headers = ['日付', '総挑戦数', 'Easy挑戦数', 'Normal挑戦数', 'Hard挑戦数', '総制覇数', 'Easy制覇数', 'Normal制覇数', 'Hard制覇数', '総放棄数', 'Easy放棄数', 'Normal放棄数', 'Hard放棄数', '回収ゴールド(G)'];
-                rows = (data.colosseum?.daily || []).map(d => [
-                    d.date,
-                    d.starts.easy + d.starts.normal + d.starts.hard,
-                    d.starts.easy,
-                    d.starts.normal,
-                    d.starts.hard,
-                    d.completes.easy + d.completes.normal + d.completes.hard,
-                    d.completes.easy,
-                    d.completes.normal,
-                    d.completes.hard,
-                    d.abandons.easy + d.abandons.normal + d.abandons.hard,
-                    d.abandons.easy,
-                    d.abandons.normal,
-                    d.abandons.hard,
-                    d.goldSpent
-                ]);
-                filename = `daily_colosseum_${new Date().toISOString().split('T')[0]}.csv`;
-            } else if (childTab === 'academy') {
-                headers = ['日付', 'パック開封数(混沌と反逆)', '消費ゴールド(G)', '返還ゴールド(G)', '実質消費ゴールド(G)'];
-                rows = (data.academy?.daily || []).map(d => {
-                    const packs = d.packs.chaos_and_rebellion || 0;
-                    const goldSpent = d.goldSpent.chaos_and_rebellion || 0;
-                    const refundGold = d.refundGold.chaos_and_rebellion || 0;
-                    return [
-                        d.date,
-                        packs,
-                        goldSpent + refundGold,
-                        refundGold,
-                        goldSpent
-                    ];
-                });
-                filename = `daily_academy_${new Date().toISOString().split('T')[0]}.csv`;
-            }
-        } else { // monthly
-            if (childTab === 'kpi') {
-                headers = ['対象月', '課金額(円)', 'MAU', 'MPU', 'MPUR(%)', 'MARPPU(円)', 'MARPU(円)', '登録ユーザー数合計', '本登録数', 'ゲスト数'];
-                rows = (data.monthlyKPI || []).map(m => [
-                    m.month,
-                    m.revenue,
-                    m.mau,
-                    m.mpu,
-                    m.mau > 0 ? ((m.mpu / m.mau) * 100).toFixed(2) : '0.00',
-                    m.mpu > 0 ? Math.round(m.revenue / m.mpu) : 0,
-                    m.mau > 0 ? Math.round(m.revenue / m.mau) : 0,
-                    m.newUsersRegistered + m.newUsersGuest,
-                    m.newUsersRegistered,
-                    m.newUsersGuest
-                ]);
-                filename = `monthly_kpi_${new Date().toISOString().split('T')[0]}.csv`;
-            } else if (childTab === 'colosseum') {
-                headers = ['対象月', '総挑戦数', 'Easy挑戦数', 'Normal挑戦数', 'Hard挑戦数', '総制覇数', 'Easy制覇数', 'Normal制覇数', 'Hard制覇数', '総放棄数', 'Easy放棄数', 'Normal放棄数', 'Hard放棄数', '回収ゴールド(G)'];
-                rows = (data.colosseum?.monthly || []).map(m => [
-                    m.month,
-                    m.starts.easy + m.starts.normal + m.starts.hard,
-                    m.starts.easy,
-                    m.starts.normal,
-                    m.starts.hard,
-                    m.completes.easy + m.completes.normal + m.completes.hard,
-                    m.completes.easy,
-                    m.completes.normal,
-                    m.completes.hard,
-                    m.abandons.easy + m.abandons.normal + m.abandons.hard,
-                    m.abandons.easy,
-                    m.abandons.normal,
-                    m.abandons.hard,
-                    m.goldSpent
-                ]);
-                filename = `monthly_colosseum_${new Date().toISOString().split('T')[0]}.csv`;
-            } else if (childTab === 'academy') {
-                headers = ['対象月', 'パック開封数(混沌と反逆)', '消費ゴールド(G)', '返還ゴールド(G)', '実質消費ゴールド(G)'];
-                rows = (data.academy?.monthly || []).map(m => {
-                    const packs = m.packs.chaos_and_rebellion || 0;
-                    const goldSpent = m.goldSpent.chaos_and_rebellion || 0;
-                    const refundGold = m.refundGold.chaos_and_rebellion || 0;
-                    return [
-                        m.month,
-                        packs,
-                        goldSpent + refundGold,
-                        refundGold,
-                        goldSpent
-                    ];
-                });
-                filename = `monthly_academy_${new Date().toISOString().split('T')[0]}.csv`;
-            }
-        }
-
+    
+    // CSVエクスポート処理 (日別KPI)
+    const exportDailyKPICsv = () => {
+        if (!dailyKPI) return;
+        
+        // ヘッダー定義
+        const headers = ['日付', '新規ユーザー登録数', '総戦闘数', '勝利数', '敗北数', '逃亡数', '勝率(%)', 'DAU (日間アクティブ)', 'MAU (月間アクティブ)', '売上金額(円)', 'DPU (日間課金者数)', 'MPU (月間課金者数)'];
+        
+        // データ行構築
+        const rows = dailyKPI.map(d => [
+            d.date,
+            d.newUsers,
+            d.totalBattles,
+            d.victories,
+            d.defeats,
+            d.fleds,
+            `${d.winRate}%`,
+            d.dau,
+            d.mau,
+            d.revenue,
+            d.dpu,
+            d.mpu
+        ]);
+        
+        // CSV文字列の生成
         const csvContent = [
             headers.join(','),
             ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
         ].join('\n');
-
+        
+        // UTF-8 BOM を追加して Excel での文字化けを防止
         const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', filename);
+        link.setAttribute('download', `game_daily_kpi_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -295,11 +195,13 @@ export default function AdminDashboardPage() {
 
     // CSVエクスポート処理 (全クエスト統計)
     const exportQuestStatsCsv = () => {
-        if (!data || !data.questStats) return;
+        if (!questStats) return;
         
+        // ヘッダー定義
         const headers = ['クエストID', 'クエスト名', '種別', '総実行数', 'クリア数', '放棄数', 'クリア率(%)'];
         
-        const rows = data.questStats.map(q => {
+        // データ行構築
+        const rows = questStats.map(q => {
             let typeLabel = 'メイン';
             if (q.quest_type === 'sub') typeLabel = 'サブ';
             else if (q.quest_type === 'ugc') typeLabel = 'UGC';
@@ -317,11 +219,13 @@ export default function AdminDashboardPage() {
             ];
         });
         
+        // CSV文字列の生成
         const csvContent = [
             headers.join(','),
             ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
         ].join('\n');
         
+        // UTF-8 BOM を追加して Excel での文字化けを防止
         const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -334,46 +238,86 @@ export default function AdminDashboardPage() {
 
     const router = useRouter();
 
-    const fetchData = useCallback(async () => {
-        const adminKey = safeLocalStorage.getItem('adminKey');
+    const fetchCategory = useCallback(async (cat: 'summary' | 'daily' | 'quests' | 'colosseum' | 'academy') => {
+        const adminKey = localStorage.getItem('adminKey');
         if (!adminKey) {
             router.push('/admin/login');
             return;
         }
 
-        setLoading(true);
+        setLoading(prev => ({ ...prev, [cat]: true }));
+        setErrors(prev => ({ ...prev, [cat]: '' }));
+
         try {
-            const res = await fetch(`/api/admin/kpi?days=${daysRange}`, {
-                headers: { 'x-admin-key': adminKey }
+            const res = await fetch(`/api/admin/kpi?category=${cat}&days=${daysRange}`, {
+                headers: {
+                    'x-admin-key': adminKey
+                }
             });
 
             if (res.status === 401) {
-                safeLocalStorage.removeItem('adminKey');
+                localStorage.removeItem('adminKey');
                 router.push('/admin/login');
                 return;
             }
 
-            if (!res.ok) throw new Error('データの取得に失敗しました');
+            if (!res.ok) {
+                throw new Error('データの取得に失敗しました');
+            }
 
             const json = await res.json();
-            setData(json);
+            
+            if (cat === 'summary') {
+                setSummary(json.summary);
+                setLevelDistribution(json.levelDistribution);
+                setSubscriptionDistribution(json.subscriptionDistribution);
+            } else if (cat === 'daily') {
+                setDailyKPI(json.dailyKPI);
+            } else if (cat === 'quests') {
+                setQuestStats(json.questStats);
+                setQuestRanking(json.questRanking);
+            } else if (cat === 'colosseum') {
+                setColosseum(json.colosseum);
+            } else if (cat === 'academy') {
+                setAcademy(json.academy);
+            }
         } catch (err: any) {
-            setError(err.message || '接続エラーが発生しました');
+            setErrors(prev => ({ ...prev, [cat]: err.message || '接続エラーが発生しました' }));
         } finally {
-            setLoading(false);
+            setLoading(prev => ({ ...prev, [cat]: false }));
         }
     }, [router, daysRange]);
 
+    // Fetch initial basic data (summary and daily chart metrics)
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        fetchCategory('summary');
+        fetchCategory('daily');
+    }, [fetchCategory]);
+
+    const handleTabChange = (tab: 'users' | 'battles' | 'dau' | 'payments' | 'colosseum' | 'academy') => {
+        setActiveTab(tab);
+        if (tab === 'colosseum' && !colosseum && !loading.colosseum) {
+            fetchCategory('colosseum');
+        } else if (tab === 'academy' && !academy && !loading.academy) {
+            fetchCategory('academy');
+        }
+    };
 
     const handleLogout = () => {
-        safeLocalStorage.removeItem('adminKey');
+        localStorage.removeItem('adminKey');
         router.push('/admin/login');
     };
 
-    if (loading) {
+    const handleRefreshAll = () => {
+        fetchCategory('summary');
+        fetchCategory('daily');
+        if (activeTab === 'colosseum' || colosseum) fetchCategory('colosseum');
+        if (activeTab === 'academy' || academy) fetchCategory('academy');
+        if (questStats) fetchCategory('quests');
+    };
+
+    // If summary is loading and not yet populated, show loading screen
+    if (loading.summary && !summary) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#070d19] text-gray-100">
                 <div className="text-center">
@@ -384,13 +328,14 @@ export default function AdminDashboardPage() {
         );
     }
 
-    if (error || !data) {
+    // If summary load failed completely
+    if (errors.summary && !summary) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#070d19] text-gray-100">
                 <div className="max-w-md p-6 bg-red-950/20 border border-red-800/40 rounded-2xl text-center">
-                    <p className="text-red-400 font-semibold mb-4">{error || 'データの読み込みに失敗しました'}</p>
+                    <p className="text-red-400 font-semibold mb-4">{errors.summary || 'データの読み込みに失敗しました'}</p>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => fetchCategory('summary')}
                         className="px-4 py-2 bg-red-900/60 hover:bg-red-800 rounded-lg text-sm text-white transition-all"
                     >
                         再試行
@@ -400,36 +345,140 @@ export default function AdminDashboardPage() {
         );
     }
 
-    const { summary, levelDistribution, subscriptionDistribution, colosseum, academy } = data;
+    if (!summary || !levelDistribution || !subscriptionDistribution) {
+        return null;
+    }
 
-    const getAcademySeriesList = () => {
-        if (!data || !data.academy) return [];
-        const summaryMap: Record<string, { series: string; packs: number; goldSpent: number; refundGold: number; }> = {};
-        const source = (parentTab === 'daily' ? data.academy?.daily : data.academy?.monthly) || [];
-        source.forEach(d => {
-            Object.keys(d.packs || {}).forEach(series => {
-                if (!summaryMap[series]) {
-                    summaryMap[series] = { series, packs: 0, goldSpent: 0, refundGold: 0 };
-                }
-                summaryMap[series].packs += d.packs[series] || 0;
-                summaryMap[series].goldSpent += d.goldSpent[series] || 0;
-                summaryMap[series].refundGold += d.refundGold[series] || 0;
-            });
+    // 自前SVGグラフ用の座標計算
+    const svgWidth = 800;
+    const svgHeight = 250;
+    const padding = 40;
+    
+    const currentDailyKPI = dailyKPI || [];
+    const divisor = currentDailyKPI.length > 1 ? currentDailyKPI.length - 1 : 1;
+    const colWidth = (svgWidth - padding * 2) / Math.max(1, currentDailyKPI.length);
+
+    // A. 折れ線グラフ用: 新規ユーザー数
+    const maxUsers = Math.max(...currentDailyKPI.map(d => d.newUsers), 5);
+    const userPoints = currentDailyKPI.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.newUsers / maxUsers) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const userLinePath = userPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const userAreaPath = userPoints.length > 0 
+        ? `${userLinePath} L ${userPoints[userPoints.length - 1].x} ${svgHeight - padding} L ${userPoints[0].x} ${svgHeight - padding} Z`
+        : '';
+
+    // B. 棒グラフ用: 総バトル数
+    const maxBattles = Math.max(...currentDailyKPI.map(d => d.totalBattles), 5);
+
+    // C. 折れ線グラフ用: アクティブユーザー数 (DAU / MAU)
+    const maxActive = Math.max(...currentDailyKPI.map(d => Math.max(d.dau, d.mau)), 5);
+    const dauPoints = currentDailyKPI.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.dau / maxActive) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const dauLinePath = dauPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const dauAreaPath = dauPoints.length > 0 
+        ? `${dauLinePath} L ${dauPoints[dauPoints.length - 1].x} ${svgHeight - padding} L ${dauPoints[0].x} ${svgHeight - padding} Z`
+        : '';
+
+    const mauPoints = currentDailyKPI.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.mau / maxActive) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const mauLinePath = mauPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const mauAreaPath = mauPoints.length > 0 
+        ? `${mauLinePath} L ${mauPoints[mauPoints.length - 1].x} ${svgHeight - padding} L ${mauPoints[0].x} ${svgHeight - padding} Z`
+        : '';
+
+    // E. 折れ線グラフ用: コロシアム挑戦数
+    const colosseumDaily = colosseum?.daily || [];
+    const maxColosseumStarts = Math.max(
+        ...colosseumDaily.map(d => (d.starts.easy + d.starts.normal + d.starts.hard)),
+        5
+    );
+    const colEasyPoints = colosseumDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.starts.easy / maxColosseumStarts) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const colEasyLinePath = colEasyPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    const colNormalPoints = colosseumDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.starts.normal / maxColosseumStarts) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const colNormalLinePath = colNormalPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    const colHardPoints = colosseumDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const y = svgHeight - padding - (d.starts.hard / maxColosseumStarts) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const colHardLinePath = colHardPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+    // D. 棒グラフ用: 課金売上金額推移 (Stripe)
+    const maxRevenue = Math.max(...currentDailyKPI.map(d => d.revenue), 1000);
+
+    // F. 魔術学院
+    const academyDaily = academy?.daily || [];
+    const maxAcademyPacks = Math.max(...academyDaily.map(d => Object.values(d.packs).reduce((a, b) => a + b, 0)), 5);
+    const maxAcademyGold = Math.max(...academyDaily.map(d => Object.values(d.goldSpent).reduce((a, b) => a + b, 0)), 1000);
+    const acadPackPoints = academyDaily.map((d, i) => {
+        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+        const total = Object.values(d.packs).reduce((a, b) => a + b, 0);
+        const y = svgHeight - padding - (total / maxAcademyPacks) * (svgHeight - padding * 2);
+        return { x, y };
+    });
+    const acadPackLinePath = acadPackPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+    const acadPackAreaPath = acadPackPoints.length > 0
+        ? `${acadPackLinePath} L ${acadPackPoints[acadPackPoints.length - 1].x} ${svgHeight - padding} L ${acadPackPoints[0].x} ${svgHeight - padding} Z`
+        : '';
+
+    // シリーズ別の累計集計
+    const academySeriesSummary: Record<string, {
+        series: string;
+        packs: number;
+        goldSpent: number;
+        refundGold: number;
+    }> = {};
+
+    academyDaily.forEach(d => {
+        Object.keys(d.packs).forEach(series => {
+            if (!academySeriesSummary[series]) {
+                academySeriesSummary[series] = {
+                    series,
+                    packs: 0,
+                    goldSpent: 0,
+                    refundGold: 0
+                };
+            }
+            academySeriesSummary[series].packs += d.packs[series] || 0;
+            academySeriesSummary[series].goldSpent += d.goldSpent[series] || 0;
+            academySeriesSummary[series].refundGold += d.refundGold[series] || 0;
         });
-        return Object.values(summaryMap);
-    };
+    });
 
-    const academySeriesList = getAcademySeriesList();
+    const academySeriesList = Object.values(academySeriesSummary);
 
     const getSeriesDisplayName = (series: string) => {
         switch (series) {
-            case 'chaos_and_rebellion': return '混沌と反逆 (Chaos & Rebellion)';
-            default: return series;
+            case 'chaos_and_rebellion':
+                return '混沌と反逆 (Chaos & Rebellion)';
+            default:
+                return series;
         }
     };
 
     return (
         <div className="min-h-screen bg-[#070d19] text-gray-100 font-sans p-6 relative">
+            
+            {/* ヘッダー */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-gray-800 pb-5 max-w-7xl mx-auto gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/title" className="p-2 hover:bg-gray-800/50 rounded-lg transition-colors text-gray-400 hover:text-white">
@@ -443,405 +492,614 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
-                    <button onClick={fetchData} disabled={loading} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-900/40 text-blue-400 text-xs font-semibold rounded-lg transition-all disabled:opacity-50">
-                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                        データの更新
+                    <button
+                        onClick={handleRefreshAll}
+                        disabled={Object.values(loading).some(Boolean)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-900/40 text-blue-400 text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={Object.values(loading).some(Boolean) ? 'animate-spin' : ''} />
+                        全ての更新
                     </button>
-                    <button onClick={handleLogout} className="flex-1 sm:flex-none px-4 py-2 bg-gray-850 hover:bg-gray-800 border border-gray-800 text-xs font-semibold rounded-lg transition-all">
+                    <button
+                        onClick={handleLogout}
+                        className="flex-1 sm:flex-none px-4 py-2 bg-gray-850 hover:bg-gray-800 border border-gray-800 text-xs font-semibold rounded-lg transition-all"
+                    >
                         ログアウト
                     </button>
                 </div>
             </header>
 
             <main className="max-w-7xl mx-auto space-y-8">
+                {/* サマリーカードグリッド */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl group hover:border-blue-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    {/* 累計登録ユーザー */}
+                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">登録ユーザー</span>
-                            <div className="p-1.5 bg-blue-950/40 rounded-lg text-blue-400 border border-blue-900/30"><Users size={16} /></div>
+                            <div className="p-1.5 bg-blue-950/40 rounded-lg text-blue-400 border border-blue-900/30">
+                                <Users size={16} />
+                            </div>
                         </div>
                         <div className="text-xl font-bold text-blue-400 tracking-tight">{summary.totalUsers} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-1">本登録: {summary.authUsers || 0} / ゲスト: {summary.anonUsers || 0}</p>
+                        <p className="text-[10px] text-gray-500 mt-2">平均レベル: {summary.avgLevel}</p>
                     </div>
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl group hover:border-emerald-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+
+                    {/* 月間アクティブ (MAU) */}
+                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-emerald-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">MAU</span>
-                            <div className="p-1.5 bg-emerald-950/40 rounded-lg text-emerald-400 border border-emerald-900/30"><Activity size={16} /></div>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">月間アクティブ (MAU)</span>
+                            <div className="p-1.5 bg-emerald-950/40 rounded-lg text-emerald-400 border border-emerald-900/30">
+                                <Activity size={16} />
+                            </div>
                         </div>
                         <div className="text-xl font-bold text-emerald-400 tracking-tight">{summary.mau} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-1">アクティビティ率: {((summary.mau / Math.max(1, summary.totalUsers)) * 100).toFixed(1)}%</p>
+                        <p className="text-[10px] text-gray-500 mt-2">
+                            アクティビティ率: {((summary.mau / Math.max(1, summary.totalUsers)) * 100).toFixed(1)}%
+                        </p>
                     </div>
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl group hover:border-yellow-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+
+                    {/* 月間課金者 (MPU) */}
+                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-yellow-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">MPU</span>
-                            <div className="p-1.5 bg-yellow-950/40 rounded-lg text-yellow-400 border border-yellow-900/30"><CreditCard size={16} /></div>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">月間課金者 (MPU)</span>
+                            <div className="p-1.5 bg-yellow-950/40 rounded-lg text-yellow-400 border border-yellow-900/30">
+                                <CreditCard size={16} />
+                            </div>
                         </div>
                         <div className="text-xl font-bold text-yellow-400 tracking-tight">{summary.mpu} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-1">課金転換率: {((summary.mpu / Math.max(1, summary.mau)) * 100).toFixed(1)}%</p>
+                        <p className="text-[10px] text-gray-500 mt-2">
+                            課金転換率: {((summary.mpu / Math.max(1, summary.totalUsers)) * 100).toFixed(1)}%
+                        </p>
                     </div>
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl group hover:border-indigo-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+
+                    {/* 総クエスト回数 */}
+                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">総クエスト</span>
-                            <div className="p-1.5 bg-indigo-950/40 rounded-lg text-indigo-400 border border-indigo-900/30"><Activity size={16} /></div>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">総クエスト回数</span>
+                            <div className="p-1.5 bg-indigo-950/40 rounded-lg text-indigo-400 border border-indigo-900/30">
+                                <Compass size={16} />
+                            </div>
                         </div>
                         <div className="text-xl font-bold text-indigo-400 tracking-tight">{summary.totalQuests || 0} 回</div>
-                        <p className="text-[10px] text-gray-500 mt-1">開始された全クエスト数</p>
+                        <p className="text-[10px] text-gray-500 mt-2">開始された全クエスト数</p>
                     </div>
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl group hover:border-purple-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+
+                    {/* 戦闘回数 */}
+                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-purple-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">戦闘回数</span>
-                            <div className="p-1.5 bg-purple-950/40 rounded-lg text-purple-400 border border-purple-900/30"><Sword size={16} /></div>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">総戦闘回数</span>
+                            <div className="p-1.5 bg-purple-950/40 rounded-lg text-purple-400 border border-purple-900/30">
+                                <Sword size={16} />
+                            </div>
                         </div>
                         <div className="text-xl font-bold text-purple-400 tracking-tight">{summary.totalBattles} 回</div>
-                        <p className="text-[10px] text-gray-500 mt-1">勝率: {summary.winRate}%</p>
+                        <p className="text-[10px] text-gray-500 mt-2">勝率: {summary.winRate}%</p>
                     </div>
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl group hover:border-red-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+
+                    {/* ゴールド流通 */}
+                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-red-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">ゴールド流通</span>
-                            <div className="p-1.5 bg-red-950/40 rounded-lg text-red-400 border border-red-900/30"><Coins size={16} /></div>
+                            <div className="p-1.5 bg-red-950/40 rounded-lg text-red-400 border border-red-900/30">
+                                <Coins size={16} />
+                            </div>
                         </div>
                         <div className="text-xl font-bold text-red-400 tracking-tight">{summary.totalGold.toLocaleString()} G</div>
-                        <p className="text-[10px] text-gray-500 mt-1">平均: {summary.avgGold.toLocaleString()} G</p>
+                        <p className="text-[10px] text-gray-500 mt-2">平均: {summary.avgGold.toLocaleString()} G</p>
                     </div>
                 </div>
 
-                {/* メインテーブル領域 */}
+                {/* メインチャート領域 */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* 左・中: テーブルカード */}
-                    <div className="lg:col-span-2 p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col min-h-[500px]">
-                        
-                        {/* 1階層目親タブ: 日次 / 月次 */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-4 mb-4 gap-3">
-                            <div className="flex bg-[#070d19] border border-gray-800 rounded-lg p-0.5 text-xs">
-                                <button
-                                    onClick={() => setParentTab('daily')}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-md font-semibold transition-all ${parentTab === 'daily' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                    {/* 左・中: チャートカード */}
+                    <div className="lg:col-span-2 p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+                            <h2 className="text-sm font-semibold tracking-wide text-gray-300">アクティビティ・決済推移 (直近 {daysRange} 日間)</h2>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <select
+                                    value={daysRange}
+                                    onChange={(e) => setDaysRange(Number(e.target.value))}
+                                    className="bg-[#070d19] border border-gray-800 text-gray-300 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-all hover:border-gray-700"
                                 >
-                                    <Clock size={14} />
-                                    日次統計
-                                </button>
-                                <button
-                                    onClick={() => setParentTab('monthly')}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-md font-semibold transition-all ${parentTab === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
-                                >
-                                    <Calendar size={14} />
-                                    月次統計
-                                </button>
-                            </div>
-                            
-                            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                                {parentTab === 'daily' && childTab === 'kpi' && (
-                                    <select
-                                        value={daysRange}
-                                        onChange={(e) => setDaysRange(Number(e.target.value))}
-                                        className="bg-[#070d19] border border-gray-800 text-gray-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-all hover:border-gray-700"
+                                    <option value={30}>直近 30 日間</option>
+                                    <option value={90}>直近 90 日間</option>
+                                    <option value={180}>直近 180 日間</option>
+                                    <option value={365}>直近 365 日間</option>
+                                </select>
+                                <div className="flex flex-wrap bg-[#070d19] border border-gray-800 rounded-lg p-0.5 text-[10px]">
+                                    <button
+                                        onClick={() => handleTabChange('users')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'users' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                                     >
-                                        <option value={30}>直近 30 日間</option>
-                                        <option value={60}>直近 60 日間</option>
-                                        <option value={90}>直近 90 日間</option>
-                                    </select>
-                                )}
+                                        ユーザー登録
+                                    </button>
+                                    <button
+                                        onClick={() => handleTabChange('battles')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'battles' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        バトル統計
+                                    </button>
+                                    <button
+                                        onClick={() => handleTabChange('dau')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'dau' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        アクティブUU
+                                    </button>
+                                    <button
+                                        onClick={() => handleTabChange('payments')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'payments' ? 'bg-yellow-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        課金決済
+                                    </button>
+                                    <button
+                                        onClick={() => handleTabChange('colosseum')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'colosseum' ? 'bg-amber-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        コロシアム
+                                    </button>
+                                    <button
+                                        onClick={() => handleTabChange('academy')}
+                                        className={`px-2.5 py-1.5 rounded-md font-semibold transition-all ${activeTab === 'academy' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        魔術学院
+                                    </button>
+                                </div>
                                 <button
-                                    onClick={exportCsv}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-xs font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
+                                    onClick={exportDailyKPICsv}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
                                 >
-                                    <Download size={14} />
+                                    <Download size={12} />
                                     CSV出力
                                 </button>
                             </div>
                         </div>
 
-                        {/* 2階層目子タブ: 基本KPI / コロシアム / 魔術学院 */}
-                        <div className="flex border-b border-gray-800 pb-3 mb-5 text-xs gap-2">
-                            <button
-                                onClick={() => setChildTab('kpi')}
-                                className={`px-4 py-1.5 rounded-full font-semibold border transition-all ${childTab === 'kpi' ? 'bg-blue-950/60 border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white bg-transparent'}`}
-                            >
-                                基本KPI
-                            </button>
-                            <button
-                                onClick={() => setChildTab('colosseum')}
-                                className={`px-4 py-1.5 rounded-full font-semibold border transition-all ${childTab === 'colosseum' ? 'bg-amber-950/60 border-amber-500 text-amber-400' : 'border-transparent text-gray-400 hover:text-white bg-transparent'}`}
-                            >
-                                コロシアム
-                            </button>
-                            <button
-                                onClick={() => setChildTab('academy')}
-                                className={`px-4 py-1.5 rounded-full font-semibold border transition-all ${childTab === 'academy' ? 'bg-indigo-950/60 border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-white bg-transparent'}`}
-                            >
-                                魔術学院
-                            </button>
+                        {/* 自前SVGグラフ */}
+                        <div className="relative min-h-[250px] flex flex-col items-stretch justify-center">
+                            {/* コロシアムタブのロード中/未ロード */}
+                            {activeTab === 'colosseum' && (loading.colosseum || !colosseum) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a1628]/40 z-10">
+                                    {errors.colosseum ? (
+                                        <p className="text-red-400 text-xs">{errors.colosseum}</p>
+                                    ) : (
+                                        <>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-2"></div>
+                                            <p className="text-xs text-gray-500">コロシアム統計を読み込み中...</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 魔術学院タブのロード中/未ロード */}
+                            {activeTab === 'academy' && (loading.academy || !academy) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a1628]/40 z-10">
+                                    {errors.academy ? (
+                                        <p className="text-red-400 text-xs">{errors.academy}</p>
+                                    ) : (
+                                        <>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mb-2"></div>
+                                            <p className="text-xs text-gray-500">魔術学院統計を読み込み中...</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* その他の一般日次KPIタブのロード中/未ロード */}
+                            {activeTab !== 'colosseum' && activeTab !== 'academy' && (loading.daily || !dailyKPI) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a1628]/40 z-10">
+                                    {errors.daily ? (
+                                        <p className="text-red-400 text-xs">{errors.daily}</p>
+                                    ) : (
+                                        <>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                                            <p className="text-xs text-gray-500">日次KPIデータを読み込み中...</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* コロシアム総合サマリー */}
+                            {activeTab === 'colosseum' && colosseum && (
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">挑戦プレイヤー数</div>
+                                        <div className="text-sm font-bold text-amber-400">{colosseum.summary.totalPlayers} UU</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">総挑戦数</div>
+                                        <div className="text-sm font-bold text-blue-400">{colosseum.summary.totalBattles} 回</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">制覇率</div>
+                                        <div className="text-sm font-bold text-emerald-400">{colosseum.summary.winRate} %</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">最高連勝</div>
+                                        <div className="text-sm font-bold text-pink-400">{colosseum.summary.maxStreak} 連勝</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド</div>
+                                        <div className="text-sm font-bold text-yellow-500">{colosseum.summary.totalGoldSpent.toLocaleString()} G</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 魔術学院総合サマリー */}
+                            {activeTab === 'academy' && academy && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">購入プレイヤー数</div>
+                                        <div className="text-sm font-bold text-indigo-400">{academy.summary.totalPlayers} UU</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">総パック購入数 (回転数)</div>
+                                        <div className="text-sm font-bold text-blue-400">{academy.summary.totalPacks} パック</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド (実質消費)</div>
+                                        <div className="text-sm font-bold text-emerald-400">{academy.summary.totalGoldSpent.toLocaleString()} G</div>
+                                    </div>
+                                    <div className="p-3 bg-[#070d19] border border-gray-800/80 rounded-xl">
+                                        <div className="text-[10px] text-gray-500 font-semibold mb-1">累計返還ゴールド</div>
+                                        <div className="text-sm font-bold text-yellow-500">{academy.summary.totalRefundGold.toLocaleString()} G</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 折れ線グラフ: ユーザー登録 & アクティブUU & コロシアム */}
+                            {(activeTab === 'users' || activeTab === 'dau' || activeTab === 'colosseum') && (
+                                <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="overflow-visible">
+                                    <defs>
+                                        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor={activeTab === 'users' ? '#3b82f6' : '#10b981'} stopOpacity="0.3" />
+                                            <stop offset="100%" stopColor={activeTab === 'users' ? '#3b82f6' : '#10b981'} stopOpacity="0" />
+                                        </linearGradient>
+                                        <linearGradient id="mauGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                                            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    {/* グリッド横線 */}
+                                    {[0, 1, 2, 3, 4].map((n) => {
+                                        const y = padding + (n / 4) * (svgHeight - padding * 2);
+                                        const currentMax = activeTab === 'users' ? maxUsers : (activeTab === 'dau' ? maxActive : maxColosseumStarts);
+                                        const label = Math.round(currentMax - (n / 4) * currentMax);
+                                        return (
+                                            <g key={n} opacity="0.15">
+                                                <line x1={padding} y1={y} x2={svgWidth - padding} y2={y} stroke="#fff" strokeDasharray="3" />
+                                                <text x={padding - 10} y={y + 4} fill="#fff" fontSize="10" textAnchor="end">{label}</text>
+                                            </g>
+                                        );
+                                    })}
+
+                                    {/* 塗りつぶし領域 */}
+                                    {activeTab === 'users' && userAreaPath && <path d={userAreaPath} fill="url(#chartGrad)" />}
+                                    {activeTab === 'dau' && mauAreaPath && <path d={mauAreaPath} fill="url(#mauGrad)" />}
+                                    {activeTab === 'dau' && dauAreaPath && <path d={dauAreaPath} fill="url(#chartGrad)" />}
+                                    
+                                    {/* 折れ線本体 */}
+                                    {activeTab === 'users' && userLinePath && <path d={userLinePath} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'dau' && mauLinePath && <path d={mauLinePath} fill="none" stroke="#6366f1" strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'dau' && dauLinePath && <path d={dauLinePath} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'colosseum' && colEasyLinePath && <path d={colEasyLinePath} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'colosseum' && colNormalLinePath && <path d={colNormalLinePath} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                                    {activeTab === 'colosseum' && colHardLinePath && <path d={colHardLinePath} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+
+                                    {/* ガイドホバー */}
+                                    {currentDailyKPI.map((d, i) => {
+                                        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+                                        return (
+                                            <g key={i}>
+                                                <rect
+                                                    x={x - colWidth / 2}
+                                                    y={padding}
+                                                    width={colWidth}
+                                                    height={svgHeight - padding * 2}
+                                                    fill="transparent"
+                                                    className="cursor-pointer"
+                                                    onMouseEnter={() => setHoveredIdx(i)}
+                                                    onMouseLeave={() => setHoveredIdx(null)}
+                                                />
+                                                {hoveredIdx === i && (
+                                                    <g>
+                                                        <line x1={x} y1={padding} x2={x} y2={svgHeight - padding} stroke="#fff" strokeWidth="1" strokeDasharray="2" opacity="0.4" />
+                                                        {activeTab === 'users' && userPoints[i] && (
+                                                            <circle cx={userPoints[i].x} cy={userPoints[i].y} r="5" fill="#3b82f6" stroke="#fff" strokeWidth="1.5" />
+                                                        )}
+                                                        {activeTab === 'dau' && dauPoints[i] && mauPoints[i] && (
+                                                            <>
+                                                                <circle cx={mauPoints[i].x} cy={mauPoints[i].y} r="5" fill="#6366f1" stroke="#fff" strokeWidth="1.5" />
+                                                                <circle cx={dauPoints[i].x} cy={dauPoints[i].y} r="5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
+                                                            </>
+                                                        )}
+                                                        {activeTab === 'colosseum' && colEasyPoints[i] && colNormalPoints[i] && colHardPoints[i] && (
+                                                            <>
+                                                                <circle cx={colEasyPoints[i].x} cy={colEasyPoints[i].y} r="4" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
+                                                                <circle cx={colNormalPoints[i].x} cy={colNormalPoints[i].y} r="4" fill="#3b82f6" stroke="#fff" strokeWidth="1.5" />
+                                                                <circle cx={colHardPoints[i].x} cy={colHardPoints[i].y} r="4" fill="#f59e0b" stroke="#fff" strokeWidth="1.5" />
+                                                            </>
+                                                        )}
+                                                    </g>
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+                                </svg>
+                            )}
+
+                            {/* 折れ線・棒グラフ混在: 魔術学院 */}
+                            {activeTab === 'academy' && academyDaily.length > 0 && (
+                                <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="overflow-visible">
+                                    <defs>
+                                        <linearGradient id="academyPackGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
+                                            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    {/* グリッド横線 */}
+                                    {[0, 1, 2, 3, 4].map((n) => {
+                                        const y = padding + (n / 4) * (svgHeight - padding * 2);
+                                        // 左軸: パック購入数
+                                        const leftLabel = Math.round(maxAcademyPacks - (n / 4) * maxAcademyPacks);
+                                        // 右軸: 消費ゴールド
+                                        const rightLabel = `${Math.round(maxAcademyGold - (n / 4) * maxAcademyGold).toLocaleString()} G`;
+                                        return (
+                                            <g key={n} opacity="0.15">
+                                                <line x1={padding} y1={y} x2={svgWidth - padding} y2={y} stroke="#fff" strokeDasharray="3" />
+                                                <text x={padding - 10} y={y + 4} fill="#fff" fontSize="10" textAnchor="end">{leftLabel}</text>
+                                                <text x={svgWidth - padding + 10} y={y + 4} fill="#fff" fontSize="10" textAnchor="start">{rightLabel}</text>
+                                            </g>
+                                        );
+                                    })}
+
+                                    {/* 棒グラフ: 消費ゴールド */}
+                                    {academyDaily.map((d, i) => {
+                                        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+                                        const barWidth = Math.max(1, colWidth - Math.max(1, colWidth * 0.2));
+                                        const totalGold = Object.values(d.goldSpent).reduce((sum, v) => sum + v, 0);
+                                        const heightGold = (totalGold / maxAcademyGold) * (svgHeight - padding * 2);
+                                        const yGold = svgHeight - padding - heightGold;
+                                        return (
+                                            <g key={i}>
+                                                {heightGold > 0 && (
+                                                    <rect
+                                                        x={x - barWidth / 2}
+                                                        y={yGold}
+                                                        width={barWidth}
+                                                        height={heightGold}
+                                                        fill="#10b981"
+                                                        opacity="0.6"
+                                                        rx="0.5"
+                                                    />
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+
+                                    {/* 折れ線塗りつぶし領域: パック購入数 */}
+                                    {acadPackAreaPath && <path d={acadPackAreaPath} fill="url(#academyPackGrad)" />}
+
+                                    {/* 折れ線本体: パック購入数 */}
+                                    {acadPackLinePath && (
+                                        <path
+                                            d={acadPackLinePath}
+                                            fill="none"
+                                            stroke="#6366f1"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    )}
+
+                                    {/* ガイドホバー */}
+                                    {academyDaily.map((d, i) => {
+                                        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+                                        return (
+                                            <g key={i}>
+                                                <rect
+                                                    x={x - colWidth / 2}
+                                                    y={padding}
+                                                    width={colWidth}
+                                                    height={svgHeight - padding * 2}
+                                                    fill="transparent"
+                                                    className="cursor-pointer"
+                                                    onMouseEnter={() => setHoveredIdx(i)}
+                                                    onMouseLeave={() => setHoveredIdx(null)}
+                                                />
+                                                {hoveredIdx === i && (
+                                                    <g>
+                                                        <line x1={x} y1={padding} x2={x} y2={svgHeight - padding} stroke="#fff" strokeWidth="1" strokeDasharray="2" opacity="0.4" />
+                                                        {acadPackPoints[i] && (
+                                                            <circle
+                                                                cx={acadPackPoints[i].x}
+                                                                cy={acadPackPoints[i].y}
+                                                                r="5"
+                                                                fill="#6366f1"
+                                                                stroke="#fff"
+                                                                strokeWidth="1.5"
+                                                            />
+                                                        )}
+                                                    </g>
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+                                </svg>
+                            )}
+
+                            {/* 棒グラフ: バトル統計 & 課金決済 */}
+                            {(activeTab === 'battles' || activeTab === 'payments') && (
+                                <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="overflow-visible">
+                                    {/* グリッド横線 */}
+                                    {[0, 1, 2, 3, 4].map((n) => {
+                                        const y = padding + (n / 4) * (svgHeight - padding * 2);
+                                        const currentMax = activeTab === 'battles' ? maxBattles : maxRevenue;
+                                        const label = activeTab === 'battles' ? Math.round(currentMax - (n / 4) * currentMax) : `${Math.round(currentMax - (n / 4) * currentMax).toLocaleString()} 円`;
+                                        return (
+                                            <g key={n} opacity="0.15">
+                                                <line x1={padding} y1={y} x2={svgWidth - padding} y2={y} stroke="#fff" strokeDasharray="3" />
+                                                <text x={padding - 10} y={y + 4} fill="#fff" fontSize="10" textAnchor="end">{label}</text>
+                                            </g>
+                                        );
+                                    })}
+
+                                    {/* 棒の描画 */}
+                                    {currentDailyKPI.map((d, i) => {
+                                        const x = padding + (i / divisor) * (svgWidth - padding * 2);
+                                        const barWidth = Math.max(1, colWidth - Math.max(1, colWidth * 0.2));
+                                        const yStart = svgHeight - padding;
+
+                                        if (activeTab === 'battles') {
+                                            const heightTotal = (d.totalBattles / maxBattles) * (svgHeight - padding * 2);
+                                            const heightVictory = d.totalBattles > 0 ? (d.victories / d.totalBattles) * heightTotal : 0;
+                                            const heightDefeat = d.totalBattles > 0 ? (d.defeats / d.totalBattles) * heightTotal : 0;
+                                            const heightFled = d.totalBattles > 0 ? (d.fleds / d.totalBattles) * heightTotal : 0;
+
+                                            const yVictory = yStart - heightVictory;
+                                            const yDefeat = yVictory - heightDefeat;
+                                            const yFled = yDefeat - heightFled;
+
+                                            return (
+                                                <g key={i}>
+                                                    {heightVictory > 0 && <rect x={x - barWidth / 2} y={yVictory} width={barWidth} height={heightVictory} fill="#10b981" opacity="0.85" rx="0.5" />}
+                                                    {heightDefeat > 0 && <rect x={x - barWidth / 2} y={yDefeat} width={barWidth} height={heightDefeat} fill="#ef4444" opacity="0.85" rx="0.5" />}
+                                                    {heightFled > 0 && <rect x={x - barWidth / 2} y={yFled} width={barWidth} height={heightFled} fill="#a855f7" opacity="0.85" rx="0.5" />}
+                                                    <rect x={x - colWidth / 2} y={padding} width={colWidth} height={svgHeight - padding * 2} fill="transparent" className="cursor-pointer" onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)} />
+                                                </g>
+                                            );
+                                        } else {
+                                            // 課金売上金額の単一バー（黄）
+                                            const heightRevenue = (d.revenue / maxRevenue) * (svgHeight - padding * 2);
+                                            const yRevenue = yStart - heightRevenue;
+                                            return (
+                                                <g key={i}>
+                                                    {heightRevenue > 0 && <rect x={x - barWidth / 2} y={yRevenue} width={barWidth} height={heightRevenue} fill="#f59e0b" opacity="0.85" rx="0.5" />}
+                                                    <rect x={x - colWidth / 2} y={padding} width={colWidth} height={svgHeight - padding * 2} fill="transparent" className="cursor-pointer" onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)} />
+                                                </g>
+                                            );
+                                        }
+                                    })}
+                                </svg>
+                            )}
+
+                            {/* ツールチップ */}
+                            {hoveredIdx !== null && (
+                                <div 
+                                    className="absolute bg-[#0f1d3a] border border-gray-700 p-3 rounded-lg shadow-xl text-xs space-y-1 pointer-events-none transition-all z-20"
+                                    style={{
+                                        left: `${Math.min((hoveredIdx / divisor) * 100, 80)}%`,
+                                        top: '10%'
+                                    }}
+                                >
+                                    <div className="font-bold border-b border-gray-800 pb-1 text-gray-300">
+                                        {activeTab === 'academy' ? academyDaily[hoveredIdx]?.date : currentDailyKPI[hoveredIdx]?.date}
+                                    </div>
+                                    {activeTab === 'users' && currentDailyKPI[hoveredIdx] && <div className="text-blue-400">新規ユーザー: {currentDailyKPI[hoveredIdx].newUsers} 名</div>}
+                                    {activeTab === 'dau' && currentDailyKPI[hoveredIdx] && (
+                                        <>
+                                            <div className="text-emerald-400 font-bold">DAU (日間): {currentDailyKPI[hoveredIdx].dau} UU</div>
+                                            <div className="text-indigo-400">MAU (月間): {currentDailyKPI[hoveredIdx].mau} UU</div>
+                                        </>
+                                    )}
+                                    {activeTab === 'payments' && currentDailyKPI[hoveredIdx] && (
+                                        <>
+                                            <div className="text-yellow-400 font-bold">売上金額: {currentDailyKPI[hoveredIdx].revenue.toLocaleString()} 円</div>
+                                            <div className="text-amber-500">課金者数 (DPU): {currentDailyKPI[hoveredIdx].dpu} UU</div>
+                                            <div className="text-purple-400">課金者数 (MPU): {currentDailyKPI[hoveredIdx].mpu} UU</div>
+                                        </>
+                                    )}
+                                    {activeTab === 'battles' && currentDailyKPI[hoveredIdx] && (
+                                        <>
+                                            <div className="text-gray-400">総戦闘: {currentDailyKPI[hoveredIdx].totalBattles} 回</div>
+                                            <div className="text-emerald-400">勝利: {currentDailyKPI[hoveredIdx].victories}</div>
+                                            <div className="text-red-400">敗北: {currentDailyKPI[hoveredIdx].defeats}</div>
+                                            <div className="text-purple-400">逃亡: {currentDailyKPI[hoveredIdx].fleds}</div>
+                                            <div className="text-blue-400 font-bold border-t border-gray-800/55 pt-1 mt-1">勝率: {currentDailyKPI[hoveredIdx].winRate}%</div>
+                                        </>
+                                    )}
+                                    {activeTab === 'colosseum' && colosseumDaily[hoveredIdx] && (
+                                        <div className="space-y-1 mt-1">
+                                            <div className="text-amber-400 font-semibold text-[10px]">コロシアム挑戦状況</div>
+                                            <div className="text-green-400 text-[10px]">Easy: {colosseumDaily[hoveredIdx].starts.easy}回 / 制覇: {colosseumDaily[hoveredIdx].completes.easy}</div>
+                                            <div className="text-blue-400 text-[10px]">Normal: {colosseumDaily[hoveredIdx].starts.normal}回 / 制覇: {colosseumDaily[hoveredIdx].completes.normal}</div>
+                                            <div className="text-yellow-500 text-[10px]">Hard: {colosseumDaily[hoveredIdx].starts.hard}回 / 制覇: {colosseumDaily[hoveredIdx].completes.hard}</div>
+                                            <div className="text-orange-400 font-semibold text-[10px] border-t border-gray-800/55 pt-0.5 mt-0.5">回収: {colosseumDaily[hoveredIdx].goldSpent.toLocaleString()} G</div>
+                                        </div>
+                                    )}
+                                    {activeTab === 'academy' && academyDaily[hoveredIdx] && (
+                                        <div className="space-y-1 mt-1">
+                                            <div className="text-indigo-400 font-semibold text-[10px]">魔術学院購入状況</div>
+                                            {Object.entries(academyDaily[hoveredIdx].packs).map(([series, count]) => (
+                                                <div key={series} className="text-blue-400 text-[10px]">
+                                                    {getSeriesDisplayName(series)}: {count}パック
+                                                </div>
+                                            ))}
+                                            <div className="text-emerald-400 font-semibold text-[10px] border-t border-gray-800/55 pt-0.5 mt-0.5">
+                                                消費: {Object.values(academyDaily[hoveredIdx].goldSpent).reduce((sum, v) => sum + v, 0).toLocaleString()} G
+                                            </div>
+                                            <div className="text-yellow-500 text-[10px]">
+                                                返還: {Object.values(academyDaily[hoveredIdx].refundGold).reduce((sum, v) => sum + v, 0).toLocaleString()} G
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
-                        {/* コロシアム総合サマリー */}
-                        {childTab === 'colosseum' && colosseum && (
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 bg-[#070d19]/40 p-4 border border-gray-800/80 rounded-2xl">
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">挑戦プレイヤー数</div>
-                                    <div className="text-sm font-bold text-amber-400">{colosseum.summary.totalPlayers} UU</div>
+                        {/* 凡例 */}
+                        <div className="flex items-center justify-center gap-6 mt-4 text-xs">
+                            {activeTab === 'users' && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 bg-blue-500 rounded" />
+                                    <span className="text-gray-400">新規ユーザー登録数</span>
                                 </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">総挑戦数</div>
-                                    <div className="text-sm font-bold text-blue-400">{colosseum.summary.totalBattles} 回</div>
-                               </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">制覇率</div>
-                                    <div className="text-sm font-bold text-emerald-400">{colosseum.summary.winRate} %</div>
+                            )}
+                            {activeTab === 'dau' && (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-emerald-500 rounded" />
+                                        <span className="text-gray-400">日間アクティブ (DAU)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3.5 h-0.5 border-t-2 border-dashed border-[#6366f1]" />
+                                        <span className="text-gray-400">月間アクティブ (MAU)</span>
+                                    </div>
+                                </>
+                            )}
+                            {activeTab === 'payments' && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 bg-yellow-500 rounded" />
+                                    <span className="text-gray-400">売上総額 (円)</span>
                                 </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">最高連勝</div>
-                                    <div className="text-sm font-bold text-pink-400">{colosseum.summary.maxStreak} 連勝</div>
-                                </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド</div>
-                                    <div className="text-sm font-bold text-yellow-500">{colosseum.summary.totalGoldSpent.toLocaleString()} G</div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 魔術学院総合サマリー */}
-                        {childTab === 'academy' && academy && (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 bg-[#070d19]/40 p-4 border border-gray-800/80 rounded-2xl">
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">購入プレイヤー数</div>
-                                    <div className="text-sm font-bold text-indigo-400">{academy.summary.totalPlayers} UU</div>
-                                </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">総パック購入数</div>
-                                    <div className="text-sm font-bold text-blue-400">{academy.summary.totalPacks} パック</div>
-                                </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">累計回収ゴールド</div>
-                                    <div className="text-sm font-bold text-emerald-400">{academy.summary.totalGoldSpent.toLocaleString()} G</div>
-                                </div>
-                                <div className="p-3 bg-[#070d19]/80 border border-gray-800/60 rounded-xl">
-                                    <div className="text-[10px] text-gray-500 font-semibold mb-1">累計返還ゴールド</div>
-                                    <div className="text-sm font-bold text-yellow-500">{academy.summary.totalRefundGold.toLocaleString()} G</div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* データテーブル */}
-                        <div className="overflow-x-auto flex-1 max-h-[550px] custom-scrollbar">
-                                {/* 1. 日次統計テーブル */}
-                                {parentTab === 'daily' && childTab === 'kpi' && (
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                <th className="py-3 px-4 font-semibold text-left">日付</th>
-                                                <th className="py-3 px-4 font-semibold text-right">課金額</th>
-                                                <th className="py-3 px-4 font-semibold text-right">DAU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">PU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">PUR (課金率)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">ARPPU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">ARPU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">新規登録ユーザー数内訳</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-850">
-                                            {(data.dailyKPI || []).slice().reverse().map(d => {
-                                                const pur = d.dau > 0 ? ((d.pu / d.dau) * 100).toFixed(2) + '%' : '0.00%';
-                                                const arppu = d.pu > 0 ? Math.round(d.revenue / d.pu).toLocaleString() + ' 円' : '0 円';
-                                                const arpu = d.dau > 0 ? Math.round(d.revenue / d.dau).toLocaleString() + ' 円' : '0 円';
-                                                const totalNew = d.newUsersRegistered + d.newUsersGuest;
-                                                return (
-                                                    <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
-                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
-                                                        <td className="py-3 px-4 text-right text-yellow-400 font-bold">{d.revenue.toLocaleString()} 円</td>
-                                                        <td className="py-3 px-4 text-right text-emerald-400 font-semibold">{d.dau.toLocaleString()}</td>
-                                                        <td className="py-3 px-4 text-right text-amber-500 font-semibold">{d.pu.toLocaleString()}</td>
-                                                        <td className="py-3 px-4 text-right text-indigo-400 font-semibold">{pur}</td>
-                                                        <td className="py-3 px-4 text-right font-medium">{arppu}</td>
-                                                        <td className="py-3 px-4 text-right font-medium">{arpu}</td>
-                                                        <td className="py-3 px-4 text-right text-gray-400">
-                                                            <span className="font-bold text-gray-250">{totalNew} 名</span>
-                                                            <span className="text-[10px] text-gray-500 block">(本登録: {d.newUsersRegistered} / ゲスト: {d.newUsersGuest})</span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
-                                {parentTab === 'daily' && childTab === 'colosseum' && colosseum && (
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                <th className="py-3 px-4 font-semibold text-left">日付</th>
-                                                <th className="py-3 px-4 font-semibold text-right">総挑戦数 (Easy/Norm/Hard)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">総制覇数 (Easy/Norm/Hard)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">総放棄数 (Easy/Norm/Hard)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">回収ゴールド</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-850">
-                                            {(colosseum?.daily || []).slice().reverse().map(d => {
-                                                const totalStarts = (d.starts?.easy || 0) + (d.starts?.normal || 0) + (d.starts?.hard || 0);
-                                                const totalCompletes = (d.completes?.easy || 0) + (d.completes?.normal || 0) + (d.completes?.hard || 0);
-                                                const totalAbandons = (d.abandons?.easy || 0) + (d.abandons?.normal || 0) + (d.abandons?.hard || 0);
-                                                return (
-                                                    <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
-                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
-                                                        <td className="py-3 px-4 text-right text-blue-400 font-bold">
-                                                            {totalStarts.toLocaleString()} 回
-                                                            <span className="text-[10px] text-gray-500 block">({d.starts.easy} / {d.starts.normal} / {d.starts.hard})</span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">
-                                                            {totalCompletes.toLocaleString()} 回
-                                                            <span className="text-[10px] text-gray-500 block">({d.completes.easy} / {d.completes.normal} / {d.completes.hard})</span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right text-red-400 font-bold">
-                                                            {totalAbandons.toLocaleString()} 回
-                                                            <span className="text-[10px] text-gray-500 block">({d.abandons.easy} / {d.abandons.normal} / {d.abandons.hard})</span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right text-yellow-500 font-bold">{d.goldSpent.toLocaleString()} G</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
-                                {parentTab === 'daily' && childTab === 'academy' && academy && (
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                <th className="py-3 px-4 font-semibold text-left">日付</th>
-                                                <th className="py-3 px-4 font-semibold text-right">パック開封数 (混沌と反逆)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">消費ゴールド</th>
-                                                <th className="py-3 px-4 font-semibold text-right">返還ゴールド</th>
-                                                <th className="py-3 px-4 font-semibold text-right">実質消費ゴールド</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-850">
-                                            {(academy?.daily || []).slice().reverse().map(d => {
-                                                const packs = d.packs?.chaos_and_rebellion || 0;
-                                                const goldSpent = d.goldSpent?.chaos_and_rebellion || 0;
-                                                const refundGold = d.refundGold?.chaos_and_rebellion || 0;
-                                                const netSpent = goldSpent;
-                                                const grossSpent = goldSpent + refundGold;
-                                                return (
-                                                    <tr key={d.date} className="hover:bg-gray-800/20 text-gray-300">
-                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{d.date}</td>
-                                                        <td className="py-3 px-4 text-right text-indigo-400 font-bold">{packs.toLocaleString()} パック</td>
-                                                        <td className="py-3 px-4 text-right font-medium">{grossSpent.toLocaleString()} G</td>
-                                                        <td className="py-3 px-4 text-right text-yellow-500 font-semibold">{refundGold.toLocaleString()} G</td>
-                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">{netSpent.toLocaleString()} G</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
-
-                                {/* 2. 月次統計テーブル */}
-                                {parentTab === 'monthly' && childTab === 'kpi' && (
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                <th className="py-3 px-4 font-semibold text-left">対象月</th>
-                                                <th className="py-3 px-4 font-semibold text-right">課金額</th>
-                                                <th className="py-3 px-4 font-semibold text-right">MAU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">MPU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">MPUR (課金率)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">MARPPU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">MARPU</th>
-                                                <th className="py-3 px-4 font-semibold text-right">新規登録ユーザー数内訳</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-850">
-                                            {(data.monthlyKPI || []).slice().reverse().map(m => {
-                                                const mpur = m.mau > 0 ? ((m.mpu / m.mau) * 100).toFixed(2) + '%' : '0.00%';
-                                                const marppu = m.mpu > 0 ? Math.round(m.revenue / m.mpu).toLocaleString() + ' 円' : '0 円';
-                                                const marpu = m.mau > 0 ? Math.round(m.revenue / m.mau).toLocaleString() + ' 円' : '0 円';
-                                                const totalNew = m.newUsersRegistered + m.newUsersGuest;
-                                                return (
-                                                    <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
-                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
-                                                        <td className="py-3 px-4 text-right text-yellow-400 font-bold">{m.revenue.toLocaleString()} 円</td>
-                                                        <td className="py-3 px-4 text-right text-emerald-400 font-semibold">{m.mau.toLocaleString()}</td>
-                                                        <td className="py-3 px-4 text-right text-amber-500 font-semibold">{m.mpu.toLocaleString()}</td>
-                                                        <td className="py-3 px-4 text-right text-indigo-400 font-semibold">{mpur}</td>
-                                                        <td className="py-3 px-4 text-right font-medium">{marppu}</td>
-                                                        <td className="py-3 px-4 text-right font-medium">{marpu}</td>
-                                                        <td className="py-3 px-4 text-right text-gray-400">
-                                                            <span className="font-bold text-gray-250">{totalNew} 名</span>
-                                                            <span className="text-[10px] text-gray-500 block">(本登録: {m.newUsersRegistered} / ゲスト: {m.newUsersGuest})</span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
-                                {parentTab === 'monthly' && childTab === 'colosseum' && colosseum && (
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                <th className="py-3 px-4 font-semibold text-left">対象月</th>
-                                                <th className="py-3 px-4 font-semibold text-right">総挑戦数 (Easy/Norm/Hard)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">総制覇数 (Easy/Norm/Hard)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">総放棄数 (Easy/Norm/Hard)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">回収ゴールド</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-850">
-                                            {(colosseum?.monthly || []).slice().reverse().map(m => {
-                                                const totalStarts = (m.starts?.easy || 0) + (m.starts?.normal || 0) + (m.starts?.hard || 0);
-                                                const totalCompletes = (m.completes?.easy || 0) + (m.completes?.normal || 0) + (m.completes?.hard || 0);
-                                                const totalAbandons = (m.abandons?.easy || 0) + (m.abandons?.normal || 0) + (m.abandons?.hard || 0);
-                                                return (
-                                                    <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
-                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
-                                                        <td className="py-3 px-4 text-right text-blue-400 font-bold">
-                                                            {totalStarts.toLocaleString()} 回
-                                                            <span className="text-[10px] text-gray-500 block">({m.starts.easy} / {m.starts.normal} / {m.starts.hard})</span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">
-                                                            {totalCompletes.toLocaleString()} 回
-                                                            <span className="text-[10px] text-gray-500 block">({m.completes.easy} / {m.completes.normal} / {m.completes.hard})</span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right text-red-400 font-bold">
-                                                            {totalAbandons.toLocaleString()} 回
-                                                            <span className="text-[10px] text-gray-500 block">({m.abandons.easy} / {m.abandons.normal} / {m.abandons.hard})</span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right text-yellow-500 font-bold">{m.goldSpent.toLocaleString()} G</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
-                                {parentTab === 'monthly' && childTab === 'academy' && academy && (
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-800 text-gray-500 sticky top-0 bg-[#0a1628] z-10">
-                                                <th className="py-3 px-4 font-semibold text-left">対象月</th>
-                                                <th className="py-3 px-4 font-semibold text-right">パック開封数 (混沌と反逆)</th>
-                                                <th className="py-3 px-4 font-semibold text-right">消費ゴールド</th>
-                                                <th className="py-3 px-4 font-semibold text-right">返還ゴールド</th>
-                                                <th className="py-3 px-4 font-semibold text-right">実質消費ゴールド</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-850">
-                                            {(academy?.monthly || []).slice().reverse().map(m => {
-                                                const packs = m.packs?.chaos_and_rebellion || 0;
-                                                const goldSpent = m.goldSpent?.chaos_and_rebellion || 0;
-                                                const refundGold = m.refundGold?.chaos_and_rebellion || 0;
-                                                const netSpent = goldSpent;
-                                                const grossSpent = goldSpent + refundGold;
-                                                return (
-                                                    <tr key={m.month} className="hover:bg-gray-800/20 text-gray-300">
-                                                        <td className="py-3 px-4 text-left font-mono font-semibold">{m.month}</td>
-                                                        <td className="py-3 px-4 text-right text-indigo-400 font-bold">{packs.toLocaleString()} パック</td>
-                                                        <td className="py-3 px-4 text-right font-medium">{grossSpent.toLocaleString()} G</td>
-                                                        <td className="py-3 px-4 text-right text-yellow-500 font-semibold">{refundGold.toLocaleString()} G</td>
-                                                        <td className="py-3 px-4 text-right text-emerald-400 font-bold">{netSpent.toLocaleString()} G</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
+                            )}
+                            {activeTab === 'battles' && (
+                                <>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded" /><span className="text-gray-400">勝利</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded" /><span className="text-gray-400">敗北</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-500 rounded" /><span className="text-gray-400">逃亡</span></div>
+                                </>
+                            )}
+                            {activeTab === 'colosseum' && (
+                                <>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-emerald-500 rounded" /><span className="text-gray-400">Easy挑戦</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-500 rounded" /><span className="text-gray-400">Normal挑戦</span></div>
+                                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-500 rounded" /><span className="text-gray-400">Hard挑戦</span></div>
+                                </>
+                            )}
+                            {activeTab === 'academy' && (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3.5 h-0.5 border-t-2 border-indigo-500" />
+                                        <span className="text-gray-400">パック購入数（折れ線）</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-emerald-500 rounded" />
+                                        <span className="text-gray-400">消費ゴールド（棒）</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -882,8 +1140,8 @@ export default function AdminDashboardPage() {
                             </div>
                             
                             <div className="space-y-4">
-                                {Object.entries(subscriptionDistribution || {}).map(([tier, count]) => {
-                                    const total = Object.values(subscriptionDistribution || {}).reduce((a, b) => a + b, 0);
+                                {Object.entries(subscriptionDistribution).map(([tier, count]) => {
+                                    const total = Object.values(subscriptionDistribution).reduce((a, b) => a + b, 0);
                                     const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                                     
                                     let color = 'from-gray-500 to-gray-600';
@@ -918,8 +1176,8 @@ export default function AdminDashboardPage() {
                                 <h2 className="text-sm font-semibold tracking-wide">プレイヤーレベル分布</h2>
                             </div>
                             <div className="space-y-4">
-                                {Object.entries(levelDistribution || {}).map(([range, count]) => {
-                                    const total = Object.values(levelDistribution || {}).reduce((a, b) => a + b, 0);
+                                {Object.entries(levelDistribution).map(([range, count]) => {
+                                    const total = Object.values(levelDistribution).reduce((a, b) => a + b, 0);
                                     const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                                     return (
                                         <div key={range} className="space-y-1.5">
@@ -939,7 +1197,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* 詳細分析テーブル（アクティブタブ別） */}
-                {childTab === 'academy' ? (
+                {activeTab === 'academy' ? (
                     <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-sm font-semibold tracking-wide text-gray-300 flex items-center gap-2">
@@ -995,22 +1253,68 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                    <div className="p-6 bg-[#0a1628] border border-gray-800 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.3)] relative min-h-[200px]">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-sm font-semibold tracking-wide text-gray-300 flex items-center gap-2">
                                 <Trophy size={16} className="text-yellow-400" />
                                 全クエスト別詳細分析（実行数・クリア数・クリア率）
+                                {questStats && (
+                                    <button
+                                        onClick={() => fetchCategory('quests')}
+                                        disabled={loading.quests}
+                                        className="p-1 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors"
+                                        title="クエスト統計を更新"
+                                    >
+                                        <RefreshCw size={12} className={loading.quests ? 'animate-spin' : ''} />
+                                    </button>
+                                )}
                             </h2>
-                            <button
-                                onClick={exportQuestStatsCsv}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
-                            >
-                                <Download size={12} />
-                                CSV出力
-                            </button>
+                            {questStats && (
+                                <button
+                                    onClick={exportQuestStatsCsv}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#070d19] hover:bg-gray-800 border border-gray-800 text-[10px] font-semibold rounded-lg transition-all text-gray-300 hover:text-white"
+                                >
+                                    <Download size={12} />
+                                    CSV出力
+                                </button>
+                            )}
                         </div>
 
-                        {data.questStats && data.questStats.length > 0 ? (
+                        {loading.quests && !questStats && (
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mb-2"></div>
+                                <p className="text-xs text-gray-500">クエスト統計を読み込み中...</p>
+                            </div>
+                        )}
+
+                        {errors.quests && !questStats && (
+                            <div className="text-center py-12">
+                                <p className="text-red-400 text-xs mb-3">{errors.quests}</p>
+                                <button
+                                    onClick={() => fetchCategory('quests')}
+                                    className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-900/40 text-red-400 text-xs rounded-lg transition-all"
+                                >
+                                    再試行
+                                </button>
+                            </div>
+                        )}
+
+                        {!questStats && !loading.quests && !errors.quests && (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <p className="text-xs text-gray-500 mb-4">
+                                    クエスト詳細分析はデータ量が非常に多いため、初期表示の負荷を軽減するために遅延ロードにしています。
+                                </p>
+                                <button
+                                    onClick={() => fetchCategory('quests')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-900/40 text-blue-400 text-xs font-semibold rounded-lg transition-all"
+                                >
+                                    <Trophy size={14} />
+                                    クエスト統計データを読み込む
+                                </button>
+                            </div>
+                        )}
+
+                        {questStats && questStats.length > 0 ? (
                             <div className="overflow-y-auto max-h-96 pr-2 custom-scrollbar">
                                 <table className="w-full text-left text-xs border-collapse">
                                     <thead>
@@ -1025,7 +1329,7 @@ export default function AdminDashboardPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-850">
-                                        {data.questStats.map((q) => {
+                                        {questStats.map((q) => {
                                             let typeLabel = 'メイン';
                                             let typeColor = 'text-blue-400 bg-blue-950/40 border border-blue-900/30';
                                             if (q.quest_type === 'sub') {
@@ -1070,9 +1374,11 @@ export default function AdminDashboardPage() {
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-gray-500 text-xs">
-                                現在、クエスト統計データが存在しません。
-                            </div>
+                            questStats && (
+                                <div className="text-center py-8 text-gray-500 text-xs">
+                                    現在、クエスト統計データが存在しません。
+                                </div>
+                            )
                         )}
                     </div>
                 )}
