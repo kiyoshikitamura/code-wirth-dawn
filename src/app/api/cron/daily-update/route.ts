@@ -190,7 +190,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ 勝利数ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G を獲得しました。`;
+                        const message = `🏆 コロシアムランキング報酬獲得！\n\n【部門】\n勝利数ランキング第${rank}位\n\n【獲得報酬】\n賞金 ${prize.toLocaleString()}G`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
@@ -225,7 +225,11 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ Easy連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。`;
+                        let rewardLines = `賞金 ${prize.toLocaleString()}G`;
+                        if (rank === 1 || rank === 2) {
+                            rewardLines += `\n知識と契約の鍵 x1`;
+                        }
+                        const message = `🏆 コロシアムランキング報酬獲得！\n\n【部門】\nEasy連勝ランキング第${rank}位\n\n【獲得報酬】\n${rewardLines}`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
@@ -260,7 +264,11 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ Normal連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。`;
+                        let rewardLines = `賞金 ${prize.toLocaleString()}G`;
+                        if (rank === 1 || rank === 2) {
+                            rewardLines += `\n知識と契約の鍵 x1`;
+                        }
+                        const message = `🏆 コロシアムランキング報酬獲得！\n\n【部門】\nNormal連勝ランキング第${rank}位\n\n【獲得報酬】\n${rewardLines}`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
@@ -295,7 +303,11 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ Hard連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。`;
+                        let rewardLines = `賞金 ${prize.toLocaleString()}G`;
+                        if (rank === 1 || rank === 2) {
+                            rewardLines += `\n魔道と鉄壁の鍵 x1`;
+                        }
+                        const message = `🏆 コロシアムランキング報酬獲得！\n\n【部門】\nHard連勝ランキング第${rank}位\n\n【獲得報酬】\n${rewardLines}`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
