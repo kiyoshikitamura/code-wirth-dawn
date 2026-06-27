@@ -48,23 +48,41 @@ export default function MainVisualArea({
         return '';
     })();
 
+    const latestGossipTime = (() => {
+        if (!gossipData) return 0;
+        let maxTime = 0;
+        if (gossipData.pinned_system_post?.created_at) {
+            maxTime = Math.max(maxTime, new Date(gossipData.pinned_system_post.created_at).getTime());
+        }
+        if (gossipData.posts && gossipData.posts.length > 0 && gossipData.posts[0].created_at) {
+            maxTime = Math.max(maxTime, new Date(gossipData.posts[0].created_at).getTime());
+        }
+        return maxTime;
+    })();
+
     useEffect(() => {
         if (isTourActive) {
             setShowPromo(false);
             return;
         }
         if (typeof window !== 'undefined') {
-            const hasVisited = sessionStorage.getItem('session_visited_gossip') === 'true';
-            const hasText = !!latestGossipText;
-            if (!hasVisited && hasText) {
+            const lastViewedStr = localStorage.getItem('last_viewed_gossip_time');
+            const lastViewedTime = lastViewedStr ? parseInt(lastViewedStr, 10) : 0;
+            const hasUnread = latestGossipTime > lastViewedTime;
+
+            if (hasUnread && latestGossipText) {
                 setShowPromo(true);
+            } else {
+                setShowPromo(false);
             }
         }
-    }, [gossipData, isTourActive, latestGossipText]);
+    }, [latestGossipTime, isTourActive, latestGossipText]);
 
     const dismissGossipPromo = () => {
         if (typeof window !== 'undefined') {
-            sessionStorage.setItem('session_visited_gossip', 'true');
+            if (latestGossipTime > 0) {
+                localStorage.setItem('last_viewed_gossip_time', String(latestGossipTime));
+            }
         }
         setShowPromo(false);
     };
