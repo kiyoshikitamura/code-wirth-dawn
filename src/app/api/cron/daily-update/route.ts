@@ -190,7 +190,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ 勝利数ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G を獲得しました。郵便受け（所持金）に直接付与されました。`;
+                        const message = `🏆 コロシアムランキング報酬獲得！ 勝利数ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G を獲得しました。`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
@@ -225,7 +225,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ Easy連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
+                        const message = `🏆 コロシアムランキング報酬獲得！ Easy連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
@@ -260,7 +260,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ Normal連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
+                        const message = `🏆 コロシアムランキング報酬獲得！ Normal連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
@@ -295,7 +295,7 @@ async function performUpdate(isForceUgcReset: boolean) {
                         rewardMap.set(u.user_id, current);
 
                         // 個別通知インサート
-                        const message = `🏆 コロシアムランキング報酬獲得！ Hard連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。郵便受け（所持金・バッグ）に直接付与されました。`;
+                        const message = `🏆 コロシアムランキング報酬獲得！ Hard連勝ランキング第${rank}位を達成し、賞金 ${prize.toLocaleString()}G${itemLogText} を獲得しました。`;
                         await supabaseServer.from('notifications').insert({
                             user_id: u.user_id,
                             type: 'system',
