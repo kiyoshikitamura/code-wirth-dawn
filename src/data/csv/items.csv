@@ -172,3 +172,7 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 4001,item_demon_chest_unidentified,未鑑定の魔導宝箱,trade_good,,100,,1,false,"{""description"":""次元の狭間から持ち帰られた、強固な魔族の封印が施された黒い宝箱。熟練の鑑定士でなければ開けることはできない。""}",
 4002,item_demon_blade_abyss,魔界の漆黒剣,equipment,weapon,0,,1,false,"{""atk_bonus"":25,""description"":""深淵の魔鉄を鍛え上げて作られた禍々しい両刃剣。手にした者の精神を蝕み、攻撃力を25上昇させる。""}",
 4003,item_demon_armor_shadow,影魔の戦衣,equipment,armor,0,,1,false,"{""def_bonus"":18,""description"":""影魔の表皮を加工して作られた軽量の防具。着用者の輪郭をぼやけさせ、防御力を18上昇させる。""}",
+301,item_silver_blade,魔除けの銀剣,equipment,weapon,5000,,1,false,"{""atk_bonus"":20,""battle_start_buff"":{""buff_type"":""atk_up"",""duration"":3},""description"":""戦闘開始時に3ターンの間、攻撃力が上昇する銀の剣。""}",
+304,item_abyss_shield,深淵の盾,equipment,armor,6000,,1,false,"{""def_bonus"":15,""battle_start_buff"":{""buff_type"":""def_up"",""duration"":3,""value"":10},""description"":""戦闘開始時に3ターンの間、防御力（+10）が上昇する黒曜石の盾。""}",
+306,item_dark_cloak,暗黒の外套,equipment,armor,4000,,1,false,"{""def_bonus"":6,""atk_bonus"":4,""battle_start_buff"":{""buff_type"":""evasion_up"",""duration"":2},""description"":""戦闘開始時に2ターンの間、回避率が上昇する闇の外套。""}",
+350,item_demon_buster,デーモンバスター,equipment,weapon,15000,,1,false,"{""atk_bonus"":35,""def_bonus"":10,""hp_bonus"":30,""battle_start_buff"":[{""buff_type"":""atk_up"",""duration"":5},{""buff_type"":""def_up"",""duration"":5,""value"":15}],""description"":""戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。""}",

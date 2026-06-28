@@ -304,6 +304,40 @@ export const createBattleSlice = (
             }
         }
 
+        // 装備品の戦闘開始時パッシブバフを適用
+        const equippedGears = (inventory || [])
+            .filter(i => i.is_equipped && (i.item_type === 'equipment' || (i as any).type === 'equipment'));
+
+        const startBuffMessages: string[] = [];
+        let initialPlayerEffects: StatusEffect[] = [];
+
+        equippedGears.forEach(gear => {
+            const ed = gear.effect_data;
+            if (ed && ed.battle_start_buff) {
+                const buffs = Array.isArray(ed.battle_start_buff) 
+                    ? ed.battle_start_buff 
+                    : [ed.battle_start_buff];
+
+                buffs.forEach((buff: any) => {
+                    const id = buff.buff_type || buff.id;
+                    const duration = buff.duration;
+                    const val = buff.value;
+                    if (id && duration) {
+                        initialPlayerEffects = applyEffect(
+                            initialPlayerEffects,
+                            id as StatusEffectId,
+                            duration,
+                            val
+                        );
+                        const buffName = getEffectName(id as StatusEffectId);
+                        startBuffMessages.push(
+                            `✨ ${gear.name}の効果で${buffName}！ (${duration}T)`
+                        );
+                    }
+                });
+            }
+        });
+
         const hasEquipBonus = equipBonus.atk > 0 || equipBonus.def > 0 || equipBonus.hp > 0;
         const equipBonusMessages: string[] = [];
         if (hasEquipBonus) {
@@ -338,6 +372,7 @@ export const createBattleSlice = (
         const startMessages = [
             `${enemies.map(e => e.name).join('と')}が現れた！`,
             ...equipBonusMessages,
+            ...startBuffMessages,
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
             ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
@@ -367,7 +402,7 @@ export const createBattleSlice = (
                 isVictory: false,
                 isDefeat: false,
                 currentTactic: 'Aggressive',
-                player_effects: [],
+                player_effects: initialPlayerEffects,
                 enemy_effects: [],
                 exhaustPile: [],
                 consumedItems: [],
