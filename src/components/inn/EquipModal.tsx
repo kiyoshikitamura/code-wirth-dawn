@@ -206,10 +206,10 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                         )}
 
                         {/* Description */}
-                        {selectedDetail.effect_data?.description && (
+                        {(selectedDetail.description || selectedDetail.effect_data?.flavor_text || selectedDetail.effect_data?.description) && (
                             <div className="bg-amber-950/20 rounded-lg p-2.5 border border-amber-900/30">
                                 <p className="text-xs text-amber-400/80 italic leading-relaxed">
-                                    「{selectedDetail.effect_data.description}」
+                                    「{selectedDetail.description || selectedDetail.effect_data?.flavor_text || selectedDetail.effect_data?.description}」
                                 </p>
                             </div>
                         )}

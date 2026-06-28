@@ -168,6 +168,28 @@ export function getEffectList(effectData: any): { label: string; value: string; 
         }
     }
 
+    // ─── 戦闘開始バフ（パッシブ） ───
+    if (effectData.battle_start_buff != null) {
+        const buffs = Array.isArray(effectData.battle_start_buff)
+            ? effectData.battle_start_buff
+            : [effectData.battle_start_buff];
+
+        for (const buff of buffs) {
+            const id = buff.buff_type || buff.id;
+            const dur = buff.duration;
+            const val = buff.value;
+            if (id && dur) {
+                const name = effectIdLabel[id] || id;
+                const valSuffix = val ? `(+${val})` : '';
+                list.push({
+                    label: '戦闘開始バフ',
+                    value: `${name}${valSuffix} (${dur}T)`,
+                    color: 'text-purple-400'
+                });
+            }
+        }
+    }
+
     // ─── 使用タイミング ───
     if (effectData.use_timing != null) {
         const timingLabel: Record<string, string> = { battle: '戦闘中', field: 'フィールド', any: 'いつでも' };
