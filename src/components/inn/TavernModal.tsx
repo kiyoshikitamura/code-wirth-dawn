@@ -103,7 +103,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             // Zustand にデータがない場合、sessionStorage キャッシュからの復帰を試みる
             let hasCache = false;
             try {
-                const cacheKey = `tavern_shadows_cache_${locationId}`;
+                const cacheKey = `tavern_shadows_cache_v25_${locationId}`;
                 const cached = sessionStorage.getItem(cacheKey);
                 if (cached) {
                     const parsed = JSON.parse(cached);
@@ -168,7 +168,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     // v2.9.3f: sessionStorageキャッシュがあればそれを使い、なければAPIから取得
     const fetchShadowsWithCache = async () => {
         try {
-            const cacheKey = `tavern_shadows_cache_${locationId}`;
+            const cacheKey = `tavern_shadows_cache_v25_${locationId}`;
             const cached = sessionStorage.getItem(cacheKey);
             if (cached) {
                 const parsed = JSON.parse(cached);
@@ -207,8 +207,12 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
             const data = await res.json();
             if (data.shadows) {
                 setTavernShadows(data.shadows);
+                if (selectedShadow) {
+                    const updated = data.shadows.find((s: any) => s.profile_id === selectedShadow.profile_id || (s.slug && s.slug === selectedShadow.slug));
+                    if (updated) setSelectedShadow(updated);
+                }
                 try {
-                    sessionStorage.setItem(`tavern_shadows_cache_${locationId}`, JSON.stringify(data.shadows));
+                    sessionStorage.setItem(`tavern_shadows_cache_v25_${locationId}`, JSON.stringify(data.shadows));
                 } catch { /* ignore */ }
             }
         } catch (e) {
@@ -548,7 +552,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                 <button
                                     onClick={async () => {
                                         setLoading(true);
-                                        try { sessionStorage.removeItem(`tavern_shadows_cache_${locationId}`); } catch {}
+                                        try { sessionStorage.removeItem(`tavern_shadows_cache_v25_${locationId}`); } catch {}
                                         await fetchShadows();
                                         setLoading(false);
                                     }}

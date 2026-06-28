@@ -78,7 +78,7 @@ export default function QuestPage() {
                             const locId = data.profile.current_location_id;
                             try {
                                 if (data.tavern_shadows) {
-                                    sessionStorage.setItem(`tavern_shadows_cache_${locId}`, JSON.stringify(data.tavern_shadows));
+                                    sessionStorage.setItem(`tavern_shadows_cache_v25_${locId}`, JSON.stringify(data.tavern_shadows));
                                 }
                                 if (data.location_quests) {
                                     sessionStorage.setItem(`location_quests_cache_${locId}`, JSON.stringify(data.location_quests));
