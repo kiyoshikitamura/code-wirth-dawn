@@ -54,9 +54,20 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
         return item.sub_type || item.effect_data?.sub_type || 'weapon';
     };
 
-    const weapons = equipmentItems.filter(i => getSubType(i) === 'weapon');
-    const armors = equipmentItems.filter(i => getSubType(i) === 'armor');
-    const accessories = equipmentItems.filter(i => getSubType(i) === 'accessory');
+    const getUniqueItems = (items: any[]) => {
+        const seen = new Set<number>();
+        return items.filter(item => {
+            if (seen.has(item.item_id)) {
+                return false;
+            }
+            seen.add(item.item_id);
+            return true;
+        });
+    };
+
+    const weapons = getUniqueItems(equipmentItems.filter(i => getSubType(i) === 'weapon'));
+    const armors = getUniqueItems(equipmentItems.filter(i => getSubType(i) === 'armor'));
+    const accessories = getUniqueItems(equipmentItems.filter(i => getSubType(i) === 'accessory'));
 
     const handleEquipItem = async (invItem: any, slot: string) => {
         if (questLocked) {
