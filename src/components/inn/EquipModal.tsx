@@ -46,6 +46,10 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
         !i.is_equipped
     );
 
+    const getOwnedCount = (itemId: number) => {
+        return inventory.filter(i => i.item_id === itemId).length;
+    };
+
     const getSubType = (item: any) => {
         return item.sub_type || item.effect_data?.sub_type || 'weapon';
     };
@@ -404,7 +408,12 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-slate-300 group-hover:text-orange-300 transition-colors truncate">{item.name}</div>
+                                                        <div className="text-xs font-bold text-slate-300 group-hover:text-orange-300 transition-colors truncate">
+                                                            {item.name}
+                                                            {getOwnedCount(item.item_id) > 1 && (
+                                                                <span className="text-[10px] text-orange-400/80 font-normal ml-1.5 font-mono">(所持: {getOwnedCount(item.item_id)})</span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[9px] text-slate-500 flex flex-wrap gap-x-1.5 mt-0.5 font-mono">
                                                             {bonus.atk > 0 && <span className="text-red-400">ATK+{bonus.atk}</span>}
                                                             {bonus.def > 0 && <span className="text-blue-400">DEF+{bonus.def}</span>}
@@ -469,7 +478,12 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-slate-300 group-hover:text-orange-300 transition-colors truncate">{item.name}</div>
+                                                        <div className="text-xs font-bold text-slate-300 group-hover:text-orange-300 transition-colors truncate">
+                                                            {item.name}
+                                                            {getOwnedCount(item.item_id) > 1 && (
+                                                                <span className="text-[10px] text-orange-400/80 font-normal ml-1.5 font-mono">(所持: {getOwnedCount(item.item_id)})</span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[9px] text-slate-500 flex flex-wrap gap-x-1.5 mt-0.5 font-mono">
                                                             {bonus.atk > 0 && <span className="text-red-400">ATK+{bonus.atk}</span>}
                                                             {bonus.def > 0 && <span className="text-blue-400">DEF+{bonus.def}</span>}
@@ -534,7 +548,12 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-slate-300 group-hover:text-orange-300 transition-colors truncate">{item.name}</div>
+                                                        <div className="text-xs font-bold text-slate-300 group-hover:text-orange-300 transition-colors truncate">
+                                                            {item.name}
+                                                            {getOwnedCount(item.item_id) > 1 && (
+                                                                <span className="text-[10px] text-orange-400/80 font-normal ml-1.5 font-mono">(所持: {getOwnedCount(item.item_id)})</span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[9px] text-slate-500 flex flex-wrap gap-x-1.5 mt-0.5 font-mono">
                                                             {bonus.atk > 0 && <span className="text-red-400">ATK+{bonus.atk}</span>}
                                                             {bonus.def > 0 && <span className="text-blue-400">DEF+{bonus.def}</span>}
@@ -543,18 +562,14 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                                                     </div>
                                                 </div>
                                                 <button
-                                                    onClick={async (e) => {
+                                                    onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // 空いている最初のスロットを選択、なければ accessory_1 を上書き
-                                                        const targetSlot = ['accessory_1', 'accessory_2', 'accessory_3'].find(
-                                                            s => !equipped.some((eq: any) => eq.slot === s)
-                                                        ) || 'accessory_1';
-                                                        await handleEquipItem(item, targetSlot);
+                                                        // 直接装備せず、詳細ポップアップを開いてスロットを選択させる
+                                                        setSelectedDetail({ ...item, _slot: 'accessory', _isEquipped: false });
                                                     }}
-                                                    disabled={loadingSlot !== null}
                                                     className="px-2.5 py-1 text-[10px] font-bold rounded bg-orange-950/40 border border-orange-900/40 hover:bg-orange-900/60 text-orange-200 transition-colors active:scale-95"
                                                 >
-                                                    {loadingSlot !== null ? '...' : '装備'}
+                                                    装備
                                                 </button>
                                             </div>
                                         );

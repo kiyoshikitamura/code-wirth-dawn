@@ -509,17 +509,37 @@ async function handleItemPurchase(profile: UserProfileDB, itemId: number, quanti
         .rpc('increment_gold', { p_user_id: profile.id, p_amount: -finalPrice });
     if (goldError) throw goldError;
 
-    // 6. Add to Inventory
-    const { error: invError } = await supabaseService
-        .from('inventory')
-        .insert({
-            user_id: profile.id,
-            item_id: item.id,
-            quantity: quantity,
-            is_equipped: false,
-            is_skill: false,
-            acquired_at: new Date().toISOString()
-        });
+    // 6. Add to Inventory (装備品は quantity = 1 の個別行を個数分 insert する)
+    let invError;
+    if (item.type === 'equipment') {
+        const insertRows = [];
+        for (let i = 0; i < quantity; i++) {
+            insertRows.push({
+                user_id: profile.id,
+                item_id: item.id,
+                quantity: 1,
+                is_equipped: false,
+                is_skill: false,
+                acquired_at: new Date().toISOString()
+            });
+        }
+        const { error } = await supabaseService
+            .from('inventory')
+            .insert(insertRows);
+        invError = error;
+    } else {
+        const { error } = await supabaseService
+            .from('inventory')
+            .insert({
+                user_id: profile.id,
+                item_id: item.id,
+                quantity: quantity,
+                is_equipped: false,
+                is_skill: false,
+                acquired_at: new Date().toISOString()
+            });
+        invError = error;
+    }
 
     if (invError) {
         await supabaseService.rpc('increment_gold', { p_user_id: profile.id, p_amount: finalPrice });

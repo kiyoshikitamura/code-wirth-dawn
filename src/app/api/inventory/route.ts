@@ -14,7 +14,7 @@ async function getAuthUserId(req: Request): Promise<string | null> {
     return null;
 }
 
-// [Security v27.3] ストーリー・スポット報酬など、ドロップ以外で直接付与してはいけないアイテムのプレフィックス
+// [Security v27.3] 付与上限定数
 const RESTRICTED_SLUG_PREFIXES = ['story_', 'spot_', 'item_pass_'];
 // クエスト専用アイテム（grant API経由でのみ付与可能）
 const QUEST_ONLY_SLUGS = new Set([
@@ -70,7 +70,9 @@ export async function POST(req: Request) {
         }
 
         // 2. Check if already exists in inventory (stackable?)
-        const { data: existing } = await supabaseServer
+        // 装備品 (item.type === 'equipment') の場合はスタック（集約）せず、常に新規レコードを個数分 insert する
+        const isEquipment = item.type === 'equipment';
+        const { data: existing } = isEquipment ? { data: null } : await supabaseServer
             .from('inventory')
             .select('id, quantity')
             .eq('user_id', userId)
@@ -78,7 +80,7 @@ export async function POST(req: Request) {
             .maybeSingle();
 
         if (existing) {
-            // 爆薬(ID: 3010 / item_explosive)の複数所持制限: すでに持っているなら追加をスキップ
+            // 既存レコードがあれば quantity を加算 (消耗品や素材のみ)
             if (item.id === 3010) {
                 console.log(`[Inventory POST] Skip adding item_explosive as user ${userId} already owns it.`);
                 return NextResponse.json({ success: true, item_name: item.name, skipped: true });
@@ -89,22 +91,42 @@ export async function POST(req: Request) {
                 .eq('id', existing.id);
             if (error) throw error;
         } else {
-            // 爆薬の新規追加の場合は数量を強制的に 1 に制限
-            const finalQuantity = item.id === 3010 ? 1 : safeQuantity;
-            const { error } = await supabaseServer
-                .from('inventory')
-                .insert({
-                    user_id: userId,
-                    item_id: item.id,
-                    quantity: finalQuantity,
-                    is_equipped: false,
-                    is_skill: false,
-                    acquired_at: new Date().toISOString()
-                });
+            // 新規追加
+            if (isEquipment) {
+                // 装備品の場合は数量 safeQuantity 分の個別行を登録
+                const insertRows = [];
+                for (let i = 0; i < safeQuantity; i++) {
+                    insertRows.push({
+                        user_id: userId,
+                        item_id: item.id,
+                        quantity: 1,
+                        is_equipped: false,
+                        is_skill: false,
+                        acquired_at: new Date().toISOString()
+                    });
+                }
+                const { error } = await supabaseServer
+                    .from('inventory')
+                    .insert(insertRows);
+                if (error) throw error;
+            } else {
+                // 爆薬の新規追加の場合は数量を強制的に 1 に制限
+                const finalQuantity = item.id === 3010 ? 1 : safeQuantity;
+                const { error } = await supabaseServer
+                    .from('inventory')
+                    .insert({
+                        user_id: userId,
+                        item_id: item.id,
+                        quantity: finalQuantity,
+                        is_equipped: false,
+                        is_skill: false,
+                        acquired_at: new Date().toISOString()
+                    });
 
-            if (error) {
-                console.error("Inventory Insert Error:", error);
-                throw error;
+                if (error) {
+                    console.error("Inventory Insert Error:", error);
+                    throw error;
+                }
             }
         }
 
@@ -115,10 +137,9 @@ export async function POST(req: Request) {
     }
 }
 
+// GET: Inventory Items and Skills
 export async function GET(req: Request) {
     try {
-        // supabaseServer (Service Role) でRLSをバイパスし、確実にデータを取得する
-
         const userId = await getAuthUserId(req);
 
         let query = supabaseServer
@@ -141,11 +162,9 @@ export async function GET(req: Request) {
                 )
             `);
 
-        // If userId is provided, filter by it. Else, maybe return system items or empty?
         if (userId) {
             query = query.eq('user_id', userId);
         } else {
-            // Fallback: Return empty or demo?
             query = query.is('user_id', null);
         }
 
@@ -194,7 +213,6 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: error.message, details: error }, { status: 500 });
         }
 
-        // user_skills のエラーログ（サイレント失敗防止）
         if (userSkillsResult.error) {
             console.error("user_skills GET Error:", JSON.stringify(userSkillsResult.error, null, 2));
         }
@@ -210,10 +228,6 @@ export async function GET(req: Request) {
                 const effectData = item.effect_data || {};
                 const powerVal = effectData.heal || effectData.damage || effectData.power || 0;
 
-                // v5.3: items.type === 'skill' はレガシーデータ（旧仕様で inventory に入ったスキル）
-                // → is_skill: true, item_type: 'skill_card' としてデッキタブに表示させる
-                // ただし slug ベースでスキル教本系のプレフィックスを持つもののみに限定
-                // (交易品・装備品等が万が一 type='skill' のまま残っていても誤分類を防ぐ)
                 const SKILL_SLUG_PREFIXES = ['book_', 'grimoire_', 'scroll_', 'skill_', 'manual_'];
                 const hasSkillSlug = item.slug && SKILL_SLUG_PREFIXES.some((p: string) => item.slug.startsWith(p));
                 const isLegacySkill = item.type === 'skill' && hasSkillSlug;
@@ -245,7 +259,7 @@ export async function GET(req: Request) {
 
         // 同一アイテムを item_id で集約 (ただし、装備品は個体ごとに装備状態が異なるため集約しない)
         const aggregatedItems: any[] = [];
-        const itemMap = new Map<string, any>();
+        const itemMap = new Map();
         for (const inv of itemInventory) {
             if (inv.item_type === 'equipment') {
                 aggregatedItems.push({ ...inv, quantity: inv.quantity || 1 });
@@ -269,15 +283,14 @@ export async function GET(req: Request) {
                 if (!skill) return null;
                 const card = skill.cards;
                 const effectData = card ? {
-                    cost_val: card.cost_val, // v28: DB伝搬のみ。バトルでのVIT/MP消費には不使用。
+                    cost_val: card.cost_val,
                     effect_val: card.effect_val,
-                    cost_type: card.cost_type, // v28: 'item'のみ有効（1バトル1回制限）。vitality/mpは廃止。
+                    cost_type: card.cost_type,
                     card_type: card.type,
                     ap_cost: card.ap_cost ?? 1,
                     target_type: card.target_type,
                     effect_id: card.effect_id || null,
-                    image_url: card.image_url || null,      // v3.3: バトルカード画像
-                    // v3.3: skills.description → cards.description → skill.name の順で優先
+                    image_url: card.image_url || null,
                     description: skill.description || card.description || card.name
                 } : {};
 
@@ -288,7 +301,6 @@ export async function GET(req: Request) {
                     card_id: skill.card_id,
                     name: skill.name,
                     slug: skill.slug || null,
-                    // [SK6 v27.3] cards.description を最優先（効果テキストが詳細）
                     description: card?.description || skill.description || skill.name,
                     item_type: 'skill_card',
                     power_value: card?.effect_val || 0,
@@ -307,40 +319,25 @@ export async function GET(req: Request) {
             }
         }).filter(Boolean) as any[];
 
-        return NextResponse.json({ inventory: [...aggregatedItems, ...skillInventory] });
-    } catch (err: any) {
-        console.error("Inventory GET Critical Error:", err);
-        return NextResponse.json({ error: err.message, stack: err.stack }, { status: 500 });
+        const inventory = [...aggregatedItems, ...skillInventory];
+        return NextResponse.json({ inventory });
+    } catch (e: any) {
+        console.error("Inventory GET Error:", e);
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
 
-// PATCH: Equip/Unequip (v5.2: inventory + user_skills 両対応, レガシースキルフォールバック付き)
+// PATCH: Equip/Unequip (v5.2: inventory + user_skills 対応)
 export async function PATCH(req: Request) {
     try {
         const { inventory_id, is_equipped, bypass_lock, is_skill } = await req.json();
-        
-        // JWT認証 (v27: x-user-id fallback removed)
         const userId = await getAuthUserId(req);
 
-        // is_skill が true の場合、まず user_skills に該当IDがあるか確認
-        // なければレガシースキル（inventory テーブルに保存された旧スキル）とみなす
-        let isLegacySkill = false;
-        if (is_skill) {
-            const { data: skillRecord } = await supabaseServer
-                .from('user_skills')
-                .select('id')
-                .eq('id', inventory_id)
-                .maybeSingle();
-
-            if (!skillRecord) {
-                // user_skills に該当IDが存在しない → レガシースキル（inventory テーブル側）
-                isLegacySkill = true;
-                console.log(`[PATCH] Legacy skill detected: inventory_id=${inventory_id} not found in user_skills, falling back to inventory table`);
-            }
+        if (!userId) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
         }
 
-        // 実際に更新するテーブルを決定
-        const useUserSkillsTable = is_skill && !isLegacySkill;
+        const useUserSkillsTable = is_skill;
 
         // クエスト進行中の装備変更制限 (bypass_lockがない場合)
         if (userId && !bypass_lock) {
@@ -351,7 +348,6 @@ export async function PATCH(req: Request) {
                 .single();
 
             if (profile?.current_quest_id && profile.quest_started_at) {
-                // 実際に使用するテーブルから取得日時を確認
                 const tableName = useUserSkillsTable ? 'user_skills' : 'inventory';
                 const columnName = useUserSkillsTable ? 'created_at' : 'acquired_at';
                 const { data: invItem } = await supabaseServer
@@ -386,7 +382,6 @@ export async function PATCH(req: Request) {
 
             const maxDeckCost = profile?.max_deck_cost || 10;
 
-            // 現在装備中のスキルのdeck_costを合算
             const [{ data: equippedUserSkills }, { data: equippedLegacySkills }] = await Promise.all([
                 supabaseServer
                     .from('user_skills')
@@ -403,7 +398,7 @@ export async function PATCH(req: Request) {
 
             let currentDeckCost = 0;
             for (const s of (equippedUserSkills || [])) {
-                if (String(s.id) === String(inventory_id)) continue; // 自身は除外
+                if (String(s.id) === String(inventory_id)) continue;
                 currentDeckCost += (s as any).skills?.deck_cost || 0;
             }
             for (const s of (equippedLegacySkills || [])) {
@@ -412,7 +407,6 @@ export async function PATCH(req: Request) {
                 currentDeckCost += ed?.deck_cost || ed?.cost || 0;
             }
 
-            // 新たに装備するスキルのdeck_costを取得
             let newSkillCost = 0;
             if (useUserSkillsTable) {
                 const { data: skillData } = await supabaseServer
@@ -439,9 +433,7 @@ export async function PATCH(req: Request) {
             }
         }
 
-        // v5.2: スキルとアイテムでテーブルを分岐（レガシースキルは inventory にフォールバック）
         if (useUserSkillsTable) {
-            // user_skills テーブルを更新（正規スキル）
             let query = supabaseServer
                 .from('user_skills')
                 .update({ is_equipped })
@@ -452,7 +444,6 @@ export async function PATCH(req: Request) {
             const { error } = await query;
             if (error) throw error;
         } else {
-            // inventory テーブルを更新（通常アイテム or レガシースキル）
             let query = supabaseServer
                 .from('inventory')
                 .update({ is_equipped })
@@ -466,13 +457,8 @@ export async function PATCH(req: Request) {
 
             const { error } = await query;
             if (error) throw error;
-
-            if (isLegacySkill) {
-                console.log(`[PATCH] Legacy skill equip updated successfully: inventory_id=${inventory_id}, is_equipped=${is_equipped}`);
-            }
         }
-        // v4.2.1: signature_deck 同期 — スキル装備/解除後に user_profiles.signature_deck を更新
-        // 英霊作成時（死亡/引退）にこのフィールドが参照されるため、常に最新のデッキ状態を反映する
+
         if (is_skill && userId) {
             try {
                 const { data: equippedAfter } = await supabaseServer

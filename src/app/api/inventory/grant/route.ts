@@ -58,15 +58,17 @@ export async function POST(req: Request) {
                 // [Security v27.3] 個別数量上限
                 quantity = Math.min(quantity, MAX_ITEM_QUANTITY);
 
-                // アイテム名を取得
+                // アイテム名と種別を取得
                 const { data: itemData } = await supabaseService
                     .from('items')
-                    .select('name')
+                    .select('name, type')
                     .eq('id', item_id)
                     .maybeSingle();
 
-                // 既存のインベントリ行を確認
-                const { data: existing } = await supabaseService
+                const isEquipment = itemData?.type === 'equipment';
+
+                // 既存のインベントリ行を確認 (装備品は集約しないため常にnull)
+                const { data: existing } = isEquipment ? { data: null } : await supabaseService
                     .from('inventory')
                     .select('id, quantity')
                     .eq('user_id', user.id)
@@ -86,17 +88,33 @@ export async function POST(req: Request) {
                         .update({ quantity: existing.quantity + quantity })
                         .eq('id', existing.id);
                 } else {
-                    // 爆薬の新規追加の場合は数量を強制的に 1 に制限
-                    const finalQuantity = item_id === 3010 ? 1 : quantity;
-                    // 新規行を挿入
-                    await supabaseService
-                        .from('inventory')
-                        .insert({
-                            user_id: user.id,
-                            item_id,
-                            quantity: finalQuantity,
-                            is_equipped: false,
-                        });
+                    if (isEquipment) {
+                        // 装備品の場合はスタックせず数量分の個別行をインサート
+                        const insertRows = [];
+                        for (let i = 0; i < quantity; i++) {
+                            insertRows.push({
+                                user_id: user.id,
+                                item_id,
+                                quantity: 1,
+                                is_equipped: false,
+                            });
+                        }
+                        await supabaseService
+                            .from('inventory')
+                            .insert(insertRows);
+                    } else {
+                        // 爆薬の新規追加の場合は数量を強制的に 1 に制限
+                        const finalQuantity = item_id === 3010 ? 1 : quantity;
+                        // 新規行を挿入
+                        await supabaseService
+                            .from('inventory')
+                            .insert({
+                                user_id: user.id,
+                                item_id,
+                                quantity: finalQuantity,
+                                is_equipped: false,
+                            });
+                    }
                 }
 
                 grantedItems.push({
