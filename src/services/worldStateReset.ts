@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 /**
  * worldStateReset.ts
  * 世界情勢アライメントスコアのリセットロジック（廃止・ダミー化）

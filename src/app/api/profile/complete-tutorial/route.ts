@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-admin';
 import { supabase as anonSupabase } from '@/lib/supabase';

@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { UGC_ENABLED } from '@/lib/ugc/ugcConfig';

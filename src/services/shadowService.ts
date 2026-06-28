@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { EconomyService } from './economyService';
 import { Card } from '@/types/game';

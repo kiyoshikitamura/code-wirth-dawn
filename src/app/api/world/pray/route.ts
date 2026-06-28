@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { NextResponse } from 'next/server';
 import { supabaseServer as supabase } from '@/lib/supabase-admin';
 import { ECONOMY_RULES } from '@/constants/game_rules';

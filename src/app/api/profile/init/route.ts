@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';

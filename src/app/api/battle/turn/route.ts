@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { NextResponse } from 'next/server';
 // import { supabaseServer as supabase } from '@/lib/supabase-admin'; // 将来の権威サーバー移行時に有効化
 

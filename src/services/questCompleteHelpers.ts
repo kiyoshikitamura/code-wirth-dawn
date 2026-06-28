@@ -160,45 +160,54 @@ export async function grantRewardItems(
             let itemId = parseInt(String(itemIdStr), 10);
             let itemDef: any = null;
 
-            if (isNaN(itemId)) {
-                // 文字列Slug（"item_bear_pelt"など）が渡された場合、DBからIDを逆引きする
-                const { data: found } = await supabase
-                    .from('items')
-                    .select('id, name')
-                    .eq('slug', itemIdStr)
-                    .maybeSingle();
-                if (found) {
-                    itemId = found.id;
-                    itemDef = found;
+            try {
+                if (isNaN(itemId)) {
+                    // 文字列Slug（"item_bear_pelt"など）が渡された場合、DBからIDを逆引きする
+                    const { data: found } = await supabase
+                        .from('items')
+                        .select('id, name')
+                        .eq('slug', itemIdStr)
+                        .maybeSingle();
+                    if (found) {
+                        itemId = found.id;
+                        itemDef = found;
+                    } else {
+                        console.warn(`[QuestComplete] Item slug '${itemIdStr}' not found in items table.`);
+                        continue;
+                    }
                 } else {
-                    console.warn(`[QuestComplete] Item slug '${itemIdStr}' not found in items table.`);
-                    continue;
+                    const { data: found } = await supabase
+                        .from('items')
+                        .select('name')
+                        .eq('id', itemId)
+                        .maybeSingle();
+                    if (found) {
+                        itemDef = found;
+                    } else {
+                        console.warn(`[QuestComplete] Item ID '${itemId}' not found in items table.`);
+                    }
                 }
-            } else {
-                const { data: found } = await supabase
-                    .from('items')
-                    .select('name')
-                    .eq('id', itemId)
-                    .maybeSingle();
-                if (!found) {
-                    console.warn(`[QuestComplete] Item ID '${itemId}' not found in items table. Skipping grant to prevent FK violation.`);
-                    continue;
-                }
-                itemDef = found;
+            } catch (queryErr) {
+                console.error(`[QuestComplete] Database error during item definition lookup for ${itemIdStr}:`, queryErr);
+                itemDef = { name: `アイテム #${itemId}` };
             }
 
             const itemName = itemDef?.name || `アイテム #${itemId}`;
 
-            const { data: existing } = await supabase
-                .from('inventory').select('id, quantity')
-                .eq('user_id', user_id).eq('item_id', itemId).maybeSingle();
+            try {
+                const { data: existing } = await supabase
+                    .from('inventory').select('id, quantity')
+                    .eq('user_id', user_id).eq('item_id', itemId).maybeSingle();
 
-            if (existing) {
-                await supabase.from('inventory').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
-            } else {
-                await supabase.from('inventory').insert({ user_id, item_id: itemId, quantity: 1 });
+                if (existing) {
+                    await supabase.from('inventory').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
+                } else {
+                    await supabase.from('inventory').insert({ user_id, item_id: itemId, quantity: 1 });
+                }
+                console.log(`[QuestComplete] Granted item ${itemId} (${itemName})`);
+            } catch (inventoryErr) {
+                console.error(`[QuestComplete] Failed to update inventory for item ${itemId}:`, inventoryErr);
             }
-            console.log(`[QuestComplete] Granted item ${itemId} (${itemName})`);
 
             try {
                 await supabase.from('user_item_history')
