@@ -6,7 +6,7 @@ NODE,trigger_fg,"通路の奥に、不気味な悪魔が現れた。（前景表
 NODE,choice_test,"","{""bg"":""bg_ruins_field"",""fg_image"":""fg_demon_soldier"",""type"":""choice""}",
 CHOICE,,「テスト用アイテムを受け取る」,get_test_items
 CHOICE,,「そのまま進む」,camp_save
-NODE,get_test_items,"検証用のアイテム「証・青 x1」「証・赤 x2」「魔導宝箱 x1」を付与します。","{""bg"":""bg_ruins_field"",""fg_image"":""fg_demon_soldier"",""rewards"":{""items"":[{""item_id"":346,""quantity"":1},{""item_id"":347,""quantity"":2},{""item_id"":4001,""quantity"":1}]},""type"":""reward""}",camp_save
+NODE,get_test_items,"検証用のアイテム「証・青 x1」「証・赤 x2」「魔導宝箱 x1」を付与します。","{""bg"":""bg_ruins_field"",""fg_image"":""fg_demon_soldier"",""rewards"":{""items"":[{""item_id"":346,""quantity"":1,""name"":""テストの証・青""},{""item_id"":347,""quantity"":2,""name"":""テストの証・赤""},{""item_id"":4001,""quantity"":1,""name"":""未鑑定の魔導宝箱""}]},""type"":""reward""}",camp_save
 NODE,camp_save,"「野営地に到着した。ここでこれまでの戦利品がセーブされます。」","{""bg"":""bg_camp"",""type"":""camp""}",check_single_box
 NODE,check_single_box,"","{""bg"":""bg_guild"",""item_id"":4001,""quantity"":1,""remove_on_success"":true,""type"":""check_delivery""}",
 CHOICE,,success,,gamble_branch

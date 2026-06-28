@@ -462,6 +462,7 @@ async function main() {
             quest_type: type,
             requirements: type === 'special' ? requirements : {},
             location_tags: location_tags,
+            is_repeatable: r.is_repeatable === 'true' || r.is_repeatable === true || r.is_repeatable === '1',
             // Map Normal Quest Props to conditions JSON if we want strict schema, 
             // OR just rely on API reading constraints from additional columns if we added them to DB.
             // Spec v3.1 says API reads CSV/Table columns directly.

@@ -447,10 +447,19 @@ export function useScenarioNodeProcessor({
                         const data = await res.json();
                         if (data.player_name) {
                             questState.setFlag('met_player_name', data.player_name, true);
+                        } else {
+                            questState.setFlag('met_player_name', '見知らぬ冒険者', true);
                         }
+                    } else {
+                        const dummies = ['戦士バルド', '魔術師ミリア', '冒険者ジーク', '盗賊レナ', '聖騎士クララ'];
+                        const picked = dummies[Math.floor(Math.random() * dummies.length)];
+                        questState.setFlag('met_player_name', picked, true);
                     }
                 } catch (e) {
-                    console.error('[meet_player] Failed to fetch nearby player:', e);
+                    console.error('[meet_player] Failed to fetch nearby player, using fallback:', e);
+                    const dummies = ['戦士バルド', '魔術師ミリア', '冒険者ジーク', '盗賊レナ', '聖騎士クララ'];
+                    const picked = dummies[Math.floor(Math.random() * dummies.length)];
+                    questState.setFlag('met_player_name', picked, true);
                 }
 
                 if (processedNodeRef.current === activeNodeId && nextId) {
