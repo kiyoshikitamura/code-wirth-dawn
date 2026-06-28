@@ -212,24 +212,44 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                         )}
 
                         {/* Action Button */}
-                        {selectedDetail._slot === 'accessory' && !selectedDetail._isEquipped ? (
+                        {selectedDetail._slot.startsWith('accessory') ? (
                             <div className="flex flex-col gap-2">
                                 {(['accessory_1', 'accessory_2', 'accessory_3'] as const).map((accSlot, idx) => {
+                                    const isCurrentSlot = selectedDetail._slot === accSlot;
                                     const currentEquip = equipped.find((e: any) => e.slot === accSlot);
-                                    const label = currentEquip ? `${idx + 1}: ${currentEquip.item.name} と入れ替え` : `${idx + 1}: 空きスロットに装備`;
-                                    return (
-                                        <button
-                                            key={accSlot}
-                                            onClick={async () => {
-                                                await handleEquipItem(selectedDetail, accSlot);
-                                                setSelectedDetail(null);
-                                            }}
-                                            disabled={loadingSlot !== null}
-                                            className="w-full py-2 rounded text-xs font-bold transition-all bg-orange-900 hover:bg-orange-800 text-orange-100 border border-orange-700 disabled:opacity-50"
-                                        >
-                                            {loadingSlot === accSlot ? '処理中...' : label}
-                                        </button>
-                                    );
+                                    
+                                    if (isCurrentSlot && selectedDetail._isEquipped) {
+                                        return (
+                                            <button
+                                                key={accSlot}
+                                                onClick={async () => {
+                                                    await handleUnequip(accSlot);
+                                                    setSelectedDetail(null);
+                                                }}
+                                                disabled={loadingSlot !== null}
+                                                className="w-full py-2 rounded text-xs font-bold transition-all bg-red-955/80 text-red-200 border border-red-800/60 hover:bg-red-900/70"
+                                            >
+                                                {loadingSlot === accSlot ? '処理中...' : `${idx + 1}: 装備を外す`}
+                                            </button>
+                                        );
+                                    } else {
+                                        const label = currentEquip 
+                                            ? `${idx + 1}: ${currentEquip.item.name} と入れ替え` 
+                                            : `${idx + 1}: スロットに装備${selectedDetail._isEquipped ? '移動' : ''}`;
+                                        return (
+                                            <button
+                                                key={accSlot}
+                                                onClick={async () => {
+                                                    await handleEquipItem(selectedDetail, accSlot);
+                                                    setSelectedDetail(null);
+                                                }}
+                                                disabled={loadingSlot !== null}
+                                                className="w-full py-2 rounded text-xs font-bold transition-all bg-orange-900 hover:bg-orange-800 text-orange-100 border border-orange-700 disabled:opacity-50"
+                                            >
+                                                {loadingSlot === accSlot ? '処理中...' : label}
+                                            </button>
+                                        );
+                                    }
                                 })}
                             </div>
                         ) : (

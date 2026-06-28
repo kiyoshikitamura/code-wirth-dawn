@@ -243,10 +243,15 @@ export async function GET(req: Request) {
             }
         }).filter(Boolean) as any[];
 
-        // 同一アイテムを item_id で集約
+        // 同一アイテムを item_id で集約 (ただし、装備品は個体ごとに装備状態が異なるため集約しない)
         const aggregatedItems: any[] = [];
         const itemMap = new Map<string, any>();
         for (const inv of itemInventory) {
+            if (inv.item_type === 'equipment') {
+                aggregatedItems.push({ ...inv, quantity: inv.quantity || 1 });
+                continue;
+            }
+
             const key = String(inv.item_id);
             if (itemMap.has(key)) {
                 itemMap.get(key).quantity += (inv.quantity || 1);
