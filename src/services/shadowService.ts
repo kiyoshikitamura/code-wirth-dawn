@@ -21,6 +21,7 @@ export interface ShadowSummary {
     npc_image_url?: string; // NPC専用イメージURL
     introduction?: string;  // 自己紹介
     slug?: string;          // NPC識別用スラグ (v4.4)
+    equipped_items?: { name: string; slot: string }[]; // v13.3追加
 }
 
 // タスク1: 英霊（shadow_heroic）の契約金算出式
@@ -116,6 +117,38 @@ export class ShadowService {
                 for (const u of shuffledUsers) {
                     if (hiredSourceIds.has(u.id)) continue;
 
+                    // そのユーザーが現在装備しているアイテムを取得
+                    const { data: equipped } = await this.supabase
+                        .from('equipped_items')
+                        .select(`
+                            slot,
+                            items (
+                                name, effect_data
+                            )
+                        `)
+                        .eq('user_id', u.id);
+
+                    const bonus = { atk: 0, def: 0, hp: 0 };
+                    const equippedItemsList: { name: string; slot: string }[] = [];
+
+                    if (equipped) {
+                        for (const eq of equipped) {
+                            const item = (eq as any).items;
+                            if (item) {
+                                equippedItemsList.push({
+                                    name: item.name,
+                                    slot: eq.slot
+                                });
+                                const eff = item.effect_data;
+                                if (eff) {
+                                    bonus.atk += eff.atk_bonus || 0;
+                                    bonus.def += eff.def_bonus || 0;
+                                    bonus.hp += eff.hp_bonus || 0;
+                                }
+                            }
+                        }
+                    }
+
                     const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
                     results.push({
                         profile_id: u.id,
@@ -124,11 +157,16 @@ export class ShadowService {
                         job_class: u.title_name || 'Adventurer',
                         origin_type: 'shadow_active',
                         contract_fee: fee,
-                        stats: { atk: u.attack || u.atk || 0, def: u.defense || u.def || 0, hp: u.max_hp },
+                        stats: {
+                            atk: (u.attack || u.atk || 0) + bonus.atk,
+                            def: (u.defense || u.def || 0) + bonus.def,
+                            hp: (u.max_hp || 100) + bonus.hp,
+                        },
                         signature_deck_preview: skillsByUser[u.id] || [],
                         subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium',
                         icon_url: u.avatar_url || undefined,
                         introduction: u.introduction || undefined,
+                        equipped_items: equippedItemsList,
                     });
                 }
             }
@@ -304,7 +342,7 @@ export class ShadowService {
                         origin_type: 'system_mercenary',
                         contract_fee: npc.hire_cost || ((npc.level || 1) * ECONOMY_RULES.HIRE_MERCENARY_PER_LEVEL),
                         // npcsテーブルのHP: max_hpが各NPC個別の上限HP値。
-                        // hp=50は固定デフォルト値、max_durability=100はDBデフォルト値のため両方使用不可
+                // hp=50は固定デフォルト値、max_durability=100はDBデフォルト値のため両方使用不可
                         stats: { atk: npc.attack || npc.atk || 0, def: npc.defense || npc.def || 0, hp: npc.max_hp || 100 },
                         signature_deck_preview: deckNames,
                         subscription_tier: 'free' as const,
@@ -354,7 +392,7 @@ export class ShadowService {
             // party_members から英霊のレコードを取得して所有者およびレベルを検証
             const { data: heroicMember } = await this.supabase
                 .from('party_members')
-                .select('owner_id, level')
+                .select('owner_id, level, atk, def, max_durability, snapshot_data')
                 .eq('id', shadow.profile_id)
                 .eq('origin_type', 'shadow_heroic')
                 .single();
@@ -365,11 +403,20 @@ export class ShadowService {
             finalContractFee = calcHeroicContractFee(level);
             heroicOwnerId = heroicMember.owner_id;
             
+            // 英霊のスナップショットステータスを退避
+            shadow.stats = {
+                atk: heroicMember.atk || 0,
+                def: heroicMember.def || 0,
+                hp: heroicMember.max_durability || 100
+            };
+            shadow.level = level;
+            (shadow as any).snapshot_data = heroicMember.snapshot_data || null;
+            
         } else if (shadow.origin_type === 'shadow_active') {
-            // user_profiles から name/level/atk/def/hp/job_class を取得して再計算および所在地チェック
+            // user_profiles から name/level/atk/def/hp/job_class/blessing_data を取得して再計算および所在地チェック
             const { data: userProfile } = await this.supabase
                 .from('user_profiles')
-                .select('name, level, is_alive, current_location_id, atk, def, max_hp, job_class')
+                .select('name, level, is_alive, current_location_id, atk, def, max_hp, job_class, blessing_data')
                 .eq('id', shadow.profile_id)
                 .single();
                 
@@ -386,11 +433,43 @@ export class ShadowService {
             
             finalContractFee = (userProfile.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
 
-            // v25: スナップショット取得
+            // 装備品のステータスボーナスと戦闘開始バフを集計
+            const { data: equipped } = await this.supabase
+                .from('equipped_items')
+                .select(`
+                    slot,
+                    items (
+                        id, name, effect_data
+                    )
+                `)
+                .eq('user_id', shadow.profile_id);
+
+            const bonus = { atk: 0, def: 0, hp: 0 };
+            const battleStartBuffs: any[] = [];
+
+            if (equipped) {
+                for (const eq of equipped) {
+                    const eff = (eq as any).items?.effect_data;
+                    if (eff) {
+                        bonus.atk += eff.atk_bonus || 0;
+                        bonus.def += eff.def_bonus || 0;
+                        bonus.hp += eff.hp_bonus || 0;
+                        if (eff.battle_start_buff) {
+                            if (Array.isArray(eff.battle_start_buff)) {
+                                battleStartBuffs.push(...eff.battle_start_buff);
+                            } else {
+                                battleStartBuffs.push(eff.battle_start_buff);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // v25: スナップショット取得 (ベース + 装備ボーナス)
             shadow.stats = {
-                atk: userProfile.atk || 0,
-                def: userProfile.def || 0,
-                hp: userProfile.max_hp || 100,
+                atk: (userProfile.atk || 0) + bonus.atk,
+                def: (userProfile.def || 0) + bonus.def,
+                hp: (userProfile.max_hp || 100) + bonus.hp,
             };
             shadow.level = userProfile.level || 1;
             (shadow as any).snapshot_job_class = userProfile.job_class || 'Adventurer';
@@ -403,12 +482,40 @@ export class ShadowService {
                 .eq('is_equipped', true)
                 .limit(6);
 
+            let resolvedCardIds: number[] = [];
             if (equippedSkills && equippedSkills.length > 0) {
                 // signature_deck_preview をカード名で埋める
                 shadow.signature_deck_preview = equippedSkills.map((s: any) => s.cards?.name).filter(Boolean);
                 // inject_cards 用 cardIds を直接セット
-                (shadow as any)._resolved_card_ids = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
+                resolvedCardIds = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
+                (shadow as any)._resolved_card_ids = resolvedCardIds;
             }
+
+            const equippedItemsList: { name: string; slot: string }[] = [];
+            if (equipped) {
+                for (const eq of equipped) {
+                    const item = (eq as any).items;
+                    if (item) {
+                        equippedItemsList.push({
+                            name: item.name,
+                            slot: (eq as any).slot
+                        });
+                    }
+                }
+            }
+
+            // snapshot_data を構築
+            (shadow as any).snapshot_data = {
+                level: userProfile.level || 1,
+                atk: userProfile.atk || 0,
+                def: userProfile.def || 0,
+                hp: userProfile.max_hp || 100,
+                deck: resolvedCardIds,
+                equipped_bonus: bonus,
+                battle_start_buffs: battleStartBuffs,
+                blessing_data: userProfile.blessing_data || null,
+                equipped_items: equippedItemsList,
+            };
 
         } else if (shadow.origin_type === 'system_mercenary') {
             // npcs から level を取得して再計算
@@ -638,6 +745,7 @@ export class ShadowService {
                     def: shadow.stats?.def || 0,
                 } : {}),
                 inject_cards: cardIds,
+                snapshot_data: (shadow as any).snapshot_data || null,
                 royalty_rate: shadow.origin_type === 'shadow_heroic'
                     ? percentageToInteger(getHeroicRoyaltyRate(shadow.subscription_tier || 'free'))
                     : shadow.origin_type === 'shadow_active'

@@ -206,6 +206,37 @@ export class LifeCycleService {
                     heroicDeck = [1001]; // 錆びた剣 (Basic Attack)
                 }
 
+                // 装備品を取得
+                const { data: equipped } = await this.supabase
+                    .from('equipped_items')
+                    .select(`
+                        items (
+                            id, effect_data
+                        )
+                    `)
+                    .eq('user_id', userId);
+
+                const bonus = { atk: 0, def: 0, hp: 0 };
+                const battleStartBuffs = [];
+
+                if (equipped) {
+                    for (const eq of equipped) {
+                        const eff = (eq as any).items?.effect_data;
+                        if (eff) {
+                            bonus.atk += eff.atk_bonus || 0;
+                            bonus.def += eff.def_bonus || 0;
+                            bonus.hp += eff.hp_bonus || 0;
+                            if (eff.battle_start_buff) {
+                                if (Array.isArray(eff.battle_start_buff)) {
+                                    battleStartBuffs.push(...eff.battle_start_buff);
+                                } else {
+                                    battleStartBuffs.push(eff.battle_start_buff);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // FIFO または空き枠がある場合は新規登録
                 // タスク3-A: origin_type を 'shadow_heroic' で登録（仕様に合致）
                 const heroicData = {
@@ -214,9 +245,9 @@ export class LifeCycleService {
                     job_class: 'Hero',
                     level: profile.level,
                     durability: 100, // 初期VITを100に設定
-                    max_durability: profile.max_hp ?? 100,
-                    atk: profile.atk ?? profile.attack ?? 0,  // v8.1: 正しいフィールド名を使用
-                    def: profile.def ?? profile.defense ?? 0,
+                    max_durability: (profile.max_hp ?? 100) + bonus.hp,
+                    atk: (profile.atk ?? profile.attack ?? 0) + bonus.atk,
+                    def: (profile.def ?? profile.defense ?? 0) + bonus.def,
                     cover_rate: 20,
                     loyalty: 100,
                     is_active: false,
@@ -230,6 +261,9 @@ export class LifeCycleService {
                         def: profile.def ?? profile.defense ?? 0,
                         hp: profile.max_hp,
                         deck: heroicDeck,
+                        equipped_bonus: bonus,
+                        battle_start_buffs: battleStartBuffs,
+                        blessing_data: profile.blessing_data || null,
                     },
                 };
 

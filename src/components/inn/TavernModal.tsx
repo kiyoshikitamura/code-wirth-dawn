@@ -933,6 +933,23 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             </div>
                         </div>
 
+                        {/* 装備品 (Equipped Items) */}
+                        {selectedShadow.equipped_items && selectedShadow.equipped_items.length > 0 && (
+                            <div className="bg-[#e3d5b8]/30 rounded-lg p-3 border border-[#a38b6b]/30">
+                                <div className="text-[10px] text-[#8b6f4e] mb-2">現在の装備</div>
+                                <div className="grid grid-cols-2 gap-2 text-xs text-[#5d4037]">
+                                    {selectedShadow.equipped_items.map((eq, i) => (
+                                        <div key={i} className="flex justify-between items-center bg-[#fdfbf7] p-1.5 rounded border border-[#a38b6b]/40">
+                                            <span className="font-bold text-[9px] uppercase tracking-wide text-[#8b5a2b] bg-amber-100/50 px-1 rounded flex-shrink-0">
+                                                {toJpSlotName(eq.slot)}
+                                            </span>
+                                            <span className="truncate ml-2 text-[11px] font-medium flex-1 text-right">{eq.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Skills */}
                         {selectedShadow.signature_deck_preview.length > 0 && (
                             <div className="bg-[#e3d5b8]/30 rounded-lg p-3 border border-[#a38b6b]/30">
@@ -1054,4 +1071,16 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
         </>,
         document.body
     );
+}
+
+function toJpSlotName(slot: string): string {
+    switch (slot) {
+        case 'weapon': return '武器';
+        case 'armor': return '防具';
+        case 'accessory': return '装飾品';
+        case 'accessory_1': return '装飾品1';
+        case 'accessory_2': return '装飾品2';
+        case 'accessory_3': return '装飾品3';
+        default: return slot;
+    }
 }

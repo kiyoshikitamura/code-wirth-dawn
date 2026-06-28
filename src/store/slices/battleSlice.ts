@@ -235,6 +235,8 @@ export const createBattleSlice = (
             prevPartyHpMap[String(pm.id)] = pm.durability ?? pm.hp ?? 0;
         });
 
+        const npcStartBuffMessages: string[] = [];
+
         partyMembers = partyMembers.map(pm => {
             const sigDeck = (pm.inject_cards || []).map(id => {
                 const found = partyCardPool.find(c => c.id === String(id));
@@ -249,7 +251,48 @@ export const createBattleSlice = (
             if (carriedHp === undefined && questState.partyHp) {
                 carriedHp = questState.partyHp[String(pm.id)];
             }
-            const currentHp = carriedHp !== undefined ? Math.max(0, carriedHp) : fullHp;
+            let currentHp = carriedHp !== undefined ? Math.max(0, carriedHp) : fullHp;
+
+            let initialEffects: StatusEffect[] = [];
+            let initialAp = 5;
+
+            const snapshot = pmAny.snapshot_data;
+            if (snapshot) {
+                // 1. 装備品の戦闘開始バフの適用
+                if (snapshot.battle_start_buffs && Array.isArray(snapshot.battle_start_buffs)) {
+                    snapshot.battle_start_buffs.forEach((buff: any) => {
+                        const id = buff.buff_type || buff.id;
+                        const duration = buff.duration;
+                        const val = buff.value;
+                        if (id && duration) {
+                            const finalDuration = isTurnEndTickCompensated(id as StatusEffectId)
+                                ? duration + 1
+                                : duration;
+                            initialEffects = applyEffect(initialEffects, id as StatusEffectId, finalDuration, val);
+                            const buffName = getEffectName(id as StatusEffectId);
+                            npcStartBuffMessages.push(`✨ ${pm.name}は装備効果で${buffName}！ (${duration}T)`);
+                        }
+                    });
+                }
+                // 2. 祈りバフの適用
+                if (snapshot.blessing_data) {
+                    const blessing = snapshot.blessing_data;
+                    initialAp += (blessing.ap_bonus || 0);
+                    if (blessing.hp_pct && blessing.hp_pct > 0) {
+                        const healAmt = Math.floor(fullHp * blessing.hp_pct);
+                        const oldHp = currentHp;
+                        currentHp = Math.min(fullHp, currentHp + healAmt);
+                        const actualHeal = currentHp - oldHp;
+                        if (actualHeal > 0) {
+                            npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(HP+${actualHeal}回復)`);
+                        } else {
+                            npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！`);
+                        }
+                    } else if (blessing.ap_bonus) {
+                        npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(初期AP+${blessing.ap_bonus})`);
+                    }
+                }
+            }
 
             return {
                 ...pm,
@@ -258,7 +301,8 @@ export const createBattleSlice = (
                 signature_deck: sigDeck,
                 ai_role: determineRole({ ...pm, signature_deck: sigDeck }),
                 ai_grade: determineGrade(pm),
-                current_ap: 5,
+                current_ap: initialAp,
+                status_effects: initialEffects,
                 used_this_turn: [],
             };
         });
@@ -377,6 +421,7 @@ export const createBattleSlice = (
             `${enemies.map(e => e.name).join('と')}が現れた！`,
             ...equipBonusMessages,
             ...startBuffMessages,
+            ...npcStartBuffMessages,
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
             ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),

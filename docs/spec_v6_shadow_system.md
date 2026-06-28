@@ -187,16 +187,18 @@ CREATE TABLE party_members (
 
 ### 5A.3 stats ・デッキの参照元
 
-雇用時の `user_profiles` から次の値を**スナップショット**として `party_members` テーブルに直接保存。
+雇用時または登録時（英霊）の `user_profiles` および `equipped_items`（装備品）から次の値を**スナップショット**として `party_members` テーブルに直接保存。
 
-| フィールド | 参照先 (`user_profiles`) | `party_members` 保存先 |
+| フィールド | 参照先 (`user_profiles` / `equipped_items`) | `party_members` 保存先 |
 |---|---|---|
-| HP | `max_hp` | `max_durability`（バトルHP上限として使用） |
-| ATK | `attack` | `atk` |
-| DEF | `defense` | `def` |
-| デッキ | `signature_deck`（card ID配列） | `inject_cards`（card ID配列） |
+| HP | `max_hp` + 装備の `hp_bonus` | `max_durability`（バトルHP上限として使用） |
+| ATK | `atk` (または `attack`) + 装備の `atk_bonus` | `atk` |
+| DEF | `def` (または `defense`) + 装備の `def_bonus` | `def` |
+| デッキ | `signature_deck` (または `user_skills` の装備スキルID配列) | `inject_cards`（card ID配列） |
+| メタデータ | 装備の `battle_start_buff` と `blessing_data` をシリアライズ | `snapshot_data` (JSONB) |
 
 > **重要**: 雇用後は `party_members` の値が固定される。元プレイヤーがステータスを変更してもリアルタイム反映はされない。
+> **戦闘開始時のバフ適用 (v13.3新規)**: 戦闘開始時、NPCの `snapshot_data` から `battle_start_buffs` および `blessing_data` を読み込み、戦闘用状態異常 (`status_effects`) および初期AP・初期HP割合回復として適用する。
 
 ### 5A.4 ロイヤリティ日額CAP（v13.0 新規定義）
 
@@ -335,4 +337,8 @@ CREATE TABLE party_members (
 
 ### 9.3 展開処理時のタイプ文字列の完全一致
 - **問題**: `shadowService` 側では `shadow_active` として登録・インサートを行っているのに対し、`PartyService` 側では `active_shadow` でタイプ判定をしていたため不整合が生じていた。結果としてNPC優先解決ルートにフォールバックしてしまい、NPCと名前が重複するアクティブ残影プレイヤーが存在した場合にNPCのステータスで上書きされるバグを引き起こした。
-- **対策**: 判定文字列を `'shadow_active'` に修正し、英霊（`'shadow_heroic'`）も含めて正しくスナップショットステータスが優先適用されるように判定式を厳密化する。
+- **対策**: 判定文字列を `'shadow_active'` に修正し、英霊（`'shadow_heroic'`）も含めて正しくスナップショットステータスが優先適用されるように判定式を厳密化する。
+
+### 9.4 雇用および英霊登録時の装備ボーナスとバフの反映漏れ (v13.3追記)
+- **問題**: 以前はプレイヤーの残影や英霊を雇用する際、装備品のステータスボーナス（ATK/DEF/HP）や戦闘開始時バフが反映されず、素のステータスのみが引き継がれていたため、他プレイヤーを雇用した際の実効性能が極めて低くなる問題があった。
+- **対策**: 雇用時（`shadowService.ts`）および英霊登録時（`lifeCycleService.ts`）に、装備中のアイテムのボーナスを集計して基本ステータスに上乗せして保存し、`snapshot_data` カラムに戦闘バフ情報（`battle_start_buff` や `blessing_data`）をシリアライズして保存する。戦闘開始時（`battleSlice.ts`）にそれらを読み込んでNPCの初期AP・現在HP・戦闘状態異常（`status_effects`）として適用する。

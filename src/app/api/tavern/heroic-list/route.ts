@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         // party_members から shadow_heroic で is_active = true のレコードを取得
         const { data: heroics, error } = await client
             .from('party_members')
-            .select('id, name, epithet, level, job_class, atk, def, max_durability, durability, image_url, inject_cards, source_user_id, owner_id, created_at, last_hired_at')
+            .select('id, name, epithet, level, job_class, atk, def, max_durability, durability, image_url, inject_cards, source_user_id, owner_id, created_at, last_hired_at, snapshot_data')
             .eq('origin_type', 'shadow_heroic')
             .eq('is_active', false)
             .order('level', { ascending: false })
@@ -33,6 +33,7 @@ export async function GET(req: Request) {
 
         // ShadowSummary 形式に変換
         const heroicList = (heroics || []).map(h => {
+            const snapshot = h.snapshot_data as any;
             // カード名は inject_cards から取得できないため、IDのみ返す
             return {
                 profile_id: h.id,
@@ -54,6 +55,7 @@ export async function GET(req: Request) {
                 npc_image_url: h.image_url,
                 source_user_id: h.source_user_id,
                 is_own: h.owner_id === userId || h.source_user_id === userId,
+                equipped_items: snapshot?.equipped_items || [],
             };
         });
 
