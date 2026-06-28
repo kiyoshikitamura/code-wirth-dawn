@@ -188,6 +188,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                         npc_image_url: s.npc_image_url || s.avatar_url,
                         flavor_text: s.flavor_text,
                         slug: s.slug || undefined,
+                        equipped_items: s.equipped_items || [],
                     }));
                     setTavernShadows(asApiFormat);
                     return;
