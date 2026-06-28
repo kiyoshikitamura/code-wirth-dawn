@@ -30,6 +30,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
     const [loading, setLoading] = useState(true);
     const [isAppraising, setIsAppraising] = useState(false);
     const [appraisalStepText, setAppraisalStepText] = useState('');
+    const [confirmData, setConfirmData] = useState<{ itemId: number; cost: number } | null>(null);
     const [appraisalResult, setAppraisalResult] = useState<AppraisalResult | null>(null);
     const [actualCost, setActualCost] = useState<number>(0);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,7 +73,27 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
 
     const totalUnappraisedCount = unappraisedItems.reduce((sum, item) => sum + item.count, 0);
 
-    const handleAppraise = async (itemId: number) => {
+    const handleRequestAppraise = (itemId: number) => {
+        setErrorMsg(null);
+        
+        let min = 1000, max = 2000;
+        if (itemId === 707) { min = 2000; max = 4000; }
+        else if (itemId === 708) { min = 4000; max = 7000; }
+        else if (itemId === 709) { min = 7000; max = 10000; }
+        
+        const cost = Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        if (gold < cost) {
+            setErrorMsg(`ゴールドが不足しています。（鑑定料: ${cost} G / 所持金: ${gold} G）`);
+            soundManager?.playSE('se_cancel');
+            return;
+        }
+        
+        setConfirmData({ itemId, cost });
+        soundManager?.playSE('se_click');
+    };
+
+    const executeAppraise = async (itemId: number, cost: number) => {
         if (isAppraising) return;
 
         setErrorMsg(null);
@@ -94,7 +115,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                         'Content-Type': 'application/json',
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                     },
-                    body: JSON.stringify({ item_id: itemId })
+                    body: JSON.stringify({ item_id: itemId, cost: cost })
                 });
 
                 const data = await res.json();
@@ -279,7 +300,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                                     </div>
                                     
                                     <button
-                                        onClick={() => handleAppraise(item.id)}
+                                        onClick={() => handleRequestAppraise(item.id)}
                                         disabled={!canAfford || item.count <= 0}
                                         className={`px-4 py-2 rounded text-xs font-bold border transition-all ${
                                             !canAfford 
@@ -393,6 +414,47 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                         >
                             荷物に加える
                         </button>
+                    </div>
+                </div>
+            )}
+            {/* 3. 鑑定確認ダイアログ */}
+            {confirmData && (
+                <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/90 animate-in fade-in duration-150"
+                     onClick={(e) => { if (e.target === e.currentTarget) { setConfirmData(null); soundManager?.playSE('se_cancel'); } }}>
+                    <div className="bg-[#1a120b] border-2 border-[#a38b6b]/60 w-full max-w-sm shadow-2xl p-5 animate-in zoom-in-95 duration-200 text-slate-300">
+                        {/* タイトル */}
+                        <div className="flex items-center gap-2 mb-4 border-b border-[#3e2723] pb-3">
+                            <Search className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                            <h3 className="text-lg font-serif font-bold text-[#e3d5b8]">鑑定の確認</h3>
+                        </div>
+
+                        {/* メッセージ */}
+                        <div className="text-sm text-slate-300 leading-relaxed mb-5 whitespace-pre-wrap font-serif">
+                            {`今回の鑑定料は ${confirmData.cost.toLocaleString()} G になります。\n鑑定を実行しますか？`}
+                        </div>
+
+                        {/* ボタン */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setConfirmData(null);
+                                    soundManager?.playSE('se_cancel');
+                                }}
+                                className="flex-1 py-2.5 text-xs font-bold bg-gray-800 border border-gray-600 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                            >
+                                やめる
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const { itemId, cost } = confirmData;
+                                    setConfirmData(null);
+                                    executeAppraise(itemId, cost);
+                                }}
+                                className="flex-1 py-2.5 text-xs font-bold bg-amber-900/40 border border-amber-600 text-amber-200 rounded hover:bg-amber-900/60 transition-colors"
+                            >
+                                鑑定する
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

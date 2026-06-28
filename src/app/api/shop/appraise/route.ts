@@ -61,7 +61,7 @@ function selectItemByWeightedRandom(pool: { slug: string; weight: number }[]): s
 
 export async function POST(req: Request) {
     try {
-        const { item_id } = await req.json();
+        const { item_id, cost } = await req.json();
         const profile = await getAuthenticatedProfile(req);
         
         // 1. 出禁チェック
@@ -99,9 +99,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: '鑑定対象の未鑑定アイテムを所持していません。' }, { status: 400 });
         }
         
-        // 4. 鑑定料を乱数で決定
+        // 4. 鑑定料の決定（クライアント指定優先、範囲外なら再計算）
         const [minCost, maxCost] = appraiseConfig.costRange;
-        const appraiseCost = Math.floor(Math.random() * (maxCost - minCost + 1)) + minCost;
+        let appraiseCost = Number(cost);
+        if (isNaN(appraiseCost) || appraiseCost < minCost || appraiseCost > maxCost) {
+            appraiseCost = Math.floor(Math.random() * (maxCost - minCost + 1)) + minCost;
+        }
         
         // 5. 所持金チェック
         if (profile.gold < appraiseCost) {
