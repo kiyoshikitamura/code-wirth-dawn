@@ -723,8 +723,9 @@ export function useInnPageState() {
 
         try {
             const authHeaders = await getAuthHeaders();
-            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${locationId}`, {
-                headers: authHeaders
+            const res = await fetch(`/api/location/quests?userId=${userProfile.id}&locationId=${locationId}&_t=${Date.now()}`, {
+                headers: authHeaders,
+                cache: 'no-store'
             });
             if (res.ok) {
                 const data = await res.json();
