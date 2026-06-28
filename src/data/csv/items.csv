@@ -176,3 +176,5 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 304,item_abyss_shield,深淵の盾,equipment,armor,6000,,1,false,"{""def_bonus"":15,""battle_start_buff"":{""buff_type"":""def_up"",""duration"":3,""value"":10},""description"":""戦闘開始時に3ターンの間、防御力（+10）が上昇する黒曜石の盾。""}",
 306,item_dark_cloak,暗黒の外套,equipment,armor,4000,,1,false,"{""def_bonus"":6,""atk_bonus"":4,""battle_start_buff"":{""buff_type"":""evasion_up"",""duration"":2},""description"":""戦闘開始時に2ターンの間、回避率が上昇する闇の外套。""}",
 350,item_demon_buster,デーモンバスター,equipment,weapon,15000,,1,false,"{""atk_bonus"":35,""def_bonus"":10,""hp_bonus"":30,""battle_start_buff"":[{""buff_type"":""atk_up"",""duration"":5},{""buff_type"":""def_up"",""duration"":5,""value"":15}],""description"":""戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。""}",
+9990,item_test_blue,テストの証・青,key_item,,0,,1,false,"{""description"":""テスト検証用の証。青色に輝いている。""}",
+9991,item_test_red,テストの証・赤,key_item,,0,,1,false,"{""description"":""テスト検証用の証。赤色に輝いている。""}",

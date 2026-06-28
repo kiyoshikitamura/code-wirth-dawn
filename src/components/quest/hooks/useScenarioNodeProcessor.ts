@@ -167,10 +167,30 @@ export function useScenarioNodeProcessor({
                 const val = currentNode.req_val || 0;
                 let passed = false;
                 
-                if (stat === 'order' && (userProfile?.order_pts || 0) >= val) passed = true;
-                else if (stat === 'chaos' && (userProfile?.chaos_pts || 0) >= val) passed = true;
-                else if (stat === 'justice' && (userProfile?.justice_pts || 0) >= val) passed = true;
-                else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
+                const isPct = stat?.endsWith('_pct') || currentNode.params?.use_pct === true;
+                const baseStat = stat?.endsWith('_pct') ? stat.replace('_pct', '') : stat;
+                
+                if (isPct) {
+                    const order = userProfile?.order_pts || 0;
+                    const chaos = userProfile?.chaos_pts || 0;
+                    const justice = userProfile?.justice_pts || 0;
+                    const evil = userProfile?.evil_pts || 0;
+                    
+                    if (baseStat === 'order' || baseStat === 'chaos') {
+                        const total = order + chaos;
+                        const pct = total > 0 ? (baseStat === 'order' ? order : chaos) / total * 100 : 50;
+                        passed = pct >= val;
+                    } else if (baseStat === 'justice' || baseStat === 'evil') {
+                        const total = justice + evil;
+                        const pct = total > 0 ? (baseStat === 'justice' ? justice : evil) / total * 100 : 50;
+                        passed = pct >= val;
+                    }
+                } else {
+                    if (stat === 'order' && (userProfile?.order_pts || 0) >= val) passed = true;
+                    else if (stat === 'chaos' && (userProfile?.chaos_pts || 0) >= val) passed = true;
+                    else if (stat === 'justice' && (userProfile?.justice_pts || 0) >= val) passed = true;
+                    else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
+                }
                 
                 const successChoice = currentNode.choices?.find((c: any) => c.label === 'success');
                 const failChoice = currentNode.choices?.find((c: any) => c.label === 'failure');
@@ -261,66 +281,93 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.type === 'check_delivery') {
-                let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;
-                const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
                 const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
                 const successNode = currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
-
                 const activeNodeId = currentNodeId;
-
-                // slug文字列の場合は数値IDに解決（インベントリは数値IDで格納されている）
-                if (typeof requiredItemId === 'string' && isNaN(parseInt(requiredItemId, 10))) {
-                    try {
-                        const { data: itemRow } = await supabase.from('items').select('id').eq('slug', requiredItemId).maybeSingle();
-                        if (processedNodeRef.current !== activeNodeId) return;
-                        if (itemRow) {
-                            console.log(`[check_delivery] Resolved slug '${requiredItemId}' → id=${itemRow.id}`);
-                            requiredItemId = itemRow.id;
-                        } else {
-                            console.error(`[check_delivery] Item slug '${requiredItemId}' not found in DB`);
-                        }
-                    } catch (e) { console.error('[check_delivery] Slug resolution error:', e); }
-                }
 
                 // 最新インベントリを取得してからチェック
                 await useGameStore.getState().fetchInventory();
                 if (processedNodeRef.current !== activeNodeId) return;
 
                 const latestInv = useGameStore.getState().inventory || [];
-                // すでにクエスト内で「消費予定」として蓄積されている分をカウントして差し引く
-                const alreadyConsumedCount = (questState.consumedItems || []).filter(id => String(id) === String(requiredItemId)).length;
 
-                // クエスト戦利品プール（未永続化アイテム）の個数を合算
-                const questLootCount = (questState.lootPool || [])
-                    .filter((i: any) => String(i.itemId) === String(requiredItemId))
-                    .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0);
+                // 判定アイテムのリストを構築
+                let checkItems: { itemId: string; reqQty: number }[] = [];
 
-                const hasItem = (latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount) >= reqQty;
-                console.log(`[check_delivery] item_id=${requiredItemId}, reqQty=${reqQty}, hasItem=${hasItem}, consumed=${alreadyConsumedCount}, lootPool=${questLootCount}, inv count=${latestInv.length}`);
-
-                if (hasItem) {
-                    if (removeOnSuccess) {
-                        // 即時消費API呼び出しを廃止し、Zustandの consumedItems に遅延消費として蓄積
-                        const consumedList: string[] = [];
-                        for (let i = 0; i < reqQty; i++) {
-                            consumedList.push(String(requiredItemId));
+                if (currentNode.params?.items && Array.isArray(currentNode.params.items)) {
+                    for (const item of currentNode.params.items) {
+                        let itemId = String(item.item_id);
+                        if (isNaN(parseInt(itemId, 10))) {
+                            try {
+                                const { data: itemRow } = await supabase.from('items').select('id').eq('slug', itemId).maybeSingle();
+                                if (processedNodeRef.current !== activeNodeId) return;
+                                if (itemRow) itemId = String(itemRow.id);
+                            } catch (e) { console.error('[check_delivery] Multi slug resolution error:', e); }
                         }
+                        checkItems.push({ itemId, reqQty: item.quantity || 1 });
+                    }
+                } else if (currentNode.items && Array.isArray(currentNode.items)) {
+                    for (const item of currentNode.items) {
+                        checkItems.push({ itemId: String(item.item_id), reqQty: item.quantity || 1 });
+                    }
+                } else {
+                    let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;
+                    const reqQty = currentNode.params?.quantity || currentNode.quantity || 1;
+                    if (requiredItemId) {
+                        if (typeof requiredItemId === 'string' && isNaN(parseInt(requiredItemId, 10))) {
+                            try {
+                                const { data: itemRow } = await supabase.from('items').select('id').eq('slug', requiredItemId).maybeSingle();
+                                if (processedNodeRef.current !== activeNodeId) return;
+                                if (itemRow) requiredItemId = itemRow.id;
+                            } catch (e) { console.error('[check_delivery] Single slug resolution error:', e); }
+                        }
+                        checkItems.push({ itemId: String(requiredItemId), reqQty });
+                    }
+                }
 
+                // すべてのアイテムの所持数を検証
+                let allPassed = true;
+
+                for (const check of checkItems) {
+                    const alreadyConsumedCount = (questState.consumedItems || []).filter(id => String(id) === String(check.itemId)).length;
+                    const questLootCount = (questState.lootPool || [])
+                        .filter((i: any) => String(i.itemId) === String(check.itemId))
+                        .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0);
+
+                    const hasQty = latestInv
+                        .filter((i: any) => String(i.item_id) === String(check.itemId))
+                        .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount;
+
+                    if (hasQty < check.reqQty) {
+                        allPassed = false;
+                        break;
+                    }
+                }
+
+                const consumedList: string[] = [];
+                if (allPassed && removeOnSuccess) {
+                    for (const check of checkItems) {
+                        for (let i = 0; i < check.reqQty; i++) {
+                            consumedList.push(String(check.itemId));
+                        }
+                    }
+                }
+
+                if (allPassed && checkItems.length > 0) {
+                    if (removeOnSuccess && consumedList.length > 0) {
                         useQuestState.getState().updateAfterBattle({
                             playerHp: useGameStore.getState().userProfile?.hp || 0,
                             partyHp: {},
                             deadNpcIds: [],
                             droppedItems: [],
-                            usedConsumables: consumedList
+                            usedConsumables: [...(questState.consumedItems || []), ...consumedList]
                         });
-
                         showToast('✅ アイテムを納品した。', 'success');
-                        if (successNode) setCurrentNodeId(successNode);
                     } else {
                         showToast('✅ アイテムを確認した。', 'success');
-                        if (successNode) setCurrentNodeId(successNode);
                     }
+                    if (successNode) setCurrentNodeId(successNode);
                 } else {
                     showToast('❌ 必要なアイテムが足りない...', 'error');
                     if (failNode) setCurrentNodeId(failNode);

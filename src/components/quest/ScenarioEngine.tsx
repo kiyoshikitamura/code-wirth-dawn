@@ -86,11 +86,34 @@ export default function ScenarioEngine({
     const historyRef = useRef(history);
     useEffect(() => { historyRef.current = history; }, [history]);
 
-    // プレイヤー名プレースホルダー置換ヘルパー
+    // プレイヤー名およびアライメント割合のプレースホルダー置換ヘルパー
     const replacePlayerName = (text: string) => {
         if (!text) return text;
+        
+        // 他プレイヤー名置換
         const metPlayerName = questState.getFlag('met_player_name') || '見知らぬ冒険者';
-        return text.replace(/{met_player_name}/g, String(metPlayerName));
+        let result = text.replace(/{met_player_name}/g, String(metPlayerName));
+        
+        // アライメント割合置換
+        const order = userProfile?.order_pts || 0;
+        const chaos = userProfile?.chaos_pts || 0;
+        const justice = userProfile?.justice_pts || 0;
+        const evil = userProfile?.evil_pts || 0;
+        
+        const totalOC = order + chaos;
+        const totalJE = justice + evil;
+        
+        const orderPct = totalOC > 0 ? Math.round((order / totalOC) * 100) : 50;
+        const chaosPct = totalOC > 0 ? Math.round((chaos / totalOC) * 100) : 50;
+        const justicePct = totalJE > 0 ? Math.round((justice / totalJE) * 100) : 50;
+        const evilPct = totalJE > 0 ? Math.round((evil / totalJE) * 100) : 50;
+        
+        result = result.replace(/{order_pct}/g, String(orderPct));
+        result = result.replace(/{chaos_pct}/g, String(chaosPct));
+        result = result.replace(/{justice_pct}/g, String(justicePct));
+        result = result.replace(/{evil_pct}/g, String(evilPct));
+        
+        return result;
     };
 
     // Phase 3: タイプライター演出

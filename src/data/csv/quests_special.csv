@@ -48,3 +48,4 @@ id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rew
 6112,qst_demon_intro,次元の狭間：予兆,1,1,1,"{}",false,,,冒険者ギルド,[異界調査] 世界の中心に突如現れた謎の巨大な裂け目。戻らない先遣隊の噂を追え。,false
 7050,qst_demon_explore,次元の狭間：調査探索,8,4,8,"{""completed_quest"":""qst_demon_intro""}",false,,Gold:500|Exp:250|Item:4001,冒険者ギルド,[異界調査] 魔界との交点たる次元の狭間の深部を調査せよ。,true
 7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。,true
+9999,qst_test_gimmicks,ギミック検証用テストクエスト,1,1,1,"{}",false,,Gold:1000|Exp:100,冒険者の影,すべての追加ギミックを一挙にテストする検証用クエストです。,true
