@@ -319,9 +319,9 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
             {/* 2. 鑑定結果モーダルポップアップ */}
             {appraisalResult && resultDesign && (
                 <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-black/95 pointer-events-none" />
+                    <div className="absolute inset-0 bg-black/80 pointer-events-none" />
                     
-                    <div className={`w-full max-w-sm rounded-xl p-6 text-center shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 text-slate-100 max-h-[90vh] overflow-y-auto ${resultDesign.bgColor} ${resultDesign.borderColor} ${
+                    <div className={`relative z-10 w-full max-w-sm rounded-xl p-6 text-center shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 text-slate-100 max-h-[90vh] overflow-y-auto ${resultDesign.bgColor} ${resultDesign.borderColor} ${
                         appraisalResult.rarity.toLowerCase() === 'legendary' ? 'animate-shake' : ''
                     }`}>
                         
