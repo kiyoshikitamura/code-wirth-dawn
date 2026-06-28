@@ -38,15 +38,12 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
         loadData();
     }, []);
 
-    // 装備済み item_id を Set に収集して、ストックのフィルタリングに使用する
-    const equippedItemIds = new Set(equipped.map((e: any) => String(e.item_id)));
-
-    // 全てのストック装備品
+    // 全てのストック装備品（装備中の個体は除外）
     const equipmentItems = inventory.filter(i =>
         !i.is_skill &&
         i.item_type !== 'skill_card' &&
         (i.item_type === 'equipment' || (i as any).type === 'equipment') &&
-        !equippedItemIds.has(String((i as any).item_id || i.id))
+        !i.is_equipped
     );
 
     const getSubType = (item: any) => {
@@ -215,24 +212,46 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                         )}
 
                         {/* Action Button */}
-                        <button
-                            onClick={async () => {
-                                if (selectedDetail._isEquipped) {
-                                    await handleUnequip(selectedDetail._slot);
-                                } else {
-                                    await handleEquipItem(selectedDetail, selectedDetail._slot);
-                                }
-                                setSelectedDetail(null);
-                            }}
-                            disabled={loadingSlot === selectedDetail._slot}
-                            className={`w-full py-2 rounded text-xs font-bold transition-all ${
-                                selectedDetail._isEquipped
-                                    ? 'bg-red-955/80 text-red-200 border border-red-800/60 hover:bg-red-900/70'
-                                    : 'bg-orange-900 hover:bg-orange-800 text-orange-100 border border-orange-700'
-                            } ${loadingSlot === selectedDetail._slot ? 'opacity-50 cursor-wait' : ''}`}
-                        >
-                            {loadingSlot === selectedDetail._slot ? '処理中...' : selectedDetail._isEquipped ? '装備を外す' : '装備する'}
-                        </button>
+                        {selectedDetail._slot === 'accessory' && !selectedDetail._isEquipped ? (
+                            <div className="flex flex-col gap-2">
+                                {(['accessory_1', 'accessory_2', 'accessory_3'] as const).map((accSlot, idx) => {
+                                    const currentEquip = equipped.find((e: any) => e.slot === accSlot);
+                                    const label = currentEquip ? `${idx + 1}: ${currentEquip.item.name} と入れ替え` : `${idx + 1}: 空きスロットに装備`;
+                                    return (
+                                        <button
+                                            key={accSlot}
+                                            onClick={async () => {
+                                                await handleEquipItem(selectedDetail, accSlot);
+                                                setSelectedDetail(null);
+                                            }}
+                                            disabled={loadingSlot !== null}
+                                            className="w-full py-2 rounded text-xs font-bold transition-all bg-orange-900 hover:bg-orange-800 text-orange-100 border border-orange-700 disabled:opacity-50"
+                                        >
+                                            {loadingSlot === accSlot ? '処理中...' : label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <button
+                                onClick={async () => {
+                                    if (selectedDetail._isEquipped) {
+                                        await handleUnequip(selectedDetail._slot);
+                                    } else {
+                                        await handleEquipItem(selectedDetail, selectedDetail._slot);
+                                    }
+                                    setSelectedDetail(null);
+                                }}
+                                disabled={loadingSlot === selectedDetail._slot}
+                                className={`w-full py-2 rounded text-xs font-bold transition-all ${
+                                    selectedDetail._isEquipped
+                                        ? 'bg-red-955/80 text-red-200 border border-red-800/60 hover:bg-red-900/70'
+                                        : 'bg-orange-900 hover:bg-orange-800 text-orange-100 border border-orange-700'
+                                } ${loadingSlot === selectedDetail._slot ? 'opacity-50 cursor-wait' : ''}`}
+                            >
+                                {loadingSlot === selectedDetail._slot ? '処理中...' : selectedDetail._isEquipped ? '装備を外す' : '装備する'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>,
@@ -281,7 +300,7 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                             <Shield className="w-3.5 h-3.5" /> 装備中スロット
                         </h3>
                         <div className="grid grid-cols-1 gap-2">
-                            {(['weapon', 'armor', 'accessory'] as const).map(slot => {
+                            {(['weapon', 'armor', 'accessory_1', 'accessory_2', 'accessory_3'] as const).map(slot => {
                                 const eq = equipped.find((e: any) => e.slot === slot);
                                 const slotLabel = getSlotLabel(slot);
                                 const slotIcon = slot === 'weapon' ? <Sword className="w-3.5 h-3.5 text-red-400" /> : slot === 'armor' ? <Shield className="w-3.5 h-3.5 text-blue-400" /> : <Star className="w-3.5 h-3.5 text-amber-400" />;
@@ -506,12 +525,16 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                                                 <button
                                                     onClick={async (e) => {
                                                         e.stopPropagation();
-                                                        await handleEquipItem(item, 'accessory');
+                                                        // 空いている最初のスロットを選択、なければ accessory_1 を上書き
+                                                        const targetSlot = ['accessory_1', 'accessory_2', 'accessory_3'].find(
+                                                            s => !equipped.some((eq: any) => eq.slot === s)
+                                                        ) || 'accessory_1';
+                                                        await handleEquipItem(item, targetSlot);
                                                     }}
-                                                    disabled={loadingSlot === 'accessory'}
+                                                    disabled={loadingSlot !== null}
                                                     className="px-2.5 py-1 text-[10px] font-bold rounded bg-orange-950/40 border border-orange-900/40 hover:bg-orange-900/60 text-orange-200 transition-colors active:scale-95"
                                                 >
-                                                    {loadingSlot === 'accessory' ? '...' : '装備'}
+                                                    {loadingSlot !== null ? '...' : '装備'}
                                                 </button>
                                             </div>
                                         );
@@ -526,7 +549,7 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
 
                 {/* Footer */}
                 <footer className="p-2 border-t border-orange-950/20 bg-[#090d1a] text-center text-[10px] text-slate-500 font-serif shrink-0">
-                    ※ 武器・防具・アクセサリーを各1つずつ装備できます。
+                    ※ 武器・防具は各1つ、アクセサリーは最大3つまで装備できます。
                 </footer>
             </div>
             {renderDetailPopup()}

@@ -128,10 +128,10 @@ Body: { inventory_id: string, is_equipped: boolean }
 # 装備する
 POST /api/equipment
 Headers: { 'Authorization': 'Bearer <jwt>', 'Content-Type': 'application/json' }
-Body: { inventory_id: string, slot: 'weapon' | 'armor' | 'accessory' }
+Body: { inventory_id: string, slot: 'weapon' | 'armor' | 'accessory_1' | 'accessory_2' | 'accessory_3' }
 
 # 外す
-DELETE /api/equipment?slot=weapon
+DELETE /api/equipment?slot=weapon  (slot には weapon | armor | accessory_1 | accessory_2 | accessory_3 を指定可能)
 Headers: { 'Authorization': 'Bearer <jwt>' }
 ```
 

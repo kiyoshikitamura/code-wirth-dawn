@@ -71,14 +71,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'inventory_id and slot are required' }, { status: 400 });
         }
 
-        if (!['weapon', 'armor', 'accessory'].includes(slot)) {
-            return NextResponse.json({ error: 'Invalid slot. Must be weapon, armor, or accessory' }, { status: 400 });
+        if (!['weapon', 'armor', 'accessory', 'accessory_1', 'accessory_2', 'accessory_3'].includes(slot)) {
+            return NextResponse.json({ error: 'Invalid slot. Must be weapon, armor, accessory, or accessory_1/2/3' }, { status: 400 });
         }
 
         // 1. インベントリからアイテム検証
         const { data: invItem, error: invError } = await supabaseService
             .from('inventory')
-            .select('id, item_id, user_id, items!inner(id, type, sub_type, effect_data, name)')
+            .select('id, item_id, user_id, is_equipped, items!inner(id, type, sub_type, effect_data, name)')
             .eq('id', inventory_id)
             .eq('user_id', userId)
             .single();
@@ -93,8 +93,31 @@ export async function POST(req: Request) {
         }
 
         // sub_type とスロットの整合性チェック
-        if (item.sub_type && item.sub_type !== slot) {
-            return NextResponse.json({ error: `This item belongs to the ${item.sub_type} slot, not ${slot}` }, { status: 400 });
+        const isAccessorySlot = ['accessory', 'accessory_1', 'accessory_2', 'accessory_3'].includes(slot);
+        if (item.sub_type) {
+            if (item.sub_type === 'accessory' && !isAccessorySlot) {
+                return NextResponse.json({ error: `This item belongs to an accessory slot, not ${slot}` }, { status: 400 });
+            }
+            if (item.sub_type !== 'accessory' && item.sub_type !== slot) {
+                return NextResponse.json({ error: `This item belongs to the ${item.sub_type} slot, not ${slot}` }, { status: 400 });
+            }
+        }
+
+        // 既に他のスロットまたは同じスロットで装備中かチェック (重複装備防止)
+        if (invItem.is_equipped) {
+            const { data: currentSlotEquip } = await supabaseService
+                .from('equipped_items')
+                .select('item_id')
+                .eq('user_id', userId)
+                .eq('slot', slot)
+                .maybeSingle();
+
+            // 同じスロットにすでにこのアイテムが装備されているなら「Already equipped」としてレスポンスを返す
+            if (currentSlotEquip && currentSlotEquip.item_id === invItem.item_id) {
+                return NextResponse.json({ success: true, message: 'Already equipped' });
+            }
+
+            return NextResponse.json({ error: 'This item is already equipped in another slot' }, { status: 400 });
         }
 
         // 2. 既存の装備を外す (UPSERT)
@@ -112,10 +135,6 @@ export async function POST(req: Request) {
             .maybeSingle();
 
         if (existing) {
-            // 既に同じアイテムが装備されている場合はスキップ
-            if (existing.item_id === invItem.item_id) {
-                return NextResponse.json({ success: true, message: 'Already equipped' });
-            }
             // 既存装備を解除 + inventory.is_equippedもfalseに同期
             await supabaseService
                 .from('equipped_items')

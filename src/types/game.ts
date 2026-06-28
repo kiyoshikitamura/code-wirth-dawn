@@ -503,7 +503,7 @@ export interface EquippedItem {
   id: string; // UUID
   user_id: string;
   item_id: number;
-  slot: 'weapon' | 'armor' | 'accessory';
+  slot: 'weapon' | 'armor' | 'accessory' | 'accessory_1' | 'accessory_2' | 'accessory_3';
   equipped_at?: string;
   // Joined from items table
   item?: ItemDB;

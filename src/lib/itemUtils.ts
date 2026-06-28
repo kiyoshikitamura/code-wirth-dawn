@@ -279,7 +279,14 @@ export function getTotalEquipmentBonus(equippedItems: { effect_data: any }[]): {
  * スロット名を日本語ラベルに変換
  */
 export function getSlotLabel(slot: string): string {
-    const map: Record<string, string> = { weapon: '武器', armor: '防具', accessory: 'アクセサリー' };
+    const map: Record<string, string> = {
+        weapon: '武器',
+        armor: '防具',
+        accessory: 'アクセサリー',
+        accessory_1: 'アクセサリー1',
+        accessory_2: 'アクセサリー2',
+        accessory_3: 'アクセサリー3',
+    };
     return map[slot] || slot;
 }
 
