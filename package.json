@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "set NODE_TLS_REJECT_UNAUTHORIZED=0&& next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "set NODE_TLS_REJECT_UNAUTHORIZED=0&& next start",
     "lint": "eslint src"
   },
   "dependencies": {
