@@ -318,16 +318,14 @@ export default function EquipModal({ onClose, questLocked, isCampMode }: EquipMo
                     ) : (
                         <>
                             {/* Equipment Bonuses */}
-                    {(equipBonus.atk > 0 || equipBonus.def > 0 || equipBonus.hp > 0) && (
-                        <div className="bg-gradient-to-r from-orange-950/35 to-slate-900/60 p-3 rounded-lg border border-orange-900/25 flex justify-between items-center shadow-inner">
-                            <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">合計装備ボーナス</span>
-                            <div className="flex gap-3">
-                                {equipBonus.hp > 0 && <span className="text-xs text-green-400 font-mono font-bold">HP +{equipBonus.hp}</span>}
-                                {equipBonus.atk > 0 && <span className="text-xs text-red-400 font-mono font-bold">ATK +{equipBonus.atk}</span>}
-                                {equipBonus.def > 0 && <span className="text-xs text-blue-400 font-mono font-bold">DEF +{equipBonus.def}</span>}
-                            </div>
+                    <div className="bg-gradient-to-r from-orange-950/35 to-slate-900/60 p-3 rounded-lg border border-orange-900/25 flex justify-between items-center shadow-inner">
+                        <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider">合計装備ボーナス</span>
+                        <div className="flex gap-3">
+                            <span className="text-xs text-green-400 font-mono font-bold">HP +{equipBonus.hp || 0}</span>
+                            <span className="text-xs text-red-400 font-mono font-bold">ATK +{equipBonus.atk || 0}</span>
+                            <span className="text-xs text-blue-400 font-mono font-bold">DEF +{equipBonus.def || 0}</span>
                         </div>
-                    )}
+                    </div>
 
                     {/* Section 1: Equipped Items */}
                     <section className="space-y-2">
