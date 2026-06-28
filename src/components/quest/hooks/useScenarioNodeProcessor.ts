@@ -163,8 +163,8 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.type === 'check_status') {
-                const stat = currentNode.req_stat;
-                const val = currentNode.req_val || 0;
+                const stat = currentNode.req_stat || currentNode.params?.req_stat;
+                const val = currentNode.req_val || currentNode.params?.req_val || 0;
                 let passed = false;
                 
                 const isPct = stat?.endsWith('_pct') || currentNode.params?.use_pct === true;
