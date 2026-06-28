@@ -54,7 +54,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
         { id: 708, name: 'アイテム（未鑑定）[SR]', slug: 'item_unappraised_sr', rarityLabel: 'SR', costDesc: '4,000〜7,000' },
         { id: 709, name: 'アイテム（未鑑定）[UR]', slug: 'item_unappraised_ur', rarityLabel: 'UR', costDesc: '7,000〜10,000' }
     ].map(config => {
-        const invRows = inventory?.filter(i => i.item_id === config.id && !i.is_equipped) || [];
+        const invRows = inventory?.filter(i => Number(i.item_id) === config.id && !i.is_equipped) || [];
         const count = invRows.reduce((sum, row) => sum + (row.quantity || 1), 0);
         return {
             ...config,
