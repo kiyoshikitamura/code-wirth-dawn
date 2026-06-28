@@ -43,9 +43,12 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
 
     useEffect(() => {
         setMounted(true);
+        fetchInventory();
     }, []);
 
     if (!mounted) return null;
+
+    console.log('[AppraisalModal] Current inventory in modal:', inventory);
 
     // 未鑑定アイテム（ID: 706〜709）の集計
     const unappraisedItems = [
