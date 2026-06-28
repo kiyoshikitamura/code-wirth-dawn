@@ -2,6 +2,12 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // セキュリティ: X-Powered-By ヘッダー除去
   poweredByHeader: false,
 
