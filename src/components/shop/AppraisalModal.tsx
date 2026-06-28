@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Coins, Search, Sparkles, ShieldAlert } from 'lucide-react';
+import { Coins, Search, Sparkles, ShieldAlert, Loader2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthToken } from '@/lib/authToken';
 import { getNpcForLocation } from '@/lib/getNpcForLocation';
@@ -27,6 +27,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
     const { gold, inventory, worldState, fetchInventory, fetchUserProfile } = useGameStore();
 
     const [mounted, setMounted] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [isAppraising, setIsAppraising] = useState(false);
     const [appraisalStepText, setAppraisalStepText] = useState('');
     const [appraisalResult, setAppraisalResult] = useState<AppraisalResult | null>(null);
@@ -43,7 +44,11 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
 
     useEffect(() => {
         setMounted(true);
-        fetchInventory();
+        const loadData = async () => {
+            await fetchInventory();
+            setLoading(false);
+        };
+        loadData();
     }, []);
 
     if (!mounted) return null;
@@ -52,10 +57,10 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
 
     // 未鑑定アイテム（ID: 706〜709）の集計
     const unappraisedItems = [
-        { id: 706, name: 'アイテム（未鑑定）[N]', slug: 'item_unappraised_n', rarityLabel: 'N', costDesc: '1,000〜2,000' },
-        { id: 707, name: 'アイテム（未鑑定）[R]', slug: 'item_unappraised_r', rarityLabel: 'R', costDesc: '2,000〜4,000' },
-        { id: 708, name: 'アイテム（未鑑定）[SR]', slug: 'item_unappraised_sr', rarityLabel: 'SR', costDesc: '4,000〜7,000' },
-        { id: 709, name: 'アイテム（未鑑定）[UR]', slug: 'item_unappraised_ur', rarityLabel: 'UR', costDesc: '7,000〜10,000' }
+        { id: 706, name: 'アイテム（未鑑定）', slug: 'item_unappraised_n', rarityLabel: 'N', costDesc: '1,000〜2,000' },
+        { id: 707, name: 'アイテム（未鑑定）', slug: 'item_unappraised_r', rarityLabel: 'R', costDesc: '2,000〜4,000' },
+        { id: 708, name: 'アイテム（未鑑定）', slug: 'item_unappraised_sr', rarityLabel: 'SR', costDesc: '4,000〜7,000' },
+        { id: 709, name: 'アイテム（未鑑定）', slug: 'item_unappraised_ur', rarityLabel: 'UR', costDesc: '7,000〜10,000' }
     ].map(config => {
         const invRows = inventory?.filter(i => Number(i.item_id) === config.id && !i.is_equipped) || [];
         const count = invRows.reduce((sum, row) => sum + (row.quantity || 1), 0);
@@ -139,7 +144,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                 return {
                     borderColor: 'border-red-600 shadow-[0_0_35px_rgba(239,68,68,0.8)]',
                     glowClass: 'animate-pulse text-red-500 font-extrabold',
-                    overlayEffect: 'bg-red-950/20 border border-red-500/30 animate-shake',
+                    bgColor: 'bg-[#210909] border border-red-500/50',
                     npcMessage: '「何ということだ…これは滅多にみない逸品だ。まさか実在するとは…！」',
                     rarityBadge: 'bg-red-950 text-red-400 border-red-800'
                 };
@@ -147,7 +152,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                 return {
                     borderColor: 'border-yellow-500 shadow-[0_0_25px_rgba(234,179,8,0.7)]',
                     glowClass: 'text-yellow-500 font-bold',
-                    overlayEffect: 'bg-yellow-950/10 border border-yellow-500/20',
+                    bgColor: 'bg-[#201808] border border-yellow-500/30',
                     npcMessage: '「おお、これはかなりの名品だぞ。世代を超えて使える品だろう。」',
                     rarityBadge: 'bg-yellow-950 text-yellow-400 border-yellow-800'
                 };
@@ -155,16 +160,16 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                 return {
                     borderColor: 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]',
                     glowClass: 'text-blue-400 font-bold',
-                    overlayEffect: 'bg-blue-950/10 border border-blue-500/20',
+                    bgColor: 'bg-[#09152b] border border-blue-500/30',
                     npcMessage: '「ほう、なかなかに良質な品だ。大切に使うといい。」',
                     rarityBadge: 'bg-blue-950 text-blue-400 border-blue-800'
                 };
             case 'common': // N
             default:
                 return {
-                    borderColor: 'border-gray-400 shadow-lg',
-                    glowClass: 'text-gray-400',
-                    overlayEffect: 'bg-gray-900/10 border border-gray-700/20',
+                    borderColor: 'border-gray-500/60 shadow-lg',
+                    glowClass: 'text-gray-100 font-semibold',
+                    bgColor: 'bg-[#151210] border border-gray-600/30',
                     npcMessage: '「ふむ、ありふれた物のようだな。まあ、使えないこともないだろう。」',
                     rarityBadge: 'bg-gray-800 text-gray-400 border-gray-600'
                 };
@@ -265,13 +270,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-[#3e2723] text-sm">アイテム（未鑑定）</span>
-                                                <span className={`text-[9px] px-1.5 py-0.2 rounded border font-mono ${
-                                                    item.rarityLabel === 'UR' ? 'border-red-600 text-red-600 bg-red-50' :
-                                                    item.rarityLabel === 'SR' ? 'border-yellow-600 text-yellow-600 bg-yellow-50' :
-                                                    item.rarityLabel === 'R' ? 'border-blue-600 text-blue-600 bg-blue-50' :
-                                                    'border-gray-500 text-gray-600 bg-gray-50'
-                                                }`}>{item.rarityLabel}</span>
+                                                <span className="font-bold text-[#3e2723] text-sm">{item.name}</span>
                                             </div>
                                             <div className="text-[11px] text-[#8b6f4e] mt-1 font-serif">
                                                 鑑定料の目安: <span className="font-bold font-mono text-[#3e2723]">{item.costDesc}</span> G
@@ -322,20 +321,22 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                 <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="absolute inset-0 bg-black/95 pointer-events-none" />
                     
-                    <div className={`w-full max-w-sm rounded-xl overflow-hidden bg-gray-900 border-2 ${resultDesign.borderColor} shadow-2xl flex flex-col items-center p-6 text-center animate-in zoom-in-95 duration-300 ${resultDesign.overlayEffect}`}>
+                    <div className={`w-full max-w-sm rounded-xl p-6 text-center shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 text-slate-100 max-h-[90vh] overflow-y-auto ${resultDesign.bgColor} ${resultDesign.borderColor} ${
+                        appraisalResult.rarity.toLowerCase() === 'legendary' ? 'animate-shake' : ''
+                    }`}>
                         
                         {/* レアリティバッジ */}
                         <div className={`text-[10px] px-2.5 py-0.5 rounded-full border uppercase font-bold tracking-widest font-mono mb-2 ${resultDesign.rarityBadge}`}>
                             {appraisalResult.rarity}
                         </div>
 
-                        <div className="text-xs text-amber-500/70 mb-4 font-serif">鑑定完了</div>
+                        <div className="text-xs text-amber-500/80 mb-4 font-serif">鑑定完了</div>
                         
                         {/* アイテム画像・輝きエフェクト */}
-                        <div className="relative w-28 h-28 bg-gray-800/80 rounded-2xl border border-gray-700/60 flex items-center justify-center overflow-hidden mb-5">
+                        <div className="relative w-28 h-28 bg-[#15100c] rounded-2xl border border-[#8b5a2b]/40 flex items-center justify-center overflow-hidden mb-5">
                             {/* キラキラ演出バックグラウンド */}
                             {(appraisalResult.rarity.toLowerCase() === 'epic' || appraisalResult.rarity.toLowerCase() === 'legendary') && (
-                                <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.15)_0%,transparent_70%)] animate-pulse" />
+                                <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(234,179,8,0.25)_0%,transparent_70%)] animate-pulse" />
                             )}
                             {appraisalResult.image_url ? (
                                 <img src={appraisalResult.image_url} alt={appraisalResult.name} className="w-full h-full object-cover" />
@@ -345,31 +346,31 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                         </div>
 
                         {/* アイテム名 */}
-                        <h4 className={`text-xl font-bold mb-2 tracking-wide text-white ${resultDesign.glowClass}`}>
+                        <h4 className={`text-xl font-bold mb-2 tracking-wide ${resultDesign.glowClass}`}>
                             {appraisalResult.name}
                         </h4>
 
                         {/* 鑑定費用 */}
-                        <div className="text-[10px] text-gray-500 font-mono mb-4">
+                        <div className="text-[10px] text-slate-400 font-mono mb-4">
                             鑑定料: <span className="text-amber-400 font-bold">{actualCost} G</span> を支払った
                         </div>
 
                         {/* アイテム効果/説明 */}
-                        <div className="bg-black/40 border border-gray-800 rounded-lg p-3 w-full mb-6 max-h-24 overflow-y-auto">
-                            <p className="text-xs text-gray-300 leading-relaxed font-serif">
+                        <div className="bg-[#120d0a] border border-[#8b5a2b]/20 rounded-lg p-3 w-full mb-6 max-h-24 overflow-y-auto">
+                            <p className="text-xs text-slate-300 leading-relaxed font-serif">
                                 {appraisalResult.description}
                             </p>
                         </div>
 
                         {/* 鑑定NPCセリフエリア */}
-                        <div className="border-t border-gray-800/80 pt-4 w-full mb-6">
-                            <div className="flex gap-2.5 items-center justify-start text-left bg-gray-950/40 p-2.5 rounded border border-gray-800/50">
+                        <div className="border-t border-[#8b5a2b]/20 pt-4 w-full mb-6">
+                            <div className="flex gap-2.5 items-center justify-start text-left bg-[#120d0a] p-2.5 rounded border border-[#8b5a2b]/20">
                                 <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-600/40 shrink-0 bg-gray-900">
                                     <img src={npcImg} alt={npcName} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="text-[9px] text-[#a38b6b] font-bold">{npcRole}</div>
-                                    <p className="text-[11px] text-amber-100 font-serif italic mt-0.5 leading-relaxed">
+                                    <p className="text-[11px] text-amber-200/90 font-serif italic mt-0.5 leading-relaxed">
                                         {resultDesign.npcMessage}
                                     </p>
                                 </div>
@@ -382,12 +383,12 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                                 setAppraisalResult(null);
                                 soundManager?.playSE('se_click');
                             }}
-                            className={`w-full py-2.5 text-xs font-bold rounded-lg transition-all shadow-md active:scale-95 ${
+                            className={`w-full py-2.5 text-xs font-bold rounded-lg transition-all shadow-md active:scale-95 text-slate-100 ${
                                 appraisalResult.rarity.toLowerCase() === 'legendary'
-                                    ? 'bg-red-800 hover:bg-red-700 text-white border border-red-600'
+                                    ? 'bg-red-800 hover:bg-red-700 border border-red-500'
                                     : appraisalResult.rarity.toLowerCase() === 'epic'
-                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-black border border-yellow-500 font-black'
-                                    : 'bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700'
+                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-black border border-yellow-500 font-bold'
+                                    : 'bg-[#3e2723] hover:bg-[#52342e] border border-[#8b5a2b]/40 text-[#e3d5b8]'
                             }`}
                         >
                             荷物に加える
