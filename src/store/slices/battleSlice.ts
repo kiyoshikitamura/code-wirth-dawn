@@ -323,10 +323,14 @@ export const createBattleSlice = (
                     const duration = buff.duration;
                     const val = buff.value;
                     if (id && duration) {
+                        const finalDuration = isTurnEndTickCompensated(id as StatusEffectId)
+                            ? duration + 1
+                            : duration;
+
                         initialPlayerEffects = applyEffect(
                             initialPlayerEffects,
                             id as StatusEffectId,
-                            duration,
+                            finalDuration,
                             val
                         );
                         const buffName = getEffectName(id as StatusEffectId);
