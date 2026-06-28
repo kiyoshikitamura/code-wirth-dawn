@@ -182,7 +182,7 @@ export function getEffectList(effectData: any): { label: string; value: string; 
                 const name = effectIdLabel[id] || id;
                 const valSuffix = val ? `(+${val})` : '';
                 list.push({
-                    label: '戦闘開始バフ',
+                    label: '戦闘時効果',
                     value: `${name}${valSuffix} (${dur}T)`,
                     color: 'text-purple-400'
                 });
