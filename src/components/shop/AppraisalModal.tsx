@@ -283,18 +283,18 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                             const canAfford = gold >= 1000; // 最低鑑定料(1000)に足りるか
                             
                             return (
-                                <div key={item.id} className="bg-[#fdfbf7] border border-[#c2b280] p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-all duration-200">
-                                    <div className="flex items-center gap-3">
+                                <div key={item.id} className="bg-[#fdfbf7] border border-[#c2b280] p-2 sm:p-3 rounded flex justify-between items-center hover:border-[#a38b6b] transition-all duration-200 gap-2">
+                                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                                         <div className="w-10 h-10 rounded bg-[#e8dcc8] border border-[#c2b280] flex items-center justify-center shrink-0 overflow-hidden relative">
                                             <img src="/images/items/item_unappraised.png" alt="未鑑定" className="w-full h-full object-cover" />
                                             <span className="absolute bottom-0 right-0 bg-[#3e2723] text-[#e3d5b8] text-[9px] px-1 font-bold rounded-tl-sm border-t border-l border-[#8b5a2b]/40">x{item.count}</span>
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-[#3e2723] text-sm">{item.name}</span>
+                                                <span className="font-bold text-[#3e2723] text-xs sm:text-sm whitespace-nowrap">{item.name}</span>
                                             </div>
-                                            <div className="text-[11px] text-[#8b6f4e] mt-1 font-serif">
-                                                鑑定料の目安: <span className="font-bold font-mono text-[#3e2723]">{item.costDesc}</span> G
+                                            <div className="text-[10px] sm:text-[11px] text-[#8b6f4e] mt-0.5 font-serif whitespace-nowrap">
+                                                目安: <span className="font-bold font-mono text-[#3e2723]">{item.costDesc}</span> G
                                             </div>
                                         </div>
                                     </div>
@@ -302,7 +302,7 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
                                     <button
                                         onClick={() => handleRequestAppraise(item.id)}
                                         disabled={!canAfford || item.count <= 0}
-                                        className={`px-4 py-2 rounded text-xs font-bold border transition-all ${
+                                        className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded text-[10px] sm:text-xs font-bold border transition-all whitespace-nowrap shrink-0 ${
                                             !canAfford 
                                                 ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
                                                 : 'bg-[#8b5a2b] hover:bg-[#724a23] text-[#e3d5b8] border-[#5c3a1b] shadow hover:shadow-md'
