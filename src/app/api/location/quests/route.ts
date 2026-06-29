@@ -400,7 +400,8 @@ export async function GET(req: Request) {
         const shuffledSpecial = [...specialQuests].sort(() => Math.random() - 0.5);
         const limitedSpecialQuests = shuffledSpecial.filter((q: any) => {
             const isMainScenario = q.slug && q.slug.startsWith('main_ep');
-            if (isMainScenario) return true; // メインシナリオは常に表示（前提条件で自然に1件に絞られる）
+            const isRiftQuest = q.slug && q.slug.startsWith('qst_rift_');
+            if (isMainScenario || isRiftQuest) return true; // メインシナリオおよび狭間の迷宮は常に表示
             const recLevel = q.rec_level || q.requirements?.min_level || 1;
             const tier = getDifficultyTier(recLevel);
             if (specialTierLimits[tier] >= SPECIAL_TIER_MAX[tier]) return false;
