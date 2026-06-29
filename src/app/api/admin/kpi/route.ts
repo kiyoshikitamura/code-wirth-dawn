@@ -65,7 +65,7 @@ export async function GET(req: Request) {
             // A. User Profiles Summary
             const { data: profileSummary, error: profSumErr } = await supabaseServer
                 .from('user_profile_summary_view')
-                .select('total_users, avg_level, anon_users_count, auth_users_count')
+                .select('total_users, avg_level, anon_users, auth_users')
                 .single();
             if (profSumErr) throw profSumErr;
 
@@ -100,8 +100,8 @@ export async function GET(req: Request) {
                 premium: subDist.premium_count || 0
             };
 
-            const anonUsers = profileSummary.anon_users_count || 0;
-            const authUsers = profileSummary.auth_users_count || 0;
+            const anonUsers = profileSummary.anon_users || 0;
+            const authUsers = profileSummary.auth_users || 0;
 
             // D. Get quick totals (battles and victories) from daily stats - REMOVED for performance
 
