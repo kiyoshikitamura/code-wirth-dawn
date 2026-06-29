@@ -1,0 +1,15 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"ギルドの部屋に入ると、ギルド長バルガスが真剣な表情で待ち構えていた。","{""bg"":""bg_office"",""bgm"":""bgm_quest_calm"",""type"":""text""}",check_spirit
+NODE,check_spirit,"大魔道士の思念を持っているか判定しています。","{""bg"":""bg_office"",""type"":""check_possession"",""item_id"":330,""quantity"":1}",
+CHOICE,,success,,has_spirit
+CHOICE,,failure,,no_spirit
+NODE,no_spirit,"「何だと？ ヴァルグナは一時的に退けたが、深淵の結界を解くための『大魔道士の思念』を手に入れられなかっただと？」バルガスは激怒し、机を叩いた。「それなしでは、これ以上調査を続けることは許可できん！ もう一度下層を再捜索してこい！」","{""bg"":""bg_office"",""speaker_name"":""ギルド長バルガス"",""type"":""text""}",end_failure
+NODE,has_spirit,"私たちはギルド長の机の上に、大魔道士の思念が込められた半透明の青白い水晶を置いた。バルガスは目を見開いた。「素晴らしい！ これこそが大魔道士の魂の結晶だ。これがあれば、深淵を阻む次元の結界を中和できる！」","{""bg"":""bg_office"",""speaker_name"":""ギルド長バルガス"",""type"":""text""}",check_dark_orb
+NODE,check_dark_orb,"闇の宝珠を持っているか判定しています。","{""bg"":""bg_office"",""type"":""check_possession"",""item_id"":329,""quantity"":1}",
+CHOICE,,success,,has_dark_orb
+CHOICE,,failure,,no_dark_orb
+NODE,has_dark_orb,"「……待て。お前たちの荷物から、何か恐ろしい悪魔の気配を感じるぞ。その禍々しい黒紫色の球体は……『闇の宝珠』か？」バルガスは眉をひそめた。「それを何に使うつもりだ？ 警告しておく。闇に魅せられた者は、最後には闇に喰われるぞ」","{""bg"":""bg_office"",""speaker_name"":""ギルド長バルガス"",""type"":""text""}",report_end
+NODE,no_dark_orb,"「よし、お前たちの正義の意思は本物のようだな。世界の命運は、この最後の『深淵』の調査にかかっている。大魔道士の思念を使い、迷宮最深部への門を開くぞ」","{""bg"":""bg_office"",""speaker_name"":""ギルド長バルガス"",""type"":""text""}",report_end
+NODE,report_end,"バルガスから深淵調査の特別許可証を受け取った。いよいよ最後の戦いが始まる。","{""bg"":""bg_office"",""type"":""text""}",end_success
+NODE,end_success,"深淵の特別調査許可を得て、次の探索の準備を整えた。","{""bg"":""bg_office"",""rewards"":{""gold"":100},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"条件を満たさず、調査任務は打ち切られた…","{""bg"":""bg_office"",""type"":""end"",""result"":""failure""}",

@@ -100,8 +100,17 @@ export async function GET(req: Request) {
                 currentNationSlug = ws.controlling_nation;
             }
         }
+
         const quests = scenariosResult.data;
         const qError = scenariosResult.error;
+
+        debug.push(`supabaseUrl = ${supabaseUrl}`);
+        const debug7060 = quests?.find((q: any) => String(q.id) === '7060');
+        if (debug7060) {
+            debug.push(`Found 7060: title=${debug7060.title}, is_repeatable=${debug7060.is_repeatable}, quest_type=${debug7060.quest_type}, repeatable_script=${debug7060.script_data?.is_repeatable}`);
+        } else {
+            debug.push(`7060 not found in query results! (total quests: ${quests?.length})`);
+        }
 
         // prosperity_level は DB上で1-5のスケール
         const currentProsperity = worldState?.prosperity_level || 3;

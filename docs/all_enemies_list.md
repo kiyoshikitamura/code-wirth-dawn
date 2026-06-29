@@ -14,7 +14,7 @@
 
 ---
 
-## 2. 全エネミーカタログ（148体）
+## 2. 全エネミーカタログ（164体）
 
 | ID | エネミー名 (スラグ) | LV / HP | ATK / DEF | EXP / Gold | ドロップ | 区分 | 行動ルーチン（使用スキルと発動条件） |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -163,3 +163,19 @@
 | **6052** | **巨大毒蠍**<br>(`boss_giant_scorpion`) | Lv.8<br>HP: 200 | ATK: 28<br>DEF: 12 | 70 EXP<br>250 G | - | quest_only | ・**毒針** (50%)<br>・**強打** (50%)<br>・**激昂** (HP40%以下で100%) |
 | **6053** | **山賊の頭**<br>(`boss_toll_bandit`) | Lv.7<br>HP: 190 | ATK: 27<br>DEF: 5 | 60 EXP<br>200 G | - | quest_only | ・**強打** (60%)<br>・**雄叫び** (3ターン毎に100%)<br>・**激昂** (HP40%以下で100%) |
 | **6054** | **河伯**<br>(`boss_river_god`) | Lv.8<br>HP: 210 | ATK: 26<br>DEF: 8 | 70 EXP<br>250 G | - | quest_only | ・**体当たり** (40%)<br>・**自己再生** (3ターン毎に100%)<br>・**毒の息** (HP50%以下で100%発動) |
+| **901** | **インプ**<br>(`enemy_rift_imp`) | Lv.7<br>HP: 180 | ATK: 18<br>DEF: 10 | 25 EXP<br>30 G | - | quest_only | ・**爪撃** (50%)<br>・**体当たり** (50%) |
+| **902** | **ヘルハウンド**<br>(`enemy_rift_hellhound`) | Lv.8<br>HP: 220 | ATK: 22<br>DEF: 8 | 30 EXP<br>40 G | - | quest_only | ・**噛みつき** (60%)<br>・**火吹き** (40%) |
+| **907** | **ヘルウィング**<br>(`enemy_rift_hellwing`) | Lv.8<br>HP: 200 | ATK: 20<br>DEF: 8 | 30 EXP<br>40 G | - | quest_only | ・**急降下** (60%)<br>・**羽撃** (40%) |
+| **903** | **サキュバス**<br>(`enemy_rift_succubus_rift`) | Lv.10<br>HP: 260 | ATK: 22<br>DEF: 12 | 40 EXP<br>60 G | - | quest_only | ・**魅了** (50%)<br>・**吸精** (50%) |
+| **908** | **デーモンメイジ**<br>(`enemy_rift_mage`) | Lv.10<br>HP: 230 | ATK: 18<br>DEF: 10 | 40 EXP<br>60 G | - | quest_only | ・**闇矢** (60%)<br>・**魔力集中** (40%) |
+| **904** | **プレイグデーモン**<br>(`enemy_rift_plague`) | Lv.12<br>HP: 320 | ATK: 26<br>DEF: 15 | 50 EXP<br>80 G | - | quest_only | ・**毒液** (60%)<br>・**瘴気の霧** (40%) |
+| **905** | **デーモンソルジャー**<br>(`enemy_rift_soldier`) | Lv.12<br>HP: 380 | ATK: 30<br>DEF: 20 | 50 EXP<br>80 G | - | quest_only | ・**斬撃** (60%)<br>・**シールドバッシュ** (40%) |
+| **906** | **シャドウデーモン**<br>(`enemy_rift_shadow`) | Lv.14<br>HP: 280 | ATK: 36<br>DEF: 10 | 60 EXP<br>100 G | - | quest_only | ・**急所突き** (60%)<br>・**身隠し** (40%) |
+| **909** | **アークデーモン**<br>(`enemy_rift_archdemon`) | Lv.14<br>HP: 450 | ATK: 40<br>DEF: 18 | 80 EXP<br>120 G | - | quest_only | ・**地獄の火** (60%)<br>・**呪い** (40%) |
+| **910** | **グレーターデーモン**<br>(`enemy_rift_greater_demon`) | Lv.18<br>HP: 520 | ATK: 45<br>DEF: 25 | 120 EXP<br>180 G | - | quest_only | ・**暗黒唐竹割り** (60%)<br>・**恐怖のオーラ** (40%) |
+| **961** | **深淵の狂皇 アスタロト**<br>(`boss_rift_astaroth`) | Lv.10<br>HP: 2400 | ATK: 52<br>DEF: 30 | 300 EXP<br>800 G | [青の宝珠](file:///d:/dev/code-wirth-dawn/src/data/csv/items.csv#L327) | quest_only | ・**狂乱爪撃** (60%)<br>・**インプ召喚** (40%) |
+| **962** | **生贄の番人 ゲレゲール**<br>(`boss_rift_gereger`) | Lv.14<br>HP: 3000 | ATK: 62<br>DEF: 40 | 500 EXP<br>1200 G | [闇の宝珠](file:///d:/dev/code-wirth-dawn/src/data/csv/items.csv#L329) | quest_only | ・**血の生贄** (60%)<br>・**呪詛** (40%) |
+| **963** | **光なき思念 アケロン**<br>(`boss_rift_acheron`) | Lv.14<br>HP: 2600 | ATK: 58<br>DEF: 25 | 500 EXP<br>1200 G | [大魔道士の思念](file:///d:/dev/code-wirth-dawn/src/data/csv/items.csv#L330) | quest_only | ・**記憶貪り** (60%)<br>・**沈滅の霧** (40%) |
+| **964** | **魔導士ヴァルグナ**<br>(`boss_rift_vargna`) | Lv.15<br>HP: 4200 | ATK: 70<br>DEF: 50 | 800 EXP<br>2000 G | [光の宝珠](file:///d:/dev/code-wirth-dawn/src/data/csv/items.csv#L328) | quest_only | ・**召喚ゲート** (40%)<br>・**次元斬** (40%)<br>・**歪みの結界** (20%) |
+| **965** | **魔導士ヴァルグナ（真）**<br>(`boss_rift_vargna_true`) | Lv.18<br>HP: 5000 | ATK: 80<br>DEF: 60 | 1200 EXP<br>3000 G | - | quest_only | ・**虚無崩壊** (40%)<br>・**魔力自己回復** (40%)<br>・**時空の歪み** (20%) |
+| **966** | **破壊神 サタン**<br>(`boss_rift_satan`) | Lv.20<br>HP: 6000 | ATK: 95<br>DEF: 75 | 2000 EXP<br>5000 G | [デーモンスレイヤー](file:///d:/dev/code-wirth-dawn/src/data/csv/items.csv#L351) | quest_only | ・**深淵レーザー** (40%)<br>・**超再生** (40%)<br>・**魔王の怒り** (20%) |

@@ -112,6 +112,16 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_ruin_crypt': '/images/quests/bg_crypt.png',  // 遺跡地下墓地 → 地下墓地にフォールバック
     'bg_marcund': '/images/quests/bg_memory_oasis.png',  // マルカンドオアシスへのエイリアス
     'bg_marcund_desert': '/images/quests/bg_desert.png',  // マルカンド砂漠 → 砂漠共通にフォールバック
+    // ── 狭間の迷宮シリーズ背景 (7060-7066) ──
+    'bg_rift_entrance': '/backgrounds/bg_rift_entrance.png',
+    'bg_rift_camp': '/backgrounds/bg_rift_camp.png',
+    'bg_rift_maze': '/backgrounds/bg_rift_maze.png',
+    'bg_rift_abyss': '/backgrounds/bg_rift_abyss.png',
+    'fg_rift_gate_order': '/backgrounds/layer_gate_order.png',
+    'fg_rift_gate_chaos': '/backgrounds/layer_gate_chaos.png',
+    'fg_rift_chest': '/backgrounds/layer_rift_chest.png',
+    'fg_rift_merchant': '/backgrounds/layer_rift_merchant.png',
+
     // 前景画像 (スプライト)
     'fg_demon_soldier': '/images/quests/fg_demon_soldier.png',
     'fg_chest_locked': '/images/quests/fg_chest_locked.png',

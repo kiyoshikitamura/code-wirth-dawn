@@ -101,6 +101,20 @@ function getEffectValueString(id: string, value?: number): string {
             return val !== undefined ? `+${val}` : '+30';
         case 'berserk':
             return 'ATK+100%/DEF-50%';
+        case 'drain_on_hit':
+            return val !== undefined ? `+${val}` : '+20';
+        case 'crit_up':
+            return val !== undefined ? `+${Math.round(val * 100)}%` : '+10%';
+        case 'absolute_barrier':
+            return val !== undefined ? `-${val}` : '-30';
+        case 'stun_infuse':
+            return '確率スタン';
+        case 'evasion_down':
+            if (val !== undefined) {
+                const absVal = Math.abs(val);
+                return `-${Math.round(absVal * 100)}%`;
+            }
+            return '-30%';
         default:
             if (val !== undefined) {
                 return val > 0 ? `+${val}` : `${val}`;
@@ -140,6 +154,11 @@ export function getEffectList(effectData: any): { label: string; value: string; 
         barrier: 'バリア',
         cure_status: '状態回復',
         cure_debuff: 'デバフ解除',
+        drain_on_hit: '吸血効果',
+        crit_up: '会心率UP',
+        absolute_barrier: '絶対被ダメ軽減',
+        stun_infuse: '攻撃時スタン付与',
+        evasion_down: '回避率DOWN',
     };
 
     // ─── HP/MP回復 ───

@@ -1,0 +1,8 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"ギルドの扉を開けると、そこにいた全員から割れんばかりの拍手と歓声が湧き起こった。","{""bg"":""bg_office"",""bgm"":""bgm_quest_calm"",""type"":""text""}",talk_vargas_01
+NODE,talk_vargas_01,"ギルド長バルガスが大きな笑顔を浮かべて歩み寄ってきた。「おお、帰ったか！ 次元の狭間が完全に消滅したのを魔導観測班が確認したぞ。サタンを……あの破壊神を本当に倒したのだな！」","{""bg"":""bg_office"",""speaker_name"":""ギルド長バルガス"",""type"":""text""}",talk_vargas_02
+NODE,talk_vargas_02,"「お前たちが成し遂げたのは、ただの魔物討伐ではない。世界の崩壊を食い止め、数多の命を救ったのだ。ギルドを、いやこの世界のすべての人々を代表して心から感謝する！」","{""bg"":""bg_office"",""speaker_name"":""ギルド長バルガス"",""type"":""text""}",talk_vargas_03
+NODE,talk_vargas_03,"バルガスは誇らしげに私たちの肩を叩き、世界の救世主としての勲章と特別な金貨を手渡した。周囲の冒険者たちも、口々に私たちの名を叫び、称賛を惜しまない。","{""bg"":""bg_office"",""type"":""text""}",world_peace
+NODE,world_peace,"世界の中心にあった不気味な奈落は完全に塞がり、青空からは温かな太陽の光が地表を照らしている。世界に再び平和が戻ったのだ。","{""bg"":""bg_office"",""type"":""text""}",epilogue_end
+NODE,epilogue_end,"だが、私たちの旅が終わったわけではない。この世界にまだ見ぬ神秘や危機がある限り、私たちは再び剣を取り、新たな冒険へと歩み続けるだろう。","{""bg"":""bg_office"",""type"":""text""}",end_success
+NODE,end_success,"世界の救世主となり、ギルド長や仲間たちと共に喜びを分かち合った。","{""bg"":""bg_office"",""rewards"":{""gold"":100},""type"":""end"",""result"":""success""}",

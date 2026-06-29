@@ -41,7 +41,7 @@ export type StatusEffectId =
     | 'barrier'     // バリア: def_upの全体版（聖壁等）
     | 'berserk'     // v4.1: 狂戦士 ATK×2.0 + DEF半減
     | 'counter_spike' // 棘の鎧 (反射)
-    | 'unyielding_barrier' // 不屈 of 防壁バリア
+    | 'unyielding_barrier' // 不屈の防壁バリア
     | 'sacrificial_ap' // 生贄の儀式 AP軽減
     | 'mana_charge'  // マナチャージ AP回復
     | 'death_sentence' // 死神の宣告 即死カウント
@@ -49,7 +49,12 @@ export type StatusEffectId =
     | 'revenge_shield' // 報復の盾 ダメージ反射蓄積
     | 'soul_boost'   // ソウルブースト 威力2.5倍
     | 'element_resonance' // 属性の共鳴
-    | 'crit_vulnerability'; // 被クリティカル率UP
+    | 'crit_vulnerability' // 被クリティカル率UP
+    | 'drain_on_hit'       // 攻撃時HP回復
+    | 'crit_up'            // クリティカル率UP
+    | 'absolute_barrier'   // 絶対被ダメージ軽減
+    | 'stun_infuse'        // 攻撃時スタン付与
+    | 'evasion_down';      // 回避率低下
 
 // ─── v2.9.3k: デバフ成功率テーブル ─────────────────────────────
 // 各デバフeffect_idごとの付与成功率（0.0〜1.0）
@@ -126,6 +131,11 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     soul_boost:   'ソウルブースト',
     element_resonance: '属性の共鳴',
     crit_vulnerability: '被クリティカル率UP',
+    drain_on_hit: '吸血効果',
+    crit_up:      '会心率UP',
+    absolute_barrier: '絶対障壁',
+    stun_infuse:  '雷電の一撃',
+    evasion_down: '回避率DOWN',
 };
 
 export function getEffectName(id: StatusEffectId, value?: number): string {
@@ -276,11 +286,17 @@ export function getMissChance(effects: StatusEffect[]): number {
  */
 export function getEvasionChance(effects: StatusEffect[]): number {
     const evaEffects = effects.filter(e => e.id === 'evasion_up' && e.duration > 0);
+    const evaDownEffects = effects.filter(e => e.id === 'evasion_down' && e.duration > 0);
+    
+    let totalVal = 0;
     if (evaEffects.length > 0) {
-        const totalVal = evaEffects.reduce((sum, e) => sum + (e.value ?? 0.3), 0);
-        return Math.min(0.9, totalVal);
+        totalVal += evaEffects.reduce((sum, e) => sum + (e.value ?? 0.3), 0);
     }
-    return 0;
+    if (evaDownEffects.length > 0) {
+        totalVal -= evaDownEffects.reduce((sum, e) => sum + (e.value ?? 0.3), 0);
+    }
+    
+    return Math.max(0, Math.min(0.9, totalVal));
 }
 
 // ─── ターン終了処理 ──────────────────────────────────────────
@@ -298,10 +314,19 @@ export function tickEffects(
     const messages: string[] = [];
     const expired: StatusEffectId[] = [];
 
-    if (hasEffect(effects, 'regen')) {
-        const heal = Math.max(1, Math.floor(maxHp * 0.05));
-        hpDelta += heal;
-        messages.push(`${targetName}のリジェネ効果！ HP +${heal}`);
+    const regenEffects = effects.filter(e => e.id === 'regen');
+    if (regenEffects.length > 0) {
+        let totalHeal = 0;
+        regenEffects.forEach(e => {
+            const heal = Math.max(1, Math.floor(maxHp * 0.05));
+            totalHeal += heal;
+        });
+        hpDelta += totalHeal;
+        if (regenEffects.length > 1) {
+            messages.push(`${targetName}のリジェネ効果(重複x${regenEffects.length})！ HP +${totalHeal}`);
+        } else {
+            messages.push(`${targetName}のリジェネ効果！ HP +${totalHeal}`);
+        }
     }
 
     if (hasEffect(effects, 'poison')) {

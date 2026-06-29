@@ -1682,6 +1682,51 @@ export const createBattleSlice = (
                         logMsg = `${card.name}！ 連鎖する紫電が炸裂！\n` + hitLogs.join('\n');
                         break;
                     }
+                    case 'shuriken_attack': {
+                        const hitsCount = 3;
+                        let hitLogs: string[] = [];
+                        let totalDmg = 0;
+                        for (let hit = 0; hit < hitsCount; hit++) {
+                            let aliveEnemies = currentEnemies.filter(e => e.hp > 0);
+                            if (aliveEnemies.length === 0) break;
+                            const picked = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+                            const targetHasCritVul = picked.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                            const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+                            
+                            const basePower = (card.power ?? 15) * damageMultiplier;
+                            const result = calculateDamageV4(basePower, picked.def || 0, currentPlayerEffects as StatusEffect[], picked.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                            totalDmg += result.damage;
+                            
+                            currentEnemies = currentEnemies.map(e => e.id === picked.id ? { ...e, hp: Math.max(0, e.hp - result.damage) } : e);
+                            
+                            const critLabel = result.isCritical ? ' クリティカル！' : '';
+                            hitLogs.push(`${picked.name}に ${result.damage} ダメージ${critLabel}`);
+
+                            const playerHasDrainOnHit = currentPlayerEffects.some(se => se.id === 'drain_on_hit');
+                            if (playerHasDrainOnHit && result.damage > 0) {
+                                const maxHp = effectivePlayerMaxHp;
+                                const currentHp = get().userProfile?.hp || 0;
+                                const healAmt = 20;
+                                const newHp = Math.min(maxHp, currentHp + healAmt);
+                                if (newHp > currentHp) {
+                                    set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                                    hitLogs.push(`  → (吸血効果！ HP +${newHp - currentHp} 回復)`);
+                                    healSyncHp = newHp;
+                                    updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
+                                }
+                            }
+
+                            const playerHasStunInfuse = currentPlayerEffects.some(se => se.id === 'stun_infuse');
+                            if (playerHasStunInfuse && result.damage > 0 && Math.random() < 0.30) {
+                                const stunEffects = applyEffect((picked.status_effects || []) as StatusEffect[], 'stun', 2);
+                                currentEnemies = currentEnemies.map(e => e.id === picked.id ? { ...e, status_effects: stunEffects } : e);
+                                hitLogs.push(`  → (⚡ 怒りの腕輪の効果！ ${picked.name}をスタンさせた！)`);
+                            }
+                        }
+                        damage = 0;
+                        logMsg = `${card.name}！ 連続して手裏剣を投擲！\n` + hitLogs.join('\n');
+                        break;
+                    }
                     case 'prominence': {
                         let burnLogs: string[] = [];
                         let prominenceDmg = (card.power ?? 50) * damageMultiplier;
@@ -2442,10 +2487,18 @@ export const createBattleSlice = (
                 let resistedDebuff: string | null = null;
                 const resistedEnemies: string[] = [];
                 const affectedEnemies: string[] = [];
+                const stunInfusedNames: string[] = [];
                 currentEnemies = currentEnemies.map(e => {
                     if (isAoe && e.hp > 0) {
                         let newHp = Math.max(0, e.hp - damage);
                         let newEffects = (e.status_effects || []) as StatusEffect[];
+                        
+                        const playerHasStunInfuse = currentPlayerEffects.some(se => se.id === 'stun_infuse');
+                        if (playerHasStunInfuse && damage > 0 && Math.random() < 0.30) {
+                            newEffects = applyEffect(newEffects, 'stun', 2);
+                            stunInfusedNames.push(e.name);
+                        }
+
                         if (effectInfo?.effectId) {
                             const isSelfBuff = isSelfBuffEffect(effectInfo.effectId);
                             if (!isSelfBuff) {
@@ -2464,6 +2517,13 @@ export const createBattleSlice = (
                     if (e.id === loopTargetEnemyId) {
                         let newHp = Math.max(0, e.hp - damage);
                         let newEffects = customTargetEffects !== null ? customTargetEffects : ((e.status_effects || []) as StatusEffect[]);
+                        
+                        const playerHasStunInfuse = currentPlayerEffects.some(se => se.id === 'stun_infuse');
+                        if (playerHasStunInfuse && damage > 0 && Math.random() < 0.30) {
+                            newEffects = applyEffect(newEffects, 'stun', 2);
+                            stunInfusedNames.push(e.name);
+                        }
+
                         const resolvedEffectId = effectInfo?.effectId || (card?.effect_id as StatusEffectId | undefined);
                         if (resolvedEffectId && isValidEffectId(resolvedEffectId)) {
                             const isSelfBuff = isSelfBuffEffect(resolvedEffectId);
@@ -2487,6 +2547,12 @@ export const createBattleSlice = (
                 const loopAllDead = currentEnemies.every(e => e.hp <= 0);
 
                 newMessages.push(logMsg);
+                if (stunInfusedNames.length > 0) {
+                    stunInfusedNames.forEach(name => {
+                        newMessages.push(`⚡ 怒りの腕輪の効果！ ${name}をスタンさせた！`);
+                    });
+                }
+
                 if (healSyncHp !== null) newMessages.push(`__hp_sync:${healSyncHp}`);
                 if (damage > 0) {
                     const resolvedEffectIdForDrain = effectInfo?.effectId || (card?.effect_id as string | undefined);
@@ -2498,6 +2564,20 @@ export const createBattleSlice = (
                         set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
                         newMessages.push(`→ 生命力を吸収！ HP +${drainHeal} 回復！`);
                         updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
+                    }
+
+                    const playerHasDrainOnHit = currentPlayerEffects.some(se => se.id === 'drain_on_hit');
+                    if (playerHasDrainOnHit) {
+                        const drainHeal = 20;
+                        const currentHp = get().userProfile?.hp || 0;
+                        const maxHp = effectivePlayerMaxHp;
+                        const newHp = Math.min(maxHp, currentHp + drainHeal);
+                        if (newHp > currentHp) {
+                            set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                            newMessages.push(`→ 吸血効果！ HP +${newHp - currentHp} 回復！`);
+                            healSyncHp = newHp;
+                            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
+                        }
                     }
                 }
 

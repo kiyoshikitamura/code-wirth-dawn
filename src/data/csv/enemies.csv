@@ -148,3 +148,19 @@ id,slug,name,level,hp,atk,def,exp,gold,drop_item_id,spawn_type,_drop_slug
 6054,boss_river_god,河伯,8,210,26,8,70,250,,quest_only
 6038,boss_war_djinn_holy,戦魔ジン(鎮火),28,1200,70,18,450,1500,,quest_only
 6039,boss_war_djinn_forge,戦魔ジン(防弱),28,1200,85,8,450,1500,,quest_only
+1901,enemy_rift_imp,インプ,7,180,18,10,20,30,,random
+1902,enemy_rift_hellhound,ヘルハウンド,8,220,22,8,25,35,,random
+1907,enemy_rift_hellwing,ヘルウィング,8,200,20,8,25,35,,random
+1903,enemy_rift_succubus,サキュバス,10,260,22,12,35,50,,random
+1908,enemy_rift_demon_mage,デーモンメイジ,10,230,18,10,35,50,,random
+1904,enemy_rift_plague_demon,プレイグデーモン,12,320,26,15,50,70,,random
+1905,enemy_rift_demon_soldier,デーモンソルジャー,12,380,30,20,50,70,,random
+1906,enemy_rift_shadow_demon,シャドウデーモン,14,280,36,10,70,100,,random
+1909,enemy_rift_archdemon,アークデーモン,14,450,40,18,70,100,,random
+1910,enemy_rift_greater_demon,グレーターデーモン,18,520,45,25,120,180,,random
+1961,boss_rift_astaroth,深淵の狂皇 アスタロト,10,2400,52,30,300,500,,quest_only
+1962,boss_rift_gereger,生贄の番人 ゲレゲール,14,3000,62,40,500,800,,quest_only
+1963,boss_rift_acheron,光なき思念 アケロン,14,2600,58,25,500,800,,quest_only
+1964,boss_rift_vargna,魔導士ヴァルグナ,15,4200,70,50,700,1200,,quest_only
+1965,boss_rift_vargna_true,魔導士ヴァルグナ（真）,18,5000,80,60,1000,1800,,quest_only
+1966,boss_rift_satan,破壊神 サタン,20,6000,95,75,1500,3000,,quest_only

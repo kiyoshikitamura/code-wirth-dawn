@@ -36,8 +36,10 @@ export function calculateDamageV4(
         + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
     dmg = dmg * variance;
 
-    // 3. クリティカル判定
-    const isCritical = Math.random() < critRate;
+    // 3. クリティカル判定 (crit_up バフによる補正を加味)
+    const critUpBuff = attackerEffects.find(e => e.id === 'crit_up');
+    const finalCritRate = critRate + (critUpBuff ? (critUpBuff.value || 0.10) : 0);
+    const isCritical = Math.random() < finalCritRate;
     if (isCritical) {
         dmg = dmg * BATTLE_RULES.CRIT_MULTIPLIER;
     }
@@ -49,7 +51,14 @@ export function calculateDamageV4(
         dmg = dmg - Math.floor(targetDef * defDownMod) - defBonus;
     }
 
-    // 5. 最終ダメージ
+    // 5. absolute_barrier (物理・魔法不問の絶対被ダメージ軽減バリア) の適用
+    const barrierBuff = defenderEffects.find(e => e.id === 'absolute_barrier');
+    if (barrierBuff) {
+        const barrierValue = barrierBuff.value !== undefined ? barrierBuff.value : 30;
+        dmg = Math.max(1, dmg - barrierValue);
+    }
+
+    // 6. 最終ダメージ
     const finalDamage = Math.max(1, Math.floor(dmg));
     return { damage: finalDamage, isCritical };
 }
