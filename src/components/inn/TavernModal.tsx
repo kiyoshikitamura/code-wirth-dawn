@@ -921,7 +921,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             <div className="flex flex-col gap-0.5 mt-0.5">
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-[10px] px-1.5 py-0.5 rounded border border-purple-700/40 text-purple-300 bg-purple-950/20 font-bold font-mono">
-                                        Lv.${selectedShadow.level} {toJpJobClass(selectedShadow.job_class)}
+                                        Lv.{selectedShadow.level} {toJpJobClass(selectedShadow.job_class)}
                                     </span>
                                     <OriginBadge shadow={selectedShadow} />
                                 </div>
@@ -940,25 +940,25 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">HP</div>
                                 <div className="text-green-400 font-bold font-mono text-xs">
-                                    ${selectedShadow.stats.hp}
+                                    {selectedShadow.stats.hp}
                                 </div>
                             </div>
                             <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">ATK</div>
                                 <div className="text-red-400 font-bold font-mono text-xs">
-                                    ${selectedShadow.stats.atk}
+                                    {selectedShadow.stats.atk}
                                 </div>
                             </div>
                             <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">DEF</div>
                                 <div className="text-sky-400 font-bold font-mono text-xs">
-                                    ${selectedShadow.stats.def}
+                                    {selectedShadow.stats.def}
                                 </div>
                             </div>
                             <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">VIT</div>
                                 <div className="text-amber-400 font-bold font-mono text-xs">
-                                    ${selectedShadow.vitality ?? selectedShadow.vit ?? 100}
+                                    {selectedShadow.vitality ?? selectedShadow.vit ?? 100}
                                 </div>
                             </div>
                         </div>
