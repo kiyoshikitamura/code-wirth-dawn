@@ -162,6 +162,7 @@ export class ShadowService {
                             def: (u.defense || u.def || 0) + bonus.def,
                             hp: (u.max_hp || 100) + bonus.hp,
                         },
+                        vitality: u.vitality || 100,
                         signature_deck_preview: skillsByUser[u.id] || [],
                         subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium',
                         icon_url: u.avatar_url || undefined,
