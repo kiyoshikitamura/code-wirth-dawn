@@ -17,7 +17,7 @@ const BADGE_MAP: Partial<Record<StatusEffectId, BadgeDef>> = {
     // ─ バフ ─────────────────────────────────────────
     atk_up:       { label: '↑A', category: 'buff',   color: 'text-orange-300', bg: 'bg-orange-900/80', border: 'border-orange-500',  blink: null },
     def_up:       { label: '↑D', category: 'buff',   color: 'text-blue-300',   bg: 'bg-blue-900/80',   border: 'border-blue-500',    blink: null },
-    def_up_heavy: { label: '↑↑D',category: 'buff',  color: 'text-blue-200',   bg: 'bg-blue-900/80',   border: 'border-blue-400',    blink: null },
+    def_up_heavy: { label: '↑D', category: 'buff',  color: 'text-blue-200',   bg: 'bg-blue-900/80',   border: 'border-blue-400',    blink: null },
     regen:        { label: '♥',   category: 'buff',   color: 'text-green-300',  bg: 'bg-green-900/80',  border: 'border-green-500',   blink: 'slow' },
     evasion_up:   { label: '↑E', category: 'buff',   color: 'text-cyan-300',   bg: 'bg-cyan-900/80',   border: 'border-cyan-500',    blink: null },
     taunt:        { label: '☆',   category: 'buff',   color: 'text-yellow-300', bg: 'bg-yellow-900/80', border: 'border-yellow-500',  blink: null },
@@ -77,20 +77,38 @@ export default function StatusEffectBadges({
     maxBadges = 6,
 }: StatusEffectBadgesProps) {
     // 有効な効果のみ（duration > 0、かつバッジ定義あり）
-    const active = effects
-        .filter(e => e.duration > 0 && BADGE_MAP[e.id as StatusEffectId])
-        .slice(0, maxBadges);
+    const validEffects = (effects || []).filter(e => e.duration > 0 && BADGE_MAP[e.id as StatusEffectId]);
+
+    // グルーピング化（同じIDのエフェクトは1つにまとめ、効果値は合計値、残りターンは最大値とする）
+    const groupedMap = new Map<string, { id: string; duration: number; value?: number }>();
+    validEffects.forEach(e => {
+        const val = (e as any).value;
+        const existing = groupedMap.get(e.id);
+        if (existing) {
+            const hasVal = val !== undefined || existing.value !== undefined;
+            const newValue = hasVal ? (existing.value || 0) + (val || 0) : undefined;
+            groupedMap.set(e.id, {
+                id: e.id,
+                duration: Math.max(existing.duration, e.duration),
+                value: newValue
+            });
+        } else {
+            groupedMap.set(e.id, { id: e.id, duration: e.duration, value: val });
+        }
+    });
+
+    const active = Array.from(groupedMap.values()).slice(0, maxBadges);
 
     // BUFF 先・DEBUFF 後でソート
     const sorted = [
         ...active.filter(e => {
             const def = BADGE_MAP[e.id as StatusEffectId];
-            const isNegative = (e as any).value !== undefined && (e as any).value < 0;
+            const isNegative = e.value !== undefined && e.value < 0;
             return def?.category === 'buff' && !isNegative;
         }),
         ...active.filter(e => {
             const def = BADGE_MAP[e.id as StatusEffectId];
-            const isNegative = (e as any).value !== undefined && (e as any).value < 0;
+            const isNegative = e.value !== undefined && e.value < 0;
             return def?.category === 'debuff' || isNegative;
         }),
     ];

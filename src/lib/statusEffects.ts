@@ -162,29 +162,25 @@ export function applyEffect(
         return effects;
     }
 
+    const stackableBuffs: StatusEffectId[] = ['atk_up', 'def_up', 'def_up_heavy', 'barrier', 'evasion_up'];
+
+    if (stackableBuffs.includes(id)) {
+        // 重複許可：新しいバフインスタンスを追加する（値とターン数は独立して管理される）
+        let initialValue = value;
+        if (initialValue === undefined) {
+            if (id === 'atk_up') initialValue = 0.5;
+            else if (id === 'evasion_up') initialValue = 0.3;
+            else initialValue = 0;
+        }
+        return [...effects, { id, duration, value: initialValue }];
+    }
+
+    // 重複を許可しないバフ・デバフ（非累積）：既存効果を最長ターンで上書き延長
     const existing = effects.find(e => e.id === id);
     if (existing) {
         return effects.map(e => {
             if (e.id === id) {
-                const stackableBuffs: StatusEffectId[] = ['atk_up', 'def_up', 'def_up_heavy', 'barrier', 'evasion_up'];
-                let newValue = value !== undefined ? value : e.value;
-                
-                if (stackableBuffs.includes(id)) {
-                    // デフォルト効果量（valueが指定されていない場合）
-                    let addedValue = value;
-                    if (addedValue === undefined) {
-                        if (id === 'atk_up') addedValue = 0.5; // +50%
-                        else if (id === 'evasion_up') addedValue = 0.3; // +30%
-                        else addedValue = 0;
-                    }
-                    
-                    const currentValue = e.value !== undefined ? e.value : (
-                        id === 'atk_up' ? 0.5 : (id === 'evasion_up' ? 0.3 : 0)
-                    );
-                    newValue = currentValue + addedValue;
-                }
-                
-                return { ...e, duration: Math.max(e.duration, duration), value: newValue };
+                return { ...e, duration: Math.max(e.duration, duration), value: value !== undefined ? value : e.value };
             }
             return e;
         });
@@ -224,10 +220,9 @@ export function hasEffect(effects: StatusEffect[], id: StatusEffectId): boolean 
  */
 export function getAttackMod(effects: StatusEffect[]): number {
     let mod = 1.0;
-    const atkEffect = effects.find(e => e.id === 'atk_up' && e.duration > 0);
-    if (atkEffect) {
-        mod += (atkEffect.value ?? 0.5);
-    }
+    const atkEffects = effects.filter(e => e.id === 'atk_up' && e.duration > 0);
+    const totalVal = atkEffects.reduce((sum, e) => sum + (e.value ?? 0.5), 0);
+    mod += totalVal;
     if (hasEffect(effects, 'berserk')) {
         mod *= 2.0; // 狂戦士効果: 与ダメージ 2倍 (Bug T)
     }
@@ -236,13 +231,13 @@ export function getAttackMod(effects: StatusEffect[]): number {
 
 /**
  * 防御バフによる固定DEF加算値を返す（提案A）。
- * def_up / def_up_heavy / barrier の value を返す。なければ 0。
+ * すべての def_up / def_up_heavy / barrier の効果値を合算して返す。
  */
 export function getDefBonus(effects: StatusEffect[]): number {
-    const defEffect = effects.find(
+    const defEffects = effects.filter(
         e => (e.id === 'def_up' || e.id === 'def_up_heavy' || e.id === 'barrier') && e.duration > 0
     );
-    return defEffect?.value ?? 0;
+    return defEffects.reduce((sum, e) => sum + (e.value ?? 0), 0);
 }
 
 /**
@@ -280,9 +275,10 @@ export function getMissChance(effects: StatusEffect[]): number {
  * 回避UP状態の回避確率を返す（0.0〜1.0）。最大90%まで。
  */
 export function getEvasionChance(effects: StatusEffect[]): number {
-    const evaEffect = effects.find(e => e.id === 'evasion_up' && e.duration > 0);
-    if (evaEffect) {
-        return Math.min(0.9, evaEffect.value ?? 0.3);
+    const evaEffects = effects.filter(e => e.id === 'evasion_up' && e.duration > 0);
+    if (evaEffects.length > 0) {
+        const totalVal = evaEffects.reduce((sum, e) => sum + (e.value ?? 0.3), 0);
+        return Math.min(0.9, totalVal);
     }
     return 0;
 }
@@ -395,4 +391,85 @@ export function isSelfBuffEffect(id: string): boolean {
         'death_sentence', 'crit_vulnerability'
     ];
     return !debuffs.includes(id);
+}
+
+/**
+ * ターン開始時用にバフ・デバフの合計効果量と最長残りターンを最大2行のテキストに集約する
+ */
+export function getBuffStatusLogMessages(effects: StatusEffect[]): string[] {
+    const activeEffects = (effects || []).filter(e => e.duration > 0);
+    if (activeEffects.length === 0) return [];
+
+    const grouped: Record<string, { totalVal?: number; maxDur: number }> = {};
+    activeEffects.forEach(e => {
+        if (!grouped[e.id]) {
+            grouped[e.id] = { totalVal: e.value !== undefined ? 0 : undefined, maxDur: e.duration };
+        }
+        if (e.value !== undefined) {
+            grouped[e.id].totalVal = (grouped[e.id].totalVal || 0) + e.value;
+        }
+        grouped[e.id].maxDur = Math.max(grouped[e.id].maxDur, e.duration);
+    });
+
+    const buffs: string[] = [];
+    const debuffs: string[] = [];
+
+    const effectIdLabel: Record<string, string> = {
+        atk_up: '攻撃UP', def_up: '防御強化', def_up_heavy: '鉄壁防御',
+        regen: 'リジェネ', evasion_up: '回避UP', taunt: '挑発',
+        stun_immune: 'スタン耐性', stun: 'スタン', bind: '拘束',
+        blind: '目潰し', blind_minor: '目潰し(軽)', poison: '毒',
+        bleed: '出血', bleed_minor: '出血(軽)', fear: '恐怖',
+        atk_down: '攻撃力低下', def_down: '防御力低下',
+        burn: '炎上', freeze: '凍結', curse: '呪い', barrier: 'バリア',
+        berserk: '狂戦士', counter_spike: '棘の鎧', unyielding_barrier: '不屈の防壁',
+        sacrificial_ap: '生贄の儀式', mana_charge: 'マナチャージ', death_sentence: '死神の宣告',
+        cover_all: '身代わりの盾', revenge_shield: '報復の盾', soul_boost: 'ソウルブースト',
+        element_resonance: '属性の共鳴', crit_vulnerability: '被クリ率UP',
+    };
+
+    const negativeList = [
+        'stun', 'bind', 'blind', 'blind_minor', 'poison', 'bleed', 'bleed_minor', 'fear', 'atk_down', 'def_down', 'burn', 'freeze', 'curse', 'crit_vulnerability', 'death_sentence'
+    ];
+
+    Object.entries(grouped).forEach(([id, info]) => {
+        const isNegativeId = negativeList.includes(id);
+        const isNegativeVal = info.totalVal !== undefined && info.totalVal < 0;
+        const isDebuff = isNegativeId || isNegativeVal;
+
+        let name = effectIdLabel[id] || id;
+        if (id === 'evasion_up' && isNegativeVal) name = '回避低下';
+        else if (id === 'atk_up' && isNegativeVal) name = '攻撃低下';
+        else if (id === 'def_up' && isNegativeVal) name = '防御低下';
+
+        let valStr = '';
+        if (info.totalVal !== undefined) {
+            if (['atk_up', 'atk_up_fatal', 'atk_down', 'def_down', 'evasion_up'].includes(id)) {
+                const absPct = Math.round(Math.abs(info.totalVal) * 100);
+                const sign = info.totalVal >= 0 ? '+' : '-';
+                valStr = `: ${sign}${absPct}%`;
+            } else {
+                const sign = info.totalVal >= 0 ? '+' : '';
+                valStr = `: ${sign}${info.totalVal}`;
+            }
+        }
+
+        const msgPart = `[${name}${valStr} (${info.maxDur}T)]`;
+
+        if (isDebuff) {
+            debuffs.push(msgPart);
+        } else {
+            buffs.push(msgPart);
+        }
+    });
+
+    const resultMessages: string[] = [];
+    if (buffs.length > 0) {
+        resultMessages.push(`📊 現在の強化状態: ${buffs.join(' ')}`);
+    }
+    if (debuffs.length > 0) {
+        resultMessages.push(`⚠️ 現在の弱体・状態異常: ${debuffs.join(' ')}`);
+    }
+
+    return resultMessages;
 }

@@ -3,7 +3,7 @@ import { Card, Enemy, PartyMember, InventoryItem } from '@/types/game';
 import { buildBattleDeck, routeDamage, calculateDamage, calculateDamageV4, rollMiss } from '@/lib/battleEngine';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 import { resolveNpcTurn, determineRole, determineGrade, BattleContext } from '@/lib/npcAI';
-import { StatusEffect, applyEffect, removeEffect, hasEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId, NEGATIVE_EFFECTS, cureStatus, cureDebuff, isSelfBuffEffect } from '@/lib/statusEffects';
+import { StatusEffect, applyEffect, removeEffect, hasEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId, NEGATIVE_EFFECTS, cureStatus, cureDebuff, isSelfBuffEffect, getBuffStatusLogMessages } from '@/lib/statusEffects';
 import { validateCardUse, getDefaultTarget, getCardApCost } from '@/lib/targeting';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getPassiveLabel } from '@/lib/passiveEffects';
@@ -425,6 +425,7 @@ export const createBattleSlice = (
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
             ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
+            ...getBuffStatusLogMessages(initialPlayerEffects),
             `--- ターン 1 ---`
         ];
 
@@ -3465,6 +3466,7 @@ export const createBattleSlice = (
                     }
                 }));
             } else {
+                const buffStatusLogs = getBuffStatusLogMessages(currentPlayerEffects);
                 set(state => ({
                     userProfile: newUserProfile,
                     battleState: {
@@ -3473,7 +3475,7 @@ export const createBattleSlice = (
                         enemies: updatedEnemies.map(e => e.hp > 0 ? e : { ...e, hp: 0 }),
                         party: newParty,
                         player_effects: currentPlayerEffects,
-                        messages: newMessages,
+                        messages: [...newMessages, ...buffStatusLogs],
                         vitDamageTakenThisTurn: false,
                         isPlayerTurn: true,
                         battlePhase: 'player',
