@@ -83,8 +83,16 @@ export default function StatusEffectBadges({
 
     // BUFF 先・DEBUFF 後でソート
     const sorted = [
-        ...active.filter(e => BADGE_MAP[e.id as StatusEffectId]?.category === 'buff'),
-        ...active.filter(e => BADGE_MAP[e.id as StatusEffectId]?.category === 'debuff'),
+        ...active.filter(e => {
+            const def = BADGE_MAP[e.id as StatusEffectId];
+            const isNegative = (e as any).value !== undefined && (e as any).value < 0;
+            return def?.category === 'buff' && !isNegative;
+        }),
+        ...active.filter(e => {
+            const def = BADGE_MAP[e.id as StatusEffectId];
+            const isNegative = (e as any).value !== undefined && (e as any).value < 0;
+            return def?.category === 'debuff' || isNegative;
+        }),
     ];
 
     if (sorted.length === 0) return null;
@@ -114,8 +122,6 @@ export default function StatusEffectBadges({
             `}</style>
             <div className={containerCls}>
                 {sorted.map((e, idx) => {
-                    const def = BADGE_MAP[e.id as StatusEffectId]!;
-                    const blinkCls = def.blink ? BLINK_CLASS[def.blink] : '';
                     const jaNames: Record<string, string> = {
                         atk_up: '攻撃力上昇', def_up: '防御強化', def_up_heavy: '鉄壁防御',
                         regen: 'リジェネ', evasion_up: '回避上昇', taunt: '挑発',
@@ -129,7 +135,43 @@ export default function StatusEffectBadges({
                         cover_all: '身代わりの盾', revenge_shield: '報復の盾', soul_boost: 'ソウルブースト',
                         element_resonance: '属性の共鳴', crit_vulnerability: '被クリ率UP',
                     };
-                    const jaName = jaNames[e.id] || e.id;
+                    let def = BADGE_MAP[e.id as StatusEffectId]!;
+                    let jaName = jaNames[e.id] || e.id;
+
+                    // 動的バフ/デバフバッジの書き換え (負の値の場合)
+                    if (e.id === 'evasion_up' && (e as any).value !== undefined && (e as any).value < 0) {
+                        def = {
+                            label: '↓E',
+                            category: 'debuff',
+                            color: 'text-cyan-300',
+                            bg: 'bg-cyan-950/80',
+                            border: 'border-cyan-700',
+                            blink: null
+                        };
+                        jaName = '回避低下';
+                    } else if (e.id === 'atk_up' && (e as any).value !== undefined && (e as any).value < 0) {
+                        def = {
+                            label: '↓A',
+                            category: 'debuff',
+                            color: 'text-red-300',
+                            bg: 'bg-red-950/80',
+                            border: 'border-red-700',
+                            blink: null
+                        };
+                        jaName = '攻撃力低下';
+                    } else if (e.id === 'def_up' && (e as any).value !== undefined && (e as any).value < 0) {
+                        def = {
+                            label: '↓D',
+                            category: 'debuff',
+                            color: 'text-blue-300',
+                            bg: 'bg-blue-950/80',
+                            border: 'border-blue-700',
+                            blink: null
+                        };
+                        jaName = '防御力低下';
+                    }
+
+                    const blinkCls = def.blink ? BLINK_CLASS[def.blink] : '';
                     return (
                         <span
                             key={`${e.id}-${idx}`}
