@@ -590,6 +590,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                 const memberDisplayName = memberEpithet ? `${memberEpithet} ${member.name}` : member.name;
                                                 const memberSkills: string[] = (member as any).skill_names || [];
                                                 // クリック時に詳細ポップアップを開くためShadowSummaryに変換
+                                                const snapshot = (member as any).snapshot_data as any;
                                                 const asShadow: ShadowSummary = {
                                                     profile_id: (member as any).source_user_id || member.id,
                                                     name: member.name,
@@ -603,12 +604,15 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                                         atk: (member as any).atk ?? 0,
                                                         def: (member as any).def ?? 0,
                                                     },
+                                                    vitality: (member as any).vitality ?? (member as any).vit ?? 100,
                                                     signature_deck_preview: memberSkills,
                                                     subscription_tier: 'free',
                                                     icon_url: memberImgSrc,
                                                     image_url: memberImgSrc,
                                                     npc_image_url: memberImgSrc,
-                                                    flavor_text: (member as any).flavor_text || (member as any).introduction,
+                                                    flavor_text: (member as any).flavor_text || (member as any).introduction || snapshot?.flavor_text || snapshot?.introduction,
+                                                    introduction: (member as any).introduction || snapshot?.introduction,
+                                                    equipped_items: snapshot?.equipped_items || [],
                                                 };
                                                 return (
                                                     <div
