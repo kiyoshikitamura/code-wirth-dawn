@@ -65,19 +65,36 @@ function getEffectValueString(id: string, value?: number): string {
     const val = value;
     switch (id) {
         case 'atk_up':
-            return val !== undefined ? `+${Math.round(val * 100)}%` : '+50%';
+            if (val !== undefined) {
+                return val >= 0 ? `+${Math.round(val * 100)}%` : `${Math.round(val * 100)}%`;
+            }
+            return '+50%';
         case 'atk_up_fatal':
             return val !== undefined ? `+${Math.round(val * 100)}%` : '+100%';
         case 'atk_down':
-            return val !== undefined ? `-${Math.round(val * 100)}%` : '-30%';
+            if (val !== undefined) {
+                const absVal = Math.abs(val);
+                return `-${Math.round(absVal * 100)}%`;
+            }
+            return '-30%';
         case 'def_up':
-            return val !== undefined ? `+${val}` : ''; // def_upはマスタ等で設定されているはず
+            if (val !== undefined) {
+                return val >= 0 ? `+${val}` : `${val}`;
+            }
+            return '';
         case 'def_up_heavy':
             return val !== undefined ? `+${val}` : '+30';
         case 'def_down':
-            return val !== undefined ? `-${Math.round(val * 100)}%` : '-50%';
+            if (val !== undefined) {
+                const absVal = Math.abs(val);
+                return `-${Math.round(absVal * 100)}%`;
+            }
+            return '-50%';
         case 'evasion_up':
-            return val !== undefined ? `+${Math.round(val * 100)}%` : '+30%';
+            if (val !== undefined) {
+                return val >= 0 ? `+${Math.round(val * 100)}%` : `${Math.round(val * 100)}%`;
+            }
+            return '+30%';
         case 'barrier':
             return val !== undefined ? `+${val}` : '+15';
         case 'unyielding_barrier':
@@ -85,8 +102,8 @@ function getEffectValueString(id: string, value?: number): string {
         case 'berserk':
             return 'ATK+100%/DEF-50%';
         default:
-            if (val !== undefined && val > 0) {
-                return `+${val}`;
+            if (val !== undefined) {
+                return val > 0 ? `+${val}` : `${val}`;
             }
             return '';
     }
@@ -201,13 +218,17 @@ export function getEffectList(effectData: any): { label: string; value: string; 
     // ─── バフ/デバフ付与 ───
     if (effectData.effect_id != null) {
         const id = effectData.effect_id;
-        const name = effectIdLabel[id] || id;
         
         const isBuffDebuff = ['atk_up', 'atk_up_fatal', 'atk_down', 'def_up', 'def_up_heavy', 'def_down', 'evasion_up', 'barrier', 'unyielding_barrier', 'berserk'].includes(id);
         const rawVal = isBuffDebuff ? (effectData.effect_val || effectData.power) : undefined;
         let targetVal = rawVal !== undefined && rawVal !== null ? Number(rawVal) : undefined;
         if (targetVal !== undefined && !isNaN(targetVal) && ['atk_up', 'atk_up_fatal', 'atk_down', 'def_down', 'evasion_up'].includes(id)) {
             targetVal = targetVal / 100;
+        }
+
+        let name = effectIdLabel[id] || id;
+        if (id === 'evasion_up' && targetVal !== undefined && targetVal < 0) {
+            name = '回避DOWN';
         }
 
         const valStr = getEffectValueString(id, targetVal);
@@ -245,7 +266,10 @@ export function getEffectList(effectData: any): { label: string; value: string; 
             const dur = buff.duration;
             const val = buff.value;
             if (id && dur) {
-                const name = effectIdLabel[id] || id;
+                let name = effectIdLabel[id] || id;
+                if (id === 'evasion_up' && val !== undefined && Number(val) < 0) {
+                    name = '回避DOWN';
+                }
                 const valStr = getEffectValueString(id, val);
                 const valSuffix = valStr ? `(${valStr})` : '';
                 list.push({
