@@ -1,39 +1,71 @@
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+// 遅延初期化用
+let _supabaseAdmin: SupabaseClient | null = null;
+let _supabaseServer: SupabaseClient | null = null;
 
-// Vercelプレビュー環境のデータベース不整合を防ぐため、プレビュー時は強制的に開発用検証DB(drbqnpzxgcbicpritcpi)に統一
-if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
-    supabaseUrl = "https://drbqnpzxgcbicpritcpi.supabase.co";
+function getSupabaseAdmin(): SupabaseClient | null {
+    let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    // Vercelプレビュー環境のデータベース不整合を防ぐため、プレビュー時は強制的に開発用検証DB(drbqnpzxgcbicpritcpi)に統一
+    if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
+        supabaseUrl = "https://drbqnpzxgcbicpritcpi.supabase.co";
+    }
+
+    if (!supabaseServiceKey) return null;
+
+    if (!_supabaseAdmin) {
+        _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        });
+    }
+    return _supabaseAdmin;
 }
 
-// Check if key is available
-const isAdminEnabled = !!supabaseServiceKey;
+function getSupabaseServer(): SupabaseClient {
+    if (!_supabaseServer) {
+        let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-export const supabaseAdmin = isAdminEnabled
-    ? createClient(supabaseUrl, supabaseServiceKey, {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
+        // Vercelプレビュー環境のデータベース不整合を防ぐため、プレビュー時は強制的に開発用検証DB(drbqnpzxgcbicpritcpi)に統一
+        if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
+            supabaseUrl = "https://drbqnpzxgcbicpritcpi.supabase.co";
         }
-    })
-    : null;
 
-export const hasServiceKey = isAdminEnabled;
-
-// Non-nullable server client (for API routes that require admin access)
-// Replaces supabase-server.ts
-// Fallback to anon key in preview if service key is not configured in Vercel settings
-export const supabaseServer = createClient(
-    supabaseUrl,
-    supabaseServiceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key',
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
+        _supabaseServer = createClient(
+            supabaseUrl || 'https://placeholder.supabase.co',
+            supabaseServiceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key',
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
+        );
     }
-);
+    return _supabaseServer;
+}
+
+// 既存コードに影響を与えないためのプロキシエクスポート
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+    get(target, prop, receiver) {
+        const client = getSupabaseAdmin();
+        if (!client) return undefined;
+        return Reflect.get(client, prop, receiver);
+    }
+});
+
+export const hasServiceKey = !!(process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+export const supabaseServer = new Proxy({} as SupabaseClient, {
+    get(target, prop, receiver) {
+        const client = getSupabaseServer();
+        return Reflect.get(client, prop, receiver);
+    }
+});
