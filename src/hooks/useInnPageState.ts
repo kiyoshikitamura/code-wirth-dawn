@@ -695,8 +695,12 @@ export function useInnPageState() {
             setLoadingQuests(false);
         }
 
-        // 本番環境のみ: キャッシュチェック（直近60秒以内ならスキップして負荷を軽減）
-        const isPreviewOrDev = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' || process.env.NODE_ENV !== 'production';
+        // 本番環境のみ: キャッシュチェック（直近60秒以内ならスクリプトをスキップして負荷を軽減）
+        const isPreviewOrDev = typeof window !== 'undefined' && (
+            window.location.hostname.includes('-git-') || 
+            window.location.hostname.includes('localhost') || 
+            window.location.hostname.includes('127.0.0.1')
+        );
         if (!isPreviewOrDev && hasQuests && Date.now() - lastFetch < 60000) {
             return;
         }
