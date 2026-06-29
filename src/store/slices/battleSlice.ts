@@ -731,12 +731,17 @@ export const createBattleSlice = (
 
     advanceTurn: () => {
         get().dealHand();
+        
+        const { battleState } = get();
+        const buffStatusLogs = getBuffStatusLogMessages((battleState.player_effects || []) as StatusEffect[]);
+
         set(state => ({
             battleState: {
                 ...state.battleState,
                 isPlayerTurn: true,
                 battlePhase: 'player' as const,
                 cardsPlayedThisTurn: 0,
+                messages: [...state.battleState.messages, ...buffStatusLogs],
             }
         }));
     },

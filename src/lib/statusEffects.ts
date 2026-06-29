@@ -411,8 +411,8 @@ export function getBuffStatusLogMessages(effects: StatusEffect[]): string[] {
         grouped[e.id].maxDur = Math.max(grouped[e.id].maxDur, e.duration);
     });
 
-    const buffs: string[] = [];
-    const debuffs: string[] = [];
+    const buffs: { id: string; msg: string }[] = [];
+    const debuffs: { id: string; msg: string }[] = [];
 
     const effectIdLabel: Record<string, string> = {
         atk_up: '攻撃UP', def_up: '防御強化', def_up_heavy: '鉄壁防御',
@@ -457,18 +457,31 @@ export function getBuffStatusLogMessages(effects: StatusEffect[]): string[] {
         const msgPart = `[${name}${valStr} (${info.maxDur}T)]`;
 
         if (isDebuff) {
-            debuffs.push(msgPart);
+            debuffs.push({ id, msg: msgPart });
         } else {
-            buffs.push(msgPart);
+            buffs.push({ id, msg: msgPart });
         }
     });
 
+    // 優先順位: 攻撃(atk_up/atk_down) -> 防御(def_up/def_up_heavy/barrier/def_down) -> 回避(evasion_up) -> その他
+    const sortOrder = ['atk_up', 'atk_down', 'def_up', 'def_up_heavy', 'barrier', 'def_down', 'evasion_up', 'taunt', 'stun_immune'];
+    const sortFn = (a: { id: string }, b: { id: string }) => {
+        let idxA = sortOrder.indexOf(a.id);
+        let idxB = sortOrder.indexOf(b.id);
+        if (idxA === -1) idxA = 999;
+        if (idxB === -1) idxB = 999;
+        return idxA - idxB;
+    };
+
+    buffs.sort(sortFn);
+    debuffs.sort(sortFn);
+
     const resultMessages: string[] = [];
     if (buffs.length > 0) {
-        resultMessages.push(`📊 現在の強化状態: ${buffs.join(' ')}`);
+        resultMessages.push(`⚡ 現在の強化状態: ${buffs.map(b => b.msg).join(' ')}`);
     }
     if (debuffs.length > 0) {
-        resultMessages.push(`⚠️ 現在の弱体・状態異常: ${debuffs.join(' ')}`);
+        resultMessages.push(`⚠️ 現在の弱体・状態異常: ${debuffs.map(d => d.msg).join(' ')}`);
     }
 
     return resultMessages;
