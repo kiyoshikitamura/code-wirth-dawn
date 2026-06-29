@@ -306,6 +306,56 @@ theme: {
 | 龍の咆哮 (`card_dragon_roar`) | 「敵ATKダウン」 | 「2ターンの間、敵全体のATKを**30%**ダウン」 |
 | 即死攻撃 (`card_death_strike`) | 「即死効果」 | 「**30%**の確率で即死。失敗時は通常攻撃」 |
 
+---
+
+## ⑩ 「狭間の迷宮」シリーズ追加アイテム（24種）
+
+「狭間の迷宮」シリーズ（7060〜7066）で登場する新アイテム。`nation_tags: ['loc_all']`、`min_prosperity: 1`。
+
+### 武器 (6種)
+
+| ID | 名前 | slug | type | base_price | effect_data | 説明 |
+|---|---|---|---|---|---|---|
+| 311 | 妖刀「人食い」 | `item_rift_man_eater` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 8, "battle_start_buff": {"id": "drain_on_hit", "duration": 99}}` | 所有者の傷を癒すために他者の生命力を吸い尽くす妖刀。 |
+| 312 | 破魔の戦斧 | `item_rift_axe` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 24, "equip_def": -4, "battle_start_buff": {"id": "atk_up", "duration": 2, "value": 0.25}}` | 次元結界すら断ち切るために作られた無骨な大斧。 |
+| 313 | 霊木の杖 | `item_rift_staff` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 10, "equip_hp": 15, "battle_start_buff": {"id": "regen", "duration": 5}}` | 世界樹の枝から削り出された、生命力溢れる杖。 |
+| 314 | 手裏剣 | `item_rift_shuriken` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 15, "battle_start_buff": {"id": "crit_up", "duration": 99, "value": 0.20}, "special_attack": "multi_hit_3"}` | 闇に生きる忍びが用いる投擲暗器。 |
+| 315 | 村正 | `item_rift_muramasa` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 55, "battle_start_buff": {"id": "def_down", "duration": 99, "value": 0.50}}` | 所有者の血と魂をすする妖刀。 |
+| 351 | デーモンスレイヤー | `item_rift_demon_slayer` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 35, "equip_def": 10, "equip_hp": 30, "battle_start_buffs": [{"id": "atk_up", "duration": 5, "value": 0.10}, {"id": "def_up_heavy", "duration": 5, "value": 15}]}` | 次元深淵の魔王を討ち果たす伝説の聖剣。 |
+
+### 防具 (5種)
+
+| ID | 名前 | slug | type | base_price | effect_data | 説明 |
+|---|---|---|---|---|---|---|
+| 316 | 深淵の盾 | `item_rift_shield` | equipment | 0 | `{"use_timing": "passive", "equip_def": 15, "battle_start_buff": {"id": "def_up", "duration": 3, "value": 20}}` | 黒曜石とデーモンの骨を融合した盾。 |
+| 317 | 聖霊のローブ | `item_rift_robe` | equipment | 0 | `{"use_timing": "passive", "equip_def": 8, "equip_hp": 20, "battle_start_buff": {"id": "regen", "duration": 5}}` | 聖水と祝福された白糸で織られたローブ。 |
+| 318 | 暗黒の外套 | `item_rift_coat` | equipment | 0 | `{"use_timing": "passive", "equip_def": 6, "equip_atk": 10, "battle_start_buff": {"id": "evasion_up", "duration": 5}}` | 影守の魔力が込められた闇の外套。 |
+| 319 | 混沌の重鎧 | `item_rift_heavy_armor` | equipment | 0 | `{"use_timing": "passive", "equip_def": 40, "battle_start_buff": {"id": "evasion_down", "duration": 5}}` | 混沌の魔力により結晶化した未知の金属鎧。 |
+| 320 | 水鏡の盾 | `item_rift_mirror_shield` | equipment | 0 | `{"use_timing": "passive", "equip_def": 10, "equip_hp": 10, "battle_start_buff": {"id": "revenge_shield", "duration": 5}}` | 敵から受けたダメージを反射する盾。 |
+
+### 通常アクセサリー (8種)
+
+| ID | 名前 | slug | type | base_price | effect_data | 説明 |
+|---|---|---|---|---|---|---|
+| 321 | 深緑のアミュレット | `item_rift_amulet` | equipment | 0 | `{"use_timing": "passive", "equip_def": 5, "equip_hp": 25, "battle_start_buff": {"id": "regen", "duration": 3}}` | 生命の息吹を宿すお守り。 |
+| 322 | 魔導士の指輪 | `item_rift_ring_mage` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 8, "equip_def": -2, "battle_start_buff": {"id": "atk_up", "duration": 3, "value": 0.15}}` | 古代の魔力回路が組み込まれた指輪。 |
+| 323 | リボン | `item_rift_ribbon` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 1, "equip_hp": 2, "battle_start_buff": {"id": "evasion_up", "duration": 99, "value": 10}}` | 戦闘向きではない不思議なリボン。 |
+| 324 | 守護のタリスマン | `item_rift_talisman` | equipment | 0 | `{"use_timing": "passive", "equip_def": 6, "battle_start_buff": {"id": "def_up", "duration": 3, "value": 15}}` | 邪気を払う銀のタリスマン。 |
+| 325 | 怒りの腕輪 | `item_rift_bracelet` | equipment | 0 | `{"use_timing": "passive", "equip_def": 3, "battle_start_buff": {"id": "stun_infuse", "duration": 3}}` | 怒りの念が込められた腕輪。 |
+| 331 | 氷結のブローチ | `item_rift_brooch` | equipment | 0 | `{"use_timing": "passive", "equip_def": 4, "equip_hp": 10, "battle_start_buff": {"id": "absolute_barrier", "duration": 3}}` | 決して溶けない永久氷雪のブローチ。 |
+| 332 | 烈火のルビーリング | `item_rift_ring_ruby` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 5, "battle_start_buff": {"id": "atk_up", "duration": 1, "value": 0.50}}` | 炎の魔力を増幅するルビーの指輪。 |
+| 333 | 疾風のアンクレット | `item_rift_anklet` | equipment | 0 | `{"use_timing": "passive", "equip_hp": 2, "battle_start_buff": {"id": "crit_up", "duration": 99, "value": 0.10}}` | クリティカル率が上昇するアンクレット。 |
+
+### 特殊アクセサリー (5種)
+
+| ID | 名前 | slug | type | base_price | effect_data | 説明 |
+|---|---|---|---|---|---|---|
+| 326 | 赤の宝珠 | `item_rift_orb_red` | equipment | 0 | `{"use_timing": "passive", "equip_hp": 3, "equip_def": 1}` | 不気味に赤黒く脈打つ宝珠。 |
+| 327 | 青の宝珠 | `item_rift_orb_blue` | equipment | 0 | `{"use_timing": "passive", "equip_hp": 3, "equip_atk": 1}` | 冷気を放つ蒼い結晶。 |
+| 328 | 光の宝珠 | `item_rift_orb_light` | equipment | 0 | `{"use_timing": "passive", "equip_hp": 5, "equip_def": 1}` | 闇を払う神聖な光を放つ珠。 |
+| 329 | 闇の宝珠 | `item_rift_orb_dark` | equipment | 0 | `{"use_timing": "passive", "equip_atk": 2}` | 底なしの暗黒を内包する宝珠。 |
+| 330 | 大魔道士の思念 | `item_rift_mage_mind` | equipment | 0 | `{"use_timing": "passive", "equip_def": 2}` | 大魔道士の魂の残滓。 |
+
 ### 変更履歴
 
 | バージョン | 日付 | 主な変更内容 |

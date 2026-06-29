@@ -1,0 +1,26 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"ついに「次元の深淵」へと突入した。空は黒紫の渦となり、足元には血のような溶岩の亀裂が走る終末の空間。ここには安全なキャンプ地など一切存在しない。","{""bg"":""bg_rift_abyss"",""bgm"":""bgm_quest_tense"",""type"":""text""}",b11_explore_01
+NODE,b11_explore_01,"深淵を彷徨う上位悪魔の襲撃！","{""bg"":""bg_rift_abyss"",""type"":""text""}",b11_battle_01
+NODE,b11_battle_01,"","{""bg"":""bg_rift_abyss"",""type"":""battle"",""enemy_group_id"":""pool_rift_abyss""}",
+CHOICE,,win,,b11_treasure_01
+CHOICE,,lose,,end_failure
+NODE,b11_treasure_01,"","{""bg"":""bg_rift_abyss"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b11_mid_boss_gate
+NODE,b11_mid_boss_gate,"深淵の中間地点。次元の歪みと一体化し、完全に悪魔と化したヴァルグナが待ち構えている！「ククク……よくぞここまで来た。だが私の真の魔力の前で、塵と消えよ！」","{""bg"":""bg_rift_abyss_02"",""type"":""text""}",b11_mid_boss_battle
+NODE,b11_mid_boss_battle,"","{""bg"":""bg_rift_abyss_02"",""type"":""battle"",""enemy_group_id"":""enemy_grp_boss_vargna_true""}",
+CHOICE,,win,,b11_mid_boss_treasure
+CHOICE,,lose,,end_failure
+NODE,b11_mid_boss_treasure,"ヴァルグナ（真）を完全に撃破した！ 奴が握り潰していた宝箱を調べる。","{""bg"":""bg_rift_abyss_02"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b12_explore_01
+NODE,b12_explore_01,"最深部の地下12階へと足を進める。空間そのものが崩壊しつつあり、周囲の景色が引き裂かれ、宇宙の深淵が剥き出しになっている。","{""bg"":""bg_rift_abyss_03"",""type"":""text""}",b12_battle_01
+NODE,b12_battle_01,"","{""bg"":""bg_rift_abyss_03"",""type"":""battle"",""enemy_group_id"":""pool_rift_abyss""}",
+CHOICE,,win,,b12_treasure_01
+CHOICE,,lose,,end_failure
+NODE,b12_treasure_01,"","{""bg"":""bg_rift_abyss_03"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b12_final_boss_gate
+NODE,b12_final_boss_gate,"迷宮の最奥、破壊神の玉座。暗黒魔力の竜巻と地獄の業火が吹き荒れる中、絶対的な破壊の化身「破壊神 サタン」がその巨躯を現した！「我は破壊、我は終焉。無に帰れ、羽虫どもよ！」","{""bg"":""bg_rift_abyss_03"",""type"":""text""}",b12_final_boss_battle
+NODE,b12_final_boss_battle,"","{""bg"":""bg_rift_abyss_03"",""type"":""battle"",""enemy_group_id"":""enemy_grp_boss_satan""}",
+CHOICE,,win,,b12_final_boss_treasure
+CHOICE,,lose,,end_failure
+NODE,b12_final_boss_treasure,"ついに破壊神サタンを討ち滅ぼした！ 崩壊していく玉座の奥で、光り輝く伝説の聖剣「デーモンスレイヤー」を獲得した！","{""bg"":""bg_rift_abyss_03"",""fg_image"":""fg_rift_chest"",""rewards"":{""items"":[351]},""type"":""reward""}",exit_gate
+NODE,exit_gate,"深淵の迷宮が激しく崩れ始めている。急いで脱出しなければならない！","{""bg"":""bg_rift_abyss_03"",""type"":""choice""}",
+CHOICE,,「崩壊する迷宮から脱出する！」,,end_success
+NODE,end_success,"奇跡的に脱出に成功した。世界の崩壊は阻止されたのだ！","{""bg"":""bg_office"",""rewards"":{""gold"":3000,""exp"":1000,""reputation"":15},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"崩壊する深淵の塵となり、世界は闇に包まれた…","{""bg"":""bg_rift_abyss"",""type"":""end"",""result"":""failure""}",

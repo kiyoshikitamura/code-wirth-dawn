@@ -786,34 +786,58 @@ export default function QuestPage() {
             }];
         } else if (enemyId && enemyId !== 'slime') {
             try {
-                // Determine if enemyId is numeric (ID) or string (Slug)
-                const isNumeric = /^\d+$/.test(String(enemyId));
-                let groupQuery = supabase.from('enemy_groups').select('*');
+                let targetSlugs: string[] = [];
+                const isRiftPool = String(enemyId).startsWith('pool_rift_');
 
-                if (isNumeric) {
-                    groupQuery = groupQuery.eq('id', enemyId);
-                } else {
-                    groupQuery = groupQuery.eq('slug', enemyId);
-                }
-
-                const { data: groupData } = await groupQuery.maybeSingle();
-
-                let targetSlugs = [enemyId];
-                if (groupData) {
-                    if (groupData.members && groupData.members.length > 0) {
-                        targetSlugs = groupData.members;
+                if (isRiftPool) {
+                    // プールごとに選出されるエネミーを定義
+                    let poolEnemies: string[] = [];
+                    if (enemyId === 'pool_rift_upper') {
+                        poolEnemies = ['enemy_rift_imp', 'enemy_rift_hellhound', 'enemy_rift_hellwing'];
+                    } else if (enemyId === 'pool_rift_middle') {
+                        poolEnemies = ['enemy_rift_succubus', 'enemy_rift_demon_mage', 'enemy_rift_plague_demon'];
+                    } else if (enemyId === 'pool_rift_lower') {
+                        poolEnemies = ['enemy_rift_demon_soldier', 'enemy_rift_shadow_demon', 'enemy_rift_archdemon'];
+                    } else if (enemyId === 'pool_rift_abyss') {
+                        poolEnemies = ['enemy_rift_archdemon', 'enemy_rift_greater_demon', 'enemy_rift_shadow_demon'];
                     }
-                    // Fallback for single enemy referenced by ID/Slug directly if not a group
-                    else if (!isNumeric) {
-                        targetSlugs = [enemyId];
+
+                    // 1体〜3体の敵をランダムで選出
+                    const numEnemies = Math.floor(Math.random() * 3) + 1; // 1~3体
+                    for (let k = 0; k < numEnemies; k++) {
+                        const randEnemy = poolEnemies[Math.floor(Math.random() * poolEnemies.length)];
+                        targetSlugs.push(randEnemy);
                     }
                 } else {
-                    // enemy_groups テーブルにレコードが存在しない
-                    console.error(`[QuestPage] enemy_group not found: id/slug=${enemyId} (isNumeric=${isNumeric}). DB同期が必要な可能性があります。`);
+                    // Determine if enemyId is numeric (ID) or string (Slug)
+                    const isNumeric = /^\d+$/.test(String(enemyId));
+                    let groupQuery = supabase.from('enemy_groups').select('*');
+
                     if (isNumeric) {
-                        // 数値IDの場合、スラッグとして使えないためフォールバック敵を直接使用
-                        console.warn(`[QuestPage] Numeric enemy_group_id=${enemyId} not found in DB. Falling back to placeholder enemy.`);
-                        targetSlugs = [];
+                        groupQuery = groupQuery.eq('id', enemyId);
+                    } else {
+                        groupQuery = groupQuery.eq('slug', enemyId);
+                    }
+
+                    const { data: groupData } = await groupQuery.maybeSingle();
+
+                    targetSlugs = [enemyId];
+                    if (groupData) {
+                        if (groupData.members && groupData.members.length > 0) {
+                            targetSlugs = groupData.members;
+                        }
+                        // Fallback for single enemy referenced by ID/Slug directly if not a group
+                        else if (!isNumeric) {
+                            targetSlugs = [enemyId];
+                        }
+                    } else {
+                        // enemy_groups テーブルにレコードが存在しない
+                        console.error(`[QuestPage] enemy_group not found: id/slug=${enemyId} (isNumeric=${isNumeric}). DB同期が必要な可能性があります。`);
+                        if (isNumeric) {
+                            // 数値IDの場合、スラッグとして使えないためフォールバック敵を直接使用
+                            console.warn(`[QuestPage] Numeric enemy_group_id=${enemyId} not found in DB. Falling back to placeholder enemy.`);
+                            targetSlugs = [];
+                        }
                     }
                 }
 

@@ -1,0 +1,22 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"「狭間の迷宮・上層」の探索を開始する。薄暗い石壁の通路が奥へと続いている。","{""bg"":""bg_rift_upper_01"",""bgm"":""bgm_quest_tense"",""type"":""text""}",b1_explore_01
+NODE,b1_explore_01,"徘徊する悪魔の気配を感じる！","{""bg"":""bg_rift_upper_01"",""type"":""text""}",b1_battle_01
+NODE,b1_battle_01,"","{""bg"":""bg_rift_upper_01"",""type"":""battle"",""enemy_group_id"":""pool_rift_upper""}",
+CHOICE,,win,,b1_treasure_01
+CHOICE,,lose,,end_failure
+NODE,b1_treasure_01,"","{""bg"":""bg_rift_upper_01"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b2_camp
+NODE,b2_camp,"探索の中間地点、青白い魔法結界に守られた安全なキャンプ地に到着した。ここまでの戦利品をセーブし、一息つこう。","{""bg"":""bg_rift_camp"",""type"":""camp""}",b3_explore_01
+NODE,b3_explore_01,"迷宮のさらに奥へと足を進める。石壁の質感や配置が変わっていく。","{""bg"":""bg_rift_upper_02"",""type"":""text""}",b3_battle_01
+NODE,b3_battle_01,"","{""bg"":""bg_rift_upper_02"",""type"":""battle"",""enemy_group_id"":""pool_rift_upper""}",
+CHOICE,,win,,b3_treasure_01
+CHOICE,,lose,,end_failure
+NODE,b3_treasure_01,"","{""bg"":""bg_rift_upper_02"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b4_boss_gate
+NODE,b4_boss_gate,"上層の最深部。禍々しい巨大な悪魔が、次元の亀裂から這い出してきた！","{""bg"":""bg_rift_upper_02"",""type"":""text""}",b4_boss_battle
+NODE,b4_boss_battle,"","{""bg"":""bg_rift_upper_02"",""type"":""battle"",""enemy_group_id"":""enemy_rift_archdemon""}",
+CHOICE,,win,,b4_boss_treasure
+CHOICE,,lose,,end_failure
+NODE,b4_boss_treasure,"アークデーモンを討伐した！ 奴が守っていた宝箱をこじ開ける。","{""bg"":""bg_rift_upper_02"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",exit_gate
+NODE,exit_gate,"上層の調査を終え、一時帰還するか下層へ進むかの選択が与えられた。","{""bg"":""bg_rift_upper_02"",""type"":""choice""}",
+CHOICE,,「上層の調査を終え、街へ帰還する」,,end_success
+NODE,end_success,"上層の調査報告を行い、冒険者ギルドで休息をとることにした。","{""bg"":""bg_office"",""rewards"":{""gold"":800,""exp"":300,""reputation"":5},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"迷宮の瘴気に呑まれ、意識が失われていく…","{""bg"":""bg_rift_upper_01"",""type"":""end"",""result"":""failure""}",

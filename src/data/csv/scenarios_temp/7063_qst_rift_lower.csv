@@ -1,0 +1,45 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"「狭間の迷宮・下層」へ突入する。空間の歪みが激化し、壁がよじれている。","{""bg"":""bg_rift_maze"",""bgm"":""bgm_quest_tense"",""type"":""text""}",b8_explore_01
+NODE,b8_explore_01,"歪んだ通路から悪魔が這い出てきた！","{""bg"":""bg_rift_lower_01"",""type"":""text""}",b8_battle_01
+NODE,b8_battle_01,"","{""bg"":""bg_rift_lower_01"",""type"":""battle"",""enemy_group_id"":""pool_rift_lower""}",
+CHOICE,,win,,b8_treasure_01
+CHOICE,,lose,,end_failure
+NODE,b8_treasure_01,"","{""bg"":""bg_rift_lower_01"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b8_camp
+NODE,b8_camp,"地下8階の探索を終え、安全結界のキャンプに到着した。英気を養おう。","{""bg"":""bg_rift_camp"",""type"":""camp""}",b9_gate_check_1
+NODE,b9_gate_check_1,"アライメント判定：秩序率が50%以上か判定しています。","{""bg"":""bg_rift_lower_02"",""type"":""check_status"",""req_stat"":""order_pct"",""req_val"":50}",
+CHOICE,,success,,b9_gate_check_2
+CHOICE,,failure,,b9_gate_check_3
+NODE,b9_gate_check_2,"アライメント判定：正義率が50%以上か判定しています。","{""bg"":""bg_rift_lower_02"",""type"":""check_status"",""req_stat"":""justice_pct"",""req_val"":50}",
+CHOICE,,success,,order_gate
+CHOICE,,failure,,b9_gate_check_3
+NODE,b9_gate_check_3,"アライメント判定：混沌率が50%以上か判定しています。","{""bg"":""bg_rift_lower_02"",""type"":""check_status"",""req_stat"":""chaos_pct"",""req_val"":50}",
+CHOICE,,success,,b9_gate_check_4
+CHOICE,,failure,,neutral_route
+NODE,b9_gate_check_4,"アライメント判定：悪率が50%以上か判定しています。","{""bg"":""bg_rift_lower_02"",""type"":""check_status"",""req_stat"":""evil_pct"",""req_val"":50}",
+CHOICE,,success,,chaos_gate
+CHOICE,,failure,,neutral_route
+NODE,order_gate,"目の前に、まばゆい黄金の光を放つ神聖な大理石の門が立ち塞がっている。私たちの正義と秩序の意思に呼応するように、重い石の扉がゆっくりと開いていく。","{""bg"":""bg_rift_lower_02"",""fg_image"":""fg_rift_gate_order"",""type"":""text""}",mid_boss_acheron
+NODE,mid_boss_acheron,"秩序の門の先で、大魔道士の魂の化身「光なき思念 アケロン」が私たちの前に立ち塞がった！","{""bg"":""bg_rift_lower_02"",""type"":""battle"",""enemy_group_id"":""boss_rift_acheron""}",
+CHOICE,,win,,mid_treasure_acheron
+CHOICE,,lose,,end_failure
+NODE,mid_treasure_acheron,"アケロンを討滅した！ 奴の遺した宝箱から、大魔道士の精神の結晶を獲得した。","{""bg"":""bg_rift_lower_02"",""fg_image"":""fg_rift_chest"",""rewards"":{""items"":[330]},""type"":""reward""}",b9_camp
+NODE,chaos_gate,"目の前に、不気味な黒紫色の魔力が渦巻く悪魔の門が立ち塞がっている。私たちの内に眠る混沌と悪の意思に呼応するように、門が脈打ち、開き始めた。","{""bg"":""bg_rift_lower_02"",""fg_image"":""fg_rift_gate_chaos"",""type"":""text""}",mid_boss_gereger
+NODE,mid_boss_gereger,"混沌の門の先で、生贄の儀式を司る悪魔「生贄の番人 ゲレゲール」が襲いかかってきた！","{""bg"":""bg_rift_lower_02"",""type"":""battle"",""enemy_group_id"":""boss_rift_gereger""}",
+CHOICE,,win,,mid_treasure_gereger
+CHOICE,,lose,,end_failure
+NODE,mid_treasure_gereger,"ゲレゲールを討滅した！ 奴の遺した宝箱から、闇の魔力を秘めた宝珠を獲得した。","{""bg"":""bg_rift_lower_02"",""fg_image"":""fg_rift_chest"",""rewards"":{""items"":[329]},""type"":""reward""}",b9_camp
+NODE,neutral_route,"アライメントの門は閉ざされたままだ。私たちは通常の迷宮通路を迂回して進むしかない。","{""bg"":""bg_rift_lower_01"",""type"":""text""}",neutral_battle
+NODE,neutral_battle,"通常ルートの徘徊悪魔が出現した！","{""bg"":""bg_rift_lower_01"",""type"":""battle"",""enemy_group_id"":""pool_rift_lower""}",
+CHOICE,,win,,neutral_treasure
+CHOICE,,lose,,end_failure
+NODE,neutral_treasure,"迂回ルートの宝箱を発見した。","{""bg"":""bg_rift_lower_01"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",b9_camp
+NODE,b9_camp,"地下9階の探索を終え、安全結界のキャンプに到着した。この先はいよいよ最深部だ。","{""bg"":""bg_rift_camp"",""type"":""camp""}",b10_boss_gate
+NODE,b10_boss_gate,"最深部の地下10階。そこには、魔界への巨大な召喚ゲートを開こうとしている大魔導士ヴァルグナが待ち構えていた！","{""bg"":""bg_rift_maze"",""type"":""text""}",b10_boss_battle
+NODE,b10_boss_battle,"","{""bg"":""bg_rift_maze"",""type"":""battle"",""enemy_group_id"":""enemy_grp_boss_vargna""}",
+CHOICE,,win,,b10_boss_treasure
+CHOICE,,lose,,end_failure
+NODE,b10_boss_treasure,"魔導士ヴァルグナの一時討伐に成功した！ 奴の遺した次元宝箱から「光の宝珠」を獲得した！","{""bg"":""bg_rift_maze"",""fg_image"":""fg_rift_chest"",""rewards"":{""items"":[328]},""type"":""reward""}",exit_gate
+NODE,exit_gate,"下層の調査を終え、一度街へ引き上げてギルドに報告しよう。","{""bg"":""bg_rift_maze"",""type"":""choice""}",
+CHOICE,,「下層の調査を終え、街へ帰還する」,,end_success
+NODE,end_success,"無事に下層から生還し、ギルドへの報告を行うことにした。","{""bg"":""bg_office"",""rewards"":{""gold"":2000,""exp"":600,""reputation"":12},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"迷宮の深部で力尽き、魂は永遠に彷徨い続ける…","{""bg"":""bg_rift_maze"",""type"":""end"",""result"":""failure""}",

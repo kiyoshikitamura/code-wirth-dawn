@@ -1,0 +1,28 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,"「狭間の迷宮・中層」に足を踏み入れる。湿った石壁に青緑の苔が怪しく光り、迷宮の奥深さを物語っている。","{""bg"":""bg_rift_middle_01"",""bgm"":""bgm_quest_tense"",""type"":""text""}",b5_explore_01
+NODE,b5_explore_01,"不気味な悪魔たちが這い寄ってくる！","{""bg"":""bg_rift_middle_01"",""type"":""text""}",b5_battle_01
+NODE,b5_battle_01,"","{""bg"":""bg_rift_middle_01"",""type"":""battle"",""enemy_group_id"":""pool_rift_middle""}",
+CHOICE,,win,,b5_treasure_01
+CHOICE,,lose,,end_failure
+NODE,b5_treasure_01,"","{""bg"":""bg_rift_middle_01"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",meet_merchant
+NODE,meet_merchant,"通路の曲がり角に、フードを深く被った怪しげな老商人が佇んでいた。「ヒッヒッヒ…こんな奥深くまで来るとは命知らずな奴らじゃ。良い取引をしようではないか？」","{""bg"":""bg_rift_middle_01"",""fg_image"":""fg_rift_merchant"",""speaker_name"":""怪しい老商人"",""type"":""text""}",merchant_choice
+NODE,merchant_choice,"商人は不気味な笑みを浮かべ、袋から妖しく輝く指輪を取り出した。「金貨150Gでこの魔力リングを譲ってやろう…」","{""bg"":""bg_rift_middle_01"",""fg_image"":""fg_rift_merchant"",""type"":""choice""}",
+CHOICE,,「金貨150Gを支払い、取引に応じる」,,buy_item
+CHOICE,,「怪しいので取引を拒否する」,,refuse_merchant
+CHOICE,,「悪魔の気配を察知し、斬りかかる！」,,attack_merchant
+NODE,buy_item,"「ヒッヒッヒ、毎度あり。お前たちの旅に幸あらんことを…」老商人は闇に消えていった。","{""bg"":""bg_rift_middle_01"",""rewards"":{""gold"":-150,""items"":[332]},""type"":""reward""}",b6_camp
+NODE,refuse_merchant,"「フン、商売にならんな……ならば、お前たちの命を代わりに頂くとしよう！」老商人は不気味に歪み、悪魔としての正体を表した！","{""bg"":""bg_rift_middle_01"",""fg_image"":""fg_demon_soldier"",""type"":""text""}",merchant_trap_battle
+NODE,attack_merchant,"「うぐっ！？ 気づいていたか…クハハ、だが手遅れだ！ ここで骨にしてくれる！」老商人は狂笑し、悪魔の姿へと変貌した！","{""bg"":""bg_rift_middle_01"",""fg_image"":""fg_demon_soldier"",""type"":""text""}",merchant_trap_battle
+NODE,merchant_trap_battle,"","{""bg"":""bg_rift_middle_01"",""type"":""battle"",""enemy_group_id"":""pool_rift_middle""}",
+CHOICE,,win,,b6_camp
+CHOICE,,lose,,end_failure
+NODE,b6_camp,"不気味な出会いを乗り越え、青白い魔法結界のキャンプ地に到着した。体制を整えよう。","{""bg"":""bg_rift_camp"",""type"":""camp""}",b7_explore_01
+NODE,b7_explore_01,"中層の最深部に進む。目の前に、巨大な悪魔アスタロトが降臨している！","{""bg"":""bg_rift_middle_02"",""type"":""text""}",b7_boss_battle
+NODE,b7_boss_battle,"","{""bg"":""bg_rift_middle_02"",""type"":""battle"",""enemy_group_id"":""boss_rift_astaroth""}",
+CHOICE,,win,,b7_boss_treasure
+CHOICE,,lose,,end_failure
+NODE,b7_boss_treasure,"アスタロトを滅ぼした！ 奴の遺した宝箱を調べる。","{""bg"":""bg_rift_middle_02"",""fg_image"":""fg_rift_chest"",""type"":""treasure""}",exit_gate
+NODE,exit_gate,"中層の調査を終えた。これより一時帰還する。","{""bg"":""bg_rift_middle_02"",""type"":""choice""}",
+CHOICE,,「中層の調査を終え、街へ帰還する」,,end_success
+NODE,end_success,"ギルド長バルガスに中層の調査結果を報告し、報酬を受け取った。","{""bg"":""bg_office"",""rewards"":{""gold"":1200,""exp"":450,""reputation"":8},""type"":""end"",""result"":""success""}",
+NODE,end_failure,"深淵の闇に魂を喰われ、意識が完全に消失した…","{""bg"":""bg_rift_middle_01"",""type"":""end"",""result"":""failure""}",
