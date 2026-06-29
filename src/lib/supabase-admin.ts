@@ -15,7 +15,7 @@ function getSupabaseAdmin(): SupabaseClient | null {
         supabaseUrl = "https://drbqnpzxgcbicpritcpi.supabase.co";
     }
 
-    if (!supabaseServiceKey) return null;
+    if (!supabaseUrl || !supabaseServiceKey) return null;
 
     if (!_supabaseAdmin) {
         _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {

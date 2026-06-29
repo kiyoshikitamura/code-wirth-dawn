@@ -1,5 +1,5 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 let _supabase: SupabaseClient | null = null;
 
