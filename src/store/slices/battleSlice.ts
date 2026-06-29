@@ -2796,10 +2796,11 @@ export const createBattleSlice = (
                     const finalDuration = isTurnEndTickCompensated(effectId) ? duration + 1 : duration;
                     const isSelfBuff = isSelfBuffEffect(effectId);
 
-                    const effectValue = action.card?.effect_val !== undefined && action.card.effect_val !== 0
+                    const rawVal = action.card?.effect_val !== undefined ? Number(action.card.effect_val) : undefined;
+                    const effectValue = rawVal !== undefined && !isNaN(rawVal) && rawVal !== 0
                         ? (['atk_up', 'atk_down', 'def_down', 'evasion_up'].includes(effectId)
-                            ? action.card.effect_val / 100 
-                            : action.card.effect_val)
+                            ? rawVal / 100 
+                            : rawVal)
                         : undefined;
 
                     if (isSelfBuff) {

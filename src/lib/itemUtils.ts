@@ -205,9 +205,9 @@ export function getEffectList(effectData: any): { label: string; value: string; 
         
         const isBuffDebuff = ['atk_up', 'atk_up_fatal', 'atk_down', 'def_up', 'def_up_heavy', 'def_down', 'evasion_up', 'barrier', 'unyielding_barrier', 'berserk'].includes(id);
         const rawVal = isBuffDebuff ? (effectData.effect_val || effectData.power) : undefined;
-        let targetVal = rawVal;
-        if (rawVal !== undefined && ['atk_up', 'atk_up_fatal', 'atk_down', 'def_down', 'evasion_up'].includes(id)) {
-            targetVal = rawVal / 100;
+        let targetVal = rawVal !== undefined && rawVal !== null ? Number(rawVal) : undefined;
+        if (targetVal !== undefined && !isNaN(targetVal) && ['atk_up', 'atk_up_fatal', 'atk_down', 'def_down', 'evasion_up'].includes(id)) {
+            targetVal = targetVal / 100;
         }
 
         const valStr = getEffectValueString(id, targetVal);
