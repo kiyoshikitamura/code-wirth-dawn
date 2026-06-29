@@ -83,8 +83,8 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 104,card_epidemic_fog,伝染病の霧,Magic,3,none,0,15,all_enemies,poison_spread,/images/items/book_epidemic_fog_1781808075688.png,毒の拡散。対象のいずれかが毒状態の場合、他の全ての敵に同じ持続時間の毒を付与する。
 105,card_shield_slam,シールドスラム,Skill,3,none,0,10,single_enemy,shield_slam,/images/items/book_shield_slam_1781803510217.png,盾を叩きつける。威力：10＋自身の現在のDEF増加バフ値。発動後、自身のDEFバフは解除される。
 106,card_spike_armor,スパイクアーマー,Defense,2,none,0,0,self,counter_spike,/images/items/book_spike_armor_1781808088434.png,棘の鎧を構える。3ターンの間、自身が攻撃を受けるたびに、自身のDEFの半分を物理ダメージとして反射する。
-107,card_unyielding_wall,不屈の防陣,Defense,3,none,0,0,all_allies,unyielding_barrier,/images/items/book_unyielding_wall_1781808100088.png,不屈 of 防壁。2ターンの間、全体のDEF+25。自身の残りHPが30%以下ならバリア効果（ダメージ30軽減）を追加。
-108,card_sacrifice_oath,犠牲の誓約,Defense,2,none,0,0,single_ally,sacrifice_oath,/images/items/book_sacrifice_oath_1781808111009.png,身代わりの誓い。指定した味方のデバフを全て自身に引き受け、自身のDEFを2ターンの間+20する。
+107,card_unyielding_wall,不屈の防陣,Defense,3,none,25,30,all_allies,unyielding_barrier,/images/items/book_unyielding_wall_1781808100088.png,不屈 of 防壁。2ターンの間、全体のDEF+25。自身の残りHPが30%以下ならバリア効果（ダメージ30軽減）を追加。
+108,card_sacrifice_oath,犠牲の誓約,Defense,2,none,0,20,single_ally,sacrifice_oath,/images/items/book_sacrifice_oath_1781808111009.png,身代わりの誓い。指定した味方のデバフを全て自身に引き受け、自身のDEFを2ターンの間+20する。
 109,card_desperado,デスペラード,Skill,3,none,0,50,single_enemy,desperado,/images/items/book_desperado_1781808120065.png,背水の一撃。自身の残りHPの割合が低いほど威力が上昇（最大3倍の150ダメージ）。
 110,card_sacrificial_ritual,生贄の儀式,Support,1,none,0,0,self,sacrificial_ap,/images/items/book_sacrificial_ritual_1781808130718.png,血の儀式。最大HPの15%を自傷。2ターンの間、手札の全ての物理スキルの消費APを1減少させる。
 111,card_desperate_strike,捨て身の一撃,Skill,2,none,0,70,single_enemy,desperate_debuff,/images/items/book_desperate_strike_1781808140404.png,捨て身の攻撃。70のダメージを与えるが、自身に2ターンの防御力DOWN（被ダメ1.5倍）を付与する。
@@ -105,10 +105,10 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 122,card_blood_pursuit,血の追撃,Skill,1,none,0,20,single_enemy,blood_pursuit,/images/items/book_blood_pursuit_1781808246566.png,出血追撃。威力: 20。対象が出血状態の場合、使用後にこのカードが手札に戻り、このターンの消費APが0になる（1T1回）。
 123,card_flame_burst,フレイムバースト,Magic,2,none,0,15,all_enemies,burn_double,/images/items/book_flame_burst_1781808256666.png,炎上起爆魔法。全体に15ダメージ。対象が炎上状態の場合、その対象に対するダメージが2倍になる。
 124,card_frozen_wave,凍てつく波動,Magic,3,none,0,0,all_enemies,dispel_freeze,/images/items/book_frozen_wave_1781808267687.png,氷の波動。敵全体のすべてのバフ効果を解除し、1ターンの間「拘束（凍結）」状態にする。
-125,card_iron_bastion,アイアンバスティオン,Defense,3,none,0,0,all_allies,cover_all,/images/items/book_iron_bastion_1781808278646.png,鉄壁の防壁。パーティ全員への単体攻撃を使用者が肩代わりし、自身のDEFを3ターンの間+35する。
-126,card_revenge_shield,リベンジシールド,Defense,2,none,0,0,self,revenge_shield,/images/items/book_revenge_shield_1781808287823.png,報復の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。
+125,card_iron_bastion,アイアンバスティオン,Defense,3,none,0,35,all_allies,cover_all,/images/items/book_iron_bastion_1781808278646.png,鉄壁の防壁。パーティ全員への単体攻撃を使用者が肩代わりし、自身のDEFを3ターンの間+35する。
+126,card_revenge_shield,リベンジシールド,Defense,2,none,0,15,self,revenge_shield,/images/items/book_revenge_shield_1781808287823.png,報復の盾。自身のDEF+15。次のターン、自分が受けたダメージの100%を相手に物理ダメージとして反射する。
 127,card_giant_body,巨人の肉体,Support,1,none,0,0,single_ally,hp_cap_up,/images/items/book_giant_body_1781808298415.png,肉体強化。指定した味方の最大HPを戦闘終了まで+50し、HPを50回復する（最大HP上昇は累積しない）。
-128,card_grounding,グラウンディング,Defense,2,none,0,0,self,stun_immune_up,/images/items/book_grounding_1781808308871.png,大地の構え。自身に「2ターンの間、スタン・拘束無効（スタン免疫）」を付与し、DEFを+15する。
+128,card_grounding,グラウンディング,Defense,2,none,0,15,self,stun_immune_up,/images/items/book_grounding_1781808308871.png,大地の構え。自身に「2ターンの間、スタン・拘束無効（スタン免疫）」を付与し、DEFを+15する。
 129,card_pay_to_win,成金の一撃,Skill,2,none,0,30,single_enemy,gold_recoil,/images/items/book_pay_to_win_1781803536472.png,"ゴールド消費攻撃。威力: 30。所持ゴールドの2%(最大1,000G)を消費し、消費額の10%(最大+100)を威力に加算。"
 130,card_gambler_dice,ギャンブラーダイス,Skill,1,none,0,60,single_enemy,random_dice,/images/items/book_gambler_dice_1781808320188.png,運試し。敵単体にランダムで 1 〜 120 の物理ダメージを与える（期待値60）。
 131,card_soul_boost,ソウルブースト,Support,2,none,0,0,self,soul_boost,/images/items/book_soul_boost_1781808330743.png,魂の暴走。自身のHPを現在値の20%消費し、次の物理または魔法カードの威力を2.5倍にする。

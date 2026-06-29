@@ -68,6 +68,8 @@ export interface Card {
   cost_type?: 'item' | 'gold' | 'none'; // v5.1: コストタイプ（item=1バトル1回制限）※v28: mp/vitality廃止
   image_url?: string; // v12.0: UGC対応画像
   animation_type?: string; // v14.0: バトルカード演出効果(SLASH, WIND等)
+  cost_val?: number; // Master data cost value
+  effect_val?: number; // Master data effect value
 }
 
 export interface Enemy {

@@ -60,6 +60,38 @@ export function formatEffectData(effectData: any): string {
 /**
  * effect_data から構造化された効果リストを返す（詳細ポップアップ用）
  */
+// ─── 効果数値（％・実数）の文字列化ヘルパー ───
+function getEffectValueString(id: string, value?: number): string {
+    const val = value;
+    switch (id) {
+        case 'atk_up':
+            return val !== undefined ? `+${Math.round(val * 100)}%` : '+50%';
+        case 'atk_up_fatal':
+            return val !== undefined ? `+${Math.round(val * 100)}%` : '+100%';
+        case 'atk_down':
+            return val !== undefined ? `-${Math.round(val * 100)}%` : '-30%';
+        case 'def_up':
+            return val !== undefined ? `+${val}` : ''; // def_upはマスタ等で設定されているはず
+        case 'def_up_heavy':
+            return val !== undefined ? `+${val}` : '+30';
+        case 'def_down':
+            return val !== undefined ? `-${Math.round(val * 100)}%` : '-50%';
+        case 'evasion_up':
+            return val !== undefined ? `+${Math.round(val * 100)}%` : '+30%';
+        case 'barrier':
+            return val !== undefined ? `+${val}` : '+15';
+        case 'unyielding_barrier':
+            return val !== undefined ? `+${val}` : '+30';
+        case 'berserk':
+            return 'ATK+100%/DEF-50%';
+        default:
+            if (val !== undefined && val > 0) {
+                return `+${val}`;
+            }
+            return '';
+    }
+}
+
 export function getEffectList(effectData: any): { label: string; value: string; color: string }[] {
     if (!effectData || typeof effectData !== 'object') return [];
     const list: { label: string; value: string; color: string }[] = [];
@@ -74,6 +106,23 @@ export function getEffectList(effectData: any): { label: string; value: string; 
         regen: '継続回復', berserk: '狂戦士',
         evasion_up: '回避UP', stun_immune: 'スタン耐性', taunt: '挑発',
         morale_up: '士気向上', spd_up: '速度UP',
+        
+        // 特殊効果の追加 (statusEffects.tsと同期)
+        unyielding_barrier: '不屈の防陣',
+        cover_all: '身代わりの盾',
+        counter_spike: '棘の鎧',
+        sacrificial_ap: '生贄の儀式',
+        mana_charge: 'マナチャージ',
+        death_sentence: '死神の宣告',
+        revenge_shield: '報復の盾',
+        soul_boost: 'ソウルブースト',
+        element_resonance: '属性の共鳴',
+        crit_vulnerability: '被クリティカル率UP',
+        ap_max: 'AP全回復',
+        ap_recover: 'AP回復',
+        barrier: 'バリア',
+        cure_status: '状態回復',
+        cure_debuff: 'デバフ解除',
     };
 
     // ─── HP/MP回復 ───
@@ -151,7 +200,20 @@ export function getEffectList(effectData: any): { label: string; value: string; 
 
     // ─── バフ/デバフ付与 ───
     if (effectData.effect_id != null) {
-        list.push({ label: '付与', value: effectIdLabel[effectData.effect_id] || effectData.effect_id, color: 'text-purple-400' });
+        const id = effectData.effect_id;
+        const name = effectIdLabel[id] || id;
+        
+        const isBuffDebuff = ['atk_up', 'atk_up_fatal', 'atk_down', 'def_up', 'def_up_heavy', 'def_down', 'evasion_up', 'barrier', 'unyielding_barrier', 'berserk'].includes(id);
+        const rawVal = isBuffDebuff ? (effectData.effect_val || effectData.power) : undefined;
+        let targetVal = rawVal;
+        if (rawVal !== undefined && ['atk_up', 'atk_up_fatal', 'atk_down', 'def_down', 'evasion_up'].includes(id)) {
+            targetVal = rawVal / 100;
+        }
+
+        const valStr = getEffectValueString(id, targetVal);
+        const valSuffix = valStr ? `(${valStr})` : '';
+
+        list.push({ label: '付与', value: `${name}${valSuffix}`, color: 'text-purple-400' });
     }
     if (effectData.effect_duration != null) {
         list.push({ label: '持続', value: `${effectData.effect_duration}ターン`, color: 'text-amber-400' });
@@ -163,7 +225,11 @@ export function getEffectList(effectData: any): { label: string; value: string; 
     if (Array.isArray(effectData.extra_effects)) {
         for (const extra of effectData.extra_effects) {
             if (extra.id) {
-                list.push({ label: '追加効果', value: `${effectIdLabel[extra.id] || extra.id}(${extra.duration ?? 3}T)`, color: 'text-purple-400' });
+                const id = extra.id;
+                const name = effectIdLabel[id] || id;
+                const valStr = getEffectValueString(id, extra.value);
+                const valSuffix = valStr ? `(${valStr})` : '';
+                list.push({ label: '追加効果', value: `${name}${valSuffix} (${extra.duration ?? 3}T)`, color: 'text-purple-400' });
             }
         }
     }
@@ -180,7 +246,8 @@ export function getEffectList(effectData: any): { label: string; value: string; 
             const val = buff.value;
             if (id && dur) {
                 const name = effectIdLabel[id] || id;
-                const valSuffix = val ? `(+${val})` : '';
+                const valStr = getEffectValueString(id, val);
+                const valSuffix = valStr ? `(${valStr})` : '';
                 list.push({
                     label: '戦闘時効果',
                     value: `${name}${valSuffix} (${dur}T)`,

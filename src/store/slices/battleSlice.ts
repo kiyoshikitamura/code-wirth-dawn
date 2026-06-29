@@ -1520,23 +1520,25 @@ export const createBattleSlice = (
                         const playerMaxHp = effectivePlayerMaxHp;
                         const playerHp = userProfile?.hp || 0;
                         const addBarrier = playerHp <= playerMaxHp * 0.3;
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 25);
+                        const defUpVal = card.cost_val || 25;
+                        const barrierVal = card.effect_val || 30;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, defUpVal);
                         if (addBarrier) {
-                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'unyielding_barrier', 3, 30);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'unyielding_barrier', 3, barrierVal);
                         }
                         const newParty = (battleState.party || []).map(m => {
                             if (!m.is_active || (m.durability ?? 0) <= 0) return m;
                             let mEffects = (m.status_effects || []) as StatusEffect[];
-                            mEffects = applyEffect(mEffects, 'def_up', 3, 25);
+                            mEffects = applyEffect(mEffects, 'def_up', 3, defUpVal);
                             if (addBarrier) {
-                                mEffects = applyEffect(mEffects, 'unyielding_barrier', 3, 30);
+                                mEffects = applyEffect(mEffects, 'unyielding_barrier', 3, barrierVal);
                             }
                             return { ...m, status_effects: mEffects };
                         });
                         set(state => ({ battleState: { ...state.battleState, party: newParty } }));
-                        logMsg = `${card.name}を使用！ 味方全体のDEF+25 (2T)！`;
+                        logMsg = `${card.name}を使用！ 味方全体のDEF+${defUpVal} (2T)！`;
                         if (addBarrier) {
-                            logMsg += ` 残りHPが30%以下のため、ダメージ30軽減のバリア効果を追加！`;
+                            logMsg += ` 残りHPが30%以下のため、ダメージ${barrierVal}軽減のバリア効果を追加！`;
                         }
                         break;
                     }
@@ -1553,9 +1555,10 @@ export const createBattleSlice = (
                             debuffs.forEach(d => {
                                 currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], d.id, d.duration, d.value);
                             });
-                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 20);
+                            const defVal = card.effect_val || 20;
+                            currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, defVal);
                             set(state => ({ battleState: { ...state.battleState, party } }));
-                            logMsg = `${card.name}を使用！ ${member.name}のデバフを全て自身に引き受け、自身のDEFを+20 (2T)した！`;
+                            logMsg = `${card.name}を使用！ ${member.name}のデバフを全て自身に引き受け、自身のDEFを+${defVal} (2T)した！`;
                         } else {
                             logMsg = `${card.name}を使用したが、対象の味方が見つからなかった。`;
                         }
@@ -1787,15 +1790,17 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'iron_bastion': {
+                        const defVal = card.effect_val || 35;
                         currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'cover_all', 4);
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 4, 35);
-                        logMsg = `${card.name}を展開！ 3ターンの間、パーティへの単体攻撃を肩代わりし、自身のDEFを+35した！`;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 4, defVal);
+                        logMsg = `${card.name}を展開！ 3ターンの間、パーティへの単体攻撃を肩代わりし、自身のDEFを+${defVal}した！`;
                         break;
                     }
                     case 'revenge_shield_card': {
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, 15);
+                        const defVal = card.effect_val || 15;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 2, defVal);
                         currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'revenge_shield', 2);
-                        logMsg = `${card.name}を使用！ 1ターンの間、自身のDEFを+15し、受けたダメージの100%を物理反射する！`;
+                        logMsg = `${card.name}を使用！ 1ターンの間、自身のDEFを+${defVal}し、受けたダメージの100%を物理反射する！`;
                         break;
                     }
                     case 'giant_body': {
@@ -1860,9 +1865,10 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'grounding': {
+                        const defVal = card.effect_val || 15;
                         currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'stun_immune', 3);
-                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, 15);
-                        logMsg = `${card.name}を使用！ 2ターンの間、スタン・拘束無効（スタン免疫）を付与し、DEFを+15した！`;
+                        currentPlayerEffects = applyEffect(currentPlayerEffects as StatusEffect[], 'def_up', 3, defVal);
+                        logMsg = `${card.name}を使用！ 2ターンの間、スタン・拘束無効（スタン免疫）を付与し、DEFを+${defVal}した！`;
                         break;
                     }
                     case 'gambler_dice': {
@@ -2789,33 +2795,40 @@ export const createBattleSlice = (
                     const duration = action.effectDuration || 3;
                     const finalDuration = isTurnEndTickCompensated(effectId) ? duration + 1 : duration;
                     const isSelfBuff = isSelfBuffEffect(effectId);
+
+                    const effectValue = action.card?.effect_val !== undefined && action.card.effect_val !== 0
+                        ? (['atk_up', 'atk_down', 'def_down', 'evasion_up'].includes(effectId)
+                            ? action.card.effect_val / 100 
+                            : action.card.effect_val)
+                        : undefined;
+
                     if (isSelfBuff) {
                         const targetType = action.card?.target_type || '';
                         if (targetType === 'all_allies') {
                             // 味方全体バフ (Bug AD): プレイヤーと全員に適用
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration, effectValue);
                             for (let j = 0; j < updatedParty.length; j++) {
                                 if (updatedParty[j].is_active && (updatedParty[j].durability ?? 0) > 0) {
                                     updatedParty[j] = {
                                         ...updatedParty[j],
-                                        status_effects: applyEffect((updatedParty[j].status_effects || []) as StatusEffect[], effectId, finalDuration)
+                                        status_effects: applyEffect((updatedParty[j].status_effects || []) as StatusEffect[], effectId, finalDuration, effectValue)
                                     };
                                 }
                             }
                             member = { ...member, status_effects: updatedParty[i].status_effects };
                         } else if (action.targetName === 'あなた' || action.targetName === '味方') {
                             // プレイヤー単体バフ: プレイヤーのみに適用 (Bug AD)
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration);
+                            currentPlayerEffects = applyEffect(currentPlayerEffects, effectId, finalDuration, effectValue);
                         } else {
                             // NPCバフ: 対象メンバーに適用。対象名が別NPCならそのNPCに適用、そうでなければ自身に適用
                             const targetIdx = updatedParty.findIndex(m => m.name === action.targetName);
                             if (targetIdx >= 0 && targetIdx !== i) {
                                 updatedParty[targetIdx] = {
                                     ...updatedParty[targetIdx],
-                                    status_effects: applyEffect((updatedParty[targetIdx].status_effects || []) as StatusEffect[], effectId, finalDuration)
+                                    status_effects: applyEffect((updatedParty[targetIdx].status_effects || []) as StatusEffect[], effectId, finalDuration, effectValue)
                                 };
                             } else {
-                                member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, finalDuration) };
+                                member = { ...member, status_effects: applyEffect((member.status_effects || []) as StatusEffect[], effectId, finalDuration, effectValue) };
                                 updatedParty[i] = member;
                             }
                         }
@@ -2830,7 +2843,7 @@ export const createBattleSlice = (
                                 trackedEnemies = trackedEnemies.map(e => {
                                     if (e.hp > 0) {
                                         if (rollDebuffSuccess(effectId)) {
-                                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
+                                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration, effectValue);
                                             affectedEnemies.push(e.name);
                                             return { ...e, status_effects: newEffects };
                                         } else {
@@ -2851,7 +2864,7 @@ export const createBattleSlice = (
                                 if (rollDebuffSuccess(effectId)) {
                                     trackedEnemies = trackedEnemies.map(e => {
                                         if (e.id === currentTargetId) {
-                                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration);
+                                            const newEffects = applyEffect((e.status_effects || []) as StatusEffect[], effectId, finalDuration, effectValue);
                                             return { ...e, status_effects: newEffects };
                                         }
                                         return e;
