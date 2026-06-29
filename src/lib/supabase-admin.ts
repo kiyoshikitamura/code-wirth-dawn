@@ -30,13 +30,8 @@ function getSupabaseAdmin(): SupabaseClient | null {
 
 function getSupabaseServer(): SupabaseClient {
     if (!_supabaseServer) {
-        let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-        let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-        // Vercelプレビュー環境のデータベース不整合を防ぐため、プレビュー時は強制的に開発用検証DB(drbqnpzxgcbicpritcpi)に統一
-        if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
-            supabaseUrl = "https://drbqnpzxgcbicpritcpi.supabase.co";
-        }
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
         _supabaseServer = createClient(
             supabaseUrl || 'https://placeholder.supabase.co',
