@@ -184,7 +184,8 @@ export async function grantRewardItems(
                     if (found) {
                         itemDef = found;
                     } else {
-                        console.warn(`[QuestComplete] Item ID '${itemId}' not found in items table.`);
+                        console.warn(`[QuestComplete] Item ID '${itemId}' not found in items table. Skipping grant to prevent FK violation.`);
+                        continue;
                     }
                 }
             } catch (queryErr) {

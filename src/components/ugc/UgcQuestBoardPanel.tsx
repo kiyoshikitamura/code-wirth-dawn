@@ -29,7 +29,11 @@ interface UgcQuestBoardPanelProps {
 }
 
 const getAuthHeaders = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  let session = null;
+  try {
+    const res = await supabase.auth.getSession();
+    session = res?.data?.session;
+  } catch (_) {}
   const token = session?.access_token;
   return {
     'Content-Type': 'application/json',

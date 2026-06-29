@@ -7,7 +7,11 @@ import dynamic from 'next/dynamic';
 const PromptGuideModal = dynamic(() => import('./PromptGuideModal'), { ssr: false });
 
 const getAuthHeaders = async () => {
-  const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
+  let session = null;
+  try {
+    const res = await (await import('@/lib/supabase')).supabase.auth.getSession();
+    session = res?.data?.session;
+  } catch (_) {}
   const token = session?.access_token;
   return {
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})

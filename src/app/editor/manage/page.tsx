@@ -24,7 +24,11 @@ export default function ManagePage() {
     useAuthGuard(); // タイトル画面経由チェック
 
     const getAuthHeaders = async (): Promise<HeadersInit> => {
-        const { data: { session } } = await supabase.auth.getSession();
+        let session = null;
+        try {
+            const res = await supabase.auth.getSession();
+            session = res?.data?.session;
+        } catch (_) {}
         const token = session?.access_token;
         return {
             'Content-Type': 'application/json',

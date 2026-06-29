@@ -9,10 +9,15 @@ import { ArrowLeft, PenTool, Plus, Package, Send, Play, Save, ScrollText, Chevro
 import EnemyEditor from '@/components/editor/EnemyEditor';
 import CustomItemEditor, { CustomReward } from '@/components/editor/CustomItemEditor';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { safeLocalStorage } from '@/lib/safeStorage';
 
 // Auth helper for API calls
 const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    let session = null;
+    try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session;
+    } catch (_) {}
     const token = session?.access_token;
     return {
         'Content-Type': 'application/json',
@@ -63,7 +68,7 @@ export default function EditorPage() {
     // Check if quest has been tested
     useEffect(() => {
         if (questId) {
-            const tested = localStorage.getItem(`ugc_tested_${questId}`);
+            const tested = safeLocalStorage.getItem(`ugc_tested_${questId}`);
             if (tested === 'true') {
                 setIsTested(true);
             }

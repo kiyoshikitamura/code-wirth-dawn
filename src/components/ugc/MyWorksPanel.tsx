@@ -22,7 +22,11 @@ interface MyWork {
 }
 
 const getAuthHeaders = async () => {
-  const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
+  let session = null;
+  try {
+    const res = await (await import('@/lib/supabase')).supabase.auth.getSession();
+    session = res?.data?.session;
+  } catch (_) {}
   const token = session?.access_token;
   return {
     'Content-Type': 'application/json',
