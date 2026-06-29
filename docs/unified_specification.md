@@ -948,3 +948,15 @@
     * 魔界の深淵剣 (`item_demon_blade_abyss`, ID: 4002): ATK+25 ➡ **ATK+40, DEF-10** & **攻撃UP(+30%) (5T)** (名前を「魔界の漆黒剣」から「魔界の深淵剣」へ変更)
     * 影魔の戦衣 (`item_demon_armor_shadow`, ID: 4003): DEF+18 ➡ **DEF+5** & **攻撃UP(+30%) (5T)**, **回避UP(+30%) (5T)**
 
+### 25.7 交易品（物資ボックス等）の売却不可バグ修正 (v29.4)
+* **交易品売却機能の正常化**:
+  - データベース（`items` テーブル）において、物資ボックス（`item_supply_box`）など一部の交易品（`trade_good`）の `type` カラムが誤って `'skill'` に設定されていた不整合を解消しました。
+  - 対象アイテムの `type` を本来の `'trade_good'` へ更新することで、ショップ売却処理（`/api/shop/sell`）内のスキル売却保護ロジックを回避し、正常に売却してゴールドを獲得できるようになりました。
+  - 対象の交易品:
+    * 良質な鉄鉱石 (`item_trade_iron`, ID: 430)
+    * 煌びやかな絹織物 (`item_trade_silk`, ID: 431)
+    * 古代遺跡の宝石 (`item_trade_gem`, ID: 432)
+    * ミスリル鋼 (`item_trade_mithril`, ID: 434)
+    * 謎の黒鉱石 (`item_dark_matter`, ID: 441)
+    * 物資ボックス (`item_supply_box`, ID: 701)
+    * 未鑑定の魔導宝箱 (`item_demon_chest_unidentified`, ID: 4001)
