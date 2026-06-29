@@ -65,14 +65,11 @@ export async function GET(req: Request) {
             // A. User Profiles Summary
             const { data: profileSummary, error: profSumErr } = await supabaseServer
                 .from('user_profile_summary_view')
-                .select('*')
+                .select('total_users, avg_level, anon_users_count, auth_users_count')
                 .single();
             if (profSumErr) throw profSumErr;
 
             const totalUsers = profileSummary.total_users || 0;
-            const totalGold = Number(profileSummary.total_gold || 0);
-            const avgGold = Math.round(Number(profileSummary.avg_gold || 0));
-            const maxGold = profileSummary.max_gold || 0;
             const avgLevel = Math.round(Number(profileSummary.avg_level || 0) * 10) / 10;
 
             // B. Level Distribution
@@ -103,25 +100,10 @@ export async function GET(req: Request) {
                 premium: subDist.premium_count || 0
             };
 
-            // A. User Profiles Summary pre-calculated counts
             const anonUsers = profileSummary.anon_users_count || 0;
             const authUsers = profileSummary.auth_users_count || 0;
 
-            // D. Get quick totals (battles and victories) from daily stats
-            const dailyBasicData = await fetchAll<any>(
-                supabaseServer
-                    .from('daily_basic_stats_view')
-                    .select('total_battles, victories'),
-                'date'
-            );
-
-            let totalBattles = 0;
-            let totalVictories = 0;
-            dailyBasicData.forEach(row => {
-                totalBattles += row.total_battles || 0;
-                totalVictories += row.victories || 0;
-            });
-            const winRate = totalBattles > 0 ? Math.round((totalVictories / totalBattles) * 100) : 0;
+            // D. Get quick totals (battles and victories) from daily stats - REMOVED for performance
 
             // E. Payment summary stats
             const { data: paySummaryData, error: paySumErr } = await supabaseServer
@@ -170,26 +152,15 @@ export async function GET(req: Request) {
             }
 
 
-            // G. Get total quest count from view starts
-            const { data: totalQuestCountData } = await supabaseServer
-                .from('quest_activity_stats_view')
-                .select('start_count');
-            
-            const totalQuests = (totalQuestCountData || []).reduce((sum, q) => sum + (q.start_count || 0), 0);
+            // G. Get total quest count from view starts - REMOVED for performance
 
             responseData.summary = {
                 totalUsers,
                 anonUsers,
                 authUsers,
-                totalGold,
-                avgGold,
-                maxGold,
                 avgLevel,
-                totalBattles,
-                winRate,
                 dau,
                 mau,
-                totalQuests,
                 pendingReports: 0,
                 totalRevenue,
                 subscriptionRevenue,
@@ -323,14 +294,10 @@ export async function GET(req: Request) {
                 };
             }).sort((a, b) => b.startCount - a.startCount);
 
-            const questRanking = questStats.slice(0, 10).map(q => ({
-                id: q.id,
-                title: q.title,
-                count: q.completeCount
-            }));
-
+            const totalQuests = questStats.reduce((sum, q) => sum + q.startCount, 0);
             responseData.questStats = questStats;
             responseData.questRanking = questRanking;
+            responseData.totalQuests = totalQuests;
         }
 
         // ═══════════════════════════════════════
@@ -490,6 +457,45 @@ export async function GET(req: Request) {
             responseData.academy = {
                 summary: acadSummary,
                 daily: dailyAcademyKPI
+            };
+        }
+
+        // ═══════════════════════════════════════
+        // §5.1 Category: battles (Total battle count and win rate)
+        // ═══════════════════════════════════════
+        if (category === 'battles' || category === 'all') {
+            const dailyBasicData = await fetchAll<any>(
+                supabaseServer
+                    .from('daily_basic_stats_view')
+                    .select('total_battles, victories'),
+                'date'
+            );
+            let totalBattles = 0;
+            let totalVictories = 0;
+            dailyBasicData.forEach(row => {
+                totalBattles += row.total_battles || 0;
+                totalVictories += row.victories || 0;
+            });
+            const winRate = totalBattles > 0 ? Math.round((totalVictories / totalBattles) * 100) : 0;
+            responseData.battles = {
+                totalBattles,
+                winRate
+            };
+        }
+
+        // ═══════════════════════════════════════
+        // §5.2 Category: gold (Total gold flow metrics)
+        // ═══════════════════════════════════════
+        if (category === 'gold' || category === 'all') {
+            const { data: profileSummary, error: profSumErr } = await supabaseServer
+                .from('user_profile_summary_view')
+                .select('total_gold, avg_gold, max_gold')
+                .single();
+            if (profSumErr) throw profSumErr;
+            responseData.gold = {
+                totalGold: Number(profileSummary.total_gold || 0),
+                avgGold: Math.round(Number(profileSummary.avg_gold || 0)),
+                maxGold: profileSummary.max_gold || 0
             };
         }
 

@@ -7,18 +7,18 @@ import { Users, Coins, Sword, ArrowLeft, CreditCard, Activity, Trophy, Compass, 
 
 interface KPISummary {
     totalUsers: number;
-    anonUsers: number;
     authUsers: number;
-    totalGold: number;
-    avgGold: number;
-    maxGold: number;
+    anonUsers: number;
+    totalGold?: number;
+    avgGold?: number;
+    maxGold?: number;
     avgLevel: number;
-    totalBattles: number;
-    winRate: number;
+    totalBattles?: number;
+    winRate?: number;
     pendingReports: number;
     dau: number;
     mau: number;
-    totalQuests: number;
+    totalQuests?: number;
 
     // Payments & Subscriptions
     totalRevenue: number;
@@ -143,6 +143,11 @@ export default function AdminDashboardPage() {
     const [colosseum, setColosseum] = useState<{ summary: ColosseumSummary; daily: ColosseumDaily[] } | null>(null);
     const [academy, setAcademy] = useState<{ summary: AcademySummary; daily: AcademyDaily[] } | null>(null);
 
+    // New on-demand states for activity summary
+    const [battles, setBattles] = useState<{ totalBattles: number; winRate: number } | null>(null);
+    const [gold, setGold] = useState<{ totalGold: number; avgGold: number; maxGold: number } | null>(null);
+    const [totalQuests, setTotalQuests] = useState<number | null>(null);
+
     // Monthly states
     const [monthlyKPI, setMonthlyKPI] = useState<MonthlyKPI[] | null>(null);
     const [monthlyColosseum, setMonthlyColosseum] = useState<MonthlyColosseum[] | null>(null);
@@ -159,7 +164,9 @@ export default function AdminDashboardPage() {
         quests: false,
         colosseum: false,
         academy: false,
-        monthly: false
+        monthly: false,
+        battles: false,
+        gold: false
     });
 
     // Category error states
@@ -169,13 +176,15 @@ export default function AdminDashboardPage() {
         quests: '',
         colosseum: '',
         academy: '',
-        monthly: ''
+        monthly: '',
+        battles: '',
+        gold: ''
     });
 
     const [daysRange, setDaysRange] = useState<number>(30);
     const router = useRouter();
 
-    const fetchCategory = useCallback(async (cat: 'summary' | 'daily' | 'quests' | 'colosseum' | 'academy' | 'monthly') => {
+    const fetchCategory = useCallback(async (cat: 'summary' | 'daily' | 'quests' | 'colosseum' | 'academy' | 'monthly' | 'battles' | 'gold') => {
         const adminKey = localStorage.getItem('adminKey');
         if (!adminKey) {
             router.push('/admin/login');
@@ -213,6 +222,7 @@ export default function AdminDashboardPage() {
             } else if (cat === 'quests') {
                 setQuestStats(json.questStats);
                 setQuestRanking(json.questRanking);
+                setTotalQuests(json.totalQuests);
             } else if (cat === 'colosseum') {
                 setColosseum(json.colosseum);
             } else if (cat === 'academy') {
@@ -221,6 +231,10 @@ export default function AdminDashboardPage() {
                 setMonthlyKPI(json.monthly.basic);
                 setMonthlyColosseum(json.monthly.colosseum);
                 setMonthlyAcademy(json.monthly.academy);
+            } else if (cat === 'battles') {
+                setBattles(json.battles);
+            } else if (cat === 'gold') {
+                setGold(json.gold);
             }
         } catch (err: any) {
             setErrors(prev => ({ ...prev, [cat]: err.message || '接続エラーが発生しました' }));
@@ -276,6 +290,8 @@ export default function AdminDashboardPage() {
             fetchCategory('monthly');
         }
         if (questStats) fetchCategory('quests');
+        if (battles) fetchCategory('battles');
+        if (gold) fetchCategory('gold');
     };
 
     // CSV Export
@@ -517,8 +533,27 @@ export default function AdminDashboardPage() {
                                 <Activity size={16} />
                             </div>
                         </div>
-                        <div className="text-xl font-bold text-indigo-400 tracking-tight">{summary.totalQuests} 回</div>
-                        <p className="text-[10px] text-gray-500 mt-2">開始された全クエスト数</p>
+                        {totalQuests !== null ? (
+                            <>
+                                <div className="text-xl font-bold text-indigo-400 tracking-tight">{totalQuests} 回</div>
+                                <p className="text-[10px] text-gray-500 mt-2">開始された全クエスト数</p>
+                            </>
+                        ) : loading.quests ? (
+                            <div className="py-2 text-xs text-gray-500 flex items-center gap-1.5">
+                                <div className="animate-spin rounded-full h-3.5 w-3.5 border-b border-indigo-400"></div>
+                                読込中...
+                            </div>
+                        ) : (
+                            <div className="py-1">
+                                <div className="text-sm font-semibold text-gray-500 mb-1.5">未取得</div>
+                                <button
+                                    onClick={() => fetchCategory('quests')}
+                                    className="px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-800/40 text-indigo-400 text-[10px] font-semibold rounded transition-all"
+                                >
+                                    データを取得
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* 総戦闘回数 */}
@@ -529,8 +564,27 @@ export default function AdminDashboardPage() {
                                 <Sword size={16} />
                             </div>
                         </div>
-                        <div className="text-xl font-bold text-purple-400 tracking-tight">{summary.totalBattles} 回</div>
-                        <p className="text-[10px] text-gray-500 mt-2">勝率: {summary.winRate}%</p>
+                        {battles !== null ? (
+                            <>
+                                <div className="text-xl font-bold text-purple-400 tracking-tight">{battles.totalBattles} 回</div>
+                                <p className="text-[10px] text-gray-500 mt-2">勝率: {battles.winRate}%</p>
+                            </>
+                        ) : loading.battles ? (
+                            <div className="py-2 text-xs text-gray-500 flex items-center gap-1.5">
+                                <div className="animate-spin rounded-full h-3.5 w-3.5 border-b border-purple-400"></div>
+                                読込中...
+                            </div>
+                        ) : (
+                            <div className="py-1">
+                                <div className="text-sm font-semibold text-gray-500 mb-1.5">未取得</div>
+                                <button
+                                    onClick={() => fetchCategory('battles')}
+                                    className="px-2.5 py-1 bg-purple-950/60 hover:bg-purple-900 border border-purple-800/40 text-purple-400 text-[10px] font-semibold rounded transition-all"
+                                >
+                                    データを取得
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* ゴールド流通量 */}
@@ -541,8 +595,27 @@ export default function AdminDashboardPage() {
                                 <Coins size={16} />
                             </div>
                         </div>
-                        <div className="text-xl font-bold text-red-400 tracking-tight">{summary.totalGold.toLocaleString()} G</div>
-                        <p className="text-[10px] text-gray-500 mt-2">平均: {summary.avgGold.toLocaleString()} G</p>
+                        {gold !== null ? (
+                            <>
+                                <div className="text-xl font-bold text-red-400 tracking-tight">{gold.totalGold.toLocaleString()} G</div>
+                                <p className="text-[10px] text-gray-500 mt-2">平均: {gold.avgGold.toLocaleString()} G</p>
+                            </>
+                        ) : loading.gold ? (
+                            <div className="py-2 text-xs text-gray-500 flex items-center gap-1.5">
+                                <div className="animate-spin rounded-full h-3.5 w-3.5 border-b border-red-400"></div>
+                                読込中...
+                            </div>
+                        ) : (
+                            <div className="py-1">
+                                <div className="text-sm font-semibold text-gray-500 mb-1.5">未取得</div>
+                                <button
+                                    onClick={() => fetchCategory('gold')}
+                                    className="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 border border-red-800/40 text-red-400 text-[10px] font-semibold rounded transition-all"
+                                >
+                                    データを取得
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
