@@ -104,7 +104,7 @@ export async function GET(req: Request) {
         const quests = scenariosResult.data;
         const qError = scenariosResult.error;
 
-        debug.push(`supabaseUrl = ${supabaseUrl}`);
+        debug.push(`supabaseUrl = ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
         const debug7060 = quests?.find((q: any) => String(q.id) === '7060');
         if (debug7060) {
             debug.push(`Found 7060: title=${debug7060.title}, is_repeatable=${debug7060.is_repeatable}, quest_type=${debug7060.quest_type}, repeatable_script=${debug7060.script_data?.is_repeatable}`);
