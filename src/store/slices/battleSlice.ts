@@ -269,7 +269,7 @@ export const createBattleSlice = (
                                 ? duration + 1
                                 : duration;
                             initialEffects = applyEffect(initialEffects, id as StatusEffectId, finalDuration, val);
-                            const buffName = getEffectName(id as StatusEffectId);
+                            const buffName = getEffectName(id as StatusEffectId, val);
                             npcStartBuffMessages.push(`✨ ${pm.name}は装備効果で${buffName}！ (${duration}T)`);
                         }
                     });
@@ -377,7 +377,7 @@ export const createBattleSlice = (
                             finalDuration,
                             val
                         );
-                        const buffName = getEffectName(id as StatusEffectId);
+                        const buffName = getEffectName(id as StatusEffectId, val);
                         startBuffMessages.push(
                             `✨ ${gear.name}の効果で${buffName}！ (${duration}T)`
                         );

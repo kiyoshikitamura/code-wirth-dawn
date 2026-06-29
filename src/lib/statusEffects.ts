@@ -128,7 +128,16 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     crit_vulnerability: '被クリティカル率UP',
 };
 
-export function getEffectName(id: StatusEffectId): string {
+export function getEffectName(id: StatusEffectId, value?: number): string {
+    if (id === 'evasion_up' && value !== undefined && value < 0) {
+        return '回避低下';
+    }
+    if (id === 'atk_up' && value !== undefined && value < 0) {
+        return '攻撃低下';
+    }
+    if (id === 'def_up' && value !== undefined && value < 0) {
+        return '防御低下';
+    }
     return EFFECT_NAMES[id] || id;
 }
 
