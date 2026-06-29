@@ -684,42 +684,10 @@ export function useInnPageState() {
         if (!userProfile?.id || !worldState?.location_name) return;
 
         const locationId = userProfile.current_location_id || '';
-        const cacheKey = `location_quests_cache_${locationId}`;
         const store = useGameStore.getState();
-        const lastFetch = store.lastInitPageFetchTime || 0;
-        const hasQuests = store.locationQuests;
 
-        // SWR: すでにメモリ上にデータがあれば即表示し、ローディング状態を排除
-        if (hasQuests) {
-            setAllQuests(hasQuests.quests || []);
-            setLoadingQuests(false);
-        }
-
-        // キャッシュチェック（直近60秒以内ならスキップ）
-        if (hasQuests && Date.now() - lastFetch < 60000) {
-            return;
-        }
-
-        // すでにキャッシュがある場合はそれを使用し、バックグラウンドでのみフェッチする
-        let cachedQuests = hasQuests;
-        if (!cachedQuests && typeof window !== 'undefined') {
-            try {
-                const cached = sessionStorage.getItem(cacheKey);
-                if (cached) {
-                    cachedQuests = JSON.parse(cached);
-                    if (cachedQuests) {
-                        useGameStore.setState({ locationQuests: cachedQuests });
-                        setAllQuests(cachedQuests.quests || []);
-                        setLoadingQuests(false);
-                    }
-                }
-            } catch {}
-        }
-
-        // キャッシュが全く存在しない場合のみ、フォアグラウンドローディングを表示
-        if (!cachedQuests) {
-            setLoadingQuests(true);
-        }
+        // キャッシュ早期リターンをバイパスし、毎回必ず最新の依頼データをサーバーから取得する
+        setLoadingQuests(true);
 
         try {
             const authHeaders = await getAuthHeaders();
