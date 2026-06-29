@@ -39,7 +39,7 @@ export async function GET(req: Request) {
             }
         }
 
-        debug.push(`userId = ${userId}, locationId = ${locationId} `);
+        debug.push(`userId = ${userId}, locationId = ${locationId}, supabaseUrl = ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
 
         if (!userId) {
             return NextResponse.json({ error: 'Authentication required', debug }, { status: 401 });
