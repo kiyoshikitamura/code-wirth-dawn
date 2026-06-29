@@ -461,7 +461,6 @@ export function useScenarioNodeProcessor({
                     const picked = dummies[Math.floor(Math.random() * dummies.length)];
                     questState.setFlag('met_player_name', picked, true);
                 }
-                }
 
                 if (processedNodeRef.current === activeNodeId && nextId) {
                     setCurrentNodeId(nextId);
