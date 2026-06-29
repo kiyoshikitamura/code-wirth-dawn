@@ -1,20 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-/**
- * Creates a Supabase client that acts on behalf of the user who made the request.
- * It extracts the Bearer token from the Authorization header and attaches it to all Supabase requests.
- * This ensures Row Level Security (RLS) is correctly enforced at the database level.
- */
 export function createAuthClient(req: Request) {
     const authHeader = req.headers.get('authorization');
     const token = authHeader ? authHeader.replace('Bearer ', '') : '';
     
-    // [Security] x-user-id フォールバック廃止 (v27.2) — JWTのみで認証
+    let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-    return createClient(supabaseUrl, supabaseAnonKey, {
+    // Vercelプレビュー環境のデータベース不整合を防ぐため、プレビュー時は強制的に開発用検証DB(drbqnpzxgcbicpritcpi)に統一
+    if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
+        supabaseUrl = "https://drbqnpzxgcbicpritcpi.supabase.co";
+        supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyYnFucHp4Z2NiaWNwcml0Y3BpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NjgyOTIsImV4cCI6MjA5NTI0NDI5Mn0.VYWf3YZz9g-Niqv1GP1dXpfZI5qYS1veyVFG94qGkuE";
+    }
+
+    if (!supabaseUrl) {
+        supabaseUrl = 'https://placeholder.supabase.co';
+    }
+
+    return createClient(supabaseUrl, supabaseAnonKey || 'placeholder-key', {
         auth: {
             persistSession: false,
             autoRefreshToken: false,
