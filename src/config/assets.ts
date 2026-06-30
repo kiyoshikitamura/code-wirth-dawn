@@ -115,6 +115,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     // ── 狭間の迷宮シリーズ背景 (7060-7066) ──
     'bg_rift_entrance': '/images/quests/bg_rift_entrance.png',
     'bg_rift_camp': '/images/quests/bg_rift_camp.png',
+    'bg_rift_camp_stairs': '/images/quests/bg_rift_camp_stairs.png',
     'bg_rift_maze': '/images/quests/bg_rift_maze.png',
     'bg_rift_upper_01': '/images/quests/bg_rift_upper_01.png',
     'bg_rift_upper_02': '/images/quests/bg_rift_upper_02.png',

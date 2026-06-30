@@ -25,4 +25,4 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 6104,qst_spot_markand,黄金の沈黙,20,5,7,7,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:605|Exp:500",交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
 5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,3,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
 7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:100,冒険者ギルド,狭間の迷宮シリーズ・プロローグ,true
-7061,qst_rift_upper,狭間の迷宮・上層,8,3,6,6,4,"{""completed_quest"":""qst_rift_prologue""}",false,,Gold:600|Rep:15|Item:326|Exp:1200,冒険者ギルド,地下1F〜4Fの探索。キャンプ3回。ボス撃へ「赤の宝珠」獲得。,true
+7061,qst_rift_upper,狭間の迷宮・上層,8,3,6,6,4,"{""completed_quest"":""qst_rift_prologue""}",false,,Gold:600|Rep:15|Exp:1200,冒険者ギルド,地下1F〜4Fの探索。キャンプ3回。ボス撃へ「赤の宝珠」獲得。,true

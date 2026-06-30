@@ -14,6 +14,25 @@ import { supabase } from '@/lib/supabase';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
 
+async function updateProfileStatusHelper(updates: { hp?: number; gold?: number }, userProfileId: string) {
+    try {
+        const authHeaders = await getAuthHeaders();
+        await fetch('/api/profile/update-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...authHeaders
+            },
+            body: JSON.stringify({
+                updates,
+                profileId: userProfileId
+            })
+        });
+    } catch (e) {
+        console.error('[ScenarioNodeProcessor] Failed to sync status:', e);
+    }
+}
+
 interface NodeProcessorOptions {
     currentNode: any;
     currentNodeId: string;
@@ -75,14 +94,14 @@ export function useScenarioNodeProcessor({
 
         const processNode = async () => {
             // BGM切替 (定義がない場合は履歴を遡って再生)
-            let bgmKey = currentNode.bgm || currentNode.bgm_key;
+            let bgmKey = currentNode.bgm || currentNode.bgm_key || currentNode.params?.bgm || currentNode.params?.bgm_key;
             if (!bgmKey && script?.nodes) {
                 const hist = historyRef.current || [];
                 for (let i = hist.length - 1; i >= 0; i--) {
                     const prevNodeId = hist[i];
                     const prevNode = script.nodes[prevNodeId];
-                    if (prevNode?.bgm || prevNode?.bgm_key) {
-                        bgmKey = prevNode.bgm || prevNode.bgm_key;
+                    if (prevNode?.bgm || prevNode?.bgm_key || prevNode?.params?.bgm || prevNode?.params?.bgm_key) {
+                        bgmKey = prevNode.bgm || prevNode.bgm_key || prevNode.params?.bgm || prevNode.params?.bgm_key;
                         break;
                     }
                 }
@@ -137,28 +156,87 @@ export function useScenarioNodeProcessor({
             }
 
 
-            else if (currentNode.type === 'random_branch') {
-                const prob = currentNode.prob || currentNode.params?.prob || 50;
+            else if (currentNode.type === 'random_branch' || currentNode.type === 'check_random') {
+                let prob = currentNode.prob || currentNode.params?.prob || currentNode.probability || currentNode.params?.probability || 50;
+                if (prob > 0 && prob < 1) {
+                    prob = prob * 100;
+                }
                 const roll = Math.random() * 100;
                 const isSuccess = roll < prob;
-                // CSV互換: CHOICE行のlabelは hit/miss または success/failure のいずれか
+                // CSV互換: CHOICE行のlabelは hit/miss または success/failure/fallback のいずれか
                 const successChoice = currentNode.choices?.find((c: any) =>
                     c.label === 'hit' || c.label === 'success');
                 const failChoice = currentNode.choices?.find((c: any) =>
-                    c.label === 'miss' || c.label === 'failure');
-                console.log(`[random_branch] prob=${prob}, roll=${roll.toFixed(1)}, result=${isSuccess ? 'SUCCESS' : 'FAIL'}`);
+                    c.label === 'miss' || c.label === 'failure' || c.label === 'fallback');
+                console.log(`[random_branch/check_random] prob=${prob}, roll=${roll.toFixed(1)}, result=${isSuccess ? 'SUCCESS' : 'FAIL'}`);
                 if (successChoice && failChoice) {
                     setCurrentNodeId(isSuccess ? successChoice.next : failChoice.next);
                 } else {
-                    // フォールバック: choices が見つからない場合は next へ遷移
-                    const fallbackNext = currentNode.next || currentNode.condNext;
-                    const fallbackFail = currentNode.condFallback || currentNode.fallback;
-                    if (fallbackNext && fallbackFail) {
-                        setCurrentNodeId(isSuccess ? fallbackNext : fallbackFail);
-                    } else if (fallbackNext) {
-                        setCurrentNodeId(fallbackNext);
+                    // フォールバック: choices が見つからない場合は params または next / fallback へ遷移
+                    const successNode = currentNode.success || currentNode.params?.success || currentNode.next || currentNode.condNext;
+                    const failNode = currentNode.fallback || currentNode.params?.fallback || currentNode.condFallback;
+                    if (successNode && failNode) {
+                        setCurrentNodeId(isSuccess ? successNode : failNode);
+                    } else if (successNode) {
+                        setCurrentNodeId(successNode);
                     }
-                    console.warn(`[random_branch] choices not found, using fallback: next=${fallbackNext}, fail=${fallbackFail}`);
+                    console.warn(`[random_branch/check_random] choices not found, using fallback: success=${successNode}, fail=${failNode}`);
+                }
+            }
+
+            else if (currentNode.type === 'damage') {
+                const effectType = currentNode.params?.effect_type || currentNode.effect_type || 'hp';
+                const damageVal = currentNode.params?.damage_val || currentNode.damage_val || 0;
+                const damagePct = currentNode.params?.damage_pct || currentNode.damage_pct || 0;
+
+                const store = useGameStore.getState();
+                if (store.userProfile) {
+                    let hpDamage = 0;
+                    let goldDamage = 0;
+
+                    if (effectType === 'hp') {
+                        if (damagePct > 0) {
+                            const maxHp = store.userProfile.max_hp || 100;
+                            hpDamage = Math.floor(maxHp * damagePct);
+                        } else {
+                            hpDamage = damageVal;
+                        }
+                    } else if (effectType === 'gold') {
+                        goldDamage = damageVal;
+                    }
+
+                    const nextHp = Math.max(0, (store.userProfile.hp || 0) - hpDamage);
+                    const nextGold = Math.max(0, (store.gold || 0) - goldDamage);
+
+                    // Zustand の状態を即時更新
+                    useGameStore.setState({
+                        userProfile: {
+                            ...store.userProfile,
+                            hp: nextHp,
+                            gold: nextGold
+                        },
+                        gold: nextGold
+                    });
+
+                    // DB へ同期
+                    await updateProfileStatusHelper({ hp: nextHp, gold: nextGold }, store.userProfile.id);
+
+                    // トースト通知 & SE再生
+                    if (hpDamage > 0) {
+                        showToast(`💥 トラップ発動！ 主人公に ${hpDamage} ダメージ！`, 'error');
+                        if (soundManager) soundManager.playSE('se_taunt');
+                    } else if (goldDamage > 0) {
+                        showToast(`💸 トラップ発動！ 所持金が ${goldDamage} G 減少した...`, 'error');
+                        if (soundManager) soundManager.playSE('se_quest_fail');
+                    }
+                }
+
+                // 完了後、1.5秒待ってから次へ自動遷移
+                const nextNodeId = currentNode.next || currentNode.next_node || currentNode.condNext;
+                if (nextNodeId) {
+                    timeoutRef.current = setTimeout(() => {
+                        setCurrentNodeId(nextNodeId);
+                    }, 1500);
                 }
             }
 

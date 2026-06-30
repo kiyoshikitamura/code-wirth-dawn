@@ -430,39 +430,39 @@ export default function ScenarioEngine({
         return (
             <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col items-center justify-between p-6">
                 <div 
-                    className="absolute inset-0 opacity-20 pointer-events-none bg-cover bg-center transition-all duration-500" 
+                    className="absolute inset-0 opacity-65 pointer-events-none bg-cover bg-center transition-all duration-500" 
                     style={{ backgroundImage: `url('${campBgUrl}')` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20 pointer-events-none" />
 
                 {/* 中央コンテンツ */}
                 <div className="flex-1 flex flex-col items-center justify-center w-full z-10">
                     {!hideButtons && (
-                        <div className="w-16 h-16 rounded-full bg-orange-900/30 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
+                        <div className="w-16 h-16 rounded-full bg-orange-950/40 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_35px_rgba(234,88,12,0.4)] animate-pulse">
                             <span className="text-3xl">🔥</span>
                         </div>
                     )}
-                    {title && <h2 className="text-2xl font-serif text-amber-400 mb-1 drop-shadow-md">{title}</h2>}
-                    <p className="text-slate-200 mb-6 text-sm italic text-center max-w-xs">{description}</p>
+                    {title && <h2 className="text-2xl font-serif text-amber-400 mb-1 drop-shadow-md tracking-widest">{title === '野営地' ? '狭間の踊り場' : title}</h2>}
+                    <p className="text-slate-200 mb-6 text-sm italic text-center max-w-sm drop-shadow">{description}</p>
 
                     {!hideButtons && (
-                        <div className="bg-slate-900/80 backdrop-blur-sm px-6 py-5 rounded-xl border border-amber-900/40 mb-6 text-center max-w-sm w-full flex flex-col gap-3">
-                            <p className="text-amber-400/80 font-bold text-sm mb-1">※ここでは特別に、デッキ・装備変更が許可されます。</p>
+                        <div className="bg-slate-950/70 backdrop-blur-md px-6 py-5 rounded-2xl border border-amber-900/30 mb-6 text-center max-w-sm w-full flex flex-col gap-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+                            <p className="text-amber-400/90 font-bold text-xs tracking-wider mb-1">※ここではデッキ・装備の変更が可能です。</p>
                             <button
                                 onClick={() => setShowCampStatus(true)}
-                                className="bg-amber-900/40 text-amber-100 border border-amber-700/50 px-8 py-3 hover:bg-amber-800/60 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                                className="bg-slate-900/60 hover:bg-slate-800/80 text-amber-100 border border-amber-700/40 px-8 py-3 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
                             >
                                 デッキ編成・装備変更
                             </button>
                             <button
                                 onClick={() => {
-                                    if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰ってギルドに報告（クリア）しますか？")) {
+                                    if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰って地上に戻りますか？\n(階段を上って地上に戻ります)")) {
                                         setEndReady({ result: 'success' });
                                     }
                                 }}
-                                className="bg-emerald-950/60 text-emerald-200 border border-emerald-700/40 px-8 py-3 hover:bg-emerald-900/40 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                                className="bg-orange-950/20 hover:bg-orange-950/40 text-orange-200 border border-orange-800/40 px-8 py-3 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
                             >
-                                探索を終えて帰還する (クリア)
+                                探索を終えて帰還する (階段を上る)
                             </button>
                         </div>
                     )}
@@ -470,34 +470,19 @@ export default function ScenarioEngine({
 
                 {/* 最下部ボタン */}
                 <div className="w-full max-w-sm z-10 pb-4 flex justify-center shrink-0">
-                    {hideButtons ? (
-                        <button
-                            onClick={() => {
-                                if (isTransitioning) return;
-                                setIsTransitioning(true);
-                                if (nextId) setCurrentNodeId(nextId);
-                                setTimeout(() => setIsTransitioning(false), 300);
-                            }}
-                            disabled={isTransitioning}
-                            className="w-full py-4 bg-slate-800/60 border border-slate-600 text-slate-300 rounded-lg font-bold text-sm text-center shadow-lg hover:bg-slate-700/60 transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <span>{continueLabel}</span>
-                            <ArrowRight size={14} className="opacity-70" />
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => {
-                                if (isTransitioning) return;
-                                setIsTransitioning(true);
-                                if (nextId) setCurrentNodeId(nextId);
-                                setTimeout(() => setIsTransitioning(false), 300);
-                            }}
-                            disabled={isTransitioning}
-                            className="text-slate-500 hover:text-slate-200 border-b border-slate-600 border-dashed hover:border-solid hover:border-slate-300 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {continueLabel}
-                        </button>
-                    )}
+                    <button
+                        onClick={() => {
+                            if (isTransitioning) return;
+                            setIsTransitioning(true);
+                            if (nextId) setCurrentNodeId(nextId);
+                            setTimeout(() => setIsTransitioning(false), 300);
+                        }}
+                        disabled={isTransitioning}
+                        className="w-full py-4 bg-amber-950/40 hover:bg-amber-900/30 border border-amber-500/50 text-amber-100 rounded-lg font-bold text-base text-center shadow-[0_0_20px_rgba(245,158,11,0.1)] hover:shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span>{continueLabel === '休憩を終えて出発する' ? '探索を継続する (階段を下りる)' : continueLabel}</span>
+                        <ArrowRight size={14} className="opacity-70" />
+                    </button>
                 </div>
 
                 {showCampStatus && <StatusModal onClose={() => setShowCampStatus(false)} isCampMode={true} />}
