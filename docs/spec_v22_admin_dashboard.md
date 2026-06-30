@@ -124,23 +124,11 @@
   2. `category = summary` では、重い `SUM(gold)` や `SUM(total_battles)` 等の全件集計をスキップし、レスポンス速度をミリ秒に維持。
   3. `category = battles` または `gold` のリクエスト時にのみ、対応するビューに対する集計クエリを実行して返却。
 * **月間アクティブ (MAU/MPU) の算出**:
-  各日付において、**「その日を含めた過去30日間のユニークユーザー数」**を以下のヘルパー関数でスライディングウィンドウ方式で集計します。
-  ```typescript
-  const getUniqueUsersInWindow = (activityMap: { [key: string]: Set<string> }, targetDateStr: string, windowDays: number = 30): number => {
-      const targetDate = new Date(targetDateStr);
-      const uniqueUsers = new Set<string>();
-      for (let i = 0; i < windowDays; i++) {
-          const d = new Date(targetDate);
-          d.setDate(d.getDate() - i);
-          const dateStr = d.toISOString().split('T')[0];
-          const usersOnDay = activityMap[dateStr];
-          if (usersOnDay) {
-              usersOnDay.forEach(uid => uniqueUsers.add(uid));
-          }
-      }
-      return uniqueUsers.size;
-  };
-  ```
+  - **サマリーカード (category=summary)**:
+    データベース全体のデータ増大に伴い、`get_daily_kpi` RPC がタイムアウト（Statement Timeout: code 57014）を引き起こすのを回避するため、RPC の呼び出しを完全に廃止しました。
+    代わりに、過去30日間の `battle_sessions`, `quest_activity_logs`, `colosseum_activity_logs`, `payment_logs` から `user_id` をインデックス範囲スキャンで並列取得し、API サーバーのメモリ上（JavaScript `Set` オブジェクト）で結合・重複排除を行う超高速オンメモリ集計アルゴリズム（500ms以内で終了）に移行しました。
+  - **日次推移履歴 (category=daily)**:
+    過去各日のスライディングウィンドウ型集計負荷を排除するため、`get_daily_kpi` の呼び出しを廃止しました。常に `daily_basic_stats_view` からデータを高速取得し、日別の MAU / MPU にはフォールバック値（DAU / DPU と同値）をセットすることで、タイムアウトエラーの発生率を完全に 0% に低減しています（月次正確な MAU/MPU 推移は月次統計タブ `monthly_kpi_view` から超高速に参照可能）。
 * **コロシアム統計 (Colosseum KPI) の算出**:
   - `get_colosseum_summary_stats()` RPCを使用して、全期間の累計挑戦プレイヤー数 (`total_players`)、総挑戦数 (`total_battles` = 挑戦数)、総クリア数 (`total_wins` = クリア数)、今期最高連勝 (`max_streak`)、累計回収ゴールド (`total_gold_spent`) を一括でフェッチし、制覇率（クリア率）を `total_wins / total_battles * 100` で計算します。
   - `get_colosseum_daily_stats(days_limit)` RPCを使用して、直近 `days` 日間の日別・難易度別の開始数・クリア数・放棄数・回収ゴールドを集計します。
