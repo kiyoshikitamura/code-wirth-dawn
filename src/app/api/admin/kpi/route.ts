@@ -496,27 +496,96 @@ export async function GET(req: Request) {
         // §6. Category: monthly (Monthly Time-Series KPI)
         // ═══════════════════════════════════════
         if (category === 'monthly' || category === 'all') {
-            const targetMonthsList: string[] = [];
+            const targetMonthsList: { label: string; start: string; end: string }[] = [];
             for (let i = 11; i >= 0; i--) {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
-                targetMonthsList.push(toJstMonthStr(d));
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                
+                const monthKey = `${y}/${String(m).padStart(2, '0')}`;
+                const start = `${y}-${String(m).padStart(2, '0')}-01T00:00:00+09:00`;
+                
+                let nextY = y;
+                let nextM = m + 1;
+                if (nextM > 12) {
+                    nextM = 1;
+                    nextY += 1;
+                }
+                const end = `${nextY}-${String(nextM).padStart(2, '0')}-01T00:00:00+09:00`;
+                
+                targetMonthsList.push({ label: monthKey, start, end });
             }
 
-            // Fetch pre-calculated monthly metrics from monthly_kpi_view
-            const { data: monthlyData, error: monthlyErr } = await supabaseServer
-                .from('monthly_kpi_view')
-                .select('*');
-            if (monthlyErr) throw monthlyErr;
-
-            const monthlyKPI = (monthlyData || []).map((row: any) => ({
-                month: row.month,
-                revenue: row.revenue,
-                mau: row.mau,
-                mpu: row.mpu,
-                newUsersRegistered: row.new_users_registered,
-                newUsersGuest: row.new_users_guest
+            // 1. Fetch MAU/MPU parallelly using high-performance JST range queries and in-memory Set
+            const monthlyActiveMetrics = await Promise.all(targetMonthsList.map(async (m) => {
+                try {
+                    const [battlesResult, questsResult, colosseumResult, paymentsResult] = await Promise.all([
+                        supabaseServer.from('battle_sessions').select('user_id').gte('created_at', m.start).lt('created_at', m.end),
+                        supabaseServer.from('quest_activity_logs').select('user_id').eq('action', 'start').gte('created_at', m.start).lt('created_at', m.end),
+                        supabaseServer.from('colosseum_activity_logs').select('user_id').eq('action', 'start').gte('created_at', m.start).lt('created_at', m.end),
+                        supabaseServer.from('payment_logs').select('user_id').gte('created_at', m.start).lt('created_at', m.end)
+                    ]);
+                    
+                    const activeUsers = new Set();
+                    if (battlesResult.data) battlesResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
+                    if (questsResult.data) questsResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
+                    if (colosseumResult.data) colosseumResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
+                    
+                    const payingUsers = new Set();
+                    if (paymentsResult.data) paymentsResult.data.forEach((r: any) => { if (r.user_id) payingUsers.add(r.user_id); });
+                    
+                    return {
+                        month: m.label,
+                        mau: activeUsers.size,
+                        mpu: payingUsers.size
+                    };
+                } catch (err) {
+                    console.error(`[Admin KPI] Error calculating monthly metrics for ${m.label}:`, err);
+                    return { month: m.label, mau: 0, mpu: 0 };
+                }
             }));
+
+            // 2. Fetch basic stats (revenue, registered, guest) from daily_basic_stats_view (about 365 days max)
+            const oldestJstStart = targetMonthsList[0].start.split('T')[0];
+            const dailyBasicData = await fetchAll<any>(
+                supabaseServer
+                    .from('daily_basic_stats_view')
+                    .select('date, new_users_registered, new_users_guest, revenue')
+                    .gte('date', oldestJstStart),
+                'date'
+            );
+
+            // Group daily basic stats by YYYY/MM JST
+            const basicMonthMap: Record<string, { revenue: number; registered: number; guest: number }> = {};
+            dailyBasicData.forEach(row => {
+                if (row.date) {
+                    const monthKey = row.date.substring(0, 7).replace('-', '/'); // YYYY/MM
+                    if (!basicMonthMap[monthKey]) {
+                        basicMonthMap[monthKey] = { revenue: 0, registered: 0, guest: 0 };
+                    }
+                    basicMonthMap[monthKey].revenue += Number(row.revenue || 0);
+                    basicMonthMap[monthKey].registered += row.new_users_registered || 0;
+                    basicMonthMap[monthKey].guest += row.new_users_guest || 0;
+                }
+            });
+
+            // Merge everything
+            const monthlyKPI = monthlyActiveMetrics.map(item => {
+                const basic = basicMonthMap[item.month] || { revenue: 0, registered: 0, guest: 0 };
+                return {
+                    month: item.month,
+                    revenue: basic.revenue,
+                    mau: item.mau,
+                    mpu: item.mpu,
+                    newUsersRegistered: basic.registered,
+                    newUsersGuest: basic.guest
+                };
+            });
+
+            responseData.monthly = monthlyKPI;
+
+            const targetMonthsLabels = targetMonthsList.map(m => m.label);
 
             // Fetch Colosseum monthly stats (using the daily RPC and grouping by month)
             const { data: colDaily } = await supabaseServer.rpc('get_colosseum_daily_stats', { days_limit: 366 });
@@ -547,7 +616,7 @@ export async function GET(req: Request) {
                 }
             });
 
-            const monthlyColosseumKPI = targetMonthsList.map(month => {
+            const monthlyColosseumKPI = targetMonthsLabels.map(month => {
                 const entry = colMonthlyMap[month] || {
                     starts: { easy: 0, normal: 0, hard: 0 },
                     completes: { easy: 0, normal: 0, hard: 0 },
@@ -582,7 +651,7 @@ export async function GET(req: Request) {
                 acadMonthlyMap[month].refundGold[series] = (acadMonthlyMap[month].refundGold[series] || 0) + Number(row.refund_gold || 0);
             });
 
-            const monthlyAcademyKPI = targetMonthsList.map(month => {
+            const monthlyAcademyKPI = targetMonthsLabels.map(month => {
                 const entry = acadMonthlyMap[month] || {
                     packs: {},
                     goldSpent: {},
