@@ -121,6 +121,12 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'fg_rift_gate_chaos': '/images/quests/fg_rift_gate_chaos.png',
     'fg_rift_chest': '/images/quests/fg_rift_chest.png',
     'fg_rift_merchant': '/images/quests/fg_rift_merchant.png',
+    'fg_rift_door_basic': '/images/quests/fg_rift_door_basic.png',
+    'fg_rift_door_iron': '/images/quests/fg_rift_door_iron.png',
+    'fg_rift_door_boss': '/images/quests/fg_rift_door_boss.png',
+    'fg_rift_well': '/images/quests/fg_rift_well.png',
+    'fg_rift_spring': '/images/quests/fg_rift_spring.png',
+    'fg_rift_trap_spears': '/images/quests/fg_rift_trap_spears.png',
 
     // 前景画像 (スプライト)
     'fg_demon_soldier': '/images/quests/fg_demon_soldier.png',

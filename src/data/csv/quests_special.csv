@@ -1,27 +1,28 @@
-id,slug,title,rec_level,difficulty,time_cost,requirements,is_urgent,chain_id,rewards_summary,client_name,_comment,is_repeatable
-6001,main_ep01,第1話「始まりの轍」,1,1,2,"{""location_id"":""loc_border_town"",""min_level"":1}",true,,Gold:100|Rep:10|Order:5,王国軍,メインシナリオ第1話,false
-6002,main_ep02,第2話「砂礫の国境線」,2,1,2,"{""completed_quest"":""main_ep01"",""location_id"":""loc_border_town""}",true,,Gold:200|Rep:10|Order:5|Move:loc_oasis,王国軍,メインシナリオ第2話,false
-6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,"{""completed_quest"":""main_ep02"",""location_id"":""loc_oasis""}",true,,Gold:300|Rep:10|Justice:5|Move:loc_plains_city,交易商会,メインシナリオ第3話,false
-6004,main_ep04,第4話「砂塵の激突」,4,1,2,"{""completed_quest"":""main_ep03"",""location_id"":""loc_plains_city""}",true,,Gold:400|Rep:10|Justice:10|Move:loc_meridia,交易商会,メインシナリオ第4話,false
-6005,main_ep05,第5話「大義という名の虚妄」,5,1,2,"{""completed_quest"":""main_ep04"",""location_id"":""loc_meridia""}",true,,Gold:500|Rep:10|Item:501|Justice:10|Move:loc_frontier_village,交易商会,メインシナリオ第5話,false
-6006,main_ep06,第6話「逃亡者の道」,6,1,2,"{""completed_quest"":""main_ep05"",""location_id"":""loc_frontier_village""}",true,,Gold:600|Rep:10|Chaos:5|Move:loc_temple_town,忍び衆,メインシナリオ第6話,false
-6007,main_ep07,第7話「刃の掟」,10,1,2,"{""completed_quest"":""main_ep06"",""location_id"":""loc_temple_town""}",true,,Gold:700|Rep:10|Justice:5|Move:loc_yato,代官所,メインシナリオ第7話,false
-6008,main_ep08,第8話「夜霧の凶刃」,11,2,1,"{""completed_quest"":""main_ep07"",""location_id"":""loc_yato""}",true,,Gold:350|Rep:10|Order:5|Move:loc_valley,なし,メインシナリオ第8話,false
-6009,main_ep09,第9話「大名行列の護衛」,12,2,2,"{""completed_quest"":""main_ep08"",""location_id"":""loc_valley""}",true,,Gold:400|Rep:10|Evil:5|Move:loc_yato,なし,メインシナリオ第9話,false
-6010,main_ep10,第10話「世界の底が抜ける日」,15,2,2,"{""completed_quest"":""main_ep09"",""location_id"":""loc_yato""}",true,,Gold:500|Rep:15|Item:502|Justice:10|Move:loc_charon,なし,メインシナリオ第10話,false
-6011,main_ep11,第11話「天使降臨」,16,3,2,"{""completed_quest"":""main_ep10"",""location_id"":""loc_charon""}",true,,Gold:1200|Rep:15|Order:5|Move:loc_meridia,なし,メインシナリオ第11話,false
-6012,main_ep12,第12話「炎の審判者」,17,3,2,"{""completed_quest"":""main_ep11"",""location_id"":""loc_meridia""}",true,,Gold:1500|Rep:15|Order:5|Move:loc_charon,なし,メインシナリオ第12話,false
-6013,main_ep13,第13話「癒しの暴君」,18,3,2,"{""completed_quest"":""main_ep12"",""location_id"":""loc_charon""}",true,,Gold:1800|Rep:20|Order:5|Move:loc_yato,なし,メインシナリオ第13話,false
-6014,main_ep14,第14話「啓示の使者」,19,3,2,"{""completed_quest"":""main_ep13"",""location_id"":""loc_yato""}",true,,Gold:2000|Rep:20|Order:5|Move:loc_regalia,なし,メインシナリオ第14話,false
-6015,main_ep15,第15話「天軍の長」,20,4,2,"{""completed_quest"":""main_ep14"",""location_id"":""loc_regalia""}",true,,Gold:2500|Rep:30|Item:503|Order:5|Move:loc_border_town,なし,メインシナリオ第15話,false
-6016,main_ep16,第16話「英霊の石碑」,21,4,2,"{""completed_quest"":""main_ep15"",""required_generations"":2,""location_id"":""loc_border_town""}",true,,Gold:3000|Rep:20|Order:5|Move:loc_meridia,なし,メインシナリオ第16話,false
-6017,main_ep17,第17話「冥府の門」,22,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_meridia""}",true,,Gold:3500|Rep:25|Item:505|Order:5|Move:loc_charon,なし,メインシナリオ第17話,false
-6018,main_ep18,第18話「戦神の洗礼」,22,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_charon""}",true,,Gold:3500|Rep:25|Item:506|Order:5|Move:loc_yato,なし,メインシナリオ第18話,false
-6019,main_ep19,第19話「月光の狩人」,23,4,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_yato""}",true,,Gold:3500|Rep:25|Item:507|Order:5|Move:loc_regalia,なし,メインシナリオ第19話,false
-6020,main_ep20,第20話「蒼暁の剣」,25,5,2,"{""completed_quest"":""main_ep17||main_ep18||main_ep19"",""location_id"":""loc_regalia""}",true,,Gold:15000|Rep:50|Item:504|Order:5,なし,メインシナリオ第20話,false
-6101,qst_spot_roland,忘却の五英霊,20,5,7,"{""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。,false
-6102,qst_spot_yato,冥食の残滓,20,5,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,,忍び衆,夜刀スポット: 冥食の夜。生贄 of 少女を護衛し冥の門の四大妖怪を退けよ。,false
-6103,qst_spot_karyu,天を衝く塔,20,5,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,,地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
-6104,qst_spot_markand,黄金の沈黙,20,5,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,,交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
-5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
-7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,"{}",false,,Gold:100,冒険者ギルド,狭間の迷宮シリーズ・プロローグ,true
+id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requirements,is_urgent,chain_id,rewards_summary,client_name,_comment,is_repeatable
+6001,main_ep01,第1話「始まりの轍」,1,1,2,2,2,"{""location_id"":""loc_border_town"",""min_level"":1}",true,,Gold:100|Rep:10|Order:5,王国軍,メインシナリオ第1話,false
+6002,main_ep02,第2話「砂礫の国境線」,2,1,2,2,2,"{""completed_quest"":""main_ep01"",""location_id"":""loc_border_town""}",true,,Gold:200|Rep:10|Order:5|Move:loc_oasis,王国軍,メインシナリオ第2話,false
+6003,main_ep03,第3話「オアシスの陰謀」,3,1,2,2,2,"{""completed_quest"":""main_ep02"",""location_id"":""loc_oasis""}",true,,Gold:300|Rep:10|Justice:5|Move:loc_plains_city,交易商会,メインシナリオ第3話,false
+6004,main_ep04,第4話「砂塵 of 激突」,4,1,2,2,2,"{""completed_quest"":""main_ep03"",""location_id"":""loc_plains_city""}",true,,Gold:400|Rep:10|Justice:10|Move:loc_meridia,交易商会,メインシナリオ第4話,false
+6005,main_ep05,第5話「大義という名の虚妄」,5,1,2,2,2,"{""completed_quest"":""main_ep04"",""location_id"":""loc_meridia""}",true,,Gold:500|Rep:10|Item:501|Justice:10|Move:loc_frontier_village,交易商会,メインシナリオ第5話,false
+6006,main_ep06,第6話「逃亡者の道」,6,1,2,2,2,"{""completed_quest"":""main_ep05"",""location_id"":""loc_frontier_village""}",true,,Gold:600|Rep:10|Chaos:5|Move:loc_temple_town,忍び衆,メインシナリオ第6話,false
+6007,main_ep07,第7話「刃の掟」,10,1,2,2,2,"{""completed_quest"":""main_ep06"",""location_id"":""loc_temple_town""}",true,,Gold:700|Rep:10|Justice:5|Move:loc_yato,代官所,メインシナリオ第7話,false
+6008,main_ep08,第8話「夜霧の凶刃」,11,2,1,1,1,"{""completed_quest"":""main_ep07"",""location_id"":""loc_yato""}",true,,Gold:350|Rep:10|Order:5|Move:loc_valley,なし,メインシナリオ第8話,false
+6009,main_ep09,第9話「大名行列の護衛」,12,2,2,2,2,"{""completed_quest"":""main_ep08"",""location_id"":""loc_valley""}",true,,Gold:400|Rep:10|Evil:5|Move:loc_yato,なし,メインシナリオ第9話,false
+6010,main_ep10,第10話「世界の底が抜ける日」,15,2,2,2,2,"{""completed_quest"":""main_ep09"",""location_id"":""loc_yato""}",true,,Gold:500|Rep:15|Item:502|Justice:10|Move:loc_charon,なし,メインシナリオ第10話,false
+6011,main_ep11,第11話「天使降臨」,16,3,2,2,2,"{""completed_quest"":""main_ep10"",""location_id"":""loc_charon""}",true,,Gold:1200|Rep:15|Order:5|Move:loc_meridia,なし,メインシナリオ第11話,false
+6012,main_ep12,第12話「炎の審判者」,17,3,2,2,2,"{""completed_quest"":""main_ep11"",""location_id"":""loc_meridia""}",true,,Gold:1500|Rep:15|Order:5|Move:loc_charon,なし,メインシナリオ第12話,false
+6013,main_ep13,第13話「癒しの暴君」,18,3,2,2,2,"{""completed_quest"":""main_ep12"",""location_id"":""loc_charon""}",true,,Gold:1800|Rep:20|Order:5|Move:loc_yato,なし,メインシナリオ第13話,false
+6014,main_ep14,第14話「啓示の使者」,19,3,2,2,2,"{""completed_quest"":""main_ep13"",""location_id"":""loc_yato""}",true,,Gold:2000|Rep:20|Order:5|Move:loc_regalia,なし,メインシナリオ第14話,false
+6015,main_ep15,第15話「天軍の長」,20,4,2,2,2,"{""completed_quest"":""main_ep14"",""location_id"":""loc_regalia""}",true,,Gold:2500|Rep:30|Item:503|Order:5|Move:loc_border_town,なし,メインシナリオ第15話,false
+6016,main_ep16,第16話「英霊の石碑」,21,4,2,2,2,"{""completed_quest"":""main_ep15"",""required_generations"":2,""location_id"":""loc_border_town""}",true,,Gold:3000|Rep:20|Order:5|Move:loc_meridia,なし,メインシナリオ第16話,false
+6017,main_ep17,第17話「冥府の門」,22,4,2,2,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_meridia""}",true,,Gold:3500|Rep:25|Item:505|Order:5|Move:loc_charon,なし,メインシナリオ第17話,false
+6018,main_ep18,第18話「戦神の洗礼」,22,4,2,2,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_charon""}",true,,Gold:3500|Rep:25|Item:506|Order:5|Move:loc_yato,なし,メインシナリオ第18話,false
+6019,main_ep19,第19話「月光の狩人」,23,4,2,2,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_regalia""}",true,,Gold:3500|Rep:25|Item:507|Order:5|Move:loc_regalia,なし,メインシナリオ第19話,false
+6020,main_ep20,第20話「蒼暁の剣」,25,5,2,2,2,"{""completed_quest"":""main_ep17||main_ep18||main_ep19"",""location_id"":""loc_regalia""}",true,,Gold:15000|Rep:50|Item:504|Order:5,なし,メインシナリオ第20話,false
+6101,qst_spot_roland,忘却の五英霊,20,5,7,7,7,"{""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false, grayish_white,,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。,false
+6102,qst_spot_yato,冥食の残滓,20,5,7,7,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:603|Exp:500",忍び衆,夜刀スポット: 冥食の夜。生贄 of 少女を護衛し冥の門の四大妖怪を退けよ。,false
+6103,qst_spot_karyu,天を衝く塔,20,5,7,7,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:604|Exp:500",地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
+6104,qst_spot_markand,黄金の沈黙,20,5,7,7,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:605|Exp:500",交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
+5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,3,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
+7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:100,冒険者ギルド,狭間の迷宮シリーズ・プロローグ,true
+7061,qst_rift_upper,狭間の迷宮・上層,8,3,6,6,4,"{""completed_quest"":""qst_rift_prologue""}",false,,Gold:600|Rep:15|Item:326|Exp:1200,冒険者ギルド,地下1F〜4Fの探索。キャンプ3回。ボス撃へ「赤の宝珠」獲得。,true

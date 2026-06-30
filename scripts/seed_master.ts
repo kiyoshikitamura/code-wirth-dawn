@@ -451,6 +451,8 @@ async function main() {
             difficulty: Number(r.difficulty) || 1,
             rec_level: Number(r.rec_level) || 1,
             time_cost: Number(r.time_cost) || 1,
+            days_success: Number(r.days_success) || Number(r.time_cost) || 1,
+            days_failure: Number(r.days_failure) || Number(r.time_cost) || 1,
             // conditions: conditions, 
             trigger_condition: null, // Deprecated in v3.1 API logic (uses specialized cols)
             rewards: rewards,
