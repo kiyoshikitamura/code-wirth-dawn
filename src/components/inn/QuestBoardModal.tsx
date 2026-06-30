@@ -13,7 +13,7 @@ interface QuestBoardModalProps {
     isTourJustCompleted?: boolean;
 }
 
-type DifficultyTab = 'easy' | 'normal' | 'hard';
+type DifficultyTab = 'special' | 'easy' | 'normal' | 'hard';
 
 export default function QuestBoardModal({ isOpen, onClose, quests, loading, userProfile, onSelect, isTourJustCompleted }: QuestBoardModalProps) {
     const [mounted, setMounted] = useState(false);
@@ -37,7 +37,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         return isIdMatch || isSlugMatch;
     };
 
-    const [activeTab, setActiveTab] = useState<DifficultyTab>('easy');
+    const [activeTab, setActiveTab] = useState<DifficultyTab>('special');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
     const [pendingQuest, setPendingQuest] = useState<Scenario | null>(null);
@@ -46,9 +46,10 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     const [isClosing, setIsClosing] = useState(false);
 
     const tabCounts = useMemo(() => ({
-        easy: quests.filter((q: any) => q.difficulty_tier === 'easy').length,
-        normal: quests.filter((q: any) => q.difficulty_tier === 'normal').length,
-        hard: quests.filter((q: any) => q.difficulty_tier === 'hard').length,
+        special: quests.filter((q: any) => q.quest_type === 'special').length,
+        easy: quests.filter((q: any) => q.difficulty_tier === 'easy' && q.quest_type !== 'special').length,
+        normal: quests.filter((q: any) => q.difficulty_tier === 'normal' && q.quest_type !== 'special').length,
+        hard: quests.filter((q: any) => q.difficulty_tier === 'hard' && q.quest_type !== 'special').length,
     }), [quests]);
 
     if (!isOpen) return null;
@@ -60,7 +61,13 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         onClose();
     };
 
-    const filteredQuests = quests.filter((q: any) => q.difficulty_tier === activeTab || q.slug?.startsWith('main_ep'));
+    const filteredQuests = quests.filter((q: any) => {
+        if (activeTab === 'special') {
+            return q.quest_type === 'special';
+        } else {
+            return q.quest_type === 'normal' && q.difficulty_tier === activeTab;
+        }
+    });
 
     const handleAccept = (quest: Scenario) => {
         const userLevel = userProfile?.level || 1;
@@ -85,6 +92,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     };
 
     const tabs: { key: DifficultyTab; label: string; color: string }[] = [
+        { key: 'special', label: 'Special', color: 'text-purple-400' },
         { key: 'easy', label: 'Easy', color: 'text-green-400' },
         { key: 'normal', label: 'Normal', color: 'text-amber-400' },
         { key: 'hard', label: 'Hard', color: 'text-red-400' },
@@ -150,6 +158,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
                         </div>
                     ) : filteredQuests.length === 0 ? (
                         <div className="text-center py-12 text-[#8b5a2b]/70 font-serif">
+                            {activeTab === 'special' && '現在、特別な依頼はありません。'}
                             {activeTab === 'easy' && '現在、初級の依頼はありません。'}
                             {activeTab === 'normal' && '現在、中級の依頼はありません。'}
                             {activeTab === 'hard' && '現在、上級の依頼はありません。'}
