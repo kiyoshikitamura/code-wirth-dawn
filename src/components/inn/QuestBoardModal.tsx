@@ -10,15 +10,25 @@ interface QuestBoardModalProps {
     loading: boolean;
     userProfile: UserProfile | null;
     onSelect: (scenario: Scenario) => void;
+    isTourJustCompleted?: boolean;
 }
 
 type DifficultyTab = 'easy' | 'normal' | 'hard';
 
-export default function QuestBoardModal({ isOpen, onClose, quests, loading, userProfile, onSelect }: QuestBoardModalProps) {
+export default function QuestBoardModal({ isOpen, onClose, quests, loading, userProfile, onSelect, isTourJustCompleted }: QuestBoardModalProps) {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (isOpen && isTourJustCompleted && quests.length > 0) {
+            const quest6002 = quests.find((q: any) => Number(q.id) === 6002 || q.slug === 'main_ep02');
+            if (quest6002) {
+                setDetailQuest(quest6002);
+            }
+        }
+    }, [isOpen, isTourJustCompleted, quests]);
 
     const isRecommendedQuest = (s: Scenario) => {
         const qId = Number(s.id);
