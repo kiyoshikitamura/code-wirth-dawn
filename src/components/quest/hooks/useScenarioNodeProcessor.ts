@@ -624,13 +624,46 @@ export function useScenarioNodeProcessor({
                     }
                 }, 1000);
             }
-            else if (currentNode.type === 'reward') {
-                const rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
-                const rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
+            else if (currentNode.type === 'reward' || currentNode.type === 'treasure') {
+                let rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
+                let rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
                 const singleItemId = currentNode.params?.item_id || currentNode.item_id || currentNode.params?.rewards?.item_id || currentNode.rewards?.item_id;
                 const alignmentShift = currentNode.params?.alignment_shift || currentNode.params?.rewards?.alignment_shift || currentNode.rewards?.alignment_shift;
-                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold, 'alignment:', alignmentShift);
 
+                // 特殊対応: 商人取引による購入
+                const isMerchantBuy = currentNode.params?.is_merchant_buy || currentNodeId.includes('merchant_buy');
+                if (isMerchantBuy) {
+                    const mItemId = questState.getFlag('merchant_item_id');
+                    const mPrice = questState.getFlag('merchant_price') || 30000;
+                    if (mItemId) {
+                        rawItems = [{ item_id: Number(mItemId), quantity: 1 }];
+                        rewardGold = -Number(mPrice); // ゴールド減算
+                        console.log(`[reward/merchant_buy] Intercepted merchant reward: Item=${mItemId}, Gold=${rewardGold}`);
+                    }
+                }
+                // 確率プール抽選
+                else if (currentNode.params?.item_pool && Array.isArray(currentNode.params.item_pool)) {
+                    const pool = currentNode.params.item_pool;
+                    const totalWeight = pool.reduce((sum: number, item: any) => sum + (item.weight || 0), 0);
+                    const roll = Math.random() * totalWeight;
+                    let currentSum = 0;
+                    let selectedItem = null;
+                    
+                    for (const item of pool) {
+                        currentSum += item.weight || 0;
+                        if (roll <= currentSum) {
+                            selectedItem = item;
+                            break;
+                        }
+                    }
+                    
+                    if (selectedItem) {
+                        rawItems = [{ item_id: selectedItem.item_id, quantity: selectedItem.quantity || 1 }];
+                        console.log(`[reward/item_pool] Rolled item ID=${selectedItem.item_id} from pool`);
+                    }
+                }
+
+                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold, 'alignment:', alignmentShift);
 
                 const activeNodeId = currentNodeId;
                 let rewardItems: any[] | undefined;
@@ -680,7 +713,6 @@ export function useScenarioNodeProcessor({
                     }
                 }
 
-
                 if (rewardGold) {
                     itemsToGrant.push({ itemId: 'gold', itemName: 'ゴールド', quantity: rewardGold });
                     msgs.push(`${rewardGold}G`);
@@ -722,6 +754,31 @@ export function useScenarioNodeProcessor({
                         setCurrentNodeId(nextId);
                     }
                 }, 1500);
+            }
+            else if (currentNode.type === 'merchant_trade') {
+                const pool = currentNode.params?.merchant_pool || currentNode.merchant_pool;
+                const price = currentNode.params?.price || currentNode.price || 30000;
+                
+                if (!questState.getFlag('merchant_item_id') && Array.isArray(pool)) {
+                    const totalWeight = pool.reduce((sum: number, item: any) => sum + (item.weight || 0), 0);
+                    const roll = Math.random() * totalWeight;
+                    let currentSum = 0;
+                    let selectedItem = null;
+                    
+                    for (const item of pool) {
+                        currentSum += item.weight || 0;
+                        if (roll <= currentSum) {
+                            selectedItem = item;
+                            break;
+                        }
+                    }
+                    
+                    if (selectedItem) {
+                        questState.setFlag('merchant_item_id', selectedItem.item_id);
+                        questState.setFlag('merchant_price', price);
+                        console.log(`[merchant_trade] Randomized merchant item: ID=${selectedItem.item_id}, Price=${price}`);
+                    }
+                }
             }
             else if (currentNode.type === 'shop_access') {
                 const questId = questState.questId;

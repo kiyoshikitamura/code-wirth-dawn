@@ -93,6 +93,26 @@ export default function ScenarioEngine({
         // 他プレイヤー名置換
         const metPlayerName = questState.getFlag('met_player_name') || '見知らぬ冒険者';
         let result = text.replace(/{met_player_name}/g, String(metPlayerName));
+
+        // 商人アイテム名置換 (v28.2)
+        const merchantItemId = questState.getFlag('merchant_item_id');
+        if (merchantItemId) {
+            const merchantItemNames: Record<number, string> = {
+                311: "妖刀「人食い」",
+                312: "破魔の戦斧",
+                313: "霊木の杖",
+                314: "手裏剣",
+                316: "深淵の盾",
+                317: "聖霊のローブ",
+                318: "暗黒の外套",
+                321: "深緑のアミュレット",
+                324: "守護のタリスマン",
+                325: "怒りの腕輪"
+            };
+            const itemName = merchantItemNames[Number(merchantItemId)] || `未知の遺物(ID:${merchantItemId})`;
+            result = result.replace(/\[merchant_item_name\]/g, itemName);
+            result = result.replace(/{merchant_item_name}/g, itemName);
+        }
         
         // アライメント割合置換
         const order = userProfile?.order_pts || 0;
@@ -656,7 +676,7 @@ export default function ScenarioEngine({
                                 ) : '結果を確認する'}
                             </button>
                         </div>
-                    ) : ['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward'].includes(currentNode.type || '') ? (
+                    ) : ['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward', 'treasure'].includes(currentNode.type || '') ? (
                         <div className="text-center text-slate-500 text-sm py-3 animate-pulse">処理中...</div>
 
                     ) : currentNode.type === 'battle' ? (
