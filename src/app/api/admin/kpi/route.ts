@@ -153,9 +153,11 @@ export async function GET(req: Request) {
 
             let mau = 0, mpu = 0;
             try {
-                const cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - 30);
-                const cutoffStr = cutoffDate.toISOString();
+                const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+                const jstCutoff = new Date(jstNow);
+                jstCutoff.setDate(jstCutoff.getDate() - 30);
+                const cutoffDateStr = jstCutoff.toISOString().split('T')[0];
+                const cutoffStr = `${cutoffDateStr}T00:00:00+09:00`;
 
                 const [battlesResult, questsResult, colosseumResult, paymentsResult] = await Promise.all([
                     supabaseServer.from('battle_sessions').select('user_id').gte('created_at', cutoffStr),
