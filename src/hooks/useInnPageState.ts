@@ -28,6 +28,7 @@ export function useInnPageState() {
 
     // Onboarding tour state management
     const [onboardingTourStep, setOnboardingTourStep] = useState<string | null>(null);
+    const [isTourJustCompleted, setIsTourJustCompleted] = useState(false);
     const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
     // コロシアムランキング報酬のキュー管理
@@ -952,6 +953,8 @@ export function useInnPageState() {
         setOnboardingTourStep,
         advanceOnboardingStep,
         initialLoadComplete,
+        isTourJustCompleted,
+        setIsTourJustCompleted,
 
         // NPC
         activeNpcData, buttonText, isDisabled, secondaryActions,

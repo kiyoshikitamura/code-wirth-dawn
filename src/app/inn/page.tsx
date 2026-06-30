@@ -96,6 +96,8 @@ function InnPageInner() {
         advanceOnboardingStep,
         initialLoadComplete,
         handleCloseRewardDialog,
+        isTourJustCompleted,
+        setIsTourJustCompleted,
     } = state;
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
@@ -734,6 +736,7 @@ function InnPageInner() {
                             setVisitedSettings(true);
                             setVisitedBilling(true);
                             setVisitedStatus(true);
+                            setIsTourJustCompleted(true);
                             advanceOnboardingStep();
                         }
                         handleDialogAction(activeModal as FacilityType);
@@ -800,11 +803,18 @@ function InnPageInner() {
             {activeModal === 'questBoard' && (
                 <QuestBoardModal
                     isOpen={true}
-                    onClose={() => setActiveModal(null)}
+                    onClose={() => {
+                        setActiveModal(null);
+                        setIsTourJustCompleted(false);
+                    }}
                     userProfile={userProfile}
                     quests={allQuests}
                     loading={loadingQuests}
-                    onSelect={(s) => router.push(`/quest/${s.id}`)}
+                    onSelect={(s) => {
+                        router.push(`/quest/${s.id}`);
+                        setIsTourJustCompleted(false);
+                    }}
+                    isTourJustCompleted={isTourJustCompleted}
                 />
             )}
 
