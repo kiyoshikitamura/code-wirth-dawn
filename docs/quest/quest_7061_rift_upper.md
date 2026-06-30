@@ -24,7 +24,7 @@
 
 ### 2.1. 新規探索BGM
 *   **アセットキー**: `bgm_rift_upper`
-*   **ファイル名**: `public/sounds/bgm/bgm_rift_upper.mp3`
+*   **ファイル名**: `public/audio/bgm/bgm_rift_upper.ogg`
 *   **演出用途**: 上層階（B1F〜B4F）の通常探索用BGM。
 
 ### 2.2. 背景画像（使い分け）
