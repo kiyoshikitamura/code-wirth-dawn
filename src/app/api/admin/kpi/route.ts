@@ -134,21 +134,48 @@ export async function GET(req: Request) {
                 }
             });
 
-            // F. Calculate DAU/MAU/DPU/MPU for today using optimized get_daily_kpi RPC (days_limit: 1)
-            let dau = 0, mau = 0, dpu = 0, mpu = 0;
+            // F. Calculate DAU/MAU/DPU/MPU for today (using fast parallel range queries and memory Set union)
+            let dau = 0, dpu = 0;
             try {
-                const { data: todayKpi, error: todayKpiErr } = await supabaseServer.rpc('get_daily_kpi', { days_limit: 1 });
-                if (todayKpiErr) {
-                    console.error('[Admin KPI] get_daily_kpi(1) RPC failed for summary:', todayKpiErr.message);
-                } else if (todayKpi && todayKpi.length > 0) {
-                    const todayRow = todayKpi[0];
-                    dau = todayRow.dau || 0;
-                    mau = todayRow.mau || 0;
-                    dpu = todayRow.dpu || 0;
-                    mpu = todayRow.mpu || 0;
+                const { data: latestBasicData, error: latestBasicErr } = await supabaseServer
+                    .from('daily_basic_stats_view')
+                    .select('dau, dpu')
+                    .order('date', { ascending: false })
+                    .limit(1)
+                    .single();
+                if (!latestBasicErr && latestBasicData) {
+                    dau = latestBasicData.dau || 0;
+                    dpu = latestBasicData.dpu || 0;
                 }
-            } catch (rpcErr) {
-                console.error('[Admin KPI] get_daily_kpi(1) exception:', rpcErr);
+            } catch (basicErr) {
+                console.error('[Admin KPI] Fetching latest basic stats exception:', basicErr);
+            }
+
+            let mau = 0, mpu = 0;
+            try {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - 30);
+                const cutoffStr = cutoffDate.toISOString();
+
+                const [battlesResult, questsResult, colosseumResult, paymentsResult] = await Promise.all([
+                    supabaseServer.from('battle_sessions').select('user_id').gte('created_at', cutoffStr),
+                    supabaseServer.from('quest_activity_logs').select('user_id').eq('action', 'start').gte('created_at', cutoffStr),
+                    supabaseServer.from('colosseum_activity_logs').select('user_id').eq('action', 'start').gte('created_at', cutoffStr),
+                    supabaseServer.from('payment_logs').select('user_id').gte('created_at', cutoffStr)
+                ]);
+
+                const activeUsers = new Set();
+                if (battlesResult.data) battlesResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
+                if (questsResult.data) questsResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
+                if (colosseumResult.data) colosseumResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
+
+                const payingUsers = new Set();
+                if (paymentsResult.data) paymentsResult.data.forEach((r: any) => { if (r.user_id) payingUsers.add(r.user_id); });
+
+                mau = activeUsers.size;
+                mpu = payingUsers.size;
+            } catch (calcErr) {
+                console.error('[Admin KPI] Calculating MAU/MPU exception:', calcErr);
             }
 
 
@@ -186,85 +213,49 @@ export async function GET(req: Request) {
                 targetDaysList.push(toJstDateStr(d));
             }
 
-            // Fallback for daily_kpi RPC (with try-catch)
-            const { data: colStats, error: colErr } = await Promise.resolve(supabaseServer.rpc('get_daily_kpi', { days_limit: days }))
-                .then(res => {
-                    if (res.error) {
-                        console.error('[Admin KPI] get_daily_kpi RPC failed (falling back to manual calculation):', res.error.message);
-                        return { data: null, error: res.error };
-                    }
-                    return res;
-                })
-                .catch(err => {
-                    console.error('[Admin KPI] get_daily_kpi exception:', err);
-                    return { data: null, error: err };
-                });
+            // Always query daily_basic_stats_view directly to avoid statement timeouts caused by get_daily_kpi RPC
+            const dailyBasicData = await fetchAll<any>(
+                supabaseServer
+                    .from('daily_basic_stats_view')
+                    .select('date, new_users, new_users_registered, new_users_guest, total_battles, victories, defeats, fleds, revenue, dpu, dau'),
+                'date'
+            );
 
-            if (colStats && colStats.length > 0) {
-                // If RPC query was successful, use its optimized pre-distinct results!
-                responseData.dailyKPI = colStats.map((row: any) => {
-                    return {
-                        date: row.kpi_date,
-                        newUsers: row.new_users,
-                        newUsersRegistered: row.new_users_registered,
-                        newUsersGuest: row.new_users_guest,
-                        totalBattles: row.total_battles,
-                        victories: row.victories,
-                        defeats: row.defeats,
-                        fleds: row.fleds,
-                        winRate: row.total_battles > 0 ? Math.round((row.victories / row.total_battles) * 100) : 0,
-                        dau: row.dau,
-                        mau: row.mau,
-                        revenue: row.revenue,
-                        dpu: row.dpu,
-                        mpu: row.mpu
-                    };
-                });
-            } else {
-                // Fallback using our daily_basic_stats_view (which now contains pre-calculated breakdowns)
-                const dailyBasicData = await fetchAll<any>(
-                    supabaseServer
-                        .from('daily_basic_stats_view')
-                        .select('date, new_users, new_users_registered, new_users_guest, total_battles, victories, defeats, fleds, revenue, dpu, dau'),
-                    'date'
-                );
+            const basicDataMap: Record<string, any> = {};
+            dailyBasicData.forEach(row => {
+                basicDataMap[row.date] = row;
+            });
 
-                const basicDataMap: Record<string, any> = {};
-                dailyBasicData.forEach(row => {
-                    basicDataMap[row.date] = row;
-                });
-
-                responseData.dailyKPI = targetDaysList.map(date => {
-                    const basic = basicDataMap[date] || {
-                        new_users: 0,
-                        new_users_registered: 0,
-                        new_users_guest: 0,
-                        total_battles: 0,
-                        victories: 0,
-                        defeats: 0,
-                        fleds: 0,
-                        revenue: 0,
-                        dpu: 0,
-                        dau: 0
-                    };
-                    return {
-                        date,
-                        newUsers: basic.new_users,
-                        newUsersRegistered: basic.new_users_registered,
-                        newUsersGuest: basic.new_users_guest,
-                        totalBattles: basic.total_battles,
-                        victories: basic.victories,
-                        defeats: basic.defeats,
-                        fleds: basic.fleds,
-                        winRate: basic.total_battles > 0 ? Math.round((basic.victories / basic.total_battles) * 100) : 0,
-                        dau: basic.dau,
-                        mau: basic.dau, // fallback sets MAU/MPU equivalent to DAU/DPU to prevent timeouts
-                        revenue: basic.revenue,
-                        dpu: basic.dpu,
-                        mpu: basic.dpu
-                    };
-                });
-            }
+            responseData.dailyKPI = targetDaysList.map(date => {
+                const basic = basicDataMap[date] || {
+                    new_users: 0,
+                    new_users_registered: 0,
+                    new_users_guest: 0,
+                    total_battles: 0,
+                    victories: 0,
+                    defeats: 0,
+                    fleds: 0,
+                    revenue: 0,
+                    dpu: 0,
+                    dau: 0
+                };
+                return {
+                    date,
+                    newUsers: basic.new_users,
+                    newUsersRegistered: basic.new_users_registered,
+                    newUsersGuest: basic.new_users_guest,
+                    totalBattles: basic.total_battles,
+                    victories: basic.victories,
+                    defeats: basic.defeats,
+                    fleds: basic.fleds,
+                    winRate: basic.total_battles > 0 ? Math.round((basic.victories / basic.total_battles) * 100) : 0,
+                    dau: basic.dau,
+                    mau: basic.dau, // fallback sets MAU equivalent to DAU to prevent timeout
+                    revenue: basic.revenue,
+                    dpu: basic.dpu,
+                    mpu: basic.dpu // fallback sets MPU equivalent to DPU to prevent timeout
+                };
+            });
         }
 
         // ═══════════════════════════════════════
