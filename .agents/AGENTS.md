@@ -585,4 +585,12 @@
   - クエストモーダル（`QuestBoardModal.tsx`）のタブ配置において、「Special」タブを新設し、最も左側（Easyの左）に配置し、初期表示（デフォルトアクティブタブ）とすること。
   - タブ件数算出（`tabCounts`）および抽出フィルタ（`filteredQuests`）において、他の難易度別タブ（`Easy/Normal/Hard`）は `quest_type === 'normal'` に制限し、Specialタブ（`quest_type === 'special'`）との間で重複カウントや重複表示を完全に排除すること。
 
+## 36. 新規アセット追加時におけるマッピング登録漏れ防止ルール (v46)
+- **背景画像・前景画像の登録徹底**:
+  - 新規に背景画像や前景スプライト画像を追加する際は、物理ファイルを `public/images/quests/` 配下に配置するだけでなく、必ず [src/config/assets.ts](file:///d:/dev/code-wirth-dawn/src/config/assets.ts) の `SCENARIO_ASSETS` マップに解決パスを登録（マッピング）すること。登録がない場合、シナリオ描画時に解決ができず背景がブラックアウトする。
+- **音源（BGM/SE）の登録徹底**:
+  - 音声アセットを追加する際は、物理ファイル（ogg推奨）を `public/audio/` 配下の適切なフォルダに格納するだけでなく、必ず [src/lib/soundManager.ts](file:///d:/dev/code-wirth-dawn/src/lib/soundManager.ts) の `BGM_FILES` または `SE_FILES` マップオブジェクトに登録すること。登録がない場合、アセットキーによるロードが失敗し、無音状態となる。
+- **開発時のセルフチェック**:
+  - クエスト定義CSVに新規に記述した `bg` または `fg` や `bgm` のキーが存在する場合、必ず上記マッピングファイルにそのキーが定義されているか、大文字小文字・アンダースコア等の綴りが完全一致しているかをデプロイ前にセルフチェックすること。
+
 
