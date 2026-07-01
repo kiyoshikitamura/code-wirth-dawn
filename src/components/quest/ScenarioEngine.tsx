@@ -433,7 +433,7 @@ export default function ScenarioEngine({
         const hideButtons = currentNode.params?.hide_buttons || currentNode.hide_buttons || false;
         const continueLabel = currentNode.params?.continue_label || currentNode.continue_label || "休憩を終えて出発する";
         const title = currentNode.params?.title !== undefined ? currentNode.params.title : (currentNode.title !== undefined ? currentNode.title : "野営地");
-        const description = currentNode.text || "「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」";
+        const description = (currentNode.text || "「焚き火の温もりが身体を癒やしてくれる。装備を整える時間はありそうだ。」").replace(/\\n/g, '\n');
 
         // 背景画像の取得 (currentNode.bg_key があればそれを使う、なければ default の bg_camp.png)
         const customBg = currentNode.bg_key || currentNode.params?.bg || currentNode.params?.bg_key;
@@ -455,7 +455,7 @@ export default function ScenarioEngine({
                         </div>
                     )}
                     {title && <h2 className="text-lg font-serif text-amber-400 mb-1 drop-shadow-md tracking-widest">{title === '野営地' ? '狭間の踊り場' : title}</h2>}
-                    <p className="text-slate-200 mb-4 text-xs italic text-center max-w-sm drop-shadow">{description}</p>
+                    <p className="text-slate-200 mb-4 text-xs italic text-center max-w-sm drop-shadow whitespace-pre-wrap">{description}</p>
                 </div>
 
                 {/* 最下部ボタンエリア (縦並びにすっきりまとめる) */}
