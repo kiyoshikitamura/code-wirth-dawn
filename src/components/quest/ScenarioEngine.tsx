@@ -429,7 +429,9 @@ export default function ScenarioEngine({
     const isCampNode = currentNode?.type === 'camp';
     const isCampHideButtons = isCampNode && (currentNode?.params?.hide_buttons || currentNode?.hide_buttons || false);
     if (isCampNode && !endReady && !isCampHideButtons) {
-        const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+        const nextId = currentNode.next || 
+            currentNode.choices?.find((c: any) => c.next && !c.next.endsWith('_inv') && !c.next.endsWith('_return'))?.next ||
+            currentNode.choices?.[0]?.next;
         const hideButtons = currentNode.params?.hide_buttons || currentNode.hide_buttons || false;
         const continueLabel = currentNode.params?.continue_label || currentNode.continue_label || "休憩を終えて出発する";
         const title = currentNode.params?.title !== undefined ? currentNode.params.title : (currentNode.title !== undefined ? currentNode.title : "野営地");

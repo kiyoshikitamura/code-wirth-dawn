@@ -218,6 +218,11 @@ export function useScenarioNodeProcessor({
                         gold: nextGold
                     });
 
+                    // QuestState (playerHp) も同期更新
+                    if (effectType === 'hp') {
+                        useQuestState.setState({ playerHp: nextHp });
+                    }
+
                     // DB へ同期
                     await updateProfileStatusHelper({ hp: nextHp, gold: nextGold }, store.userProfile.id);
 
