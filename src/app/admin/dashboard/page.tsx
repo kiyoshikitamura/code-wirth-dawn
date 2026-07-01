@@ -484,7 +484,7 @@ export default function AdminDashboardPage() {
 
             <main className="max-w-7xl mx-auto space-y-8">
                 {/* サマリーカードグリッド */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* 累計登録ユーザー */}
                     <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         <div className="flex items-center justify-between mb-3">
@@ -495,34 +495,6 @@ export default function AdminDashboardPage() {
                         </div>
                         <div className="text-xl font-bold text-blue-400 tracking-tight">{summary.totalUsers} 名</div>
                         <p className="text-[10px] text-gray-500 mt-2">本登録: {summary.authUsers} / ゲスト: {summary.anonUsers}</p>
-                    </div>
-
-                    {/* 月間アクティブ (MAU) */}
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-emerald-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">月間アクティブ (MAU)</span>
-                            <div className="p-1.5 bg-emerald-950/40 rounded-lg text-emerald-400 border border-emerald-900/30">
-                                <Activity size={16} />
-                            </div>
-                        </div>
-                        <div className="text-xl font-bold text-emerald-400 tracking-tight">{summary.mau} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-2">
-                            アクティビティ率: {((summary.mau / Math.max(1, summary.totalUsers)) * 100).toFixed(1)}%
-                        </p>
-                    </div>
-
-                    {/* 月間課金者 (MPU) */}
-                    <div className="p-5 bg-[#0a1628] border border-gray-800 rounded-2xl relative overflow-hidden group hover:border-yellow-500/50 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">月間課金者 (MPU)</span>
-                            <div className="p-1.5 bg-yellow-950/40 rounded-lg text-yellow-400 border border-yellow-900/30">
-                                <CreditCard size={16} />
-                            </div>
-                        </div>
-                        <div className="text-xl font-bold text-yellow-400 tracking-tight">{summary.mpu} 名</div>
-                        <p className="text-[10px] text-gray-500 mt-2">
-                            課金転換率: {((summary.mpu / Math.max(1, summary.mau)) * 100).toFixed(1)}%
-                        </p>
                     </div>
 
                     {/* 総クエスト回数 */}
