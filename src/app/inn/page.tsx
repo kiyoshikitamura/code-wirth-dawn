@@ -253,8 +253,16 @@ function InnPageInner() {
             }
             // 特別パッケージ案内の表示制御
             sessionStorage.removeItem('wirth_dawn_just_registered');
-            if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                setShowStarterPackPromo(true);
+            if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite) && typeof window !== 'undefined') {
+                try {
+                    const promoShown = localStorage.getItem('wirth_dawn_starter_promo_shown');
+                    if (!promoShown) {
+                        localStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
+                        setShowStarterPackPromo(true);
+                    }
+                } catch (err) {
+                    console.warn('[InnPage] localStorage access failed:', err);
+                }
             }
         }
 
@@ -287,8 +295,16 @@ function InnPageInner() {
             if (userProfile.is_anonymous) {
                 setShowGuestRegisterPromo(true);
             } else {
-                if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                    setShowStarterPackPromo(true);
+                if (!(userProfile.has_purchased_starter && userProfile.has_purchased_elite) && typeof window !== 'undefined') {
+                    try {
+                        const promoShown = localStorage.getItem('wirth_dawn_starter_promo_shown');
+                        if (!promoShown) {
+                            localStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
+                            setShowStarterPackPromo(true);
+                        }
+                    } catch (err) {
+                        console.warn('[InnPage] localStorage access failed:', err);
+                    }
                 }
             }
         }
