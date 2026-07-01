@@ -219,7 +219,7 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 'target_location_slug', 'hp_percent', 'hp_flat', 'percent',
                 'flag', 'key', 'delta', 'value', 'threshold', 'operator',
                 'amount', 'location_name', 'items', 'gold',
-                'success_node', 'fail_node',
+                'success_node', 'fail_node', 'success',
                 'encounter_rate', 'fallback', 'rewards',
                 'hide_buttons', 'continue_label', 'title'];
             for (const k of passthrough) {
