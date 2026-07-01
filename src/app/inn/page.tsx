@@ -22,6 +22,7 @@ import { X } from 'lucide-react';
 // モーダル群: ロード時間とチラつきを完全になくすため静的インポート (spec_v27)
 import TavernModal from '@/components/inn/TavernModal';
 import ShopModal from '@/components/shop/ShopModal';
+import AppraisalModal from '@/components/shop/AppraisalModal';
 import PrayerModal from '@/components/world/PrayerModal';
 import StatusModal from '@/components/inn/StatusModal';
 import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
@@ -67,6 +68,7 @@ function InnPageInner() {
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
+        showAppraisal, setShowAppraisal,
         showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
@@ -756,6 +758,7 @@ function InnPageInner() {
 
             {/* Modals */}
             {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+            {showAppraisal && <AppraisalModal onClose={() => setShowAppraisal(false)} reputation={reputation} />}
             {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
             {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
             {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
