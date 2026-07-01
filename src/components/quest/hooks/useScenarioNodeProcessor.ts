@@ -221,18 +221,26 @@ export function useScenarioNodeProcessor({
                     // DB へ同期
                     await updateProfileStatusHelper({ hp: nextHp, gold: nextGold }, store.userProfile.id);
 
+                    const playerName = store.userProfile?.name || '主人公';
                     // トースト通知 & SE再生
                     if (hpDamage > 0) {
-                        showToast(`💥 トラップ発動！ 主人公に ${hpDamage} ダメージ！`, 'error');
+                        showToast(`トラップ発動！ ${playerName}に ${hpDamage} ダメージ！`, 'error');
                         if (soundManager) soundManager.playSE('se_taunt');
                     } else if (goldDamage > 0) {
-                        showToast(`💸 トラップ発動！ 所持金が ${goldDamage} G 減少した...`, 'error');
+                        showToast(`トラップ発動！ ${playerName}の所持金が ${goldDamage} G 減少した...`, 'error');
                         if (soundManager) soundManager.playSE('se_quest_fail');
                     }
                 }
 
-                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする
-                console.log(`[damage] Damage applied, waiting for manual proceed.`);
+                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする（テキストがない場合は自動遷移）
+                const nextNodeId = currentNode.next || currentNode.next_node || currentNode.condNext;
+                if (!currentNode.text && nextNodeId) {
+                    timeoutRef.current = setTimeout(() => {
+                        setCurrentNodeId(nextNodeId);
+                    }, 50);
+                } else {
+                    console.log(`[damage] Damage applied, waiting for manual proceed.`);
+                }
             }
 
             else if (currentNode.type === 'check_status') {
@@ -817,12 +825,21 @@ export function useScenarioNodeProcessor({
                 });
 
                 if (msgs.length > 0) {
-                    showToast(`🎁 報酬獲得 (クエスト完了時付与): ${msgs.join(' / ')}`, 'success');
+                    showToast(`報酬獲得: ${msgs.join(' / ')}`, 'success');
                     setHistory(prev => [...prev, `[Reward] ${msgs.join(' / ')} を獲得 (予定)`]);
                 }
 
-                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする
-                console.log(`[reward] Reward granted, waiting for manual proceed.`);
+                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする（テキストがない場合は自動遷移）
+                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
+                if (!currentNode.text && nextId) {
+                    timeoutRef.current = setTimeout(() => {
+                        if (processedNodeRef.current === activeNodeId) {
+                            setCurrentNodeId(nextId);
+                        }
+                    }, 50);
+                } else {
+                    console.log(`[reward] Reward granted, waiting for manual proceed.`);
+                }
             }
             else if (currentNode.type === 'merchant_trade') {
                 const pool = currentNode.params?.merchant_pool || currentNode.merchant_pool;

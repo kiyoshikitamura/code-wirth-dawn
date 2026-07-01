@@ -576,8 +576,14 @@ export default function ScenarioEngine({
                             'bg-slate-900/95 border-slate-700/50 text-slate-300'
                         }`}
                     >
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-slate-950/40 border border-slate-800/40 shadow-inner">
-                            {toastMessage.type === 'success' ? '🎁' : toastMessage.type === 'error' ? '💥' : '✉️'}
+                        <div className="flex items-center justify-center">
+                            {toastMessage.type === 'success' ? (
+                                <span className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold tracking-widest rounded-full uppercase">REWARD</span>
+                            ) : toastMessage.type === 'error' ? (
+                                <span className="px-3 py-1.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[10px] font-bold tracking-widest rounded-full uppercase">ALERT</span>
+                            ) : (
+                                <span className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold tracking-widest rounded-full uppercase">INFO</span>
+                            )}
                         </div>
                         
                         <p className="text-sm font-bold tracking-wider leading-relaxed whitespace-pre-line text-slate-200">
@@ -692,7 +698,7 @@ export default function ScenarioEngine({
                                 ) : '結果を確認する'}
                             </button>
                         </div>
-                    ) : ['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward', 'treasure'].includes(currentNode.type || '') ? (
+                    ) : (['guest_join', 'random_branch', 'check_status', 'check_possession', 'check_equipped', 'check_item', 'check_flag', 'check_flags', 'check_world', 'check_delivery', 'modify_flag', 'modify_reputation', 'reward', 'treasure', 'damage'].includes(currentNode.type || '') && !currentNode.text) ? (
                         <div className="text-center text-slate-500 text-sm py-3 animate-pulse">処理中...</div>
 
                     ) : currentNode.type === 'battle' ? (
