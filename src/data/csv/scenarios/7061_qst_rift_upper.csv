@@ -11,7 +11,7 @@ CHOICE,,lose,,end_failure
 NODE,7061_b1f_battle_win,"倒した魔物の残骸の奥から古びた宝箱を発見した！","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_chest"",""type"":""treasure"",""item_pool"":[{""item_id"":706,""weight"":425},{""item_id"":707,""weight"":298},{""item_id"":708,""weight"":110},{""item_id"":709,""weight"":17},{""item_id"":15,""weight"":8},{""item_id"":16,""weight"":7},{""item_id"":17,""weight"":7},{""item_id"":18,""weight"":7},{""item_id"":19,""weight"":7},{""item_id"":20,""weight"":7},{""item_id"":21,""weight"":7},{""item_id"":53,""weight"":7},{""item_id"":558,""weight"":7},{""item_id"":559,""weight"":7},{""item_id"":561,""weight"":7},{""item_id"":563,""weight"":7},{""item_id"":564,""weight"":7},{""item_id"":568,""weight"":8},{""item_id"":572,""weight"":8},{""item_id"":214,""weight"":8},{""item_id"":245,""weight"":8},{""item_id"":430,""weight"":8},{""item_id"":431,""weight"":7},{""item_id"":700,""weight"":7}]}",7061_b1f_03
 NODE,7061_b1f_door_detour,"扉を避け、迂回路の細い通路を進む。足元が崩れやすい不安定な砂利道だ。","{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b1f_trap_01
 NODE,7061_b1f_trap_01,"ガタッと足元の石板が沈んだ！ 天井から無数の瓦礫が崩れ落ちてくる！","{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b1f_trap_damage
-NODE,7061_b1f_trap_damage,"降り注ぐ岩を間一髪で避けたが、衝撃で体力を消耗してしまった。（パーティー全体に軽微なダメージ）","{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b1f_03
+NODE,7061_b1f_trap_damage,"降り注ぐ岩を間一髪で避けたが、衝撃で体力を消耗してしまった。（軽微なダメージ）","{""bg"":""bg_rift_upper_01"",""type"":""damage"",""effect_type"":""hp"",""damage_val"":10}",7061_b1f_03
 NODE,7061_b1f_03,"難所を抜け、さらに奥へと進む。石壁には所々、不気味な黒い煤のようなものが付着しており、先遣隊が戦闘を行った形跡を物語っている。","{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b1f_04
 NODE,7061_b1f_04,"通路の脇に、崩れかけた木箱と、その上に置かれた古びた羊皮紙を見つけた。","{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b1f_reading
 NODE,7061_b1f_reading,"ひび割れた石壁に、かつてここを訪れた者が残したと思われる消えかけの走り書きがある。煤で黒ずんだ文字は、こう告げている。「……右の扉は開けるな。深淵の猟犬が待っている……」","{""bg"":""bg_rift_upper_01"",""type"":""text""}",
@@ -26,12 +26,12 @@ NODE,7061_b1f_battle_win_02,"倒した魔物の残骸の奥から古びた宝箱
 NODE,7061_b1f_chest_find,"ひっそりとした小部屋の奥に、不自然にぽつんと置かれた頑丈な宝箱を見つけた。","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_chest""}",
 CHOICE,,宝箱を開けてみる,,7061_b1f_chest_trigger
 CHOICE,,罠を警戒して無視する,,7061_b1f_05
-NODE,7061_b1f_chest_trigger,,"{""type"":""check_random"",""probability"":0.45,""success"":""7061_b1f_chest_trap_1"",""fallback"":""7061_b1f_chest_safe""}",
-NODE,7061_b1f_chest_trap_1,,"{""type"":""check_random"",""probability"":0.30,""success"":""7061_b1f_trap_pitfall"",""fallback"":""7061_b1f_chest_trap_2""}",
-NODE,7061_b1f_chest_trap_2,,"{""type"":""check_random"",""probability"":0.36,""success"":""7061_b1f_trap_explode"",""fallback"":""7061_b1f_chest_trap_3""}",
-NODE,7061_b1f_chest_trap_3,,"{""type"":""check_random"",""probability"":0.44,""success"":""7061_b1f_trap_alarm"",""fallback"":""7061_b1f_chest_trap_4""}",
-NODE,7061_b1f_chest_trap_4,,"{""type"":""check_random"",""probability"":0.60,""success"":""7061_b1f_trap_acid"",""fallback"":""7061_b1f_chest_trap_5""}",
-NODE,7061_b1f_chest_trap_5,,"{""type"":""check_random"",""probability"":0.70,""success"":""7061_b1f_trap_rock"",""fallback"":""7061_b1f_trap_teleport""}",
+NODE,7061_b1f_chest_trigger,,"{""bg"":""bg_rift_upper_01"",""type"":""check_random"",""probability"":0.45,""success"":""7061_b1f_chest_trap_1"",""fallback"":""7061_b1f_chest_safe""}",
+NODE,7061_b1f_chest_trap_1,,"{""bg"":""bg_rift_upper_01"",""type"":""check_random"",""probability"":0.30,""success"":""7061_b1f_trap_pitfall"",""fallback"":""7061_b1f_chest_trap_2""}",
+NODE,7061_b1f_chest_trap_2,,"{""bg"":""bg_rift_upper_01"",""type"":""check_random"",""probability"":0.36,""success"":""7061_b1f_trap_explode"",""fallback"":""7061_b1f_chest_trap_3""}",
+NODE,7061_b1f_chest_trap_3,,"{""bg"":""bg_rift_upper_01"",""type"":""check_random"",""probability"":0.44,""success"":""7061_b1f_trap_alarm"",""fallback"":""7061_b1f_chest_trap_4""}",
+NODE,7061_b1f_chest_trap_4,,"{""bg"":""bg_rift_upper_01"",""type"":""check_random"",""probability"":0.60,""success"":""7061_b1f_trap_acid"",""fallback"":""7061_b1f_chest_trap_5""}",
+NODE,7061_b1f_chest_trap_5,,"{""bg"":""bg_rift_upper_01"",""type"":""check_random"",""probability"":0.70,""success"":""7061_b1f_trap_rock"",""fallback"":""7061_b1f_trap_teleport""}",
 NODE,7061_b1f_trap_pitfall,"足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ)","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7061_b1f_chest_safe
 NODE,7061_b1f_trap_explode,"宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に爆発した！ (最大HPの25%ダメージ)","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7061_b1f_chest_safe
 NODE,7061_b1f_trap_alarm,"けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7061_b1f_battle_01

@@ -231,13 +231,8 @@ export function useScenarioNodeProcessor({
                     }
                 }
 
-                // 完了後、1.5秒待ってから次へ自動遷移
-                const nextNodeId = currentNode.next || currentNode.next_node || currentNode.condNext;
-                if (nextNodeId) {
-                    timeoutRef.current = setTimeout(() => {
-                        setCurrentNodeId(nextNodeId);
-                    }, 1500);
-                }
+                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする
+                console.log(`[damage] Damage applied, waiting for manual proceed.`);
             }
 
             else if (currentNode.type === 'check_status') {
@@ -826,12 +821,8 @@ export function useScenarioNodeProcessor({
                     setHistory(prev => [...prev, `[Reward] ${msgs.join(' / ')} を獲得 (予定)`]);
                 }
 
-                const nextId = currentNode.next || currentNode.choices?.[0]?.next;
-                if (nextId) timeoutRef.current = setTimeout(() => {
-                    if (processedNodeRef.current === activeNodeId) {
-                        setCurrentNodeId(nextId);
-                    }
-                }, 1500);
+                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする
+                console.log(`[reward] Reward granted, waiting for manual proceed.`);
             }
             else if (currentNode.type === 'merchant_trade') {
                 const pool = currentNode.params?.merchant_pool || currentNode.merchant_pool;

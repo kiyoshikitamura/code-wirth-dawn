@@ -164,11 +164,10 @@ export default function ScenarioEngine({
         feedEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [feed]);
 
-    // トースト表示ヘルパー（3秒で自動消去）
+    // トースト表示ヘルパー
     const showToast = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         setToastMessage({ text, type });
-        toastTimerRef.current = setTimeout(() => setToastMessage(null), 3000);
     };
 
     // スクリプトデータの解析 (BYORK JSON) または V3 フローノード
@@ -278,8 +277,21 @@ export default function ScenarioEngine({
         script
     });
 
-    // 背景画像のプリロードとクロスフェード制御
-    const bgUrl = getAssetUrl(currentNode?.bg_key || 'default');
+    // 背景画像の解決 (指定がない場合は履歴を遡って引き継ぐ)
+    let bgKey = currentNode?.bg_key || currentNode?.bg || currentNode?.params?.bg_key || currentNode?.params?.bg;
+    if (!bgKey && script?.nodes) {
+        const hist = historyRef.current || [];
+        for (let i = hist.length - 1; i >= 0; i--) {
+            const prevNodeId = hist[i];
+            const prevNode = script.nodes[prevNodeId];
+            const prevBg = prevNode?.bg_key || prevNode?.bg || prevNode?.params?.bg_key || prevNode?.params?.bg;
+            if (prevBg) {
+                bgKey = prevBg;
+                break;
+            }
+        }
+    }
+    const bgUrl = getAssetUrl(bgKey || 'default');
     useEffect(() => {
         if (!bgUrl) return;
         // 同じURLなら何もしない
@@ -436,21 +448,36 @@ export default function ScenarioEngine({
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20 pointer-events-none" />
 
                 {/* 中央コンテンツ */}
-                <div className="flex-1 flex flex-col items-center justify-center w-full z-10">
+                <div className="flex-1 flex flex-col items-center justify-center w-full z-10 max-w-sm">
                     {!hideButtons && (
-                        <div className="w-16 h-16 rounded-full bg-orange-950/40 border-2 border-orange-600/50 flex items-center justify-center mb-4 shadow-[0_0_35px_rgba(234,88,12,0.4)] animate-pulse">
-                            <span className="text-3xl">🔥</span>
+                        <div className="w-12 h-12 rounded-full bg-orange-950/40 border-2 border-orange-600/50 flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(234,88,12,0.4)] animate-pulse">
+                            <span className="text-2xl">🔥</span>
                         </div>
                     )}
-                    {title && <h2 className="text-2xl font-serif text-amber-400 mb-1 drop-shadow-md tracking-widest">{title === '野営地' ? '狭間の踊り場' : title}</h2>}
-                    <p className="text-slate-200 mb-6 text-sm italic text-center max-w-sm drop-shadow">{description}</p>
+                    {title && <h2 className="text-lg font-serif text-amber-400 mb-1 drop-shadow-md tracking-widest">{title === '野営地' ? '狭間の踊り場' : title}</h2>}
+                    <p className="text-slate-200 mb-4 text-xs italic text-center max-w-sm drop-shadow">{description}</p>
+                </div>
+
+                {/* 最下部ボタンエリア (縦並びにすっきりまとめる) */}
+                <div className="w-full max-w-xs z-10 pb-4 flex flex-col gap-2 shrink-0 bg-slate-950/60 backdrop-blur-md p-4 rounded-xl border border-amber-900/20 shadow-lg">
+                    <button
+                        onClick={() => {
+                            if (isTransitioning) return;
+                            setIsTransitioning(true);
+                            if (nextId) setCurrentNodeId(nextId);
+                            setTimeout(() => setIsTransitioning(false), 300);
+                        }}
+                        disabled={isTransitioning}
+                        className="w-full py-2.5 bg-amber-950/40 hover:bg-amber-900/30 border border-amber-500/50 text-amber-100 rounded-lg font-bold text-sm text-center shadow-[0_0_15px_rgba(245,158,11,0.1)] transition-all active:scale-[0.98] tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {continueLabel === '休憩を終えて出発する' ? '探索を継続する (階段を下りる)' : continueLabel}
+                    </button>
 
                     {!hideButtons && (
-                        <div className="bg-slate-950/70 backdrop-blur-md px-6 py-5 rounded-2xl border border-amber-900/30 mb-6 text-center max-w-sm w-full flex flex-col gap-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
-                            <p className="text-amber-400/90 font-bold text-xs tracking-wider mb-1">※ここではデッキ・装備の変更が可能です。</p>
+                        <>
                             <button
                                 onClick={() => setShowCampStatus(true)}
-                                className="bg-slate-900/60 hover:bg-slate-800/80 text-amber-100 border border-amber-700/40 px-8 py-3 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                                className="w-full py-2 bg-slate-900/60 hover:bg-slate-800/80 text-amber-100 border border-amber-700/40 transition-all tracking-wider text-xs font-bold rounded-lg active:scale-[0.98]"
                             >
                                 デッキ編成・装備変更
                             </button>
@@ -460,29 +487,12 @@ export default function ScenarioEngine({
                                         setEndReady({ result: 'success' });
                                     }
                                 }}
-                                className="bg-orange-950/20 hover:bg-orange-950/40 text-orange-200 border border-orange-800/40 px-8 py-3 transition-all tracking-wider text-base font-bold rounded-lg active:scale-[0.98] w-full"
+                                className="w-full py-2 bg-orange-950/20 hover:bg-orange-950/40 text-orange-200 border border-orange-800/40 transition-all tracking-wider text-xs font-bold rounded-lg active:scale-[0.98]"
                             >
                                 探索を終えて帰還する (階段を上る)
                             </button>
-                        </div>
+                        </>
                     )}
-                </div>
-
-                {/* 最下部ボタン */}
-                <div className="w-full max-w-sm z-10 pb-4 flex justify-center shrink-0">
-                    <button
-                        onClick={() => {
-                            if (isTransitioning) return;
-                            setIsTransitioning(true);
-                            if (nextId) setCurrentNodeId(nextId);
-                            setTimeout(() => setIsTransitioning(false), 300);
-                        }}
-                        disabled={isTransitioning}
-                        className="w-full py-4 bg-amber-950/40 hover:bg-amber-900/30 border border-amber-500/50 text-amber-100 rounded-lg font-bold text-base text-center shadow-[0_0_20px_rgba(245,158,11,0.1)] hover:shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all active:scale-[0.98] tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <span>{continueLabel === '休憩を終えて出発する' ? '探索を継続する (階段を下りる)' : continueLabel}</span>
-                        <ArrowRight size={14} className="opacity-70" />
-                    </button>
                 </div>
 
                 {showCampStatus && <StatusModal onClose={() => setShowCampStatus(false)} isCampMode={true} />}
@@ -552,14 +562,35 @@ export default function ScenarioEngine({
     return (
         <div className="relative w-full h-full flex flex-col justify-end bg-slate-900 overflow-hidden">
 
-            {/* Phase 2: トースト通知UI */}
+            {/* 中央イベント・獲得通知ダイアログ */}
             {toastMessage && (
-                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[60] w-[85vw] max-w-[360px] px-5 py-3.5 rounded-xl shadow-xl border text-[15px] text-center leading-relaxed font-bold tracking-wider animate-in fade-in slide-in-from-top-3 duration-300 ${
-                    toastMessage.type === 'success' ? 'bg-emerald-950/90 border-emerald-700/50 text-emerald-300' :
-                    toastMessage.type === 'error' ? 'bg-red-950/90 border-red-700/50 text-red-300' :
-                    'bg-slate-800/90 border-slate-600/50 text-slate-300'
-                }`}>
-                    {toastMessage.text}
+                <div 
+                    onClick={() => setToastMessage(null)}
+                    className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300 cursor-pointer"
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className={`w-full max-w-xs p-6 rounded-2xl border text-center shadow-[0_10px_40px_rgba(0,0,0,0.8)] animate-in scale-in duration-200 flex flex-col items-center gap-4 ${
+                            toastMessage.type === 'success' ? 'bg-slate-900/95 border-amber-500/40 text-amber-100' :
+                            toastMessage.type === 'error' ? 'bg-slate-900/95 border-orange-500/40 text-orange-200' :
+                            'bg-slate-900/95 border-slate-700/50 text-slate-300'
+                        }`}
+                    >
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-slate-950/40 border border-slate-800/40 shadow-inner">
+                            {toastMessage.type === 'success' ? '🎁' : toastMessage.type === 'error' ? '💥' : '✉️'}
+                        </div>
+                        
+                        <p className="text-sm font-bold tracking-wider leading-relaxed whitespace-pre-line text-slate-200">
+                            {toastMessage.text}
+                        </p>
+
+                        <button
+                            onClick={() => setToastMessage(null)}
+                            className="mt-2 px-6 py-2.5 bg-slate-950/60 hover:bg-slate-950/90 border border-amber-600/30 text-amber-400 font-bold text-xs tracking-wider rounded-lg active:scale-95 transition-all w-full"
+                        >
+                            閉じる
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -576,10 +607,10 @@ export default function ScenarioEngine({
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent pointer-events-none" />
 
             {/* 前景画像レイヤー（キャラクター立ち絵、宝箱など） */}
-            {(currentNode?.fg_image || currentNode?.params?.fg_image) && (
+            {(currentNode?.fg_image || currentNode?.fg || currentNode?.params?.fg_image || currentNode?.params?.fg) && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 mb-28 animate-in fade-in duration-500">
                     <img 
-                        src={getAssetUrl(currentNode.fg_image || currentNode.params?.fg_image)} 
+                        src={getAssetUrl(currentNode.fg_image || currentNode.fg || currentNode.params?.fg_image || currentNode.params?.fg)} 
                         alt="Foreground Object" 
                         className="max-h-[55%] w-auto object-contain" 
                     />
