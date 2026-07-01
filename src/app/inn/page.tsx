@@ -294,11 +294,15 @@ function InnPageInner() {
         }
 
         // 4. 本登録ユーザーの次回ログイン時のパック案内
-        if (!userProfile.is_anonymous && isEp1Cleared) {
-            const promoShown = sessionStorage.getItem('wirth_dawn_starter_promo_shown');
-            if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
-                sessionStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
-                setShowStarterPackPromo(true);
+        if (!userProfile.is_anonymous && isEp1Cleared && typeof window !== 'undefined') {
+            try {
+                const promoShown = localStorage.getItem('wirth_dawn_starter_promo_shown');
+                if (!promoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                    localStorage.setItem('wirth_dawn_starter_promo_shown', 'true');
+                    setShowStarterPackPromo(true);
+                }
+            } catch (err) {
+                console.warn('[InnPage] localStorage access failed:', err);
             }
         }
     }, [completedQuests, userProfile, searchParams, initialLoadComplete]);
