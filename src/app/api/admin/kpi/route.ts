@@ -151,34 +151,7 @@ export async function GET(req: Request) {
                 console.error('[Admin KPI] Fetching latest basic stats exception:', basicErr);
             }
 
-            let mau = 0, mpu = 0;
-            try {
-                const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-                const jstCutoff = new Date(jstNow);
-                jstCutoff.setDate(jstCutoff.getDate() - 30);
-                const cutoffDateStr = jstCutoff.toISOString().split('T')[0];
-                const cutoffStr = `${cutoffDateStr}T00:00:00+09:00`;
-
-                const [battlesResult, questsResult, colosseumResult, paymentsResult] = await Promise.all([
-                    supabaseServer.from('battle_sessions').select('user_id').gte('created_at', cutoffStr),
-                    supabaseServer.from('quest_activity_logs').select('user_id').eq('action', 'start').gte('created_at', cutoffStr),
-                    supabaseServer.from('colosseum_activity_logs').select('user_id').eq('action', 'start').gte('created_at', cutoffStr),
-                    supabaseServer.from('payment_logs').select('user_id').gte('created_at', cutoffStr)
-                ]);
-
-                const activeUsers = new Set();
-                if (battlesResult.data) battlesResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
-                if (questsResult.data) questsResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
-                if (colosseumResult.data) colosseumResult.data.forEach((r: any) => { if (r.user_id) activeUsers.add(r.user_id); });
-
-                const payingUsers = new Set();
-                if (paymentsResult.data) paymentsResult.data.forEach((r: any) => { if (r.user_id) payingUsers.add(r.user_id); });
-
-                mau = activeUsers.size;
-                mpu = payingUsers.size;
-            } catch (calcErr) {
-                console.error('[Admin KPI] Calculating MAU/MPU exception:', calcErr);
-            }
+            const mau = 0, mpu = 0;
 
 
             // G. Get total quest count from view starts - REMOVED for performance
@@ -215,11 +188,14 @@ export async function GET(req: Request) {
                 targetDaysList.push(toJstDateStr(d));
             }
 
+            const oldestDateStr = targetDaysList[0];
+
             // Always query daily_basic_stats_view directly to avoid statement timeouts caused by get_daily_kpi RPC
             const dailyBasicData = await fetchAll<any>(
                 supabaseServer
                     .from('daily_basic_stats_view')
-                    .select('date, new_users, new_users_registered, new_users_guest, total_battles, victories, defeats, fleds, revenue, dpu, dau'),
+                    .select('date, new_users, new_users_registered, new_users_guest, total_battles, victories, defeats, fleds, revenue, dpu, dau')
+                    .gte('date', oldestDateStr),
                 'date'
             );
 
