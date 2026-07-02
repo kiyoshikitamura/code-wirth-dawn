@@ -21,21 +21,29 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         setMounted(true);
     }, []);
 
-    useEffect(() => {
-        if (isOpen && isTourJustCompleted && quests.length > 0) {
-            const quest6002 = quests.find((q: any) => Number(q.id) === 6002 || q.slug === 'main_ep02');
-            if (quest6002) {
-                setDetailQuest(quest6002);
-            }
-        }
-    }, [isOpen, isTourJustCompleted, quests]);
-
     const isRecommendedQuest = (s: Scenario) => {
         const qId = Number(s.id);
         const isIdMatch = !isNaN(qId) && qId >= 6001 && qId <= 6020;
         const isSlugMatch = s.slug?.startsWith('main_ep');
         return isIdMatch || isSlugMatch;
     };
+
+    const visibleQuests = useMemo(() => {
+        return quests.filter((q: any) => {
+            // Exclude Dimensional Rift quests entirely on production
+            const isRiftQuest = q.slug?.startsWith('qst_rift') || q.slug?.startsWith('qst_demon') || Number(q.id) === 7060 || Number(q.id) === 7061 || Number(q.id) === 7051;
+            return !isRiftQuest;
+        });
+    }, [quests]);
+
+    useEffect(() => {
+        if (isOpen && isTourJustCompleted && visibleQuests.length > 0) {
+            const quest6002 = visibleQuests.find((q: any) => Number(q.id) === 6002 || q.slug === 'main_ep02');
+            if (quest6002) {
+                setDetailQuest(quest6002);
+            }
+        }
+    }, [isOpen, isTourJustCompleted, visibleQuests]);
 
     const [activeTab, setActiveTab] = useState<DifficultyTab>('special');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
@@ -46,17 +54,17 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     const [isClosing, setIsClosing] = useState(false);
 
     const tabCounts = useMemo(() => {
-        const specialCount = quests.filter((q: any) => q.quest_type === 'special').length;
-        const easyCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'easy').length;
-        const normalCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'normal').length;
-        const hardCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'hard').length;
+        const specialCount = visibleQuests.filter((q: any) => q.quest_type === 'special' || isRecommendedQuest(q)).length;
+        const easyCount = visibleQuests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'easy').length;
+        const normalCount = visibleQuests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'normal').length;
+        const hardCount = visibleQuests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'hard').length;
         return {
             special: specialCount,
             easy: easyCount,
             normal: normalCount,
             hard: hardCount
         };
-    }, [quests]);
+    }, [visibleQuests]);
 
     if (!isOpen) return null;
     if (!mounted) return null;
@@ -67,9 +75,9 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         onClose();
     };
 
-    const filteredQuests = quests.filter((q: any) => {
+    const filteredQuests = visibleQuests.filter((q: any) => {
         if (activeTab === 'special') {
-            return q.quest_type === 'special';
+            return q.quest_type === 'special' || isRecommendedQuest(q);
         } else {
             return (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === activeTab;
         }
