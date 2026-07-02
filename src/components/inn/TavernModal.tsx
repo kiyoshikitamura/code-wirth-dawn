@@ -962,7 +962,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             <div className="bg-black/40 rounded p-2 flex flex-col items-center justify-center text-center border border-slate-800">
                                 <div className="text-[10px] text-gray-500 mb-0.5">VIT</div>
                                 <div className="text-amber-400 font-bold font-mono text-xs">
-                                    {selectedShadow.vitality ?? selectedShadow.vit ?? 100}
+                                    {selectedShadow.vitality ?? 100}
                                 </div>
                             </div>
                         </div>
