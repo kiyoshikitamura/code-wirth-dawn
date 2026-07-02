@@ -402,6 +402,20 @@ export async function processPartyWearCycle(
 
     if (!activeParty || activeParty.length === 0) return partyChanges;
 
+    // --- Deactivate defeated members in database ---
+    if (defeatedIds && defeatedIds.length > 0) {
+        const { error: deactivateError } = await supabase
+            .from('party_members')
+            .update({ is_active: false })
+            .in('id', defeatedIds)
+            .eq('owner_id', user_id);
+        if (deactivateError) {
+            console.error(`[Vitality] Failed to deactivate defeated members:`, deactivateError.message);
+        } else {
+            console.log(`[Vitality] Successfully deactivated defeated members in DB:`, defeatedIds);
+        }
+    }
+
     for (const member of activeParty) {
         const oldDurability = member.durability ?? 100;
         const effectiveOldDur = member.is_active === false ? 0 : oldDurability;
