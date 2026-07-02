@@ -806,7 +806,7 @@ export default function QuestPage() {
                             ['enemy_rift_demon_mage', 'enemy_rift_hellwing'],
                             ['enemy_rift_plague_demon', 'enemy_wraith'],
                             ['enemy_wraith', 'enemy_wraith', 'enemy_zombie'],
-                            ['enemy_bandit_guard', 'enemy_bandit_guard', 'enemy_rift_demon_mage']
+                            ['enemy_cult_priest', 'enemy_cult_priest', 'enemy_rift_demon_mage']
                         ];
                         targetSlugs = patterns[Math.floor(Math.random() * patterns.length)];
                     } else if (enemyId === 'pool_rift_lower') {
