@@ -792,7 +792,9 @@ export function useScenarioNodeProcessor({
                         if (typeof item === 'string' || typeof item === 'number') {
                             return { item_id: parseInt(String(item), 10), quantity: 1 };
                         }
-                        return item;
+                        const itemId = item.item_id || item.id || item.itemId;
+                        const quantity = item.quantity || item.amount || item.qty || 1;
+                        return { item_id: itemId, quantity };
                     });
                 } else if (singleItemId) {
                     const singleQty = currentNode.params?.quantity || currentNode.quantity || 1;
@@ -843,6 +845,21 @@ export function useScenarioNodeProcessor({
                 if (rewardGold) {
                     itemsToGrant.push({ itemId: 'gold', itemName: 'ゴールド', quantity: rewardGold });
                     msgs.push(`${rewardGold}G`);
+
+                    if (rewardGold < 0) {
+                        const store = useGameStore.getState();
+                        if (store.userProfile) {
+                            const nextGold = Math.max(0, (store.userProfile.gold || 0) + rewardGold);
+                            useGameStore.setState({
+                                userProfile: {
+                                    ...store.userProfile,
+                                    gold: nextGold
+                                },
+                                gold: nextGold
+                            });
+                            await updateProfileStatusHelper({ gold: nextGold }, store.userProfile.id);
+                        }
+                    }
                 }
 
                 if (rewardItems && rewardItems.length > 0) {
