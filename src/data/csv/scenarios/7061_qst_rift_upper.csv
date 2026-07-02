@@ -85,7 +85,7 @@ CHOICE,,miss,,7061_b2f_well_bad
 NODE,7061_b2f_well_good,"暗闇に手を伸ばすと、かつて誰かが落としたと思われる金貨の袋を引っかけることができた！","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_well"",""type"":""treasure"",""gold"":150}",7061_b2f_04
 NODE,7061_b2f_well_bad,"のぞき込んだ瞬間、井戸の隙間に潜んでいた大蛇が飛び出して噛みついてきた！ 毒の牙を避けたが、体勢を崩して軽く痛手を負ってしまった。（10ダメージ）","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_well"",""type"":""damage"",""effect_type"":""hp"",""damage_val"":10}",7061_b2f_04
 NODE,7061_b2f_04,"さらに進むと、暗がりに黒いフードを深く被った不気味な人影が立っているのが見えた。男は怪しげに笑い、こちらに正体の分からぬ品を差し出してきた。「……迷宮の奥へ進むなら、この品を持っていかんかね？ 30,000ゴールドで譲ってやろう……中身は手にしてからのお楽しみだ」","{""bg"":""bg_rift_upper_01"",""fg"":""fg_rift_merchant"",""type"":""merchant_trade"",""price"":30000,""merchant_pool"":[{""item_id"":314,""weight"":1},{""item_id"":311,""weight"":5},{""item_id"":318,""weight"":5},{""item_id"":312,""weight"":13},{""item_id"":313,""weight"":13},{""item_id"":316,""weight"":13},{""item_id"":317,""weight"":13},{""item_id"":321,""weight"":13},{""item_id"":324,""weight"":12},{""item_id"":325,""weight"":12}]}",
-CHOICE,,30,000Gを支払い、その品を購入する,,7061_b2f_merchant_buy_check
+CHOICE,,30000Gを支払い、その品を購入する,,7061_b2f_merchant_buy_check
 CHOICE,,怪しい取引を断る,,7061_b2f_merchant_refuse
 NODE,7061_b2f_merchant_buy_check,"","{""bg"":""bg_rift_upper_01"",""type"":""check_status"",""req_stat"":""gold"",""req_val"":30000}",
 CHOICE,,success,,7061_b2f_merchant_buy
