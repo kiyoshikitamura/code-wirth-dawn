@@ -133,6 +133,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_rift_abyss_03': '/images/quests/bg_rift_abyss_03.png',
     'fg_rift_gate_order': '/images/quests/fg_rift_gate_order.png',
     'fg_rift_gate_chaos': '/images/quests/fg_rift_gate_chaos.png',
+    'fg_galahad': '/images/quests/fg_galahad.png',
     'fg_rift_chest': '/images/quests/fg_rift_chest.png',
     'fg_rift_merchant': '/images/quests/fg_rift_merchant.png',
     'fg_rift_door_basic': '/images/quests/fg_rift_door_basic.png',

@@ -360,6 +360,7 @@ export async function POST(req: Request) {
         let daysPassed = 1;
         if (result === 'success') daysPassed = quest.days_success ?? 1;
         else if (result === 'failure') daysPassed = quest.days_failure ?? 1;
+        if (String(quest.id) === '7064') daysPassed = 0;
 
         const { newAge, newAgeDays, decay } = processAging(
             user.age || 18, user.age_days || 0, daysPassed
@@ -377,7 +378,7 @@ export async function POST(req: Request) {
         // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1、HPは装備補正込みで全快）
         let battleDefeatVitPenalty = 0;
         if (result === 'failure') {
-            battleDefeatVitPenalty = 1;
+            battleDefeatVitPenalty = (String(quest.id) === '7064') ? 0 : 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
             updates.hp = (user.max_hp || 100) + equipHpBonus;
@@ -751,7 +752,9 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §12. 名声変動
         // ═══════════════════════════════════════
-        const repChange = await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
+        const repChange = (String(quest.id) === '7064' && result === 'failure')
+            ? null
+            : await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
 
         // ─── 先行宣言: 新しい拠点名とステータス変化 ───
         let newLocationName: string | null = null;

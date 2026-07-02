@@ -814,8 +814,8 @@ export default function QuestPage() {
                             ['enemy_rift_plague_demon', 'enemy_rift_demon_soldier'],
                             ['enemy_rift_shadow_demon', 'enemy_rift_demon_soldier'],
                             ['enemy_rift_archdemon', 'enemy_wraith'],
-                            ['enemy_yato_ronin_leader', 'enemy_yato_ronin', 'enemy_yato_ronin'],
-                            ['enemy_yato_tengu', 'enemy_yato_onibi', 'enemy_yato_onibi']
+                            ['enemy_rift_greater_demon', 'enemy_rift_demon_mage'],
+                            ['enemy_rift_archdemon', 'enemy_rift_shadow_demon', 'enemy_rift_demon_soldier']
                         ];
                         targetSlugs = patterns[Math.floor(Math.random() * patterns.length)];
                     } else if (enemyId === 'pool_rift_abyss') {
