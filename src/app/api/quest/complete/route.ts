@@ -319,7 +319,8 @@ export async function POST(req: Request) {
                             filteredLootPool.push({
                                 ...loot,
                                 itemId: mappedItem.id,
-                                itemName: mappedItem.name
+                                itemName: mappedItem.name,
+                                name: mappedItem.name
                             });
                         } else {
                             filteredLootPool.push(loot);

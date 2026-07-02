@@ -97,9 +97,9 @@ export default function ScenarioEngine({
         if (metPlayerName && metPlayerName !== '見知らぬ冒険者' && String(metPlayerIsReal) === '1') {
             metPlayerText = `【${metPlayerName}】のパーティー`;
         }
-        let result = text.replace(/{met_player_text}/g, metPlayerText);
+        let result = text.replace(/\{met_player_text\}/g, metPlayerText);
         result = result.replace(/\[met_player_text\]/g, metPlayerText);
-        result = result.replace(/{met_player_name}/g, String(metPlayerName || '見知らぬ冒険者'));
+        result = result.replace(/\{met_player_name\}/g, String(metPlayerName || '見知らぬ冒険者'));
         result = result.replace(/\[met_player_name\]/g, String(metPlayerName || '見知らぬ冒険者'));
 
         // 商人アイテム名置換 (v28.2)

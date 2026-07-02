@@ -278,9 +278,9 @@ export function useScenarioNodeProcessor({
                     else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
                     else if (stat === 'gold') {
                         const currentGold = Number([
-                            useGameStore.getState().gold,
                             useGameStore.getState().userProfile?.gold,
                             userProfile?.gold,
+                            useGameStore.getState().gold,
                             0
                         ].find(g => g !== undefined && g !== null));
                         if (currentGold >= Number(val)) passed = true;
@@ -826,7 +826,7 @@ export function useScenarioNodeProcessor({
                         }
                         if (processedNodeRef.current !== activeNodeId) return;
 
-                        itemsToGrant.push({ itemId: String(item.item_id), itemName, quantity: item.quantity || 1 });
+                        itemsToGrant.push({ itemId: String(item.item_id), itemName, name: itemName, quantity: item.quantity || 1 });
                         msgs.push(`${itemName} x${item.quantity || 1}`);
                     }
                 }

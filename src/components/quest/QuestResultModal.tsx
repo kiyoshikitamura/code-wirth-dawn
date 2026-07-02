@@ -203,7 +203,7 @@ export default function QuestResultModal({
                                             {loot.type === 'skill' ? <BookOpen className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <div className="text-slate-200 font-bold text-xs truncate">{loot.name}</div>
+                                            <div className="text-slate-200 font-bold text-xs truncate">{loot.name || loot.itemName}</div>
                                             <div className="text-[9px] text-gray-500">
                                                 {loot.type === 'skill' ? '新スキル修得' : `アイテム獲得 (x${loot.quantity || 1})`}
                                             </div>
