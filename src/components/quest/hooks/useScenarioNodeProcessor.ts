@@ -276,6 +276,7 @@ export function useScenarioNodeProcessor({
                     else if (stat === 'chaos' && (userProfile?.chaos_pts || 0) >= val) passed = true;
                     else if (stat === 'justice' && (userProfile?.justice_pts || 0) >= val) passed = true;
                     else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
+                    else if (stat === 'gold' && (useGameStore.getState().gold || userProfile?.gold || 0) >= val) passed = true;
                 }
                 
                 const successChoice = currentNode.choices?.find((c: any) => c.label === 'success');
@@ -535,21 +536,21 @@ export function useScenarioNodeProcessor({
 
                     if (res.ok && processedNodeRef.current === activeNodeId) {
                         const data = await res.json();
-                        if (data.player_name) {
+                        if (data.player_name && data.is_real) {
                             questState.setFlag('met_player_name', data.player_name, true);
+                            questState.setFlag('met_player_is_real', 1, true);
                         } else {
-                            questState.setFlag('met_player_name', '見知らぬ冒険者', true);
+                            questState.setFlag('met_player_name', '', true);
+                            questState.setFlag('met_player_is_real', 0, true);
                         }
                     } else {
-                        const dummies = ['戦士バルド', '魔術師ミリア', '冒険者ジーク', '盗賊レナ', '聖騎士クララ'];
-                        const picked = dummies[Math.floor(Math.random() * dummies.length)];
-                        questState.setFlag('met_player_name', picked, true);
+                        questState.setFlag('met_player_name', '', true);
+                        questState.setFlag('met_player_is_real', 0, true);
                     }
                 } catch (e) {
-                    console.error('[meet_player] Failed to fetch nearby player, using fallback:', e);
-                    const dummies = ['戦士バルド', '魔術師ミリア', '冒険者ジーク', '盗賊レナ', '聖騎士クララ'];
-                    const picked = dummies[Math.floor(Math.random() * dummies.length)];
-                    questState.setFlag('met_player_name', picked, true);
+                    console.error('[meet_player] Failed to fetch nearby player:', e);
+                    questState.setFlag('met_player_name', '', true);
+                    questState.setFlag('met_player_is_real', 0, true);
                 }
 
                 if (processedNodeRef.current === activeNodeId && nextId) {
@@ -870,6 +871,20 @@ export function useScenarioNodeProcessor({
                         questState.setFlag('merchant_item_id', selectedItem.item_id);
                         questState.setFlag('merchant_price', price);
                         console.log(`[merchant_trade] Randomized merchant item: ID=${selectedItem.item_id}, Price=${price}`);
+                    }
+                }
+
+                // Ensure merchant_item_name is fetched and stored
+                const mItemId = questState.getFlag('merchant_item_id');
+                if (mItemId && !questState.getFlag('merchant_item_name')) {
+                    try {
+                        const { data: itemData } = await supabase.from('items').select('name').eq('id', Number(mItemId)).maybeSingle();
+                        if (itemData?.name) {
+                            questState.setFlag('merchant_item_name', itemData.name);
+                            console.log(`[merchant_trade] Resolved item name: ${itemData.name}`);
+                        }
+                    } catch (err) {
+                        console.error('[merchant_trade] Failed to fetch item name:', err);
                     }
                 }
             }

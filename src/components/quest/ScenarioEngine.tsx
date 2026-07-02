@@ -91,12 +91,22 @@ export default function ScenarioEngine({
         if (!text) return text;
         
         // 他プレイヤー名置換
-        const metPlayerName = questState.getFlag('met_player_name') || '見知らぬ冒険者';
-        let result = text.replace(/{met_player_name}/g, String(metPlayerName));
+        const metPlayerName = questState.getFlag('met_player_name');
+        const metPlayerIsReal = questState.getFlag('met_player_is_real');
+        let metPlayerText = '別の冒険者パーティー';
+        if (metPlayerName && metPlayerIsReal === 1) {
+            metPlayerText = `【${metPlayerName}】のパーティー`;
+        }
+        let result = text.replace(/{met_player_text}/g, metPlayerText);
+        result = result.replace(/{met_player_name}/g, String(metPlayerName || '見知らぬ冒険者'));
 
         // 商人アイテム名置換 (v28.2)
+        const flagItemName = questState.getFlag('merchant_item_name');
         const merchantItemId = questState.getFlag('merchant_item_id');
-        if (merchantItemId) {
+        let itemName = '';
+        if (flagItemName) {
+            itemName = String(flagItemName);
+        } else if (merchantItemId) {
             const merchantItemNames: Record<number, string> = {
                 311: "妖刀「人食い」",
                 312: "破魔の戦斧",
@@ -109,7 +119,9 @@ export default function ScenarioEngine({
                 324: "守護のタリスマン",
                 325: "怒りの腕輪"
             };
-            const itemName = merchantItemNames[Number(merchantItemId)] || `未知の遺物(ID:${merchantItemId})`;
+            itemName = merchantItemNames[Number(merchantItemId)] || `未知の遺物(ID:${merchantItemId})`;
+        }
+        if (itemName) {
             result = result.replace(/\[merchant_item_name\]/g, itemName);
             result = result.replace(/{merchant_item_name}/g, itemName);
         }
