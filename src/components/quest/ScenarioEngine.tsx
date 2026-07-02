@@ -210,6 +210,7 @@ export default function ScenarioEngine({
     }, [scenario]);
 
     let currentNode = script.nodes?.[currentNodeId];
+    console.log('[ScenarioEngine] currentNode:', currentNodeId, JSON.stringify(currentNode));
 
     // --- タイプライターeffect ---
     useEffect(() => {

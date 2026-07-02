@@ -462,8 +462,10 @@ export function useScenarioNodeProcessor({
                 }
             }
 
-            else if (currentNode.action === 'heal_partial') {
+            else if (currentNode.action === 'heal_partial' || currentNode.params?.action === 'heal_partial') {
                 questState.healParty(0.5);
+                showToast('💚 湧き水によって傷が癒やされた。 (HP回復)', 'success');
+                setHistory(prev => [...prev, '[System] 湧き水を飲み、体力を回復した。']);
             }
 
             else if (currentNode.type === 'camp') {
@@ -517,7 +519,7 @@ export function useScenarioNodeProcessor({
                 }
             }
 
-            else if (currentNode.type === 'meet_player' || currentNode.action === 'meet_player') {
+            else if (currentNode.type === 'meet_player' || currentNode.action === 'meet_player' || currentNode.params?.action === 'meet_player') {
                 const activeNodeId = currentNodeId;
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
