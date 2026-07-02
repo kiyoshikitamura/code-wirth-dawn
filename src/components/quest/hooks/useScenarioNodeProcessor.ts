@@ -797,15 +797,23 @@ export function useScenarioNodeProcessor({
                 const msgs: string[] = [];
 
                 if (alignmentShift && typeof alignmentShift === 'object') {
+                    const alignLabels: Record<string, string> = {
+                        order: '秩序',
+                        chaos: '混沌',
+                        justice: '正義',
+                        evil: '悪意'
+                    };
                     for (const [key, val] of Object.entries(alignmentShift)) {
                         const amount = Number(val);
                         if (amount !== 0 && ['order', 'chaos', 'justice', 'evil'].includes(key)) {
+                            const label = alignLabels[key] || key;
                             itemsToGrant.push({
                                 itemId: `align_${key}`,
-                                itemName: `アライメント (${key})`,
+                                itemName: `アライメント (${label})`,
+                                name: `アライメント (${label})`,
                                 quantity: amount
                             });
-                            msgs.push(`${key} ${amount > 0 ? '+' : ''}${amount}`);
+                            msgs.push(`${label} ${amount > 0 ? '+' : ''}${amount}`);
                         }
                     }
                 }
