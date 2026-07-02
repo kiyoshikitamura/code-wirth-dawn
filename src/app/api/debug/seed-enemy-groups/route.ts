@@ -62,9 +62,7 @@ export async function GET(request: Request) {
 
     const rows = lines.slice(headerIdx + 1);
 
-    const results: any[] = [];
-    let successCount = 0;
-    let errorCount = 0;
+    const records: any[] = [];
 
     for (const row of rows) {
         const parts = row.split(',');
@@ -73,7 +71,6 @@ export async function GET(request: Request) {
         if (filterId && String(id) !== filterId) continue;
 
         const slug = parts[1]?.trim();
-        // members はパイプ区切り（例: enemy_apostle_soldier|enemy_apostle_soldier）
         const membersRaw = parts[2]?.trim() || '';
         const members = membersRaw.split('|').filter(m => m.trim());
 
@@ -83,30 +80,29 @@ export async function GET(request: Request) {
             members,
         };
 
-        if (dryRun) {
-            results.push({ action: 'dry_run', id, slug, members, data: groupData });
-            successCount++;
-            continue;
-        }
+        records.push(groupData);
+    }
 
-        const { error } = await supabase
-            .from('enemy_groups')
-            .upsert(groupData, { onConflict: 'id' });
+    if (dryRun) {
+        return NextResponse.json({
+            success: true,
+            dry_run: true,
+            summary: { total: records.length, success: records.length, errors: 0 },
+            results: records.map(r => ({ action: 'dry_run', id: r.id, slug: r.slug, members: r.members }))
+        });
+    }
 
-        if (error) {
-            results.push({ action: 'error', id, slug, error: error.message });
-            errorCount++;
-        } else {
-            results.push({ action: 'upserted', id, slug, members });
-            successCount++;
-        }
+    const { error } = await supabase
+        .from('enemy_groups')
+        .upsert(records, { onConflict: 'id' });
+
+    if (error) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
         success: true,
-        dry_run: dryRun,
-        filter_id: filterId || 'all',
-        summary: { total: successCount + errorCount, success: successCount, errors: errorCount },
-        results,
+        dry_run: false,
+        summary: { total: records.length, success: records.length, errors: 0 }
     });
 }
