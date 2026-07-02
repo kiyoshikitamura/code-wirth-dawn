@@ -114,11 +114,12 @@ export async function POST(req: Request) {
         try {
             const { data: partyMembers } = await supabaseService
                 .from('party_members')
-                .select('id')
+                .select('id, durability')
                 .eq('owner_id', id);
 
             if (partyMembers && partyMembers.length > 0) {
-                const updatePromises = partyMembers.map((m: any) => {
+                const activeMembersToHeal = partyMembers.filter((m: any) => (m.durability ?? 0) > 0);
+                const updatePromises = activeMembersToHeal.map((m: any) => {
                     return supabaseService
                         .from('party_members')
                         .update({ 
@@ -127,7 +128,7 @@ export async function POST(req: Request) {
                         .eq('id', m.id);
                 });
                 await Promise.all(updatePromises);
-                partyHealed = partyMembers.length;
+                partyHealed = activeMembersToHeal.length;
             }
         } catch (partyErr) {
             console.warn('[Inn Rest] Failed to heal party members:', partyErr);
