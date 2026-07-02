@@ -130,8 +130,9 @@ NODE,7061_b2f_06,通路を進むと、壁際に誰かが倒れているのが見
 NODE,7061_b2f_06_2,近づくと、それは息絶えて間もない先遣隊の戦士だった。,"{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b2f_06_3
 NODE,7061_b2f_06_3,その手元には、埃を被った古い革鞄が残されている。表面は擦り切れ、赤黒い血痕が付着している。,"{""bg"":""bg_rift_upper_01"",""type"":""text""}",
 CHOICE,,鞄の中身を改めてみる,,7061_b2f_loot_bag
-CHOICE,,静かに黙祷を捧げて通り過ぎる,,7061_b2f_07
+CHOICE,,静かに黙祷を捧げて通り過ぎる,,7061_b2f_pray
 NODE,7061_b2f_loot_bag,,"{""bg"":""bg_rift_upper_01"",""type"":""treasure"",""alignment_shift"":{""evil"":5},""item_pool"":[{""item_id"":706,""weight"":80},{""item_id"":707,""weight"":50},{""item_id"":708,""weight"":30},{""item_id"":709,""weight"":10},{""item_id"":15,""weight"":8},{""item_id"":16,""weight"":7},{""item_id"":17,""weight"":7},{""item_id"":18,""weight"":7},{""item_id"":19,""weight"":7},{""item_id"":20,""weight"":7},{""item_id"":21,""weight"":7},{""item_id"":53,""weight"":7},{""item_id"":558,""weight"":7},{""item_id"":559,""weight"":7},{""item_id"":561,""weight"":7},{""item_id"":563,""weight"":7},{""item_id"":564,""weight"":7},{""item_id"":568,""weight"":8},{""item_id"":572,""weight"":8},{""item_id"":214,""weight"":8},{""item_id"":245,""weight"":8},{""item_id"":430,""weight"":8},{""item_id"":431,""weight"":7},{""item_id"":700,""weight"":7}]}",7061_b2f_07
+NODE,7061_b2f_pray,私達は息絶えた冒険者の冥福を祈り、静かに黙祷を捧げた。,"{""bg"":""bg_rift_upper_01"",""type"":""reward"",""alignment_shift"":{""justice"":5}}",7061_b2f_07
 NODE,7061_b2f_07,悲しみを胸に、さらに奥へ進む。,"{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b2f_07_2
 NODE,7061_b2f_07_2,不意に、前方の曲がり角から複数の足音が響いてきた。魔物の気配ではない。,"{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b2f_07_3
 NODE,7061_b2f_07_3,私達は武器を構えて身を潜めた。,"{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b2f_npc_encounter
