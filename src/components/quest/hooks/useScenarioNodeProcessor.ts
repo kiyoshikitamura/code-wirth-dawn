@@ -866,6 +866,13 @@ export function useScenarioNodeProcessor({
                 }
             }
             else if (currentNode.type === 'merchant_trade') {
+                const lastMerchantNode = questState.getFlag('last_merchant_node');
+                if (lastMerchantNode !== currentNodeId) {
+                    questState.setFlag('merchant_item_id', '', true);
+                    questState.setFlag('merchant_price', 0, true);
+                    questState.setFlag('merchant_item_name', '', true);
+                    questState.setFlag('last_merchant_node', currentNodeId, true);
+                }
                 const pool = currentNode.params?.merchant_pool || currentNode.merchant_pool;
                 const price = currentNode.params?.price || currentNode.price || 30000;
                 

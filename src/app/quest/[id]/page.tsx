@@ -790,23 +790,45 @@ export default function QuestPage() {
                 const isRiftPool = String(enemyId).startsWith('pool_rift_');
 
                 if (isRiftPool) {
-                    // プールごとに選出されるエネミーを定義
-                    let poolEnemies: string[] = [];
+                    // プールごとに仕様書で定義された敵編成パターンから均等抽選
                     if (enemyId === 'pool_rift_upper') {
-                        poolEnemies = ['enemy_rift_imp', 'enemy_rift_hellhound', 'enemy_rift_hellwing'];
+                        const patterns = [
+                            ['enemy_rift_imp', 'enemy_rift_imp'],
+                            ['enemy_rift_hellhound', 'enemy_rift_imp'],
+                            ['enemy_rift_hellwing', 'enemy_skeleton'],
+                            ['enemy_skeleton', 'enemy_skeleton', 'enemy_zombie'],
+                            ['enemy_cultist', 'enemy_cultist']
+                        ];
+                        targetSlugs = patterns[Math.floor(Math.random() * patterns.length)];
                     } else if (enemyId === 'pool_rift_middle') {
-                        poolEnemies = ['enemy_rift_succubus', 'enemy_rift_demon_mage', 'enemy_rift_plague_demon'];
+                        const patterns = [
+                            ['enemy_rift_succubus', 'enemy_rift_hellhound'],
+                            ['enemy_rift_demon_mage', 'enemy_rift_hellwing'],
+                            ['enemy_rift_plague_demon', 'enemy_wraith'],
+                            ['enemy_wraith', 'enemy_wraith', 'enemy_zombie'],
+                            ['enemy_bandit_guard', 'enemy_bandit_guard', 'enemy_rift_demon_mage']
+                        ];
+                        targetSlugs = patterns[Math.floor(Math.random() * patterns.length)];
                     } else if (enemyId === 'pool_rift_lower') {
-                        poolEnemies = ['enemy_rift_demon_soldier', 'enemy_rift_shadow_demon', 'enemy_rift_archdemon'];
+                        const patterns = [
+                            ['enemy_rift_plague_demon', 'enemy_rift_demon_soldier'],
+                            ['enemy_rift_shadow_demon', 'enemy_rift_demon_soldier'],
+                            ['enemy_rift_archdemon', 'enemy_wraith'],
+                            ['enemy_yato_ronin_leader', 'enemy_yato_ronin', 'enemy_yato_ronin'],
+                            ['enemy_yato_tengu', 'enemy_yato_onibi', 'enemy_yato_onibi']
+                        ];
+                        targetSlugs = patterns[Math.floor(Math.random() * patterns.length)];
                     } else if (enemyId === 'pool_rift_abyss') {
-                        poolEnemies = ['enemy_rift_archdemon', 'enemy_rift_greater_demon', 'enemy_rift_shadow_demon'];
-                    }
-
-                    // 1体〜3体の敵をランダムで選出
-                    const numEnemies = Math.floor(Math.random() * 3) + 1; // 1~3体
-                    for (let k = 0; k < numEnemies; k++) {
-                        const randEnemy = poolEnemies[Math.floor(Math.random() * poolEnemies.length)];
-                        targetSlugs.push(randEnemy);
+                        const patterns = [
+                            ['enemy_rift_greater_demon', 'enemy_rift_demon_soldier'],
+                            ['enemy_rift_archdemon', 'enemy_rift_archdemon', 'enemy_rift_shadow_demon'],
+                            ['enemy_rift_greater_demon', 'enemy_mutant_chimera', 'enemy_mutant_chimera'],
+                            ['enemy_karyu_assassin_elite', 'enemy_karyu_assassin_elite', 'enemy_bounty_hunter_sword'],
+                            ['enemy_angel_soldier', 'enemy_rift_demon_soldier'],
+                            ['enemy_mutant_chimera', 'enemy_mutant_chimera', 'enemy_mutant_chimera', 'enemy_rift_demon_mage'],
+                            ['enemy_rift_archdemon', 'enemy_karyu_assassin_elite', 'enemy_bounty_hunter_sword']
+                        ];
+                        targetSlugs = patterns[Math.floor(Math.random() * patterns.length)];
                     }
                 } else {
                     // Determine if enemyId is numeric (ID) or string (Slug)

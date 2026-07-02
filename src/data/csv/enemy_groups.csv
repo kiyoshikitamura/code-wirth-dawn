@@ -182,4 +182,5 @@ id,slug,members
 1006,enemy_grp_rift_succ_hound,enemy_rift_succubus|enemy_rift_hellhound
 1007,enemy_grp_rift_mage_wing,enemy_rift_demon_mage|enemy_rift_hellwing
 1008,enemy_grp_rift_skel_king,boss_skeleton_king|enemy_rift_imp|enemy_rift_imp
+9510,enemy_grp_rift_merchant_demon,enemy_rift_greater_demon|enemy_rift_demon_mage
 

@@ -29,6 +29,7 @@ const BGM_FILES: Record<string, string> = {
     bgm_spot_final_choice: '/audio/bgm/bgm_spot_final_choice.ogg',
     // 狭間の迷宮
     bgm_rift_upper:        '/audio/bgm/bgm_rift_upper.ogg',
+    bgm_rift_middle:       '/audio/bgm/bgm_rift_middle.ogg',
 };
 
 const SE_FILES: Record<string, string> = {

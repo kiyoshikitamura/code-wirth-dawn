@@ -121,6 +121,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'bg_rift_upper_02': '/images/quests/bg_rift_upper_02.png',
     'bg_rift_middle_01': '/images/quests/bg_rift_middle_01.png',
     'bg_rift_middle_02': '/images/quests/bg_rift_middle_02.png',
+    'bg_rift_middle_maze': '/images/quests/bg_rift_middle_maze.png',
     'bg_rift_lower_01': '/images/quests/bg_rift_lower_01.png',
     'bg_rift_lower_02': '/images/quests/bg_rift_lower_02.png',
     'bg_rift_abyss': '/images/quests/bg_rift_abyss.png',
@@ -136,6 +137,7 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     'fg_rift_well': '/images/quests/fg_rift_well.png',
     'fg_rift_spring': '/images/quests/fg_rift_spring.png',
     'fg_rift_trap_spears': '/images/quests/fg_rift_trap_spears.png',
+    'fg_rift_pedestals': '/images/quests/fg_rift_pedestals.png',
 
     // 前景画像 (スプライト)
     'fg_demon_soldier': '/images/quests/fg_demon_soldier.png',
