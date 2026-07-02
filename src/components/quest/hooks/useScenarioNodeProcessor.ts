@@ -345,7 +345,7 @@ export function useScenarioNodeProcessor({
                     .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0);
                 
                 const hasItem = (latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount) >= reqQty;
-                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 if (!currentNode.params?.silent && !currentNode.silent) {
                     showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
@@ -393,7 +393,7 @@ export function useScenarioNodeProcessor({
                 }
 
                 const hasEquipped = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId) && i.is_equipped).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) >= reqQty;
-                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasEquipped ? '✅ 指定の装備を確認。' : '❌ 指定の装備がされていない...', hasEquipped ? 'success' : 'error');
                 setCurrentNodeId(hasEquipped ? successNode : failNode);
@@ -401,7 +401,7 @@ export function useScenarioNodeProcessor({
 
             else if (currentNode.type === 'check_delivery') {
                 const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
-                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 const activeNodeId = currentNodeId;
 
@@ -482,7 +482,7 @@ export function useScenarioNodeProcessor({
                             droppedItems: [],
                             usedConsumables: [...(questState.consumedItems || []), ...consumedList]
                         });
-                        showToast('✅ アイテムを納品した。', 'success');
+                        showToast('✅ アイテムを渡した。', 'success');
                     } else {
                         showToast('✅ アイテムを確認した。', 'success');
                     }
