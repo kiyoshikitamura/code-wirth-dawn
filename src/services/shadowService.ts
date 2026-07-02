@@ -22,7 +22,7 @@ export interface ShadowSummary {
     introduction?: string;  // 自己紹介
     slug?: string;          // NPC識別用スラグ (v4.4)
     equipped_items?: { name: string; slot: string }[]; // v13.3追加
-    vitality: number;
+    vitality?: number;
 }
 
 // タスク1: 英霊（shadow_heroic）の契約金算出式
