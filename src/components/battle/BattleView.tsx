@@ -323,7 +323,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 cardEffect.effectType === 'heal' ||
                 card.type === 'Heal' || card.name.includes('回復') || card.name.includes('治癒') || card.name.includes('応急') || card.name.includes('ヒール') || card.name.includes('癒');
             // 全体回復カード（target_type === 'all_allies'）の場合は単体選択モードに入らないようにする (Bug X)
-            const isAllyHeal = isHealCard && card.target_type !== 'all_allies' && cardEffect.effectType !== 'buff_party' && cardEffect.effectType !== 'cure_self';
+            const isAllyHeal = (isHealCard || card.target_type === 'single_ally') && card.target_type !== 'all_allies' && cardEffect.effectType !== 'buff_party';
 
             const isBuff = card.type === 'Support' ||
                 card.type === 'Defense' ||

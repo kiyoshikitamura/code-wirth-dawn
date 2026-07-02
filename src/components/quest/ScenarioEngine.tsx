@@ -94,7 +94,7 @@ export default function ScenarioEngine({
         const metPlayerName = questState.getFlag('met_player_name');
         const metPlayerIsReal = questState.getFlag('met_player_is_real');
         let metPlayerText = '別の冒険者パーティー';
-        if (metPlayerName && metPlayerIsReal === 1) {
+        if (metPlayerName && metPlayerName !== '見知らぬ冒険者' && String(metPlayerIsReal) === '1') {
             metPlayerText = `【${metPlayerName}】のパーティー`;
         }
         let result = text.replace(/{met_player_text}/g, metPlayerText);

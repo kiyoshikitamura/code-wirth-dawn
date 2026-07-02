@@ -269,8 +269,6 @@ export const createBattleSlice = (
                                 ? duration + 1
                                 : duration;
                             initialEffects = applyEffect(initialEffects, id as StatusEffectId, finalDuration, val);
-                            const buffName = getEffectName(id as StatusEffectId, val);
-                            npcStartBuffMessages.push(`✨ ${pm.name}は装備効果で${buffName}！ (${duration}T)`);
                         }
                     });
                 }
@@ -292,6 +290,13 @@ export const createBattleSlice = (
                         npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(初期AP+${blessing.ap_bonus})`);
                     }
                 }
+                const npcStatusLogs = getBuffStatusLogMessages(initialEffects);
+                npcStatusLogs.forEach(msg => {
+                    const formatted = msg
+                        .replace('現在の強化状態', `${pm.name}の装備バフ`)
+                        .replace('現在の弱体・状態異常', `${pm.name}の装備デバフ`);
+                    npcStartBuffMessages.push(formatted);
+                });
             }
 
             return {
@@ -377,10 +382,7 @@ export const createBattleSlice = (
                             finalDuration,
                             val
                         );
-                        const buffName = getEffectName(id as StatusEffectId, val);
-                        startBuffMessages.push(
-                            `✨ ${gear.name}の効果で${buffName}！ (${duration}T)`
-                        );
+                        // Individual equipment logs removed to prevent clutter
                     }
                 });
             }
@@ -831,6 +833,7 @@ export const createBattleSlice = (
         let fleeNow = false;
         let effectApplied = false;
         let updatedEnemies = [...(battleState.enemies || [])];
+        let updatedParty = [...(battleState.party || [])];
 
         const effectLabel: Record<string, string> = {
             regen: 'リジェネ', atk_up: '攻撃力上昇', def_up: '防御力上昇',
@@ -868,6 +871,36 @@ export const createBattleSlice = (
         }
 
         if (!ed.escape) {
+            const isReviveElixir = item.item_id === 423 || item.slug === 'item_roland_elixir' || ed.effect === 'revive_full';
+            if (isReviveElixir && updatedParty.length > 0) {
+                updatedParty = updatedParty.map(m => {
+                    const maxDur = (m as any).max_hp || m.max_durability || m.durability || 100;
+                    const wasDead = !m.is_active || (m.durability ?? 0) <= 0;
+                    const curDur = m.durability ?? 0;
+                    if (wasDead) {
+                        itemMessages.push(`✨ 天使の涙の奇跡により、${m.name}が蘇生した！ (HP: ${maxDur}/${maxDur})`);
+                        itemMessages.push(`__party_sync:${m.id}:${maxDur}`);
+                        if (m.id && m.origin_type !== 'quest_guest') {
+                            supabase.from('party_members').update({ durability: maxDur, is_active: true }).eq('id', m.id).then();
+                        }
+                        return {
+                            ...m,
+                            durability: maxDur,
+                            is_active: true,
+                            status_effects: []
+                        };
+                    } else if (curDur < maxDur) {
+                        itemMessages.push(`✨ 天使の涙の効果により、${m.name}のHPが全回復した！ (HP: ${maxDur}/${maxDur})`);
+                        itemMessages.push(`__party_sync:${m.id}:${maxDur}`);
+                        return {
+                            ...m,
+                            durability: maxDur
+                        };
+                    }
+                    return m;
+                });
+            }
+
             if (ed.heal_full || ed.heal_all) {
                 effectApplied = true;
                 const healed = maxHp - prevHp;
@@ -1071,6 +1104,7 @@ export const createBattleSlice = (
             ),
             battleState: {
                 ...state.battleState,
+                party: updatedParty,
                 messages: [...state.battleState.messages, ...itemMessages],
                 player_effects: newPlayerEffects,
                 battleItems: newBattleItems,
@@ -1372,6 +1406,7 @@ export const createBattleSlice = (
                 let customTargetEffects: StatusEffect[] | null = null;
                 logMsg = '';
                 healSyncHp = null;
+                let shouldReturnToHand = false;
 
                 switch (effectInfo.effectType) {
                     case 'catharsis': {
@@ -1801,7 +1836,7 @@ export const createBattleSlice = (
                         const critLabel = result.isCritical ? ' クリティカルヒット！' : '';
                         logMsg = `${loopTargetEnemy.name}に${card.name}！${critLabel} ${damage} のダメージ！`;
                         if (hasBleed) {
-                            nextHand.push(card);
+                            shouldReturnToHand = true;
                             logMsg += ` 対象が出血状態のため、カードが手札に返還された！`;
                         }
                         break;
@@ -2370,27 +2405,72 @@ export const createBattleSlice = (
                     case 'cure_self': {
                         const healAmount = (card as any).effect_val ?? card.power ?? 0;
                         let healMsg = '';
-                        if (userProfile && healAmount > 0) {
-                            const maxHp = effectivePlayerMaxHp;
-                            const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
-                            set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
-                            healMsg = ` HP +${healAmount} 回復！ (${newHp}/${maxHp}) 及び`;
-                            healSyncHp = newHp;
-                            const { selectedProfileId } = get();
-                            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
-                        }
+                        const cardTargetType = (targetId && targetId !== 'player') ? 'single_ally' : (card.target_type || 'self');
+                        const resolvedTargetId = targetId || getDefaultTarget(card, battleState);
 
-                        if (effectInfo.cureType === 'status') {
-                            const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse'];
-                            currentPlayerEffects = currentPlayerEffects.filter(e => !statusAilments.includes(e.id));
-                            logMsg = `${card.name}を使用！${healMsg}状態異常を回復した！`;
-                        } else if (effectInfo.cureType === 'debuff') {
-                            currentPlayerEffects = currentPlayerEffects.filter(e => !['atk_down', 'def_down'].includes(e.id));
-                            logMsg = `${card.name}を使用！${healMsg}デバフを解除した！`;
+                        if (cardTargetType === 'single_ally' && resolvedTargetId && resolvedTargetId !== 'player') {
+                            const party = [...(battleState.party || [])];
+                            const idx = party.findIndex(m => String(m.id) === resolvedTargetId);
+                            if (idx >= 0) {
+                                const member = party[idx];
+                                let newDur = member.durability ?? 0;
+                                let cureMsg = '';
+                                if (healAmount > 0) {
+                                    const maxDur = (member as any).max_hp || member.max_durability || member.durability || 100;
+                                    const curDur = member.durability ?? 0;
+                                    const healed = Math.min(healAmount, maxDur - curDur);
+                                    newDur = curDur + healed;
+                                    cureMsg = ` HP +${healed} 回復！ (${newDur}/${maxDur}) 及び`;
+                                    newMessages.push(`__party_sync:${member.id}:${newDur}`);
+                                }
+
+                                let newEffects = [...(member.status_effects || [])];
+                                if (effectInfo.cureType === 'status') {
+                                    const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse'];
+                                    newEffects = newEffects.filter(e => !statusAilments.includes(e.id));
+                                    logMsg = `${card.name}を${member.name}に使用！${cureMsg}状態異常を回復した！`;
+                                } else if (effectInfo.cureType === 'debuff') {
+                                    newEffects = newEffects.filter(e => !['atk_down', 'def_down'].includes(e.id));
+                                    logMsg = `${card.name}を${member.name}に使用！${cureMsg}デバフを解除した！`;
+                                } else {
+                                    const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'atk_down', 'def_down'];
+                                    newEffects = newEffects.filter(e => !statusAilments.includes(e.id));
+                                    logMsg = `${card.name}を${member.name}に使用！${cureMsg}状態を正常に戻した！`;
+                                }
+
+                                party[idx] = { ...member, durability: newDur, status_effects: newEffects };
+                                set(state => ({
+                                    battleState: {
+                                        ...state.battleState,
+                                        party
+                                    }
+                                }));
+                            } else {
+                                logMsg = `${card.name}を使用！`;
+                            }
                         } else {
-                            const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'atk_down', 'def_down'];
-                            currentPlayerEffects = currentPlayerEffects.filter(e => !statusAilments.includes(e.id));
-                            logMsg = `${card.name}を使用！${healMsg}状態を正常に戻した！`;
+                            if (userProfile && healAmount > 0) {
+                                const maxHp = effectivePlayerMaxHp;
+                                const newHp = Math.min(maxHp, (userProfile.hp || 0) + healAmount);
+                                set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                                healMsg = ` HP +${healAmount} 回復！ (${newHp}/${maxHp}) 及び`;
+                                healSyncHp = newHp;
+                                const { selectedProfileId } = get();
+                                updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
+                            }
+
+                            if (effectInfo.cureType === 'status') {
+                                const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse'];
+                                currentPlayerEffects = currentPlayerEffects.filter(e => !statusAilments.includes(e.id));
+                                logMsg = `${card.name}を使用！${healMsg}状態異常を回復した！`;
+                            } else if (effectInfo.cureType === 'debuff') {
+                                currentPlayerEffects = currentPlayerEffects.filter(e => !['atk_down', 'def_down'].includes(e.id));
+                                logMsg = `${card.name}を使用！${healMsg}デバフを解除した！`;
+                            } else {
+                                const statusAilments: string[] = ['poison', 'burn', 'stun', 'bind', 'bleed', 'bleed_minor', 'fear', 'blind', 'blind_minor', 'freeze', 'curse', 'atk_down', 'def_down'];
+                                currentPlayerEffects = currentPlayerEffects.filter(e => !statusAilments.includes(e.id));
+                                logMsg = `${card.name}を使用！${healMsg}状態を正常に戻した！`;
+                            }
                         }
                         break;
                     }
@@ -2446,12 +2526,16 @@ export const createBattleSlice = (
                 }
 
                 if (loop === 0) {
-                    nextHand = nextHand.filter(c => c.id !== card.id);
-                    if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
-                        currentExhaustPile.push({ id: card.id, name: card.name, type: card.type });
-                        currentConsumedItems.push(card.id);
+                    if (shouldReturnToHand) {
+                        // Keep in hand, do not discard
                     } else {
-                        nextDiscardPile = [...nextDiscardPile, card];
+                        nextHand = nextHand.filter(c => c.id !== card.id);
+                        if ((card.type === 'Item' && (card as any).isEquipment) || card.cost_type === 'item' || card.type === 'Support') {
+                            currentExhaustPile.push({ id: card.id, name: card.name, type: card.type });
+                            currentConsumedItems.push(card.id);
+                        } else {
+                            nextDiscardPile = [...nextDiscardPile, card];
+                        }
                     }
                 }
 

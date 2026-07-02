@@ -45,12 +45,18 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
 
     const [isClosing, setIsClosing] = useState(false);
 
-    const tabCounts = useMemo(() => ({
-        special: quests.filter((q: any) => q.quest_type === 'special').length,
-        easy: quests.filter((q: any) => q.difficulty_tier === 'easy' && q.quest_type !== 'special').length,
-        normal: quests.filter((q: any) => q.difficulty_tier === 'normal' && q.quest_type !== 'special').length,
-        hard: quests.filter((q: any) => q.difficulty_tier === 'hard' && q.quest_type !== 'special').length,
-    }), [quests]);
+    const tabCounts = useMemo(() => {
+        const specialCount = quests.filter((q: any) => q.quest_type === 'special').length;
+        const easyCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'easy').length;
+        const normalCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'normal').length;
+        const hardCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'hard').length;
+        return {
+            special: specialCount,
+            easy: easyCount,
+            normal: normalCount,
+            hard: hardCount
+        };
+    }, [quests]);
 
     if (!isOpen) return null;
     if (!mounted) return null;
@@ -65,7 +71,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         if (activeTab === 'special') {
             return q.quest_type === 'special';
         } else {
-            return q.quest_type === 'normal' && q.difficulty_tier === activeTab;
+            return (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === activeTab;
         }
     });
 
