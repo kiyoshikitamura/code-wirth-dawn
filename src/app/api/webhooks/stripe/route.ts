@@ -160,19 +160,7 @@ export async function POST(req: Request) {
                         }
                     }
 
-                    // Record payment log (Spec Dashboard Extensions)
-                    const { error: payLogErr } = await supabaseAdmin
-                        .from('payment_logs')
-                        .insert({
-                            id: session.id,
-                            user_id: userId,
-                            amount: session.amount_total ?? 0,
-                            gold_amount: 0,
-                            type: 'subscription'
-                        });
-                    if (payLogErr) {
-                        console.error('[webhooks/stripe] Failed to write payment_logs for subscription:', payLogErr);
-                    }
+                    // Subscription payment log is now recorded in invoice.payment_succeeded to support renewals and trial conversions without double-counting.
 
                 } else if (session.mode === 'payment') {
                     // ─── ゴールド都度購入 ───
@@ -308,6 +296,67 @@ export async function POST(req: Request) {
                     } else {
                         console.log(`[webhooks/stripe] Awarded initial weekly bonus (tier: ${newTier}) to user ${userId} on update (success: ${isSuccess})`);
                     }
+                }
+                break;
+            }
+
+            case 'invoice.payment_succeeded': {
+                const invoice = event.data.object as any;
+
+                // Only process subscription invoices
+                if (!invoice.subscription) {
+                    break;
+                }
+
+                // Retrieve user_id from metadata or by retrieving customer/subscription objects
+                let userId = invoice.subscription_details?.metadata?.user_id || invoice.metadata?.user_id;
+
+                if (!userId && invoice.customer) {
+                    try {
+                        const customer = await stripe.customers.retrieve(invoice.customer as string);
+                        if ('metadata' in customer) {
+                            userId = customer.metadata?.user_id;
+                        }
+                    } catch (custErr) {
+                        console.error('[webhooks/stripe] Failed to retrieve customer for invoice payment:', custErr);
+                    }
+                }
+
+                if (!userId && invoice.subscription) {
+                    try {
+                        const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+                        userId = subscription.metadata?.user_id;
+                    } catch (subErr) {
+                        console.error('[webhooks/stripe] Failed to retrieve subscription for invoice payment:', subErr);
+                    }
+                }
+
+                if (!userId) {
+                    console.error('[webhooks/stripe] invoice.payment_succeeded: user_id could not be determined. Invoice:', invoice.id);
+                    break;
+                }
+
+                const amount = invoice.amount_paid ?? 0;
+
+                // Record subscription payment log
+                const { error: payLogErr } = await supabaseAdmin
+                    .from('payment_logs')
+                    .insert({
+                        id: invoice.charge ? (invoice.charge as string) : invoice.id,
+                        user_id: userId,
+                        amount: amount,
+                        gold_amount: 0,
+                        type: 'subscription'
+                    });
+
+                if (payLogErr) {
+                    if (payLogErr.code === '23505') {
+                        console.log('[webhooks/stripe] invoice.payment_succeeded: payment log already exists, skipping.');
+                    } else {
+                        console.error('[webhooks/stripe] Failed to write payment_logs for invoice:', payLogErr);
+                    }
+                } else {
+                    console.log(`[webhooks/stripe] Recorded subscription payment of ${amount} JPY for user ${userId}`);
                 }
                 break;
             }
