@@ -138,7 +138,7 @@ export async function GET(req: Request) {
             let dau = 0, dpu = 0;
             try {
                 const { data: latestBasicData, error: latestBasicErr } = await supabaseServer
-                    .from('daily_basic_stats_view')
+                    .from('daily_kpi_cache')
                     .select('dau, dpu')
                     .order('date', { ascending: false })
                     .limit(1)
@@ -190,10 +190,31 @@ export async function GET(req: Request) {
 
             const oldestDateStr = targetDaysList[0];
 
-            // Always query daily_basic_stats_view directly to avoid statement timeouts caused by get_daily_kpi RPC
+            // Check if daily cache needs to be refreshed (if stale - older than 5 minutes)
+            try {
+                const todayJst = toJstDateStr(new Date());
+                const { data: cacheStatus, error: statusErr } = await supabaseServer
+                    .from('daily_kpi_cache')
+                    .select('updated_at')
+                    .eq('date', todayJst)
+                    .single();
+
+                const isStale = !cacheStatus || 
+                                statusErr || 
+                                (Date.now() - new Date(cacheStatus.updated_at).getTime() > 5 * 60 * 1000); // 5 minutes
+
+                if (isStale) {
+                    console.log('[Admin KPI] Cache is stale or missing. Refreshing daily KPI cache...');
+                    await supabaseServer.rpc('refresh_daily_kpi_cache', { full_refresh: false });
+                }
+            } catch (cacheErr) {
+                console.error('[Admin KPI] Failed to check/refresh daily KPI cache:', cacheErr);
+            }
+
+            // Query cached daily KPI stats
             const dailyBasicData = await fetchAll<any>(
                 supabaseServer
-                    .from('daily_basic_stats_view')
+                    .from('daily_kpi_cache')
                     .select('date, new_users, new_users_registered, new_users_guest, total_battles, victories, defeats, fleds, revenue, dpu, dau')
                     .gte('date', oldestDateStr),
                 'date'
