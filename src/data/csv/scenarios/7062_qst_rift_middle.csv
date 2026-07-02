@@ -26,18 +26,18 @@ NODE,7062_b5f_door_detour,扉を避け、暗く湿った迂回路へと入る。
 NODE,7062_b5f_door_detour_2,突然、背後でカチリと石板が沈む音がした。仕掛け罠だ！ 天井から無数の槍が降り注ぐ！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_val"":12}",7062_b5f_adventurer
 NODE,7062_b5f_adventurer,罠の通路を抜けてさらに奥へ進むと、壁際で力尽きて倒れ込んでいる一人の冒険者を見つけた。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_adventurer_2
 NODE,7062_b5f_adventurer_2,装備はボロボロに引き裂かれ、深い爪痕から絶え間なく血が流れている。虫の息のようだ。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_adventurer_3
-NODE,7062_b5f_adventurer_3,「うう、頼む……誰か、薬草を……さもなくば、癒やしの魔術を施してくれ……」,"{""bg"":""bg_rift_middle_01"",""type"":""text"",""speaker"":""瀕死の冒険者""}",
-CHOICE,,薬草を分け与える（薬草×1を消費）,,7062_b5f_adventurer_herb_check
+NODE,7062_b5f_adventurer_3,「うう、頼む……誰か、癒やし草を……さもなくば、癒やしの魔術を施してくれ……」,"{""bg"":""bg_rift_middle_01"",""type"":""text"",""speaker"":""瀕死の冒険者""}",
+CHOICE,,癒やし草を分け与える（癒やし草×1を消費）,,7062_b5f_adventurer_herb_check
 CHOICE,,回復魔法で癒やす,,7062_b5f_adventurer_magic
 CHOICE,,無視して立ち去る,,7062_b5f_adventurer_ignore
 CHOICE,,身ぐるみを剥ぎ取る（強奪）,,7062_b5f_adventurer_rob
-NODE,7062_b5f_adventurer_herb_check,,"{""type"":""check_delivery"",""item_id"":3001,""remove_on_success"":true,""success"":""7062_b5f_adventurer_herb_success"",""fallback"":""7062_b5f_adventurer_no_herb""}",
+NODE,7062_b5f_adventurer_herb_check,,"{""type"":""check_delivery"",""item_id"":702,""remove_on_success"":true,""success"":""7062_b5f_adventurer_herb_success"",""fallback"":""7062_b5f_adventurer_no_herb""}",
 NODE,7062_b5f_adventurer_herb_success,「おお……痛みが引いていく……感謝する……。お礼と言ってはなんだが、この先にある幻影の十字路は『東の壁』に隠し扉がある。そこが正解だ……」,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""justice"":5},""speaker"":""瀕死の冒険者""}",7062_b5f_crossroads_intro
-NODE,7062_b5f_adventurer_no_herb,助けようとしたが、インベントリに『薬草（ID: 3001）』を持っていなかった。他の手段を考えなければならない。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_adventurer_3
+NODE,7062_b5f_adventurer_no_herb,助けようとしたが、インベントリに『癒やし草』を持っていなかった。他の手段を考え直さなければならない。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_adventurer_3
 NODE,7062_b5f_adventurer_magic,「魔法のおかげで命が繋がった……恩に着る。十字路の南の先には宝があったが、先に進む道ではなかった。気をつけろ……」,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""justice"":3},""speaker"":""瀕死の冒険者""}",7062_b5f_crossroads_intro
 NODE,7062_b5f_adventurer_ignore,助けを求める声を冷酷に聞き流し、そのまま通路の先へ進んだ。,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""evil"":5}}",7062_b5f_crossroads_intro
 NODE,7062_b5f_adventurer_rob,男の財布から力ずくで500Gを奪い取った！ しかし、男が懐に忍ばせていた自爆トラップが作動した！,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""evil"":10},""gold"":500}",7062_b5f_adventurer_rob_dmg
-NODE,7062_b5f_adventurer_rob_dmg,トラップの魔力爆発が直撃し、手痛いダメージを受けた！ (最大HPの10%ダメージ),"{""bg"":""bg_rift_middle_01"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.10}",7062_b5f_crossroads_intro
+NODE,7062_b5f_adventurer_rob_dmg,トラップの魔力爆発が直撃し、手痛いダメージを受けた！ (最大HP of 10%ダメージ),"{""bg"":""bg_rift_middle_01"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.10}",7062_b5f_crossroads_intro
 NODE,7062_b5f_crossroads_intro,瀕死の男をあとにし、ねじれた魔力が激しく渦巻く大広間へと足を踏み入れた。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_crossroads
 NODE,7062_b5f_crossroads,目の前には、視界が歪むほどの魔力に包まれた『幻影の十字路』が広がっている。空間が不自然にループしており、正解以外の道はすべてここに戻る。,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",
 CHOICE,,北の通路を進む,,7062_b5f_cross_north
@@ -50,19 +50,19 @@ CHOICE,,win,,7062_b5f_cross_north_win
 CHOICE,,lose,,end_failure
 NODE,7062_b5f_cross_north_win,襲いかかる魔物を撃破したが、奇妙な浮遊感と共に周囲の景色がぐにゃりと歪んだ……,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",7062_b5f_cross_loop_msg
 NODE,7062_b5f_cross_loop_msg,進んだはずの通路の先は、奇妙な歪みを経て元の場所へと繋がっていた。無限に繰り返されるかのような『幻影の十字路』が、再び目の前に姿を現す……,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",7062_b5f_crossroads
-NODE,7062_b5f_cross_west,西の通路を進む。どこまで歩いても全く同じ石肌の壁が続き、最終的には完全に閉ざされた行き止まりの壁に行き当たった。,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",7062_b5f_cross_loop_msg
-NODE,7062_b5f_cross_south,南の通路へ進む。崩落した瓦礫の陰に、魔物が隠していたらしき古びた木箱を見つけた。,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",
+NODE,7062_b5f_cross_west,西の通路を進む。どこまで歩いても全く同じ石肌の壁が続き、最終的には完全に閉ざされた行き致まりの壁に行き当たった。,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",7062_b5f_cross_loop_msg
+NODE,7062_b5f_cross_south,南の通路へ進む。崩落した瓦礫の陰に、魔物が隠していたらしき古びた木箱を見つけた。,"{""bg"":""bg_rift_middle_maze"",""fg"":""fg_rift_chest"",""type"":""text""}",
 CHOICE,,木箱の宝箱を開けてみる,,7062_b5f_cross_south_chest
 CHOICE,,無視して通路を戻る,,7062_b5f_cross_loop_msg
-NODE,7062_b5f_cross_south_chest,木箱を慎重に開けると、古い小金貨といくつかの消費アイテムが入っていた。,"{""bg"":""bg_rift_middle_maze"",""type"":""treasure"",""item_pool"":[{""item_id"":706,""weight"":500},{""item_id"":15,""weight"":300},{""item_id"":430,""weight"":200}]}",7062_b5f_cross_loop_msg
+NODE,7062_b5f_cross_south_chest,木箱を慎重に開けると、古い小金貨といくつかの消費アイテムが入っていた。,"{""bg"":""bg_rift_middle_maze"",""fg"":""fg_rift_chest"",""type"":""treasure"",""item_pool"":[{""item_id"":706,""weight"":500},{""item_id"":15,""weight"":300},{""item_id"":430,""weight"":200}]}",7062_b5f_cross_loop_msg
 NODE,7062_b5f_cross_east,東の壁面を詳細に調査する。先ほどの冒険者から得たヒントの通り、特定の歪んだルーンが刻まれたレンガを強く叩いてみた。,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",7062_b5f_cross_east_2
 NODE,7062_b5f_cross_east_2,ゴゴゴゴ……と床を震わせる音が響き、目の前の石壁が横にスライドして、暗闇の奥へと続く隠し通路が現れた！,"{""bg"":""bg_rift_middle_maze"",""fg"":""fg_rift_door_basic"",""type"":""text""}",7062_b5f_cross_east_3
-NODE,7062_b5f_cross_east_3,私達はループ迷宮を突破したことを確信し、開かれた隠し扉の先へ足早に進んだ。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_merchant_intro
+NODE,7062_b5f_cross_east_3,私達は繰り返される迷路を突破したことを確信し、開かれた隠し通路の先へ足早に進んだ。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_merchant_intro
 NODE,7062_b5f_merchant_intro,通路を抜けた先の小部屋で、黒いローブを深く被った怪しい男が、無気味な光を放つ品物を並べて佇んでいた。,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""text""}",7062_b5f_merchant_trade
 NODE,7062_b5f_merchant_trade,,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""merchant_trade"",""price"":40000,""merchant_pool"":[{""item_id"":708,""weight"":100}]}",7062_b5f_merchant_desc
 NODE,7062_b5f_merchant_desc,"「ヒッヒッヒ……よくぞこの迷宮の歪みを抜けてきた。良い品があるぞ。この希少な『未鑑定アイテム[SR]』を40,000ゴールドで買わんかね？」","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""text"",""speaker"":""怪しい商人""}",
 CHOICE,,"40,000Gを支払い、品物を購入する",,7062_b5f_merchant_buy_check
-CHOICE,,値切ってみる（名声・正義交渉）,,7062_b5f_merchant_discount_check
+CHOICE,,値切ってみる（名声交渉）,,7062_b5f_merchant_discount_check
 CHOICE,,力ずくで奪い取る（強奪・戦闘）,,7062_b5f_merchant_rob_battle
 CHOICE,,取引を断る,,7062_b5f_merchant_decline
 NODE,7062_b5f_merchant_buy_check,,"{""bg"":""bg_rift_middle_01"",""type"":""check_status"",""req_stat"":""gold"",""req_val"":40000}",
@@ -70,19 +70,19 @@ CHOICE,,success,,7062_b5f_merchant_buy_success
 CHOICE,,failure,,7062_b5f_merchant_no_gold
 NODE,7062_b5f_merchant_buy_success,「毎度あり……。ククク、運が良ければお前の命を救う名器となるだろう。さあ、受け取るが良い」,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""reward"",""is_merchant_buy"":true,""alignment_shift"":{""evil"":2},""speaker"":""怪しい商人""}",7062_b5f_merchant_end
 NODE,7062_b5f_merchant_no_gold,「……おっと、金が足りないようだな。手持ちが無いなら、商売はおしまいだ。冷やかしは帰ってくれ」,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""text"",""speaker"":""怪しい商人""}",7062_b5f_merchant_end
-NODE,7062_b5f_merchant_discount_check,,"{""bg"":""bg_rift_middle_01"",""type"":""check_status"",""req_stat"":""justice"",""req_val"":30}",
+NODE,7062_b5f_merchant_discount_check,,"{""bg"":""bg_rift_middle_01"",""type"":""check_status"",""req_stat"":""reputation"",""req_val"":30}",
 CHOICE,,success,,7062_b5f_merchant_discount_success
 CHOICE,,failure,,7062_b5f_merchant_discount_fail
-NODE,7062_b5f_merchant_discount_success,"「ほう……お前たちの正義の評判はここまで届いているぞ。良かろう、その名声に免じて30,000ゴールドに値引きしてやろう」","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""reward"",""gold"":-30000,""items"":[{""id"":708,""amount"":1}],""speaker"":""怪しい商人""}",7062_b5f_merchant_end
+NODE,7062_b5f_merchant_discount_success,"「ほう……お前たちの名声の高さはここまで届いているぞ。良かろう、その名声に免じて30,000ゴールドに値引きしてやろう」","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""reward"",""gold"":-30000,""items"":[{""id"":708,""amount"":1}],""speaker"":""怪しい商人""}",7062_b5f_merchant_end
 NODE,7062_b5f_merchant_discount_fail,「値切るだと？ ここは命を切り売りする迷宮だ。情けで安売りするほど私はお人好しではないぞ」,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""text"",""speaker"":""怪しい商人""}",7062_b5f_merchant_desc
 NODE,7062_b5f_merchant_rob_battle,「力ずくで奪う気か！ その愚行、死を以て償うが良い！」商人はフードを脱ぎ捨て、恐るべき悪魔の正体を現した！,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_merchant_rob_battle_2
 NODE,7062_b5f_merchant_rob_battle_2,,"{""bg"":""bg_rift_middle_01"",""bgm"":""bgm_battle_strong"",""enemy_group_id"":""9510"",""type"":""battle""}",
 CHOICE,,win,,7062_b5f_merchant_rob_win
 CHOICE,,lose,,end_failure
-NODE,7062_b5f_merchant_rob_win,商人の正体であった強大な魔物を撃破した！ 転がった荷物の中から『未鑑定アイテム[SR]』を力ずくで回収した。,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""evil"":15},""items"":[{""id"":708,""amount"":1}]}",7062_b5f_merchant_end
+NODE,7062_b5f_merchant_rob_win,商人の正体であった強大な魔物を撃破した！ 転がった荷物の中から『未鑑定アイテム[SR]』を力ずくで回収した。,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""evil"":15},""items"":[{""id"":708,""amount"":1}]}",7062_b5f_pre_camp
 NODE,7062_b5f_merchant_decline,「買わないか……。まあ良い、欲の無い者ほど迷宮では長生きするのかもしれんからな」,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_merchant"",""type"":""text"",""speaker"":""怪しい商人""}",7062_b5f_merchant_end
 NODE,7062_b5f_merchant_end,商人は静かに荷物をまとめると、黒い霧に包まれて影の中に消え去っていった。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_pre_camp
-NODE,7062_b5f_pre_camp,小部屋を出て、地下へと続く緩やかな下り坂を進む。前方から松明の温かい光と微かな薬草の香りが漂ってきた。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_camp_stairs
+NODE,7062_b5f_pre_camp,小部屋を出て、地下へと続く緩やかな下り坂を進む。前方から松明の松明の温かい光と微かな薬草の香りが漂ってきた。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_camp_stairs
 NODE,7062_b5f_camp_stairs,ここは地下5階の最奥、安全が確保されたキャンプ地だ。次の階層へ進むか、ここで引き返すかを決定できる。,"{""bg"":""bg_rift_camp_stairs"",""type"":""camp""}",
 CHOICE,,探索を続けて地下6階へ進む,,7062_b6f_start
 CHOICE,,街に一時帰還する（クエスト一時中断・達成）,,7062_end_success_midway

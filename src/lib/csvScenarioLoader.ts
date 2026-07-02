@@ -179,9 +179,13 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 }
             }
 
-            // 背景・BGM
+            // 背景・BGM・前景
             if (params.bg) node.bg_key = params.bg;
             if (params.bgm) node.bgm = params.bgm;
+            if (params.fg) {
+                node.fg = params.fg;
+                node.fg_key = params.fg;
+            }
 
             // 敵グループ
             if (params.enemy_group_id) {
@@ -221,7 +225,11 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 'amount', 'location_name', 'items', 'gold',
                 'success_node', 'fail_node', 'success',
                 'encounter_rate', 'fallback', 'rewards',
-                'hide_buttons', 'continue_label', 'title'];
+                'hide_buttons', 'continue_label', 'title',
+                'fg', 'effect_type', 'damage_val', 'damage_pct',
+                'alignment_shift', 'is_merchant_buy', 'item_pool', 'merchant_pool', 'price',
+                'speaker', 'speaker_name', 'speaker_image_url'
+            ];
             for (const k of passthrough) {
                 if (params[k] !== undefined) {
                     node.params = node.params || {};

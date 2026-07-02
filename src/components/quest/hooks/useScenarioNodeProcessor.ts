@@ -255,8 +255,30 @@ export function useScenarioNodeProcessor({
                 
                 const isPct = stat?.endsWith('_pct') || currentNode.params?.use_pct === true;
                 const baseStat = stat?.endsWith('_pct') ? stat.replace('_pct', '') : stat;
-                
-                if (isPct) {
+
+                if (stat === 'reputation') {
+                    let repScore = 0;
+                    if (userProfile?.current_location_id) {
+                        const { data: locData } = await supabase
+                            .from('locations')
+                            .select('name')
+                            .eq('id', userProfile.current_location_id)
+                            .maybeSingle();
+                        const locationName = locData?.name;
+                        if (locationName) {
+                            const { data: repData } = await supabase
+                                .from('reputations')
+                                .select('score')
+                                .eq('user_id', userProfile.id)
+                                .eq('location_name', locationName)
+                                .maybeSingle();
+                            repScore = repData?.score || 0;
+                        }
+                    }
+                    console.log(`[check_status] reputation check: score=${repScore}, required=${val}`);
+                    if (repScore >= Number(val)) passed = true;
+                }
+                else if (isPct) {
                     const order = userProfile?.order_pts || 0;
                     const chaos = userProfile?.chaos_pts || 0;
                     const justice = userProfile?.justice_pts || 0;
