@@ -98,7 +98,9 @@ export default function ScenarioEngine({
             metPlayerText = `【${metPlayerName}】のパーティー`;
         }
         let result = text.replace(/{met_player_text}/g, metPlayerText);
+        result = result.replace(/\[met_player_text\]/g, metPlayerText);
         result = result.replace(/{met_player_name}/g, String(metPlayerName || '見知らぬ冒険者'));
+        result = result.replace(/\[met_player_name\]/g, String(metPlayerName || '見知らぬ冒険者'));
 
         // 商人アイテム名置換 (v28.2)
         const flagItemName = questState.getFlag('merchant_item_name');

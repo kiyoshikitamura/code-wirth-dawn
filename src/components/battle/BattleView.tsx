@@ -518,9 +518,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             // __ で始まる同期・制御メッセージを除く実際のテキストログ数をカウント
             const textMessages = battleState.messages.filter(m => !m.startsWith('__'));
             
+            const isQueueFinished = isTypingDone && typingQueue.current?.length === 0 && !activeMessage;
+            
             // 実際に画面上にタイプライター表示完了したログ数 (displayedLogs) が
-            // 発生したすべてのテキストログ数 (textMessages) に達するまで待ってからオーバーレイを表示
-            if (displayedLogs.length >= textMessages.length) {
+            // 発生したすべてのテキストログ数 (textMessages) に達するか、タイプライターが終了した時にオーバーレイを表示
+            if (displayedLogs.length >= textMessages.length || isQueueFinished) {
                 const timer = setTimeout(() => {
                     setShowResultOverlay(true);
                 }, 800);
@@ -529,7 +531,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         } else {
             setShowResultOverlay(false);
         }
-    }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs]);
+    }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs, isTypingDone, activeMessage]);
 
     if (!hasHydrated) return (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">

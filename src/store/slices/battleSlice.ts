@@ -419,6 +419,12 @@ export const createBattleSlice = (
                 : `✨ 祈りの加護が発動！(AP+1)`)
             : null;
 
+        const playerBuffLogs = getBuffStatusLogMessages(initialPlayerEffects).map(msg =>
+            msg
+                .replace('現在の強化状態', `${userProfile?.name || 'プレイヤー'}の装備バフ`)
+                .replace('現在の弱体・状態異常', `${userProfile?.name || 'プレイヤー'}の装備デバフ`)
+        );
+
         const startMessages = [
             `${enemies.map(e => e.name).join('と')}が現れた！`,
             ...equipBonusMessages,
@@ -427,7 +433,7 @@ export const createBattleSlice = (
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
             ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
-            ...getBuffStatusLogMessages(initialPlayerEffects),
+            ...playerBuffLogs,
             `--- ターン 1 ---`
         ];
 

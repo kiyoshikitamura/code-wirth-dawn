@@ -276,7 +276,15 @@ export function useScenarioNodeProcessor({
                     else if (stat === 'chaos' && (userProfile?.chaos_pts || 0) >= val) passed = true;
                     else if (stat === 'justice' && (userProfile?.justice_pts || 0) >= val) passed = true;
                     else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
-                    else if (stat === 'gold' && (useGameStore.getState().gold || userProfile?.gold || 0) >= val) passed = true;
+                    else if (stat === 'gold') {
+                        const currentGold = Number([
+                            useGameStore.getState().gold,
+                            useGameStore.getState().userProfile?.gold,
+                            userProfile?.gold,
+                            0
+                        ].find(g => g !== undefined && g !== null));
+                        if (currentGold >= Number(val)) passed = true;
+                    }
                 }
                 
                 const successChoice = currentNode.choices?.find((c: any) => c.label === 'success');
