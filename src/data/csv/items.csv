@@ -173,7 +173,7 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 311,item_rift_man_eater,妖刀「人食い」,equipment,weapon,8000,,,false,"{""atk_bonus"":8,""battle_start_buff"":{""buff_type"":""drain_on_hit"",""duration"":99,""value"":20},""description"":""所有者の傷を癒すために他者の生命力を吸い尽くす妖刀。攻撃を繰り出すたびに、刃が吸い取った生気が装備者の肉体へと流れ込み、傷口を瞬時に塞いでいく。""}",
 312,item_rift_magic_battle_axe,破魔の戦斧,equipment,weapon,8500,,,false,"{""atk_bonus"":24,""def_bonus"":-4,""battle_start_buff"":{""buff_type"":""atk_up"",""duration"":2,""value"":0.25},""description"":""次元結界すら断ち切るために作られた無骨な大斧。すさまじい重量を持つが、一撃で悪魔の防壁を粉砕する。""}",
 313,item_rift_spirit_wood_staff,霊木の杖,equipment,weapon,7500,,,false,"{""atk_bonus"":10,""hp_bonus"":15,""battle_start_buff"":{""buff_type"":""regen"",""duration"":5},""description"":""世界樹の枝から削り出された、生命力溢れる杖。周囲の地脈から生命エネルギーを吸い上げ、装備者の傷を癒やし続ける。""}",
-314,item_rift_ninja_shuriken,手裏剣,equipment,weapon,9000,,,false,"{""atk_bonus"":15,""battle_start_buff"":{""buff_type"":""crit_up"",""duration"":99,""value"":0.20},""description"":""闇に生きる忍びが忍術の奥義に用いる投擲用の暗器。素早く投じることで敵の隙を的確に突き、高確率で致命傷を与える多段攻撃を叩き込む。""}",314
+314,item_rift_ninja_shuriken,手裏剣,equipment,weapon,9000,,,false,"{""atk_bonus"":1,""battle_start_buff"":{""buff_type"":""crit_up"",""duration"":99,""value"":0.20},""description"":""闇に生きる忍びが忍術の奥義に用いる投擲用の暗器。素早く投じることで敵の隙を的確に突き、高確率で致命傷を与える多段攻撃を叩き込む。""}",314
 315,item_rift_muramasa_katana,村正,equipment,weapon,12000,,,false,"{""atk_bonus"":55,""battle_start_buff"":{""buff_type"":""def_down"",""duration"":99},""description"":""所有者の血と魂をすする妖刀。圧倒的な攻撃力を与える代わりに、身を守るための警戒心を完全に奪い去る。""}",
 316,item_rift_abyss_shield,深淵の盾,equipment,armor,7800,,,false,"{""def_bonus"":15,""battle_start_buff"":{""buff_type"":""def_up"",""duration"":3,""value"":20},""description"":""黒曜石とデーモンの骨を融合させて作られた盾。周囲の光を吸収する黒い霧を放ち、敵の攻撃の威力を大幅に減衰させる。""}",
 317,item_rift_holy_spirit_robe,聖霊のローブ,equipment,armor,8200,,,false,"{""def_bonus"":8,""hp_bonus"":20,""battle_start_buff"":{""buff_type"":""regen"",""duration"":5},""description"":""聖水と祝福された白糸で織り上げられたローブ。邪悪な魔力を霧散させる不可視の防壁を形成する。""}",
@@ -202,3 +202,7 @@ id,slug,name,type,sub_type,base_price,nation_tags,min_prosperity,is_black_market
 350,item_demon_buster,デーモンバスター,equipment,weapon,15000,,1,false,"{""atk_bonus"":35,""def_bonus"":10,""hp_bonus"":30,""battle_start_buff"":[{""buff_type"":""atk_up"",""duration"":5},{""buff_type"":""def_up"",""duration"":5,""value"":15}],""description"":""戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。""}",
 346,item_test_blue,テストの証・青,key_item,,0,,1,false,"{""description"":""テスト検証用の証。青色に輝いている。""}",
 347,item_test_red,テストの証・赤,key_item,,0,,1,false,"{""description"":""テスト検証用の証。赤色に輝いている。""}",
+706,item_unappraised_n,未鑑定アイテム[N],material,unappraised,0,,,false,"{""description"":""次元の狭間から持ち帰られた、未鑑定の遺物や日用品。街の鑑定所で鑑定してもらうことができる。""}",
+707,item_unappraised_r,未鑑定アイテム[R],material,unappraised,0,,,false,"{""description"":""次元の狭間から持ち帰られた、希少な魔力が漂う未鑑定の遺物。街の鑑定所で鑑定してもらうことができる。""}",
+708,item_unappraised_sr,未鑑定アイテム[SR],material,unappraised,0,,,false,"{""description"":""次元の狭間から持ち帰られた、強力な魔力が渦巻く未鑑定の遺物。街の鑑定所で鑑定してもらうことができる。""}",
+709,item_unappraised_ur,未鑑定アイテム[UR],material,unappraised,0,,,false,"{""description"":""次元の狭間から持ち帰られた、極めて稀な超魔力を秘めた未鑑定の古代遺物。街の鑑定所で鑑定してもらうことができる。""}",

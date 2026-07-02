@@ -58,10 +58,10 @@ export default function AppraisalModal({ onClose, reputation }: Props) {
 
     // 未鑑定アイテム（ID: 706〜709）の集計
     const unappraisedItems = [
-        { id: 706, name: 'アイテム（未鑑定）', slug: 'item_unappraised_n', rarityLabel: 'N', costDesc: '1,000〜2,000' },
-        { id: 707, name: 'アイテム（未鑑定）', slug: 'item_unappraised_r', rarityLabel: 'R', costDesc: '2,000〜4,000' },
-        { id: 708, name: 'アイテム（未鑑定）', slug: 'item_unappraised_sr', rarityLabel: 'SR', costDesc: '4,000〜7,000' },
-        { id: 709, name: 'アイテム（未鑑定）', slug: 'item_unappraised_ur', rarityLabel: 'UR', costDesc: '7,000〜10,000' }
+        { id: 706, name: '未鑑定アイテム[N]', slug: 'item_unappraised_n', rarityLabel: 'N', costDesc: '1,000〜2,000' },
+        { id: 707, name: '未鑑定アイテム[R]', slug: 'item_unappraised_r', rarityLabel: 'R', costDesc: '2,000〜4,000' },
+        { id: 708, name: '未鑑定アイテム[SR]', slug: 'item_unappraised_sr', rarityLabel: 'SR', costDesc: '4,000〜7,000' },
+        { id: 709, name: '未鑑定アイテム[UR]', slug: 'item_unappraised_ur', rarityLabel: 'UR', costDesc: '7,000〜10,000' }
     ].map(config => {
         const invRows = inventory?.filter(i => Number(i.item_id) === config.id && !i.is_equipped) || [];
         const count = invRows.reduce((sum, row) => sum + (row.quantity || 1), 0);
