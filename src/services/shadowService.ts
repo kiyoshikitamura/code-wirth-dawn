@@ -22,6 +22,7 @@ export interface ShadowSummary {
     introduction?: string;  // 自己紹介
     slug?: string;          // NPC識別用スラグ (v4.4)
     equipped_items?: { name: string; slot: string }[]; // v13.3追加
+    vitality?: number;
 }
 
 // タスク1: 英霊（shadow_heroic）の契約金算出式
@@ -76,7 +77,7 @@ export class ShadowService {
 
         // 1. アクティブシャドウ（現在同じ拠点にいるプレイヤー）
         try {
-            const { data: activeUsers } = await this.supabase
+            const { data: activeUsersRaw } = await this.supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('current_location_id', locationId)
@@ -86,8 +87,15 @@ export class ShadowService {
                 .neq('name', null)
                 .not('name', 'ilike', 'テスト%')
                 .not('name', 'ilike', 'test%')
+                .gt('level', 1)
                 .limit(20); // 候補を多めに取得してからランダム〆5体を選抜
 
+            const EXCLUDED_IDS = [
+                'c1cf67dd-527a-497e-bf88-ce10c2cb516f', // きたむ様旧ID
+                '5ad434ec-763f-473e-939f-14a5e9e1cc93', // きたむ様新ID
+                'af2848d0-40f2-4f75-bd2b-ac633184107c'  // きたむ様プレビュー環境ID
+            ];
+            const activeUsers = (activeUsersRaw || []).filter((u: any) => !EXCLUDED_IDS.includes(u.id));
 
             if (activeUsers && activeUsers.length > 0) {
                 // v2.7: user_skillsテーブルから装備済みスキルを一括取得（gossip/route.tsと同様の正しい実装）
@@ -424,8 +432,16 @@ export class ShadowService {
             if (!userProfile || !userProfile.is_alive) {
                 return { success: false, error: '対象のプレイヤーは現在雇用できません（死亡または存在しません）。' };
             }
-            if (userProfile.name && (userProfile.name.toLowerCase().startsWith('テスト') || userProfile.name.toLowerCase().startsWith('test'))) {
+            const EXCLUDED_IDS = [
+                'c1cf67dd-527a-497e-bf88-ce10c2cb516f', // きたむ様旧ID
+                '5ad434ec-763f-473e-939f-14a5e9e1cc93', // きたむ様新ID
+                'af2848d0-40f2-4f75-bd2b-ac633184107c'  // きたむ様プレビュー環境ID
+            ];
+            if (EXCLUDED_IDS.includes(shadow.profile_id) || (userProfile.name && (userProfile.name.toLowerCase().startsWith('テスト') || userProfile.name.toLowerCase().startsWith('test')))) {
                 return { success: false, error: 'テストアカウントは雇用できません。' };
+            }
+            if (userProfile.level && userProfile.level <= 1) {
+                return { success: false, error: 'レベル1のプレイヤーは雇用できません。' };
             }
             if (userProfile.current_location_id !== hirer.current_location_id) {
                 return { success: false, error: '対象のプレイヤーは既に別の地点に移動しました。' };
