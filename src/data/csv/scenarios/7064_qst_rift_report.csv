@@ -1,0 +1,27 @@
+row_type,node_id,text_label,params,next_node
+NODE,start,私達は大魔道士ヴァルグナを討ち倒し、奈落の最下層から無事に街へと帰還した。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",7064_report_inn
+NODE,7064_report_inn,宿屋で泥のように眠り、体力を回復させた後、得られた調査結果を報告するために冒険者ギルドへと向かった。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",7064_report_guild
+NODE,7064_report_guild,ギルドの重厚な扉を開け、応接室に入ると、ギルドマスターが険しい表情で私達を待ち構えていた。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",7064_report_gm
+NODE,7064_report_gm,「よくぞ無事で帰ってきてくれた。ヴァルグナの迷宮の調査はどうだった？ 何か核心に迫る証拠や手がかりは手に入ったか？」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_check_light_orb
+NODE,7064_check_light_orb,,"{""type"":""check_possession"",""item_id"":328,""silent"":true}",
+CHOICE,,success,,7064_check_dark_orb
+CHOICE,,failure,,7064_report_failure_msg
+NODE,7064_check_dark_orb,,"{""type"":""check_possession"",""item_id"":329,""silent"":true}",
+CHOICE,,success,,7064_check_thought
+CHOICE,,failure,,7064_report_failure_msg
+NODE,7064_check_thought,,"{""type"":""check_possession"",""item_id"":330,""silent"":true}",
+CHOICE,,success,,7064_report_success_event
+CHOICE,,failure,,7064_report_failure_msg
+NODE,7064_report_failure_msg,「ううむ……ヴァルグナは退治したようだが、迷宮の異変の謎を完全に解明するには証拠が足りないな……」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_report_failure_msg_2
+NODE,7064_report_failure_msg_2,「迷宮の真の支配者と歪みの原因を突き止めるには、『光の宝珠』『闇の宝珠』、そしてヴァルグナの『大魔道士の思念』の3つが必要なのだ」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_report_failure_msg_3
+NODE,7064_report_failure_msg_3,「申し訳ないが、一度下層へと再走し、全ての手がかりを揃えてから改めて報告してくれ」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_end_failure
+NODE,7064_end_failure,報告が不完全だったため、クエストは失敗扱いとなった。不足した宝珠を集めるために下層を再攻略する必要がある。,"{""type"":""end_failure""}",
+NODE,7064_report_success_event,「素晴らしい！ 『光の宝珠』『闇の宝珠』、そして『大魔道士の思念』の3つすべてを回収したのだな！」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_report_success_event_2
+NODE,7064_report_success_event_2,ギルドマスターが3つのアイテムを受け取り、祭壇に並べる。その瞬間、強烈な魔力の共鳴が響き渡った！,"{""bg"":""bg_rift_entrance"",""type"":""text""}",7064_report_success_event_3
+NODE,7064_report_success_event_3,大魔道士の思念が虚空に像を結び、静かに真実を語り始めた。,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""大魔道士の英霊""}",7064_report_success_event_4
+NODE,7064_report_success_event_4,『……私は……操られていたのだ……。奈落のさらに奥底、真の「深淵」に封印されし破壊神サタンの手によって……』,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""大魔道士の英霊""}",7064_report_success_event_5
+NODE,7064_report_success_event_5,『サタンの魔力が迷宮の心臓を動かし、悪魔の軍勢を無限に召喚していたのだ。サタンを倒さぬ限り、狭間の裂け目は閉じない……』,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""大魔道士の英霊""}",7064_report_success_event_6
+NODE,7064_report_success_event_6,英霊の思念はそう語ると、3つの宝珠の魔力を共鳴させ、迷宮の最深部「深淵」の強固な封印を完全に解き放った！,"{""bg"":""bg_rift_entrance"",""type"":""text""}",7064_report_success_event_7
+NODE,7064_report_success_event_7,「何ということだ……！ ヴァルグナは単なる黒幕の端末にすぎなかったのか……。事態は一刻を争う！」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_report_success_event_8
+NODE,7064_report_success_event_8,「勇者たちよ、解放された最深部『深淵』へと下り、破壊神サタンを討ち取ってくれ！ 世界の命運はお前たちに託された！」,"{""bg"":""bg_rift_entrance"",""type"":""text"",""speaker"":""ギルドマスター""}",7064_end_success
+NODE,7064_end_success,すべての証拠の報告を完了し、迷宮の真の最終決戦地である「深淵（7065）」が解放された！,"{""type"":""end_success""}",

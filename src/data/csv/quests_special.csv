@@ -27,5 +27,7 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:100,冒険者ギルド,狭間の迷宮シリーズ・プロローグ,true
 7061,qst_rift_upper,狭間の迷宮・上層,8,3,6,6,4,"{""completed_quest"":""qst_rift_prologue""}",false,,Gold:600|Rep:15|Exp:1200,冒険者ギルド,地下1F〜4Fの探索。キャンプ3回。ボス撃へ「赤の宝珠」獲得。,true
 7062,qst_rift_middle,狭間の迷宮・中層,10,4,8,8,5,"{""completed_quest"":""qst_rift_upper""}",false,,Gold:1200|Rep:20|Exp:1800,冒険者ギルド,地下5F〜7Fの探索。キャンプ2回。ボス討伐で「青の宝珠」獲得。,true
+7063,qst_rift_lower,狭間の迷宮・下層,14,5,10,10,6,"{""completed_quest"":""qst_rift_middle""}",false,,Gold:1500|Rep:25|Exp:2200,冒険者ギルド,地下8F〜10Fの探索。キャンプ2回。ボス撃破で「大魔道士の思念」獲得。,true
+7064,qst_rift_report,狭間の迷宮・ギルドへの報告,1,1,1,1,1,"{""completed_quest"":""qst_rift_lower""}",false,,Gold:200|Rep:10|Exp:200,冒険者ギルド,ヴァルグナ撃破と道中で手に入れた手がかりを元に冒険者ギルドへ報告する。,false
 7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,1,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。,true
 9999,qst_test_gimmicks,ギミック検証用テストクエスト,1,1,1,1,1,"{}",false,,Gold:1000|Exp:100,冒険者の影,すべての追加ギミックを一挙にテストする検証用クエストです。,true
