@@ -1,15 +1,16 @@
 row_type,node_id,text_label,params,next_node
-NODE,start,「狭間の迷宮」の最深部『深淵』へと足を踏み入れる。そこは、これまでの階層とは比較にならないほど狂暴な次元の嵐が吹き荒れる極限の空間だった。,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_rift_abyss"",""type"":""text""}",7065_b11f_start
-NODE,7065_b11f_start,地下11階に足を踏み入れた直後、前方から這うようにして戻ってくる満身創痍の冒険者パーティと鉢合わせた。彼らの装備は引き裂かれ、顔には恐怖が張り付いている。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_1
+NODE,start,「狭間の迷宮」の最深部『深淵』へと足を踏み入れる。そこは、これまでの階層とは比較にならないほど狂暴な次元の嵐が吹き荒れる極限の空間だった。,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_rift_abyss"",""type"":""text""}",7065_b11f_meet
+NODE,7065_b11f_meet,,"{""bg"":""bg_rift_abyss"",""type"":""meet_player""}",7065_b11f_start
+NODE,7065_b11f_start,地下11階に足を踏み入れた直後、前方から這うようにして戻ってくる満身創痍の{met_player_text}と鉢合わせた。彼らの装備は引き裂かれ、顔には恐怖が張り付いている。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_1
 NODE,7065_b11f_wounded_1,「だ、だめだ……この先は地獄だ……魔物の強さがこれまでの比じゃない……。俺たちは引き返す……命があるうちに……」,"{""bg"":""bg_rift_abyss"",""speaker_name"":""満身創痍の冒険者"",""type"":""text""}",7065_b11f_wounded_2
 NODE,7065_b11f_wounded_2,彼らはそう言い残すと、互いを支え合いながら、震える足取りで上層への階段へと逃げのびていった。私達は冷たい戦慄を覚えつつ、奥へと進んだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_3
 NODE,7065_b11f_wounded_3,目の前には、巨大な中央広間が広がっている。周囲には4つの玄室へと続く扉があり、それぞれ不気味な紋様が刻まれていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
-NODE,7065_b11f_lobby,中央ロビー。不気味に歪む4つの玄室の扉が私達を囲んでいる。どの扉を開けるべきか。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",
-CHOICE,,第一の玄室（部屋1）を探索する,,7065_b11f_rm1_check
-CHOICE,,第二の玄室（部屋2）を探索する,,7065_b11f_rm2_check
-CHOICE,,第三の玄室（部屋3）を探索する,,7065_b11f_rm3_check
-CHOICE,,最奥の玄室（部屋4）へ進む,,7065_b11f_rm4_open_check
-NODE,7065_b11f_rm1_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_sw1_on"",""value"":1,""operator"":""==""}}",
+NODE,7065_b11f_lobby,中央ロビー。不気味に歪む4つの玄室 of the扉が私達を囲んでいる。どの扉を開けるべきか。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",
+CHOICE,,第一の玄室を探索する,,7065_b11f_rm1_check
+CHOICE,,第二の玄室を探索する,,7065_b11f_rm2_check
+CHOICE,,第三の玄室を探索する,,7065_b11f_rm3_check
+CHOICE,,最奥の玄室へ進む,,7065_b11f_rm4_open_check
+NODE,7065_b11f_rm1_check,,"{""type"":""check_flag"",""flag"":""rift_sw1_on"",""value"":1,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm1_done
 CHOICE,,failure,,7065_b11f_rm1_start
 NODE,7065_b11f_rm1_done,第1の玄室の魔力スイッチはすでに起動している。ここにはもう用はない。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
@@ -37,14 +38,14 @@ NODE,7065_b11f_rm1_trap_rock,天井の仕掛けが作動し、巨大な崩落岩
 NODE,7065_b11f_rm1_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm1_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm1_after_chest
 NODE,7065_b11f_rm1_after_chest,宝箱の奥の壁面には、古の次元装置と思われる魔力のスイッチが設置されていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm1_switch_1
-NODE,7065_b11f_rm1_switch_1,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_sw1_on"",""value"":1}}",7065_b11f_rm1_switch_2
-NODE,7065_b11f_rm1_switch_2,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_switches_pressed"",""delta"":1}}",7065_b11f_rm1_switch_done
+NODE,7065_b11f_rm1_switch_1,,"{""type"":""modify_flag"",""flag"":""rift_sw1_on"",""value"":1}",7065_b11f_rm1_switch_2
+NODE,7065_b11f_rm1_switch_2,,"{""type"":""modify_flag"",""flag"":""rift_switches_pressed"",""delta"":1}",7065_b11f_rm1_switch_done
 NODE,7065_b11f_rm1_switch_done,カチリと音が響き、スイッチのルーンが眩しく光り輝いた。第1の玄室の魔力が解放されたようだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm1_check_all
-NODE,7065_b11f_rm1_check_all,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+NODE,7065_b11f_rm1_check_all,,"{""type"":""check_flag"",""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm1_all_activated
 CHOICE,,failure,,7065_b11f_lobby
 NODE,7065_b11f_rm1_all_activated,ゴゴゴゴ……！ 3つの玄室の魔力が共鳴し、中央ロビーの奥にある「最奥の玄室の扉」の封印が解かれた音が響き渡った！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
-NODE,7065_b11f_rm2_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_sw2_on"",""value"":1,""operator"":""==""}}",
+NODE,7065_b11f_rm2_check,,"{""type"":""check_flag"",""flag"":""rift_sw2_on"",""value"":1,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm2_done
 CHOICE,,failure,,7065_b11f_rm2_start
 NODE,7065_b11f_rm2_done,第2の玄室の魔力スイッチはすでに起動している。ここにはもう用はない。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
@@ -72,14 +73,14 @@ NODE,7065_b11f_rm2_trap_rock,天井の仕掛けが作動し、巨大な崩落岩
 NODE,7065_b11f_rm2_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm2_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm2_after_chest
 NODE,7065_b11f_rm2_after_chest,宝箱の奥の壁面には、古の次元装置と思われる魔力のスイッチが設置されていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm2_switch_1
-NODE,7065_b11f_rm2_switch_1,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_sw2_on"",""value"":1}}",7065_b11f_rm2_switch_2
-NODE,7065_b11f_rm2_switch_2,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_switches_pressed"",""delta"":1}}",7065_b11f_rm2_switch_done
+NODE,7065_b11f_rm2_switch_1,,"{""type"":""modify_flag"",""flag"":""rift_sw2_on"",""value"":1}",7065_b11f_rm2_switch_2
+NODE,7065_b11f_rm2_switch_2,,"{""type"":""modify_flag"",""flag"":""rift_switches_pressed"",""delta"":1}",7065_b11f_rm2_switch_done
 NODE,7065_b11f_rm2_switch_done,カチリと音が響き、スイッチのルーンが眩しく光り輝いた。第2の玄室の魔力が解放されたようだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm2_check_all
-NODE,7065_b11f_rm2_check_all,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+NODE,7065_b11f_rm2_check_all,,"{""type"":""check_flag"",""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm2_all_activated
 CHOICE,,failure,,7065_b11f_lobby
 NODE,7065_b11f_rm2_all_activated,ゴゴゴゴ……！ 3つの玄室の魔力が共鳴し、中央ロビーの奥にある「最奥の玄室の扉」の封印が解かれた音が響き渡った！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
-NODE,7065_b11f_rm3_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_sw3_on"",""value"":1,""operator"":""==""}}",
+NODE,7065_b11f_rm3_check,,"{""type"":""check_flag"",""flag"":""rift_sw3_on"",""value"":1,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm3_done
 CHOICE,,failure,,7065_b11f_rm3_start
 NODE,7065_b11f_rm3_done,第3の玄室の魔力スイッチはすでに起動している。ここにはもう用はない。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
@@ -107,14 +108,14 @@ NODE,7065_b11f_rm3_trap_rock,天井の仕掛けが作動し、巨大な崩落岩
 NODE,7065_b11f_rm3_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm3_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm3_after_chest
 NODE,7065_b11f_rm3_after_chest,宝箱の奥の壁面には、古の次元装置と思われる魔力のスイッチが設置されていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm3_switch_1
-NODE,7065_b11f_rm3_switch_1,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_sw3_on"",""value"":1}}",7065_b11f_rm3_switch_2
-NODE,7065_b11f_rm3_switch_2,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_switches_pressed"",""delta"":1}}",7065_b11f_rm3_switch_done
+NODE,7065_b11f_rm3_switch_1,,"{""type"":""modify_flag"",""flag"":""rift_sw3_on"",""value"":1}",7065_b11f_rm3_switch_2
+NODE,7065_b11f_rm3_switch_2,,"{""type"":""modify_flag"",""flag"":""rift_switches_pressed"",""delta"":1}",7065_b11f_rm3_switch_done
 NODE,7065_b11f_rm3_switch_done,カチリと音が響き、スイッチのルーンが眩しく光り輝いた。第3の玄室の魔力が解放されたようだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm3_check_all
-NODE,7065_b11f_rm3_check_all,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+NODE,7065_b11f_rm3_check_all,,"{""type"":""check_flag"",""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm3_all_activated
 CHOICE,,failure,,7065_b11f_lobby
 NODE,7065_b11f_rm3_all_activated,ゴゴゴゴ……！ 3つの玄室の魔力が共鳴し、中央ロビーの奥にある「最奥の玄室の扉」の封印が解かれた音が響き渡った！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
-NODE,7065_b11f_rm4_open_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+NODE,7065_b11f_rm4_open_check,,"{""type"":""check_flag"",""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}",
 CHOICE,,success,,7065_b11f_rm4_enter
 CHOICE,,failure,,7065_b11f_rm4_locked
 NODE,7065_b11f_rm4_locked,最奥の玄室の重厚な鉄の扉は、未だ強力な魔力の結界で閉ざされている。まだ起動していない魔力スイッチがあるようだ。ロビーに戻ろう。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
