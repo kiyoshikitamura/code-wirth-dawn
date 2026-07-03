@@ -505,7 +505,7 @@ export class QuestService {
                 ? supabaseServer.from('locations').select('name, ruling_nation_id, slug').eq('id', locationId).maybeSingle()
                 : Promise.resolve({ data: null }),
             supabaseServer.from('scenarios')
-                .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure')
+                .select('id, slug, title, description, quest_type, requirements, conditions, rewards, rec_level, difficulty, is_urgent, client_name, impact, location_id, max_reputation, script_data, days_success, days_failure, is_repeatable')
                 .in('quest_type', ['normal', 'special'])
                 .not('slug', 'like', 'ugc_%')
                 .limit(200),
@@ -586,7 +586,7 @@ export class QuestService {
 
         const specialQuests = quests.filter((q: any) => {
             if (q.quest_type !== 'special') return false;
-            if (completedQuestIds.has(String(q.id))) return false;
+            if (completedQuestIds.has(String(q.id)) && !q.is_repeatable && !q.script_data?.is_repeatable) return false;
 
             const reqs = q.requirements || {};
             
