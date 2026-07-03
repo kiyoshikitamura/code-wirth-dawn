@@ -401,7 +401,7 @@ export default function QuestPage() {
         }
     }, [scenario, userProfile, fetchUserProfile, isTestPlay, searchParams, router]);
 
-    const handleComplete = (result: 'success' | 'failure' | 'abort') => {
+    const handleComplete = (result: 'success' | 'failure' | 'abort' | 'success_retreat') => {
         if (result === 'abort') {
             router.push('/inn');
             return;
