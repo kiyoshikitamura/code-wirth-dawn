@@ -563,6 +563,41 @@ export async function updateWorldSimulation(supabaseClient?: SupabaseClient) {
             logs.push(`[RepDecay] 例外: ${decayErr.message}`);
         }
 
+        // 8. プレイヤーレベル分布の集計とBBS自動投稿
+        try {
+            const { data: activeProfiles, error: activeProfilesError } = await client
+                .from('user_profiles')
+                .select('current_location_id, level')
+                .eq('is_alive', true);
+
+            const { data: activeLocations, error: activeLocationsError } = await client
+                .from('locations')
+                .select('id, name');
+
+            if (!activeProfilesError && !activeLocationsError && activeProfiles && activeLocations) {
+                const { GossipService } = await import('@/services/gossipService');
+                const gossipService = new GossipService(client);
+
+                for (const loc of activeLocations) {
+                    const profilesInLoc = activeProfiles.filter(p => p.current_location_id === loc.id);
+                    if (profilesInLoc.length > 0) {
+                        const totalCount = profilesInLoc.length;
+                        const levels = profilesInLoc.map(p => p.level || 1);
+                        const avgLevel = Math.round((levels.reduce((sum, lvl) => sum + lvl, 0) / totalCount) * 10) / 10;
+                        const maxLevel = Math.max(...levels);
+
+                        const messageText = `【ギルド観測報告】現在の街の冒険者分布：\n総滞在者数: ${totalCount}名\n平均レベル: ${avgLevel} (最高: Lv.${maxLevel})\n熟練の冒険者が多数集っています。`;
+                        
+                        await gossipService.postSystemMessage(messageText, loc.id);
+                        logs.push(`[GossipBatch] Posted level distribution for ${loc.name} (Count: ${totalCount}, Avg: ${avgLevel})`);
+                    }
+                }
+            } else {
+                logs.push(`[GossipBatch] Failed to fetch data: profilesError=${activeProfilesError?.message}, locationsError=${activeLocationsError?.message}`);
+            }
+        } catch (gossipBatchErr: any) {
+            logs.push(`[GossipBatch] Exception: ${gossipBatchErr.message}`);
+        }
 
         return { success: true, logs, hegemony: quotas };
 

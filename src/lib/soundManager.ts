@@ -27,6 +27,11 @@ const BGM_FILES: Record<string, string> = {
     // スポットクエスト専用BGM (6101-6104)
     bgm_spot_final_boss:   '/audio/bgm/bgm_spot_final_boss.ogg',
     bgm_spot_final_choice: '/audio/bgm/bgm_spot_final_choice.ogg',
+    // 狭間の迷宮
+    bgm_rift_upper:        '/audio/bgm/bgm_rift_upper.ogg',
+    bgm_rift_middle:       '/audio/bgm/bgm_rift_middle.ogg',
+    bgm_rift_lower:        '/audio/bgm/bgm_rift_lower.ogg',
+    bgm_rift_abyss:        '/audio/bgm/bgm_rift_abyss.ogg',
 };
 
 const SE_FILES: Record<string, string> = {

@@ -314,6 +314,9 @@ export default function ShopModal({ onClose }: Props) {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-lg font-bold text-white truncate">{selectedItem.name}</h3>
+                                {inventory.some(inv => inv.is_skill && (inv.slug === selectedItem.slug || inv.name === selectedItem.name)) && (
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/50 text-emerald-300 bg-emerald-950/80 font-bold flex-shrink-0">所持中</span>
+                                )}
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBorder} text-gray-300 bg-gray-800 flex-shrink-0`}>{typeLabel}</span>
                             </div>
                             <div className="text-yellow-400 font-mono font-bold text-lg">{(selectedItem.current_price as number).toLocaleString()} G</div>
@@ -543,6 +546,9 @@ export default function ShopModal({ onClose }: Props) {
                                             <div className="flex-1 min-w-0 mr-2">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-bold text-[#3e2723] text-sm truncate">{item.name}</span>
+                                                    {inventory.some(inv => inv.is_skill && (inv.slug === item.slug || inv.name === item.name)) && (
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-700 text-emerald-700 bg-emerald-50 font-bold whitespace-nowrap">所持中</span>
+                                                    )}
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
                                                         item.type === 'skill' || item.type === 'skill_card' ? 'border-blue-700 text-blue-700 bg-blue-50' :
                                                         item.type === 'consumable' ? 'border-green-700 text-green-700 bg-green-50' :

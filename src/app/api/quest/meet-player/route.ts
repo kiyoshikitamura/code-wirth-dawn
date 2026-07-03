@@ -63,27 +63,12 @@ export async function POST(req: Request) {
             }
         }
 
-        // 3. Fallback to dummy adventurer names if no other players found
-        if (!playerName) {
-            const dummyAdventurers = [
-                '戦士バルド',
-                '魔術師ミリア',
-                '冒険者ジーク',
-                '盗賊レナ',
-                '聖騎士クララ',
-                '老兵ハンス',
-                '薬師エマ',
-                '吟遊詩人リュート'
-            ];
-            playerName = dummyAdventurers[Math.floor(Math.random() * dummyAdventurers.length)];
-            console.log(`[MeetPlayer] No nearby players found at location=${locationId || 'unknown'}. Fallback to dummy: ${playerName}`);
-        } else {
-            console.log(`[MeetPlayer] Encountered nearby player: ${playerName} at location=${locationId}`);
-        }
+        const isReal = !!playerName;
 
         return NextResponse.json({
             success: true,
-            player_name: playerName
+            player_name: playerName || null,
+            is_real: isReal
         });
 
     } catch (e: any) {

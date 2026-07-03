@@ -97,9 +97,7 @@ export async function GET(request: Request) {
     const colIdx: Record<string, number> = {};
     header.forEach((h, i) => { colIdx[h] = i; });
 
-    const results: any[] = [];
-    let successCount = 0;
-    let errorCount = 0;
+    const records: any[] = [];
 
     for (let i = 1; i < lines.length; i++) {
         const fields = lines[i].split(',').map(f => f.trim());
@@ -126,36 +124,34 @@ export async function GET(request: Request) {
         if (dropItemId && !isNaN(dropItemId)) record.drop_item_id = dropItemId;
         if (dropSlug) record.drop_item_slug = dropSlug;
 
-        // action_pattern: enemy_actions.csv から構築したアクションパターンを反映
         if (actionPatternMap[slug]) {
             record.action_pattern = actionPatternMap[slug];
         }
 
-        if (dryRun) {
-            results.push({ action: 'dry_run', id, slug, name, has_actions: !!actionPatternMap[slug], action_count: actionPatternMap[slug]?.length || 0 });
-            successCount++;
-            continue;
-        }
+        records.push(record);
+    }
 
-        const { error } = await supabase
-            .from('enemies')
-            .upsert(record, { onConflict: 'id' });
+    if (dryRun) {
+        return NextResponse.json({
+            success: true,
+            dry_run: true,
+            summary: { total: records.length, success: records.length, errors: 0 },
+            results: records.map(r => ({ action: 'dry_run', id: r.id, slug: r.slug, name: r.name }))
+        });
+    }
 
-        if (error) {
-            results.push({ action: 'error', id, slug, error: error.message });
-            errorCount++;
-        } else {
-            results.push({ action: 'upserted', id, slug, name, has_actions: !!actionPatternMap[slug], action_count: actionPatternMap[slug]?.length || 0 });
-            successCount++;
-        }
+    const { error } = await supabase
+        .from('enemies')
+        .upsert(records, { onConflict: 'id' });
+
+    if (error) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
-        success: !errorCount,
-        dry_run: dryRun,
-        filter_id: filterId || 'all',
-        summary: { total: results.length, success: successCount, errors: errorCount },
-        results,
+        success: true,
+        dry_run: false,
+        summary: { total: records.length, success: records.length, errors: 0 }
     });
 }
 

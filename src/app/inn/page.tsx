@@ -22,6 +22,7 @@ import { X } from 'lucide-react';
 // モーダル群: ロード時間とチラつきを完全になくすため静的インポート (spec_v27)
 import TavernModal from '@/components/inn/TavernModal';
 import ShopModal from '@/components/shop/ShopModal';
+import AppraisalModal from '@/components/shop/AppraisalModal';
 import PrayerModal from '@/components/world/PrayerModal';
 import StatusModal from '@/components/inn/StatusModal';
 import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
@@ -33,6 +34,7 @@ import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 import OnboardingAcademyModal from '@/components/inn/OnboardingAcademyModal';
 import GuestRegisterPromoModal from '@/components/inn/GuestRegisterPromoModal';
 import StarterPackPromoModal from '@/components/inn/StarterPackPromoModal';
+import RiftPromoModal from '@/components/inn/RiftPromoModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
@@ -67,6 +69,7 @@ function InnPageInner() {
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
+        showAppraisal, setShowAppraisal,
         showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
@@ -142,6 +145,7 @@ function InnPageInner() {
     // 新規: プロモーションモーダルの表示ステート
     const [showGuestRegisterPromo, setShowGuestRegisterPromo] = useState(false);
     const [showStarterPackPromo, setShowStarterPackPromo] = useState(false);
+    const [showRiftPromo, setShowRiftPromo] = useState(false);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -319,7 +323,20 @@ function InnPageInner() {
                 console.warn('[InnPage] localStorage access failed:', err);
             }
         }
-    }, [completedQuests, userProfile, searchParams, initialLoadComplete]);
+
+        // 5. 狭間の迷宮プロモモーダル表示制御 (Lv4以上、未表示、かつ他のプロモが非表示の場合)
+        if (userProfile && (userProfile.level || 1) >= 4 && !showGuestRegisterPromo && !showStarterPackPromo && typeof window !== 'undefined') {
+            try {
+                const riftPromoShown = localStorage.getItem('wirth_dawn_rift_promo_shown');
+                if (!riftPromoShown) {
+                    localStorage.setItem('wirth_dawn_rift_promo_shown', 'true');
+                    setShowRiftPromo(true);
+                }
+            } catch (err) {
+                console.warn('[InnPage] localStorage access failed for rift promo:', err);
+            }
+        }
+    }, [completedQuests, userProfile, searchParams, initialLoadComplete, showGuestRegisterPromo, showStarterPackPromo]);
 
     React.useEffect(() => {
         if (showTavern) {
@@ -372,6 +389,7 @@ function InnPageInner() {
         showTutorial ||
         showGuestRegisterPromo ||
         showStarterPackPromo ||
+        showRiftPromo ||
         restLoading ||
         traveling
     );
@@ -729,6 +747,11 @@ function InnPageInner() {
                 />
             )}
 
+            {/* Rift Promo Modal */}
+            {showRiftPromo && (
+                <RiftPromoModal onClose={() => setShowRiftPromo(false)} />
+            )}
+
             {/* NPC Dialog */}
             {activeNpcData && activeModal && (
                 <NpcDialogModal
@@ -776,6 +799,7 @@ function InnPageInner() {
 
             {/* Modals */}
             {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+            {showAppraisal && <AppraisalModal onClose={() => setShowAppraisal(false)} reputation={reputation} />}
             {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
             {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
             {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}

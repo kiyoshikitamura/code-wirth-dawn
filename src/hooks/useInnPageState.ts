@@ -182,6 +182,7 @@ export function useInnPageState() {
     const [showAccount, setShowAccount] = useState(false);
     const [showTavern, setShowTavern] = useState(false);
     const [showShop, setShowShop] = useState(false);
+    const [showAppraisal, setShowAppraisal] = useState(false);
     const [showAcademy, setShowAcademy] = useState(false);
     const [showPrayer, setShowPrayer] = useState(false);
     const [showBilling, setShowBilling] = useState(false);
@@ -658,7 +659,21 @@ export function useInnPageState() {
                 secondaryActions: secondary,
             };
         }
-        if (activeModal === 'shop') return { buttonText: '品揃えを見る', isDisabled: false };
+        if (activeModal === 'shop') {
+            return {
+                buttonText: '品揃えを見る',
+                isDisabled: false,
+                secondaryActions: [
+                    {
+                        label: '鑑定する',
+                        onClick: () => {
+                            setActiveModal(null);
+                            setShowAppraisal(true);
+                        }
+                    }
+                ]
+            };
+        }
         if (activeModal === 'temple') return { buttonText: '礼拝堂に行く', isDisabled: false };
         if (activeModal === 'guild') return { buttonText: '依頼を見る', isDisabled: false };
         if (activeModal === 'magicAcademy') return { buttonText: '魔術学院に入る', isDisabled: false };
@@ -934,6 +949,7 @@ export function useInnPageState() {
         showAccount, setShowAccount,
         showTavern, setShowTavern,
         showShop, setShowShop,
+        showAppraisal, setShowAppraisal,
         showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,

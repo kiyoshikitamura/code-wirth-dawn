@@ -14,7 +14,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 13,card_prayer,祈り,Heal,2,none,0,30,all_allies,regen,/images/items/book_heal_s.png,神への祈りで仲間を癒す。30の体力を回復し、さらに3ターンのリジェネ（毎ターンHP5%回復）を付与する。
 14,card_heal,治癒,Heal,2,none,0,80,single_ally,,/images/items/book_heal_s.png,光の力で傷を塞ぐ。単体の体力を80回復する。
 15,card_holy_wall,聖壁,Defense,3,none,0,20,all_allies,barrier,/images/items/skill_barrier_all.png,聖なる光の壁でパーティ全体を守る。2ターンの間、受けるダメージをDEF+20分だけ軽減する（パーティ全体）。
-16,card_sand_trap,砂の罠,Support,1,none,0,10,single_enemy,bind,/images/items/book_sand_trap.png,砂に仕掛けた罠で動きを封じる。1ターンの間、敵の行動を完全に封じる（拘束）。ダメージなし。
+16,card_sand_trap,砂の罠,Support,1,none,0,0,single_enemy,bind,/images/items/book_sand_trap.png,砂に仕掛けた罠で動きを封じる。1ターンの間、敵の行動を完全に封じる（拘束）。ダメージなし。
 17,card_sandstorm,砂塵の目眩まし,Support,3,none,0,0,all_enemies,blind,/images/items/book_sandstorm.png,砂嵐で視界を奪う。2ターンの間、敵全体の攻撃を50%の確率でミスさせる（目潰し）。
 18,card_poison_dagger,毒刃,Skill,2,none,0,25,single_enemy,poison,/images/items/book_poison_dagger.png,毒を塗った短刀で攻撃する。25のダメージを与え、3ターンの間、毎ターンHP5%の毒ダメージを付与する。
 19,card_mirage,蜃気楼,Support,3,none,0,0,all_allies,evasion_up,/images/items/scroll_mirage.png,蜃気楼の幻影でパーティ全体を守る。3ターンの間、パーティ全体が敵の攻撃を30%の確率で回避する。

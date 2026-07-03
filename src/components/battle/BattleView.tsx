@@ -46,6 +46,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     const battleState = useGameStore(state => state.battleState);
     const hand = useGameStore(state => state.hand);
+    const deck = useGameStore(state => state.deck || []);
+    const discardPile = useGameStore(state => state.discardPile || []);
     const attackEnemy = useGameStore(state => state.attackEnemy);
     const endTurn = useGameStore(state => state.endTurn);
     const runNpcPhase = useGameStore(state => state.runNpcPhase);
@@ -518,9 +520,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             // __ で始まる同期・制御メッセージを除く実際のテキストログ数をカウント
             const textMessages = battleState.messages.filter(m => !m.startsWith('__'));
             
+            const isQueueFinished = isTypingDone && typingQueue.current?.length === 0 && !activeMessage;
+            
             // 実際に画面上にタイプライター表示完了したログ数 (displayedLogs) が
-            // 発生したすべてのテキストログ数 (textMessages) に達するまで待ってからオーバーレイを表示
-            if (displayedLogs.length >= textMessages.length) {
+            // 発生したすべてのテキストログ数 (textMessages) に達するか、タイプライターが終了した時にオーバーレイを表示
+            if (displayedLogs.length >= textMessages.length || isQueueFinished) {
                 const timer = setTimeout(() => {
                     setShowResultOverlay(true);
                 }, 800);
@@ -529,7 +533,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         } else {
             setShowResultOverlay(false);
         }
-    }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs]);
+    }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs, isTypingDone, activeMessage]);
 
     if (!hasHydrated) return (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">
@@ -1477,6 +1481,18 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     {apErrorActive && (
                         <span className="absolute -bottom-4 text-[7px] text-red-500 font-bold bg-black/80 px-1 py-0.5 rounded border border-red-600 shadow-lg leading-none">AP不足</span>
                     )}
+                </div>
+
+                {/* Deck & Discard Display */}
+                <div className="absolute top-0 left-16 z-40 flex gap-1 h-14">
+                    <div className="flex flex-col justify-center items-center w-11 h-14 bg-black/60 rounded-lg border border-white/20 shadow-lg backdrop-blur-md">
+                        <span className="text-[7px] font-bold mb-0.5 text-slate-400">山札</span>
+                        <span className="text-sm font-bold font-mono text-amber-100">{deck.length}</span>
+                    </div>
+                    <div className="flex flex-col justify-center items-center w-11 h-14 bg-black/60 rounded-lg border border-white/20 shadow-lg backdrop-blur-md">
+                        <span className="text-[7px] font-bold mb-0.5 text-slate-400">捨て札</span>
+                        <span className="text-sm font-bold font-mono text-amber-100">{discardPile.length}</span>
+                    </div>
                 </div>
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}

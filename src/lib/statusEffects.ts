@@ -451,6 +451,7 @@ export function getBuffStatusLogMessages(effects: StatusEffect[]): string[] {
         sacrificial_ap: '生贄の儀式', mana_charge: 'マナチャージ', death_sentence: '死神の宣告',
         cover_all: '身代わりの盾', revenge_shield: '報復の盾', soul_boost: 'ソウルブースト',
         element_resonance: '属性の共鳴', crit_vulnerability: '被クリ率UP',
+        drain_on_hit: '吸血',
     };
 
     const negativeList = [

@@ -28,23 +28,6 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         return isIdMatch || isSlugMatch;
     };
 
-    const visibleQuests = useMemo(() => {
-        return quests.filter((q: any) => {
-            // Exclude Dimensional Rift quests entirely on production
-            const isRiftQuest = q.slug?.startsWith('qst_rift') || q.slug?.startsWith('qst_demon') || Number(q.id) === 7060 || Number(q.id) === 7061 || Number(q.id) === 7051;
-            return !isRiftQuest;
-        });
-    }, [quests]);
-
-    useEffect(() => {
-        if (isOpen && isTourJustCompleted && visibleQuests.length > 0) {
-            const quest6002 = visibleQuests.find((q: any) => Number(q.id) === 6002 || q.slug === 'main_ep02');
-            if (quest6002) {
-                setDetailQuest(quest6002);
-            }
-        }
-    }, [isOpen, isTourJustCompleted, visibleQuests]);
-
     const [activeTab, setActiveTab] = useState<DifficultyTab>('special');
     const [detailQuest, setDetailQuest] = useState<Scenario | null>(null);
     const [showUrgentWarning, setShowUrgentWarning] = useState(false);
@@ -54,17 +37,17 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
     const [isClosing, setIsClosing] = useState(false);
 
     const tabCounts = useMemo(() => {
-        const specialCount = visibleQuests.filter((q: any) => q.quest_type === 'special' || isRecommendedQuest(q)).length;
-        const easyCount = visibleQuests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'easy').length;
-        const normalCount = visibleQuests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'normal').length;
-        const hardCount = visibleQuests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'hard').length;
+        const specialCount = quests.filter((q: any) => q.quest_type === 'special' || isRecommendedQuest(q)).length;
+        const easyCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'easy').length;
+        const normalCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'normal').length;
+        const hardCount = quests.filter((q: any) => (q.quest_type === 'normal' || isRecommendedQuest(q)) && q.difficulty_tier === 'hard').length;
         return {
             special: specialCount,
             easy: easyCount,
             normal: normalCount,
             hard: hardCount
         };
-    }, [visibleQuests]);
+    }, [quests]);
 
     if (!isOpen) return null;
     if (!mounted) return null;
@@ -75,7 +58,7 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         onClose();
     };
 
-    const filteredQuests = visibleQuests.filter((q: any) => {
+    const filteredQuests = quests.filter((q: any) => {
         if (activeTab === 'special') {
             return q.quest_type === 'special' || isRecommendedQuest(q);
         } else {

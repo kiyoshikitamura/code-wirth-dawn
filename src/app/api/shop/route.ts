@@ -120,6 +120,8 @@ export async function GET(req: Request) {
         const filteredItems = allItems.filter(item => {
             // 除外リストのアイテムはショップに並べない
             if (item.slug && SHOP_EXCLUDE_SLUGS.has(item.slug)) return false;
+            // 狭間の迷宮シリーズの追加装備品を除外
+            if (item.slug && item.slug.startsWith('item_rift_')) return false;
             // base_price=0 の装備品はクエスト限定報酬のためショップに並べない
             if (item.type === 'equipment' && (item.base_price || 0) <= 0) return false;
             // クエスト専売アイテムは常に表示

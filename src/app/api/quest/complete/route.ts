@@ -153,6 +153,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'You are not currently in this quest.' }, { status: 403 });
         }
 
+        let isFirstReportCompletion = true;
+        if ((String(quest_id) === '7064' || String(quest_id) === '7066') && result === 'success') {
+            const { data: priorClear } = await supabase
+                .from('user_completed_quests')
+                .select('id')
+                .eq('user_id', user_id)
+                .eq('scenario_id', Number(quest_id))
+                .maybeSingle();
+            if (priorClear) {
+                isFirstReportCompletion = false;
+                console.log(`[QuestComplete] ${quest_id}: Repeat completion detected. Withholding completion rewards.`);
+            }
+        }
+
+
         // [Security] バトル検証トークンの必須化と検証
         let battleCount = 0;
         let hasBattles = false;
@@ -319,7 +334,8 @@ export async function POST(req: Request) {
                             filteredLootPool.push({
                                 ...loot,
                                 itemId: mappedItem.id,
-                                itemName: mappedItem.name
+                                itemName: mappedItem.name,
+                                name: mappedItem.name
                             });
                         } else {
                             filteredLootPool.push(loot);
@@ -359,6 +375,7 @@ export async function POST(req: Request) {
         let daysPassed = 1;
         if (result === 'success') daysPassed = quest.days_success ?? 1;
         else if (result === 'failure') daysPassed = quest.days_failure ?? 1;
+        if (['7060', '7064', '7066'].includes(String(quest.id))) daysPassed = 0;
 
         const { newAge, newAgeDays, decay } = processAging(
             user.age || 18, user.age_days || 0, daysPassed
@@ -369,14 +386,14 @@ export async function POST(req: Request) {
         if (decay.vit > 0 || decay.atk > 0 || decay.def > 0) {
             updates.max_vitality = Math.max(0, (user.max_vitality || 100) - decay.vit);
             updates.vitality = Math.min(user.vitality || 100, updates.max_vitality);
-            updates.atk = Math.max(1, (user.atk || user.attack || 1) - decay.atk);
+            updates.atk = Math.max(1, (user.attack || user.atk || 1) - decay.atk);
             updates.def = Math.max(1, (user.def || 1) - decay.def);
         }
 
         // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1、HPは装備補正込みで全快）
         let battleDefeatVitPenalty = 0;
         if (result === 'failure') {
-            battleDefeatVitPenalty = 1;
+            battleDefeatVitPenalty = (['7060', '7064', '7066'].includes(String(quest.id))) ? 0 : 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
             updates.hp = (user.max_hp || 100) + equipHpBonus;
@@ -392,12 +409,13 @@ export async function POST(req: Request) {
             const currentExp = Number(user.exp || 0);
             const difficulty = quest.difficulty || 1;
             const expFallback = difficulty * (Math.floor(Math.random() * 41) + 10);
-            const questExp = (quest.rewards?.exp) || expFallback;
+            const questExp = isFirstReportCompletion ? ((quest.rewards?.exp) || expFallback) : 0;
             const battleBonus = battleCount * (Math.floor(Math.random() * 101) + 100);
             earnedExp = questExp + battleBonus;
             if (isUgcV2) {
                 earnedExp = UGC_REWARD_LIMITS.fixed_exp || 30;
             }
+
             earnedExp += lootExpSum;
 
 
@@ -430,8 +448,19 @@ export async function POST(req: Request) {
         // §4. 報酬 + 移動 + アライメント
         // ═══════════════════════════════════════
         let alignmentShift: Record<string, number> | null = null;
-        const qRewards = quest.rewards || {};
+        let qRewards = quest.rewards || {};
+        if (!isFirstReportCompletion) {
+            qRewards = {
+                ...qRewards,
+                gold: 0,
+                exp: 0,
+                reputation: 0,
+                items: [],
+                skills: []
+            };
+        }
         const nRewards = node_rewards || {};
+
 
         // ノード報酬のアイテム・スキルはマージから排除（二重付与防止：クライアントの loot_pool で付与されるため）
         const effectiveRewards = result === 'success'
@@ -750,7 +779,9 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §12. 名声変動
         // ═══════════════════════════════════════
-        const repChange = await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
+        const repChange = ((String(quest.id) === '7064' || String(quest.id) === '7066') && result === 'failure')
+            ? null
+            : await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
 
         // ─── 先行宣言: 新しい拠点名とステータス変化 ───
         let newLocationName: string | null = null;
@@ -1085,6 +1116,7 @@ async function getQuestAllowedItems(supabase: any, quest: any, questId: string):
                 if (typeof item === 'object' && item !== null) {
                     if (item.item_id) allowed.add(String(item.item_id).trim());
                     if (item.itemId) allowed.add(String(item.itemId).trim());
+                    if (item.id) allowed.add(String(item.id).trim());
                 } else if (item) {
                     allowed.add(String(item).trim());
                 }

@@ -394,20 +394,8 @@ export async function GET(req: Request) {
             return true;
         });
 
-        // specialクエストにもtier制限を適用（メインシナリオは免除: チェーン条件で最大1件に制限されるため）
-        const SPECIAL_TIER_MAX: Record<string, number> = { easy: 3, normal: 2, hard: 2 };
-        const specialTierLimits: Record<string, number> = { easy: 0, normal: 0, hard: 0 };
-        const shuffledSpecial = [...specialQuests].sort(() => Math.random() - 0.5);
-        const limitedSpecialQuests = shuffledSpecial.filter((q: any) => {
-            const isMainScenario = q.slug && q.slug.startsWith('main_ep');
-            const isRiftQuest = q.slug && q.slug.startsWith('qst_rift_');
-            if (isMainScenario || isRiftQuest) return true; // メインシナリオおよび狭間の迷宮は常に表示
-            const recLevel = q.rec_level || q.requirements?.min_level || 1;
-            const tier = getDifficultyTier(recLevel);
-            if (specialTierLimits[tier] >= SPECIAL_TIER_MAX[tier]) return false;
-            specialTierLimits[tier]++;
-            return true;
-        });
+        // specialクエストの制限は撤廃（出現条件に合致したすべてのspecialクエストを表示）
+        const limitedSpecialQuests = specialQuests;
 
         const allQuests = [...limitedSpecialQuests, ...limitedNormalQuests]
             .sort((a: any, b: any) => {

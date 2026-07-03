@@ -698,10 +698,15 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                     >
                                         <div className="w-full h-full flex flex-col relative">
                                             {/* レアリティバッジ */}
-                                            <div className="absolute top-0.5 left-0.5 z-10">
+                                            <div className="absolute top-0.5 left-0.5 z-10 flex gap-1">
                                                 <span className={`text-[5px] sm:text-[6px] px-1 py-0.5 rounded font-black border leading-none scale-90 ${getRarityBadgeColor(card.rarity)}`}>
                                                     {card.rarity}
                                                 </span>
+                                                {inventory.some(inv => inv.is_skill && (inv.slug === card.slug || inv.skill_id === card.id || inv.item_id === card.id)) && (
+                                                    <span className="text-[5px] sm:text-[6px] px-1 py-0.5 rounded font-black border leading-none scale-90 bg-emerald-950/80 border-emerald-500/50 text-emerald-300 shadow-[0_0_5px_rgba(16,185,129,0.3)]">
+                                                        所持中
+                                                    </span>
+                                                )}
                                             </div>
                                             {/* イメージ */}
                                             <div className="flex-1 bg-slate-950/60 overflow-hidden flex items-center justify-center">
@@ -730,7 +735,12 @@ export default function AcademyModal({ onClose, onOpenBilling }: Props) {
                                 return (
                                     <div className="flex flex-col gap-2.5 text-left animate-in fade-in slide-in-from-right-3 duration-250">
                                         <div className="flex justify-between items-start gap-1">
-                                            <h4 className="text-xs sm:text-sm font-bold text-slate-100 font-serif leading-snug">{hoveredCard.name}</h4>
+                                            <div className="flex flex-col gap-0.5">
+                                                <h4 className="text-xs sm:text-sm font-bold text-slate-100 font-serif leading-snug">{hoveredCard.name}</h4>
+                                                {inventory.some(inv => inv.is_skill && (inv.slug === hoveredCard.slug || inv.skill_id === hoveredCard.id || inv.item_id === hoveredCard.id)) && (
+                                                    <span className="text-[8px] font-black text-emerald-400">（所持中）</span>
+                                                )}
+                                            </div>
                                             <span className={`text-[6px] sm:text-[7px] px-1.5 py-0.5 rounded font-black border ${getRarityBadgeColor(hoveredCard.rarity)} shrink-0`}>
                                                 {hoveredCard.rarity}
                                             </span>

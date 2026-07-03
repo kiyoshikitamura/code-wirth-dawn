@@ -14,6 +14,25 @@ import { supabase } from '@/lib/supabase';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
 
+async function updateProfileStatusHelper(updates: { hp?: number; gold?: number }, userProfileId: string) {
+    try {
+        const authHeaders = await getAuthHeaders();
+        await fetch('/api/profile/update-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...authHeaders
+            },
+            body: JSON.stringify({
+                updates,
+                profileId: userProfileId
+            })
+        });
+    } catch (e) {
+        console.error('[ScenarioNodeProcessor] Failed to sync status:', e);
+    }
+}
+
 interface NodeProcessorOptions {
     currentNode: any;
     currentNodeId: string;
@@ -75,14 +94,14 @@ export function useScenarioNodeProcessor({
 
         const processNode = async () => {
             // BGM切替 (定義がない場合は履歴を遡って再生)
-            let bgmKey = currentNode.bgm || currentNode.bgm_key;
+            let bgmKey = currentNode.bgm || currentNode.bgm_key || currentNode.params?.bgm || currentNode.params?.bgm_key;
             if (!bgmKey && script?.nodes) {
                 const hist = historyRef.current || [];
                 for (let i = hist.length - 1; i >= 0; i--) {
                     const prevNodeId = hist[i];
                     const prevNode = script.nodes[prevNodeId];
-                    if (prevNode?.bgm || prevNode?.bgm_key) {
-                        bgmKey = prevNode.bgm || prevNode.bgm_key;
+                    if (prevNode?.bgm || prevNode?.bgm_key || prevNode?.params?.bgm || prevNode?.params?.bgm_key) {
+                        bgmKey = prevNode.bgm || prevNode.bgm_key || prevNode.params?.bgm || prevNode.params?.bgm_key;
                         break;
                     }
                 }
@@ -137,28 +156,95 @@ export function useScenarioNodeProcessor({
             }
 
 
-            else if (currentNode.type === 'random_branch') {
-                const prob = currentNode.prob || currentNode.params?.prob || 50;
+            else if (currentNode.type === 'random_branch' || currentNode.type === 'check_random') {
+                let prob = currentNode.prob || currentNode.params?.prob || currentNode.probability || currentNode.params?.probability || 50;
+                if (prob > 0 && prob < 1) {
+                    prob = prob * 100;
+                }
                 const roll = Math.random() * 100;
                 const isSuccess = roll < prob;
-                // CSV互換: CHOICE行のlabelは hit/miss または success/failure のいずれか
+                // CSV互換: CHOICE行のlabelは hit/miss または success/failure/fallback のいずれか
                 const successChoice = currentNode.choices?.find((c: any) =>
                     c.label === 'hit' || c.label === 'success');
                 const failChoice = currentNode.choices?.find((c: any) =>
-                    c.label === 'miss' || c.label === 'failure');
-                console.log(`[random_branch] prob=${prob}, roll=${roll.toFixed(1)}, result=${isSuccess ? 'SUCCESS' : 'FAIL'}`);
+                    c.label === 'miss' || c.label === 'failure' || c.label === 'fallback');
+                console.log(`[random_branch/check_random] prob=${prob}, roll=${roll.toFixed(1)}, result=${isSuccess ? 'SUCCESS' : 'FAIL'}`);
                 if (successChoice && failChoice) {
                     setCurrentNodeId(isSuccess ? successChoice.next : failChoice.next);
                 } else {
-                    // フォールバック: choices が見つからない場合は next へ遷移
-                    const fallbackNext = currentNode.next || currentNode.condNext;
-                    const fallbackFail = currentNode.condFallback || currentNode.fallback;
-                    if (fallbackNext && fallbackFail) {
-                        setCurrentNodeId(isSuccess ? fallbackNext : fallbackFail);
-                    } else if (fallbackNext) {
-                        setCurrentNodeId(fallbackNext);
+                    // フォールバック: choices が見つからない場合は params または next / fallback へ遷移
+                    const successNode = currentNode.success || currentNode.params?.success || currentNode.next || currentNode.condNext;
+                    const failNode = currentNode.fallback || currentNode.params?.fallback || currentNode.condFallback;
+                    if (successNode && failNode) {
+                        setCurrentNodeId(isSuccess ? successNode : failNode);
+                    } else if (successNode) {
+                        setCurrentNodeId(successNode);
                     }
-                    console.warn(`[random_branch] choices not found, using fallback: next=${fallbackNext}, fail=${fallbackFail}`);
+                    console.warn(`[random_branch/check_random] choices not found, using fallback: success=${successNode}, fail=${failNode}`);
+                }
+            }
+
+            else if (currentNode.type === 'damage') {
+                const effectType = currentNode.params?.effect_type || currentNode.effect_type || 'hp';
+                const damageVal = currentNode.params?.damage_val || currentNode.damage_val || 0;
+                const damagePct = currentNode.params?.damage_pct || currentNode.damage_pct || 0;
+
+                const store = useGameStore.getState();
+                if (store.userProfile) {
+                    let hpDamage = 0;
+                    let goldDamage = 0;
+
+                    if (effectType === 'hp') {
+                        if (damagePct > 0) {
+                            const maxHp = store.userProfile.max_hp || 100;
+                            hpDamage = Math.floor(maxHp * damagePct);
+                        } else {
+                            hpDamage = damageVal;
+                        }
+                    } else if (effectType === 'gold') {
+                        goldDamage = damageVal;
+                    }
+
+                    const nextHp = Math.max(0, (store.userProfile.hp || 0) - hpDamage);
+                    const nextGold = Math.max(0, (store.gold || 0) - goldDamage);
+
+                    // Zustand の状態を即時更新
+                    useGameStore.setState({
+                        userProfile: {
+                            ...store.userProfile,
+                            hp: nextHp,
+                            gold: nextGold
+                        },
+                        gold: nextGold
+                    });
+
+                    // QuestState (playerHp) も同期更新
+                    if (effectType === 'hp') {
+                        useQuestState.setState({ playerHp: nextHp });
+                    }
+
+                    // DB へ同期
+                    await updateProfileStatusHelper({ hp: nextHp, gold: nextGold }, store.userProfile.id);
+
+                    const playerName = store.userProfile?.name || '主人公';
+                    // トースト通知 & SE再生
+                    if (hpDamage > 0) {
+                        showToast(`トラップ発動！ ${playerName}に ${hpDamage} ダメージ！`, 'error');
+                        if (soundManager) soundManager.playSE('se_taunt');
+                    } else if (goldDamage > 0) {
+                        showToast(`トラップ発動！ ${playerName}の所持金が ${goldDamage} G 減少した...`, 'error');
+                        if (soundManager) soundManager.playSE('se_quest_fail');
+                    }
+                }
+
+                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする（テキストがない場合は自動遷移）
+                const nextNodeId = currentNode.next || currentNode.next_node || currentNode.condNext;
+                if (!currentNode.text && nextNodeId) {
+                    timeoutRef.current = setTimeout(() => {
+                        setCurrentNodeId(nextNodeId);
+                    }, 50);
+                } else {
+                    console.log(`[damage] Damage applied, waiting for manual proceed.`);
                 }
             }
 
@@ -169,8 +255,30 @@ export function useScenarioNodeProcessor({
                 
                 const isPct = stat?.endsWith('_pct') || currentNode.params?.use_pct === true;
                 const baseStat = stat?.endsWith('_pct') ? stat.replace('_pct', '') : stat;
-                
-                if (isPct) {
+
+                if (stat === 'reputation') {
+                    let repScore = 0;
+                    if (userProfile?.current_location_id) {
+                        const { data: locData } = await supabase
+                            .from('locations')
+                            .select('name')
+                            .eq('id', userProfile.current_location_id)
+                            .maybeSingle();
+                        const locationName = locData?.name;
+                        if (locationName) {
+                            const { data: repData } = await supabase
+                                .from('reputations')
+                                .select('score')
+                                .eq('user_id', userProfile.id)
+                                .eq('location_name', locationName)
+                                .maybeSingle();
+                            repScore = repData?.score || 0;
+                        }
+                    }
+                    console.log(`[check_status] reputation check: score=${repScore}, required=${val}`);
+                    if (repScore >= Number(val)) passed = true;
+                }
+                else if (isPct) {
                     const order = userProfile?.order_pts || 0;
                     const chaos = userProfile?.chaos_pts || 0;
                     const justice = userProfile?.justice_pts || 0;
@@ -190,6 +298,15 @@ export function useScenarioNodeProcessor({
                     else if (stat === 'chaos' && (userProfile?.chaos_pts || 0) >= val) passed = true;
                     else if (stat === 'justice' && (userProfile?.justice_pts || 0) >= val) passed = true;
                     else if (stat === 'evil' && (userProfile?.evil_pts || 0) >= val) passed = true;
+                    else if (stat === 'gold') {
+                        const currentGold = Number([
+                            useGameStore.getState().userProfile?.gold,
+                            userProfile?.gold,
+                            useGameStore.getState().gold,
+                            0
+                        ].find(g => g !== undefined && g !== null));
+                        if (currentGold >= Number(val)) passed = true;
+                    }
                 }
                 
                 const successChoice = currentNode.choices?.find((c: any) => c.label === 'success');
@@ -228,9 +345,10 @@ export function useScenarioNodeProcessor({
                     .reduce((sum: number, i: any) => sum + (i.quantity || 1), 0);
                 
                 const hasItem = (latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount) >= reqQty;
-                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
-                if (!currentNode.params?.silent && !currentNode.silent) {
+                const isSilent = currentNode.params?.silent || currentNode.silent || currentNodeId === '7065_b12f_check_weapon';
+                if (!isSilent) {
                     showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
                 }
                 setCurrentNodeId(hasItem ? successNode : failNode);
@@ -276,7 +394,7 @@ export function useScenarioNodeProcessor({
                 }
 
                 const hasEquipped = (inventory || []).filter((i: any) => String(i.item_id) === String(requiredItemId) && i.is_equipped).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) >= reqQty;
-                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 showToast(hasEquipped ? '✅ 指定の装備を確認。' : '❌ 指定の装備がされていない...', hasEquipped ? 'success' : 'error');
                 setCurrentNodeId(hasEquipped ? successNode : failNode);
@@ -284,7 +402,7 @@ export function useScenarioNodeProcessor({
 
             else if (currentNode.type === 'check_delivery') {
                 const removeOnSuccess = currentNode.params?.remove_on_success ?? currentNode.remove_on_success ?? true;
-                const successNode = currentNode.next || currentNode.choices?.[0]?.next;
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
                 const activeNodeId = currentNodeId;
 
@@ -365,7 +483,7 @@ export function useScenarioNodeProcessor({
                             droppedItems: [],
                             usedConsumables: [...(questState.consumedItems || []), ...consumedList]
                         });
-                        showToast('✅ アイテムを納品した。', 'success');
+                        showToast('✅ アイテムを渡した。', 'success');
                     } else {
                         showToast('✅ アイテムを確認した。', 'success');
                     }
@@ -376,8 +494,33 @@ export function useScenarioNodeProcessor({
                 }
             }
 
-            else if (currentNode.action === 'heal_partial') {
-                questState.healParty(0.5);
+            else if (currentNode.action === 'heal_partial' || currentNode.params?.action === 'heal_partial') {
+                console.log('[ScenarioNodeProcessor] heal_partial triggered. currentNode:', currentNode);
+                const store = useGameStore.getState();
+                if (store.userProfile) {
+                    const maxHp = (store.userProfile.max_hp || 100) + (store.equipBonus?.hp || 0);
+                    const healAmount = Math.floor(maxHp * 0.5);
+                    const nextHp = Math.min(maxHp, (store.userProfile.hp || 0) + healAmount);
+                    
+                    // Zustand GameStore
+                    useGameStore.setState({
+                        userProfile: {
+                            ...store.userProfile,
+                            hp: nextHp
+                        }
+                    });
+                    
+                    // Zustand QuestStore
+                    questState.healParty(0.5);
+                    
+                    // Sync to DB
+                    await updateProfileStatusHelper({ hp: nextHp }, store.userProfile.id);
+                    
+                    showToast('💚 湧き水によって傷が癒やされた。 (HP回復)', 'success');
+                    setHistory(prev => [...prev, '[System] 湧き水を飲み、体力を回復した。']);
+                } else {
+                    console.warn('[ScenarioNodeProcessor] heal_partial: userProfile not found in store');
+                }
             }
 
             else if (currentNode.type === 'camp') {
@@ -431,7 +574,7 @@ export function useScenarioNodeProcessor({
                 }
             }
 
-            else if (currentNode.type === 'meet_player' || currentNode.action === 'meet_player') {
+            else if (currentNode.type === 'meet_player' || currentNode.action === 'meet_player' || currentNode.params?.action === 'meet_player') {
                 const activeNodeId = currentNodeId;
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
 
@@ -447,21 +590,21 @@ export function useScenarioNodeProcessor({
 
                     if (res.ok && processedNodeRef.current === activeNodeId) {
                         const data = await res.json();
-                        if (data.player_name) {
+                        if (data.player_name && data.is_real) {
                             questState.setFlag('met_player_name', data.player_name, true);
+                            questState.setFlag('met_player_is_real', 1, true);
                         } else {
-                            questState.setFlag('met_player_name', '見知らぬ冒険者', true);
+                            questState.setFlag('met_player_name', '', true);
+                            questState.setFlag('met_player_is_real', 0, true);
                         }
                     } else {
-                        const dummies = ['戦士バルド', '魔術師ミリア', '冒険者ジーク', '盗賊レナ', '聖騎士クララ'];
-                        const picked = dummies[Math.floor(Math.random() * dummies.length)];
-                        questState.setFlag('met_player_name', picked, true);
+                        questState.setFlag('met_player_name', '', true);
+                        questState.setFlag('met_player_is_real', 0, true);
                     }
                 } catch (e) {
-                    console.error('[meet_player] Failed to fetch nearby player, using fallback:', e);
-                    const dummies = ['戦士バルド', '魔術師ミリア', '冒険者ジーク', '盗賊レナ', '聖騎士クララ'];
-                    const picked = dummies[Math.floor(Math.random() * dummies.length)];
-                    questState.setFlag('met_player_name', picked, true);
+                    console.error('[meet_player] Failed to fetch nearby player:', e);
+                    questState.setFlag('met_player_name', '', true);
+                    questState.setFlag('met_player_is_real', 0, true);
                 }
 
                 if (processedNodeRef.current === activeNodeId && nextId) {
@@ -624,13 +767,46 @@ export function useScenarioNodeProcessor({
                     }
                 }, 1000);
             }
-            else if (currentNode.type === 'reward') {
-                const rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
-                const rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
+            else if (currentNode.type === 'reward' || currentNode.type === 'treasure') {
+                let rawItems = currentNode.params?.items || currentNode.params?.rewards?.items || currentNode.rewards?.items;
+                let rewardGold = currentNode.params?.gold || currentNode.params?.rewards?.gold || currentNode.rewards?.gold;
                 const singleItemId = currentNode.params?.item_id || currentNode.item_id || currentNode.params?.rewards?.item_id || currentNode.rewards?.item_id;
                 const alignmentShift = currentNode.params?.alignment_shift || currentNode.params?.rewards?.alignment_shift || currentNode.rewards?.alignment_shift;
-                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold, 'alignment:', alignmentShift);
 
+                // 特殊対応: 商人取引による購入
+                const isMerchantBuy = currentNode.params?.is_merchant_buy || currentNodeId.includes('merchant_buy');
+                if (isMerchantBuy) {
+                    const mItemId = questState.getFlag('merchant_item_id');
+                    const mPrice = questState.getFlag('merchant_price') || 30000;
+                    if (mItemId) {
+                        rawItems = [{ item_id: Number(mItemId), quantity: 1 }];
+                        rewardGold = -Number(mPrice); // ゴールド減算
+                        console.log(`[reward/merchant_buy] Intercepted merchant reward: Item=${mItemId}, Gold=${rewardGold}`);
+                    }
+                }
+                // 確率プール抽選
+                else if (currentNode.params?.item_pool && Array.isArray(currentNode.params.item_pool)) {
+                    const pool = currentNode.params.item_pool;
+                    const totalWeight = pool.reduce((sum: number, item: any) => sum + (item.weight || 0), 0);
+                    const roll = Math.random() * totalWeight;
+                    let currentSum = 0;
+                    let selectedItem = null;
+                    
+                    for (const item of pool) {
+                        currentSum += item.weight || 0;
+                        if (roll <= currentSum) {
+                            selectedItem = item;
+                            break;
+                        }
+                    }
+                    
+                    if (selectedItem) {
+                        rawItems = [{ item_id: selectedItem.item_id, quantity: selectedItem.quantity || 1 }];
+                        console.log(`[reward/item_pool] Rolled item ID=${selectedItem.item_id} from pool`);
+                    }
+                }
+
+                console.log('[reward] rawItems:', JSON.stringify(rawItems), 'singleItemId:', singleItemId, 'gold:', rewardGold, 'alignment:', alignmentShift);
 
                 const activeNodeId = currentNodeId;
                 let rewardItems: any[] | undefined;
@@ -640,7 +816,9 @@ export function useScenarioNodeProcessor({
                         if (typeof item === 'string' || typeof item === 'number') {
                             return { item_id: parseInt(String(item), 10), quantity: 1 };
                         }
-                        return item;
+                        const itemId = item.item_id || item.id || item.itemId;
+                        const quantity = item.quantity || item.amount || item.qty || 1;
+                        return { item_id: itemId, quantity };
                     });
                 } else if (singleItemId) {
                     const singleQty = currentNode.params?.quantity || currentNode.quantity || 1;
@@ -667,23 +845,45 @@ export function useScenarioNodeProcessor({
                 const msgs: string[] = [];
 
                 if (alignmentShift && typeof alignmentShift === 'object') {
+                    const alignLabels: Record<string, string> = {
+                        order: '秩序',
+                        chaos: '混沌',
+                        justice: '正義',
+                        evil: '悪意'
+                    };
                     for (const [key, val] of Object.entries(alignmentShift)) {
                         const amount = Number(val);
                         if (amount !== 0 && ['order', 'chaos', 'justice', 'evil'].includes(key)) {
+                            const label = alignLabels[key] || key;
                             itemsToGrant.push({
                                 itemId: `align_${key}`,
-                                itemName: `アライメント (${key})`,
+                                itemName: `アライメント (${label})`,
+                                name: `アライメント (${label})`,
                                 quantity: amount
                             });
-                            msgs.push(`${key} ${amount > 0 ? '+' : ''}${amount}`);
+                            msgs.push(`${label} ${amount > 0 ? '+' : ''}${amount}`);
                         }
                     }
                 }
 
-
                 if (rewardGold) {
                     itemsToGrant.push({ itemId: 'gold', itemName: 'ゴールド', quantity: rewardGold });
                     msgs.push(`${rewardGold}G`);
+
+                    if (rewardGold < 0) {
+                        const store = useGameStore.getState();
+                        if (store.userProfile) {
+                            const nextGold = Math.max(0, (store.userProfile.gold || 0) + rewardGold);
+                            useGameStore.setState({
+                                userProfile: {
+                                    ...store.userProfile,
+                                    gold: nextGold
+                                },
+                                gold: nextGold
+                            });
+                            await updateProfileStatusHelper({ gold: nextGold }, store.userProfile.id);
+                        }
+                    }
                 }
 
                 if (rewardItems && rewardItems.length > 0) {
@@ -697,7 +897,7 @@ export function useScenarioNodeProcessor({
                         }
                         if (processedNodeRef.current !== activeNodeId) return;
 
-                        itemsToGrant.push({ itemId: String(item.item_id), itemName, quantity: item.quantity || 1 });
+                        itemsToGrant.push({ itemId: String(item.item_id), itemName, name: itemName, quantity: item.quantity || 1 });
                         msgs.push(`${itemName} x${item.quantity || 1}`);
                     }
                 }
@@ -712,16 +912,67 @@ export function useScenarioNodeProcessor({
                 });
 
                 if (msgs.length > 0) {
-                    showToast(`🎁 報酬獲得 (クエスト完了時付与): ${msgs.join(' / ')}`, 'success');
+                    showToast(`報酬獲得: ${msgs.join(' / ')}`, 'success');
                     setHistory(prev => [...prev, `[Reward] ${msgs.join(' / ')} を獲得 (予定)`]);
                 }
 
+                // 完了後、自動遷移はさせず手動で「次へ」進めるようにする（テキストがない場合は自動遷移）
                 const nextId = currentNode.next || currentNode.choices?.[0]?.next;
-                if (nextId) timeoutRef.current = setTimeout(() => {
-                    if (processedNodeRef.current === activeNodeId) {
-                        setCurrentNodeId(nextId);
+                if (!currentNode.text && nextId) {
+                    timeoutRef.current = setTimeout(() => {
+                        if (processedNodeRef.current === activeNodeId) {
+                            setCurrentNodeId(nextId);
+                        }
+                    }, 50);
+                } else {
+                    console.log(`[reward] Reward granted, waiting for manual proceed.`);
+                }
+            }
+            else if (currentNode.type === 'merchant_trade') {
+                const lastMerchantNode = questState.getFlag('last_merchant_node');
+                if (lastMerchantNode !== currentNodeId) {
+                    questState.setFlag('merchant_item_id', '', true);
+                    questState.setFlag('merchant_price', 0, true);
+                    questState.setFlag('merchant_item_name', '', true);
+                    questState.setFlag('last_merchant_node', currentNodeId, true);
+                }
+                const pool = currentNode.params?.merchant_pool || currentNode.merchant_pool;
+                const price = currentNode.params?.price || currentNode.price || 30000;
+                
+                if (!questState.getFlag('merchant_item_id') && Array.isArray(pool)) {
+                    const totalWeight = pool.reduce((sum: number, item: any) => sum + (item.weight || 0), 0);
+                    const roll = Math.random() * totalWeight;
+                    let currentSum = 0;
+                    let selectedItem = null;
+                    
+                    for (const item of pool) {
+                        currentSum += item.weight || 0;
+                        if (roll <= currentSum) {
+                            selectedItem = item;
+                            break;
+                        }
                     }
-                }, 1500);
+                    
+                    if (selectedItem) {
+                        questState.setFlag('merchant_item_id', selectedItem.item_id);
+                        questState.setFlag('merchant_price', price);
+                        console.log(`[merchant_trade] Randomized merchant item: ID=${selectedItem.item_id}, Price=${price}`);
+                    }
+                }
+
+                // Ensure merchant_item_name is fetched and stored
+                const mItemId = questState.getFlag('merchant_item_id');
+                if (mItemId && !questState.getFlag('merchant_item_name')) {
+                    try {
+                        const { data: itemData } = await supabase.from('items').select('name').eq('id', Number(mItemId)).maybeSingle();
+                        if (itemData?.name) {
+                            questState.setFlag('merchant_item_name', itemData.name);
+                            console.log(`[merchant_trade] Resolved item name: ${itemData.name}`);
+                        }
+                    } catch (err) {
+                        console.error('[merchant_trade] Failed to fetch item name:', err);
+                    }
+                }
             }
             else if (currentNode.type === 'shop_access') {
                 const questId = questState.questId;

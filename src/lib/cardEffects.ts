@@ -61,6 +61,7 @@ export type CardEffectType =
     | 'quick_draw'
     | 'tactical_plan'
     | 'time_reverse'
+    | 'shuriken_attack'
     | 'mana_filter';
 
 export interface CardEffectInfo {
