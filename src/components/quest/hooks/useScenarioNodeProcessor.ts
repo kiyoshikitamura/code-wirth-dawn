@@ -347,7 +347,8 @@ export function useScenarioNodeProcessor({
                 const hasItem = (latestInv.filter((i: any) => String(i.item_id) === String(requiredItemId)).reduce((sum: number, i: any) => sum + (i.quantity || 1), 0) - alreadyConsumedCount + questLootCount) >= reqQty;
                 const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.[0]?.next;
                 const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
-                if (!currentNode.params?.silent && !currentNode.silent) {
+                const isSilent = currentNode.params?.silent || currentNode.silent || currentNodeId === '7065_b12f_check_weapon';
+                if (!isSilent) {
                     showToast(hasItem ? '✅ 必要なアイテムを所持している。' : '❌ 必要なアイテムが足りない...', hasItem ? 'success' : 'error');
                 }
                 setCurrentNodeId(hasItem ? successNode : failNode);

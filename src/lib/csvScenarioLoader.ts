@@ -228,7 +228,7 @@ export function parseCsvToScenarioJson(csvText: string): ScenarioJson {
                 'hide_buttons', 'continue_label', 'title',
                 'fg', 'effect_type', 'damage_val', 'damage_pct',
                 'alignment_shift', 'is_merchant_buy', 'item_pool', 'merchant_pool', 'price',
-                'speaker', 'speaker_name', 'speaker_image_url'
+                'speaker', 'speaker_name', 'speaker_image_url', 'silent'
             ];
             for (const k of passthrough) {
                 if (params[k] !== undefined) {

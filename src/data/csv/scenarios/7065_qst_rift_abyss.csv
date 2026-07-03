@@ -142,12 +142,12 @@ NODE,7065_b11f_rm4_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出�
 NODE,7065_b11f_rm4_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm4_chest_open
 NODE,7065_b11f_rm4_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm4_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":318,""weight"":100},{""item_id"":319,""weight"":100}]}",7065_b11f_rm4_after_chest
-NODE,7065_b11f_rm4_after_chest,宝箱を退けた後、祭壇の背後の壁画が開き、青く光り輝くテレポートの扉が出現した！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_door_basic_transparent"",""type"":""text""}",7065_b11f_camp_teleport
+NODE,7065_b11f_rm4_after_chest,宝箱を退けた後、祭壇の背後の壁画が開き、青く光り輝くテレポートの扉が出現した！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_door_basic"",""type"":""text""}",7065_b11f_camp_teleport
 NODE,7065_b11f_camp_teleport,意を決してテレポートの扉へと飛び込む。激しい時空の歪みを経て、私達は地下11階の最奥、安全が確保されたキャンプ地に辿り着いた。,"{""bg"":""bg_rift_camp_stairs"",""type"":""text""}",7065_b11f_camp
 NODE,7065_b11f_camp,地下11階の最奥キャンプ地。これより先は迷宮の最深部「地下12階」へと続く。十分な休息と装備の調整を行ってほしい。,"{""bg"":""bg_rift_camp_stairs"",""type"":""camp""}",
 CHOICE,,探索を続けて最深部（地下12階）へ進む,,7065_b12f_start
 CHOICE,,街に一時帰還する（クエスト一時中断・達成）,,7065_end_success_midway
-NODE,7065_b12f_start,テレポートの扉を抜けた先……そこは、中層をも凌駕する禍々しい黒大理石の王座の間だった。王座の頂点には、あの討伐したはずの大魔導士ヴァルグナが佇んでいる。,"{""bg"":""bg_rift_vargna_throne"",""bgm"":""bgm_battle_boss"",""type"":""text""}",7065_b12f_dialog
+NODE,7065_b12f_start,テレポートの扉を抜けた先……そこは、中層をも凌駕する禍々しい黒大理石の王座の間だった。王座の頂点には、あの討伐したはずの大魔導士ヴァルグナが佇んでいる。,"{""bg"":""bg_rift_vargna_summon"",""bgm"":""bgm_battle_boss"",""type"":""text""}",7065_b12f_dialog
 NODE,7065_b12f_dialog,「ククク……よくぞ奈落の底まで来たな。だが我が魂は、深淵の時空魔力と融合し、無限に蘇る真の魔神となったのだ！ お前たちの血肉を、破壊神サタンの生贄として捧げてくれよう！」,"{""bg"":""bg_rift_vargna_throne"",""speaker_name"":""大魔導士ヴァルグナ（真）"",""type"":""text""}",7065_b12f_battle
 NODE,7065_b12f_battle,,"{""bg"":""bg_rift_vargna_summon"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":""9506"",""type"":""battle""}",
 CHOICE,,win,,7065_b12f_win
@@ -164,7 +164,9 @@ NODE,7065_b12f_satan_battle,,"{""bg"":""bg_rift_abyss_02"",""bgm"":""bgm_spot_fi
 CHOICE,,win,,7065_b12f_satan_win
 CHOICE,,lose,,end_failure
 NODE,7065_b12f_satan_win,信じられない死闘の果てに、破壊神サタンの巨体を打ち砕き、再び深淵の底へ封印することに成功した！ サタンの滅びた影の中に、眩い聖光を放つ一本の剣が遺されていた。,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_b12f_satan_reward_node
-NODE,7065_b12f_satan_reward_node,伝説の聖剣『デーモンスレイヤー』を手に入れた！ 剣を握った瞬間、全身に神聖な加護が満ち溢れるのを感じた。,"{""bg"":""bg_rift_abyss_02"",""fg"":""fg_rift_chest"",""type"":""reward"",""items"":[{""id"":351,""amount"":1}]}",7065_end_success
+NODE,7065_b12f_satan_reward_node,伝説の聖剣『デーモンスレイヤー』を手に入れた！ 剣を握った瞬間、全身に神聖な加護が満ち溢れるのを感じた。,"{""bg"":""bg_rift_abyss_02"",""type"":""reward"",""items"":[{""id"":351,""amount"":1}]}",7065_b12f_after_satan_1
+NODE,7065_b12f_after_satan_1,サタンが完全に封印され、周囲の狂暴な魔力が急速に霧散していく。しかし、深淵の底の裂け目は未だ完全に塞がってはおらず、微かな時空の歪みが残されている……,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_b12f_after_satan_2
+NODE,7065_b12f_after_satan_2,私達は残された調査の必要性を感じつつも、これ以上の滞在は危険と判断し、伝説の聖剣を手に深淵の最奥から脱出を図った。,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_end_success
 NODE,7065_end_success,深淵の魔王を討ち果たし、クエストを完全攻略した！ 異変の元凶を封印した栄光を手に、私達は迷宮から帰還した。,"{""type"":""end_success""}",
 NODE,7065_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""type"":""end_success""}",
 NODE,end_failure,力及ばず、パーティは全滅した。私達の意識は深淵の底の闇へと溶けて消えていった……,"{""type"":""end_failure""}",
