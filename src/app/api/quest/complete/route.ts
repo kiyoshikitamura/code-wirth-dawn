@@ -449,7 +449,7 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         let alignmentShift: Record<string, number> | null = null;
         let qRewards = quest.rewards || {};
-        if (!isFirstReportCompletion) {
+        if (!isFirstReportCompletion || String(quest_id) === '7060') {
             qRewards = {
                 ...qRewards,
                 gold: 0,
