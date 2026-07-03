@@ -24,7 +24,7 @@ NODE,route_a_move_02_2,息を呑むような沈黙のなか、私達は武器の
 NODE,route_a_entrance_01,大渓谷の最底。地の底が引き裂かれたかのような、巨大な闇の裂け目がそこにあった。これが『狭間の迷宮』の入り口だ。,"{""bg"":""bg_rift_entrance"",""bgm"":""bgm_quest_tense"",""type"":""text""}",route_a_entrance_01_2
 NODE,route_a_entrance_01_2,周囲の岩肌は赤黒く変色し、空間そのものが波打つように歪んでいる。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",route_a_entrance_02
 NODE,route_a_entrance_02,裂け目から噴き出す紫色の不気味な瘴気が、渓谷の冷たい大気と混ざり合いながら渦を巻いている。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",route_a_entrance_02_2
-NODE,route_a_entrance_02_2,耳を澄ませば、風 of 音に混じって、空間が軋むような低い音が鼓膜を震わせた。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",route_a_entrance_03
+NODE,route_a_entrance_02_2,耳を澄ませば、風の音に混じって、空間が軋むような低い音が鼓膜を震わせた。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",route_a_entrance_03
 NODE,route_a_entrance_03,"「……行くぞ」
 私達は顔を見合わせ、それぞれの武器を構え直した。","{""bg"":""bg_rift_entrance"",""type"":""text""}",route_a_entrance_03_2
 NODE,route_a_entrance_03_2,胸の奥で高鳴る恐怖を押し殺し、覚悟を決めて、不気味な光が明滅する暗黒の裂け目へと足を踏み入れた。,"{""bg"":""bg_rift_entrance"",""type"":""text""}",end_route_a

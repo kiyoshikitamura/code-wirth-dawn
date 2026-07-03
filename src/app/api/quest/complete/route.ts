@@ -1089,6 +1089,7 @@ async function getQuestAllowedItems(supabase: any, quest: any, questId: string):
                 if (typeof item === 'object' && item !== null) {
                     if (item.item_id) allowed.add(String(item.item_id).trim());
                     if (item.itemId) allowed.add(String(item.itemId).trim());
+                    if (item.id) allowed.add(String(item.id).trim());
                 } else if (item) {
                     allowed.add(String(item).trim());
                 }

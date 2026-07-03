@@ -29,7 +29,7 @@ NODE,7063_b8f_ritual_hall_3,残留思念が空中で形を結び、魔導士ヴ�
 NODE,7063_b8f_lore_ritual,幻影の中のヴァルグナは、狂ったように呪文を唱え、虚空に紫色の次元の裂け目をこじ開けている。,"{""bg"":""bg_rift_vargna_summon"",""type"":""text"",""speaker"":""ヴァルグナの幻影""}",7063_b8f_lore_ritual_2
 NODE,7063_b8f_lore_ritual_2,裂け目からは、次から次へと赤い悪魔の兵士たち湧き出し、世界に向けて突撃していく……。,"{""bg"":""bg_rift_vargna_summon"",""type"":""text""}",7063_b8f_lore_ritual_3
 NODE,7063_b8f_lore_ritual_3,しかし、どうやって一人の魔導士が、生命力を枯渇させずに無限の悪魔の軍勢を召喚し続けられるのだろうか？,"{""bg"":""bg_rift_vargna_summon"",""type"":""text""}",7063_b8f_lore_ritual_4
-NODE,7063_b8f_lore_ritual_4,この無限 of 召喚術の根源には、何か想像を絶するおぞましい秘密があるはずだ……。私達は強い疑念を抱いた。,"{""bg"":""bg_rift_vargna_summon"",""type"":""text""}",7063_b8f_after_ritual
+NODE,7063_b8f_lore_ritual_4,この無限の召喚術の根源には、何か想像を絶するおぞましい秘密があるはずだ……。私達は強い疑念を抱いた。,"{""bg"":""bg_rift_vargna_summon"",""type"":""text""}",7063_b8f_after_ritual
 NODE,7063_b8f_after_ritual,幻影はやがて虚空に溶けて消え去った。しかし、ヴァルグナの魔力は依然としてこの階層の空気を支配している。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_2
 NODE,7063_b8f_after_ritual_2,警戒を高めて通路の先を急ぐ。その時、瓦礫の間から再び悪魔の凶牙が迫ってきた！,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_battle_02
 NODE,7063_b8f_after_ritual_pre1,壁面にこびりついた悪魔の血が、まるで生きているかのように微かに脈打っている。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_pre2
@@ -40,7 +40,7 @@ CHOICE,,lose,,end_failure
 NODE,7063_b8f_battle_02_win,激しい斬り合いの末に敵を討ち果たした。突き当たりの小部屋に、澄んだ水を湛えた魔力石の盆がある。,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_spring"",""type"":""text""}",
 CHOICE,,魔力の盆の水を飲んで回復する,,7063_b8f_fountain_drink
 CHOICE,,罠を警戒して素通りする,,7063_b8f_lore_clues
-NODE,7063_b8f_fountain_drink,,"{""bg"":""bg_rift_lower_entrance"",""type"":""heal_partial""}",7063_b8f_lore_clues
+NODE,7063_b8f_fountain_drink,澄んだ泉の水をすくい口に含むと、清らかな魔力が体中に染み渡り、疲労が和らぐのを感じた。（HPが一部回復した）,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_spring"",""type"":""text"",""action"":""heal_partial""}",7063_b8f_lore_clues
 NODE,7063_b8f_lore_clues,通路の奥へとさらに歩を進める。壁に掛けられた古びた石板に、かつてここに挑んだ者たちの警告が刻まれていた。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_lore_clues_2
 NODE,7063_b8f_lore_clues_2,『地下9階には魂の天秤が佇む。己の歩みと魂が「正義」か「悪意」に強く傾いていなければ、天秤の門は開かぬ。』,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_lore_clues_3
 NODE,7063_b8f_lore_clues_3,『また、虚像の玉座を破り、迷宮の隠された謎の核心に迫りたくば、失われた大魔導士の思念を持ち帰るのだ。』,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_clues
@@ -65,7 +65,7 @@ NODE,7063_b9f_start_pre2,まるで世界の意思が私たちの一挙手一投�
 NODE,7063_b9f_start_pre3,呼吸の音さえこの冷ややかな大空間に響き渡る。一歩一歩、台座へと進んだ。,"{""bg"":""bg_rift_trial_scales"",""type"":""text""}",7063_b9f_desc_01
 NODE,7063_b9f_scales_desc_01,天秤の台座に刻まれた古い文字が光を放ち、頭の中に直接声となって響き渡る。,"{""bg"":""bg_rift_trial_scales"",""type"":""text""}",7063_b9f_scales_desc_02
 NODE,7063_b9f_scales_desc_02,「立ち入りし者たちの魂よ、その本質を天秤に示すが良い。光と闇、己の歩みがいずれの極地を差すかを……」,"{""bg"":""bg_rift_trial_scales"",""type"":""text""}",7063_b9f_scales_desc_03
-NODE,7063_b9f_scales_desc_03,天秤の針がゆっくりと回り始め、私達のパーティー全員の「心（アライメント）」を推し量り始めた。,"{""bg"":""bg_rift_trial_scales"",""type"":""text""}",7063_b9f_alignment_gate
+NODE,7063_b9f_scales_desc_03,天秤の針がゆっくりと回り始め、私達のパーティー全員の「心」を推し量り始めた。,"{""bg"":""bg_rift_trial_scales"",""type"":""text""}",7063_b9f_alignment_gate
 NODE,7063_b9f_alignment_gate,,"{""bg"":""bg_rift_trial_scales"",""type"":""check_status"",""req_stat"":""justice_pct"",""req_val"":50}",
 CHOICE,,success,,7063_b9f_light_path
 CHOICE,,failure,,7063_b9f_alignment_gate_evil

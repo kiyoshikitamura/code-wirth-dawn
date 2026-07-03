@@ -24,10 +24,10 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 6103,qst_spot_karyu,天を衝く塔,20,5,7,7,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:604|Exp:500",地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
 6104,qst_spot_markand,黄金の沈黙,20,5,7,7,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:605|Exp:500",交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
 5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,3,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
-7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:100,冒険者ギルド,狭間の迷宮シリーズ・プロローグ,true
-7061,qst_rift_upper,狭間の迷宮・上層,8,3,6,6,4,"{""completed_quest"":""qst_rift_prologue""}",false,,Gold:600|Rep:15|Exp:1200,冒険者ギルド,地下1F〜4Fの探索。キャンプ3回。ボス撃へ「赤の宝珠」獲得。,true
-7062,qst_rift_middle,狭間の迷宮・中層,10,4,8,8,5,"{""completed_quest"":""qst_rift_upper""}",false,,Gold:1200|Rep:20|Exp:1800,冒険者ギルド,地下5F〜7Fの探索。キャンプ2回。ボス討伐で「青の宝珠」獲得。,true
-7063,qst_rift_lower,狭間の迷宮・下層,14,5,10,10,6,"{""completed_quest"":""qst_rift_middle""}",false,,Gold:1500|Rep:25|Exp:2200,冒険者ギルド,地下8F〜10Fの探索。キャンプ2回。ボス撃破で「大魔道士の思念」獲得。,true
-7064,qst_rift_report,狭間の迷宮・ギルドへの報告,1,1,1,1,1,"{""completed_quest"":""qst_rift_lower""}",false,,Gold:200|Rep:10|Exp:200,冒険者ギルド,ヴァルグナ撃破と道中で手に入れた手がかりを元に冒険者ギルドへ報告する。,false
+7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:0,冒険者ギルド,世界の中心に現れた「狭間の迷宮」の謎に迫る調査のプロローグ。,true
+7061,qst_rift_upper,狭間の迷宮・上層,8,3,6,6,4,"{""completed_quest"":""qst_rift_prologue""}",false,,Gold:600|Rep:15|Exp:1200,冒険者ギルド,突如現れた巨大な裂け目「狭間の迷宮」の上層部を調査せよ。,true
+7062,qst_rift_middle,狭間の迷宮・中層,10,4,8,8,5,"{""completed_quest"":""qst_rift_upper""}",false,,Gold:1200|Rep:20|Exp:1800,冒険者ギルド,さらなる深度へと繋がる「狭間の迷宮」の中層部を調査せよ。,true
+7063,qst_rift_lower,狭間の迷宮・下層,14,5,10,10,6,"{""completed_quest"":""qst_rift_middle""}",false,,Gold:1500|Rep:25|Exp:2200,冒険者ギルド,悪魔たちの巣窟と化した「狭間の迷宮」の最下層を調査せよ。,true
+7064,qst_rift_report,狭間の迷宮・ギルドへの報告,1,1,1,1,1,"{""completed_quest"":""qst_rift_lower""}",false,,Gold:200|Rep:10|Exp:200,冒険者ギルド,ヴァルグナ撃破と道中で手に入れた手がかりを元に冒険者ギルドへ報告する。,true
 7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,1,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。,true
 9999,qst_test_gimmicks,ギミック検証用テストクエスト,1,1,1,1,1,"{}",false,,Gold:1000|Exp:100,冒険者の影,すべての追加ギミックを一挙にテストする検証用クエストです。,true
