@@ -184,7 +184,7 @@ export async function POST(req: Request) {
                 hasBattles = battleCount > 0;
             }
         }
-        if ((result === 'success' || result === 'success_retreat') && hasBattles) {
+        if (result === 'success' && hasBattles) {
             const { battle_completion_token } = body;
             if (!battle_completion_token) {
                 console.warn(`[Security] API rejected quest completion. User ${user_id} won quest ${quest_id} but omitted battle_completion_token.`);
