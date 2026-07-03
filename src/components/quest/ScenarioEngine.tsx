@@ -506,7 +506,7 @@ export default function ScenarioEngine({
                             <button
                                 onClick={() => {
                                     if (confirm("ここで調査を終了し、獲得した戦利品を持ち帰って地上に戻りますか？\n(階段を上って地上に戻ります)")) {
-                                        setEndReady({ result: 'success' });
+                                        setEndReady({ result: 'success_retreat' });
                                     }
                                 }}
                                 className="w-full py-2 bg-orange-950/20 hover:bg-orange-950/40 text-orange-200 border border-orange-800/40 transition-all tracking-wider text-xs font-bold rounded-lg active:scale-[0.98]"
