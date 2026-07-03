@@ -184,7 +184,7 @@ export async function POST(req: Request) {
                 hasBattles = battleCount > 0;
             }
         }
-        if (result === 'success' && hasBattles) {
+        if ((result === 'success' || result === 'success_retreat') && hasBattles) {
             const { battle_completion_token } = body;
             if (!battle_completion_token) {
                 console.warn(`[Security] API rejected quest completion. User ${user_id} won quest ${quest_id} but omitted battle_completion_token.`);
@@ -660,14 +660,14 @@ export async function POST(req: Request) {
             await supabase.from('quest_activity_logs').insert({
                 user_id,
                 quest_id,
-                action: result === 'success' ? 'complete' : 'abandon',
+                action: (result === 'success' || result === 'success_retreat') ? 'complete' : 'abandon',
                 created_at: new Date().toISOString()
             });
         } catch (logErr) {
             console.error('[QuestComplete] Failed to record quest activity log:', logErr);
         }
 
-        if (result === 'success') {
+        if (result === 'success' || result === 'success_retreat') {
             const rewardPromises: PromiseLike<any>[] = [];
 
             // Gold
@@ -833,16 +833,16 @@ export async function POST(req: Request) {
         historyPromises.push(
             supabase.from('user_chronicles').insert({
                 user_id,
-                event_type: result === 'success' ? 'quest_success' : 'quest_failure',
+                event_type: result === 'success' ? 'quest_success' : (result === 'success_retreat' ? 'quest_retreat' : 'quest_failure'),
                 accumulated_days: updates.accumulated_days,
                 location_id: quest.location_id || updates.current_location_id || user.current_location_id,
                 location_name: newLocationName || (repChange ? repChange.location : null),
                 scenario_id: (isUgcV2 || String(quest_id).startsWith('colosseum_')) ? null : quest_id,
                 ugc_scenario_id: isUgcV2 ? quest_id : null,
-                title: result === 'success' ? `クエストクリア: ${quest.title}` : `クエスト失敗/放棄: ${quest.title}`,
+                title: result === 'success' ? `クエストクリア: ${quest.title}` : (result === 'success_retreat' ? `一時帰還: ${quest.title}` : `クエスト失敗/放棄: ${quest.title}`),
                 description: result === 'success' 
                     ? `クエスト『${quest.title}』を達成し、多くの報酬を得た。`
-                    : `クエスト『${quest.title}』の遂行中に撤退、または失敗した。`,
+                    : (result === 'success_retreat' ? `クエスト『${quest.title}』の途中で安全に一時帰還した。` : `クエスト『${quest.title}』の遂行中に撤退、または失敗した。`),
                 param_changes: paramChanges,
                 is_major_event: isMajor,
                 share_text: finalShareText
@@ -980,7 +980,7 @@ export async function POST(req: Request) {
         // ─── 旧 §14 の位置（宣言を前に移動したためプレースホルダーのみ） ───
 
         // 所持金マイルストーン
-        if (result === 'success') {
+        if (result === 'success' || result === 'success_retreat') {
             const finalGold = (user.gold || 0) + totalGoldReward;
 
             for (const milestone of GOLD_MILESTONES) {

@@ -212,7 +212,7 @@ CHOICE,,インベントリを開く/装備変更,,7061_b2f_camp_inv
 CHOICE,,探索を切り上げて地上に戻る,,7061_b2f_camp_return
 CHOICE,,大扉を開けて地下3階へ進む,,7061_b3f_start
 NODE,7061_b2f_camp_inv,,"{""bg"":""bg_rift_camp_stairs"",""type"":""shop_access""}",
-NODE,7061_b2f_camp_return,安全を優先し、迷宮からの一時撤退を決めた。無事に地上へと引き返す。（クエスト達成①）,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success""}",
+NODE,7061_b2f_camp_return,安全を優先し、迷宮からの一時撤退を決めた。無事に地上へと引き返す。（クエスト達成①）,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success_retreat""}",
 NODE,7061_b3f_start,大扉を開け、地下3階へと足を踏み入れた。,"{""bg"":""bg_rift_upper_02"",""bgm"":""bgm_rift_upper"",""type"":""text""}",7061_b3f_start_2
 NODE,7061_b3f_start_2,ここからは迷宮の構造がさらに複雑になり、瘴気の不気味な青い光が通路をぼんやりと照らしている。,"{""bg"":""bg_rift_upper_02"",""type"":""text""}",7061_b3f_01
 NODE,7061_b3f_01,進むと、左右に二つの分かれ道が現れた。,"{""bg"":""bg_rift_upper_02"",""type"":""text""}",7061_b3f_01_2
@@ -304,7 +304,7 @@ CHOICE,,インベントリを開く/装備変更,,7061_b3f_camp_inv
 CHOICE,,探索を切り上げて地上に戻る,,7061_b3f_camp_return
 CHOICE,,階段を下りて地下4階へ進む,,7061_b4f_start
 NODE,7061_b3f_camp_inv,,"{""bg"":""bg_rift_camp_stairs"",""type"":""shop_access""}",
-NODE,7061_b3f_camp_return,安全な帰還を選択した。篝火に別れを告げ、地上へと引き返す。（クエスト達成①）,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success""}",
+NODE,7061_b3f_camp_return,安全な帰還を選択した。篝火に別れを告げ、地上へと引き返す。（クエスト達成①）,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success_retreat""}",
 NODE,7061_b4f_start,ついに地下4階、最深部へと足を踏み入れた。,"{""bg"":""bg_rift_upper_02"",""bgm"":""bgm_rift_upper"",""type"":""text""}",7061_b4f_start_2
 NODE,7061_b4f_start_2,漂う瘴気は濃く冷たく、鼻を突く強烈な獣の悪臭と不浄な匂いが立ち込めている。,"{""bg"":""bg_rift_upper_02"",""type"":""text""}",7061_b4f_01
 NODE,7061_b4f_01,天井からは、ポタポタと粘り気のある謎の液体が絶え間なく滴り落ち、石床に不気味な音を立てている。,"{""bg"":""bg_rift_upper_02"",""type"":""text""}",7061_b4f_01_2

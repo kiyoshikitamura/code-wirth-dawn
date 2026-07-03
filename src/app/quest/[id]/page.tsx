@@ -107,7 +107,7 @@ export default function QuestPage() {
     useAuthGuard(); // タイトル画面経由チェック
 
     const [prefetchedResult, setPrefetchedResult] = useState<{
-        result: 'success' | 'failure';
+        result: 'success' | 'failure' | 'success_retreat';
         data: any;
     } | null>(null);
     const [isPrefetching, setIsPrefetching] = useState(false);
@@ -185,12 +185,12 @@ export default function QuestPage() {
         }
     }, [id]);
 
-    const handlePrepareResult = useCallback(async (result: 'success' | 'failure', history: string[], nodeRewards?: any) => {
+    const handlePrepareResult = useCallback(async (result: 'success' | 'failure' | 'success_retreat', history: string[], nodeRewards?: any) => {
         if (prefetchStartedRef.current) return;
         prefetchStartedRef.current = true;
         setIsPrefetching(true);
 
-        const isSuccess = result === 'success';
+        const isSuccess = result === 'success' || result === 'success_retreat';
 
         if (isTestPlay) {
             // テストプレイ完了: 成功・敗北を問わずクエスト動作確認済みとして記録
@@ -347,7 +347,7 @@ export default function QuestPage() {
                 },
                 body: JSON.stringify({
                     quest_id: scenario?.id,
-                    result: isSuccess ? 'success' : 'failure',
+                    result: result,
                     history: history || [],
                     loot_pool: lootPoolData,
                     consumed_items: consumedItemsData,
@@ -409,7 +409,7 @@ export default function QuestPage() {
 
         if (prefetchedResult) {
             setResultOverlay({
-                result: prefetchedResult.result,
+                result: prefetchedResult.result === 'success_retreat' ? 'success' : prefetchedResult.result,
                 data: prefetchedResult.data
             });
         } else {
