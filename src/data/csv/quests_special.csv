@@ -21,7 +21,7 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 6020,main_ep20,第20話「蒼暁の剣」,25,5,2,2,2,"{""completed_quest"":""main_ep17||main_ep18||main_ep19"",""location_id"":""loc_regalia""}",true,,Gold:15000|Rep:50|Item:504|Order:5,なし,メインシナリオ第20話,false
 6101,qst_spot_roland,忘却の五英霊,20,5,7,7,7,"{""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,grayish_white,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。,false
 6102,qst_spot_yato,冥食の残滓,20,5,7,7,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:603|Exp:500",忍び衆,夜刀スポット: 冥食の夜。生贄 of 少女を護衛し冥の門の四大妖怪を退けよ。,false
-6103,qst_spot_karyu,天を衝く塔,20,5,7,7,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:604|Exp:500",地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
+6103,qst_spot_karyu,天を衝く塔,20,5,7,7,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50},""event_trigger"":true}",false,,"Gold:10000|Rep:200|Item:604|Exp:500",地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
 6104,qst_spot_markand,黄金の沈黙,20,5,7,7,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:605|Exp:500",交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
 5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,3,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
 7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:0,冒険者ギルド,世界の中心に現れた「狭間の迷宮」の謎に迫る調査のプロローグ。,true
@@ -32,4 +32,4 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 7065,qst_rift_abyss,狭間の迷宮・深淵,18,6,12,12,6,"{""completed_quest"":""qst_rift_report""}",false,,Gold:3000|Rep:15,冒険者ギルド,迷宮最深部「深淵」の封印をせよ,true
 7066,qst_rift_epilogue,狭間の迷宮・エピローグ,1,1,1,1,1,"{""completed_quest"":""qst_rift_abyss""}",false,,Gold:50000|Rep:25|Exp:100,冒険者ギルド,次元の深淵に破壊神を封印したことをギルド長ガラハドへ報告せよ。,true
 7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,1,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。,true
-9999,qst_test_gimmicks,ギミック検証用テストクエスト,1,1,1,1,1,"{}",false,,Gold:1000|Exp:100,冒険者の影,すべての追加ギミックを一挙にテストする検証用クエストです。,true
+9999,qst_test_gimmicks,ギミック検証用テストクエスト,1,1,1,1,1,"{""event_trigger"":true}",false,,Gold:1000|Exp:100,冒険者の影,すべての追加ギミックを一挙にテストする検証用クエストです。,true

@@ -552,4 +552,5 @@ main().then(() => {
     } catch (e) {
         console.warn('Failed to run automatic permission cleanup (non-critical):', e);
     }
+    process.exit(0);
 });
