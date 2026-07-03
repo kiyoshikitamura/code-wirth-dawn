@@ -155,8 +155,11 @@ const CARD_EFFECT_MAP: Record<string, CardEffectInfo> = {
 
     // ─── 魔導書 (65-67) ──────────────────────────────────────────
     '65': { effectType: 'attack', effectId: 'burn', effectDuration: 2 },                    // 火球（40dmg+炎上2T）
+    'card_fireball': { effectType: 'attack', effectId: 'burn', effectDuration: 2 },
     '66': { effectType: 'attack', effectId: 'bind', effectDuration: 1 },                    // 氷槍（35dmg+拘束1T）
+    'card_ice_lance': { effectType: 'attack', effectId: 'bind', effectDuration: 1 },
     '67': { effectType: 'multi_attack', effectId: 'stun', effectDuration: 1 },              // 雷撃（45dmg 2連撃+スタン1T）
+    'card_thunder_strike': { effectType: 'multi_attack', effectId: 'stun', effectDuration: 1 },
 
     // ─── 英霊専用 (71-74) ────────────────────────────────────────
     '71': { effectType: 'attack', effectId: 'atk_up', effectDuration: 3 },                  // 五星の加護（35dmg+ATK UP 3T）
@@ -237,12 +240,14 @@ function getBaseCardId(cardId: string): string {
  */
 export function getCardEffectInfo(card: Card): CardEffectInfo {
     const baseId = getBaseCardId(card.id);
+    const slug = card.slug;
 
-    // 1. 明示的マッピング
-    if (CARD_EFFECT_MAP[baseId]) {
+    // 1. 明示的マッピング (ID または Slug で検索)
+    const mapped = CARD_EFFECT_MAP[baseId] || (slug ? CARD_EFFECT_MAP[slug] : undefined);
+    if (mapped) {
         return {
-            ...CARD_EFFECT_MAP[baseId],
-            target_type: CARD_EFFECT_MAP[baseId].target_type || card.target_type
+            ...mapped,
+            target_type: mapped.target_type || card.target_type
         };
     }
 
