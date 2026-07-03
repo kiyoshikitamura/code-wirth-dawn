@@ -1,5 +1,5 @@
 row_type,node_id,text_label,params,next_node
-NODE,start_prep,「狭間の迷宮」の最深部『深淵』へと足を踏み入れる。そこは、これまでの階層とは比較にならないほど狂暴な次元の嵐が吹き荒れる極限の空間だった。,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_rift_abyss"",""type"":""text""}",7065_b11f_start
+NODE,start,「狭間の迷宮」の最深部『深淵』へと足を踏み入れる。そこは、これまでの階層とは比較にならないほど狂暴な次元の嵐が吹き荒れる極限の空間だった。,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_rift_abyss"",""type"":""text""}",7065_b11f_start
 NODE,7065_b11f_start,地下11階に足を踏み入れた直後、前方から這うようにして戻ってくる満身創痍の冒険者パーティと鉢合わせた。彼らの装備は引き裂かれ、顔には恐怖が張り付いている。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_1
 NODE,7065_b11f_wounded_1,「だ、だめだ……この先は地獄だ……魔物の強さがこれまでの比じゃない……。俺たちは引き返す……命があるうちに……」,"{""bg"":""bg_rift_abyss"",""speaker_name"":""満身創痍の冒険者"",""type"":""text""}",7065_b11f_wounded_2
 NODE,7065_b11f_wounded_2,彼らはそう言い残すと、互いを支え合いながら、震える足取りで上層への階段へと逃げのびていった。私達は冷たい戦慄を覚えつつ、奥へと進んだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_3

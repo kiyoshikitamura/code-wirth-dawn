@@ -29,7 +29,7 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 7062,qst_rift_middle,狭間の迷宮・中層,10,4,8,8,5,"{""completed_quest"":""qst_rift_upper""}",false,,Gold:1200|Rep:20|Exp:1800,冒険者ギルド,さらなる深度へと繋がる「狭間の迷宮」の中層部を調査せよ。,true
 7063,qst_rift_lower,狭間の迷宮・下層,14,5,10,10,6,"{""completed_quest"":""qst_rift_middle""}",false,,Gold:1500|Rep:25|Exp:2200,冒険者ギルド,悪魔たちの巣窟と化した「狭間の迷宮」の最下層を調査せよ。,true
 7064,qst_rift_report,狭間の迷宮・ギルドへの報告,1,1,1,1,1,"{""completed_quest"":""qst_rift_lower""}",false,,Gold:200|Rep:10|Exp:200,冒険者ギルド,ヴァルグナ撃破と道中で手に入れた手がかりを元に冒険者ギルドへ報告する。,true
-7065,qst_rift_abyss,狭間の迷宮・深淵,18,6,12,12,6,"{""completed_quest"":""qst_rift_report""}",false,,Gold:3000|Rep:15,冒険者ギルド,迷宮最深部「深淵」の悪魔王を再封印し、伝説の聖剣を回収せよ。,true
+7065,qst_rift_abyss,狭間の迷宮・深淵,18,6,12,12,6,"{""completed_quest"":""qst_rift_report""}",false,,Gold:3000|Rep:15,冒険者ギルド,迷宮最深部「深淵」の封印をせよ,true
 7066,qst_rift_epilogue,狭間の迷宮・エピローグ,1,1,1,1,1,"{""completed_quest"":""qst_rift_abyss""}",false,,Gold:50000|Rep:25|Exp:100,冒険者ギルド,次元の深淵に破壊神を封印したことをギルド長ガラハドへ報告せよ。,true
 7051,qst_demon_appraise,次元の狭間：調査報告,2,2,1,1,1,"{""completed_quest"":""qst_demon_explore""}",false,,Gold:100|Exp:50,冒険者ギルド,[報告鑑定] 狭間から持ち帰った「未鑑定の宝箱」を鑑定し、報告する。,true
 9999,qst_test_gimmicks,ギミック検証用テストクエスト,1,1,1,1,1,"{}",false,,Gold:1000|Exp:100,冒険者の影,すべての追加ギミックを一挙にテストする検証用クエストです。,true

@@ -1,5 +1,5 @@
 row_type,node_id,text_label,params,next_node
-NODE,start_prep,大仕事を終え、重い足取りでギルドの扉を開ける。しかし、中に入った瞬間、静かな安堵の混ざった歓声と拍手が私たちを包み込んだ。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7066_start
+NODE,start,大仕事を終え、重い足取りでギルドの扉を開ける。しかし、中に入った瞬間、静かな安堵の混ざった歓声と拍手が私たちを包み込んだ。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7066_start
 NODE,7066_start,ギルド内の冒険者たちが道を空ける。その先には、いつもの厳格な表情の中に深い安堵を滲ませたギルド長ガラハドが立っていた。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7066_text_galahad_01
 NODE,7066_text_galahad_01,「おお、無事に戻ったか。次元の底でサタンの気配が封じられたのを魔導観測班が確認した。本当に、あの伝説の破壊神を抑え込んだのだな。」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7066_text_galahad_02
 NODE,7066_text_galahad_02,「お前たちが成し遂げたのは、単なる悪魔退治ではない。この世界のすべての人々を、破滅の運命から救い出したのだ。ギルドを代表して、心から感謝する。」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7066_text_galahad_03
