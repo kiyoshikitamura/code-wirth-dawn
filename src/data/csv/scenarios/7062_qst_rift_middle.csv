@@ -31,7 +31,7 @@ NODE,7062_b5f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響い�
 NODE,7062_b5f_trap_alarm_battle,,"{""bg"":""bg_rift_middle_01"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_middle"",""type"":""battle""}",
 CHOICE,,win,,7062_b5f_chest_open
 CHOICE,,lose,,end_failure
-NODE,7062_b5f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7062_b5f_chest_open
+NODE,7062_b5f_trap_acid,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7062_b5f_chest_open
 NODE,7062_b5f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7062_b5f_chest_open
 NODE,7062_b5f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7062_b5f_chest_open,宝箱の中からアイテムを手に入れた。,"{""bg"":""bg_rift_middle_01"",""type"":""treasure"",""item_pool"":[{""item_id"":708,""weight"":270},{""item_id"":707,""weight"":350},{""item_id"":706,""weight"":150},{""item_id"":709,""weight"":80},{""item_id"":430,""weight"":150}]}",7062_b5f_adventurer
@@ -130,7 +130,7 @@ NODE,7062_b6f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響い�
 NODE,7062_b6f_trap_alarm_battle,,"{""bg"":""bg_rift_middle_01"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_middle"",""type"":""battle""}",
 CHOICE,,win,,7062_b6f_chest_open
 CHOICE,,lose,,end_failure
-NODE,7062_b6f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7062_b6f_chest_open
+NODE,7062_b6f_trap_acid,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7062_b6f_chest_open
 NODE,7062_b6f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7062_b6f_chest_open
 NODE,7062_b6f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7062_b6f_chest_open,革袋の中からアイテムを手に入れた。,"{""bg"":""bg_rift_middle_01"",""type"":""treasure"",""item_pool"":[{""item_id"":708,""weight"":200},{""item_id"":707,""weight"":350},{""item_id"":430,""weight"":300},{""item_id"":15,""weight"":150}]}",7062_b6f_party_encounter

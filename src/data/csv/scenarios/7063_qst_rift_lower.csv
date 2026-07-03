@@ -31,7 +31,7 @@ NODE,7063_b8f_trap_alarm_1,けたたましい鐘の音が迷宮内に鳴り響�
 NODE,7063_b8f_trap_alarm_battle_1,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
 CHOICE,,win,,7063_b8f_chest_open
 CHOICE,,lose,,end_failure
-NODE,7063_b8f_trap_acid_1,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest_open
+NODE,7063_b8f_trap_acid_1,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest_open
 NODE,7063_b8f_after_ritual_pre1,壁面にこびりついた悪魔の血が、まるで生きているかのように微かに脈打っている。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_pre2
 NODE,7063_b8f_after_ritual_pre2,ここは迷宮の深淵に最も近い階層。私たちは心を引き締め、さらに奥へ進む。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_2
 NODE,7063_b8f_trap_rock_1,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7063_b8f_chest_open
@@ -65,7 +65,7 @@ NODE,7063_b8f_trap_alarm_2,けたたましい鐘の音が迷宮内に鳴り響�
 NODE,7063_b8f_trap_alarm_battle_2,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
 CHOICE,,win,,7063_b8f_chest2_open
 CHOICE,,lose,,end_failure
-NODE,7063_b8f_trap_acid_2,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest2_open
+NODE,7063_b8f_trap_acid_2,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest2_open
 NODE,7063_b8f_trap_rock_2,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7063_b8f_chest2_open
 NODE,7063_b8f_trap_teleport_2,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7063_b8f_chest2_open,宝箱の中から魔力が込められたアイテムを獲得した。,"{""bg"":""bg_rift_lower_entrance"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":300},{""item_id"":708,""weight"":400},{""item_id"":707,""weight"":200},{""item_id"":431,""weight"":100}]}",7063_b8f_after_chest2
@@ -95,7 +95,7 @@ NODE,7063_b8f_trap_alarm_3,けたたましい鐘の音が迷宮内に鳴り響�
 NODE,7063_b8f_trap_alarm_battle_3,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
 CHOICE,,win,,7063_b8f_chest3_open
 CHOICE,,lose,,end_failure
-NODE,7063_b8f_trap_acid_3,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest3_open
+NODE,7063_b8f_trap_acid_3,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest3_open
 NODE,7063_b8f_trap_rock_3,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7063_b8f_chest3_open
 NODE,7063_b8f_trap_teleport_3,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7063_b8f_chest3_open,宝箱の中から魔力が込められたアイテムを獲得した。,"{""bg"":""bg_rift_lower_entrance"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":300},{""item_id"":708,""weight"":400},{""item_id"":707,""weight"":200},{""item_id"":431,""weight"":100}]}",7063_b8f_after_chest3

@@ -33,7 +33,7 @@ NODE,7065_b11f_rm1_trap_alarm,けたたましい鐘の音が迷宮内に鳴り�
 NODE,7065_b11f_rm1_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
 CHOICE,,win,,7065_b11f_rm1_chest_open
 CHOICE,,lose,,end_failure
-NODE,7065_b11f_rm1_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm1_chest_open
+NODE,7065_b11f_rm1_trap_acid,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm1_chest_open
 NODE,7065_b11f_rm1_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm1_chest_open
 NODE,7065_b11f_rm1_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm1_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm1_after_chest
@@ -68,7 +68,7 @@ NODE,7065_b11f_rm2_trap_alarm,けたたましい鐘の音が迷宮内に鳴り�
 NODE,7065_b11f_rm2_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
 CHOICE,,win,,7065_b11f_rm2_chest_open
 CHOICE,,lose,,end_failure
-NODE,7065_b11f_rm2_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm2_chest_open
+NODE,7065_b11f_rm2_trap_acid,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm2_chest_open
 NODE,7065_b11f_rm2_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm2_chest_open
 NODE,7065_b11f_rm2_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm2_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm2_after_chest
@@ -103,7 +103,7 @@ NODE,7065_b11f_rm3_trap_alarm,けたたましい鐘の音が迷宮内に鳴り�
 NODE,7065_b11f_rm3_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
 CHOICE,,win,,7065_b11f_rm3_chest_open
 CHOICE,,lose,,end_failure
-NODE,7065_b11f_rm3_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm3_chest_open
+NODE,7065_b11f_rm3_trap_acid,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm3_chest_open
 NODE,7065_b11f_rm3_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm3_chest_open
 NODE,7065_b11f_rm3_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm3_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm3_after_chest
@@ -138,7 +138,7 @@ NODE,7065_b11f_rm4_trap_alarm,けたたましい鐘の音が迷宮内に鳴り�
 NODE,7065_b11f_rm4_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
 CHOICE,,win,,7065_b11f_rm4_chest_open
 CHOICE,,lose,,end_failure
-NODE,7065_b11f_rm4_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm4_chest_open
+NODE,7065_b11f_rm4_trap_acid,鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1500G),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm4_chest_open
 NODE,7065_b11f_rm4_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm4_chest_open
 NODE,7065_b11f_rm4_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7065_b11f_rm4_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":318,""weight"":100},{""item_id"":319,""weight"":100}]}",7065_b11f_rm4_after_chest
