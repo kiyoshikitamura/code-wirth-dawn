@@ -706,6 +706,7 @@ function InnPageInner() {
                         amount: resultOverlay.data.penalty.reputation,
                         location: resultOverlay.data.penalty.location || '現在地'
                     } : null}
+                    lootSaved={resultOverlay.data?.loot_saved}
                     onClose={async () => {
                         // クエストボードのキャッシュクリア
                         useGameStore.setState({ locationQuests: null, lastInitPageFetchTime: 0 });
