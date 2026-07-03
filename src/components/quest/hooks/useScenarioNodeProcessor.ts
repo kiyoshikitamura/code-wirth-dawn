@@ -40,10 +40,10 @@ interface NodeProcessorOptions {
     setHistory: React.Dispatch<React.SetStateAction<string[]>>;
     setShowingGuestJoin: (data: any) => void;
     setShowingTravel: (data: any) => void;
-    setEndReady: (data: { result: 'success' | 'failure' | 'abort'; nodeRewards?: any } | null) => void;
+    setEndReady: (data: { result: 'success' | 'failure' | 'abort' | 'success_retreat'; nodeRewards?: any } | null) => void;
     historyRef: React.MutableRefObject<string[]>;
     onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
-    onComplete: (result: 'success' | 'failure' | 'abort', history: string[]) => void;
+    onComplete: (result: 'success' | 'failure' | 'abort' | 'success_retreat', history: string[]) => void;
     showingTravel: any;
     showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
     nodeTrigger: number;

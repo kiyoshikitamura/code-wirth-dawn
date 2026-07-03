@@ -546,8 +546,8 @@ export default function ScenarioEngine({
 
     const questResult = currentNode.params?.result || currentNode.result;
     const isSuccess = endReady
-        ? endReady.result === 'success'
-        : (questResult === 'success' || currentNode.type === 'end_success');
+        ? (endReady.result === 'success' || endReady.result === 'success_retreat')
+        : (questResult === 'success' || questResult === 'success_retreat' || currentNode.type === 'end_success');
 
 
     const handleChoice = (choice: any) => {
