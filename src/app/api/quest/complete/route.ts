@@ -375,7 +375,7 @@ export async function POST(req: Request) {
         let daysPassed = 1;
         if (result === 'success') daysPassed = quest.days_success ?? 1;
         else if (result === 'failure') daysPassed = quest.days_failure ?? 1;
-        if (String(quest.id) === '7064' || String(quest.id) === '7066') daysPassed = 0;
+        if (['7060', '7064', '7066'].includes(String(quest.id))) daysPassed = 0;
 
         const { newAge, newAgeDays, decay } = processAging(
             user.age || 18, user.age_days || 0, daysPassed
@@ -386,14 +386,14 @@ export async function POST(req: Request) {
         if (decay.vit > 0 || decay.atk > 0 || decay.def > 0) {
             updates.max_vitality = Math.max(0, (user.max_vitality || 100) - decay.vit);
             updates.vitality = Math.min(user.vitality || 100, updates.max_vitality);
-            updates.atk = Math.max(1, (user.atk || user.attack || 1) - decay.atk);
+            updates.atk = Math.max(1, (user.attack || user.atk || 1) - decay.atk);
             updates.def = Math.max(1, (user.def || 1) - decay.def);
         }
 
         // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1、HPは装備補正込みで全快）
         let battleDefeatVitPenalty = 0;
         if (result === 'failure') {
-            battleDefeatVitPenalty = (String(quest.id) === '7064' || String(quest.id) === '7066') ? 0 : 1;
+            battleDefeatVitPenalty = (['7060', '7064', '7066'].includes(String(quest.id))) ? 0 : 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
             updates.hp = (user.max_hp || 100) + equipHpBonus;

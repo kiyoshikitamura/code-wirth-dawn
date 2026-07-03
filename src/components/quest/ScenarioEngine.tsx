@@ -224,6 +224,11 @@ export default function ScenarioEngine({
     }, [scenario]);
 
     let currentNode = script.nodes?.[currentNodeId];
+    if (!currentNode && currentNodeId !== 'start' && script.nodes?.['start']) {
+        console.warn(`[ScenarioEngine] Node "${currentNodeId}" not found. Automatically resetting to "start" to heal progress state.`);
+        setCurrentNodeId('start');
+        currentNode = script.nodes['start'];
+    }
     console.log('[ScenarioEngine] currentNode:', currentNodeId, JSON.stringify(currentNode));
 
     // --- タイプライターeffect ---
