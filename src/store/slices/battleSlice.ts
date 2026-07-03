@@ -2311,7 +2311,7 @@ export const createBattleSlice = (
                         const hitsCount = 2;
                         let hitLogs: string[] = [];
                         let totalDmg = 0;
-                        const basePower = (card.power ?? 0) * damageMultiplier;
+                        const basePower = ((card.power ?? 0) / hitsCount) * damageMultiplier;
 
                         if (basePower > 0) {
                             for (let hit = 0; hit < hitsCount; hit++) {
@@ -2328,6 +2328,18 @@ export const createBattleSlice = (
 
                                 const critLabel = result.isCritical ? ' クリティカル！' : '';
                                 hitLogs.push(`${hit + 1}撃目: ${result.damage} ダメージ${critLabel}`);
+
+                                // 連撃終了時（最後のヒット）に状態異常を付与する (雷撃等の効果適用用)
+                                if (hit === hitsCount - 1 && card.effect_id && card.effect_id !== 'none' && card.effect_id !== 'multi_hit') {
+                                    const effectDuration = card.effect_duration || 1;
+                                    const eIdx = currentEnemies.findIndex(e => e.id === freshEnemy.id);
+                                    if (eIdx !== -1 && currentEnemies[eIdx].hp > 0) {
+                                        let eEffects = [...(currentEnemies[eIdx].status_effects || [])] as StatusEffect[];
+                                        eEffects = applyEffect(eEffects, card.effect_id as any, effectDuration);
+                                        currentEnemies[eIdx] = { ...currentEnemies[eIdx], status_effects: eEffects };
+                                        hitLogs.push(`  → (敵を${card.effect_id === 'stun' ? 'スタン' : card.effect_id}状態にした！ ${effectDuration}T)`);
+                                    }
+                                }
 
                                 const playerHasDrainOnHit = currentPlayerEffects.some(se => se.id === 'drain_on_hit');
                                 if (playerHasDrainOnHit && result.damage > 0) {

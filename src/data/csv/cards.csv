@@ -68,7 +68,7 @@ id,slug,name,type,ap_cost,cost_type,cost_val,effect_val,target_type,effect_id,im
 74,card_desert_curse,砂塵の支配,Skill,2,none,0,20,all_enemies,def_down,/images/items/spot_desert_curse.png,王墓から得た砂の呪力で嵐を巻き起こす。全敵にダメージを与えDEFを低下させる。
 65,card_fireball,火球,Magic,2,none,0,40,single_enemy,burn,/images/items/grimoire_fire.png,火球を放ち敵を攻撃する。40の魔法ダメージを与え、2ターンの間、炎上（毎ターンHP5%ダメージ）を付与する。
 66,card_ice_lance,氷槍,Magic,2,none,0,35,single_enemy,bind,/images/items/grimoire_ice.png,氷の槍で敵を貫く。35の魔法ダメージを与え、1ターンの間、敵を拘束（行動不能）にする。
-67,card_thunder_strike,雷撃,Magic,3,none,0,45,single_enemy,stun,/images/items/grimoire_thunder.png,雷を落とし敵を攻撃する。45の魔法ダメージを与え、1ターンの間、スタン（行動不能）を付与する。
+67,card_thunder_strike,雷撃,Magic,3,none,0,45,single_enemy,stun,/images/items/grimoire_thunder.png,雷を落とし敵を攻撃する。合計45のダメージを与える2連撃（各22.5）を放ち、1ターンの間、スタン（行動不能）を付与する。
 81,card_baphomet_flame,獄炎の刻印,Magic,4,none,0,70,all_enemies,burn,/images/items/legend_baphomet_flame.png,大悪魔の業火を再現する。全体に70の魔法ダメージ＋3ターンの炎上を付与する。
 82,card_angel_grace,天使の恩寵,Heal,4,none,0,120,all_allies,regen,/images/items/legend_angel_grace.png,天使の光で全体を120回復し、3ターンのリジェネを付与する。
 83,card_dragon_inferno,竜炎のブレス,Skill,5,none,0,100,all_enemies,def_down,/images/items/legend_dragon_inferno.png,古代竜の灼熱のブレス。全体に100のダメージ＋DEF DOWN（2T）を付与する。
