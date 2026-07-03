@@ -476,7 +476,15 @@ export async function POST(req: Request) {
                       }
                     : undefined
             }
-            : { ...qRewards };
+            : (result === 'success_retreat'
+                ? {
+                    gold: 0,
+                    exp: 0,
+                    reputation: 0,
+                    items: [],
+                    skills: []
+                  }
+                : { ...qRewards });
 
         // アライメントの合算処理 (loot_pool内のalign_値をマージ)
         if (result === 'success' && (effectiveRewards.alignment_shift || Object.values(lootAlignShift).some(v => v !== 0))) {
@@ -698,6 +706,18 @@ export async function POST(req: Request) {
             rewardPromises.push(grantReputationChanges(supabase, user_id, verifiedRepChanges, user.current_location_id));
 
             await Promise.all(rewardPromises);
+
+            // filteredLootPool (ダンジョン内で獲得した戦利品) を返却用 lootSaved にマージ
+            if (Array.isArray(filteredLootPool)) {
+                for (const fLoot of filteredLootPool) {
+                    lootSaved.push({
+                        itemId: fLoot.itemId,
+                        name: fLoot.itemName || fLoot.name,
+                        quantity: fLoot.quantity || 1,
+                        type: fLoot.type || 'item'
+                    });
+                }
+            }
         }
 
         // クエストの成否に関わらず、消費されたアイテム（consumed_items）はインベントリから差し引く
