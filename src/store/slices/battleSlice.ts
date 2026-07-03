@@ -16,12 +16,7 @@ import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
 
 const isTurnEndTickCompensated = (id: StatusEffectId): boolean => {
-    return [
-        'stun', 'bind', 'freeze',                  // 行動不能デバフ
-        'def_up', 'evasion_up', 'taunt',          // 敵ターン中意味を持つバフ
-        'unyielding_barrier', 'cover_all',         // 敵ターン中意味を持つバフ
-        'atk_down', 'blind', 'blind_minor'         // 敵ターン中意味を持つデバフ
-    ].includes(id);
+    return false; // キャラクター別の手番開始時クリンナップへ移行したため、補正は不要
 };
 
 // ─── ノイズカードのフォールバック ────────────────────────────────────────────
@@ -568,150 +563,11 @@ export const createBattleSlice = (
             return;
         }
 
-        let newAp = battleState.current_ap || 0;
-
-        // Bug fix: tickEffectsを先に実行し、tick後のeffectsでスタン判定する
-        // 修正前は tickEffects 前の古い effects で isStunned を判定していたため、
-        // スタンの付与/解除とAP回復が1ターンずれていた
-        let playerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
-        const wasStunned = isStunned(playerEffects); // tick前のスタン状態を記録
-        const playerMaxHp = getEffectiveMaxHp(userProfile, battleState);
-        const playerTick = tickEffects(playerEffects, playerMaxHp, 'あなた');
-        playerEffects = playerTick.newEffects;
-        const tickMessages: string[] = [...playerTick.messages];
-
-        // 味方NPCのステート効果時間減少処理 (Bug I)
-        let updatedParty = [...(battleState.party || [])];
-        updatedParty = updatedParty.map(member => {
-            if (!member.is_active || (member.durability ?? 100) <= 0) return member;
-            const mEffects = [...(member.status_effects || [])] as StatusEffect[];
-            const maxDur = member.max_durability || member.durability || 100;
-            const mTick = tickEffects(mEffects, maxDur, member.name);
-            tickMessages.push(...mTick.messages);
-            let newDur = Math.max(0, (member.durability || 0) + mTick.hpDelta);
-            newDur = Math.min(maxDur, newDur);
-            if (mTick.hpDelta !== 0) {
-                tickMessages.push(`__party_sync:${member.id}:${newDur}`);
-            }
-            const isNowActive = newDur > 0;
-            if (!isNowActive && member.is_active) {
-                tickMessages.push(`${member.name}は力尽きた...`);
-                if (member.origin_type !== 'quest_guest') {
-                    supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
-                }
-            }
-            return {
-                ...member,
-                durability: newDur,
-                status_effects: mTick.newEffects,
-                is_active: isNowActive
-            };
-        });
-
-        // プレイヤーの死神の宣告による即死処理 (Bug V)
-        let finalHpDelta = playerTick.hpDelta;
-        if (playerTick.expired.includes('death_sentence')) {
-            finalHpDelta = -(userProfile?.hp || 0);
-            tickMessages.push(`💀 あなたは死神の宣告により即死した！`);
-        }
-
-        // tick後もスタン中（= duration >= 2 で付与された場合）はAP回復スキップ
-        // tick前にスタンだったが tick後に解除された場合もこのターンはAP回復スキップ
-        // （スタン中のターンではAP回復しない仕様）
-        if (!wasStunned) {
-            newAp = Math.min(10, newAp + 5);
-        }
-
-        let isDeadFromDoT = false;
-        if ((finalHpDelta !== 0 || playerTick.expired.includes('death_sentence')) && userProfile) {
-            const newHp = Math.max(0, Math.min(playerMaxHp, (userProfile.hp || 0) + finalHpDelta));
-            isDeadFromDoT = newHp <= 0;
-            set(state => ({
-                userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null
-            }));
-            tickMessages.push(`__hp_sync:${newHp}`);
-            const { selectedProfileId } = get();
-            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || selectedProfileId);
-        }
-
-        if (isDeadFromDoT) {
-            soundManager?.playSE('se_battle_lose');
-            set(state => ({
-                battleState: {
-                    ...state.battleState,
-                    isDefeat: true,
-                    messages: [...state.battleState.messages, ...tickMessages, 'あなたは力尽きた...'],
-                    player_effects: playerEffects,
-                    enemies: updatedEnemies,
-                    enemy: currentTarget,
-                    vitDamageTakenThisTurn: false,
-                    battlePhase: 'npc_done',
-                }
-            }));
-            return;
-        }
-
-        // ─── attackEnemy の段階で既に全敵HP0の場合は即勝利（NPCフェーズ不要）───
-        const preCheckAllDead = battleState.enemies.every(e => e.hp <= 0);
-        if (preCheckAllDead && battleState.enemies.length > 0) {
-            soundManager?.playSE('se_battle_win');
-            set(state => ({
-                battleState: {
-                    ...state.battleState,
-                    isVictory: true,
-                    battle_result: 'victory',
-                    battlePhase: 'npc_done',
-                    messages: [...state.battleState.messages, '全ての敵を倒した！ 勝利！']
-                }
-            }));
-            return;
-        }
-
-        let updatedEnemies = [...battleState.enemies];
-        let allEnemiesDead = true;
-
-        updatedEnemies = updatedEnemies.map(enemy => {
-            if (enemy.hp <= 0) return enemy;
-            let eEffects = [...(enemy.status_effects || [])] as StatusEffect[];
-            const eTick = tickEffects(eEffects, enemy.maxHp, enemy.name);
-            tickMessages.push(...eTick.messages);
-            let newHp = Math.max(0, enemy.hp + eTick.hpDelta);
-            if (eTick.expired.includes('death_sentence')) {
-                if (enemy.death_immune) {
-                    const bossDmg = Math.max(300, Math.floor(enemy.maxHp * 0.2));
-                    newHp = Math.max(0, newHp - bossDmg);
-                    tickMessages.push(`💀 ${enemy.name}は即死耐性により即死を無効化し、代わりに ${bossDmg} の大ダメージを受けた！`);
-                } else {
-                    newHp = 0;
-                    tickMessages.push(`💀 ${enemy.name}は死神の宣告により即死した！`);
-                }
-            }
-            if (newHp > 0) allEnemiesDead = false;
-            return { ...enemy, hp: newHp, status_effects: eTick.newEffects };
-        });
-
-        let currentTarget = battleState.enemy;
-        if (currentTarget) {
-            const updatedTarget = updatedEnemies.find(e => e.id === currentTarget!.id);
-            if (updatedTarget) currentTarget = updatedTarget;
-            if (currentTarget.hp <= 0 && !allEnemiesDead) {
-                const firstAlive = updatedEnemies.find(e => e.hp > 0);
-                if (firstAlive) {
-                    currentTarget = firstAlive;
-                    tickMessages.push(`ターゲットを ${firstAlive.name} に切り替えた。`);
-                }
-            }
-        }
-
+        // ターン終了時はクリンナップを走らせず、ターン数のみ加算してNPCフェーズへ
         set(state => ({
             battleState: {
                 ...state.battleState,
-                current_ap: newAp,
-                messages: [...state.battleState.messages, ...tickMessages],
-                player_effects: playerEffects,
-                enemies: updatedEnemies,
-                enemy: currentTarget,
-                party: updatedParty,
+                turn: nextTurn,
                 vitDamageTakenThisTurn: false,
                 battlePhase: 'npc_done',
             }
@@ -738,18 +594,72 @@ export const createBattleSlice = (
     runEnemyPhase: async () => { await get().processEnemyTurn(true); },
 
     advanceTurn: () => {
+        const { battleState, userProfile } = get();
+        
+        // プレイヤーターン開始時のクリンナップ (DoT、即死、AP回復)
+        let playerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
+        const wasStunned = isStunned(playerEffects);
+        const playerMaxHp = getEffectiveMaxHp(userProfile, battleState);
+        const playerTick = tickEffects(playerEffects, playerMaxHp, 'あなた');
+        playerEffects = playerTick.newEffects;
+        
+        const tickMessages: string[] = [...playerTick.messages];
+        
+        // 死神の宣告による即死
+        let finalHpDelta = playerTick.hpDelta;
+        if (playerTick.expired.includes('death_sentence')) {
+            finalHpDelta = -(userProfile?.hp || 0);
+            tickMessages.push(`💀 あなたは死神の宣告により即死した！`);
+        }
+        
+        let finalHp = userProfile?.hp || 0;
+        let isDeadFromDoT = false;
+        if ((finalHpDelta !== 0 || playerTick.expired.includes('death_sentence')) && userProfile) {
+            finalHp = Math.max(0, Math.min(playerMaxHp, finalHp + finalHpDelta));
+            isDeadFromDoT = finalHp <= 0;
+            tickMessages.push(`__hp_sync:${finalHp}`);
+            
+            const { selectedProfileId } = get();
+            updateProfileStatusHelper({ hp: finalHp }, userProfile.id || selectedProfileId);
+        }
+        
+        // スタンしていなければAP+5 (最大10)
+        let newAp = battleState.current_ap || 0;
+        if (!wasStunned) {
+            newAp = Math.min(10, newAp + 5);
+        }
+        
+        // クリンナップ後のプレイヤー状態を先にセット
+        set(state => ({
+            userProfile: state.userProfile ? { ...state.userProfile, hp: finalHp } : null,
+            battleState: {
+                ...state.battleState,
+                player_effects: playerEffects,
+                current_ap: newAp,
+                isDefeat: isDeadFromDoT ? true : state.battleState.isDefeat,
+                messages: [...state.battleState.messages, ...tickMessages]
+            }
+        }));
+        
+        if (isDeadFromDoT) {
+            soundManager?.playSE('se_battle_lose');
+            return;
+        }
+
+        // 次に手札ドロー
         get().dealHand();
         
-        const { battleState } = get();
-        const buffStatusLogs = getBuffStatusLogMessages((battleState.player_effects || []) as StatusEffect[]);
-
+        // ドロー後の状態でプレイヤーフェーズ開始を設定
+        const nextState = get();
+        const buffStatusLogs = getBuffStatusLogMessages((nextState.battleState.player_effects || []) as StatusEffect[]);
+        
         set(state => ({
             battleState: {
                 ...state.battleState,
                 isPlayerTurn: true,
                 battlePhase: 'player' as const,
                 cardsPlayedThisTurn: 0,
-                messages: [...state.battleState.messages, ...buffStatusLogs],
+                messages: [...state.battleState.messages, ...buffStatusLogs]
             }
         }));
     },
@@ -2871,6 +2781,34 @@ export const createBattleSlice = (
             let member = { ...updatedParty[i] };
             if (!member.is_active || (member.durability ?? 100) <= 0) continue;
 
+            // 各味方NPCの手番開始時クリンナップ (行動直前)
+            const mEffects = [...(member.status_effects || [])] as StatusEffect[];
+            const maxDur = member.max_durability || member.durability || 100;
+            const mTick = tickEffects(mEffects, maxDur, member.name);
+            newMessages.push(...mTick.messages);
+
+            let newDur = Math.max(0, (member.durability || 0) + mTick.hpDelta);
+            newDur = Math.min(maxDur, newDur);
+            if (mTick.hpDelta !== 0) {
+                newMessages.push(`__party_sync:${member.id}:${newDur}`);
+            }
+
+            const isNowActive = newDur > 0;
+            if (!isNowActive && member.is_active) {
+                newMessages.push(`${member.name}は力尽きた...`);
+                // 非同期でDB更新
+                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+            }
+
+            member.durability = newDur;
+            member.status_effects = mTick.newEffects;
+            member.is_active = isNowActive;
+
+            if (!isNowActive) {
+                updatedParty[i] = member;
+                continue;
+            }
+
             member.used_this_turn = [];
 
             // 味方NPCのスタン・拘束・凍結チェック (Bug F & G)
@@ -3191,8 +3129,36 @@ export const createBattleSlice = (
         let vitDamageTaken = battleState.vitDamageTakenThisTurn;
 
         for (const enemy of activeEnemies) {
-            const currentEnemyStatus = updatedEnemies.find(e => e.id === enemy.id);
+            let currentEnemyStatus = updatedEnemies.find(e => e.id === enemy.id);
             if (!currentEnemyStatus || currentEnemyStatus.hp <= 0) continue;
+
+            // エネミー個別の手番開始時クリンナップ (行動直前)
+            const eEffects = [...(currentEnemyStatus.status_effects || [])] as StatusEffect[];
+            const eTick = tickEffects(eEffects, enemy.maxHp, enemy.name);
+            newMessages.push(...eTick.messages);
+
+            let newHp = Math.max(0, currentEnemyStatus.hp + eTick.hpDelta);
+
+            // 死神の宣告による即死判定
+            if (eTick.expired.includes('death_sentence')) {
+                if (enemy.death_immune) {
+                    const bossDmg = Math.max(300, Math.floor(enemy.maxHp * 0.2));
+                    newHp = Math.max(0, newHp - bossDmg);
+                    newMessages.push(`💀 ${enemy.name}は即死耐性により即死を無効化し、代わりに ${bossDmg} の大ダメージを受けた！`);
+                } else {
+                    newHp = 0;
+                    newMessages.push(`💀 ${enemy.name}は死神の宣告により即死した！`);
+                }
+            }
+
+            currentEnemyStatus = { ...currentEnemyStatus, hp: newHp, status_effects: eTick.newEffects };
+            updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? currentEnemyStatus! : e);
+
+            if (newHp <= 0) {
+                newMessages.push(`${enemy.name}は力尽きた...`);
+                continue; // 倒れた場合は行動キャンセル
+            }
+
             const enemyStatusEffects = (currentEnemyStatus.status_effects || []) as StatusEffect[];
             if (isStunned(enemyStatusEffects)) {
                 newMessages.push(`${enemy.name}はスタン状態で行動できない！`);
@@ -3202,15 +3168,13 @@ export const createBattleSlice = (
             // v4.2: 敵行動時の出血ダメージ（カード使用時ダメージの仕様）
             const bleedDmg = getBleedDamage(enemyStatusEffects);
             if (bleedDmg > 0) {
-                const eIdx = updatedEnemies.findIndex(e => e.id === enemy.id);
-                if (eIdx !== -1) {
-                    const newHp = Math.max(0, updatedEnemies[eIdx].hp - bleedDmg);
-                    updatedEnemies[eIdx] = { ...updatedEnemies[eIdx], hp: newHp };
-                    newMessages.push(`${enemy.name}の出血ダメージ！ HP -${bleedDmg}`);
-                    if (newHp <= 0) {
-                        newMessages.push(`${enemy.name}は出血で倒れた！`);
-                        continue; // 出血で倒れた場合は行動キャンセル
-                    }
+                const finalHp = Math.max(0, currentEnemyStatus.hp - bleedDmg);
+                currentEnemyStatus = { ...currentEnemyStatus, hp: finalHp };
+                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? currentEnemyStatus! : e);
+                newMessages.push(`${enemy.name}の出血ダメージ！ HP -${bleedDmg}`);
+                if (finalHp <= 0) {
+                    newMessages.push(`${enemy.name}は出血で倒れた！`);
+                    continue; // 出血で倒れた場合は行動キャンセル
                 }
             }
 
