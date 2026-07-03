@@ -3,15 +3,25 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 async function run() {
-    const url = 'https://code-wirth-dawn-git-develop-kiyoshi-kitamura.vercel.app/api/location/quests?userId=f94db6e2-ca9b-4e1b-90f7-ebf996c56782&locationId=1';
+    const token = process.env.VERCEL_TOKEN || 'tU9H0Ldpeo7yLg7Qy1yP1z9L'; // フォールバックのデバッグ用トークン
+    const projectId = 'prj_code_wirth_dawn';
+    
+    console.log('Fetching Vercel deployment list...');
+    const url = `https://api.vercel.com/v6/deployments?projectId=prj_n2w9RTmlnYuMux7GezTUGezRTmln&limit=10`;
     
     try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
         const data = await res.json();
-        console.log('--- Vercel API Debug Logs:');
-        console.log(data.debug);
+        console.log('=== Vercel Deployments ===');
+        for (const dep of (data.deployments || [])) {
+            console.log(`ID: ${dep.uid}, State: ${dep.state}, Creator: ${dep.creator?.username}, Commit: ${dep.meta?.githubCommitMessage?.slice(0, 40)}`);
+        }
     } catch (e) {
-        console.error('Fetch error:', e);
+        console.error('Error fetching Vercel deployments:', e);
     }
 }
 

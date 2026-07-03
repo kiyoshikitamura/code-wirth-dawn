@@ -46,8 +46,19 @@ export default function InnHeader({
 
     const totalDays = userProfile?.accumulated_days || 0;
     const year = 742 + Math.floor(totalDays / 365);
-    const month = 1 + Math.floor((totalDays % 365) / 30);
-    const day = 1 + (totalDays % 30);
+    
+    let month = 1;
+    let day = 1;
+    let remainingDays = totalDays % 365;
+    const daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    for (let i = 0; i < daysInMonths.length; i++) {
+        if (remainingDays < daysInMonths[i]) {
+            day = remainingDays + 1;
+            break;
+        }
+        remainingDays -= daysInMonths[i];
+        month++;
+    }
 
     const isLowVit = (userProfile?.vitality ?? 100) <= 20;
 

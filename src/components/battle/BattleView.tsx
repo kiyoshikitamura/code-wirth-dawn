@@ -46,6 +46,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     const battleState = useGameStore(state => state.battleState);
     const hand = useGameStore(state => state.hand);
+    const deck = useGameStore(state => state.deck || []);
+    const discardPile = useGameStore(state => state.discardPile || []);
     const attackEnemy = useGameStore(state => state.attackEnemy);
     const endTurn = useGameStore(state => state.endTurn);
     const runNpcPhase = useGameStore(state => state.runNpcPhase);
@@ -1481,6 +1483,18 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     )}
                 </div>
 
+                {/* Deck & Discard Display */}
+                <div className="absolute top-0 left-16 z-40 flex gap-1 h-14">
+                    <div className="flex flex-col justify-center items-center w-11 h-14 bg-black/60 rounded-lg border border-white/20 shadow-lg backdrop-blur-md">
+                        <span className="text-[7px] font-bold mb-0.5 text-slate-400">山札</span>
+                        <span className="text-sm font-bold font-mono text-amber-100">{deck.length}</span>
+                    </div>
+                    <div className="flex flex-col justify-center items-center w-11 h-14 bg-black/60 rounded-lg border border-white/20 shadow-lg backdrop-blur-md">
+                        <span className="text-[7px] font-bold mb-0.5 text-slate-400">捨て札</span>
+                        <span className="text-sm font-bold font-mono text-amber-100">{discardPile.length}</span>
+                    </div>
+                </div>
+
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
                 <div className="relative w-full h-48 flex items-end">
                     <div 
@@ -1498,39 +1512,23 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 return 'border-slate-500 shadow-sm bg-black/40 backdrop-blur-md hover:border-slate-400';
                             }
 
-                            // 手札枚数に応じた動的重ね合わせマージンの計算 (案C)
-                            const getOverlapClass = (len: number, index: number) => {
-                                if (index === 0) return '';
-                                if (len >= 12) return '-ml-12 sm:-ml-14';
-                                if (len >= 9) return '-ml-10 sm:-ml-12';
-                                if (len >= 6) return '-ml-6 sm:-ml-8';
-                                return '-ml-4 sm:-ml-6';
-                            };
-
                             return (
                                 <button
                                     key={idx}
                                     onClick={() => handleCardClick(idx)}
                                     disabled={!canInteract}
-                                    className={`relative group transition-all duration-300 flex-shrink-0 snap-center origin-bottom
-                                        ${isSelected ? 'w-[84px] sm:w-30 scale-120 z-50 -translate-y-8 shadow-[0_15px_30px_rgba(0,0,0,0.5)]' : 'w-[72px] sm:w-24'}
+                                    className={`relative group transition-all duration-300 flex-shrink-0 snap-center
+                                        ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50 -translate-y-6' : 'w-[72px] sm:w-24'}
                                         ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
                                         ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
-                                        ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-90' : ''}
-                                        ${getOverlapClass(hand.length, idx)}
-                                        ${!isSelected && canInteract ? 'hover:scale-130 hover:-translate-y-8 hover:z-[60] hover:shadow-[0_20px_35px_rgba(0,0,0,0.6)]' : ''}
+                                        ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
+                                        ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
                                      `}
                                     style={{
                                         zIndex: isSelected ? 50 : idx
                                     }}
-                                    onMouseEnter={(e) => {
-                                        if (canInteract) {
-                                            e.currentTarget.style.zIndex = '60';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.zIndex = isSelected ? '50' : String(idx);
-                                    }}
+                                    onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
+                                    onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
                                 >
                                 <div className={`h-32 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
                                     ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}

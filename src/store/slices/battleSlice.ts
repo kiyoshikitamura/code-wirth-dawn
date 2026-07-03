@@ -6,7 +6,7 @@ import { resolveNpcTurn, determineRole, determineGrade, BattleContext } from '@/
 import { StatusEffect, applyEffect, removeEffect, hasEffect, tickEffects, getBleedDamage, isStunned, StatusEffectId, getEffectName, getMissChance, getAtkDownMod, getEvasionChance, getDefBonus, getDefDownMod, rollDebuffSuccess, isValidEffectId, NEGATIVE_EFFECTS, cureStatus, cureDebuff, isSelfBuffEffect, getBuffStatusLogMessages } from '@/lib/statusEffects';
 import { validateCardUse, getDefaultTarget, getCardApCost } from '@/lib/targeting';
 import { getCardEffectInfo } from '@/lib/cardEffects';
-import { getPassiveLabel } from '@/lib/passiveEffects';
+import { getPassiveLabel, aggregateBattlePassives } from '@/lib/passiveEffects';
 import { getEnemySkill, loadEnemySkillsFromDB } from '@/lib/enemySkills';
 import { useQuestState } from '../useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
@@ -14,6 +14,24 @@ import { soundManager, CARD_EFFECT_SE_MAP } from '@/lib/soundManager';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveMaxHp } from './profileSlice';
 import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
+
+// ─── 効果ドロー用山札補充シャッフルヘルパー ───────────────────────────────────
+function drawCardsFromDeck(drawCount: number, deck: Card[], discardPile: Card[]): { drawn: Card[]; deck: Card[]; discardPile: Card[] } {
+    let currentDeck = [...deck];
+    let currentDiscard = [...discardPile];
+    const drawn: Card[] = [];
+
+    for (let i = 0; i < drawCount; i++) {
+        if (currentDeck.length === 0) {
+            if (currentDiscard.length === 0) break;
+            currentDeck = [...currentDiscard].sort(() => 0.5 - Math.random());
+            currentDiscard = [];
+        }
+        const card = currentDeck.pop();
+        if (card) drawn.push(card);
+    }
+    return { drawn, deck: currentDeck, discardPile: currentDiscard };
+}
 
 const isTurnEndTickCompensated = (id: StatusEffectId): boolean => {
     return false; // キャラクター別の手番開始時クリンナップへ移行したため、補正は不要
@@ -548,6 +566,7 @@ export const createBattleSlice = (
         }
 
         const nextTurn = battleState.turn + 1;
+        const allEnemiesDead = (battleState.enemies || []).every(e => e.hp <= 0);
 
         if (nextTurn > 30) {
             soundManager?.playSE('se_battle_lose');
@@ -604,9 +623,16 @@ export const createBattleSlice = (
         playerEffects = playerTick.newEffects;
         
         const tickMessages: string[] = [...playerTick.messages];
+
+        const supportModifiers = aggregateBattlePassives(battleState.activeSupportBuffs || []);
+        let passiveHpDelta = 0;
+        if (supportModifiers.slipDamage > 0) {
+            passiveHpDelta = -supportModifiers.slipDamage;
+            tickMessages.push(`あなたに「血の怒り」の反動ダメージ！ HP -${supportModifiers.slipDamage}`);
+        }
         
         // 死神の宣告による即死
-        let finalHpDelta = playerTick.hpDelta;
+        let finalHpDelta = playerTick.hpDelta + passiveHpDelta;
         if (playerTick.expired.includes('death_sentence')) {
             finalHpDelta = -(userProfile?.hp || 0);
             tickMessages.push(`💀 あなたは死神の宣告により即死した！`);
@@ -1710,20 +1736,16 @@ export const createBattleSlice = (
                         const discardedHand = nextHand.filter(c => c.id !== card.id);
                         nextDiscardPile = [...nextDiscardPile, ...discardedHand];
                         nextHand = [];
-                        const deck = get().deck;
-                        const drawCount = Math.min(deck.length, handCount);
-                        const drawn: typeof nextHand = [];
-                        const remainingDeck = [...deck];
-                        for (let draw = 0; draw < drawCount; draw++) {
-                            if (remainingDeck.length === 0) break;
-                            drawn.push(remainingDeck.shift()!);
-                        }
-                        nextHand = drawn;
-                        set({ deck: remainingDeck });
+
+                        const drawResult = drawCardsFromDeck(handCount, get().deck, nextDiscardPile);
+                        nextHand = drawResult.drawn;
+                        set({ deck: drawResult.deck });
+                        nextDiscardPile = drawResult.discardPile;
+
                         const currentAp = battleState.current_ap || 0;
                         const newAp = Math.min(15, currentAp + 1);
                         set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
-                        logMsg = `${card.name}を使用！ 手札の ${handCount} 枚のカードを全て捨て、新たに ${drawCount} 枚ドロー！ APが1回復した！`;
+                        logMsg = `${card.name}を使用！ 手札の ${handCount} 枚のカードを全て捨て、新たに ${drawResult.drawn.length} 枚ドロー！ APが1回復した！`;
                         break;
                     }
                     case 'recycle': {
@@ -1984,20 +2006,14 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'quick_draw': {
-                        const deck = get().deck;
-                        const drawCount = Math.min(2, deck.length);
-                        const drawn: typeof nextHand = [];
-                        const remainingDeck = [...deck];
-                        for (let draw = 0; draw < drawCount; draw++) {
-                            if (remainingDeck.length === 0) break;
-                            drawn.push(remainingDeck.shift()!);
-                        }
-                        nextHand = [...nextHand, ...drawn];
-                        set({ deck: remainingDeck });
-                        logMsg = `${card.name}を使用！ 山札から ${drawCount} 枚ドロー！`;
-                        const isFirstCard = (battleState.cardsPlayedThisTurn || 0) <= 1;
+                        const drawResult = drawCardsFromDeck(2, get().deck, nextDiscardPile);
+                        nextHand = [...nextHand, ...drawResult.drawn];
+                        set({ deck: drawResult.deck });
+                        nextDiscardPile = drawResult.discardPile;
+                        logMsg = `${card.name}を使用！ 山札から ${drawResult.drawn.length} 枚ドロー！`;
+                        const isFirstCard = (get().battleState.cardsPlayedThisTurn || 0) <= 1;
                         if (isFirstCard) {
-                            const newAp = Math.min(15, battleState.current_ap + 1);
+                            const newAp = Math.min(15, get().battleState.current_ap + 1);
                             set(state => ({ battleState: { ...state.battleState, current_ap: newAp } }));
                             logMsg += ` さらにこのターン最初のカードプレイのため、APが1回復した！`;
                         }
@@ -2246,7 +2262,8 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'debuff_enemy': {
-                        damage = card.power ?? 0;
+                        const skipDamage = effectInfo.skipDamage === true;
+                        damage = skipDamage ? 0 : (card.power ?? 0);
                         if (damage > 0) {
                             damage = calculateDamage(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], true, effectivePlayerAtk);
                             logMsg = `${loopTargetEnemy.name}に${card.name}！ ${damage} ダメージ！`;
@@ -2291,10 +2308,43 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'multi_attack': {
-                        damage = (card.power ?? 0) * 2;
-                        if (damage > 0) {
-                            damage = calculateDamage(damage, loopTargetEnemy.def || 0, currentPlayerEffects as StatusEffect[], loopTargetEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk);
-                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 怒涛の連撃で ${damage} のダメージ！`;
+                        const hitsCount = 2;
+                        let hitLogs: string[] = [];
+                        let totalDmg = 0;
+                        const basePower = (card.power ?? 0) * damageMultiplier;
+
+                        if (basePower > 0) {
+                            for (let hit = 0; hit < hitsCount; hit++) {
+                                const freshEnemy = currentEnemies.find(e => e.id === loopTargetEnemy.id);
+                                if (!freshEnemy || freshEnemy.hp <= 0) break;
+
+                                const targetHasCritVul = freshEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                                const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
+
+                                const result = calculateDamageV4(basePower, freshEnemy.def || 0, currentPlayerEffects as StatusEffect[], freshEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                                totalDmg += result.damage;
+
+                                currentEnemies = currentEnemies.map(e => e.id === freshEnemy.id ? { ...e, hp: Math.max(0, e.hp - result.damage) } : e);
+
+                                const critLabel = result.isCritical ? ' クリティカル！' : '';
+                                hitLogs.push(`${hit + 1}撃目: ${result.damage} ダメージ${critLabel}`);
+
+                                const playerHasDrainOnHit = currentPlayerEffects.some(se => se.id === 'drain_on_hit');
+                                if (playerHasDrainOnHit && result.damage > 0) {
+                                    const maxHp = effectivePlayerMaxHp;
+                                    const currentHp = get().userProfile?.hp || 0;
+                                    const healAmt = 20;
+                                    const newHp = Math.min(maxHp, currentHp + healAmt);
+                                    if (newHp > currentHp) {
+                                        set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                                        hitLogs.push(`  → (吸血効果！ HP +${newHp - currentHp} 回復)`);
+                                        healSyncHp = newHp;
+                                        updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
+                                    }
+                                }
+                            }
+                            damage = 0;
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 怒涛の2連撃！\n` + hitLogs.join('\n');
                         } else {
                             logMsg = `${card.name}を使用！`;
                         }
