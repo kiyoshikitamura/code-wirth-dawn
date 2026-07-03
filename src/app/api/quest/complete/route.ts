@@ -706,18 +706,6 @@ export async function POST(req: Request) {
             rewardPromises.push(grantReputationChanges(supabase, user_id, verifiedRepChanges, user.current_location_id));
 
             await Promise.all(rewardPromises);
-
-            // filteredLootPool (ダンジョン内で獲得した戦利品) を返却用 lootSaved にマージ
-            if (Array.isArray(filteredLootPool)) {
-                for (const fLoot of filteredLootPool) {
-                    lootSaved.push({
-                        itemId: fLoot.itemId,
-                        name: fLoot.itemName || fLoot.name,
-                        quantity: fLoot.quantity || 1,
-                        type: fLoot.type || 'item'
-                    });
-                }
-            }
         }
 
         // クエストの成否に関わらず、消費されたアイテム（consumed_items）はインベントリから差し引く
@@ -1148,6 +1136,18 @@ async function getQuestAllowedItems(supabase: any, quest: any, questId: string):
         if (node.type === 'battle' || node.nodeType === 'battle' || node.type === 'boss') {
             if (node.enemy_group_id) {
                 enemyGroupSlugs.add(String(node.enemy_group_id).trim());
+            }
+        }
+
+        // Treasure nodes / Random chests (node.item_pool or node.params.item_pool support)
+        const itemPools = node.item_pool || node.params?.item_pool;
+        if (Array.isArray(itemPools)) {
+            for (const entry of itemPools) {
+                if (entry) {
+                    if (entry.item_id) allowed.add(String(entry.item_id).trim());
+                    if (entry.itemId) allowed.add(String(entry.itemId).trim());
+                    if (entry.id) allowed.add(String(entry.id).trim());
+                }
             }
         }
     }
