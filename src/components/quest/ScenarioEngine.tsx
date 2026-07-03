@@ -15,7 +15,7 @@ import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 
 interface Props {
     scenario: ScenarioDB;
-    onComplete: (result: 'success' | 'failure' | 'abort', history: string[], nodeRewards?: any) => void;
+    onComplete: (result: 'success' | 'failure' | 'abort' | 'success_retreat', history: string[], nodeRewards?: any) => void;
     onPrepareResult?: (result: 'success' | 'failure' | 'success_retreat', history: string[], nodeRewards?: any) => void;
     isResultReady?: boolean;
     isPreparingResult?: boolean;
@@ -697,7 +697,7 @@ export default function ScenarioEngine({
                                 onClick={() => {
                                     if (isResultReady && !isProcessingResult) {
                                         setIsProcessingResult(true);
-                                        onComplete(endReady.result === 'success_retreat' ? 'success' : endReady.result, history, endReady.nodeRewards);
+                                        onComplete(endReady.result, history, endReady.nodeRewards);
                                     }
                                 }}
                                 disabled={!isResultReady || isProcessingResult}
