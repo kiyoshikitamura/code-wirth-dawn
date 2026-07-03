@@ -128,7 +128,7 @@ CHOICE,,インベントリを開く/装備変更,,7061_b1f_camp_inv
 CHOICE,,探索を切り上げて地上に戻る,,7061_b1f_camp_return
 CHOICE,,迷宮のさらに奥へ進む,,7061_b2f_start
 NODE,7061_b1f_camp_inv,,"{""bg"":""bg_rift_camp_stairs"",""type"":""shop_access""}",
-NODE,7061_b1f_camp_return,これ以上の探索は危険と判断し、これまでに得た成果を抱えて一度地上に戻ることにした。,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success""}",
+NODE,7061_b1f_camp_return,これ以上の探索は危険と判断し、これまでに得た成果を抱えて一度地上に戻ることにした。,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success_retreat""}",
 NODE,7061_b2f_start,螺旋階段を下り、地下2階へと足を踏み入れた。,"{""bg"":""bg_rift_upper_01"",""bgm"":""bgm_rift_upper"",""type"":""text""}",7061_b2f_start_2
 NODE,7061_b2f_start_2,周囲の石壁は湿気を帯び、冷気が足元から調う。,"{""bg"":""bg_rift_upper_01"",""type"":""text""}",7061_b2f_01
 NODE,7061_b2f_01,砂利道を抜けると、突然視界が開けた。どこまで続いているのか分からない広大な地下空洞である。,"{""bg"":""bg_rift_upper_02"",""type"":""text""}",7061_b2f_01_2
