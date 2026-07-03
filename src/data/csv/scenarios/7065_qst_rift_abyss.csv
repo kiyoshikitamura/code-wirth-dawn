@@ -1,0 +1,169 @@
+row_type,node_id,text_label,params,next_node
+NODE,start_prep,「狭間の迷宮」の最深部『深淵』へと足を踏み入れる。そこは、これまでの階層とは比較にならないほど狂暴な次元の嵐が吹き荒れる極限の空間だった。,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_rift_abyss"",""type"":""text""}",7065_b11f_start
+NODE,7065_b11f_start,地下11階に足を踏み入れた直後、前方から這うようにして戻ってくる満身創痍の冒険者パーティと鉢合わせた。彼らの装備は引き裂かれ、顔には恐怖が張り付いている。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_1
+NODE,7065_b11f_wounded_1,「だ、だめだ……この先は地獄だ……魔物の強さがこれまでの比じゃない……。俺たちは引き返す……命があるうちに……」,"{""bg"":""bg_rift_abyss"",""speaker_name"":""満身創痍の冒険者"",""type"":""text""}",7065_b11f_wounded_2
+NODE,7065_b11f_wounded_2,彼らはそう言い残すと、互いを支え合いながら、震える足取りで上層への階段へと逃げのびていった。私達は冷たい戦慄を覚えつつ、奥へと進んだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_wounded_3
+NODE,7065_b11f_wounded_3,目の前には、巨大な中央広間が広がっている。周囲には4つの玄室へと続く扉があり、それぞれ不気味な紋様が刻まれていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_lobby,中央ロビー。不気味に歪む4つの玄室の扉が私達を囲んでいる。どの扉を開けるべきか。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",
+CHOICE,,第一の玄室（部屋1）を探索する,,7065_b11f_rm1_check
+CHOICE,,第二の玄室（部屋2）を探索する,,7065_b11f_rm2_check
+CHOICE,,第三の玄室（部屋3）を探索する,,7065_b11f_rm3_check
+CHOICE,,最奥の玄室（部屋4）へ進む,,7065_b11f_rm4_open_check
+NODE,7065_b11f_rm1_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_sw1_on"",""value"":1,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm1_done
+CHOICE,,failure,,7065_b11f_rm1_start
+NODE,7065_b11f_rm1_done,第1の玄室の魔力スイッチはすでに起動している。ここにはもう用はない。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm1_start,不気味な魔力の障壁を潜り抜け、第1の玄室へと踏み込む。その瞬間、暗闇から咆哮を上げて狂暴な悪魔たちが飛びかかってきた！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm1_battle
+NODE,7065_b11f_rm1_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm1_win
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm1_win,激しい死闘の末、玄室の守護者たちを退けた。部屋の祭壇の前に、禍々しい輝きを放つ宝箱が置かれているのを見つけた。,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_chest"",""type"":""text""}",
+CHOICE,,宝箱を開けてみる,,7065_b11f_rm1_chest_trigger
+CHOICE,,無視してスイッチへ向かう,,7065_b11f_rm1_after_chest
+NODE,7065_b11f_rm1_chest_trigger,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.45,""success"":""7065_b11f_rm1_trap_1"",""fallback"":""7065_b11f_rm1_chest_open""}",
+NODE,7065_b11f_rm1_trap_1,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.3,""success"":""7065_b11f_rm1_trap_pitfall"",""fallback"":""7065_b11f_rm1_trap_2""}",
+NODE,7065_b11f_rm1_trap_2,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.36,""success"":""7065_b11f_rm1_trap_explode"",""fallback"":""7065_b11f_rm1_trap_3""}",
+NODE,7065_b11f_rm1_trap_3,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.44,""success"":""7065_b11f_rm1_trap_alarm"",""fallback"":""7065_b11f_rm1_trap_4""}",
+NODE,7065_b11f_rm1_trap_4,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.6,""success"":""7065_b11f_rm1_trap_acid"",""fallback"":""7065_b11f_rm1_trap_5""}",
+NODE,7065_b11f_rm1_trap_5,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.7,""success"":""7065_b11f_rm1_trap_rock"",""fallback"":""7065_b11f_rm1_trap_teleport""}",
+NODE,7065_b11f_rm1_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7065_b11f_rm1_chest_open
+NODE,7065_b11f_rm1_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7065_b11f_rm1_chest_open
+NODE,7065_b11f_rm1_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7065_b11f_rm1_trap_alarm_battle
+NODE,7065_b11f_rm1_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm1_chest_open
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm1_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm1_chest_open
+NODE,7065_b11f_rm1_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm1_chest_open
+NODE,7065_b11f_rm1_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
+NODE,7065_b11f_rm1_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm1_after_chest
+NODE,7065_b11f_rm1_after_chest,宝箱の奥の壁面には、古の次元装置と思われる魔力のスイッチが設置されていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm1_switch_1
+NODE,7065_b11f_rm1_switch_1,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_sw1_on"",""value"":1}}",7065_b11f_rm1_switch_2
+NODE,7065_b11f_rm1_switch_2,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_switches_pressed"",""delta"":1}}",7065_b11f_rm1_switch_done
+NODE,7065_b11f_rm1_switch_done,カチリと音が響き、スイッチのルーンが眩しく光り輝いた。第1の玄室の魔力が解放されたようだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm1_check_all
+NODE,7065_b11f_rm1_check_all,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm1_all_activated
+CHOICE,,failure,,7065_b11f_lobby
+NODE,7065_b11f_rm1_all_activated,ゴゴゴゴ……！ 3つの玄室の魔力が共鳴し、中央ロビーの奥にある「最奥の玄室の扉」の封印が解かれた音が響き渡った！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm2_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_sw2_on"",""value"":1,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm2_done
+CHOICE,,failure,,7065_b11f_rm2_start
+NODE,7065_b11f_rm2_done,第2の玄室の魔力スイッチはすでに起動している。ここにはもう用はない。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm2_start,不気味な魔力の障壁を潜り抜け、第2の玄室へと踏み込む。その瞬間、暗闇から咆哮を上げて狂暴な悪魔たちが飛びかかってきた！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm2_battle
+NODE,7065_b11f_rm2_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm2_win
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm2_win,激しい死闘の末、玄室の守護者たちを退けた。部屋の祭壇の前に、禍々しい輝きを放つ宝箱が置かれているのを見つけた。,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_chest"",""type"":""text""}",
+CHOICE,,宝箱を開けてみる,,7065_b11f_rm2_chest_trigger
+CHOICE,,無視してスイッチへ向かう,,7065_b11f_rm2_after_chest
+NODE,7065_b11f_rm2_chest_trigger,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.45,""success"":""7065_b11f_rm2_trap_1"",""fallback"":""7065_b11f_rm2_chest_open""}",
+NODE,7065_b11f_rm2_trap_1,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.3,""success"":""7065_b11f_rm2_trap_pitfall"",""fallback"":""7065_b11f_rm2_trap_2""}",
+NODE,7065_b11f_rm2_trap_2,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.36,""success"":""7065_b11f_rm2_trap_explode"",""fallback"":""7065_b11f_rm2_trap_3""}",
+NODE,7065_b11f_rm2_trap_3,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.44,""success"":""7065_b11f_rm2_trap_alarm"",""fallback"":""7065_b11f_rm2_trap_4""}",
+NODE,7065_b11f_rm2_trap_4,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.6,""success"":""7065_b11f_rm2_trap_acid"",""fallback"":""7065_b11f_rm2_trap_5""}",
+NODE,7065_b11f_rm2_trap_5,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.7,""success"":""7065_b11f_rm2_trap_rock"",""fallback"":""7065_b11f_rm2_trap_teleport""}",
+NODE,7065_b11f_rm2_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7065_b11f_rm2_chest_open
+NODE,7065_b11f_rm2_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7065_b11f_rm2_chest_open
+NODE,7065_b11f_rm2_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7065_b11f_rm2_trap_alarm_battle
+NODE,7065_b11f_rm2_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm2_chest_open
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm2_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm2_chest_open
+NODE,7065_b11f_rm2_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm2_chest_open
+NODE,7065_b11f_rm2_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
+NODE,7065_b11f_rm2_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm2_after_chest
+NODE,7065_b11f_rm2_after_chest,宝箱の奥の壁面には、古の次元装置と思われる魔力のスイッチが設置されていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm2_switch_1
+NODE,7065_b11f_rm2_switch_1,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_sw2_on"",""value"":1}}",7065_b11f_rm2_switch_2
+NODE,7065_b11f_rm2_switch_2,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_switches_pressed"",""delta"":1}}",7065_b11f_rm2_switch_done
+NODE,7065_b11f_rm2_switch_done,カチリと音が響き、スイッチのルーンが眩しく光り輝いた。第2の玄室の魔力が解放されたようだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm2_check_all
+NODE,7065_b11f_rm2_check_all,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm2_all_activated
+CHOICE,,failure,,7065_b11f_lobby
+NODE,7065_b11f_rm2_all_activated,ゴゴゴゴ……！ 3つの玄室の魔力が共鳴し、中央ロビーの奥にある「最奥の玄室の扉」の封印が解かれた音が響き渡った！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm3_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_sw3_on"",""value"":1,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm3_done
+CHOICE,,failure,,7065_b11f_rm3_start
+NODE,7065_b11f_rm3_done,第3の玄室の魔力スイッチはすでに起動している。ここにはもう用はない。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm3_start,不気味な魔力の障壁を潜り抜け、第3の玄室へと踏み込む。その瞬間、暗闇から咆哮を上げて狂暴な悪魔たちが飛びかかってきた！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm3_battle
+NODE,7065_b11f_rm3_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm3_win
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm3_win,激しい死闘の末、玄室の守護者たちを退けた。部屋の祭壇の前に、禍々しい輝きを放つ宝箱が置かれているのを見つけた。,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_chest"",""type"":""text""}",
+CHOICE,,宝箱を開けてみる,,7065_b11f_rm3_chest_trigger
+CHOICE,,無視してスイッチへ向かう,,7065_b11f_rm3_after_chest
+NODE,7065_b11f_rm3_chest_trigger,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.45,""success"":""7065_b11f_rm3_trap_1"",""fallback"":""7065_b11f_rm3_chest_open""}",
+NODE,7065_b11f_rm3_trap_1,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.3,""success"":""7065_b11f_rm3_trap_pitfall"",""fallback"":""7065_b11f_rm3_trap_2""}",
+NODE,7065_b11f_rm3_trap_2,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.36,""success"":""7065_b11f_rm3_trap_explode"",""fallback"":""7065_b11f_rm3_trap_3""}",
+NODE,7065_b11f_rm3_trap_3,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.44,""success"":""7065_b11f_rm3_trap_alarm"",""fallback"":""7065_b11f_rm3_trap_4""}",
+NODE,7065_b11f_rm3_trap_4,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.6,""success"":""7065_b11f_rm3_trap_acid"",""fallback"":""7065_b11f_rm3_trap_5""}",
+NODE,7065_b11f_rm3_trap_5,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.7,""success"":""7065_b11f_rm3_trap_rock"",""fallback"":""7065_b11f_rm3_trap_teleport""}",
+NODE,7065_b11f_rm3_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7065_b11f_rm3_chest_open
+NODE,7065_b11f_rm3_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7065_b11f_rm3_chest_open
+NODE,7065_b11f_rm3_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7065_b11f_rm3_trap_alarm_battle
+NODE,7065_b11f_rm3_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm3_chest_open
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm3_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm3_chest_open
+NODE,7065_b11f_rm3_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm3_chest_open
+NODE,7065_b11f_rm3_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
+NODE,7065_b11f_rm3_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":316,""weight"":100},{""item_id"":317,""weight"":100}]}",7065_b11f_rm3_after_chest
+NODE,7065_b11f_rm3_after_chest,宝箱の奥の壁面には、古の次元装置と思われる魔力のスイッチが設置されていた。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm3_switch_1
+NODE,7065_b11f_rm3_switch_1,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_sw3_on"",""value"":1}}",7065_b11f_rm3_switch_2
+NODE,7065_b11f_rm3_switch_2,,"{""type"":""modify_flag"",""params"":{""flag"":""rift_switches_pressed"",""delta"":1}}",7065_b11f_rm3_switch_done
+NODE,7065_b11f_rm3_switch_done,カチリと音が響き、スイッチのルーンが眩しく光り輝いた。第3の玄室の魔力が解放されたようだ。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm3_check_all
+NODE,7065_b11f_rm3_check_all,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm3_all_activated
+CHOICE,,failure,,7065_b11f_lobby
+NODE,7065_b11f_rm3_all_activated,ゴゴゴゴ……！ 3つの玄室の魔力が共鳴し、中央ロビーの奥にある「最奥の玄室の扉」の封印が解かれた音が響き渡った！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm4_open_check,,"{""type"":""check_flag"",""params"":{""flag"":""rift_switches_pressed"",""value"":3,""operator"":""==""}}",
+CHOICE,,success,,7065_b11f_rm4_enter
+CHOICE,,failure,,7065_b11f_rm4_locked
+NODE,7065_b11f_rm4_locked,最奥の玄室の重厚な鉄の扉は、未だ強力な魔力の結界で閉ざされている。まだ起動していない魔力スイッチがあるようだ。ロビーに戻ろう。,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_lobby
+NODE,7065_b11f_rm4_enter,3つのスイッチの魔力が満ち、封印が消え去った。軋んだ音を立てて最奥の玄室の扉を開け、中へと踏み込む。その奥から、凄まじい瘴気が溢れ出てきた！,"{""bg"":""bg_rift_abyss"",""type"":""text""}",7065_b11f_rm4_battle
+NODE,7065_b11f_rm4_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm4_win
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm4_win,最奥の玄室を護る強大なデーモンの討伐に成功した。その背後の祭壇の上に、怪しく脈動する巨大な黒い宝箱を見つけた。,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_chest"",""type"":""text""}",
+CHOICE,,宝箱を開けてみる,,7065_b11f_rm4_chest_trigger
+CHOICE,,無視してテレポートへ急ぐ,,7065_b11f_rm4_after_chest
+NODE,7065_b11f_rm4_chest_trigger,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.45,""success"":""7065_b11f_rm4_trap_1"",""fallback"":""7065_b11f_rm4_chest_open""}",
+NODE,7065_b11f_rm4_trap_1,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.3,""success"":""7065_b11f_rm4_trap_pitfall"",""fallback"":""7065_b11f_rm4_trap_2""}",
+NODE,7065_b11f_rm4_trap_2,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.36,""success"":""7065_b11f_rm4_trap_explode"",""fallback"":""7065_b11f_rm4_trap_3""}",
+NODE,7065_b11f_rm4_trap_3,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.44,""success"":""7065_b11f_rm4_trap_alarm"",""fallback"":""7065_b11f_rm4_trap_4""}",
+NODE,7065_b11f_rm4_trap_4,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.6,""success"":""7065_b11f_rm4_trap_acid"",""fallback"":""7065_b11f_rm4_trap_5""}",
+NODE,7065_b11f_rm4_trap_5,,"{""bg"":""bg_rift_abyss"",""type"":""check_random"",""probability"":0.7,""success"":""7065_b11f_rm4_trap_rock"",""fallback"":""7065_b11f_rm4_trap_teleport""}",
+NODE,7065_b11f_rm4_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7065_b11f_rm4_chest_open
+NODE,7065_b11f_rm4_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7065_b11f_rm4_chest_open
+NODE,7065_b11f_rm4_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7065_b11f_rm4_trap_alarm_battle
+NODE,7065_b11f_rm4_trap_alarm_battle,,"{""bg"":""bg_rift_abyss"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_abyss"",""type"":""battle""}",
+CHOICE,,win,,7065_b11f_rm4_chest_open
+CHOICE,,lose,,end_failure
+NODE,7065_b11f_rm4_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7065_b11f_rm4_chest_open
+NODE,7065_b11f_rm4_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7065_b11f_rm4_chest_open
+NODE,7065_b11f_rm4_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
+NODE,7065_b11f_rm4_chest_open,宝箱を開けて、中の古代アイテムを手に入れた。,"{""bg"":""bg_rift_abyss"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":350},{""item_id"":708,""weight"":450},{""item_id"":318,""weight"":100},{""item_id"":319,""weight"":100}]}",7065_b11f_rm4_after_chest
+NODE,7065_b11f_rm4_after_chest,宝箱を退けた後、祭壇の背後の壁画が開き、青く光り輝くテレポートの扉が出現した！,"{""bg"":""bg_rift_abyss"",""fg"":""fg_door_basic_transparent"",""type"":""text""}",7065_b11f_camp_teleport
+NODE,7065_b11f_camp_teleport,意を決してテレポートの扉へと飛び込む。激しい時空の歪みを経て、私達は地下11階の最奥、安全が確保されたキャンプ地に辿り着いた。,"{""bg"":""bg_rift_camp_stairs"",""type"":""text""}",7065_b11f_camp
+NODE,7065_b11f_camp,地下11階の最奥キャンプ地。これより先は迷宮の最深部「地下12階」へと続く。十分な休息と装備の調整を行ってほしい。,"{""bg"":""bg_rift_camp_stairs"",""type"":""camp""}",
+CHOICE,,探索を続けて最深部（地下12階）へ進む,,7065_b12f_start
+CHOICE,,街に一時帰還する（クエスト一時中断・達成）,,7065_end_success_midway
+NODE,7065_b12f_start,テレポートの扉を抜けた先……そこは、中層をも凌駕する禍々しい黒大理石の王座の間だった。王座の頂点には、あの討伐したはずの大魔導士ヴァルグナが佇んでいる。,"{""bg"":""bg_rift_vargna_throne"",""bgm"":""bgm_battle_boss"",""type"":""text""}",7065_b12f_dialog
+NODE,7065_b12f_dialog,「ククク……よくぞ奈落の底まで来たな。だが我が魂は、深淵の時空魔力と融合し、無限に蘇る真の魔神となったのだ！ お前たちの血肉を、破壊神サタンの生贄として捧げてくれよう！」,"{""bg"":""bg_rift_vargna_throne"",""speaker_name"":""大魔導士ヴァルグナ（真）"",""type"":""text""}",7065_b12f_battle
+NODE,7065_b12f_battle,,"{""bg"":""bg_rift_vargna_summon"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":""9506"",""type"":""battle""}",
+CHOICE,,win,,7065_b12f_win
+CHOICE,,lose,,end_failure
+NODE,7065_b12f_win,激闘の末、真の魔人へと化したヴァルグナを討ち倒した！ しかし、彼の身体が崩壊する最中、背後の時空が激しく歪み、恐るべき漆黒の穴が開いていく……,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7065_b12f_win_2
+NODE,7065_b12f_win_2,大魔導士ヴァルグナは討伐したが、深淵の絶え間ない魔力の再生により、何度倒されても再び立ち上がる呪縛がかけられているようだ……。その時、懐の宝珠が激しく共鳴を始めた！,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7065_b12f_check_weapon
+NODE,7065_b12f_check_weapon,,"{""type"":""check_possession"",""item_id"":351,""silent"":true}",
+CHOICE,,success,,7065_b12f_weapon_owned
+CHOICE,,failure,,7065_b12f_weapon_missing
+NODE,7065_b12f_weapon_owned,すでに伝説の聖剣『デーモンスレイヤー』を手にしているためか、深淵に潜むサタンの封印は維持され、新たな顕現は抑え込まれている。私達は迷宮の深淵を踏破したことを確信し、脱出した。,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7065_end_success
+NODE,7065_b12f_weapon_missing,ゴゴゴゴ……！ ヴァルグナの残骸から溢れ出た魔力を喰らい、時空の裂け目から巨大な三又の槍を携えた、圧倒的な闇の化身が顕現した！,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_b12f_satan_dialog
+NODE,7065_b12f_satan_dialog,「我は奈落に封印されし魔界の絶対君主、サタン。我が眠りを妨げる矮小なる人間どもよ、その魂を無限の暗黒に沈めてくれよう！」,"{""bg"":""bg_rift_abyss_02"",""bgm"":""bgm_spot_final_boss"",""speaker_name"":""破壊神サタン"",""type"":""text""}",7065_b12f_satan_battle
+NODE,7065_b12f_satan_battle,,"{""bg"":""bg_rift_abyss_02"",""bgm"":""bgm_spot_final_boss"",""enemy_group_id"":""9507"",""type"":""battle""}",
+CHOICE,,win,,7065_b12f_satan_win
+CHOICE,,lose,,end_failure
+NODE,7065_b12f_satan_win,信じられない死闘の果てに、破壊神サタンの巨体を打ち砕き、再び深淵の底へ封印することに成功した！ サタンの滅びた影の中に、眩い聖光を放つ一本の剣が遺されていた。,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_b12f_satan_reward_node
+NODE,7065_b12f_satan_reward_node,伝説の聖剣『デーモンスレイヤー』を手に入れた！ 剣を握った瞬間、全身に神聖な加護が満ち溢れるのを感じた。,"{""bg"":""bg_rift_abyss_02"",""fg"":""fg_rift_chest"",""type"":""reward"",""items"":[{""id"":351,""amount"":1}]}",7065_end_success
+NODE,7065_end_success,深淵の魔王を討ち果たし、クエストを完全攻略した！ 異変の元凶を封印した栄光を手に、私達は迷宮から帰還した。,"{""type"":""end_success""}",
+NODE,7065_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""type"":""end_success""}",
+NODE,end_failure,力及ばず、パーティは全滅した。私達の意識は深淵の底の闇へと溶けて消えていった……,"{""type"":""end_failure""}",

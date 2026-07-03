@@ -494,9 +494,32 @@ export function useScenarioNodeProcessor({
             }
 
             else if (currentNode.action === 'heal_partial' || currentNode.params?.action === 'heal_partial') {
-                questState.healParty(0.5);
-                showToast('💚 湧き水によって傷が癒やされた。 (HP回復)', 'success');
-                setHistory(prev => [...prev, '[System] 湧き水を飲み、体力を回復した。']);
+                console.log('[ScenarioNodeProcessor] heal_partial triggered. currentNode:', currentNode);
+                const store = useGameStore.getState();
+                if (store.userProfile) {
+                    const maxHp = (store.userProfile.max_hp || 100) + (store.equipBonus?.hp || 0);
+                    const healAmount = Math.floor(maxHp * 0.5);
+                    const nextHp = Math.min(maxHp, (store.userProfile.hp || 0) + healAmount);
+                    
+                    // Zustand GameStore
+                    useGameStore.setState({
+                        userProfile: {
+                            ...store.userProfile,
+                            hp: nextHp
+                        }
+                    });
+                    
+                    // Zustand QuestStore
+                    questState.healParty(0.5);
+                    
+                    // Sync to DB
+                    await updateProfileStatusHelper({ hp: nextHp }, store.userProfile.id);
+                    
+                    showToast('💚 湧き水によって傷が癒やされた。 (HP回復)', 'success');
+                    setHistory(prev => [...prev, '[System] 湧き水を飲み、体力を回復した。']);
+                } else {
+                    console.warn('[ScenarioNodeProcessor] heal_partial: userProfile not found in store');
+                }
             }
 
             else if (currentNode.type === 'camp') {

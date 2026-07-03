@@ -31,6 +31,7 @@ const BGM_FILES: Record<string, string> = {
     bgm_rift_upper:        '/audio/bgm/bgm_rift_upper.ogg',
     bgm_rift_middle:       '/audio/bgm/bgm_rift_middle.ogg',
     bgm_rift_lower:        '/audio/bgm/bgm_rift_lower.ogg',
+    bgm_rift_abyss:        '/audio/bgm/bgm_rift_abyss.ogg',
 };
 
 const SE_FILES: Record<string, string> = {

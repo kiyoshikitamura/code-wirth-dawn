@@ -1,0 +1,9 @@
+row_type,node_id,text_label,params,next_node
+NODE,start_prep,大仕事を終え、重い足取りでギルドの扉を開ける。しかし、中に入った瞬間、静かな安堵の混ざった歓声と拍手が私たちを包み込んだ。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7066_start
+NODE,7066_start,ギルド内の冒険者たちが道を空ける。その先には、いつもの厳格な表情の中に深い安堵を滲ませたギルド長ガラハドが立っていた。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7066_text_galahad_01
+NODE,7066_text_galahad_01,「おお、無事に戻ったか。次元の底でサタンの気配が封じられたのを魔導観測班が確認した。本当に、あの伝説の破壊神を抑え込んだのだな。」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7066_text_galahad_02
+NODE,7066_text_galahad_02,「お前たちが成し遂げたのは、単なる悪魔退治ではない。この世界のすべての人々を、破滅の運命から救い出したのだ。ギルドを代表して、心から感謝する。」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7066_text_galahad_03
+NODE,7066_text_galahad_03,ガラハドは私たちの肩をそっと叩き、大きな勲章と約束された莫大な報酬を手渡した。周囲の冒険者たちも、静かに私たちの健闘を称えてくれた。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7066_rift_still_open
+NODE,7066_rift_still_open,「だが、これで完全に終わったわけではない。サタンは封印したが、歪みによって生じた『狭間の裂け目』は未だ開いたままであり、不安定な魔力も渦巻いている。」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7066_epilogue_end
+NODE,7066_epilogue_end,「残念ながら、私達の調査は引き続き行っていくことが必要だ。裂け目の監視を続けつつ、内部に眠る貴重な古代の遺物や強力なアイテムを引き続き回収・調査してほしい。」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7066_end_success
+NODE,7066_end_success,深淵の真実をガラハドへ報告し、私たちは長きにわたる迷宮調査の一応の区切りを迎えた。しかし、未だ塞がらぬ大穴を前に、私たちの旅は静かに続いていく。,"{""type"":""end_success""}",

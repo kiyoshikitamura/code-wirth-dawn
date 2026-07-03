@@ -19,8 +19,21 @@ CHOICE,,lose,,end_failure
 NODE,7062_b5f_battle_win,激しい戦闘の末、魔物たちを討ち倒した。彼らの背後に古びた木箱があるのを見つけた。,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_chest"",""type"":""text""}",
 CHOICE,,木箱の宝箱を開けてみる,,7062_b5f_chest_trigger
 CHOICE,,罠を警戒して無視する,,7062_b5f_adventurer
-NODE,7062_b5f_chest_trigger,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.4,""success"":""7062_b5f_chest_trap"",""fallback"":""7062_b5f_chest_open""}",
-NODE,7062_b5f_chest_trap,宝箱を開けた瞬間、鋭い針が指先に突き刺さった！ (最大HPの15%のダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7062_b5f_chest_open
+NODE,7062_b5f_chest_trigger,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.45,""success"":""7062_b5f_chest_trap_1"",""fallback"":""7062_b5f_chest_open""}",
+NODE,7062_b5f_chest_trap_1,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.3,""success"":""7062_b5f_trap_pitfall"",""fallback"":""7062_b5f_chest_trap_2""}",
+NODE,7062_b5f_chest_trap_2,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.36,""success"":""7062_b5f_trap_explode"",""fallback"":""7062_b5f_chest_trap_3""}",
+NODE,7062_b5f_chest_trap_3,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.44,""success"":""7062_b5f_trap_alarm"",""fallback"":""7062_b5f_chest_trap_4""}",
+NODE,7062_b5f_chest_trap_4,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.6,""success"":""7062_b5f_trap_acid"",""fallback"":""7062_b5f_chest_trap_5""}",
+NODE,7062_b5f_chest_trap_5,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.7,""success"":""7062_b5f_trap_rock"",""fallback"":""7062_b5f_trap_teleport""}",
+NODE,7062_b5f_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7062_b5f_chest_open
+NODE,7062_b5f_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7062_b5f_chest_open
+NODE,7062_b5f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7062_b5f_trap_alarm_battle
+NODE,7062_b5f_trap_alarm_battle,,"{""bg"":""bg_rift_middle_01"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_middle"",""type"":""battle""}",
+CHOICE,,win,,7062_b5f_chest_open
+CHOICE,,lose,,end_failure
+NODE,7062_b5f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7062_b5f_chest_open
+NODE,7062_b5f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7062_b5f_chest_open
+NODE,7062_b5f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7062_b5f_chest_open,宝箱の中からアイテムを手に入れた。,"{""bg"":""bg_rift_middle_01"",""type"":""treasure"",""item_pool"":[{""item_id"":708,""weight"":270},{""item_id"":707,""weight"":350},{""item_id"":706,""weight"":150},{""item_id"":709,""weight"":80},{""item_id"":430,""weight"":150}]}",7062_b5f_adventurer
 NODE,7062_b5f_door_detour,扉を避け、暗く湿った迂回路へと入る。足元はひどくぬかるんでおり、一歩進むたびに靴が沈み込む。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_door_detour_2
 NODE,7062_b5f_door_detour_2,突然、背後でカチリと石板が沈む音がした。仕掛け罠だ！ 天井から無数の槍が降り注ぐ！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_val"":12}",7062_b5f_adventurer
@@ -105,8 +118,21 @@ CHOICE,,lose,,end_failure
 NODE,7062_b6f_battle_win,激闘の末に悪魔兵を撃破した。魔物の残骸の影に、先遣隊の物資らしき革袋が落ちている。,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_chest"",""type"":""text""}",
 CHOICE,,革袋の宝箱を開ける,,7062_b6f_chest_trigger
 CHOICE,,無視して先を急ぐ,,7062_b6f_party_encounter
-NODE,7062_b6f_chest_trigger,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.4,""success"":""7062_b6f_chest_trap"",""fallback"":""7062_b6f_chest_open""}",
-NODE,7062_b6f_chest_trap,革袋を引っ張った瞬間、隠されていた魔術火薬が炸裂した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7062_b6f_chest_open
+NODE,7062_b6f_chest_trigger,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.45,""success"":""7062_b6f_chest_trap_1"",""fallback"":""7062_b6f_chest_open""}",
+NODE,7062_b6f_chest_trap_1,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.3,""success"":""7062_b6f_trap_pitfall"",""fallback"":""7062_b6f_chest_trap_2""}",
+NODE,7062_b6f_chest_trap_2,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.36,""success"":""7062_b6f_trap_explode"",""fallback"":""7062_b6f_chest_trap_3""}",
+NODE,7062_b6f_chest_trap_3,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.44,""success"":""7062_b6f_trap_alarm"",""fallback"":""7062_b6f_chest_trap_4""}",
+NODE,7062_b6f_chest_trap_4,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.6,""success"":""7062_b6f_trap_acid"",""fallback"":""7062_b6f_chest_trap_5""}",
+NODE,7062_b6f_chest_trap_5,,"{""bg"":""bg_rift_middle_01"",""type"":""check_random"",""probability"":0.7,""success"":""7062_b6f_trap_rock"",""fallback"":""7062_b6f_trap_teleport""}",
+NODE,7062_b6f_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7062_b6f_chest_open
+NODE,7062_b6f_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7062_b6f_chest_open
+NODE,7062_b6f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7062_b6f_trap_alarm_battle
+NODE,7062_b6f_trap_alarm_battle,,"{""bg"":""bg_rift_middle_01"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_middle"",""type"":""battle""}",
+CHOICE,,win,,7062_b6f_chest_open
+CHOICE,,lose,,end_failure
+NODE,7062_b6f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7062_b6f_chest_open
+NODE,7062_b6f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7062_b6f_chest_open
+NODE,7062_b6f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_middle_01"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7062_b6f_chest_open,革袋の中からアイテムを手に入れた。,"{""bg"":""bg_rift_middle_01"",""type"":""treasure"",""item_pool"":[{""item_id"":708,""weight"":200},{""item_id"":707,""weight"":350},{""item_id"":430,""weight"":300},{""item_id"":15,""weight"":150}]}",7062_b6f_party_encounter
 NODE,7062_b6f_party_encounter,さらに進むと、頑丈な鉄の檻が通路の中央に設置されているのを発見した。中に数名の冒険者が閉じ込められている。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b6f_party_desc1
 NODE,7062_b6f_party_desc1,檻の周りでは、鋭い爪を持つ悪魔たちが今にも獲物を引き裂かんと爪を研ぎ澄ませている。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b6f_party_desc2

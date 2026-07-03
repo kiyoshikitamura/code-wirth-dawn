@@ -18,12 +18,12 @@ NODE,7064_report_failure_talk,「……ううむ、ヴァルグナの幻影は�
 NODE,7064_report_failure_warn,「お前たちの実力は信じている。しかし、中立の道だけでは手に入らぬ宝珠もあるはずだ。アライメントの調律を行い、再度下層へと下り、全ての手がかりを揃えてから改めて報告してくれ」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7064_end_failure
 NODE,7064_end_failure,報告に必要な手がかりが揃っていなかったため、ギルド長ガラハドはさらなる調査を命じた。不足した宝珠を集めるため、下層を再探索しなければならない。,"{""type"":""end_failure""}",
 NODE,7064_report_success_event,私達が『光の宝珠』『闇の宝珠』、そして『大魔道士の思念』を並べると、ガラハドの鋭い眼光が驚愕に揺れ、身を乗り出した。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7064_report_success_talk1
-NODE,7064_report_success_talk1,「素晴らしい！ 三つの特異点がすべて揃ったな！ これこそが狭間の大魔導士が遺した本質……。よし、これらの魔力を共鳴させ、真実を呼び出すぞ！」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7064_report_resonance
+NODE,7064_report_success_talk1,「素晴らしい！ 三つの特異点がすべて揃ったな！ これこそが狭間の大魔導士が遺した本質……。よし、これらの魔力を共鳴させ、真実を呼び出すぞ！」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7064_report_success_event_2
 NODE,7064_report_success_event_2,ガラハドが古い儀式の呪文を唱えると、3つの秘宝が眩い光と闇の渦を巻き起こし、中央の精神結晶から半透明の大魔道士の英霊が静かに像を結んだ……。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7064_report_success_event_3
 NODE,7064_report_success_event_3,『……私は、操られていたのだ。奈落のさらに奥底、真の「深淵」に封印されし破壊神サタンの手によって……。私の無限の魔力は、彼の復活の生贄として吸い上げられていた』,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""大魔道士の英霊"",""type"":""text""}",7064_report_success_event_4
 NODE,7064_report_success_event_4,『サタンの魔力が迷宮の心臓を動かし、悪魔の軍勢を無限に召喚しているのだ。サタンを倒さぬ限り、狭間の裂け目は閉じない……。いま、三宝珠の光が、深淵の封印を完全に解き放つ！』,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""大魔道士の英霊"",""type"":""text""}",7064_report_success_event_5
 NODE,7064_report_success_event_5,英霊の思念はそう語ると、まばゆい光となって執務室の空気に溶けて消えていった。しかし、3つの宝珠が放った共鳴波は、地の底へと突き抜けていった。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7064_report_success_event_6
 NODE,7064_report_success_event_6,ガラハドはしばらく唖然とした後、拳を強く机に叩きつけ、厳しい表情で私達を睨んだ。,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""type"":""text""}",7064_report_success_event_7
-NODE,7064_report_success_event_7,「何ということだ……！ ヴァルグナは単なる黒幕の端末にすぎなかったのか……。事態は一刻を争うぞ。大魔道士の英霊が解き放った最深部『深淵』へと下り、破壊神サタンを討ち取るのだ！」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7064_report_success_event_8
+NODE,7064_report_success_event_7,「何ということだ……！ ヴァルグナは単なる幻影にすぎなかったのか……。事態は一刻を争うぞ。大魔道士の英霊が解き放った最深部『深淵』へと下り、破壊神サタンを討ち取るのだ！」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7064_report_success_event_8
 NODE,7064_report_success_event_8,「お前たちの手で、この世界の命運を決めてくれ！ 頼んだぞ、冒険者たちよ！」,"{""bg"":""bg_office"",""fg"":""fg_galahad"",""speaker_name"":""ギルド長ガラハド"",""type"":""text""}",7064_end_success
 NODE,7064_end_success,すべての証拠の報告を完了し、迷宮の真の最終決戦地である「深淵（7065）」が解放された！,"{""type"":""end_success""}",

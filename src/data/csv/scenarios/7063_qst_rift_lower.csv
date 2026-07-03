@@ -19,8 +19,23 @@ NODE,7063_b8f_corridor_pre2,下層の悪魔たちの呪詛だろうか。私た�
 NODE,7063_b8f_battle_01_win,激しい戦闘の末、襲いかかってきた悪魔の群れを退けた。瓦礫の影に、不気味な黒い宝箱が置かれているのを見つけた。,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_chest"",""type"":""text""}",
 CHOICE,,宝箱を開けてみる,,7063_b8f_chest_trigger
 CHOICE,,罠を警戒して無視する,,7063_b8f_after_chest
-NODE,7063_b8f_chest_trigger,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.4,""success"":""7063_b8f_chest_trap"",""fallback"":""7063_b8f_chest_open""}",
-NODE,7063_b8f_chest_trap,宝箱の蓋を開けた瞬間、鋭い石の刃が飛び出した！ (最大HPの15%のダメージを受ける),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7063_b8f_chest_open
+NODE,7063_b8f_chest_trigger,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.45,""success"":""7063_b8f_chest_trap_1"",""fallback"":""7063_b8f_chest_open""}",
+NODE,7063_b8f_chest_trap_1,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.3,""success"":""7063_b8f_trap_pitfall"",""fallback"":""7063_b8f_chest_trap_2""}",
+NODE,7063_b8f_chest_trap_2,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.36,""success"":""7063_b8f_trap_explode"",""fallback"":""7063_b8f_chest_trap_3""}",
+NODE,7063_b8f_chest_trap_3,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.44,""success"":""7063_b8f_trap_alarm"",""fallback"":""7063_b8f_chest_trap_4""}",
+NODE,7063_b8f_chest_trap_4,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.6,""success"":""7063_b8f_trap_acid"",""fallback"":""7063_b8f_chest_trap_5""}",
+NODE,7063_b8f_chest_trap_5,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.7,""success"":""7063_b8f_trap_rock"",""fallback"":""7063_b8f_trap_teleport""}",
+NODE,7063_b8f_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7063_b8f_chest_open
+NODE,7063_b8f_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7063_b8f_chest_open
+NODE,7063_b8f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7063_b8f_trap_alarm_battle
+NODE,7063_b8f_trap_alarm_battle,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
+CHOICE,,win,,7063_b8f_chest_open
+CHOICE,,lose,,end_failure
+NODE,7063_b8f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest_open
+NODE,7063_b8f_after_ritual_pre1,壁面にこびりついた悪魔の血が、まるで生きているかのように微かに脈打っている。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_pre2
+NODE,7063_b8f_after_ritual_pre2,ここは迷宮の深淵に最も近い階層。私たちは心を引き締め、さらに奥へ進む。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_2
+NODE,7063_b8f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7063_b8f_chest_open
+NODE,7063_b8f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
 NODE,7063_b8f_chest_open,宝箱の中から魔力が込められたアイテムを獲得した。,"{""bg"":""bg_rift_lower_entrance"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":300},{""item_id"":708,""weight"":400},{""item_id"":707,""weight"":200},{""item_id"":431,""weight"":100}]}",7063_b8f_after_chest
 NODE,7063_b8f_after_chest,宝箱をあとにし、冷たい風が吹き抜けるさらに深い回廊へと足を進めた。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_ritual_hall
 NODE,7063_b8f_ritual_hall,しばらく進むと、魔力の残滓が異常に色濃く立ち込める、広大な石造りの儀式室に到達した。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_ritual_hall_2
@@ -32,15 +47,32 @@ NODE,7063_b8f_lore_ritual_3,しかし、どうやって一人の魔導士が、�
 NODE,7063_b8f_lore_ritual_4,この無限の召喚術の根源には、何か想像を絶するおぞましい秘密があるはずだ……。私達は強い疑念を抱いた。,"{""bg"":""bg_rift_vargna_summon"",""type"":""text""}",7063_b8f_after_ritual
 NODE,7063_b8f_after_ritual,幻影はやがて虚空に溶けて消え去った。しかし、ヴァルグナの魔力は依然としてこの階層の空気を支配している。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_2
 NODE,7063_b8f_after_ritual_2,警戒を高めて通路の先を急ぐ。その時、瓦礫の間から再び悪魔の凶牙が迫ってきた！,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_battle_02
-NODE,7063_b8f_after_ritual_pre1,壁面にこびりついた悪魔の血が、まるで生きているかのように微かに脈打っている。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_pre2
-NODE,7063_b8f_after_ritual_pre2,ここは迷宮の深淵に最も近い階層。私たちは心を引き締め、さらに奥へ進む。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_ritual_2
 NODE,7063_b8f_battle_02,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
 CHOICE,,win,,7063_b8f_battle_02_win
 CHOICE,,lose,,end_failure
-NODE,7063_b8f_battle_02_win,激しい斬り合いの末に敵を討ち果たした。突き当たりの小部屋に、澄んだ水を湛えた魔力石の盆がある。,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_spring"",""type"":""text""}",
+NODE,7063_b8f_battle_02_win,激しい斬り合いの末に敵を討ち果たした。ふと見ると、部屋の隅の瓦礫の間に、古びた宝箱が半分埋もれているのを見つけた。,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_chest"",""type"":""text""}",
+CHOICE,,宝箱を開けてみる,,7063_b8f_chest2_trigger
+CHOICE,,罠を警戒して無視する,,7063_b8f_after_chest2
+NODE,7063_b8f_chest2_trigger,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.45,""success"":""7063_b8f_chest2_trap_1"",""fallback"":""7063_b8f_chest2_open""}",
+NODE,7063_b8f_chest2_trap_1,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.3,""success"":""7063_b8f_trap_pitfall"",""fallback"":""7063_b8f_chest2_trap_2""}",
+NODE,7063_b8f_chest2_trap_2,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.36,""success"":""7063_b8f_trap_explode"",""fallback"":""7063_b8f_chest2_trap_3""}",
+NODE,7063_b8f_chest2_trap_3,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.44,""success"":""7063_b8f_trap_alarm"",""fallback"":""7063_b8f_chest2_trap_4""}",
+NODE,7063_b8f_chest2_trap_4,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.6,""success"":""7063_b8f_trap_acid"",""fallback"":""7063_b8f_chest2_trap_5""}",
+NODE,7063_b8f_chest2_trap_5,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.7,""success"":""7063_b8f_trap_rock"",""fallback"":""7063_b8f_trap_teleport""}",
+NODE,7063_b8f_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7063_b8f_chest2_open
+NODE,7063_b8f_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に炸裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7063_b8f_chest2_open
+NODE,7063_b8f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7063_b8f_trap_alarm_battle
+NODE,7063_b8f_trap_alarm_battle,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
+CHOICE,,win,,7063_b8f_chest2_open
+CHOICE,,lose,,end_failure
+NODE,7063_b8f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest2_open
+NODE,7063_b8f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7063_b8f_chest2_open
+NODE,7063_b8f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
+NODE,7063_b8f_chest2_open,宝箱の中から魔力が込められたアイテムを獲得した。,"{""bg"":""bg_rift_lower_entrance"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":300},{""item_id"":708,""weight"":400},{""item_id"":707,""weight"":200},{""item_id"":431,""weight"":100}]}",7063_b8f_after_chest2
+NODE,7063_b8f_after_chest2,宝箱をあとにし、突き当たりの小部屋へと足を進めた。そこには、澄んだ魔力水を湛えた石の盆が佇んでいた。,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_spring"",""type"":""text""}",
 CHOICE,,魔力の盆の水を飲んで回復する,,7063_b8f_fountain_drink
 CHOICE,,罠を警戒して素通りする,,7063_b8f_lore_clues
-NODE,7063_b8f_fountain_drink,澄んだ泉の水をすくい口に含むと、清らかな魔力が体中に染み渡り、疲労が和らぐのを感じた。（HPが一部回復した）,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_spring"",""type"":""text"",""action"":""heal_partial""}",7063_b8f_lore_clues
+NODE,7063_b8f_fountain_drink,澄んだ泉の水をすくい口に含むと、清らかな魔力水が体中に染み渡り、疲労が和らぐのを感じた。（HPが一部回復した）,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_spring"",""type"":""text"",""action"":""heal_partial""}",7063_b8f_lore_clues
 NODE,7063_b8f_lore_clues,通路の奥へとさらに歩を進める。壁に掛けられた古びた石板に、かつてここに挑んだ者たちの警告が刻まれていた。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_lore_clues_2
 NODE,7063_b8f_lore_clues_2,『地下9階には魂の天秤が佇む。己の歩みと魂が「正義」か「悪意」に強く傾いていなければ、天秤の門は開かぬ。』,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_lore_clues_3
 NODE,7063_b8f_lore_clues_3,『また、虚像の玉座を破り、迷宮の隠された謎の核心に迫りたくば、失われた大魔導士の思念を持ち帰るのだ。』,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_after_clues
@@ -48,7 +80,26 @@ NODE,7063_b8f_after_clues,警告を胸に刻み、さらに先へと進む。薄
 NODE,7063_b8f_battle_03,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
 CHOICE,,win,,7063_b8f_battle_03_win
 CHOICE,,lose,,end_failure
-NODE,7063_b8f_battle_03_win,強敵を切り伏せ、通路を確保した。前方から、魔力の結界に守られた暖かな光が漏れ出ている。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_pre_camp
+NODE,7063_b8f_battle_03_win,強敵を切り伏せ、通路を確保した。倒れた魔物の影から、魔力の冷気を放つ頑丈な宝箱を見つけた。,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_chest"",""type"":""text""}",
+CHOICE,,宝箱を開けてみる,,7063_b8f_chest3_trigger
+CHOICE,,罠を警戒して無視する,,7063_b8f_after_chest3
+NODE,7063_b8f_chest3_trigger,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.45,""success"":""7063_b8f_chest3_trap_1"",""fallback"":""7063_b8f_chest3_open""}",
+NODE,7063_b8f_chest3_trap_1,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.3,""success"":""7063_b8f_trap_pitfall"",""fallback"":""7063_b8f_chest3_trap_2""}",
+NODE,7063_b8f_chest3_trap_2,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.36,""success"":""7063_b8f_trap_explode"",""fallback"":""7063_b8f_chest3_trap_3""}",
+NODE,7063_b8f_chest3_trap_3,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.44,""success"":""7063_b8f_trap_alarm"",""fallback"":""7063_b8f_chest3_trap_4""}",
+NODE,7063_b8f_chest3_trap_4,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.6,""success"":""7063_b8f_trap_acid"",""fallback"":""7063_b8f_chest3_trap_5""}",
+NODE,7063_b8f_chest3_trap_5,,"{""bg"":""bg_rift_lower_entrance"",""type"":""check_random"",""probability"":0.7,""success"":""7063_b8f_trap_rock"",""fallback"":""7063_b8f_trap_teleport""}",
+NODE,7063_b8f_trap_pitfall,足元の石畳が崩落し、奈落へと真っ逆さまに落下した！ (最大HPの15%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.15}",7063_b8f_chest3_open
+NODE,7063_b8f_trap_explode,宝箱を開けた瞬間、充填されていた魔法火薬が凄まじい轟音と共に裂した！ (最大HPの25%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.25}",7063_b8f_chest3_open
+NODE,7063_b8f_trap_alarm,けたたましい鐘の音が迷宮内に鳴り響いた！ 近くの魔物達が不意打ちで襲いかかってくる！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",7063_b8f_trap_alarm_battle
+NODE,7063_b8f_trap_alarm_battle,,"{""bg"":""bg_rift_lower_entrance"",""bgm"":""bgm_battle"",""enemy_group_id"":""pool_rift_lower"",""type"":""battle""}",
+CHOICE,,win,,7063_b8f_chest3_open
+CHOICE,,lose,,end_failure
+NODE,7063_b8f_trap_acid,"鍵穴から酸性の霧が勢いよく噴き出した！ 装備を腐食させ、修復費用が発生した。 (-1,500 G)","{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""gold"",""damage_val"":1500}",7063_b8f_chest3_open
+NODE,7063_b8f_trap_rock,天井の仕掛けが作動し、巨大な崩落岩が直撃した！ 凄まじい衝撃が全身を襲う！ (最大HPの70%ダメージ),"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.7}",7063_b8f_chest3_open
+NODE,7063_b8f_trap_teleport,眩しい光が走り、空間が歪む……。おおっと！テレポートだ！壁の中に！！,"{""bg"":""bg_rift_lower_entrance"",""fg"":""fg_rift_trap_spears"",""type"":""text""}",end_failure
+NODE,7063_b8f_chest3_open,宝箱の中から魔力が込められたアイテムを獲得した。,"{""bg"":""bg_rift_lower_entrance"",""type"":""treasure"",""item_pool"":[{""item_id"":709,""weight"":300},{""item_id"":708,""weight"":400},{""item_id"":707,""weight"":200},{""item_id"":431,""weight"":100}]}",7063_b8f_after_chest3
+NODE,7063_b8f_after_chest3,宝箱をあとにし、通路をさらに進む。前方から、魔力の結界に守られた暖かな光が漏れ出ている。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_pre_camp
 NODE,7063_b8f_pre_camp,結界の内部に入ると、瘴気が遮断された安全な空間が広がっていた。ここで一度息を整えよう。,"{""bg"":""bg_rift_lower_entrance"",""type"":""text""}",7063_b8f_camp_stairs
 NODE,7063_b8f_camp_stairs,ここは地下8階の最奥、安全が確保されたキャンプ地だ。次の階層へ進むか、一度帰還するかを決めておこう。,"{""bg"":""bg_rift_camp_stairs"",""type"":""camp""}",
 CHOICE,,探索を続けて地下9階へ進む,,7063_b9f_start
