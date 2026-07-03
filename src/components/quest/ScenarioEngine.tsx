@@ -242,7 +242,7 @@ export default function ScenarioEngine({
         }
 
         let fullText = endReady ? (
-            endReady.result === 'success' ? '調査を終え、無事に帰還の途についた...' : '冒険はここで潰えてしまった...'
+            currentNode?.text || (endReady.result === 'success' ? '調査を終え、無事に帰還の途についた...' : '冒険はここで潰えてしまった...')
         ) : (currentNode?.text || (
             currentNode?.type === 'travel' ? '移動中... (数日が経過した)' :
             currentNode?.type === 'guest_join' ? '新たな仲間が合流したようだ。' : '...'

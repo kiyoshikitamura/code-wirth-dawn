@@ -41,8 +41,6 @@ N,item_rift_guardian_silver_talisman,1
 N,item_rift_wrath_spiked_bracelet,1
 N,item_rift_red_pulsing_orb,1
 N,item_rift_blue_octahedron_gem,1
-N,item_rift_divine_light_orb,1
-N,item_rift_ominous_dark_orb,1
 N,item_rift_magic_spirit_crystal,1
 N,item_rift_ice_crystal_brooch,1
 N,item_rift_flame_ruby_ring,1
@@ -82,8 +80,6 @@ R,item_rift_guardian_silver_talisman,4
 R,item_rift_wrath_spiked_bracelet,4
 R,item_rift_red_pulsing_orb,4
 R,item_rift_blue_octahedron_gem,4
-R,item_rift_divine_light_orb,4
-R,item_rift_ominous_dark_orb,5
 R,item_rift_magic_spirit_crystal,5
 R,item_rift_ice_crystal_brooch,5
 R,item_rift_flame_ruby_ring,5
@@ -116,8 +112,6 @@ SR,item_rift_guardian_silver_talisman,7
 SR,item_rift_wrath_spiked_bracelet,7
 SR,item_rift_red_pulsing_orb,7
 SR,item_rift_blue_octahedron_gem,7
-SR,item_rift_divine_light_orb,7
-SR,item_rift_ominous_dark_orb,7
 SR,item_rift_magic_spirit_crystal,7
 SR,item_rift_ice_crystal_brooch,7
 SR,item_rift_flame_ruby_ring,7
@@ -132,7 +126,6 @@ SR,item_rift_holy_spirit_robe,7
 SR,item_rift_dark_cloak,7
 SR,item_rift_chaos_heavy_armor,7
 SR,item_rift_water_mirror_shield,7
-SR,item_rift_demon_slayer,8
 UR,item_rift_emerald_leaf_amulet,10
 UR,item_rift_mage_sapphire_ring,10
 UR,item_rift_cute_pink_ribbon,10
@@ -140,8 +133,6 @@ UR,item_rift_guardian_silver_talisman,10
 UR,item_rift_wrath_spiked_bracelet,10
 UR,item_rift_red_pulsing_orb,10
 UR,item_rift_blue_octahedron_gem,10
-UR,item_rift_divine_light_orb,10
-UR,item_rift_ominous_dark_orb,10
 UR,item_rift_magic_spirit_crystal,10
 UR,item_rift_ice_crystal_brooch,10
 UR,item_rift_flame_ruby_ring,10
@@ -156,4 +147,3 @@ UR,item_rift_holy_spirit_robe,10
 UR,item_rift_dark_cloak,10
 UR,item_rift_chaos_heavy_armor,10
 UR,item_rift_water_mirror_shield,10
-UR,item_rift_demon_slayer,10
