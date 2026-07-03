@@ -200,7 +200,7 @@ NODE,7063_b10f_defeat_detail1,「くくく……奈落の封印は間もなく�
 NODE,7063_b10f_defeat_detail2,「お前たちの必死な足掻きも、すべては大いなる儀式の糧にすぎぬ……！」,"{""bg"":""bg_rift_vargna_throne"",""type"":""text"",""speaker"":""魔導士ヴァルグナ""}",7063_b10f_defeat_detail3
 NODE,7063_b10f_defeat_detail3,黒い霧が激しく噴き出し、玉座の周囲を飲み込んでいく。,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7063_b10f_defeat_detail4
 NODE,7063_b10f_defeat_detail4,私たちは霧に巻かれぬよう、互いに叫び合って位置を確かめた。,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7063_b10f_boss_defeat_4
-NODE,7063_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""type"":""end_success""}",
+NODE,7063_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success_retreat""}",
 NODE,7063_b10f_reward_pre1,黒い霧が晴れた後、玉座の間は静まり返り、冷たい沈黙だけが残された。,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7063_b10f_reward_pre2
 NODE,7063_b10f_reward_pre2,ヴァルグナの肉体があった場所には、ただ不気味な精神の揺らぎが残るのみ。,"{""bg"":""bg_rift_vargna_throne"",""type"":""text""}",7063_b10f_boss_reward
 NODE,end_failure,パーティーは壊滅し、迷宮の暗黒の中へと沈んでいった……,"{""type"":""end_failure""}",

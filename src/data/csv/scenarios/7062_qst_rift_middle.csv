@@ -105,7 +105,7 @@ NODE,7062_b5f_pre_camp,小部屋を出て、地下へと続く緩やかな下り
 NODE,7062_b5f_camp_stairs,ここは地下5階の最奥、安全が確保されたキャンプ地だ。次の階層へ進むか、ここで引き返すかを決定できる。,"{""bg"":""bg_rift_camp_stairs"",""type"":""camp""}",
 CHOICE,,探索を続けて地下6階へ進む,,7062_b6f_start
 CHOICE,,街に一時帰還する（クエスト一時中断・達成）,,7062_end_success_midway
-NODE,7062_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""type"":""end_success""}",
+NODE,7062_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success_retreat""}",
 NODE,7062_b6f_start,地下6階へと続く階段を下りる。周囲の空気はさらに重く沈み、古代の血と埃の匂いが立ち込めている。,"{""bg"":""bg_rift_camp_stairs"",""type"":""text""}",7062_b6f_start_2
 NODE,7062_b6f_start_2,ここはかつて魔導士ヴァルグナを崇拝する狂信者たちが儀式を執り行ったとされる、崩壊した地下祭殿の跡地だ。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b6f_desc_01
 NODE,7062_b6f_desc_01,巨大な石柱が何本も折れて床に倒れており、床の割れ目から不気味な黒いモヤが絶えず吹き出している……,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b6f_desc_02

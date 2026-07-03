@@ -490,7 +490,7 @@ export async function processReputationChange(
     updates: any
 ): Promise<{ amount: number; location: string } | null> {
     // 成功時: rewards.reputation を名声報酬として加算
-    if (result === 'success' && effectiveRewards?.reputation) {
+    if ((result === 'success' || result === 'success_retreat') && effectiveRewards?.reputation) {
         const repAmount = effectiveRewards.reputation;
         const locId = user.current_location_id || updates.current_location_id;
         if (locId) {

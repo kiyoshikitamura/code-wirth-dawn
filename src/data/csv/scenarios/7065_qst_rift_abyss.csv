@@ -168,5 +168,5 @@ NODE,7065_b12f_satan_reward_node,伝説の聖剣『デーモンスレイヤー�
 NODE,7065_b12f_after_satan_1,サタンが完全に封印され、周囲の狂暴な魔力が急速に霧散していく。しかし、深淵の底の裂け目は未だ完全に塞がってはおらず、微かな時空の歪みが残されている……,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_b12f_after_satan_2
 NODE,7065_b12f_after_satan_2,私達は残された調査の必要性を感じつつも、これ以上の滞在は危険と判断し、深淵の最奥から脱出を図った。,"{""bg"":""bg_rift_abyss_02"",""type"":""text""}",7065_end_success
 NODE,7065_end_success,深淵の魔王を討ち果たし、クエストを完全攻略した！ 異変の元凶を封印した栄光を手に、私達は迷宮から帰還した。,"{""type"":""end_success""}",
-NODE,7065_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""type"":""end_success""}",
+NODE,7065_end_success_midway,これまでの成果を抱え、安全のために迷宮を脱出して拠点へと帰還した。,"{""bg"":""bg_rift_camp_stairs"",""type"":""end"",""result"":""success_retreat""}",
 NODE,end_failure,力及ばず、パーティは全滅した。私達の意識は深淵の底の闇へと溶けて消えていった……,"{""type"":""end_failure""}",

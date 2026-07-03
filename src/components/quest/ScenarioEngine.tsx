@@ -16,7 +16,7 @@ import { useScenarioNodeProcessor } from './hooks/useScenarioNodeProcessor';
 interface Props {
     scenario: ScenarioDB;
     onComplete: (result: 'success' | 'failure' | 'abort', history: string[], nodeRewards?: any) => void;
-    onPrepareResult?: (result: 'success' | 'failure', history: string[], nodeRewards?: any) => void;
+    onPrepareResult?: (result: 'success' | 'failure' | 'success_retreat', history: string[], nodeRewards?: any) => void;
     isResultReady?: boolean;
     isPreparingResult?: boolean;
     onBattleStart?: (enemyId: string, successNodeId: string, bgKey?: string, bgm?: string) => void;
@@ -72,7 +72,7 @@ export default function ScenarioEngine({
     const [showCampStatus, setShowCampStatus] = useState(false);
 
     // Phase 2: UX改善 State
-    const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort'; nodeRewards?: any } | null>(null);
+    const [endReady, setEndReady] = useState<{ result: 'success' | 'failure' | 'abort' | 'success_retreat'; nodeRewards?: any } | null>(null);
     const [isProcessingResult, setIsProcessingResult] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -345,7 +345,7 @@ export default function ScenarioEngine({
         if (endReady && endReady.result !== 'abort' && onPrepareResult) {
             if (prepareTriggeredRef.current) return;
             prepareTriggeredRef.current = true;
-            onPrepareResult(endReady.result as 'success' | 'failure', history, endReady.nodeRewards);
+            onPrepareResult(endReady.result as 'success' | 'failure' | 'success_retreat', history, endReady.nodeRewards);
         }
     }, [endReady, history, onPrepareResult]);
 
@@ -697,7 +697,7 @@ export default function ScenarioEngine({
                                 onClick={() => {
                                     if (isResultReady && !isProcessingResult) {
                                         setIsProcessingResult(true);
-                                        onComplete(endReady.result, history, endReady.nodeRewards);
+                                        onComplete(endReady.result === 'success_retreat' ? 'success' : endReady.result, history, endReady.nodeRewards);
                                     }
                                 }}
                                 disabled={!isResultReady || isProcessingResult}
