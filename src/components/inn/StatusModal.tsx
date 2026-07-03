@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '@/store/gameStore';
-import { Shield, Backpack, Zap, Heart, Sword, Users, Flame, X } from 'lucide-react';
+import { Shield, Backpack, Zap, Heart, Sword, Users, Flame, X, Scale } from 'lucide-react';
 import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
 import SkillDeckModal from './SkillDeckModal';
@@ -26,6 +26,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
     const [showEquip, setShowEquip] = React.useState(false);
     const [showItems, setShowItems] = React.useState(false);
     const [showParty, setShowParty] = React.useState(false);
+    const [showAlignment, setShowAlignment] = React.useState(false);
 
     React.useEffect(() => {
         fetchUserProfile();
@@ -164,6 +165,17 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                         </button>
                     </div>
 
+                    {/* 属性確認ボタン */}
+                    <div className="pt-2">
+                        <button
+                            onClick={() => setShowAlignment(true)}
+                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-slate-900 via-gray-900 to-slate-900 border border-amber-600/30 hover:border-amber-500 text-xs font-bold text-amber-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-slate-800/80"
+                        >
+                            <Scale className="w-4 h-4 text-amber-400" />
+                            属性（アライメント）確認
+                        </button>
+                    </div>
+
                     {/* 通行許可証の有効期限表示 */}
                     {userProfile?.pass_expires_at && Object.keys(userProfile.pass_expires_at).length > 0 && (() => {
                         const activePasses: { name: string; daysLeft: number }[] = [];
@@ -202,6 +214,84 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
         </div>
 
         {/* ── サブモーダル ── */}
+        {showAlignment && (() => {
+            const orderPts = userProfile?.order_pts || 0;
+            const chaosPts = userProfile?.chaos_pts || 0;
+            const justicePts = userProfile?.justice_pts || 0;
+            const evilPts = userProfile?.evil_pts || 0;
+
+            const lawChaosTotal = orderPts + chaosPts;
+            const orderPct = lawChaosTotal > 0 ? Math.round((orderPts / lawChaosTotal) * 100) : 50;
+            const chaosPct = lawChaosTotal > 0 ? Math.round((chaosPts / lawChaosTotal) * 100) : 50;
+
+            const goodEvilTotal = justicePts + evilPts;
+            const justicePct = goodEvilTotal > 0 ? Math.round((justicePts / goodEvilTotal) * 100) : 50;
+            const evilPct = goodEvilTotal > 0 ? Math.round((evilPts / goodEvilTotal) * 100) : 50;
+
+            return (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-150">
+                    <div className="w-full max-w-sm bg-gray-950 border border-amber-900/40 rounded-lg shadow-2xl overflow-hidden flex flex-col">
+                        <header className="flex items-center justify-between px-4 py-3 border-b border-gray-950 bg-black/40 shrink-0">
+                            <h3 className="text-sm font-serif text-amber-400 font-bold tracking-wider flex items-center gap-2">
+                                <Scale className="w-4 h-4" /> 属性（アライメント）状況
+                            </h3>
+                            <button onClick={() => setShowAlignment(false)} className="p-1 text-gray-400 hover:text-white bg-gray-950/60 rounded-full hover:bg-gray-800 transition-colors">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </header>
+
+                        <div className="p-5 space-y-6">
+                            {/* 秩序 vs 混沌 */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-xs font-bold">
+                                    <span className="text-indigo-400">秩序 (Order): {orderPct}%</span>
+                                    <span className="text-purple-400">混沌 (Chaos): {chaosPct}%</span>
+                                </div>
+                                <div className="relative w-full h-4 bg-purple-950/60 rounded-full overflow-hidden border border-purple-900/30 flex">
+                                    <div className="h-full bg-indigo-600 transition-all duration-500" style={{ width: `${orderPct}%` }} />
+                                    <div className="h-full bg-purple-600 transition-all duration-500" style={{ width: `${chaosPct}%` }} />
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-800/80" />
+                                </div>
+                                <div className="flex justify-between text-[10px] text-gray-500">
+                                    <span>累積: {orderPts} Pts</span>
+                                    <span>累積: {chaosPts} Pts</span>
+                                </div>
+                            </div>
+
+                            {/* 正義 vs 悪意 */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-xs font-bold">
+                                    <span className="text-amber-400">正義 (Justice): {justicePct}%</span>
+                                    <span className="text-red-400">悪意 (Evil): {evilPct}%</span>
+                                </div>
+                                <div className="relative w-full h-4 bg-red-950/60 rounded-full overflow-hidden border border-red-900/30 flex">
+                                    <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${justicePct}%` }} />
+                                    <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${evilPct}%` }} />
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-800/80" />
+                                </div>
+                                <div className="flex justify-between text-[10px] text-gray-500">
+                                    <span>累積: {justicePts} Pts</span>
+                                    <span>累積: {evilPts} Pts</span>
+                                </div>
+                            </div>
+
+                            <div className="text-[10px] text-gray-500 bg-gray-900/40 p-2.5 rounded border border-gray-900 text-center leading-relaxed">
+                                シナリオやクエスト中の選択、特定の行動によって属性値は変化します。天秤の試練などの特殊な扉の開放に影響を与えます。
+                            </div>
+                        </div>
+
+                        <footer className="px-4 py-2.5 bg-black/40 border-t border-gray-900 flex justify-end">
+                            <button
+                                onClick={() => setShowAlignment(false)}
+                                className="px-4 py-1.5 bg-gray-800 hover:bg-gray-700 text-xs font-bold text-gray-200 rounded transition-all"
+                            >
+                                閉じる
+                            </button>
+                        </footer>
+                    </div>
+                </div>
+            );
+        })()}
         {showSkillDeck && (
             <SkillDeckModal
                 onClose={() => setShowSkillDeck(false)}
