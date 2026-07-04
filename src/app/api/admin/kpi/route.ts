@@ -498,6 +498,27 @@ export async function GET(req: Request) {
         // §6. Category: monthly (Monthly Time-Series KPI)
         // ═══════════════════════════════════════
         if (category === 'monthly' || category === 'all') {
+            // Check if monthly cache needs to be refreshed (if stale - older than 1 hour)
+            try {
+                const currentMonthJst = toJstMonthStr(new Date());
+                const { data: cacheStatus, error: statusErr } = await supabaseServer
+                    .from('monthly_kpi_cache')
+                    .select('updated_at')
+                    .eq('month', currentMonthJst)
+                    .single();
+
+                const isStale = !cacheStatus || 
+                                statusErr || 
+                                (Date.now() - new Date(cacheStatus.updated_at).getTime() > 60 * 60 * 1000); // 1 hour
+
+                if (isStale) {
+                    console.log('[Admin KPI] Cache is stale or missing. Refreshing monthly KPI cache...');
+                    await supabaseServer.rpc('refresh_monthly_kpi_cache', { full_refresh: false });
+                }
+            } catch (cacheErr) {
+                console.error('[Admin KPI] Failed to check/refresh monthly KPI cache:', cacheErr);
+            }
+
             // 1. Fetch pre-calculated monthly KPI metrics in JST from monthly_kpi_view
             const { data: monthlyData, error: monthlyErr } = await supabaseServer
                 .from('monthly_kpi_view')
