@@ -177,11 +177,12 @@ export async function GET(req: Request) {
                 .eq('type', 'system')
                 .like('message', '🏆 コロシアムランキング報酬獲得！%'),
 
-            // 7. completedQuests
+            // 7. completedQuests (Direct query for massive performance speedup)
             supabaseAuth
-                .from('user_completed_quests')
+                .from('user_chronicles')
                 .select('scenario_id, ugc_scenario_id')
                 .eq('user_id', user.id)
+                .eq('event_type', 'quest_success')
         ]);
 
         // ── 覇権計算 ──
@@ -258,7 +259,15 @@ export async function GET(req: Request) {
         }
 
         // ── レスポンス組み立て ──
-        const completed_quests = completedQuestsResult.data || [];
+        const raw_completed_quests = completedQuestsResult.data || [];
+        const seenQuests = new Set();
+        const completed_quests = raw_completed_quests.filter((q: any) => {
+            const key = `${q.scenario_id}-${q.ugc_scenario_id}`;
+            if (seenQuests.has(key)) return false;
+            seenQuests.add(key);
+            return true;
+        });
+
         if (prefetchQuestId && !completed_quests.some((q: any) => String(q.scenario_id) === String(prefetchQuestId))) {
             completed_quests.push({
                 scenario_id: isNaN(Number(prefetchQuestId)) ? prefetchQuestId : Number(prefetchQuestId),
