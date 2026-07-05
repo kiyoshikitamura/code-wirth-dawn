@@ -44,8 +44,7 @@ export async function GET(req: Request) {
         let repAggregatedAt = repCacheRes.data?.[0]?.aggregated_at || null;
         let repStatus = 'ready';
 
-        const lastRepAggregation = repAggregatedAt ? new Date(repAggregatedAt).getTime() : 0;
-        const repStale = !repAggregatedAt || (now - lastRepAggregation > FIFTEEN_MIN_MS);
+        const repStale = false; // Bypassed: On-demand ranking aggregation is suspended for performance
 
         if (repStale) {
             repStatus = 'aggregating';
@@ -95,8 +94,7 @@ export async function GET(req: Request) {
         let alignAggregatedAt = alignCacheRes.data?.[0]?.aggregated_at || null;
         let alignStatus = 'ready';
 
-        const lastAlignAggregation = alignAggregatedAt ? new Date(alignAggregatedAt).getTime() : 0;
-        const alignStale = !alignAggregatedAt || (now - lastAlignAggregation > FIFTEEN_MIN_MS);
+        const alignStale = false; // Bypassed: On-demand ranking aggregation is suspended for performance
 
         if (alignStale) {
             alignStatus = 'aggregating';

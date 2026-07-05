@@ -156,10 +156,12 @@ export async function POST(req: Request) {
         let isFirstReportCompletion = true;
         if ((String(quest_id) === '7064' || String(quest_id) === '7066') && result === 'success') {
             const { data: priorClear } = await supabase
-                .from('user_completed_quests')
+                .from('user_chronicles')
                 .select('id')
                 .eq('user_id', user_id)
+                .eq('event_type', 'quest_success')
                 .eq('scenario_id', Number(quest_id))
+                .limit(1)
                 .maybeSingle();
             if (priorClear) {
                 isFirstReportCompletion = false;
@@ -393,7 +395,7 @@ export async function POST(req: Request) {
         // バトル敗北、撤退、ギブアップ等によるクエスト失敗ペナルティ（一律 VIT -1、HPは装備補正込みで全快）
         let battleDefeatVitPenalty = 0;
         if (result === 'failure') {
-            battleDefeatVitPenalty = (['7060', '7064', '7066'].includes(String(quest.id))) ? 0 : 1;
+            battleDefeatVitPenalty = (['7060', '7064', '7066', '6021'].includes(String(quest.id))) ? 0 : 1;
             const currentVit = updates.vitality ?? user.vitality ?? 100;
             updates.vitality = Math.max(0, currentVit - battleDefeatVitPenalty);
             updates.hp = (user.max_hp || 100) + equipHpBonus;
@@ -736,7 +738,8 @@ export async function POST(req: Request) {
             // UGC First Blood
             if (quest.is_ugc) {
                 const { count: priorClears } = await supabase
-                    .from('user_completed_quests').select('id', { count: 'exact', head: true })
+                    .from('user_chronicles').select('id', { count: 'exact', head: true })
+                    .eq('event_type', 'quest_success')
                     .eq('ugc_scenario_id', quest_id);
                 if (priorClears === 0) {
                     const sd = buildShareData('ugc_first_blood', { quest_name: quest.title || '' });
@@ -787,7 +790,7 @@ export async function POST(req: Request) {
         // ═══════════════════════════════════════
         // §12. 名声変動
         // ═══════════════════════════════════════
-        const repChange = ((String(quest.id) === '7064' || String(quest.id) === '7066') && result === 'failure')
+        const repChange = ((String(quest.id) === '7064' || String(quest.id) === '7066' || String(quest.id) === '6021') && result === 'failure')
             ? null
             : await processReputationChange(supabase, user_id, user, result, effectiveRewards, updates);
 
@@ -957,10 +960,28 @@ export async function POST(req: Request) {
                     );
                 } else if ([6105, 6106, 6107, 6108, 6109, 6110, 6111].includes(qId) || ['qst_legend_baphomet', 'qst_legend_angel', 'qst_legend_dragon', 'qst_legend_kirin', 'qst_legend_golem', 'qst_legend_kraken', 'qst_legend_minotaur'].includes(qSlug)) {
                     await gossipService.postSystemMessage(
-                        `「深淵より出でし災厄の化身『${quest.title}』が、冒険者『${userName}』によって討伐された。この偉業は長く歴史に刻まれるだろう。」`,
+                        `「深淵より出でし災厄の化身『${quest.title}』が、冒険者『${userName}』によって討伐された。この偉業は長く歴史に刻されるだろう。」`,
                         locationId,
                         user_id
                     );
+                } else if (qId === 7065 || qSlug === 'qst_rift_abyss') {
+                    const isFirst = await checkAndFireTrigger(supabase, user_id, 'gossip_rift_clear', qSlug);
+                    if (isFirst) {
+                        await gossipService.postSystemMessage(
+                            `「虚空の彼方、狭間の迷宮の最深部にて、厄災の源たる深淵の支配者が冒険者『${userName}』によって討伐された。この偉業によって世界の崩壊は食い止められたのだ。」`,
+                            null,
+                            user_id
+                        );
+                    }
+                } else if (qId === 7066 || qSlug === 'qst_rift_epilogue') {
+                    const isFirst = await checkAndFireTrigger(supabase, user_id, 'gossip_rift_clear', qSlug);
+                    if (isFirst) {
+                        await gossipService.postSystemMessage(
+                            `「狭間の迷宮のすべての調査が終わり、世界に真の平穏がもたらされた。すべての真実を解き明かした大いなる探求者『${userName}』の功績を、歴史に永く刻もう。」`,
+                            null,
+                            user_id
+                        );
+                    }
                 }
             }
 

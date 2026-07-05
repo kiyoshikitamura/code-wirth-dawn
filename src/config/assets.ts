@@ -147,11 +147,12 @@ export const SCENARIO_ASSETS: Record<string, string> = {
     // 前景画像 (スプライト)
     'fg_demon_soldier': '/images/quests/fg_demon_soldier.png',
     'fg_chest_locked': '/images/quests/fg_chest_locked.png',
+    'fg_fortune_teller': '/images/npcs/npc_fortune_teller.png',
 };
 
 export function getAssetUrl(key: string): string {
     if (!key || typeof key !== 'string') return SCENARIO_ASSETS['default'];
     // UGC v2: 絶対URLはそのまま返す（ugc:// は事前にresolveUgcUrlで解決済み）
-    if (key.startsWith('http')) return key;
+    if (key.startsWith('http') || key.startsWith('/')) return key;
     return SCENARIO_ASSETS[key] || SCENARIO_ASSETS['default'];
 }

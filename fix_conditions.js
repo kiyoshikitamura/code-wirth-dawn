@@ -72,8 +72,8 @@ const mainQuestsData = {
     rec_level: 6,
     difficulty: 1,
     time_cost: 2,
-    requirements: '{"completed_quest":"main_ep05","location_id":"loc_frontier_village"}',
-    trigger_condition: 'loc:loc_frontier_village&pre:main_ep05',
+    requirements: '{"completed_quest":"main_ep05_hire","location_id":"loc_frontier_village"}',
+    trigger_condition: 'loc:loc_frontier_village&pre:main_ep05_hire',
     rewards_summary: 'Gold:600|Rep:10|Chaos:5',
     client_name: '忍び衆',
     comment: 'メインシナリオ第6話'
@@ -245,6 +245,18 @@ const mainQuestsData = {
     rewards_summary: 'Gold:15000|Rep:50|Item:504|Order:5',
     client_name: 'なし',
     comment: 'メインシナリオ第20話'
+  },
+  6021: {
+    slug: 'main_ep05_hire',
+    title: 'メインクエスト第5話（Extra）「戦友の招集」',
+    rec_level: 5,
+    difficulty: 1,
+    time_cost: 1,
+    requirements: '{"completed_quest":"main_ep05"}',
+    trigger_condition: 'pre:main_ep05',
+    rewards_summary: 'Gold:200|Rep:5|Order:5',
+    client_name: '旅の占い師',
+    comment: 'ガウェインを失いし孤独な旅路。新たな運命の糸を紡ぎ、東の警戒線を越えよ。'
   }
 };
 
@@ -261,10 +273,11 @@ for (let i = 0; i < specialLines.length; i++) {
   if (!line.trim()) continue;
   const parts = line.split(',');
   const id = parseInt(parts[0]);
-  if (id >= 6001 && id <= 6020 && mainQuestsData[id]) {
+  if (id >= 6001 && id <= 6021 && mainQuestsData[id]) {
     const q = mainQuestsData[id];
     const reqEscaped = q.requirements.replace(/"/g, '""');
-    specialLines[i] = `${id},${q.slug},${q.title},${q.rec_level},${q.difficulty},${q.time_cost},"${reqEscaped}",true,,${q.rewards_summary},${q.client_name},${q.comment}`;
+    const days = (id === 6008 || id === 6021) ? 1 : 2;
+    specialLines[i] = `${id},${q.slug},${q.title},${q.rec_level},${q.difficulty},${q.time_cost},${days},${days},"${reqEscaped}",true,,${q.rewards_summary},${q.client_name},${q.comment},false`;
   }
 }
 fs.writeFileSync(specialCsvPath, specialLines.filter(l => l.trim()).join('\r\n') + '\r\n', 'utf8');
@@ -278,7 +291,7 @@ for (let i = 0; i < questsLines.length; i++) {
   if (!line.trim()) continue;
   const parts = line.split(',');
   const id = parseInt(parts[0]);
-  if (id >= 6001 && id <= 6020 && mainQuestsData[id]) {
+  if (id >= 6001 && id <= 6021 && mainQuestsData[id]) {
     const q = mainQuestsData[id];
     questsLines[i] = `${id},${q.slug},${q.title},${q.rec_level},${q.difficulty},${q.time_cost},${q.trigger_condition},${q.rewards_summary},メイン: ${q.comment}`;
   }

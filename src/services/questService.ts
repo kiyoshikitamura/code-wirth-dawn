@@ -231,10 +231,12 @@ export class QuestService {
 
                     if (targetId) {
                         const { data } = await supabase
-                            .from('user_completed_quests')
+                            .from('user_chronicles')
                             .select('scenario_id')
                             .eq('user_id', userId)
+                            .eq('event_type', 'quest_success')
                             .eq('scenario_id', targetId)
+                            .limit(1)
                             .maybeSingle();
                         if (data) {
                             anyCompleted = true;
@@ -266,10 +268,12 @@ export class QuestService {
 
                     if (targetId) {
                         const { data } = await supabase
-                            .from('user_completed_quests')
+                            .from('user_chronicles')
                             .select('scenario_id')
                             .eq('user_id', userId)
+                            .eq('event_type', 'quest_success')
                             .eq('scenario_id', targetId)
+                            .limit(1)
                             .maybeSingle();
                         if (!data) return { valid: false, reason: `Prerequisite quest (${reqVal}) not completed` };
                     } else {
@@ -500,7 +504,11 @@ export class QuestService {
             supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
             supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
             supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
-            supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
+            supabaseServer
+                .from('user_chronicles')
+                .select('scenario_id, ugc_scenario_id')
+                .eq('user_id', userId)
+                .eq('event_type', 'quest_success'),
             locationId
                 ? supabaseServer.from('locations').select('name, ruling_nation_id, slug').eq('id', locationId).maybeSingle()
                 : Promise.resolve({ data: null }),

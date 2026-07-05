@@ -31,9 +31,10 @@ export async function GET(req: Request) {
                 .not('slug', 'like', 'ugc_%')
                 .order('id', { ascending: true }),
             supabaseService
-                .from('user_completed_quests')
-                .select('scenario_id')
-                .eq('user_id', userId),
+                .from('user_chronicles')
+                .select('scenario_id, ugc_scenario_id')
+                .eq('user_id', userId)
+                .eq('event_type', 'quest_success'),
         ]);
 
         if (questsRes.error) throw questsRes.error;
