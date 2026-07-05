@@ -48,7 +48,13 @@ export async function middleware(request: NextRequest) {
     const now = Date.now();
     let settings = cachedSettings;
 
-    if (!cachedSettings || now - lastFetchedTime > CACHE_TTL_MS) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        settings = {
+            force_maintenance: false,
+            start_at: null,
+            end_at: null
+        };
+    } else if (!cachedSettings || now - lastFetchedTime > CACHE_TTL_MS) {
         try {
             const supabase = createClient(supabaseUrl, supabaseAnonKey, {
                 auth: { persistSession: false, autoRefreshToken: false }
