@@ -79,96 +79,114 @@ export default function TitlePageInner() {
 
     // ─── ユーザー状態確認 ─────────────────────────────────────────────────
     const checkUserStatus = useCallback(async () => {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        // 12秒で強制タイムアウトしてメニューに戻す保護タイマー
+        const timeoutId = setTimeout(() => {
+            console.warn('[checkUserStatus] ログイン処理がタイムアウトしました。');
+            setAuthError('ログイン処理がタイムアウトしました。ネットワーク状況を確認し、再度お試しください。');
+            setMode('MENU');
+        }, 12000);
 
-        if (error || !user) {
-            await supabase.auth.signOut();
-            clearAuthTokenCache();
-            setMode('ENTRY');
-            return;
-        }
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
 
-        await fetchUserProfile();
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('id')
-            .eq('id', user.id)
-            .maybeSingle();
+            if (error || !user) {
+                await supabase.auth.signOut();
+                clearAuthTokenCache();
+                setMode('ENTRY');
+                return;
+            }
 
-        // セッショントークン取得（削除フローで使用）
-        const { data: { session } } = await supabase.auth.getSession();
+            await fetchUserProfile();
+            const { data: profile, error: profileErr } = await supabase
+                .from('user_profiles')
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle();
 
-        // Intent フラグの読み取り
-        const isNewGameIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_new_game_intent') === '1';
-        if (isNewGameIntent) sessionStorage.removeItem('cwd_new_game_intent');
+            if (profileErr) throw profileErr;
 
-        const isDeleteIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_delete_intent') === '1';
-        if (isDeleteIntent) sessionStorage.removeItem('cwd_delete_intent');
+            // セッショントークン取得（削除フローで使用）
+            const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+            if (sessionErr) throw sessionErr;
 
-        // 「タイトルに戻る」意図チェック — ゲーム画面から明示的にタイトルへ戻った場合
-        // セッションが残存していても自動リダイレクトせずメニューを表示する
-        const isReturnToTitle = typeof window !== 'undefined' && sessionStorage.getItem('cwd_return_to_title') === '1';
-        if (isReturnToTitle) sessionStorage.removeItem('cwd_return_to_title');
+            // Intent フラグの読み取り
+            const isNewGameIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_new_game_intent') === '1';
+            if (isNewGameIntent) sessionStorage.removeItem('cwd_new_game_intent');
 
-        if (profile) {
-            // 優先度: deleteIntent > newGameIntent > returnToTitle > 自動ログイン
-            // deleteIntent / newGameIntent は明示的な新アクションなので
-            // 古い returnToTitle フラグが残存していても優先する
-            if (isDeleteIntent && session?.access_token) {
-                setIsDeleting(true);
-                try {
-                    const res = await fetch('/api/profile/reset', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${session.access_token}` },
-                    });
-                    if (!res.ok) throw new Error((await res.json()).error);
-                    clearGameStarted();
-                    // ローカルストレージもクリア（New Game が stale データを参照しないように）
-                    if (typeof window !== 'undefined') {
-                        localStorage.removeItem('game-storage');
-                        localStorage.removeItem('quest-storage');
+            const isDeleteIntent = typeof window !== 'undefined' && sessionStorage.getItem('cwd_delete_intent') === '1';
+            if (isDeleteIntent) sessionStorage.removeItem('cwd_delete_intent');
+
+            // 「タイトルに戻る」意図チェック — ゲーム画面から明示的にタイトルへ戻った場合
+            // セッションが残存していても自動リダイレクトせずメニューを表示する
+            const isReturnToTitle = typeof window !== 'undefined' && sessionStorage.getItem('cwd_return_to_title') === '1';
+            if (isReturnToTitle) sessionStorage.removeItem('cwd_return_to_title');
+
+            if (profile) {
+                // 優先度: deleteIntent > newGameIntent > returnToTitle > 自動ログイン
+                // deleteIntent / newGameIntent は明示的な新アクションなので
+                // 古い returnToTitle フラグが残存していても優先する
+                if (isDeleteIntent && session?.access_token) {
+                    setIsDeleting(true);
+                    try {
+                        const res = await fetch('/api/profile/reset', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${session.access_token}` },
+                        });
+                        if (!res.ok) throw new Error((await res.json()).error);
+                        clearGameStarted();
+                        // ローカルストレージもクリア（New Game が stale データを参照しないように）
+                        if (typeof window !== 'undefined') {
+                            localStorage.removeItem('game-storage');
+                            localStorage.removeItem('quest-storage');
+                        }
+                        // 削除成功 → サインアウトせずにキャラ作成画面へ直行
+                        // （再度OAuth認証する冗長ステップを省く）
+                        await new Promise(r => setTimeout(r, 1500));
+                        setAuthError(null);
+                        setIsTestPlay(false);
+                        setMode('CHAR_CREATION');
+                    } catch (err: any) {
+                        setAuthError(`削除に失敗しました: ${err.message}`);
+                        setMode('MENU');
+                    } finally {
+                        setIsDeleting(false);
                     }
-                    // 削除成功 → サインアウトせずにキャラ作成画面へ直行
-                    // （再度OAuth認証する冗長ステップを省く）
-                    await new Promise(r => setTimeout(r, 1500));
-                    setAuthError(null);
-                    setIsTestPlay(false);
-                    setMode('CHAR_CREATION');
-                } catch (err: any) {
-                    setAuthError(`削除に失敗しました: ${err.message}`);
-                    setMode('MENU');
-                } finally {
-                    setIsDeleting(false);
+                    return;
                 }
-                return;
+                if (isNewGameIntent) {
+                    // 既存キャラがある場合: 削除確認ダイアログを表示
+                    setPendingSessionToken(session?.access_token || null);
+                    setShowNewGameOverwrite(true);
+                    setMode('MENU');
+                    return;
+                }
+                if (isReturnToTitle) {
+                    // 明示的にタイトルに戻ったので、セッションをクリアしてメニューを表示
+                    await supabase.auth.signOut();
+                    clearAuthTokenCache();
+                    clearGameStarted();
+                    setMode('MENU');
+                    return;
+                }
+                setGameStarted();
+                router.push('/inn');
+            } else {
+                if (isDeleteIntent) {
+                    await supabase.auth.signOut();
+                    clearAuthTokenCache();
+                    setAuthError('削除対象のキャラクターが見つかりませんでした。');
+                    setMode('MENU');
+                    return;
+                }
+                setIsTestPlay(user.is_anonymous ?? false);
+                setMode('CHAR_CREATION');
             }
-            if (isNewGameIntent) {
-                // 既存キャラがある場合: 削除確認ダイアログを表示
-                setPendingSessionToken(session?.access_token || null);
-                setShowNewGameOverwrite(true);
-                setMode('MENU');
-                return;
-            }
-            if (isReturnToTitle) {
-                // 明示的にタイトルに戻ったので、セッションをクリアしてメニューを表示
-                await supabase.auth.signOut();
-                clearAuthTokenCache();
-                clearGameStarted();
-                setMode('MENU');
-                return;
-            }
-            setGameStarted();
-            router.push('/inn');
-        } else {
-            if (isDeleteIntent) {
-                await supabase.auth.signOut();
-                clearAuthTokenCache();
-                setAuthError('削除対象のキャラクターが見つかりませんでした。');
-                setMode('MENU');
-                return;
-            }
-            setIsTestPlay(user.is_anonymous ?? false);
-            setMode('CHAR_CREATION');
+        } catch (err: any) {
+            console.error('[checkUserStatus] エラーキャッチ:', err);
+            setAuthError(`ログイン処理中にエラーが発生しました: ${err.message || err}`);
+            setMode('MENU');
+        } finally {
+            clearTimeout(timeoutId);
         }
     }, [fetchUserProfile, router]);
 
@@ -423,14 +441,27 @@ export default function TitlePageInner() {
 
     // ─── CREATING 画面 ────────────────────────────────────────────────────
     if (mode === 'CREATING') {
+        const handleUnlockAudio = () => {
+            if (soundManager) {
+                soundManager.init();
+                soundManager.resume();
+                soundManager.playPendingBgm();
+            }
+        };
+
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden">
+            <div 
+                onClick={handleUnlockAudio}
+                className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden cursor-pointer"
+                title="画面をタップするとBGMが再生されます"
+            >
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-[200vw] h-[200vw] bg-[radial-gradient(circle,rgba(163,139,107,0.1)_0%,transparent_70%)] animate-pulse-slow"></div>
                 </div>
                 <MapIcon className="w-24 h-24 animate-spin-slow mb-8 text-amber-500 opacity-80" />
-                <h2 className="text-xl md:text-2xl text-[#e3d5b8] mb-8 animate-fade-in tracking-[0.2em] font-bold drop-shadow-lg">世界に降り立っています...</h2>
-                <div className="h-32 relative z-10"></div>
+                <h2 className="text-xl md:text-2xl text-[#e3d5b8] mb-4 animate-fade-in tracking-[0.2em] font-bold drop-shadow-lg">世界に降り立っています...</h2>
+                <p className="text-xs text-slate-500/80 tracking-widest animate-pulse z-10 mb-8">画面タップでBGMが再生されます</p>
+                <div className="h-16 relative z-10"></div>
                 <div className="absolute bottom-10 w-64 h-1 bg-gray-800 rounded-full overflow-hidden z-10">
                     <div className="h-full bg-amber-500 animate-progress-indeterminate"></div>
                 </div>
