@@ -71,7 +71,11 @@ export async function GET(req: Request) {
             supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
             supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
             supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
-            supabaseServer.from('user_completed_quests').select('scenario_id').eq('user_id', userId),
+            supabaseServer
+                .from('user_chronicles')
+                .select('scenario_id, ugc_scenario_id')
+                .eq('user_id', userId)
+                .eq('event_type', 'quest_success'),
             // v4.2: まず location の name と ruling_nation_id を取得（world_states は location_name FK のため別クエリ）
             locationId
                 ? supabaseServer.from('locations').select('name, slug, ruling_nation_id').eq('id', locationId).maybeSingle()
@@ -86,8 +90,16 @@ export async function GET(req: Request) {
         // Extract results
         const worldState = worldStateResult.data;
         const inventory = inventoryResult.data;
+        const rawCompletedQuests = completedQuestsResult.data || [];
         const reputations = reputationsResult.data;
-        const completedQuests = completedQuestsResult.data;
+        // Deduplicate in Javascript to bypass Postgres distinct-sorting overhead
+        const seenQuests = new Set();
+        const completedQuests = rawCompletedQuests.filter((q: any) => {
+            const key = `${q.scenario_id}`;
+            if (seenQuests.has(key)) return false;
+            seenQuests.add(key);
+            return true;
+        });
 
         // v4.2: world_states.controlling_nation を location_name 経由で取得
         let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
