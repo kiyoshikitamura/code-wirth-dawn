@@ -458,17 +458,8 @@ export async function updateWorldSimulation(supabaseClient?: SupabaseClient) {
                 logs.push(`Error saving history logs: ${histError.message}`);
             } else {
                 logs.push(`[History] Inserted ${historyLogs.length} state change events.`);
-                try {
-                    const { GossipService } = await import('@/services/gossipService');
-                    const gossipService = new GossipService(client);
-                    for (const log of historyLogs) {
-                        if (log.message) {
-                            await gossipService.postSystemMessage(log.message, log.location_id);
-                        }
-                    }
-                } catch (gossipErr: any) {
-                    console.error('[WorldSim Gossip] Failed to auto-post world events:', gossipErr);
-                }
+                // Note: Environmental simulation logs are kept only in world_states_history (Chronicle Hall) 
+                // and excluded from gossip_posts to prevent chat spam.
             }
         }
 
@@ -505,59 +496,19 @@ export async function updateWorldSimulation(supabaseClient?: SupabaseClient) {
         // REP_DECAY_THRESHOLD (100) を超えている全レコードの score を REP_DECAY_AMOUNT (-5) 分減少
         // ただし下限は REP_DECAY_THRESHOLD (100) に固定（仕様確認済み: 102 → 97 ではなく 100）
         try {
-            // 対象レコードを一括取得
-            const { data: highReps, error: repFetchError } = await client
-                .from('reputations')
-                .select('id, score')
-                .gt('score', ECONOMY_RULES.REP_DECAY_THRESHOLD);
+            const decayAmount = ECONOMY_RULES.REP_DECAY_AMOUNT; // -5（負数）
+            const threshold = ECONOMY_RULES.REP_DECAY_THRESHOLD; // 100
 
-            if (repFetchError) {
-                logs.push(`[RepDecay] 取得エラー: ${repFetchError.message}`);
-            } else if (highReps && highReps.length > 0) {
-                // スコアを計算してバッチ更新用に分類
-                // 「threshold ちょうど(100)になるもの」と「threshold + decay超のもの」を一括処理
-                const decayAmount = ECONOMY_RULES.REP_DECAY_AMOUNT; // -5（負数）
-                const threshold = ECONOMY_RULES.REP_DECAY_THRESHOLD; // 100
+            const { data: decayCount, error: repDecayError } = await client
+                .rpc('decay_reputations', { 
+                    p_decay_amount: decayAmount, 
+                    p_threshold: threshold 
+                });
 
-                // 結果スコアが threshold を下回るケース → threshold に固定
-                const clampedIds = highReps
-                    .filter((r: any) => r.score + decayAmount < threshold)
-                    .map((r: any) => r.id);
-                // 結果スコアが threshold 以上のケース → そのまま -5
-                const normalDecayIds = highReps
-                    .filter((r: any) => r.score + decayAmount >= threshold)
-                    .map((r: any) => r.id);
-
-                let decayCount = 0;
-
-                // 一括UPDATE: threshold固定グループ
-                if (clampedIds.length > 0) {
-                    const { error: clampError } = await client
-                        .from('reputations')
-                        .update({ score: threshold })
-                        .in('id', clampedIds);
-                    if (clampError) {
-                        logs.push(`[RepDecay] Clamp UPDATE エラー: ${clampError.message}`);
-                    } else {
-                        decayCount += clampedIds.length;
-                    }
-                }
-
-                // 一括UPDATE: 通常Decayグループ
-                // Supabase clientではRAW SQL式でのインクリメントがないため、
-                // スコアの分布が均一でない場合は個別UPDATEが必要。
-                // 実運用上 threshold超のレコード数は少数のため、個別でも問題なし。
-                for (const rep of highReps.filter((r: any) => normalDecayIds.includes(r.id))) {
-                    const { error: repUpdateError } = await client
-                        .from('reputations')
-                        .update({ score: rep.score + decayAmount })
-                        .eq('id', rep.id);
-                    if (!repUpdateError) decayCount++;
-                }
-
-                logs.push(`[RepDecay] ${decayCount} / ${highReps.length} 件の名声を ${decayAmount} 減少（下限: ${threshold}）`);
+            if (repDecayError) {
+                logs.push(`[RepDecay] RPC エラー: ${repDecayError.message}`);
             } else {
-                logs.push('[RepDecay] Decay対象なし（全員 score ≤ 100）');
+                logs.push(`[RepDecay] ${decayCount} 件の名声を ${decayAmount} 減少（下限: ${threshold}）`);
             }
         } catch (decayErr: any) {
             logs.push(`[RepDecay] 例外: ${decayErr.message}`);
@@ -575,9 +526,6 @@ export async function updateWorldSimulation(supabaseClient?: SupabaseClient) {
                 .select('id, name');
 
             if (!activeProfilesError && !activeLocationsError && activeProfiles && activeLocations) {
-                const { GossipService } = await import('@/services/gossipService');
-                const gossipService = new GossipService(client);
-
                 for (const loc of activeLocations) {
                     const profilesInLoc = activeProfiles.filter(p => p.current_location_id === loc.id);
                     if (profilesInLoc.length > 0) {
@@ -585,11 +533,9 @@ export async function updateWorldSimulation(supabaseClient?: SupabaseClient) {
                         const levels = profilesInLoc.map(p => p.level || 1);
                         const avgLevel = Math.round((levels.reduce((sum, lvl) => sum + lvl, 0) / totalCount) * 10) / 10;
                         const maxLevel = Math.max(...levels);
-
-                        const messageText = `【ギルド観測報告】現在の街の冒険者分布：\n総滞在者数: ${totalCount}名\n平均レベル: ${avgLevel} (最高: Lv.${maxLevel})\n熟練の冒険者が多数集っています。`;
                         
-                        await gossipService.postSystemMessage(messageText, loc.id);
-                        logs.push(`[GossipBatch] Posted level distribution for ${loc.name} (Count: ${totalCount}, Avg: ${avgLevel})`);
+                        // Note: Distribution reports are excluded from gossip_posts to prevent chat spam.
+                        logs.push(`[GossipBatch] Level distribution for ${loc.name} (Count: ${totalCount}, Avg: ${avgLevel})`);
                     }
                 }
             } else {

@@ -46,10 +46,10 @@ export async function GET(req: Request) {
             supabaseService.from('items').select('id, slug, name, type, sub_type, base_price, effect_data'),
             supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, image_url, cards(name, type, ap_cost, effect_val, description)'),
             supabaseService.from('npcs').select('slug, name, epithet, job_class, level, max_hp, attack, defense, cover_rate, hire_cost, introduction'),
-            supabaseService.from('user_bestiary').select('enemy_id').eq('user_id', userId),
-            supabaseService.from('user_item_history').select('item_id').eq('user_id', userId),
+            supabaseService.from('user_chronicles').select('enemy_id').eq('user_id', userId).eq('event_type', 'monster_defeated'),
+            supabaseService.from('user_chronicles').select('item_id').eq('user_id', userId).eq('event_type', 'item_collected'),
             supabaseService.from('user_skills').select('skill_id').eq('user_id', userId),
-            supabaseService.from('user_npc_encounters').select('npc_slug').eq('user_id', userId),
+            supabaseService.from('user_chronicles').select('npc_slug').eq('user_id', userId).eq('event_type', 'npc_encountered'),
         ]);
 
         if (enemiesRes.error) throw enemiesRes.error;

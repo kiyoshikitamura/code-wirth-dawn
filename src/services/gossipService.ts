@@ -79,7 +79,8 @@ export class GossipService {
      */
     async postUserMessage(
         userId: string,
-        content: string
+        content: string,
+        isGlobal?: boolean
     ): Promise<{ success: boolean; error?: string; status?: number }> {
         try {
             // 1. Validation: Max length
@@ -128,7 +129,8 @@ export class GossipService {
             }
 
             // 5. Insert post
-            const locationName = (profile as any).locations?.name || null;
+            const locationId = isGlobal ? null : profile.current_location_id;
+            const locationName = isGlobal ? null : ((profile as any).locations?.name || null);
             const { error: insertErr } = await this.supabase
                 .from('gossip_posts')
                 .insert({
@@ -137,7 +139,7 @@ export class GossipService {
                     epithet: profile.title_name || null,
                     avatar_url: profile.avatar_url || null,
                     content: content.trim(),
-                    location_id: profile.current_location_id,
+                    location_id: locationId,
                     location_name: locationName,
                     is_system: false
                 });

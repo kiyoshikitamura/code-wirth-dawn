@@ -321,6 +321,23 @@ export function useScenarioNodeProcessor({
                 }
             }
 
+            else if (currentNode.type === 'check_party_size') {
+                const minSize = Number(currentNode.params?.min_size || currentNode.min_size || 2);
+                const storePartyMembers = useGameStore.getState().partyMembers || [];
+                const partySize = storePartyMembers.length + 1;
+                const passed = partySize >= minSize;
+
+                const successNode = currentNode.params?.success || currentNode.next || currentNode.choices?.find((c: any) => c.label === 'success')?.next || currentNode.choices?.[0]?.next;
+                const failNode = currentNode.params?.fallback || currentNode.condFallback || currentNode.fallback || currentNode.choices?.find((c: any) => c.label === 'failure')?.next || currentNode.choices?.[1]?.next || currentNode.next_node_failure;
+
+                if (passed && successNode) {
+                    setCurrentNodeId(successNode);
+                } else if (!passed && failNode) {
+                    setCurrentNodeId(failNode);
+                } else {
+                    console.warn('[check_party_size] Branch paths missing for:', currentNode);
+                }
+            }
 
             else if (currentNode.type === 'check_possession') {
                 let requiredItemId: any = currentNode.params?.item_id || currentNode.item_id;

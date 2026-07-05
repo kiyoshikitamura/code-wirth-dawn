@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
         const now = Date.now();
         let aggregatedAt = latestCache?.[0]?.aggregated_at || null;
-        let isStale = !aggregatedAt || (now - new Date(aggregatedAt).getTime() > FIFTEEN_MIN_MS);
+        let isStale = false; // Bypassed: On-demand ranking aggregation is suspended for performance
 
         if (isStale) {
             try {

@@ -17,6 +17,8 @@ export async function GET(req: Request) {
         const limit = Math.min(Number(searchParams.get('limit') || '30'), 100);
         const offset = Math.max(Number(searchParams.get('offset') || '0'), 0);
         const excludeSystem = searchParams.get('excludeSystem') === 'true';
+        const channel = searchParams.get('channel') || 'global';
+        const locationId = searchParams.get('locationId') || null;
 
         // 1. 最上段ピン留め用の「最新システムメッセージ」を1件取得
         let pinnedSystemPost = null;
@@ -39,8 +41,22 @@ export async function GET(req: Request) {
             .select('*, user_profiles(subscription_tier)')
             .order('created_at', { ascending: false });
 
-        if (excludeSystem) {
-            query = query.eq('is_system', false);
+        if (channel === 'local') {
+            if (locationId) {
+                query = query.eq('location_id', locationId).eq('is_system', false);
+            } else {
+                return NextResponse.json({
+                    pinned_system_post: null,
+                    posts: []
+                });
+            }
+        } else {
+            // channel === 'global'
+            if (excludeSystem) {
+                query = query.eq('is_system', false).is('location_id', null);
+            } else {
+                query = query.or('location_id.is.null,is_system.eq.true');
+            }
         }
 
         const { data: posts, error: postsError } = await query
@@ -70,7 +86,7 @@ export async function GET(req: Request) {
 /**
  * POST /api/gossip
  * 掲示板へ噂話を投稿する。
- * Body: { content: string }
+ * Body: { content: string, isGlobal?: boolean }
  */
 export async function POST(req: Request) {
     try {
@@ -86,9 +102,10 @@ export async function POST(req: Request) {
 
         const body = await req.json().catch(() => ({}));
         const content = body.content || '';
+        const isGlobal = body.isGlobal === true;
 
         const gossipService = new GossipService(supabase);
-        const res = await gossipService.postUserMessage(user.id, content);
+        const res = await gossipService.postUserMessage(user.id, content, isGlobal);
 
         if (!res.success) {
             return NextResponse.json({ error: res.error }, { status: res.status || 400 });

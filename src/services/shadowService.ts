@@ -288,9 +288,10 @@ export class ShadowService {
                         let clearedScenarioIds = new Set<string>();
                         if (scenarioIds.length > 0) {
                             const { data: cleared } = await this.supabase
-                                .from('user_completed_quests')
+                                .from('user_chronicles')
                                 .select('scenario_id')
                                 .eq('user_id', currentUserId)
+                                .eq('event_type', 'quest_success')
                                 .in('scenario_id', scenarioIds);
                             clearedScenarioIds = new Set((cleared || []).map((c: any) => String(c.scenario_id)));
                         }
