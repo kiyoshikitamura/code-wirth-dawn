@@ -38,6 +38,9 @@ function toJstMonthStr(dateInput: any): string {
 }
 
 export async function GET(req: Request) {
+    if (process.env.SUSPEND_CRON === 'true') {
+        return NextResponse.json({ message: 'KPI API is temporarily suspended' }, { status: 503 });
+    }
     try {
         // 1. Authorization Check
         const adminKey = req.headers.get('x-admin-key');
