@@ -213,6 +213,7 @@ function InnPageInner() {
         if (!initialLoadComplete || !completedQuests || !userProfile) return;
 
         const isEp1Cleared = completedQuests.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001');
+        const isEp2Cleared = completedQuests.some(q => q.scenario_id === 6002 || String(q.scenario_id) === '6002');
 
         // 自己修復: 第1話が未クリア（新規ゲーム開始時やデバッグリセット直後）なら
         // localStorage と React ステートの訪問フラグを一括クリアして初期状態に戻す
@@ -332,6 +333,32 @@ function InnPageInner() {
                 }
             } catch (err) {
                 console.warn('[InnPage] localStorage access failed:', err);
+            }
+        }
+
+        // 4.1 本登録ユーザーの第2話クリア時のパック案内
+        if (!userProfile.is_anonymous && isEp2Cleared && typeof window !== 'undefined') {
+            try {
+                const ep2PromoShown = localStorage.getItem('wirth_dawn_starter_promo_ep2_shown');
+                if (!ep2PromoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                    localStorage.setItem('wirth_dawn_starter_promo_ep2_shown', 'true');
+                    setShowStarterPackPromo(true);
+                }
+            } catch (err) {
+                console.warn('[InnPage] localStorage access failed for ep2 promo:', err);
+            }
+        }
+
+        // 4.2 本登録ユーザーのレベル5到達時のパック案内
+        if (!userProfile.is_anonymous && (userProfile.level || 1) >= 5 && typeof window !== 'undefined') {
+            try {
+                const lv5PromoShown = localStorage.getItem('wirth_dawn_starter_promo_lv5_shown');
+                if (!lv5PromoShown && !(userProfile.has_purchased_starter && userProfile.has_purchased_elite)) {
+                    localStorage.setItem('wirth_dawn_starter_promo_lv5_shown', 'true');
+                    setShowStarterPackPromo(true);
+                }
+            } catch (err) {
+                console.warn('[InnPage] localStorage access failed for lv5 promo:', err);
             }
         }
 
