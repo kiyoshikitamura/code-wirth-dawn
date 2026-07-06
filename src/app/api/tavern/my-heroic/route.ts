@@ -10,13 +10,24 @@ import { supabaseServer } from '@/lib/supabase-admin';
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('user_id');
+        let userId = searchParams.get('user_id');
+        const client = supabaseServer;
+
+        if (!userId) {
+            // AuthorizationヘッダーからJWTトークンを取得してユーザーIDをデコード
+            const authHeader = req.headers.get('authorization');
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.replace('Bearer ', '');
+                const { data: { user }, error: authErr } = await client.auth.getUser(token);
+                if (!authErr && user) {
+                    userId = user.id;
+                }
+            }
+        }
 
         if (!userId) {
             return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
         }
-
-        const client = supabaseServer;
 
         // サブスクリプション tier を取得
         const { data: profile } = await client
