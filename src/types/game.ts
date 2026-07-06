@@ -137,6 +137,7 @@ export interface UserProfile {
 
   age?: number;
   accumulated_days?: number;
+  world_elapsed_days?: number;
   previous_location_id?: string;
   level?: number;
   exp?: number;

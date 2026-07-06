@@ -161,7 +161,7 @@ export default function WorldMapPage() {
     };
 
     // Calendar & Age Computation
-    const totalDays = userProfile?.accumulated_days || 0;
+    const totalDays = userProfile?.world_elapsed_days ?? userProfile?.accumulated_days ?? 0;
     const year = 742 + Math.floor(totalDays / 365);
     const month = 1 + Math.floor((totalDays % 365) / 30);
     const day = 1 + (totalDays % 30);

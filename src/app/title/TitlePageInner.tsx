@@ -451,6 +451,15 @@ export default function TitlePageInner() {
 
             await new Promise(r => setTimeout(r, 1000));
             await fetchUserProfile();
+            try {
+                const store = useGameStore.getState();
+                await Promise.all([
+                    store.fetchInventory(),
+                    store.fetchEquipment()
+                ]);
+            } catch (cacheErr) {
+                console.warn('[Cache Refresh] Failed to refresh inventory/equipment cache:', cacheErr);
+            }
             setGameStarted();
 
             // X Ads Conversion Tracking: Sign Up

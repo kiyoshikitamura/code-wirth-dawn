@@ -44,7 +44,7 @@ export default function InnHeader({
         return () => clearInterval(interval);
     }, []);
 
-    const totalDays = userProfile?.accumulated_days || 0;
+    const totalDays = userProfile?.world_elapsed_days ?? userProfile?.accumulated_days ?? 0;
     const year = 742 + Math.floor(totalDays / 365);
     
     let month = 1;
