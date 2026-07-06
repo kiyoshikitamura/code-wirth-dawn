@@ -507,16 +507,20 @@ export default function TitlePageInner() {
 
             {/* Character Creation Background */}
             {mode === 'CHAR_CREATION' && (
-                <div className="absolute inset-0 bg-[#e3d5b8] pointer-events-none">
-                    <div className="absolute inset-0 mix-blend-multiply opacity-40" style={{ backgroundImage: 'url("/textures/old-wall.png")' }}></div>
-                    <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]"></div>
+                <div className="absolute inset-0 bg-[#080a10] pointer-events-none">
+                    <div
+                        className="absolute inset-0 bg-cover bg-center opacity-40 filter blur-sm"
+                        style={{ backgroundImage: 'url("/backgrounds/key_visual/cozy_inn.png")' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-slate-950/70 to-stone-950/90" />
+                    <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.9)]"></div>
                 </div>
             )}
 
-            <main className={`relative z-10 w-full max-w-md ${mode === 'CHAR_CREATION' ? 'bg-[#e3d5b8]/10 text-slate-900 p-8 rounded-lg border-[3px] border-amber-800/60 shadow-2xl backdrop-blur-md relative overflow-hidden' : 'p-8 flex flex-col items-center'}`}>
+            <main className={`relative z-10 w-full max-w-md ${mode === 'CHAR_CREATION' ? 'bg-[#0d0f1f]/90 text-amber-100 p-8 rounded-2xl border border-amber-500/30 shadow-2xl backdrop-blur-md relative overflow-hidden' : 'p-8 flex flex-col items-center'}`}>
 
                 {mode === 'CHAR_CREATION' && (
-                    <div className="absolute inset-2 border border-amber-800/30 pointer-events-none rounded"></div>
+                    <div className="absolute inset-2 border border-amber-500/10 pointer-events-none rounded-xl"></div>
                 )}
 
                 {(mode === 'ENTRY' || mode === 'MENU' || mode === 'CONTINUE_MENU') && (
@@ -739,17 +743,28 @@ export default function TitlePageInner() {
 
                 {/* ─── CHAR_CREATION ─── */}
                 {mode === 'CHAR_CREATION' && (
-                    <div className="space-y-6 animate-fade-in relative z-10 p-2 max-w-md mx-auto">
+                    <div className="space-y-4 animate-fade-in relative z-10 p-1 max-w-md mx-auto w-full text-slate-200">
                         <style>{`
                             @keyframes float-fortune {
                                 0%, 100% { transform: translateY(0); }
-                                50% { transform: translateY(-6px); }
+                                50% { transform: translateY(-5px); }
                             }
                         `}</style>
 
+                        {/* ⚠️ テストプレイ警告バナー (Trial Play) */}
+                        {isTestPlay && (
+                            <div className="bg-amber-950/40 border border-amber-800/40 rounded-xl p-3 text-center shadow-lg">
+                                <p className="text-amber-400 text-xs font-bold tracking-wide mb-1">⚠️ テストプレイ中 (Trial Play)</p>
+                                <p className="text-amber-200/80 text-[10px] leading-relaxed">
+                                    このキャラクターは <strong>7日後に失効</strong> します。<br />
+                                    データを引き継ぐには、ゲーム内から Google アカウントと連携してください。
+                                </p>
+                            </div>
+                        )}
+
                         {/* 🔮 占い師ナビゲーターの立ち絵エリア */}
-                        <div className="flex flex-col items-center justify-center pt-2">
-                            <div className="relative w-32 h-32 md:w-36 md:h-36 mb-2 overflow-hidden rounded-full border-2 border-amber-600/40 bg-slate-950/60 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_15px_rgba(217,119,6,0.3)] animate-[float-fortune_4s_ease-in-out_infinite]">
+                        <div className="flex flex-col items-center justify-center pt-1">
+                            <div className="relative w-28 h-28 md:w-32 md:h-32 mb-1 overflow-hidden rounded-full border border-amber-500/30 bg-slate-950/70 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_12px_rgba(217,119,6,0.25)] animate-[float-fortune_4s_ease-in-out_infinite]">
                                 <img 
                                     src="/images/npcs/npc_fortune_teller.png" 
                                     alt="Fortune Teller" 
@@ -761,7 +776,7 @@ export default function TitlePageInner() {
                                     }}
                                 />
                             </div>
-                            <div className="text-center font-serif text-[10px] text-amber-500/80 tracking-[0.4em] uppercase mb-1">
+                            <div className="text-center font-serif text-[9px] text-amber-500/60 tracking-[0.4em] uppercase mb-0.5">
                                 — Observer of Fate —
                             </div>
                             <div className="text-center font-serif text-xs text-amber-400 font-bold tracking-widest">
@@ -769,33 +784,33 @@ export default function TitlePageInner() {
                             </div>
                         </div>
 
-                        {/* 🔮 会話テキストウィンドウ (Parchment Dialogue Card) */}
-                        <div className="bg-[#1c1710]/95 border-2 border-amber-900/40 rounded-xl p-5 shadow-2xl space-y-4 relative min-h-[140px] flex flex-col justify-between">
-                            <div className="absolute top-2 right-2 opacity-5 pointer-events-none">
-                                <Sparkles className="w-12 h-12 text-amber-500" />
+                        {/* 🔮 会話テキストウィンドウ (Dark Card) */}
+                        <div className="bg-slate-950/60 border border-amber-900/40 rounded-xl p-4 shadow-xl space-y-3.5 relative">
+                            <div className="absolute top-2 right-2 opacity-[0.03] pointer-events-none">
+                                <Sparkles className="w-10 h-10 text-amber-500" />
                             </div>
                             
-                            {/* セリフの表示 */}
-                            <div className="text-amber-950/90 font-serif leading-relaxed text-sm md:text-base border-b border-amber-950/10 pb-3 min-h-[70px] flex items-center justify-center text-center">
-                                <p className="italic text-amber-100 font-medium whitespace-pre-line animate-fade-in">
-                                    {creationStep === 0 && "「よくぞ、昏き霧の彼方よりこの境界へ辿り着いた、名もなき旅人よ。\n私は運命を読み解きし者……」"}
-                                    {creationStep === 1 && "「水面に映る、お前の魂の響きを聞かせておくれ。\nこの先、世界を歩むとき、人々はお前をなんと呼ぶのですか？」"}
-                                    {creationStep === 2 && "「お前が魂を宿すその器（身体）の属性と、重ねてきた時の長さ（年齢）はいくらか？\nそれによって、お前が世界に宿す力（ステータス）が決まるのです……」"}
+                            {/* セリフの表示 - 改行を排除して自然にラップ、フォントサイズを小さく調整 */}
+                            <div className="text-amber-200/90 font-serif leading-relaxed text-xs md:text-sm border-b border-amber-500/15 pb-3 text-center">
+                                <p className="italic text-amber-100 font-medium whitespace-pre-line animate-fade-in tracking-wide">
+                                    {creationStep === 0 && "「よくぞ、昏き霧の彼方よりこの境界へ辿り着いた、名もなき旅人よ。私は運命を読み解きし者……」"}
+                                    {creationStep === 1 && "「水面に映る、お前の魂の響きを聞かせておくれ。この先、世界を歩むとき、人々はお前をなんと呼ぶのですか？」"}
+                                    {creationStep === 2 && "「お前が魂を宿すその器の属性と、重ねてきた時の長さ（年齢）はいくらか？それによって、お前が世界に宿す力（ステータス）が決まるのです……」"}
                                     {creationStep === 3 && "「お前の精神がまとう外殻、肉体の肖像をここに描き出しなさい……」"}
-                                    {creationStep === 4 && "「……ふむ、お前の運命の輪郭が整いました。\nお前という存在が、この閉ざされた霧の向こう側、世界へ降り立つ準備はできたようです。」"}
+                                    {creationStep === 4 && "「……ふむ、お前の運命の輪郭が整いました。お前という存在が、この閉ざされた霧の向こう側、世界へ降り立つ準備はできたようです。」"}
                                 </p>
                             </div>
 
                             {/* 各ステップごとの入力UIコントロール */}
-                            <div className="pt-2 animate-fade-in">
+                            <div className="animate-fade-in">
                                 {/* Step 1: Name Input */}
                                 {creationStep === 1 && (
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 py-1">
                                         <input
                                             type="text"
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
-                                            className="w-full bg-transparent border-b-2 border-amber-500/40 focus:border-amber-400 text-amber-100 p-2 outline-none transition-colors text-xl text-center font-serif italic placeholder-amber-500/20"
+                                            className="w-full bg-transparent border-b border-amber-500/40 focus:border-amber-400 text-amber-100 p-2 outline-none transition-colors text-lg text-center font-serif italic placeholder-amber-500/20"
                                             placeholder="汝の名は..."
                                             maxLength={16}
                                             autoFocus
@@ -805,10 +820,10 @@ export default function TitlePageInner() {
 
                                 {/* Step 2: Gender and Age Input (Integrated) */}
                                 {creationStep === 2 && (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3.5">
                                         {/* Gender Select */}
-                                        <div className="space-y-1.5">
-                                            <div className="text-center text-[10px] text-amber-500/70 uppercase tracking-widest font-serif">器の属性 (Gender)</div>
+                                        <div className="space-y-1">
+                                            <div className="text-center text-[9px] text-amber-500/70 uppercase tracking-widest font-serif">器の属性 (Gender)</div>
                                             <div className="flex justify-center gap-2">
                                                 {['Male', 'Female', 'Unknown'].map((g) => (
                                                     <button
@@ -817,18 +832,18 @@ export default function TitlePageInner() {
                                                         onClick={() => setGender(g as any)}
                                                         className={`flex-1 py-2 border rounded-lg transition-all duration-300 font-serif text-xs tracking-widest
                                                             ${gender === g
-                                                                ? 'bg-amber-900/60 border-amber-500 text-amber-100 shadow-inner'
-                                                                : 'bg-stone-950/40 border-stone-800 text-amber-600/60 hover:border-amber-700/50'}`}
+                                                                ? 'bg-amber-950/80 border-amber-500 text-amber-200 shadow-lg shadow-amber-950/50'
+                                                                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'}`}
                                                     >
-                                                        {g === 'Male' ? 'Male (男)' : g === 'Female' ? 'Female (女)' : 'Unknown (不明)'}
+                                                        {g === 'Male' ? 'Male' : g === 'Female' ? 'Female' : 'Unknown'}
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Age Select Slider */}
-                                        <div className="space-y-2 pt-2 border-t border-amber-950/15">
-                                            <div className="text-center text-[10px] text-amber-500/70 uppercase tracking-widest font-serif">重ねた星霜 (Age: {age}歳)</div>
+                                        <div className="space-y-1.5 pt-2 border-t border-amber-950/15">
+                                            <div className="text-center text-[9px] text-amber-500/70 uppercase tracking-widest font-serif">重ねた星霜 (Age: {age}歳)</div>
                                             <div className="space-y-1 px-2">
                                                 <input
                                                     type="range"
@@ -836,25 +851,25 @@ export default function TitlePageInner() {
                                                     max="40"
                                                     value={age}
                                                     onChange={(e) => setAge(Number(e.target.value))}
-                                                    className="w-full accent-amber-500 cursor-pointer bg-amber-950/40 h-1.5 rounded-lg appearance-none"
+                                                    className="w-full accent-amber-500 cursor-pointer bg-slate-900 h-1.5 rounded-lg appearance-none"
                                                 />
-                                                <div className="flex justify-between text-[10px] font-mono text-amber-500/40 pt-1">
+                                                <div className="flex justify-between text-[9px] font-mono text-amber-500/40 pt-0.5">
                                                     <span>15歳</span>
                                                     <span>40歳</span>
                                                 </div>
                                             </div>
 
                                             {/* Dynamic Flavor & Stats */}
-                                            <div className="bg-slate-950/50 p-3 rounded-lg border border-amber-900/20 min-h-[90px] relative mt-1">
-                                                <p className="text-center font-serif text-amber-400/80 text-xs italic mb-2">
+                                            <div className="bg-black/50 p-2.5 rounded-lg border border-amber-950/30 min-h-[85px] relative mt-1">
+                                                <p className="text-center font-serif text-amber-400/80 text-xs italic mb-1.5">
                                                     「{getFlavorText(age)}」
                                                 </p>
                                                 {previewStats ? (
                                                     <div className="grid grid-cols-4 gap-1 text-center font-mono text-amber-200/90 text-[10px]">
-                                                        <div className="bg-amber-950/20 py-1 rounded">HP<br /><span className="text-xs font-bold text-amber-100">{previewStats.max_hp}</span></div>
-                                                        <div className="bg-amber-950/20 py-1 rounded">ATK<br /><span className="text-xs font-bold text-amber-100">{previewStats.atk}</span></div>
-                                                        <div className="bg-amber-950/20 py-1 rounded">DEF<br /><span className="text-xs font-bold text-amber-100">{previewStats.def}</span></div>
-                                                        <div className="bg-amber-950/20 py-1 rounded">Vit<br /><span className="text-xs font-bold text-amber-100">{previewStats.max_vitality}</span></div>
+                                                        <div className="bg-amber-950/20 py-0.5 rounded">HP<br /><span className="text-xs font-bold text-amber-100">{previewStats.max_hp}</span></div>
+                                                        <div className="bg-amber-950/20 py-0.5 rounded">ATK<br /><span className="text-xs font-bold text-amber-100">{previewStats.atk}</span></div>
+                                                        <div className="bg-amber-950/20 py-0.5 rounded">DEF<br /><span className="text-xs font-bold text-amber-100">{previewStats.def}</span></div>
+                                                        <div className="bg-amber-950/20 py-0.5 rounded">Vit<br /><span className="text-xs font-bold text-amber-100">{previewStats.max_vitality}</span></div>
                                                     </div>
                                                 ) : (
                                                     <div className="text-center text-[10px] text-amber-500/40 py-2">運命を算定中...</div>
@@ -866,10 +881,10 @@ export default function TitlePageInner() {
 
                                 {/* Step 3: Avatar Upload */}
                                 {creationStep === 3 && (
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="text-center text-[10px] text-amber-500/70 uppercase tracking-widest font-serif mb-1">魂の肖像 (Avatar)</div>
+                                    <div className="flex flex-col items-center gap-2 py-1">
+                                        <div className="text-center text-[9px] text-amber-500/70 uppercase tracking-widest font-serif mb-1">魂の肖像 (Avatar)</div>
                                         <label className="cursor-pointer group relative">
-                                            <div className="w-20 h-20 rounded-full border-2 border-amber-600/40 group-hover:border-amber-400 overflow-hidden flex items-center justify-center bg-slate-950/60 transition-all shadow-xl">
+                                            <div className="w-16 h-16 rounded-full border border-amber-500/40 group-hover:border-amber-400 overflow-hidden flex items-center justify-center bg-slate-950/80 transition-all shadow-xl">
                                                 <img 
                                                     src={avatarPreview || '/images/icons/observer_gem.png'} 
                                                     alt="avatar preview" 
@@ -881,23 +896,23 @@ export default function TitlePageInner() {
                                                     }}
                                                 />
                                             </div>
-                                            <div className="absolute -bottom-1 -right-1 bg-amber-950 border border-amber-500/50 rounded-full p-1.5 shadow-lg group-hover:bg-amber-900 transition-colors">
-                                                <Plus className="w-3 h-3 text-amber-400" />
+                                            <div className="absolute -bottom-0.5 -right-0.5 bg-amber-950 border border-amber-500/50 rounded-full p-1 shadow-lg group-hover:bg-amber-900 transition-colors">
+                                                <Plus className="w-2.5 h-2.5 text-amber-400" />
                                             </div>
                                             <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
                                         </label>
-                                        <span className="text-[10px] text-amber-500/50">{avatarFile ? 'タップして画像を変更' : 'タップしてカスタム画像をアップロード'}</span>
+                                        <span className="text-[9px] text-amber-500/50">{avatarFile ? 'タップして画像を変更' : 'タップしてカスタム画像をアップロード'}</span>
                                     </div>
                                 )}
 
                                 {/* Step 4: Final Confirmation (Contract) */}
                                 {creationStep === 4 && (
-                                    <div className="bg-slate-950/70 rounded-xl p-4 space-y-3 border border-amber-600/40 max-w-xs mx-auto shadow-inner">
+                                    <div className="bg-slate-950/70 rounded-xl p-3.5 space-y-2.5 border border-amber-600/40 max-w-xs mx-auto shadow-inner">
                                         <div className="flex justify-center mb-1">
                                             <img 
                                                 src={avatarPreview || '/images/icons/observer_gem.png'} 
                                                 alt="avatar" 
-                                                className="w-16 h-16 rounded-full border-2 border-amber-500 object-cover shadow-lg" 
+                                                className="w-14 h-14 rounded-full border border-amber-500 object-cover shadow-lg" 
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement;
                                                     target.onerror = null;
@@ -905,21 +920,21 @@ export default function TitlePageInner() {
                                                 }}
                                             />
                                         </div>
-                                        <div className="space-y-1.5 text-xs">
+                                        <div className="space-y-1 text-xs">
                                             <div className="flex justify-between border-b border-amber-950/15 pb-1">
-                                                <span className="text-amber-500/80 font-serif">旅人の名</span>
+                                                <span className="text-amber-500/70 font-serif">旅人の名</span>
                                                 <span className="text-amber-100 font-bold font-serif italic">{name}</span>
                                             </div>
                                             <div className="flex justify-between border-b border-amber-950/15 pb-1">
-                                                <span className="text-amber-500/80 font-serif">性別</span>
-                                                <span className="text-amber-100">{gender === 'Male' ? '男 (Male)' : gender === 'Female' ? '女 (Female)' : '無名 (Unknown)'}</span>
+                                                <span className="text-amber-500/70 font-serif">性別</span>
+                                                <span className="text-amber-100">{gender === 'Male' ? 'Male' : gender === 'Female' ? 'Female' : 'Unknown'}</span>
                                             </div>
                                             <div className="flex justify-between border-b border-amber-950/15 pb-1">
-                                                <span className="text-amber-500/80 font-serif">年齢</span>
+                                                <span className="text-amber-500/70 font-serif">年齢</span>
                                                 <span className="text-amber-100 font-mono">{age} 歳</span>
                                             </div>
                                             {previewStats && (
-                                                <div className="pt-1.5 grid grid-cols-4 gap-1 text-center font-mono text-[9px] text-amber-200/80">
+                                                <div className="pt-1 grid grid-cols-4 gap-1 text-center font-mono text-[9px] text-amber-200/80">
                                                     <div><div>HP</div><div className="text-amber-100 font-bold">{previewStats.max_hp}</div></div>
                                                     <div><div>ATK</div><div className="text-amber-100 font-bold">{previewStats.atk}</div></div>
                                                     <div><div>DEF</div><div className="text-amber-100 font-bold">{previewStats.def}</div></div>
@@ -935,14 +950,14 @@ export default function TitlePageInner() {
                             {errorMsg && <p className="text-red-500 text-[10px] text-center font-bold mt-1">{errorMsg}</p>}
                         </div>
 
-                        {/* 🔮 コントロールボタンエリア (Wizard Navigation) */}
-                        <div className="space-y-2">
+                        {/* 🔮 コントロールボタンエリア (Wizard Navigation - Premium Gold/Dark Aesthetic) */}
+                        <div className="space-y-2 pt-1">
                             {creationStep < 4 ? (
                                 <button
                                     type="button"
                                     onClick={() => setCreationStep(prev => prev + 1)}
                                     disabled={creationStep === 1 && !name.trim()}
-                                    className="w-full bg-amber-900/40 text-amber-400 font-serif font-bold tracking-widest py-3 rounded-lg disabled:opacity-30 hover:bg-amber-900/60 border border-amber-600/50 hover:border-amber-400 transition-all shadow-xl flex items-center justify-center gap-2"
+                                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 font-serif font-bold tracking-widest py-3 rounded-lg disabled:opacity-30 border border-amber-400/30 active:scale-[0.99] transition-all shadow-[0_4px_15px_rgba(217,119,6,0.15)] flex items-center justify-center gap-2"
                                 >
                                     <span>{creationStep === 0 ? '運命に身を委ねる' : '先へ進む'}</span>
                                     <ChevronRight className="w-4 h-4" />
@@ -952,10 +967,10 @@ export default function TitlePageInner() {
                                     type="button"
                                     onClick={() => setShowConfirm(true)}
                                     disabled={!name.trim() || !previewStats}
-                                    className="w-full group bg-slate-950 text-amber-500 font-serif font-bold tracking-widest py-4.5 rounded-lg disabled:opacity-50 hover:bg-slate-900 border-2 border-amber-600 hover:border-amber-400 transition-all shadow-xl flex items-center justify-center gap-3 overflow-hidden"
+                                    className="w-full group bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 font-serif font-bold tracking-widest py-3.5 rounded-lg disabled:opacity-50 border border-amber-400/40 transition-all shadow-[0_4px_20px_rgba(217,119,6,0.25)] flex items-center justify-center gap-3 overflow-hidden active:scale-[0.99]"
                                 >
                                     <span className="relative z-10 transition-transform group-hover:scale-105">世界に降り立つ（契約）</span>
-                                    <Compass className="w-5 h-5 relative z-10 transition-transform duration-700 group-hover:rotate-180 text-amber-500" />
+                                    <Compass className="w-5 h-5 relative z-10 transition-transform duration-700 group-hover:rotate-180 text-amber-100" />
                                 </button>
                             )}
 
@@ -965,9 +980,9 @@ export default function TitlePageInner() {
                                     <button
                                         type="button"
                                         onClick={() => setCreationStep(prev => prev - 1)}
-                                        className="flex-1 border border-slate-800 bg-stone-950/20 text-slate-400 hover:text-slate-200 font-serif text-[10px] tracking-widest py-2 rounded-lg transition-colors text-center flex items-center justify-center gap-1"
+                                        className="flex-1 border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 hover:text-white font-serif text-[11px] tracking-widest py-2.5 rounded-lg transition-colors text-center flex items-center justify-center gap-1 shadow-md"
                                     >
-                                        <ChevronLeft className="w-3.5 h-3.5" />
+                                        <ChevronLeft className="w-3.5 h-3.5 text-slate-300" />
                                         <span>前に戻る</span>
                                     </button>
                                 )}
@@ -995,7 +1010,7 @@ export default function TitlePageInner() {
                                             setCreationStep(0);
                                         }
                                     }}
-                                    className="flex-1 border border-slate-800 bg-stone-950/20 text-slate-400 hover:text-slate-200 font-serif text-[10px] tracking-widest py-2 rounded-lg transition-colors text-center"
+                                    className="flex-1 border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 hover:text-white font-serif text-[11px] tracking-widest py-2.5 rounded-lg transition-colors text-center shadow-md"
                                 >
                                     {creationStep === 4 ? 'やり直す' : 'タイトルへ戻る'}
                                 </button>
@@ -1005,7 +1020,7 @@ export default function TitlePageInner() {
                         {/* 最終確認モーダル */}
                         {showConfirm && (
                             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setShowConfirm(false)}>
-                                <div className="bg-[#1c1710] border-2 border-amber-600/70 rounded-xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
+                                <div className="bg-[#0d0f1f] border border-amber-500/30 rounded-xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
                                     <h3 className="text-lg font-serif text-amber-400 text-center mb-6 tracking-widest">— 運命の契約 —</h3>
 
                                     {isTestPlay && (
@@ -1019,7 +1034,7 @@ export default function TitlePageInner() {
                                             <img 
                                                 src={avatarPreview || '/images/icons/observer_gem.png'} 
                                                 alt="avatar" 
-                                                className="w-16 h-16 rounded-full border-2 border-amber-700 object-cover shadow-lg"
+                                                className="w-16 h-16 rounded-full border border-amber-700 object-cover shadow-lg"
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement;
                                                     target.onerror = null;
@@ -1034,32 +1049,32 @@ export default function TitlePageInner() {
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-amber-400/80 font-serif">性別</span>
-                                                <span className="text-amber-100">{gender === 'Male' ? '男' : gender === 'Female' ? '女' : '不明'}</span>
+                                                <span className="text-amber-100">{gender === 'Male' ? 'Male' : gender === 'Female' ? 'Female' : 'Unknown'}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-amber-400/80 font-serif">年齢</span>
                                                 <span className="text-amber-100">{age}歳</span>
                                             </div>
                                             {previewStats && (
-                                                <div className="space-y-1 pt-2 border-t border-amber-700/30">
+                                                <div className="space-y-1.5 pt-2 border-t border-amber-700/30">
                                                     <div className="grid grid-cols-4 gap-1">
                                                         <div className="text-center"><div className="text-[10px] text-amber-400/60">HP</div><div className="text-amber-200 font-mono font-bold">{previewStats.max_hp}</div></div>
                                                         <div className="text-center"><div className="text-[10px] text-amber-400/60">ATK</div><div className="text-amber-200 font-mono font-bold">{previewStats.atk}</div></div>
                                                         <div className="text-center"><div className="text-[10px] text-amber-400/60">DEF</div><div className="text-amber-200 font-mono font-bold">{previewStats.def}</div></div>
                                                         <div className="text-center"><div className="text-[10px] text-amber-400/60">Vit</div><div className="text-amber-200 font-mono font-bold">{previewStats.max_vitality}</div></div>
                                                     </div>
-                                                    <div className="text-center text-[10px] text-amber-400/60">Gold　<span className="text-amber-200 font-mono font-bold">{previewStats.gold?.toLocaleString() ?? '—'} G</span></div>
+                                                    <div className="text-center text-[10px] text-amber-400/60 pt-1">Gold　<span className="text-amber-200 font-mono font-bold">{previewStats.gold?.toLocaleString() ?? '—'} G</span></div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     <div className="flex gap-3">
-                                        <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border border-amber-700/50 text-amber-400/80 font-serif rounded-lg text-sm hover:border-amber-600 hover:text-amber-300 transition-colors">戻る</button>
+                                        <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border border-slate-700/85 text-slate-300 font-serif rounded-lg text-xs hover:border-slate-650 hover:text-white transition-colors bg-slate-900/40">戻る</button>
                                         <button
                                             onClick={() => handleCharacterSubmit()}
-                                            className="flex-1 py-3 bg-amber-900/30 border border-amber-600 text-amber-200 font-serif font-bold rounded-lg text-sm hover:bg-amber-900/50 hover:border-amber-400 hover:text-white transition-all shadow-lg"
+                                            className="flex-1 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 font-serif font-bold rounded-lg text-xs hover:text-white transition-all shadow-lg border border-amber-400/30"
                                         >
-                                            確定する
+                                            契約を交わす
                                         </button>
                                     </div>
                                 </div>

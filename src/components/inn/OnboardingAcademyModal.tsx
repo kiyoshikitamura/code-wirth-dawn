@@ -192,26 +192,54 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
             {/* フェーズ 1: 世界観説明 */}
             {step === 'welcome' && (
                 <div className="relative w-full max-w-md bg-[#0d0f1f]/90 border border-amber-500/30 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center">
-                    <div className="absolute -top-10 bg-amber-500/10 border border-amber-500/30 p-4 rounded-full flex items-center justify-center">
-                        <Sparkles className="w-8 h-8 text-amber-400 animate-pulse" />
+                    <style>{`
+                        @keyframes float-fortune {
+                            0%, 100% { transform: translateY(0); }
+                            50% { transform: translateY(-5px); }
+                        }
+                    `}</style>
+
+                    {/* 🔮 占い師ナビゲーターの立ち絵エリア */}
+                    <div className="flex flex-col items-center justify-center pt-2 mb-4">
+                        <div className="relative w-28 h-28 mb-2 overflow-hidden rounded-full border border-amber-500/30 bg-slate-950/60 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_12px_rgba(217,119,6,0.25)] animate-[float-fortune_4s_ease-in-out_infinite]">
+                            <img 
+                                src="/images/npcs/npc_fortune_teller.png" 
+                                alt="Fortune Teller" 
+                                className="w-full h-full object-cover scale-110 object-top"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.onerror = null;
+                                    target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2378350f'/><text x='50' y='55' font-size='30' text-anchor='middle' dominant-baseline='middle'>🔮</text></svg>";
+                                }}
+                            />
+                        </div>
+                        <div className="text-[9px] text-amber-500/60 uppercase tracking-widest font-serif mb-0.5">
+                            — Observer of Fate —
+                        </div>
+                        <div className="text-xs text-amber-400 font-bold tracking-widest">
+                            占い師
+                        </div>
                     </div>
-                    
-                    <h2 className="mt-6 text-xl sm:text-2xl font-black text-amber-100 tracking-wider">
+
+                    <h2 className="text-xl sm:text-2xl font-black text-amber-100 tracking-wider">
                         魔導の契約
                     </h2>
                     
-                    <div className="w-24 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent my-4" />
+                    <div className="w-24 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent my-2" />
                     
-                    <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-medium whitespace-pre-line tracking-wide my-4 min-h-[140px] flex items-center justify-center">
-                        {`「目覚めよ、名もなき旅人よ。\n\n混沌と秩序が交錯するこの地を歩むには、運命を切り拓く力……すなわち『カード』の契約が必要となる。\n\n学舎の門を叩き、古の契約を結ぶのだ。」`}
-                    </p>
+                    {/* 🔮 会話テキストウィンドウ (Dark Card) */}
+                    <div className="bg-black/40 border border-amber-900/40 rounded-xl p-4 shadow-xl w-full my-4">
+                        <p className="text-xs sm:text-sm text-amber-200 leading-relaxed font-serif tracking-wide text-center whitespace-pre-line">
+                            {`「目覚めよ、名もなき旅人よ。\n混沌と秩序が交錯するこの地を歩むには、運命を切り拓く力……すなわち『カード』の契約が必要となる。\n学舎の門を叩き、古の契約を結ぶのだ。」`}
+                        </p>
+                    </div>
 
                     <button
                         onClick={() => {
                             soundManager?.playSE('se_click');
                             setStep('pack');
                         }}
-                        className="mt-6 w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 rounded-xl font-black tracking-widest text-sm shadow-[0_4px_20px_rgba(245,158,11,0.25)] border border-amber-400/30 active:scale-98 transition-all duration-200"
+                        className="mt-4 w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 rounded-xl font-bold tracking-widest text-sm shadow-[0_4px_20px_rgba(245,158,11,0.25)] border border-amber-400/30 active:scale-98 transition-all duration-200"
                     >
                         魔術学院へ進む
                     </button>
