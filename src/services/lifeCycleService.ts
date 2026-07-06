@@ -329,35 +329,13 @@ export class LifeCycleService {
         const goldRate = oldTier === 'premium' ? 1.0 : (oldTier === 'basic' ? 1.0 : 0.5);
         const inheritedGold = Math.floor((oldProfile?.gold || 0) * goldRate);
 
-        // 2. Reputation Inheritance (Sub Only: 10% of each location's score)
-        // Q3: 名声継承を reputations テーブルに書き戻す（spec_v10 §4.2）
-        const isSubscriber = oldTier !== 'free';
-        let inheritedRep = 0;
-        if (isSubscriber) {
-            const { data: repData } = await this.supabase
-                .from('reputations')
-                .select('id, location_name, score')
-                .eq('user_id', userId);
-            if (repData && repData.length > 0) {
-                const totalScore = repData.reduce((sum: number, r: any) => sum + (r.score || 0), 0);
-                inheritedRep = Math.floor(totalScore * 0.1);
-
-                // Q3: 各拠点の名声を展開して書き戻す（10%を各拠点に分配）
-                for (const rep of repData) {
-                    const inheritedForLocation = Math.floor((rep.score || 0) * 0.1);
-                    if (inheritedForLocation !== 0) {
-                        await this.supabase
-                            .from('reputations')
-                            .upsert({
-                                user_id: userId,
-                                location_name: rep.location_name,
-                                score: inheritedForLocation
-                            }, { onConflict: 'user_id,location_name' });
-                    }
-                }
-                console.log(`[Inheritance] Reputation inherited: ${inheritedRep} (across ${repData.length} locations)`);
-            }
-        }
+        // 2. Reputation Reset (No inheritance, reset to 0)
+        // v35.0: ベーシックとpremiumでの名声の10％引継ぎはなくし、名声も0にリセットする
+        await this.supabase
+            .from('reputations')
+            .update({ score: 0 })
+            .eq('user_id', userId);
+        console.log(`[Inheritance] Reputation reset to 0 for user: ${userId}`);
 
         // 3. 形見引き継ぎ — historical_logs から heirloom_item_ids を取得
         let resolvedHeirloomIds: string[] = heirloomItemIds || [];

@@ -425,7 +425,8 @@ export async function POST(req: Request) {
                 currentLevel, currentExp, earnedExp,
                 updates.atk || user.atk || 1,
                 updates.def || user.def || 1,
-                user.max_hp || 85
+                user.max_hp || 85,
+                user.max_deck_cost || 12
             );
 
             updates.exp = growthResult.newExp;

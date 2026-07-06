@@ -77,7 +77,23 @@ BEGIN
       UNION
       SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id 
       FROM public.quest_activity_logs 
-      WHERE created_at >= (v_start_date - INTERVAL '1 day') AND user_id IS NOT NULL AND action = 'start'
+      WHERE created_at >= (v_start_date - INTERVAL '1 day') AND user_id IS NOT NULL
+      UNION
+      SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id 
+      FROM public.academy_pack_logs 
+      WHERE created_at >= (v_start_date - INTERVAL '1 day') AND user_id IS NOT NULL
+      UNION
+      SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id 
+      FROM public.colosseum_activity_logs 
+      WHERE created_at >= (v_start_date - INTERVAL '1 day') AND user_id IS NOT NULL
+      UNION
+      SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id 
+      FROM public.prayer_logs 
+      WHERE created_at >= (v_start_date - INTERVAL '1 day') AND user_id IS NOT NULL
+      UNION
+      SELECT (created_at AT TIME ZONE 'Asia/Tokyo')::date as jst_date, user_id 
+      FROM public.payment_logs 
+      WHERE created_at >= (v_start_date - INTERVAL '1 day') AND user_id IS NOT NULL
     ) combined
     GROUP BY jst_date
   )

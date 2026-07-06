@@ -110,7 +110,8 @@ export async function POST(req: Request) {
                 earnedExp,
                 currentAtk,
                 currentDef,
-                maxHp
+                maxHp,
+                Number(user.max_deck_cost || 12)
             );
 
             updates.exp = growthResult.newExp;

@@ -378,6 +378,18 @@ async function run() {
             console.log('Successfully deleted the temporary historical log.');
         }
 
+        // 6. Delete completion flags for Quest 6022 and 6023
+        const { error: questDelErr } = await supabase
+            .from('user_completed_quests')
+            .delete()
+            .eq('user_id', userId)
+            .in('scenario_id', [6022, 6023]);
+        if (questDelErr) {
+            console.error('Error clearing completed quests 6022/6023:', questDelErr);
+        } else {
+            console.log('Successfully cleared completed quests 6022 and 6023.');
+        }
+
         return;
     }
 

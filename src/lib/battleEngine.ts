@@ -168,10 +168,8 @@ export function buildBattleDeck(
         }
     }
 
-    // 4. v4.1 案A: 最小デッキ枚数の保証（min(手札上限×2, 12)）
-    // 手札上限を取得
-    const handSize = userLevel >= 30 ? 7 : userLevel >= 20 ? 6 : userLevel >= 5 ? 5 : 4;
-    const MIN_DECK_SIZE = Math.max(handSize * 2, 12);
+    // v35.0: バトル開始時の最小山札（デッキ）枚数を一律で15枚に引き上げ・統一
+    const MIN_DECK_SIZE = 15;
 
     if (finalDeck.length < MIN_DECK_SIZE) {
         // 基本カード10種(ID 1-10)からランダムに補充

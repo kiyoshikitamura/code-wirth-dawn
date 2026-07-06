@@ -17,7 +17,7 @@ NODE,road_03_02,"（妖狐の術か。立ち止まれば幻惑される。直感
 NODE,random_fog,"","{""type"":""random_branch"",""prob"":50,""bg"":""bg_karyu_mountain""}",
 CHOICE,,success,,road_04
 CHOICE,,failure,,lost_01
-NODE,road_04,"意を決して左 of 細道を選ぶ。不意に霧が薄れ、せせらぎの音が聞こえてきた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",road_04_02
+NODE,road_04,"意を決して左の細道を選ぶ。不意に霧が薄れ、せせらぎの音が聞こえてきた。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",road_04_02
 NODE,road_04_02,"（どうやら正しい道を選べたようだ。だが、この空気の重さは何だ？）","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",road_05
 NODE,road_05,"提灯の列は途切れ、周囲には蛍のような淡い光が漂い始めた。妖しき狐火だ。","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",road_05_02
 NODE,road_05_02,"（狐火が道を案内しているかのようだな。それとも、罠へ誘い込んでいるのか？）","{""bg"":""bg_karyu_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",road_06

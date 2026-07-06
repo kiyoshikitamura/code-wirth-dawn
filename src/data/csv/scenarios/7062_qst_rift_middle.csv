@@ -50,7 +50,7 @@ NODE,7062_b5f_adventurer_no_herb,助けようとしたが、癒やし草を所�
 NODE,7062_b5f_adventurer_magic,「魔法のおかげで命が繋がった……恩に着る。十字路の南の先には宝があったが、先に進む道ではなかった。気をつけろ……」,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""justice"":3},""speaker"":""瀕死の冒険者""}",7062_b5f_crossroads_intro
 NODE,7062_b5f_adventurer_ignore,助けを求める声を冷酷に聞き流し、そのまま通路の先へ進んだ。,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""evil"":5}}",7062_b5f_crossroads_intro
 NODE,7062_b5f_adventurer_rob,男の財布から力ずくで500Gを奪い取った！ しかし、男が懐に忍ばせていた自爆トラップが作動した！,"{""bg"":""bg_rift_middle_01"",""type"":""reward"",""alignment_shift"":{""evil"":10},""gold"":500}",7062_b5f_adventurer_rob_dmg
-NODE,7062_b5f_adventurer_rob_dmg,トラップの魔力爆発が直撃し、手痛いダメージを受けた！ (最大HP of 10%ダメージ),"{""bg"":""bg_rift_middle_01"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.10}",7062_b5f_crossroads_intro
+NODE,7062_b5f_adventurer_rob_dmg,トラップの魔力爆発が直撃し、手痛いダメージを受けた！ (最大HPの10%ダメージ),"{""bg"":""bg_rift_middle_01"",""type"":""damage"",""effect_type"":""hp"",""damage_pct"":0.10}",7062_b5f_crossroads_intro
 NODE,7062_b5f_crossroads_intro,瀕死の男をあとにし、ねじれた魔力が激しく渦巻く大広間へと足を踏み入れた。,"{""bg"":""bg_rift_middle_01"",""type"":""text""}",7062_b5f_crossroads
 NODE,7062_b5f_crossroads,目の前には、視界が歪むほどの魔力に包まれた『幻影の十字路』が広がっている。空間が不自然にループしており、正解以外の道はすべてここに戻る。,"{""bg"":""bg_rift_middle_maze"",""type"":""text""}",
 CHOICE,,北の通路を進む,,7062_b5f_cross_north

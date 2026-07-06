@@ -42,7 +42,7 @@ NODE,evening_04,"障子を突き破り、上級の暗殺者たちが一斉にな
 NODE,battle_02,"政敵の放った精鋭の刺客部隊が襲来した！","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_battle_boss"",""enemy_group_id"":446,""type"":""battle""}",
 CHOICE,,win,,over_01
 CHOICE,,lose,,end_failure_01
-NODE,over_01,"激しい斬り合いの末、最後の刺客が崩れ落ちた。屋敷は血と破壊 of 痕にまみれている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",over_02
+NODE,over_01,"激しい斬り合いの末、最後の刺客が崩れ落ちた。屋敷は血と破壊の痕にまみれている。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",over_02
 NODE,over_02,"翌朝。帳簿の改ざんを最後まで見抜けなかった巡検使は、不満げに屋敷を去っていった。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",over_03
 NODE,over_03,"「はぁ……はぁ……助かった……」","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""speaker_name"":""薛"",""type"":""text""}",over_03_02
 NODE,over_03_02,"薛は膝から崩れ落ち、へたり込んで安堵の息を吐いた。","{""bg"":""bg_karyu_palace"",""bgm"":""bgm_quest_calm"",""type"":""text""}",over_04

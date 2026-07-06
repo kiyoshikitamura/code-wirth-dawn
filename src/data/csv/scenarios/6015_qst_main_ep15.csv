@@ -14,14 +14,14 @@ NODE,text_devastation_03,巨大な光の刃で大路ごと薙ぎ払ったよう�
 NODE,text_soldiers_last,崩壊した大聖堂へ続く大通りの陰に、血に塗れた聖騎士たちが身を潜めていた。,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_soldiers_02
 NODE,text_soldiers_02,（彼らの誇り高き白銀の鎧はことごとく砕け、絶望的な死臭が漂っている）,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_soldiers_03
 NODE,text_soldiers_03,「……応援か？ だが、遅すぎた。我らの刃では奴の影すら斬れんのだ」,"{""bg"":""bg_regalia_ruined"",""speaker_name"":""負傷した衛兵隊長"",""type"":""text""}",text_soldiers_04
-NODE,text_soldiers_04,「ミカエルは大聖堂にいる。この地に残る希望 of 種を全て刈り取るためにな」,"{""bg"":""bg_regalia_ruined"",""speaker_name"":""負傷した衛兵隊長"",""type"":""text""}",text_volg_resolve
+NODE,text_soldiers_04,「ミカエルは大聖堂にいる。この地に残る希望の種を全て刈り取るためにな」,"{""bg"":""bg_regalia_ruined"",""speaker_name"":""負傷した衛兵隊長"",""type"":""text""}",text_volg_resolve
 NODE,text_volg_resolve,「最後の一体、天軍の長か。闘気の格が今までの奴らとは段違いだぜ」,"{""bg"":""bg_regalia_ruined"",""speaker_name"":""ヴォルグ"",""type"":""text""}",text_volg_resolve_02
 NODE,text_volg_resolve_02,「だが関係ねえ。俺たちが行く先々で大天使どもを蹴散らしてきたんだ」,"{""bg"":""bg_regalia_ruined"",""speaker_name"":""ヴォルグ"",""type"":""text""}",text_volg_resolve_03
 NODE,text_volg_resolve_03,「最強の天使だろうが、やることは同じだ。その傲慢な首を切り落とす」,"{""bg"":""bg_regalia_ruined"",""speaker_name"":""ヴォルグ"",""type"":""text""}",text_cathedral
 NODE,text_cathedral,あなたはヴォルグと共に、犠牲者の血で染まった大聖堂の石段を駆け上がる。,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_cathedral_02
 NODE,text_cathedral_02,かつて荘厳を誇った白亜の尖塔は半壊し、砕け散った硝子が月光に煌めく.,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_cathedral_03
 NODE,text_cathedral_03,（聖者の彫像すら首から上を失っている。神々の無慈悲さに胸が痛むな）,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_cathedral_04
-NODE,text_cathedral_04,聖堂の前に広がる礼拝広場には、天を貫くほどの巨大な神威 of 光柱が聳える。,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_michael_throne
+NODE,text_cathedral_04,聖堂の前に広がる礼拝広場には、天を貫くほどの巨大な神威の光柱が聳える。,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_michael_throne
 NODE,text_michael_throne,砕け散った聖者の石像を積み上げた、即席の玉座に傲然と腰掛ける巨軀。,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_michael_throne_02
 NODE,text_michael_throne_02,背に翻るのは輝く白銀の六翼。その手には凄まじい熱線の光刃が握られている。,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_michael_throne_03
 NODE,text_michael_throne_03,（他の大天使とは存在感が違う。見るだけで膝が折れそうな威圧感だ）,"{""bg"":""bg_regalia_ruined"",""type"":""text""}",text_apostle_elite
