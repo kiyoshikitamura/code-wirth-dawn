@@ -456,8 +456,8 @@ function InnPageInner() {
                 {(() => {
                     const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                     
-                    const isStatusRecommended = !isTourActive && !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && !visitedStatus;
-                    const isSettingsRecommended = !isTourActive && !!userProfile && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && visitedStatus && !visitedSettings;
+                    const isStatusRecommended = !isTourActive && !!userProfile && !userProfile.is_tutorial_completed && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && !visitedStatus;
+                    const isSettingsRecommended = !isTourActive && !!userProfile && !userProfile.is_tutorial_completed && (userProfile.level || 1) < 3 && isEp1Cleared && partyMembers.length > 0 && visitedGuild && visitedAcademy && visitedShop && visitedBilling && visitedStatus && !visitedSettings;
                     
                     return (
                         <InnHeader 
@@ -503,7 +503,7 @@ function InnPageInner() {
                     isHub={isHub}
                     isGossipRecommended={(() => {
                         if (isTourActive) return false;
-                        if (userProfile && (userProfile.level || 1) >= 3) return false; // Lv3以上バイパス
+                        if (userProfile && ((userProfile.level || 1) >= 3 || userProfile.is_tutorial_completed)) return false; // Lv3以上またはチュートリアル完了でバイパス
                         const completedQuests = useGameStore.getState().completedQuests;
                         const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                         const clearedCount = completedQuests?.length ?? 0;
@@ -518,7 +518,7 @@ function InnPageInner() {
 
                 {/* 目的ガイダンスバナー (Onboarding Banner) */}
                 {(() => {
-                    if (userProfile && (userProfile.level || 1) >= 3) return null; // Lv3以上バイパス
+                    if (userProfile && ((userProfile.level || 1) >= 3 || userProfile.is_tutorial_completed)) return null; // Lv3以上またはチュートリアル完了でバイパス
 
                     const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
                     let bannerText = '';
@@ -592,7 +592,7 @@ function InnPageInner() {
                             else if (onboardingTourStep === '6') recommendedFacility = 'guild';
                         } else {
                             const isEp1Cleared = completedQuests?.some(q => q.scenario_id === 6001 || String(q.scenario_id) === '6001') ?? false;
-                            if (userProfile && (userProfile.level || 1) >= 3) {
+                            if (userProfile && ((userProfile.level || 1) >= 3 || userProfile.is_tutorial_completed)) {
                                 recommendedFacility = null;
                             } else if (!isEp1Cleared) {
                                 recommendedFacility = 'guild';
