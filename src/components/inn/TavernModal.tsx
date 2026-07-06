@@ -8,6 +8,7 @@ import { getNpcForLocation } from '@/lib/getNpcForLocation';
 import { toJpJobClass } from '@/lib/jobClass';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 import { useGameStore } from '@/store/gameStore';
+import HeroicRecordsModal from './HeroicRecordsModal';
 
 interface TavernModalProps {
     isOpen: boolean;
@@ -77,6 +78,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [heroicHallList, setHeroicHallList] = useState<ShadowSummary[]>([]);
     const [heroicHallLoading, setHeroicHallLoading] = useState(false);
     const [dismissing, setDismissing] = useState(false);
+    const [showHeroicRecords, setShowHeroicRecords] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -741,10 +743,19 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             ) : (
                                 /* ===== 英霊の間タブ (v4.1) ===== */
                                 <div className="space-y-2">
-                                    <div className="bg-amber-50/60 border border-amber-400/40 rounded-lg p-3 mb-2">
-                                        <h3 className="text-sm font-bold text-[#3e2723] font-serif mb-1 flex items-center gap-1.5">
-                                            <Crown size={14} className="text-amber-600" />英霊の間
-                                        </h3>
+                                    <div className="bg-amber-50/60 border border-amber-400/40 rounded-lg p-3 mb-2 flex flex-col gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-bold text-[#3e2723] font-serif flex items-center gap-1.5">
+                                                <Crown size={14} className="text-amber-600" />英霊の間
+                                            </h3>
+                                            <button
+                                                onClick={() => setShowHeroicRecords(true)}
+                                                className="px-2.5 py-1 bg-[#5d4037] hover:bg-[#4e342e] text-[10px] font-bold text-[#e3d5b8] rounded transition-colors flex items-center gap-1 shadow-sm border border-[#3e2723]/30"
+                                            >
+                                                <Star size={10} className="fill-amber-400 text-amber-400" />
+                                                英霊の記録から雇う
+                                            </button>
+                                        </div>
                                         <p className="text-[11px] text-[#5d4037] leading-relaxed">
                                             かつてこの世界を旅した冒険者たちの魂。
                                         </p>
@@ -1047,6 +1058,12 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                     )}
                 </div>
             </div>
+        )}
+        {showHeroicRecords && (
+            <HeroicRecordsModal
+                userId={userProfile.id}
+                onClose={() => setShowHeroicRecords(false)}
+            />
         )}
         </>,
         document.body
