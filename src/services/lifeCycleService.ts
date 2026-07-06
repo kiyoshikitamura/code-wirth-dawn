@@ -167,24 +167,37 @@ export class LifeCycleService {
 
                 const currentCount = count || 0;
 
-                // 上限に達している、または上限を超えている場合、指定された英霊（または最古の英霊）を削除して空きを作る
+                // 上限に達している、または上限を超えている場合、上限（heroicLimit）に収まるように超過分を削除する
                 if (currentCount >= heroicLimit && existingHeroics) {
-                    let memberToDelete = null;
+                    const toDeleteIds = new Set<string>();
+                    
+                    // 1. 手動で上書き指定された英霊を削除対象に加える
                     if (options?.replaceHeroicId) {
-                        memberToDelete = existingHeroics.find(h => String(h.id) === String(options.replaceHeroicId));
+                        const memberToDelete = existingHeroics.find(h => String(h.id) === String(options.replaceHeroicId));
+                        if (memberToDelete) {
+                            toDeleteIds.add(String(memberToDelete.id));
+                        }
                     }
 
-                    if (memberToDelete) {
-                        await this.supabase.from('party_members').delete().eq('id', memberToDelete.id);
-                        console.log('Heroic replacement: deleted selected heroic', memberToDelete.id);
-                    } else {
-                        // FIFOフォールバック
-                        const excessCount = currentCount - heroicLimit + 1;
-                        const oldestMembers = existingHeroics.slice(0, excessCount);
+                    // 2. 最終的に登録数が上限（heroicLimit）以下になるために必要な総削除数を算出
+                    // 新しい英霊が1体追加されるため、削除後の残存数は最大で (heroicLimit - 1) 体である必要がある
+                    const requiredDeletions = currentCount - heroicLimit + 1;
+                    const remainingDeletionsNeeded = requiredDeletions - toDeleteIds.size;
+
+                    if (remainingDeletionsNeeded > 0) {
+                        // 上書き指定されたもの以外の残りの英霊から、最古のものを順に削除対象に加える
+                        const remainingHeroics = existingHeroics.filter(h => !toDeleteIds.has(String(h.id)));
+                        const oldestMembers = remainingHeroics.slice(0, remainingDeletionsNeeded);
                         for (const member of oldestMembers) {
-                            await this.supabase.from('party_members').delete().eq('id', member.id);
-                            console.log('Heroic FIFO Fallback: deleted oldest heroic', member.id);
+                            toDeleteIds.add(String(member.id));
                         }
+                    }
+
+                    // 3. 削除対象のレコードを一括削除
+                    if (toDeleteIds.size > 0) {
+                        const idsArray = Array.from(toDeleteIds);
+                        await this.supabase.from('party_members').delete().in('id', idsArray);
+                        console.log('Deleted excess heroics to enforce limit:', idsArray);
                     }
                 }
                 // v18: デッキバリデーション — user_skills から装備中スキルを取得
