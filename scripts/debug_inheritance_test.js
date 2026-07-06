@@ -48,6 +48,26 @@ async function run() {
         console.log(`Location ID: ${p.current_location_id}`);
         console.log(`Quest ID:    ${p.current_quest_id || 'None'}`);
 
+        // Fetch completed quests
+        const { data: completed, error: ce } = await supabase
+            .from('user_completed_quests')
+            .select('scenario_id')
+            .eq('user_id', userId);
+
+        if (ce) {
+            console.error('Error fetching completed quests:', ce);
+        } else {
+            console.log('Completed Quests:', completed.map(q => q.scenario_id).join(', '));
+        }
+
+        // Fetch scenario 6015 info
+        const { data: scen, error: seErr } = await supabase
+            .from('scenarios')
+            .select('id, slug, title')
+            .eq('id', 6015)
+            .maybeSingle();
+        console.log('Scenario 6015 in DB:', scen || seErr);
+
         // Fetch heroic spirits count
         const { data: heroics, error: he } = await supabase
             .from('party_members')
