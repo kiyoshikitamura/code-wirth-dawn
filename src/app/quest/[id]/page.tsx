@@ -174,6 +174,27 @@ export default function QuestPage() {
                 // 防衛データを Enemy 形式に変換
                 const enemies = adaptDefensePartyToEnemies(opponent);
                 
+                // questStateの初期化 (戦闘終了時のHP同期やレジュームのため)
+                const equipHpBonus = store.equipBonus?.hp || 0;
+                const playerMaxHp = (store.userProfile?.max_hp || 100) + equipHpBonus;
+                const playerHp = store.userProfile?.hp || playerMaxHp;
+                
+                const partyHp: Record<string, number> = {};
+                if (Array.isArray(store.partyMembers)) {
+                    store.partyMembers.forEach((pm: any) => {
+                        partyHp[String(pm.id)] = pm.hp || pm.max_hp || 100;
+                    });
+                }
+
+                useQuestState.getState().startQuest({
+                    questId: id,
+                    questType: 'special',
+                    playerHp,
+                    playerMaxHp,
+                    partyHp,
+                    currentLocationId: store.userProfile?.current_location_id || undefined
+                });
+
                 // バトル開始状態の設定
                 setViewMode('battle');
                 setBattleBgUrl('/images/quests/bg_colosseum.png');
@@ -506,6 +527,13 @@ export default function QuestPage() {
             setLoading(false);
             return;
         }
+
+        // PvPアリーナの場合はシナリオ・UGCのロードをバイパス
+        if (id.startsWith('pvp_arena_')) {
+            setLoading(false);
+            return;
+        }
+
         async function loadScenario() {
             try {
                 // 最新のユーザー情報を読み込む (コロシアムの場合は最新のロック状態を強制取得するため常にフェッチ)
