@@ -746,7 +746,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             <Crown size={14} className="text-amber-600" />英霊の間
                                         </h3>
                                         <p className="text-[11px] text-[#5d4037] leading-relaxed">
-                                            かつてこの世界を旅した冒険者たちの魂。英霊はより強力なAIで行動し、レベルに応じた特殊効果を発揮します。
+                                            かつてこの世界を旅した冒険者たちの魂。
                                         </p>
                                     </div>
 
