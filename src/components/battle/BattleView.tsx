@@ -967,9 +967,73 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 </div>
             )}
 
-            {/* Enemies Layout — 左:ターゲット大（スプライト表示） / 右:非ターゲット小（アイコンリスト） */}
+            {/* Enemies Layout — 左:ターゲット大（スプライト表示） / 右:非ターゲット小（アイコンリスト） または PvP時の横並び丸型アイコン */}
             <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-2 pb-1 flex-shrink-0">
-                <div className="w-full flex items-center justify-center gap-6 sm:gap-10 px-4">
+                {enemies.some((e: any) => e.is_pvp_player || e.is_pvp_member) ? (
+                    <div className="w-full flex items-start justify-center gap-4 px-4 py-2 overflow-x-auto no-scrollbar">
+                        {enemies.map((enemy) => {
+                            const isTarget = target?.id === enemy.id;
+                            const isDead = enemy.hp <= 0;
+                            return (
+                                <button
+                                    key={enemy.id}
+                                    disabled={isDead}
+                                    onClick={() => {
+                                        if (isTarget) {
+                                            setSelectedEnemyDetail(enemy);
+                                        } else {
+                                            setTarget(enemy.id);
+                                        }
+                                    }}
+                                    className={`flex flex-col items-center flex-shrink-0 active:scale-95 transition-all relative ${
+                                        isDead ? 'opacity-40 grayscale' : ''
+                                    }`}
+                                >
+                                    {/* Target marker border */}
+                                    <div className={`w-11 h-11 rounded-full border-[2.5px] flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm transition-all ${
+                                        isTarget 
+                                            ? 'border-red-500 scale-110 shadow-[0_0_15px_rgba(239,68,68,0.7)]' 
+                                            : 'border-slate-500/60 bg-black/50 hover:border-amber-500/40'
+                                    }`}>
+                                        {enemy.image_url ? (
+                                            <img src={enemy.image_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Skull size={18} className="text-slate-500" />
+                                        )}
+                                    </div>
+
+                                    {/* Floating Damage Numbers for Enemy */}
+                                    {floatingDamages.filter(d => !d.isPlayer && isTarget).map(d => (
+                                        <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy">
+                                            -{d.amount}
+                                        </div>
+                                    ))}
+
+                                    {/* HP Bar */}
+                                    <div className="w-11 h-1.5 mt-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                                        <div 
+                                            className="h-full bg-red-500 transition-all duration-500" 
+                                            style={{ width: `${Math.max(0, Math.min(100, (enemy.hp / (enemy.maxHp || 1)) * 100))}%` }} 
+                                        />
+                                    </div>
+
+                                    {/* Name */}
+                                    <span className="text-[9px] text-slate-200 font-bold w-[48px] text-center truncate mt-0.5 drop-shadow-md">
+                                        {enemy.name}
+                                    </span>
+                                    
+                                    {/* Status badges */}
+                                    {(enemy.status_effects || []).length > 0 && !isDead && (
+                                        <div className="absolute top-0 left-0 -translate-y-1/4 z-30 pointer-events-none">
+                                            <StatusEffectBadges effects={enemy.status_effects || []} size="sm" maxBadges={3} />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="w-full flex items-center justify-center gap-6 sm:gap-10 px-4">
                     {/* LEFT: Target enemy (Sprite) */}
                     {target && (
                         <div className="relative transition-all duration-500 flex flex-col items-center flex-shrink-0 z-20">
@@ -1143,6 +1207,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         );
                     })()}
                 </div>
+                )}
             </div>
 
             {/* PLAYER & PARTY STATUS PANEL */}
@@ -1258,6 +1323,68 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 <div className="mt-1 flex flex-wrap gap-1">
                                     {(selectedPartyMember.skill_names || selectedPartyMember.skills || selectedPartyMember.abilities || []).length > 0 ? (
                                         (selectedPartyMember.skill_names || selectedPartyMember.skills || selectedPartyMember.abilities).map((skill: any, si: number) => (
+                                            <span key={si} className="px-1.5 py-0.5 bg-amber-900/30 border border-amber-800/50 rounded text-[9px] text-amber-300">
+                                                {typeof skill === 'string' ? skill : skill.name || skill}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-[9px] text-slate-500 italic">なし</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Enemy Status Detail Popup */}
+            {selectedEnemyDetail && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEnemyDetail(null)}>
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-[280px] shadow-2xl drop-shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 rounded-full border-2 border-red-500 bg-slate-800 flex items-center justify-center overflow-hidden">
+                                    {selectedEnemyDetail.image_url ? (
+                                        <img src={selectedEnemyDetail.image_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Skull size={18} className="text-red-400" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-200 truncate max-w-[140px]">{selectedEnemyDetail.name || 'エネミー'}</p>
+                                    <p className="text-[9px] text-slate-500">Lv.{selectedEnemyDetail.level || 1} {selectedEnemyDetail.is_pvp_player ? 'プレイヤー (防衛)' : '同行英霊 (防衛)'}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedEnemyDetail(null)} className="text-slate-500 hover:text-slate-300">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="space-y-2 text-[11px]">
+                            {/* HP with PvP scaling information */}
+                            <div className="flex flex-col bg-slate-800/50 rounded px-2.5 py-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-red-400 font-bold">HP</span>
+                                    <span className="text-slate-200 font-mono font-bold">
+                                        {selectedEnemyDetail.hp} / {selectedEnemyDetail.maxHp}
+                                    </span>
+                                </div>
+                                <div className="text-[9px] text-slate-400 mt-1 border-t border-slate-700/50 pt-1 text-right">
+                                    ベース: {selectedEnemyDetail.base_hp || Math.round(selectedEnemyDetail.maxHp / 6)} + PvP補正: +{(selectedEnemyDetail.base_hp || Math.round(selectedEnemyDetail.maxHp / 6)) * 5}
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-red-400 font-bold">攻撃力</span>
+                                <span className="text-slate-200 font-mono">{selectedEnemyDetail.atk || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-sky-400 font-bold">防御力</span>
+                                <span className="text-slate-200 font-mono">{selectedEnemyDetail.def || 0}</span>
+                            </div>
+                            <div className="bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-amber-400 font-bold text-[10px]">所持スキル (デッキ)</span>
+                                <div className="mt-1 flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
+                                    {(selectedEnemyDetail.signature_deck || []).length > 0 ? (
+                                        selectedEnemyDetail.signature_deck.map((skill: any, si: number) => (
                                             <span key={si} className="px-1.5 py-0.5 bg-amber-900/30 border border-amber-800/50 rounded text-[9px] text-amber-300">
                                                 {typeof skill === 'string' ? skill : skill.name || skill}
                                             </span>

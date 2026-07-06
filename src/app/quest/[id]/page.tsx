@@ -18,6 +18,65 @@ import { Swords, ScrollText } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { soundManager } from '@/lib/soundManager';
 
+// PvP防衛パーティをエネミー配列に変換するアダプター
+function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
+    const enemies: Enemy[] = [];
+    
+    // 1. 防衛プレイヤー自身 (ボス扱い)
+    const playerSnapshot = opponent.player_snapshot;
+    const baseHp = playerSnapshot.hp || 100;
+    const finalHp = baseHp * 6; // 6倍補正
+    
+    const playerEnemy: any = {
+        id: opponent.user_id,
+        name: opponent.user_name,
+        level: playerSnapshot.level || 1,
+        hp: finalHp,
+        maxHp: finalHp,
+        atk: playerSnapshot.atk || 10,
+        def: playerSnapshot.def || 10,
+        image_url: playerSnapshot.avatar_url || opponent.avatar_url || '/images/npcs/default.png',
+        origin_type: 'shadow_heroic', // smart AIを適用
+        ai_role: 'striker',
+        signature_deck: opponent.skill_deck_snapshot || [],
+        status_effects: [],
+        current_ap: 6, // 初期APは6
+        is_pvp_player: true,
+        base_hp: baseHp,
+        hp_multiplier: 6
+    };
+    enemies.push(playerEnemy);
+    
+    // 2. 防衛メンバーたち (お供エネミー扱い)
+    const members = opponent.party_members_snapshot || [];
+    members.forEach((m: any) => {
+        const mBaseHp = m.hp || 100;
+        const mFinalHp = mBaseHp * 6;
+        
+        const memberEnemy: any = {
+            id: m.id,
+            name: m.name,
+            level: m.level || 1,
+            hp: mFinalHp,
+            maxHp: mFinalHp,
+            atk: m.atk || 10,
+            def: m.def || 10,
+            image_url: m.icon_url || m.image_url || '/images/npcs/default.png',
+            origin_type: 'shadow_heroic', // smart AIを適用
+            ai_role: m.job_class?.toLowerCase().includes('cleric') || m.job_class?.toLowerCase().includes('priest') ? 'medic' : 'striker',
+            signature_deck: m.signature_deck_snapshot || [],
+            status_effects: [],
+            current_ap: 6,
+            is_pvp_member: true,
+            base_hp: mBaseHp,
+            hp_multiplier: 6
+        };
+        enemies.push(memberEnemy);
+    });
+    
+    return enemies;
+}
+
 export default function QuestPage() {
     const params = useParams();
     const router = useRouter();
@@ -105,6 +164,30 @@ export default function QuestPage() {
     const [battleBgm, setBattleBgm] = useState<string>('bgm_battle'); // CSVのbattle BGMを保持
 
     useAuthGuard(); // タイトル画面経由チェック
+
+    // PvP アリーナ用戦闘自動開始処理
+    useEffect(() => {
+        if (id && id.startsWith('pvp_arena_')) {
+            const store = useGameStore.getState();
+            const opponent = (store as any).pvpOpponent;
+            if (opponent) {
+                // 防衛データを Enemy 形式に変換
+                const enemies = adaptDefensePartyToEnemies(opponent);
+                
+                // バトル開始状態の設定
+                setViewMode('battle');
+                setBattleBgUrl('/images/quests/bg_colosseum.png');
+                setBattleBgm('bgm_battle_boss');
+                
+                // バトルの起動
+                store.startBattle(enemies).then();
+            } else {
+                console.warn('[QuestPage] pvpOpponent data not found in store, returning to inn');
+                useQuestState.getState().resetQuestState();
+                router.push('/inn');
+            }
+        }
+    }, [id, router]);
 
     const [prefetchedResult, setPrefetchedResult] = useState<{
         result: 'success' | 'failure' | 'success_retreat';
@@ -946,6 +1029,44 @@ export default function QuestPage() {
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
         if (isProcessingEndRef.current) return;
         isProcessingEndRef.current = true;
+
+        // 非同期PvP（アリーナ戦）の終了処理
+        if (id && id.startsWith('pvp_arena_')) {
+            const opponentId = id.replace('pvp_arena_', '');
+            const storeState = useGameStore.getState();
+            const opponentName = storeState.battleState?.enemies?.[0]?.name || '対戦相手';
+            const isVictory = result === 'win';
+
+            try {
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                };
+
+                const completeRes = await fetch('/api/pvp/complete', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        is_victory: isVictory,
+                        opponent_id: opponentId,
+                        opponent_name: opponentName
+                    })
+                });
+
+                if (completeRes.ok) {
+                    const pvpResult = await completeRes.json();
+                    alert(`戦闘終了！ ${isVictory ? '勝利しました！' : '敗北しました。'}\nレート変動: ${pvpResult.rating_change >= 0 ? '+' : ''}${pvpResult.rating_change} (現在: ${pvpResult.rating})`);
+                }
+            } catch (e) {
+                console.error('[PvP Complete] Failed to send pvp completion:', e);
+            }
+
+            // クエスト状態をクリアして宿屋に戻る
+            useQuestState.getState().resetQuestState();
+            router.push('/inn');
+            return;
+        }
 
         try {
             localStorage.removeItem('pending_quest_resume');

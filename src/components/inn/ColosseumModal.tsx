@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
-import { Swords, Trophy, X, BookOpen } from 'lucide-react';
+import { Swords, Trophy, X, BookOpen, User } from 'lucide-react';
 import ColosseumRankingModal from './ColosseumRankingModal';
+import ColosseumPvPModal from './ColosseumPvPModal';
 
 interface ColosseumModalProps {
     onClose: () => void;
@@ -13,8 +14,43 @@ interface ColosseumModalProps {
 
 export default function ColosseumModal({ onClose }: ColosseumModalProps) {
     const [mounted, setMounted] = useState(false);
+    const [mode, setMode] = useState<'select' | 'pve' | 'pvp' | null>(null);
+
     useEffect(() => {
         setMounted(true);
+
+        // 1. 環境変数チェック
+        let isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
+
+        // 2. クライアントサイドでのドメインによるフォールバック判定（プレビューURL自動検出）
+        if (typeof window !== 'undefined') {
+            const host = window.location.hostname;
+            const isLocal = host === 'localhost' || host === '127.0.0.1';
+            // 本番ドメイン以外の vercel.app サブドメイン（ブランチ毎のプレビュー用一時ドメインなど）をプレビューと見なす
+            const isVercelPreview = host.includes('.vercel.app') && host !== 'code-wirth-dawn.vercel.app';
+            if (isLocal || isVercelPreview) {
+                isPreview = true;
+            }
+        }
+
+        setMode(isPreview ? 'select' : 'pve');
+
+        // コロシアムに入場したタイミングで、現在の構成を防衛パーティとして自動登録・更新する
+        const autoRegisterDefense = async () => {
+            try {
+                const authHeaders = await getAuthHeaders();
+                await fetch('/api/pvp/defense', {
+                    method: 'POST',
+                    headers: {
+                        ...authHeaders
+                    }
+                });
+                console.log('[Colosseum] Auto registered/updated PvP defense party.');
+            } catch (e) {
+                console.warn('[Colosseum] Auto defense registration failed:', e);
+            }
+        };
+        autoRegisterDefense();
     }, []);
 
     const router = useRouter();
@@ -69,6 +105,83 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
             setLoading(false);
         }
     };
+
+    if (mode === 'pvp') {
+        return <ColosseumPvPModal onClose={onClose} />;
+    }
+
+    if (mode === 'select') {
+        return createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="relative w-full max-w-lg bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[90vh]">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#11203b]/80 border-b border-[#1e345b]">
+                        <div className="flex items-center gap-2 text-amber-400">
+                            <Swords size={20} className="animate-pulse" />
+                            <h2 className="font-black tracking-widest text-lg text-slate-100">闘技場 (コロシアム)</h2>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-center space-y-6">
+                        <div className="text-center space-y-2">
+                            <h3 className="text-base font-bold text-slate-100">どちらの戦闘に挑戦しますか？</h3>
+                            <p className="text-xs text-slate-400 font-medium">実力を競い合う対人戦と、難易度別のボス勝ち抜き戦が選択できます。</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Left: PvP */}
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setMode('pvp');
+                                }}
+                                className="flex flex-col items-center justify-center p-6 bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+                            >
+                                <Swords size={40} className="text-amber-400 mb-3 group-hover:animate-bounce" />
+                                <span className="text-base font-black text-slate-100">対人戦</span>
+                                <p className="text-[10px] text-slate-400 mt-2 leading-relaxed font-medium">
+                                    他ユーザーの防衛デッキと真剣勝負
+                                </p>
+                            </button>
+
+                            {/* Right: PvE */}
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setMode('pve');
+                                }}
+                                className="flex flex-col items-center justify-center p-6 bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+                            >
+                                <Trophy size={40} className="text-amber-500/80 mb-3 group-hover:animate-bounce" />
+                                <span className="text-base font-black text-slate-100">ボス戦</span>
+                                <p className="text-[10px] text-slate-400 mt-2 leading-relaxed font-medium">
+                                    難易度別の勝ち抜き戦<br />モンスターエネミーに挑む
+                                </p>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-[#0b1220] border-t border-[#1e345b] flex justify-end">
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2.5 bg-[#11203b] border border-[#233f6d] rounded-xl hover:bg-[#1a2e52] hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
+                        >
+                            キャンセル
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        );
+    }
 
     if (showRankings) {
         return <ColosseumRankingModal onClose={() => setShowRankings(false)} />;
