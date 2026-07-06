@@ -18,14 +18,23 @@ export async function GET(req: Request) {
 
         const client = supabaseServer;
 
-        // party_members から shadow_heroic で is_active = true のレコードを取得
+        // ユーザーのプランを取得 (Premium割引判定のため)
+        const { data: profile } = await client
+            .from('user_profiles')
+            .select('subscription_tier')
+            .eq('id', userId)
+            .maybeSingle();
+        const tier = profile?.subscription_tier || 'free';
+        const isPremium = tier === 'premium';
+
+        // party_members から shadow_heroic で is_active = false のレコードを1体取得（レベル降順）
         const { data: heroics, error } = await client
             .from('party_members')
             .select('id, name, epithet, level, job_class, atk, def, max_durability, durability, image_url, inject_cards, source_user_id, owner_id, created_at, last_hired_at, snapshot_data')
             .eq('origin_type', 'shadow_heroic')
             .eq('is_active', false)
             .order('level', { ascending: false })
-            .limit(10);
+            .limit(1);
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
@@ -34,7 +43,10 @@ export async function GET(req: Request) {
         // ShadowSummary 形式に変換
         const heroicList = (heroics || []).map(h => {
             const snapshot = h.snapshot_data as any;
-            // カード名は inject_cards から取得できないため、IDのみ返す
+            const isOwn = h.owner_id === userId;
+            const baseFee = 5000 + ((h.level || 1) * 1000); // HIRE_HEROIC_BASE + HIRE_HEROIC_PER_LEVEL
+            const contractFee = (isPremium && isOwn) ? Math.floor(baseFee * 0.5) : baseFee;
+
             return {
                 profile_id: h.id,
                 name: h.name,
@@ -42,19 +54,19 @@ export async function GET(req: Request) {
                 level: h.level || 1,
                 job_class: h.job_class || 'Adventurer',
                 origin_type: 'shadow_heroic' as const,
-                contract_fee: 5000 + ((h.level || 1) * 1000), // HIRE_HEROIC_BASE + HIRE_HEROIC_PER_LEVEL
+                contract_fee: contractFee,
                 stats: {
                     hp: h.max_durability || 100,
                     atk: h.atk || 0,
                     def: h.def || 0,
                 },
                 signature_deck_preview: [] as string[],
-                subscription_tier: 'free',
+                subscription_tier: tier,
                 icon_url: h.image_url,
                 image_url: h.image_url,
                 npc_image_url: h.image_url,
                 source_user_id: h.source_user_id,
-                is_own: h.owner_id === userId || h.source_user_id === userId,
+                is_own: isOwn || h.source_user_id === userId,
                 equipped_items: snapshot?.equipped_items || [],
             };
         });
