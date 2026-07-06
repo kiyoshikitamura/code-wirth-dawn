@@ -273,7 +273,126 @@ async function run() {
         return;
     }
 
-    console.error(`Unknown command '${cmd}'. Use: status, kill, active, set-tier <tier>, set-lp <value>, ready-6023, ready-6022, revive`);
+    if (cmd === 'restore-profile') {
+        console.log(`[Restore-Profile] Fetching latest historical log for user ${userId}...`);
+        const { data: log, error: logErr } = await supabase
+            .from('historical_logs')
+            .select('*')
+            .eq('user_id', userId)
+            .order('death_date', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (logErr) {
+            console.error('Error fetching historical log:', logErr);
+            return;
+        }
+
+        if (!log) {
+            console.error('No historical log found. Cannot restore.');
+            return;
+        }
+
+        const snapshot = log.data;
+        console.log('Restoring from death date:', log.death_date);
+
+        // 1. Restore user_profiles stats to pre-death state
+        const { error: profErr } = await supabase
+            .from('user_profiles')
+            .update({
+                is_alive: true,
+                level: 20,
+                gold: 79900,
+                legacy_points: 0,
+                vitality: 86,
+                max_vitality: 96,
+                hp: 96,
+                max_hp: 96,
+                atk: 25,
+                def: 20,
+                current_quest_id: null
+            })
+            .eq('id', userId);
+
+        if (profErr) {
+            console.error('Error restoring profile stats:', profErr);
+            return;
+        }
+        console.log('Successfully restored user_profiles stats.');
+
+        // 2. Delete the registered heroic spirit from party_members
+        const { error: heroicErr } = await supabase
+            .from('party_members')
+            .delete()
+            .eq('owner_id', userId)
+            .eq('origin_type', 'shadow_heroic');
+
+        if (heroicErr) {
+            console.error('Error deleting registered heroic spirit:', heroicErr);
+        } else {
+            console.log('Successfully deleted the registered heroic spirit.');
+        }
+
+        // 3. Delete the retired character record in retired_characters
+        const { error: retiredErr } = await supabase
+            .from('retired_characters')
+            .delete()
+            .eq('user_id', userId);
+
+        if (retiredErr) {
+            console.error('Error deleting retired character record:', retiredErr);
+        } else {
+            console.log('Successfully deleted the retired character record.');
+        }
+
+        // 4. Restore inventory items
+        console.log('Restoring inventory items from snapshot...');
+        await supabase.from('inventory').delete().eq('user_id', userId);
+
+        if (snapshot.heirloom_item_ids && snapshot.heirloom_item_ids.length > 0) {
+            const inserts = snapshot.heirloom_item_ids.map(id => ({
+                user_id: userId,
+                item_id: Number(id),
+                quantity: 1,
+                is_equipped: false
+            }));
+            const { error: invErr } = await supabase.from('inventory').insert(inserts);
+            if (invErr) {
+                console.error('Error inserting inventory items:', invErr);
+            } else {
+                console.log('Successfully restored inventory items:', snapshot.heirloom_item_ids);
+            }
+        }
+
+        // 5. Delete the latest historical log
+        const { error: delLogErr } = await supabase
+            .from('historical_logs')
+            .delete()
+            .eq('id', log.id);
+        if (delLogErr) {
+            console.error('Error deleting historical log:', delLogErr);
+        } else {
+            console.log('Successfully deleted the temporary historical log.');
+        }
+
+        return;
+    }
+
+    if (cmd === 'dump-logs') {
+        console.log(`[Dump-Logs] Fetching historical logs for user ${userId}...`);
+        const { data: logs, error } = await supabase
+            .from('historical_logs')
+            .select('*')
+            .eq('user_id', userId);
+        if (error) {
+            console.error('Error fetching logs:', error);
+        } else {
+            console.log(JSON.stringify(logs, null, 2));
+        }
+        return;
+    }
+
+    console.error(`Unknown command '${cmd}'. Use: status, kill, active, set-tier <tier>, set-lp <value>, ready-6023, ready-6022, revive, dump-logs`);
 }
 
 run();

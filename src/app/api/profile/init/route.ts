@@ -75,6 +75,7 @@ export async function POST(req: Request) {
             age: age ?? 20,
             birth_date: birth_date || null, // V9.2
             accumulated_days: 0,
+            level: 1, // Reset level to 1 on inheritance/start
             // gold: gold || 1000, // Determined by processInheritance below
             vitality: max_vitality ?? 100, // Ensure defaults or use calculated
             max_vitality: max_vitality ?? 100,
