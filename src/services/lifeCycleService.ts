@@ -220,27 +220,36 @@ export class LifeCycleService {
                 const { data: equipped } = await this.supabase
                     .from('equipped_items')
                     .select(`
+                        slot,
                         items (
-                            id, effect_data
+                            id, name, effect_data
                         )
                     `)
                     .eq('user_id', userId);
 
                 const bonus = { atk: 0, def: 0, hp: 0 };
                 const battleStartBuffs = [];
+                const equippedItemsList: any[] = [];
 
                 if (equipped) {
                     for (const eq of equipped) {
-                        const eff = (eq as any).items?.effect_data;
-                        if (eff) {
-                            bonus.atk += eff.atk_bonus || 0;
-                            bonus.def += eff.def_bonus || 0;
-                            bonus.hp += eff.hp_bonus || 0;
-                            if (eff.battle_start_buff) {
-                                if (Array.isArray(eff.battle_start_buff)) {
-                                    battleStartBuffs.push(...eff.battle_start_buff);
-                                } else {
-                                    battleStartBuffs.push(eff.battle_start_buff);
+                        const item = (eq as any).items;
+                        if (item) {
+                            equippedItemsList.push({
+                                slot: eq.slot,
+                                name: item.name
+                            });
+                            const eff = item.effect_data;
+                            if (eff) {
+                                bonus.atk += eff.atk_bonus || 0;
+                                bonus.def += eff.def_bonus || 0;
+                                bonus.hp += eff.hp_bonus || 0;
+                                if (eff.battle_start_buff) {
+                                    if (Array.isArray(eff.battle_start_buff)) {
+                                        battleStartBuffs.push(...eff.battle_start_buff);
+                                    } else {
+                                        battleStartBuffs.push(eff.battle_start_buff);
+                                    }
                                 }
                             }
                         }
@@ -272,6 +281,7 @@ export class LifeCycleService {
                         hp: profile.max_hp,
                         deck: heroicDeck,
                         equipped_bonus: bonus,
+                        equipped_items: equippedItemsList,
                         battle_start_buffs: battleStartBuffs,
                         blessing_data: profile.blessing_data || null,
                     },
