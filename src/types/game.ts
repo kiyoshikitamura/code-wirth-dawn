@@ -137,6 +137,7 @@ export interface UserProfile {
 
   age?: number;
   accumulated_days?: number;
+  world_elapsed_days?: number;
   previous_location_id?: string;
   level?: number;
   exp?: number;
@@ -174,6 +175,8 @@ export interface UserProfile {
   is_anonymous?: boolean; // v16.0: テストプレイフラグ
   last_name_change?: string; // v16.2: 最終名前変更日時（ISO 8601）
   is_tutorial_completed?: boolean;
+  is_alive?: boolean;
+  legacy_points?: number;
 }
 
 // ...
@@ -250,7 +253,8 @@ export interface UserProfileDB {
   accumulated_days?: number;
   is_tutorial_completed?: boolean;
   is_anonymous?: boolean;
-  // ...
+  is_alive?: boolean;
+  legacy_points?: number;
 }
 
 export interface UserCompletedQuestDB {

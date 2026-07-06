@@ -13,7 +13,7 @@ NODE,intel_04_02,"酒場の主人が青ざめた顔でそう忠告してくれ�
 NODE,night_01,"夜半過ぎ。月が雲に隠れたのを見計らい、用意した小舟を静かに漕ぎ出す。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_02
 NODE,night_02,"岬を大回りして迂回する。海は墨を流したように暗く、潮の匂いが鼻をつく。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",night_03
 NODE,night_03,"波の音だけが響く中、遠くの暗闇にポツンと浮かぶ入り江の松明が見えてきた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",cove_01
-NODE,cove_01,"入り江の奥に接近する。情報通り、三隻 of 船が寄り添うように停泊していた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",cove_02
+NODE,cove_01,"入り江の奥に接近する。情報通り、三隻の船が寄り添うように停泊していた。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",cove_02
 NODE,cove_02,"一番巨大な旗艦の舷側から、太い錨の鎖が海面に向かってぶら下がっている。あそこから登れそうだ。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",climb_01
 NODE,climb_01,"小舟を密かに接舷させ、濡れて滑る重い鎖を力一杯握りしめる。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",climb_01_02
 NODE,climb_01_02,"冷たい夜露と潮水が鎖を滑りやすくしている。一歩誤れば暗い海へ真っ逆さまだ。","{""bg"":""bg_karyu_coast"",""bgm"":""bgm_quest_tense"",""type"":""text""}",climb_01_03

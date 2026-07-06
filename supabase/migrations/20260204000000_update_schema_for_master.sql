@@ -86,6 +86,9 @@ ALTER TABLE party_members ENABLE ROW LEVEL SECURITY;
 -- Owners see their own members. Everyone sees Pool members (owner_id NULL).
 CREATE POLICY "Users see own and pool members" ON party_members 
     FOR SELECT USING (auth.uid() = owner_id OR owner_id IS NULL);
+DROP POLICY IF EXISTS "Users can delete own party members" ON party_members;
+CREATE POLICY "Users can delete own party members" ON party_members 
+    FOR DELETE TO authenticated USING (auth.uid() = owner_id);
 
 
 -- 4. Recreate Inventory (referencing new Items ID)

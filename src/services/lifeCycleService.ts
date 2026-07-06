@@ -6,6 +6,7 @@ interface DeathOptions {
     heirloomItemIds?: string[];
     allowedSlots?: number;
     paidGold?: number;
+    replaceHeroicId?: number | string;
 }
 
 export class LifeCycleService {
@@ -37,14 +38,14 @@ export class LifeCycleService {
             // 2. Calculate Legacy Points
             let legacyPoints = (profile.accumulated_days * 10) + (profile.level * 100);
             const tier = profile.subscription_tier ?? 'free';
-            if (tier !== 'free') {
-                legacyPoints = Math.floor(legacyPoints * 1.5);
-            }
+            const lpMultiplier = tier === 'premium' ? 1.5 : (tier === 'basic' ? 1.2 : 1.0);
+            legacyPoints = Math.floor(legacyPoints * lpMultiplier);
 
             // 3. Create Snapshot Data（タスク2: 形見情報をスナップショットに含める）
             const snapshotData = {
                 final_level: profile.level,
                 final_gold: profile.gold,
+                max_deck_cost: profile.max_deck_cost,
                 stats: {
                     atk: profile.attack,
                     def: profile.defense,
@@ -151,10 +152,10 @@ export class LifeCycleService {
             }
 
             // 6. 英霊登録（仕様: spec_v13 §4, spec_v10 §3.2）
-            //    free:不可 / basic:最大3体 / premium:最大10体
+            //    free:最大1体 / basic:最大3体 / premium:最大10体
             //    上限到達時はFIFO（最古の英霊を削除して新規登録）
             const herTier = profile.subscription_tier ?? 'free';
-            const heroicLimit = herTier === 'premium' ? 10 : herTier === 'basic' ? 3 : 0;
+            const heroicLimit = herTier === 'premium' ? 10 : herTier === 'basic' ? 3 : 1;
 
             if (heroicLimit > 0) {
                 const { count, data: existingHeroics } = await this.supabase
@@ -166,15 +167,24 @@ export class LifeCycleService {
 
                 const currentCount = count || 0;
 
-                // FIFO: 上限に達している、または上限を超えている場合、最古の英霊から順に削除して空きを作る
+                // 上限に達している、または上限を超えている場合、指定された英霊（または最古の英霊）を削除して空きを作る
                 if (currentCount >= heroicLimit && existingHeroics) {
-                    // 何体削除する必要があるか計算 (新規追加する1体分も考慮)
-                    const excessCount = currentCount - heroicLimit + 1;
-                    const oldestMembers = existingHeroics.slice(0, excessCount);
-                    
-                    for (const member of oldestMembers) {
-                        await this.supabase.from('party_members').delete().eq('id', member.id);
-                        console.log('Heroic FIFO: deleted heroic', member.id);
+                    let memberToDelete = null;
+                    if (options?.replaceHeroicId) {
+                        memberToDelete = existingHeroics.find(h => String(h.id) === String(options.replaceHeroicId));
+                    }
+
+                    if (memberToDelete) {
+                        await this.supabase.from('party_members').delete().eq('id', memberToDelete.id);
+                        console.log('Heroic replacement: deleted selected heroic', memberToDelete.id);
+                    } else {
+                        // FIFOフォールバック
+                        const excessCount = currentCount - heroicLimit + 1;
+                        const oldestMembers = existingHeroics.slice(0, excessCount);
+                        for (const member of oldestMembers) {
+                            await this.supabase.from('party_members').delete().eq('id', member.id);
+                            console.log('Heroic FIFO Fallback: deleted oldest heroic', member.id);
+                        }
                     }
                 }
                 // v18: デッキバリデーション — user_skills から装備中スキルを取得
@@ -210,27 +220,36 @@ export class LifeCycleService {
                 const { data: equipped } = await this.supabase
                     .from('equipped_items')
                     .select(`
+                        slot,
                         items (
-                            id, effect_data
+                            id, name, effect_data
                         )
                     `)
                     .eq('user_id', userId);
 
                 const bonus = { atk: 0, def: 0, hp: 0 };
                 const battleStartBuffs = [];
+                const equippedItemsList: any[] = [];
 
                 if (equipped) {
                     for (const eq of equipped) {
-                        const eff = (eq as any).items?.effect_data;
-                        if (eff) {
-                            bonus.atk += eff.atk_bonus || 0;
-                            bonus.def += eff.def_bonus || 0;
-                            bonus.hp += eff.hp_bonus || 0;
-                            if (eff.battle_start_buff) {
-                                if (Array.isArray(eff.battle_start_buff)) {
-                                    battleStartBuffs.push(...eff.battle_start_buff);
-                                } else {
-                                    battleStartBuffs.push(eff.battle_start_buff);
+                        const item = (eq as any).items;
+                        if (item) {
+                            equippedItemsList.push({
+                                slot: eq.slot,
+                                name: item.name
+                            });
+                            const eff = item.effect_data;
+                            if (eff) {
+                                bonus.atk += eff.atk_bonus || 0;
+                                bonus.def += eff.def_bonus || 0;
+                                bonus.hp += eff.hp_bonus || 0;
+                                if (eff.battle_start_buff) {
+                                    if (Array.isArray(eff.battle_start_buff)) {
+                                        battleStartBuffs.push(...eff.battle_start_buff);
+                                    } else {
+                                        battleStartBuffs.push(eff.battle_start_buff);
+                                    }
                                 }
                             }
                         }
@@ -262,6 +281,7 @@ export class LifeCycleService {
                         hp: profile.max_hp,
                         deck: heroicDeck,
                         equipped_bonus: bonus,
+                        equipped_items: equippedItemsList,
                         battle_start_buffs: battleStartBuffs,
                         blessing_data: profile.blessing_data || null,
                     },
@@ -286,59 +306,45 @@ export class LifeCycleService {
      * Spec v10: Gold, Reputation, Heirloom
      * タスク2: historical_logs から heirloom_item_ids を読み込み inventory に INSERT する。
      */
-    async processInheritance(userId: string, newProfileData: any, heirloomItemIds?: string[]): Promise<any> {
+    async processInheritance(
+        userId: string,
+        newProfileData: any,
+        heirloomItemIds?: string[],
+        bpAllocation?: {
+            allocated_hp_points?: number;
+            allocated_atk_points?: number;
+            allocated_def_points?: number;
+            allocated_vit_points?: number;
+        }
+    ): Promise<any> {
         const { data: oldProfile } = await this.supabase
             .from('user_profiles')
-            .select('legacy_points, gold, subscription_tier')
+            .select('legacy_points, gold, subscription_tier, current_location_id, max_deck_cost')
             .eq('id', userId)
             .single();
 
         const oldTier = oldProfile?.subscription_tier ?? 'free';
-        const isSubscriber = oldTier !== 'free';
 
-        // 1. Gold Inheritance
-        const goldRate = isSubscriber ? 0.5 : 0.1;
-        // Q2: 継承ゴールド上限 50,000G（spec_v7 §3.1）
-        const inheritedGold = Math.min(50000, Math.floor((oldProfile?.gold || 0) * goldRate));
+        // 1. Gold Inheritance (Free: 50%, Basic/Premium: 100% - No limits)
+        const goldRate = oldTier === 'premium' ? 1.0 : (oldTier === 'basic' ? 1.0 : 0.5);
+        const inheritedGold = Math.floor((oldProfile?.gold || 0) * goldRate);
 
-        // 2. Reputation Inheritance (Sub Only: 10% of each location's score)
-        // Q3: 名声継承を reputations テーブルに書き戻す（spec_v10 §4.2）
-        let inheritedRep = 0;
-        if (isSubscriber) {
-            const { data: repData } = await this.supabase
-                .from('reputations')
-                .select('id, location_name, score')
-                .eq('user_id', userId);
-            if (repData && repData.length > 0) {
-                const totalScore = repData.reduce((sum: number, r: any) => sum + (r.score || 0), 0);
-                inheritedRep = Math.floor(totalScore * 0.1);
+        // 2. Reputation Reset (No inheritance, reset to 0)
+        // v35.0: ベーシックとpremiumでの名声の10％引継ぎはなくし、名声も0にリセットする
+        await this.supabase
+            .from('reputations')
+            .update({ score: 0 })
+            .eq('user_id', userId);
+        console.log(`[Inheritance] Reputation reset to 0 for user: ${userId}`);
 
-                // Q3: 各拠点の名声を展開して書き戻す（10%を各拠点に分配）
-                for (const rep of repData) {
-                    const inheritedForLocation = Math.floor((rep.score || 0) * 0.1);
-                    if (inheritedForLocation !== 0) {
-                        await this.supabase
-                            .from('reputations')
-                            .upsert({
-                                user_id: userId,
-                                location_name: rep.location_name,
-                                score: inheritedForLocation
-                            }, { onConflict: 'user_id,location_name' });
-                    }
-                }
-                console.log(`[Inheritance] Reputation inherited: ${inheritedRep} (across ${repData.length} locations)`);
-            }
-        }
-
-        // 3. タスク2: 形見引き継ぎ — historical_logs から heirloom_item_ids を取得
-        // まず前世代スナップショットから形見情報を読み込む
+        // 3. 形見引き継ぎ — historical_logs から heirloom_item_ids を取得
         let resolvedHeirloomIds: string[] = heirloomItemIds || [];
         if (resolvedHeirloomIds.length === 0) {
             const { data: lastLog } = await this.supabase
                 .from('historical_logs')
                 .select('data')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false })
+                .order('death_date', { ascending: false })
                 .limit(1)
                 .maybeSingle();
 
@@ -355,15 +361,23 @@ export class LifeCycleService {
 
         await this.supabase.from('inventory').delete().eq('user_id', userId);
 
+        // 世代交代: 装備中アイテムのリセット
+        await this.supabase.from('equipped_items').delete().eq('user_id', userId);
+
         // 世代交代: 訪問済み拠点リセット（#11 全拠点制覇は世代1回）
         await this.supabase.from('user_visited_locations').delete().eq('user_id', userId);
 
+        // 世代交代: 旧パーティメンバー（同行中のみ）のリセット
+        await this.supabase.from('party_members').delete().eq('owner_id', userId).eq('is_active', true);
+
+        // 世代交代: 全スキルの装備（デッキ）を解除
+        await this.supabase
+            .from('user_skills')
+            .update({ is_equipped: false })
+            .eq('user_id', userId);
+
         // 世代交代: 「世代1回」トリガーをクリア、「キャラ1回」「1回」は維持
         try {
-            // PERSISTENT_TRIGGERS に含まれないトリガーを全て削除
-            for (const slug of PERSISTENT_TRIGGERS) {
-                // Keep these — do nothing
-            }
             // Delete non-persistent triggers
             const { data: allTriggers } = await this.supabase
                 .from('user_share_triggers')
@@ -385,7 +399,7 @@ export class LifeCycleService {
             console.warn('[Inheritance] share_triggers reset skipped:', e);
         }
 
-        // タスク2: 形見アイテムを inventory に実際に INSERT
+        // 形見アイテムを inventory に実際に INSERT
         if (resolvedHeirloomIds.length > 0) {
             let heirloomsToKeep: any[] = [];
 
@@ -413,17 +427,45 @@ export class LifeCycleService {
             }
         }
 
+        // 4. BP Allocation Verification & Boost
+        const hpPoints = bpAllocation?.allocated_hp_points || 0;
+        const atkPoints = bpAllocation?.allocated_atk_points || 0;
+        const defPoints = bpAllocation?.allocated_def_points || 0;
+        const vitPoints = bpAllocation?.allocated_vit_points || 0;
+        const totalAllocated = hpPoints + atkPoints + defPoints + vitPoints;
+
+        const maxBP = Math.floor((oldProfile?.legacy_points || 0) / 300);
+        if (totalAllocated > maxBP) {
+            throw new Error(`Invalid BP allocation: allocated ${totalAllocated} BP, max allowed is ${maxBP}`);
+        }
+
+        const baseMaxHP = newProfileData.max_hp ?? 100;
+        const baseMaxVIT = newProfileData.max_vitality ?? 100;
+        const baseATK = newProfileData.atk ?? 1;
+        const baseDEF = newProfileData.def ?? 1;
+
+        const finalMaxHP = baseMaxHP + (hpPoints * 5);
+        const finalMaxVIT = baseMaxVIT + (vitPoints * 2);
+        const finalATK = baseATK + (atkPoints * 1);
+        const finalDEF = baseDEF + (defPoints * 1);
+
         // Prepare new data
         const finalData = {
             ...newProfileData,
+            current_location_id: oldProfile?.current_location_id || newProfileData.current_location_id,
             gold: (newProfileData.gold || 1000) + inheritedGold,
-            legacy_points: 0,
+            legacy_points: 0, // Reset legacy points after successful consumption
             is_alive: true,
-            vitality: newProfileData.max_vitality ?? 100,
+            max_vitality: finalMaxVIT,
+            vitality: finalMaxVIT,
             accumulated_days: 0,
             age: newProfileData.age ?? 20,
-            hp: newProfileData.max_hp ?? 100,
-            max_hp: newProfileData.max_hp ?? 100
+            max_hp: finalMaxHP,
+            hp: finalMaxHP,
+            initial_hp: finalMaxHP,
+            atk: finalATK,
+            def: finalDEF,
+            max_deck_cost: oldProfile?.max_deck_cost || newProfileData.max_deck_cost || 12
         };
 
         return finalData;

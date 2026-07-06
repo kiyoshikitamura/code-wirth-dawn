@@ -13,7 +13,7 @@ CHOICE,,「渓流沿いの道を行く——水場なら蛇の痕跡を追える
 CHOICE,,「尾根道を行く——高所から巣の位置を見下ろせるはず」,,ridge_01
 NODE,creek_01,"渓流沿いを進む。清水が岩を洗い、心地よい音を立てている。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",creek_01_02
 NODE,creek_01_02,"（水辺の湿った砂の上に、這った跡がはっきりと残されている）","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",creek_02
-NODE,creek_02,"水辺に巨大な蛇 of 足跡を発見。この方向で間違いない。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",creek_03
+NODE,creek_02,"水辺に巨大な蛇の足跡を発見。この方向で間違いない。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",creek_03
 NODE,creek_03,"渓流を遡ると、岩壁に大きな洞窟の入口が見えた。蛇の巣はあの中だ。","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_calm"",""type"":""text""}",avoid_01_02
 NODE,ridge_01,"尾根道を登る。見晴らしは良いが、足場が悪い。突風が吹き——！","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ridge_01_02
 NODE,ridge_01_02,"（突風に足元をすくわれ、小石が音を立てて谷底へと落ちていく）","{""bg"":""bg_mountain"",""bgm"":""bgm_quest_tense"",""type"":""text""}",ridge_trap

@@ -23,7 +23,7 @@ export default function GlobalStatusBar({ currentLocationName, onEnterLocation, 
     const [showBilling, setShowBilling] = React.useState(false);
 
     // Calendar & Age Computation
-    const totalDays = userProfile?.accumulated_days || 0;
+    const totalDays = userProfile?.world_elapsed_days ?? userProfile?.accumulated_days ?? 0;
     const year = 742 + Math.floor(totalDays / 365);
     
     let month = 1;

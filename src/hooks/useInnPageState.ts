@@ -690,13 +690,13 @@ export function useInnPageState() {
             setShowPrayer(true);
         } else if (facility === 'guild') {
             setActiveModal('questBoard');
-            fetchQuestsForBoard();
+            fetchQuestsForBoard(isTourJustCompleted);
         } else if (facility === 'magicAcademy') {
             setShowAcademy(true);
         }
     };
 
-    const fetchQuestsForBoard = async () => {
+    const fetchQuestsForBoard = async (forceFetch = false) => {
         if (!userProfile?.id || !worldState?.location_name) return;
 
         const locationId = userProfile.current_location_id || '';
@@ -717,7 +717,8 @@ export function useInnPageState() {
             window.location.hostname.includes('localhost') || 
             window.location.hostname.includes('127.0.0.1')
         );
-        if (!isPreviewOrDev && hasQuests && Date.now() - lastFetch < 60000) {
+        const shouldForce = forceFetch || isTourJustCompleted;
+        if (!shouldForce && !isPreviewOrDev && hasQuests && Date.now() - lastFetch < 60000) {
             return;
         }
 

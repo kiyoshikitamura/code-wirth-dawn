@@ -57,7 +57,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
 
     const activeGold = storeUserProfile?.gold ?? userProfile.gold;
 
-    const [activeTab, setActiveTab] = useState<'hire' | 'register' | 'heroic'>('hire');
+    const [activeTab, setActiveTab] = useState<'hire' | 'heroic'>('hire');
     const shadows = tavernShadows;
     const currentParty = partyMembers;
 
@@ -71,7 +71,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
     const [selectedShadow, setSelectedShadow] = useState<ShadowSummary | null>(null);
     const [simpleProfileUser, setSimpleProfileUser] = useState<ShadowSummary | null>(null);
-    const [myHeroics, setMyHeroics] = useState<MyHeroic[]>([]);
+    const [myHeroics, setMyHeroics] = useState<ShadowSummary[]>([]);
     const [heroicLoading, setHeroicLoading] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
     const [heroicHallList, setHeroicHallList] = useState<ShadowSummary[]>([]);
@@ -147,9 +147,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     }, [isOpen, locationId, tavernShadows.length]);
 
     useEffect(() => {
-        if (isOpen && activeTab === 'register') {
-            fetchMyHeroics();
-        }
         if (isOpen && activeTab === 'heroic') {
             fetchHeroicHall();
         }
@@ -547,9 +544,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                             <button onClick={() => setActiveTab('hire')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'hire' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
                                 傭兵を雇う
                             </button>
-                            <button onClick={() => setActiveTab('register')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors ${activeTab === 'register' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
-                                影の記録
-                            </button>
                             <button onClick={() => setActiveTab('heroic')} className={`flex-1 py-2 font-bold font-serif text-sm transition-colors flex items-center justify-center gap-1 ${activeTab === 'heroic' ? 'bg-[#8b5a2b] text-[#e3d5b8]' : 'bg-[#3e2723] text-[#8b5a2b] hover:bg-[#4e342e]'}`}>
                                 <Crown size={12} />英霊の間
                             </button>
@@ -744,7 +738,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                         );
                                     })}
                                 </div>
-                            ) : activeTab === 'heroic' ? (
+                            ) : (
                                 /* ===== 英霊の間タブ (v4.1) ===== */
                                 <div className="space-y-2">
                                     <div className="bg-amber-50/60 border border-amber-400/40 rounded-lg p-3 mb-2">
@@ -824,67 +818,6 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             })}
                                         </>
                                     )}
-                                </div>
-                            ) : (
-                                /* ===== 影の記録タブ ===== */
-                                <div className="space-y-4">
-                                    {/* 説明文 */}
-                                    <div className="bg-amber-50/60 border border-[#a38b6b]/40 rounded-lg p-3">
-                                        <h3 className="text-sm font-bold text-[#3e2723] font-serif mb-1.5">残影とは</h3>
-                                        <p className="text-[11px] text-[#5d4037] leading-relaxed">
-                                            引退・死亡したキャラクターは「英霊」として酒場の系譜に刻まれ、他の冒険者のパーティに加わることができます。
-                                            英霊が雇われるたびに、あなたのもとへロイヤリティが届きます。
-                                        </p>
-                                    </div>
-
-                                    {/* サブスクリプション案内 */}
-                                    <div className="bg-[#fdfbf7] border border-[#c2b280] rounded-lg p-3">
-                                        <h3 className="text-xs font-bold text-[#3e2723] mb-2 font-serif">英霊登録上限</h3>
-                                        <div className="space-y-1 text-[10px] text-[#5d4037]">
-                                            <div className="flex justify-between">
-                                                <span>Free</span><span className="font-bold text-[#8b5a2b]">登録不可</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Basic</span><span className="font-bold text-[#8b5a2b]">最大 3体</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="flex items-center gap-1"><Sparkles size={9} className="text-amber-500" />Premium</span>
-                                                <span className="font-bold text-[#8b5a2b]">最大 10体</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 自分の英霊リスト */}
-                                    <div>
-                                        <h3 className="text-xs font-bold text-[#3e2723] mb-2 font-serif border-b border-[#8b5a2b]/30 pb-1">
-                                            あなたの英霊
-                                        </h3>
-                                        {heroicLoading ? (
-                                            <div className="text-center text-[#8b5a2b] text-xs py-4 animate-pulse">記録を確認中...</div>
-                                        ) : myHeroics.length === 0 ? (
-                                            <div className="text-center text-[#8b6f4e] text-xs py-6 font-serif italic">
-                                                <p>英霊の記録はまだありません。</p>
-                                                <p className="mt-1">引退または死亡したキャラクターが、英霊として刻まれます。</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                {myHeroics.map(h => (
-                                                    <div key={h.id} className="flex items-center gap-2 p-2 bg-gradient-to-r from-amber-50/60 to-[#fdfbf7] border border-amber-300/60 rounded ring-1 ring-amber-400/30">
-                                                        <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-400/50 flex items-center justify-center flex-shrink-0">
-                                                            <Star size={12} className="text-amber-600" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="text-xs font-bold text-[#3e2723] truncate">{h.name}</div>
-                                                            <div className="text-[10px] text-[#8b6f4e]">Lv.{h.level} {toJpJobClass(h.job_class)}</div>
-                                                        </div>
-                                                        <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-600 to-yellow-400 text-[9px] font-bold text-slate-950 px-1.5 py-0.5 rounded flex-shrink-0">
-                                                            <Star size={8} />英霊
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
                             )}
                         </div>

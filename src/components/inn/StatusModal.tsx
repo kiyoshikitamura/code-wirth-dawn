@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '@/store/gameStore';
-import { Shield, Backpack, Zap, Heart, Sword, Users, Flame, X, Scale } from 'lucide-react';
+import { Shield, Backpack, Zap, Heart, Sword, Users, Flame, X, Scale, Star } from 'lucide-react';
 import { getVitalityStatus } from '@/lib/character';
 import { GROWTH_RULES } from '@/constants/game_rules';
 import SkillDeckModal from './SkillDeckModal';
 import EquipModal from './EquipModal';
 import ItemModal from './ItemModal';
 import PartyModal from './PartyModal';
+import HeroicRecordsModal from './HeroicRecordsModal';
 
 interface StatusModalProps {
     onClose: () => void;
     isCampMode?: boolean;
     questLocked?: boolean;
+    onRetire?: () => void;
 }
 
-export default function StatusModal({ onClose, isCampMode, questLocked }: StatusModalProps) {
+export default function StatusModal({ onClose, isCampMode, questLocked, onRetire }: StatusModalProps) {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
         setMounted(true);
@@ -27,6 +29,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
     const [showItems, setShowItems] = React.useState(false);
     const [showParty, setShowParty] = React.useState(false);
     const [showAlignment, setShowAlignment] = React.useState(false);
+    const [showHeroicRecords, setShowHeroicRecords] = React.useState(false);
 
     React.useEffect(() => {
         fetchUserProfile();
@@ -165,15 +168,34 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                         </button>
                     </div>
 
-                    {/* 属性確認ボタン */}
-                    <div className="pt-2">
-                        <button
-                            onClick={() => setShowAlignment(true)}
-                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-slate-900 via-gray-900 to-slate-900 border border-amber-600/30 hover:border-amber-500 text-xs font-bold text-amber-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-slate-800/80"
-                        >
-                            <Scale className="w-4 h-4 text-amber-400" />
-                            属性（アライメント）確認
-                        </button>
+                    {/* 属性確認 ＆ 引退（旅を終える）ボタン */}
+                    <div className="space-y-2 pt-1">
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setShowAlignment(true)}
+                                className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-slate-900 via-gray-900 to-slate-900 border border-amber-600/30 hover:border-amber-500 text-[11px] font-bold text-amber-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-slate-800/80"
+                            >
+                                <Scale className="w-4 h-4 text-amber-400 shrink-0" />
+                                アライメント確認
+                            </button>
+                            <button
+                                onClick={() => setShowHeroicRecords(true)}
+                                className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-br from-[#2c1d18] to-slate-900 border border-[#8b5a2b]/40 hover:border-[#b8804c] text-[11px] font-bold text-amber-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-[#3d2720]"
+                            >
+                                <Star className="w-4 h-4 text-amber-400 shrink-0" />
+                                英霊の記録
+                            </button>
+                        </div>
+
+                        {!isCampMode && onRetire && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production' && (
+                            <button
+                                onClick={onRetire}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-red-950/60 via-slate-900 to-red-950/60 border border-red-900/30 hover:border-red-600/50 text-xs font-bold text-red-200 rounded-lg transition-all active:scale-[0.98] shadow-md shadow-black/40 hover:from-red-900/40"
+                            >
+                                <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" fill="currentColor" />
+                                旅を終える（引退）
+                            </button>
+                        )}
                     </div>
 
                     {/* 通行許可証の有効期限表示 */}
@@ -316,6 +338,12 @@ export default function StatusModal({ onClose, isCampMode, questLocked }: Status
                 onClose={() => setShowParty(false)}
                 userProfile={userProfile}
                 isCampMode={isCampMode}
+            />
+        )}
+        {showHeroicRecords && userProfile?.id && (
+            <HeroicRecordsModal
+                userId={userProfile.id}
+                onClose={() => setShowHeroicRecords(false)}
             />
         )}
         </>,

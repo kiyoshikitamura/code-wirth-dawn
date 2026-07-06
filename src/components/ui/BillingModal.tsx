@@ -202,7 +202,7 @@ export default function BillingModal({ onClose }: Props) {
                                         <span className="text-slate-400 text-xs font-mono font-bold">880円（税込）/ 月</span>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mb-4 leading-normal">
-                                        週ごとのゴールドに加え、魔術学院で強力なスキルを獲得できる各種鍵アイテムを毎週付与する標準プラン。
+                                        週ごとのゴールド・鍵に加え、ゴールド100%継承や形見枠の拡張(30個)など、世代継承の効率が大幅に強化される標準プラン。
                                     </p>
                                     <ul className="text-[9px] text-slate-300 space-y-2 border-t border-slate-900 pt-3 mb-5">
                                         <li className="flex justify-between items-center text-indigo-300 font-bold bg-indigo-950/20 px-2 py-1 rounded">
@@ -213,10 +213,10 @@ export default function BillingModal({ onClose }: Props) {
                                             <span className="text-slate-400">└ 付与される鍵の内訳:</span>
                                             <span>知識と契約の鍵 x1 / 魔道と鉄壁の鍵 x1</span>
                                         </li>
-                                        <li className="flex justify-between"><span>👥 キャラクタースロット</span><span>3 枠 (Free: 1)</span></li>
-                                        <li className="flex justify-between"><span>🏰 英霊 (Heroic) 登録</span><span>最大 3体 (Free: 0)</span></li>
+                                        <li className="flex justify-between"><span>🏰 英霊 (Heroic) 登録</span><span>最大 3体 (Free: 1体)</span></li>
+                                        <li className="flex justify-between"><span>🎁 形見引き継ぎ枠</span><span>最大 30個 (Free: 10個)</span></li>
+                                        <li className="flex justify-between"><span>🪙 ゴールド継承比率</span><span>100 % (Free: 50%)</span></li>
                                         <li className="flex justify-between"><span>🪙 英霊ロイヤリティ率</span><span>25 % (Free: —)</span></li>
-                                        <li className="flex justify-between"><span>🌐 UGC 作成公開 / 保存</span><span>最大 5枠 / 10枠</span></li>
                                     </ul>
                                 </div>
                                 <button
@@ -246,7 +246,7 @@ export default function BillingModal({ onClose }: Props) {
                                         <span className="text-slate-400 text-xs font-mono font-bold">2,200円（税込）/ 月</span>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mb-4 leading-normal">
-                                        旅人の冒険枠・英霊スロットを大幅に拡張し、毎週大量のゴールドと複数の鍵を付与する最上位プラン。
+                                        英霊スロット(最大10体)や形見枠(50個)の最大拡張に加え、自身の英霊を50% OFFで雇用できるなど、究極の世代継承をサポートする最上位プラン。
                                     </p>
                                     <ul className="text-[9px] text-slate-300 space-y-2 border-t border-slate-900 pt-3 mb-5">
                                         <li className="flex justify-between items-center text-amber-300 font-bold bg-amber-950/20 px-2 py-1 rounded">
@@ -257,10 +257,11 @@ export default function BillingModal({ onClose }: Props) {
                                             <span className="text-slate-400">└ 付与される鍵の内訳:</span>
                                             <span>知識と契約の鍵 x3 / 魔道と鉄壁の鍵 x2</span>
                                         </li>
-                                        <li className="flex justify-between"><span>👥 キャラクタースロット</span><span>5 枠 (Free: 1)</span></li>
-                                        <li className="flex justify-between"><span>🏰 英霊 (Heroic) 登録</span><span>最大 10体 (Free: 0)</span></li>
+                                        <li className="flex justify-between"><span>🏰 英霊 (Heroic) 登録</span><span>最大 10体 (Free: 1体)</span></li>
+                                        <li className="flex justify-between"><span>🎁 形見引き継ぎ枠</span><span>最大 50個 (Free: 10個)</span></li>
+                                        <li className="flex justify-between"><span>🪙 ゴールド継承比率</span><span>100 % (Free: 50%)</span></li>
+                                        <li className="flex justify-between"><span>🏷️ 自身の英霊雇用費用</span><span>50 % OFF</span></li>
                                         <li className="flex justify-between"><span>🪙 英霊ロイヤリティ率</span><span>35 % (Free: —)</span></li>
-                                        <li className="flex justify-between"><span>🌐 UGC 作成公開 / 保存</span><span>最大 30枠 / 50枠</span></li>
                                     </ul>
                                 </div>
                                 <button

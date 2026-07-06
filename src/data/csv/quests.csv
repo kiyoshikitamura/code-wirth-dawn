@@ -19,5 +19,7 @@ id,slug,title,rec_level,difficulty,time_cost,trigger_condition,rewards_summary,_
 6018,main_ep18,第18話「戦神の洗礼」,18,4,2,loc:loc_charon&pre:main_ep16,Gold:3500|Rep:25|Item:506|Order:5,メイン: メインシナリオ第18話
 6019,main_ep19,第19話「月光の狩人」,22,4,2,loc:loc_yato&pre:main_ep16,Gold:3500|Rep:25|Item:507|Order:5,メイン: メインシナリオ第19話
 6020,main_ep20,第20話「蒼暁の剣」,25,5,2,loc:loc_regalia&pre:main_ep17||main_ep18||main_ep19,Gold:15000|Rep:50|Item:504|Order:5,メイン: メインシナリオ第20話
-6021,main_ep05_hire,メインクエスト第5話（Extra）「戦友の招集」,5,1,1,pre:main_ep05,Gold:200|Rep:5|Order:5|Move:loc_frontier_village,メイン: ガウェインを失いし孤独な旅路。新たな運命の糸を紡ぎ、東の警戒線を越えよ。
+6021,main_ep05_hire,メインクエスト第5話（Extra）「戦友の招集」,5,1,1,pre:main_ep05,Gold:200|Rep:5|Order:5,メイン: ガウェインを失いし孤独な旅路。新たな運命の糸を紡ぎ、東の警戒線を越えよ。
+6022,qst_heritage_training,継承クエスト「英霊の祝福」,1,1,1,pre:main_ep15_extra&gen:2,Gold:500|Exp:1000|Rep:10,メイン: 先代の偉業があなたに力を貸す。英霊の祝福を受け、新たな旅立ちの糧とせよ。
+6023,main_ep15_extra,メインクエスト第15話（Extra）「次世代への道標」,15,1,1,pre:main_ep15,Gold:300|Exp:100|Rep:10,メイン: 天使の侵攻を退けた主人公に、旅の占い師が世界の危機と継承の英断について語る。
 クエストデータの設計意図,,,,,,,,

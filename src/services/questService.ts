@@ -40,7 +40,8 @@ export function calculateGrowth(
     expGained: number,
     currentAtk: number = 1,
     currentDef: number = 1,
-    currentMaxHp: number = BASE_HP
+    currentMaxHp: number = BASE_HP,
+    currentMaxDeckCost: number = BASE_DECK_COST
 ): { newExp: number; levelInfo: LevelUpInfo } {
     let level = currentLevel;
     let exp = currentExp + expGained;
@@ -87,7 +88,7 @@ export function calculateGrowth(
             def_increase: defInc,
             // v15.0: currentMaxHp からの累積加算（固定式ではなく加算方式）
             new_max_hp: currentMaxHp + hpInc,
-            new_max_cost: Math.min(MAX_DECK_COST, BASE_DECK_COST + (level * COST_PER_LEVEL))
+            new_max_cost: Math.max(currentMaxDeckCost, Math.min(MAX_DECK_COST, currentMaxDeckCost + costInc))
         }
     };
 }

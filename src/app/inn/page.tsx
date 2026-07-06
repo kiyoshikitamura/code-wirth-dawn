@@ -25,6 +25,7 @@ import ShopModal from '@/components/shop/ShopModal';
 import AppraisalModal from '@/components/shop/AppraisalModal';
 import PrayerModal from '@/components/world/PrayerModal';
 import StatusModal from '@/components/inn/StatusModal';
+import InheritanceModal from '@/components/inn/InheritanceModal';
 import AccountSettingsModal from '@/components/inn/AccountSettingsModal';
 import GossipModal from '@/components/world/GossipModal';
 import QuestBoardModal from '@/components/inn/QuestBoardModal';
@@ -62,6 +63,8 @@ export default function InnPage() {
 function InnPageInner() {
     const searchParams = useSearchParams();
     const [showGuideBanner, setShowGuideBanner] = useState(true);
+    const [showInheritance, setShowInheritance] = useState(false);
+    const [inheritanceCause, setInheritanceCause] = useState('voluntary');
     const state = useInnPageState();
     const {
         router, loading, worldState, userProfile, equipBonus, isHub,
@@ -104,6 +107,14 @@ function InnPageInner() {
     } = state;
 
     const isTourActive = !!(onboardingTourStep && onboardingTourStep !== 'completed');
+
+    // 生命力0（死亡）による強制引退検知フック
+    React.useEffect(() => {
+        if (userProfile && userProfile.is_alive && (userProfile.vitality ?? 100) <= 0) {
+            setInheritanceCause('death');
+            setShowInheritance(true);
+        }
+    }, [userProfile]);
 
     // ツアー中に拠点の各施設データをバックグラウンドで先読み（プリフェッチ）
     React.useEffect(() => {
@@ -804,8 +815,23 @@ function InnPageInner() {
             {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
             {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
             {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
-            {showStatus && <StatusModal onClose={() => setShowStatus(false)} />}
+            {showStatus && (
+                <StatusModal 
+                    onClose={() => setShowStatus(false)} 
+                    onRetire={() => {
+                        setShowStatus(false);
+                        setInheritanceCause('voluntary');
+                        setShowInheritance(true);
+                    }}
+                />
+            )}
             {showBilling && <BillingModal onClose={() => setShowBilling(false)} />}
+            {showInheritance && (
+                <InheritanceModal
+                    onClose={() => setShowInheritance(false)}
+                    cause={inheritanceCause}
+                />
+            )}
 
             {activeModal === 'collection' && <CollectionModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'questLog' && <QuestLogModal onClose={() => setActiveModal(null)} />}

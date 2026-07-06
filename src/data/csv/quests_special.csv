@@ -19,10 +19,12 @@ id,slug,title,rec_level,difficulty,time_cost,days_success,days_failure,requireme
 6018,main_ep18,第18話「戦神の洗礼」,18,4,2,2,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_charon""}",true,,Gold:3500|Rep:25|Item:506|Order:5,なし,メインシナリオ第18話,false
 6019,main_ep19,第19話「月光の狩人」,22,4,2,2,2,"{""completed_quest"":""main_ep16"",""location_id"":""loc_yato""}",true,,Gold:3500|Rep:25|Item:507|Order:5,なし,メインシナリオ第19話,false
 6020,main_ep20,第20話「蒼暁の剣」,25,5,2,2,2,"{""completed_quest"":""main_ep17||main_ep18||main_ep19"",""location_id"":""loc_regalia""}",true,,Gold:15000|Rep:50|Item:504|Order:5,なし,メインシナリオ第20話,false
-6021,main_ep05_hire,メインクエスト第5話（Extra）「戦友の招集」,5,1,1,1,1,"{""completed_quest"":""main_ep05""}",true,,Gold:200|Rep:5|Order:5|Move:loc_frontier_village,旅の占い師,ガウェインを失いし孤独な旅路。新たな運命の糸を紡ぎ、東の警戒線を越えよ。,false
+6021,main_ep05_hire,メインクエスト第5話（Extra）「戦友の招集」,5,1,1,1,1,"{""completed_quest"":""main_ep05""}",true,,Gold:200|Rep:5|Order:5,旅の占い師,ガウェインを失いし孤独な旅路。新たな運命の糸を紡ぎ、東の警戒線を越えよ。,false
+6022,qst_heritage_training,継承クエスト「英霊の祝福」,1,1,1,1,1,"{""completed_quest"":""main_ep15_extra"",""required_generations"":2}",true,,Gold:500|Exp:1000|Rep:10,旅の占い師,先代の偉業があなたに力を貸す。英霊の祝福を受け、新たな旅立ちの糧とせよ。,false
+6023,main_ep15_extra,メインクエスト第15話（Extra）「次世代への道標」,15,1,1,1,1,"{""completed_quest"":""main_ep15""}",true,,Gold:300|Exp:100|Rep:10,旅の占い師,天使の侵攻を退けた主人公に、旅の占い師が世界の危機と継承の英断について語る。,false
 6101,qst_spot_roland,忘却の五英霊,20,5,7,7,7,"{""nation_id"":""loc_holy_empire"",""min_alignment_pct"":{""alignment"":""order"",""min_pct"":50}}",false,grayish_white,"Gold:10000|Rep:200|Item:602|Exp:500",王国軍,聖王国スポット: 封印された英霊たちが暴走。王都を守り五英霊に決着をつけよ。,false
-6102,qst_spot_yato,冥食の残滓,20,5,7,7,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:603|Exp:500",忍び衆,夜刀スポット: 冥食の夜。生贄 of 少女を護衛し冥の門の四大妖怪を退けよ。,false
-6103,qst_spot_karyu,天を衝く塔,20,5,7,7,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:604|Exp:500",地方太守,華龍スポット: 霊山に虚無 of 塔が出現。四神を退け頂の神に挑め。,false
+6102,qst_spot_yato,冥食の残滓,20,5,7,7,7,"{""nation_id"":""loc_yatoshin"",""min_alignment_pct"":{""alignment"":""justice"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:603|Exp:500",忍び衆,夜刀スポット: 冥食の夜。生贄の少女を護衛し冥の門の四大妖怪を退けよ。,false
+6103,qst_spot_karyu,天を衝く塔,20,5,7,7,7,"{""nation_id"":""loc_haryu"",""min_alignment_pct"":{""alignment"":""evil"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:604|Exp:500",地方太守,華龍スポット: 霊山に虚無の塔が出現。四神を退け頂の神に挑め。,false
 6104,qst_spot_markand,黄金の沈黙,20,5,7,7,7,"{""nation_id"":""loc_marcund"",""min_alignment_pct"":{""alignment"":""chaos"",""min_pct"":50}}",false,,"Gold:10000|Rep:200|Item:605|Exp:500",交易商会,マルカンドスポット: 禁忌の王墓が出現。罠と守護者を越え無名王の呪いを断て。,false
 5101,qst_rep_graverobber,墓荒らしの退治,5,2,3,3,3,"{""completed_quest"":""main_ep01"",""min_reputation"":10,""nation_id"":""loc_roland""}",false,,,聖堂騎士団,[指名依頼] 聖墓地を荒らす盗掘団を追い払え。遺品の返還も任務に含む。,false
 7060,qst_rift_prologue,狭間の迷宮・プロローグ,1,1,1,1,1,"{}",false,,Gold:0,冒険者ギルド,世界の中心に現れた「狭間の迷宮」の謎に迫る調査のプロローグ。,true

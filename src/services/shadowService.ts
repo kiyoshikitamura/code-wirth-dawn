@@ -386,7 +386,7 @@ export class ShadowService {
         // 1. 雇用者のプロフィールを取得
         const { data: hirer } = await this.supabase
             .from('user_profiles')
-            .select('gold, current_location_id')
+            .select('gold, current_location_id, subscription_tier')
             .eq('id', hirerId)
             .single();
 
@@ -410,7 +410,12 @@ export class ShadowService {
             if (!heroicMember) return { success: false, error: '無効な英霊IDです。' };
 
             const level = heroicMember.level || shadow.level || 1;
-            finalContractFee = calcHeroicContractFee(level);
+            const baseFee = calcHeroicContractFee(level);
+            
+            // Premium discount check: if owner is hirer and hirer is Premium, 50% discount
+            const hirerTier = hirer?.subscription_tier ?? 'free';
+            const isDiscountEligible = (hirerTier === 'premium') && (heroicMember.owner_id === hirerId);
+            finalContractFee = isDiscountEligible ? Math.floor(baseFee * 0.5) : baseFee;
             heroicOwnerId = heroicMember.owner_id;
             
             // 英霊のスナップショットステータスを退避
@@ -421,6 +426,7 @@ export class ShadowService {
             };
             shadow.level = level;
             (shadow as any).snapshot_data = heroicMember.snapshot_data || null;
+            shadow.contract_fee = finalContractFee;
             
         } else if (shadow.origin_type === 'shadow_active') {
             // user_profiles から name/level/atk/def/hp/job_class/blessing_data を取得して再計算および所在地チェック

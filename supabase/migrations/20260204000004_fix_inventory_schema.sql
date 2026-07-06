@@ -16,3 +16,4 @@ ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own inventory" ON inventory FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update own inventory" ON inventory FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own inventory" ON inventory FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own inventory" ON inventory FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);

@@ -40,28 +40,29 @@ export async function POST(req: Request) {
         if (targetLevel < 1) return NextResponse.json({ error: 'Level cannot be less than 1' }, { status: 400 });
 
         // レベルダウン・アップに関わらず、Lv1からtargetLevelまで再計算して整合性を保つ
+        const initialMaxDeckCost = profile.max_deck_cost || GROWTH_RULES.BASE_DECK_COST;
         maxHp = GROWTH_RULES.BASE_HP_FALLBACK; // 100
-        maxDeckCost = GROWTH_RULES.BASE_DECK_COST;
         baseAtk = 1; // 初期値
         baseDef = 1; // 初期値
 
+        let costInc = 0;
         for (let l = 1; l < targetLevel; l++) {
             // HP: (可変成長の中央値を使用)
             const { min, max } = GROWTH_RULES.getHpLevelGain(l);
             maxHp += Math.floor((min + max) / 2);
 
-            // Deck Cost
-            const projectedCost = GROWTH_RULES.BASE_DECK_COST + (l * GROWTH_RULES.COST_PER_LEVEL);
-            if (projectedCost <= GROWTH_RULES.MAX_DECK_COST) {
-                maxDeckCost = projectedCost;
-            } else {
-                maxDeckCost = GROWTH_RULES.MAX_DECK_COST;
-            }
-
             // ATK/DEF: (平均値の1を使用)
             baseAtk += 1;
             baseDef += 1;
+
+            if (l >= currentLevel) {
+                const projectedCost = GROWTH_RULES.BASE_DECK_COST + (l * GROWTH_RULES.COST_PER_LEVEL);
+                if (projectedCost <= GROWTH_RULES.MAX_DECK_COST) {
+                    costInc += GROWTH_RULES.COST_PER_LEVEL;
+                }
+            }
         }
+        maxDeckCost = Math.max(initialMaxDeckCost, Math.min(GROWTH_RULES.MAX_DECK_COST, initialMaxDeckCost + costInc));
 
         // EXP: ターゲットレベルの必要EXPに合わせる
         const newExp = GROWTH_RULES.EXP_FORMULA(targetLevel);
