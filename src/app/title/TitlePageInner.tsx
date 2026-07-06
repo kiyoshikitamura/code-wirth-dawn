@@ -565,25 +565,25 @@ export default function TitlePageInner() {
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                                 <div className="flex justify-between border-b border-stone-900 pb-0.5">
                                     <span>HP:</span>
-                                    <span className="text-green-400 font-bold font-mono">{previewStats?.max_hp}</span>
+                                    <span className="text-green-400 font-bold font-mono">{userProfile?.max_hp ?? previewStats?.max_hp}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-stone-900 pb-0.5">
                                     <span>VIT:</span>
-                                    <span className="text-orange-400 font-bold font-mono">{previewStats?.max_vitality}</span>
+                                    <span className="text-orange-400 font-bold font-mono">{userProfile?.max_vitality ?? previewStats?.max_vitality}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-stone-900 pb-0.5">
                                     <span>ATK:</span>
-                                    <span className="text-red-400 font-bold font-mono">{previewStats?.atk}</span>
+                                    <span className="text-red-400 font-bold font-mono">{userProfile?.atk ?? previewStats?.atk}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-stone-900 pb-0.5">
                                     <span>DEF:</span>
-                                    <span className="text-cyan-400 font-bold font-mono">{previewStats?.def}</span>
+                                    <span className="text-cyan-400 font-bold font-mono">{userProfile?.def ?? previewStats?.def}</span>
                                 </div>
                             </div>
                             
                             <div className="flex justify-between text-[8.5px] text-amber-500/80 font-mono tracking-wide pt-1">
                                 <span>DECK COST CAPACITY:</span>
-                                <span className="font-bold font-mono text-amber-400">{previewStats?.max_deck_cost}</span>
+                                <span className="font-bold font-mono text-amber-400">{userProfile?.max_deck_cost ?? previewStats?.max_deck_cost}</span>
                             </div>
                         </div>
 
