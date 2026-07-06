@@ -27,17 +27,37 @@ export async function GET(req: Request) {
         const tier = profile?.subscription_tier || 'free';
         const isPremium = tier === 'premium';
 
-        // party_members から shadow_heroic で is_active = false のレコードを1体取得（レベル降順）
-        const { data: heroics, error } = await client
+        // 1. 全登録英霊の総数を取得
+        const { count, error: countErr } = await client
             .from('party_members')
-            .select('id, name, epithet, level, job_class, atk, def, max_durability, durability, image_url, inject_cards, source_user_id, owner_id, created_at, last_hired_at, snapshot_data')
+            .select('id', { count: 'exact', head: true })
             .eq('origin_type', 'shadow_heroic')
-            .eq('is_active', false)
-            .order('level', { ascending: false })
-            .limit(1);
+            .eq('is_active', false);
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        if (countErr) {
+            return NextResponse.json({ error: countErr.message }, { status: 500 });
+        }
+
+        const totalCount = count || 0;
+        let heroics = null;
+        let selectError = null;
+
+        if (totalCount > 0) {
+            // ランダムな位置（オフセット）を設定して1体取得
+            const randomOffset = Math.floor(Math.random() * totalCount);
+            const { data, error: fetchErr } = await client
+                .from('party_members')
+                .select('id, name, epithet, level, job_class, atk, def, max_durability, durability, image_url, inject_cards, source_user_id, owner_id, created_at, last_hired_at, snapshot_data')
+                .eq('origin_type', 'shadow_heroic')
+                .eq('is_active', false)
+                .range(randomOffset, randomOffset);
+            
+            heroics = data;
+            selectError = fetchErr;
+        }
+
+        if (selectError) {
+            return NextResponse.json({ error: selectError.message }, { status: 500 });
         }
 
         // ShadowSummary 形式に変換
