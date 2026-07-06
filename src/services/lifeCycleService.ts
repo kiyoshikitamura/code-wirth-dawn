@@ -372,6 +372,9 @@ export class LifeCycleService {
 
         await this.supabase.from('inventory').delete().eq('user_id', userId);
 
+        // 世代交代: 装備中アイテムのリセット
+        await this.supabase.from('equipped_items').delete().eq('user_id', userId);
+
         // 世代交代: 訪問済み拠点リセット（#11 全拠点制覇は世代1回）
         await this.supabase.from('user_visited_locations').delete().eq('user_id', userId);
 
