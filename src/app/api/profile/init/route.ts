@@ -85,6 +85,10 @@ export async function POST(req: Request) {
             max_deck_cost: max_deck_cost ?? 12,
             atk: atk ?? 1,  // v9.3: 基礎攻撃力（年齢連動）
             def: def ?? 1,  // v9.3: 基礎防御力（年齢連動）
+            order_pts: 0,   // Reset alignment to neutral
+            chaos_pts: 0,
+            justice_pts: 0,
+            evil_pts: 0,
             is_alive: true, // Resurrect
             updated_at: new Date().toISOString()
         };
