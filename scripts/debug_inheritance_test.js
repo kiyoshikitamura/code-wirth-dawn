@@ -301,6 +301,8 @@ async function run() {
             .from('user_profiles')
             .update({
                 is_alive: true,
+                name: 'きたむ（プレビュー）',
+                avatar_url: '/avatars/adventurer.jpg',
                 level: 20,
                 gold: 79900,
                 legacy_points: 0,
@@ -392,7 +394,24 @@ async function run() {
         return;
     }
 
-    console.error(`Unknown command '${cmd}'. Use: status, kill, active, set-tier <tier>, set-lp <value>, ready-6023, ready-6022, revive, dump-logs`);
+    if (cmd === 'restore-name') {
+        console.log(`[Restore-Name] Restoring name and avatar for user ${userId}...`);
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({
+                name: 'きたむ（プレビュー）',
+                avatar_url: '/avatars/adventurer.jpg'
+            })
+            .eq('id', userId);
+        if (error) {
+            console.error('Error restoring name/avatar:', error);
+        } else {
+            console.log('Successfully restored player name to "きたむ（プレビュー）" and default avatar.');
+        }
+        return;
+    }
+
+    console.error(`Unknown command '${cmd}'. Use: status, kill, active, set-tier <tier>, set-lp <value>, ready-6023, ready-6022, revive, dump-logs, restore-name`);
 }
 
 run();
