@@ -45,6 +45,7 @@ export class LifeCycleService {
             const snapshotData = {
                 final_level: profile.level,
                 final_gold: profile.gold,
+                max_deck_cost: profile.max_deck_cost,
                 stats: {
                     atk: profile.attack,
                     def: profile.defense,

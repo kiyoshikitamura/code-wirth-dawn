@@ -312,6 +312,7 @@ async function run() {
                 max_hp: 96,
                 atk: 25,
                 def: 20,
+                max_deck_cost: 30,
                 current_quest_id: null
             })
             .eq('id', userId);
