@@ -193,7 +193,7 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                                 onClick={() => setStep('select')}
                                 className="flex-1 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-amber-950/30 flex items-center justify-center gap-1.5"
                             >
-                                継承の儀式へ（遺品整理） <ArrowRight className="w-3.5 h-3.5" />
+                                継承の儀式へ <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                         </footer>
                     </div>

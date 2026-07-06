@@ -308,7 +308,7 @@ export class LifeCycleService {
     ): Promise<any> {
         const { data: oldProfile } = await this.supabase
             .from('user_profiles')
-            .select('legacy_points, gold, subscription_tier, current_location_id')
+            .select('legacy_points, gold, subscription_tier, current_location_id, max_deck_cost')
             .eq('id', userId)
             .single();
 
@@ -377,6 +377,12 @@ export class LifeCycleService {
 
         // 世代交代: 旧パーティメンバーのリセット
         await this.supabase.from('party_members').delete().eq('owner_id', userId);
+
+        // 世代交代: 全スキルの装備（デッキ）を解除
+        await this.supabase
+            .from('user_skills')
+            .update({ is_equipped: false })
+            .eq('user_id', userId);
 
         // 世代交代: 「世代1回」トリガーをクリア、「キャラ1回」「1回」は維持
         try {
@@ -466,7 +472,8 @@ export class LifeCycleService {
             hp: finalMaxHP,
             initial_hp: finalMaxHP,
             atk: finalATK,
-            def: finalDEF
+            def: finalDEF,
+            max_deck_cost: oldProfile?.max_deck_cost || newProfileData.max_deck_cost || 12
         };
 
         return finalData;
