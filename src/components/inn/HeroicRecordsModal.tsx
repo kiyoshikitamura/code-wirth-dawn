@@ -345,10 +345,12 @@ export default function HeroicRecordsModal({ userId, onClose }: HeroicRecordsMod
                                     onClick={async () => {
                                         await handleHire(selectedHeroic);
                                     }}
-                                    disabled={hirePhase !== 'idle' || gold < selectedHeroic.contract_fee || partyMembers.length >= 4}
-                                    className="px-4 py-1.5 bg-purple-700 hover:bg-purple-600 disabled:bg-purple-950/40 disabled:text-slate-500 text-xs font-bold rounded text-white transition-colors"
+                                    disabled={hirePhase !== 'idle' || gold < selectedHeroic.contract_fee || partyMembers.length >= 4 || storeUserProfile?.subscription_tier === 'free'}
+                                    className="px-4 py-1.5 bg-purple-700 hover:bg-purple-600 disabled:bg-purple-950/40 disabled:text-[#8b6f4e] text-xs font-bold rounded text-white transition-colors"
                                 >
-                                    {hirePhase === 'loading' ? '契約中...' : `雇用する (${selectedHeroic.contract_fee.toLocaleString()} G)`}
+                                    {storeUserProfile?.subscription_tier === 'free'
+                                        ? 'Basic/Premium専用'
+                                        : hirePhase === 'loading' ? '契約中...' : `雇用する (${selectedHeroic.contract_fee.toLocaleString()} G)`}
                                 </button>
                             )}
                         </div>
