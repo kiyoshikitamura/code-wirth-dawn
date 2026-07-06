@@ -255,7 +255,25 @@ async function run() {
         return;
     }
 
-    console.error(`Unknown command '${cmd}'. Use: status, kill, active, set-tier <tier>, set-lp <value>, ready-6023, ready-6022`);
+    if (cmd === 'revive') {
+        console.log(`[Revive] Setting user ${userId} to alive...`);
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({
+                is_alive: true,
+                vitality: 80
+            })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error reviving user:', error);
+        } else {
+            console.log('Successfully revived user profile and set vitality to 80.');
+        }
+        return;
+    }
+
+    console.error(`Unknown command '${cmd}'. Use: status, kill, active, set-tier <tier>, set-lp <value>, ready-6023, ready-6022, revive`);
 }
 
 run();
