@@ -26,10 +26,10 @@ export default function TitlePageInner() {
     //   MENU   → New Game / Continue / Test Play ボタン
     //   CHAR_CREATION → キャラクター作成フォーム
     //   CREATING      → 作成中ローディング
-    const [mode, setModeRaw] = useState<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'DELETING'>('ENTRY');
-    const modeRef = useRef<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'DELETING'>('ENTRY');
+    const [mode, setModeRaw] = useState<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'LANDING_CARD' | 'DELETING'>('ENTRY');
+    const modeRef = useRef<'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'LANDING_CARD' | 'DELETING'>('ENTRY');
     // mode を変更するときは必ずこのラッパーを使う（modeRef を同期更新するため）
-    const setMode = useCallback((m: 'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'DELETING') => {
+    const setMode = useCallback((m: 'ENTRY' | 'MENU' | 'CONTINUE_MENU' | 'CHAR_CREATION' | 'CREATING' | 'LANDING_CARD' | 'DELETING') => {
         modeRef.current = m;
         setModeRaw(m);
     }, []);
@@ -76,6 +76,8 @@ export default function TitlePageInner() {
     const [pendingSessionToken, setPendingSessionToken] = useState<string | null>(null);
     // 利用規約モーダル表示
     const [showTermsModal, setShowTermsModal] = useState(false);
+    // カードパック開封演出用
+    const [packOpened, setPackOpened] = useState(false);
 
     // Dynamic Flavor Text
     const getFlavorText = (currentAge: number) => {
@@ -440,7 +442,7 @@ export default function TitlePageInner() {
 
             setIsUploading(false);
 
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 1000));
             await fetchUserProfile();
             setGameStarted();
 
@@ -451,7 +453,7 @@ export default function TitlePageInner() {
                 trackXEvent(signupId);
             }
 
-            router.push('/inn');
+            setMode('LANDING_CARD');
         } catch (err: any) {
             console.error(err);
             alert(`作成失敗: ${err.message}`);
@@ -484,6 +486,146 @@ export default function TitlePageInner() {
                 <div className="h-16 relative z-10"></div>
                 <div className="absolute bottom-10 w-64 h-1 bg-gray-800 rounded-full overflow-hidden z-10">
                     <div className="h-full bg-amber-500 animate-progress-indeterminate"></div>
+                </div>
+            </div>
+        );
+    }
+
+    // ─── LANDING_CARD 画面（新世代カードパック開封演出） ───────────────────────
+    if (mode === 'LANDING_CARD') {
+        const handleOpenPack = () => {
+            if (!packOpened) {
+                setPackOpened(true);
+                if (soundManager) soundManager.playSE('se_card_draw'); // Play SE if available
+            }
+        };
+
+        const handleStartAdventure = () => {
+            router.push('/inn');
+        };
+
+        return (
+            <div className="min-h-screen bg-[#03060c] flex flex-col items-center justify-center text-gray-300 font-serif relative overflow-hidden p-6 select-none">
+                {/* Background Magic Aura */}
+                <div className="absolute w-[200vw] h-[200vw] bg-[radial-gradient(circle,rgba(217,119,6,0.06)_0%,transparent_60%)] animate-pulse-slow pointer-events-none" />
+
+                {/* Starry dust particles */}
+                <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px] opacity-40" />
+
+                <div className="relative z-10 flex flex-col items-center justify-center max-w-sm w-full gap-6">
+                    
+                    {!packOpened ? (
+                        /* Step 1: Pack display */
+                        <div 
+                            onClick={handleOpenPack}
+                            className="flex flex-col items-center justify-center cursor-pointer group space-y-6"
+                        >
+                            <h2 className="text-base font-bold text-amber-500 tracking-[0.3em] text-center font-serif uppercase drop-shadow-[0_2px_10px_rgba(217,119,6,0.3)] animate-pulse">
+                                新世代の魂が降臨しました
+                            </h2>
+                            
+                            {/* Card Pack Object */}
+                            <div className="w-56 h-80 rounded-2xl bg-gradient-to-b from-amber-900/60 to-stone-900/90 border-2 border-amber-500/50 shadow-[0_0_35px_rgba(245,158,11,0.25)] flex flex-col justify-between p-5 relative overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_50px_rgba(245,158,11,0.45)] group-active:scale-[0.98]">
+                                {/* Pack Gloss Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 rotate-12 scale-150 transform transition-transform group-hover:translate-x-12 duration-1000" />
+                                <div className="absolute inset-1.5 border border-amber-500/20 rounded-xl" />
+                                
+                                <div className="w-full flex justify-center py-4">
+                                    <div className="w-10 h-10 rounded-full border border-amber-500/40 bg-black/40 flex items-center justify-center text-amber-400 group-hover:animate-spin-slow">
+                                        <Compass className="w-5 h-5" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-center pb-6">
+                                    <div className="text-[10px] text-amber-500 font-mono tracking-widest">GATEWAY OF SOULS</div>
+                                    <div className="text-xs font-bold text-amber-200/90 tracking-[0.15em] font-serif">契約の封書</div>
+                                    <div className="text-[9px] text-slate-500 tracking-wider pt-2">クリックして封を切る</div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Step 2: Card Reveal */
+                        <div className="flex flex-col items-center justify-center space-y-6 w-full animate-in fade-in zoom-in-95 duration-1000">
+                            <h2 className="text-base font-bold text-amber-400 tracking-[0.2em] text-center font-serif uppercase animate-pulse">
+                                新たなる冒険者の誕生
+                            </h2>
+
+                            {/* Character Card Front */}
+                            <div className="w-60 h-[340px] rounded-2xl bg-gradient-to-b from-[#1c140d] to-[#0c0a07] border-2 border-amber-500/80 shadow-[0_0_50px_rgba(245,158,11,0.45)] flex flex-col justify-between p-4 relative overflow-hidden animate-in slide-in-from-bottom duration-700">
+                                {/* Gold Glow backplate */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.2)_0%,transparent_60%)]" />
+                                <div className="absolute inset-2 border border-amber-500/30 rounded-xl pointer-events-none" />
+
+                                {/* Card Header */}
+                                <div className="flex justify-between items-start border-b border-amber-500/30 pb-2 z-10">
+                                    <div>
+                                        <span className="text-[8px] text-amber-500/70 font-mono tracking-widest">ADVENTURER</span>
+                                        <h3 className="text-sm font-bold text-amber-100 font-serif leading-tight">{name}</h3>
+                                    </div>
+                                    <span className="text-[9px] font-bold text-amber-400 bg-amber-950/80 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono">
+                                        Lv.1
+                                    </span>
+                                </div>
+
+                                {/* Card Portrait */}
+                                <div className="flex-1 flex flex-col justify-center items-center py-3 z-10">
+                                    <div className="w-24 h-24 rounded-full border-2 border-amber-500/40 bg-black overflow-hidden relative shadow-lg shadow-black/80">
+                                        <img 
+                                            src={avatarPreview || '/images/icons/observer_gem.png'} 
+                                            alt="" 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    </div>
+                                    <div className="mt-2.5 flex items-center gap-1.5 text-[9px] text-slate-400">
+                                        <span>年齢: {age}歳</span>
+                                        <span className="opacity-40">|</span>
+                                        <span>{gender === 'Male' ? '男性' : gender === 'Female' ? '女性' : '不明'}</span>
+                                    </div>
+                                </div>
+
+                                {/* Card Body / Inherited Stats */}
+                                <div className="border-t border-amber-500/30 pt-2.5 z-10 text-[9px] text-slate-400 space-y-1">
+                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                                        <div className="flex justify-between border-b border-stone-900 pb-0.5">
+                                            <span>HP:</span>
+                                            <span className="text-green-400 font-bold font-mono">{previewStats?.max_hp}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-stone-900 pb-0.5">
+                                            <span>VIT:</span>
+                                            <span className="text-orange-400 font-bold font-mono">{previewStats?.max_vitality}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-stone-900 pb-0.5">
+                                            <span>ATK:</span>
+                                            <span className="text-red-400 font-bold font-mono">{previewStats?.atk}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-stone-900 pb-0.5">
+                                            <span>DEF:</span>
+                                            <span className="text-cyan-400 font-bold font-mono">{previewStats?.def}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between text-[8px] text-amber-500/70 font-mono tracking-wide pt-1">
+                                        <span>DECK COST CAPACITY:</span>
+                                        <span className="font-bold font-mono text-amber-400">{previewStats?.max_deck_cost}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p className="text-[10px] text-slate-400 tracking-wide text-center leading-relaxed max-w-xs">
+                                誓約は交わされ、新たな生命が宿りました。<br />
+                                宿屋から果てなきフロンティアへの第一歩を。
+                            </p>
+
+                            {/* Start Adventure Button */}
+                            <button
+                                onClick={handleStartAdventure}
+                                className="w-full py-3 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:from-yellow-500 hover:to-yellow-400 text-slate-950 text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-amber-950/40 flex items-center justify-center gap-1.5 font-serif border border-yellow-400/20"
+                            >
+                                <Compass className="w-3.5 h-3.5 text-slate-950 animate-spin-slow" />
+                                旅を始める（宿屋へ）
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );

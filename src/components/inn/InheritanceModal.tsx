@@ -14,7 +14,7 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [retiring, setRetiring] = useState(false);
-    const [step, setStep] = useState<'intro' | 'select' | 'confirm' | 'epilogue'>('intro');
+    const [step, setStep] = useState<'intro' | 'select' | 'confirm' | 'crystalize' | 'epilogue'>('intro');
     const [existingHeroics, setExistingHeroics] = useState<any[]>([]);
     const [selectedReplaceHeroicId, setSelectedReplaceHeroicId] = useState<string | null>(null);
     
@@ -104,8 +104,8 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                 throw new Error(data.error || '引退処理に失敗しました。');
             }
 
-            // Move to Epilogue Narrative
-            setStep('epilogue');
+            // Move to Crystalization animation
+            setStep('crystalize');
         } catch (e: any) {
             alert(e.message || 'エラーが発生しました。');
         } finally {
@@ -419,6 +419,81 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                                         旅を終え、英霊とする
                                     </>
                                 )}
+                            </button>
+                        </footer>
+                    </div>
+                )}
+
+                {/* ── CRYSTALIZE STEP (CARD REVEAL ANIMATION) ── */}
+                {step === 'crystalize' && (
+                    <div className="flex flex-col h-full bg-[#03060d] items-center justify-center p-6 text-center animate-in fade-in duration-1000 relative overflow-hidden">
+                        {/* Magic Circle Glow */}
+                        <div className="absolute w-80 h-80 rounded-full border border-amber-500/10 animate-spin-slow flex items-center justify-center pointer-events-none">
+                            <div className="w-72 h-72 rounded-full border border-dashed border-amber-500/20" />
+                            <div className="absolute w-56 h-56 rounded-full bg-[radial-gradient(circle,rgba(217,119,6,0.08)_0%,transparent_70%)] animate-pulse" />
+                        </div>
+
+                        {/* Interactive Card Container */}
+                        <div className="relative z-10 flex-1 flex flex-col justify-center items-center gap-6 mt-4">
+                            <h3 className="text-sm font-bold text-amber-400 tracking-[0.2em] uppercase font-serif animate-bounce">
+                                魂の結晶化（英霊登録）
+                            </h3>
+
+                            {/* Card Object */}
+                            <div className="w-60 h-[320px] rounded-2xl bg-gradient-to-b from-[#18233c] to-[#0a101f] border-2 border-amber-500/60 shadow-[0_0_40px_rgba(245,158,11,0.3)] flex flex-col justify-between p-4 relative overflow-hidden animate-in slide-in-from-bottom duration-700">
+                                {/* Card Glow Backlight */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.15)_0%,transparent_60%)]" />
+                                
+                                {/* Inner Card Border */}
+                                <div className="absolute inset-2 border border-amber-500/20 rounded-xl pointer-events-none" />
+
+                                {/* Card Header */}
+                                <div className="flex justify-between items-start border-b border-amber-500/20 pb-2 z-10">
+                                    <div className="text-left">
+                                        <div className="text-[8px] text-amber-500/60 font-mono tracking-widest">HEROIC SPIRIT</div>
+                                        <div className="text-sm font-bold text-amber-100 font-serif leading-tight">{userProfile?.name}</div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono">
+                                        Lv.{userProfile?.level}
+                                    </span>
+                                </div>
+
+                                {/* Card Body / Portrait Placeholder */}
+                                <div className="flex-1 flex flex-col justify-center items-center py-4 z-10 relative">
+                                    <div className="w-24 h-24 rounded-full border-2 border-amber-500/40 bg-black overflow-hidden relative shadow-lg shadow-black/60">
+                                        <img src={userProfile?.avatar_url || '/avatars/default.png'} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="mt-3 px-3 py-1 bg-amber-950/40 border border-amber-500/30 rounded text-[9px] text-amber-300 font-serif tracking-widest font-bold">
+                                        英霊登録完了
+                                    </div>
+                                </div>
+
+                                {/* Card Footer / Stats */}
+                                <div className="border-t border-amber-500/20 pt-2 z-10 text-[9px] text-slate-400 space-y-1">
+                                    <div className="flex justify-between">
+                                        <span>生存日数:</span>
+                                        <span className="text-slate-200 font-mono">{userProfile?.accumulated_days}日</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>継承BPボーナス:</span>
+                                        <span className="text-green-400 font-bold font-mono">+{previewBP} BP</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p className="text-[10px] text-slate-400 tracking-wide max-w-xs leading-normal">
+                                キャラクターの魂が英霊として石碑に刻まれ、<br />
+                                次代を照らす光となりました。
+                            </p>
+                        </div>
+
+                        {/* Transition Button */}
+                        <footer className="w-full max-w-sm px-4 py-4 z-10 shrink-0 mt-4">
+                            <button
+                                onClick={() => setStep('epilogue')}
+                                className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-amber-950/30 flex items-center justify-center gap-1.5 border border-amber-500/20"
+                            >
+                                占い師の導きへ <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                         </footer>
                     </div>
