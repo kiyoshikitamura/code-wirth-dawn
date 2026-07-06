@@ -3,12 +3,12 @@ META,gold,300,,
 META,exp,100,,
 META,reputation,10,,
 NODE,start,「天軍の長を退けたのね。……見事な戦いだったわ」,"{""bg"":""bg_camp"",""bgm"":""bgm_quest_calm"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_02
-NODE,start_02,「でも、あなたの魂の灯火（VIT）が、磨耗しているのを感じるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_03
+NODE,start_02,「...でも、あなたの魂の灯火が、少しずつ衰えているのを感じるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_03
 NODE,start_03,「どれほど強き英雄であっても、永遠に戦い続けることはできない」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_04
-NODE,start_04,「……けれど、悲しむことはない。世界の危機はまだ続くのだから」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_05
-NODE,start_05,「あなたが培った『冒険 of 記憶』と『次代 of 絆』は次へと受け継げるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_06
-NODE,start_06,「引退を選ぶとき、その意志やスキル、ゴールドや装備は次代に受け継がれる」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_07
-NODE,start_07,「旅を終えたあなたの魂は『英霊』となり、酒場で次代を助けることもできる」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_08
+NODE,start_04,「……けれど、悲しむことはない。世界の危機を救う方法はあるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_05
+NODE,start_05,「あなたが培った『冒険の記憶』と『次世代の絆』は次へと受け継げるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_06
+NODE,start_06,「あなたが旅路を終えるとき、その想いや歩んだ成果は、失われずに引き継がれるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_07
+NODE,start_07,「その魂は『英霊』として記録され、酒場で未来の旅人たちを助ける光となるでしょう」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_08
 NODE,start_08,「戦い抜くも一興。けれど未来に希望を託し、引退を選ぶのも尊き英断よ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_09
 NODE,start_09,「もし旅路を終えるなら、私は新たな出発を祝福する準備をして待っているわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",end_success
 NODE,end_success,占い師との対話を通じて、魂の継承と英霊化の真実を知った。,"{""bg"":""bg_camp"",""type"":""end"",""result"":""success""}",
