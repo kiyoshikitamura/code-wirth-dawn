@@ -44,11 +44,11 @@ export async function GET(req: Request) {
             locationName !== 'Unknown'
                 ? supabaseService.from('reputations').select('score').eq('user_id', profile.id).eq('location_name', locationName).maybeSingle()
                 : Promise.resolve({ data: null, error: null }),
-            supabaseService.from('items').select('id, slug, name, type, sub_type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market, quest_req_id').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v2.9.3d: スキル・キーアイテム・素材を除外（装備品は枠数制限付きで表示）
+            supabaseService.from('items').select('id, slug, name, type, sub_type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market, quest_req_id, image_url').neq('type', 'skill').neq('type', 'key_item').neq('type', 'material'), // v2.9.3d: スキル・キーアイテム・素材を除外（装備品は枠数制限付きで表示）
             supabaseService.from('skills').select('id, slug, name, card_id, base_price, deck_cost, nation_tags, min_prosperity, is_black_market, image_url'),
             supabaseService.from('cards').select('id, slug, name, type, ap_cost, cost_type, cost_val, effect_val, target_type, effect_id, image_url, description'),
             // 通行許可証は全道具屋で表示するため別途取得
-            supabaseService.from('items').select('id, slug, name, type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market').in('slug', PASS_SLUGS),
+            supabaseService.from('items').select('id, slug, name, type, base_price, description, effect_data, nation_tags, min_prosperity, is_black_market, image_url').in('slug', PASS_SLUGS),
             // ユーザーが既に所持している通行許可証を確認
             supabaseService.from('inventory').select('item_id, items!inner(slug)').eq('user_id', profile.id).in('items.slug', PASS_SLUGS)
         ]);
@@ -147,7 +147,7 @@ export async function GET(req: Request) {
             let price = Math.floor(item.base_price * priceMultiplier);
             return {
                 ...item,
-                image_url: item.slug ? `/images/items/${item.slug}.png` : null,
+                image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null),
                 current_price: price,
                 is_quest_exclusive: (questId && item.quest_req_id === questId),
                 _source: 'item' as const
@@ -161,7 +161,7 @@ export async function GET(req: Request) {
             return {
                 ...item,
                 type: 'key_item' as const,
-                image_url: item.slug ? `/images/items/${item.slug}.png` : null,
+                image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null),
                 current_price: price,
                 is_owned: isOwned,
                 _source: 'item' as const

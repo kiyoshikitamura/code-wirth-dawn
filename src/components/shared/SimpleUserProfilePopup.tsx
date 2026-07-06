@@ -68,8 +68,13 @@ export default function SimpleUserProfilePopup({
                                 alt={name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                    // フォールバック画像
-                                    (e.target as HTMLImageElement).src = '/avatars/adventurer.jpg';
+                                    const target = e.target as HTMLImageElement;
+                                    if (!target.src.includes('adventurer.jpg')) {
+                                        target.src = '/avatars/adventurer.jpg';
+                                    } else {
+                                        target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="%230c1628"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23475569" font-size="12">No Avatar</text></svg>';
+                                        target.onerror = null;
+                                    }
                                 }}
                             />
                         </div>

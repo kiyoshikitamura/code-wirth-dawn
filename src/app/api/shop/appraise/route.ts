@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         // 8. 抽選結果のアイテム情報を取得
         const { data: itemData, error: itemError } = await supabaseService
             .from('items')
-            .select('id, slug, name, type, sub_type, base_price, description, rarity, effect_data')
+            .select('id, slug, name, type, sub_type, base_price, description, rarity, effect_data, image_url')
             .eq('slug', resultSlug)
             .single();
             
@@ -262,7 +262,7 @@ export async function POST(req: Request) {
                 description: itemData.description,
                 rarity: itemData.rarity,
                 effect_data: itemData.effect_data,
-                image_url: itemData.slug ? `/images/items/${itemData.slug}.png` : null
+                image_url: itemData.image_url || (itemData.slug ? `/images/items/${itemData.slug}.png` : null)
             },
             cost: appraiseCost,
             new_gold: finalProfile?.gold ?? (profile.gold - appraiseCost)

@@ -38,9 +38,6 @@ function toJstMonthStr(dateInput: any): string {
 }
 
 export async function GET(req: Request) {
-    if (process.env.SUSPEND_CRON === 'true') {
-        return NextResponse.json({ message: 'KPI API is temporarily suspended' }, { status: 503 });
-    }
     try {
         // 1. Authorization Check
         const adminKey = req.headers.get('x-admin-key');
@@ -264,12 +261,33 @@ export async function GET(req: Request) {
         // §3. Category: quests (Quest statistics)
         // ═══════════════════════════════════════
         if (category === 'quests' || category === 'all') {
+            // Check if quest cache needs to be refreshed (if stale - older than 10 minutes)
+            try {
+                const { data: cacheStatus, error: statusErr } = await supabaseServer
+                    .from('quest_activity_stats_cache')
+                    .select('updated_at')
+                    .limit(1)
+                    .maybeSingle();
+
+                const isStale = !cacheStatus || 
+                                statusErr || 
+                                (Date.now() - new Date(cacheStatus.updated_at).getTime() > 10 * 60 * 1000); // 10 minutes
+
+                if (isStale) {
+                    console.log('[Admin KPI] Quest activity stats cache is stale or missing. Refreshing...');
+                    await supabaseServer.rpc('refresh_quest_activity_stats_cache');
+                }
+            } catch (cacheErr) {
+                console.error('[Admin KPI] Failed to check/refresh quest activity stats cache:', cacheErr);
+            }
+
             const questStatsData = await fetchAll<any>(
                 supabaseServer
                     .from('quest_activity_stats_view')
                     .select('scenario_id, title, quest_type, start_count, complete_count, abandon_count'),
                 'scenario_id'
             );
+
 
             const questStats = questStatsData.map(q => {
                 const startCount = q.start_count || 0;

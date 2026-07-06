@@ -298,13 +298,13 @@ export async function GET(req: Request) {
                 const repRequired = typeof reqs.min_reputation === 'number'
                     ? reqs.min_reputation
                     : (reqs.min_reputation[locationId || q.location_id] || 0);
-                const repActual = repMap[locationId || q.location_id] || 0;
+                const repActual = (locationResult.data?.name && repMap[locationResult.data.name]) || 0;
                 if (repActual < repRequired) return false;
             }
 
             // v16: max_reputation フィルタ（悪人限定クエスト: 名声が高すぎると受注不可）
             if (q.max_reputation !== null && q.max_reputation !== undefined) {
-                const repActual = repMap[locationId || q.location_id] || 0;
+                const repActual = (locationResult.data?.name && repMap[locationResult.data.name]) || 0;
                 if (repActual > q.max_reputation) return false;
             }
 
@@ -348,14 +348,14 @@ export async function GET(req: Request) {
                 const repRequired = typeof minRep === 'number'
                     ? minRep
                     : (minRep[locationId || q.location_id] || 0);
-                const repActual = repMap[locationId || q.location_id] || 0;
+                const repActual = (locationResult.data?.name && repMap[locationResult.data.name]) || 0;
                 if (repActual < repRequired) return false;
             }
 
             // v16: max_reputation フィルタ（悪人限定クエスト）
             const maxRep = conds.max_reputation ?? q.max_reputation;
             if (maxRep !== null && maxRep !== undefined) {
-                const repActual = repMap[locationId || q.location_id] || 0;
+                const repActual = (locationResult.data?.name && repMap[locationResult.data.name]) || 0;
                 if (repActual > maxRep) return false;
             }
 

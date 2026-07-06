@@ -140,7 +140,10 @@ export default function GossipModal({ onClose }: Props) {
                         }
                     } else {
                         // channel === 'global'
-                        if (enrichedPost.location_id === null || enrichedPost.is_system) {
+                        const isUserPost = !enrichedPost.is_system;
+                        const isGlobalSystemPost = enrichedPost.is_system && enrichedPost.location_id === null;
+
+                        if (isUserPost || isGlobalSystemPost) {
                             if (hideSystemMessages && enrichedPost.is_system) return;
                             setPosts(prev => {
                                 if (prev.some(p => p.id === enrichedPost.id)) return prev;
