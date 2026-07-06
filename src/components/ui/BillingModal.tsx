@@ -213,12 +213,10 @@ export default function BillingModal({ onClose }: Props) {
                                             <span className="text-slate-400">└ 付与される鍵の内訳:</span>
                                             <span>知識と契約の鍵 x1 / 魔道と鉄壁の鍵 x1</span>
                                         </li>
-                                        <li className="flex justify-between"><span>👥 キャラクタースロット</span><span>3 枠 (Free: 1)</span></li>
                                         <li className="flex justify-between"><span>🏰 英霊 (Heroic) 登録</span><span>最大 3体 (Free: 1体)</span></li>
                                         <li className="flex justify-between"><span>🎁 形見引き継ぎ枠</span><span>最大 30個 (Free: 10個)</span></li>
                                         <li className="flex justify-between"><span>🪙 ゴールド継承比率</span><span>100 % (Free: 50%)</span></li>
                                         <li className="flex justify-between"><span>🪙 英霊ロイヤリティ率</span><span>25 % (Free: —)</span></li>
-                                        <li className="flex justify-between"><span>🌐 UGC 作成公開 / 保存</span><span>最大 5枠 / 10枠</span></li>
                                     </ul>
                                 </div>
                                 <button
@@ -259,13 +257,11 @@ export default function BillingModal({ onClose }: Props) {
                                             <span className="text-slate-400">└ 付与される鍵の内訳:</span>
                                             <span>知識と契約の鍵 x3 / 魔道と鉄壁の鍵 x2</span>
                                         </li>
-                                        <li className="flex justify-between"><span>👥 キャラクタースロット</span><span>5 枠 (Free: 1)</span></li>
                                         <li className="flex justify-between"><span>🏰 英霊 (Heroic) 登録</span><span>最大 10体 (Free: 1体)</span></li>
                                         <li className="flex justify-between"><span>🎁 形見引き継ぎ枠</span><span>最大 50個 (Free: 10個)</span></li>
                                         <li className="flex justify-between"><span>🪙 ゴールド継承比率</span><span>100 % (Free: 50%)</span></li>
-                                        <li className="flex justify-between"><span>🏷️ 自身の英霊雇用費用</span><span>50 % OFF (Basic: なし)</span></li>
+                                        <li className="flex justify-between"><span>🏷️ 自身の英霊雇用費用</span><span>50 % OFF</span></li>
                                         <li className="flex justify-between"><span>🪙 英霊ロイヤリティ率</span><span>35 % (Free: —)</span></li>
-                                        <li className="flex justify-between"><span>🌐 UGC 作成公開 / 保存</span><span>最大 30枠 / 50枠</span></li>
                                     </ul>
                                 </div>
                                 <button
