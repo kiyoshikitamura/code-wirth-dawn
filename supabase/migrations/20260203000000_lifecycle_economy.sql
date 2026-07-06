@@ -65,10 +65,11 @@ ALTER TABLE items ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read items" ON items;
 CREATE POLICY "Public read items" ON items FOR SELECT USING (true);
 
--- Historical Logs: Users can view their own history.
+-- Historical Logs: Users can view their own history and insert their own history.
 DROP POLICY IF EXISTS "Users can view own history" ON historical_logs;
 CREATE POLICY "Users can view own history" ON historical_logs FOR SELECT USING (auth.uid() = user_id);
--- Service Role creates logs on death.
+DROP POLICY IF EXISTS "Users can insert own history" ON historical_logs;
+CREATE POLICY "Users can insert own history" ON historical_logs FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
 -- Royalty Logs: Users can view their own earnings.
 DROP POLICY IF EXISTS "Users can view own royalties" ON royalty_logs;
