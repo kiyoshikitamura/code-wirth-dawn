@@ -424,66 +424,73 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                     </div>
                 )}
 
-                {/* ── CRYSTALIZE STEP (CARD REVEAL ANIMATION) ── */}
+                {/* ── CRYSTALIZE STEP (SOUL ASCENDING & RUNIC INSCRIPTION) ── */}
                 {step === 'crystalize' && (
-                    <div className="flex flex-col h-full bg-[#03060d] items-center justify-center p-6 text-center animate-in fade-in duration-1000 relative overflow-hidden">
-                        {/* Magic Circle Glow */}
-                        <div className="absolute w-80 h-80 rounded-full border border-amber-500/10 animate-spin-slow flex items-center justify-center pointer-events-none">
-                            <div className="w-72 h-72 rounded-full border border-dashed border-amber-500/20" />
-                            <div className="absolute w-56 h-56 rounded-full bg-[radial-gradient(circle,rgba(217,119,6,0.08)_0%,transparent_70%)] animate-pulse" />
+                    <div className="flex flex-col h-full bg-[#05080e] items-center justify-center p-6 text-center animate-in fade-in duration-1000 relative overflow-hidden">
+                        {/* Glowing Ethereal Background Embers */}
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                            <div className="absolute top-1/4 left-1/3 w-2 h-2 bg-amber-400/40 rounded-full animate-ping duration-1000" />
+                            <div className="absolute top-2/3 right-1/4 w-3 h-3 bg-amber-300/20 rounded-full animate-pulse duration-700" />
+                            <div className="absolute bottom-1/3 left-1/4 w-1.5 h-1.5 bg-yellow-400/30 rounded-full animate-ping duration-1500" />
+                            <div className="absolute w-[200vw] h-[200vw] bg-[radial-gradient(circle,rgba(217,119,6,0.05)_0%,transparent_60%)] -translate-y-1/2 pointer-events-none" />
                         </div>
 
-                        {/* Interactive Card Container */}
+                        {/* Magic Circle Inscription Seal */}
+                        <div className="absolute w-80 h-80 rounded-full border border-amber-500/10 animate-spin-slow flex items-center justify-center pointer-events-none">
+                            <div className="w-72 h-72 rounded-full border border-dashed border-amber-500/20" />
+                            <div className="absolute w-56 h-56 rounded-full bg-[radial-gradient(circle,rgba(217,119,6,0.06)_0%,transparent_70%)] animate-pulse" />
+                        </div>
+
+                        {/* Inscription Container */}
                         <div className="relative z-10 flex-1 flex flex-col justify-center items-center gap-6 mt-4">
-                            <h3 className="text-sm font-bold text-amber-400 tracking-[0.2em] uppercase font-serif animate-bounce">
-                                魂の結晶化（英霊登録）
-                            </h3>
+                            <div className="space-y-1">
+                                <span className="text-[10px] text-amber-500/80 font-mono tracking-[0.4em] uppercase">Soul Inscription</span>
+                                <h3 className="text-base font-bold text-amber-400 tracking-[0.2em] font-serif">
+                                    魂は英霊碑へ刻まれました
+                                </h3>
+                            </div>
 
-                            {/* Card Object */}
-                            <div className="w-60 h-[320px] rounded-2xl bg-gradient-to-b from-[#18233c] to-[#0a101f] border-2 border-amber-500/60 shadow-[0_0_40px_rgba(245,158,11,0.3)] flex flex-col justify-between p-4 relative overflow-hidden animate-in slide-in-from-bottom duration-700">
-                                {/* Card Glow Backlight */}
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.15)_0%,transparent_60%)]" />
-                                
-                                {/* Inner Card Border */}
-                                <div className="absolute inset-2 border border-amber-500/20 rounded-xl pointer-events-none" />
+                            {/* Memorial Stone Inscription Tablet */}
+                            <div className="w-64 py-6 px-5 rounded-xl bg-gradient-to-b from-[#101625] to-[#080b12] border border-amber-500/30 shadow-[0_0_30px_rgba(217,119,6,0.15)] flex flex-col gap-4 relative overflow-hidden animate-in slide-in-from-bottom duration-1000">
+                                {/* Gold Dust Effect overlay */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.08)_0%,transparent_70%)]" />
+                                <div className="absolute inset-2 border border-amber-500/15 rounded-lg pointer-events-none" />
 
-                                {/* Card Header */}
-                                <div className="flex justify-between items-start border-b border-amber-500/20 pb-2 z-10">
-                                    <div className="text-left">
-                                        <div className="text-[8px] text-amber-500/60 font-mono tracking-widest">HEROIC SPIRIT</div>
-                                        <div className="text-sm font-bold text-amber-100 font-serif leading-tight">{userProfile?.name}</div>
+                                {/* Avatar Crest */}
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-20 h-20 rounded-full border border-amber-500/30 bg-black/60 overflow-hidden relative p-1 shadow-lg shadow-black/80">
+                                        <img src={userProfile?.avatar_url || '/avatars/default.png'} alt="" className="w-full h-full rounded-full object-cover" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono">
-                                        Lv.{userProfile?.level}
-                                    </span>
-                                </div>
-
-                                {/* Card Body / Portrait Placeholder */}
-                                <div className="flex-1 flex flex-col justify-center items-center py-4 z-10 relative">
-                                    <div className="w-24 h-24 rounded-full border-2 border-amber-500/40 bg-black overflow-hidden relative shadow-lg shadow-black/60">
-                                        <img src={userProfile?.avatar_url || '/avatars/default.png'} alt="" className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="mt-3 px-3 py-1 bg-amber-950/40 border border-amber-500/30 rounded text-[9px] text-amber-300 font-serif tracking-widest font-bold">
-                                        英霊登録完了
+                                    <div className="text-center">
+                                        <h4 className="text-sm font-bold text-amber-100 font-serif">{userProfile?.name}</h4>
+                                        <span className="text-[9px] text-amber-500/60 font-mono tracking-widest">LEVEL {userProfile?.level}</span>
                                     </div>
                                 </div>
 
-                                {/* Card Footer / Stats */}
-                                <div className="border-t border-amber-500/20 pt-2 z-10 text-[9px] text-slate-400 space-y-1">
+                                {/* Inscribed stats in ancient style */}
+                                <div className="border-t border-b border-amber-500/15 py-3 space-y-2 text-[10px] text-amber-200/80 font-serif">
                                     <div className="flex justify-between">
-                                        <span>生存日数:</span>
-                                        <span className="text-slate-200 font-mono">{userProfile?.accumulated_days}日</span>
+                                        <span>冒険日数</span>
+                                        <span className="text-amber-100 font-mono">{userProfile?.accumulated_days} 日</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>継承BPボーナス:</span>
-                                        <span className="text-green-400 font-bold font-mono">+{previewBP} BP</span>
+                                        <span>獲得レガシー</span>
+                                        <span className="text-amber-100 font-mono">{previewLP.toLocaleString()} LP</span>
                                     </div>
+                                    <div className="flex justify-between text-green-400">
+                                        <span>継承BPボーナス</span>
+                                        <span className="font-bold font-mono">+{previewBP} BP</span>
+                                    </div>
+                                </div>
+
+                                <div className="text-center text-[9px] text-slate-500 tracking-wider font-serif">
+                                    「その功績は永劫に讃えられん」
                                 </div>
                             </div>
 
                             <p className="text-[10px] text-slate-400 tracking-wide max-w-xs leading-normal">
-                                キャラクターの魂が英霊として石碑に刻まれ、<br />
-                                次代を照らす光となりました。
+                                冒険の足跡は英霊として記録されました。<br />
+                                次代を担う魂へ、その意志を受け継ぎましょう。
                             </p>
                         </div>
 
@@ -491,7 +498,7 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                         <footer className="w-full max-w-sm px-4 py-4 z-10 shrink-0 mt-4">
                             <button
                                 onClick={() => setStep('epilogue')}
-                                className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-amber-950/30 flex items-center justify-center gap-1.5 border border-amber-500/20"
+                                className="w-full py-3 bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-slate-950 text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-amber-950/20 flex items-center justify-center gap-1.5 border border-amber-500/20 font-serif"
                             >
                                 占い師の導きへ <ArrowRight className="w-3.5 h-3.5" />
                             </button>

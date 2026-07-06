@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { useGameStore } from '@/store/gameStore';
 import { getAuthToken, clearAuthTokenCache } from '@/lib/authToken';
 
 /** sessionStorage キー */
@@ -30,21 +30,19 @@ export function clearGameStarted(): void {
 
 /**
  * ゲームページ保護用フック。
- *
- * - タイトル画面を経由せずに直接アクセスされた場合は /title にリダイレクト。
- * - Supabase セッションが失効している場合もリダイレクト。
- * - ブラウザバックを検知して /title にリダイレクト（全保護ページ共通）。
- * - /battle-test は対象外にするため、そのページでは呼ばない。
- *
- * 使い方:
- *   function InnPageInner() {
- *     useAuthGuard();  // ← 先頭で呼ぶ
- *     ...
- *   }
  */
 export function useAuthGuard(): void {
     const router = useRouter();
     const checked = useRef(false);
+    const userProfile = useGameStore(state => state.userProfile);
+
+    // 引退済み（死亡状態）のキャラクターが保護ページに入ろうとした場合は、レジュームのためキャラメイク画面へ送る
+    useEffect(() => {
+        if (userProfile && !userProfile.is_alive) {
+            console.log('[useAuthGuard] Retired character detected. Redirecting to reincarnation setup.');
+            router.replace('/title?inherited=true');
+        }
+    }, [userProfile, router]);
 
     useEffect(() => {
         // StrictMode の二重呼び出しを防ぐ
