@@ -6,6 +6,7 @@ interface DeathOptions {
     heirloomItemIds?: string[];
     allowedSlots?: number;
     paidGold?: number;
+    replaceHeroicId?: number | string;
 }
 
 export class LifeCycleService {
@@ -165,15 +166,24 @@ export class LifeCycleService {
 
                 const currentCount = count || 0;
 
-                // FIFO: 上限に達している、または上限を超えている場合、最古の英霊から順に削除して空きを作る
+                // 上限に達している、または上限を超えている場合、指定された英霊（または最古の英霊）を削除して空きを作る
                 if (currentCount >= heroicLimit && existingHeroics) {
-                    // 何体削除する必要があるか計算 (新規追加する1体分も考慮)
-                    const excessCount = currentCount - heroicLimit + 1;
-                    const oldestMembers = existingHeroics.slice(0, excessCount);
-                    
-                    for (const member of oldestMembers) {
-                        await this.supabase.from('party_members').delete().eq('id', member.id);
-                        console.log('Heroic FIFO: deleted heroic', member.id);
+                    let memberToDelete = null;
+                    if (options?.replaceHeroicId) {
+                        memberToDelete = existingHeroics.find(h => String(h.id) === String(options.replaceHeroicId));
+                    }
+
+                    if (memberToDelete) {
+                        await this.supabase.from('party_members').delete().eq('id', memberToDelete.id);
+                        console.log('Heroic replacement: deleted selected heroic', memberToDelete.id);
+                    } else {
+                        // FIFOフォールバック
+                        const excessCount = currentCount - heroicLimit + 1;
+                        const oldestMembers = existingHeroics.slice(0, excessCount);
+                        for (const member of oldestMembers) {
+                            await this.supabase.from('party_members').delete().eq('id', member.id);
+                            console.log('Heroic FIFO Fallback: deleted oldest heroic', member.id);
+                        }
                     }
                 }
                 // v18: デッキバリデーション — user_skills から装備中スキルを取得

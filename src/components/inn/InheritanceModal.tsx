@@ -15,6 +15,8 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
     const [loading, setLoading] = useState(true);
     const [retiring, setRetiring] = useState(false);
     const [step, setStep] = useState<'select' | 'confirm' | 'epilogue'>('select');
+    const [existingHeroics, setExistingHeroics] = useState<any[]>([]);
+    const [selectedReplaceHeroicId, setSelectedReplaceHeroicId] = useState<string | null>(null);
     
     // Summary of inheritance variables
     const tier = userProfile?.subscription_tier ?? 'free';
@@ -28,18 +30,29 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
     const previewLP = Math.floor(baseLP * lpMultiplier);
     const previewBP = Math.floor(previewLP / 300);
 
+    const heroicLimit = tier === 'premium' ? 10 : (tier === 'basic' ? 3 : 1);
+    const isLimitReached = existingHeroics.length >= heroicLimit;
+
     useEffect(() => {
-        const loadInventory = async () => {
+        const loadInventoryAndHeroics = async () => {
             setLoading(true);
             try {
                 await fetchInventory();
+                
+                // Fetch registered heroics for replacement
+                const authHeaders = await getAuthHeaders();
+                const res = await fetch('/api/tavern/my-heroic', { headers: authHeaders });
+                if (res.ok) {
+                    const data = await res.json();
+                    setExistingHeroics(data.heroics || []);
+                }
             } catch (e) {
-                console.error('Failed to fetch inventory', e);
+                console.error('Failed to load inventory or heroics', e);
             } finally {
                 setLoading(false);
             }
         };
-        loadInventory();
+        loadInventoryAndHeroics();
     }, []);
 
     // Filter out skills/deck cards. We allow weapon, armor, accessory (equipment) and consumables.
@@ -62,6 +75,11 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
     };
 
     const handleExecuteRetire = async () => {
+        if (isLimitReached && !selectedReplaceHeroicId) {
+            alert('英霊の登録上限に達しています。入れ替える英霊を選択してください。');
+            return;
+        }
+
         setRetiring(true);
         try {
             const authHeaders = await getAuthHeaders();
@@ -76,7 +94,8 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                     heirloom_item_ids: selectedItems.map(id => {
                         const invItem = inventory.find(i => String(i.id) === String(id));
                         return invItem ? String(invItem.item_id) : null;
-                    }).filter(Boolean)
+                    }).filter(Boolean),
+                    replace_heroic_id: selectedReplaceHeroicId
                 })
             });
 
@@ -255,6 +274,44 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                                     </span>
                                 </div>
                             </div>
+
+                            {/* Heroic Overwrite Selector */}
+                            {isLimitReached && (
+                                <div className="w-full max-w-sm bg-[#1a0e10]/80 border border-red-900/30 rounded-xl p-3.5 space-y-2 text-left animate-in slide-in-from-bottom-2 duration-300">
+                                    <div className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                                        <AlertTriangle size={12} className="text-red-500 animate-pulse" />
+                                        英霊登録の上限に達しています ({existingHeroics.length} / {heroicLimit})
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
+                                        新しく登録するために、入れ替えて（削除して）上書きする英霊を1体選択してください。
+                                    </p>
+                                    <div className="mt-2 space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                                        {existingHeroics.map((h: any) => (
+                                            <label
+                                                key={h.id}
+                                                className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all active:scale-[0.99] ${
+                                                    selectedReplaceHeroicId === String(h.id)
+                                                        ? 'bg-red-950/30 border-red-500/80 text-red-200'
+                                                        : 'bg-black/30 border-slate-800 text-slate-400 hover:border-slate-700'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2 text-[10px]">
+                                                    <input
+                                                        type="radio"
+                                                        name="replace_heroic"
+                                                        value={h.id}
+                                                        checked={selectedReplaceHeroicId === String(h.id)}
+                                                        onChange={() => setSelectedReplaceHeroicId(String(h.id))}
+                                                        className="accent-red-500 w-3 h-3 cursor-pointer"
+                                                    />
+                                                    <span className="font-bold">{h.name}</span>
+                                                </div>
+                                                <span className="text-[9px] font-mono text-slate-500">Lv.{h.level}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Confirmation Buttons */}
@@ -267,8 +324,12 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                             </button>
                             <button
                                 onClick={handleExecuteRetire}
-                                disabled={retiring}
-                                className="flex-1 py-2.5 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-red-950/30 flex items-center justify-center gap-1.5"
+                                disabled={retiring || (isLimitReached && !selectedReplaceHeroicId)}
+                                className={`flex-1 py-2.5 text-white text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-1.5
+                                    ${(retiring || (isLimitReached && !selectedReplaceHeroicId))
+                                        ? 'bg-slate-800/40 text-slate-500 border border-slate-850 cursor-not-allowed shadow-none'
+                                        : 'bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 shadow-red-950/30'
+                                    }`}
                             >
                                 {retiring ? (
                                     <>

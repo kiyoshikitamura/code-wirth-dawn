@@ -8,7 +8,7 @@ import { buildShareData } from '@/lib/shareUtils';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { cause, heirloom_item_ids } = body;
+        const { cause, heirloom_item_ids, replace_heroic_id } = body;
 
         const client = createAuthClient(req);
         const { data: { user: jwtUser } } = await client.auth.getUser();
@@ -52,11 +52,12 @@ export async function POST(req: Request) {
         const lifeSync = new LifeCycleService(client);
         const deathCause = cause === 'voluntary' ? 'Voluntary Retirement' : (cause || 'Unknown');
 
-        // 形見情報をoptionsとして渡し、historical_logsのスナップショットに含める
+        // 形見情報と英霊上書き指定をoptionsとして渡し、引退処理を行う
         const result = await lifeSync.handleCharacterDeath(profile.id, deathCause, {
             heirloomItemIds: finalHeirlooms,
             allowedSlots,
             paidGold: 0,
+            replaceHeroicId: replace_heroic_id,
         });
 
         if (!result.success) {
