@@ -370,6 +370,13 @@ export class LifeCycleService {
         // 世代交代: 旧パーティメンバー（同行中のみ）のリセット
         await this.supabase.from('party_members').delete().eq('owner_id', userId).eq('is_active', true);
 
+        // 世代交代: 継承毎に1回限定のクエスト（6022: 英霊の祝福）のクリア履歴をリセット
+        await this.supabase
+            .from('user_chronicles')
+            .delete()
+            .eq('user_id', userId)
+            .eq('scenario_id', 6022);
+
         // 世代交代: 全スキルの装備（デッキ）を解除
         await this.supabase
             .from('user_skills')
