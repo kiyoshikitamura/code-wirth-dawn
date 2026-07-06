@@ -166,8 +166,8 @@ export default function StatusModal({ onClose, isCampMode, questLocked, onRetire
                         </button>
                     </div>
 
-                    {/* 属性確認ボタン */}
-                    <div className="pt-2">
+                    {/* 属性確認 ＆ 引退（旅を終える）ボタン */}
+                    <div className="space-y-2 pt-1">
                         <button
                             onClick={() => setShowAlignment(true)}
                             className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-slate-900 via-gray-900 to-slate-900 border border-amber-600/30 hover:border-amber-500 text-xs font-bold text-amber-200 rounded-lg transition-all active:scale-95 shadow-md shadow-black/40 hover:from-slate-800/80"
@@ -175,11 +175,8 @@ export default function StatusModal({ onClose, isCampMode, questLocked, onRetire
                             <Scale className="w-4 h-4 text-amber-400" />
                             属性（アライメント）確認
                         </button>
-                    </div>
 
-                    {/* 引退（旅を終える）ボタン */}
-                    {!isCampMode && onRetire && (
-                        <div className="pt-2">
+                        {!isCampMode && onRetire && (
                             <button
                                 onClick={onRetire}
                                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-red-950/60 via-slate-900 to-red-950/60 border border-red-900/30 hover:border-red-600/50 text-xs font-bold text-red-200 rounded-lg transition-all active:scale-[0.98] shadow-md shadow-black/40 hover:from-red-900/40"
@@ -187,8 +184,8 @@ export default function StatusModal({ onClose, isCampMode, questLocked, onRetire
                                 <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" fill="currentColor" />
                                 旅を終える（引退）
                             </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* 通行許可証の有効期限表示 */}
                     {userProfile?.pass_expires_at && Object.keys(userProfile.pass_expires_at).length > 0 && (() => {

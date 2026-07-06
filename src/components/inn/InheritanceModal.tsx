@@ -14,7 +14,7 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [retiring, setRetiring] = useState(false);
-    const [step, setStep] = useState<'select' | 'confirm' | 'epilogue'>('select');
+    const [step, setStep] = useState<'intro' | 'select' | 'confirm' | 'epilogue'>('intro');
     const [existingHeroics, setExistingHeroics] = useState<any[]>([]);
     const [selectedReplaceHeroicId, setSelectedReplaceHeroicId] = useState<string | null>(null);
     
@@ -122,6 +122,83 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
             <div className="w-full max-w-xl h-[92dvh] bg-[#090d16] border-2 border-amber-950/40 rounded-xl shadow-2xl overflow-hidden flex flex-col relative text-slate-100 font-serif">
                 
+                {/* ── INTRO STEP ── */}
+                {step === 'intro' && (
+                    <div className="flex flex-col h-full justify-between animate-in fade-in duration-300">
+                        {/* Header */}
+                        <header className="flex items-center justify-between px-4 py-3 border-b border-amber-950/20 bg-[#060910] shrink-0">
+                            <h2 className="text-sm font-bold tracking-widest text-amber-500 flex items-center gap-1.5 font-serif">
+                                <Sparkles className="w-4 h-4 text-amber-400" /> 継承の儀式
+                            </h2>
+                            <button onClick={onClose} className="p-1 text-slate-400 hover:text-white bg-slate-900/60 border border-slate-800 rounded-full transition-colors active:scale-95">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </header>
+
+                        {/* Narrative Content */}
+                        <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-6 md:gap-8 overflow-y-auto">
+                            {/* Fortune Teller Portrait */}
+                            <div className="w-40 h-40 md:w-48 md:h-48 rounded-2xl overflow-hidden border-2 border-amber-500/40 bg-slate-950 flex shrink-0 justify-center items-center shadow-xl shadow-black/80 relative">
+                                <img 
+                                    src="/images/npcs/npc_fortune_teller.png" 
+                                    alt="旅の占い師" 
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                                <div className="absolute bottom-2 left-2 right-2 text-center text-[10px] font-bold text-amber-400 font-serif">
+                                    旅の占い師
+                                </div>
+                            </div>
+
+                            {/* Dialogue & Rule Box */}
+                            <div className="flex-grow max-w-sm space-y-4 text-left">
+                                <div className="bg-[#121824]/60 border border-amber-950/30 rounded-xl p-4 md:p-5 shadow-inner shadow-black/50 relative space-y-3">
+                                    <div className="absolute -top-1.5 -left-1.5 w-3 h-3 border-t-2 border-l-2 border-amber-500/60" />
+                                    <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 border-b-2 border-r-2 border-amber-500/60" />
+                                    
+                                    <div className="text-xs leading-relaxed text-amber-200/90 font-serif space-y-2.5">
+                                        <p className="italic text-amber-300">
+                                            「お前の魂の灯火が、少しずつ衰えているのを感じるわ。けれど、悲しむことはない。世界の危機を救う方法はあるわ」
+                                        </p>
+                                        <p>
+                                            「お前が培った『冒険の記憶』と『次世代の絆』は、失われずに次代へと受け継げるわ。準備はいい？」
+                                        </p>
+                                    </div>
+
+                                    {/* Detailed Bullet Rules */}
+                                    <div className="bg-black/40 border border-amber-900/10 rounded-lg p-3 space-y-2 text-[10px] text-slate-300 leading-normal">
+                                        <div className="font-bold text-amber-500 border-b border-amber-950/40 pb-1 flex items-center gap-1">
+                                            <Shield size={10} /> 英霊継承の誓い
+                                        </div>
+                                        <ul className="list-disc list-inside space-y-1 text-slate-400">
+                                            <li><span className="text-slate-200 font-bold">英霊の石碑</span>: 旅路を終えたキャラクターは「英霊」として石碑に刻まれ、酒場で雇用可能になります。</li>
+                                            <li><span className="text-slate-200 font-bold">スキル引き継ぎ</span>: 習得した全てのスキル（デッキ・習得済みスキル）は100%継承されます。</li>
+                                            <li><span className="text-slate-200 font-bold">ゴールド・遺品継承</span>: 所持金の一部と、選択した「形見アイテム」（Free: 最大10個 / Basic: 30個 / Premium: 50個）を引き継ぎます。</li>
+                                            <li><span className="text-slate-200 font-bold">継承ボーナス（BP）</span>: 累積冒険成果に応じたBPを獲得し、次世代キャラメイク時に初期能力値に割り振れます。</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Control Buttons */}
+                        <footer className="px-4 py-4 bg-[#060910] border-t border-amber-950/20 flex gap-3 shrink-0">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 py-2.5 border border-slate-700 hover:bg-slate-900 text-slate-200 text-xs font-bold rounded-lg transition-all"
+                            >
+                                まだ旅を続ける
+                            </button>
+                            <button
+                                onClick={() => setStep('select')}
+                                className="flex-1 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-amber-950/30 flex items-center justify-center gap-1.5"
+                            >
+                                継承の儀式へ（遺品整理） <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                        </footer>
+                    </div>
+                )}
+
                 {/* ── SELECT STEP ── */}
                 {step === 'select' && (
                     <>

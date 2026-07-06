@@ -355,7 +355,7 @@ export class LifeCycleService {
                 .from('historical_logs')
                 .select('data')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false })
+                .order('death_date', { ascending: false })
                 .limit(1)
                 .maybeSingle();
 
@@ -374,6 +374,9 @@ export class LifeCycleService {
 
         // 世代交代: 訪問済み拠点リセット（#11 全拠点制覇は世代1回）
         await this.supabase.from('user_visited_locations').delete().eq('user_id', userId);
+
+        // 世代交代: 旧パーティメンバーのリセット
+        await this.supabase.from('party_members').delete().eq('owner_id', userId);
 
         // 世代交代: 「世代1回」トリガーをクリア、「キャラ1回」「1回」は維持
         try {

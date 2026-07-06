@@ -18,6 +18,7 @@ import { soundManager } from '@/lib/soundManager';
 export default function TitlePageInner() {
     const router = useRouter();
     const { userProfile, fetchUserProfile } = useGameStore();
+    const isReincarnation = !!(userProfile && !userProfile.is_alive);
     useBgm('bgm_title');
 
     // Flow State:
@@ -1126,32 +1127,34 @@ export default function TitlePageInner() {
                                 )}
 
                                 {/* やり直す / タイトルに戻る */}
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        if (creationStep === 4) {
-                                            // 契約やり直し
-                                            setCreationStep(0);
-                                            setName('');
-                                            setGender('Male');
-                                            setAge(20);
-                                            setAvatarFile(null);
-                                            setAvatarPreview('/images/icons/observer_gem.png');
-                                        } else {
-                                            // タイトルに戻る
-                                            clearGameStarted();
-                                            try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
-                                            setMode('ENTRY');
-                                            setName('');
-                                            setAvatarFile(null);
-                                            setAvatarPreview('/images/icons/observer_gem.png');
-                                            setCreationStep(0);
-                                        }
-                                    }}
-                                    className="flex-1 border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 hover:text-white font-serif text-[11px] tracking-widest py-2.5 rounded-lg transition-colors text-center shadow-md"
-                                >
-                                    {creationStep === 4 ? 'やり直す' : 'タイトルへ戻る'}
-                                </button>
+                                {(!isReincarnation || creationStep === 4) && (
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            if (creationStep === 4) {
+                                                // 契約やり直し
+                                                setCreationStep(0);
+                                                setName('');
+                                                setGender('Male');
+                                                setAge(20);
+                                                setAvatarFile(null);
+                                                setAvatarPreview('/images/icons/observer_gem.png');
+                                            } else {
+                                                // タイトルに戻る
+                                                clearGameStarted();
+                                                try { await supabase.auth.signOut(); clearAuthTokenCache(); } catch (_) {}
+                                                setMode('ENTRY');
+                                                setName('');
+                                                setAvatarFile(null);
+                                                setAvatarPreview('/images/icons/observer_gem.png');
+                                                setCreationStep(0);
+                                            }
+                                        }}
+                                        className="flex-1 border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 hover:text-white font-serif text-[11px] tracking-widest py-2.5 rounded-lg transition-colors text-center shadow-md"
+                                    >
+                                        {creationStep === 4 ? 'やり直す' : 'タイトルへ戻る'}
+                                    </button>
+                                )}
                             </div>
                         </div>
 
