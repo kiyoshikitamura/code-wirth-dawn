@@ -53,9 +53,11 @@ export async function GET(req: Request) {
         } else {
             // channel === 'global'
             if (excludeSystem) {
-                query = query.eq('is_system', false).is('location_id', null);
+                // Show all user messages
+                query = query.eq('is_system', false);
             } else {
-                query = query.or('location_id.is.null,is_system.eq.true');
+                // Show all user messages + global system messages (where location_id is null)
+                query = query.or('is_system.eq.false,and(is_system.eq.true,location_id.is.null)');
             }
         }
 

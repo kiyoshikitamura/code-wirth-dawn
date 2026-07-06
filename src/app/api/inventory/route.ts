@@ -158,7 +158,8 @@ export async function GET(req: Request) {
                     sub_type,
                     base_price,
                     effect_data,
-                    cost
+                    cost,
+                    image_url
                 )
             `);
 
@@ -228,7 +229,7 @@ export async function GET(req: Request) {
                 const effectData = item.effect_data || {};
                 const powerVal = effectData.heal || effectData.damage || effectData.power || 0;
 
-                const SKILL_SLUG_PREFIXES = ['book_', 'grimoire_', 'scroll_', 'skill_', 'manual_'];
+                const SKILL_SLUG_PREFIXES = ['book_', 'grimoire_', 'scroll_', 'skill_', 'manual_', 'spot_', 'legend_'];
                 const hasSkillSlug = item.slug && SKILL_SLUG_PREFIXES.some((p: string) => item.slug.startsWith(p));
                 const isLegacySkill = item.type === 'skill' && hasSkillSlug;
 
@@ -249,7 +250,7 @@ export async function GET(req: Request) {
                     is_skill: isLegacySkill,
                     cost: item.cost || effectData.cost_val || effectData.cost || 0,
                     effect_data: effectData,
-                    image_url: item.slug ? `/images/items/${item.slug}.png` : null
+                    image_url: item.image_url || (item.slug ? `/images/items/${item.slug}.png` : null)
                 };
             } catch (e: any) {
                 console.error(`Error mapping inventory item ${entry.id}:`, e);

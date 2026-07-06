@@ -251,8 +251,13 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                             alt="バルガス"
                             className="w-20 h-20 object-cover rounded-lg border border-[#233f6a] bg-[#0c1628]"
                             onError={(e) => {
-                                // Fallback
-                                (e.target as HTMLImageElement).src = '/images/enemies/default.png';
+                                const target = e.target as HTMLImageElement;
+                                if (!target.src.includes('default.png')) {
+                                    target.src = '/images/enemies/default.png';
+                                } else {
+                                    target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="%230c1628"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23475569" font-size="12">No Image</text></svg>';
+                                    target.onerror = null;
+                                }
                             }}
                         />
                         <div className="space-y-1 flex-1 min-w-0">

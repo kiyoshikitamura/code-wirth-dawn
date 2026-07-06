@@ -230,7 +230,8 @@ class SoundManager {
     }
 
     async playBgm(key: string): Promise<void> {
-        if (!key || key === this.currentBgmKey) return;
+        if (!key) return;
+        if (key === this.currentBgmKey && this.bgmAudio && !this.bgmAudio.paused) return;
 
         this.init();
 
