@@ -71,7 +71,7 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
     const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
     const [selectedShadow, setSelectedShadow] = useState<ShadowSummary | null>(null);
     const [simpleProfileUser, setSimpleProfileUser] = useState<ShadowSummary | null>(null);
-    const [myHeroics, setMyHeroics] = useState<MyHeroic[]>([]);
+    const [myHeroics, setMyHeroics] = useState<ShadowSummary[]>([]);
     const [heroicLoading, setHeroicLoading] = useState(false);
     const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
     const [heroicHallList, setHeroicHallList] = useState<ShadowSummary[]>([]);
@@ -868,20 +868,48 @@ export default function TavernModal({ isOpen, onClose, userProfile, locationId, 
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
-                                                {myHeroics.map(h => (
-                                                    <div key={h.id} className="flex items-center gap-2 p-2 bg-gradient-to-r from-amber-50/60 to-[#fdfbf7] border border-amber-300/60 rounded ring-1 ring-amber-400/30">
-                                                        <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-400/50 flex items-center justify-center flex-shrink-0">
-                                                            <Star size={12} className="text-amber-600" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="text-xs font-bold text-[#3e2723] truncate">{h.name}</div>
-                                                            <div className="text-[10px] text-[#8b6f4e]">Lv.{h.level} {toJpJobClass(h.job_class)}</div>
-                                                        </div>
-                                                        <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-600 to-yellow-400 text-[9px] font-bold text-slate-950 px-1.5 py-0.5 rounded flex-shrink-0">
-                                                            <Star size={8} />英霊
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                {myHeroics.map((h, i) => {
+                                                     const hired = isAlreadyHired(h);
+                                                     const displayName = h.epithet ? `${h.epithet} ${h.name}` : h.name;
+                                                     const isPremium = userProfile?.subscription_tier === 'premium';
+                                                     return (
+                                                         <div 
+                                                             key={h.profile_id || i} 
+                                                             onClick={() => setSelectedShadow(h)}
+                                                             className={`flex items-center justify-between p-2 bg-gradient-to-r transition-all cursor-pointer active:scale-[0.99] ${
+                                                                 hired 
+                                                                 ? 'border border-[#6b8cae]/40 bg-[#eef3f7] opacity-80'
+                                                                 : 'border border-amber-300/60 rounded ring-1 ring-amber-400/30 from-amber-50/60 to-[#fdfbf7] hover:from-amber-100/60'
+                                                             }`}
+                                                         >
+                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                 <div className="w-7 h-7 rounded-full bg-amber-100 border border-amber-400/50 flex items-center justify-center flex-shrink-0">
+                                                                     <Star size={12} className="text-amber-600" />
+                                                                 </div>
+                                                                 <div className="flex-1 min-w-0">
+                                                                     <div className="text-xs font-bold text-[#3e2723] truncate">{displayName}</div>
+                                                                     <div className="text-[10px] text-[#8b6f4e]">Lv.{h.level} {toJpJobClass(h.job_class)}</div>
+                                                                 </div>
+                                                             </div>
+                                                             <div className="flex flex-col items-end gap-0.5 flex-shrink-0 pl-2">
+                                                                 {hired ? (
+                                                                     <span className="bg-[#4a7da8] text-white text-[9px] px-1.5 py-0.5 font-bold rounded">雇用中</span>
+                                                                 ) : (
+                                                                     <>
+                                                                         <div className="text-amber-700 font-mono font-bold text-[11px]">
+                                                                             {h.contract_fee.toLocaleString()} G
+                                                                         </div>
+                                                                         {isPremium && (
+                                                                             <span className="text-[8px] text-amber-600 font-bold bg-amber-100/80 px-1 rounded border border-amber-300/30 animate-pulse">
+                                                                                 50% OFF
+                                                                             </span>
+                                                                         )}
+                                                                     </>
+                                                                 )}
+                                                             </div>
+                                                         </div>
+                                                     );
+                                                 })}
                                             </div>
                                         )}
                                     </div>

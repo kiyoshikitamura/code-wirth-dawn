@@ -1,0 +1,11 @@
+row_type,node_id,text_label,params,next_node
+META,gold,500,,
+META,exp,1000,,
+META,reputation,10,,
+NODE,start,「ようこそ、新たなる旅人よ。ふふ、やはり私の目に狂いはなかったわ」,"{""bg"":""bg_camp"",""bgm"":""bgm_quest_calm"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_02
+NODE,start_02,「あなたの中に、かつて世界を救わんとした先代 of 魂 of ぬくもりが見えるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_03
+NODE,start_03,「その継承されし意志に敬意を表し、私の占術で英霊 of 祝福を授けましょう」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_04
+NODE,start_04,「先代 of 『冒険 of 記憶』が、あなたの血となり肉となり、新たな力となるわ」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_05
+NODE,start_05,「さあ、瞳を閉じて。星々があなたの行く道を照らし、祝福を与えますように」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",start_06
+NODE,start_06,「あなたの旅路に、大いなる幸運と英霊たちの導きがあらんことを！」,"{""bg"":""bg_camp"",""type"":""text"",""speaker_name"":""旅の占い師"",""fg"":""fg_fortune_teller""}",end_success
+NODE,end_success,旅の占い師の儀式により、先代の英霊の祝福（大量の経験値）を獲得した！,"{""bg"":""bg_camp"",""type"":""end"",""result"":""success""}",

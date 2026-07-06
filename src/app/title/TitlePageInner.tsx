@@ -13,6 +13,7 @@ import { Sword, Map as MapIcon, Hourglass, Compass, LogIn, PlayCircle, BookOpen,
 import { useBgm } from '@/hooks/useBgm';
 import DeleteConfirmModal from '@/components/title/DeleteConfirmModal';
 import TermsOfServiceModal from '@/components/title/TermsOfServiceModal';
+import { soundManager } from '@/lib/soundManager';
 
 export default function TitlePageInner() {
     const router = useRouter();
@@ -59,6 +60,12 @@ export default function TitlePageInner() {
     const [showConfirm, setShowConfirm] = useState(false);
     const [creationStep, setCreationStep] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
+
+    // BP Allocation States
+    const [allocatedHpPoints, setAllocatedHpPoints] = useState(0);
+    const [allocatedAtkPoints, setAllocatedAtkPoints] = useState(0);
+    const [allocatedDefPoints, setAllocatedDefPoints] = useState(0);
+    const [allocatedVitPoints, setAllocatedVitPoints] = useState(0);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteCheck1, setDeleteCheck1] = useState(false);
     const [deleteCheck2, setDeleteCheck2] = useState(false);
@@ -100,7 +107,7 @@ export default function TitlePageInner() {
             await fetchUserProfile();
             const { data: profile, error: profileErr } = await supabase
                 .from('user_profiles')
-                .select('id')
+                .select('id, is_alive, legacy_points')
                 .eq('id', user.id)
                 .maybeSingle();
 
@@ -123,6 +130,12 @@ export default function TitlePageInner() {
             if (isReturnToTitle) sessionStorage.removeItem('cwd_return_to_title');
 
             if (profile) {
+                // If character has retired or died, bypass redirect and send to char creation
+                if (!profile.is_alive) {
+                    setIsTestPlay(user.is_anonymous ?? false);
+                    setMode('CHAR_CREATION');
+                    return;
+                }
                 // 優先度: deleteIntent > newGameIntent > returnToTitle > 自動ログイン
                 // deleteIntent / newGameIntent は明示的な新アクションなので
                 // 古い returnToTitle フラグが残存していても優先する
@@ -391,6 +404,10 @@ export default function TitlePageInner() {
                     accumulated_days: 0,
                     current_location_id: startLoc?.id,
                     avatar_url: avatarFile ? '' : (avatarPreview || '/images/icons/observer_gem.png'),
+                    allocated_hp_points: allocatedHpPoints,
+                    allocated_atk_points: allocatedAtkPoints,
+                    allocated_def_points: allocatedDefPoints,
+                    allocated_vit_points: allocatedVitPoints,
                 })
             });
 
@@ -853,6 +870,133 @@ export default function TitlePageInner() {
                                                 </div>
                                             </div>
 
+                                            {/* BP Allocation Section */}
+                                            {(() => {
+                                                const lp = userProfile?.legacy_points || 0;
+                                                const isAlive = userProfile?.is_alive ?? true;
+                                                const availableBP = !isAlive && lp > 0
+                                                    ? Math.floor(lp / 300)
+                                                     : 0;
+                                                if (availableBP <= 0) return null;
+                                                const spent = allocatedHpPoints + allocatedAtkPoints + allocatedDefPoints + allocatedVitPoints;
+                                                return (
+                                                    <div className="bg-slate-900/60 p-3 rounded-lg border border-amber-500/30 space-y-2 mt-2">
+                                                        <div className="flex justify-between items-center border-b border-amber-950/20 pb-1">
+                                                            <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider font-serif">継承ボーナス (BP分配)</span>
+                                                            <span className="text-xs font-bold text-amber-400">
+                                                                残り: {availableBP - spent} / {availableBP} BP
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                            {/* HP */}
+                                                            <div className="flex items-center justify-between bg-black/40 p-1.5 rounded border border-amber-900/10">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-slate-400 font-bold text-[9px]">HP (+5 / BP)</span>
+                                                                    <span className="text-amber-100 font-bold font-mono text-[11px]">+{allocatedHpPoints * 5} HP</span>
+                                                                </div>
+                                                                <div className="flex gap-1 shrink-0">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => setAllocatedHpPoints(p => Math.max(0, p - 1))}
+                                                                        className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 font-bold text-center flex items-center justify-center border border-slate-700 active:scale-95 text-slate-300"
+                                                                    >
+                                                                        -
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => {
+                                                                            if (spent < availableBP) setAllocatedHpPoints(p => p + 1);
+                                                                        }}
+                                                                        className="w-5 h-5 rounded bg-amber-900/40 hover:bg-amber-900/60 font-bold text-center flex items-center justify-center border border-amber-500/30 active:scale-95 text-amber-200"
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* ATK */}
+                                                            <div className="flex items-center justify-between bg-black/40 p-1.5 rounded border border-amber-900/10">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-slate-400 font-bold text-[9px]">ATK (+1 / BP)</span>
+                                                                    <span className="text-amber-100 font-bold font-mono text-[11px]">+{allocatedAtkPoints} ATK</span>
+                                                                </div>
+                                                                <div className="flex gap-1 shrink-0">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => setAllocatedAtkPoints(p => Math.max(0, p - 1))}
+                                                                        className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 font-bold text-center flex items-center justify-center border border-slate-700 active:scale-95 text-slate-300"
+                                                                    >
+                                                                        -
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => {
+                                                                            if (spent < availableBP) setAllocatedAtkPoints(p => p + 1);
+                                                                        }}
+                                                                        className="w-5 h-5 rounded bg-amber-900/40 hover:bg-amber-900/60 font-bold text-center flex items-center justify-center border border-amber-500/30 active:scale-95 text-amber-200"
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* DEF */}
+                                                            <div className="flex items-center justify-between bg-black/40 p-1.5 rounded border border-amber-900/10">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-slate-400 font-bold text-[9px]">DEF (+1 / BP)</span>
+                                                                    <span className="text-amber-100 font-bold font-mono text-[11px]">+{allocatedDefPoints} DEF</span>
+                                                                </div>
+                                                                <div className="flex gap-1 shrink-0">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => setAllocatedDefPoints(p => Math.max(0, p - 1))}
+                                                                        className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 font-bold text-center flex items-center justify-center border border-slate-700 active:scale-95 text-slate-300"
+                                                                    >
+                                                                        -
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => {
+                                                                            if (spent < availableBP) setAllocatedDefPoints(p => p + 1);
+                                                                        }}
+                                                                        className="w-5 h-5 rounded bg-amber-900/40 hover:bg-amber-900/60 font-bold text-center flex items-center justify-center border border-amber-500/30 active:scale-95 text-amber-200"
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Max VIT */}
+                                                            <div className="flex items-center justify-between bg-black/40 p-1.5 rounded border border-amber-900/10">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-slate-400 font-bold text-[9px]">VIT (+2 / BP)</span>
+                                                                    <span className="text-amber-100 font-bold font-mono text-[11px]">+{allocatedVitPoints * 2} VIT</span>
+                                                                </div>
+                                                                <div className="flex gap-1 shrink-0">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => setAllocatedVitPoints(p => Math.max(0, p - 1))}
+                                                                        className="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 font-bold text-center flex items-center justify-center border border-slate-700 active:scale-95 text-slate-300"
+                                                                    >
+                                                                        -
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => {
+                                                                            if (spent < availableBP) setAllocatedVitPoints(p => p + 1);
+                                                                        }}
+                                                                        className="w-5 h-5 rounded bg-amber-900/40 hover:bg-amber-900/60 font-bold text-center flex items-center justify-center border border-amber-500/30 active:scale-95 text-amber-200"
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+
                                             {/* Dynamic Flavor & Stats */}
                                             <div className="bg-black/50 p-2.5 rounded-lg border border-amber-950/30 min-h-[85px] relative mt-1">
                                                 <p className="text-center font-serif text-amber-400/80 text-xs italic mb-1.5">
@@ -929,10 +1073,10 @@ export default function TitlePageInner() {
                                             </div>
                                             {previewStats && (
                                                 <div className="pt-1 grid grid-cols-4 gap-1 text-center font-mono text-[9px] text-amber-200/80">
-                                                    <div><div>HP</div><div className="text-amber-100 font-bold">{previewStats.max_hp}</div></div>
-                                                    <div><div>ATK</div><div className="text-amber-100 font-bold">{previewStats.atk}</div></div>
-                                                    <div><div>DEF</div><div className="text-amber-100 font-bold">{previewStats.def}</div></div>
-                                                    <div><div>VIT</div><div className="text-amber-100 font-bold">{previewStats.max_vitality}</div></div>
+                                                    <div><div>HP</div><div className="text-amber-100 font-bold">{previewStats.max_hp + (allocatedHpPoints * 5)}</div></div>
+                                                    <div><div>ATK</div><div className="text-amber-100 font-bold">{previewStats.atk + (allocatedAtkPoints * 1)}</div></div>
+                                                    <div><div>DEF</div><div className="text-amber-100 font-bold">{previewStats.def + (allocatedDefPoints * 1)}</div></div>
+                                                    <div><div>VIT</div><div className="text-amber-100 font-bold">{previewStats.max_vitality + (allocatedVitPoints * 2)}</div></div>
                                                 </div>
                                             )}
                                         </div>

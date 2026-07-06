@@ -9,7 +9,25 @@ import { buildShareData } from '@/lib/shareUtils';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title_name, gender, age, gold, current_location_id, birth_date, max_hp, max_vitality, max_deck_cost, heirloom_item_ids, atk, def, avatar_url } = body;
+        const {
+            title_name,
+            gender,
+            age,
+            gold,
+            current_location_id,
+            birth_date,
+            max_hp,
+            max_vitality,
+            max_deck_cost,
+            heirloom_item_ids,
+            atk,
+            def,
+            avatar_url,
+            allocated_hp_points,
+            allocated_atk_points,
+            allocated_def_points,
+            allocated_vit_points
+        } = body;
 
         const { user_id } = body; // クライアントから明示的に渡される場合
 
@@ -92,7 +110,17 @@ export async function POST(req: Request) {
 
         if (profileId) {
             // Apply Inheritance if profile exists (Reincarnation flow)
-            const result = await lifeSync.processInheritance(profileId, { ...updates, gold: requestedGold }, heirloom_item_ids);
+            const result = await lifeSync.processInheritance(
+                profileId,
+                { ...updates, gold: requestedGold },
+                heirloom_item_ids,
+                {
+                    allocated_hp_points,
+                    allocated_atk_points,
+                    allocated_def_points,
+                    allocated_vit_points
+                }
+            );
             if (result) {
                 updates = { ...updates, ...result };
             }
