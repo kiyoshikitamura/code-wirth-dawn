@@ -192,16 +192,10 @@ export default function OnboardingAcademyModal({ onClose }: Props) {
             {/* フェーズ 1: 世界観説明 */}
             {step === 'welcome' && (
                 <div className="relative w-full max-w-md bg-[#0d0f1f]/90 border border-amber-500/30 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center">
-                    <style>{`
-                        @keyframes float-fortune {
-                            0%, 100% { transform: translateY(0); }
-                            50% { transform: translateY(-5px); }
-                        }
-                    `}</style>
 
                     {/* 🔮 占い師ナビゲーターの立ち絵エリア */}
                     <div className="flex flex-col items-center justify-center pt-2 mb-4">
-                        <div className="relative w-28 h-28 mb-2 overflow-hidden rounded-full border border-amber-500/30 bg-slate-950/60 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_12px_rgba(217,119,6,0.25)] animate-[float-fortune_4s_ease-in-out_infinite]">
+                        <div className="relative w-28 h-28 mb-2 overflow-hidden rounded-full border border-amber-500/30 bg-slate-950/60 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_12px_rgba(217,119,6,0.25)]">
                             <img 
                                 src="/images/npcs/npc_fortune_teller.png" 
                                 alt="Fortune Teller" 

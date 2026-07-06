@@ -744,12 +744,6 @@ export default function TitlePageInner() {
                 {/* ─── CHAR_CREATION ─── */}
                 {mode === 'CHAR_CREATION' && (
                     <div className="space-y-4 animate-fade-in relative z-10 p-1 max-w-md mx-auto w-full text-slate-200">
-                        <style>{`
-                            @keyframes float-fortune {
-                                0%, 100% { transform: translateY(0); }
-                                50% { transform: translateY(-5px); }
-                            }
-                        `}</style>
 
                         {/* ⚠️ テストプレイ警告バナー (Trial Play) */}
                         {isTestPlay && (
@@ -764,7 +758,7 @@ export default function TitlePageInner() {
 
                         {/* 🔮 占い師ナビゲーターの立ち絵エリア */}
                         <div className="flex flex-col items-center justify-center pt-1">
-                            <div className="relative w-28 h-28 md:w-32 md:h-32 mb-1 overflow-hidden rounded-full border border-amber-500/30 bg-slate-950/70 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_12px_rgba(217,119,6,0.25)] animate-[float-fortune_4s_ease-in-out_infinite]">
+                            <div className="relative w-28 h-28 md:w-32 md:h-32 mb-1 overflow-hidden rounded-full border border-amber-500/30 bg-slate-950/70 shadow-2xl flex items-center justify-center filter drop-shadow-[0_0_12px_rgba(217,119,6,0.25)]">
                                 <img 
                                     src="/images/npcs/npc_fortune_teller.png" 
                                     alt="Fortune Teller" 
