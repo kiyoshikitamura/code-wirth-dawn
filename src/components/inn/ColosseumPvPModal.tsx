@@ -234,9 +234,20 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                     {/* Opponents List Section */}
                     <div className="space-y-2.5">
-                        <h3 className="text-xs font-bold text-amber-500/80 uppercase tracking-wider flex items-center gap-1.5">
-                            対戦相手マッチング (同ランク帯)
-                        </h3>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xs font-bold text-amber-500/80 uppercase tracking-wider flex items-center gap-1.5">
+                                対戦相手マッチング (同ランク帯)
+                            </h3>
+                            <button
+                                disabled={loading}
+                                onClick={fetchOpponents}
+                                className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 rounded-lg text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-all active:scale-95 disabled:opacity-50"
+                                title="対戦相手を再読み込み"
+                            >
+                                <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
+                                リロード
+                            </button>
+                        </div>
 
                         {loading && opponents.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-10 space-y-2">
