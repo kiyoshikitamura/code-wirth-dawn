@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';
 import { getVitalityStatus } from '@/lib/character';
 import { LifeCycleService } from '@/services/lifeCycleService';
+import { supabaseServer } from '@/lib/supabase-admin';
 
 // Logic to consume vitality
 export async function POST(req: Request) {
@@ -56,8 +57,7 @@ export async function POST(req: Request) {
         if (newVit === 0) {
             console.log("Vitality depleted. Triggering Death Handler...");
 
-            const client = createAuthClient(req);
-            const lifeSync = new LifeCycleService(client);
+            const lifeSync = new LifeCycleService(supabaseServer);
 
             await lifeSync.handleCharacterDeath(profile.id);
 

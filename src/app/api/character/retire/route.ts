@@ -2,6 +2,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 import { LifeCycleService } from '@/services/lifeCycleService';
 import { buildShareData } from '@/lib/shareUtils';
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
         }
 
         // Delegate to LifeCycleService
-        const lifeSync = new LifeCycleService(client);
+        const lifeSync = new LifeCycleService(supabaseServer);
         const deathCause = cause === 'voluntary' ? 'Voluntary Retirement' : (cause || 'Unknown');
 
         // 形見情報と英霊上書き指定をoptionsとして渡し、引退処理を行う
