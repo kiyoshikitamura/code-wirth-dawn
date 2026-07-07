@@ -495,7 +495,10 @@ function tryDebuffEnemy(
         (c.type === 'Support' || c.type === 'Defense') &&
         // ダメージを伴う攻撃デバフ（シールドバッシュ等）は、デバフフェーズで優先使用せず、
         // 通常の攻撃ランダムループで処理させることで多様なスキルを使わせる！
-        !(c.power && c.power > 0) &&
+        // IDが '6' (シールドバッシュ) であるもの、または威力値 (power / effect_val) が 0超であるものを厳密に除外！
+        c.id !== '6' &&
+        !(c.power && Number(c.power) > 0) &&
+        !(c.effect_val && Number(c.effect_val) > 0) &&
         getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
     );
 
