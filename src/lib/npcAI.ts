@@ -217,16 +217,16 @@ export function resolveNpcTurn(
     //  - Striker: atk_upカードを自分に使用後、攻撃
     //  - Medic: regen/def_upカードを傷ついた味方に優先
     //  - Guardian: def_upカードを自分に使用後、攻撃も行う
-    // 4. v2.5: Role-based Buff Priority (50%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
-    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.5) {
+    // 4. v2.5: Role-based Buff Priority (30%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
+    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.3) {
         const buffAction = tryRoleBasedBuff(npc, deck, context);
         if (buffAction) {
             actions.push(buffAction);
         }
     }
 
-    // 4.5. v2.9.3j: デバフカード使用 (50%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
-    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.5) {
+    // 4.5. v2.9.3j: デバフカード使用 (30%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
+    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.3) {
         const debuffAction = tryDebuffEnemy(npc, deck, context);
         if (debuffAction) {
             actions.push(debuffAction);
@@ -236,16 +236,34 @@ export function resolveNpcTurn(
     // 5. Attack: v4.1 — Smart AI は2枚/ターン、Random AI は1枚/ターン
     // v4.0: lastUsedCardId による連打防止 — 直前ターンと同じカードは使わない
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
+    // シナジー（コンボ）スコアを計算して、効果的なカードを最優先にするロジックを導入！
+    const getSynergyScore = (card: Card): number => {
+        const cardIdStr = String(card.id);
+        const enemyEffects = context.enemyEffects || [];
+        const hasBleed = enemyEffects.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
+        const hasBindOrFreeze = enemyEffects.some(e => e.id === 'bind' || e.id === 'freeze');
+
+        // 1. 傷口をえぐる (102) または 烈風突き (122) は、敵が出血状態なら最優先！
+        if ((cardIdStr === '102' || cardIdStr === '122') && hasBleed) {
+            return 100;
+        }
+        // 2. フリーズランサー (114) は、敵が拘束または凍結状態なら最優先！
+        if (cardIdStr === '114' && hasBindOrFreeze) {
+            return 100;
+        }
+        return 0;
+    };
+
     const attackCards = deck
         .filter(c => {
             if (c.type === 'Skill' || c.type === 'Magic') return true;
             if ((c.type === 'Defense' || c.type === 'Support') && c.target_type && ENEMY_TARGETS.includes(c.target_type)) return true;
             return false;
         })
-        // APコスト降順ソートを廃止し、毎ターン完全にランダムにシャッフルする。
-        // これにより、高コスト技（メテオストライク等）ばかりが優先されて低コスト・条件付き技（ファイアウェーブ、傷口をえぐる等）が死に札になるのを防ぎ、
-        // 英霊が本来持っている多彩なスキルを戦況に応じてバランスよく使用するようになります！
-        .sort(() => Math.random() - 0.5);
+        // 基本は完全にランダムにシャッフルする
+        .sort(() => Math.random() - 0.5)
+        // さらにシナジースコアが高い（コンボ成立）カードを配列の先頭（最優先）に押し上げる！
+        .sort((a, b) => getSynergyScore(b) - getSynergyScore(a));
 
     const lastUsed = (npc as any).lastUsedCardId as string | undefined;
     const maxAttackCards = npc.ai_grade === 'smart' ? 2 : 1; // v4.1: Smart は2枚
@@ -509,11 +527,13 @@ function tryDebuffEnemy(
 
     if (debuffCards.length === 0) return null;
 
-    // 既に敵に付与済みのデバフは除外
+    // 既に敵に付与済みのデバフは除外（重複使用を完全に避ける！）
     const unusedDebuff = debuffCards.find(c => {
         const alreadyApplied = context.enemyEffects?.some(e => e.id === c.effect_id); // 敵の効果配列を参照 (Bug AC)
         return !alreadyApplied;
-    }) || debuffCards[0]; // 全部付与済みなら最初のを使う
+    });
+
+    if (!unusedDebuff) return null; // 重複する場合は優先使用せず、通常攻撃ループへ譲る！
 
     npc.current_ap = (npc.current_ap || 0) - getNpcCardApCost(unusedDebuff, npc, context.enemyEffects);
 
