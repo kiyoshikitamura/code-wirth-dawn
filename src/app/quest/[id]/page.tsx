@@ -823,10 +823,10 @@ export default function QuestPage() {
 
     // script_data が null またはノードが空のクエストは「準備中」表示
     // UGCクエストは flow_nodes にノードを保存するため、そちらもチェック
-    const hasScriptNodes = scenario.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
-    const hasFlowNodes = Array.isArray(scenario.flow_nodes) && scenario.flow_nodes.length > 0;
+    const hasScriptNodes = scenario?.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
+    const hasFlowNodes = Array.isArray(scenario?.flow_nodes) && scenario.flow_nodes.length > 0;
     const hasScenarioNodes = hasScriptNodes || hasFlowNodes;
-    if (!hasScenarioNodes) {
+    if (!hasScenarioNodes && (!id || !id.startsWith('pvp_arena_'))) {
         return (
             <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-6 px-6">
                 <div className="w-16 h-16 rounded-full bg-amber-900/30 border-2 border-amber-700 flex items-center justify-center">
