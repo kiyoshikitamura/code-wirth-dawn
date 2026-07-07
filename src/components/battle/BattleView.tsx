@@ -970,69 +970,72 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             )}
 
             {/* Enemies Layout — 左:ターゲット大（スプライト表示） / 右:非ターゲット小（アイコンリスト） または PvP時の横並び丸型アイコン */}
-            <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-2 pb-1 flex-shrink-0">
+            <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-4 pb-2 flex-shrink-0">
                 {enemies.some((e: any) => e.is_pvp_player || e.is_pvp_member) ? (
-                    <div className="w-full flex items-start justify-center gap-4 px-4 py-2 overflow-x-auto no-scrollbar">
-                        {enemies.map((enemy) => {
-                            const isTarget = target?.id === enemy.id;
-                            const isDead = enemy.hp <= 0;
-                            return (
-                                <button
-                                    key={enemy.id}
-                                    disabled={isDead}
-                                    onClick={() => {
-                                        if (isTarget) {
-                                            setSelectedEnemyDetail(enemy);
-                                        } else {
-                                            setTarget(enemy.id);
-                                        }
-                                    }}
-                                    className={`flex flex-col items-center flex-shrink-0 active:scale-95 transition-all relative ${
-                                        isDead ? 'opacity-40 grayscale' : ''
-                                    }`}
-                                >
-                                    {/* Target marker border */}
-                                    <div className={`w-11 h-11 rounded-full border-[2.5px] flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm transition-all ${
-                                        isTarget 
-                                            ? 'border-red-500 scale-110 shadow-[0_0_15px_rgba(239,68,68,0.7)]' 
-                                            : 'border-slate-500/60 bg-black/50 hover:border-amber-500/40'
-                                    }`}>
-                                        {enemy.image_url ? (
-                                            <img src={enemy.image_url} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Skull size={18} className="text-slate-500" />
+                    <div className="w-full flex flex-col items-center justify-center py-6 px-4 min-h-[240px]">
+                        <div className="grid grid-cols-2 gap-x-12 gap-y-6 justify-center justify-items-center max-w-[320px] mx-auto">
+                            {enemies.map((enemy, idx) => {
+                                const isTarget = target?.id === enemy.id;
+                                const isDead = enemy.hp <= 0;
+                                const isLastOdd = enemies.length % 2 !== 0 && idx === enemies.length - 1;
+                                return (
+                                    <button
+                                        key={enemy.id}
+                                        disabled={isDead}
+                                        onClick={() => {
+                                            if (isTarget) {
+                                                setSelectedEnemyDetail(enemy);
+                                            } else {
+                                                setTarget(enemy.id);
+                                            }
+                                        }}
+                                        className={`flex flex-col items-center flex-shrink-0 active:scale-95 transition-all relative ${
+                                            isDead ? 'opacity-40 grayscale' : ''
+                                        } ${isLastOdd ? 'col-span-2 justify-self-center' : ''}`}
+                                    >
+                                        {/* Target marker border */}
+                                        <div className={`w-18 h-18 rounded-full border-[3px] flex items-center justify-center overflow-hidden shadow-xl backdrop-blur-sm transition-all ${
+                                            isTarget 
+                                                ? 'border-red-500 scale-105 shadow-[0_0_20px_rgba(239,68,68,0.8)]' 
+                                                : 'border-slate-500/60 bg-black/50 hover:border-amber-500/40'
+                                        }`}>
+                                            {enemy.image_url ? (
+                                                <img src={enemy.image_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Skull size={28} className="text-slate-500" />
+                                            )}
+                                        </div>
+
+                                        {/* Floating Damage Numbers for Enemy */}
+                                        {floatingDamages.filter(d => !d.isPlayer && isTarget).map(d => (
+                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy">
+                                                -{d.amount}
+                                            </div>
+                                        ))}
+
+                                        {/* HP Bar */}
+                                        <div className="w-18 h-2 mt-2 bg-black/65 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500" 
+                                                style={{ width: `${Math.max(0, Math.min(100, (enemy.hp / (enemy.maxHp || 1)) * 100))}%` }} 
+                                            />
+                                        </div>
+
+                                        {/* Name */}
+                                        <span className="text-[10px] text-slate-100 font-bold w-[80px] text-center truncate mt-1 drop-shadow-md">
+                                            {enemy.name}
+                                        </span>
+                                        
+                                        {/* Status badges */}
+                                        {(enemy.status_effects || []).length > 0 && !isDead && (
+                                            <div className="absolute top-0 left-0 -translate-y-1/4 z-30 pointer-events-none">
+                                                <StatusEffectBadges effects={enemy.status_effects || []} size="sm" maxBadges={3} />
+                                            </div>
                                         )}
-                                    </div>
-
-                                    {/* Floating Damage Numbers for Enemy */}
-                                    {floatingDamages.filter(d => !d.isPlayer && isTarget).map(d => (
-                                        <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy">
-                                            -{d.amount}
-                                        </div>
-                                    ))}
-
-                                    {/* HP Bar */}
-                                    <div className="w-11 h-1.5 mt-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-inner">
-                                        <div 
-                                            className="h-full bg-red-500 transition-all duration-500" 
-                                            style={{ width: `${Math.max(0, Math.min(100, (enemy.hp / (enemy.maxHp || 1)) * 100))}%` }} 
-                                        />
-                                    </div>
-
-                                    {/* Name */}
-                                    <span className="text-[9px] text-slate-200 font-bold w-[48px] text-center truncate mt-0.5 drop-shadow-md">
-                                        {enemy.name}
-                                    </span>
-                                    
-                                    {/* Status badges */}
-                                    {(enemy.status_effects || []).length > 0 && !isDead && (
-                                        <div className="absolute top-0 left-0 -translate-y-1/4 z-30 pointer-events-none">
-                                            <StatusEffectBadges effects={enemy.status_effects || []} size="sm" maxBadges={3} />
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : (
                     <div className="w-full flex items-center justify-center gap-6 sm:gap-10 px-4">
@@ -1626,9 +1629,27 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
                 <div className="relative w-full h-48 flex items-end">
+                    {/* カスタムスクロールバー用インラインスタイル */}
+                    <style dangerouslySetInnerHTML={{ __html: `
+                        .custom-scrollbar::-webkit-scrollbar {
+                            height: 5px;
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-track {
+                            background: rgba(15, 23, 42, 0.4);
+                            border-radius: 999px;
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-thumb {
+                            background: rgba(245, 158, 11, 0.4);
+                            border-radius: 999px;
+                            border: 1px solid rgba(251, 191, 36, 0.2);
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                            background: rgba(245, 158, 11, 0.75);
+                        }
+                    `}} />
                     <div 
-                        className="w-full h-full overflow-x-auto no-scrollbar snap-x snap-mandatory flex items-end px-[10%] pb-3 pt-12 gap-0"
-                        style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}
+                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-32 pr-[10%] pb-3 pt-12 gap-0"
+                        style={{ maskImage: 'linear-gradient(to right, transparent, transparent 110px, black 135px, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, transparent 110px, black 135px, black 95%, transparent)' }}
                     >
                         {hand.map((card, idx) => {
                             const apCost = card.ap_cost ?? 1;
