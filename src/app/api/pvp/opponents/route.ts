@@ -347,7 +347,93 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "30",
+                            "name": "飛刀",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "134",
+                            "name": "プラズマシャワー",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "130",
+                            "name": "ギャンブラーダイス",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 60
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "120",
+                            "name": "リサイクル",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -944,7 +1030,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         4
                     ],
                     "image_url": "/images/npcs/npc_yato_monk_hoichi.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "4",
+                            "name": "防御",
+                            "type": "Defense",
+                            "ap_cost": 1,
+                            "power": 10
+                        }
+                    ]
                 },
                 {
                     "id": 2032,
@@ -959,7 +1061,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         42
                     ],
                     "image_url": "/images/npcs/npc_free_cursed_armor.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "42",
+                            "name": "血の怒り",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1968,
@@ -975,7 +1086,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         8
                     ],
                     "image_url": "/images/npcs/npc_free_stray_dog.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "8",
+                            "name": "クイックステップ",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1961,
@@ -1067,7 +1194,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "59",
+                            "name": "狂戦士の薬",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "67",
+                            "name": "雷撃",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 45
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -1230,7 +1422,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         114
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "13",
+                            "name": "祈り",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        }
+                    ]
                 },
                 {
                     "id": 1317,
@@ -1253,7 +1489,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         115
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782498046183",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "27",
+                            "name": "龍の咆哮",
+                            "type": "Support",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "112",
+                            "name": "デトネーション",
+                            "type": "Magic",
+                            "ap_cost": 4,
+                            "power": 90
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -1408,7 +1709,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        },
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 1721,
@@ -1501,7 +1832,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "42",
+                            "name": "血の怒り",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "112",
+                            "name": "デトネーション",
+                            "type": "Magic",
+                            "ap_cost": 4,
+                            "power": 90
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1720,
@@ -1516,7 +1912,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         12
                     ],
                     "image_url": "/images/npcs/npc_roland_scholar.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "12",
+                            "name": "裁き",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 50
+                        }
+                    ]
                 },
                 {
                     "id": 1722,
@@ -1532,7 +1937,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         23
                     ],
                     "image_url": "/images/npcs/npc_yato_onmyoji.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "4",
+                            "name": "防御",
+                            "type": "Defense",
+                            "ap_cost": 1,
+                            "power": 10
+                        },
+                        {
+                            "id": "23",
+                            "name": "影縫い",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -1694,7 +2115,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        },
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 1792,
@@ -1709,7 +2160,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         1
                     ],
                     "image_url": "/images/npcs/npc_markand_slave_giant.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        }
+                    ]
                 },
                 {
                     "id": 2033,
@@ -1724,7 +2184,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         18
                     ],
                     "image_url": "/images/npcs/npc_markand_merc_scimitar.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "18",
+                            "name": "毒刃",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        }
+                    ]
                 },
                 {
                     "id": 2034,
@@ -1740,7 +2209,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         23
                     ],
                     "image_url": "/images/npcs/npc_yato_onmyoji.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "4",
+                            "name": "防御",
+                            "type": "Defense",
+                            "ap_cost": 1,
+                            "power": 10
+                        },
+                        {
+                            "id": "23",
+                            "name": "影縫い",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -1902,7 +2387,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_samurai_general.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "9",
+                            "name": "挑発",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 1752,
@@ -1920,7 +2421,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         48
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        }
+                    ]
                 },
                 {
                     "id": 1995,
@@ -1935,7 +2466,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 1996,
@@ -1951,7 +2491,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         24
                     ],
                     "image_url": "/images/npcs/npc_yato_kannushi.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "24",
+                            "name": "清め",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 50
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -2172,7 +2728,58 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "evasion_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "13",
+                            "name": "祈り",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1568,
@@ -2247,7 +2854,79 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "evasion_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "2",
+                            "name": "斬撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "7",
+                            "name": "集中",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "26",
+                            "name": "氣の癒やし",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 70
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "102",
+                            "name": "傷口をえぐる",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "122",
+                            "name": "血の追撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 20
+                        },
+                        {
+                            "id": "127",
+                            "name": "巨人の肉体",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1734,
@@ -2317,7 +2996,79 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "def_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "2",
+                            "name": "斬撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "3",
+                            "name": "突き",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 18
+                        },
+                        {
+                            "id": "62",
+                            "name": "調毒",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 15
+                        },
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "44",
+                            "name": "疾風術",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "8",
+                            "name": "クイックステップ",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "126",
+                            "name": "リベンジシールド",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 15
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -2478,7 +3229,30 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         15
                     ],
                     "image_url": "/images/npcs/npc_roland_paladin_leo.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "11",
+                            "name": "聖剣",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "15",
+                            "name": "聖壁",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 20
+                        }
+                    ]
                 },
                 {
                     "id": 841,
@@ -2494,7 +3268,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         6
                     ],
                     "image_url": "/images/npcs/npc_roland_knight_veteran.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "4",
+                            "name": "防御",
+                            "type": "Defense",
+                            "ap_cost": 1,
+                            "power": 10
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        }
+                    ]
                 },
                 {
                     "id": 897,
@@ -2510,7 +3300,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         14
                     ],
                     "image_url": "/images/npcs/npc_nadeshiko.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "4",
+                            "name": "防御",
+                            "type": "Defense",
+                            "ap_cost": 1,
+                            "power": 10
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        }
+                    ]
                 },
                 {
                     "id": 835,
@@ -2528,7 +3334,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         29
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -2686,7 +3522,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         14
                     ],
                     "image_url": "/images/npcs/npc_roland_priest_anna.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "13",
+                            "name": "祈り",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        }
+                    ]
                 },
                 {
                     "id": 1383,
@@ -2706,7 +3558,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         137
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/abe8c1ff-5fb5-47dd-89cc-d20e217502a4/avatar.jpeg?t=1782293429456",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        },
+                        {
+                            "id": "133",
+                            "name": "属性の共鳴",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "134",
+                            "name": "プラズマシャワー",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1405,
@@ -2724,7 +3620,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         29
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        }
+                    ]
                 },
                 {
                     "id": 1407,
@@ -2739,7 +3665,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         18
                     ],
                     "image_url": "/images/npcs/npc_markand_merc_scimitar.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "18",
+                            "name": "毒刃",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -2860,7 +3795,65 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         137
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "21",
+                            "name": "ツバメ返し",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 60
+                        },
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "7",
+                            "name": "集中",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "26",
+                            "name": "氣の癒やし",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 70
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1138,
@@ -2881,7 +3874,58 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         115
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        },
+                        {
+                            "id": "113",
+                            "name": "マナチャージ",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        }
+                    ]
                 },
                 {
                     "id": 1104,
@@ -2902,7 +3946,58 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         134
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/6d4473c3-a03e-4938-9a5d-1e1f5fadcafd/avatar.png?t=1781963398206",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "128",
+                            "name": "グラウンディング",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 15
+                        },
+                        {
+                            "id": "104",
+                            "name": "伝染病の霧",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 15
+                        },
+                        {
+                            "id": "108",
+                            "name": "犠牲の誓約",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 20
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        },
+                        {
+                            "id": "67",
+                            "name": "雷撃",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 45
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "134",
+                            "name": "プラズマシャワー",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 30
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -3026,7 +4121,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 672,
@@ -3045,7 +4149,44 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "135",
+                            "name": "アブソリュートゼロ",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 25
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 },
                 {
                     "id": 746,
@@ -3065,7 +4206,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         66
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "133",
+                            "name": "属性の共鳴",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "135",
+                            "name": "アブソリュートゼロ",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 25
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -3205,7 +4390,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_samurai_general.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "9",
+                            "name": "挑発",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 568,
@@ -3220,7 +4421,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 945,
@@ -3237,7 +4447,30 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         15
                     ],
                     "image_url": "/images/npcs/npc_roland_paladin_leo.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "11",
+                            "name": "聖剣",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "15",
+                            "name": "聖壁",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 20
+                        }
+                    ]
                 },
                 {
                     "id": 503,
@@ -3255,7 +4488,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         29
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -3472,7 +4735,58 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "def_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "13",
+                            "name": "祈り",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1564,
@@ -3540,7 +4854,65 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "40",
+                            "name": "暗殺",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "27",
+                            "name": "龍の咆哮",
+                            "type": "Support",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -3689,7 +5061,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         27
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c2494b75-13df-4189-9a94-de216ce0336e/avatar.png?t=1782407029074",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "40",
+                            "name": "暗殺",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "12",
+                            "name": "裁き",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "27",
+                            "name": "龍の咆哮",
+                            "type": "Support",
+                            "ap_cost": 3,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1218,
@@ -3705,7 +5107,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         29
                     ],
                     "image_url": "/images/npcs/npc_free_griffon.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        }
+                    ]
                 },
                 {
                     "id": 1219,
@@ -3720,7 +5138,16 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 1271,
@@ -3739,7 +5166,44 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         134
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/defefa6d-87e6-4fb4-8649-4bea5220c607/avatar.png?t=1781692394005",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "24",
+                            "name": "清め",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 50
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "65",
+                            "name": "火球",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 40
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        },
+                        {
+                            "id": "134",
+                            "name": "プラズマシャワー",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 30
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -3843,7 +5307,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         48
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        }
+                    ]
                 },
                 {
                     "id": 1760,
@@ -3859,7 +5353,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         24
                     ],
                     "image_url": "/images/npcs/npc_yato_kannushi.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "24",
+                            "name": "清め",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 50
+                        }
+                    ]
                 },
                 {
                     "id": 1826,
@@ -3944,7 +5454,86 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "2",
+                            "name": "斬撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "8",
+                            "name": "クイックステップ",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "102",
+                            "name": "傷口をえぐる",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "26",
+                            "name": "氣の癒やし",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 70
+                        },
+                        {
+                            "id": "122",
+                            "name": "血の追撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 20
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "42",
+                            "name": "血の怒り",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -4114,7 +5703,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "2",
+                            "name": "斬撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "3",
+                            "name": "突き",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 18
+                        },
+                        {
+                            "id": "10",
+                            "name": "石投げ",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 8
+                        },
+                        {
+                            "id": "7",
+                            "name": "集中",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        },
+                        {
+                            "id": "5",
+                            "name": "応急手当",
+                            "type": "Heal",
+                            "ap_cost": 1,
+                            "power": 40
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "22",
+                            "name": "クナイ投げ",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 15
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 },
                 {
                     "id": 707,
@@ -4136,7 +5790,65 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/bac4f137-a5fc-4ce2-977b-d64eaa4b0afc/avatar.jpeg?t=1781626808364",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "21",
+                            "name": "ツバメ返し",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 60
+                        },
+                        {
+                            "id": "40",
+                            "name": "暗殺",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "2",
+                            "name": "斬撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "3",
+                            "name": "突き",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 18
+                        },
+                        {
+                            "id": "7",
+                            "name": "集中",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "26",
+                            "name": "氣の癒やし",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 70
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 },
                 {
                     "id": 766,
@@ -4152,7 +5864,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25
                     ],
                     "image_url": "/images/npcs/npc_yato_samurai_general.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "9",
+                            "name": "挑発",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        }
+                    ]
                 },
                 {
                     "id": 815,
@@ -4172,7 +5900,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "138",
+                            "name": "タクティカルプラン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "12",
+                            "name": "裁き",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -4360,7 +6132,65 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "def_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "5",
+                            "name": "応急手当",
+                            "type": "Heal",
+                            "ap_cost": 1,
+                            "power": 40
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1879,
@@ -4376,7 +6206,23 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         16
                     ],
                     "image_url": "/images/npcs/npc_markand_bedouin.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "1",
+                            "name": "強打",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1887,
@@ -4456,7 +6302,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "evasion_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "58",
+                            "name": "即死攻撃",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 30
+                        },
+                        {
+                            "id": "55",
+                            "name": "時止めの法",
+                            "type": "Support",
+                            "ap_cost": 5,
+                            "power": 0
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "129",
+                            "name": "成金の一撃",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "130",
+                            "name": "ギャンブラーダイス",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 60
+                        }
+                    ]
                 },
                 {
                     "id": 1885,
@@ -4541,7 +6431,86 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "2",
+                            "name": "斬撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 12
+                        },
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "8",
+                            "name": "クイックステップ",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "102",
+                            "name": "傷口をえぐる",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "26",
+                            "name": "氣の癒やし",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 70
+                        },
+                        {
+                            "id": "122",
+                            "name": "血の追撃",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 20
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "42",
+                            "name": "血の怒り",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -4703,7 +6672,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         29
                     ],
                     "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "48",
+                            "name": "天翔斬",
+                            "type": "Skill",
+                            "ap_cost": 5,
+                            "power": 120
+                        },
+                        {
+                            "id": "25",
+                            "name": "居合切り",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 100
+                        },
+                        {
+                            "id": "28",
+                            "name": "鉄布衫",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "29",
+                            "name": "連撃",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 40
+                        }
+                    ]
                 },
                 {
                     "id": 696,
@@ -4723,7 +6722,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         58
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c7906aec-ba14-4e35-8102-b21c6bea529a/avatar.jpeg?t=1781659829258",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "33",
+                            "name": "奇跡",
+                            "type": "Heal",
+                            "ap_cost": 5,
+                            "power": 999
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "58",
+                            "name": "即死攻撃",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 30
+                        }
+                    ]
                 },
                 {
                     "id": 956,
@@ -4742,7 +6785,44 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782007944627",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "15",
+                            "name": "聖壁",
+                            "type": "Defense",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 },
                 {
                     "id": 957,
@@ -4764,7 +6844,65 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/99ec1273-d758-4797-a5e3-ab6761eb5561/avatar.png?t=1781631772227",
-                    "snapshot_data": {}
+                    "snapshot_data": {},
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "40",
+                            "name": "暗殺",
+                            "type": "Skill",
+                            "ap_cost": 3,
+                            "power": 50
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "133",
+                            "name": "属性の共鳴",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "14",
+                            "name": "治癒",
+                            "type": "Heal",
+                            "ap_cost": 2,
+                            "power": 80
+                        },
+                        {
+                            "id": "65",
+                            "name": "火球",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 40
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -4956,7 +7094,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "59",
+                            "name": "狂戦士の薬",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "67",
+                            "name": "雷撃",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 45
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "119",
+                            "name": "ダブルキャスト",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 },
                 {
                     "id": 1882,
@@ -5030,7 +7233,44 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "37",
+                            "name": "メテオストライク",
+                            "type": "Magic",
+                            "ap_cost": 5,
+                            "power": 100
+                        },
+                        {
+                            "id": "54",
+                            "name": "死の舞踊",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 50
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "134",
+                            "name": "プラズマシャワー",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 30
+                        },
+                        {
+                            "id": "136",
+                            "name": "ファイアウェーブ",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 20
+                        }
+                    ]
                 },
                 {
                     "id": 1880,
@@ -5122,7 +7362,100 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "45",
+                            "name": "岩砕き",
+                            "type": "Skill",
+                            "ap_cost": 4,
+                            "power": 55
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "6",
+                            "name": "シールドバッシュ",
+                            "type": "Defense",
+                            "ap_cost": 2,
+                            "power": 10
+                        },
+                        {
+                            "id": "30",
+                            "name": "飛刀",
+                            "type": "Skill",
+                            "ap_cost": 2,
+                            "power": 25
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "130",
+                            "name": "ギャンブラーダイス",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 60
+                        },
+                        {
+                            "id": "117",
+                            "name": "ブレインスピン",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "120",
+                            "name": "リサイクル",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "142",
+                            "name": "シャドークロウ",
+                            "type": "Skill",
+                            "ap_cost": 1,
+                            "power": 18
+                        }
+                    ]
                 },
                 {
                     "id": 1881,
@@ -5209,7 +7542,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "regen"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "16",
+                            "name": "砂の罠",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "57",
+                            "name": "闇の代償",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "64",
+                            "name": "瞑想",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 3
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        },
+                        {
+                            "id": "66",
+                            "name": "氷槍",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 35
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "137",
+                            "name": "クイックドロー",
+                            "type": "Support",
+                            "ap_cost": 1,
+                            "power": 0
+                        },
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
@@ -5426,7 +7824,51 @@ const GHOST_PRESETS: Record<string, any[]> = {
                                 "buff_type": "atk_up"
                             }
                         ]
-                    }
+                    },
+                    "signature_deck_snapshot": [
+                        {
+                            "id": "139",
+                            "name": "タイムリバース",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "55",
+                            "name": "時止めの法",
+                            "type": "Support",
+                            "ap_cost": 5,
+                            "power": 0
+                        },
+                        {
+                            "id": "113",
+                            "name": "マナチャージ",
+                            "type": "Support",
+                            "ap_cost": 2,
+                            "power": 0
+                        },
+                        {
+                            "id": "114",
+                            "name": "フリーズランサー",
+                            "type": "Magic",
+                            "ap_cost": 2,
+                            "power": 30
+                        },
+                        {
+                            "id": "115",
+                            "name": "雷電の連鎖",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 20
+                        },
+                        {
+                            "id": "124",
+                            "name": "凍てつく波動",
+                            "type": "Magic",
+                            "ap_cost": 3,
+                            "power": 0
+                        }
+                    ]
                 }
             ],
             "equipped_items_snapshot": [
