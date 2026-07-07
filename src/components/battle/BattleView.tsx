@@ -403,12 +403,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             lastShownTurnRef.current = battleState.turn;
             // TURN N オーバーレイ（2000ms） → PLAYER オーバーレイ（1000ms）
             setShowTurnOverlay(true);
-            const t1 = setTimeout(() => {
+            setTimeout(() => {
                 setShowTurnOverlay(false);
                 setShowPhaseOverlay('player');
             }, 2000);
-            const t2 = setTimeout(() => setShowPhaseOverlay(null), 3000);
-            return () => { clearTimeout(t1); clearTimeout(t2); };
+            setTimeout(() => setShowPhaseOverlay(null), 3000);
         }
     }, [battleState.battlePhase, battleState.turn]);
 
