@@ -412,11 +412,27 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                     <span className="text-[10px] text-amber-500/90 font-bold block">🛡️ 装備中の武具:</span>
                                     {selectedOpponent.equipped_items_snapshot && selectedOpponent.equipped_items_snapshot.length > 0 ? (
                                         <div className="flex flex-wrap gap-1.5">
-                                            {selectedOpponent.equipped_items_snapshot.map((item: any, idx: number) => (
-                                                <span key={idx} className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-medium">
-                                                    {item.name}
-                                                </span>
-                                            ))}
+                                            {selectedOpponent.equipped_items_snapshot.map((item: any, idx: number) => {
+                                                let displayName = item.name;
+                                                if (!displayName || displayName.trim() === '') {
+                                                    const ed = item.effect_data || {};
+                                                    const bonuses: string[] = [];
+                                                    if (ed.atk_bonus) bonuses.push(`ATK+${ed.atk_bonus}`);
+                                                    if (ed.def_bonus) bonuses.push(`DEF+${ed.def_bonus}`);
+                                                    if (ed.hp_bonus) bonuses.push(`HP+${ed.hp_bonus}`);
+                                                    
+                                                    if (bonuses.length > 0) {
+                                                        displayName = `遺物 (${bonuses.join('/')})`;
+                                                    } else {
+                                                        displayName = '神秘の遺物';
+                                                    }
+                                                }
+                                                return (
+                                                    <span key={idx} className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-medium">
+                                                        {displayName}
+                                                    </span>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <span className="text-[10px] text-slate-500 italic block">装備なし</span>
