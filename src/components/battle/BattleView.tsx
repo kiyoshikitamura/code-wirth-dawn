@@ -34,6 +34,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean }[]>([]);
     const [apErrorActive, setApErrorActive] = useState(false);
     const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
+    const [playerActiveSkill, setPlayerActiveSkill] = useState<string | null>(null);
+    const [isStrongPlayerActive, setIsStrongPlayerActive] = useState(false);
 
     const prevLiveHpRef = useRef<number | null>(null);
     const prevTargetHpRef = useRef<number | null>(null);
@@ -112,6 +114,21 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         setIsStrongEnemyActive(false);
                     }, displayTime);
                 }
+            } else {
+                const match = msg.match(/の『(.+?)』/);
+                const skillName = match ? match[1] : '';
+                if (skillName) {
+                    setPlayerActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPlayerActive(true);
+                    }
+                    const displayTime = isStrong ? 2200 : 1800;
+                    setTimeout(() => {
+                        setPlayerActiveSkill(null);
+                        setIsStrongPlayerActive(false);
+                    }, displayTime);
+                }
             }
         }
 
@@ -134,7 +151,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: true }]);
                 setTimeout(() => {
                     setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                }, 1000);
+                }, 2200);
             }
         }
         prevLiveHpRef.current = liveHp;
@@ -158,7 +175,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false }]);
                     setTimeout(() => {
                         setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                    }, 1000);
+                    }, 2200);
                 }
             }
             prevTargetHpRef.current = currentTarget.hp;
@@ -660,6 +677,30 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 <div className="absolute inset-0 z-50 pointer-events-none bg-white animate-strong-flash" />
             )}
 
+            {/* プレイヤー/味方NPCスキルカットイン ＆ スラッシュエフェクト (上下反転 ＆ 青系) */}
+            {playerActiveSkill && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+                    {/* 青いスラッシュエフェクト (画面上部に配置: -translate-y-24) */}
+                    <div className="absolute w-[150%] h-[8px] bg-blue-500/90 shadow-[0_0_20px_rgba(59,130,246,1)] rotate-12 -translate-y-32 animate-enemy-swipe1" />
+                    <div className="absolute w-[150%] h-[8px] bg-blue-500/90 shadow-[0_0_20px_rgba(59,130,246,1)] -rotate-12 -translate-y-24 animate-enemy-swipe2" />
+                    <div className="absolute inset-0 bg-blue-950/10 animate-pulse" />
+                    
+                    {/* スキル名カットイン帯 (画面下部に配置: bottom-1/4) */}
+                    <div className="absolute inset-x-0 bottom-1/4 flex flex-col items-center justify-center z-50">
+                        <div className={`w-full py-3 border-y flex flex-col items-center justify-center shadow-2xl backdrop-blur-sm ${
+                            isStrongPlayerActive
+                                ? 'bg-sky-950/90 text-cyan-400 border-cyan-400/50 shadow-[0_0_40px_rgba(34,211,238,0.8)]'
+                                : 'bg-slate-900/90 text-sky-400 border-sky-400/50 shadow-[0_0_25px_rgba(56,189,248,0.6)]'
+                        }`}>
+                            <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">ALLY SKILL ACTIVATED</span>
+                            <span className="font-serif text-2xl md:text-3xl font-extrabold tracking-widest animate-pulse">
+                                『{playerActiveSkill}』
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* エネミースキル警告カットイン ＆ 被攻撃スワイプ爪痕エフェクト */}
             {enemyActiveSkill && (
                 <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
@@ -709,17 +750,18 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 }
                 @keyframes floatDamage {
                     0% { transform: translateY(0) scale(0.6); opacity: 0; }
-                    15% { transform: translateY(-25px) scale(1.2); opacity: 1; }
-                    40% { transform: translateY(-35px) scale(1.0); }
-                    100% { transform: translateY(-45px) scale(1.0); opacity: 0; }
+                    10% { transform: translateY(-25px) scale(1.2); opacity: 1; }
+                    30% { transform: translateY(-35px) scale(1.0); }
+                    80% { transform: translateY(-40px) scale(1.0); opacity: 1; }
+                    100% { transform: translateY(-48px) scale(0.9); opacity: 0; }
                 }
                 .damage-pop-player {
-                    animation: floatDamage 1.0s forwards;
+                    animation: floatDamage 2.0s forwards;
                     color: #ef4444; /* red-500 */
                     text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
                 }
                 .damage-pop-enemy {
-                    animation: floatDamage 1.0s forwards;
+                    animation: floatDamage 2.0s forwards;
                     color: #f59e0b; /* amber-500 */
                     text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
                 }
