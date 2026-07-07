@@ -106,7 +106,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     setShouldShake(true);
                     setTimeout(() => setShouldShake(false), 200);
                 }
-                const displayTime = isStrong ? 3000 : 2500;
+                const displayTime = isStrong ? 2500 : 2000;
                 setTimeout(() => {
                     setEnemyActiveSkill(null);
                     setIsStrongEnemyActive(false);
@@ -117,17 +117,29 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         else {
             let skillName = '';
             
-            // A. スキル使用/発動/服用の検知: 「[スキル名]を使用！」「✨ [スキル名]を発動！」「⚠ [スキル名]を服用！」「[スキル名]をハンスに使用！」
-            const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(を使用|を発動|を服用|を[^\s]+?に使用)/);
-            if (useMatch) {
-                skillName = useMatch[2];
+            // A. お供NPCのスキル: 「[2〜4文字の名前]の[スキル名]！」
+            // 例: 「ハンスの斬撃！」「ガウェインの五星の加護！」
+            // ※「魔術書:雷電の連鎖！」は「魔術書:雷電」が6文字のため、このNPCの条件を正しくバイパスします
+            const npcMatch = msg.match(/^([^\sの]{2,4})の([^\s！『』]{2,})！/);
+            if (npcMatch) {
+                const name = npcMatch[2];
+                if (!['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '行動', '復帰', '麻痺', '混乱', '魅了'].some(k => name.includes(k))) {
+                    skillName = name;
+                }
             }
             
-            // B. 助詞「で」によるスキルの検知: 「[スキル名]で HP +100 回復！」「[スキル名]で全体攻撃！」
+            // B. プレイヤーのスキル使用/発動/服用/詠唱/「で」の検知 (文頭から安全に抽出)
+            // 例: 「魔術書:雷電の連鎖！ 連鎖する紫電...」 ➔ 「魔術書:雷電の連鎖」
+            // 例: 「魔術書:ファイアウェーブで烈火の波！」 ➔ 「魔術書:ファイアウェーブ」
+            // 例: 「瞑想を使用！」 ➔ 「瞑想」
             if (!skillName) {
-                const deMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(で\s*?HP|で全体攻撃)/);
-                if (deMatch) {
-                    skillName = deMatch[2];
+                const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(！|を使用|を発動|を服用|で|を[^\s]+?に使用)/);
+                if (useMatch) {
+                    const name = useMatch[2];
+                    if (!name.includes('ダメージ') && !name.includes('効果') && !name.includes('回復') && 
+                        !['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '魅了', '混乱', '麻痺'].some(k => name.includes(k))) {
+                        skillName = name;
+                    }
                 }
             }
             
@@ -143,12 +155,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 }
             }
             
-            // D. プレイヤーのスキル: 「[対象名]に[スキル名]！」
+            // C. プレイヤーのターゲット指定スキル: 「[対象名]に[スキル名]！」
             if (!skillName) {
                 const playerMatch = msg.match(/^([^\sに]+?)に([^\s！『』]{2,})！/);
                 if (playerMatch) {
                     const name = playerMatch[2];
-                    // ダメージ数や特定キーワードを除外
                     if (!name.includes('ダメージ') && !name.includes('効果') && !name.includes('回復') && 
                         !['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '魅了', '混乱', '麻痺'].some(k => name.includes(k))) {
                         skillName = name;
@@ -160,6 +171,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 // 装飾文字をクリンナップ
                 skillName = skillName.replace(/^[♥✨⚠\s]+/, '').trim();
                 
+                // 魔術書や魔導書のプレフィックスを除去してカットイン名を見やすくする
+                skillName = skillName.replace(/^(魔術書|魔導書):/, '');
+                
                 // 不要な状態メッセージや計算結果を除外する最終チェック
                 if (skillName.length >= 2 && !['出血', 'ダメージ', '毒', '火傷', 'スタン', '死亡', '気絶', '回避', 'ガード', 'ミス', '効果', 'HP'].some(k => skillName.includes(k))) {
                     setPlayerActiveSkill(skillName);
@@ -167,7 +181,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     if (isStrong) {
                         setIsStrongPlayerActive(true);
                     }
-                    const displayTime = isStrong ? 3000 : 2500;
+                    const displayTime = isStrong ? 2500 : 2000;
                     setTimeout(() => {
                         setPlayerActiveSkill(null);
                         setIsStrongPlayerActive(false);
