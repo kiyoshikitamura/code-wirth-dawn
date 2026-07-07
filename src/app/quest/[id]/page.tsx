@@ -22,6 +22,14 @@ import { soundManager } from '@/lib/soundManager';
 function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
     const enemies: Enemy[] = [];
     
+    // 無効なアセットパスを実在するシャドウ画像に強制フォールバックするヘルパー
+    const getEnforcedImageUrl = (url: string | null | undefined) => {
+        if (!url || url.includes('default.png') || url.includes('spirit_king.png') || url.includes('wise_mage.png') || url.includes('iron_knight.png') || url.includes('wind_ranger.png') || url.includes('shadow_samurai.png') || url.includes('apprentice_warrior.png') || url.includes('wandering_miko.png')) {
+            return '/images/npcs/npc_guest_shadow.png';
+        }
+        return url;
+    };
+    
     // 1. 防衛プレイヤー自身 (ボス扱い)
     const playerSnapshot = typeof opponent.player_snapshot === 'string'
         ? JSON.parse(opponent.player_snapshot)
@@ -37,7 +45,7 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         maxHp: finalHp,
         atk: playerSnapshot.atk || 10,
         def: playerSnapshot.def || 10,
-        image_url: playerSnapshot.avatar_url || opponent.avatar_url || '/images/npcs/default.png',
+        image_url: getEnforcedImageUrl(playerSnapshot.avatar_url || opponent.avatar_url),
         origin_type: 'shadow_heroic', // smart AIを適用
         ai_role: 'striker',
         signature_deck: opponent.skill_deck_snapshot || [],
@@ -65,7 +73,7 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
             maxHp: mFinalHp,
             atk: m.atk || 10,
             def: m.def || 10,
-            image_url: m.icon_url || m.image_url || '/images/npcs/default.png',
+            image_url: getEnforcedImageUrl(m.icon_url || m.image_url || m.avatar_url),
             origin_type: 'shadow_heroic', // smart AIを適用
             ai_role: m.job_class?.toLowerCase().includes('cleric') || m.job_class?.toLowerCase().includes('priest') ? 'medic' : 'striker',
             signature_deck: m.signature_deck_snapshot || [],

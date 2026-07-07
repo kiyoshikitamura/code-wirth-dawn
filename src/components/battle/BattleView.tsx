@@ -1648,8 +1648,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         }
                     `}} />
                     <div 
-                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-32 pr-[10%] pb-3 pt-12 gap-0"
-                        style={{ maskImage: 'linear-gradient(to right, transparent, transparent 110px, black 135px, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, transparent 110px, black 135px, black 95%, transparent)' }}
+                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-4 pr-[10%] pb-3 pt-12 gap-0"
                     >
                         {hand.map((card, idx) => {
                             const apCost = card.ap_cost ?? 1;
