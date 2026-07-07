@@ -241,7 +241,10 @@ export function resolveNpcTurn(
             if ((c.type === 'Defense' || c.type === 'Support') && c.target_type && ENEMY_TARGETS.includes(c.target_type)) return true;
             return false;
         })
-        .sort((a, b) => getNpcCardApCost(b, npc, context.enemyEffects) - getNpcCardApCost(a, npc, context.enemyEffects));
+        // APコスト降順ソートを廃止し、毎ターン完全にランダムにシャッフルする。
+        // これにより、高コスト技（メテオストライク等）ばかりが優先されて低コスト・条件付き技（ファイアウェーブ、傷口をえぐる等）が死に札になるのを防ぎ、
+        // 英霊が本来持っている多彩なスキルを戦況に応じてバランスよく使用するようになります！
+        .sort(() => Math.random() - 0.5);
 
     const lastUsed = (npc as any).lastUsedCardId as string | undefined;
     const maxAttackCards = npc.ai_grade === 'smart' ? 2 : 1; // v4.1: Smart は2枚

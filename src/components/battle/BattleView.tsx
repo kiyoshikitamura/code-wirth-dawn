@@ -88,33 +88,62 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp, (msg) => {
         // 敵への被ダメージログ検知とポップアップ ＆ 個別揺れ追加
-        const enemyDmgMatch = msg.match(/^([^\s]+?)に (\d+) のダメージ！/);
+        const enemyDmgMatch = msg.match(/^([^\s]+?)に(?:.+?)?(\d+)\s*のダメージ！/) 
+            || msg.match(/各敵に\s*(\d+)\s*のダメージ！/);
         if (enemyDmgMatch) {
-            const enemyName = enemyDmgMatch[1];
-            const amount = parseInt(enemyDmgMatch[2], 10);
-            const targetEnemy = (battleState?.enemies || []).find((e: any) => e.name === enemyName);
-            if (targetEnemy) {
-                const id = Date.now() + Math.random();
-                setFloatingDamages(prev => [...prev, { id, amount, isPlayer: false, targetEnemyId: targetEnemy.id }]);
-                setTimeout(() => {
-                    setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                }, 1500);
+            const isAoe = msg.includes('各敵に');
+            const amount = parseInt(isAoe ? enemyDmgMatch[1] : enemyDmgMatch[2], 10);
+            
+            if (isAoe) {
+                // 全ての生存エネミーにダメージポップアップを表示
+                (battleState?.enemies || []).filter((e: any) => e.hp > 0).forEach((targetEnemy: any) => {
+                    const id = Date.now() + Math.random();
+                    setFloatingDamages(prev => [...prev, { id, amount, isPlayer: false, targetEnemyId: targetEnemy.id }]);
+                    setTimeout(() => {
+                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
+                    }, 1500);
 
-                setShakingEnemyIds(prev => {
-                    const next = new Set(prev);
-                    next.add(targetEnemy.id);
-                    return next;
-                });
-                setTimeout(() => {
                     setShakingEnemyIds(prev => {
                         const next = new Set(prev);
-                        next.delete(targetEnemy.id);
+                        next.add(targetEnemy.id);
                         return next;
                     });
-                }, 300);
-
+                    setTimeout(() => {
+                        setShakingEnemyIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(targetEnemy.id);
+                            return next;
+                        });
+                    }, 300);
+                });
                 setShouldShake(true);
                 setTimeout(() => setShouldShake(false), 200);
+            } else {
+                const enemyName = enemyDmgMatch[1];
+                const targetEnemy = (battleState?.enemies || []).find((e: any) => e.name === enemyName);
+                if (targetEnemy) {
+                    const id = Date.now() + Math.random();
+                    setFloatingDamages(prev => [...prev, { id, amount, isPlayer: false, targetEnemyId: targetEnemy.id }]);
+                    setTimeout(() => {
+                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
+                    }, 1500);
+
+                    setShakingEnemyIds(prev => {
+                        const next = new Set(prev);
+                        next.add(targetEnemy.id);
+                        return next;
+                    });
+                    setTimeout(() => {
+                        setShakingEnemyIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(targetEnemy.id);
+                            return next;
+                        });
+                    }, 300);
+
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 200);
+                }
             }
         }
 
@@ -153,7 +182,17 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             const npcNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
             const isNpcAction = npcNames.some((name: string) => msg.startsWith(name));
             
-            if (!isNpcAction) {
+            const isExplicitCardAction = 
+                msg.includes('『') || 
+                msg.startsWith('魔術書:') || 
+                msg.startsWith('魔導書:') ||
+                msg.includes('を使用！') || 
+                msg.includes('を使用しました') || 
+                msg.includes('を発動！') || 
+                msg.includes('を服用！') ||
+                msg.includes('を唱えた！');
+
+            if (!isNpcAction && isExplicitCardAction) {
             
             // 0. 二重括弧『 』が含まれている場合は最優先でその中身を抽出 (スキル・魔法発動)
             // 例: 「ハンスの『金剛壁』！」 ➔ 「金剛壁」

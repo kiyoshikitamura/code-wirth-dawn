@@ -88,12 +88,9 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
                 const duration = buff.duration;
                 const val = buff.value;
                 if (id && duration) {
-                    const isTurnEndTickCompensated = (effectId: string) => {
-                        return ['atk_up', 'def_up', 'regen', 'absolute_barrier'].includes(effectId);
-                    };
-                    const finalDuration = isTurnEndTickCompensated(id)
-                        ? duration + 1
-                        : duration;
+                    // 敵側リーダーの装備初期バフは、敵ターンの最初の行動直前クリンナップ（tickEffects）で減少するため、
+                    // 1Tのバフがプレイヤー手番中に消えて無駄になるのを防ぐべく無条件で duration + 1 補正を行う！
+                    const finalDuration = duration + 1;
 
                     const existing = initialEnemyEffects.find(eff => eff.id === id);
                     if (existing) {
@@ -154,12 +151,9 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
                 const duration = buff.duration;
                 const val = buff.value;
                 if (id && duration) {
-                    const isTurnEndTickCompensated = (effectId: string) => {
-                        return ['atk_up', 'def_up', 'regen', 'absolute_barrier'].includes(effectId);
-                    };
-                    const finalDuration = isTurnEndTickCompensated(id)
-                        ? duration + 1
-                        : duration;
+                    // 敵側メンバーの初期バフは、敵ターンの最初の行動直前クリンナップ（tickEffects）で減少するため、
+                    // 1Tのバフがプレイヤー手番中に消えて無駄になるのを防ぐべく無条件で duration + 1 補正を行う！
+                    const finalDuration = duration + 1;
 
                     const existing = initialMemberEffects.find(eff => eff.id === id);
                     if (existing) {
