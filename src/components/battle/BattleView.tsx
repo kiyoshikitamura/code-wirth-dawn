@@ -33,6 +33,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [isStrongActive, setIsStrongActive] = useState(false);
     const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean }[]>([]);
     const [apErrorActive, setApErrorActive] = useState(false);
+    const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
 
     const prevLiveHpRef = useRef<number | null>(null);
     const prevTargetHpRef = useRef<number | null>(null);
