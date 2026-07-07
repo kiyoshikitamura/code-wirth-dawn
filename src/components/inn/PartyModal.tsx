@@ -130,6 +130,10 @@ export default function PartyModal({ onClose, userProfile, isCampMode }: PartyMo
         const originTypeLabel = 
             selectedDetail.origin_type === 'shadow_active' ? '影の残像' : 
             selectedDetail.origin_type === 'shadow_heroic' ? '英霊' : '傭兵';
+        const equippedItems = selectedDetail.snapshot_data?.equipped_items || [];
+        const equipLabel = 
+            selectedDetail.origin_type === 'shadow_heroic' ? '引退時の装備' : 
+            selectedDetail.origin_type === 'shadow_active' ? '登録時の装備' : '現在の装備';
 
         return createPortal(
             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setSelectedDetail(null)}>
@@ -200,6 +204,23 @@ export default function PartyModal({ onClose, userProfile, isCampMode }: PartyMo
                                 </div>
                             )}
                         </div>
+
+                        {/* Equipped Items snapshot */}
+                        {equippedItems && equippedItems.length > 0 && (
+                            <div className="bg-black/20 rounded-lg p-2.5 border border-slate-800">
+                                <div className="text-[10px] text-purple-400 mb-2 font-bold">{equipLabel}</div>
+                                <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                                    {equippedItems.map((eq: any, i: number) => (
+                                        <div key={i} className="flex justify-between items-center bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                                            <span className="font-bold text-[9px] uppercase tracking-wide text-purple-400 bg-purple-950/40 px-1 rounded flex-shrink-0">
+                                                {toJpSlotName(eq.slot)}
+                                            </span>
+                                            <span className="truncate ml-2 text-[11px] font-medium flex-1 text-right text-slate-200">{eq.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Signature Skills */}
                         {selectedDetail.skill_names && selectedDetail.skill_names.length > 0 && (
@@ -358,4 +379,16 @@ export default function PartyModal({ onClose, userProfile, isCampMode }: PartyMo
         </div>,
         document.body
     );
+}
+
+function toJpSlotName(slot: string): string {
+    switch (slot) {
+        case 'weapon': return '武器';
+        case 'armor': return '防具';
+        case 'accessory': return '装飾品';
+        case 'accessory_1': return '装飾品1';
+        case 'accessory_2': return '装飾品2';
+        case 'accessory_3': return '装飾品3';
+        default: return slot;
+    }
 }
