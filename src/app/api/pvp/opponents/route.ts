@@ -93,21 +93,19 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "191",
-                    "name": "旅人の外套",
+                    "id": "200",
+                    "name": "魔法のランプ",
                     "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 3
-                    }
+                    "effect_data": {}
                 }
             ],
             "skill_deck_snapshot": [
                 {
                     "id": "14",
                     "name": "治癒",
-                    "type": "Skill",
+                    "type": "Heal",
                     "ap_cost": 2,
-                    "power": -15
+                    "power": 15
                 }
             ]
         },
@@ -129,32 +127,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "315",
+                    "name": "村正",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "atk_bonus": 55,
+                        "description": "所有者の血と魂をすする妖刀。圧倒的な攻撃力を与える代わりに、身を守るための警戒心を完全に奪い去る。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
+                            "duration": 99,
+                            "buff_type": "def_down"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "318",
+                    "name": "暗黒の外套",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -205,6 +243,148 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
+            "user_id": "b4a20ab3-18d9-44d4-8837-bacd4fc711e9",
+            "user_name": "ハヤト",
+            "avatar_url": "/images/icons/observer_gem.png",
+            "battle_score": 827,
+            "defense_rank": "C",
+            "is_ghost": true,
+            "player_snapshot": {
+                "level": 15,
+                "job_class": "Warrior",
+                "hp": 487,
+                "max_hp": 487,
+                "atk": 18,
+                "def": 16
+            },
+            "party_members_snapshot": [],
+            "equipped_items_snapshot": [
+                {
+                    "id": "350",
+                    "name": "デーモンバスター",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "333",
+                    "name": "疾風のアンクレット",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 2,
+                        "description": "装備者の足取りを軽やかにし、必殺の一撃を出やすくする。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 99,
+                            "buff_type": "crit_up"
+                        }
+                    }
+                },
+                {
+                    "id": "501",
+                    "name": "ガウェインの小手",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "317",
+                    "name": "聖霊のローブ",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 20,
+                        "def_bonus": 8,
+                        "description": "聖水と祝福された白糸で織り上げられたローブ。邪悪な魔力を霧散させる不可視の防壁を形成する。",
+                        "battle_start_buff": {
+                            "duration": 5,
+                            "buff_type": "regen"
+                        }
+                    }
+                },
+                {
+                    "id": "324",
+                    "name": "守護のタリスマン",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 6,
+                        "description": "聖堂の祝福を受けた銀のタリスマン。着用者の周囲に微小な衝撃吸収フィールドを発生させ、致命傷を防ぐ。",
+                        "battle_start_buff": {
+                            "value": 15,
+                            "duration": 3,
+                            "buff_type": "def_up"
+                        }
+                    }
+                }
+            ],
+            "skill_deck_snapshot": [
+                {
+                    "id": "37",
+                    "name": "メテオストライク",
+                    "type": "Magic",
+                    "ap_cost": 5,
+                    "power": 100
+                },
+                {
+                    "id": "134",
+                    "name": "プラズマシャワー",
+                    "type": "Magic",
+                    "ap_cost": 3,
+                    "power": 30
+                },
+                {
+                    "id": "123",
+                    "name": "フレイムバースト",
+                    "type": "Magic",
+                    "ap_cost": 2,
+                    "power": 15
+                },
+                {
+                    "id": "116",
+                    "name": "プロミネンス",
+                    "type": "Magic",
+                    "ap_cost": 4,
+                    "power": 50
+                },
+                {
+                    "id": "112",
+                    "name": "デトネーション",
+                    "type": "Magic",
+                    "ap_cost": 4,
+                    "power": 90
+                },
+                {
+                    "id": "135",
+                    "name": "アブソリュートゼロ",
+                    "type": "Magic",
+                    "ap_cost": 3,
+                    "power": 25
+                }
+            ]
+        },
+        {
             "user_id": "44508458-016f-4d3f-810c-1c5a8827e17f",
             "user_name": "ななにく",
             "avatar_url": "/avatars/adventurer.jpg",
@@ -222,33 +402,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "501",
+                    "name": "ガウェインの小手",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
                         }
+                    }
+                },
+                {
+                    "id": "206",
+                    "name": "神器:草薙(模造)",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 18,
+                        "description": "夜刀神国の神話に登場する剣の模造品。それでも一振りで竹林を吹き飛ばす威力を秘めている。"
+                    }
+                },
+                {
+                    "id": "219",
+                    "name": "重装鎧",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 10,
+                        "def_bonus": 12,
+                        "description": "全身を鋼鉄で覆い隠す防御力重視の鎧。物理的な攻撃を大きく軽減する。"
                     }
                 }
             ],
@@ -308,32 +492,84 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "351",
+                    "name": "デーモンスレイヤー",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "次元深淵の魔王を討ち果たすために鍛え上げられた伝説の聖剣。手にするだけで邪悪を退ける神聖な加護が全身を包み込む。",
+                        "battle_start_buff": [
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "501",
+                    "name": "ガウェインの小手",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "319",
+                    "name": "混沌の重鎧",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 40,
+                        "description": "混沌の魔力により結晶化した未知の金属製プレートアーマー。圧倒的な防御力を提供する代償として、装備者の動作を著しく遅くする。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_down"
+                        }
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "324",
+                    "name": "守護のタリスマン",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 6,
+                        "description": "聖堂の祝福を受けた銀のタリスマン。着用者の周囲に微小な衝撃吸収フィールドを発生させ、致命傷を防ぐ。",
+                        "battle_start_buff": {
+                            "value": 15,
+                            "duration": 3,
+                            "buff_type": "def_up"
                         }
                     }
                 }
@@ -386,10 +622,68 @@ const GHOST_PRESETS: Record<string, any[]> = {
     ],
     "B": [
         {
+            "user_id": "ghost_b_1",
+            "user_name": "鋼鉄のウォルグ",
+            "avatar_url": "/images/npcs/npc_guest_volg.png",
+            "battle_score": 1800,
+            "defense_rank": "B",
+            "is_ghost": true,
+            "player_snapshot": {
+                "level": 10,
+                "job_class": "Warrior",
+                "hp": 180,
+                "max_hp": 180,
+                "atk": 18,
+                "def": 15
+            },
+            "party_members_snapshot": [
+                {
+                    "id": "ghost_b_1_m1",
+                    "name": "ルキヤ",
+                    "job_class": "Guard",
+                    "level": 8,
+                    "hp": 140,
+                    "max_hp": 140,
+                    "atk": 12,
+                    "def": 12,
+                    "inject_cards": [
+                        9
+                    ],
+                    "image_url": "/images/npcs/npc_roland_guard_heavy.png"
+                }
+            ],
+            "equipped_items_snapshot": [
+                {
+                    "id": "153",
+                    "name": "鋼鉄の大剣",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 8
+                    }
+                }
+            ],
+            "skill_deck_snapshot": [
+                {
+                    "id": "1",
+                    "name": "強打",
+                    "type": "Skill",
+                    "ap_cost": 2,
+                    "power": 25
+                },
+                {
+                    "id": "2",
+                    "name": "斬撃",
+                    "type": "Skill",
+                    "ap_cost": 1,
+                    "power": 10
+                }
+            ]
+        },
+        {
             "user_id": "c7906aec-ba14-4e35-8102-b21c6bea529a",
             "user_name": "ベル",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c7906aec-ba14-4e35-8102-b21c6bea529a/avatar.jpeg?t=1781659829258",
-            "battle_score": 2509,
+            "battle_score": 2044,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -406,8 +700,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ラヴィーネ",
                     "job_class": "Civilian",
                     "level": 13,
-                    "hp": 401,
-                    "max_hp": 401,
+                    "hp": 79,
+                    "max_hp": 221,
                     "atk": 18,
                     "def": 14,
                     "inject_cards": [
@@ -425,8 +719,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "魔剣士 テリア",
                     "job_class": "Civilian",
                     "level": 20,
-                    "hp": 584,
-                    "max_hp": 584,
+                    "hp": 71,
+                    "max_hp": 299,
                     "atk": 19,
                     "def": 22,
                     "inject_cards": [
@@ -445,32 +739,75 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "501",
+                    "name": "ガウェインの小手",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "602",
+                    "name": "神の法衣",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "def_bonus": 12,
+                        "description": "忘却の五英霊の力を封じた法衣。纏う者に神聖な加護を与え、致命的な一撃すら耐え凌ぐ強固な結界を張る。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 2,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "315",
+                    "name": "村正",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 55,
+                        "description": "所有者の血と魂をすする妖刀。圧倒的な攻撃力を与える代わりに、身を守るための警戒心を完全に奪い去る。",
+                        "battle_start_buff": {
+                            "duration": 99,
+                            "buff_type": "def_down"
+                        }
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -521,135 +858,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
-            "user_id": "c4a8cf70-6185-4725-8e07-810bb5a53d38",
-            "user_name": "ラヴィーネ",
-            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.png?t=1783243446077",
-            "battle_score": 2001,
-            "defense_rank": "B",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 16,
-                "job_class": "Warrior",
-                "hp": 251,
-                "max_hp": 251,
-                "atk": 22,
-                "def": 16
-            },
-            "party_members_snapshot": [
-                {
-                    "id": 1668,
-                    "name": "ヴォルグ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 680,
-                    "max_hp": 680,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        28,
-                        29,
-                        48,
-                        25
-                    ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
-                },
-                {
-                    "id": 1792,
-                    "name": "ゴリアテ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 390,
-                    "max_hp": 390,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        1
-                    ],
-                    "image_url": "/images/npcs/npc_markand_slave_giant.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
-                        "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
-                        }
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "6",
-                    "name": "シールドバッシュ",
-                    "type": "Defense",
-                    "ap_cost": 2,
-                    "power": 10
-                },
-                {
-                    "id": "1",
-                    "name": "強打",
-                    "type": "Skill",
-                    "ap_cost": 1,
-                    "power": 12
-                },
-                {
-                    "id": "64",
-                    "name": "瞑想",
-                    "type": "Support",
-                    "ap_cost": 1,
-                    "power": 3
-                },
-                {
-                    "id": "119",
-                    "name": "ダブルキャスト",
-                    "type": "Support",
-                    "ap_cost": 2,
-                    "power": 0
-                },
-                {
-                    "id": "124",
-                    "name": "凍てつく波動",
-                    "type": "Magic",
-                    "ap_cost": 3,
-                    "power": 0
-                },
-                {
-                    "id": "37",
-                    "name": "メテオストライク",
-                    "type": "Magic",
-                    "ap_cost": 5,
-                    "power": 100
-                }
-            ]
-        },
-        {
             "user_id": "0c4d9ee3-2b38-498a-ab23-823ae91dced5",
             "user_name": "ルキヤ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/0c4d9ee3-2b38-498a-ab23-823ae91dced5/avatar.png?t=1781605286950",
-            "battle_score": 2662,
+            "battle_score": 2302,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -666,8 +878,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "魔剣士 テリア",
                     "job_class": "Civilian",
                     "level": 25,
-                    "hp": 730,
-                    "max_hp": 730,
+                    "hp": 89,
+                    "max_hp": 370,
                     "atk": 88,
                     "def": 39,
                     "inject_cards": [
@@ -689,32 +901,82 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "350",
+                    "name": "デーモンバスター",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "333",
+                    "name": "疾風のアンクレット",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 2,
+                        "description": "装備者の足取りを軽やかにし、必殺の一撃を出やすくする。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.1,
+                            "duration": 99,
+                            "buff_type": "crit_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "318",
+                    "name": "暗黒の外套",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "322",
+                    "name": "魔導士の指輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 8,
+                        "def_bonus": -2,
+                        "description": "古代の魔力回路が組み込まれた指輪。スペルキャスターの魔力を増幅させ、呪文による破壊力を一時的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.15,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -765,6 +1027,212 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
+            "user_id": "c4a8cf70-6185-4725-8e07-810bb5a53d38",
+            "user_name": "ラヴィーネ",
+            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.png?t=1783243446077",
+            "battle_score": 2639,
+            "defense_rank": "B",
+            "is_ghost": true,
+            "player_snapshot": {
+                "level": 16,
+                "job_class": "Warrior",
+                "hp": 251,
+                "max_hp": 251,
+                "atk": 22,
+                "def": 16
+            },
+            "party_members_snapshot": [
+                {
+                    "id": 1668,
+                    "name": "ヴォルグ",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 22,
+                    "max_hp": 680,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        28,
+                        29,
+                        48,
+                        25
+                    ],
+                    "image_url": "/images/npcs/npc_guest_volg.png"
+                },
+                {
+                    "id": 1792,
+                    "name": "ゴリアテ",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 71,
+                    "max_hp": 390,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        1
+                    ],
+                    "image_url": "/images/npcs/npc_markand_slave_giant.png"
+                },
+                {
+                    "id": 2033,
+                    "name": "バドル",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 94,
+                    "max_hp": 208,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        18
+                    ],
+                    "image_url": "/images/npcs/npc_markand_merc_scimitar.png"
+                },
+                {
+                    "id": 2034,
+                    "name": "アベ",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 90,
+                    "max_hp": 130,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        4,
+                        23
+                    ],
+                    "image_url": "/images/npcs/npc_yato_onmyoji.png"
+                }
+            ],
+            "equipped_items_snapshot": [
+                {
+                    "id": "501",
+                    "name": "ガウェインの小手",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
+                            "duration": 3,
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "325",
+                    "name": "怒りの腕輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 3,
+                        "description": "怒りの念が込められた腕輪。着用者の肉体を頑強にし、相手を行動不能にする。",
+                        "battle_start_buff": {
+                            "duration": 3,
+                            "buff_type": "stun_infuse"
+                        }
+                    }
+                },
+                {
+                    "id": "602",
+                    "name": "神の法衣",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "def_bonus": 12,
+                        "description": "忘却の五英霊の力を封じた法衣。纏う者に神聖な加護を与え、致命的な一撃すら耐え凌ぐ強固な結界を張る。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 2,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "351",
+                    "name": "デーモンスレイヤー",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "次元深淵の魔王を討ち果たすために鍛え上げられた伝説の聖剣。手にするだけで邪悪を退ける神聖な加護が全身を包み込む。",
+                        "battle_start_buff": [
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "skill_deck_snapshot": [
+                {
+                    "id": "6",
+                    "name": "シールドバッシュ",
+                    "type": "Defense",
+                    "ap_cost": 2,
+                    "power": 10
+                },
+                {
+                    "id": "1",
+                    "name": "強打",
+                    "type": "Skill",
+                    "ap_cost": 1,
+                    "power": 12
+                },
+                {
+                    "id": "64",
+                    "name": "瞑想",
+                    "type": "Support",
+                    "ap_cost": 1,
+                    "power": 3
+                },
+                {
+                    "id": "119",
+                    "name": "ダブルキャスト",
+                    "type": "Support",
+                    "ap_cost": 2,
+                    "power": 0
+                },
+                {
+                    "id": "124",
+                    "name": "凍てつく波動",
+                    "type": "Magic",
+                    "ap_cost": 3,
+                    "power": 0
+                },
+                {
+                    "id": "37",
+                    "name": "メテオストライク",
+                    "type": "Magic",
+                    "ap_cost": 5,
+                    "power": 100
+                }
+            ]
+        },
+        {
             "user_id": "1eb40aa6-7fb0-4d44-8e82-3a6da6234913",
             "user_name": "a",
             "avatar_url": "/avatars/adventurer.jpg",
@@ -785,7 +1253,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 299,
+                    "hp": 92,
                     "max_hp": 299,
                     "atk": 5,
                     "def": 10,
@@ -800,7 +1268,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 8,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -817,7 +1285,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 234,
+                    "hp": 97,
                     "max_hp": 234,
                     "atk": 5,
                     "def": 10,
@@ -831,7 +1299,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヤスマサ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 143,
+                    "hp": 95,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -844,33 +1312,83 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "332",
+                    "name": "烈火のルビーリング",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
                         }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "318",
+                    "name": "暗黒の外套",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "351",
+                    "name": "デーモンスレイヤー",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "次元深淵の魔王を討ち果たすために鍛え上げられた伝説の聖剣。手にするだけで邪悪を退ける神聖な加護が全身を包み込む。",
+                        "battle_start_buff": [
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 }
             ],
@@ -920,151 +1438,6 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
-            "user_id": "e155794b-a049-4d34-a9ec-1b7086cba695",
-            "user_name": "タクミ",
-            "avatar_url": "/avatars/adventurer.jpg",
-            "battle_score": 2086,
-            "defense_rank": "B",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 15,
-                "job_class": "Warrior",
-                "hp": 238,
-                "max_hp": 238,
-                "atk": 19,
-                "def": 12
-            },
-            "party_members_snapshot": [
-                {
-                    "id": 620,
-                    "name": "ケンジ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 180,
-                    "max_hp": 180,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        25
-                    ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
-                },
-                {
-                    "id": 672,
-                    "name": "とらまる",
-                    "job_class": "Civilian",
-                    "level": 11,
-                    "hp": 342,
-                    "max_hp": 342,
-                    "atk": 13,
-                    "def": 12,
-                    "inject_cards": [
-                        37,
-                        115,
-                        135,
-                        119,
-                        64
-                    ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183"
-                },
-                {
-                    "id": 746,
-                    "name": "Melody",
-                    "job_class": "Civilian",
-                    "level": 10,
-                    "hp": 336,
-                    "max_hp": 336,
-                    "atk": 12,
-                    "def": 16,
-                    "inject_cards": [
-                        114,
-                        133,
-                        135,
-                        124,
-                        117,
-                        66
-                    ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
-                        "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
-                        }
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "37",
-                    "name": "メテオストライク",
-                    "type": "Magic",
-                    "ap_cost": 5,
-                    "power": 100
-                },
-                {
-                    "id": "64",
-                    "name": "瞑想",
-                    "type": "Support",
-                    "ap_cost": 1,
-                    "power": 3
-                },
-                {
-                    "id": "103",
-                    "name": "無防備な獲物",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 40
-                },
-                {
-                    "id": "29",
-                    "name": "連撃",
-                    "type": "Skill",
-                    "ap_cost": 3,
-                    "power": 40
-                },
-                {
-                    "id": "116",
-                    "name": "プロミネンス",
-                    "type": "Magic",
-                    "ap_cost": 4,
-                    "power": 50
-                },
-                {
-                    "id": "124",
-                    "name": "凍てつく波動",
-                    "type": "Magic",
-                    "ap_cost": 3,
-                    "power": 0
-                }
-            ]
-        },
-        {
             "user_id": "99ec1273-d758-4797-a5e3-ab6761eb5561",
             "user_name": "リマーナ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/99ec1273-d758-4797-a5e3-ab6761eb5561/avatar.png?t=1781631772227",
@@ -1085,7 +1458,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "レオ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 300,
+                    "hp": 40,
                     "max_hp": 300,
                     "atk": 5,
                     "def": 10,
@@ -1101,7 +1474,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ガッド",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 250,
+                    "hp": 29,
                     "max_hp": 250,
                     "atk": 5,
                     "def": 10,
@@ -1116,7 +1489,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "撫子",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 100,
+                    "hp": 34,
                     "max_hp": 100,
                     "atk": 5,
                     "def": 10,
@@ -1131,7 +1504,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 42,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -1146,32 +1519,80 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "350",
+                    "name": "デーモンバスター",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "233",
+                    "name": "黄金のサイコロ",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
+                        "atk_bonus": 5,
+                        "def_bonus": 2,
+                        "description": "戦場の結果を運否天賦に任せる狂気のギャンブラーに愛用される、純金振りのサイコロ。"
                     }
                 },
                 {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
+                    "id": "602",
+                    "name": "神の法衣",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 30,
+                        "def_bonus": 12,
+                        "description": "忘却の五英霊の力を封じた法衣。纏う者に神聖な加護を与え、致命的な一撃すら耐え凌ぐ強固な結界を張る。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.3,
+                            "duration": 2,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "322",
+                    "name": "魔導士の指輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 8,
+                        "def_bonus": -2,
+                        "description": "古代の魔力回路が組み込まれた指輪。スペルキャスターの魔力を増幅させ、呪文による破壊力を一時的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.15,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
+                            "duration": 3,
+                            "buff_type": "def_up"
                         }
                     }
                 }
@@ -1225,7 +1646,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "abb4d4f8-b86e-4d5f-af46-1c69933b2d3e",
             "user_name": "ションボリーヌ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/abb4d4f8-b86e-4d5f-af46-1c69933b2d3e/avatar.jpg?t=1782452623044",
-            "battle_score": 2436,
+            "battle_score": 2331,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1242,7 +1663,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "アンナ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 100,
+                    "hp": 1,
                     "max_hp": 100,
                     "atk": 5,
                     "def": 10,
@@ -1257,8 +1678,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Persepho",
                     "job_class": "Civilian",
                     "level": 8,
-                    "hp": 281,
-                    "max_hp": 281,
+                    "hp": 13,
+                    "max_hp": 176,
                     "atk": 11,
                     "def": 12,
                     "inject_cards": [
@@ -1276,7 +1697,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 60,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -1293,7 +1714,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "バドル",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 160,
+                    "hp": 77,
                     "max_hp": 160,
                     "atk": 5,
                     "def": 10,
@@ -1305,32 +1726,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "206",
+                    "name": "神器:草薙(模造)",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "atk_bonus": 18,
+                        "description": "夜刀神国の神話に登場する剣の模造品。それでも一振りで竹林を吹き飛ばす威力を秘めている。"
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "503",
+                    "name": "英霊の鎖帷子",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
+                        "hp_bonus": 10,
+                        "def_bonus": 14,
+                        "description": "神々に抗った古代の英雄たちの残留魔力が編み込まれた鎖帷子。纏う者の傷を癒し、折れかけた心を奮い立たせる不思議な温もりがある。"
                     }
                 },
                 {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
+                    "id": "3045",
+                    "name": "狐火の護符",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
                         }
                     }
                 }
@@ -1384,7 +1810,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "e8aaeff4-d6d4-43b7-aa62-31dcaf621157",
             "user_name": "シド・ザ・ブレンド",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e8aaeff4-d6d4-43b7-aa62-31dcaf621157/avatar.jpg?t=1782077585038",
-            "battle_score": 2877,
+            "battle_score": 2337,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1401,8 +1827,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 14,
-                    "hp": 479,
-                    "max_hp": 479,
+                    "hp": 13,
+                    "max_hp": 284,
                     "atk": 16,
                     "def": 15,
                     "inject_cards": [
@@ -1422,8 +1848,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 460,
-                    "max_hp": 460,
+                    "hp": 32,
+                    "max_hp": 250,
                     "atk": 16,
                     "def": 18,
                     "inject_cards": [
@@ -1442,8 +1868,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "透",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 322,
-                    "max_hp": 322,
+                    "hp": 7,
+                    "max_hp": 187,
                     "atk": 13,
                     "def": 14,
                     "inject_cards": [
@@ -1460,32 +1886,47 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "502",
+                    "name": "竜牙の剣",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "atk_bonus": 12,
+                        "def_bonus": 2,
+                        "description": "神代の守護竜の牙から鍛えた剣。刀身には天界の紋様が浮かび上がり、『神に弓引く者』の証として、持ち主に叛逆の力を宿す。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.2,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "602",
+                    "name": "神の法衣",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "def_bonus": 12,
+                        "description": "忘却の五英霊の力を封じた法衣。纏う者に神聖な加護を与え、致命的な一撃すら耐え凌ぐ強固な結界を張る。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 2,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "501",
+                    "name": "ガウェインの小手",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -1536,6 +1977,181 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
+            "user_id": "e155794b-a049-4d34-a9ec-1b7086cba695",
+            "user_name": "タクミ",
+            "avatar_url": "/avatars/adventurer.jpg",
+            "battle_score": 1801,
+            "defense_rank": "B",
+            "is_ghost": true,
+            "player_snapshot": {
+                "level": 15,
+                "job_class": "Warrior",
+                "hp": 238,
+                "max_hp": 238,
+                "atk": 19,
+                "def": 12
+            },
+            "party_members_snapshot": [
+                {
+                    "id": 620,
+                    "name": "ケンジ",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 76,
+                    "max_hp": 180,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        25
+                    ],
+                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
+                },
+                {
+                    "id": 672,
+                    "name": "とらまる",
+                    "job_class": "Civilian",
+                    "level": 11,
+                    "hp": 75,
+                    "max_hp": 192,
+                    "atk": 13,
+                    "def": 12,
+                    "inject_cards": [
+                        37,
+                        115,
+                        135,
+                        119,
+                        64
+                    ],
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183"
+                },
+                {
+                    "id": 746,
+                    "name": "Melody",
+                    "job_class": "Civilian",
+                    "level": 10,
+                    "hp": 75,
+                    "max_hp": 201,
+                    "atk": 12,
+                    "def": 16,
+                    "inject_cards": [
+                        114,
+                        133,
+                        135,
+                        124,
+                        117,
+                        66
+                    ],
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040"
+                }
+            ],
+            "equipped_items_snapshot": [
+                {
+                    "id": "219",
+                    "name": "重装鎧",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 10,
+                        "def_bonus": 12,
+                        "description": "全身を鋼鉄で覆い隠す防御力重視の鎧。物理的な攻撃を大きく軽減する。"
+                    }
+                },
+                {
+                    "id": "206",
+                    "name": "神器:草薙(模造)",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 18,
+                        "description": "夜刀神国の神話に登場する剣の模造品。それでも一振りで竹林を吹き飛ばす威力を秘めている。"
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
+                            "duration": 3,
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "222",
+                    "name": "幸運のコイン",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 4,
+                        "description": "マルカンドの闇市で高値で取引される、持っているだけで会心の一撃が連発する不思議な硬貨。"
+                    }
+                },
+                {
+                    "id": "501",
+                    "name": "ガウェインの小手",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                }
+            ],
+            "skill_deck_snapshot": [
+                {
+                    "id": "37",
+                    "name": "メテオストライク",
+                    "type": "Magic",
+                    "ap_cost": 5,
+                    "power": 100
+                },
+                {
+                    "id": "64",
+                    "name": "瞑想",
+                    "type": "Support",
+                    "ap_cost": 1,
+                    "power": 3
+                },
+                {
+                    "id": "103",
+                    "name": "無防備な獲物",
+                    "type": "Skill",
+                    "ap_cost": 2,
+                    "power": 40
+                },
+                {
+                    "id": "29",
+                    "name": "連撃",
+                    "type": "Skill",
+                    "ap_cost": 3,
+                    "power": 40
+                },
+                {
+                    "id": "116",
+                    "name": "プロミネンス",
+                    "type": "Magic",
+                    "ap_cost": 4,
+                    "power": 50
+                },
+                {
+                    "id": "124",
+                    "name": "凍てつく波動",
+                    "type": "Magic",
+                    "ap_cost": 3,
+                    "power": 0
+                }
+            ]
+        },
+        {
             "user_id": "e55cce3b-9248-4b99-82bc-c7e05f479aec",
             "user_name": "TB",
             "avatar_url": "/avatars/adventurer.jpg",
@@ -1556,7 +2172,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 230,
+                    "hp": 47,
                     "max_hp": 230,
                     "atk": 5,
                     "def": 10,
@@ -1571,7 +2187,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 180,
+                    "hp": 46,
                     "max_hp": 180,
                     "atk": 5,
                     "def": 10,
@@ -1585,7 +2201,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "レオ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 300,
+                    "hp": 52,
                     "max_hp": 300,
                     "atk": 5,
                     "def": 10,
@@ -1601,7 +2217,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 49,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -1616,33 +2232,84 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "319",
+                    "name": "混沌の重鎧",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "def_bonus": 40,
+                        "description": "混沌の魔力により結晶化した未知の金属製プレートアーマー。圧倒的な防御力を提供する代償として、装備者の動作を著しく遅くする。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_down"
                         }
+                    }
+                },
+                {
+                    "id": "501",
+                    "name": "ガウェインの小手",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "321",
+                    "name": "深緑のアミュレット",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 25,
+                        "def_bonus": 5,
+                        "description": "豊かな大森林の生命の息吹を宿すお守り。装備者の体内に宿る自然治癒力を呼び覚まし、絶え間なく体力を回復させる。",
+                        "battle_start_buff": {
+                            "duration": 3,
+                            "buff_type": "regen"
+                        }
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
+                            "duration": 3,
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "350",
+                    "name": "デーモンバスター",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 }
             ],
@@ -1692,10 +2359,182 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
+            "user_id": "e26223d4-36b2-446e-b8ae-aa2c92be8b47",
+            "user_name": "クロノ",
+            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782598149931",
+            "battle_score": 2639,
+            "defense_rank": "B",
+            "is_ghost": true,
+            "player_snapshot": {
+                "level": 14,
+                "job_class": "Warrior",
+                "hp": 228,
+                "max_hp": 228,
+                "atk": 15,
+                "def": 14
+            },
+            "party_members_snapshot": [
+                {
+                    "id": 1546,
+                    "name": "ラヴィーネ",
+                    "job_class": "Civilian",
+                    "level": 15,
+                    "hp": 15,
+                    "max_hp": 266,
+                    "atk": 41,
+                    "def": 40,
+                    "inject_cards": [
+                        1,
+                        13,
+                        37,
+                        64,
+                        114,
+                        124,
+                        119
+                    ],
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
+                },
+                {
+                    "id": 1564,
+                    "name": "雅人",
+                    "job_class": "Civilian",
+                    "level": 17,
+                    "hp": 63,
+                    "max_hp": 285,
+                    "atk": 33,
+                    "def": 43,
+                    "inject_cards": [
+                        40,
+                        1,
+                        14,
+                        16,
+                        25,
+                        27,
+                        37,
+                        64
+                    ],
+                    "image_url": "/avatars/adventurer.jpg"
+                }
+            ],
+            "equipped_items_snapshot": [
+                {
+                    "id": "503",
+                    "name": "英霊の鎖帷子",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 10,
+                        "def_bonus": 14,
+                        "description": "神々に抗った古代の英雄たちの残留魔力が編み込まれた鎖帷子。纏う者の傷を癒し、折れかけた心を奮い立たせる不思議な温もりがある。"
+                    }
+                },
+                {
+                    "id": "351",
+                    "name": "デーモンスレイヤー",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "次元深淵の魔王を討ち果たすために鍛え上げられた伝説の聖剣。手にするだけで邪悪を退ける神聖な加護が全身を包み込む。",
+                        "battle_start_buff": [
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
+                            "duration": 3,
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "233",
+                    "name": "黄金のサイコロ",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "def_bonus": 2,
+                        "description": "戦場の結果を運否天賦に任せる狂気のギャンブラーに愛用される、純金振りのサイコロ。"
+                    }
+                },
+                {
+                    "id": "501",
+                    "name": "ガウェインの小手",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 7,
+                        "description": "「生き残れ」——名もなき辺境で散った老騎士の最後の言葉と共に遺された小手。無数の戦場で主人を守り抜いた鉄の温もりが、今も微かに残っている。",
+                        "battle_start_buff": {
+                            "value": 0.1,
+                            "duration": 2,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                }
+            ],
+            "skill_deck_snapshot": [
+                {
+                    "id": "124",
+                    "name": "凍てつく波動",
+                    "type": "Magic",
+                    "ap_cost": 3,
+                    "power": 0
+                },
+                {
+                    "id": "119",
+                    "name": "ダブルキャスト",
+                    "type": "Support",
+                    "ap_cost": 2,
+                    "power": 0
+                },
+                {
+                    "id": "37",
+                    "name": "メテオストライク",
+                    "type": "Magic",
+                    "ap_cost": 5,
+                    "power": 100
+                },
+                {
+                    "id": "33",
+                    "name": "奇跡",
+                    "type": "Heal",
+                    "ap_cost": 5,
+                    "power": 999
+                },
+                {
+                    "id": "57",
+                    "name": "闇の代償",
+                    "type": "Support",
+                    "ap_cost": 1,
+                    "power": 0
+                }
+            ]
+        },
+        {
             "user_id": "e50314d6-4b08-4e2a-b954-c81ff91e01f3",
             "user_name": "あめちぃ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e50314d6-4b08-4e2a-b954-c81ff91e01f3/avatar.jpg?t=1782257002786",
-            "battle_score": 2462,
+            "battle_score": 2237,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1712,8 +2551,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "小野",
                     "job_class": "Civilian",
                     "level": 7,
-                    "hp": 288,
-                    "max_hp": 288,
+                    "hp": 21,
+                    "max_hp": 198,
                     "atk": 14,
                     "def": 8,
                     "inject_cards": [
@@ -1729,7 +2568,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "グリフォン",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 260,
+                    "hp": 26,
                     "max_hp": 260,
                     "atk": 5,
                     "def": 10,
@@ -1744,7 +2583,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 180,
+                    "hp": 19,
                     "max_hp": 180,
                     "atk": 5,
                     "def": 10,
@@ -1758,8 +2597,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ドリミス",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 340,
-                    "max_hp": 340,
+                    "hp": 70,
+                    "max_hp": 205,
                     "atk": 14,
                     "def": 16,
                     "inject_cards": [
@@ -1774,33 +2613,32 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "206",
+                    "name": "神器:草薙(模造)",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "atk_bonus": 18,
+                        "description": "夜刀神国の神話に登場する剣の模造品。それでも一振りで竹林を吹き飛ばす威力を秘めている。"
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "219",
+                    "name": "重装鎧",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
+                        "hp_bonus": 10,
+                        "def_bonus": 12,
+                        "description": "全身を鋼鉄で覆い隠す防御力重視の鎧。物理的な攻撃を大きく軽減する。"
                     }
                 },
                 {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
+                    "id": "233",
+                    "name": "黄金のサイコロ",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 4,
-                        "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
-                        }
+                        "atk_bonus": 5,
+                        "def_bonus": 2,
+                        "description": "戦場の結果を運否天賦に任せる狂気のギャンブラーに愛用される、純金振りのサイコロ。"
                     }
                 }
             ],
@@ -1846,7 +2684,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "0be1a6b5-763f-4bcb-8e63-59b49a121e68",
             "user_name": "ナス",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/0be1a6b5-763f-4bcb-8e63-59b49a121e68/avatar.png?t=1781702598439",
-            "battle_score": 2681,
+            "battle_score": 2231,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1863,8 +2701,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 9,
-                    "hp": 296,
-                    "max_hp": 296,
+                    "hp": 95,
+                    "max_hp": 176,
                     "atk": 11,
                     "def": 12,
                     "inject_cards": [
@@ -1885,8 +2723,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Jack ",
                     "job_class": "Civilian",
                     "level": 12,
-                    "hp": 370,
-                    "max_hp": 370,
+                    "hp": 98,
+                    "max_hp": 205,
                     "atk": 14,
                     "def": 14,
                     "inject_cards": [
@@ -1906,7 +2744,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 230,
+                    "hp": 95,
                     "max_hp": 230,
                     "atk": 5,
                     "def": 10,
@@ -1921,8 +2759,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "とらまる",
                     "job_class": "Civilian",
                     "level": 12,
-                    "hp": 368,
-                    "max_hp": 368,
+                    "hp": 98,
+                    "max_hp": 203,
                     "atk": 13,
                     "def": 12,
                     "inject_cards": [
@@ -1938,32 +2776,37 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "206",
+                    "name": "神器:草薙(模造)",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "atk_bonus": 18,
+                        "description": "夜刀神国の神話に登場する剣の模造品。それでも一振りで竹林を吹き飛ばす威力を秘めている。"
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "503",
+                    "name": "英霊の鎖帷子",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
+                        "hp_bonus": 10,
+                        "def_bonus": 14,
+                        "description": "神々に抗った古代の英雄たちの残留魔力が編み込まれた鎖帷子。纏う者の傷を癒し、折れかけた心を奮い立たせる不思議な温もりがある。"
                     }
                 },
                 {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
+                    "id": "3045",
+                    "name": "狐火の護符",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
                         }
                     }
                 }
@@ -2012,144 +2855,6 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "power": 80
                 }
             ]
-        },
-        {
-            "user_id": "b4a20ab3-18d9-44d4-8837-bacd4fc711e9",
-            "user_name": "ハヤト",
-            "avatar_url": "/images/icons/observer_gem.png",
-            "battle_score": 1904,
-            "defense_rank": "B",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 13,
-                "job_class": "Warrior",
-                "hp": 468,
-                "max_hp": 468,
-                "atk": 16,
-                "def": 15
-            },
-            "party_members_snapshot": [
-                {
-                    "id": 2015,
-                    "name": "ヤスマサ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 143,
-                    "max_hp": 143,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        14,
-                        24
-                    ],
-                    "image_url": "/images/npcs/npc_yato_kannushi.png"
-                },
-                {
-                    "id": 2017,
-                    "name": "ケンジ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 234,
-                    "max_hp": 234,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        25
-                    ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
-                },
-                {
-                    "id": 2018,
-                    "name": "ゴウ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 299,
-                    "max_hp": 299,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        25,
-                        9
-                    ],
-                    "image_url": "/images/npcs/npc_yato_samurai_general.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
-                        "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
-                        }
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "37",
-                    "name": "メテオストライク",
-                    "type": "Magic",
-                    "ap_cost": 5,
-                    "power": 100
-                },
-                {
-                    "id": "134",
-                    "name": "プラズマシャワー",
-                    "type": "Magic",
-                    "ap_cost": 3,
-                    "power": 30
-                },
-                {
-                    "id": "123",
-                    "name": "フレイムバースト",
-                    "type": "Magic",
-                    "ap_cost": 2,
-                    "power": 15
-                },
-                {
-                    "id": "116",
-                    "name": "プロミネンス",
-                    "type": "Magic",
-                    "ap_cost": 4,
-                    "power": 50
-                },
-                {
-                    "id": "112",
-                    "name": "デトネーション",
-                    "type": "Magic",
-                    "ap_cost": 4,
-                    "power": 90
-                },
-                {
-                    "id": "135",
-                    "name": "アブソリュートゼロ",
-                    "type": "Magic",
-                    "ap_cost": 3,
-                    "power": 25
-                }
-            ]
         }
     ],
     "A": [
@@ -2157,7 +2862,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "097ade0d-ff40-4b2f-a0cf-0f79076c5f77",
             "user_name": "オペラ座の暇人",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1783349233368",
-            "battle_score": 3511,
+            "battle_score": 3503,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2170,26 +2875,11 @@ const GHOST_PRESETS: Record<string, any[]> = {
             },
             "party_members_snapshot": [
                 {
-                    "id": 1952,
-                    "name": "ハンゾウ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 143,
-                    "max_hp": 143,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        10,
-                        22
-                    ],
-                    "image_url": "/images/npcs/npc_yato_ninja_hanzo.png"
-                },
-                {
                     "id": 1958,
                     "name": "ホウイチ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 143,
+                    "hp": 14,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -2200,12 +2890,41 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "image_url": "/images/npcs/npc_yato_monk_hoichi.png"
                 },
                 {
+                    "id": 2032,
+                    "name": "鎧",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 93,
+                    "max_hp": 390,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        42
+                    ],
+                    "image_url": "/images/npcs/npc_free_cursed_armor.png"
+                },
+                {
+                    "id": 1968,
+                    "name": "野犬",
+                    "job_class": "Civilian",
+                    "level": 1,
+                    "hp": 91,
+                    "max_hp": 39,
+                    "atk": 5,
+                    "def": 10,
+                    "inject_cards": [
+                        1,
+                        8
+                    ],
+                    "image_url": "/images/npcs/npc_free_stray_dog.png"
+                },
+                {
                     "id": 1961,
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 18,
-                    "hp": 550,
-                    "max_hp": 550,
+                    "hp": 66,
+                    "max_hp": 295,
                     "atk": 86,
                     "def": 40,
                     "inject_cards": [
@@ -2220,51 +2939,85 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         119
                     ],
                     "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217"
-                },
-                {
-                    "id": 1968,
-                    "name": "野犬",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 39,
-                    "max_hp": 39,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        1,
-                        8
-                    ],
-                    "image_url": "/images/npcs/npc_free_stray_dog.png"
                 }
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "350",
+                    "name": "デーモンバスター",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "332",
+                    "name": "烈火のルビーリング",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "318",
+                    "name": "暗黒の外套",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -2318,7 +3071,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "205fca0d-0bc0-41b9-9687-50a00743fd0c",
             "user_name": "Melody",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
-            "battle_score": 3658,
+            "battle_score": 3448,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2335,7 +3088,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 18,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -2352,8 +3105,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 477,
-                    "max_hp": 477,
+                    "hp": 51,
+                    "max_hp": 267,
                     "atk": 84,
                     "def": 32,
                     "inject_cards": [
@@ -2374,7 +3127,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "クロヴィス",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 91,
+                    "hp": 52,
                     "max_hp": 91,
                     "atk": 5,
                     "def": 10,
@@ -2388,7 +3141,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "アベ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 130,
+                    "hp": 77,
                     "max_hp": 130,
                     "atk": 5,
                     "def": 10,
@@ -2401,32 +3154,82 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "350",
+                    "name": "デーモンバスター",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "316",
+                    "name": "深淵の盾",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "def_bonus": 15,
+                        "description": "黒曜石とデーモンの骨を融合させて作られた盾。周囲の光を吸収する黒い霧を放ち、敵の攻撃の威力を大幅に減衰させる。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 20,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "322",
+                    "name": "魔導士の指輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 8,
+                        "def_bonus": -2,
+                        "description": "古代の魔力回路が組み込まれた指輪。スペルキャスターの魔力を増幅させ、呪文による破壊力を一時的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.15,
+                            "duration": 3,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "331",
+                    "name": "氷結のブローチ",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 10,
+                        "def_bonus": 4,
+                        "description": "決して溶けない永久氷雪が埋め込まれたブローチ。周囲の熱を急速に奪うことで、炎の攻撃や高熱の環境から装備者を守る。",
+                        "battle_start_buff": {
+                            "value": 30,
+                            "duration": 3,
+                            "buff_type": "absolute_barrier"
+                        }
+                    }
+                },
+                {
+                    "id": "321",
+                    "name": "深緑のアミュレット",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 25,
+                        "def_bonus": 5,
+                        "description": "豊かな大森林の生命の息吹を宿すお守り。装備者の体内に宿る自然治癒力を呼び覚まし、絶え間なく体力を回復させる。",
+                        "battle_start_buff": {
+                            "duration": 3,
+                            "buff_type": "regen"
                         }
                     }
                 }
@@ -2480,7 +3283,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "2d6d2a29-385c-4eab-a5f2-57218264f963",
             "user_name": "えの",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2d6d2a29-385c-4eab-a5f2-57218264f963/avatar.png?t=1781596098415",
-            "battle_score": 4955,
+            "battle_score": 4280,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2497,8 +3300,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ラヴィーネ",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 496,
-                    "max_hp": 496,
+                    "hp": 80,
+                    "max_hp": 286,
                     "atk": 41,
                     "def": 38,
                     "inject_cards": [
@@ -2517,8 +3320,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 19,
-                    "hp": 660,
-                    "max_hp": 660,
+                    "hp": 71,
+                    "max_hp": 390,
                     "atk": 47,
                     "def": 45,
                     "inject_cards": [
@@ -2540,8 +3343,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "TB",
                     "job_class": "Civilian",
                     "level": 14,
-                    "hp": 493,
-                    "max_hp": 493,
+                    "hp": 86,
+                    "max_hp": 298,
                     "atk": 54,
                     "def": 43,
                     "inject_cards": [
@@ -2561,32 +3364,82 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "602",
+                    "name": "神の法衣",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 30,
+                        "def_bonus": 12,
+                        "description": "忘却の五英霊の力を封じた法衣。纏う者に神聖な加護を与え、致命的な一撃すら耐え凌ぐ強固な結界を張る。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.3,
+                            "duration": 2,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "3045",
+                    "name": "狐火の護符",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
+                        "battle_start_buff": {
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "350",
+                    "name": "デーモンバスター",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "325",
+                    "name": "怒りの腕輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 3,
+                        "description": "怒りの念が込められた腕輪。着用者の肉体を頑強にし、相手を行動不能にする。",
+                        "battle_start_buff": {
+                            "duration": 3,
+                            "buff_type": "stun_infuse"
                         }
                     }
                 }
@@ -2640,7 +3493,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "16bafcdc-a211-482b-8850-6b94031ed6ea",
             "user_name": "せな",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/16bafcdc-a211-482b-8850-6b94031ed6ea/avatar.png?t=1781626478030",
-            "battle_score": 3731,
+            "battle_score": 3161,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2657,7 +3510,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 93,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -2674,8 +3527,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ベル",
                     "job_class": "Civilian",
                     "level": 16,
-                    "hp": 468,
-                    "max_hp": 468,
+                    "hp": 92,
+                    "max_hp": 243,
                     "atk": 21,
                     "def": 26,
                     "inject_cards": [
@@ -2693,8 +3546,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "リンネ",
                     "job_class": "Civilian",
                     "level": 11,
-                    "hp": 347,
-                    "max_hp": 347,
+                    "hp": 93,
+                    "max_hp": 197,
                     "atk": 11,
                     "def": 10,
                     "inject_cards": [
@@ -2711,8 +3564,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "リマーナ",
                     "job_class": "Civilian",
                     "level": 14,
-                    "hp": 427,
-                    "max_hp": 427,
+                    "hp": 92,
+                    "max_hp": 232,
                     "atk": 22,
                     "def": 12,
                     "inject_cards": [
@@ -2730,33 +3583,39 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "3045",
+                    "name": "狐火の護符",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
                         }
+                    }
+                },
+                {
+                    "id": "230",
+                    "name": "大賢者の杖",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 10,
+                        "atk_bonus": 12,
+                        "description": "ローランの最高位魔術師のみが持つことを許された、宇宙の真理へアクセスできる杖。"
+                    }
+                },
+                {
+                    "id": "503",
+                    "name": "英霊の鎖帷子",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 10,
+                        "def_bonus": 14,
+                        "description": "神々に抗った古代の英雄たちの残留魔力が編み込まれた鎖帷子。纏う者の傷を癒し、折れかけた心を奮い立たせる不思議な温もりがある。"
                     }
                 }
             ],
@@ -2806,138 +3665,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
-            "user_id": "e26223d4-36b2-446e-b8ae-aa2c92be8b47",
-            "user_name": "クロノ",
-            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782598149931",
-            "battle_score": 3089,
-            "defense_rank": "A",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 14,
-                "job_class": "Warrior",
-                "hp": 228,
-                "max_hp": 228,
-                "atk": 15,
-                "def": 14
-            },
-            "party_members_snapshot": [
-                {
-                    "id": 1546,
-                    "name": "ラヴィーネ",
-                    "job_class": "Civilian",
-                    "level": 15,
-                    "hp": 476,
-                    "max_hp": 476,
-                    "atk": 41,
-                    "def": 40,
-                    "inject_cards": [
-                        1,
-                        13,
-                        37,
-                        64,
-                        114,
-                        124,
-                        119
-                    ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
-                },
-                {
-                    "id": 1564,
-                    "name": "雅人",
-                    "job_class": "Civilian",
-                    "level": 17,
-                    "hp": 525,
-                    "max_hp": 525,
-                    "atk": 33,
-                    "def": 43,
-                    "inject_cards": [
-                        40,
-                        1,
-                        14,
-                        16,
-                        25,
-                        27,
-                        37,
-                        64
-                    ],
-                    "image_url": "/avatars/adventurer.jpg"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
-                        "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
-                        }
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "124",
-                    "name": "凍てつく波動",
-                    "type": "Magic",
-                    "ap_cost": 3,
-                    "power": 0
-                },
-                {
-                    "id": "119",
-                    "name": "ダブルキャスト",
-                    "type": "Support",
-                    "ap_cost": 2,
-                    "power": 0
-                },
-                {
-                    "id": "37",
-                    "name": "メテオストライク",
-                    "type": "Magic",
-                    "ap_cost": 5,
-                    "power": 100
-                },
-                {
-                    "id": "33",
-                    "name": "奇跡",
-                    "type": "Heal",
-                    "ap_cost": 5,
-                    "power": 999
-                },
-                {
-                    "id": "57",
-                    "name": "闇の代償",
-                    "type": "Support",
-                    "ap_cost": 1,
-                    "power": 0
-                }
-            ]
-        },
-        {
             "user_id": "0f1c24a4-20e1-4d89-823a-7b0b20e1ab45",
             "user_name": "紅葉",
             "avatar_url": "/avatars/adventurer.jpg",
-            "battle_score": 3599,
+            "battle_score": 3314,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2954,7 +3685,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 680,
+                    "hp": 91,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -2971,7 +3702,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヤスマサ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 143,
+                    "hp": 1,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -2986,8 +3717,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 20,
-                    "hp": 629,
-                    "max_hp": 629,
+                    "hp": 42,
+                    "max_hp": 344,
                     "atk": 102,
                     "def": 30,
                     "inject_cards": [
@@ -3008,32 +3739,85 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "3045",
+                    "name": "狐火の護符",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
+                        }
+                    }
+                },
+                {
+                    "id": "351",
+                    "name": "デーモンスレイヤー",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "次元深淵の魔王を討ち果たすために鍛え上げられた伝説の聖剣。手にするだけで邪悪を退ける神聖な加護が全身を包み込む。",
+                        "battle_start_buff": [
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "318",
+                    "name": "暗黒の外套",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "322",
+                    "name": "魔導士の指輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 8,
+                        "def_bonus": -2,
+                        "description": "古代の魔力回路が組み込まれた指輪。スペルキャスターの魔力を増幅させ、呪文による破壊力を一時的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.15,
+                            "duration": 3,
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -3101,45 +3885,14 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 "def": 500
             },
             "party_members_snapshot": [],
-            "equipped_items_snapshot": [
-                {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
-                        "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
-                        }
-                    }
-                }
-            ],
+            "equipped_items_snapshot": [],
             "skill_deck_snapshot": []
         },
         {
             "user_id": "c1cf67dd-527a-497e-bf88-ce10c2cb516f",
             "user_name": "きたむ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c1cf67dd-527a-497e-bf88-ce10c2cb516f/avatar.jpeg?t=1781586725280",
-            "battle_score": 12385,
+            "battle_score": 12175,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
@@ -3156,8 +3909,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 475,
-                    "max_hp": 475,
+                    "hp": 13,
+                    "max_hp": 265,
                     "atk": 34,
                     "def": 37,
                     "inject_cards": [
@@ -3173,33 +3926,56 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "244",
+                    "name": "盗賊の七つ道具",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
+                        "def_bonus": 3,
+                        "description": "どんなに固く閉ざされた宝箱の錠前も簡単に開けてしまう、特殊な形状をした鍵開けツールのセット。"
                     }
                 },
                 {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
+                    "id": "244",
+                    "name": "盗賊の七つ道具",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
+                        "def_bonus": 3,
+                        "description": "どんなに固く閉ざされた宝箱の錠前も簡単に開けてしまう、特殊な形状をした鍵開けツールのセット。"
                     }
                 },
                 {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
+                    "id": "3045",
+                    "name": "狐火の護符",
                     "type": "equipment",
                     "effect_data": {
-                        "def_bonus": 4,
+                        "hp_bonus": 5,
+                        "atk_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "妖狐の姫が婚礼の夜に贈った護符。狐火の青白い炎が封じられ、霊的な災いから持ち主を守護する。触れると微かに温もりがあり、暗闇で淡く発光する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 10,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "def_up"
                         }
+                    }
+                },
+                {
+                    "id": "568",
+                    "name": "砂防の革甲",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 5,
+                        "def_bonus": 3,
+                        "description": "砂漠の過酷な環境に耐えるために設計された軽量な革甲。"
+                    }
+                },
+                {
+                    "id": "206",
+                    "name": "神器:草薙(模造)",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 18,
+                        "description": "夜刀神国の神話に登場する剣の模造品。それでも一振りで竹林を吹き飛ばす威力を秘めている。"
                     }
                 }
             ],
@@ -3252,7 +4028,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "fac65cfe-bbae-4ca2-b647-fa95ee6ad734",
             "user_name": "なかなかな",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
-            "battle_score": 6343,
+            "battle_score": 5653,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
@@ -3269,8 +4045,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ラヴィーネ",
                     "job_class": "Civilian",
                     "level": 16,
-                    "hp": 546,
-                    "max_hp": 546,
+                    "hp": 51,
+                    "max_hp": 321,
                     "atk": 62,
                     "def": 51,
                     "inject_cards": [
@@ -3290,7 +4066,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "カシム",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 169,
+                    "hp": 62,
                     "max_hp": 169,
                     "atk": 5,
                     "def": 10,
@@ -3305,8 +4081,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ArcLine",
                     "job_class": "Civilian",
                     "level": 12,
-                    "hp": 380,
-                    "max_hp": 380,
+                    "hp": 93,
+                    "max_hp": 215,
                     "atk": 100,
                     "def": 22,
                     "inject_cards": [
@@ -3324,8 +4100,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 21,
-                    "hp": 653,
-                    "max_hp": 653,
+                    "hp": 82,
+                    "max_hp": 353,
                     "atk": 103,
                     "def": 31,
                     "inject_cards": [
@@ -3346,32 +4122,82 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "318",
+                    "name": "暗黒の外套",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
+                        }
+                    }
+                },
+                {
+                    "id": "322",
+                    "name": "魔導士の指輪",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 8,
+                        "def_bonus": -2,
+                        "description": "古代の魔力回路が組み込まれた指輪。スペルキャスターの魔力を増幅させ、呪文による破壊力を一時的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.15,
                             "duration": 3,
-                            "value": 50
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "350",
+                    "name": "デーモンバスター",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
                         }
                     }
                 }
@@ -3425,7 +4251,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "a52c0e53-7c2c-4929-a58b-c3a8788cfa3d",
             "user_name": "ArcLine",
             "avatar_url": "/avatars/adventurer.jpg",
-            "battle_score": 8005,
+            "battle_score": 6835,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
@@ -3442,8 +4268,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 18,
-                    "hp": 550,
-                    "max_hp": 550,
+                    "hp": 81,
+                    "max_hp": 295,
                     "atk": 86,
                     "def": 40,
                     "inject_cards": [
@@ -3464,8 +4290,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "雅人",
                     "job_class": "Civilian",
                     "level": 21,
-                    "hp": 640,
-                    "max_hp": 640,
+                    "hp": 57,
+                    "max_hp": 340,
                     "atk": 59,
                     "def": 60,
                     "inject_cards": [
@@ -3482,8 +4308,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "魔剣士 テリア",
                     "job_class": "Civilian",
                     "level": 26,
-                    "hp": 754,
-                    "max_hp": 754,
+                    "hp": 57,
+                    "max_hp": 379,
                     "atk": 84,
                     "def": 43,
                     "inject_cards": [
@@ -3508,8 +4334,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 17,
-                    "hp": 575,
-                    "max_hp": 575,
+                    "hp": 68,
+                    "max_hp": 335,
                     "atk": 63,
                     "def": 52,
                     "inject_cards": [
@@ -3528,32 +4354,81 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "gear_steel_greatsword",
-                    "name": "鋼鉄の大剣",
+                    "id": "332",
+                    "name": "烈火のルビーリング",
                     "type": "equipment",
                     "effect_data": {
-                        "atk_bonus": 10
-                    }
-                },
-                {
-                    "id": "gear_plate_mail",
-                    "name": "合金プレートメイル",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 8,
-                        "hp_bonus": 30
-                    }
-                },
-                {
-                    "id": "gear_reflect_shield",
-                    "name": "反撃のタワーシールド",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 4,
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
                         "battle_start_buff": {
-                            "id": "absolute_barrier",
-                            "duration": 3,
-                            "value": 50
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "350",
+                    "name": "デーモンバスター",
+                    "type": "equipment",
+                    "effect_data": {
+                        "hp_bonus": 30,
+                        "atk_bonus": 35,
+                        "def_bonus": 10,
+                        "description": "戦闘開始時に5ターンの間、攻撃力と防御力が上昇する大剣。",
+                        "battle_start_buff": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "332",
+                    "name": "烈火のルビーリング",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 5,
+                        "description": "火山のマグマを閉じ込めたかのように赤く輝くルビーの指輪。装備者が放つ火属性の攻撃力を増幅する。",
+                        "battle_start_buff": {
+                            "value": 0.5,
+                            "duration": 1,
+                            "buff_type": "atk_up"
+                        }
+                    }
+                },
+                {
+                    "id": "318",
+                    "name": "暗黒の外套",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10,
+                        "def_bonus": 6,
+                        "description": "影守の魔力が込められた闇の外套。着用者の輪郭をぼやけさせ、暗闇での隠密性と回避力を劇的に高める。",
+                        "battle_start_buff": {
+                            "value": 0.3,
+                            "duration": 5,
+                            "buff_type": "evasion_up"
                         }
                     }
                 }
