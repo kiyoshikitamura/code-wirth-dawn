@@ -199,13 +199,12 @@ export default function QuestPage() {
                     currentLocationId: store.userProfile?.current_location_id || undefined
                 });
 
-                // バトル開始状態の設定
-                setViewMode('battle');
-                setBattleBgUrl('/images/quests/bg_colosseum.png');
-                setBattleBgm('bgm_battle_boss');
-                
-                // バトルの起動
-                store.startBattle(enemies).then();
+                // バトルの起動 (非同期完了を待つことで BattleView の null クラッシュを防止)
+                store.startBattle(enemies).then(() => {
+                    setViewMode('battle');
+                    setBattleBgUrl('/images/quests/bg_colosseum.png');
+                    setBattleBgm('bgm_battle_boss');
+                });
             } else {
                 console.warn('[QuestPage] pvpOpponent data not found in store, returning to inn');
                 useQuestState.getState().resetQuestState();
