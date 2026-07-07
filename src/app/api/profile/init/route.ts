@@ -107,7 +107,7 @@ export async function POST(req: Request) {
         }
 
         // Inheritance Logic
-        const lifeSync = new LifeCycleService(client);
+        const lifeSync = new LifeCycleService(supabaseServer);
 
         // v15.0: calculate-stats API から渡された gold を優先（フォールバックは v15.0 最低値の 800G）
         const FRESH_START_GOLD_DEFAULT = 800; // spec_v10: 800 + randInt(100,400) の最低値
