@@ -499,7 +499,6 @@ export const createBattleSlice = (
             ...equipBonusMessages,
             ...startBuffMessages,
             ...npcStartBuffMessages,
-            ...enemyStartBuffMessages,
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
             `--- ターン 1 ---`

@@ -143,7 +143,8 @@ export async function POST(req: Request) {
                 signature_deck_snapshot: resolvedDeck, // 解決済みのスキルカード
                 icon_url: m.icon_url || null,
                 image_url: m.image_url || null,
-                sort_order: m.sort_order ?? 0
+                sort_order: m.sort_order ?? 0,
+                snapshot_data: m.snapshot_data || null
             };
         });
 

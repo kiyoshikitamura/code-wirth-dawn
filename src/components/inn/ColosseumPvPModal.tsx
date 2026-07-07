@@ -19,6 +19,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
 
+    const [selectedOpponent, setSelectedOpponent] = useState<any | null>(null);
     const [opponents, setOpponents] = useState<any[]>([]);
     const [challengerScore, setChallengerScore] = useState<number>(0);
     const [challengerRank, setChallengerRank] = useState<string>('C');
@@ -305,7 +306,10 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                         {/* Right Side: Challenge Button */}
                                         <button
                                             disabled={loading}
-                                            onClick={() => handleChallenge(opponent)}
+                                            onClick={() => {
+                                                soundManager?.playSE('se_item_get');
+                                                setSelectedOpponent(opponent);
+                                            }}
                                             className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0"
                                         >
                                             挑戦する
@@ -333,6 +337,198 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     </button>
                 </div>
             </div>
+
+            {/* Opponent Detail Preview Modal */}
+            {selectedOpponent && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+                    <div className="relative w-full max-w-lg bg-[#0e121a] border-2 border-amber-500/50 rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(245,158,11,0.3)] flex flex-col max-h-[85vh]">
+                        {/* Title */}
+                        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-950/60 to-slate-900 border-b border-amber-500/30">
+                            <h3 className="font-black text-amber-400 tracking-wider flex items-center gap-2 text-sm">
+                                <Swords size={18} />
+                                対戦相手の詳細確認
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setSelectedOpponent(null);
+                                }}
+                                className="text-slate-400 hover:text-white p-1 hover:bg-white/5 rounded-lg animate-in"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Detail Content */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-left">
+                            {/* Leader Segment */}
+                            <div className="bg-gradient-to-b from-[#1b1c24] to-[#121319] border border-amber-500/20 rounded-xl p-4 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full border border-amber-500/40 bg-black/60 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {selectedOpponent.avatar_url ? (
+                                            <img src={selectedOpponent.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={20} className="text-amber-500/70" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] uppercase tracking-wider text-amber-500 font-black block">LEADER / PLAYER</span>
+                                        <h4 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                                            {selectedOpponent.user_name}
+                                            <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-black border border-amber-500/30">
+                                                Lvl {selectedOpponent.player_snapshot?.level || 1}
+                                            </span>
+                                        </h4>
+                                        <span className="text-[10px] text-slate-400 font-mono">
+                                            職業: {selectedOpponent.player_snapshot?.job_class || 'Adventurer'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Leader Stats */}
+                                <div className="grid grid-cols-3 gap-2 text-center py-2 bg-black/40 rounded-lg border border-slate-800">
+                                    <div>
+                                        <span className="text-[9px] text-slate-400 block font-bold">HP</span>
+                                        <span className="text-xs font-bold text-emerald-400 font-mono">
+                                            {selectedOpponent.player_snapshot?.hp || 100}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] text-slate-400 block font-bold">ATK</span>
+                                        <span className="text-xs font-bold text-rose-400 font-mono">
+                                            {selectedOpponent.player_snapshot?.atk || 10}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] text-slate-400 block font-bold">DEF</span>
+                                        <span className="text-xs font-bold text-sky-400 font-mono">
+                                            {selectedOpponent.player_snapshot?.def || 10}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Equipped Gears */}
+                                <div className="space-y-1.5">
+                                    <span className="text-[10px] text-amber-500/90 font-bold block">🛡️ 装備中の武具:</span>
+                                    {selectedOpponent.equipped_items_snapshot && selectedOpponent.equipped_items_snapshot.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {selectedOpponent.equipped_items_snapshot.map((item: any, idx: number) => (
+                                                <span key={idx} className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-medium">
+                                                    {item.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] text-slate-500 italic block">装備なし</span>
+                                    )}
+                                </div>
+
+                                {/* Skill Deck */}
+                                <div className="space-y-1.5">
+                                    <span className="text-[10px] text-amber-500/90 font-bold block">🔮 スキルデッキ:</span>
+                                    {selectedOpponent.skill_deck_snapshot && selectedOpponent.skill_deck_snapshot.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {selectedOpponent.skill_deck_snapshot.map((card: any, idx: number) => (
+                                                <span key={idx} className="text-[10px] bg-amber-950/20 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-md font-medium">
+                                                    {card.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] text-slate-500 italic block">初期デッキ</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Party Members Segment */}
+                            <div className="space-y-3">
+                                <span className="text-[11px] font-bold text-amber-500/80 uppercase tracking-widest block">
+                                    👥 同行英霊メンバー ({selectedOpponent.party_members_snapshot?.length || 0}名)
+                                </span>
+                                
+                                {selectedOpponent.party_members_snapshot && selectedOpponent.party_members_snapshot.length > 0 ? (
+                                    <div className="space-y-2.5">
+                                        {selectedOpponent.party_members_snapshot.map((m: any, idx: number) => (
+                                            <div key={idx} className="bg-[#141822] border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-md border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        {m.icon_url || m.image_url ? (
+                                                            <img src={m.icon_url || m.image_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User size={14} className="text-slate-500" />
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                                            {m.name}
+                                                            <span className="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.2 rounded font-mono">
+                                                                L. {m.level || 1}
+                                                            </span>
+                                                        </h5>
+                                                        <span className="text-[9px] text-slate-400 block font-mono">
+                                                            クラス: {m.job_class || '傭兵'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Member Mini Stats */}
+                                                <div className="flex gap-3 text-right font-mono text-[10px]">
+                                                    <div>
+                                                        <span className="text-[8px] text-slate-500 block">HP</span>
+                                                        <span className="font-bold text-emerald-400">{m.hp || 100}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[8px] text-slate-500 block">ATK</span>
+                                                        <span className="font-bold text-rose-400">{m.atk || 10}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[8px] text-slate-500 block">DEF</span>
+                                                        <span className="font-bold text-sky-400">{m.def || 10}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4 bg-[#141822] border border-slate-800/80 rounded-xl text-[10px] text-slate-500 italic">
+                                        同行メンバーなし (ソロ編成)
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Confirmation Footer */}
+                        <div className="px-6 py-4 bg-[#0a0d14] border-t border-slate-800/80 space-y-3">
+                            <p className="text-[10px] font-bold text-amber-500/95 text-center flex items-center justify-center gap-1">
+                                <Zap size={10} className="animate-bounce text-amber-400" />
+                                本当にこの防衛パーティに挑戦しますか？
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        soundManager?.playSE('se_item_get');
+                                        setSelectedOpponent(null);
+                                    }}
+                                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all text-center"
+                                >
+                                    戻る
+                                </button>
+                                <button
+                                    disabled={loading}
+                                    onClick={() => {
+                                        setSelectedOpponent(null);
+                                        handleChallenge(selectedOpponent);
+                                    }}
+                                    className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1"
+                                >
+                                    {loading ? <RefreshCw className="animate-spin" size={12} /> : <Swords size={12} />}
+                                    本当に挑戦する
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>,
         document.body
     );
