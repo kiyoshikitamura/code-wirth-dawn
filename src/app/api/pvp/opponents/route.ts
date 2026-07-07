@@ -3472,7 +3472,7 @@ export async function GET(req: Request) {
             .select('*')
             .neq('user_id', userId)
             .order('updated_at', { ascending: false })
-            .limit(20);
+            .limit(50);
 
         if (dbError) {
             console.error('[PvP Opponents] Database fetch error:', dbError);
@@ -3480,6 +3480,14 @@ export async function GET(req: Request) {
         }
 
         let opponentsList = dbOpponents ? [...dbOpponents] : [];
+
+        // テスト・ダミーアカウント（レベルが低すぎる、またはテスト用のアカウント）をマッチングから除外
+        opponentsList = opponentsList.filter(opp => {
+            const level = opp.player_snapshot ? parseInt(opp.player_snapshot.level || 0, 10) : 1;
+            const name = String(opp.user_name || '').toLowerCase();
+            const isDummyName = name.includes('テスト') || name.includes('てすと') || name.includes('test') || name.includes('null');
+            return level >= 3 && !isDummyName;
+        });
 
         // 3. 不足分をゴーストデータで補填 (最大5件)
         const ghostCountNeeded = 5 - opponentsList.length;
