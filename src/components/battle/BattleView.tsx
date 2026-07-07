@@ -1223,7 +1223,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         } ${isShaking ? 'animate-enemy-shake' : ''}`}
                                     >
                                         {/* Target marker border */}
-                                        <div className={`w-18 h-18 rounded-full border-[3px] flex items-center justify-center overflow-hidden shadow-xl backdrop-blur-sm transition-all ${
+                                        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[3px] flex items-center justify-center overflow-hidden shadow-xl backdrop-blur-sm transition-all ${
                                             isTarget 
                                                 ? 'border-red-500 scale-105 shadow-[0_0_20px_rgba(239,68,68,0.8)]' 
                                                 : 'border-slate-500/60 bg-black/50 hover:border-amber-500/40'
@@ -1231,7 +1231,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                             {enemy.image_url ? (
                                                 <img src={enemy.image_url} alt="" className="w-full h-full object-cover" />
                                             ) : (
-                                                <Skull size={28} className="text-slate-500" />
+                                                <Skull size={24} className="text-slate-500" />
                                             )}
                                         </div>
 
@@ -1243,7 +1243,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         ))}
 
                                         {/* HP Bar */}
-                                        <div className="w-18 h-2 mt-2 bg-black/65 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                                        <div className="w-14 sm:w-16 h-1.5 mt-1.5 bg-black/65 rounded-full overflow-hidden border border-white/10 shadow-inner">
                                             <div 
                                                 className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500" 
                                                 style={{ width: `${Math.max(0, Math.min(100, (enemy.hp / (enemy.maxHp || 1)) * 100))}%` }} 
@@ -1251,7 +1251,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         </div>
 
                                         {/* Name */}
-                                        <span className="text-[10px] text-slate-100 font-bold w-[80px] text-center truncate mt-1 drop-shadow-md">
+                                        <span className="text-[10px] text-slate-100 font-bold w-[64px] sm:w-[72px] text-center truncate mt-1 drop-shadow-md">
                                             {enemy.name}
                                         </span>
                                         
@@ -1287,7 +1287,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     {target && (
                         <div className="relative transition-all duration-500 flex flex-col items-center flex-shrink-0 z-20">
                             {/* Huge Sprite Image */}
-                            <div className={`w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] relative transition-all duration-500 flex items-center justify-center
+                            <div className={`w-[130px] h-[130px] sm:w-[190px] sm:h-[190px] relative transition-all duration-500 flex items-center justify-center
                                 ${(target.hp > 0 || (activeEffect && activeEffect !== 'BUFF')) ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
                                 ${activeEffect && activeEffect !== 'BUFF' ? 'flash-active' : ''}
                                 ${shouldEnemyShake ? 'animate-enemy-shake' : ''}
@@ -1879,7 +1879,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 </div>
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
-                <div className="relative w-full h-48 flex items-end">
+                <div className="relative w-full h-40 sm:h-48 flex items-end">
                     {/* カスタムスクロールバー用インラインスタイル */}
                     <style dangerouslySetInnerHTML={{ __html: `
                         .custom-scrollbar::-webkit-scrollbar {
@@ -1899,7 +1899,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         }
                     `}} />
                     <div 
-                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-4 pr-[10%] pb-3 pt-12 gap-0"
+                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-4 pr-[10%] pb-3 pt-6 sm:pt-12 gap-0"
                     >
                         {hand.map((card, idx) => {
                             const apCost = card.ap_cost ?? 1;
@@ -1918,19 +1918,19 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                     onClick={() => handleCardClick(idx)}
                                     disabled={!canInteract}
                                     className={`relative group transition-all duration-300 flex-shrink-0 snap-center
-                                        ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50 -translate-y-6' : 'w-[72px] sm:w-24'}
-                                        ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
-                                        ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
-                                        ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
-                                        ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
-                                     `}
+                                         ${isSelected ? 'w-[70px] sm:w-28 scale-110 z-50 -translate-y-4' : 'w-[60px] sm:w-24'}
+                                         ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
+                                         ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
+                                         ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
+                                         ${idx > 0 ? '-ml-5 sm:-ml-8' : ''}
+                                      `}
                                     style={{
                                         zIndex: isSelected ? 50 : idx
                                     }}
                                     onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
                                     onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
                                 >
-                                <div className={`h-32 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
+                                <div className={`h-26 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
                                     ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}
                                     ${!isSelected ? 'group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]' : ''}
                                 `}>
