@@ -837,7 +837,11 @@ export const createBattleSlice = (
                         itemMessages.push(`✨ 天使の涙の奇跡により、${m.name}が蘇生した！ (HP: ${maxDur}/${maxDur})`);
                         itemMessages.push(`__party_sync:${m.id}:${maxDur}`);
                         if (m.id && m.origin_type !== 'quest_guest') {
-                            supabase.from('party_members').update({ durability: maxDur, is_active: true }).eq('id', m.id).then();
+                            const isColosseum = (get().userProfile?.current_quest_id && String(get().userProfile.current_quest_id).startsWith('colosseum_')) || 
+                                                (get().battleState.enemies || []).some(e => e.is_pvp_player || e.is_pvp_member);
+                            if (!isColosseum) {
+                                supabase.from('party_members').update({ durability: maxDur, is_active: true }).eq('id', m.id).then();
+                            }
                         }
                         return {
                             ...m,
@@ -3076,7 +3080,11 @@ export const createBattleSlice = (
             if (!isNowActive && member.is_active) {
                 newMessages.push(`${member.name}は力尽きた...`);
                 // 非同期でDB更新
-                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+                const isColosseum = (get().userProfile?.current_quest_id && String(get().userProfile.current_quest_id).startsWith('colosseum_')) || 
+                                    (get().battleState.enemies || []).some(e => e.is_pvp_player || e.is_pvp_member);
+                if (!isColosseum) {
+                    supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+                }
             }
 
             updatedParty[i] = {
@@ -3563,7 +3571,11 @@ export const createBattleSlice = (
                         if (newDur <= 0) {
                             newMessages.push(`${p.name}は力尽きた...`);
                             if (p.origin_type !== 'quest_guest') {
-                                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
+                                const isColosseum = (get().userProfile?.current_quest_id && String(get().userProfile.current_quest_id).startsWith('colosseum_')) || 
+                                                    (get().battleState.enemies || []).some(e => e.is_pvp_player || e.is_pvp_member);
+                                if (!isColosseum) {
+                                    supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
+                                }
                             }
                         }
                         return { ...p, durability: newDur, is_active: newDur > 0 };

@@ -739,9 +739,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             {/* プレイヤー/味方NPCスキルカットイン ＆ スラッシュエフェクト (上下反転 ＆ 青系) */}
             {playerActiveSkill && (
                 <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
-                    {/* 青いスラッシュエフェクト (画面上部に配置: -translate-y-24) */}
-                    <div className="absolute w-[150%] h-[8px] bg-blue-500/90 shadow-[0_0_20px_rgba(59,130,246,1)] rotate-12 -translate-y-32 animate-enemy-swipe1" />
-                    <div className="absolute w-[150%] h-[8px] bg-blue-500/90 shadow-[0_0_20px_rgba(59,130,246,1)] -rotate-12 -translate-y-24 animate-enemy-swipe2" />
                     <div className="absolute inset-0 bg-blue-950/10 animate-pulse" />
                     
                     {/* スキル名カットイン帯 (画面下部に配置: bottom-1/4) */}
