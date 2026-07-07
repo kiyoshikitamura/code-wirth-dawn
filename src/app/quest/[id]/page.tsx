@@ -29,6 +29,35 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         }
         return url;
     };
+
+    // デッキ定義がない場合（ID配列のみの場合）にモックカードを作成してデッキを復元するヘルパー
+    const resolveDeckSnapshot = (snapshot: any[] | null, injectCards: any[] | null) => {
+        if (snapshot && snapshot.length > 0) return snapshot;
+        return (injectCards || []).map((cardId: any) => {
+            const cardIdStr = String(cardId);
+            const mockCards: Record<string, { name: string, ap_cost: number }> = {
+                '1': { name: '強打', ap_cost: 2 },
+                '2': { name: '斬撃', ap_cost: 1 },
+                '3': { name: '突き', ap_cost: 1 },
+                '9': { name: '挑発', ap_cost: 1 },
+                '11': { name: '聖壁', ap_cost: 2 },
+                '12': { name: '裁き', ap_cost: 3 },
+                '14': { name: '治癒', ap_cost: 2 },
+                '15': { name: '聖壁', ap_cost: 2 },
+                '25': { name: '居合切り', ap_cost: 2 },
+                '29': { name: '強打', ap_cost: 2 },
+                '48': { name: '天翔斬', ap_cost: 3 },
+                '71': { name: '五星の加護', ap_cost: 2 },
+            };
+            const mock = mockCards[cardIdStr] || { name: 'スキル', ap_cost: 1 };
+            return {
+                id: cardIdStr,
+                name: mock.name,
+                ap_cost: mock.ap_cost,
+                type: 'Skill',
+            };
+        });
+    };
     
     // 1. 防衛プレイヤー自身 (ボス扱い)
     const playerSnapshot = typeof opponent.player_snapshot === 'string'
@@ -36,6 +65,10 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         : (opponent.player_snapshot || {});
     const baseHp = playerSnapshot.hp || 100;
     const finalHp = baseHp * 6; // 6倍補正
+    
+    const parsedSkillDeck = typeof opponent.skill_deck_snapshot === 'string'
+        ? JSON.parse(opponent.skill_deck_snapshot)
+        : (opponent.skill_deck_snapshot || null);
     
     const playerEnemy: any = {
         id: `pvp_enemy_${String(opponent.user_id)}`,
@@ -48,7 +81,7 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         image_url: getEnforcedImageUrl(playerSnapshot.avatar_url || opponent.avatar_url),
         origin_type: 'shadow_heroic', // smart AIを適用
         ai_role: 'striker',
-        signature_deck: opponent.skill_deck_snapshot || [],
+        signature_deck: resolveDeckSnapshot(parsedSkillDeck, opponent.inject_cards || null),
         status_effects: [],
         current_ap: 6, // 初期APは6
         is_pvp_player: true,
@@ -65,6 +98,10 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         const mBaseHp = m.hp || 100;
         const mFinalHp = mBaseHp * 6;
         
+        const parsedMemberDeck = typeof m.signature_deck_snapshot === 'string'
+            ? JSON.parse(m.signature_deck_snapshot)
+            : (m.signature_deck_snapshot || null);
+        
         const memberEnemy: any = {
             id: `pvp_enemy_${String(m.id)}`,
             name: m.name,
@@ -76,7 +113,7 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
             image_url: getEnforcedImageUrl(m.icon_url || m.image_url || m.avatar_url),
             origin_type: 'shadow_heroic', // smart AIを適用
             ai_role: m.job_class?.toLowerCase().includes('cleric') || m.job_class?.toLowerCase().includes('priest') ? 'medic' : 'striker',
-            signature_deck: m.signature_deck_snapshot || [],
+            signature_deck: resolveDeckSnapshot(parsedMemberDeck, m.inject_cards || null),
             status_effects: [],
             current_ap: 6,
             is_pvp_member: true,

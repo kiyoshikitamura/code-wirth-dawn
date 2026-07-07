@@ -3259,7 +3259,11 @@ export const createBattleSlice = (
             // PvPエネミーの場合、毎ターン手番開始時にAPを3回復させる（上限15）
             const isPvPEnemy = enemy.is_pvp_player || enemy.is_pvp_member;
             if (isPvPEnemy) {
-                (enemy as any).current_ap = Math.min(15, ((enemy as any).current_ap ?? 6) + 3);
+                const newAp = Math.min(15, ((enemy as any).current_ap ?? 6) + 3);
+                (enemy as any).current_ap = newAp;
+                if (currentEnemyStatus) {
+                    (currentEnemyStatus as any).current_ap = newAp;
+                }
             }
 
             newMessages.push(`${enemy.name}の行動！`);
@@ -3282,7 +3286,11 @@ export const createBattleSlice = (
                 if (playableSkills.length > 0) {
                     const chosenCard = playableSkills[Math.floor(Math.random() * playableSkills.length)];
                     const apCost = chosenCard.ap_cost ?? 1;
-                    (enemy as any).current_ap = Math.max(0, currentAp - apCost);
+                    const nextAp = Math.max(0, currentAp - apCost);
+                    (enemy as any).current_ap = nextAp;
+                    if (currentEnemyStatus) {
+                        (currentEnemyStatus as any).current_ap = nextAp;
+                    }
 
                     // プレイヤーのスキルカードIDからエネミースキルのslugを引くマップ
                     const cardToEnemySkillMap: Record<string, string> = {
@@ -3490,7 +3498,7 @@ export const createBattleSlice = (
                 const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
                 newMessages.push(`${enemy.name}の${skillLabel}は外れた！ ミス！ (${totalMiss}%)`);
                 // v4.0: lastUsedSkill更新
-                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...currentEnemyStatus, lastUsedSkill: selectedSkillSlug } as any : e);
                 continue;
             }
 
@@ -3510,7 +3518,7 @@ export const createBattleSlice = (
             const enemyCritLabel = isEnemyCrit ? ' クリティカルヒット！' : '';
 
             // v4.0: lastUsedSkill更新
-            updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+            updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...currentEnemyStatus, lastUsedSkill: selectedSkillSlug } as any : e);
 
             const evasionChance = getEvasionChance(currentPlayerEffects);
             if (evasionChance > 0 && Math.random() < evasionChance) {
