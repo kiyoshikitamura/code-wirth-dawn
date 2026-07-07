@@ -142,6 +142,39 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         const parsedMemberDeck = typeof m.signature_deck_snapshot === 'string'
             ? JSON.parse(m.signature_deck_snapshot)
             : (m.signature_deck_snapshot || null);
+            
+        let initialMemberEffects: any[] = [];
+        const mSnapshot = typeof m.snapshot_data === 'string'
+            ? JSON.parse(m.snapshot_data)
+            : (m.snapshot_data || {});
+            
+        if (mSnapshot && mSnapshot.battle_start_buffs && Array.isArray(mSnapshot.battle_start_buffs)) {
+            mSnapshot.battle_start_buffs.forEach((buff: any) => {
+                const id = buff.buff_type || buff.id;
+                const duration = buff.duration;
+                const val = buff.value;
+                if (id && duration) {
+                    const isTurnEndTickCompensated = (effectId: string) => {
+                        return ['atk_up', 'def_up', 'regen', 'absolute_barrier'].includes(effectId);
+                    };
+                    const finalDuration = isTurnEndTickCompensated(id)
+                        ? duration + 1
+                        : duration;
+
+                    const existing = initialMemberEffects.find(eff => eff.id === id);
+                    if (existing) {
+                        existing.duration = Math.max(existing.duration, finalDuration);
+                        existing.value = (existing.value || 0) + val;
+                    } else {
+                        initialMemberEffects.push({
+                            id,
+                            duration: finalDuration,
+                            value: val
+                        });
+                    }
+                }
+            });
+        }
         
         const memberEnemy: any = {
             id: `pvp_enemy_${String(m.id)}`,
@@ -155,7 +188,7 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
             origin_type: 'shadow_heroic', // smart AIを適用
             ai_role: m.job_class?.toLowerCase().includes('cleric') || m.job_class?.toLowerCase().includes('priest') ? 'medic' : 'striker',
             signature_deck: resolveDeckSnapshot(parsedMemberDeck, m.inject_cards || null),
-            status_effects: [],
+            status_effects: initialMemberEffects,
             current_ap: 6,
             is_pvp_member: true,
             base_hp: mBaseHp,

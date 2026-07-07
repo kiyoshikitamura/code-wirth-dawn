@@ -3757,6 +3757,88 @@ export const createBattleSlice = (
             }
         }
 
+        const finalAllEnemiesDead = updatedEnemies.every(e => e.hp <= 0);
+
+        if (finalAllEnemiesDead) {
+            soundManager?.playSE('se_battle_win');
+            const { selectedScenario } = get();
+            const finalMessages = [...newMessages, '敵パーティが力尽きた！ 勝利！'];
+            const isQuestBattle = useQuestState.getState().isInQuest;
+            try {
+                getAuthHeaders().then(authHeaders => {
+                    const headers: HeadersInit = {
+                        'Content-Type': 'application/json',
+                        ...authHeaders
+                    };
+                    if (!isQuestBattle) {
+                        fetch('/api/report-action', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
+                        }).catch(console.error);
+                    }
+                    const bsid = get().battleState.battle_session_id;
+                    if (bsid) {
+                        fetch('/api/battle/validate-result', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({ battle_session_id: bsid, claimed_result: 'victory' })
+                        }).then(vRes => vRes.json()).then(vData => {
+                            if (vData.battle_completion_token) {
+                                set(state => ({
+                                    battleState: { ...state.battleState, battle_completion_token: vData.battle_completion_token }
+                                }));
+                            }
+                        }).catch(err => console.error('Validation failed:', err));
+                    }
+                }).catch(console.error);
+
+                const battleHp = get().userProfile?.hp;
+                const battleVit = get().userProfile?.vitality;
+                const battleUserId = get().userProfile?.id;
+                if (battleHp != null && battleUserId) {
+                    const updateBody: any = { hp: Math.max(0, battleHp) };
+                    if (battleVit != null) updateBody.vitality = battleVit;
+                    updateProfileStatusHelper(updateBody, battleUserId);
+                }
+                get().fetchWorldState();
+                get().fetchUserProfile().then(() => {
+                    const preservedHp = get().userProfile?.hp;
+                    const preservedVit = get().userProfile?.vitality;
+                    if (preservedHp != null) {
+                        set(state => ({
+                            userProfile: state.userProfile
+                                ? { ...state.userProfile, hp: preservedHp, vitality: preservedVit ?? state.userProfile.vitality }
+                                : state.userProfile
+                        }));
+                    }
+                }).catch(console.error);
+
+                if (!isQuestBattle) {
+                    const partyCount = (newParty.length || 0) + 1;
+                    const rewardGold = selectedScenario?.reward_gold || 50;
+                    const reward = Math.floor(rewardGold / partyCount);
+                    get().addGold(reward);
+                    finalMessages.push(`報酬 金貨 ${rewardGold} 枚を獲得。`);
+                    if (partyCount > 1) finalMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
+                    updateProfileStatusHelper({ gold: get().gold }, get().userProfile?.id || null);
+                }
+            } catch (e) { console.error(e); }
+            
+            set(state => ({
+                userProfile: newUserProfile,
+                battleState: {
+                    ...state.battleState,
+                    isVictory: true,
+                    battle_result: 'victory',
+                    enemies: updatedEnemies.map(e => ({ ...e, hp: 0 })),
+                    enemy: null,
+                    messages: finalMessages
+                }
+            }));
+            return;
+        }
+
         if (newUserProfile && (newUserProfile.hp ?? 0) <= 0) {
             newMessages.push('あなたは力尽きた...');
 
