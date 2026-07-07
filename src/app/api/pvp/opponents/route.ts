@@ -129,29 +129,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 {
-                    "id": "ca50250f-cdcf-475f-bca6-8e5a689a034b",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "214f0a08-f20d-48c1-8ba9-a2706fed07ce",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "dd4c45a5-ebe3-4d39-9437-1c8fac582619",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "a31ca3a3-50e5-4eab-ad33-d1ae1d3e1921",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "a373d93e-9afe-4021-974c-8276da353152",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -217,19 +222,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 {
-                    "id": "8080fdbd-509f-4da1-8129-d4336f66973c",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "4a5b357b-21a2-48e0-b4ef-1cfc94b69277",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "e437260f-9209-465e-b4cf-cfb9bc955306",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -288,29 +308,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 {
-                    "id": "5fef4ead-ee12-4d59-9109-9e1110e5df7f",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "67e951c3-87e2-46a5-921d-5e877aceafe9",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "27a65104-28bd-4889-81c8-1cd5c6b7dbf2",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "ad1a8aa5-baa4-4f10-88ef-2525eef148c6",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "83b2df90-d649-475b-b90b-77e67c7f4d27",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -420,29 +445,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "7bb3d599-dee5-4bd2-8971-e6111240fae0",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "4f3950ef-0f46-4ab0-981f-1a4e42493964",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "d8e03521-18a1-4429-b7c4-d1b43f319070",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "3a57991a-b33c-49da-893c-32e9c118448a",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "29a1c9d9-15fb-4ef9-9709-feba7d5ed612",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -540,29 +570,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "66f4ab34-3d4e-4af5-b699-c1678324e20c",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "ec57dfe7-9331-4f7d-91a8-c4935e30cfcf",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "18e5d8ec-b309-4356-a6bd-4ad985fa9f27",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "4a3314d6-89b1-40d7-b64c-7f4cb655786f",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "db4f9e03-4db8-4113-80c4-7175580857e7",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -654,29 +689,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "9c498754-3b12-4964-86f6-e2782c96f6c7",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "db0b9f85-046e-4d4f-985a-2401aa8cc453",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "3f34d98d-c875-4c53-8545-1488cf18dfe6",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "c105bcb0-3008-46ad-b32d-be932368bb47",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "331ad9e0-e2a7-4ea9-a43a-60a7e1868c30",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -804,29 +844,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "8f5661e6-d7d9-40d0-a8cc-a68751260fd4",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "24ecb559-2194-4fc9-bf08-cb72597965d9",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "7285ffbb-873d-4e95-891b-c2f630b95662",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "fe362cc3-a4e3-4070-b85f-38be73a4e2df",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "cf318d9b-9a10-4c2f-ae47-18bef42a7884",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -944,29 +989,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "ee3dab97-2fbb-42f9-9628-3d1da4c73dc5",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "b8ebce8c-b9a7-4870-9872-812501879597",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "4fde46d6-cf5e-480e-9a01-6595d143f161",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "01946933-3277-4301-b0cc-f1c7ce8daeee",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "bcecfebc-05c9-46a4-b225-abd9a8f9372a",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1096,29 +1146,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "20ee3898-4fd1-4252-a837-93808b511df8",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "738a243e-4d85-4a75-b452-e574e5d8c9bd",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "63e71f11-3997-4940-a4d6-aefaa0d9b6cb",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "3f6fa39b-863e-47d4-a6a8-4b6be985927f",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "bb57cd26-0c4d-4c8e-9a4a-cf4639c43cdf",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1250,19 +1305,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "fb850410-2f32-4fee-9c53-c41115e2eea6",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "ae4ed379-102a-4c58-a86c-6069f4db015e",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "981cd2f5-87cc-4806-a7c7-e2f4525160bc",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1390,19 +1460,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "459ed17b-1b38-4383-8646-081a08a84ce8",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "7236acac-26b2-4640-8a3b-f2c51219e6f7",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "f3b49524-c31d-4277-84ca-d8628b07f8a3",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1531,29 +1616,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "d228b9b1-09ad-4c34-9bc2-bef8d6100e7f",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "81b2a984-9d76-4db6-a1e1-304e62d7d3b3",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "1b7648f1-6b4f-4641-8f5d-cabd3be86512",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "65659814-c323-499d-89c9-f24921b119cf",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "1dc3a492-d383-49a7-8b09-ce7fd7091f8e",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1684,19 +1774,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "a5e47108-d89a-4b62-87c3-39bc9ba258bb",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "c1a6cfc5-7982-4b1b-ab3d-430b98645490",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "7c8f54fe-2263-4e3d-b917-905c49507aff",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1833,19 +1938,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "ab1d3183-e37c-45ae-8b4d-c0488e249f49",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "881bcc02-764d-44c1-a565-c9185a4ab986",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "c6f2e88a-f2be-4490-af5a-78403355ad8b",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -1956,29 +2076,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "a922f7ab-c677-476b-b6b6-c47b20599d7a",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "c3166812-9ecd-4e9a-8659-5e53d9cd723b",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "ab955a77-8154-4eaa-8b08-8bacb181596a",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "152cbf46-e133-45b9-ada1-699199da9722",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "e14e76b3-ad9b-4346-88c6-d7adc89fae90",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2114,29 +2239,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "629bc909-26fd-4cdc-aa27-32d8878b775a",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "aee20ec8-48a2-4618-9855-5c4695f6f518",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "67d2f70e-7feb-4a4b-85d4-5bbe387f23a9",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "0b3f45ea-7f52-4f9b-8a76-356493db6e6a",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "41d656e5-cffe-406c-aa2e-555665f55ea0",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2271,29 +2401,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "8dfe51b3-dbfb-4c8f-93f8-b24834bc1475",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "eaaccb28-4031-41f6-997a-f41498945eb1",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "11770b89-7325-4c43-892b-008391a226a7",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "ccad9f89-69bf-4394-a091-ece8bde17e5c",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "fa90c77e-5583-467a-97d6-6f1239e5065b",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2426,29 +2561,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "b2e091a7-a004-404e-9419-6cf4854f47dd",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "a08f8589-a243-4e35-a709-fc663fa71710",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "48717c0b-376a-4b50-b9dd-0fdf50c7f63b",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "314d29df-d379-4733-a99d-4055f9f7ea3c",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "a5eac56c-9e15-4897-85e5-4bf00a6229c4",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2590,19 +2730,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "b2e92945-9e52-4b58-a2c5-78b1bd2fc9e5",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "e0e421ea-b38c-43bd-9cce-c198b89bc85d",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "8e870e6f-ee69-4b14-8456-f3367197c742",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2710,29 +2865,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "e253bc43-6080-4069-8586-1b802aa881ea",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "a33a01c2-01c9-44a1-a743-4b6cc49a4a26",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "a8d756cc-096a-4e0c-a068-45748f37d316",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "106f8cb6-fd7f-4e4f-8a7e-f61acdf75537",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "be85d998-2553-4a3c-ad4c-5395365f226f",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2848,29 +3008,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "1b12a008-9b25-4878-9ce6-34c133b7e8a8",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "9ea2b62a-f50a-4f18-897b-20a8323d3751",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "1c94e928-dc72-456a-80d2-dd2f7253761f",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "b7c5f7e5-3f78-49df-a28a-347e46925314",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "3d7a381f-c079-4682-8a1a-8007e035148f",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -2936,7 +3101,38 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 "def": 500
             },
             "party_members_snapshot": [],
-            "equipped_items_snapshot": [],
+            "equipped_items_snapshot": [
+                {
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
+                    "type": "equipment",
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
+                },
+                {
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
+                },
+                {
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
+                    "type": "equipment",
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
+                }
+            ],
             "skill_deck_snapshot": []
         },
         {
@@ -2977,29 +3173,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "f7685080-09db-48c4-8cc9-2be57552b79d",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "21f9d8a1-822b-48eb-be2b-097bfa7c25b1",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "a843c67a-8da5-412f-ac92-bc14723136ac",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "08758288-b14a-4ba3-a340-55e75014c6ac",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "2c351879-f9ee-4888-ba24-053e62b7fb33",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -3145,29 +3346,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "efeb78fe-1499-4b4f-b5f4-d1869add2dd4",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "dd85a295-4187-4f25-b520-d03449b61a71",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "416c2136-2693-4c0a-8d5a-7e6853dfaa40",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "c51e5148-28a7-43d7-817a-42b924096458",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "1319882f-631f-41aa-ba56-46c89c299a86",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
@@ -3322,29 +3528,34 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "equipped_items_snapshot": [
                 {
-                    "id": "a3490a35-f1c1-4a5d-8f40-4efd45ced88b",
+                    "id": "gear_steel_greatsword",
+                    "name": "鋼鉄の大剣",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "atk_bonus": 10
+                    }
                 },
                 {
-                    "id": "4edcc474-df54-4bb2-9858-a052c4470e21",
+                    "id": "gear_plate_mail",
+                    "name": "合金プレートメイル",
                     "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 8,
+                        "hp_bonus": 30
+                    }
                 },
                 {
-                    "id": "d785ea62-f30a-477f-ba9b-efe290d0d455",
+                    "id": "gear_reflect_shield",
+                    "name": "反撃のタワーシールド",
                     "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "64460c3b-70e4-44ed-858f-aea06ed52642",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "822b3cf5-7948-4315-9528-0bc596138fff",
-                    "type": "equipment",
-                    "effect_data": {}
+                    "effect_data": {
+                        "def_bonus": 4,
+                        "battle_start_buff": {
+                            "id": "absolute_barrier",
+                            "duration": 3,
+                            "value": 50
+                        }
+                    }
                 }
             ],
             "skill_deck_snapshot": [
