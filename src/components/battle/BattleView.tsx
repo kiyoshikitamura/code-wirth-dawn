@@ -106,10 +106,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         setShouldShake(true);
                         setTimeout(() => setShouldShake(false), 200);
                     }
+                    const displayTime = isStrong ? 2200 : 1800;
                     setTimeout(() => {
                         setEnemyActiveSkill(null);
                         setIsStrongEnemyActive(false);
-                    }, 1000);
+                    }, displayTime);
                 }
             }
         }

@@ -3256,6 +3256,12 @@ export const createBattleSlice = (
                 }
             }
 
+            // PvPエネミーの場合、毎ターン手番開始時にAPを3回復させる（上限15）
+            const isPvPEnemy = enemy.is_pvp_player || enemy.is_pvp_member;
+            if (isPvPEnemy) {
+                (enemy as any).current_ap = Math.min(15, ((enemy as any).current_ap ?? 6) + 3);
+            }
+
             newMessages.push(`${enemy.name}の行動！`);
 
             const actions = (enemy as any).action_pattern || [];
@@ -3264,7 +3270,51 @@ export const createBattleSlice = (
             let applyStun = false;
             let isDrainVit = false;
 
-            if (actions.length > 0) {
+            const sigDeck = enemy.signature_deck || [];
+            if (isPvPEnemy && sigDeck.length > 0) {
+                const currentAp = (enemy as any).current_ap ?? 6;
+                // 使用可能なスキルを抽出 (APが足りるもの)
+                const playableSkills = sigDeck.filter((c: any) => {
+                    const apCost = c.ap_cost ?? 1;
+                    return currentAp >= apCost;
+                });
+
+                if (playableSkills.length > 0) {
+                    const chosenCard = playableSkills[Math.floor(Math.random() * playableSkills.length)];
+                    const apCost = chosenCard.ap_cost ?? 1;
+                    (enemy as any).current_ap = Math.max(0, currentAp - apCost);
+
+                    // プレイヤーのスキルカードIDからエネミースキルのslugを引くマップ
+                    const cardToEnemySkillMap: Record<string, string> = {
+                        '1': 'skill_counter_stance', // 強打
+                        '2': 'skill_counter_stance', // 斬撃
+                        '3': 'skill_claw_rend',       // 突き
+                        '9': 'skill_counter_stance', // 挑発
+                        '11': 'skill_counter_stance', // 聖壁
+                        '12': 'skill_thunder_strike', // 裁き (スタン)
+                        '14': 'skill_boss_heal',      // 治癒 (回復)
+                        '15': 'skill_counter_stance', // 聖壁
+                        '25': 'skill_ares_strike',    // 居合切り
+                        '29': 'skill_counter_stance', 
+                        '48': 'skill_michael_blade',  // 天翔斬
+                        '71': 'skill_zeus_aegis',     // 五星の加護
+                    };
+                    
+                    const cardIdStr = String(chosenCard.id);
+                    const mappedSlug = cardToEnemySkillMap[cardIdStr];
+                    
+                    if (mappedSlug) {
+                        selectedSkillSlug = mappedSlug;
+                    } else {
+                        // マップに無い場合は、回復か攻撃かで判定
+                        const isHeal = String(chosenCard.name).includes('治癒') || String(chosenCard.name).includes('回復') || (chosenCard.power || 0) < 0;
+                        selectedSkillSlug = isHeal ? 'skill_boss_heal' : 'skill_shield_bash';
+                    }
+                    
+                    // 戦闘ログ表示に元のスキルカード名を使用する
+                    selectedSkillName = chosenCard.name;
+                }
+            } else if (actions.length > 0) {
                 const validActions = actions.filter((a: any) => {
                     if (!a.condition) return true;
                     const parts = String(a.condition).split(':');
