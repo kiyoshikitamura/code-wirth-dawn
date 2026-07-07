@@ -33,32 +33,634 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
     // デッキ定義がない場合（ID配列のみの場合）にモックカードを作成してデッキを復元するヘルパー
     const resolveDeckSnapshot = (snapshot: any[] | null, injectCards: any[] | null) => {
         if (snapshot && snapshot.length > 0) return snapshot;
+        const mockCardsMaster: Record<string, { name: string, ap_cost: number, type: string }> = {
+        "1": {
+                "name": "強打",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "2": {
+                "name": "斬撃",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "3": {
+                "name": "突き",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "4": {
+                "name": "防御",
+                "ap_cost": 1,
+                "type": "Defense"
+        },
+        "5": {
+                "name": "応急手当",
+                "ap_cost": 1,
+                "type": "Heal"
+        },
+        "6": {
+                "name": "シールドバッシュ",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "7": {
+                "name": "集中",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "8": {
+                "name": "クイックステップ",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "9": {
+                "name": "挑発",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "10": {
+                "name": "石投げ",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "11": {
+                "name": "聖剣",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "12": {
+                "name": "裁き",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "13": {
+                "name": "祈り",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "14": {
+                "name": "治癒",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "15": {
+                "name": "聖壁",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "16": {
+                "name": "砂の罠",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "17": {
+                "name": "砂塵の目眩まし",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "18": {
+                "name": "毒刃",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "19": {
+                "name": "蜃気楼",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "20": {
+                "name": "オアシスの水",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "21": {
+                "name": "ツバメ返し",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "22": {
+                "name": "クナイ投げ",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "23": {
+                "name": "影縫い",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "24": {
+                "name": "清め",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "25": {
+                "name": "居合切り",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "26": {
+                "name": "氣の癒やし",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "27": {
+                "name": "龍の咆哮",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "28": {
+                "name": "鉄布衫",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "29": {
+                "name": "連撃",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "30": {
+                "name": "飛刀",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "31": {
+                "name": "王の城壁",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "32": {
+                "name": "ドラゴンダイブ",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "33": {
+                "name": "奇跡",
+                "ap_cost": 5,
+                "type": "Heal"
+        },
+        "34": {
+                "name": "皇帝の盾",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "35": {
+                "name": "絶対防御",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "36": {
+                "name": "百裂拳",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "37": {
+                "name": "メテオストライク",
+                "ap_cost": 5,
+                "type": "Magic"
+        },
+        "38": {
+                "name": "完全治癒",
+                "ap_cost": 4,
+                "type": "Heal"
+        },
+        "39": {
+                "name": "ホーリーノヴァ",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "40": {
+                "name": "暗殺",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "41": {
+                "name": "魔刃",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "42": {
+                "name": "血の怒り",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "43": {
+                "name": "獅子の心",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "44": {
+                "name": "疾風術",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "45": {
+                "name": "岩砕き",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "46": {
+                "name": "魂裂き",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "47": {
+                "name": "幻影撃",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "48": {
+                "name": "天翔斬",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "49": {
+                "name": "黒曜球",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "50": {
+                "name": "近衛の盾",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "51": {
+                "name": "竜の鱗",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "52": {
+                "name": "虚空撃",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "53": {
+                "name": "女神の祝福",
+                "ap_cost": 4,
+                "type": "Heal"
+        },
+        "54": {
+                "name": "死の舞踊",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "55": {
+                "name": "時止めの法",
+                "ap_cost": 5,
+                "type": "Support"
+        },
+        "56": {
+                "name": "吸血",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "57": {
+                "name": "闇の代償",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "58": {
+                "name": "即死攻撃",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "59": {
+                "name": "狂戦士の薬",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "60": {
+                "name": "魂の生贄",
+                "ap_cost": 5,
+                "type": "Magic"
+        },
+        "61": {
+                "name": "市民の支援",
+                "ap_cost": 1,
+                "type": "Heal"
+        },
+        "62": {
+                "name": "調毒",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "63": {
+                "name": "血の契約",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "64": {
+                "name": "瞑想",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "65": {
+                "name": "火球",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "66": {
+                "name": "氷槍",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "67": {
+                "name": "雷撃",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "71": {
+                "name": "五星の加護",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "72": {
+                "name": "冥食の理",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "73": {
+                "name": "神殺しの光芒",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "74": {
+                "name": "砂塵の支配",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "81": {
+                "name": "獄炎の刻印",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "82": {
+                "name": "天使の恩寵",
+                "ap_cost": 4,
+                "type": "Heal"
+        },
+        "83": {
+                "name": "竜炎のブレス",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "84": {
+                "name": "麒麟の結界",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "85": {
+                "name": "ゴーレムコア",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "86": {
+                "name": "海神の怒涛",
+                "ap_cost": 5,
+                "type": "Magic"
+        },
+        "87": {
+                "name": "覇王の大斧",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "101": {
+                "name": "カタルシス",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "102": {
+                "name": "傷口をえぐる",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "103": {
+                "name": "無防備な獲物",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "104": {
+                "name": "伝染病の霧",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "105": {
+                "name": "シールドスラム",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "106": {
+                "name": "スパイクアーマー",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "107": {
+                "name": "不屈の防陣",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "108": {
+                "name": "犠牲の誓約",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "109": {
+                "name": "デスペラード",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "110": {
+                "name": "生贄の儀式",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "111": {
+                "name": "捨て身の一撃",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "112": {
+                "name": "デトネーション",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "113": {
+                "name": "マナチャージ",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "114": {
+                "name": "フリーズランサー",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "115": {
+                "name": "雷電の連鎖",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "116": {
+                "name": "プロミネンス",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "117": {
+                "name": "ブレインスピン",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "118": {
+                "name": "サーチライト",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "119": {
+                "name": "ダブルキャスト",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "120": {
+                "name": "リサイクル",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "121": {
+                "name": "死神の宣告",
+                "ap_cost": 4,
+                "type": "Support"
+        },
+        "122": {
+                "name": "血の追撃",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "123": {
+                "name": "フレイムバースト",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "124": {
+                "name": "凍てつく波動",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "125": {
+                "name": "アイアンバスティオン",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "126": {
+                "name": "リベンジシールド",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "127": {
+                "name": "巨人の肉体",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "128": {
+                "name": "グラウンディング",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "129": {
+                "name": "成金の一撃",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "130": {
+                "name": "ギャンブラーダイス",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "131": {
+                "name": "ソウルブースト",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "132": {
+                "name": "破滅の契約",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "133": {
+                "name": "属性の共鳴",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "134": {
+                "name": "プラズマシャワー",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "135": {
+                "name": "アブソリュートゼロ",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "136": {
+                "name": "ファイアウェーブ",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "137": {
+                "name": "クイックドロー",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "138": {
+                "name": "タクティカルプラン",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "139": {
+                "name": "タイムリバース",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "140": {
+                "name": "マナフィルター",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "141": {
+                "name": "魔界の黒炎",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "142": {
+                "name": "シャドークロウ",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "314": {
+                "name": "手裏剣投擲",
+                "ap_cost": 1,
+                "type": "Skill"
+        }
+};
+
         return (injectCards || []).map((cardId: any) => {
             const cardIdStr = String(cardId);
-            const mockCards: Record<string, { name: string, ap_cost: number }> = {
-                '1': { name: '強打', ap_cost: 2 },
-                '2': { name: '斬撃', ap_cost: 1 },
-                '3': { name: '突き', ap_cost: 1 },
-                '9': { name: '挑発', ap_cost: 1 },
-                '11': { name: '聖壁', ap_cost: 2 },
-                '12': { name: '裁き', ap_cost: 3 },
-                '14': { name: '治癒', ap_cost: 2 },
-                '15': { name: '聖壁', ap_cost: 2 },
-                '25': { name: '居合切り', ap_cost: 2 },
-                '29': { name: '強打', ap_cost: 2 },
-                '48': { name: '天翔斬', ap_cost: 3 },
-                '71': { name: '五星の加護', ap_cost: 2 },
-            };
-            const mock = mockCards[cardIdStr] || { name: 'スキル', ap_cost: 1 };
+            const mock = mockCardsMaster[cardIdStr];
+            if (mock) {
+                return {
+                    id: cardIdStr,
+                    name: mock.name,
+                    ap_cost: mock.ap_cost,
+                    type: mock.type,
+                };
+            }
             return {
                 id: cardIdStr,
-                name: mock.name,
-                ap_cost: mock.ap_cost,
+                name: 'スキル',
+                ap_cost: 1,
                 type: 'Skill',
             };
         });
     };
-    
+
     // 1. 防衛プレイヤー自身 (ボス扱い)
     const playerSnapshot = typeof opponent.player_snapshot === 'string'
         ? JSON.parse(opponent.player_snapshot)
