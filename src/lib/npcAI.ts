@@ -240,16 +240,32 @@ export function resolveNpcTurn(
     const getSynergyScore = (card: Card): number => {
         const cardIdStr = String(card.id);
         const enemyEffects = context.enemyEffects || [];
+        const selfEffects = (npc.status_effects || []) as StatusEffect[];
         const hasBleed = enemyEffects.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
         const hasBindOrFreeze = enemyEffects.some(e => e.id === 'bind' || e.id === 'freeze');
 
-        // 1. 傷口をえぐる (102) または 烈風突き (122) は、敵が出血状態なら最優先！
+        // 1. 傷口をえぐる (102) または 烈風突き (122) ➔ 敵が出血状態なら最優先！
         if ((cardIdStr === '102' || cardIdStr === '122') && hasBleed) {
             return 100;
         }
-        // 2. フリーズランサー (114) は、敵が拘束または凍結状態なら最優先！
+        // 2. フリーズランサー (114) ➔ 敵が拘束または凍結状態なら最優先！
         if (cardIdStr === '114' && hasBindOrFreeze) {
             return 100;
+        }
+        // 3. ダブルキャスト (116) のバフがかかっている時 ➔ 強力な魔法 (コスト3以上) を最優先！
+        const hasDoubleCast = selfEffects.some(e => e.id === 'double_cast');
+        if (hasDoubleCast && (card.type === 'Magic' || card.type === 'Skill') && (card.ap_cost ?? 0) >= 3) {
+            return 120; // 2回発動させたい大技魔法を最優先！
+        }
+        // 4. 自分または味方にデバフ（毒、出血、炎上、スタン、攻撃力低下、暗闇等）がかかっている時 ➔ 解除系を優先！
+        // 対象カード: オアシスの水 (20), 清め (24)
+        const teamHasDebuff = context.partyMembers.some(m =>
+            m.is_active && (m.durability ?? 0) > 0 &&
+            ((m.status_effects || []) as StatusEffect[]).some(e => ['poison', 'bleed', 'bleed_minor', 'burn', 'stun', 'atk_down', 'def_down', 'blind'].includes(e.id))
+        ) || (context.playerEffects || []).some(e => ['poison', 'bleed', 'bleed_minor', 'burn', 'stun', 'atk_down', 'def_down', 'blind'].includes(e.id));
+
+        if ((cardIdStr === '20' || cardIdStr === '24') && teamHasDebuff) {
+            return 90; // デバフ治療コンボ
         }
         return 0;
     };
