@@ -32,7 +32,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [enemyActiveSkill, setEnemyActiveSkill] = useState<string | null>(null);
     const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
     const [isStrongActive, setIsStrongActive] = useState(false);
-    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string }[]>([]);
+    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string; targetMemberId?: string }[]>([]);
     const [apErrorActive, setApErrorActive] = useState(false);
     const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
     const [playerActiveSkill, setPlayerActiveSkill] = useState<string | null>(null);
@@ -40,6 +40,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     const prevLiveHpRef = useRef<number | null>(null);
     const prevEnemiesHpRef = useRef<Record<string, number>>({});
+    const prevPartyHpRef = useRef<Record<string, number>>({});
 
     // Concurrency phase lock for NEXT button
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -340,7 +341,28 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 prevEnemiesHpRef.current[enemy.id] = enemy.hp;
             }
         });
-    }, [battleState.enemies]);
+    }, [JSON.stringify((battleState.enemies || []).map(e => ({ id: e.id, hp: e.hp })))]);
+
+    // 味方お供（パーティメンバー）全員の被ダメージ検知
+    useEffect(() => {
+        const party = battleState.party || [];
+        party.forEach(member => {
+            const prevHp = prevPartyHpRef.current[member.id];
+            const currentHp = member.durability ?? member.hp ?? 0;
+            if (prevHp !== undefined && currentHp !== null) {
+                const diff = prevHp - currentHp;
+                if (diff > 0) {
+                    const id = Date.now() + Math.random();
+                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false, targetMemberId: String(member.id) }]);
+                    
+                    setTimeout(() => {
+                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
+                    }, 2200);
+                }
+            }
+            prevPartyHpRef.current[member.id] = currentHp;
+        });
+    }, [JSON.stringify((battleState.party || []).map(m => ({ id: m.id, hp: m.durability ?? m.hp ?? 0 })))]);
 
     // v15.0: オーバーレイ表示管理（ターン/フェーズ）
     const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
@@ -1484,12 +1506,19 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                     onClick={() => setSelectedPartyMember(member)}
                                     className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform relative"
                                 >
-                                    <div className={`w-10 h-10 rounded-full border-[2px] ${(member.durability ?? member.hp) > 0 ? 'border-sky-400/80 bg-black/50' : 'border-white/20 bg-black/80 opacity-60'} flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm`}>
+                                    <div className={`w-10 h-10 rounded-full border-[2px] ${(member.durability ?? member.hp) > 0 ? 'border-sky-400/80 bg-black/50' : 'border-white/20 bg-black/80 opacity-60'} flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm relative`}>
                                         {(member.icon_url || member.image_url || member.avatar_url) ? (
                                             <img src={member.icon_url || member.image_url || member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
                                             <User size={18} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
                                         )}
+
+                                        {/* Floating Damage Numbers for Party Member */}
+                                        {floatingDamages.filter(d => d.targetMemberId === String(member.id)).map(d => (
+                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-sm font-black tracking-wider text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] animate-bounce" style={{ top: '25%', left: '25%' }}>
+                                                -{d.amount}
+                                            </div>
+                                        ))}
                                     </div>
                                     {/* パーティアイコン左上：状態異常バッジ — button 相対に配置しoverflow-hiddenを回避 */}
                                     {(member.status_effects || []).length > 0 && (member.durability ?? member.hp) > 0 && (
