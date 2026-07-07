@@ -712,7 +712,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         119,
                         114
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1317,
@@ -734,7 +735,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64,
                         115
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782498046183"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782498046183",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -896,7 +898,73 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         117,
                         120
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782585034384"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782585034384",
+                    "snapshot_data": {
+                        "hp": 340,
+                        "atk": 22,
+                        "def": 27,
+                        "deck": [],
+                        "level": 25,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 30,
+                            "atk": 66,
+                            "def": 12
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "デーモンバスター",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_2"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -1057,7 +1125,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         48,
                         25
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1792,
@@ -1071,7 +1140,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         1
                     ],
-                    "image_url": "/images/npcs/npc_markand_slave_giant.png"
+                    "image_url": "/images/npcs/npc_markand_slave_giant.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 2033,
@@ -1085,7 +1155,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         18
                     ],
-                    "image_url": "/images/npcs/npc_markand_merc_scimitar.png"
+                    "image_url": "/images/npcs/npc_markand_merc_scimitar.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 2034,
@@ -1100,7 +1171,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         4,
                         23
                     ],
-                    "image_url": "/images/npcs/npc_yato_onmyoji.png"
+                    "image_url": "/images/npcs/npc_yato_onmyoji.png",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -1261,7 +1333,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         9,
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_samurai_general.png"
+                    "image_url": "/images/npcs/npc_yato_samurai_general.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1752,
@@ -1278,7 +1351,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25,
                         48
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1995,
@@ -1292,7 +1366,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
+                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1996,
@@ -1307,7 +1382,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         14,
                         24
                     ],
-                    "image_url": "/images/npcs/npc_yato_kannushi.png"
+                    "image_url": "/images/npcs/npc_yato_kannushi.png",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -1467,7 +1543,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         14,
                         15
                     ],
-                    "image_url": "/images/npcs/npc_roland_paladin_leo.png"
+                    "image_url": "/images/npcs/npc_roland_paladin_leo.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 841,
@@ -1482,7 +1559,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         4,
                         6
                     ],
-                    "image_url": "/images/npcs/npc_roland_knight_veteran.png"
+                    "image_url": "/images/npcs/npc_roland_knight_veteran.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 897,
@@ -1497,7 +1575,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         4,
                         14
                     ],
-                    "image_url": "/images/npcs/npc_nadeshiko.png"
+                    "image_url": "/images/npcs/npc_nadeshiko.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 835,
@@ -1514,7 +1593,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         28,
                         29
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -1671,7 +1751,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         13,
                         14
                     ],
-                    "image_url": "/images/npcs/npc_roland_priest_anna.png"
+                    "image_url": "/images/npcs/npc_roland_priest_anna.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1383,
@@ -1690,7 +1771,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         134,
                         137
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/abe8c1ff-5fb5-47dd-89cc-d20e217502a4/avatar.jpeg?t=1782293429456"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/abe8c1ff-5fb5-47dd-89cc-d20e217502a4/avatar.jpeg?t=1782293429456",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1405,
@@ -1707,7 +1789,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         28,
                         29
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1407,
@@ -1721,7 +1804,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         18
                     ],
-                    "image_url": "/images/npcs/npc_markand_merc_scimitar.png"
+                    "image_url": "/images/npcs/npc_markand_merc_scimitar.png",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -1841,7 +1925,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64,
                         137
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1138,
@@ -1861,7 +1946,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         114,
                         115
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1104,
@@ -1881,7 +1967,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         64,
                         134
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/6d4473c3-a03e-4938-9a5d-1e1f5fadcafd/avatar.png?t=1781963398206"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/6d4473c3-a03e-4938-9a5d-1e1f5fadcafd/avatar.png?t=1781963398206",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -2004,7 +2091,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
+                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 672,
@@ -2022,7 +2110,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         119,
                         64
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 746,
@@ -2041,7 +2130,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         117,
                         66
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -2180,7 +2270,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         9,
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_samurai_general.png"
+                    "image_url": "/images/npcs/npc_yato_samurai_general.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 568,
@@ -2194,7 +2285,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
+                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 945,
@@ -2210,7 +2302,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         14,
                         15
                     ],
-                    "image_url": "/images/npcs/npc_roland_paladin_leo.png"
+                    "image_url": "/images/npcs/npc_roland_paladin_leo.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 503,
@@ -2227,7 +2320,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         28,
                         29
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -2392,7 +2486,59 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         124,
                         119
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251",
+                    "snapshot_data": {
+                        "hp": 241,
+                        "atk": 20,
+                        "def": 14,
+                        "deck": [],
+                        "level": 15,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 25,
+                            "atk": 21,
+                            "def": 26
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "幸運のコイン",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "竜牙の剣",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "狐火の護符",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "英霊の鎖帷子",
+                                "slot": "armor"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.2,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 10,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1564,
@@ -2413,7 +2559,54 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         37,
                         64
                     ],
-                    "image_url": "/avatars/adventurer.jpg"
+                    "image_url": "/avatars/adventurer.jpg",
+                    "snapshot_data": {
+                        "hp": 245,
+                        "atk": 19,
+                        "def": 19,
+                        "deck": [],
+                        "level": 17,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 40,
+                            "atk": 14,
+                            "def": 24
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "商人の鞄",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "竜牙の剣",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "重装鎧",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "十字軍の指輪",
+                                "slot": "accessory_2"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.2,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -2561,7 +2754,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         12,
                         27
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c2494b75-13df-4189-9a94-de216ce0336e/avatar.png?t=1782407029074"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c2494b75-13df-4189-9a94-de216ce0336e/avatar.png?t=1782407029074",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1218,
@@ -2576,7 +2770,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         1,
                         29
                     ],
-                    "image_url": "/images/npcs/npc_free_griffon.png"
+                    "image_url": "/images/npcs/npc_free_griffon.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1219,
@@ -2590,7 +2785,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
+                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1271,
@@ -2608,7 +2804,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         66,
                         134
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/defefa6d-87e6-4fb4-8649-4bea5220c607/avatar.png?t=1781692394005"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/defefa6d-87e6-4fb4-8649-4bea5220c607/avatar.png?t=1781692394005",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -2716,7 +2913,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         22,
                         64
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 707,
@@ -2737,7 +2935,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         26,
                         64
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/bac4f137-a5fc-4ce2-977b-d64eaa4b0afc/avatar.jpeg?t=1781626808364"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/bac4f137-a5fc-4ce2-977b-d64eaa4b0afc/avatar.jpeg?t=1781626808364",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 766,
@@ -2752,7 +2951,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         9,
                         25
                     ],
-                    "image_url": "/images/npcs/npc_yato_samurai_general.png"
+                    "image_url": "/images/npcs/npc_yato_samurai_general.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 815,
@@ -2771,7 +2971,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         12,
                         64
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/193c41b3-c6ee-4a72-bf73-0184d2976511/avatar.jpeg?t=1781883867183",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -2887,7 +3088,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         1,
                         4
                     ],
-                    "image_url": "/images/npcs/npc_yato_monk_hoichi.png"
+                    "image_url": "/images/npcs/npc_yato_monk_hoichi.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 2032,
@@ -2901,7 +3103,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         42
                     ],
-                    "image_url": "/images/npcs/npc_free_cursed_armor.png"
+                    "image_url": "/images/npcs/npc_free_cursed_armor.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1968,
@@ -2916,7 +3119,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         1,
                         8
                     ],
-                    "image_url": "/images/npcs/npc_free_stray_dog.png"
+                    "image_url": "/images/npcs/npc_free_stray_dog.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1961,
@@ -2938,7 +3142,77 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         117,
                         119
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
+                    "snapshot_data": {
+                        "hp": 265,
+                        "atk": 23,
+                        "def": 26,
+                        "deck": [],
+                        "level": 18,
+                        "blessing_data": {
+                            "hp_pct": 0.1,
+                            "ap_bonus": 1,
+                            "expires_after_battle": true
+                        },
+                        "equipped_bonus": {
+                            "hp": 30,
+                            "atk": 63,
+                            "def": 14
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "デーモンバスター",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -3098,7 +3372,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         48,
                         25
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1721,
@@ -3120,7 +3395,78 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         137,
                         119
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
+                    "snapshot_data": {
+                        "hp": 237,
+                        "atk": 18,
+                        "def": 20,
+                        "deck": [],
+                        "level": 15,
+                        "blessing_data": {
+                            "hp_pct": 0.1,
+                            "ap_bonus": 1,
+                            "expires_after_battle": true
+                        },
+                        "equipped_bonus": {
+                            "hp": 30,
+                            "atk": 66,
+                            "def": 12
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "デーモンスレイヤー",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_2"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1720,
@@ -3134,7 +3480,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [
                         12
                     ],
-                    "image_url": "/images/npcs/npc_roland_scholar.png"
+                    "image_url": "/images/npcs/npc_roland_scholar.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1722,
@@ -3149,7 +3496,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         4,
                         23
                     ],
-                    "image_url": "/images/npcs/npc_yato_onmyoji.png"
+                    "image_url": "/images/npcs/npc_yato_onmyoji.png",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -3313,7 +3661,64 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         124,
                         119
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251",
+                    "snapshot_data": {
+                        "hp": 241,
+                        "atk": 20,
+                        "def": 14,
+                        "deck": [],
+                        "level": 15,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 45,
+                            "atk": 21,
+                            "def": 24
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "幸運のコイン",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "竜牙の剣",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "狐火の護符",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "神の法衣",
+                                "slot": "armor"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.2,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 10,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 2,
+                                "buff_type": "evasion_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1568,
@@ -3336,7 +3741,59 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         122,
                         127
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855",
+                    "snapshot_data": {
+                        "hp": 335,
+                        "atk": 22,
+                        "def": 23,
+                        "deck": [],
+                        "level": 19,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 55,
+                            "atk": 25,
+                            "def": 22
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "神器:草薙(模造)",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "狐火の護符",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "神の法衣",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "商人の鞄",
+                                "slot": "accessory_1"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 10,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 2,
+                                "buff_type": "evasion_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1734,
@@ -3359,7 +3816,54 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         126,
                         119
                     ],
-                    "image_url": "/avatars/adventurer.jpg"
+                    "image_url": "/avatars/adventurer.jpg",
+                    "snapshot_data": {
+                        "hp": 278,
+                        "atk": 26,
+                        "def": 17,
+                        "deck": [],
+                        "level": 14,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 20,
+                            "atk": 28,
+                            "def": 26
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "英霊の鎖帷子",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "神器:草薙(模造)",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "狐火の護符",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "黄金のサイコロ",
+                                "slot": "accessory_3"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 10,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -3520,7 +4024,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         28,
                         29
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 696,
@@ -3539,7 +4044,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         57,
                         58
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c7906aec-ba14-4e35-8102-b21c6bea529a/avatar.jpeg?t=1781659829258"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c7906aec-ba14-4e35-8102-b21c6bea529a/avatar.jpeg?t=1781659829258",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 956,
@@ -3557,7 +4063,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         15,
                         64
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782007944627"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782007944627",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 957,
@@ -3578,7 +4085,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         65,
                         64
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/99ec1273-d758-4797-a5e3-ab6761eb5561/avatar.png?t=1781631772227"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/99ec1273-d758-4797-a5e3-ab6761eb5561/avatar.png?t=1781631772227",
+                    "snapshot_data": {}
                 }
             ],
             "equipped_items_snapshot": [
@@ -3695,7 +4203,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         25,
                         48
                     ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
+                    "image_url": "/images/npcs/npc_guest_volg.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1760,
@@ -3710,7 +4219,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         14,
                         24
                     ],
-                    "image_url": "/images/npcs/npc_yato_kannushi.png"
+                    "image_url": "/images/npcs/npc_yato_kannushi.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1826,
@@ -3734,7 +4244,68 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         42,
                         117
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855",
+                    "snapshot_data": {
+                        "hp": 344,
+                        "atk": 22,
+                        "def": 24,
+                        "deck": [],
+                        "level": 20,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 0,
+                            "atk": 80,
+                            "def": 6
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "村正",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "duration": 99,
+                                "buff_type": "def_down"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -3921,7 +4492,41 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         115,
                         124
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
+                    "snapshot_data": {
+                        "hp": 250,
+                        "atk": 16,
+                        "def": 18,
+                        "deck": [],
+                        "level": 15,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 15,
+                            "atk": 18,
+                            "def": 19
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "神器:草薙(模造)",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "重装鎧",
+                                "slot": "armor"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -4059,7 +4664,73 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         114,
                         119
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.png?t=1783243446077"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.png?t=1783243446077",
+                    "snapshot_data": {
+                        "hp": 251,
+                        "atk": 22,
+                        "def": 16,
+                        "deck": [],
+                        "level": 16,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 70,
+                            "atk": 40,
+                            "def": 35
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "狐火の護符",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "怒りの腕輪",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "神の法衣",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "デーモンスレイヤー",
+                                "slot": "weapon"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 10,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "duration": 3,
+                                "buff_type": "stun_infuse"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 2,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.1,
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1879,
@@ -4074,7 +4745,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         1,
                         16
                     ],
-                    "image_url": "/images/npcs/npc_markand_bedouin.png"
+                    "image_url": "/images/npcs/npc_markand_bedouin.png",
+                    "snapshot_data": {}
                 },
                 {
                     "id": 1887,
@@ -4093,7 +4765,68 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         129,
                         130
                     ],
-                    "image_url": "/avatars/adventurer.jpg"
+                    "image_url": "/avatars/adventurer.jpg",
+                    "snapshot_data": {
+                        "hp": 215,
+                        "atk": 20,
+                        "def": 16,
+                        "deck": [],
+                        "level": 12,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 0,
+                            "atk": 80,
+                            "def": 6
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "村正",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "duration": 99,
+                                "buff_type": "def_down"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1885,
@@ -4117,7 +4850,68 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         42,
                         117
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2e3beb82-3fb8-4321-b13c-9eaa7a4ca897/avatar.jpg?t=1782109724855",
+                    "snapshot_data": {
+                        "hp": 353,
+                        "atk": 23,
+                        "def": 25,
+                        "deck": [],
+                        "level": 21,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 0,
+                            "atk": 80,
+                            "def": 6
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "村正",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "duration": 99,
+                                "buff_type": "def_down"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
@@ -4283,7 +5077,77 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         117,
                         119
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
+                    "snapshot_data": {
+                        "hp": 265,
+                        "atk": 23,
+                        "def": 26,
+                        "deck": [],
+                        "level": 18,
+                        "blessing_data": {
+                            "hp_pct": 0.1,
+                            "ap_bonus": 1,
+                            "expires_after_battle": true
+                        },
+                        "equipped_bonus": {
+                            "hp": 30,
+                            "atk": 63,
+                            "def": 14
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "デーモンバスター",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1882,
@@ -4301,7 +5165,63 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         134,
                         136
                     ],
-                    "image_url": "/avatars/adventurer.jpg"
+                    "image_url": "/avatars/adventurer.jpg",
+                    "snapshot_data": {
+                        "hp": 280,
+                        "atk": 22,
+                        "def": 25,
+                        "deck": [],
+                        "level": 21,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 60,
+                            "atk": 37,
+                            "def": 35
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "デーモンバスター",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "商人の鞄",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "深淵の盾",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "ガウェインの小手",
+                                "slot": "accessory_1"
+                            },
+                            {
+                                "name": "十字軍の指輪",
+                                "slot": "accessory_2"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 10,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.1,
+                                "duration": 2,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1880,
@@ -4327,7 +5247,73 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         120,
                         142
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782585034384"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1782585034384",
+                    "snapshot_data": {
+                        "hp": 349,
+                        "atk": 24,
+                        "def": 27,
+                        "deck": [],
+                        "level": 26,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 30,
+                            "atk": 60,
+                            "def": 16
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "デーモンバスター",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "暗黒の外套",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "烈火のルビーリング",
+                                "slot": "accessory_1"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.3,
+                                "duration": 5,
+                                "buff_type": "evasion_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 0.5,
+                                "duration": 1,
+                                "buff_type": "atk_up"
+                            }
+                        ]
+                    }
                 },
                 {
                     "id": 1881,
@@ -4349,7 +5335,72 @@ const GHOST_PRESETS: Record<string, any[]> = {
                         137,
                         139
                     ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040"
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
+                    "snapshot_data": {
+                        "hp": 270,
+                        "atk": 20,
+                        "def": 20,
+                        "deck": [],
+                        "level": 17,
+                        "blessing_data": null,
+                        "equipped_bonus": {
+                            "hp": 65,
+                            "atk": 43,
+                            "def": 32
+                        },
+                        "equipped_items": [
+                            {
+                                "name": "デーモンバスター",
+                                "slot": "weapon"
+                            },
+                            {
+                                "name": "深淵の盾",
+                                "slot": "armor"
+                            },
+                            {
+                                "name": "魔導士の指輪",
+                                "slot": "accessory_3"
+                            },
+                            {
+                                "name": "氷結のブローチ",
+                                "slot": "accessory_2"
+                            },
+                            {
+                                "name": "深緑のアミュレット",
+                                "slot": "accessory_1"
+                            }
+                        ],
+                        "battle_start_buffs": [
+                            {
+                                "duration": 5,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 15,
+                                "duration": 5,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 20,
+                                "duration": 3,
+                                "buff_type": "def_up"
+                            },
+                            {
+                                "value": 0.15,
+                                "duration": 3,
+                                "buff_type": "atk_up"
+                            },
+                            {
+                                "value": 30,
+                                "duration": 3,
+                                "buff_type": "absolute_barrier"
+                            },
+                            {
+                                "duration": 3,
+                                "buff_type": "regen"
+                            }
+                        ]
+                    }
                 }
             ],
             "equipped_items_snapshot": [
