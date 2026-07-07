@@ -535,7 +535,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         }
     }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs, isTypingDone, activeMessage]);
 
-    if (!hasHydrated) return (
+    try {
+        if (!hasHydrated) return (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">
             {bgImageUrl && (
                 <div 
@@ -1958,4 +1959,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             )}
         </div>
     );
+    } catch (error: any) {
+        console.error("BattleView Render Error:", error);
+        return (
+            <div className="p-6 bg-red-950 border-4 border-red-500 rounded-xl text-red-100 font-mono text-xs overflow-auto max-h-[80vh] relative z-[9999] select-text">
+                <h2 className="text-lg font-bold text-red-400 mb-2">BattleView レンダリングエラー</h2>
+                <p className="font-bold mb-2">{error?.message || String(error)}</p>
+                <pre className="mt-4 whitespace-pre-wrap text-[10px] leading-relaxed">{error?.stack}</pre>
+            </div>
+        );
+    }
 }
