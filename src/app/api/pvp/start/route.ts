@@ -43,7 +43,8 @@ export async function POST(req: Request) {
 
         // クエストロックを設定。PVPアリーナを示すID 'pvp_arena' を設定する
         const pvpQuestId = `pvp_arena_${opponent_id}`;
-        await setQuestLock(userId, pvpQuestId);
+        // 対人戦は通常のクエストではないため、クエストロック（進行中フラグ）の適用から除外します。
+        // await setQuestLock(userId, pvpQuestId);
 
         return NextResponse.json({
             success: true,

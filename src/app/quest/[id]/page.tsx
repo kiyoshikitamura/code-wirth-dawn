@@ -23,12 +23,14 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
     const enemies: Enemy[] = [];
     
     // 1. 防衛プレイヤー自身 (ボス扱い)
-    const playerSnapshot = opponent.player_snapshot;
+    const playerSnapshot = typeof opponent.player_snapshot === 'string'
+        ? JSON.parse(opponent.player_snapshot)
+        : (opponent.player_snapshot || {});
     const baseHp = playerSnapshot.hp || 100;
     const finalHp = baseHp * 6; // 6倍補正
     
     const playerEnemy: any = {
-        id: opponent.user_id,
+        id: `pvp_enemy_${String(opponent.user_id)}`,
         name: opponent.user_name,
         level: playerSnapshot.level || 1,
         hp: finalHp,
@@ -48,13 +50,15 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
     enemies.push(playerEnemy);
     
     // 2. 防衛メンバーたち (お供エネミー扱い)
-    const members = opponent.party_members_snapshot || [];
+    const members = typeof opponent.party_members_snapshot === 'string'
+        ? JSON.parse(opponent.party_members_snapshot)
+        : (opponent.party_members_snapshot || []);
     members.forEach((m: any) => {
         const mBaseHp = m.hp || 100;
         const mFinalHp = mBaseHp * 6;
         
         const memberEnemy: any = {
-            id: m.id,
+            id: `pvp_enemy_${String(m.id)}`,
             name: m.name,
             level: m.level || 1,
             hp: mFinalHp,
