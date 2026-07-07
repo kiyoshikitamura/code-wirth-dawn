@@ -528,8 +528,11 @@ export default function QuestPage() {
             return;
         }
 
+        console.log('[QuestPage] Initializing with id:', id);
+
         // PvPアリーナの場合はシナリオ・UGCのロードをバイパス
-        if (id.startsWith('pvp_arena_')) {
+        if (id && id.startsWith('pvp_arena_')) {
+            console.log('[QuestPage] PvP Arena detected. Bypassing scenario load.');
             setLoading(false);
             return;
         }
