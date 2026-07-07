@@ -421,6 +421,34 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                     if (ed.def_bonus) bonuses.push(`DEF+${ed.def_bonus}`);
                                                     if (ed.hp_bonus) bonuses.push(`HP+${ed.hp_bonus}`);
                                                     
+                                                    // 特殊な戦闘開始時パッシブバフも反映
+                                                    if (ed.battle_start_buff) {
+                                                        const buffs = Array.isArray(ed.battle_start_buff)
+                                                            ? ed.battle_start_buff
+                                                            : [ed.battle_start_buff];
+                                                        
+                                                        const buffLabelMap: Record<string, string> = {
+                                                            'absolute_barrier': 'バリア',
+                                                            'atk_up': '攻撃UP',
+                                                            'def_up': '防御UP',
+                                                            'regen': 'リジェネ',
+                                                            'evasion_up': '回避UP',
+                                                            'stun_immune': 'スタン無効',
+                                                            'berserk': '狂戦士',
+                                                        };
+                                                        
+                                                        buffs.forEach((b: any) => {
+                                                            const bId = b.buff_type || b.id;
+                                                            if (bId) {
+                                                                const label = buffLabelMap[bId] || 'バフ';
+                                                                // 重複防止
+                                                                if (!bonuses.includes(label)) {
+                                                                    bonuses.push(label);
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                    
                                                     if (bonuses.length > 0) {
                                                         displayName = `遺物 (${bonuses.join('/')})`;
                                                     } else {
