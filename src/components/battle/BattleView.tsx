@@ -87,6 +87,37 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         completeActiveMessage,
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp, (msg) => {
+        // 敵への被ダメージログ検知とポップアップ ＆ 個別揺れ追加
+        const enemyDmgMatch = msg.match(/^([^\s]+?)に (\d+) のダメージ！/);
+        if (enemyDmgMatch) {
+            const enemyName = enemyDmgMatch[1];
+            const amount = parseInt(enemyDmgMatch[2], 10);
+            const targetEnemy = (battleState?.enemies || []).find((e: any) => e.name === enemyName);
+            if (targetEnemy) {
+                const id = Date.now() + Math.random();
+                setFloatingDamages(prev => [...prev, { id, amount, isPlayer: false, targetEnemyId: targetEnemy.id }]);
+                setTimeout(() => {
+                    setFloatingDamages(prev => prev.filter(d => d.id !== id));
+                }, 1500);
+
+                setShakingEnemyIds(prev => {
+                    const next = new Set(prev);
+                    next.add(targetEnemy.id);
+                    return next;
+                });
+                setTimeout(() => {
+                    setShakingEnemyIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(targetEnemy.id);
+                        return next;
+                    });
+                }, 300);
+
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 200);
+            }
+        }
+
         // 1. 敵エネミースキルの検知 (の『スキル名』形式)
         if (msg.includes('の『')) {
             const match = msg.match(/の『(.+?)』/);
@@ -117,6 +148,12 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         // 2. 味方（プレイヤー ＆ 味方NPC）スキルの検知
         else {
             let skillName = '';
+            
+            // 同行NPCのスキルカットインは行わない (プレイヤー本人のみ対象)
+            const npcNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
+            const isNpcAction = npcNames.some((name: string) => msg.startsWith(name));
+            
+            if (!isNpcAction) {
             
             // 0. 二重括弧『 』が含まれている場合は最優先でその中身を抽出 (スキル・魔法発動)
             // 例: 「ハンスの『金剛壁』！」 ➔ 「金剛壁」
@@ -191,6 +228,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         setIsStrongPlayerActive(false);
                     }, displayTime);
                 }
+            }
             }
         }
 

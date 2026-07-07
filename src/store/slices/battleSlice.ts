@@ -350,9 +350,8 @@ export const createBattleSlice = (
                         initialEffects = applyEffect(initialEffects, 'ap_bonus' as StatusEffectId, 99, blessing.ap_bonus);
                     }
                 }
-                const summary = buildBuffSummaryLine(pm.name, initialEffects);
-                if (summary) {
-                    npcStartBuffMessages.push(summary);
+                if (initialEffects && initialEffects.length > 0) {
+                    npcStartBuffMessages.push(`✨ ${pm.name}は初期バフ効果を得た。`);
                 }
             }
 
@@ -3356,7 +3355,7 @@ export const createBattleSlice = (
                     const cardToEnemySkillMap: Record<string, string> = {
                         '1': 'skill_counter_stance', // 強打
                         '2': 'skill_counter_stance', // 斬撃
-                        '3': 'skill_claw_rend',       // 突き
+                        '3': 'skill_spear_thrust',    // 突き
                         '9': 'skill_counter_stance', // 挑発
                         '11': 'skill_counter_stance', // 聖壁
                         '12': 'skill_thunder_strike', // 裁き (スタン)
