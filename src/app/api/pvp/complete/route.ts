@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         }
 
         const userId = user.id;
-        const { is_victory, opponent_id, opponent_name } = await req.json();
+        const { is_victory, opponent_id, opponent_name, battle_logs } = await req.json();
 
         if (is_victory === undefined || !opponent_name) {
             return NextResponse.json({ error: 'パラメータが不足しています。' }, { status: 400 });
@@ -103,7 +103,8 @@ export async function POST(req: Request) {
                     opponent_id,
                     opponent_name,
                     rating_change: ratingChange,
-                    new_rating: currentRating
+                    new_rating: currentRating,
+                    battle_logs: battle_logs || []
                 }
             });
         } catch (chronicleErr) {

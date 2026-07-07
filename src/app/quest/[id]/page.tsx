@@ -1799,7 +1799,8 @@ export default function QuestPage() {
                     body: JSON.stringify({
                         is_victory: isVictory,
                         opponent_id: opponentId,
-                        opponent_name: opponentName
+                        opponent_name: opponentName,
+                        battle_logs: storeState.battleState?.messages || []
                     })
                 });
 
