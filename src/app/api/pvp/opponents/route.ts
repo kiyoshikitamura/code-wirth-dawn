@@ -8063,8 +8063,10 @@ export async function GET(req: Request) {
         // テスト・ダミーアカウント（レベルが低すぎる、またはテスト用のアカウント）をマッチングから除外
         opponentsList = opponentsList.filter(opp => {
             const level = opp.player_snapshot ? parseInt(opp.player_snapshot.level || 0, 10) : 1;
-            const name = String(opp.user_name || '').toLowerCase();
-            const isDummyName = name.includes('テスト') || name.includes('てすと') || name.includes('test') || name.includes('null');
+            const name = String(opp.user_name || '');
+            const nameLower = name.toLowerCase();
+            const isTargetTest = name === 'きたむ（調整テスト用）';
+            const isDummyName = (nameLower.includes('テスト') || nameLower.includes('てすと') || nameLower.includes('test') || nameLower.includes('null')) && !isTargetTest;
             return level >= 3 && !isDummyName;
         });
 
@@ -8089,7 +8091,17 @@ export async function GET(req: Request) {
         }
 
         // リスト全体をランダムシャッフルして上位5件を対戦相手にする
-        opponentsList = [...opponentsList].sort(() => Math.random() - 0.5).slice(0, 5);
+        // リスト全体をランダムシャッフルする
+        opponentsList = [...opponentsList].sort(() => Math.random() - 0.5);
+
+        // 「きたむ（調整テスト用）」を検出して先頭（1番上）に移動する
+        const testTargetIdx = opponentsList.findIndex(opp => String(opp.user_name) === 'きたむ（調整テスト用）');
+        if (testTargetIdx !== -1) {
+            const [testTarget] = opponentsList.splice(testTargetIdx, 1);
+            opponentsList.unshift(testTarget);
+        }
+
+        opponentsList = opponentsList.slice(0, 5);
 
         return NextResponse.json({
             success: true,
