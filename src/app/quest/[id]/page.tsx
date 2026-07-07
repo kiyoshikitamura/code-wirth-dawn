@@ -207,7 +207,7 @@ export default function QuestPage() {
                 });
             } else {
                 console.warn('[QuestPage] pvpOpponent data not found in store, returning to inn');
-                useQuestState.getState().resetQuestState();
+                useQuestState.getState().resetQuest();
                 router.push('/inn');
             }
         }
@@ -1097,7 +1097,7 @@ export default function QuestPage() {
             }
 
             // クエスト状態をクリアして宿屋に戻る
-            useQuestState.getState().resetQuestState();
+            useQuestState.getState().resetQuest();
             router.push('/inn');
             return;
         }
