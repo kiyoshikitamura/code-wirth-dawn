@@ -118,17 +118,33 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         else {
             let skillName = '';
             
-            // A. 味方NPCのスキル: 「[名前]の[スキル名]！」
-            const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
-            if (npcMatch) {
-                const name = npcMatch[2];
-                // 状態変化や特定アクションのログを除外
-                if (!['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '行動', '復帰', '麻痺', '混乱', '魅了'].some(k => name.includes(k))) {
-                    skillName = name;
+            // A. スキル使用/発動/服用の検知: 「[スキル名]を使用！」「✨ [スキル名]を発動！」「⚠ [スキル名]を服用！」「[スキル名]をハンスに使用！」
+            const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(を使用|を発動|を服用|を[^\s]+?に使用)/);
+            if (useMatch) {
+                skillName = useMatch[2];
+            }
+            
+            // B. 助詞「で」によるスキルの検知: 「[スキル名]で HP +100 回復！」「[スキル名]で全体攻撃！」
+            if (!skillName) {
+                const deMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(で\s*?HP|で全体攻撃)/);
+                if (deMatch) {
+                    skillName = deMatch[2];
                 }
             }
             
-            // B. プレイヤーのスキル: 「[対象名]に[スキル名]！」
+            // C. 味方NPCのスキル: 「[名前]の[スキル名]！」
+            if (!skillName) {
+                const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
+                if (npcMatch) {
+                    const name = npcMatch[2];
+                    // 状態変化や特定アクションのログを除外
+                    if (!['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '行動', '復帰', '麻痺', '混乱', '魅了'].some(k => name.includes(k))) {
+                        skillName = name;
+                    }
+                }
+            }
+            
+            // D. プレイヤーのスキル: 「[対象名]に[スキル名]！」
             if (!skillName) {
                 const playerMatch = msg.match(/^([^\sに]+?)に([^\s！『』]{2,})！/);
                 if (playerMatch) {
@@ -142,16 +158,22 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             }
             
             if (skillName) {
-                setPlayerActiveSkill(skillName);
-                const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
-                if (isStrong) {
-                    setIsStrongPlayerActive(true);
+                // 装飾文字をクリンナップ
+                skillName = skillName.replace(/^[♥✨⚠\s]+/, '').trim();
+                
+                // 不要な状態メッセージや計算結果を除外する最終チェック
+                if (skillName.length >= 2 && !['出血', 'ダメージ', '毒', '火傷', 'スタン', '死亡', '気絶', '回避', 'ガード', 'ミス', '効果', 'HP'].some(k => skillName.includes(k))) {
+                    setPlayerActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPlayerActive(true);
+                    }
+                    const displayTime = isStrong ? 2200 : 1800;
+                    setTimeout(() => {
+                        setPlayerActiveSkill(null);
+                        setIsStrongPlayerActive(false);
+                    }, displayTime);
                 }
-                const displayTime = isStrong ? 2200 : 1800;
-                setTimeout(() => {
-                    setPlayerActiveSkill(null);
-                    setIsStrongPlayerActive(false);
-                }, displayTime);
             }
         }
 
@@ -716,7 +738,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 : 'bg-slate-900/90 text-sky-400 border-sky-400/50 shadow-[0_0_25px_rgba(56,189,248,0.6)]'
                         }`}>
                             <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">ALLY SKILL ACTIVATED</span>
-                            <span className="font-serif text-2xl md:text-3xl font-extrabold tracking-widest animate-pulse">
+                            <span className={`font-serif font-extrabold tracking-widest animate-pulse whitespace-nowrap px-4 ${
+                                (playerActiveSkill?.length || 0) > 8 
+                                    ? 'text-lg md:text-xl' 
+                                    : (playerActiveSkill?.length || 0) > 5 
+                                        ? 'text-xl md:text-2xl' 
+                                        : 'text-2xl md:text-3xl'
+                            }`}>
                                 『{playerActiveSkill}』
                             </span>
                         </div>
@@ -738,7 +766,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 : 'bg-amber-950/90 text-amber-500 border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.6)]'
                         }`}>
                             <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">ENEMY SKILL WARNING</span>
-                            <span className="font-serif text-2xl md:text-3xl font-extrabold tracking-widest animate-pulse">
+                            <span className={`font-serif font-extrabold tracking-widest animate-pulse whitespace-nowrap px-4 ${
+                                (enemyActiveSkill?.length || 0) > 8 
+                                    ? 'text-lg md:text-xl' 
+                                    : (enemyActiveSkill?.length || 0) > 5 
+                                        ? 'text-xl md:text-2xl' 
+                                        : 'text-2xl md:text-3xl'
+                            }`}>
                                 『{enemyActiveSkill}』
                             </span>
                         </div>
