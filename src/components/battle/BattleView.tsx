@@ -87,48 +87,71 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         completeActiveMessage,
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp, (msg) => {
+        // 1. 敵エネミースキルの検知 (の『スキル名』形式)
         if (msg.includes('の『')) {
-            const isEnemyPhase = battleState.battlePhase !== 'player';
-            if (isEnemyPhase) {
-                const match = msg.match(/の『(.+?)』/);
-                const skillName = match ? match[1] : '';
-                if (skillName) {
-                    setEnemyActiveSkill(skillName);
-                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
-                    if (isStrong) {
-                        setIsStrongEnemyActive(true);
+            const match = msg.match(/の『(.+?)』/);
+            const skillName = match ? match[1] : '';
+            if (skillName) {
+                setEnemyActiveSkill(skillName);
+                const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                if (isStrong) {
+                    setIsStrongEnemyActive(true);
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 300);
+                    setTimeout(() => {
                         setShouldShake(true);
                         setTimeout(() => setShouldShake(false), 300);
-                        setTimeout(() => {
-                            setShouldShake(true);
-                            setTimeout(() => setShouldShake(false), 300);
-                        }, 150);
-                    } else {
-                        // 弱・通常攻撃時も軽く揺らして臨場感を出す
-                        setShouldShake(true);
-                        setTimeout(() => setShouldShake(false), 200);
-                    }
-                    const displayTime = isStrong ? 2200 : 1800;
-                    setTimeout(() => {
-                        setEnemyActiveSkill(null);
-                        setIsStrongEnemyActive(false);
-                    }, displayTime);
+                    }, 150);
+                } else {
+                    // 弱・通常攻撃時も軽く揺らして臨場感を出す
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 200);
                 }
-            } else {
-                const match = msg.match(/の『(.+?)』/);
-                const skillName = match ? match[1] : '';
-                if (skillName) {
-                    setPlayerActiveSkill(skillName);
-                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
-                    if (isStrong) {
-                        setIsStrongPlayerActive(true);
-                    }
-                    const displayTime = isStrong ? 2200 : 1800;
-                    setTimeout(() => {
-                        setPlayerActiveSkill(null);
-                        setIsStrongPlayerActive(false);
-                    }, displayTime);
+                const displayTime = isStrong ? 2200 : 1800;
+                setTimeout(() => {
+                    setEnemyActiveSkill(null);
+                    setIsStrongEnemyActive(false);
+                }, displayTime);
+            }
+        } 
+        // 2. 味方（プレイヤー ＆ 味方NPC）スキルの検知
+        else {
+            let skillName = '';
+            
+            // A. 味方NPCのスキル: 「[名前]の[スキル名]！」
+            const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
+            if (npcMatch) {
+                const name = npcMatch[2];
+                // 状態変化や特定アクションのログを除外
+                if (!['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '行動', '復帰', '麻痺', '混乱', '魅了'].some(k => name.includes(k))) {
+                    skillName = name;
                 }
+            }
+            
+            // B. プレイヤーのスキル: 「[対象名]に[スキル名]！」
+            if (!skillName) {
+                const playerMatch = msg.match(/^([^\sに]+?)に([^\s！『』]{2,})！/);
+                if (playerMatch) {
+                    const name = playerMatch[2];
+                    // ダメージ数や特定キーワードを除外
+                    if (!name.includes('ダメージ') && !name.includes('効果') && !name.includes('回復') && 
+                        !['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '魅了', '混乱', '麻痺'].some(k => name.includes(k))) {
+                        skillName = name;
+                    }
+                }
+            }
+            
+            if (skillName) {
+                setPlayerActiveSkill(skillName);
+                const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                if (isStrong) {
+                    setIsStrongPlayerActive(true);
+                }
+                const displayTime = isStrong ? 2200 : 1800;
+                setTimeout(() => {
+                    setPlayerActiveSkill(null);
+                    setIsStrongPlayerActive(false);
+                }, displayTime);
             }
         }
 
