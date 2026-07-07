@@ -1083,12 +1083,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             {/* Enemies Layout — 左:ターゲット大（スプライト表示） / 右:非ターゲット小（アイコンリスト） または PvP時の横並び丸型アイコン */}
             <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-4 pb-2 flex-shrink-0">
                 {enemies.some((e: any) => e.is_pvp_player || e.is_pvp_member) ? (
-                    <div className="w-full flex flex-col items-center justify-center py-6 px-4 min-h-[240px]">
-                        <div className="grid grid-cols-2 gap-x-12 gap-y-6 justify-center justify-items-center max-w-[320px] mx-auto">
-                            {enemies.map((enemy, idx) => {
+                    <div className="w-full flex flex-col items-center justify-center py-4 px-4 min-h-[220px] gap-3">
+                        {(() => {
+                            const renderEnemyButton = (enemy: any) => {
                                 const isTarget = target?.id === enemy.id;
                                 const isDead = enemy.hp <= 0;
-                                const isLastOdd = enemies.length % 2 !== 0 && idx === enemies.length - 1;
                                 return (
                                     <button
                                         key={enemy.id}
@@ -1102,7 +1101,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         }}
                                         className={`flex flex-col items-center flex-shrink-0 active:scale-95 transition-all relative ${
                                             isDead ? 'opacity-40 grayscale' : ''
-                                        } ${isLastOdd ? 'col-span-2 justify-self-center' : ''}`}
+                                        }`}
                                     >
                                         {/* Target marker border */}
                                         <div className={`w-18 h-18 rounded-full border-[3px] flex items-center justify-center overflow-hidden shadow-xl backdrop-blur-sm transition-all ${
@@ -1145,8 +1144,23 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         )}
                                     </button>
                                 );
-                            })}
-                        </div>
+                            };
+
+                            return (
+                                <>
+                                    {/* 後列 (上: 最大2名) */}
+                                    <div className="flex justify-center gap-8 sm:gap-12">
+                                        {enemies.slice(0, 2).map(renderEnemyButton)}
+                                    </div>
+                                    {/* 前列 (下: 最大3名) */}
+                                    {enemies.length > 2 && (
+                                        <div className="flex justify-center gap-6 sm:gap-10">
+                                            {enemies.slice(2, 5).map(renderEnemyButton)}
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                 ) : (
                     <div className="w-full flex items-center justify-center gap-6 sm:gap-10 px-4">
