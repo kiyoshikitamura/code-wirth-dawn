@@ -31,15 +31,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [enemyActiveSkill, setEnemyActiveSkill] = useState<string | null>(null);
     const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
     const [isStrongActive, setIsStrongActive] = useState(false);
-    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean }[]>([]);
+    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string }[]>([]);
     const [apErrorActive, setApErrorActive] = useState(false);
     const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
     const [playerActiveSkill, setPlayerActiveSkill] = useState<string | null>(null);
     const [isStrongPlayerActive, setIsStrongPlayerActive] = useState(false);
 
     const prevLiveHpRef = useRef<number | null>(null);
-    const prevTargetHpRef = useRef<number | null>(null);
-    const prevTargetIdRef = useRef<string | null>(null);
+    const prevEnemiesHpRef = useRef<Record<string, number>>({});
 
     // Concurrency phase lock for NEXT button
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -107,7 +106,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     setShouldShake(true);
                     setTimeout(() => setShouldShake(false), 200);
                 }
-                const displayTime = isStrong ? 2200 : 1800;
+                const displayTime = isStrong ? 3000 : 2500;
                 setTimeout(() => {
                     setEnemyActiveSkill(null);
                     setIsStrongEnemyActive(false);
@@ -168,7 +167,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     if (isStrong) {
                         setIsStrongPlayerActive(true);
                     }
-                    const displayTime = isStrong ? 2200 : 1800;
+                    const displayTime = isStrong ? 3000 : 2500;
                     setTimeout(() => {
                         setPlayerActiveSkill(null);
                         setIsStrongPlayerActive(false);
@@ -202,34 +201,35 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         prevLiveHpRef.current = liveHp;
     }, [liveHp]);
 
-    // 敵の被ダメージ検知
+    // 敵全員の被ダメージ検知
     useEffect(() => {
-        const currentTarget = battleState.enemy;
-        if (currentTarget && currentTarget.hp !== null) {
-            // ターゲットIDが一致し、かつ前回のHP記録がある場合のみ被ダメージ検知を行う
-            if (prevTargetIdRef.current === currentTarget.id && prevTargetHpRef.current !== null) {
-                const diff = prevTargetHpRef.current - currentTarget.hp;
+        const currentEnemies = battleState.enemies || [];
+        currentEnemies.forEach(enemy => {
+            const prevHp = prevEnemiesHpRef.current[enemy.id];
+            if (prevHp !== undefined && enemy.hp !== null) {
+                const diff = prevHp - enemy.hp;
                 if (diff > 0) {
-                    setShouldShake(true);
-                    setTimeout(() => setShouldShake(false), 300);
-
-                    setShouldEnemyShake(true);
-                    setTimeout(() => setShouldEnemyShake(false), 300);
-
                     const id = Date.now() + Math.random();
-                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false }]);
+                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false, targetEnemyId: enemy.id }]);
+                    
+                    // 現在のメインターゲットの場合は画面全体やアバターも揺らす
+                    if (enemy.id === battleState.enemy?.id) {
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                        setShouldEnemyShake(true);
+                        setTimeout(() => setShouldEnemyShake(false), 300);
+                    }
+                    
                     setTimeout(() => {
                         setFloatingDamages(prev => prev.filter(d => d.id !== id));
                     }, 2200);
                 }
             }
-            prevTargetHpRef.current = currentTarget.hp;
-            prevTargetIdRef.current = currentTarget.id;
-        } else {
-            prevTargetHpRef.current = null;
-            prevTargetIdRef.current = null;
-        }
-    }, [battleState.enemy?.hp, battleState.enemy?.id]);
+            if (enemy.hp !== null) {
+                prevEnemiesHpRef.current[enemy.id] = enemy.hp;
+            }
+        });
+    }, [battleState.enemies]);
 
     // v15.0: オーバーレイ表示管理（ターン/フェーズ）
     const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
@@ -1107,7 +1107,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         </div>
 
                                         {/* Floating Damage Numbers for Enemy */}
-                                        {floatingDamages.filter(d => !d.isPlayer && isTarget).map(d => (
+                                        {floatingDamages.filter(d => !d.isPlayer && d.targetEnemyId === enemy.id).map(d => (
                                             <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy">
                                                 -{d.amount}
                                             </div>
@@ -1155,7 +1155,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 )}
 
                                 {/* Floating Damage Numbers for Enemy */}
-                                {floatingDamages.filter(d => !d.isPlayer).map(d => (
+                                {floatingDamages.filter(d => !d.isPlayer && d.targetEnemyId === target.id).map(d => (
                                     <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-3xl font-black tracking-wider damage-pop-enemy">
                                         -{d.amount}
                                     </div>
