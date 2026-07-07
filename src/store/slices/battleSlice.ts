@@ -3355,18 +3355,32 @@ export const createBattleSlice = (
 
                     // プレイヤーのスキルカードIDからエネミースキルのslugを引くマップ
                     const cardToEnemySkillMap: Record<string, string> = {
-                        '1': 'skill_counter_stance', // 強打
-                        '2': 'skill_counter_stance', // 斬撃
-                        '3': 'skill_spear_thrust',    // 突き
-                        '9': 'skill_counter_stance', // 挑発
-                        '11': 'skill_counter_stance', // 聖壁
-                        '12': 'skill_thunder_strike', // 裁き (スタン)
-                        '14': 'skill_boss_heal',      // 治癒 (回復)
-                        '15': 'skill_counter_stance', // 聖壁
-                        '25': 'skill_ares_strike',    // 居合切り
-                        '29': 'skill_counter_stance', 
-                        '48': 'skill_michael_blade',  // 天翔斬
-                        '71': 'skill_zeus_aegis',     // 五星の加護
+                        '1': 'skill_heavy_blow',       // 強打
+                        '2': 'skill_heavy_blow',       // 斬撃
+                        '3': 'skill_heavy_blow',       // 突き
+                        '4': 'skill_counter_stance',   // 防御 (反撃の構え)
+                        '6': 'skill_shield_bash',      // シールドバッシュ (スタン物理)
+                        '9': 'skill_counter_stance',   // 挑発
+                        '11': 'skill_michael_blade',   // 聖剣 (防御無視物理)
+                        '12': 'skill_thunder_strike',  // 裁き (スタン魔法)
+                        '13': 'skill_boss_heal',       // 祈り (回復)
+                        '14': 'skill_boss_heal',       // 治癒 (回復)
+                        '15': 'skill_counter_stance',  // 聖壁
+                        '16': 'skill_gabriel_horn',    // 砂の罠 (全体デバフ)
+                        '17': 'skill_sand_blind',      // 砂塵の目眩まし (目潰し)
+                        '18': 'skill_poison_attack',   // 毒刃 (毒物理)
+                        '22': 'skill_claw_rend',       // クナイ投げ (出血物理)
+                        '25': 'skill_ares_strike',     // 居合切り
+                        '26': 'skill_thunder_strike',  // 氷槍 (スタン魔法/代替)
+                        '29': 'skill_heavy_blow',      // 強打
+                        '45': 'skill_ares_strike',     // 岩砕き
+                        '48': 'skill_michael_blade',   // 天翔斬
+                        '71': 'skill_zeus_aegis',      // 五星の加護
+                        '102': 'skill_claw_rend',      // 傷口をえぐる (出血物理)
+                        '114': 'skill_thunder_strike', // フリーズランサー (魔法/スタン)
+                        '115': 'skill_thunder_strike', // 雷電の連鎖 (魔法/スタン)
+                        '124': 'skill_gabriel_horn',   // 凍てつく波動 (全体デバフ)
+                        '136': 'skill_uriel_flame',    // ファイアウェーブ (火炎攻撃)
                     };
                     
                     const cardIdStr = String(chosenCard.id);
@@ -3421,7 +3435,11 @@ export const createBattleSlice = (
             let applyDefDown = false;
 
             if (skillDef) {
-                selectedSkillName = skillDef.name;
+                // PvP敵お供の場合、ログのスキル名は元のカード名（ファイアウェーブ等）を維持し、
+                // モンスタースキルの名前に上書きされるのを防ぐ！
+                if (!isPvPEnemy) {
+                    selectedSkillName = skillDef.name;
+                }
                 // v2.9.3g: CSVのatk値を使用。未設定時はlevelベースのフォールバック
                 const baseAtk = (enemy as any).atk || ((enemy.level || 1) * 3 + 5);
                 switch (skillDef.effect_type) {
