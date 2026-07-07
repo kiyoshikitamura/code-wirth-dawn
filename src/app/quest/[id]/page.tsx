@@ -804,7 +804,7 @@ export default function QuestPage() {
         );
     }
 
-    if (!scenario) {
+    if (!scenario && (!id || !id.startsWith('pvp_arena_'))) {
         return (
             <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-4 px-6 text-center">
                 <h1 className="text-2xl font-serif text-red-500">{!id ? "Invalid Quest ID" : (errorMsg || "Quest Not Found")}</h1>
@@ -1326,8 +1326,8 @@ export default function QuestPage() {
                     <QuestSettingsModal
                         onClose={() => setIsSettingsOpen(false)}
                         onGiveUp={handleGiveUp}
-                        title={scenario.title}
-                        description={scenario.full_description || scenario.description}
+                        title={scenario?.title || '対人戦アリーナ'}
+                        description={scenario?.full_description || scenario?.description || '闘技場アリーナ戦'}
                     />
                 )}
 
@@ -1344,15 +1344,17 @@ export default function QuestPage() {
 
                 <main className="flex-1 overflow-hidden relative flex flex-col">
                     <div className={`flex-1 relative w-full h-full flex flex-col ${viewMode !== 'scenario' ? 'hidden' : ''}`}>
-                        <ScenarioEngine
-                            scenario={scenario}
-                            initialNodeId={initialNodeId}
-                            onBattleStart={startBattle}
-                            onPrepareResult={handlePrepareResult}
-                            isResultReady={!!prefetchedResult}
-                            isPreparingResult={isPrefetching}
-                            onComplete={handleComplete}
-                        />
+                        {scenario && (
+                            <ScenarioEngine
+                                scenario={scenario}
+                                initialNodeId={initialNodeId}
+                                onBattleStart={startBattle}
+                                onPrepareResult={handlePrepareResult}
+                                isResultReady={!!prefetchedResult}
+                                isPreparingResult={isPrefetching}
+                                onComplete={handleComplete}
+                            />
+                        )}
                     </div>
                     <div className={`flex-1 relative w-full h-full ${viewMode !== 'battle' ? 'hidden' : ''}`}>
                         <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} disableRedirect={true} />
