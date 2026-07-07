@@ -608,7 +608,8 @@ export const createBattleSlice = (
                     body: JSON.stringify({
                         battle_session_id: battleState.battle_session_id,
                         action_type: 'end_turn',
-                        log_message: 'Player turn ended'
+                        log_message: 'Player turn ended',
+                        battle_logs: battleState.messages || []
                     })
                 }).then(res => res.json()).then(data => {
                     if (data.error) console.warn('Server end_turn validation failed:', data.error);
@@ -1226,7 +1227,8 @@ export const createBattleSlice = (
                             action_type: 'attack_enemy',
                             card,
                             target_id: targetEnemyId,
-                            log_message: `Used ${card?.name}`
+                            log_message: `Used ${card?.name}`,
+                            battle_logs: battleState.messages || []
                         })
                     });
                     const data = await res.json();
