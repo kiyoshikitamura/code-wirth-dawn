@@ -187,7 +187,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked, onRetire
                             </button>
                         </div>
 
-                        {!isCampMode && onRetire && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production' && (
+                        {!isCampMode && onRetire && (
                             <button
                                 onClick={onRetire}
                                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-red-950/60 via-slate-900 to-red-950/60 border border-red-900/30 hover:border-red-600/50 text-xs font-bold text-red-200 rounded-lg transition-all active:scale-[0.98] shadow-md shadow-black/40 hover:from-red-900/40"
