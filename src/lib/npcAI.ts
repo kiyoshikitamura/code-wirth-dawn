@@ -11,6 +11,7 @@
 import { Card, PartyMember } from '@/types/game';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 import { getMissChance, StatusEffect, hasEffect } from './statusEffects';
+import { getCardEffectInfo } from './cardEffects';
 
 // ─── Types ───────────────────────────────────────────────
 export type AIRole = 'striker' | 'guardian' | 'medic';
@@ -509,7 +510,7 @@ function tryDebuffEnemy(
         card: unusedDebuff,
         damage: damage > 0 ? Math.max(1, damage + (npc.atk || 0) - context.enemyDef) : undefined,
         effectId: unusedDebuff.effect_id,
-        effectDuration: unusedDebuff.effect_duration || 2,
+        effectDuration: getCardEffectInfo(unusedDebuff).effectDuration || unusedDebuff.effect_duration || 2,
         targetEnemyName: context.enemyName,
         message: damage > 0
             ? `${npc.name}の${unusedDebuff.name}！ ${context.enemyName}に ${Math.max(1, damage + (npc.atk || 0) - context.enemyDef)} のダメージ！`
@@ -532,7 +533,7 @@ function executeCard(
             type: 'buff',
             card,
             effectId: card.effect_id,
-            effectDuration: card.effect_duration || 3,
+            effectDuration: getCardEffectInfo(card).effectDuration || card.effect_duration || 3,
             targetName,
             usedCardId: card.id,
             message: `${npc.name}の${card.name}！ ${targetName}に効果が発動した。`

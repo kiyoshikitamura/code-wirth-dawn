@@ -70,6 +70,8 @@ export interface Card {
   animation_type?: string; // v14.0: バトルカード演出効果(SLASH, WIND等)
   cost_val?: number; // Master data cost value
   effect_val?: number; // Master data effect value
+  is_temp_halved?: boolean; // v28.1: タイムリバース用AP半減フラグ
+  original_ap_cost?: number; // v28.1: タイムリバース前のオリジナルAPコスト
 }
 
 export interface Enemy {
@@ -560,6 +562,7 @@ export interface BattleState {
   // 'player'= プレイヤー操作中 | 'npc_done'= NPC処理完了・Enemy待機 | 'enemy_done'= 敵処理完了・次ターン待機
   battlePhase?: 'player' | 'npc_done' | 'enemy_done';
   cardsPlayedThisTurn?: number;
+  lastPlayedCard?: Card | null; // v28.1: タイムリバース用直前プレイカード退避
 }
 
 export type Scenario = ScenarioDB;

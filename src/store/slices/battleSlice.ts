@@ -34,7 +34,8 @@ function drawCardsFromDeck(drawCount: number, deck: Card[], discardPile: Card[])
 }
 
 const isTurnEndTickCompensated = (id: StatusEffectId): boolean => {
-    return false; // キャラクター別の手番開始時クリンナップへ移行したため、補正は不要
+    // 敵のターン中にのみ意味を持つ行動制限デバフについて、付与時に+1ターン補正する
+    return ['stun', 'bind', 'freeze'].includes(id);
 };
 
 // ─── ノイズカードのフォールバック ────────────────────────────────────────────
@@ -130,6 +131,7 @@ export const createBattleSlice = (
                 vitDamageTakenThisTurn: false,
                 battle_result: undefined,
                 activeSupportBuffs: [],
+                lastPlayedCard: null,
             }
         }));
     },
@@ -613,7 +615,19 @@ export const createBattleSlice = (
     runEnemyPhase: async () => { await get().processEnemyTurn(true); },
 
     advanceTurn: () => {
-        const { battleState, userProfile } = get();
+        const { battleState, userProfile, hand, deck, discardPile } = get();
+        
+        const restoreCost = (c: Card) => {
+            if (c.is_temp_halved && c.original_ap_cost !== undefined) {
+                return { ...c, ap_cost: c.original_ap_cost, is_temp_halved: undefined, original_ap_cost: undefined };
+            }
+            return c;
+        };
+        const nextHand = hand.map(restoreCost);
+        const nextDeck = deck.map(restoreCost);
+        const nextDiscardPile = discardPile.map(restoreCost);
+        
+        set({ hand: nextHand, deck: nextDeck, discardPile: nextDiscardPile });
         
         // プレイヤーターン開始時のクリンナップ (DoT、即死、AP回復)
         let playerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
@@ -1118,7 +1132,8 @@ export const createBattleSlice = (
                 battleState: {
                     ...state.battleState,
                     current_ap: (battleState.current_ap || 0) - finalApCost,
-                    cardsPlayedThisTurn: (state.battleState.cardsPlayedThisTurn || 0) + 1
+                    cardsPlayedThisTurn: (state.battleState.cardsPlayedThisTurn || 0) + 1,
+                    lastPlayedCard: card.id !== '139' ? { ...card } : state.battleState.lastPlayedCard
                 }
             }));
 
@@ -2034,12 +2049,15 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'time_reverse': {
-                        const lastPlayedCard = nextDiscardPile[nextDiscardPile.length - 1];
+                        const lastPlayedCard = battleState.lastPlayedCard;
                         if (lastPlayedCard) {
-                            nextDiscardPile = nextDiscardPile.slice(0, -1);
+                            nextDiscardPile = nextDiscardPile.filter(c => c.id !== lastPlayedCard.id);
+                            currentExhaustPile = currentExhaustPile.filter(c => c.id !== lastPlayedCard.id);
                             const halvedCard = {
                                 ...lastPlayedCard,
-                                ap_cost: Math.floor((lastPlayedCard.ap_cost ?? 1) / 2)
+                                original_ap_cost: lastPlayedCard.ap_cost,
+                                ap_cost: Math.floor((lastPlayedCard.ap_cost ?? 1) / 2),
+                                is_temp_halved: true
                             };
                             nextHand.push(halvedCard);
                             logMsg = `${card.name}を使用！ 直前に使用した「${lastPlayedCard.name}」を手札に戻し、そのAPコストを半分にした！`;
@@ -2321,7 +2339,8 @@ export const createBattleSlice = (
                                 const targetHasCritVul = freshEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
                                 const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
 
-                                const result = calculateDamageV4(basePower, freshEnemy.def || 0, currentPlayerEffects as StatusEffect[], freshEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                                const targetDef = hit > 0 ? 0 : (freshEnemy.def || 0);
+                                const result = calculateDamageV4(basePower, targetDef, currentPlayerEffects as StatusEffect[], freshEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
                                 totalDmg += result.damage;
 
                                 currentEnemies = currentEnemies.map(e => e.id === freshEnemy.id ? { ...e, hp: Math.max(0, e.hp - result.damage) } : e);
@@ -2843,43 +2862,14 @@ export const createBattleSlice = (
             let member = { ...updatedParty[i] };
             if (!member.is_active || (member.durability ?? 100) <= 0) continue;
 
-            // 各味方NPCの手番開始時クリンナップ (行動直前)
-            const mEffects = [...(member.status_effects || [])] as StatusEffect[];
-            const maxDur = member.max_durability || member.durability || 100;
-            const mTick = tickEffects(mEffects, maxDur, member.name);
-            newMessages.push(...mTick.messages);
-
-            let newDur = Math.max(0, (member.durability || 0) + mTick.hpDelta);
-            newDur = Math.min(maxDur, newDur);
-            if (mTick.hpDelta !== 0) {
-                newMessages.push(`__party_sync:${member.id}:${newDur}`);
-            }
-
-            const isNowActive = newDur > 0;
-            if (!isNowActive && member.is_active) {
-                newMessages.push(`${member.name}は力尽きた...`);
-                // 非同期でDB更新
-                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
-            }
-
-            member.durability = newDur;
-            member.status_effects = mTick.newEffects;
-            member.is_active = isNowActive;
-
-            if (!isNowActive) {
-                updatedParty[i] = member;
-                continue;
-            }
-
-            member.used_this_turn = [];
-
-            // 味方NPCのスタン・拘束・凍結チェック (Bug F & G)
             const memberEffects = (member.status_effects || []) as StatusEffect[];
             if (isStunned(memberEffects)) {
                 newMessages.push(`${member.name}は行動不能状態で行動できない！`);
                 updatedParty[i] = member;
                 continue;
             }
+
+            member.used_this_turn = [];
 
             const targetEnemy = freshBattle.enemies.find(e => e.id === currentTargetId);
             const enemyEffects = targetEnemy ? targetEnemy.status_effects : [];
@@ -3070,7 +3060,33 @@ export const createBattleSlice = (
                 }
             }
 
-            updatedParty[i] = { ...member, current_ap: member.current_ap, lastUsedCardId } as any;
+            // 各味方NPCの手番終了時クリンナップ (行動直後)
+            const mEffects = [...(member.status_effects || [])] as StatusEffect[];
+            const maxDur = member.max_durability || member.durability || 100;
+            const mTick = tickEffects(mEffects, maxDur, member.name);
+            newMessages.push(...mTick.messages);
+
+            let newDur = Math.max(0, (member.durability || 0) + mTick.hpDelta);
+            newDur = Math.min(maxDur, newDur);
+            if (mTick.hpDelta !== 0) {
+                newMessages.push(`__party_sync:${member.id}:${newDur}`);
+            }
+
+            const isNowActive = newDur > 0;
+            if (!isNowActive && member.is_active) {
+                newMessages.push(`${member.name}は力尽きた...`);
+                // 非同期でDB更新
+                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+            }
+
+            updatedParty[i] = {
+                ...member,
+                durability: newDur,
+                status_effects: mTick.newEffects,
+                is_active: isNowActive,
+                current_ap: member.current_ap,
+                lastUsedCardId
+            } as any;
         }
 
         let updatedEnemies = trackedEnemies;

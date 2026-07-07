@@ -101,74 +101,82 @@ export default function GossipModal({ onClose }: Props) {
     useEffect(() => {
         const channelName = `public:gossip_posts_realtime`;
         const activeLocationId = userProfile?.current_location_id;
+        let subscription: any = null;
 
-        const subscription = supabase
-            .channel(channelName)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'gossip_posts'
-                },
-                async (payload) => {
-                    const newPost = payload.new;
+        getAuthToken().then(token => {
+            if (token) {
+                supabase.realtime.setAuth(token);
+            }
+            subscription = supabase
+                .channel(channelName)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'gossip_posts'
+                    },
+                    async (payload) => {
+                        const newPost = payload.new;
 
-                    // Enrich post with user's subscription tier
-                    let enrichedPost = { ...newPost };
-                    if (newPost.user_id && !newPost.is_system) {
-                        try {
-                            const { data: p } = await supabase
-                                .from('user_profiles')
-                                .select('subscription_tier')
-                                .eq('id', newPost.user_id)
-                                .maybeSingle();
-                            if (p) {
-                                enrichedPost.user_profiles = { subscription_tier: p.subscription_tier };
+                        // Enrich post with user's subscription tier
+                        let enrichedPost = { ...newPost };
+                        if (newPost.user_id && !newPost.is_system) {
+                            try {
+                                const { data: p } = await supabase
+                                    .from('user_profiles')
+                                    .select('subscription_tier')
+                                    .eq('id', newPost.user_id)
+                                    .maybeSingle();
+                                if (p) {
+                                    enrichedPost.user_profiles = { subscription_tier: p.subscription_tier };
+                                }
+                            } catch (err) {
+                                console.error('[GossipRealtime] Enrichment error:', err);
                             }
-                        } catch (err) {
-                            console.error('[GossipRealtime] Enrichment error:', err);
+                        }
+
+                        if (channel === 'local') {
+                            if (enrichedPost.location_id === activeLocationId && !enrichedPost.is_system) {
+                                setPosts(prev => {
+                                    if (prev.some(p => p.id === enrichedPost.id)) return prev;
+                                    return [enrichedPost, ...prev];
+                                });
+                            }
+                        } else {
+                            // channel === 'global'
+                            const isUserPost = !enrichedPost.is_system;
+                            const isGlobalSystemPost = enrichedPost.is_system && enrichedPost.location_id === null;
+
+                            if (isUserPost || isGlobalSystemPost) {
+                                if (hideSystemMessages && enrichedPost.is_system) return;
+                                setPosts(prev => {
+                                    if (prev.some(p => p.id === enrichedPost.id)) return prev;
+                                    return [enrichedPost, ...prev];
+                                });
+                            }
                         }
                     }
-
-                    if (channel === 'local') {
-                        if (enrichedPost.location_id === activeLocationId && !enrichedPost.is_system) {
-                            setPosts(prev => {
-                                if (prev.some(p => p.id === enrichedPost.id)) return prev;
-                                return [enrichedPost, ...prev];
-                            });
-                        }
-                    } else {
-                        // channel === 'global'
-                        const isUserPost = !enrichedPost.is_system;
-                        const isGlobalSystemPost = enrichedPost.is_system && enrichedPost.location_id === null;
-
-                        if (isUserPost || isGlobalSystemPost) {
-                            if (hideSystemMessages && enrichedPost.is_system) return;
-                            setPosts(prev => {
-                                if (prev.some(p => p.id === enrichedPost.id)) return prev;
-                                return [enrichedPost, ...prev];
-                            });
-                        }
+                )
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'DELETE',
+                        schema: 'public',
+                        table: 'gossip_posts'
+                    },
+                    (payload) => {
+                        const oldPost = payload.old;
+                        setPosts(prev => prev.filter(p => p.id !== oldPost.id));
                     }
-                }
-            )
-            .on(
-                'postgres_changes',
-                {
-                    event: 'DELETE',
-                    schema: 'public',
-                    table: 'gossip_posts'
-                },
-                (payload) => {
-                    const oldPost = payload.old;
-                    setPosts(prev => prev.filter(p => p.id !== oldPost.id));
-                }
-            )
-            .subscribe();
+                )
+                .subscribe();
+        });
 
         return () => {
-            supabase.removeChannel(subscription);
+            if (subscription) {
+                supabase.removeChannel(subscription);
+            }
         };
     }, [channel, userProfile?.current_location_id, hideSystemMessages]);
 
@@ -283,6 +291,7 @@ export default function GossipModal({ onClose }: Props) {
                 localStorage.setItem('last_gossip_post_time', String(Date.now()));
                 setNewPostContent('');
                 setCooldownTime(10);
+                fetchInitialData(true);
             }
         } catch (e: any) {
             setErrorMsg(e.message || '通信エラーが発生しました。');
